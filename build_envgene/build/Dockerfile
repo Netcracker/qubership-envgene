@@ -1,6 +1,6 @@
 #########################################
 ## Stage 1
-FROM ghcr.io/netcracker/base-images-module-base:main
+FROM ghcr.io/netcracker/base-images-module-base:main as base-image
 
 FROM ubuntu:24.04
 

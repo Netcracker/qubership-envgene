@@ -1,6 +1,6 @@
 #######################################
 # Stage 1 
-FROM FROM ghcr.io/netcracker/base-images-module-base:main as build
+FROM ghcr.io/netcracker/base-images-module-base:main as build
 
 USER root
 
@@ -28,7 +28,7 @@ RUN apk update \
 
 #######################################
 # Stage 2
-FROM FROM ghcr.io/netcracker/base-images-module-base:main
+FROM ghcr.io/netcracker/base-images-module-base:main
 
 COPY --from=build /module /module
 
