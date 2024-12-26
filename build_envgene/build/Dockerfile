@@ -43,7 +43,12 @@ RUN apt install -y \
 RUN curl --retry 3 --retry-connrefused --retry-delay 5 -LO https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 
 RUN chmod +x sops-v3.9.0.linux.amd64 
 RUN mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops 
-RUN pip install --no-cache-dir -r /build/requirements.txt 
+RUN pip install --no-cache-dir lxml==4.9.3 ruamel.yaml==0.18.5 ruamel.yaml.clib==0.2.8 ruyaml==0.91.0
+RUN pip install --no-cache-dir jschon==0.11.0 jsonschema==4.19.1 diagrams==0.23.3 jmespath==1.0.1
+RUN pip install --no-cache-dir semantic-version==2.10.0 termcolor==2.4.0 ansible-core==2.13.3
+RUN pip install --no-cache-dir ansible-base==2.10.17 ansible_runner==2.3.5 hiyapyco==0.6.0
+RUN pip install --no-cache-dir cffi==1.16.0 click==8.1.3
+
 RUN pip install ansible --upgrade 
 RUN rm -rf /usr/local/lib/python3.10/dist-packages/ansible_collections/* 
 RUN ansible-galaxy collection install -r /build/requirements.yml -p /module/ansible/collections 
