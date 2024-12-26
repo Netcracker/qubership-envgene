@@ -25,12 +25,10 @@ COPY --from=base-image /module /module
 
 ENV ANSIBLE_LIBRARY /module/ansible/library:$ANSIBLE_LIBRARY
 
-ENV ANSIBLE_LIBRARY /module/ansible/library:$ANSIBLE_LIBRARY
-
-RUN apt update -y \
-    && apt remove perl-base -y --allow-remove-essential \
-    && apt autoremove -y \
-    && apt install -y \
+RUN apt update -y 
+RUN apt remove perl-base -y --allow-remove-essential 
+RUN apt autoremove -y 
+RUN apt install -y \
     git \
     python3 \
     ca-certificates \
@@ -41,21 +39,21 @@ RUN apt update -y \
     curl \
     sudo \
     zip \
-    unzip \
-    && curl --retry 3 --retry-connrefused --retry-delay 5 -LO https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
-    && chmod +x sops-v3.9.0.linux.amd64 \
-    && mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops \
-    && pip install --no-cache-dir -r /build/requirements.txt \
-    && pip install ansible --upgrade \
-    && rm -rf /usr/local/lib/python3.10/dist-packages/ansible_collections/* \
-    && ansible-galaxy collection install -r /build/requirements.yml -p /module/ansible/collections \
-    && pip install /python/jschon-sort \
-    && pip install /python/envgene \
-    && pip install /python/integration \
-    && chmod 754 /module/scripts/* \
-    && apt autoremove -y \
-    && apt autoclean -y \
-    && apt clean -y \
-    && rm -rf /var/lib/apt/lists/*
+    unzip 
+RUN curl --retry 3 --retry-connrefused --retry-delay 5 -LO https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 
+RUN chmod +x sops-v3.9.0.linux.amd64 
+RUN mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops 
+RUN pip install --no-cache-dir -r /build/requirements.txt 
+RUN pip install ansible --upgrade 
+RUN rm -rf /usr/local/lib/python3.10/dist-packages/ansible_collections/* 
+RUN ansible-galaxy collection install -r /build/requirements.yml -p /module/ansible/collections 
+RUN pip install /python/jschon-sort 
+RUN pip install /python/envgene 
+RUN pip install /python/integration 
+RUN chmod 754 /module/scripts/* 
+RUN apt autoremove -y 
+RUN apt autoclean -y 
+RUN apt clean -y 
+RUN rm -rf /var/lib/apt/lists/*
 
 WORKDIR /module/ansible
