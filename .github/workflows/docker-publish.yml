@@ -5,7 +5,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: qubership_build_effective_set_generator
+  IMAGE_NAME: netcracker/qubership-build-effective-set-generator
 
 jobs:
   build-and-push-image:
