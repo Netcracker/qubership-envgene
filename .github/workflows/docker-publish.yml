@@ -1,4 +1,4 @@
-name: Create and publish a Docker image
+name: Create and publish qubership_build_effective_set_generator Docker image
 
 on:
   workflow_dispatch:
@@ -36,7 +36,7 @@ jobs:
         id: push
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./build_effective_set_generator/build
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
