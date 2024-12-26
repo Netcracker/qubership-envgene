@@ -1,0 +1,9 @@
+.gradle
+venv
+.idea
+/.project
+/environments
+/tmp
+/env-builder/deployers
+__pycache__
+.vscode

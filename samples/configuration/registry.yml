@@ -1,0 +1,7 @@
+registry:
+  username: envgen.creds.get('registry-cred').username
+  password: envgen.creds.get('registry-cred').password
+  releaseRepository: "https://artifactory.example.com/mvn.release"
+  snapshotRepository: "https://artifactory.example.com/mvn.snapshot"
+  stagingRepository: "https://artifactory.example.com/mvn.staging"
+  proxyRepository: "https://artifactory.example.com/mvn.proxy"

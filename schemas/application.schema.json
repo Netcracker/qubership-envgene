@@ -1,0 +1,14 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    
+    "properties": {
+        "name" : { "type": "string" },
+        "registryName" : { "type": "string" },
+        "artifactId" : { "type": "string" },
+        "groupId" : { "type": "string" },
+        "supportParallelDeploy" : { "type": "boolean" },
+        "deployParameters" : { "type": "object" },
+        "technicalConfigurationParameters" : { "type": "object" }
+    }
+}

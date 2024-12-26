@@ -1,0 +1,3 @@
+---
+- name: 01. generate effective set
+  include_tasks: 01_generate_effective_set.yaml

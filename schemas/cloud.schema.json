@@ -1,0 +1,79 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    
+    "properties": {
+        "name" : { "type": "string" },
+        "version" : { "type": "number" },
+        "apiUrl" : { "type": "string" },
+        "apiPort" : { "type": ["integer", "string"] },
+        "privateUrl" : { "type": "string" },
+        "publicUrl" : { "type": "string" },
+        "dashboardUrl" : { "type": "string" },
+        "labels": {
+            "type" :"array",
+            "items": { "type": "string" }
+        },
+        "defaultCredentialsId" : { "type": "string" },
+        "protocol" : { "type": "string" },
+        "dbMode" : { "type": "string" },
+        "databases": {
+            "type" :"array",
+            "items": { "type": "object" }
+        },
+        "mergeDeployParametersAndE2EParameters": { "type": "boolean" },
+        "maasConfig" : { 
+            "type": "object",
+            "properties": {
+                "credentialsId": { "type": "string" },
+                "enable": { "type": "boolean" },
+                "maasUrl": { "type": "string" },
+                "maasInternalAddress": { "type": "string" }
+              }
+        },
+        "vaultConfig" : { 
+            "type": "object",
+            "properties": {
+                "credentialsId": { "type": "string" },
+                "enable": { "type": "boolean" },
+                "url": { "type": "string" }
+              }
+        },
+        "dbaasConfigs" : {
+            "type" :"array",
+            "items": { 
+                "type": "object",
+                "properties": {
+                    "credentialsId": { "type": "string" },
+                    "enable": { "type": "boolean" },
+                    "apiUrl": { "type": "string" },
+                    "aggregatorUrl": { "type": "string" }
+                }
+            }
+        },
+        "consulConfig" : { 
+            "type": "object",
+            "properties": {
+                "tokenSecret": { "type": "string" },
+                "enabled": { "type": "boolean" },
+                "publicUrl": { "type": "string" },
+                "internalUrl": { "type": "string" }
+              }
+        },
+        "deployParameters" : { "type": "object" },
+        "e2eParameters" : { "type": "object" },
+        "technicalConfigurationParameters" : { "type": "object" },   
+        "deployParameterSets": {
+            "type" :"array",
+            "items": { "type": "string" }
+        },
+        "e2eParameterSets": {
+            "type" :"array",
+            "items": { "type": "string" }
+        },
+        "technicalConfigurationParameterSets": {
+            "type" :"array",
+            "items": { "type": "string" }
+        }
+    }
+}

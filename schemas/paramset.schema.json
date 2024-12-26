@@ -1,0 +1,20 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "name" : { "type": "string" },
+        "version" : { "type": "number" },
+        "parameters" : { "type": "object" },
+        "applications": {
+            "type" :"array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "appName": { "type": "string"},
+                    "parameters" : { "type": "object" }
+                }
+            }
+        }
+    },
+    "required": ["name", "parameters"]
+}

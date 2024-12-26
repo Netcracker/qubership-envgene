@@ -1,0 +1,27 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "name" : { "type": "string" },
+        "registryName" : { "type": "string" },
+        "description" : { "type": "string" },
+        "owners" : { "type": "string" },
+        "gitRepository" : { "type": "string" },
+        "defaultBranch" : { "type": "string" },
+        "credential" : { "type": "string" },
+        "labels": {
+            "type" :"array",
+            "items": { "type": "string" }
+        },
+        "globalE2EParameters" : {
+            "type": "object",
+            "properties": {
+                "pipelineDefaultRecipients": { "type": "string" },
+                "recipientsStrategy": { "type": "string" },
+                "mergeTenantsAndE2EParameters": { "type": "boolean" },
+                "environmentParameters" : { "type": "object" }
+              }
+        },
+        "deployParameters" : { "type": "object" }
+    }
+}

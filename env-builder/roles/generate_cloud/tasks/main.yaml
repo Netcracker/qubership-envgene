@@ -1,0 +1,6 @@
+---
+- name: Generate Cloud yaml for cloud {{ _cloud }}
+  ansible.builtin.blockinfile:
+    path: "{{ current_env_dir }}/cloud.yml"
+    block: "{{ lookup('template', _template) }}"
+    create: yes

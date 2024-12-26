@@ -1,0 +1,16 @@
+[tool.black]
+line-length = 120
+skip-string-normalization = true
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+strict_optional = true
+strict_equality = true
+warn_no_return = true
+check_untyped_defs = true
+warn_redundant_casts = true
+show_error_codes = true
+implicit_reexport = false
+warn_unreachable = true
+disallow_incomplete_defs = true

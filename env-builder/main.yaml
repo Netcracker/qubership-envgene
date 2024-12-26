@@ -1,0 +1,144 @@
+---
+- name: Generate jobs set
+  hosts: 127.0.0.1
+  connection: local
+  gather_facts: false
+  tasks:
+    #get env variables
+    - name: Get input arguments
+      ansible.builtin.set_fact:
+        env: "{{ lookup('ansible.builtin.env', 'env') }}" 
+        cluster_name: "{{ lookup('ansible.builtin.env', 'cluster_name') }}" 
+        templates_dir: "{{ lookup('ansible.builtin.env', 'templates_dir') }}" 
+        env_instances_dir: "{{ lookup('ansible.builtin.env', 'env_instances_dir') }}" 
+        render_dir: "{{ lookup('ansible.builtin.env', 'render_dir') }}"
+        template_version: "{{ lookup('ansible.builtin.env', 'template_version') }}"
+        cloud_passport_file_path: "{{ lookup('ansible.builtin.env', 'cloud_passport_file_path') }}"
+        cmdb_url: "{{ lookup('ansible.builtin.env', 'cmdb_url') }}"
+        render_parameters_dir: "{{ lookup('ansible.builtin.env', 'render_parameters_dir') }}"
+    - name: Print arguments
+      debug:
+        msg: "Building environment {{ env }} from templates dir {{ templates_dir }} and instances dir {{ env_instances_dir }}"
+
+    #get env variables
+    - name: Get inventory
+      ansible.builtin.set_fact:
+        env_definition: "{{ lookup('file', '{{ env_instances_dir }}/Inventory/env_definition.yml') | from_yaml }}"
+
+    - name: Print inventory
+      debug:
+        var: env_definition
+
+    #get env variables
+    - name: Get cloud passport
+      ansible.builtin.set_fact:
+        cloud_passport: "{{ lookup('file', '{{ cloud_passport_file_path }}') | from_yaml }}"
+      when: cloud_passport_file_path | trim != ''
+
+    #generate env_config
+    - name: Generate config for env {{ env }}
+      ansible.builtin.set_fact:
+        config: "{{ lookup('template', 'env_config.yml.j2') | from_yaml }}"
+
+    - name: Print config
+      debug:
+        var: config
+
+    - name: Set current env
+      ansible.builtin.set_fact:
+        current_env: "{{ config.environment }}"
+
+    - name: Set current vars
+      ansible.builtin.set_fact:
+        cloud: "{{ current_env.cloud }}"
+        tenant: "{{ current_env.tenant | default('')}}"
+        deployer: "{{ current_env.deployer | default('')}}"
+
+    - name: print current env
+      debug:
+        msg: "current_env: {{ current_env }}"
+
+    - name: Set Gitlab ENV parameters
+      ansible.builtin.set_fact:
+        ND_CMDB_CONFIG_REF: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_SHORT_SHA') | default('No SHA') }}"
+        ND_CMDB_CONFIG_REF_NAME: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_REF_NAME') | default('No Ref Name') }}"
+        ND_CMDB_CONFIG_TAG: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_TAG') | default('No Ref tag') }}"
+        ND_CDMB_REPOSITORY_URL: "{{ lookup('ansible.builtin.env', 'CI_REPOSITORY_URL') | default('No Ref URL') }}"
+        ND_CMDB_ENV_TEMPLATE: "{{ env_template | default(current_env.env_template) }}"
+
+    - name: Set current_env_dir
+      ansible.builtin.set_fact:
+        current_env_dir: "{{ render_dir }}/{{ env }}"
+
+    - name: Set Env Template
+      ansible.builtin.include_vars:
+        file: "{{ templates_dir }}/env_templates/{{current_env.env_template}}.yaml"
+        name: current_env_template 
+
+    - name: Gen tenant
+      ansible.builtin.include_role:
+        name: generate_tenant
+      vars:
+        _env: "{{ env }}"
+        _tenant: "{{ tenant }}"
+        _cloud: "{{ current_env.cloud }}"
+        _current_env_dir: "{{ current_env_dir }}"
+        _template: "{{current_env_template.tenant}}"
+
+    - name: Gen cloud
+      ansible.builtin.include_role:
+        name: generate_cloud
+      vars:
+        _env: "{{ env }}"
+        _tenant: "{{ tenant }}"
+        _cloud: "{{ current_env.cloud }}"
+        _current_env_dir: "{{ current_env_dir }}"
+        _template: "{{ current_env_template.cloud }}"
+
+    - name: Gen namespaces 
+      ansible.builtin.include_role:
+        name: generate_namespaces
+      vars:
+        _env: "{{ env }}"
+        _tenant: "{{ tenant }}"
+        _cloud: "{{ current_env.cloud }}"
+        _current_env_dir: "{{ current_env_dir }}"
+      loop: "{{ current_env_template.namespaces }}"
+      loop_control:
+        loop_var: namespace
+
+    - name: Gen resource profiles 
+      ansible.builtin.include_role:
+        name: generate_profiles
+      vars:
+        _env: "{{ env }}"
+        _tenant: "{{ tenant }}"
+        _cloud: "{{ current_env.cloud }}"
+        _current_env_dir: "{{ current_env_dir }}"
+      loop: "{{ current_env_template.resourceProfiles }}"
+      loop_control:
+        loop_var: profile
+      when: current_env_template.resourceProfiles is defined
+
+    - name: Generate environment specific schema
+      ansible.builtin.copy:
+        src: "{{ current_env_template.envSpecificSchema }}"
+        dest: "{{ current_env_dir }}/env-specific-schema.yml"
+      when: current_env_template.envSpecificSchema is defined
+
+    - name: Find parametersets with Jinja templates
+      ansible.builtin.find:
+        paths: "{{ render_parameters_dir }}"
+        patterns: '*.yml.j2,*.yaml.j2'
+        recurse: true
+      register: paramset_templates
+
+    - name: Generate paramsets defined using Jinja templates
+      ansible.builtin.include_role:
+        name: generate_paramsets
+      vars:
+        _paramset_path: "{{ paramset_file.path }}"
+      loop: "{{ paramset_templates.files }}"
+      loop_control:
+        loop_var: paramset_file
+      when: paramset_templates.files | length > 0

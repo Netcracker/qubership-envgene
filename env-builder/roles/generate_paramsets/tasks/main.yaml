@@ -1,0 +1,19 @@
+---
+- name: Get paramset template name from {{ _paramset_path }}
+  set_fact:
+    _paramset_template_name: "{{ _paramset_path.split('/')|last|replace('.yml.j2', '')|replace('.yaml.j2', '') }}"
+
+- name: Get target paramset path for {{ _paramset_path }}
+  set_fact:
+    _paramset_target_path: "{{ _paramset_path|replace('.yml.j2', '.yml')|replace('.yaml.j2', '.yml') }}"
+
+- name: Generate paramset yaml {{ _paramset_template_name }} 
+  ansible.builtin.blockinfile:
+    path: "{{ _paramset_target_path }}"
+    block: "{{ lookup('template', _paramset_path) }}"
+    create: yes
+
+- name: Delete jinja template {{ _paramset_path}} after rendering
+  ansible.builtin.file:
+    state: absent
+    path: "{{ _paramset_path }}"

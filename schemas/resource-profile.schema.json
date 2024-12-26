@@ -1,0 +1,41 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "name" : { "type": "string" },
+        "version" : { "type": "number" },
+        "baseline" : { "type": "string" },
+        "description" : { "type": "string" },
+        "applications": {
+            "type" :"array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name" : { "type": "string" },
+                    "version" : { "type": ["string", "number"] },
+                    "sd" : { "type": ["string", "number"] },
+                    "services" : {
+                        "type" :"array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name" : { "type": "string" },
+                                "parameters" : {
+                                    "type" :"array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name" : { "type" : "string" },
+                                            "value" : { "type" : "string" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "required": [ "name", "applications" ]
+}

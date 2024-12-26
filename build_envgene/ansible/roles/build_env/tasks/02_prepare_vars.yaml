@@ -1,0 +1,28 @@
+---
+- name: decrypt {{ cred_config_path }} with instance secret-key
+  crypt:
+    crypt_type: "decrypt"
+    source_file: "{{ cred_config_path }}"
+  register: decrypt_creds
+  no_log: True
+
+- name: Set env_definition path
+  set_fact:
+    env_definition_path: "{{ envs_directory_path + '/' + cluster_name + '/' + environment_name + '/Inventory/env_definition.yml' }}"
+
+- name: Include vars from environments file
+  set_fact:
+    env_definition:   "{{ lookup('file', env_definition_path) | from_yaml }}"
+
+- name: Include vars from credentials file
+  set_fact:
+    cred_config: "{{ decrypt_creds.result | from_yaml }}"
+  no_log: True
+
+- name: include old logic
+  include_tasks: 02_prepare_vars_old.yaml
+  when: env_definition['envTemplate']['artifact'] is undefined
+
+- name: include new logic
+  include_tasks: 02_prepare_vars_new.yaml
+  when: env_definition['envTemplate']['artifact'] is defined

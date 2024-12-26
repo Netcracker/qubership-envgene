@@ -1,0 +1,23 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties":{
+        "cp_discovery":{ 
+          "type": "object",  
+          "properties":{
+            "gitlab":{ 
+              "type": "object", 
+              "properties":{
+                "branch":{"type": "string"}, 
+                "project":{"type": "string"},
+                "token":{"type": "string"}
+                },
+                "required": ["branch", "project", "token"]
+              }
+            },
+            "required": ["gitlab"]
+          }, 
+        "self_token":{"type": "string"}
+    },
+    "required": ["cp_discovery", "self_token"]
+}

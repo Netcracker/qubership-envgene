@@ -1,0 +1,11 @@
+# Template for env generation
+---
+tenant: "{{ templates_dir }}/env_templates/composite-dev/tenant.yml.j2"
+cloud: "{{ templates_dir }}/env_templates/composite-dev/cloud.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/composite-dev/namespaces/core.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/composite-dev/namespaces/bss.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/composite-dev/namespaces/oss.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/composite-dev/namespaces/billing.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/composite-dev/namespaces/network-adapters.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/composite-dev/namespaces/data-management.yml.j2"

@@ -1,0 +1,118 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "inventory": {
+      "type": "object",
+      "properties": {
+        "environmentName": {
+          "type": "string"
+        },
+        "tenantName": {
+          "type": "string"
+        },
+        "deployer": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "owners": {
+          "type": "string"
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "updateCredIdsWithEnvName": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "envTemplate": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "additionalTemplateVariables": {
+          "type": "object"
+        },
+        "sharedTemplateVariables": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "envSpecificParamsets": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "envSpecificTechnicalParamsets": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "envSpecificE2EParamsets": {
+          "type": "object",
+          "patternProperties": {
+            ".*": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "envSpecificResourceProfiles": {
+          "type": "object"
+        },
+        "sharedMasterCredentialFiles": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "templateArtifact": {
+          "type": "object",
+          "properties": {
+            "registry": {
+              "type": "string"
+            },
+            "repository": {
+              "type": "string"
+            },
+            "artifact": {
+              "type": "object",
+              "properties": {
+                "group_id": {
+                  "type": "string"
+                },
+                "artifact_id": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

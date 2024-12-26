@@ -1,0 +1,45 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    
+    "properties": {
+        "name" : { "type": "string" },
+        "credentialsId": { "type": "string" },
+        "version" : { "type": "number" },
+        "isServerSideMerge": { "type": "boolean" },
+        "labels": {
+            "type" :"array",
+            "items": { "type": "string" }
+        },
+        "cleanInstallApprovalRequired": { "type": "boolean" },
+        "mergeDeployParametersAndE2EParameters": { "type": "boolean" },
+        "profile": {
+            "type": ["object", "null"],
+            "properties": {
+                "name": { "type": ["string", "null"] },
+                "baseline" : { "type": "string" }
+            }
+        },
+        "deployParameters" : { "type": "object" },
+        "e2eParameters" : { "type": "object" },
+        "technicalConfigurationParameters" : { "type": "object" },   
+        "deployParameterSets": {
+            "type" :"array",
+            "items": { "type": "string" }
+        },
+        "e2eParameterSets": {
+            "type" :"array",
+            "items": { "type": "string" }
+        },
+        "technicalConfigurationParameterSets": {
+            "type" :"array",
+            "items": { "type": "string" }
+        }
+    },
+    "required": [  
+        "name",
+        "isServerSideMerge",
+        "cleanInstallApprovalRequired",
+        "mergeDeployParametersAndE2EParameters"
+    ]
+}

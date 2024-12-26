@@ -1,0 +1,9 @@
+first_cred:
+    type: secret
+    data:
+        secret: glpat-vxxDsEVkaQyoHasXGCY9 
+second_cred:
+    type: usernamePassword
+    data:
+        username: username
+        password: qwerty123456

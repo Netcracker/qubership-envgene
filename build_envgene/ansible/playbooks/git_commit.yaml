@@ -1,0 +1,7 @@
+---
+- name: Commit and push changes to git
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: git_commit
