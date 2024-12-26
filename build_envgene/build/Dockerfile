@@ -33,6 +33,9 @@ RUN apt install -y \
     python3 \
     python3-pip \
     python3-venv \
+    libxml2-dev \
+    libxslt-dev \
+    zlib1g-dev \
     ca-certificates \
     openssl \
     openssh-client \
