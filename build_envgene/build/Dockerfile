@@ -25,30 +25,27 @@ COPY --from=base-image /module /module
 
 ENV ANSIBLE_LIBRARY /module/ansible/library:$ANSIBLE_LIBRARY
 
+ENV ANSIBLE_LIBRARY /module/ansible/library:$ANSIBLE_LIBRARY
+
 RUN apt update -y \
+    && apt remove perl-base -y --allow-remove-essential \
+    && apt autoremove -y \
     && apt install -y \
     git \
     python3 \
-    python3-pip \
-    python3-venv \
     ca-certificates \
     openssl \
     openssh-client \
+    pip \
     coreutils \
     curl \
     sudo \
     zip \
     unzip \
-    libxml2-dev \
-    libxslt-dev \
-    zlib1g-dev \
     && curl --retry 3 --retry-connrefused --retry-delay 5 -LO https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
     && chmod +x sops-v3.9.0.linux.amd64 \
     && mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops \
-    && python3 -m venv /module/venv \
-    && . /module/venv/bin/activate \
-    && pip install --upgrade pip \
-    && pip install --no-deps --no-cache-dir -r /build/requirements.txt \
+    && pip install --no-cache-dir -r /build/requirements.txt \
     && pip install ansible --upgrade \
     && rm -rf /usr/local/lib/python3.10/dist-packages/ansible_collections/* \
     && ansible-galaxy collection install -r /build/requirements.yml -p /module/ansible/collections \
@@ -60,4 +57,5 @@ RUN apt update -y \
     && apt autoclean -y \
     && apt clean -y \
     && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /module/ansible
