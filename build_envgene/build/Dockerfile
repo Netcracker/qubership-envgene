@@ -2,8 +2,6 @@
 ## Stage 1
 FROM ghcr.io/netcracker/base-images-module-base:main as base-image
 
-FROM ubuntu:24.04
-
 USER root
 
 # Создаем необходимые директории
@@ -24,41 +22,37 @@ COPY --from=base-image /module /module
 ENV ANSIBLE_LIBRARY /module/ansible/library:$ANSIBLE_LIBRARY
 
 # Устанавливаем зависимости и обновляем pip
-RUN apt update -y \
-    && apt install -y \
-        python3 \
-        python3-pip \
-        python3-venv \
+RUN apk update \
+    && apk add --no-cache \
         git \
-        libxml2-dev \
-        libxslt-dev \
-        zlib1g-dev \
-        build-essential \
-        ca-certificates \
-        openssl \
+        python3 \
+        py3-pip \
+        py3-cryptography \
+        py3-openssl \
         openssh-client \
+        ca-certificates \
         coreutils \
         curl \
         sudo \
         zip \
         unzip \
-    && pip install --upgrade pip --break-system-packages
-
-# Устанавливаем Python-зависимости
-RUN pip install --no-cache-dir lxml==4.9.3 \
+        build-base \
+        libxml2-dev \
+        libxslt-dev \
+        zlib-dev \
+    && curl --retry 3 --retry-connrefused --retry-delay 5 -LO https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
+    && chmod +x sops-v3.9.0.linux.amd64 \
+    && mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops \
+    && pip install --upgrade pip \
     && pip install --no-cache-dir -r /build/requirements.txt \
     && pip install ansible --upgrade \
-    && rm -rf /usr/local/lib/python3.10/dist-packages/ansible_collections/* \
+    && rm -rf /usr/lib/python3.10/site-packages/ansible_collections/* \
     && ansible-galaxy collection install -r /build/requirements.yml -p /module/ansible/collections \
     && pip install /python/jschon-sort \
     && pip install /python/envgene \
-    && pip install /python/integration
-
-# Настраиваем права на скрипты и очищаем временные файлы
-RUN chmod 754 /module/scripts/* \
-    && apt autoremove -y \
-    && apt autoclean -y \
-    && apt clean -y \
-    && rm -rf /var/lib/apt/lists/*
+    && pip install /python/integration \
+    && chmod 754 /module/scripts/* \
+    && apk del build-base libxml2-dev libxslt-dev zlib-dev \
+    && rm -rf /var/cache/apk/* /tmp/* /var/tmp/*
 
 WORKDIR /module/ansible
