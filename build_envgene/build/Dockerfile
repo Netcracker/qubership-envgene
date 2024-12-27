@@ -44,9 +44,9 @@ RUN apt update -y \
     unzip \
     && curl --retry 3 --retry-connrefused --retry-delay 5 -LO https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
     && chmod +x sops-v3.9.0.linux.amd64 \
-    && mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops \
-    && pip install --no-cache-dir lxml==4.9.3 \
-    && pip install --no-cache-dir -r /build/requirements.txt \
+    && mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops
+RUN pip install --no-cache-dir lxml==4.9.3
+RUN pip install --no-cache-dir -r /build/requirements.txt \
     && pip install ansible --upgrade \
     && rm -rf /usr/local/lib/python3.10/dist-packages/ansible_collections/* \
     && ansible-galaxy collection install -r /build/requirements.yml -p /module/ansible/collections \
