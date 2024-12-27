@@ -4,7 +4,6 @@ FROM ghcr.io/netcracker/base-images-module-base:main as base-image
 
 USER root
 
-# Копируем файлы в контейнер
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/requirements.yml /build/requirements.yml
@@ -12,10 +11,15 @@ COPY build_envgene/ansible /module/ansible
 COPY build_envgene/scripts /module/scripts
 COPY python /python
 
-# Устанавливаем переменные окружения
+COPY build_* create_* produce_* sort* /build_env/
+COPY scripts /build_env/scripts
+COPY env-builder /build_env/env-builder
+COPY schemas /build_env/schemas
+
+
 ENV ANSIBLE_LIBRARY /module/ansible/library:$ANSIBLE_LIBRARY
 
-# Устанавливаем зависимости и обновляем pip
+
 RUN apk update \
     && apk add --no-cache \
         git \
