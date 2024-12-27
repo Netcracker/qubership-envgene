@@ -4,9 +4,6 @@ FROM ghcr.io/netcracker/base-images-module-base:main as base-image
 
 USER root
 
-# Создаем необходимые директории
-RUN mkdir "/etc/ssl"
-
 # Копируем файлы в контейнер
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
