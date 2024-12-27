@@ -15,9 +15,6 @@ COPY build_envgene/ansible /module/ansible
 COPY build_envgene/scripts /module/scripts
 COPY python /python
 
-# Копируем файлы из базового образа
-COPY --from=base-image /module /module
-
 # Устанавливаем переменные окружения
 ENV ANSIBLE_LIBRARY /module/ansible/library:$ANSIBLE_LIBRARY
 
