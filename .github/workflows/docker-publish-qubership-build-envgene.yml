@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         component:
-          - name: qubership-build-envgene
+          - name: qubership-envgene-build
             file: ./build_envgene/build/Dockerfile
             context: .
     runs-on: ubuntu-latest
