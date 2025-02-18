@@ -11,10 +11,8 @@ class IPluginRegistry(type):
             IPluginRegistry.plugin_registries.append(cls)
 
 class PluginCore(object, metaclass=IPluginRegistry):
-    def __init__(self, params: dict, pipeline_helper: ModuleType, pipeline: Pipeline) -> None:
-        self.params = params
-        self.pipeline = pipeline
-        self.pipeline_helper = pipeline_helper
+    def __init__(self) -> None:
+        pass
 
     def invoke(self) -> None:
         pass
