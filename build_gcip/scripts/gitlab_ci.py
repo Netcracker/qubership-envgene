@@ -48,6 +48,8 @@ def build_pipeline(params: PipelineParameters):
     jobs_map = {}
     queued_job_names = []
 
+    per_env_plugin_engine = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/per_env')
+
     for env in params.env_names.split("\n"):
         logger.info(f'----------------start processing for {env}---------------------')
         ci_project_dir = project_dir
@@ -121,8 +123,7 @@ def build_pipeline(params: PipelineParameters):
         plugin_params['env_name'] = environment_name
         plugin_params['cluster_name'] = cluster_name
         plugin_params['full_env'] = env
-        plugin_engine = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/per_env', params=plugin_params, pipeline_helper=pipeline_helper, pipeline=pipeline)
-        plugin_engine.start()
+        per_env_plugin_engine.run(params=plugin_params, pipeline=pipeline, pipeline_helper=pipeline_helper)
 
         for job in job_sequence:
             if not job in jobs_map.keys():

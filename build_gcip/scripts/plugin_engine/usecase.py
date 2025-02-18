@@ -1,12 +1,10 @@
 import os
 from importlib import import_module
 from typing import Any
-from types import ModuleType
 
-from gcip import Pipeline
 from envgenehelper import logger
 
-from .engine_contract import IPluginRegistry, PluginCore
+from .engine_contract import IPluginRegistry
 
 def filter_unwanted_directories(name: str) -> bool:
     return not ['__pycache__'].__contains__(name)
@@ -69,14 +67,5 @@ class PluginUseCase:
             cut_off_idx = plugins_dir_parts.index('pipegene_plugins')
             package_name = '.'.join(plugins_dir_parts[cut_off_idx:])
             self.__search_for_plugins_in(plugins_paths, package_name)
+        return self.modules
 
-    @staticmethod
-    def register_plugin(module: type, params: dict, pipeline_helper: ModuleType, pipeline: Pipeline) -> PluginCore:
-        return module(params=params, pipeline_helper=pipeline_helper, pipeline=pipeline)
-
-    @staticmethod
-    def hook_plugin(plugin: PluginCore):
-        """
-        Return a function accepting commands.
-        """
-        return plugin.invoke
