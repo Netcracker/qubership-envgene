@@ -2,17 +2,23 @@ import os
 from os import *
 
 from envgenehelper import check_for_cyrillic, logger, findAllYamlsInDir, openYaml, check_dir_exists, get_cluster_name_from_full_name, get_environment_name_from_full_name, check_environment_is_valid_or_fail, check_file_exists, validate_yaml_by_scheme_or_fail
-from pipeline_parameters import PipelineParameters
+from pipeline_parameters import PipelineParametersDataClass
 
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 logger.info(f"Info about project_dir: {project_dir}")
 
-def validate_pipeline(params: PipelineParameters):
-    basic_checks(params.env_names)
-    if params.is_template_test:
+def validate_pipeline(params: dict):
+    basic_checks(params['ENV_NAMES'])
+    if params['IS_TEMPLATE_TEST']:
         template_test_checks()
     else:
-        real_execution_checks(params.env_names, params.get_passport, params.env_build, params.cmdb_import, params.env_inventory_generation_params['ENV_INVENTORY_INIT'])
+        real_execution_checks(
+            params["ENV_NAMES"],
+            params["GET_PASSPORT"],
+            params["ENV_BUILD"],
+            params["CMDB_IMPORT"],
+            params["ENV_INVENTORY_GENERATION_PARAMS"]["ENV_INVENTORY_INIT"],
+        )
 
 def basic_checks(env_names):
     if not env_names:
@@ -35,7 +41,7 @@ def template_test_checks():
         errorFound = True
     if errorFound:
         raise ReferenceError(f"Execution is aborted as validation is not successful. See logs above.")
-    
+
 def real_execution_checks(env_names, get_passport, env_build, cmdb_import, env_inventory_init):
     for env in env_names.split("\n"):
         # now we are using only complex environment names that contain both cluster_name and environment_name
@@ -56,7 +62,7 @@ def check_environment(environment_name, cluster_name, get_passport, env_build, c
     all_environments_dir = f"{project_dir}/environments"
     skip_env_definition_check = get_passport and not env_build and not cmdb_import
     check_environment_is_valid_or_fail(environment_name, cluster_name, all_environments_dir, skip_env_definition_check, not skip_env_definition_check, schemas_dir=schemas_dir)
-    
+
 def check_passport_params(get_passport):
     if get_passport:
         integration_path = f"{project_dir}/configuration/integration.yml"
@@ -66,4 +72,3 @@ def check_passport_params(get_passport):
         else:
             logger.error(f'File configuration/integration.yml not exists in {integration_path}')
             raise ReferenceError(f"Execution is aborted as validation is not successful. See logs above.")
-

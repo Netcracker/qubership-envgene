@@ -10,5 +10,7 @@ class PluginEngine:
             self.plugins_to_invoke.append(registered_plugin.invoke)
 
     def run(self, *args, **kwargs):
+        results = []
         for plugin_to_invoke in self.plugins_to_invoke:
-            plugin_to_invoke(*args, **kwargs)
+            results.append(plugin_to_invoke(*args, **kwargs))
+        return results

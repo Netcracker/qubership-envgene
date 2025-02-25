@@ -5,21 +5,19 @@ from dataclasses import fields
 import click
 
 from envgenehelper import logger
-from gitlab_ci import build_pipeline
 from validations import validate_pipeline
-from pipeline_parameters import PipelineParameters
+from pipeline_parameters import PipelineParametersHandler
 
 @click.group()
 def cli():
     pass
 
-def prepare_input_params() -> PipelineParameters:
-    params = PipelineParameters()
-    params_log = "Input parameters are:"
-    for param in fields(params):
-        params_log += f"\n{param.name.upper()}: {pformat(getattr(params, param.name))}"
+def prepare_input_params() -> PipelineParametersDataClass:
+    pipe_params = PipelineParametersHandler()
+    params_log = (f"Input parameters are: ")
+    params_log += pipe_params.get_params_str()
     logger.info(params_log)
-    return params
+    return pipe_params.params
 
 @cli.command("validate_pipeline")
 def validate_pipeline_command():

@@ -1,26 +1,22 @@
-import os
 from os import *
-from pprint import pformat
-from dataclasses import fields
 
 import click
 
 from envgenehelper import logger
 from gitlab_ci import build_pipeline
 from validations import validate_pipeline
-from pipeline_parameters import PipelineParameters
+from pipeline_parameters import PipelineParametersHandler
 
 @click.group(chain=True)
 def gcip():
     pass
 
-def prepare_input_params() -> PipelineParameters:
-    params = PipelineParameters()
+def prepare_input_params() -> dict:
+    pipe_params = PipelineParametersHandler()
     params_log = (f"Input parameters are: ")
-    for param in fields(params):
-        params_log += f"\n{param.name.upper()}: {pformat(getattr(params, param.name))}"
+    params_log += pipe_params.get_params_str()
     logger.info(params_log)
-    return params
+    return pipe_params.params
 
 @gcip.command("generate_pipeline")
 def generate_pipeline():
