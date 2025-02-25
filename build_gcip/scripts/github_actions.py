@@ -1,7 +1,3 @@
-import os
-from pprint import pformat
-from dataclasses import fields
-
 import click
 
 from envgenehelper import logger
@@ -12,7 +8,7 @@ from pipeline_parameters import PipelineParametersHandler
 def cli():
     pass
 
-def prepare_input_params() -> PipelineParametersDataClass:
+def prepare_input_params() -> dict:
     pipe_params = PipelineParametersHandler()
     params_log = (f"Input parameters are: ")
     params_log += pipe_params.get_params_str()
