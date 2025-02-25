@@ -37,6 +37,6 @@ class PipelineParametersHandler:
 
     def get_params_str(self) -> str:
         result = ''
-        for k, v in self.params:
+        for k, v in self.params.items():
             result += f"\n{k.upper()}: {pformat(v)}"
         return result
