@@ -27,7 +27,7 @@ class JobExtended(Job):
             job_data['needs'] = []
         return job_data
 
-def job_instance(params, vars, needs=[], rules=None):
+def job_instance(params, vars, needs=None, rules=None):
     timeout = params.get('timeout', '10m')
     job = JobExtended(
         name=params['name'],
@@ -39,6 +39,7 @@ def job_instance(params, vars, needs=[], rules=None):
     )
     if 'before_script' in params.keys():
         job.prepend_scripts(params['before_script'])
+    if needs == None: needs = []
     job.set_needs(needs)
     job.add_tags("NETCRACKER")
     if rules:
