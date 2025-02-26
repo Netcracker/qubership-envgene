@@ -1,6 +1,14 @@
 from gcip import Job
 from typing import Optional, List, Dict, Union, Any
-from envgenehelper import logger, check_file_exists, openYaml, config_helper, getAppDefinitionPath, get_envgene_config_yaml, get_or_create_nested_yaml_attribute
+from envgenehelper import (
+    logger,
+    check_file_exists,
+    openYaml,
+    config_helper,
+    getAppDefinitionPath,
+    get_envgene_config_yaml,
+    get_or_create_nested_yaml_attribute,
+)
 from os import getenv
 
 class JobExtended(Job):
@@ -23,8 +31,6 @@ class JobExtended(Job):
         job_data = super().render()
         job_data['script'] = self.script
         job_data['timeout'] = self.timeout
-        if job_data.get('needs') is None:
-            job_data['needs'] = []
         return job_data
 
 def job_instance(params, vars, needs=None, rules=None):
@@ -39,8 +45,7 @@ def job_instance(params, vars, needs=None, rules=None):
     )
     if 'before_script' in params.keys():
         job.prepend_scripts(params['before_script'])
-    if needs == None:
-        needs = []
+    if needs==None: needs = []
     job.set_needs(needs)
     job.add_tags("NETCRACKER")
     if rules:
@@ -71,7 +76,7 @@ def get_gav_coordinates_from_build():
         logger.error(f"No build results found. File '{file_path_gav}' not found.")
         raise ReferenceError(f"Execution is aborted build artifact is not valid. See logs above.")
     return result
-        
+
 def find_predecessor_job(job_name, jobs_map, jobs_sequence):
     seqIdx = jobs_sequence.index(job_name)
     predecessors = reversed(jobs_sequence[:seqIdx])
