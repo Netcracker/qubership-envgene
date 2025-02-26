@@ -39,6 +39,8 @@ def job_instance(params, vars, needs=None, rules=None):
     )
     if 'before_script' in params.keys():
         job.prepend_scripts(params['before_script'])
+    if needs == []:
+        needs = None
     job.set_needs(needs)
     job.add_tags("NETCRACKER")
     if rules:
