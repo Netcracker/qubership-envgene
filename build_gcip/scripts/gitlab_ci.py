@@ -132,7 +132,7 @@ def build_pipeline(params: dict):
                 continue
             queued_job_names.append(job_instance.name)
             sorted_pipeline.add_children(job_instance)
-            job_instance.add_needs(find_predecessor_job(job, jobs_map, job_sequence))
+            job_instance.add_needs(*find_predecessor_job(job, jobs_map, job_sequence))
 
         logger.info(f'----------------end processing for {env}---------------------')
 
