@@ -58,14 +58,18 @@ class PluginUseCase:
         Discover the plugin classes contained in Python files, given a
         list of directory names to scan.
         """
-        if reload:
-            self.modules.clear()
-            IPluginRegistry.plugin_registries.clear()
-            logger.info(f'Searching for plugins in {self.plugins_dir}')
-            plugins_paths = filter_plugins_paths(self.plugins_dir)
-            plugins_dir_parts = os.path.normpath(self.plugins_dir).split('/')
-            cut_off_idx = plugins_dir_parts.index('pipegene_plugins')
-            package_name = '.'.join(plugins_dir_parts[cut_off_idx:])
-            self.__search_for_plugins_in(plugins_paths, package_name)
+        if not reload:
+            return self.modules
+        self.modules.clear()
+        IPluginRegistry.plugin_registries.clear()
+        logger.info(f'Searching for plugins in {self.plugins_dir}')
+        if not os.path.exists(self.plugins_dir):
+            logger.info(f"{self.plugins_dir} dir doesn't exist, search for plugins skipped")
+            return self.modules
+        plugins_paths = filter_plugins_paths(self.plugins_dir)
+        plugins_dir_parts = os.path.normpath(self.plugins_dir).split('/')
+        cut_off_idx = plugins_dir_parts.index('pipegene_plugins')
+        package_name = '.'.join(plugins_dir_parts[cut_off_idx:])
+        self.__search_for_plugins_in(plugins_paths, package_name)
         return self.modules
 
