@@ -1,16 +1,16 @@
 #######################################
 # Stage 1 
-FROM ghcr.io/netcracker/base-images-module-base:main as build
+FROM ghcr.io/netcracker/base-images-module-base:main AS build
 
 USER root
 
+COPY python/integration /python/integration
+COPY schemas /module/schemas
+COPY python /python
 COPY build_gcip/build/pip.conf /etc/pip.conf
 COPY build_gcip/build/requirements.txt /build/requirements.txt
 COPY build_gcip/scripts /module/scripts
 COPY build_gcip/pipegene_plugins /module/scripts/pipegene_plugins
-COPY python /python
-COPY schemas /module/schemas
-COPY python/integration /python/integration
 
 RUN apk update \
     && apk add --no-cache \
