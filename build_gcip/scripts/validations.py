@@ -15,7 +15,6 @@ def validate_pipeline(params: dict):
             params["ENV_NAMES"],
             params["GET_PASSPORT"],
             params["ENV_BUILD"],
-            params["CMDB_IMPORT"],
             params["ENV_INVENTORY_GENERATION_PARAMS"]["ENV_INVENTORY_INIT"],
         )
 
@@ -41,7 +40,7 @@ def template_test_checks():
     if errorFound:
         raise ReferenceError(f"Execution is aborted as validation is not successful. See logs above.")
 
-def real_execution_checks(env_names, get_passport, env_build, cmdb_import, env_inventory_init):
+def real_execution_checks(env_names, get_passport, env_build, env_inventory_init):
     for env in env_names.split("\n"):
         # now we are using only complex environment names that contain both cluster_name and environment_name
         if env.count('/') != 1: 
@@ -51,15 +50,15 @@ def real_execution_checks(env_names, get_passport, env_build, cmdb_import, env_i
         cluster_name = get_cluster_name_from_full_name(env)
         environment_name = get_environment_name_from_full_name(env)
         # checks
-        check_environment(environment_name, cluster_name, get_passport, env_build, cmdb_import, env_inventory_init)
+        check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init)
         check_passport_params(get_passport)
 
-def check_environment(environment_name, cluster_name, get_passport, env_build, cmdb_import, env_inventory_init):
+def check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init):
     if env_inventory_init == "true":
         return
     schemas_dir = getenv("JSON_SCHEMAS_DIR", "/module/schemas")
     all_environments_dir = f"{project_dir}/environments"
-    skip_env_definition_check = get_passport and not env_build and not cmdb_import
+    skip_env_definition_check = get_passport and not env_build
     check_environment_is_valid_or_fail(environment_name, cluster_name, all_environments_dir, skip_env_definition_check, not skip_env_definition_check, schemas_dir=schemas_dir)
 
 def check_passport_params(get_passport):
