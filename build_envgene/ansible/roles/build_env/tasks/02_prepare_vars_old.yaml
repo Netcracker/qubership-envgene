@@ -7,7 +7,7 @@
   set_fact:
     group_id:           "{{ env_definition['envTemplate']['templateArtifact']['artifact']['group_id'] }}"
     artifact_id:        "{{ env_definition['envTemplate']['templateArtifact']['artifact']['artifact_id'] }}"
-    version:            "{{ env_template_vers | default(env_definition['envTemplate']['templateArtifact']['artifact']['version']) }}"
+    version:            "{{ env_definition['envTemplate']['templateArtifact']['artifact']['version'] }}"
     repository_type:    "{{ env_definition['envTemplate']['templateArtifact']['repository'] }}"
     repository_template_type: "{{ env_definition['envTemplate']['templateArtifact']['templateRepository'] }}"
     registry_name:      "{{ env_definition['envTemplate']['templateArtifact']['registry'] }}"
