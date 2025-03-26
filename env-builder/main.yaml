@@ -120,6 +120,16 @@
         loop_var: profile
       when: current_env_template.resourceProfiles is defined
 
+    - name: Gen composite struture
+      ansible.builtin.include_role:
+        name: generate_composite_structure
+      vars:
+        _env: "{{ env }}"
+        _tenant: "{{ tenant }}"
+        _cloud: "{{ current_env.cloud }}"
+        _current_env_dir: "{{ current_env_dir }}"
+        _template: "{{current_env_template.tenant}}"
+
     - name: Generate environment specific schema
       ansible.builtin.copy:
         src: "{{ current_env_template.envSpecificSchema }}"

@@ -1,53 +1,70 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "title": "Template Descriptor",
-    "description": "Configuration for environment templates including tenant, cloud, namespaces, and parametersets",
-    "type": "object",
-    "properties": {
-      "tenant": {
-        "title": "Tenant Path",
-        "description": "Path to the tenant template file",
-        "type": "string",
-        "examples": [
-          "{{ templates_dir }}/env_templates/dev/tenant.yml.j2"
-        ]
-      },
-      "cloud": {
-        "title": "Cloud Path",
-        "description": "Path to the cloud template file",
-        "type": "string",
-        "examples": [
-          "{{ templates_dir }}/env_templates/dev/cloud.yml.j2"
-        ]
-      },
-      "namespaces": {
-        "title": "Namespaces",
-        "description": "List of namespaces, each with a name and path to the corresponding template",
-        "type": "array",
-        "items": {
-          "type": "object",
-          "properties": {
-            "name": { "type": "string" },
-            "template_path": { "type": "string" }
-          },
-          "required": ["name", "template_path"]
-        },
-        "examples": [
-          {
-            "name": "{{current_env.environmentName}}-baseline",
-            "template_path": "{{ templates_dir }}/env_templates/dev/Namespaces/baseline.yml.j2"
-          },
-          {
-            "name": "{{current_env.environmentName}}-bss",
-            "template_path": "{{ templates_dir }}/env_templates/dev/Namespaces/bss.yml.j2"
-          }
-        ]
-      },
-      "parametersets": {
-        "type": "array",
-        "items": {}
-      }
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Template Descriptor",
+  "description": "Configuration for environment templates including tenant, cloud, namespaces, and parametersets",
+  "type": "object",
+  "properties": {
+    "tenant": {
+      "title": "Tenant Path",
+      "description": "Path to the tenant template file",
+      "type": "string",
+      "examples": [
+        "{{ templates_dir }}/env_templates/dev/tenant.yml.j2"
+      ]
     },
-    "required": ["tenant", "cloud", "namespaces", "parametersets"]
-  }
-  
+    "cloud": {
+      "title": "Cloud Path",
+      "description": "Path to the cloud template file",
+      "type": "string",
+      "examples": [
+        "{{ templates_dir }}/env_templates/dev/cloud.yml.j2"
+      ]
+    },
+    "composite_structure": {
+      "title": "Composite Structure Path",
+      "description": "Path to the Composite Structure template file",
+      "type": "string",
+      "examples": [
+        "{{ templates_dir }}/env_templates/dev/composite-structure.yml.j2"
+      ]
+    },
+    "namespaces": {
+      "title": "Namespaces",
+      "description": "List of namespaces, each with a name and path to the corresponding template",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "template_path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "template_path"
+        ]
+      },
+      "examples": [
+        {
+          "name": "{{current_env.environmentName}}-baseline",
+          "template_path": "{{ templates_dir }}/env_templates/dev/Namespaces/baseline.yml.j2"
+        },
+        {
+          "name": "{{current_env.environmentName}}-bss",
+          "template_path": "{{ templates_dir }}/env_templates/dev/Namespaces/bss.yml.j2"
+        }
+      ]
+    },
+    "parametersets": {
+      "type": "array",
+      "items": {}
+    }
+  },
+  "required": [
+    "tenant",
+    "cloud",
+    "namespaces"
+  ]
+}

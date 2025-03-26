@@ -1,0 +1,75 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Composite Structure Definition",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Primary identifier for the Composite structure"
+      },
+      "baseline": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name of the baseline component"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of the baseline component",
+            "enum": [
+              "namespace"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      "satellites": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the satellite component"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of the satellite component",
+              "enum": [
+                "namespace"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "type"
+          ],
+          "additionalProperties": false
+        },
+        "minItems": 1,
+        "description": "List of satellite components"
+      },
+      "id": {
+        "type": "string",
+        "description": "Name of the baseline component"
+      },
+      "version": {
+        "type": "integer",
+        "description": "Version number of the structure definition",
+        "const": 0
+      }
+    },
+    "required": [
+      "name",
+      "baseline",
+      "satellites",
+      "id",
+      "version"
+    ],
+    "additionalProperties": false
+  }
