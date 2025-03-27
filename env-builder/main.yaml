@@ -129,7 +129,7 @@
         _cloud: "{{ current_env.cloud }}"
         _current_env_dir: "{{ current_env_dir }}"
         _template: "{{current_env_template.composite_structure}}"
-
+        
     - name: Generate environment specific schema
       ansible.builtin.copy:
         src: "{{ current_env_template.envSpecificSchema }}"
