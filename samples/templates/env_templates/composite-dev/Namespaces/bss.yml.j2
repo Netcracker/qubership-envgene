@@ -12,7 +12,12 @@ profile:
   baseline: dev
 deployParameters: 
   OVERRIDE_PARAMETER: "template-value"
-  core_ns: "{{ current_env.solution_structure['a-core-app'].namespace }}"
+{% if 'application-name-A' in current_env.solution_structure %}
+  param: value-1
+{% else %}
+  param: value-2
+{% endif %}
+  oss_ns: "{{ current_env.solution_structure['oss-app].['oss'].namespace }}"
 {% if current_env.additionalTemplateVariables.ci is defined %}
 e2eParameters: 
 {{ current_env.additionalTemplateVariables.e2eParameters | ansible.builtin.to_nice_yaml | indent(2, true) }}

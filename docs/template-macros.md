@@ -1,6 +1,5 @@
 # Jinja Template Macros
 
-
 - [Jinja Template Macros](#jinja-template-macros)
   - [Basic macros](#basic-macros)
     - [`templates_dir`](#templates_dir)
@@ -16,8 +15,6 @@
     - [`current_env.additionalTemplateVariables`](#current_envadditionaltemplatevariables)
     - [`current_env.cloud_passport`](#current_envcloud_passport)
     - [`current_env.solution_structure`](#current_envsolution_structure)
-
-
 
 This documentation provides a list of Jinja macros that can be used during template generation
 
@@ -36,9 +33,7 @@ This documentation provides a list of Jinja macros that can be used during templ
 tenant: "{{ templates_dir }}/env_templates/composite-dev/tenant.yml.j2"  
 ```
 
-
 **Usage in sample:** [Sample](samples/templates/env_templates/simple.yaml)  
-
 
 ### `current_env.name`
 
@@ -52,7 +47,6 @@ tenant: "{{ templates_dir }}/env_templates/composite-dev/tenant.yml.j2"
 ```yaml
 name: "{{current_env.name }}-oss" 
 ```
-
 
 **Usage in sample:** [Sample](samples/templates/env_templates/composite-dev/Namespaces/oss.yml.j2)  
 
@@ -69,9 +63,7 @@ name: "{{current_env.name }}-oss"
 name: "{{ current_env.tenant }}"
 ```
 
-
 **Usage in sample:** [Sample](samples/templates/env_templates/composite-dev/tenant.yml.j2)  
-
 
 ### `current_env.cloud`
 
@@ -86,9 +78,7 @@ name: "{{ current_env.tenant }}"
 name: "{{ current_env.cloud }}"
 ```
 
-
 **Usage in sample:** [Sample](samples/templates/env_templates/simple/cloud.yml.j2)  
-
 
 ### `current_env.cloudNameWithCluster`
 
@@ -112,9 +102,7 @@ Else:
 name: "{{ current_env.cloudNameWithCluster }}"
 ```
 
-
 **Usage in sample:** [Sample](samples/templates/env_templates/composite-dev/cloud.yml.j2)  
-
 
 ### `current_env.cmdb_name`
 
@@ -172,7 +160,6 @@ name: "{{ current_env.cloudNameWithCluster }}"
 
 **Usage in sample:** [Sample](samples/templates/env_templates/composite-dev/cloud.yml.j2)  
 
-
 ### `current_env.env_template`
 
 ---
@@ -186,7 +173,6 @@ name: "{{ current_env.cloudNameWithCluster }}"
 ```
 
 **Usage in sample:**  
-
 
 ### `current_env.additionalTemplateVariables`
 
@@ -204,7 +190,6 @@ deployParameters:
 ```
 
 **Usage in sample:** [Sample](samples/templates/env_templates/composite-prod/cloud.yml.j2)
-
 
 ### `current_env.cloud_passport`
 
@@ -226,7 +211,6 @@ deployParameters:
 
 **Usage in sample:** [Sample](test_data/test_templates/env_templates/composite-dev/cloud.yml.j2)
 
-
 ### `current_env.solution_structure`
 
 ---
@@ -234,18 +218,21 @@ deployParameters:
 
 ```yaml
 <application-name-A>:
-  deployPostfix: <deploy-postfix-value-A>
-  namespace: <namespace-A>
-  version: <application-version-A>
+  <deploy-postfix-A>:
+    version: <application-version-A>
+    namespace: <namespace-A>
 <application-name-B>:
-  deployPostfix: <deploy-postfix-value-B>
-  namespace: <namespace-B>
-  version: <application-version-B>
+  <deploy-postfix-B>:
+    version: <application-version-B>
+    namespace: <namespace-B>
+  <deploy-postfix-C>:
+    version: <application-version-C>
+    namespace: <namespace-C>
 ```
 
 The variable is obtained by transforming the file defined in the path `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/solution-descriptor/sd.yml`.
 
-The value of the `namespace` attribute in this variable is obtained from the `name` attribute of the **already rendered** `Namespace` object. The definition of the object is located at `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/Namespaces/<deployPostfix>/namespace.yml`.
+The value of the `namespace` attribute in this variable is obtained from the `name` attribute of the **already rendered** `Namespace` object. The definition of the object is located at `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/Namespaces/<deployPostfix>/namespace.yml`. If the corresponding `Namespace` object is not found, the `namespace` value is set to `Null`.
 
 Default value is `{}`
 
@@ -255,7 +242,16 @@ Default value is `{}`
 
 ```yaml
   deployParameters:
-    core_ns: "{{ current_env.solution_structure['a-core-app'].namespace }}"
+{% if 'billing-app' in current_env.solution_structure %}
+    param: value-1
+{% else %}
+    param: value-2
+{% endif %}
+```
+
+```yaml
+  deployParameters:
+    oss_ns: "{{ current_env.solution_structure['oss-app]['oss'].namespace }}"
 ```
 
 **Usage in sample:**
