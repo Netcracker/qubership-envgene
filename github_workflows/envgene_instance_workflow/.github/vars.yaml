@@ -1,0 +1,56 @@
+---
+
+ENV_TEMPLATE_TEST: False #boolean - only true or false
+ENV_TEMPLATE_NAME: 'test'
+SD_DATA: '{ "version": 2.2, "type": "deploy" }'
+SD_VERSION: 'app-ver-02'
+SD_SOURCE_TYPE: 'json'
+SD_DELTA: False
+ENV_SPECIFIC_PARAMETERS: |
+  {
+    "clusterParams": {
+      "clusterEndpoint": "test-val.com",
+      "clusterToken": "updated"
+    },
+    "additionalTemplateVariables": {
+      "key": "value"
+    },
+    "cloudName": "test-val-01",
+    "envSpecificParamsets": {
+      "cloud": [
+        "cloud-specific",
+        "integrations",
+        "paramsetA"
+      ],
+      "main": [
+        "internal-base-ns",
+        "toms-params",
+        "paramsetB"
+      ]
+    },
+    "paramsets": {
+      "paramsetA": {
+        "version": 1,
+        "name": "paramsetA",
+        "parameters": {
+          "key1": "value2"
+        },
+        "applications": [
+          {
+            "appName": "Access-Control",
+            "parameters": {
+              "key1": "value2"
+            }
+          }
+        ]
+      },
+      "paramsetB": {
+        "version": 2,
+        "name": "paramsetB",
+        "parameters": {
+          "key1": "value2"
+        },
+        "applications": []
+      }
+    }
+  }
