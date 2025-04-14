@@ -10,6 +10,7 @@
     - [Effective Set](#effective-set)
       - [Effective Set Structure](#effective-set-structure)
       - [deployment-parameters.yaml](#deployment-parametersyaml)
+      - [credentials.yaml](#credentialsyaml)
       - [technical-configuration-parameters.yaml](#technical-configuration-parametersyaml)
       - [mapping.yml](#mappingyml)
     - [Macros](#macros)
@@ -105,12 +106,37 @@ Below is a **complete** list of attributes
 #### deployment-parameters.yaml
 
 ```yaml
-global: # Optional
-  <key>: <value>
-
-<service-name>:
-  <key>: <value>
+<key-1>: <value-1>
+<key-2>: <value-2>
+global: &id001
+  <key-1>: <value-1>
+  <key-2>: <value-2>
+<service-name-1>:
+  <<: *id001
+  <service-key-1>: <value-1>
+  <service-key-2>: <value-2>
+<service-name-2>:
+  <<: *id001
+  <service-key-1>: <value-1>
+  <service-key-2>: <value-2>
 ```
+
+Each application microservice has its own dedicated section. These sections contain the same set of parameters as defined at the root level.
+
+To avoid repetition, YAML anchors (&) are used for reusability, while aliases (*) reference them.
+
+The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
+
+#### credentials.yaml
+
+```yaml
+<key-1>: <value-1>
+<key-2>: <value-2>
+```
+
+Each application microservice has its own dedicated section. These sections contain the same set of parameters as defined at the root level.
+
+To avoid repetition, YAML anchors (&) are used for reusability, while aliases (*) reference them.
 
 #### technical-configuration-parameters.yaml
 
