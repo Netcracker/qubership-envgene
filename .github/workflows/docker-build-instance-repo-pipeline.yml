@@ -1,11 +1,11 @@
-name: Build qubership-env-instance-builder dockerimage
+name: Build qubership-instance-repo-pipeline dockerimage
 
 on:
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: netcracker/qubership-env-instance-builder
+  IMAGE_NAME: netcracker/qubership-instance-repo-pipeline
 
 jobs:
   build-and-push-image:
