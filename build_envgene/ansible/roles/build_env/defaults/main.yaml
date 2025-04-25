@@ -45,6 +45,4 @@ build_env_releaseTemplateRepository: "{{ lookup('env', 'ansible_var_build_env_re
 build_env_snapshotTemplateRepository: "{{ lookup('env', 'ansible_var_build_env_snapshotTemplateRepository') }}"
 build_env_stagingTemplateRepository: "{{ lookup('env', 'ansible_var_build_env_stagingTemplateRepository') }}"
 
-###CI Platform
-ci_platform: "{{ lookup('env', 'CI_PLATFORM') | default('Gitlab') }}"
 

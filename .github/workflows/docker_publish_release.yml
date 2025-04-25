@@ -19,7 +19,8 @@ on:
         default: '[
                   {"name": "qubership-envgene", "file": "./build_envgene/build/Dockerfile", "context": "."},
                   {"name": "qubership-gcip", "file": "./build_gcip/build/Dockerfile", "context": "."},
-                  {"name": "qubership-effective-set-generator", "file": "./build_effective_set_generator/build/Dockerfile", "context": "."}
+                  {"name": "qubership-effective-set-generator", "file": "./build_effective_set_generator/build/Dockerfile", "context": "."},
+                  {"name": "qubership-instance-repo-pipeline", "file": "./github_workflows/instance-repo-pipeline/Dockerfile", "context": "."}
                 ]'
         description: 'component'
         required: true
