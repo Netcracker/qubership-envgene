@@ -12,7 +12,8 @@ CLOUD_SUBSTITUTIONS = {
     "publicUrl": "CLOUD_PUBLIC_HOST",
     "dashboardUrl": "CLOUD_DASHBOARD_URL",
     "defaultCredentialsId": "CLOUD_DEPLOY_TOKEN",
-    "protocol": "CLOUD_PROTOCOL"
+    "protocol": "CLOUD_PROTOCOL",
+    "productionMode":"PRODUCTION_MODE"
 }
 
 def process_and_update_key(targetKey, targetYaml, sourceKey, sourceYaml, comment) :

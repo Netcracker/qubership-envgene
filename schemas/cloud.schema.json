@@ -17,6 +17,7 @@
         "defaultCredentialsId" : { "type": "string" },
         "protocol" : { "type": "string" },
         "dbMode" : { "type": "string" },
+        "productionMode" : { "type": "boolean" },
         "databases": {
             "type" :"array",
             "items": { "type": "object" }
