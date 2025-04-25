@@ -1,0 +1,117 @@
+---
+- name: Ensure AppDefs and RegDefs folders exist
+  file:
+    path: "{{ current_env_dir }}/{{ item }}"
+    state: directory
+  loop:
+    - AppDefs
+    - RegDefs
+
+- name: Determine appregdef config path
+  set_fact:
+    appregdef_config_path: >-
+      {{
+        (env_instances_dir + '/environments/' + cluster_name + '/configuration/appregdef_config.yaml')
+        if lookup('file', env_instances_dir + '/environments/' + cluster_name + '/configuration/appregdef_config.yaml', errors='ignore') != ''
+        else (
+          (env_instances_dir + '/environments/' + cluster_name + '/configuration/appregdef_config.yml')
+          if lookup('file', env_instances_dir + '/environments/' + cluster_name + '/configuration/appregdef_config.yml', errors='ignore') != ''
+          else (
+            (env_instances_dir + '/configuration/appregdef_config.yaml')
+            if lookup('file', env_instances_dir + '/configuration/appregdef_config.yaml', errors='ignore') != ''
+            else (env_instances_dir + '/configuration/appregdef_config.yml')
+          )
+        )
+      }}
+
+
+- name: Load appregdef config (if exists)
+  set_fact:
+    appregdef_config: "{{ lookup('file', appregdef_config_path) | from_yaml }}"
+  ignore_errors: true
+
+- name: Set default overrides
+  set_fact:
+    appdefs_overrides: "{{ appregdef_config.appdefs.overrides | default({}) }}"
+    regdefs_overrides: "{{ appregdef_config.regdefs.overrides | default({}) }}"
+
+# Render AppDefs
+
+- name: Find AppDef templates
+  find:
+    paths: "{{ templates_dir }}/appdefs"
+    patterns:
+      - "*.yaml.j2"
+      - "*.yml.j2"
+      - "*.j2"
+  register: appdef_templates
+
+- name: Render AppDef templates
+  template:
+    src: "{{ item.path }}"
+    dest: "/tmp/appdef_rendered.yml"
+  vars:
+    appdefs:
+      overrides: "{{ appdefs_overrides }}"
+  loop: "{{ appdef_templates.files }}"
+  register: appdef_render_results
+  when: appdef_templates.matched > 0
+
+- name: Extract AppDef name and save rendered file
+  block:
+    - name: Read AppDef name from rendered file
+      set_fact:
+        appdef_name: "{{ lookup('file', '/tmp/appdef_rendered.yml') | from_yaml | json_query('name') }}"
+
+    - name: Save AppDef as {{ appdef_name }}.yml
+      copy:
+        src: "/tmp/appdef_rendered.yml"
+        dest: "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.yml"
+        remote_src: true
+  loop: "{{ appdef_render_results.results }}"
+  loop_control:
+    index_var: idx
+  vars:
+    item: "{{ appdef_templates.files[idx] }}"
+  when: appdef_templates.matched > 0
+
+
+# Render RegDefs
+
+- name: Find RegDef templates
+  find:
+    paths: "{{ templates_dir }}/regdefs"
+    patterns:
+      - "*.yaml.j2"
+      - "*.yml.j2"
+      - "*.j2"
+  register: regdef_templates
+
+- name: Render RegDef templates
+  template:
+    src: "{{ item.path }}"
+    dest: "/tmp/regdef_rendered.yml"
+  vars:
+    regdefs:
+      overrides: "{{ regdefs_overrides }}"
+  loop: "{{ regdef_templates.files }}"
+  register: regdef_render_results
+  when: regdef_templates.matched > 0
+
+- name: Extract RegDef name and save rendered file
+  block:
+    - name: Read RegDef name from rendered file
+      set_fact:
+        regdef_name: "{{ lookup('file', '/tmp/regdef_rendered.yml') | from_yaml | json_query('name') }}"
+
+    - name: Save RegDef as {{ regdef_name }}.yml
+      copy:
+        src: "/tmp/regdef_rendered.yml"
+        dest: "{{ current_env_dir }}/RegDefs/{{ regdef_name }}.yml"
+        remote_src: true
+  loop: "{{ regdef_render_results.results }}"
+  loop_control:
+    index_var: idx
+  vars:
+    item: "{{ regdef_templates.files[idx] }}"
+  when: regdef_templates.matched > 0
