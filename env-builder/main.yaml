@@ -167,7 +167,7 @@
 
     - name: Render AppDef/RegDef templates
       ansible.builtin.include_role:
-        name: render_appregdefs
+        name: generate_appregdefs
       vars:
         cluster_name: "{{ cluster_name }}"
       when:
