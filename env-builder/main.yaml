@@ -165,16 +165,25 @@
         loop_var: paramset_file
       when: paramset_templates.files | length > 0
 
+    - name: Check if any AppDef or RegDef templates exist
+      find:
+        paths:
+          - "{{ templates_dir }}/appdefs"
+          - "{{ templates_dir }}/regdefs"
+        patterns:
+          - "*.yaml.j2"
+          - "*.yml.j2"
+          - "*.j2"
+        use_regex: false
+      register: appregdef_templates_found
+      ignore_errors: true
+
     - name: Render AppDef/RegDef templates
       ansible.builtin.include_role:
         name: generate_appregdefs
       vars:
         cluster_name: "{{ cluster_name }}"
-      when:
-        - lookup('pipe', 'ls ' ~ templates_dir ~ '/appdefs/*.yml.j2 2>/dev/null') | length > 0
-          or lookup('pipe', 'ls ' ~ templates_dir ~ '/appdefs/*.yaml.j2 2>/dev/null') | length > 0
-          or lookup('pipe', 'ls ' ~ templates_dir ~ '/appdefs/*.j2 2>/dev/null') | length > 0
-          or lookup('pipe', 'ls ' ~ templates_dir ~ '/regdefs/*.yml.j2 2>/dev/null') | length > 0
-          or lookup('pipe', 'ls ' ~ templates_dir ~ '/regdefs/*.yaml.j2 2>/dev/null') | length > 0
-          or lookup('pipe', 'ls ' ~ templates_dir ~ '/regdefs/*.j2 2>/dev/null') | length > 0
+      when: 
+        - appregdef_templates_found.matched is defined
+        - appregdef_templates_found.matched > 0
 

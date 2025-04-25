@@ -7,6 +7,7 @@
     - AppDefs
     - RegDefs
 
+# -------- Load Configuration --------
 - name: Determine appregdef config path
   set_fact:
     appregdef_config_path: >-
@@ -24,7 +25,6 @@
         )
       }}
 
-
 - name: Load appregdef config (if exists)
   set_fact:
     appregdef_config: "{{ lookup('file', appregdef_config_path) | from_yaml }}"
@@ -35,83 +35,68 @@
     appdefs_overrides: "{{ appregdef_config.appdefs.overrides | default({}) }}"
     regdefs_overrides: "{{ appregdef_config.regdefs.overrides | default({}) }}"
 
-# Render AppDefs
-
+# ------------------------------------
+# -------- Render AppDef Templates --------
 - name: Find AppDef templates
   find:
     paths: "{{ templates_dir }}/appdefs"
-    patterns:
-      - "*.yaml.j2"
-      - "*.yml.j2"
-      - "*.j2"
+    patterns: ["*.yaml.j2", "*.yml.j2", "*.j2"]
   register: appdef_templates
 
-- name: Render AppDef templates
-  template:
-    src: "{{ item.path }}"
-    dest: "/tmp/appdef_rendered.yml"
-  vars:
-    appdefs:
-      overrides: "{{ appdefs_overrides }}"
-  loop: "{{ appdef_templates.files }}"
-  register: appdef_render_results
-  when: appdef_templates.matched > 0
-
-- name: Extract AppDef name and save rendered file
+- name: Render and save AppDefs
   block:
-    - name: Read AppDef name from rendered file
-      set_fact:
-        appdef_name: "{{ lookup('file', '/tmp/appdef_rendered.yml') | from_yaml | json_query('name') }}"
+    - name: Render AppDef to unique temp file
+      template:
+        src: "{{ item.path }}"
+        dest: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.appdef.yml"
+      vars:
+        appdefs:
+          overrides: "{{ appdefs_overrides }}"
 
-    - name: Save AppDef as {{ appdef_name }}.yml
+    - name: Read name from rendered AppDef
+      set_fact:
+        appdef_rendered_path: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.appdef.yml"
+        appdef_name: "{{ lookup('file', appdef_rendered_path) | from_yaml | json_query('name') }}"
+
+    - name: Save rendered AppDef to environment folder
       copy:
-        src: "/tmp/appdef_rendered.yml"
+        src: "{{ appdef_rendered_path }}"
         dest: "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.yml"
         remote_src: true
-  loop: "{{ appdef_render_results.results }}"
+  loop: "{{ appdef_templates.files }}"
   loop_control:
-    index_var: idx
-  vars:
-    item: "{{ appdef_templates.files[idx] }}"
+    label: "{{ item.path | basename }}"
   when: appdef_templates.matched > 0
 
-
-# Render RegDefs
-
+# ------------------------------------
+# -------- Render RegDef Templates --------
 - name: Find RegDef templates
   find:
     paths: "{{ templates_dir }}/regdefs"
-    patterns:
-      - "*.yaml.j2"
-      - "*.yml.j2"
-      - "*.j2"
+    patterns: ["*.yaml.j2", "*.yml.j2", "*.j2"]
   register: regdef_templates
 
-- name: Render RegDef templates
-  template:
-    src: "{{ item.path }}"
-    dest: "/tmp/regdef_rendered.yml"
-  vars:
-    regdefs:
-      overrides: "{{ regdefs_overrides }}"
-  loop: "{{ regdef_templates.files }}"
-  register: regdef_render_results
-  when: regdef_templates.matched > 0
-
-- name: Extract RegDef name and save rendered file
+- name: Render and save RegDefs
   block:
-    - name: Read RegDef name from rendered file
-      set_fact:
-        regdef_name: "{{ lookup('file', '/tmp/regdef_rendered.yml') | from_yaml | json_query('name') }}"
+    - name: Render RegDef to unique temp file
+      template:
+        src: "{{ item.path }}"
+        dest: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.regdef.yml"
+      vars:
+        regdefs:
+          overrides: "{{ regdefs_overrides }}"
 
-    - name: Save RegDef as {{ regdef_name }}.yml
+    - name: Read name from rendered RegDef
+      set_fact:
+        regdef_rendered_path: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.regdef.yml"
+        regdef_name: "{{ lookup('file', regdef_rendered_path) | from_yaml | json_query('name') }}"
+
+    - name: Save rendered RegDef to environment folder
       copy:
-        src: "/tmp/regdef_rendered.yml"
+        src: "{{ regdef_rendered_path }}"
         dest: "{{ current_env_dir }}/RegDefs/{{ regdef_name }}.yml"
         remote_src: true
-  loop: "{{ regdef_render_results.results }}"
+  loop: "{{ regdef_templates.files }}"
   loop_control:
-    index_var: idx
-  vars:
-    item: "{{ regdef_templates.files[idx] }}"
+    label: "{{ item.path | basename }}"
   when: regdef_templates.matched > 0
