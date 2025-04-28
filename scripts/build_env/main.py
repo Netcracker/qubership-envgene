@@ -263,11 +263,19 @@ def validate_appregdefs(render_dir, env_name):
     regdef_dir = f"{render_dir}/{env_name}/RegDefs"
 
     if os.path.exists(appdef_dir):
-        for file in findAllYamlsInDir(appdef_dir):
+        appdef_files = findAllYamlsInDir(appdef_dir)
+        if not appdef_files:
+            print(f"[INFO] No AppDef YAMLs found in {appdef_dir}")
+        for file in appdef_files:
+            print(f"[VALIDATING] AppDef file: {file}")
             validate_yaml_by_scheme_or_fail(file, "schemas/appdef.schema.json")
 
     if os.path.exists(regdef_dir):
-        for file in findAllYamlsInDir(regdef_dir):
+        regdef_files = findAllYamlsInDir(regdef_dir)
+        if not regdef_files:
+            print(f"[INFO] No RegDef YAMLs found in {regdef_dir}")
+        for file in regdef_files:
+            print(f"[VALIDATING] RegDef file: {file}")
             validate_yaml_by_scheme_or_fail(file, "schemas/regdef.schema.json")
 
 
