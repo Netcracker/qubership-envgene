@@ -168,7 +168,7 @@
     # ------------------------------------
     # Step 1: Check if any AppDef or RegDef templates exist
     - name: Check if any AppDef or RegDef templates exist
-      ansible.builtin.stat:
+      ansible.builtin.find:
         paths:
           - "{{ templates_dir }}/appdefs"
           - "{{ templates_dir }}/regdefs"
@@ -183,7 +183,7 @@
     # Debugging Step (optional but recommended)
     - name: Debug - Found AppDef/RegDef templates
       ansible.builtin.debug:
-        msg: "Total AppDef/RegDef templates found: {{ appregdef_templates_found.matched }}"
+        msg: "Total AppDef/RegDef templates found: {{ appregdef_templates_found.files | length }}"
       when: appregdef_templates_found is defined
 
     # ------------------------------------
@@ -195,6 +195,5 @@
         cluster_name: "{{ cluster_name }}"
       when:
         - appregdef_templates_found is defined
-        - appregdef_templates_found.matched | default(0) > 0
-
+        - appregdef_templates_found.files | length > 0
 

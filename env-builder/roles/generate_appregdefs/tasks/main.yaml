@@ -44,15 +44,17 @@
 # ------------------------------------
 # -------- Render AppDefs --------
 - name: Find AppDef templates
-  ansible.builtin.stat:
+  ansible.builtin.find:
     paths: "{{ templates_dir }}/appdefs"
     patterns: ["*.yaml.j2", "*.yml.j2", "*.j2"]
+    use_regex: false
   register: appdef_templates
+  ignore_errors: true
 
 - name: Debug - Found AppDef templates
   ansible.builtin.debug:
     var: appdef_templates.files
-  when: appdef_templates.matched > 0
+  when: appdef_templates.files is defined and appdef_templates.files | length > 0
 
 - name: Render and save AppDefs
   block:
@@ -81,20 +83,22 @@
   loop: "{{ appdef_templates.files }}"
   loop_control:
     label: "{{ item.path | basename }}"
-  when: appdef_templates.matched > 0
+  when: appdef_templates.files is defined and appdef_templates.files | length > 0
 
 # ------------------------------------
 # -------- Render RegDefs --------
 - name: Find RegDef templates
-  ansible.builtin.stat:
+  ansible.builtin.find:
     paths: "{{ templates_dir }}/regdefs"
     patterns: ["*.yaml.j2", "*.yml.j2", "*.j2"]
+    use_regex: false
   register: regdef_templates
+  ignore_errors: true
 
 - name: Debug - Found RegDef templates
   ansible.builtin.debug:
     var: regdef_templates.files
-  when: regdef_templates.matched > 0
+  when: regdef_templates.files is defined and regdef_templates.files | length > 0
 
 - name: Render and save RegDefs
   block:
@@ -123,4 +127,4 @@
   loop: "{{ regdef_templates.files }}"
   loop_control:
     label: "{{ item.path | basename }}"
-  when: regdef_templates.matched > 0
+  when: regdef_templates.files is defined and regdef_templates.files | length > 0
