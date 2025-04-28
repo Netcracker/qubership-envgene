@@ -168,7 +168,7 @@
     # ------------------------------------
     # Step 1: Check if any AppDef or RegDef templates exist
     - name: Check if any AppDef or RegDef templates exist
-      ansible.builtin.find:
+      ansible.builtin.stat:
         paths:
           - "{{ templates_dir }}/appdefs"
           - "{{ templates_dir }}/regdefs"

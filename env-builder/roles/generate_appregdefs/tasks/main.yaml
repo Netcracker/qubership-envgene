@@ -44,7 +44,7 @@
 # ------------------------------------
 # -------- Render AppDefs --------
 - name: Find AppDef templates
-  ansible.builtin.find:
+  ansible.builtin.stat:
     paths: "{{ templates_dir }}/appdefs"
     patterns: ["*.yaml.j2", "*.yml.j2", "*.j2"]
   register: appdef_templates
@@ -86,7 +86,7 @@
 # ------------------------------------
 # -------- Render RegDefs --------
 - name: Find RegDef templates
-  ansible.builtin.find:
+  ansible.builtin.stat:
     paths: "{{ templates_dir }}/regdefs"
     patterns: ["*.yaml.j2", "*.yml.j2", "*.j2"]
   register: regdef_templates
