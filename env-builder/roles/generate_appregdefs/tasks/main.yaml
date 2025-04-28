@@ -7,7 +7,7 @@
     - AppDefs
     - RegDefs
 
-# -------- Load Configuration --------
+# -------- Load appregdef_config --------
 - name: Determine appregdef config path
   ansible.builtin.set_fact:
     appregdef_config_path: >-
@@ -25,7 +25,7 @@
         )
       }}
 
-- name: Load appregdef config if it exists
+- name: Load appregdef config if exists
   ansible.builtin.set_fact:
     appregdef_config: "{{ lookup('file', appregdef_config_path) | from_yaml }}"
   ignore_errors: true
@@ -35,7 +35,7 @@
     appdefs_overrides: "{{ appregdef_config.appdefs.overrides | default({}) }}"
     regdefs_overrides: "{{ appregdef_config.regdefs.overrides | default({}) }}"
 
-- name: Debug - Show loaded appdefs_overrides and regdefs_overrides
+- name: Debug - Show loaded overrides
   ansible.builtin.debug:
     msg:
       - "AppDefs Overrides: {{ appdefs_overrides }}"
@@ -51,39 +51,40 @@
   register: appdef_templates
   ignore_errors: true
 
-- name: Debug - Found AppDef templates
-  ansible.builtin.debug:
-    var: appdef_templates.files
-  when: appdef_templates.files is defined and appdef_templates.files | length > 0
-
 - name: Render and save AppDefs
+  when: appdef_templates.files is defined and (appdef_templates.files | length) > 0
   block:
-    - name: Render AppDef to unique temp file
-      ansible.builtin.template:
-        src: "{{ item.path }}"
-        dest: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.appdef.yml"
-      vars:
-        appdefs:
-          overrides: "{{ appdefs_overrides }}"
-
-    - name: Read AppDef name from rendered file
-      ansible.builtin.set_fact:
-        appdef_rendered_path: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.appdef.yml"
-        appdef_name: "{{ lookup('file', appdef_rendered_path) | from_yaml | json_query('name') }}"
-
-    - name: Debug - Show extracted AppDef name
+    - name: Debug - Found AppDef templates
       ansible.builtin.debug:
-        msg: "AppDef rendered: {{ appdef_name }} from {{ item.path }}"
+        msg: "Total AppDef templates found: {{ appdef_templates.files | length }}"
 
-    - name: Save rendered AppDef to environment folder
-      ansible.builtin.copy:
-        src: "{{ appdef_rendered_path }}"
-        dest: "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.yml"
-        remote_src: true
-  loop: "{{ appdef_templates.files }}"
-  loop_control:
-    label: "{{ item.path | basename }}"
-  when: appdef_templates.files is defined and appdef_templates.files | length > 0
+    - name: Render AppDefs
+      block:
+        - name: Render AppDef to temp
+          ansible.builtin.template:
+            src: "{{ item.path }}"
+            dest: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.appdef.yml"
+          vars:
+            appdefs:
+              overrides: "{{ appdefs_overrides }}"
+
+        - name: Read AppDef name
+          ansible.builtin.set_fact:
+            appdef_rendered_path: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.appdef.yml"
+            appdef_name: "{{ lookup('file', appdef_rendered_path) | from_yaml | json_query('name') }}"
+
+        - name: Debug - AppDef Name
+          ansible.builtin.debug:
+            msg: "AppDef rendered: {{ appdef_name }}"
+
+        - name: Save rendered AppDef
+          ansible.builtin.copy:
+            src: "{{ appdef_rendered_path }}"
+            dest: "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.yml"
+            remote_src: true
+      loop: "{{ appdef_templates.files }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
 
 # ------------------------------------
 # -------- Render RegDefs --------
@@ -95,36 +96,37 @@
   register: regdef_templates
   ignore_errors: true
 
-- name: Debug - Found RegDef templates
-  ansible.builtin.debug:
-    var: regdef_templates.files
-  when: regdef_templates.files is defined and regdef_templates.files | length > 0
-
 - name: Render and save RegDefs
+  when: regdef_templates.files is defined and (regdef_templates.files | length) > 0
   block:
-    - name: Render RegDef to unique temp file
-      ansible.builtin.template:
-        src: "{{ item.path }}"
-        dest: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.regdef.yml"
-      vars:
-        regdefs:
-          overrides: "{{ regdefs_overrides }}"
-
-    - name: Read RegDef name from rendered file
-      ansible.builtin.set_fact:
-        regdef_rendered_path: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.regdef.yml"
-        regdef_name: "{{ lookup('file', regdef_rendered_path) | from_yaml | json_query('name') }}"
-
-    - name: Debug - Show extracted RegDef name
+    - name: Debug - Found RegDef templates
       ansible.builtin.debug:
-        msg: "RegDef rendered: {{ regdef_name }} from {{ item.path }}"
+        msg: "Total RegDef templates found: {{ regdef_templates.files | length }}"
 
-    - name: Save rendered RegDef to environment folder
-      ansible.builtin.copy:
-        src: "{{ regdef_rendered_path }}"
-        dest: "{{ current_env_dir }}/RegDefs/{{ regdef_name }}.yml"
-        remote_src: true
-  loop: "{{ regdef_templates.files }}"
-  loop_control:
-    label: "{{ item.path | basename }}"
-  when: regdef_templates.files is defined and regdef_templates.files | length > 0
+    - name: Render RegDefs
+      block:
+        - name: Render RegDef to temp
+          ansible.builtin.template:
+            src: "{{ item.path }}"
+            dest: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.regdef.yml"
+          vars:
+            regdefs:
+              overrides: "{{ regdefs_overrides }}"
+
+        - name: Read RegDef name
+          ansible.builtin.set_fact:
+            regdef_rendered_path: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.regdef.yml"
+            regdef_name: "{{ lookup('file', regdef_rendered_path) | from_yaml | json_query('name') }}"
+
+        - name: Debug - RegDef Name
+          ansible.builtin.debug:
+            msg: "RegDef rendered: {{ regdef_name }}"
+
+        - name: Save rendered RegDef
+          ansible.builtin.copy:
+            src: "{{ regdef_rendered_path }}"
+            dest: "{{ current_env_dir }}/RegDefs/{{ regdef_name }}.yml"
+            remote_src: true
+      loop: "{{ regdef_templates.files }}"
+      loop_control:
+        label: "{{ item.path | basename }}"
