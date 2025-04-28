@@ -165,31 +165,47 @@
         loop_var: paramset_file
       when: paramset_templates.files | length > 0
 
-    # Step 1: Check if any AppDef or RegDef templates exist
-    - name: Check if any AppDef or RegDef templates exist
+    - name: Find AppDef templates
       ansible.builtin.find:
-        paths:
-          - "{{ templates_dir }}/appdefs"
-          - "{{ templates_dir }}/regdefs"
+        paths: "{{ templates_dir }}/appdefs"
         patterns:
           - "*.yaml.j2"
           - "*.yml.j2"
           - "*.j2"
         use_regex: false
-      register: appregdef_templates_found
+      register: appdef_templates
       ignore_errors: true
 
-    # Step 2: Debug
-    - name: Debug - Found AppDef/RegDef templates
-      ansible.builtin.debug:
-        msg: "Total AppDef/RegDef templates found: {{ appregdef_templates_found.files | default([]) | length }}"
+    - name: Find RegDef templates
+      ansible.builtin.find:
+        paths: "{{ templates_dir }}/regdefs"
+        patterns:
+          - "*.yaml.j2"
+          - "*.yml.j2"
+          - "*.j2"
+        use_regex: false
+      register: regdef_templates
+      ignore_errors: true
 
-    # Step 3: Render AppDefs and RegDefs if any
+    - name: Debug - AppDefs and RegDefs Found
+      debug:
+        msg:
+          - "AppDefs: {{ appdef_templates.files | length }}"
+          - "RegDefs: {{ regdef_templates.files | length }}"
+
+# AppRegDef
     - name: Render AppDef/RegDef templates
       ansible.builtin.include_role:
         name: generate_appregdefs
       vars:
         cluster_name: "{{ cluster_name }}"
+        templates_dir: "{{ templates_dir }}"
+        env_instances_dir: "{{ env_instances_dir }}"
+        current_env_dir: "{{ current_env_dir }}"
+        appdef_templates_files: "{{ appdef_templates.files | default([]) }}"
+        regdef_templates_files: "{{ regdef_templates.files | default([]) }}"
       when:
-        - appregdef_templates_found.files is defined
-        - (appregdef_templates_found.files | default([]) | length) > 0
+        - (appdef_templates.files | default([]) | length) > 0
+          or
+        - (regdef_templates.files | default([]) | length) > 0
+

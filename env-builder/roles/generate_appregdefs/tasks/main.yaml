@@ -1,4 +1,3 @@
----
 - name: Ensure AppDefs and RegDefs folders exist
   ansible.builtin.file:
     path: "{{ current_env_dir }}/{{ item }}"
@@ -43,20 +42,12 @@
 
 # ------------------------------------
 # -------- Render AppDefs --------
-- name: Find AppDef templates
-  ansible.builtin.find:
-    paths: "{{ templates_dir }}/appdefs"
-    patterns: ["*.yaml.j2", "*.yml.j2", "*.j2"]
-    use_regex: false
-  register: appdef_templates
-  ignore_errors: true
-
 - name: Render and save AppDefs
-  when: appdef_templates.files is defined and (appdef_templates.files | length) > 0
+  when: appdef_templates_files | length > 0
   block:
     - name: Debug - Found AppDef templates
       ansible.builtin.debug:
-        msg: "Total AppDef templates found: {{ appdef_templates.files | length }}"
+        msg: "Total AppDef templates found: {{ appdef_templates_files | length }}"
 
     - name: Render AppDefs
       block:
@@ -73,35 +64,23 @@
             appdef_rendered_path: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.appdef.yml"
             appdef_name: "{{ lookup('file', appdef_rendered_path) | from_yaml | json_query('name') }}"
 
-        - name: Debug - AppDef Name
-          ansible.builtin.debug:
-            msg: "AppDef rendered: {{ appdef_name }}"
-
         - name: Save rendered AppDef
           ansible.builtin.copy:
             src: "{{ appdef_rendered_path }}"
             dest: "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.yml"
             remote_src: true
-      loop: "{{ appdef_templates.files }}"
+      loop: "{{ appdef_templates_files }}"
       loop_control:
         label: "{{ item.path | basename }}"
 
 # ------------------------------------
 # -------- Render RegDefs --------
-- name: Find RegDef templates
-  ansible.builtin.find:
-    paths: "{{ templates_dir }}/regdefs"
-    patterns: ["*.yaml.j2", "*.yml.j2", "*.j2"]
-    use_regex: false
-  register: regdef_templates
-  ignore_errors: true
-
 - name: Render and save RegDefs
-  when: regdef_templates.files is defined and (regdef_templates.files | length) > 0
+  when: regdef_templates_files | length > 0
   block:
     - name: Debug - Found RegDef templates
       ansible.builtin.debug:
-        msg: "Total RegDef templates found: {{ regdef_templates.files | length }}"
+        msg: "Total RegDef templates found: {{ regdef_templates_files | length }}"
 
     - name: Render RegDefs
       block:
@@ -118,15 +97,11 @@
             regdef_rendered_path: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.regdef.yml"
             regdef_name: "{{ lookup('file', regdef_rendered_path) | from_yaml | json_query('name') }}"
 
-        - name: Debug - RegDef Name
-          ansible.builtin.debug:
-            msg: "RegDef rendered: {{ regdef_name }}"
-
         - name: Save rendered RegDef
           ansible.builtin.copy:
             src: "{{ regdef_rendered_path }}"
             dest: "{{ current_env_dir }}/RegDefs/{{ regdef_name }}.yml"
             remote_src: true
-      loop: "{{ regdef_templates.files }}"
+      loop: "{{ regdef_templates_files }}"
       loop_control:
         label: "{{ item.path | basename }}"
