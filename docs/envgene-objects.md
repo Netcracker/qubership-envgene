@@ -33,14 +33,23 @@ This object is a describes the structure of a solution, links to solution's comp
 
 ```yaml
 tenant: "<path-to-the-tenant-template-file>"
+# Cloud configuration can be specified either as direct template path (string) 
+# or as an object with template_path and optional overrides
 cloud: "<path-to-the-cloud-template-file>"
+# or
+cloud:
+  template_path: "<path-to-the-cloud-template-file>"
+  # Optional
+  # See details https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
+  template_override:     
+    "<yaml or jinja expression>"
 composite_structure: "<path-to-the-composite-structure-template-file>"
 namespaces:
   - template_path: "<path-to-the-namespace-template-file>"
     # Optional
     # See details https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
     template_override:
-      <yaml or jinja expression>
+      "<yaml or jinja expression>"
 ```
 
 [Template Descriptor JSON schema](/schemas/template-descriptor.schema.json)

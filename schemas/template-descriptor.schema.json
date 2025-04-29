@@ -15,9 +15,41 @@
     "cloud": {
       "title": "Cloud Path",
       "description": "Path to the cloud template file",
-      "type": "string",
-      "examples": [
-        "{{ templates_dir }}/env_templates/dev/cloud.yml.j2"
+      "oneOf": [
+        {
+          "type": "string",
+          "examples": [
+            "{{ templates_dir }}/env_templates/dev/cloud.yml.j2"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "template_path": {
+              "type": "string"
+            },
+            "template_override": {
+              "type": "object",
+              "additionalProperties": true,
+              "description": "Arbitrary key-value overrides"
+            }
+          },
+          "required": [
+            "template_path"
+          ],
+          "additionalProperties": false,
+          "examples": [
+            {
+              "template_path": "{{ templates_dir }}/env_templates/dev/cloud.yml.j2",
+              "template_override": {
+                "profile": {
+                  "name": "prod_override",
+                  "baseline": "prod"
+                }
+              }
+            }
+          ]
+        }
       ]
     },
     "composite_structure": {
@@ -42,7 +74,9 @@
             "type": "string"
           },
           "template_override": {
-            "type": "string"
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Arbitrary key-value overrides"
           }
         },
         "required": [
