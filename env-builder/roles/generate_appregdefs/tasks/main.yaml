@@ -1,3 +1,5 @@
+---
+# --- Ensure AppDefs and RegDefs folders exist
 - name: Ensure AppDefs and RegDefs folders exist
   ansible.builtin.file:
     path: "{{ current_env_dir }}/{{ item }}"
@@ -6,7 +8,7 @@
     - AppDefs
     - RegDefs
 
-# -------- Load appregdef_config --------
+# --- Load appregdef config if exists
 - name: Determine appregdef config path
   ansible.builtin.set_fact:
     appregdef_config_path: >-
@@ -24,7 +26,7 @@
         )
       }}
 
-- name: Load appregdef config if exists
+- name: Load appregdef config if it exists
   ansible.builtin.set_fact:
     appregdef_config: "{{ lookup('file', appregdef_config_path) | from_yaml }}"
   ignore_errors: true
@@ -40,8 +42,7 @@
       - "AppDefs Overrides: {{ appdefs_overrides }}"
       - "RegDefs Overrides: {{ regdefs_overrides }}"
 
-# ------------------------------------
-# -------- Render AppDefs --------
+# --- Render and Save AppDefs
 - name: Render and save AppDefs
   when: appdef_templates_files | length > 0
   block:
@@ -49,9 +50,9 @@
       ansible.builtin.debug:
         msg: "Total AppDef templates found: {{ appdef_templates_files | length }}"
 
-    - name: Render AppDefs
+    - name: Render and Save AppDefs
       block:
-        - name: Render AppDef to temp
+        - name: Render AppDef to temp file
           ansible.builtin.template:
             src: "{{ item.path }}"
             dest: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.appdef.yml"
@@ -73,8 +74,7 @@
       loop_control:
         label: "{{ item.path | basename }}"
 
-# ------------------------------------
-# -------- Render RegDefs --------
+# --- Render and Save RegDefs
 - name: Render and save RegDefs
   when: regdef_templates_files | length > 0
   block:
@@ -82,9 +82,9 @@
       ansible.builtin.debug:
         msg: "Total RegDef templates found: {{ regdef_templates_files | length }}"
 
-    - name: Render RegDefs
+    - name: Render and Save RegDefs
       block:
-        - name: Render RegDef to temp
+        - name: Render RegDef to temp file
           ansible.builtin.template:
             src: "{{ item.path }}"
             dest: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.rendered.regdef.yml"
