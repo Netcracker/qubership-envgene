@@ -165,6 +165,10 @@
         loop_var: paramset_file
       when: paramset_templates.files | length > 0
 
+    ###############################################################################
+    # Discover and Render AppDef / RegDef Templates
+    ###############################################################################
+
     # --- Find AppDef templates
     - name: Find AppDef templates
       ansible.builtin.find:
@@ -189,15 +193,15 @@
       register: regdef_templates
       ignore_errors: true
 
-    # --- Debug Found Templates
-    - name: Debug - AppDefs and RegDefs Found
+    # --- Debug found templates
+    - name: Debug - Found AppDef and RegDef templates
       ansible.builtin.debug:
         msg:
           - "AppDefs Found: {{ appdef_templates.files | default([]) | length }}"
           - "RegDefs Found: {{ regdef_templates.files | default([]) | length }}"
 
-    # --- Render AppDefs and RegDefs if templates exist
-    - name: Render AppDef/RegDef templates
+    # --- Render AppDef / RegDef Templates (only if any exist)
+    - name: Render AppDef / RegDef templates
       ansible.builtin.include_role:
         name: generate_appregdefs
       vars:
@@ -211,5 +215,3 @@
         (appdef_templates.files | default([]) | length) > 0
         or
         (regdef_templates.files | default([]) | length) > 0
-
-
