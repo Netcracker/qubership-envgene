@@ -1,37 +1,69 @@
 {
     "$schema": "http://json-schema.org/draft-04/schema#",
     "type": "object",
+    "title": "Environment Specific Resource Profile Schema",
+    "description": "The schema used to define the environment specific resource profile parameters",
     "properties": {
         "applications": {
-            "type" :"array",
-            "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "title": "Application Name",
+              "description": "Name of the application",
+              "examples": ["Cloud-Core", "Data-Core"]
+            },
+            "version": {
+              "type": ["string", "number"],
+              "title": "Application Version",
+              "description": "Version of the application",
+              "examples": [
+                "release-2023.3-8.4.0-20231103.225817-60-RELEASE",
+                "release-2023.4-8.5.0-20231201.110520-61-RELEASE"
+              ]
+            },
+            "sd": {
+              "type": ["string", "number"],
+              "title": "Solution Descriptor",
+              "examples": ["SD1234", "SD5678"]
+            },
+            "services": {
+              "type": "array",
+              "items": {
                 "type": "object",
                 "properties": {
-                    "name" : { "type": "string" },
-                    "version" : { "type": ["string", "number"] },
-                    "sd" : { "type": ["string", "number"] },
-                    "services" : {
-                        "type" :"array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "name" : { "type": "string" },
-                                "parameters" : {
-                                    "type" :"array",
-                                    "items": {
-                                        "type": "object",
-                                        "properties": {
-                                            "name" : { "type" : "string" },
-                                            "value" : { "type" : "string" }
-                                        }
-                                    }
-                                }
-                            }
+                  "name": {
+                    "type": "string",
+                    "title": "Service Name",
+                    "description": "Name of the service",
+                    "examples": ["facade-operator", "core-service"]
+                  },
+                  "parameters": {
+                    "type": "array",
+                    "title": "Service Parameters",
+                    "description": "Override parameters for the service",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "examples": ["param1", "param2"]
+                        },
+                        "value": {
+                          "type": "string",
+                          "examples": ["value1", "value2"]
                         }
+                      }
                     }
+                  }
                 }
+              }
             }
+          }
         }
+      }
     },
-    "required": [ "applications" ]
+    "required": ["applications"]
 }

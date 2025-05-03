@@ -1,52 +1,155 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
+  "title": "Environment Definition",
+  "description": "Configuration for the environment, Environment Inventory",
+  "additionalProperties": true,
   "properties": {
     "inventory": {
       "type": "object",
+      "title": "Environment definition for Inventory",
+      "description": "Structure that defines environment for the Inventory",
+      "additionalProperties": true,
       "properties": {
         "environmentName": {
-          "type": "string"
+          "type": "string",
+          "title": "Environment Name",
+          "description": "Name of the environment",
+          "examples": [
+            "dev01",
+            "test10",
+            "prod"
+          ]
         },
         "tenantName": {
-          "type": "string"
+          "type": "string",
+          "title": "Tenant Name",
+          "description": "Name of the tenant for your environment",
+          "examples": [
+            "Application",
+            "Infrastructure"
+          ]
         },
         "deployer": {
-          "type": "string"
+          "type": "string",
+          "title": "Deployer Name",
+          "description": "Name of the Application Deployer for your environment. Should be listed in /configuration/deployer.yml or /environments/<cluster-name>/app-deployer/deployer.yml",
+          "examples": [
+            "app-deployer",
+            "deployer"
+          ]
+        },
+        "cloudPassport": {
+          "type": "string",
+          "title": "Cloud Passport",
+          "description": "Name of the Cloud Passport for your environment. Should be listed in /environments/<cluster-name>/cloud-passport/",
+          "examples": [
+            "qubership-k8s-01",
+            "dev-cluster"
+          ]
+        },
+        "clusterUrl": {
+          "type": "string",
+          "title": "Cluster URL",
+          "description": "URL of the cluster",
+          "examples": [
+            "https://k8s.qubership.org:6443",
+            "https://example.cluster.com"
+          ]
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "title": "Description",
+          "description": "Environment description",
+          "examples": [
+            "Test environment"
+          ]
         },
         "owners": {
-          "type": "string"
+          "type": "string",
+          "title": "Environment Owners",
+          "description": "Environment owners",
+          "examples": [
+            "Qubership team"
+          ]
         },
         "config": {
           "type": "object",
+          "title": "Configuration Settings",
+          "description": "",
+          "additionalProperties": true,
           "properties": {
             "updateCredIdsWithEnvName": {
-              "type": "boolean"
+              "type": "boolean",
+              "title": "Update Credential IDs with Environment Name",
+              "description": "If true, updates credential IDs during CMDB import using a specific pattern",
+              "default": false,
+              "examples": [
+                true,
+                false
+              ]
+            },
+            "updateRPOverrideNameWithEnvName": {
+              "type": "boolean",
+              "title": "Update Resource Profile Override Names",
+              "description": "If true, updates resource profile override names during CMDB import using a specific pattern",
+              "default": false,
+              "examples": [
+                true,
+                false
+              ]
             }
           }
         }
-      }
+      },
+      "required": [
+        "environmentName"
+      ]
     },
     "envTemplate": {
       "type": "object",
+      "title": "Environment Template",
+      "description": "Definition of template that will be used",
+      "additionalProperties": true,
       "properties": {
         "name": {
-          "type": "string"
+          "type": "string",
+          "title": "Template Name",
+          "description": "Name of the template, corresponding to the namespace in the template artifact",
+          "examples": [
+            "solution",
+            "env-template"
+          ]
         },
         "additionalTemplateVariables": {
-          "type": "object"
+          "type": "object",
+          "title": "Additional Template Variables",
+          "description": "Additional variables for template processing",
+          "examples": [
+            {
+              "key1": "value1",
+              "key2": "value2"
+            }
+          ]
         },
         "sharedTemplateVariables": {
           "type": "array",
+          "title": "Shared Template Variables",
+          "description": "Array of file names in 'shared-template-variables' folders",
           "items": {
             "type": "string"
-          }
+          },
+          "examples": [
+            [
+              "shared-var-1",
+              "shared-var-2"
+            ]
+          ]
         },
         "envSpecificParamsets": {
           "type": "object",
+          "title": "Environment-Specific Deployment Parameters",
+          "description": "Environment-specific deployment parameters set",
           "patternProperties": {
             ".*": {
               "type": "array",
@@ -58,6 +161,8 @@
         },
         "envSpecificTechnicalParamsets": {
           "type": "object",
+          "title": "Environment-Specific Technical Parameters",
+          "description": "Environment-specific technical parameters set",
           "patternProperties": {
             ".*": {
               "type": "array",
@@ -69,6 +174,8 @@
         },
         "envSpecificE2EParamsets": {
           "type": "object",
+          "title": "Environment-Specific E2E Parameters",
+          "description": "Environment-specific E2E parameters set",
           "patternProperties": {
             ".*": {
               "type": "array",
@@ -79,40 +186,149 @@
           }
         },
         "envSpecificResourceProfiles": {
-          "type": "object"
+          "type": "object",
+          "title": "Environment-Specific Resource Profiles",
+          "description": "Environment-specific resource profiles override",
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          }
         },
         "sharedMasterCredentialFiles": {
           "type": "array",
+          "title": "Shared Master Credential Files",
+          "description": "Array of file names in 'shared-credentials' folders",
           "items": {
             "type": "string"
-          }
+          },
+          "examples": [
+            [
+              "master-cred-1",
+              "master-cred-2"
+            ]
+          ]
         },
         "templateArtifact": {
           "type": "object",
+          "title": "Template Artifact",
+          "description": "Definition of template artifact",
+          "additionalProperties": true,
           "properties": {
             "registry": {
-              "type": "string"
+              "type": "string",
+              "title": "Registry Name",
+              "description": "Registry name, listed in configuration/registry.yml",
+              "examples": [
+                "artifactory",
+                "gke-registry"
+              ]
             },
             "repository": {
-              "type": "string"
+              "type": "string",
+              "title": "Repository Name",
+              "description": "Repository name for zip artifact",
+              "examples": [
+                "snapshotRepository",
+                "repo-examples"
+              ]
+            },
+            "templateRepository": {
+              "type": "string",
+              "title": "Template Repository Name",
+              "description": "Repository name for the artifact",
+              "examples": [
+                "stagingTemplateRepository",
+                "productionRepo"
+              ]
             },
             "artifact": {
               "type": "object",
+              "title": "Artifact Details",
+              "description": "Template artifact details",
+              "additionalProperties": true,
               "properties": {
                 "group_id": {
-                  "type": "string"
+                  "type": "string",
+                  "title": "Group ID",
+                  "description": "Group ID which is used to uniquely identify artifact",
+                  "examples": [
+                    "org.qubership",
+                    "com.examples.group"
+                  ]
                 },
                 "artifact_id": {
-                  "type": "string"
+                  "type": "string",
+                  "title": "Artifact ID",
+                  "description": "ID which is used to uniquely identify artifact",
+                  "examples": [
+                    "env-templates",
+                    "artifact-examples"
+                  ]
                 },
                 "version": {
-                  "type": "string"
+                  "type": "string",
+                  "title": "Version",
+                  "description": "Version of the project/product artifact",
+                  "examples": [
+                    "1.0.0",
+                    "2.3.1"
+                  ]
                 }
-              }
+              },
+              "required": [
+                "group_id",
+                "artifact_id",
+                "version"
+              ]
             }
-          }
+          },
+          "required": [
+            "registry",
+            "repository",
+            "artifact"
+          ]
+        },
+        "artifact": {
+          "type": "string",
+          "title": "Artifact Details",
+          "description": "Artifact details which includes artifact id and version",
+          "examples": [
+            "env-templates:1.0.0",
+            "artifact-examples:master-SNAPSHOT"
+          ]
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "templateArtifact"
+          ]
+        },
+        {
+          "required": [
+            "artifact"
+          ]
+        }
+      ]
+    },
+    "generatedVersions": {
+      "type": "object",
+      "title": "Generated Version",
+      "description": "Automatically generated artifact of template version was used for last environment generation",
+      "additionalProperties": true,
+      "properties": {
+        "generateEnvironmentLatestVersion": {
+          "type": "string"
         }
       }
     }
-  }
+  },
+  "required": [
+    "inventory",
+    "envTemplate"
+  ]
 }

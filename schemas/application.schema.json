@@ -1,10 +1,44 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
-    
+    "title": "Application Object",
+    "description": "Defines application level parameters",
+    "additionalProperties": true,
     "properties": {
-        "name" : { "type": "string" },
-        "deployParameters" : { "type": "object" },
-        "technicalConfigurationParameters" : { "type": "object" }
-    }
-}
+      "name": {
+        "type": "string",
+        "title": "Application Name",
+        "description": "The name of the application",
+        "examples": [
+          "postgresql"
+        ]
+      },
+      "deployParameters": {
+        "type": "object",
+        "title": "Deployment Parameters",
+        "description": "A collection of key-value pairs specifying deployment (to manifest rendering) parameters",
+        "examples": [
+          {
+            "MONITORING_ENABLED": true,
+            "ZOOKEEPER_URL": "zookeeper.zookeeper:2182"
+          }
+        ]
+      },
+      "technicalConfigurationParameters": {
+        "type": "object",
+        "title": "Technical Configuration Parameters",
+        "description": "A collection of key-value pairs specifying technical configuration (to configure application behavior without redeployment) parameters",
+        "examples": [
+          {
+            "log_level": "DEBUG",
+            "retryAttempts": 5
+          }
+        ]
+      }
+    },
+    "required": [
+      "name",
+      "deployParameters",
+      "technicalConfigurationParameters"
+    ]
+  }
