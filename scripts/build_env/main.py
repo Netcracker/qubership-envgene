@@ -130,7 +130,7 @@ def get_duplicate_names(param_files):
     return set([x for x in file_names if file_names.count(x) > 1])
 
 
-def validate_parameters(templates_dir, all_instances_dir):
+def validate_parameters(templates_dir, all_instances_dir, cluster_name=None, env_name=None):
     errors = []
     logger.info(f'Validate {templates_dir}/parameters dir')
     param_files = findAllYamlsInDir(f'{templates_dir}/parameters')
@@ -147,22 +147,41 @@ def validate_parameters(templates_dir, all_instances_dir):
     # all_param_files = param_files
     errors = errors + validate_parameter_files(param_files)
 
-    sub_dirs = find_all_sub_dir(all_instances_dir)
-
-    for sub_dir in next(sub_dirs)[1]:
-        if sub_dir != "parameters":
-            logger.info(f'Validate {all_instances_dir}/{sub_dir}/parameters')
-            param_files = findAllYamlsInDir(f'{all_instances_dir}/{sub_dir}/parameters')
-            # all_param_files = all_param_files + param_files
+    # Only validate the specific cluster if provided
+    if cluster_name:
+        if os.path.exists(f'{all_instances_dir}/{cluster_name}/parameters'):
+            logger.info(f'Validate {all_instances_dir}/{cluster_name}/parameters')
+            param_files = findAllYamlsInDir(f'{all_instances_dir}/{cluster_name}/parameters')
             errors = errors + validate_parameter_files(param_files)
+            
+            # Only validate the specific environment if provided
+            if env_name:
+                env_base_path = f'{all_instances_dir}/{cluster_name}/{env_name}'
+                if os.path.exists(env_base_path):
+                    # Now traverse through all subdirectories to find other parameter directories
+                    for root, dirs, files in os.walk(env_base_path):
+                        for dir_name in dirs:
+                            if dir_name == "parameters":
+                                param_path = os.path.join(root, dir_name)
+                                logger.info(f'Validate {param_path}')
+                                param_files = findAllYamlsInDir(param_path)
+                                errors = errors + validate_parameter_files(param_files)
+    else:
+        # If no specific cluster/env provided, validate all (original behavior)
+        sub_dirs = find_all_sub_dir(all_instances_dir)
+        
+        for sub_dir in next(sub_dirs)[1]:
+            if sub_dir != "parameters":
+                logger.info(f'Validate {all_instances_dir}/{sub_dir}/parameters')
+                param_files = findAllYamlsInDir(f'{all_instances_dir}/{sub_dir}/parameters')
+                errors = errors + validate_parameter_files(param_files)
 
-            env_dirs = find_all_sub_dir(f'{all_instances_dir}/{sub_dir}')
-            for env_dir in next(env_dirs)[1]:
-                if env_dir not in ["parameters", "cloud-passport"]:
-                    logger.info(f'Validate {all_instances_dir}/{sub_dir}/{env_dir}/Inventory/parameters')
-                    param_files = findAllYamlsInDir(f'{all_instances_dir}/{sub_dir}/{env_dir}/Inventory/parameters')
-                    # all_param_files = all_param_files + param_files
-                    errors = errors + validate_parameter_files(param_files)
+                env_dirs = find_all_sub_dir(f'{all_instances_dir}/{sub_dir}')
+                for env_dir in next(env_dirs)[1]:
+                    if env_dir not in ["parameters", "cloud-passport"]:
+                        logger.info(f'Validate {all_instances_dir}/{sub_dir}/{env_dir}/Inventory/parameters')
+                        param_files = findAllYamlsInDir(f'{all_instances_dir}/{sub_dir}/{env_dir}/Inventory/parameters')
+                        errors = errors + validate_parameter_files(param_files)
 
     # all_param_names = get_duplicate_names(all_param_files)
     # if len(all_param_names) > 0:
@@ -277,7 +296,7 @@ def render_environment(env_name, cluster_name, templates_dir, all_instances_dir,
     # checking that directory is valid
     check_environment_is_valid_or_fail(env_name, cluster_name, all_instances_dir, validate_env_definition_by_schema=True)
     # searching for env directory in instances
-    validate_parameters(templates_dir, all_instances_dir)
+    validate_parameters(templates_dir, all_instances_dir, cluster_name, env_name)
     env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
     logger.info(f"Environment {env_name} directory is {env_dir}")
     # build env
