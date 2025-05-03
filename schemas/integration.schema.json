@@ -1,23 +1,70 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "type": "object",
-    "properties":{
-        "cp_discovery":{ 
-          "type": "object",  
-          "properties":{
-            "gitlab":{ 
-              "type": "object", 
-              "properties":{
-                "branch":{"type": "string"}, 
-                "project":{"type": "string"},
-                "token":{"type": "string"}
-                },
-                "required": ["branch", "project", "token"]
-              }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Integration Configuration",
+  "description": "Defines the integration configuration",
+  "additionalProperties": true,
+  "properties": {
+    "cp_discovery": {
+      "type": "object",
+      "title": "Cloud Passport Discovery Configuration",
+      "description": "Configuration settings related to Cloud Passport discovery",
+      "additionalProperties": true,
+      "properties": {
+        "gitlab": {
+          "type": "object",
+          "title": "GitLab Settings",
+          "description": "Settings for GitLab integration",
+          "properties": {
+            "branch": {
+              "type": "string",
+              "title": "Branch Name",
+              "description": "The name of the GitLab branch to be used",
+              "examples": [
+                "main",
+                "develop",
+                "feature/new-feature"
+              ]
             },
-            "required": ["gitlab"]
-          }, 
-        "self_token":{"type": "string"}
+            "project": {
+              "type": "string",
+              "title": "Project Name",
+              "description": "The GitLab project name or ID",
+              "examples": [
+                "examples-project",
+                "test-project",
+                "backend-repo"
+              ]
+            },
+            "token": {
+              "type": "string",
+              "title": "Access Token",
+              "description": "The access token granting the access to discovery repository for calling Cloud Passport discovery",
+              "examples": [
+                "glpat-67890fghij",
+                "glpat-11223klmno"
+              ]
+            }
+          },
+          "required": [
+            "branch",
+            "project",
+            "token"
+          ]
+        }
+      },
+      "required": [
+        "gitlab"
+      ]
     },
-    "required": ["cp_discovery", "self_token"]
+    "self_token": {
+      "type": "string",
+      "title": "Self Token",
+      "description": "The access token granting the access to this repository for committing changes",
+      "examples": [
+        "glpat-67890fghij",
+        "glpat-11223klmno"
+      ]
+    }
+  }
 }

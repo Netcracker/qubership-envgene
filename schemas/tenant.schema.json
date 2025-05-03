@@ -1,27 +1,104 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
+    "title": "Tenant Object",
+    "description": "Defines tenant level parameters",
+    "additionalProperties": true,
     "properties": {
-        "name" : { "type": "string" },
-        "registryName" : { "type": "string" },
-        "description" : { "type": "string" },
-        "owners" : { "type": "string" },
-        "gitRepository" : { "type": "string" },
-        "defaultBranch" : { "type": "string" },
-        "credential" : { "type": "string" },
-        "labels": {
-            "type" :"array",
-            "items": { "type": "string" }
+      "name": {
+        "type": "string",
+        "title": "Tenant Name",
+        "description": "Field is used to uniquely identify the Tenant",
+        "examples": [
+          "Infrastructure"
+        ]
+      },
+      "registryName": {
+        "type": "string",
+        "title": "Registry Name",
+        "description": "Field is used to connect with registry",
+        "examples": [
+          "default",
+          "Shared Registry"
+        ]
+      },
+      "description": {
+        "type": "string",
+        "title": "Description",
+        "description": "Description of the tenant",
+        "examples": [
+          "This tenancy is used for Qubership team"
+        ]
+      },
+      "owners": {
+        "type": "string",
+        "title": "Tenant Owners",
+        "description": "Tenant owners",
+        "examples": [
+          "Qubership team"
+        ]
+      },
+      "gitRepository": {
+        "type": "string",
+        "title": "Git repository",
+        "description": "Git repository used for the tenancy"
+      },
+      "defaultBranch": {
+        "type": "string",
+        "title": "Default Branch for the tenancy"
+      },
+      "credential": {
+        "type": "string",
+        "title": "Credential ID",
+        "description": "The identifier for credentials used by the deployment"
+      },
+      "labels": {
+        "type": "array",
+        "title": "List of labels for Tenant",
+        "description": "A list of labels that should be applied to the Labels",
+        "items": {
+          "type": "string"
         },
-        "globalE2EParameters" : {
-            "type": "object",
-            "properties": {
-                "pipelineDefaultRecipients": { "type": "string" },
-                "recipientsStrategy": { "type": "string" },
-                "mergeTenantsAndE2EParameters": { "type": "boolean" },
-                "environmentParameters" : { "type": "object" }
-              }
-        },
-        "deployParameters" : { "type": "object" }
-    }
-}
+        "examples": [
+          [
+            "Qubership",
+            "dev"
+          ]
+        ]
+      },
+      "globalE2EParameters": {
+        "type": "object",
+        "title": "Global e2e Parameters",
+        "description": "Section with e2e parameters for Namespace that should be used in e2e pipeline",
+        "additionalProperties": true,
+        "properties": {
+          "pipelineDefaultRecipients": {
+            "type": "string"
+          },
+          "recipientsStrategy": {
+            "type": "string"
+          },
+          "mergeTenantsAndE2EParameters": {
+            "type": "boolean"
+          },
+          "environmentParameters": {
+            "type": "object"
+          }
+        }
+      },
+      "deployParameters": {
+        "type": "object",
+        "title": "Deploment parameters",
+        "description": "Section with Deployment parameters for tenacy",
+        "examples": [
+          {
+            "KAFKA_SERVER": "kafka.kafka:9092"
+          }
+        ]
+      }
+    },
+    "required": [
+      "name",
+      "registryName"
+    ]
+  }

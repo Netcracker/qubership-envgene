@@ -1,20 +1,84 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
+    "title": "Parameter Set Object",
+    "description": "Defines the Parameter Set which is container for a group of parameters",
+    "additionalProperties": true,
     "properties": {
-        "name" : { "type": "string" },
-        "version" : { "type": "number" },
-        "parameters" : { "type": "object" },
-        "applications": {
-            "type" :"array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "appName": { "type": "string"},
-                    "parameters" : { "type": "object" }
+      "name": {
+        "type": "string",
+        "title": "Parameter Set Name",
+        "description": "Name of the parameter set",
+        "examples": [
+          "network-adapters"
+        ]
+      },
+      "version": {
+        "type": "number",
+        "title": "Version Number",
+        "description": "Version number of the specific parameter set",
+        "examples": [
+          23.1,
+          1
+        ]
+      },
+      "parameters": {
+        "type": "object",
+        "title": "Parameter Set Parameters",
+        "description": "Parameters of the Parameter Set",
+        "examples": [
+          {
+            "NAMESPACE": "main",
+            "ESCAPE_SEQUENCE": "true"
+          }
+        ]
+      },
+      "applications": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true,
+          "properties": {
+            "appName": {
+              "type": "string",
+              "title": "Application Name",
+              "description": "Name of the application",
+              "examples": [
+                "Cloud-Core",
+                "Core-Extension"
+              ]
+            },
+            "parameters": {
+              "type": "object",
+              "title": "Application Parameters",
+              "description": "Application level parameters",
+              "examples": [
+                {
+                  "COMPOSITE_PLATFORM": "true"
                 }
+              ]
             }
-        }
+          }
+        },
+        "required": [
+          "appName",
+          "parameters"
+        ]
+      }
     },
-    "required": ["name", "parameters"]
-}
+    "anyOf": [
+      {
+        "required": [
+          "parameters"
+        ]
+      },
+      {
+        "required": [
+          "applications"
+        ]
+      }
+    ],
+    "required": [
+      "name"
+    ]
+  }
