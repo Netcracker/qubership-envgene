@@ -179,6 +179,42 @@
         fail_msg: "Missing one or more required variables: templates_dir, env_instances_dir, cluster_name, current_env_dir. Please check your configuration."
 
 ###############################################################################
+# Check for APP_REG_DEFS_JOB Parameter
+###############################################################################
+
+    - name: Check if APP_REG_DEFS_JOB is defined
+      ansible.builtin.set_fact:
+        use_external_defs: "{{ app_reg_defs_job is defined and app_reg_defs_job | length > 0 }}"
+
+    - name: Log external definitions usage
+      ansible.builtin.debug:
+        msg: "APP_REG_DEFS_JOB variable is set, Application and Registry definitions from corresponding job will be used for the Environment"
+      when: use_external_defs
+
+    - name: Process external definitions
+      block:
+        - name: Get and unpack external definitions
+          ansible.builtin.unarchive:
+            src: "{{ jenkins_artifacts_dir }}/{{ app_reg_defs_job }}/definitions.zip"
+            dest: "/tmp/external_defs"
+            remote_src: true
+          
+        - name: Copy external AppDefs to environment
+          ansible.builtin.copy:
+            src: "/tmp/external_defs/{{ app_defs_path }}/"
+            dest: "{{ current_env_dir }}/AppDefs/"
+            remote_src: true
+          when: app_defs_path is defined
+
+        - name: Copy external RegDefs to environment
+          ansible.builtin.copy:
+            src: "/tmp/external_defs/{{ reg_defs_path }}/"
+            dest: "{{ current_env_dir }}/RegDefs/"
+            remote_src: true
+          when: reg_defs_path is defined
+      when: use_external_defs
+
+###############################################################################
 # Discover and Render AppDef / RegDef Templates
 ###############################################################################
 
@@ -194,6 +230,7 @@
         file_type: file
       register: appdef_templates
       ignore_errors: true
+      when: not use_external_defs
 
     - name: Find RegDef templates
       ansible.builtin.find:
@@ -207,12 +244,14 @@
         file_type: file
       register: regdef_templates
       ignore_errors: true
+      when: not use_external_defs
 
     - name: Debug - Found AppDef and RegDef templates
       ansible.builtin.debug:
         msg:
           - "AppDefs Found: {{ appdef_templates.files | default([]) | length }}"
           - "RegDefs Found: {{ regdef_templates.files | default([]) | length }}"
+      when: not use_external_defs
 
 ###############################################################################
 # Conditionally Render Templates if Present
@@ -229,6 +268,7 @@
         appdef_templates_files: "{{ appdef_templates.files | default([]) }}"
         regdef_templates_files: "{{ regdef_templates.files | default([]) }}"
       when: >
-        (appdef_templates.files is defined and appdef_templates.files | length > 0) or
-        (regdef_templates.files is defined and regdef_templates.files | length > 0)
+        not use_external_defs and
+        ((appdef_templates.files is defined and appdef_templates.files | length > 0) or
+        (regdef_templates.files is defined and regdef_templates.files | length > 0))
 

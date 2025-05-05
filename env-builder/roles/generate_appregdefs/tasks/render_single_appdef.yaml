@@ -1,0 +1,81 @@
+# render_single_appdef.yaml
+
+- name: Render AppDef to temp file
+  template:
+    src: "{{ appdef_item.path }}"
+    dest: "/tmp/{{ appdef_item.path | basename | regex_replace('\\.j2$', '') }}.{{ render_timestamp }}.rendered.appdef.yml"
+  vars:
+    appdefs:
+      overrides: "{{ appdefs_overrides }}"
+    # Pass all environment variables through to the template context
+    current_env: "{{ current_env | default({}) }}"
+
+- name: Set rendered AppDef path
+  set_fact:
+    appdef_rendered_path: "/tmp/{{ appdef_item.path | basename | regex_replace('\\.j2$', '') }}.{{ render_timestamp }}.rendered.appdef.yml"
+
+- name: Read AppDef name from rendered file
+  set_fact:
+    appdef_name: "{{ lookup('file', appdef_rendered_path, errors='ignore') | default('{}', true) | from_yaml | json_query('name') }}"
+    appdef_content: "{{ lookup('file', appdef_rendered_path, errors='ignore') | default('{}', true) | from_yaml }}"
+
+- name: Validate AppDef against JSON schema
+  block:
+    - name: Copy JSON schema for AppDef
+      copy:
+        content: |
+          {
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": { "type": "string" },
+              "registryName": { "type": "string" },
+              "artifactId": { "type": "string" },
+              "groupId": { "type": "string" },
+              "supportParallelDeploy": { "type": "boolean" },
+              "deployParameters": { "$ref": "#/definitions/mapString" },
+              "technicalConfigurationParameters": { "$ref": "#/definitions/mapString" },
+              "solutionDescriptor": { "type": "boolean" }
+            },
+            "definitions": {
+              "mapString": {
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              }
+            },
+            "required": [
+              "name", "registryName", "artifactId", "groupId", "supportParallelDeploy",
+              "deployParameters", "technicalConfigurationParameters"
+            ]
+          }
+        dest: "/tmp/appdef_schema.json"
+      
+    - name: Validate AppDef against schema
+      command: >
+        python3 -c "
+        import json, jsonschema, sys;
+        try:
+          jsonschema.validate(json.loads('''{{ appdef_content | to_json }}'''), json.load(open('/tmp/appdef_schema.json')));
+          print('Valid');
+        except jsonschema.exceptions.ValidationError as e:
+          print('Invalid: ' + str(e));
+          sys.exit(1);
+        "
+      register: validation_result
+      failed_when: validation_result.rc != 0
+      changed_when: false
+  rescue:
+    - name: Log validation failure
+      debug:
+        msg: "AppDef validation failed for {{ appdef_item.path }}: {{ validation_result.stdout | default('Unknown error') }}"
+    - name: Fail the task
+      fail:
+        msg: "AppDef validation failed"
+
+- name: Save rendered AppDef
+  copy:
+    src: "{{ appdef_rendered_path }}"
+    dest: "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.yml"
+    remote_src: true
+  when: appdef_name | length > 0
