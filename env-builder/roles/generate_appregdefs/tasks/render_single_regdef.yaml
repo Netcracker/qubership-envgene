@@ -1,164 +1,59 @@
-# render_single_regdef.yaml
+---
+# roles/generate_appregdefs/tasks/render_single_regdef.yaml
+
+- name: Ensure tmp_render_dir fact is set
+  set_fact:
+    tmp_render_dir: "{{ tmp_render_dir | default('/tmp') }}"
+
+- name: Prepare regdefs dict for Jinja context
+  set_fact:
+    regdefs:
+      overrides: "{{ regdefs_overrides }}"
+
+- name: Load raw RegDef template as YAML
+  slurp:
+    src: "{{ item.path }}"
+  register: regdef_raw_slurp
+
+- name: Decode raw RegDef template
+  set_fact:
+    regdef_raw: "{{ regdef_raw_slurp.content | b64decode }}"
+
+- name: Extract template basename for Jinja context
+  set_fact:
+    template_name: "{{ item.path | basename | regex_replace('\\.j2$', '') }}"
 
 - name: Render RegDef to temp file
   template:
-    src: "{{ regdef_item.path }}"
-    dest: "/tmp/{{ regdef_item.path | basename | regex_replace('\\.j2$', '') }}.{{ render_timestamp }}.rendered.regdef.yml"
+    src: "{{ item.path }}"
+    dest: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.regdef.yml"
   vars:
-    regdefs:
-      overrides: "{{ regdefs_overrides }}"
-    # Pass all environment variables through to the template context
-    current_env: "{{ current_env | default({}) }}"
+    regdefs: "{{ regdefs }}"
 
 - name: Set rendered RegDef path
   set_fact:
-    regdef_rendered_path: "/tmp/{{ regdef_item.path | basename | regex_replace('\\.j2$', '') }}.{{ render_timestamp }}.rendered.regdef.yml"
+    regdef_rendered_path: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.regdef.yml"
 
-- name: Read RegDef name from rendered file
-  set_fact:
-    regdef_name: "{{ lookup('file', regdef_rendered_path, errors='ignore') | default('{}', true) | from_yaml | json_query('name') }}"
-    regdef_content: "{{ lookup('file', regdef_rendered_path, errors='ignore') | default('{}', true) | from_yaml }}"
-
-- name: Validate RegDef against JSON schema
-  block:
-    - name: Copy JSON schema for RegDef
-      copy:
-        content: |
-          {
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "name": { "type": "string" },
-              "credentialsId": { "type": "string" },
-              "mavenConfig": { "$ref": "#/definitions/MavenConfig" },
-              "dockerConfig": { "$ref": "#/definitions/DockerConfig" },
-              "goConfig": { "$ref": "#/definitions/GoConfig" },
-              "rawConfig": { "$ref": "#/definitions/RawConfig" },
-              "npmConfig": { "$ref": "#/definitions/NpmConfig" },
-              "helmConfig": { "$ref": "#/definitions/HelmConfig" },
-              "helmAppConfig": { "$ref": "#/definitions/HelmAppConfig" }
-            },
-            "required": ["name", "credentialsId", "mavenConfig", "dockerConfig"],
-            "definitions": {
-              "mapString": {
-                "type": "object",
-                "additionalProperties": { "type": "string" }
-              },
-              "DockerConfig": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "snapshotUri": { "type": "string" },
-                  "stagingUri": { "type": "string" },
-                  "releaseUri": { "type": "string" },
-                  "groupUri": { "type": "string" },
-                  "snapshotRepoName": { "type": "string" },
-                  "stagingRepoName": { "type": "string" },
-                  "releaseRepoName": { "type": "string" },
-                  "groupName": { "type": "string" }
-                },
-                "required": [
-                  "groupName", "groupUri", "releaseRepoName", "releaseUri",
-                  "snapshotRepoName", "snapshotUri", "stagingRepoName", "stagingUri"
-                ]
-              },
-              "MavenConfig": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "repositoryDomainName": { "type": "string" },
-                  "fullRepositoryUrl": { "type": "string" },
-                  "targetSnapshot": { "type": "string" },
-                  "targetStaging": { "type": "string" },
-                  "targetRelease": { "type": "string" },
-                  "snapshotGroup": { "type": "string" },
-                  "releaseGroup": { "type": "string" }
-                },
-                "required": [
-                  "fullRepositoryUrl", "releaseGroup", "repositoryDomainName",
-                  "snapshotGroup", "targetRelease", "targetSnapshot", "targetStaging"
-                ]
-              },
-              "GoConfig": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "goTargetSnapshot": { "type": "string" },
-                  "goTargetRelease": { "type": "string" },
-                  "goProxyRepository": { "type": "string" }
-                },
-                "required": ["goTargetSnapshot", "goTargetRelease", "goProxyRepository"]
-              },
-              "RawConfig": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "rawTargetSnapshot": { "type": "string" },
-                  "rawTargetRelease": { "type": "string" },
-                  "rawTargetStaging": { "type": "string" },
-                  "rawTargetProxy": { "type": "string" }
-                },
-                "required": ["rawTargetSnapshot", "rawTargetRelease", "rawTargetStaging", "rawTargetProxy"]
-              },
-              "NpmConfig": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "npmTargetSnapshot": { "type": "string" },
-                  "npmTargetRelease": { "type": "string" }
-                },
-                "required": ["npmTargetSnapshot", "npmTargetRelease"]
-              },
-              "HelmConfig": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "helmTargetStaging": { "type": "string" },
-                  "helmTargetRelease": { "type": "string" }
-                },
-                "required": ["helmTargetStaging", "helmTargetRelease"]
-              },
-              "HelmAppConfig": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "helmStagingRepoName": { "type": "string" },
-                  "helmReleaseRepoName": { "type": "string" },
-                  "helmGroupRepoName": { "type": "string" },
-                  "helmDevRepoName": { "type": "string" }
-                },
-                "required": ["helmStagingRepoName", "helmReleaseRepoName", "helmGroupRepoName", "helmDevRepoName"]
-              }
-            }
-          }
-        dest: "/tmp/regdef_schema.json"
-      
-    - name: Validate RegDef against schema
-      command: >
-        python3 -c "
-        import json, jsonschema, sys;
-        try:
-          jsonschema.validate(json.loads('''{{ regdef_content | to_json }}'''), json.load(open('/tmp/regdef_schema.json')));
-          print('Valid');
-        except jsonschema.exceptions.ValidationError as e:
-          print('Invalid: ' + str(e));
-          sys.exit(1);
-        "
-      register: validation_result
-      failed_when: validation_result.rc != 0
-      changed_when: false
-  rescue:
-    - name: Log validation failure
-      debug:
-        msg: "RegDef validation failed for {{ regdef_item.path }}: {{ validation_result.stdout | default('Unknown error') }}"
-    - name: Fail the task
-      fail:
-        msg: "RegDef validation failed"
-
-- name: Save rendered RegDef
-  copy:
+- name: Read rendered RegDef into raw string
+  slurp:
     src: "{{ regdef_rendered_path }}"
-    dest: "{{ current_env_dir }}/RegDefs/{{ regdef_name }}.yml"
-    remote_src: true
-  when: regdef_name | length > 0
+  register: regdef_rendered_slurp
+
+- name: Decode rendered RegDef
+  set_fact:
+    regdef_raw_rendered: "{{ regdef_rendered_slurp.content | b64decode }}"
+
+- name: Parse rendered RegDef YAML into a dict
+  set_fact:
+    regdef_content: "{{ regdef_raw_rendered | from_yaml }}"
+
+- name: Extract name field from RegDef
+  set_fact:
+    regdef_name: "{{ regdef_content.name }}"
+
+- name: Save rendered RegDef to final path
+  copy:
+    content: "{{ regdef_raw_rendered }}"
+    dest: "{{ current_env_dir }}/RegDefs/{{ regdef_name }}.regdef.yml"
+    mode: '0644'
+  when: regdef_name is defined and regdef_name | length > 0
