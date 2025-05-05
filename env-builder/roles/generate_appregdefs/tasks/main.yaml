@@ -1,96 +1,83 @@
-# Main.yml for generate_appregdefs role
-
+---
 - name: Validate mandatory variables
   assert:
     that:
       - current_env_dir is defined
       - cluster_name is defined
       - env_instances_dir is defined
-      - appdef_templates_files is defined or appdef_templates_files | length == 0
-      - regdef_templates_files is defined or regdef_templates_files | length == 0
+      - (appdef_templates.files | length) >= 0
+      - (regdef_templates.files | length) >= 0
 
-- name: Create AppDefs directory if it doesn't exist
+- name: Ensure AppDefs directory exists
   file:
     path: "{{ current_env_dir }}/AppDefs"
     state: directory
     mode: '0755'
-  when: appdef_templates_files | length > 0
+  when: appdef_templates.files | length > 0
 
-- name: Create RegDefs directory if it doesn't exist
+- name: Ensure RegDefs directory exists
   file:
     path: "{{ current_env_dir }}/RegDefs"
     state: directory
     mode: '0755'
-  when: regdef_templates_files | length > 0
+  when: regdef_templates.files | length > 0
 
-- name: Set appregdef config paths
+- name: Set config file candidates
   set_fact:
     cluster_config_yaml: "{{ env_instances_dir }}/environments/{{ cluster_name }}/configuration/appregdef_config.yaml"
-    cluster_config_yml: "{{ env_instances_dir }}/environments/{{ cluster_name }}/configuration/appregdef_config.yml"
-    global_config_yaml: "{{ env_instances_dir }}/configuration/appregdef_config.yaml"
-    global_config_yml: "{{ env_instances_dir }}/configuration/appregdef_config.yml"
+    cluster_config_yml:  "{{ env_instances_dir }}/environments/{{ cluster_name }}/configuration/appregdef_config.yml"
+    global_config_yaml:  "{{ env_instances_dir }}/configuration/appregdef_config.yaml"
+    global_config_yml:   "{{ env_instances_dir }}/configuration/appregdef_config.yml"
 
-- name: Check which configuration file exists
-  set_fact:
-    cluster_config_exists_yaml: "{{ lookup('file', cluster_config_yaml, errors='ignore') != '' }}"
-    cluster_config_exists_yml: "{{ lookup('file', cluster_config_yml, errors='ignore') != '' }}"
-    global_config_exists_yaml: "{{ lookup('file', global_config_yaml, errors='ignore') != '' }}"
-    global_config_exists_yml: "{{ lookup('file', global_config_yml, errors='ignore') != '' }}"
-
-- name: Set appregdef config path
+- name: Pick the first-existing config
   set_fact:
     appregdef_config_path: >-
-      {% if cluster_config_exists_yaml %}{{ cluster_config_yaml }}
-      {% elif cluster_config_exists_yml %}{{ cluster_config_yml }}
-      {% elif global_config_exists_yaml %}{{ global_config_yaml }}
-      {% elif global_config_exists_yml %}{{ global_config_yml }}
-      {% else %}none{% endif %}
+      {%- if lookup('file', cluster_config_yaml, errors='ignore') != '' -%} {{ cluster_config_yaml }}
+      {%- elif lookup('file', cluster_config_yml,  errors='ignore') != '' -%} {{ cluster_config_yml }}
+      {%- elif lookup('file', global_config_yaml,  errors='ignore') != '' -%} {{ global_config_yaml }}
+      {%- elif lookup('file', global_config_yml,   errors='ignore') != '' -%} {{ global_config_yml }}
+      {%- else -%} none {%- endif -%}
 
-- name: Load appregdef config
-  block:
-    - name: Load configuration file
-      set_fact:
-        appregdef_config: "{{ lookup('file', appregdef_config_path) | from_yaml }}"
-      when: appregdef_config_path != 'none'
-  rescue:
-    - name: Log malformed YAML error
-      debug:
-        msg: "Error: Configuration file {{ appregdef_config_path }} exists but contains malformed YAML. Using empty configuration."
-    - name: Set empty configuration
-      set_fact:
-        appregdef_config: {}
+- name: Load overrides config (if any)
+  set_fact:
+    appregdef_config: "{{ lookup('file', appregdef_config_path) | from_yaml }}"
+  when: appregdef_config_path != 'none'
+  ignore_errors: yes
 
-- name: Set default empty configuration if no file exists
+- name: Default to empty config
   set_fact:
     appregdef_config: {}
-  when: appregdef_config_path == 'none'
+  when: appregdef_config is not defined
 
-- name: Set overrides
+- name: Extract override mappings
   set_fact:
     appdefs_overrides: "{{ appregdef_config.appdefs.overrides | default({}) }}"
     regdefs_overrides: "{{ appregdef_config.regdefs.overrides | default({}) }}"
 
-- name: Set render timestamp
+# ── Moved this *above* the include_tasks loops ───────────────────────────────
+
+- name: Timestamp for unique filenames
   set_fact:
     render_timestamp: "{{ lookup('pipe', 'date +%s') }}"
 
-- name: Render and save each AppDef
+# ── Now render AppDefs ─────────────────────────────────────────────────────
+
+- name: Render all AppDefs
   include_tasks: render_single_appdef.yaml
-  loop: "{{ appdef_templates_files }}"
+  loop: "{{ appdef_templates.files }}"
   loop_control:
     label: "{{ item.path | basename }}"
   vars:
     appdef_item: "{{ item }}"
-  when: appdef_templates_files | length > 0
+  when: appdef_templates.files | length > 0
 
-- name: Render and save each RegDef
+# ── And render RegDefs ─────────────────────────────────────────────────────
+
+- name: Render all RegDefs
   include_tasks: render_single_regdef.yaml
-  loop: "{{ regdef_templates_files }}"
+  loop: "{{ regdef_templates.files }}"
   loop_control:
     label: "{{ item.path | basename }}"
   vars:
     regdef_item: "{{ item }}"
-  when: regdef_templates_files | length > 0
-
-
-
+  when: regdef_templates.files | length > 0
