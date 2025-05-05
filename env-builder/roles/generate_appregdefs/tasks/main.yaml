@@ -1,6 +1,6 @@
 ---
 ###############################################################################
-# --- Validate Mandatory Variables
+# Validate Mandatory Variables
 ###############################################################################
 
 - name: Validate mandatory variables for generate_appregdefs
@@ -12,7 +12,7 @@
     fail_msg: "One or more required variables are missing. Please ensure 'current_env_dir', 'cluster_name', and 'env_instances_dir' are defined."
 
 ###############################################################################
-# --- Ensure AppDefs and RegDefs folders exist
+# Ensure AppDefs and RegDefs folders exist
 ###############################################################################
 
 - name: Ensure AppDefs and RegDefs folders exist
@@ -26,7 +26,7 @@
     label: "{{ item }}"
 
 ###############################################################################
-# --- Load appregdef config if exists
+# Load appregdef config if exists
 ###############################################################################
 
 - name: Determine appregdef config path
@@ -62,7 +62,7 @@
       - "RegDefs overrides loaded: {{ regdefs_overrides }}"
 
 ###############################################################################
-# --- Setup: Create a Timestamp for Unique Temp Files (Safe for Parallel Runs)
+# Setup: Create a Timestamp for Unique Temp Files (Safe for Parallel Runs)
 ###############################################################################
 
 - name: Set rendering timestamp
@@ -71,7 +71,7 @@
   when: render_timestamp is not defined
 
 ###############################################################################
-# --- Render and Save AppDefs
+# Render and Save AppDefs
 ###############################################################################
 
 - name: Render and save AppDefs
@@ -110,7 +110,7 @@
           failed_when: false
 
 ###############################################################################
-# --- Render and Save RegDefs
+# Render and Save RegDefs
 ###############################################################################
 
 - name: Render and save RegDefs
