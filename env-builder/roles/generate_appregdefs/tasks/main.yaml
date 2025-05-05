@@ -1,149 +1,96 @@
----
-###############################################################################
-# Validate Mandatory Variables
-###############################################################################
+# Main.yml for generate_appregdefs role
 
-- name: Validate mandatory variables for generate_appregdefs
-  ansible.builtin.assert:
+- name: Validate mandatory variables
+  assert:
     that:
       - current_env_dir is defined
       - cluster_name is defined
       - env_instances_dir is defined
-    fail_msg: "One or more required variables are missing. Please ensure 'current_env_dir', 'cluster_name', and 'env_instances_dir' are defined."
+      - appdef_templates_files is defined or appdef_templates_files | length == 0
+      - regdef_templates_files is defined or regdef_templates_files | length == 0
 
-###############################################################################
-# Ensure AppDefs and RegDefs folders exist
-###############################################################################
-
-- name: Ensure AppDefs and RegDefs folders exist
-  ansible.builtin.file:
-    path: "{{ current_env_dir }}/{{ item }}"
+- name: Create AppDefs directory if it doesn't exist
+  file:
+    path: "{{ current_env_dir }}/AppDefs"
     state: directory
-  loop:
-    - AppDefs
-    - RegDefs
-  loop_control:
-    label: "{{ item }}"
+    mode: '0755'
+  when: appdef_templates_files | length > 0
 
-###############################################################################
-# Load appregdef config if exists
-###############################################################################
+- name: Create RegDefs directory if it doesn't exist
+  file:
+    path: "{{ current_env_dir }}/RegDefs"
+    state: directory
+    mode: '0755'
+  when: regdef_templates_files | length > 0
 
-- name: Determine appregdef config path
-  ansible.builtin.set_fact:
+- name: Set appregdef config paths
+  set_fact:
+    cluster_config_yaml: "{{ env_instances_dir }}/environments/{{ cluster_name }}/configuration/appregdef_config.yaml"
+    cluster_config_yml: "{{ env_instances_dir }}/environments/{{ cluster_name }}/configuration/appregdef_config.yml"
+    global_config_yaml: "{{ env_instances_dir }}/configuration/appregdef_config.yaml"
+    global_config_yml: "{{ env_instances_dir }}/configuration/appregdef_config.yml"
+
+- name: Check which configuration file exists
+  set_fact:
+    cluster_config_exists_yaml: "{{ lookup('file', cluster_config_yaml, errors='ignore') != '' }}"
+    cluster_config_exists_yml: "{{ lookup('file', cluster_config_yml, errors='ignore') != '' }}"
+    global_config_exists_yaml: "{{ lookup('file', global_config_yaml, errors='ignore') != '' }}"
+    global_config_exists_yml: "{{ lookup('file', global_config_yml, errors='ignore') != '' }}"
+
+- name: Set appregdef config path
+  set_fact:
     appregdef_config_path: >-
-      {{
-        (env_instances_dir + '/environments/' + cluster_name + '/configuration/appregdef_config.yaml')
-        if lookup('file', env_instances_dir + '/environments/' + cluster_name + '/configuration/appregdef_config.yaml', errors='ignore') != ''
-        else (
-          (env_instances_dir + '/environments/' + cluster_name + '/configuration/appregdef_config.yml')
-          if lookup('file', env_instances_dir + '/environments/' + cluster_name + '/configuration/appregdef_config.yml', errors='ignore') != ''
-          else (
-            (env_instances_dir + '/configuration/appregdef_config.yaml')
-            if lookup('file', env_instances_dir + '/configuration/appregdef_config.yaml', errors='ignore') != ''
-            else (env_instances_dir + '/configuration/appregdef_config.yml')
-          )
-        )
-      }}
+      {% if cluster_config_exists_yaml %}{{ cluster_config_yaml }}
+      {% elif cluster_config_exists_yml %}{{ cluster_config_yml }}
+      {% elif global_config_exists_yaml %}{{ global_config_yaml }}
+      {% elif global_config_exists_yml %}{{ global_config_yml }}
+      {% else %}none{% endif %}
 
-- name: Load appregdef config (safe fallback to empty)
-  ansible.builtin.set_fact:
-    appregdef_config: "{{ lookup('file', appregdef_config_path, errors='ignore') | default('{}', True) | from_yaml }}"
+- name: Load appregdef config
+  block:
+    - name: Load configuration file
+      set_fact:
+        appregdef_config: "{{ lookup('file', appregdef_config_path) | from_yaml }}"
+      when: appregdef_config_path != 'none'
+  rescue:
+    - name: Log malformed YAML error
+      debug:
+        msg: "Error: Configuration file {{ appregdef_config_path }} exists but contains malformed YAML. Using empty configuration."
+    - name: Set empty configuration
+      set_fact:
+        appregdef_config: {}
 
-- name: Set default overrides
-  ansible.builtin.set_fact:
+- name: Set default empty configuration if no file exists
+  set_fact:
+    appregdef_config: {}
+  when: appregdef_config_path == 'none'
+
+- name: Set overrides
+  set_fact:
     appdefs_overrides: "{{ appregdef_config.appdefs.overrides | default({}) }}"
     regdefs_overrides: "{{ appregdef_config.regdefs.overrides | default({}) }}"
 
-- name: Debug - Show loaded overrides
-  ansible.builtin.debug:
-    msg:
-      - "AppDefs overrides loaded: {{ appdefs_overrides }}"
-      - "RegDefs overrides loaded: {{ regdefs_overrides }}"
-
-###############################################################################
-# Setup: Create a Timestamp for Unique Temp Files (Safe for Parallel Runs)
-###############################################################################
-
-- name: Set rendering timestamp
-  ansible.builtin.set_fact:
+- name: Set render timestamp
+  set_fact:
     render_timestamp: "{{ lookup('pipe', 'date +%s') }}"
-  when: render_timestamp is not defined
 
-###############################################################################
-# Render and Save AppDefs
-###############################################################################
+- name: Render and save each AppDef
+  include_tasks: render_single_appdef.yaml
+  loop: "{{ appdef_templates_files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  vars:
+    appdef_item: "{{ item }}"
+  when: appdef_templates_files | length > 0
 
-- name: Render and save AppDefs
-  when: appdef_templates_files is defined and appdef_templates_files | length > 0
-  block:
-    - name: Debug - Found AppDef templates
-      ansible.builtin.debug:
-        msg: "Total AppDef templates found: {{ appdef_templates_files | length }}"
+- name: Render and save each RegDef
+  include_tasks: render_single_regdef.yaml
+  loop: "{{ regdef_templates_files }}"
+  loop_control:
+    label: "{{ item.path | basename }}"
+  vars:
+    regdef_item: "{{ item }}"
+  when: regdef_templates_files | length > 0
 
-    - name: Render and save each AppDef
-      loop: "{{ appdef_templates_files }}"
-      loop_control:
-        label: "{{ item.path | basename }}"
-      block:
-        - name: Render AppDef to temp file
-          ansible.builtin.template:
-            src: "{{ item.path }}"
-            dest: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.{{ render_timestamp }}.rendered.appdef.yml"
-          vars:
-            appdefs:
-              overrides: "{{ appdefs_overrides }}"
-          failed_when: false
 
-        - name: Read AppDef name from rendered file
-          ansible.builtin.set_fact:
-            appdef_rendered_path: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.{{ render_timestamp }}.rendered.appdef.yml"
-            appdef_name: "{{ lookup('file', appdef_rendered_path, errors='ignore') | default('{}', True) | from_yaml | json_query('name') }}"
-          failed_when: false
 
-        - name: Save rendered AppDef
-          ansible.builtin.copy:
-            src: "{{ appdef_rendered_path }}"
-            dest: "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.yml"
-            remote_src: true
-          when: appdef_name is defined and appdef_name | trim | length > 0
-          failed_when: false
-
-###############################################################################
-# Render and Save RegDefs
-###############################################################################
-
-- name: Render and save RegDefs
-  when: regdef_templates_files is defined and regdef_templates_files | length > 0
-  block:
-    - name: Debug - Found RegDef templates
-      ansible.builtin.debug:
-        msg: "Total RegDef templates found: {{ regdef_templates_files | length }}"
-
-    - name: Render and save each RegDef
-      loop: "{{ regdef_templates_files }}"
-      loop_control:
-        label: "{{ item.path | basename }}"
-      block:
-        - name: Render RegDef to temp file
-          ansible.builtin.template:
-            src: "{{ item.path }}"
-            dest: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.{{ render_timestamp }}.rendered.regdef.yml"
-          vars:
-            regdefs:
-              overrides: "{{ regdefs_overrides }}"
-          failed_when: false
-
-        - name: Read RegDef name from rendered file
-          ansible.builtin.set_fact:
-            regdef_rendered_path: "/tmp/{{ item.path | basename | regex_replace('\\.j2$', '') }}.{{ render_timestamp }}.rendered.regdef.yml"
-            regdef_name: "{{ lookup('file', regdef_rendered_path, errors='ignore') | default('{}', True) | from_yaml | json_query('name') }}"
-          failed_when: false
-
-        - name: Save rendered RegDef
-          ansible.builtin.copy:
-            src: "{{ regdef_rendered_path }}"
-            dest: "{{ current_env_dir }}/RegDefs/{{ regdef_name }}.yml"
-            remote_src: true
-          when: regdef_name is defined and regdef_name | trim | length > 0
-          failed_when: false
