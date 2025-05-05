@@ -261,10 +261,6 @@
       ansible.builtin.include_role:
         name: generate_appregdefs
       vars:
-        cluster_name: "{{ cluster_name }}"
-        templates_dir: "{{ templates_dir }}"
-        env_instances_dir: "{{ env_instances_dir }}"
-        current_env_dir: "{{ current_env_dir }}"
         appdef_templates_files: "{{ appdef_templates.files | default([]) }}"
         regdef_templates_files: "{{ regdef_templates.files | default([]) }}"
       when: >
