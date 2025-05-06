@@ -165,9 +165,7 @@
         loop_var: paramset_file
       when: paramset_templates.files | length > 0
 
-###############################################################################
 # Validate Required Variables
-###############################################################################
 
     - name: Validate required variables
       ansible.builtin.assert:
@@ -178,9 +176,7 @@
           - current_env_dir is defined
         fail_msg: "Missing one or more required variables: templates_dir, env_instances_dir, cluster_name, current_env_dir. Please check your configuration."
 
-###############################################################################
 # Check for APP_REG_DEFS_JOB Parameter
-###############################################################################
 
     - name: Check if APP_REG_DEFS_JOB is defined
       ansible.builtin.set_fact:
@@ -214,9 +210,7 @@
           when: reg_defs_path is defined
       when: use_external_defs
 
-###############################################################################
 # Discover and Render AppDef / RegDef Templates
-###############################################################################
 
     - name: Find AppDef templates
       ansible.builtin.find:
@@ -253,9 +247,7 @@
           - "RegDefs Found: {{ regdef_templates.files | default([]) | length }}"
       when: not use_external_defs
 
-###############################################################################
 # Conditionally Render Templates if Present
-###############################################################################
 
     - name: Render AppDef / RegDef templates
       ansible.builtin.include_role:
