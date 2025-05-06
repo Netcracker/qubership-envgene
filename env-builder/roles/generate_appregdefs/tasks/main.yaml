@@ -24,10 +24,10 @@
 
 - name: Set config file candidates
   set_fact:
-    cluster_config_yaml: "{{ env_instances_dir }}/environments/{{ cluster_name }}/configuration/appregdef_config.yaml"
-    cluster_config_yml:  "{{ env_instances_dir }}/environments/{{ cluster_name }}/configuration/appregdef_config.yml"
-    global_config_yaml:  "{{ env_instances_dir }}/configuration/appregdef_config.yaml"
-    global_config_yml:   "{{ env_instances_dir }}/configuration/appregdef_config.yml"
+    cluster_config_yaml: "{{ output_dir }}/{{ cluster_name }}/configuration/appregdef_config.yaml"
+    cluster_config_yml:  "{{ output_dir }}/{{ cluster_name }}/configuration/appregdef_config.yml"
+    global_config_yaml:  "{{ output_dir }}/configuration/appregdef_config.yaml"
+    global_config_yml:   "{{ output_dir }}/configuration/appregdef_config.yml"
 
 - name: Pick the first-existing config
   set_fact:
@@ -59,13 +59,13 @@
     regdefs:
       overrides: "{{ regdefs_overrides }}"
 
-# ── Moved this *above* the include_tasks loops ───────────────────────────────
+# ── Moved this *above* the include_tasks loops
 
 - name: Timestamp for unique filenames
   set_fact:
     render_timestamp: "{{ lookup('pipe', 'date +%s') }}"
 
-# ── Now render AppDefs ─────────────────────────────────────────────────────
+# ── Now render AppDefs
 
 - name: Render all AppDefs
   include_tasks: render_single_appdef.yaml
@@ -76,7 +76,7 @@
     appdef_item: "{{ item }}"
   when: appdef_templates.files | length > 0
 
-# ── And render RegDefs ─────────────────────────────────────────────────────
+# ── And render RegDefs
 
 - name: Render all RegDefs
   include_tasks: render_single_regdef.yaml
