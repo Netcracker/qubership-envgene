@@ -54,6 +54,11 @@
     appdefs_overrides: "{{ appregdef_config.appdefs.overrides | default({}) }}"
     regdefs_overrides: "{{ appregdef_config.regdefs.overrides | default({}) }}"
 
+- name: Prepare regdefs dict for Jinja context
+  set_fact:
+    regdefs:
+      overrides: "{{ regdefs_overrides }}"
+
 # ── Moved this *above* the include_tasks loops ───────────────────────────────
 
 - name: Timestamp for unique filenames
