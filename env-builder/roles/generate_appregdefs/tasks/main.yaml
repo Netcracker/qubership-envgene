@@ -26,8 +26,8 @@
   set_fact:
     cluster_config_yaml: "{{ output_dir }}/{{ cluster_name }}/configuration/appregdef_config.yaml"
     cluster_config_yml:  "{{ output_dir }}/{{ cluster_name }}/configuration/appregdef_config.yml"
-    global_config_yaml:  "{{ output_dir }}/configuration/appregdef_config.yaml"
-    global_config_yml:   "{{ output_dir }}/configuration/appregdef_config.yml"
+    global_config_yaml:  "{{ output_dir | dirname }}/configuration/appregdef_config.yaml"
+    global_config_yml:   "{{ output_dir | dirname }}/configuration/appregdef_config.yml"
 
 - name: Pick the first-existing config
   set_fact:
