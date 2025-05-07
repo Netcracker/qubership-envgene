@@ -29,14 +29,31 @@
     global_config_yaml:  "{{ output_dir | dirname }}/configuration/appregdef_config.yaml"
     global_config_yml:   "{{ output_dir | dirname }}/configuration/appregdef_config.yml"
 
-- name: Pick the first-existing config
+- name: Stat potential config files
+  stat:
+    path: "{{ item }}"
+  loop:
+    - "{{ cluster_config_yaml }}"
+    - "{{ cluster_config_yml }}"
+    - "{{ global_config_yaml }}"
+    - "{{ global_config_yml }}"
+  loop_control:
+    label: "{{ item | basename }}"
+  register: config_stats
+
+- name: Pick config path by existence
   set_fact:
     appregdef_config_path: >-
-      {%- if lookup('file', cluster_config_yaml, errors='ignore') != '' -%} {{ cluster_config_yaml }}
-      {%- elif lookup('file', cluster_config_yml,  errors='ignore') != '' -%} {{ cluster_config_yml }}
-      {%- elif lookup('file', global_config_yaml,  errors='ignore') != '' -%} {{ global_config_yaml }}
-      {%- elif lookup('file', global_config_yml,   errors='ignore') != '' -%} {{ global_config_yml }}
-      {%- else -%} none {%- endif -%}
+      {{ (
+          config_stats.results[0].stat.exists and cluster_config_yaml
+        ) or (
+          config_stats.results[1].stat.exists and cluster_config_yml
+        ) or (
+          config_stats.results[2].stat.exists and global_config_yaml
+        ) or (
+          config_stats.results[3].stat.exists and global_config_yml
+        ) or 'none'
+      }}
 
 - name: Load overrides config (if any)
   set_fact:
@@ -59,13 +76,9 @@
     regdefs:
       overrides: "{{ regdefs_overrides }}"
 
-# ── Moved this *above* the include_tasks loops
-
 - name: Timestamp for unique filenames
   set_fact:
     render_timestamp: "{{ lookup('pipe', 'date +%s') }}"
-
-# ── Now render AppDefs
 
 - name: Render all AppDefs
   include_tasks: render_single_appdef.yaml
@@ -75,8 +88,6 @@
   vars:
     appdef_item: "{{ item }}"
   when: appdef_templates.files | length > 0
-
-# ── And render RegDefs
 
 - name: Render all RegDefs
   include_tasks: render_single_regdef.yaml
