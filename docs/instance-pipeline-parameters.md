@@ -16,6 +16,7 @@
   - [`ENVGENE_AGE_PRIVATE_KEY`](#envgene_age_private_key)
   - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
   - [`PUBLIC_AGE_KEYS`](#public_age_keys)
+  - [`DEPLOYMENT_SESSION_ID`](#deployment_session_id)
 
 The following are the launch parameters for the instance repository pipeline. These parameters influence, the execution of specific jobs within the pipeline.
 
@@ -204,3 +205,9 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 > These are generally configured as GitLab CI/CD variables or GitHub environment variables.
 
 **Example**: "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p,age113z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmca32p"
+
+## `DEPLOYMENT_SESSION_ID`
+
+**Description**: This parameter will be included in the deployment context of the Effective Set. The EnvGene passes it to the Calculator CLI using the `--extra_params` attribute. It is used together with `GENERATE_EFFECTIVE_SET`.
+
+**Example**: "123e4567-e89b-12d3-a456-426614174000"

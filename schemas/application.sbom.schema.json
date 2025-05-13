@@ -68,16 +68,10 @@
             "$ref": "#/definitions/service"
           },
           {
-            "$ref": "#/definitions/smartplug"
-          },
-          {
             "$ref": "#/definitions/configuration"
           },
           {
-            "$ref": "#/definitions/cdn"
-          },
-          {
-            "$ref": "#/definitions/frontend"
+            "$ref": "#/definitions/generic-image"
           }
         ]
       }
@@ -168,6 +162,51 @@
           "description": "The attachment data. Proactive controls such as input validation and sanitization should be employed to prevent misuse of attachment text"
         }
       }
+    },
+    "hash": {
+      "type": "object",
+      "title": "Hash",
+      "required": [
+        "alg",
+        "content"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "alg": {
+          "$ref": "#/definitions/hash-alg"
+        },
+        "content": {
+          "$ref": "#/definitions/hash-content"
+        }
+      }
+    },
+    "hash-alg": {
+      "type": "string",
+      "title": "Hash Algorithm",
+      "description": "The algorithm that generated the hash value.",
+      "enum": [
+        "MD5",
+        "SHA-1",
+        "SHA-256",
+        "SHA-384",
+        "SHA-512",
+        "SHA3-256",
+        "SHA3-384",
+        "SHA3-512",
+        "BLAKE2b-256",
+        "BLAKE2b-384",
+        "BLAKE2b-512",
+        "BLAKE3"
+      ]
+    },
+    "hash-content": {
+      "type": "string",
+      "title": "Hash Value",
+      "description": "The value of the hash.",
+      "examples": [
+        "3942447fac867ae5cdb3229b658f4d48"
+      ],
+      "pattern": "^([a-fA-F0-9]{32}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64}|[a-fA-F0-9]{96}|[a-fA-F0-9]{128})$"
     },
     "metadata-application": {
       "type": "object",
@@ -367,6 +406,7 @@
         "group",
         "name",
         "version",
+        "hashes",
         "purl"
       ],
       "additionalProperties": false,
@@ -415,6 +455,14 @@
           "$ref": "#/definitions/version",
           "title": "Component Version",
           "description": "The component version. The version should ideally comply with semantic versioning but is not enforced"
+        },
+        "hashes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/hash"
+          },
+          "title": "Hashes",
+          "description": "The hashes of the docker image"
         },
         "purl": {
           "type": "string",
@@ -605,6 +653,7 @@
         "mime-type",
         "bom-ref",
         "name",
+        "version",
         "properties",
         "components"
       ],
@@ -639,6 +688,11 @@
             "tomcat-catalina"
           ]
         },
+        "version": {
+          "$ref": "#/definitions/version",
+          "title": "Component Version",
+          "description": "The component version. The version should ideally comply with semantic versioning but is not enforced."
+        },
         "properties": {
           "type": "array",
           "items": {
@@ -653,7 +707,14 @@
                 "type": "string"
               },
               "value": {
-                "type": "string"
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
               }
             }
           }
@@ -675,141 +736,7 @@
               }
             ]
           },
-          "minItems": 3,
-          "maxItems": 3,
-          "uniqueItems": true,
-          "allOf": [
-            {
-              "contains": {
-                "$ref": "#/definitions/docker-image"
-              }
-            },
-            {
-              "contains": {
-                "$ref": "#/definitions/declarative-configuration"
-              }
-            },
-            {
-              "contains": {
-                "$ref": "#/definitions/resource-profile-baseline"
-              }
-            }
-          ]
-        }
-      }
-    },
-    "smartplug": {
-      "type": "object",
-      "title": "Smartplug",
-      "description": "Describes smartplug",
-      "required": [
-        "type",
-        "mime-type",
-        "bom-ref",
-        "name",
-        "components"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "application"
-          ],
-          "title": "Component Type",
-          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
-        },
-        "mime-type": {
-          "type": "string",
-          "enum": [
-            "application/vnd.qubership.configuration.smartplug"
-          ],
-          "title": "Mime-Type",
-          "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
-        },
-        "bom-ref": {
-          "$ref": "#/definitions/refType",
-          "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
-        },
-        "name": {
-          "type": "string",
-          "title": "Component Name",
-          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery"
-        },
-        "components": {
-          "type": "array",
-          "title": "Smartplug components",
-          "description": "Components of smartplug",
-          "minItems": 1,
-          "maxItems": 1,
-          "items": {
-            "type": "object",
-            "title": "Resource Profile Baseline",
-            "description": "Describes resource profile baseline",
-            "required": [
-              "type",
-              "mime-type",
-              "bom-ref",
-              "group",
-              "name",
-              "version",
-              "purl"
-            ],
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "application"
-                ],
-                "title": "Component Type",
-                "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
-              },
-              "mime-type": {
-                "type": "string",
-                "enum": [
-                  "application/vnd.osgi.bundle"
-                ],
-                "title": "Mime-Type",
-                "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
-              },
-              "bom-ref": {
-                "$ref": "#/definitions/refType",
-                "title": "BOM Reference",
-                "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
-              },
-              "group": {
-                "type": "string",
-                "title": "Component Group",
-                "description": "The grouping name or identifier. This will often be a shortened, single name of the company or project that produced the component, or the source package or domain name. Whitespace and special characters should be avoided. Examples include: apache, org.apache.commons, and apache.org.",
-                "examples": [
-                  "com.acme"
-                ]
-              },
-              "name": {
-                "type": "string",
-                "title": "Component Name",
-                "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
-                "examples": [
-                  "tomcat-catalina"
-                ]
-              },
-              "version": {
-                "$ref": "#/definitions/version",
-                "title": "Component Version",
-                "description": "The component version. The version should ideally comply with semantic versioning but is not enforced"
-              },
-              "purl": {
-                "type": "string",
-                "title": "Package URL (purl)",
-                "description": "Asserts the identity of the component using package-url (purl). The purl, if specified, must be valid and conform to the specification defined at: [https://github.com/package-url/purl-spec](https://github.com/package-url/purl-spec). Refer to `@.evidence.identity` to optionally provide evidence that substantiates the assertion of the component's identity.",
-                "examples": [
-                  "pkg:maven/com.acme/tomcat-catalina@9.0.14?packaging=jar"
-                ]
-              }
-            }
-          }
+          "uniqueItems": true
         }
       }
     },
@@ -822,6 +749,8 @@
         "mime-type",
         "bom-ref",
         "name",
+        "version",
+        "properties",
         "components"
       ],
       "additionalProperties": false,
@@ -837,121 +766,8 @@
         "mime-type": {
           "type": "string",
           "enum": [
-            "application/vnd.qubership.configuration"
-          ],
-          "title": "Mime-Type",
-          "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
-        },
-        "bom-ref": {
-          "$ref": "#/definitions/refType",
-          "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
-        },
-        "name": {
-          "type": "string",
-          "title": "Component Name",
-          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery"
-        },
-        "components": {
-          "type": "array",
-          "title": "Configuration components",
-          "description": "Components of configuration",
-          "minItems": 1,
-          "maxItems": 1,
-          "items": {
-            "type": "object",
-            "title": "",
-            "description": "",
-            "required": [
-              "type",
-              "mime-type",
-              "bom-ref",
-              "group",
-              "name",
-              "version",
-              "purl"
-            ],
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "application"
-                ],
-                "title": "Component Type",
-                "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
-              },
-              "mime-type": {
-                "type": "string",
-                "enum": [
-                  "application/zip"
-                ],
-                "title": "Mime-Type",
-                "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
-              },
-              "bom-ref": {
-                "$ref": "#/definitions/refType",
-                "title": "BOM Reference",
-                "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
-              },
-              "group": {
-                "type": "string",
-                "title": "Component Group",
-                "description": "The grouping name or identifier. This will often be a shortened, single name of the company or project that produced the component, or the source package or domain name. Whitespace and special characters should be avoided. Examples include: apache, org.apache.commons, and apache.org.",
-                "examples": [
-                  "com.acme"
-                ]
-              },
-              "name": {
-                "type": "string",
-                "title": "Component Name",
-                "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
-                "examples": [
-                  "tomcat-catalina"
-                ]
-              },
-              "version": {
-                "$ref": "#/definitions/version",
-                "title": "Component Version",
-                "description": "The component version. The version should ideally comply with semantic versioning but is not enforced"
-              },
-              "purl": {
-                "type": "string",
-                "title": "Package URL (purl)",
-                "description": "Asserts the identity of the component using package-url (purl). The purl, if specified, must be valid and conform to the specification defined at: [https://github.com/package-url/purl-spec](https://github.com/package-url/purl-spec). Refer to `@.evidence.identity` to optionally provide evidence that substantiates the assertion of the component's identity.",
-                "examples": [
-                  "pkg:maven/com.acme/tomcat-catalina@9.0.14?packaging=jar"
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    "cdn": {
-      "type": "object",
-      "title": "CDN",
-      "description": "Describes CDN",
-      "required": [
-        "type",
-        "mime-type",
-        "bom-ref",
-        "name",
-        "components"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "application"
-          ],
-          "title": "Component Type",
-          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
-        },
-        "mime-type": {
-          "type": "string",
-          "enum": [
+            "application/vnd.qubership.configuration",
+            "application/vnd.qubership.configuration.smartplug",
             "application/vnd.qubership.configuration.cdn"
           ],
           "title": "Mime-Type",
@@ -967,75 +783,139 @@
           "title": "Component Name",
           "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery"
         },
-        "components": {
+        "version": {
+          "$ref": "#/definitions/version",
+          "title": "Component Version",
+          "description": "The component version. The version should ideally comply with semantic versioning but is not enforced."
+        },
+        "properties": {
           "type": "array",
-          "title": "CDN components",
-          "description": "Components of CDN",
-          "minItems": 1,
-          "maxItems": 1,
           "items": {
             "type": "object",
-            "title": "",
-            "description": "",
             "required": [
-              "type",
-              "mime-type",
-              "bom-ref",
-              "group",
               "name",
-              "version",
-              "purl"
+              "value"
             ],
             "additionalProperties": false,
             "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "application"
-                ],
-                "title": "Component Type",
-                "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
-              },
-              "mime-type": {
-                "type": "string",
-                "enum": [
-                  "application/zip"
-                ],
-                "title": "Mime-Type",
-                "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
-              },
-              "bom-ref": {
-                "$ref": "#/definitions/refType",
-                "title": "BOM Reference",
-                "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
-              },
-              "group": {
-                "type": "string",
-                "title": "Component Group",
-                "description": "The grouping name or identifier. This will often be a shortened, single name of the company or project that produced the component, or the source package or domain name. Whitespace and special characters should be avoided. Examples include: apache, org.apache.commons, and apache.org.",
-                "examples": [
-                  "com.acme"
-                ]
-              },
               "name": {
-                "type": "string",
-                "title": "Component Name",
-                "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
-                "examples": [
-                  "tomcat-catalina"
+                "type": "string"
+              },
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  }
                 ]
+              }
+            }
+          }
+        },
+        "components": {
+          "type": "array",
+          "title": "Components",
+          "description": "A list of service components",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/artifact"
               },
-              "version": {
-                "$ref": "#/definitions/version",
-                "title": "Component Version",
-                "description": "The component version. The version should ideally comply with semantic versioning but is not enforced"
+              {
+                "$ref": "#/definitions/declarative-configuration"
               },
-              "purl": {
-                "type": "string",
-                "title": "Package URL (purl)",
-                "description": "Asserts the identity of the component using package-url (purl). The purl, if specified, must be valid and conform to the specification defined at: [https://github.com/package-url/purl-spec](https://github.com/package-url/purl-spec). Refer to `@.evidence.identity` to optionally provide evidence that substantiates the assertion of the component's identity.",
-                "examples": [
-                  "pkg:maven/com.acme/tomcat-catalina@9.0.14?packaging=jar"
+              {
+                "$ref": "#/definitions/resource-profile-baseline"
+              }
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "title": "Component's Artifact",
+      "description": "Defines component's artifacts",
+      "required": [
+        "type",
+        "mime-type",
+        "bom-ref",
+        "group",
+        "name",
+        "version",
+        "properties"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "application"
+          ],
+          "title": "Component Type",
+          "description": "Specifies the component type (always 'application' for these configuration children)"
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": [
+            "application/zip",
+            "application/vnd.osgi.bundle",
+            "application/xml",
+            "application/java-archive"
+          ],
+          "title": "MIME Type",
+          "description": "The format specification for the configuration component"
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType",
+          "title": "BOM Reference",
+          "description": "Unique identifier for the component within the BOM"
+        },
+        "group": {
+          "type": "string",
+          "title": "Component Group",
+          "description": "Organization/project grouping identifier",
+          "examples": [
+            "com.acme"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "title": "Component Name",
+          "description": "Shortened identifier for the component",
+          "examples": [
+            "tomcat-catalina"
+          ]
+        },
+        "version": {
+          "$ref": "#/definitions/version",
+          "title": "Component Version",
+          "description": "Version identifier (preferably following semantic versioning)"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "name",
+              "value"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  }
                 ]
               }
             }
@@ -1043,15 +923,17 @@
         }
       }
     },
-    "frontend": {
+    "generic-image": {
       "type": "object",
-      "title": "Frontend",
-      "description": "Describes frontend",
+      "title": "Qubership specific image",
+      "description": "Defines the image's composition",
       "required": [
         "type",
         "mime-type",
         "bom-ref",
         "name",
+        "version",
+        "properties",
         "components"
       ],
       "additionalProperties": false,
@@ -1067,7 +949,7 @@
         "mime-type": {
           "type": "string",
           "enum": [
-            "application/vnd.qubership.configuration.frontend"
+            "application/octet-stream"
           ],
           "title": "Mime-Type",
           "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
@@ -1080,81 +962,60 @@
         "name": {
           "type": "string",
           "title": "Component Name",
-          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery"
+          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
+          "examples": [
+            "tomcat-catalina"
+          ]
         },
-        "components": {
+        "version": {
+          "$ref": "#/definitions/version",
+          "title": "Component Version",
+          "description": "The component version. The version should ideally comply with semantic versioning but is not enforced."
+        },
+        "properties": {
           "type": "array",
-          "title": "Frontend components",
-          "description": "Components of frontend",
-          "minItems": 1,
-          "maxItems": 1,
           "items": {
             "type": "object",
-            "title": "",
-            "description": "",
             "required": [
-              "type",
-              "mime-type",
-              "bom-ref",
-              "group",
               "name",
-              "version",
-              "purl"
+              "value"
             ],
             "additionalProperties": false,
             "properties": {
-              "type": {
-                "type": "string",
-                "enum": [
-                  "application"
-                ],
-                "title": "Component Type",
-                "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
-              },
-              "mime-type": {
-                "type": "string",
-                "enum": [
-                  "application/zip"
-                ],
-                "title": "Mime-Type",
-                "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
-              },
-              "bom-ref": {
-                "$ref": "#/definitions/refType",
-                "title": "BOM Reference",
-                "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
-              },
-              "group": {
-                "type": "string",
-                "title": "Component Group",
-                "description": "The grouping name or identifier. This will often be a shortened, single name of the company or project that produced the component, or the source package or domain name. Whitespace and special characters should be avoided. Examples include: apache, org.apache.commons, and apache.org.",
-                "examples": [
-                  "com.acme"
-                ]
-              },
               "name": {
-                "type": "string",
-                "title": "Component Name",
-                "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
-                "examples": [
-                  "tomcat-catalina"
-                ]
+                "type": "string"
               },
-              "version": {
-                "$ref": "#/definitions/version",
-                "title": "Component Version",
-                "description": "The component version. The version should ideally comply with semantic versioning but is not enforced"
-              },
-              "purl": {
-                "type": "string",
-                "title": "Package URL (purl)",
-                "description": "Asserts the identity of the component using package-url (purl). The purl, if specified, must be valid and conform to the specification defined at: [https://github.com/package-url/purl-spec](https://github.com/package-url/purl-spec). Refer to `@.evidence.identity` to optionally provide evidence that substantiates the assertion of the component's identity.",
-                "examples": [
-                  "pkg:maven/com.acme/tomcat-catalina@9.0.14?packaging=jar"
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "boolean"
+                  }
                 ]
               }
             }
           }
+        },
+        "components": {
+          "type": "array",
+          "title": "Components",
+          "description": "A list of image components",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/docker-image"
+              },
+              {
+                "$ref": "#/definitions/declarative-configuration"
+              },
+              {
+                "$ref": "#/definitions/resource-profile-baseline"
+              }
+            ]
+          },
+          "uniqueItems": true
         }
       }
     }
