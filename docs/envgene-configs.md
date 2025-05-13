@@ -83,6 +83,7 @@ envTemplate:
   # Optional
   # Array of file names containing parameters that will be merged with `additionalTemplateVariables`
   # File must contain key-value hashmap
+  # File must NOT located in a `parameters` directory
   sharedTemplateVariables: array
   # Optional
   # Environment specific deployment parameters set
