@@ -72,6 +72,7 @@ def handle_template_override(render_dir):
     for file in all_files:
         template_path = file.replace("_override", "")
         yaml_to_override = openYaml(template_path)
+        logger.info(f"file before {openFileAsString(template_path)}")
         src = openYaml(file)
         merge_yaml_into_target(yaml_to_override, '', src)
         writeYamlToFile(template_path, yaml_to_override)
@@ -82,7 +83,9 @@ def handle_template_override(render_dir):
         if template_path_stem == 'namespace':
             schema_path = NAMESPACE_SCHEMA
         logger.info(f"Override: {src}")
+        logger.info(f"file after merge {openFileAsString(template_path)}")
         beautifyYaml(template_path, schema_path)
+        logger.info(f"file after beautify {openFileAsString(template_path)}")
         deleteFile(file)
 
 

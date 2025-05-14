@@ -167,6 +167,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
 def processTemplate(templatePath, templateName, env_instances_dir, schema_path, paramset_map, env_specific_params_map, resource_profiles_map=None, header_text="", process_env_specific=True):
     logger.info(f"Processing template: {templateName} in {templatePath}")
     templateContent = openYaml(templatePath)
+    if 'cloud' in templatePath:
+        logger.info(openFileAsString(templatePath))
     if process_env_specific:
         updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent, paramset_map)
     #process deployParameters
