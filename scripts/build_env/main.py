@@ -74,7 +74,9 @@ def handle_template_override(render_dir):
         yaml_to_override = openYaml(template_path)
         logger.info(f"file before {openFileAsString(template_path)}")
         src = openYaml(file)
+        logger.info(f"file content: {yaml_to_override}")
         merge_yaml_into_target(yaml_to_override, '', src)
+        logger.info(f"file content after: {yaml_to_override}")
         writeYamlToFile(template_path, yaml_to_override)
         template_path_stem = pathlib.Path(template_path).stem
         schema_path = ""
