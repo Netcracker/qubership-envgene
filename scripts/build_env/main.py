@@ -81,6 +81,7 @@ def handle_template_override(render_dir):
             schema_path = CLOUD_SCHEMA
         if template_path_stem == 'namespace':
             schema_path = NAMESPACE_SCHEMA
+        logger.info(f"Override: {src}")
         beautifyYaml(template_path, schema_path)
         deleteFile(file)
 

@@ -173,6 +173,8 @@ def processTemplate(templatePath, templateName, env_instances_dir, schema_path, 
     templateContent["deployParameters"] = convertParameterSetsToParameters(templatePath, templateContent, "deployParameterSets", "deployParameters", paramset_map, env_specific_params_map, header_text)
     templateContent["deployParameterSets"] = []
     #process e2eParameters
+    logger.info('e2eParameterSets order')
+    logger.info(templateContent["e2eParameterSets"])
     templateContent["e2eParameters"] = convertParameterSetsToParameters(templatePath, templateContent, "e2eParameterSets", "e2eParameters", paramset_map, env_specific_params_map, header_text)
     templateContent["e2eParameterSets"] = []
     #process technicalConfigurationParameters
