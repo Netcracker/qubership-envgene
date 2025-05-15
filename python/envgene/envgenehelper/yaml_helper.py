@@ -203,7 +203,6 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
                     del src_dicts[k]
             for _, src_dicts_el in src_dicts.items():
                 target_yaml[k].append(src_dicts_el)
-            target_yaml[k] = list(set(target_yaml[k]))
         elif overwrite_existing_values:
             target_yaml[k] = v
 
