@@ -25,13 +25,14 @@
         - [\[Version 2.0\]\[Deployment Parameter Context\] Per Service `deployment-parameters.yaml`](#version-20deployment-parameter-context-per-service-deployment-parametersyaml)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `mapping.yml`](#version-20deployment-parameter-context-mappingyml)
       - [\[Version 2.0\] Pipeline Parameter Context](#version-20-pipeline-parameter-context)
-        - [\[Version 2.0\] Pipeline Parameter Context Injected Parameters](#version-20-pipeline-parameter-context-injected-parameters)
-          - [\[Version 2.0\]\[Pipeline Parameter Context\] `composite_structure` Example](#version-20pipeline-parameter-context-composite_structure-example)
-          - [\[Version 2.0\]\[Pipeline Parameter Context\] `k8s_tokens` Example](#version-20pipeline-parameter-context-k8s_tokens-example)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-parameters.yaml`](#version-20pipeline-parameter-context-consumer-parametersyaml)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-credentials.yaml`](#version-20pipeline-parameter-context-consumer-credentialsyaml)
+        - [\[Version 2.0\] Pipeline Parameter Context Injected Parameters](#version-20-pipeline-parameter-context-injected-parameters)
+          - [\[Version 2.0\]\[Pipeline Parameter Context\] `composite_structure` Example](#version-20pipeline-parameter-context-composite_structure-example)
+          - [\[Version 2.0\]\[Pipeline Parameter Context\] `k8s_tokens` Example](#version-20pipeline-parameter-context-k8s_tokens-example)
+          - [\[Version 2.0\]\[Pipeline Parameter Context\] `environments` Example](#version-20pipeline-parameter-context-environments-example)
       - [\[Version 2.0\] Runtime Parameter Context](#version-20-runtime-parameter-context)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `parameters.yaml`](#version-20runtime-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `credentials.yaml`](#version-20runtime-parameter-context-credentialsyaml)
@@ -517,42 +518,9 @@ This file defines a mapping between namespaces and the corresponding paths to th
 
 These parameters define a dedicated parameter context used for managing environment lifecycle systems, such as deployment orchestrators or CI/CD workflows.
 
-This context is constructed from parameters defined in the `e2eParameters` sections of the `Cloud` Environment Instance object. Additionally, the following parameters are included:
+This context is constructed from parameters defined in the `e2eParameters` sections of the `Cloud` Environment Instance object, as well as parameters [additionally injected](#version-20-pipeline-parameter-context-injected-parameters) by EnvGene. Such parameters are described in [`parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml) and [`credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml).
 
-##### [Version 2.0] Pipeline Parameter Context Injected Parameters
-
-| Attribute | Mandatory | Description | Default | Example |
-|---|---|---|---|---|
-| **composite_structure** | Mandatory | Contains the unmodified  [Composite Structure](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#environment-instance-objects) object of the Environment Instance for which the Effective Set is generated. This variable is located in `parameters.yaml` | `{}`| [example](#version-20pipeline-parameter-context-composite_structure-example) |
-| **k8s_tokens** | Mandatory | Contains deployment tokens for each namespace in the Environment Instance. The value is derived from the `data.secret` property of the Credential specified via `defaultCredentialsId` attribute in the corresponding `Namespace` or parent `Cloud`. If the attribute is not defined at the `Namespace` level, it is inherited from the parent `Cloud`. If defined at both levels, the `Namespace` value takes precedence. Either the `Cloud` or `Namespace` must define `defaultCredentialsId`. This variable is located in `credentials.yaml`.  | None | [example](#version-20pipeline-parameter-context-k8s_tokens-example) |
-
-###### \[Version 2.0][Pipeline Parameter Context] `composite_structure` Example
-
-```yaml
-composite_structure:
-  name: "clusterA-env-1-composite-structure"
-  version: 0
-  id: "env-1-core"
-  baseline:
-    name: "env-1-core"
-    type: "namespace"
-  satellites:
-    - name: "env-1-bss"
-      type: "namespace"
-    - name: "env-1-oss"
-      type: "namespace"
-```
-
-###### \[Version 2.0][Pipeline Parameter Context] `k8s_tokens` Example
-
-```yaml
-k8s_tokens:
-  env-1-core: "ZXlKaGJHY2lPaUpTVXpJMU5pS..."
-  env-1-bss: "ZXlKaGJHY2lPaUpTVXpJMU5pS..."
-  env-1-oss: "URBd01EQXdNREF3TURBd01EQX..."
-```
-
-These **general** parameters are described in two files:
+Optionally, the pipeline context can include file pairs containing **consumer-specific** [sensitive](#version-20pipeline-parameter-context-consumer-credentialsyaml)/[non-sensitive](#version-20pipeline-parameter-context-consumer-parametersyaml) parameters. These parameters, derived as subsets of `parameters.yaml` and `credentials.yaml`, are generated based on a JSON schema provided by the `--pipeline-context-schema-path` attribute. Each attribute results in a separate file pair:
 
 ##### \[Version 2.0][Pipeline Parameter Context] `parameters.yaml`
 
@@ -577,8 +545,6 @@ The structure of this file is as follows:
 ```
 
 The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
-
-Optionally, the pipeline context can include file pairs containing **consumer-specific** sensitive/non-sensitive parameters. These parameters, derived as subsets of `parameters.yaml` and `credentials.yaml`, are generated based on a JSON schema provided by the `--pipeline-context-schema-path` attribute. Each attribute results in a separate file pair:
 
 ##### \[Version 2.0][Pipeline Parameter Context] `<consumer>-parameters.yaml`
 
@@ -617,6 +583,52 @@ The calculator forms consumer-specific parameters according to the following pri
 3. These rules apply only to root-level parameters
 
 [Example of consumer-specific pipeline context component JSON schema](../examples/consumer-v1.0.json)
+
+##### [Version 2.0] Pipeline Parameter Context Injected Parameters
+
+| Attribute | Mandatory | Description | Default | Example |
+|---|---|---|---|---|
+| **composite_structure** | Mandatory | Contains the unmodified  [Composite Structure](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#environment-instance-objects) object of the Environment Instance for which the Effective Set is generated. This variable is located in `parameters.yaml` | `{}`| [example](#version-20pipeline-parameter-context-composite_structure-example) |
+| **k8s_tokens** | Mandatory | Contains deployment tokens for each namespace in the Environment Instance. The value is derived from the `data.secret` property of the Credential specified via `defaultCredentialsId` attribute in the corresponding `Namespace` or parent `Cloud`. If the attribute is not defined at the `Namespace` level, it is inherited from the parent `Cloud`. If defined at both levels, the `Namespace` value takes precedence. Either the `Cloud` or `Namespace` must define `defaultCredentialsId`. This variable is located in `credentials.yaml` | None | [example](#version-20pipeline-parameter-context-k8s_tokens-example) |
+| **environments** | Mandatory | Contains all repository Environments, not just the one for which the Effective Set calculation was run. For each Environment, it includes the names of its contained namespaces. For each namespace, it provides a deploy postfix. The deploy postfix is taken from the namespace template name (the template filename without extension) | None | [example](#version-20pipeline-parameter-context-environments-example) |
+
+###### \[Version 2.0][Pipeline Parameter Context] `composite_structure` Example
+
+```yaml
+composite_structure:
+  name: "clusterA-env-1-composite-structure"
+  version: 0
+  id: "env-1-core"
+  baseline:
+    name: "env-1-core"
+    type: "namespace"
+  satellites:
+    - name: "env-1-bss"
+      type: "namespace"
+    - name: "env-1-oss"
+      type: "namespace"
+```
+
+###### \[Version 2.0][Pipeline Parameter Context] `k8s_tokens` Example
+
+```yaml
+k8s_tokens:
+  env-1-core: "ZXlKaGJHY2lPaUpTVXpJMU5pS..."
+  env-1-bss: "ZXlKaGJHY2lPaUpTVXpJMU5pS..."
+  env-1-oss: "URBd01EQXdNREF3TURBd01EQX..."
+```
+
+###### \[Version 2.0][Pipeline Parameter Context] `environments` Example
+
+```yaml
+environments:
+  cluster-x/env-y:
+    namespaces:
+      env-1-core:
+        deployPostfix: core
+      env-1-bss:
+        deployPostfix: bss
+```
 
 #### [Version 2.0] Runtime Parameter Context
 
