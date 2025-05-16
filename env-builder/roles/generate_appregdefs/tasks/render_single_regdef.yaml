@@ -29,6 +29,7 @@
     dest: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.regdef.yml"
   vars:
     regdefs: "{{ regdefs }}"
+    current_env: "{{ current_env }}"
 
 - name: Set rendered RegDef path
   set_fact:

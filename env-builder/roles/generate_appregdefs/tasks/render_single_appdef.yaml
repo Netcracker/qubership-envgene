@@ -41,6 +41,7 @@
     appdefs:     "{{ appdefs }}"
     artifactId:  "{{ artifactId }}"
     groupId:     "{{ groupId }}"
+    current_env: "{{ current_env }}"
 
 - name: Set rendered AppDef path
   set_fact:
