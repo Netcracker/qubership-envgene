@@ -208,6 +208,9 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 ## `DEPLOYMENT_SESSION_ID`
 
-**Description**: This parameter will be included in the deployment context of the Effective Set. The EnvGene passes it to the Calculator CLI using the `--extra_params` attribute. It is used together with `GENERATE_EFFECTIVE_SET`.
+**Description**: This parameter is used in two scenarios:
+
+1. If this parameter is provided, the resulting pipeline commit will include a [Git trailer](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt-code--trailerlttokengtltvaluegtcode) in the format: `DEPLOYMENT_SESSION_ID: <value of DEPLOYMENT_SESSION_ID>`.
+2. It will also be part of the deployment context of the Effective Set. The EnvGene passes it to the Calculator CLI using the `--extra_params` attribute. In this case it is used together with `GENERATE_EFFECTIVE_SET`.
 
 **Example**: "123e4567-e89b-12d3-a456-426614174000"
