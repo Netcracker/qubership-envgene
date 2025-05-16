@@ -41,7 +41,8 @@
     appdefs:     "{{ appdefs }}"
     artifactId:  "{{ artifactId }}"
     groupId:     "{{ groupId }}"
-
+    current_env: "{{ current_env }}"
+    
 - name: Set rendered AppDef path
   set_fact:
     appdef_rendered_path: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.appdef.yml"
