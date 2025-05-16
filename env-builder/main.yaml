@@ -222,6 +222,8 @@
           - "*.yaml.j2"
           - "*.yml.j2"
           - "*.j2"
+          - "*.yaml"
+          - "*.yml"
         recurse: true
         use_regex: false
         file_type: file
@@ -236,6 +238,8 @@
           - "*.yaml.j2"
           - "*.yml.j2"
           - "*.j2"
+          - "*.yaml"
+          - "*.yml"
         recurse: true
         use_regex: false
         file_type: file
