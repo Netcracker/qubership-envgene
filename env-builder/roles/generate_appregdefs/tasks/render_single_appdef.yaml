@@ -8,23 +8,52 @@
     appdefs:
       overrides: "{{ appdefs_overrides }}"
 
-- name: Extract template base name (for output naming)
+- name: Extract template base name
   set_fact:
     template_name: "{{ item.path | basename | regex_replace('\\.j2$', '') }}"
 
+- name: Load raw AppDef template
+  slurp:
+    src: "{{ item.path }}"
+  register: appdef_raw_slurp
+
+- name: Decode raw AppDef template
+  set_fact:
+    appdef_raw: "{{ appdef_raw_slurp.content | b64decode }}"
+
+- name: Extract metadata lines for YAML parsing
+  set_fact:
+    appdef_metadata_raw: >-
+      {{ appdef_raw
+         .splitlines()
+         | select('match', '^[^\\{\\%].*?:')
+         | join('\n') }}
+
+- name: Parse metadata YAML into dict
+  set_fact:
+    appdef_metadata: "{{ appdef_metadata_raw | from_yaml }}"
+
+- name: Extract metadata fields
+  set_fact:
+    artifactId: "{{ appdef_metadata.artifactId }}"
+    groupId:    "{{ appdef_metadata.groupId }}"
+    appdef_name: "{{ appdef_metadata.name }}"
+
 - name: Render AppDef template using Jinja
   template:
-    src: "{{ item.path }}"
+    src:  "{{ item.path }}"
     dest: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.appdef.yml"
   vars:
     appdefs:     "{{ appdefs }}"
     current_env: "{{ current_env }}"
+    artifactId:  "{{ artifactId }}"
+    groupId:     "{{ groupId }}"
 
 - name: Set rendered AppDef path
   set_fact:
     appdef_rendered_path: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.appdef.yml"
 
-- name: Read rendered AppDef file into string
+- name: Read rendered AppDef into string
   slurp:
     src: "{{ appdef_rendered_path }}"
   register: appdef_rendered_slurp
@@ -33,19 +62,9 @@
   set_fact:
     appdef_raw_rendered: "{{ appdef_rendered_slurp.content | b64decode }}"
 
-- name: Parse rendered AppDef YAML into dict
-  set_fact:
-    appdef_parsed: "{{ appdef_raw_rendered | from_yaml }}"
-
-- name: Extract fields from rendered AppDef
-  set_fact:
-    artifactId: "{{ appdef_parsed.artifactId }}"
-    groupId:    "{{ appdef_parsed.groupId }}"
-    appdef_name: "{{ appdef_parsed.name }}"
-
 - name: Save final rendered AppDef
   copy:
     content: "{{ appdef_raw_rendered }}"
-    dest: "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.appdef.yml"
-    mode: '0644'
+    dest:    "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.appdef.yml"
+    mode:    '0644'
   when: appdef_name is defined and appdef_name | length > 0
