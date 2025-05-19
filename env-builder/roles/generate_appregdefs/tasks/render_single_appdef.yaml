@@ -19,21 +19,21 @@
   set_fact:
     appdef_raw: "{{ appdef_raw_slurp.content | b64decode }}"
 
-- name: Parse raw AppDef YAML into dict
+- name: Parse raw AppDef YAML into dict (without evaluating Jinja)
   set_fact:
     appdef_parsed: "{{ appdef_raw | from_yaml }}"
 
-- name: Extract AppDef fields for Jinja context
+- name: Extract fields from raw AppDef for Jinja context
   set_fact:
     artifactId: "{{ appdef_parsed.artifactId }}"
-    groupId:    "{{ appdef_parsed.groupId }}"
+    groupId: "{{ appdef_parsed.groupId }}"
     appdef_name: "{{ appdef_parsed.name }}"
 
-- name: Extract template basename for Jinja context
+- name: Extract template base name (for output naming)
   set_fact:
     template_name: "{{ item.path | basename | regex_replace('\\.j2$', '') }}"
 
-- name: Render AppDef to temp file
+- name: Render AppDef template using Jinja
   template:
     src: "{{ item.path }}"
     dest: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.appdef.yml"
@@ -47,22 +47,18 @@
   set_fact:
     appdef_rendered_path: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.appdef.yml"
 
-- name: Read rendered AppDef into raw string
+- name: Read rendered AppDef file into string
   slurp:
     src: "{{ appdef_rendered_path }}"
   register: appdef_rendered_slurp
 
-- name: Decode rendered AppDef
+- name: Decode rendered AppDef string
   set_fact:
     appdef_raw_rendered: "{{ appdef_rendered_slurp.content | b64decode }}"
 
-- name: Parse rendered AppDef YAML into a dict
-  set_fact:
-    appdef_content: "{{ appdef_raw_rendered | from_yaml }}"
-
-- name: Save rendered AppDef to final path
+- name: Save final rendered AppDef
   copy:
     content: "{{ appdef_raw_rendered }}"
-    dest:    "{{ current_env_dir }}/AppDefs/{{ appdef_content.name }}.appdef.yml"
-    mode:    '0644'
-  when: appdef_content.name is defined and (appdef_content.name | length) > 0
+    dest: "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.appdef.yml"
+    mode: '0644'
+  when: appdef_name is defined and appdef_name | length > 0
