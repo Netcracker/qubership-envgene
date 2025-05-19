@@ -10,37 +10,16 @@
     appdefs:
       overrides: "{{ appdefs_overrides }}"
 
-- name: Load raw AppDef template
-  slurp:
-    src: "{{ item.path }}"
-  register: appdef_raw_slurp
-
-- name: Decode raw AppDef template
-  set_fact:
-    appdef_raw: "{{ appdef_raw_slurp.content | b64decode }}"
-
-- name: Parse raw AppDef YAML into dict
-  set_fact:
-    appdef_parsed: "{{ appdef_raw | from_yaml }}"
-
-- name: Extract AppDef fields for Jinja context
-  set_fact:
-    artifactId: "{{ appdef_parsed.artifactId }}"
-    groupId:    "{{ appdef_parsed.groupId }}"
-    appdef_name: "{{ appdef_parsed.name }}"
-
 - name: Extract template basename for Jinja context
   set_fact:
     template_name: "{{ item.path | basename | regex_replace('\\.j2$', '') }}"
 
 - name: Render AppDef to temp file
   template:
-    src: "{{ item.path }}"
+    src:  "{{ item.path }}"
     dest: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.appdef.yml"
   vars:
     appdefs:     "{{ appdefs }}"
-    artifactId:  "{{ artifactId }}"
-    groupId:     "{{ groupId }}"
     current_env: "{{ current_env }}"
 
 - name: Set rendered AppDef path
@@ -55,6 +34,16 @@
 - name: Decode rendered AppDef
   set_fact:
     appdef_raw_rendered: "{{ appdef_rendered_slurp.content | b64decode }}"
+
+- name: Parse rendered AppDef YAML into a dict
+  set_fact:
+    appdef_content: "{{ appdef_raw_rendered | from_yaml }}"
+
+- name: Extract name (and other fields) for our final filename
+  set_fact:
+    appdef_name: "{{ appdef_content.name }}"
+    artifactId: "{{ appdef_content.artifactId }}"
+    groupId:    "{{ appdef_content.groupId }}"
 
 - name: Save rendered AppDef to final path
   copy:
