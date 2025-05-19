@@ -1,0 +1,41 @@
+name: Build jar for Effective set
+run-name: "Build jar: ${{ github.ref_name }} #${{ github.run_number }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      maven-command:
+        description: 'Maven command'
+        required: false
+        type: string
+        default: "--batch-mode package -Dgpg.skip=true -f ./build_effective_set_generator_java/pom.xml"
+      artifact-name:
+        description: 'Artifact name'
+        required: false
+        default: ''
+      tags:
+        description: 'Tags'
+        required: false
+        type: string
+        default: ''
+      java-version:
+        description: 'Java version (e.g., 21)'
+        required: false
+        type: string
+        default: "21"
+      dry-run:
+        description: 'Dry run'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  dev-build:
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@main
+    with:
+      maven-command: "${{ github.event.inputs.maven-command }}"
+      java-version: ${{ github.event.inputs.java-version }}
+      upload-artifact: true
+      artifact-id: ${{ github.event.inputs.artifact-name || github.event.repository.name }}
+    secrets:
+      maven-token: ${{ secrets.GITHUB_TOKEN }}
