@@ -1,74 +1,92 @@
 ---
 - name: Ensure tmp_render_dir fact is set
   set_fact:
-    tmp_render_dir: "{{ tmp_render_dir | default('/tmp') }}"
+    tmp_render_dir:   "{{ tmp_render_dir   | default('/tmp') }}"
+    render_timestamp: "{{ render_timestamp | default( lookup('pipe','date +%s') ) }}"
+
+- name: Ensure current_env fact is present
+  set_fact:
+    current_env: "{{ current_env | default({ 'cloud_passport': { 'custom': {} } }) }}"
+
+- name: Ensure tmp_render_dir exists
+  file:
+    path: "{{ tmp_render_dir }}"
+    state: directory
+    mode: '0755'
 
 - name: Prepare appdefs dict for Jinja context
   set_fact:
     appdefs:
       overrides: "{{ appdefs_overrides }}"
 
-- name: Extract template base name
+- name: Compute template_name and temp path
   set_fact:
-    template_name: "{{ item.path | basename | regex_replace('\\.j2$', '') }}"
+    template_name: "{{ item.path | basename | regex_replace('\\.ya?ml\\.j2$', '') }}"
+    rendered_tmp:  "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.appdef.yml"
 
-- name: Load raw AppDef template
+- name: Load & decode the raw Jinja template
   slurp:
     src: "{{ item.path }}"
-  register: appdef_raw_slurp
+  register: raw_slurp
 
-- name: Decode raw AppDef template
+- name: Set raw template text
   set_fact:
-    appdef_raw: "{{ appdef_raw_slurp.content | b64decode }}"
+    appdef_raw: "{{ raw_slurp.content | b64decode }}"
 
-- name: Extract only name, artifactId, and groupId lines (with YAML header)
+- name: Extract `name` via regex
   set_fact:
-    appdef_metadata_raw: >-
-      {{ '---\n' +
-         (appdef_raw
-           .splitlines()
-           | select('match', '^\\s*(name|artifactId|groupId):')
-           | list
-           | join('\n')
-         )
-      }}
+    appdef_name: >-
+      {{ (appdef_raw
+           | regex_findall('^\\s*name:\\s*\"([^\"]+)\"', multiline=True)
+           | first | default('')
+         ) }}
 
-- name: Parse metadata YAML into dict
+- name: Extract `artifactId` via regex
   set_fact:
-    appdef_metadata: "{{ appdef_metadata_raw | from_yaml }}"
+    artifactId: >-
+      {{ (appdef_raw
+           | regex_findall('^\\s*artifactId:\\s*\"([^\"]+)\"', multiline=True)
+           | first | default('')
+         ) }}
 
-- name: Extract metadata fields
+- name: Extract `groupId` via regex
   set_fact:
-    artifactId: "{{ appdef_metadata.artifactId }}"
-    groupId:    "{{ appdef_metadata.groupId }}"
-    appdef_name: "{{ appdef_metadata.name }}"
+    groupId: >-
+      {{ (appdef_raw
+           | regex_findall('^\\s*groupId:\\s*\"([^\"]+)\"', multiline=True)
+           | first | default('')
+         ) }}
+
+- name: Compute final output paths
+  set_fact:
+    final_dir:  "{{ current_env_dir }}/AppDefs"
+    final_path: "{{ final_dir }}/{{ appdef_name }}.appdef.yml"
+
+- name: Ensure final AppDefs directory exists
+  file:
+    path:    "{{ final_dir }}"
+    state:   directory
+    mode:    '0755'
+    recurse: yes
 
 - name: Render AppDef template using Jinja
   template:
     src:  "{{ item.path }}"
-    dest: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.appdef.yml"
+    dest: "{{ rendered_tmp }}"
   vars:
-    appdefs:     "{{ appdefs }}"
+    appdefs:    "{{ appdefs }}"
     current_env: "{{ current_env }}"
-    artifactId:  "{{ artifactId }}"
-    groupId:     "{{ groupId }}"
+    artifactId: "{{ artifactId }}"
+    groupId:    "{{ groupId }}"
 
-- name: Set rendered AppDef path
-  set_fact:
-    appdef_rendered_path: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.appdef.yml"
-
-- name: Read rendered AppDef into string
+- name: Slurp rendered file back into memory
   slurp:
-    src: "{{ appdef_rendered_path }}"
-  register: appdef_rendered_slurp
+    src: "{{ rendered_tmp }}"
+  register: rendered_slurp
 
-- name: Decode rendered AppDef string
-  set_fact:
-    appdef_raw_rendered: "{{ appdef_rendered_slurp.content | b64decode }}"
-
-- name: Save final rendered AppDef
+- name: Decode & save final AppDef
   copy:
-    content: "{{ appdef_raw_rendered }}"
-    dest:    "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.appdef.yml"
+    content: "{{ rendered_slurp.content | b64decode }}"
+    dest:    "{{ final_path }}"
     mode:    '0644'
-  when: appdef_name is defined and appdef_name | length > 0
+  when: appdef_name | length > 0
