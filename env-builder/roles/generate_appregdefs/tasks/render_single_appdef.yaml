@@ -21,14 +21,17 @@
   set_fact:
     appdef_raw: "{{ appdef_raw_slurp.content | b64decode }}"
 
-- name: Extract only name, artifactId, and groupId lines for YAML parsing
+- name: Extract only name, artifactId, and groupId lines (with YAML header)
   set_fact:
     appdef_metadata_raw: >-
-      {{ appdef_raw
-         .splitlines()
-         | select('match', '^\s*(name|artifactId|groupId):')
-         | list
-         | join('\n') }}
+      {{ '---\n' +
+         (appdef_raw
+           .splitlines()
+           | select('match', '^\\s*(name|artifactId|groupId):')
+           | list
+           | join('\n')
+         )
+      }}
 
 - name: Parse metadata YAML into dict
   set_fact:
