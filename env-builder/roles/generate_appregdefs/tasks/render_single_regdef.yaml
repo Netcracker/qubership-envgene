@@ -31,7 +31,7 @@
         src:  "{{ item.path }}"
         dest: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.regdef.yml"
       vars:
-        # current_env: "{{ current_env }}"
+        current_env: "{{ current_env }}"
         regdefs:     "{{ regdefs }}"
 
     # 5) Read & decode the rendered output
