@@ -32,24 +32,82 @@ When a commit is made to the Template Repository, an artifact is built and publi
 This object is a describes the structure of a solution, links to solution's components. It has the following structure:
 
 ```yaml
+# Optional
+# Template Inheritance configuration
+# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+parent-templates:
+  <parent-template-name>: "<app:ver-of-parent-template>"
+# Mandatory
+# Can be specified either as direct template path (string) or as an object
 tenant: "<path-to-the-tenant-template-file>"
-# Cloud configuration can be specified either as direct template path (string) 
-# or as an object with template_path and optional overrides
+# or
+tenant:
+  # Template Inheritance configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  parent: "<parent-template-name>"
+# Mandatory
+# Can be specified either as direct template path (string) or as an object
 cloud: "<path-to-the-cloud-template-file>"
 # or
 cloud:
+  # Optional
   template_path: "<path-to-the-cloud-template-file>"
   # Optional
-  # See details https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
+  # Template Override configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
   template_override:     
     "<yaml or jinja expression>"
+  # Optional
+  # Template Inheritance configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  parent: "<parent-template-name>"
+  # Optional
+  # Template Inheritance configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  overrides-parent:
+    profile:
+      override-profile-name: "<resource-profile-override-name>"
+      parent-profile-name: "<resource-profile-override-name>"
+      baseline-profile-name: "<resource-profile-baseline-name>"
+      merge-with-parent: <boolean>
+    deployParameters: <hashmap-with-parameters>
+    e2eParameters: <hashmap-with-parameters>
+    technicalConfigurationParameters: <hashmap-with-parameters>
+    deployParameterSets: <list-with-parameter-sets>
+    e2eParameterSets: <list-with-parameter-sets>
+    technicalConfigurationParameterSets: <list-with-parameter-sets>
 composite_structure: "<path-to-the-composite-structure-template-file>"
 namespaces:
-  - template_path: "<path-to-the-namespace-template-file>"
+  - # Optional
+    template_path: "<path-to-the-namespace-template-file>"
     # Optional
     # See details https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
     template_override:
       "<yaml or jinja expression>"
+    # Optional
+    # Template Inheritance configuration
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    name: <namespace-name-in-parent-template>
+    # Optional
+    # Template Inheritance configuration
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    parent: "<parent-template-name>"
+    # Optional
+    # Template Inheritance configuration
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    overrides-parent:
+      profile:
+        override-profile-name: "<resource-profile-override-name>"
+        parent-profile-name: "<resource-profile-override-name>"
+        baseline-profile-name: "<resource-profile-baseline-name>"
+        merge-with-parent: true
+      deployParameters: <hashmap-with-parameters>
+      e2eParameters: <hashmap-with-parameters>
+      technicalConfigurationParameters: <hashmap-with-parameters>
+      deployParameterSets: <list-with-parameter-sets>
+      e2eParameterSets: <list-with-parameter-sets>
+      technicalConfigurationParameterSets: <list-with-parameter-sets>
+      template_path: "<path-to-the-namespace-template-file>"
 ```
 
 [Template Descriptor JSON schema](/schemas/template-descriptor.schema.json)
