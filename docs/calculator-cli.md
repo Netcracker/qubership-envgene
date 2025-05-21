@@ -371,10 +371,10 @@ Common Predefined Parameters:
 
 | Attribute | Mandatory | Type | Description | Default | Source in Application SBOM |
 |---|---|---|---|---|---|
-| `artifact` | no | string | artifact ID of [Primary Service Artifact](#version-20-primary-service-artifact) | None | None |
-| `artifact.artifactId` | no | string | artifact ID of [Primary Service Artifact](#version-20-primary-service-artifact) | None | `<primary-service-artifact>.artifactId`|
-| `artifact.groupId` | no | string | group ID of [Primary Service Artifact](#version-20-primary-service-artifact)  | None | `<primary-service-artifact>.groupId` |
-| `artifact.version` | no | string | version of [Primary Service Artifact](#version-20-primary-service-artifact)  | None | `<primary-service-artifact>.version`|
+| `artifact` | no | string | [Primary Service Artifact](#version-20-primary-service-artifact) | None | None |
+| `artifact.artifactId` | no | string | artifact ID of [Primary Service Artifact](#version-20-primary-service-artifact) | None | `<primary-service-artifact>.id.split(':')[1]`|
+| `artifact.groupId` | no | string | group ID of [Primary Service Artifact](#version-20-primary-service-artifact)  | None | `<primary-service-artifact>..id.split(':')[0]` |
+| `artifact.version` | no | string | version of [Primary Service Artifact](#version-20-primary-service-artifact)  | None | `<primary-service-artifact>..id.split(':')[2]`|
 | `artifacts` | yes | list | This section defines microservice artifacts. Artifacts are only populated for services/SBOM components that meet [specified conditions](#version-20-service-artifacts). All other cases should return `[]` | `[]` | None |
 | `artifacts[].artifact_id` | yes | string | always `''` | `''` | None |
 | `artifacts[].artifact_path` | yes | string | always `''` | `''` | None |
