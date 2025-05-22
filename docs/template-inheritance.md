@@ -27,7 +27,7 @@ Managing configurations for complex solutions presents several challenges:
 - Maintenance overhead when updating common parameters
 - Configuration drift as copies evolve independently
 
-This creates inefficiencies in configuration management, increases error potential, and makes configuration updates across multiple templates cumbersome.
+This creates inefficiencies in configuration management, increases error potential, and makes configuration updates across multiple templates difficult.
 
 ## Proposed Approach
 
