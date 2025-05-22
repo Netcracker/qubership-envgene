@@ -17,17 +17,17 @@
 
 Managing configurations for complex solutions presents several challenges:
 
-  **Cross-Team Dependencies**: When multiple teams own configuration of different components:
+**Cross-Team Dependencies**: When multiple teams own configuration of different components:
 
-    - No standardized way to share configurations
-    - Changes require manual coordination across teams
-    - Version compatibility becomes difficult to track
+- No standardized way to share configurations
+- Changes require manual coordination across teams
+- Version compatibility becomes difficult to track
 
-  **Configuration Duplication**: Teams repeatedly copy or re-invent similar configuration across projects, leading to:
+**Configuration Duplication**: Teams repeatedly copy or re-invent similar configuration across projects, leading to:
 
-    - Maintenance overhead when updating common parameters
-    - Configuration drift as copies evolve independently
-    - Inconsistent environments despite similar requirements
+  - Maintenance overhead when updating common parameters
+  - Configuration drift as copies evolve independently
+  - Inconsistent environments despite similar requirements
 
 This creates inefficiencies in configuration management, increases error potential, and makes configuration updates across multiple templates cumbersome.
 
