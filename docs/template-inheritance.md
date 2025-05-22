@@ -85,7 +85,7 @@ This feature can be used in scenarios where EnvGene manages configuration parame
 
 A solution comprises multiple applications, where application's teams develop and provide their respective templates. The team responsible for the overall solution collects these templates, combines them into a product-level template, and adds necessary customizations.
 
-![template-inheritance-2.png](./images/template-inheritance-3.png)
+![template-inheritance-2.png](./images/template-inheritance-2.png)
 
 #### Case 2
 
