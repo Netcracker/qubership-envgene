@@ -4,7 +4,7 @@
   - [Problem Statement](#problem-statement)
   - [Proposed Approach](#proposed-approach)
     - [Key Capabilities](#key-capabilities)
-    - [Potential Use Cases](#potential-use-cases)
+    - [Use Cases](#use-cases)
       - [Case 1](#case-1)
       - [Case 2](#case-2)
     - [Template Inheritance Configuration](#template-inheritance-configuration)
