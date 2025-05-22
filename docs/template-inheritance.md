@@ -160,15 +160,15 @@ cloud:
     # Optional
     # Parameters that extend/override the parent template's values
     deployParameterSets:
-      - "tst-bss-overrides"
+      - "bss-overrides"
     # Optional
     # Parameters that extend/override the parent template's values
     e2eParameterSets: 
-      - "tst-bss-e2e-overrides"
+      - "bss-e2e-overrides"
     # Optional
     # Parameters that extend/override the parent template's values
     technicalConfigurationParameterSets:
-      - "tst-bss-runtime-overrides"
+      - "bss-runtime-overrides"
 namespaces:
   # Name of the namespace template in parent template. Here should be exact alignment with the name of namespace template in parent template
   - name: "{env}-bss"
@@ -208,15 +208,15 @@ namespaces:
       # Optional
       # Parameter Sets that extend/override the parent template's values
       deployParameterSets:
-        - "tst-bss-overrides"
+        - "bss-overrides"
       # Optional
       # Parameters Sets that extend/override the parent template's values
       e2eParameterSets: 
-        - "tst-bss-e2e-overrides"
+        - "bss-e2e-overrides"
       # Optional
       # Parameters Sets that extend/override the parent template's values
       technicalConfigurationParameterSets:
-        - "tst-bss-runtime-overrides"
+        - "bss-runtime-overrides"
 ```
 
 ##### Examples
