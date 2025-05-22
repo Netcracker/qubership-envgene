@@ -79,7 +79,7 @@ This diagram shows parent and child templates with their components. The color o
    - Parent templates are regular EnvGene templates needing no special configuration
    - Supports multi-level inheritance chains
 
-### Potential Use Cases
+### Use Cases
 
 This feature can be used in scenarios where EnvGene manages configuration parameters for complex solutions consisting of multiple applications or application groups, with parameters developed and tested by different teams.
 
