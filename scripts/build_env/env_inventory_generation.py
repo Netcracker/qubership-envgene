@@ -184,12 +184,21 @@ def handle_env_specific_params(env, env_specific_params):
     envSpecificParamsets = params.get("envSpecificParamsets")
     paramsets = params.get("paramsets")
     creds = params.get("credentials")
+    tenantName = params.get("tenantName")
+    deployer = params.get("deployer")
+    
+    logger.info(f"ENV_SPECIFIC_PARAMS TenanytName is {tenantName}")
+    logger.info(f"ENV_SPECIFIC_PARAMS deployer value is {deployer}")
 
     handle_cluster_params(env, clusterParams)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.additionalTemplateVariables', additionalTemplateVariables)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.envSpecificParamsets', envSpecificParamsets)
     handle_credentials(env, creds)
     create_paramset_files(env, paramsets)
+    helper.merge_yaml_into_target(env.inventory, 'inventory.tenantName', tenantName)
+    helper.merge_yaml_into_target(env.inventory, 'inventory.deployer', deployer)
+    
+    logger.info(f"ENV_SPECIFIC_PARAMS env details : {vars(env)}")
 
 def handle_env_template_name(env, env_template_name):
     if not env_template_name:
