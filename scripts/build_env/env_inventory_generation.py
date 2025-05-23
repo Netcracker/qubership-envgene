@@ -186,6 +186,7 @@ def handle_env_specific_params(env, env_specific_params):
     creds = params.get("credentials")
     tenantName = params.get("tenantName")
     deployer = params.get("deployer")
+    
     logger.info(f"ENV_SPECIFIC_PARAMS TenanytName is {tenantName}")
     logger.info(f"ENV_SPECIFIC_PARAMS deployer value is {deployer}")
 
