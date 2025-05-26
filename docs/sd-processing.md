@@ -136,12 +136,9 @@ There are three merge modes. They differ in their algorithms and output results:
 
 #### `basic-merge` SD Merge Mode
 
-The simplest merge strategy designed specifically for Effective Set calculation in EnvGene. This mode:
+The simple merge strategy designed specifically for Effective Set calculation in EnvGene. This mode:
 
-- Focuses exclusively on application version management
-- Only modifies/extends the applications list while preserving all existing entries
 - Maintains minimal SD structure (only `applications` attribute)
-- Supports both simple (`app:ver`) and extended (with `deployPostfix`/`alias`) application formats
 - Preserves the original order of applications
 - Typical use case: Incremental updates to solution components when you need to modify versions of existing applications or add new ones
 
@@ -193,8 +190,7 @@ The following set of terms is used to describe the rules and assumptions of SD m
 
 A variation of basic merge that supports application removal. This mode:
 
-- Performs all functions of `basic-merge`
-- Additionally allows removal of duplicate applications (exact matches)
+- Additionally allows removal of duplicate applications
 - Rejects new applications not present in original SD (throws warning)
 - Maintains the same minimal SD structure as `basic-merge`
 - Typical use case: Creating reduced solution configurations by removing unnecessary components
@@ -210,18 +206,17 @@ The same as for [`basic-merge`](#basic-merge-sd-merge-mode-assumptions)
 ##### `basic-exclusion-merge` SD Merge Mode Rules
 
 1. For each Matching Application in Full SD, replace the Application Version with the one from Delta SD
-2. For each New Application, throw warning error
+2. For each New Application, throw readable warning log message
 3. For each Duplicating Application, remove Application
 4. Resulting SD must not contain any attributes other than `application`
 5. Application in the Resulting SD may contain `alias`
 
 #### `extended-merge` SD Merge Mode
 
-The most comprehensive merge strategy that maintains full SD structure for deployment purposes. This mode:
+The comprehensive merge strategy that maintains full SD structure for deployment purposes. This mode:
 
 - Handles both applications list and deployment graph (`deployGraph`)
 - Preserves all SD attributes (version, type, deployMode) with consistency checks
-- Supports complex application matching including alias-based resolution
 - Maintains strict ordering in all lists (applications, chunks, apps)
 - Requires complete deployGraph consistency when present
 - Typical use case: Where both EnvGene and deployment systems need the SD
