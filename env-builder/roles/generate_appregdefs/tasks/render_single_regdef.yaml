@@ -61,5 +61,5 @@
     - name: Save final rendered RegDef
       copy:
         content: "{{ regdef_raw_rendered }}"
-        dest:    "{{ current_env_dir }}/RegDefs/{{ regdef_content.name }}.regdef.yml"
+        dest:    "{{ current_env_dir }}/RegDefs/{{ regdef_content.name }}.yml"
         mode:    '0644'
