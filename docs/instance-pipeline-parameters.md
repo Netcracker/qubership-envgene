@@ -305,7 +305,7 @@ If `false` or not provided:
 
 See details in [SD processing](/docs/sd-processing.md)
 
-**Default Value**: None
+**Default Value**: `true`
 
 **Mandatory**: No
 
