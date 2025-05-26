@@ -24,6 +24,7 @@
         - [`extended-merge` SD Merge Mode Terms](#extended-merge-sd-merge-mode-terms)
         - [`extended-merge` Merge Mode Assumptions](#extended-merge-merge-mode-assumptions)
         - [`extended-merge` SD Merge Mode Rules](#extended-merge-sd-merge-mode-rules)
+  - [Test Cases](#test-cases)
 
 ## Problem Statement
 
@@ -285,3 +286,7 @@ The following set of terms is used to describe the rules and assumptions of SD m
 4. The order of elements in the applications list must remain unchanged
 5. The order of elements in the deployGraph list must remain unchanged
 6. The order of elements in the apps list must remain unchanged
+
+## Test Cases
+
+1. [SD processing](/docs/test-cases/sd-processing.md)
