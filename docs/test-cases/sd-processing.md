@@ -18,6 +18,7 @@
   - [TC-001-015: Removing application and revert application version from SD for an Environment via several SD artifacts](#tc-001-015-removing-application-and-revert-application-version-from-sd-for-an-environment-via-several-sd-artifacts)
   - [TC-001-016: Removing application and revert application version from SD for an Environment via content of several SDs](#tc-001-016-removing-application-and-revert-application-version-from-sd-for-an-environment-via-content-of-several-sds)
   - [TC-001-017: Adding new application and update application version in `extended-merge` mode to SD for an Environment via SD content](#tc-001-017-adding-new-application-and-update-application-version-in-extended-merge-mode-to-sd-for-an-environment-via-sd-content)
+  - [TC-001-017: Adding new application and update application version to SD for an Environment via SD content. SD version migration](#tc-001-017-adding-new-application-and-update-application-version-to-sd-for-an-environment-via-sd-content-sd-version-migration)
 
 This describes test cases for the [SD Processing](/docs/sd-processing.md) feature
 
@@ -378,3 +379,25 @@ Results:
 
 - Full SD with content obtained as a result of merging in `extended-merge` mode of SD retrieved from `<SD-content>` into previous Full SD (from pre-requisites) exists for the Environment in the Instance repository
 - Delta SD with content obtained from `<SD-content>` exist for the Environment in Instance repository
+
+## TC-001-017: Adding new application and update application version to SD for an Environment via SD content. SD version migration
+
+Status: Not Implemented
+
+Pre-requisites:
+
+- Full SD **v2.1** exists for the Environment in Instance repository
+- No Delta SD exists for the Environment in Instance repository
+
+Inputs:
+
+- `ENV_NAMES`: `<env-id>` # Single env-id
+- `SD_VERSION`: `<app:ver>` # Single app:ver of SD **v2.2** with application to remove and application with updated version
+- `SD_SOURCE_TYPE`: `artifact`
+- `SD_DELTA`: `true`
+- `SD_MERGE_MODE`: `basic-exclusion-merge`
+
+Results:
+
+- Full SD with content obtained as a result of merging in `basic-exclusion-merge` mode of SD retrieved from artifacts `<app:ver>` into previous Full SD (from pre-requisites) exists for the Environment in the Instance repository
+- Delta SD with content obtained from artifact `<app:ver>` exist for the Environment in Instance repository
