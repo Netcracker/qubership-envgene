@@ -13,8 +13,11 @@
   - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
   - [`SD_SOURCE_TYPE`](#sd_source_type)
   - [`SD_VERSION`](#sd_version)
+  - [`SD_VERSION_MULTIPLE`](#sd_version_multiple)
   - [`SD_DATA`](#sd_data)
+  - [`SD_DATA_MULTIPLE`](#sd_data_multiple)
   - [`SD_DELTA`](#sd_delta)
+  - [`SD_MERGE_MODE`](#sd_merge_mode)
 
 The following are the launch parameters for the instance repository pipeline. These parameters influence, the execution of specific jobs within the pipeline.
 
@@ -121,8 +124,6 @@ envTemplate:
 
 **Example**:
 
-JSON in string:
-
 ```text
 '{"clusterParams":{"clusterEndpoint":"<value>","clusterToken":"<value>"},"additionalTemplateVariables":{"<key>":"<value>"},"cloudName":"<value>","envSpecificParamsets":{"<ns-template-name>":["paramsetA"],"cloud":["paramsetB"]},"paramsets":{"paramsetA":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[{"appName":"<app-name>","parameters":{"<key>":"<value>"}}]},"paramsetB":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[]}},"credentials":{"credX":{"type":"<credential-type>","data":{"username":"<value>","password":"<value>"}},"credY":{"type":"<credential-type>","data":{"secret":"<value>"}}}}'
 ```
@@ -212,6 +213,16 @@ System downloads the artifact and overrides the file `/environments/<ENV_NAME>/I
 
 **Example**: `MONITORING:0.64.1`
 
+## `SD_VERSION_MULTIPLE`
+
+**Description**: One or more app:ver of the SD artifact passed via a `\n` separator. EnvGene downloads and sequentially merges them in the mode described in `SD_MERGE_MODE`, where subsequent app:ver takes priority over the previous one. Then, depending on `SD_DELTA`, it either overrides or merges with the Full SD. If the file is absent, it will be generated. See details in [SD processing](/docs/sd-processing.md)
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `solution-part-1:0.64.2\nsolution-part-2:0.44.1`
+
 ## `SD_DATA`
 
 **Description**: Defines the content of SD. **JSON in string** format.
@@ -246,6 +257,41 @@ applications:
     deployPostfix: "postgresql-dbaas"
 ```
 
+## `SD_DATA_MULTIPLE`
+
+**Description**: List of SD content in JSON-in-string format. EnvGene sequentially merges them in the mode described in `SD_MERGE_MODE`, where subsequent app:ver takes priority over the previous one. Then, depending on `SD_DELTA`, it either overrides or merges with the Full SD. If the file is absent, it will be generated. See details in [SD processing](/docs/sd-processing.md)
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**:
+
+```text
+'{[{"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "MONITORING:0.64.1", "deployPostfix": "platform-monitoring"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql"}]}, {"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "postgres-services:1.32.6", "deployPostfix": "postgresql"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql-dbaas"}]}]}'
+```
+
+The same in YAML:
+
+```yaml
+- version: 2.1
+  type: "solutionDeploy"
+  deployMode: "composite"
+  applications:
+    - version: "MONITORING:0.64.1"
+      deployPostfix: "platform-monitoring"
+    - version: "postgres:1.32.6"
+      deployPostfix: "postgresql"
+- version: 2.1
+  type: "solutionDeploy"
+  deployMode: "composite"
+  applications:
+    - version: "postgres-services:1.32.6"
+      deployPostfix: "postgresql"
+    - version: "postgres:1.32.6"
+      deployPostfix: "postgresql-dbaas"
+```
+
 ## `SD_DELTA`
 
 **Description**: Defines if SD provided in `SD_DATA` is Delta SD. Valid values ​​are `true` or `false`.
@@ -264,3 +310,13 @@ See details in [SD processing](/docs/sd-processing.md)
 **Mandatory**: No
 
 **Example**: `true`
+
+## `SD_MERGE_MODE`
+
+**Description**: SD merge mode between SDs passed in `SD_VERSION_MULTIPLE`/`SD_DATA_MULTIPLE`, as well as when merging the SD already in the repo with those passed via `SD_VERSION`/`SD_VERSION_MULTIPLE`/`SD_DATA`/`SD_DATA_MULTIPLE` (if `SD_DELTA`: `true`). See details in [SD processing](/docs/sd-processing.md)
+
+**Default Value**: `basic-merge`
+
+**Mandatory**: No
+
+**Example**: `extended`
