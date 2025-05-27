@@ -85,7 +85,7 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setRegistryPath(envParams.registryPath);
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setEffectiveSetVersion(envParams.version);
-        sharedData.setPcsspPaths(List.of(envParams.pcssp));
+        sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
     }
 
     static class EnvCommandSpace {
