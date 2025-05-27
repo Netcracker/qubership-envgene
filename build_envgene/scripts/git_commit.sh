@@ -78,6 +78,12 @@ if [ -e configuration ]; then
   echo "Copy config folder"
   mkdir -p /tmp/configuration
   cp -r configuration /tmp
+  fi
+
+if [ -e sboms ]; then
+    echo "Copy sboms folder"
+    mkdir -p /tmp/sboms
+    cp -r sboms /tmp
 fi
 
 if [ -e gitlab-ci/prefix_build ]; then
@@ -137,6 +143,11 @@ fi
 if [ -e /tmp/configuration ]; then
   echo "Restoring config folder"
   cp -r /tmp/configuration .
+fi
+
+if [ -e /tmp/sboms ]; then
+  echo "Restoring config folder"
+  cp -r /tmp/sboms .
 fi
 
 if [ -e /tmp/gitlab-ci ]; then
