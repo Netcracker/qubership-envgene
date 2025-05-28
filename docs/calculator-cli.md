@@ -370,7 +370,7 @@ The calculator forms consumer-specific parameters according to the following pri
 |---|---|---|---|---|
 | **composite_structure** | Mandatory | Contains the unmodified  [Composite Structure](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#environment-instance-objects) object of the Environment Instance for which the Effective Set is generated. This variable is located in `parameters.yaml` | `{}`| [example](#version-20pipeline-parameter-context-composite_structure-example) |
 | **k8s_tokens** | Mandatory | Contains deployment tokens for each namespace in the Environment Instance. The value is derived from the `data.secret` property of the Credential specified via `defaultCredentialsId` attribute in the corresponding `Namespace` or parent `Cloud`. If the attribute is not defined at the `Namespace` level, it is inherited from the parent `Cloud`. If defined at both levels, the `Namespace` value takes precedence. Either the `Cloud` or `Namespace` must define `defaultCredentialsId`. This variable is located in `credentials.yaml` | None | [example](#version-20pipeline-parameter-context-k8s_tokens-example) |
-| **environments** | Mandatory | Contains all repository Environments, not just the one for which the Effective Set calculation was run. For each Environment, it includes the names of its contained namespaces. For each namespace, it provides a deploy postfix. The deploy postfix is taken from the namespace template name (the template filename without extension) | None | [example](#version-20pipeline-parameter-context-environments-example) |
+| **environments** | Mandatory | Contains **all** repository Environments, not just the one for which the Effective Set calculation was run. For each Environment, it includes the names of its contained namespaces. For each namespace, it provides a deploy postfix. The `deployPostfix` is taken from the Environment Instance's namespace folder name (a child of `Namespace` and parent of namespace.yml), which also acts as the namespace template name. This variable is located in `parameters.yaml` | None | [example](#version-20pipeline-parameter-context-environments-example) |
 
 ###### \[Version 2.0][Pipeline Parameter Context] `composite_structure` Example
 
@@ -402,11 +402,27 @@ k8s_tokens:
 
 ```yaml
 environments:
-  cluster-x/env-y:
+  <environment-id>: # In `cluster-name/env-name` notation
+    namespaces:
+      <namespace>: # Namespace `name` attribute
+        deployPostfix: <deploy-postfix> # Namespace template filename without extension
+      ...
+  ...
+```
+
+```yaml
+environments:
+  cluster-1/env-1:
     namespaces:
       env-1-core:
         deployPostfix: core
       env-1-bss:
+        deployPostfix: bss
+  cluster-2/env-2:
+    namespaces:
+      env-2-core:
+        deployPostfix: core
+      env-2-bss:
         deployPostfix: bss
 ```
 
