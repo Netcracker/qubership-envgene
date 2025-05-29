@@ -110,6 +110,7 @@ def get_deployer_config(env_name=None, work_dir=None, instances_dir=None, secret
             cred_yaml = decrypt_file(cred_path, in_place=False)
         cmdb_username = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_username_attribute_path)
         cmdb_api_token = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_api_token_attribute_path)
+    return cmdb_url, cmdb_username, cmdb_api_token
 
 def get_sbom_generator_deployer_config():
     work_dir = getenv_with_error('CI_PROJECT_DIR')
