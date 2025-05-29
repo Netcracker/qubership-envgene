@@ -6,18 +6,7 @@ from main import render_environment
 from envgenehelper import *
 
 test_data = [
-      ("sample-cloud-name", "composite-full", "composite-full-version-from-tests")
-    , ("sample-cloud-name", "composite-with-creds", "composite-with-creds-version-from-tests")
-    , ("sample-cloud-name", "composite-with-env-specific", "composite-with-env-specific-version-from-tests")
-    , ("another-cloud-name", "composite-full", "another-cloud-name-version-from-tests")
-    , ("REDACTED-ocp-mdc-09", "cse-toolset", "mdc-09-cse-toolset-from-tests")
-    , ("cloud-without-passport", "env-without-passport", "env-without-passport-version-from-tests")
-    , ("REDACTED-sb-ocp-01", "pl01", "REDACTED-sb-ocp-01-pl01-version-from-tests")
-    , ("REDACTED-sb-ocp-01", "platform-with-overrides", "REDACTED-sb-ocp-01-platform-with-overrides-version-from-tests")
-    , ("cloud-with-passport-override", "cse-toolset", "cloud-with-passport-override-cse-toolset-version-from-tests")
-    , ("REDACTED-ocp-01", "env-amber", "REDACTED-ocp-01-env-amber-version-from-tests")
-    , ("cloud-with-passport-override", "cse-toolset-cloud-deployer", "cloud-with-passport-override-cse-toolset-cloud-deployer-version-from-tests")
-    , ("cloud-with-passport-override", "cse-toolset-test-deployer", "cloud-with-passport-override-cse-toolset-test-deployer-version-from-tests")
+      ("test-solution-structure", "test-solution-structure-case-01", "test-01")
 ]
 g_templates_dir = getAbsPath("../../test_data/test_templates")
 g_inventory_dir = getAbsPath("../../test_data/test_environments")

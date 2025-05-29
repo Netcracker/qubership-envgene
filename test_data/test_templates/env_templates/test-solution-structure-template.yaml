@@ -1,0 +1,7 @@
+---
+tenant: "{{ templates_dir }}/env_templates/test-solution-structure-template/tenant.yml.j2"
+cloud: "{{ templates_dir }}/env_templates/test-solution-structure-template/cloud.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/Namespaces/app-core.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/Namespaces/app.yml.j2"
+

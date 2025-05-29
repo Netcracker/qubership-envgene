@@ -1,5 +1,0 @@
-version: 23.3
-name: core-e2e-wa
-parameters:
-    PROFILE: "dev"
-applications: []

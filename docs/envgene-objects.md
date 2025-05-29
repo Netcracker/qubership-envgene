@@ -16,6 +16,12 @@
     - [Application](#application)
     - [Resource Profile Override (in Instance)](#resource-profile-override-in-instance)
     - [Composite Structure](#composite-structure)
+    - [Solution Descriptor](#solution-descriptor)
+    - [Credential](#credential)
+      - [`usernamePassword`](#usernamepassword)
+      - [`secret`](#secret)
+    - [Environment Credentials File](#environment-credentials-file)
+    - [Shared Credentials File](#shared-credentials-file)
 
 ## Environment Template Objects
 
@@ -181,4 +187,126 @@ satellites:
     type: "namespace"
   - name: "env-1-oss"
     type: "namespace"
+```
+
+### Solution Descriptor
+
+The Solution Descriptor (SD) defines the application composition of a solution. In EnvGene it serves as the primary input for EnvGene's Effective Set calculations. The SD can also be used for template rendering through the [`current_env.solution_structure`](/docs/template-macros.md#current_envsolution_structure) variable.
+
+Other systems can use it for other reasons, for example as a deployment blueprint for external systems.
+
+Only SD versions 2.1 and 2.2 can be used by EnvGene for the purposes described above, as their `application` list elements contain the `deployPostfix` and `version` attributes.
+
+SD processing in EnvGene is described [here](/docs/sd-processing.md).
+
+SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [pipeline](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
+
+In EnvGene, there are:
+
+**Full SD**: Defines the complete application composition of a solution. There can be only one Full SD per environment, located at the path `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yml`
+
+**Delta SD**: A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. There can be only one Delta SD per environment, located at the path `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yml`
+
+Only Full SD is used for Effective Set calculation. The Delta SD is only needed for troubleshooting purposes.
+
+[Solution Descriptor JSON schema](/schemas/TBD)
+
+Example:
+
+```yaml
+version: 2.1
+type: "solutionDeploy"
+deployMode: "composite"
+applications:
+  - version: "MONITORING:0.64.1"
+    deployPostfix: "platform-monitoring"
+  - version: "postgres:1.32.6"
+    deployPostfix: "postgresql"
+  - version: "postgres-services:1.32.6"
+    deployPostfix: "postgresql"
+  - version: "postgres:1.32.6"
+    deployPostfix: "postgresql-dbaas"
+```
+
+### Credential
+
+This object is used by EnvGene to manage sensitive parameters. It is generated during environment instance creation for each `<cred-id>` specified in [Credential macros](/docs/template-macros.md#credential-macros)
+
+There are two Credential types with different structures:
+
+#### `usernamePassword`
+
+```yaml
+<cred-id>:
+  type: usernamePassword
+  data:
+    username: <value>
+    password: <value>
+```
+
+#### `secret`
+
+```yaml
+<cred-id>:
+  type: "secret"
+  data:
+    secret: <value>
+```
+
+After generation, `<value>` is set to `envgeneNullValue`. The user must manually set the actual value.
+
+[Credential JSON schema](/schemas/credential.schema.json)
+
+### Environment Credentials File
+
+This file stores all [Credential](#credential) objects of the Environment upon generation
+
+Environment Credentials File is located at the path `/environments/<cloud-name>/<env-name>/Credentials/credentials.yml`
+
+Example:
+
+```yaml
+db_cred:
+  type: usernamePassword
+  data:
+    username: "s3cr3tN3wLogin"
+    password: "s3cr3tN3wP@ss"
+token:
+  type: secret
+  data:
+    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
+```
+
+### Shared Credentials File
+
+This file provides centralized storage for [Credential](#credential) values that can be shared across multiple environments. During Environment Instance generation, EnvGene automatically copies relevant Credential objects from these shared files into the [Environment Credentials File](#environment-credentials-file)
+
+The between Shared Credentials and Environment is established through:
+
+- The `envTemplate.sharedMasterCredentialFiles` property in [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
+- The property value should be the filename (without extension) of the Shared Credentials File
+
+Credentials can be defined at three scopes with different precedence:
+
+1. **Environment-level**  
+   Location: `/environments/<cluster-name>/<env-name>/Inventory/parameters/`
+2. **Cluster-level**  
+   Location: `/environments/<cluster-name>/parameters/`
+3. **Site-level**  
+   Location: `/environments/parameters/`
+
+EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
+
+Example:
+
+```yaml
+db_cred:
+  type: usernamePassword
+  data:
+    username: "s3cr3tN3wLogin"
+    password: "s3cr3tN3wP@ss"
+token:
+  type: secret
+  data:
+    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
 ```
