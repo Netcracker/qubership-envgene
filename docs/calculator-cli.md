@@ -59,6 +59,7 @@
 11. Calculator CLI should generate Effective Set for one environment no more than 1 minute
 12. The Calculator CLI must adhere to the [Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention) when compiling the application's service list.
 13. Parameters in all files of Effective Set must be sorted alphabetically
+14. The Calculator CLI must validate credential values and fail immediately if any credential has the value "envgeneNullValue", providing a clear error message identifying the problematic credential (validation ID: VAL-CRED-001, see [Validation Catalog](./validation-catalog-draft.md))
 
 ## Proposed Approach
 
@@ -669,6 +670,41 @@ The contents of this file are identical to [mapping.yml in the Deployment Parame
 ### Macros
 
 TBD
+
+### Credential Validation
+
+The Calculator CLI must implement a validation mechanism for credential values to ensure that all required credentials are properly defined. This validation occurs after credential resolution but before finalizing the effective set generation.
+
+#### Validation Process
+
+1. After all credentials are processed and before the effective set is finalized, the Calculator CLI must scan all credential values in the following files:
+   - In Effective Set v1.0: All `credentials.yaml` files
+   - In Effective Set v2.0: All `credentials.yaml` files in deployment, pipeline, and runtime contexts
+
+2. If any credential value equals "envgeneNullValue", the Calculator CLI must:
+   - Immediately stop the effective set generation process
+   - Provide a clear error message that includes:
+     - The validation ID (VAL-CRED-001)
+     - The path to the file containing the invalid credential
+     - The key of the credential with the "envgeneNullValue" value
+     - A suggestion to define the missing credential in the appropriate environment configuration
+
+3. The validation should be performed as a dedicated step in the effective set generation process to ensure that no effective set with invalid credentials is generated.
+
+#### Error Message Format
+
+When an "envgeneNullValue" is detected, the error message should follow this format:
+
+```text
+[VAL-CRED-001] Error: Invalid credential value detected
+File: <path-to-credentials-file>
+Credential: <credential-key>
+Value: "envgeneNullValue"
+
+This indicates that a required credential is missing or undefined. Please define this credential in your environment configuration.
+```
+
+Refer to the [Validation Catalog](./validation-catalog-draft.md) for more information about this and other validations.
 
 ## Use Cases
 
