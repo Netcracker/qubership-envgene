@@ -4,18 +4,8 @@
 
 - [Application Manifest](#application-manifest)
   - [Table of Contents](#table-of-contents)
-  - [Problem Statements](#problem-statements)
-  - [Requirements](#requirements)
   - [Proposed Approach](#proposed-approach)
     - [PoC](#poc)
-
-## Problem Statements
-
-TBD
-
-## Requirements
-
-TBD
 
 ## Proposed Approach
 
