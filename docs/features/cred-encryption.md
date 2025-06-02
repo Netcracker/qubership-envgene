@@ -37,7 +37,7 @@ The library also supports managing Shadow Credential files (creation, modificati
 Below are the input parameters for this library:
 
 | Attribute | Type | Mandatory | Default | Description | Example |
-|---|---|---|---|---|
+|---|---|---|---|---|---|
 | `input-path` | string | yes | None | Path to the folder or file containing Credentials to be processed | `/environments/` or `/configuration/credentials/credentials` |
 | `output-path` | string | no | None | Path to the folder where the processed file-structure (from `input-path`) will be saved. Mutually exclusive with `in-place: true` | `/tmp/environments` |
 | `in-place`| boolean | no | `true` | Determines whether the processed file-structure will be saved to `output-path` (if `false`) or modified in-place in `input-path` (if `true`) | `false` |
