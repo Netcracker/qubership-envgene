@@ -5,18 +5,18 @@ cloud:
   template_override:
     deployParameterSets:
       - paramset-A
-    e2eParameters:
+    e2eParameterSets:
       - paramset-A
-    technicalConfigurationParameters:
+    technicalConfigurationParameterSets:
       - paramset-A
 namespaces:
   - template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/Namespaces/app-core.yml.j2"
     template_override:
       deployParameterSets:
         - paramset-A
-      e2eParameters:
+      e2eParameterSets:
         - paramset-A
-      technicalConfigurationParameters:
+      technicalConfigurationParameterSets:
         - paramset-A
   - template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/Namespaces/app.yml.j2"
 
