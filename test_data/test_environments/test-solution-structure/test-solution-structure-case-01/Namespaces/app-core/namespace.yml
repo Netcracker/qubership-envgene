@@ -19,12 +19,16 @@ deployParameters:
   ENVGENE_CONFIG_TAG: ""
   TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
   TEST_PARAM_IF_ENDIF_2: "TEST_PARAM_IF_ENDIF_2_value"
-e2eParameters: {}
+  param-A: "apple" # paramset: paramset-A version: n/a source: template
+e2eParameters:
+  TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
+  param-A: "apple" # paramset: paramset-A version: n/a source: template
 technicalConfigurationParameters:
   APP_CORE_NAMESPACE: "test-solution-structure-case-01-app-core"
   APP_NAMESPACE: "test-solution-structure-case-01-app"
+  TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
+  param-A: "apple" # paramset: paramset-A version: n/a source: template
 deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []
 tenantName: "test-solution-structure-template"
-

@@ -35,18 +35,23 @@ consulConfig:
   internalUrl: "http://consul.consul:8888"
 deployParameters:
   CLOUD_DASHBOARD_URL: "https://dashboard.test-host.managed.tmp.cloud" # cloud passport: test-solution-structure version: 1.5
-  CMDB_URL: "https://test-host.managed.tmp.cloud" # cloud passport: test-solution-structure version: 1.5
+  CMDB_URL: "https://test-host.managed.tmp.cloud"          # cloud passport: test-solution-structure version: 1.5
   ENV_NAME: "test-solution-structure-case-01"
-  GRAFANA_UI_URL: "https://test-host.managed.tmp.cloud" # cloud passport: test-solution-structure version: 1.5
-  GRAYLOG_UI_URL: "https://test-host.managed.tmp.cloud" # cloud passport: test-solution-structure version: 1.5
+  GRAFANA_UI_URL: "https://test-host.managed.tmp.cloud"    # cloud passport: test-solution-structure version: 1.5
+  GRAYLOG_UI_URL: "https://test-host.managed.tmp.cloud"    # cloud passport: test-solution-structure version: 1.5
+  TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
   TEST_VALUE_SS_cloud_yml: "test-solution-structure-case-01-app"
-  TRACING_UI_URL: "https://test-host.managed.tmp.cloud" # cloud passport: test-solution-structure version: 1.5
-  VALUE: "true" # cloud passport: test-solution-structure version: 1.5
+  TRACING_UI_URL: "https://test-host.managed.tmp.cloud"    # cloud passport: test-solution-structure version: 1.5
+  VALUE: "true"                                            # cloud passport: test-solution-structure version: 1.5
+  param-A: "apple" # paramset: paramset-A version: n/a source: template
 e2eParameters:
   INSTANSES_REPO: "https://github.com/Netcracker/qubership-envgene-instance"
+  TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
+  param-A: "apple" # paramset: paramset-A version: n/a source: template
   url: "https://toolset.test-host.managed.tmp.cloud"
-technicalConfigurationParameters: {}
+technicalConfigurationParameters:
+  TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
+  param-A: "apple" # paramset: paramset-A version: n/a source: template
 deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []
-
