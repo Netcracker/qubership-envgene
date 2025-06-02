@@ -59,7 +59,7 @@
 11. Calculator CLI should generate Effective Set for one environment no more than 1 minute
 12. The Calculator CLI must adhere to the [Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention) when compiling the application's service list.
 13. Parameters in all files of Effective Set must be sorted alphabetically
-14. The Calculator CLI must validate credential values and fail immediately if any credential has the value "envgeneNullValue", providing a clear error message identifying the problematic credential (validation ID: VAL-CRED-001, see [Validation Catalog](./validation-catalog-draft.md))
+14. The Calculator CLI must validate credential values and fail immediately if any Credential has the value `envgeneNullValue`, providing a clear error message identifying the problematic credential (validation ID: VAL-CRED-001, see [Validation Catalog](/docs/validation-catalog.md))
 
 ## Proposed Approach
 
@@ -77,9 +77,9 @@ Below is a **complete** list of attributes
 | `--solution-sbom-path`/`-ssp`| string | yes | Path to the Solution SBOM. | N/A | `/environments/cluster/platform-00/Inventory/solution-descriptor/solution.sbom.json` |
 | `--registries`/`-r`| string | yes | Path to the [registry configuration](#registry-configuration) | N/A | `/configuration/registry.yml` |
 | `--output`/`-o` | string | yes | Folder where the result will be put by Calculator CLI | N/A | `/environments/cluster/platform-00/effective-set` |
-| `--effective-set-version`/`-esv` | string | no | The version of the effective set to be generated. Available options are `v1.0` and `v2.0` | `v1.0` | `v1.0` |
+| `--effective-set-version`/`-esv` | string | no | The version of the Effective Set to be generated. Available options are `v1.0` and `v2.0` | `v1.0` | `v1.0` |
 | `--pipeline-consumer-specific-schema-path`/`-pcssp` | string | no | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided  | N/A |  |
-| `--extra_params`/`-ex` | string | no | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided | N/A | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000` |
+| `--extra_params`/`-ex` | string | no | Additional parameters used by the Calculator for Effective Set generation. Multiple instances of this attribute can be provided | N/A | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000` |
 
 ### Registry Configuration
 
@@ -162,7 +162,7 @@ To avoid repetition, YAML anchors (&) are used for reusability, while aliases (*
 
 #### [Version 1.0] mapping.yml
 
-This file defines a mapping between namespaces and the corresponding paths to their respective folders. The need for this mapping arises from the fact that the effective set consumer requires information about the specific names of namespaces. However, the effective set is stored in the repository in a structure that facilitates comparisons between effective sets for environments of the same type."
+This file defines a mapping between namespaces and the corresponding paths to their respective folders. The need for this mapping arises from the fact that the Effective Set consumer requires information about the specific names of namespaces. However, the Effective Set is stored in the repository in a structure that facilitates comparisons between Effective Sets for environments of the same type."
 
 ```yaml
 ---
@@ -507,7 +507,7 @@ For every service (regardless of type), service-specific parameters include **pe
 
 ##### \[Version 2.0][Deployment Parameter Context] `mapping.yml`
 
-This file defines a mapping between namespaces and the corresponding paths to their respective folders. The need for this mapping arises from the fact that the effective set consumer requires information about the specific names of namespaces. However, the effective set is stored in the repository in a structure that facilitates comparisons between effective sets for environments of the same type
+This file defines a mapping between namespaces and the corresponding paths to their respective folders. The need for this mapping arises from the fact that the Effective Set consumer requires information about the specific names of namespaces. However, the Effective Set is stored in the repository in a structure that facilitates comparisons between Effective Sets for environments of the same type
 
 ```yaml
 ---
@@ -673,38 +673,39 @@ TBD
 
 ### Credential Validation
 
-The Calculator CLI must implement a validation mechanism for credential values to ensure that all required credentials are properly defined. This validation occurs after credential resolution but before finalizing the effective set generation.
+The Calculator CLI implements a validation mechanism for credential values that ensures all required Credentials are properly defined. This validation occurs after credential resolution but before finalizing the Effective Set generation. The validation takes place on decrypted values to ensure that encrypted Credentials are properly evaluated.
 
 #### Validation Process
 
-1. After all credentials are processed and before the effective set is finalized, the Calculator CLI must scan all credential values in the following files:
+1. After all Credentials are processed and before the Effective Set is finalized, the Calculator CLI scans all Credential values in the following files:
    - In Effective Set v1.0: All `credentials.yaml` files
    - In Effective Set v2.0: All `credentials.yaml` files in deployment, pipeline, and runtime contexts
 
-2. If any credential value equals "envgeneNullValue", the Calculator CLI must:
-   - Immediately stop the effective set generation process
-   - Provide a clear error message that includes:
+2. If any Credential value equals `envgeneNullValue`, the Calculator CLI:
+   - Immediately stops the Effective Set generation process
+   - Provides a clear error message that includes:
      - The validation ID (VAL-CRED-001)
-     - The path to the file containing the invalid credential
-     - The key of the credential with the "envgeneNullValue" value
-     - A suggestion to define the missing credential in the appropriate environment configuration
+     - The path to the file containing the invalid Credential
+     - The key of the Credential with the `envgeneNullValue` value
+     - A suggestion to define the missing Credential in the appropriate Environment Credentials file
+   - The error message lists ALL null parameters to prevent situations where only the first detected one is reported
 
-3. The validation should be performed as a dedicated step in the effective set generation process to ensure that no effective set with invalid credentials is generated.
+3. Credential validation runs as a separate, final verification phase before completing the Effective Set generation. This ensures data integrity by preventing the creation of Effective Sets with missing or invalid Credentials.
 
 #### Error Message Format
 
-When an "envgeneNullValue" is detected, the error message should follow this format:
+When an `envgeneNullValue` is detected, the error message follows this format:
 
 ```text
 [VAL-CRED-001] Error: Invalid credential value detected
-File: <path-to-credentials-file>
-Credential: <credential-key>
-Value: "envgeneNullValue"
+Environment Credentials file path: <path-to-credentials-file>
+Credential ID: <credential-key>
+Credential value: `envgeneNullValue`
 
-This indicates that a required credential is missing or undefined. Please define this credential in your environment configuration.
+This indicates that a required Credential is missing. Please define it in the Environment Credentials file.
 ```
 
-Refer to the [Validation Catalog](./validation-catalog-draft.md) for more information about this and other validations.
+Refer to the [Validation Catalog](/docs/validation-catalog.md) for more information about this and other validations.
 
 ## Use Cases
 
