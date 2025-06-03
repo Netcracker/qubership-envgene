@@ -91,6 +91,9 @@ public class NamespaceApplicationMap extends DynamicMap {
             map.put(SMARTPLUG, applicationBomDto.getSmartplugs());
             map.put(CDN, applicationBomDto.getCdn());
             map.put(SAMPLREPO, applicationBomDto.getSampleRepo());
+            map.put(DEPLOY_DESC, applicationBomDto.getDeployDescriptors());
+            map.put(COMMON_DEPLOY_DESC, applicationBomDto.getCommonDeployDescriptors());
+            map.put(PER_SERVICE_DEPLOY_PARAMS, applicationBomDto.getPerServiceParams());
         }
     }
 

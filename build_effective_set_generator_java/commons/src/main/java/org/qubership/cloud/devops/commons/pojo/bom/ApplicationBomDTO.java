@@ -19,9 +19,7 @@ package org.qubership.cloud.devops.commons.pojo.bom;
 
 import lombok.Builder;
 import lombok.Data;
-import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistrySummaryDTO;
 
-import java.util.List;
 import java.util.Map;
 
 @Data
@@ -39,4 +37,8 @@ public class ApplicationBomDTO {
     private Map<String, Map<String, Object>> cdn;
     private Map<String, Map<String, Object>> sampleRepo;
 
+    //deployment-descriptor params
+    private Map<String, Map<String, Object>> deployDescriptors;
+    private Map<String, Map<String, Object>> commonDeployDescriptors;
+    private Map<String, Map<String, Object>> perServiceParams;
 }
