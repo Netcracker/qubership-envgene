@@ -16,6 +16,10 @@
 
 package org.qubership.cloud.devops.commons.utils.constant;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ApplicationConstants {
     public static final String SERVICES = "services";
     public static final String CONFIGURATIONS = "configurations";
@@ -23,4 +27,7 @@ public class ApplicationConstants {
     public static final String SMARTPLUG = "smartplug";
     public static final String CDN = "cdn";
     public static final String SAMPLREPO = "sampleRepo";
+    public static final String DEPLOY_DESC = "deploy_desc";
+    public static final String COMMON_DEPLOY_DESC = "common_deploy_desc";
+    public static final String PER_SERVICE_DEPLOY_PARAMS = "per_service_deploy_params";
 }

@@ -68,7 +68,7 @@ public class FileSystemUtils {
         applicationDTOList
                 .forEach(app->{
                     try {
-                        Path deploymentPath = getFileFromGivenPath(data.getOutputDir(), "deployment", app.getNamespace(), app.getAppName(), "values").toPath();
+                        Path deploymentPath = getFileFromGivenPath(data.getOutputDir(), "deployment", app.getNamespace(), app.getAppName(), "values", "per-service-parameters").toPath();
                         Files.createDirectories(deploymentPath);
                         Path runtimePath = getFileFromGivenPath(data.getOutputDir(), "runtime", app.getNamespace(), app.getAppName()).toPath();
                         Files.createDirectories(runtimePath);

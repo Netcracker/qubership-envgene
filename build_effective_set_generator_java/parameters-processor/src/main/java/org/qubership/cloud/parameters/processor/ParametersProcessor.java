@@ -101,6 +101,6 @@ public class ParametersProcessor implements Serializable {
                         return new AbstractMap.SimpleEntry<>(entry.getKey(), entry.getValue());
                     }
                 })
-                .collect(HashMap::new, (m, v) -> m.put(v.getKey(), convertParameterToObject(v.getValue())), HashMap::putAll);
+                .collect(TreeMap::new, (m, v) -> m.put(v.getKey(), convertParameterToObject(v.getValue())), TreeMap::putAll);
     }
 }

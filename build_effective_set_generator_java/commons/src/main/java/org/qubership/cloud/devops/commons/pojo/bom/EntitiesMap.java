@@ -16,9 +16,13 @@
 
 package org.qubership.cloud.devops.commons.pojo.bom;
 
-import lombok.*;
-import java.util.HashMap;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.util.Map;
+import java.util.TreeMap;
 
 
 @AllArgsConstructor
@@ -26,10 +30,13 @@ import java.util.Map;
 @Getter
 @Setter
 public class EntitiesMap {
-    public Map<String, Map<String, Object>> serviceMap = new HashMap<>();
-    public Map<String, Map<String, Object>> configurationMap = new HashMap<>();
-    public Map<String, Map<String, Object>> smartplugMap = new HashMap<>();
-    public Map<String, Map<String, Object>> frontEndMap = new HashMap<>();
-    public Map<String, Map<String, Object>> cdnMap = new HashMap<>();
-    public Map<String, Map<String, Object>> repoMap = new HashMap<>();
+    public Map<String, Map<String, Object>> serviceMap = new TreeMap<>();
+    public Map<String, Map<String, Object>> configurationMap = new TreeMap<>();
+    public Map<String, Map<String, Object>> smartplugMap = new TreeMap<>();
+    public Map<String, Map<String, Object>> frontEndMap = new TreeMap<>();
+    public Map<String, Map<String, Object>> cdnMap = new TreeMap<>();
+    public Map<String, Map<String, Object>> repoMap = new TreeMap<>();
+    public Map<String, Map<String, Object>> deployDescParamsMap = new TreeMap<>();
+    public Map<String, Map<String, Object>> commonParamsMap = new TreeMap<>();
+    public Map<String, Map<String, Object>> perServiceParams = new TreeMap<>();
 }
