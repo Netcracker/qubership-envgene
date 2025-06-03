@@ -173,11 +173,15 @@ Located at `/configuration/config.yml`
 ```yaml
 # Optional. Default value - `true`
 # Parameter defines the encryption mode
+# Requires setting an encryption key: `SECRET_KEY` or `ENVGENE_AGE_PRIVATE_KEY`, `PUBLIC_AGE_KEYS`
 crypt: boolean
 # Optional. Default value - `Fernet`
 # Defines the encryption technology
 # Requires setting an encryption key: `SECRET_KEY` or `ENVGENE_AGE_PRIVATE_KEY`, `PUBLIC_AGE_KEYS`
 crypt_backend: enum [`Fernet`, `SOPS`]
+# Optional. Default value - `true`
+# Specifies if Shade Credential Files generation is enabled
+crypt_create_shades: boolean 
 # Optional. Default value - `auto`
 # Defines the auto-discovery mode for Artifact Definition of env template artifact
 # Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
