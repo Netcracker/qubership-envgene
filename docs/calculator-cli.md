@@ -59,7 +59,7 @@
 11. Calculator CLI should generate Effective Set for one environment no more than 1 minute
 12. The Calculator CLI must adhere to the [Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention) when compiling the application's service list.
 13. Parameters in all files of Effective Set must be sorted alphabetically
-14. The Calculator CLI must validate credential values and fail immediately if any Credential has the value `envgeneNullValue`, providing a clear error message identifying the problematic credential (validation ID: VAL-CRED-001, see [Error Catalog for Credential Validations](/docs/error-catalog.md#credential-validation-errors))
+14. The Calculator CLI must validate credential values and fail immediately if any Credential has the value `envgeneNullValue`, providing a clear error message identifying the problematic credential (validation ID: ERR-CRED-VAL-001, see [Error Catalog for Credential Validations](/docs/error-catalog.md#credential-validation-errors))
 
 ## Proposed Approach
 
@@ -684,7 +684,7 @@ The Calculator CLI implements a validation mechanism for credential values that 
 2. If any Credential value equals `envgeneNullValue`, the Calculator CLI:
    - Immediately stops the Effective Set generation process
    - Provides a clear error message that includes:
-     - The validation ID (VAL-CRED-001)
+     - The validation ID (ERR-CRED-VAL-001)
      - The path to the file containing the invalid Credential
      - The key of the Credential with the `envgeneNullValue` value
      - A suggestion to define the missing Credential in the appropriate Environment Credentials file
@@ -697,7 +697,7 @@ The Calculator CLI implements a validation mechanism for credential values that 
 When an `envgeneNullValue` is detected, the error message follows this format:
 
 ```text
-[VAL-CRED-001] Error: Invalid credential value detected
+[ERR-CRED-VAL-001] Error: Invalid credential value detected
 Environment Credentials file path: <path-to-credentials-file>
 Credential ID: <credential-key>
 Credential value: `envgeneNullValue`
