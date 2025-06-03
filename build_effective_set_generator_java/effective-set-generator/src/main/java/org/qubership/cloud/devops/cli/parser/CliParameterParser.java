@@ -121,6 +121,7 @@ public class CliParameterParser {
     public void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
         ParameterBundle parameterBundle = parametersService.getCliE2EParameter(tenantName, cloudName);
         parameterBundle.getE2eParams().put("composite_structure", inputData.getCompositeStructureMap());
+        parameterBundle.getE2eParams().put("environments", inputData.getClusterMap());
         parameterBundle.getSecuredE2eParams().put("k8s_tokens", k8TokenMap);
         createE2EFiles(parameterBundle);
         createConsumerFiles(parameterBundle);
@@ -193,12 +194,14 @@ public class CliParameterParser {
     private void createFiles(String namespaceName, String appName, ParameterBundle parameterBundle) throws IOException {
         if ("v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion())) {
             String deploymentDir = String.format("%s/%s/%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName, appName, "values");
+            String perServiceDir = String.format("%s/%s/%s/%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters");
             String runtimeDir = String.format("%s/%s/%s/%s", sharedData.getOutputDir(), "runtime", namespaceName, appName);
 
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), perServiceDir, "deployment-parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), deploymentDir, "credentials.yaml");
-            fileDataConverter.writeToFile(new HashMap<>(), deploymentDir, "deploy-descriptor.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getDeployDescParams(), deploymentDir, "deploy-descriptor.yaml");
 
             //runtime parameters
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), runtimeDir, "parameters.yaml");

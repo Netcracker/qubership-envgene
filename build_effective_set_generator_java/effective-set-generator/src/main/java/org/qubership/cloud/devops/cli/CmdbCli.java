@@ -26,6 +26,7 @@ import picocli.CommandLine;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -85,7 +86,8 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setRegistryPath(envParams.registryPath);
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setEffectiveSetVersion(envParams.version);
-        sharedData.setPcsspPaths(List.of(envParams.pcssp));
+        sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
+        sharedData.setExtraParams(envParams.extraParams);
     }
 
     static class EnvCommandSpace {
@@ -112,5 +114,9 @@ public class CmdbCli implements Callable<Integer> {
 
         @CommandLine.Option(names = {"-pcssp", "--pipeline-consumer-specific-schema-path"}, description = "Pipeline Consumer Specific path")
         String[] pcssp;
+
+        @CommandLine.Option(names = {"-ex", "--extra_params"}, description = "Additional params that used to generate effective set")
+        String extraParams;
+
     }
 }

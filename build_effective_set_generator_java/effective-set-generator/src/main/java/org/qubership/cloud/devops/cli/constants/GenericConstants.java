@@ -22,7 +22,7 @@ public class GenericConstants {
     public static final String YML_EXT = ".yml";
     public static final String APPS_FOLDER = "Applications";
     public static final String PROFILES_FOLDER = "Profiles";
-
     public static final String CREDS_FOLDER = "Credentials";
+
 }
 
