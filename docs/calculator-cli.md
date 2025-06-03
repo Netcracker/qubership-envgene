@@ -59,7 +59,7 @@
 11. Calculator CLI should generate Effective Set for one environment no more than 1 minute
 12. The Calculator CLI must adhere to the [Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention) when compiling the application's service list.
 13. Parameters in all files of Effective Set must be sorted alphabetically
-14. The Calculator CLI must validate credential values and fail immediately if any Credential has the value `envgeneNullValue`, providing a clear error message identifying the problematic credential (validation ID: VAL-CRED-001, see [Validation Catalog](/docs/validation-catalog.md))
+14. The Calculator CLI must validate credential values and fail immediately if any Credential has the value `envgeneNullValue`, providing a clear error message identifying the problematic credential (validation ID: VAL-CRED-001, see [Validation Catalog](/docs/error-catalog.md#err-cred-val-001-missing-or-undefined-credential))
 
 ## Proposed Approach
 
@@ -705,7 +705,7 @@ Credential value: `envgeneNullValue`
 This indicates that a required Credential is missing. Please define it in the Environment Credentials file.
 ```
 
-Refer to the [Validation Catalog](/docs/validation-catalog.md) for more information about this and other validations.
+Refer to the [Validation Catalog](/docs/error-catalog.md#err-cred-val-001-missing-or-undefined-credential) for more information about this and other validations.
 
 ## Use Cases
 
