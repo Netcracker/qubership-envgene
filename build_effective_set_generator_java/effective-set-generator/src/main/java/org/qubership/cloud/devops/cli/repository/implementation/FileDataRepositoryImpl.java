@@ -392,7 +392,13 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     private void loadRegistryData() {
         Map<String, RegistryDTO> registries = fileDataConverter.parseInputFile(new TypeReference<HashMap<String, RegistryDTO>>() {
         }, new File(sharedData.getRegistryPath()));
-        inputData.setRegistryDTOMap(registries);
+        Map<String, RegistryDTO> registryMap = new HashMap<>();
+
+        for (Map.Entry<String, RegistryDTO> entry : registries.entrySet()) {
+            String cleanKey = entry.getKey().replace("%20", " ");
+            registryMap.put(cleanKey, entry.getValue());
+        }
+        inputData.setRegistryDTOMap(registryMap);
     }
 
     public Map<String, Object> getObjectMap(CompositeStructureDTO compositeStructureDTO) {
