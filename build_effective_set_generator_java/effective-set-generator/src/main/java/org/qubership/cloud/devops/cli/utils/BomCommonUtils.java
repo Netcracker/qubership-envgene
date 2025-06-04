@@ -68,27 +68,30 @@ public class BomCommonUtils {
             if (component.getMimeType().equals("application/vnd.qubership.service")) {
                 processServiceComponent(entitiesMap.getServiceMap(), component, appName, baseline, override);
             } else if (component.getMimeType().equals("application/vnd.qubership.configuration.smartplug")) {
-                getOtherComponents(entitiesMap.getSmartplugMap(), component, "spar");
+                getOtherComponents(entitiesMap.getSmartplugMap(), component, "application/vnd.osgi.bundle");
             } else if (component.getMimeType().equals("application/vnd.qubership.configuration.frontend")) {
-                getOtherComponents(entitiesMap.frontEndMap, component, "zip");
+                getOtherComponents(entitiesMap.frontEndMap, component, "application/zip");
             } else if (component.getMimeType().equals("application/vnd.qubership.configuration")) {
-                getOtherComponents(entitiesMap.getConfigurationMap(), component, "zip");
+                getOtherComponents(entitiesMap.getConfigurationMap(), component, "application/zip");
             } else if (component.getMimeType().equals("application/vnd.qubership.configuration.cdn")) {
-                getOtherComponents(entitiesMap.getCdnMap(), component, "zip");
+                getOtherComponents(entitiesMap.getCdnMap(), component, "application/zip");
             } else if (component.getMimeType().equals("application/vnd.qubership.configuration.sampleRepo")) {
-                getOtherComponents(entitiesMap.getRepoMap(), component, "zip");
+                getOtherComponents(entitiesMap.getRepoMap(), component, "application/zip");
             }
         }
     }
 
     private void getOtherComponents(Map<String, Map<String, Object>> configMap, Component component, String type) {
         Map<String, Object> configParams = new TreeMap<>();
-        Component subComponent = component.getComponents().stream().filter(artifact -> artifact.getMimeType().equals(type)).findFirst().get();
-        configParams.put("artifact.gav", String.format("%s:%s:%s", subComponent.getName(), subComponent.getGroup(), subComponent.getVersion()));
-        configParams.put("artifact.groupId", subComponent.getGroup());
-        configParams.put("artifact.artifactId", subComponent.getName());
-        configParams.put("artifact.version", subComponent.getVersion());
-        configMap.put(component.getName(), configParams);
+        Component subComponent;
+        subComponent = component.getComponents().stream().filter(artifact -> artifact.getMimeType().equals(type)).findFirst().orElse(null);
+        if (subComponent != null) {
+            configParams.put("artifact.gav", String.format("%s:%s:%s", subComponent.getName(), subComponent.getGroup(), subComponent.getVersion()));
+            configParams.put("artifact.groupId", subComponent.getGroup());
+            configParams.put("artifact.artifactId", subComponent.getName());
+            configParams.put("artifact.version", subComponent.getVersion());
+            configMap.put(component.getName(), configParams);
+        }
     }
 
     private void processServiceComponent(Map<String, Map<String, Object>> serviceMap, Component component, String appName, String baseline, Profile override) {
@@ -103,21 +106,20 @@ public class BomCommonUtils {
         Map<String, String> profileValues = new HashMap<>();
 
         for (Component subComponent : component.getComponents()) {
-            switch (subComponent.getType().getTypeName()) {
-                case "container":
+            switch (subComponent.getMimeType()) {
+                case "application/vnd.docker.image":
                     imageName = subComponent.getName();
                     dockerRepo = subComponent.getGroup();
                     dockerTag = subComponent.getVersion();
                     registrySummaryDTO = getRegistrySummaryDTO(subComponent, DOCKER_PATTERN);
                     break;
-
-                case "data":
-                    if ("deployment-configuration".equals(subComponent.getName())) {
-                        isFacadeGateway = extractGatewayFlag(subComponent);
-                    } else if ("resource-profile-baselines".equals(subComponent.getName())) {
-                        profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
-                    }
+                case "application/vnd.qubership.configuration.declarative-configuration":
+                    isFacadeGateway = extractGatewayFlag(subComponent);
                     break;
+                case "application/vnd.qubership.resource-profile-baseline":
+                    profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
+                    break;
+
             }
         }
 
@@ -140,11 +142,17 @@ public class BomCommonUtils {
     }
 
     public String getPropertyValue(Component component, String propertyName) {
-        return component.getProperties().stream()
+        return safePropertyStream(component)
                 .filter(property -> propertyName.equals(property.getName()))
                 .map(Property::getValue)
                 .findFirst()
-                .orElse(null);
+                .orElse("");
+    }
+
+    public Stream<Property> safePropertyStream(Component component) {
+        return component.getProperties() != null
+                ? component.getProperties().stream()
+                : Stream.empty();
     }
 
     private boolean extractGatewayFlag(Component dataComponent) {
