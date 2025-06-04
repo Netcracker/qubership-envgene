@@ -161,11 +161,14 @@ To avoid repetition, YAML anchors (&) are used for reusability, while aliases (*
 
 #### [Version 1.0] mapping.yml
 
-This file defines a mapping between namespaces and the corresponding paths to their respective folders. The need for this mapping arises from the fact that the effective set consumer requires information about the specific names of namespaces. However, the effective set is stored in the repository in a structure that facilitates comparisons between effective sets for environments of the same type."
+This file defines a mapping between Namespaces and their corresponding folder paths. This mapping is necessary because the Effective Set consumer requires knowledge of the specific Namespace names. However, the Effective Set is stored in the repository in a structure optimized for comparing Effective Sets across Environments.
+
+Namespace name is taken from the `name` attribute of Namespace
+Path is relative to the Instance repository (i.e., it starts with `/environments`)
 
 ```yaml
 ---
-<namespace-name-01>: <path-to-deployPostfix-folder-01> # <namespace-name> should be get from 'name' attribute of namespace object
+<namespace-name-01>: <path-to-deployPostfix-folder-01>
 <namespace-name-02>: <path-to-deployPostfix-folder-02>
 ```
 
@@ -506,11 +509,14 @@ For every service (regardless of type), service-specific parameters include **pe
 
 ##### \[Version 2.0][Deployment Parameter Context] `mapping.yml`
 
-This file defines a mapping between namespaces and the corresponding paths to their respective folders. The need for this mapping arises from the fact that the effective set consumer requires information about the specific names of namespaces. However, the effective set is stored in the repository in a structure that facilitates comparisons between effective sets for environments of the same type
+This file defines a mapping between Namespaces and their corresponding folder paths. This mapping is necessary because the Effective Set consumer requires knowledge of the specific Namespace names. However, the Effective Set is stored in the repository in a structure optimized for comparing Effective Sets across Environments.
+
+Namespace name is taken from the `name` attribute of Namespace
+Path is relative to the Instance repository (i.e., it starts with `/environments`)
 
 ```yaml
 ---
-<namespace-name-01>: <path-to-deployPostfix-folder-01> # <namespace-name> should be get from 'name' attribute of namespace object
+<namespace-name-01>: <path-to-deployPostfix-folder-01>
 <namespace-name-02>: <path-to-deployPostfix-folder-02>
 ```
 
@@ -589,7 +595,7 @@ The calculator forms consumer-specific parameters according to the following pri
 | Attribute | Mandatory | Description | Default | Example |
 |---|---|---|---|---|
 | **composite_structure** | Mandatory | Contains the unmodified  [Composite Structure](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#environment-instance-objects) object of the Environment Instance for which the Effective Set is generated. This variable is located in `parameters.yaml` | `{}`| [example](#version-20pipeline-parameter-context-composite_structure-example) |
-| **k8s_tokens** | Mandatory | Contains deployment tokens for each namespace in the Environment Instance. The value is derived from the `data.secret` property of the Credential specified via `defaultCredentialsId` attribute in the corresponding `Namespace` or parent `Cloud`. If the attribute is not defined at the `Namespace` level, it is inherited from the parent `Cloud`. If defined at both levels, the `Namespace` value takes precedence. Either the `Cloud` or `Namespace` must define `defaultCredentialsId`. This variable is located in `credentials.yaml` | None | [example](#version-20pipeline-parameter-context-k8s_tokens-example) |
+| **k8s_tokens** | Mandatory | Contains deployment tokens for each namespace in the Environment Instance. The key represents the `name` attribute of the `Namespace`. The value is derived from the `data.secret` property of the Credential specified via `defaultCredentialsId` attribute in the corresponding `Namespace` or parent `Cloud`. If the attribute is not defined at the `Namespace` level, it is inherited from the parent `Cloud`. If defined at both levels, the `Namespace` value takes precedence. Either the `Cloud` or `Namespace` must define `defaultCredentialsId`. This variable is located in `credentials.yaml` | None | [example](#version-20pipeline-parameter-context-k8s_tokens-example) |
 | **environments** | Mandatory | Contains all repository Environments, not just the one for which the Effective Set calculation was run. For each Environment, it includes the names of its contained namespaces. For each namespace, it provides a deploy postfix. The deploy postfix is taken from the namespace template name (the template filename without extension). This variable is located in `parameters.yaml`  | None | [example](#version-20pipeline-parameter-context-environments-example) |
 
 ###### \[Version 2.0][Pipeline Parameter Context] `composite_structure` Example
