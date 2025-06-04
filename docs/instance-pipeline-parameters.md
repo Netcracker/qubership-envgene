@@ -168,6 +168,58 @@ Consumer-specific operational context components registered in EnvGene:
 
 1. None
 
+**Example**:
+
+```json
+{
+  "version": "v2.0",
+  "contexts": {
+    "operational": {
+      "consumers": [
+        {
+          "name": "dcl",
+          "version": "v1.0",
+          "schema": {
+            "$schema": "http: //json-schema.org/draft-04/schema#",
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "type": "integer"
+              },
+              "group": {
+                "type": "string",
+                "default": "group"
+              },
+              "artifact": {
+                "type": "string",
+                "default": "artifact"
+              },
+              "registry": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "version",
+              "group"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+The same in JSON in string format:
+
+```text
+{"version":"v2.0","contexts":{"operational":{"consumers":[{"name":"dcl","version":"v1.0","schema":{"$schema":"http: //json-schema.org/draft-04/schema#","type":"object","properties":{"name":{"type":"string"},"version":{"type":"integer"},"group":{"type":"string","default":"group"},"artifact":{"type":"string","default":"artifact"},"registry":{"type":"string"}},"required":["name","version","group"]}}]}}}
+```
+
 ## `SECRET_KEY`
 
 **Description**: Fernet key. Used to encrypt/decrypt credentials when `crypt_backend` s set to `Fernet` (mandatory in this case).  
