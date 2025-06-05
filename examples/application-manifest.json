@@ -70,21 +70,6 @@
       ],
       "components": [
         {
-          "bom-ref": "key-manager-assembly-release-2023.1-7.10.0:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
-          "type": "container",
-          "mime-type": "application/vnd.docker.image",
-          "name": "key-manager-assembly-release-2023.1-7.10.0",
-          "group": "cloud-core",
-          "version": "build22",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:docker/cloud-core/key-manager-assembly-release-2023.1-7.10.0@build22?registry_id=sandbox?repository_id=targetSnapshot"
-        },
-        {
           "bom-ref": "resource-profile-baselines:7875b590-4b19-4781-b6ef-9b0a1c337111",
           "type": "data",
           "mime-type": "application/vnd.qubership.resource-profile-baseline",
@@ -139,6 +124,21 @@
       ]
     },
     {
+      "bom-ref": "key-manager-assembly-release-2023.1-7.10.0:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "key-manager-assembly-release-2023.1-7.10.0",
+      "group": "cloud-core",
+      "version": "build22",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
+        }
+      ],
+      "purl": "pkg:docker/cloud-core/key-manager-assembly-release-2023.1-7.10.0@build22?registry_id=sandbox?repository_id=targetSnapshot"
+    },
+    {
       "bom-ref": "identity-provider:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "type": "application",
       "mime-type": "application/vnd.qubership.service",
@@ -183,21 +183,6 @@
         }
       ],
       "components": [
-        {
-          "bom-ref": "identity-provider-assembly-8157:80f031da-024c-4748-a1b9-d548a3dd030f",
-          "type": "container",
-          "mime-type": "application/vnd.docker.image",
-          "name": "identity-provider-assembly-8157",
-          "group": "cloud-core",
-          "version": "build3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:docker/cloud-core/identity-provider-assembly-8157@build3?registry_id=sandbox?repository_id=snapshotUri"
-        },
         {
           "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
           "type": "data",
@@ -253,9 +238,24 @@
       ]
     },
     {
+      "bom-ref": "identity-provider-assembly-8157:80f031da-024c-4748-a1b9-d548a3dd030f",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "identity-provider-assembly-8157",
+      "group": "cloud-core",
+      "version": "build3",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
+        }
+      ],
+      "purl": "pkg:docker/cloud-core/identity-provider-assembly-8157@build3?registry_id=sandbox?repository_id=snapshotUri"
+    },
+    {
       "bom-ref": "smartplug-sample-plugin:30794643-0400-4cf4-88e9-24f7325e9a7f",
       "type": "application",
-      "mime-type": "application/vnd.qubership.configuration.smartplug",
+      "mime-type": "application/vnd.qubership.plugin.smartplug",
       "name": "smartplug-sample-plugin",
       "version": "master-20250210.074231-74",
       "properties": [
@@ -307,7 +307,7 @@
         },
         {
           "bom-ref": "smartplug-sample-plugin:b23c4b74-ff7e-4c24-9a6b-6837b7befa0a",
-          "type": "data",
+          "type": "library",
           "mime-type": "application/vnd.osgi.bundle",
           "name": "smartplug-sample-plugin",
           "group": "org.qubership.cloud.ext-platform-sample-plugins",
@@ -335,7 +335,7 @@
     {
       "bom-ref": "api-docs:2fc57d76-7d97-4e70-924f-190ddb064585",
       "type": "application",
-      "mime-type": "application/vnd.qubership.configuration.samplerepo",
+      "mime-type": "application/vnd.qubership.plugin.samplerepo",
       "name": "api-docs",
       "version": "master-20250210.074231-73",
       "properties": [
@@ -415,7 +415,7 @@
     {
       "bom-ref": "cdn-conf:b2233ee5-d27a-4bde-9d5a-f808f3f0463e",
       "type": "application",
-      "mime-type": "application/vnd.qubership.configuration.cdn",
+      "mime-type": "application/vnd.qubership.plugin.cdn",
       "name": "cdn-conf",
       "version": "master-20250210.074231-72",
       "properties": [
