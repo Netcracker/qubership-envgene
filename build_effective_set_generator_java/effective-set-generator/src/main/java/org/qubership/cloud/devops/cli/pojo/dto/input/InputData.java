@@ -52,8 +52,6 @@ public class InputData {
     @Builder.Default
     private Map<String, ProfileFullDto> profileFullDtoMap = Collections.emptyMap();
     @Builder.Default
-    private Map<String, ApplicationLinkDTO> applicationLinkDTOMap = Collections.emptyMap();
-    @Builder.Default
     private Map<String, RegistryDTO> registryDTOMap = Collections.emptyMap();
     private SolutionBomDTO solutionBomDTO;
     @Builder.Default

@@ -101,7 +101,7 @@ public class BindingBaseTest {
             );
 
             ApplicationService appService = mock(ApplicationService.class);
-            when(appService.getByName("application")).thenReturn(
+            when(appService.getByName("application", "namespace")).thenReturn(
                     Application.builder()
                             .name("application")
                             .params(params.get("appParams") != null ? (Map<String, String>) params.get("appParams") : Collections.emptyMap())
