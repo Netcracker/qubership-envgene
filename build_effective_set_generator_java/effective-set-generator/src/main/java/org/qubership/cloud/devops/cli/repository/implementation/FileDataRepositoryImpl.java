@@ -246,14 +246,10 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                         inputData.setProfileFullDtoMap(profilesMap);
 
                     } else if (currentFolder.equals(GenericConstants.NS_FOLDER)) {
-                        List<ApplicationLinkDTO> applicationLinkDTOList = new ArrayList<>();
                         namespaceMap.replaceAll((name, namespaceDTO) -> {
                             List<ApplicationLinkDTO> applications = appsOnNamespace.get(name);
-                            applicationLinkDTOList.addAll(applications);
                             return namespaceDTO.toBuilder().applications(applications).build();
                         });
-                        inputData.setApplicationLinkDTOMap(applicationLinkDTOList.stream().
-                                collect(Collectors.toMap(ApplicationLinkDTO::getName, applicationLinkDTO -> applicationLinkDTO)));
                         inputData.setNamespaceDTOMap(namespaceMap);
 
                     } else if (currentFolder.equals(basePath.getFileName().toString())) {
@@ -350,7 +346,8 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         ApplicationLinkDTO applicationLinkDTO = fileDataConverter.parseInputFile(ApplicationLinkDTO.class, file.toFile());
         if (parent.getParent().getParent().getFileName().toString().equals(GenericConstants.NS_FOLDER)) {
             String namespace = parent.getParent().getFileName().toString();
-            if (checkIfAppValid(namespace, file.getFileName().toString().split("\\.")[0], nsWithAppsFromSD)) {
+            String appName = file.getFileName().toString().replaceFirst("\\.(ya?ml)$", "");
+            if (checkIfAppValid(namespace, appName, nsWithAppsFromSD)) {
                 appsOnNamespace.computeIfAbsent(namespace, k -> new ArrayList<>()).add(applicationLinkDTO);
             }
         } else {

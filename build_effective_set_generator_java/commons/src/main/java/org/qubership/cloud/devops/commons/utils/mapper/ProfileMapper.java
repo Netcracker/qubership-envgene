@@ -47,7 +47,6 @@ public class ProfileMapper {
     public Profile convertToEntity(ProfileFullDto profileDto, Tenant tenant) {
         Profile profileEntity = mapper.map(profileDto, Profile.class);
         if (profileEntity.getApplications() != null) {
-            enrichFromDatabase(profileEntity);
             profileEntity.getApplications().forEach(a -> {
                 a.getServices().forEach(s -> {
                     s.getParameters().forEach(p -> p.setServiceProfile(s));
@@ -58,14 +57,6 @@ public class ProfileMapper {
         }
         profileEntity.setTenant(tenant);
         return profileEntity;
-    }
-
-    private void enrichFromDatabase(Profile profileEntity) {
-        List<String> applicationNames = profileEntity.getApplications().stream().map(ApplicationProfile::getName).collect(Collectors.toList());
-        List<String> nonExistingApplications = applicationNames.stream().filter(name -> isNull(applicationService.getApplicationFromYaml(name))).distinct().collect(Collectors.toList());
-        if (!nonExistingApplications.isEmpty()) {
-            throw new NotFoundException(String.format(ExceptionAdditionalInfoMessages.APPLICATION_MULTIPLE_NOT_FOUND_FORMAT, String.join(",", nonExistingApplications)));
-        }
     }
 
 }
