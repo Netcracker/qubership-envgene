@@ -11,7 +11,7 @@ env:
 
 jobs:
   build-jar:
-    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@main
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@feature/rc-copy
     with:
       maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
       java-version: 17
