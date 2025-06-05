@@ -156,14 +156,21 @@ public class BomCommonUtils {
     }
 
     private boolean extractGatewayFlag(Component dataComponent) {
-        return dataComponent.getData().stream()
-                .map(ComponentData::getContents)
-                .map(Content::getAttachment)
-                .map(AttachmentText::getText)
-                .map(encodedText -> fileDataConverter.decodeAndParse(encodedText, DeploymentConfig.class))
-                .map(deploymentConfig -> deploymentConfig.getDeployOptions().isGenerateFacadeGateway())
-                .findFirst()
-                .orElse(false);
+        try {
+            return dataComponent.getData().stream()
+                    .map(ComponentData::getContents)
+                    .map(Content::getAttachment)
+                    .map(AttachmentText::getText)
+                    .map(encodedText -> fileDataConverter.decodeAndParse(encodedText, DeploymentConfig.class))
+                    .map(deploymentConfig -> {
+                        DeployOptions deployOptions = deploymentConfig.getDeployOptions();
+                        return deployOptions != null && deployOptions.isGenerateFacadeGateway();
+                    })
+                    .findFirst()
+                    .orElse(false);
+        } catch(Exception e) {
+            return false;
+        }
     }
 
     protected static RegistrySummaryDTO getRegistrySummaryDTO(Component component, Pattern pattern) {
@@ -186,7 +193,7 @@ public class BomCommonUtils {
         Map<String, String> profileValues = new HashMap<>();
 
         for (ComponentData data : dataComponent.getData()) {
-            if (baseline.equals(data.getName().split("\\.")[0])) {
+            if (baseline != null && baseline.equals(data.getName().split("\\.")[0])) {
                 Content content = data.getContents();
                 String encodedText = content.getAttachment().getText();
                 profileValues = fileDataConverter.decodeAndParse(encodedText, new TypeReference<HashMap<String, String>>() {
