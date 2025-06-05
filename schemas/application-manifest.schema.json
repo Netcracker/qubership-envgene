@@ -77,6 +77,9 @@
             "$ref": "#/definitions/helm-library"
           },
           {
+            "$ref": "#/definitions/helm-chart"
+          },
+          {
             "$ref": "#/definitions/docker-image"
           }
         ]
@@ -585,9 +588,6 @@
           "items": {
             "oneOf": [
               {
-                "$ref": "#/definitions/helm-chart"
-              },
-              {
                 "$ref": "#/definitions/docker-image"
               },
               {
@@ -1075,6 +1075,19 @@
               }
             }
           }
+        },
+        "components": {
+          "type": "array",
+          "title": "Components",
+          "description": "A list of service components",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/helm-chart"
+              }
+            ]
+          },
+          "uniqueItems": true
         }
       }
     }

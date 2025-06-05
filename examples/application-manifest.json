@@ -70,26 +70,6 @@
       ],
       "components": [
         {
-          "bom-ref": "key-manager:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
-          "type": "application",
-          "mime-type": "application/vnd.qubership.helm.chart",
-          "name": "key-manager",
-          "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/key-manager@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
-          "properties": [
-            {
-              "name": "alias",
-              "value": "km"
-            }
-          ]
-        },
-        {
           "bom-ref": "key-manager-assembly-release-2023.1-7.10.0:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
           "type": "container",
           "mime-type": "application/vnd.docker.image",
@@ -203,26 +183,6 @@
         }
       ],
       "components": [
-        {
-          "bom-ref": "identity-provider:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
-          "type": "application",
-          "mime-type": "application/vnd.qubership.helm.chart",
-          "name": "identity-provider",
-          "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/identity-provider@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
-          "properties": [
-            {
-              "name": "alias",
-              "value": "ip"
-            }
-          ]
-        },
         {
           "bom-ref": "identity-provider-assembly-8157:80f031da-024c-4748-a1b9-d548a3dd030f",
           "type": "container",
@@ -581,49 +541,99 @@
         }
       ],
       "purl": "pkg:docker/cloud-core/key-manager-second@build22?registry_id=sandbox?repository_id=targetSnapshot"
+    },
+    {
+      "bom-ref": "Cloud-Core:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.helm.chart",
+      "name": "Cloud-Core",
+      "version": "1.2.3",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
+        }
+      ],
+      "purl": "pkg:helm/example-repo/Cloud-Core@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+      "properties": [
+        {
+          "name": "alias",
+          "value": "app-chart"
+        }
+      ],
+      "components": [
+        {
+          "bom-ref": "key-manager:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "key-manager",
+          "version": "1.2.3",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
+            }
+          ],
+          "purl": "pkg:helm/example-repo/key-manager@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "properties": [
+            {
+              "name": "alias",
+              "value": "km"
+            }
+          ]
+        },
+        {
+          "bom-ref": "identity-provider:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "identity-provider",
+          "version": "1.2.3",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
+            }
+          ],
+          "purl": "pkg:helm/example-repo/identity-provider@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "properties": [
+            {
+              "name": "alias",
+              "value": "ip"
+            }
+          ]
+        }
+      ]
     }
   ],
   "dependencies": [
     {
       "ref": "key-manager:61439aff-c00d-43f5-9bae-fe6db05db2d5",
       "dependsOn": [
-        "common-templates:44bc4550-c3f1-4465-b891-2764c9d3db56",
         "smartplug-sample-plugin:30794643-0400-4cf4-88e9-24f7325e9a7f",
         "api-docs:2fc57d76-7d97-4e70-924f-190ddb064585",
         "platform-bootstrap-cli:be8e1821-6c8a-49a4-8947-62716d08162b",
-        "key-manager-second:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f"
+        "key-manager-second:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
+        "key-manager:7f17a6dc-b973-438f-abb7-e0c57a32afc5"
       ]
     },
     {
       "ref": "identity-provider:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "dependsOn": [
-        "common-templates:44bc4550-c3f1-4465-b891-2764c9d3db56",
-        "cdn-conf:b2233ee5-d27a-4bde-9d5a-f808f3f0463e"
+        "cdn-conf:b2233ee5-d27a-4bde-9d5a-f808f3f0463e",
+        "identity-provider:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3"
       ]
     },
     {
-      "ref": "smartplug-sample-plugin:30794643-0400-4cf4-88e9-24f7325e9a7f",
-      "dependsOn": []
+      "ref": "key-manager:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
+      "dependsOn": [
+        "common-templates:44bc4550-c3f1-4465-b891-2764c9d3db56"
+      ]
     },
     {
-      "ref": "api-docs:2fc57d76-7d97-4e70-924f-190ddb064585",
-      "dependsOn": []
-    },
-    {
-      "ref": "cdn-conf:b2233ee5-d27a-4bde-9d5a-f808f3f0463e",
-      "dependsOn": []
-    },
-    {
-      "ref": "platform-bootstrap-cli:be8e1821-6c8a-49a4-8947-62716d08162b",
-      "dependsOn": []
-    },
-    {
-      "ref": "common-templates:44bc4550-c3f1-4465-b891-2764c9d3db56",
-      "dependsOn": []
-    },
-    {
-      "ref": "key-manager-second:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
-      "dependsOn": []
+      "ref": "identity-provider:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
+      "dependsOn": [
+        "common-templates:44bc4550-c3f1-4465-b891-2764c9d3db56"
+      ]
     }
   ]
 }
