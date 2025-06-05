@@ -92,7 +92,11 @@ public class CliParameterParser {
                     try {
                         logInfo("Started processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                         generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), k8TokenMap);
-                        String deployPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "Namespaces", namespaceName);
+                        String deployPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "Namespaces", namespaceName).replace('\\', '/');
+                        int index = deployPostFixDir.indexOf("/environments/");
+                        if (index != 1) {
+                            deployPostFixDir = deployPostFixDir.substring(index + 1);
+                        }
                         mappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                     } catch (Exception e) {

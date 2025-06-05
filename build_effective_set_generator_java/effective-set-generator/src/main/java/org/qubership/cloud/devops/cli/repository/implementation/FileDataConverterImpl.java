@@ -91,7 +91,9 @@ public class FileDataConverterImpl implements FileDataConverter {
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
         File file = fileSystemUtils.getFileFromGivenPath(args);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            getYamlObject().dump(params, writer);
+            if (params != null && !params.isEmpty()) {
+                getYamlObject().dump(params, writer);
+            }
         }
     }
 
