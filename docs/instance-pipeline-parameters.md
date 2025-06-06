@@ -162,6 +162,9 @@ contexts:
 | **contexts.operational.consumers[].version** | Mandatory if `contexts.operational.consumers` is set | The version of the [consumer-specific operational context component](/docs/calculator-cli.md#version-20-operational-parameter-context). If used without `contexts.operational.consumers[].schema`, the component must be pre-registered in EnvGene. | None | `v1.0`|
 | **contexts.operational.consumers[].schema** | Optional | The content of the consumer-specific operational context component JSON schema transformed into a string. It is used to generate a consumer-specific operational context for a consumer not registered in EnvGene. EnvGene saves the value as a JSON file with the name `<contexts.operational[].name>-<contexts.operational[].version>.schema.json` and passes the path to it to the Calculator CLI via `--operational-consumer-specific-schema-path` attribute. The schema obtained in this way is not saved between pipeline runs and must be passed for each run. | None | [consumer-v1.0.json](/examples/consumer-v1.0.json) |
 
+> [!WARNING]  
+> The JSON schema passed in `contexts.operational.consumers[].schema` may contain a `$` symbol, for example in the `$schema` attribute. In this case, it must be escaped according to [GitLab's rules](https://docs.gitlab.com/ci/variables/#use-the--character-in-cicd-variables) by adding an additional `$` for escaping, for example `$$schema`.
+
 Registered component JSON schemas are stored in the EnvGene Docker image as JSON files named: `<consumers-name>-<consumer-version>.schema.json`
 
 Consumer-specific operational context components registered in EnvGene:
