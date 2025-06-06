@@ -29,8 +29,8 @@ public class ApplicationMap extends DynamicMap {
     private String namespace;
 
     public ApplicationMap(String defaultApp, Binding binding, String namespace) {
-        this.namespace = namespace;
         super(defaultApp, binding);
+        this.namespace = namespace;
     }
 
     @Override
