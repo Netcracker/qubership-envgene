@@ -16,7 +16,7 @@
 
 ### QIP Example
 
-![application-manifest-1.drawio.png](/docs/images/application-manifest-2.drawio.png)
+![application-manifest-1.drawio.png](/docs/images/application-manifest-3.drawio.png)
 
 [QIP Application Manifest example](/examples/application-manifest-qip.json)
 
