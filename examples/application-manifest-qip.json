@@ -981,48 +981,34 @@
               "value": "ip"
             }
           ]
+        },
+        {
+          "bom-ref": "qubership-integration-platform-composite-gateway:13dac210-3424-4799-9631-667d7b2b0ed8",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "qubership-integration-platform-composite-gateway",
+          "version": "1.2.3",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
+            }
+          ],
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-composite-gateway@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "properties": [
+            {
+              "name": "alias",
+              "value": "qubership-integration-platform-composite-gateway"
+            }
+          ]
         }
       ]
     },
     {
-      "bom-ref": "qubership-integration-platform-composite-gateway:30794643-0400-4cf4-88e9-24f7325e9a7f",
-      "type": "application",
-      "mime-type": "application/vnd.qubership.plugin.gateway",
-      "name": "qubership-integration-platform-composite-gateway",
-      "version": "master-20250210.074231-74",
-      "properties": [
-        {
-          "name": "git_branch",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "git_revision",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "build_id_dtrust",
-          "value": "063f0593-c453-4904-b833-ce4d113e9c5a"
-        },
-        {
-          "name": "maven_repository",
-          "value": "https://artifactory.qubership.org/sa.mvn.group"
-        },
-        {
-          "name": "type",
-          "value": ""
-        },
-        {
-          "name": "git_url",
-          "value": "https://git.qubership.org/tree/960269e6c55e1bd6fd7f7ed5df873241facb542f"
-        }
-      ],
-      "components": []
-    },
-    {
-      "bom-ref": "qubership-integration-platform-composite-gateway:13dac210-3424-4799-9631-667d7b2b0ed8",
-      "type": "application",
-      "mime-type": "application/vnd.qubership.helm.chart",
-      "name": "qubership-integration-platform-composite-gateway",
+      "bom-ref": "core-tpl:13dac210-3424-4799-9631-667d7b2b0ed8",
+      "type": "library",
+      "mime-type": "application/vnd.qubership.helm.library",
+      "name": "core-tpl",
       "version": "1.2.3",
       "hashes": [
         {
@@ -1030,254 +1016,28 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:helm/example-repo/qubership-integration-platform-composite-gateway@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+      "purl": "pkg:helm/example-repo/core-tpl@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
       "properties": [
         {
           "name": "alias",
-          "value": "qubership-integration-platform-composite-gateway"
+          "value": "core-tpl"
         }
       ]
     },
     {
-      "bom-ref": "qubership-integration-platform-catalog-extension-points:d75d6981-088d-4391-8643-6f90fd5736bf",
-      "type": "library",
-      "mime-type": "application/java-archive",
-      "name": "qubership-integration-platform-catalog-extension-points",
-      "group": "org.qubership.cloud.content.common",
-      "version": "master-20250205.150410-build5",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
-      "purl": "pkg:maven/org.qubership.cloud.content.common/qubership-integration-platform-catalog-extension-points@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot",
-      "properties": []
-    },
-    {
-      "bom-ref": "qubership-integration-platform-engine-extension-points:a465b0f4-5f09-4dc2-8033-98cfcf888c52",
-      "type": "library",
-      "mime-type": "application/java-archive",
-      "name": "qubership-integration-platform-engine-extension-points",
-      "group": "org.qubership.cloud.content.common",
-      "version": "1.2.3",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
-      "purl": "pkg:maven/common/qubership-integration-platform-engine-extension-points@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
-      "properties": []
-    },
-    {
-      "bom-ref": "security-scripts:be8e1821-6c8a-49a4-8947-62716d08162b",
-      "type": "application",
-      "mime-type": "application/vnd.qubership.job",
-      "name": "security-scripts",
-      "version": "master-20250210.074231-76",
-      "properties": [],
-      "components": [
-        {
-          "bom-ref": "security-scripts-environment:d75d6981-088d-4391-8643-6f90fd5736bf",
-          "type": "data",
-          "mime-type": "application/zip",
-          "name": "security-scripts-environment",
-          "group": "org.qubership.cloud.content.common",
-          "version": "master-20250205.150410-build5",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:maven/org.qubership.cloud.content.common/security-scripts-environment@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot",
-          "properties": []
-        },
-        {
-          "bom-ref": "security-scripts-core:d75d6981-088d-4391-8643-6f90fd5736bf",
-          "type": "data",
-          "mime-type": "application/zip",
-          "name": "security-scripts-core",
-          "group": "org.qubership.cloud.content.common",
-          "version": "master-20250205.150410-build5",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:maven/org.qubership.cloud.content.common/security-scripts-core@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot",
-          "properties": []
-        },
-        {
-          "bom-ref": "security-scripts-identity-provider:d75d6981-088d-4391-8643-6f90fd5736bf",
-          "type": "data",
-          "mime-type": "application/zip",
-          "name": "security-scripts-identity-provider",
-          "group": "org.qubership.cloud.content.common",
-          "version": "master-20250205.150410-build5",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:maven/org.qubership.cloud.content.common/security-scripts-identity-provider@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot",
-          "properties": []
-        },
-        {
-          "bom-ref": "security-scripts-common:d75d6981-088d-4391-8643-6f90fd5736bf",
-          "type": "data",
-          "mime-type": "application/zip",
-          "name": "security-scripts-common",
-          "group": "org.qubership.cloud.content.common",
-          "version": "master-20250205.150410-build5",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:maven/org.qubership.cloud.content.common/security-scripts-common@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot",
-          "properties": []
-        }
-      ]
-    },
-    {
-      "bom-ref": "security-scripts-cli:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
+      "bom-ref": "core-tpl:80f031da-024c-4748-a1b9-d548a3dd030f",
       "type": "container",
       "mime-type": "application/vnd.docker.image",
-      "name": "security-scripts-cli",
+      "name": "core-tpl",
       "group": "core",
-      "version": "build22",
+      "version": "build3",
       "hashes": [
         {
           "alg": "SHA-256",
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/core/security-scripts-cli@build22?registry_id=sandbox?repository_id=targetSnapshot"
-    },
-    {
-      "bom-ref": "platform-scripts:be8e1821-6c8a-49a4-8947-62716d08162b",
-      "type": "application",
-      "mime-type": "application/vnd.qubership.job",
-      "name": "platform-scripts",
-      "version": "master-20250210.074231-76",
-      "properties": [],
-      "components": [
-        {
-          "bom-ref": "platform-scripts-core:d75d6981-088d-4391-8643-6f90fd5736bf",
-          "type": "data",
-          "mime-type": "application/zip",
-          "name": "platform-scripts-core",
-          "group": "org.qubership.cloud.content.common",
-          "version": "master-20250205.150410-build5",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:maven/org.qubership.cloud.content.common/platform-scripts-core@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot",
-          "properties": []
-        },
-        {
-          "bom-ref": "platform-scripts-vault:d75d6981-088d-4391-8643-6f90fd5736bf",
-          "type": "data",
-          "mime-type": "application/zip",
-          "name": "platform-scripts-vault",
-          "group": "org.qubership.cloud.content.common",
-          "version": "master-20250205.150410-build5",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:maven/org.qubership.cloud.content.common/platform-scripts-vault@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot",
-          "properties": []
-        },
-        {
-          "bom-ref": "platform-scripts-common:d75d6981-088d-4391-8643-6f90fd5736bf",
-          "type": "data",
-          "mime-type": "application/zip",
-          "name": "platform-scripts-common",
-          "group": "org.qubership.cloud.content.common",
-          "version": "master-20250205.150410-build5",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:maven/org.qubership.cloud.content.common/platform-scripts-common@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot",
-          "properties": []
-        },
-        {
-          "bom-ref": "platform-scripts-m2m:d75d6981-088d-4391-8643-6f90fd5736bf",
-          "type": "data",
-          "mime-type": "application/zip",
-          "name": "platform-scripts-m2m",
-          "group": "org.qubership.cloud.content.common",
-          "version": "master-20250205.150410-build5",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:maven/org.qubership.cloud.content.common/platform-scripts-m2m@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot",
-          "properties": []
-        },
-        {
-          "bom-ref": "platform-scripts-identity-provider:d75d6981-088d-4391-8643-6f90fd5736bf",
-          "type": "data",
-          "mime-type": "application/zip",
-          "name": "platform-scripts-identity-provider",
-          "group": "org.qubership.cloud.content.common",
-          "version": "master-20250205.150410-build5",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:maven/org.qubership.cloud.content.common/platform-scripts-identity-provider@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot",
-          "properties": []
-        }
-      ]
-    },
-    {
-      "bom-ref": "platform-scripts-cli:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
-      "type": "container",
-      "mime-type": "application/vnd.docker.image",
-      "name": "platform-scripts-cli",
-      "group": "core",
-      "version": "build22",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
-      "purl": "pkg:docker/core/platform-scripts-cli@build22?registry_id=sandbox?repository_id=targetSnapshot"
-    },
-    {
-      "bom-ref": "platform-bootstrap-cli:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
-      "type": "container",
-      "mime-type": "application/vnd.docker.image",
-      "name": "platform-bootstrap-cli",
-      "group": "core",
-      "version": "build22",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
-      "purl": "pkg:docker/core/platform-bootstrap-cli@build22?registry_id=sandbox?repository_id=targetSnapshot"
+      "purl": "pkg:docker/core/core-tpl@build3?registry_id=sandbox?repository_id=snapshotUri"
     }
   ],
   "dependencies": [
@@ -1299,70 +1059,105 @@
         "cr-synchonizer:6dde3587-76a0-4369-8a9b-36c5c7b468be",
         "cr-synchonizer:80f031da-024c-4748-a1b9-d548a3dd030f",
         "qubership-integration-platform:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
-        "qubership-integration-platform-composite-gateway:30794643-0400-4cf4-88e9-24f7325e9a7f",
-        "qubership-integration-platform-composite-gateway:13dac210-3424-4799-9631-667d7b2b0ed8",
-        "qubership-integration-platform-catalog-extension-points:d75d6981-088d-4391-8643-6f90fd5736bf",
-        "qubership-integration-platform-engine-extension-points:a465b0f4-5f09-4dc2-8033-98cfcf888c52",
-        "security-scripts:be8e1821-6c8a-49a4-8947-62716d08162b",
-        "security-scripts-cli:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
-        "platform-scripts:be8e1821-6c8a-49a4-8947-62716d08162b",
-        "platform-scripts-cli:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
-        "platform-bootstrap-cli:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f"
+        "core-tpl:13dac210-3424-4799-9631-667d7b2b0ed8",
+        "core-tpl:80f031da-024c-4748-a1b9-d548a3dd030f"
       ]
     },
     {
       "ref": "qubership-integration-platform-ui:61439aff-c00d-43f5-9bae-fe6db05db2d5",
       "dependsOn": [
-        "qubership-integration-platform-ui:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
-        "qubership-integration-platform-ui:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f"
+        "qubership-integration-platform-ui:7f17a6dc-b973-438f-abb7-e0c57a32afc5"
+      ]
+    },
+    {
+      "ref": "qubership-integration-platform-ui:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
+      "dependsOn": [
+        "qubership-integration-platform-ui:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
+        "core-tpl:13dac210-3424-4799-9631-667d7b2b0ed8"
       ]
     },
     {
       "ref": "qubership-integration-platform-variables-management:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "dependsOn": [
-        "qubership-integration-platform-variables-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
-        "qubership-integration-platform-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f"
+        "qubership-integration-platform-variables-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3"
+      ]
+    },
+    {
+      "ref": "qubership-integration-platform-variables-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
+      "dependsOn": [
+        "qubership-integration-platform-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f",
+        "core-tpl:13dac210-3424-4799-9631-667d7b2b0ed8"
       ]
     },
     {
       "ref": "qubership-integration-platform-systems-catalog:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "dependsOn": [
-        "qubership-integration-platform-systems-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
-        "qubership-integration-platform-systems-catalog:80f031da-024c-4748-a1b9-d548a3dd030f"
+        "qubership-integration-platform-systems-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3"
+      ]
+    },
+    {
+      "ref": "qubership-integration-platform-systems-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
+      "dependsOn": [
+        "qubership-integration-platform-systems-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
+        "core-tpl:13dac210-3424-4799-9631-667d7b2b0ed8"
       ]
     },
     {
       "ref": "qubership-integration-platform-catalog:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "dependsOn": [
-        "qubership-integration-platform-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
-        "qubership-integration-platform-catalog:80f031da-024c-4748-a1b9-d548a3dd030f"
+        "qubership-integration-platform-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3"
+      ]
+    },
+    {
+      "ref": "qubership-integration-platform-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
+      "dependsOn": [
+        "qubership-integration-platform-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
+        "core-tpl:13dac210-3424-4799-9631-667d7b2b0ed8"
       ]
     },
     {
       "ref": "qubership-integration-platform-engine:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "dependsOn": [
-        "qubership-integration-platform-engine:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
-        "qubership-integration-platform-engine:80f031da-024c-4748-a1b9-d548a3dd030f"
+        "qubership-integration-platform-engine:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3"
+      ]
+    },
+    {
+      "ref": "qubership-integration-platform-engine:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
+      "dependsOn": [
+        "qubership-integration-platform-engine:80f031da-024c-4748-a1b9-d548a3dd030f",
+        "core-tpl:13dac210-3424-4799-9631-667d7b2b0ed8"
       ]
     },
     {
       "ref": "qubership-integration-platform-sessions-management:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "dependsOn": [
-        "qubership-integration-platform-sessions-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
-        "qubership-integration-platform-sessions-management:80f031da-024c-4748-a1b9-d548a3dd030f"
+        "qubership-integration-platform-sessions-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3"
+      ]
+    },
+    {
+      "ref": "qubership-integration-platform-sessions-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
+      "dependsOn": [
+        "qubership-integration-platform-sessions-management:80f031da-024c-4748-a1b9-d548a3dd030f",
+        "core-tpl:13dac210-3424-4799-9631-667d7b2b0ed8"
       ]
     },
     {
       "ref": "cr-synchonizer:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "dependsOn": [
-        "cr-synchonizer:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
-        "cr-synchonizer:80f031da-024c-4748-a1b9-d548a3dd030f"
+        "cr-synchonizer:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3"
       ]
     },
     {
-      "ref": "qubership-integration-platform-composite-gateway:30794643-0400-4cf4-88e9-24f7325e9a7f",
+      "ref": "cr-synchonizer:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
       "dependsOn": [
-        "qubership-integration-platform-composite-gateway:13dac210-3424-4799-9631-667d7b2b0ed8"
+        "cr-synchonizer:80f031da-024c-4748-a1b9-d548a3dd030f",
+        "core-tpl:13dac210-3424-4799-9631-667d7b2b0ed8"
+      ]
+    },
+    {
+      "ref": "core-tpl:13dac210-3424-4799-9631-667d7b2b0ed8",
+      "dependsOn": [
+        "core-tpl:80f031da-024c-4748-a1b9-d548a3dd030f"
       ]
     }
   ]
