@@ -14,8 +14,6 @@
 
 [Application Manifest JSON schema](/schemas/application-manifest.schema.json)
 
-[Application Manifest example](/examples/application-manifest.json)
-
 ### QIP Example
 
 ![application-manifest-1.drawio.png](/docs/images/application-manifest-2.drawio.png)
