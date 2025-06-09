@@ -11,6 +11,7 @@ from .file_helper import *
 from .logger import logger
 from .json_helper import openJson
 from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
+from ruyaml import CommentedMap, CommentedSeq
 from typing import Callable, OrderedDict
 
 def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
@@ -57,9 +58,27 @@ def convert_dict_to_yaml(d):
         return d
     return ruyaml.CommentedMap(d)
 
+def remove_empty_list_comments(data):
+    # In case of comments for values in empty lists that no longer have values ruyaml renders them incorrectly and is incapable of parsing the rendered files
+    # To avoid this we clean up those comments
+    if isinstance(data, CommentedMap):
+        for key, value in data.items():
+            if isinstance(value, list) and not value:
+                if data.ca and data.ca.items and key in data.ca.items:
+                    comment_info = data.ca.items[key]
+                    if len(comment_info) > 3:
+                        comment_info[3] = None
+            if isinstance(value, (CommentedMap, CommentedSeq)):
+                remove_empty_list_comments(value)
+    elif isinstance(data, CommentedSeq):
+        for item in data:
+            if isinstance(item, (CommentedMap, CommentedSeq)):
+                remove_empty_list_comments(item)
+
 def writeYamlToFile(filePath, contents):
     logger.debug(f"Writing yaml to file: {filePath}")
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
+    remove_empty_list_comments(contents)
     with open(filePath, 'w+') as f:
         yaml.dump(contents, f)
     return
