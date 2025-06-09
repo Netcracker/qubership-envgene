@@ -124,6 +124,12 @@ public class CliParameterParser {
 
     public void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
         ParameterBundle parameterBundle = parametersService.getCliE2EParameter(tenantName, cloudName);
+        if (parameterBundle.getE2eParams() == null) {
+            parameterBundle.setE2eParams(new HashMap<>());
+        }
+        if (parameterBundle.getSecuredE2eParams() == null) {
+            parameterBundle.setSecuredE2eParams(new HashMap<>());
+        }
         parameterBundle.getE2eParams().put("composite_structure", inputData.getCompositeStructureMap());
         parameterBundle.getE2eParams().put("environments", inputData.getClusterMap());
         parameterBundle.getSecuredE2eParams().put("k8s_tokens", k8TokenMap);
