@@ -13,7 +13,7 @@
 10. [Testing Error Scenarios](#testing-error-scenarios)
 
 > **Important Resources:**
-> - [Error Catalog](../error-catalog.md): Complete catalog of all error codes
+> - [Error Catalog](./error-catalog.md): Complete catalog of all error codes
 > - [PR Template](../.github/PULL_REQUEST_TEMPLATE/pull_request_template.md): Standard PR template with error handling requirements
 
 ## Error Handling Principles
@@ -88,7 +88,7 @@ All these error classes inherit from the base `EnvGeneError` class, which suppor
    )
    ```
 
-4. **Use Error Codes** (see [Error Catalog](../error-catalog.md) for all codes):
+4. **Use Error Codes** (see [Error Catalog](./error-catalog.md) for all codes):
    ```python
    # ENVGENE-0001: Module initialization failed
    raise RuntimeError("[ENVGENE-0001] Failed to initialize module. Check configuration.")
@@ -101,7 +101,7 @@ All these error classes inherit from the base `EnvGeneError` class, which suppor
 
 ## Error Code Format
 
-EnvGene error codes must follow the format: `ENVGENE-XXXX` where (see [Error Catalog](../error-catalog.md) for the complete list of error codes):
+EnvGene error codes must follow the format: `ENVGENE-XXXX` where (see [Error Catalog](./error-catalog.md) for the complete list of error codes):
 
 - `ENVGENE` - Component identifier (always ENVGENE for our component)
 - `XXXX` - Error code number (padded with zeros on the left)
@@ -252,7 +252,7 @@ Reviewers **MUST** verify that all items in the checklist are properly addressed
 
 ### Mandatory Error Codes
 
-Every error message in EnvGene MUST include an error code that follows the naming convention below. This is a strict requirement to ensure consistent error handling and documentation. All error codes must be documented in the [Error Catalog](../error-catalog.md).
+Every error message in EnvGene MUST include an error code that follows the naming convention below. This is a strict requirement to ensure consistent error handling and documentation. All error codes must be documented in the [Error Catalog](./error-catalog.md).
 
 ### Error Code Naming Convention
 
@@ -326,7 +326,7 @@ This format aligns with the standard error code format used by other components 
 - [ ] Errors are properly propagated to pipeline output
 
 #### Documentation
-- [ ] All error codes are documented in the [error catalog](../error-catalog.md)
+- [ ] All error codes are documented in the [error catalog](./error-catalog.md)
 - [ ] Documentation includes all required sections (ID, Component, When, What, Error, Resolution)
 - [ ] Error documentation includes examples of both error message and resolution steps
 
