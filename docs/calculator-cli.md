@@ -603,8 +603,6 @@ The calculator forms consumer-specific parameters according to the following pri
 ```yaml
 composite_structure:
   name: "clusterA-env-1-composite-structure"
-  version: 0
-  id: "env-1-core"
   baseline:
     name: "env-1-core"
     type: "namespace"
