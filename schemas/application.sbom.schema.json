@@ -735,6 +735,9 @@
             "oneOf": [
               {
                 "$ref": "#/definitions/artifact"
+              },
+              {
+                "$ref": "#/definitions/resource-profile-baseline"
               }
             ]
           },
