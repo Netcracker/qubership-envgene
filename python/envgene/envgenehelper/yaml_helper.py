@@ -59,8 +59,10 @@ def convert_dict_to_yaml(d):
     return ruyaml.CommentedMap(d)
 
 def remove_empty_list_comments(data):
-    # In case of comments for values in empty lists that no longer have values ruyaml renders them incorrectly and is incapable of parsing the rendered files
-    # To avoid this we clean up those comments
+    # There are cases when list has values and those values have comments related
+    # to them. When all values are removed from list, comments are left behind 
+    # and when rendered by ruyaml create an invalid file content that makes 
+    # future parsing to fail. To avoid this we clean up those comments
     if isinstance(data, CommentedMap):
         for key, value in data.items():
             if isinstance(value, list) and not value:
