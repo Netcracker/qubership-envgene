@@ -28,7 +28,7 @@ technicalConfigurationParameters:
   APP_NAMESPACE: "test-solution-structure-case-01-app"
   TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
   param-A: "apple" # paramset: paramset-A version: n/a source: template
-deployParameterSets: [] #TC-002-001
-e2eParameterSets: [] #TC-002-001
-technicalConfigurationParameterSets: [] #TC-002-001
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
 tenantName: "test-solution-structure-template"

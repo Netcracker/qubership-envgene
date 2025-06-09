@@ -1,6 +1,5 @@
 ---
 tenant: "{{ templates_dir }}/env_templates/test-solution-structure-template/tenant.yml.j2"
-#TC-002-001 begin
 cloud: 
   template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/cloud.yml.j2"
   template_override:
@@ -20,5 +19,4 @@ namespaces:
       technicalConfigurationParameterSets:
         - paramset-A
   - template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/Namespaces/app.yml.j2"
-#TC-002-001 end
 
