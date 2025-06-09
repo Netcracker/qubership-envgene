@@ -1,32 +1,31 @@
 # EnvGene Error Handling Best Practices Guide
 
 ## Table of Contents
-1. [Overview](#overview)
-2. [Error Handling Principles](#error-handling-principles)
-3. [When and Where to Catch Errors](#when-and-where-to-catch-errors)
-4. [Error Classification](#error-classification)
-5. [Writing User-Friendly Error Messages](#writing-user-friendly-error-messages)
-6. [Error Handling Patterns](#error-handling-patterns)
-7. [Logging Best Practices](#logging-best-practices)
-8. [Examples](#examples)
-9. [Checklist](#checklist)
+1. [Error Handling Principles](#error-handling-principles)
+2. [When and Where to Catch Errors](#when-and-where-to-catch-errors)
+3. [Error Classification](#error-classification)
+4. [Writing User-Friendly Error Messages](#writing-user-friendly-error-messages)
+5. [Error Code Format](#error-code-format)
+6. [Error Message Propagation](#error-message-propagation)
+7. [Examples](#examples)
+8. [Checklist](#checklist)
+9. [Error Handling PR Template Requirements](#error-handling-pr-template-requirements)
 10. [Testing Error Scenarios](#testing-error-scenarios)
 
-## Overview
-
-This guide establishes best practices for error handling in EnvGene pipelines to ensure that error messages are:
-- **User-friendly**: Understandable by non-technical users
-- **Actionable**: Provide clear guidance on how to resolve the issue
-- **Specific**: Include relevant context and details
-- **Consistent**: Follow established patterns across the codebase
+> **Important Resources:**
+> - [Error Catalog](../error-catalog.md): Complete catalog of all error codes
+> - [PR Template](../.github/PULL_REQUEST_TEMPLATE/pull_request_template.md): Standard PR template with error handling requirements
 
 ## Error Handling Principles
 
-1. **Fail Fast, Fail Loud**: Detect and report errors as soon as they occur.
-2. **Be Specific**: Provide detailed error messages that explain what went wrong and why.
-3. **Be Helpful**: Include guidance on how to fix the issue.
-4. **Be Consistent**: Follow the established error handling patterns.
-5. **Log Appropriately**: Ensure errors are logged with sufficient context for debugging.
+This guide establishes best practices for error handling in EnvGene pipelines to ensure that error messages are:
+
+1. **User-friendly**: Understandable by non-technical users
+2. **Actionable**: Provide clear guidance on how to resolve the issue
+3. **Specific**: Include relevant context and details
+4. **Consistent**: Follow established patterns across the codebase
+5. **Fail Fast, Fail Loud**: Detect and report errors as soon as they occur
+6. **Log Appropriately**: Ensure errors are logged with sufficient context for debugging
 
 ## When and Where to Catch Errors
 
@@ -48,14 +47,19 @@ This guide establishes best practices for error handling in EnvGene pipelines to
 
 ## Error Classification
 
+EnvGene provides a set of custom error classes in [`python/envgene/envgenehelper/errors.py`](../python/envgene/envgenehelper/errors.py) that should be used for consistent error handling across the codebase:
+
 | Error Type           | When to Use                      | Example                              |
 |----------------------|----------------------------------|--------------------------------------|
 | `ValueError`         | Invalid parameter values         | Invalid input format                 |
-| `TypeError`          | Incorrect parameter types       | Wrong type passed to function        |
-| `ReferenceError`     | Missing required resources      | Required file not found             |
-| `EnvironmentError`   | Environment-related issues      | Missing environment variables       |
-| `RuntimeError`       | Other runtime errors            | Unexpected state in the application |
-| `CustomError`        | Domain-specific error cases     | See Error Catalog                   |
+| `TypeError`          | Incorrect parameter types        | Wrong type passed to function        |
+| `ReferenceError`     | Missing required resources       | Required file not found              |
+| `EnvironmentError`   | Environment-related issues       | Missing environment variables        |
+| `RuntimeError`       | Other runtime errors             | Unexpected state in the application  |
+| `ValidationError`    | Input validation failures        | Schema validation failure            |
+| `IntegrationError`   | External system integration      | API call failure                     |
+
+All these error classes inherit from the base `EnvGeneError` class, which supports error codes and formatted error messages.
 
 
 ## Writing User-Friendly Error Messages
@@ -84,10 +88,10 @@ This guide establishes best practices for error handling in EnvGene pipelines to
    )
    ```
 
-4. **Use Error Codes**:
+4. **Use Error Codes** (see [Error Catalog](../error-catalog.md) for all codes):
    ```python
-   # ERR-MOD-001: Module initialization failed
-   raise RuntimeError("[ERR-MOD-VAL-001] Failed to initialize module. Check configuration.")
+   # ENVGENE-0001: Module initialization failed
+   raise RuntimeError("[ENVGENE-0001] Failed to initialize module. Check configuration.")
    ```
 
 ### DON'T:
@@ -95,127 +99,138 @@ This guide establishes best practices for error handling in EnvGene pipelines to
 2. Use technical jargon without explanation
 3. Be vague or generic
 
-## Error Handling Patterns
+## Error Code Format
 
-### 1. Input Validation
+EnvGene error codes must follow the format: `ENVGENE-XXXX` where (see [Error Catalog](../error-catalog.md) for the complete list of error codes):
+
+- `ENVGENE` - Component identifier (always ENVGENE for our component)
+- `XXXX` - Error code number (padded with zeros on the left)
+
+Error code ranges:
+
+| Range      | Type          | Description                                      |
+|------------|---------------|--------------------------------------------------|
+| 0001-1499  | Business      | Errors in business logic                         |
+| 1500-1999  | Technical     | Errors in technical logic                        |
+| 3000-3999  | Inconsistency | Errors related to data/state inconsistency       |
+| 4000-6999  | Validation    | Validation errors for input parameters           |
+| 7000-7999  | Integration   | Integration errors with external systems         |
+| 8000-8999  | Data source   | Errors related to data sources (DB, files, etc.) |
+
+Example usage in code:
 
 ```python
-def process_config(config):
+from envgenehelper.errors import ValidationError
+
+def validate_config(config):
     if not isinstance(config, dict):
-        raise TypeError("Configuration must be a dictionary")
+        raise ValidationError("Configuration must be a dictionary", error_code="ENVGENE-4001")
     
     if 'api_key' not in config:
-        raise ValueError("Missing required configuration: 'api_key'")
-    
-    # Process config...
+        raise ValidationError("Missing required configuration: 'api_key'", error_code="ENVGENE-4002")
 ```
 
-### 2. Resource Handling
+## Error Message Propagation
 
-```python
-def load_template(template_path):
-    try:
-        with open(template_path, 'r') as f:
-            return f.read()
-    except FileNotFoundError:
-        raise ReferenceError(f"Template file not found: {template_path}")
-    except IOError as e:
-        raise RuntimeError(f"Error reading template file {template_path}: {str(e)}")
-```
+It's critical to ensure that user-friendly error messages are correctly propagated to the pipeline output and not swallowed by higher-level handlers. Follow these guidelines:
 
-### 3. External Command Execution
-
-```python
-def run_external_command(cmd):
-    try:
-        result = subprocess.run(
-            cmd,
-            capture_output=True,
-            text=True,
-            check=True
-        )
-        return result.stdout
-    except subprocess.CalledProcessError as e:
-        logger.error(f"Command failed with code {e.returncode}")
-        logger.error(f"Stdout: {e.stdout}")
-        logger.error(f"Stderr: {e.stderr}")
-        raise RuntimeError("Failed to execute command. See logs for details.")
-```
-
-## Logging Best Practices
-
-1. **Log Errors with Context**:
+1. **Preserve Original Error Context**:
    ```python
    try:
-       # Some operation
-   except Exception as e:
-       logger.error(
-           "Failed to process configuration. "
-           f"File: {config_file}, Error: {str(e)}",
-           exc_info=True  # Include stack trace in logs
-       )
-       raise  # Re-raise with original traceback
+       # Operation that might fail
+   except EnvGeneError as e:
+       # Add context but preserve the original error
+       raise RuntimeError(f"Pipeline execution failed: {str(e)}") from e
    ```
 
-2. **Use Appropriate Log Levels**:
-   - `DEBUG`: Detailed information for debugging
-   - `INFO`: Confirmation that things are working as expected
-   - `WARNING`: Indication that something unexpected happened
-   - `ERROR`: Serious problems that prevent normal execution
-   - `CRITICAL`: Severe errors that cause premature termination
+2. **Bubble Up Important Errors**:
+   - Don't catch exceptions unless you can handle them meaningfully
+   - When re-raising, use the `from` syntax to preserve the traceback
+   - Ensure top-level handlers display the full error message to users
+
+3. **Pipeline Output Handling**:
+   - All pipeline components must report errors to a central error handler
+   - The central error handler must format errors consistently
+   - User-facing interfaces must display the formatted error message
 
 ## Examples
 
 ### Good Error Message
 
 ```python
+from envgenehelper.errors import ValidationError, TypeError
+
 def validate_credentials(credentials):
     if not isinstance(credentials, dict):
         raise TypeError(
             "Credentials must be a dictionary. "
-            f"Got {type(credentials).__name__} instead."
+            f"Got {type(credentials).__name__} instead.",
+            error_code="ENVGENE-4001"
         )
     
     required_fields = ['username', 'password', 'domain']
     missing = [field for field in required_fields if field not in credentials]
     
     if missing:
-        raise ValueError(
+        raise ValidationError(
             f"Missing required credential fields: {', '.join(missing)}. "
-            "Please provide all required credentials."
+            "Please provide all required credentials.",
+            error_code="ENVGENE-4002"
         )
 ```
 
-### Good Logging Pattern
+### Good Error Propagation Pattern
 
 ```python
+from envgenehelper.errors import IntegrationError
+
 try:
-    result = some_operation()
-except SomeSpecificError as e:
-    logger.error(
-        "Failed to complete operation. "
-        f"Context: {context}, Error: {str(e)}",
-        exc_info=True
-    )
-    raise RuntimeError("Operation failed. See logs for details.") from e
+    result = api_client.fetch_data()
+except ApiClientError as e:
+    # Convert to our error type with proper code
+    raise IntegrationError(
+        f"Failed to fetch data from API: {str(e)}",
+        error_code="ENVGENE-7001"
+    ) from e
 ```
 
 ## Checklist
 
-### Before Submitting Code:
-- [ ] All error messages are clear and actionable
-- [ ] Error messages include relevant context
-- [ ] Sensitive information is not logged or exposed
-- [ ] Error codes are used where appropriate
-- [ ] Logs provide sufficient information for debugging
-- [ ] All error scenarios are tested
+Use this checklist to ensure your error handling follows best practices:
 
-### Error Message Review:
-- [ ] Is the error message understandable by a non-technical user?
-- [ ] Does it explain what went wrong?
-- [ ] Does it suggest how to fix the issue?
-- [ ] Is it specific enough to identify the problem?
-- [ ] Is the error code included in the error message?
+- [ ] Errors are caught at appropriate boundaries
+- [ ] Error messages are user-friendly and actionable
+- [ ] Error codes follow the `ENVGENE-XXXX` format
+- [ ] Custom error classes from `envgenehelper.errors` are used
+- [ ] Sensitive information is not exposed in error messages
+- [ ] Errors are properly propagated to pipeline output
+- [ ] Error messages are properly cataloged in error-catalog.md
+
+## Error Handling PR Template Requirements
+
+All pull requests that introduce new code or modify existing code **MUST** include the error handling checklist in the PR description. This is automatically included in the [standard PR template](../.github/PULL_REQUEST_TEMPLATE/pull_request_template.md) and is a mandatory requirement to ensure consistent error handling across the codebase.
+
+```markdown
+## Error Handling Checklist
+
+### Error Implementation
+- [ ] Custom error classes from `envgenehelper.errors` are used for all error cases
+- [ ] All error messages include error codes following the ENVGENE-XXXX format
+- [ ] Error messages are user-friendly and provide clear guidance on how to resolve the issue
+- [ ] No sensitive information is exposed in error messages
+- [ ] Errors are properly propagated to pipeline output and not swallowed by handlers
+
+### Error Documentation
+- [ ] All new error codes are documented in error-catalog.md
+- [ ] Documentation includes all required sections (ID, Component, When, What, Error, Resolution)
+- [ ] Error code ranges are used appropriately (business: 0001-1499, validation: 4000-6999, etc.)
+
+### Error Testing
+- [ ] Tests are included for error scenarios
+- [ ] Error messages are verified to be displayed correctly in the pipeline output
+```
+
+Reviewers **MUST** verify that all items in the checklist are properly addressed before approving the PR.
 
 ## Testing Error Scenarios
 
@@ -237,25 +252,21 @@ except SomeSpecificError as e:
 
 ### Mandatory Error Codes
 
-Every error message in EnvGene MUST include an error code that follows the naming convention below. This is a strict requirement to ensure consistent error handling and documentation.
+Every error message in EnvGene MUST include an error code that follows the naming convention below. This is a strict requirement to ensure consistent error handling and documentation. All error codes must be documented in the [Error Catalog](../error-catalog.md).
 
 ### Error Code Naming Convention
 
 All error codes in EnvGene must follow this consistent pattern:
 
 ```
-ERR-<MODULE>-<TYPE>-<NUMBER>
+ENVGENE-XXXX
 ```
 
 Where:
-- `ERR`: Prefix indicating this is an error code
-- `<MODULE>`: 3-5 letter abbreviation of the module or component (e.g., `CRED` for Credentials, `TEMPL` for Template Rendering)
-- `<TYPE>`: 3-5 letter abbreviation of the error type (e.g., `VAL` for Validation, `LOD` for Loading)
-- `<NUMBER>`: 3-digit number (padded with leading zeros) unique within the module and type
+- `ENVGENE`: Component identifier (always ENVGENE for our component)
+- `XXXX`: Error code number (padded with zeros on the left)
 
-### Examples:
-- `ERR-CRED-VAL-001`: First validation error in the Credentials module
-- `ERR-CONF-LOD-002`: Second configuration loading error
+This format aligns with the standard error code format used by other components in the system.
 
 ### Error Code Documentation Requirements
 
@@ -264,34 +275,34 @@ Where:
    - The documentation MUST include all required sections (ID, Component, When, What, Error, Resolution)
    - Example:
      ```markdown
-     ### ERR-MOD-VAL-001: Invalid Module Configuration
+     #### ENVGENE-4001: Invalid Configuration
      
-     - **ID**: ERR-MOD-VAL-001
-     - **Component**: Module Loader
-     - **When**: During module initialization
-     - **What**: Required module configuration is missing or invalid
+     - **ID**: ENVGENE-4001
+     - **Component**: Configuration Validator
+     - **When**: During configuration validation
+     - **What**: Required configuration is missing or invalid
      - **Error**: 
        ```
-       [ERR-MOD-VAL-001] Invalid module configuration. Missing required field: {field_name}
+       [ENVGENE-4001] Invalid configuration. Missing required field: {field_name}
        ```
      - **Resolution**:
-       1. Check the module configuration file
+       1. Check the configuration file
        2. Ensure all required fields are present and valid
-       3. Refer to the module documentation for configuration requirements
+       3. Refer to the documentation for configuration requirements
      ```
 
 2. **Code Implementation**:
-   - Always include the error code at the beginning of the error message
-   - Use the format: `[ERROR-CODE] Error message details`
+   - Use the EnvGeneError classes from `envgenehelper.errors`
+   - Include the error code when raising exceptions
    - Example:
      ```python
-     raise ValueError("[ERR-MOD-VAL-001] Invalid module configuration. Missing required field: {field_name}")
+     from envgenehelper.errors import ValidationError
+     raise ValidationError(f"Invalid configuration. Missing required field: {field_name}", error_code="ENVGENE-4001")
      ```
 
 3. **Maintenance Guidelines**:
-   - Keep module and type abbreviations consistent across the codebase
+   - Use the appropriate error code range based on the error type
    - When adding a new error code, use the next available number in the sequence
-   - If a module or type becomes too broad, consider splitting it into more specific categories
    - Update the error catalog before merging any code that introduces new error codes
 
 4. **Code Review Checklist**
@@ -306,18 +317,18 @@ Where:
 - [ ] Resource cleanup (files, connections, etc.) happens in finally blocks or using context managers
 
 #### Error Implementation
+- [ ] Custom error classes from [`envgenehelper.errors`](../python/envgene/envgenehelper/errors.py) are used
 - [ ] All error messages include error codes
-- [ ] Error codes follow the naming convention (ERR-MOD-TYPE-NNN)
+- [ ] Error codes follow the naming convention (ENVGENE-XXXX)
 - [ ] Error messages are clear, actionable, and user-friendly
 - [ ] Sensitive information is not exposed in error messages
 - [ ] Error messages include all necessary context for debugging
-- [ ] Errors are logged with appropriate severity levels
+- [ ] Errors are properly propagated to pipeline output
 
 #### Documentation
-- [ ] All error codes are documented in the error catalog
+- [ ] All error codes are documented in the [error catalog](../error-catalog.md)
 - [ ] Documentation includes all required sections (ID, Component, When, What, Error, Resolution)
 - [ ] Error documentation includes examples of both error message and resolution steps
-- [ ] Related errors are cross-referenced in the documentation
 
 ## Error Catalog Maintenance
 
