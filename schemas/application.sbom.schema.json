@@ -474,90 +474,6 @@
         }
       }
     },
-    "declarative-configuration": {
-      "type": "object",
-      "title": "Declarative Configuration",
-      "description": "Describes declarative configuration",
-      "required": [
-        "type",
-        "mime-type",
-        "bom-ref",
-        "name",
-        "data"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "data"
-          ],
-          "title": "Component Type",
-          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
-        },
-        "mime-type": {
-          "type": "string",
-          "enum": [
-            "application/vnd.qubership.configuration.declarative-configuration"
-          ],
-          "title": "Mime-Type",
-          "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
-        },
-        "bom-ref": {
-          "$ref": "#/definitions/refType",
-          "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
-        },
-        "name": {
-          "type": "string",
-          "title": "Component Name",
-          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
-          "const": "declarative-configuration"
-        },
-        "data": {
-          "type": "array",
-          "title": "Data",
-          "description": "This object SHOULD be specified for any component of type `data` and must not be specified for other component types",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "type",
-              "name",
-              "contents"
-            ],
-            "properties": {
-              "type": {
-                "type": "string",
-                "title": "Type of Data",
-                "description": "The general theme or subject matter of the data being specified",
-                "enum": [
-                  "configuration"
-                ]
-              },
-              "name": {
-                "title": "Dataset Name",
-                "description": "The name of the dataset",
-                "type": "string"
-              },
-              "contents": {
-                "type": "object",
-                "title": "Data Contents",
-                "description": "The contents or references to the contents of the data being described",
-                "additionalProperties": false,
-                "properties": {
-                  "attachment": {
-                    "title": "Data Attachment",
-                    "description": "An optional way to include textual or encoded data",
-                    "$ref": "#/definitions/attachment"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "resource-profile-baseline": {
       "type": "object",
       "title": "Resource Profile Baseline",
@@ -729,9 +645,6 @@
                 "$ref": "#/definitions/docker-image"
               },
               {
-                "$ref": "#/definitions/declarative-configuration"
-              },
-              {
                 "$ref": "#/definitions/resource-profile-baseline"
               }
             ]
@@ -822,12 +735,6 @@
             "oneOf": [
               {
                 "$ref": "#/definitions/artifact"
-              },
-              {
-                "$ref": "#/definitions/declarative-configuration"
-              },
-              {
-                "$ref": "#/definitions/resource-profile-baseline"
               }
             ]
           },
@@ -1006,12 +913,6 @@
             "oneOf": [
               {
                 "$ref": "#/definitions/docker-image"
-              },
-              {
-                "$ref": "#/definitions/declarative-configuration"
-              },
-              {
-                "$ref": "#/definitions/resource-profile-baseline"
               }
             ]
           },
