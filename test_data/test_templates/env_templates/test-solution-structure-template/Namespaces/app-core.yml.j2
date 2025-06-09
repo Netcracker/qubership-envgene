@@ -26,14 +26,12 @@ e2eParameters: {}
 technicalConfigurationParameters:
   APP_CORE_NAMESPACE: "{{current_env.name}}-app-core"
   APP_NAMESPACE: "{{current_env.name}}-app"
-#TC-002-001 begin
-deployParameterSets: 
-  # comment line
-  - "app-common"
-e2eParameterSets:
-  # comment line
-  - "app-common"
-technicalConfigurationParameterSets:
-  # comment line
-  - "app-common"
-#TC-002-001 end
+deployParameterSets: #TC-002-001
+  # comment line #TC-002-001
+  - "app-common" #TC-002-001
+e2eParameterSets: #TC-002-001
+  # comment line #TC-002-001
+  - "app-common" #TC-002-001
+technicalConfigurationParameterSets: #TC-002-001
+  # comment line #TC-002-001
+  - "app-common" #TC-002-001
