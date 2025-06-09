@@ -261,7 +261,7 @@ public class BomReaderUtilsImplV2 {
         Map<String, String> profileValues = new TreeMap<>();
 
         for (ComponentData data : dataComponent.getData()) {
-            if (baseline.equals(data.getName().split("\\.")[0])) {
+            if (baseline != null && baseline.equals(data.getName().split("\\.")[0])) {
                 Content content = data.getContents();
                 String encodedText = content.getAttachment().getText();
                 profileValues = fileDataConverter.decodeAndParse(encodedText, new TypeReference<TreeMap<String, String>>() {
