@@ -95,7 +95,7 @@ public class CliParameterParser {
                         String deployPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "Namespaces", namespaceName).replace('\\', '/');
                         int index = deployPostFixDir.indexOf("/environments/");
                         if (index != 1) {
-                            deployPostFixDir = deployPostFixDir.substring(index + 1);
+                            deployPostFixDir = deployPostFixDir.substring(index);
                         }
                         mappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
