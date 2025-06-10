@@ -10,7 +10,6 @@
       - [Delta SD](#delta-sd)
     - [Instance Repository Pipeline Parameters](#instance-repository-pipeline-parameters)
       - [`SD_DATA` Example](#sd_data-example)
-      - [`SD_DATA_MULTIPLE` Example](#sd_data_multiple-example)
     - [SD merge](#sd-merge)
       - [`basic-merge` SD Merge Mode](#basic-merge-sd-merge-mode)
         - [`basic-merge` SD Merge Mode Terms](#basic-merge-sd-merge-mode-terms)
@@ -28,7 +27,7 @@
 
 ## Problem Statement
 
-EnvGene requires the Solution Descriptor (SD), as it lacks knowledge of whole Solution's application scope to calculate the Effective Set
+EnvGene requires the Solution Descriptor (SD), as it lacks knowledge of whole Solution's application scope as well as application's microservices scope to calculate the Effective Set
 
 ## Proposed Approach
 
@@ -45,7 +44,7 @@ To support the deployment of individual applications, the use of Delta SDs is su
 
 ### SD Types
 
-In EnvGen, there are two types of SDs that differ in their purpose and composition:
+In EnvGene, there are two types of SDs that differ in their purpose and composition:
 
 #### Full SD
 
@@ -59,81 +58,48 @@ A partial Solution Descriptor that contains incremental changes to be applied to
 
 | Attribute | Type | Mandatory | Description | Default | Example |
 |---|---|---|---|---|---|
-| `SD_VERSION` | string | no | Defines the SD artifact in `application:version` notation. EnvGene downloads the artifact. Then, depending on `SD_DELTA`, it either overrides or merges with the [Full SD](#full-sd) with the content provided in the artifact. If the file is absent, it will be generated | None | `solution:0.64.1` |
-| `SD_VERSION_MULTIPLE` | string | no | One or more app:ver of the SD artifact passed via a `\n` separator. EnvGene downloads and sequentially merges them in the mode described in `SD_MERGE_MODE`, where subsequent app:ver takes priority over the previous one. Then, depending on `SD_DELTA`, it either overrides or merges with the [Full SD](#full-sd). If the file is absent, it will be generated | None | `solution-part-1:0.64.2\nsolution-part-2:0.44.1` |
-| `SD_DATA` | string | no | Content of SD in JSON-in-string format. Depending on `SD_DELTA`, EnvGene either overrides or merges with the [Full SD](#full-sd) with the content provided in `SD_DATA`. If the file is absent, it will be generated | None | [Example](#sd_data-example) |
-| `SD_DATA_MULTIPLE` | string | no | List of SD content in JSON-in-string format. EnvGene sequentially merges them in the mode described in `SD_MERGE_MODE`, where subsequent app:ver takes priority over the previous one. Then, depending on `SD_DELTA`, it either overrides or merges with the [Full SD](#full-sd). If the file is absent, it will be generated | None | [Example](#sd_data_multiple-example) |
-| `SD_SOURCE_TYPE` | enumerate[`artifact`,`json`] | TBD | Defines the method by which SD is passed in the `SD_VERSION`/`SD_VERSION_MULTIPLE`/`SD_DATA`/`SD_DATA_MULTIPLE` attributes. If `artifact`, an SD artifact is expected in `SD_VERSION`/`SD_VERSION_MULTIPLE` in app:ver notation. If `json`, SD content is expected in `SD_DATA`/`SD_DATA_MULTIPLE` in JSON-in-string format | TBD | `artifact` |
-| `SD_DELTA` | boolean | no | If `true` EnvGene overrides the [Delta SD](#delta-sd) with the content provided in `SD_VERSION`/`SD_VERSION_MULTIPLE`/`SD_DATA`/`SD_DATA_MULTIPLE`. EnvGene merges the content provided in `SD_VERSION`/`SD_VERSION_MULTIPLE`/`SD_DATA`/`SD_DATA_MULTIPLE` into the [Full SD](#full-sd). If `false` EnvGene overrides the [Full SD](#full-sd) with the content provided in `SD_VERSION`/`SD_VERSION_MULTIPLE`/`SD_DATA`/`SD_DATA_MULTIPLE` | `true` | `false` |
-| `SD_MERGE_MODE` | enumerate[`basic-merge`, `basic-exclusion-merge`, `extended-merge`] | no | SD merge mode between SDs passed in `SD_VERSION_MULTIPLE`/`SD_DATA_MULTIPLE`, as well as when merging the SD already in the repo with those passed via `SD_VERSION`/`SD_VERSION_MULTIPLE`/`SD_DATA`/`SD_DATA_MULTIPLE` (if `SD_DELTA`: `true`). See details [here](#sd-merge). | `basic-merge` | `extended` |
+| `SD_VERSION` | string | no | Specifies one or more SD artifacts in `application:version` notation passed via a `\n` separator. EnvGene downloads and sequentially merges them in the mode described in `SD_MULTIPLE_MERGE_MODE`, where subsequent `application:version` takes priority over the previous one. Saves the result to [Delta SD](#delta-sd), then merges with [Full SD](#full-sd) using `SD_REPO_MERGE_MODE` merge mode | None | `solution:0.64.1` |
+| `SD_DATA` | string | no | Specifies the **list** of contents of one or more SD in JSON-in-string format. EnvGene sequentially merges them in the mode described in `SD_MULTIPLE_MERGE_MODE`, where subsequent element takes priority over the previous one. Saves the result to [Delta SD](#delta-sd), then merges with [Full SD](#full-sd) using `SD_REPO_MERGE_MODE` merge mode | None | [Example](#sd_data-example) |
+| `SD_SOURCE_TYPE` | enumerate[`artifact`,`json`] | TBD | Determines the method by which SD is passed in the `SD_VERSION`/`SD_DATA` attributes. If `artifact`, an SD artifact is expected in `SD_VERSION` in app:ver notation. If `json`, SD content is expected in `SD_DATA` in JSON-in-string format | TBD | `artifact` |
+| `SD_DELTA` | enumerate[`true`, `false`] | no | Deprecated. When `true`: behaves identically to `SD_REPO_MERGE_MODE: extended-merge`. When `false` behaves identically to `SD_REPO_MERGE_MODE: replace`. If both `SD_DELTA` and `SD_REPO_MERGE_MODE` are provided, `SD_REPO_MERGE_MODE` takes precedence | `true` | `false` |
+| `SD_MULTIPLE_MERGE_MODE` | enumerate[`basic-merge`, `extended-merge`] | no | Defines SD merge mode between SDs passed in `SD_VERSION`/`SD_DATA`. See details in [SD Merge](#sd-merge) | `basic-merge` | `extended-merge` |
+| `SD_REPO_MERGE_MODE` | enumerate[`basic-merge`, `basic-exclusion-merge`, `extended-merge`, `replace`] | no | Defines SD merge mode between incoming SD and already existed in repository SD. See details in [SD Merge](#sd-merge) | `basic-merge` | `extended-merge` |
 
 #### `SD_DATA` Example
 
-```text
-'{"version":"2.1","type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"},{"version":"postgres-services:1.32.6","deployPostfix":"postgresql"},{"version":"postgres:1.32.6","deployPostfix":"postgresql-dbaas"}]}'
-```
-
-The same in YAML:
-
-```yaml
-version: 2.1
-type: "solutionDeploy"
-deployMode: "composite"
-applications:
-  - version: "MONITORING:0.64.1"
-    deployPostfix: "platform-monitoring"
-  - version: "postgres:1.32.6"
-    deployPostfix: "postgresql"
-  - version: "postgres-services:1.32.6"
-    deployPostfix: "postgresql"
-  - version: "postgres:1.32.6"
-    deployPostfix: "postgresql-dbaas"
-```
-
-#### `SD_DATA_MULTIPLE` Example
+Single SD:
 
 ```text
-'{[{"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "MONITORING:0.64.1", "deployPostfix": "platform-monitoring"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql"}]}, {"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "postgres-services:1.32.6", "deployPostfix": "postgresql"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql-dbaas"}]}]}'
+'[{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"}]},{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"postgres-services:1.32.6","deployPostfix":"postgresql"},{"version":"postgres:1.32.3","deployPostfix":"postgresql-dbaas"}]}]'
 ```
 
-The same in YAML:
+Multiple SD:
 
-```yaml
-- version: 2.1
-  type: "solutionDeploy"
-  deployMode: "composite"
-  applications:
-    - version: "MONITORING:0.64.1"
-      deployPostfix: "platform-monitoring"
-    - version: "postgres:1.32.6"
-      deployPostfix: "postgresql"
-- version: 2.1
-  type: "solutionDeploy"
-  deployMode: "composite"
-  applications:
-    - version: "postgres-services:1.32.6"
-      deployPostfix: "postgresql"
-    - version: "postgres:1.32.6"
-      deployPostfix: "postgresql-dbaas"
+```text
+'[{[{"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "MONITORING:0.64.1", "deployPostfix": "platform-monitoring"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql"}]}, {"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "postgres-services:1.32.6", "deployPostfix": "postgresql"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql-dbaas"}]}]}]'
 ```
+
+> [!NOTE]
+> `SD_DATA` is a list even in single SD case
 
 ### SD merge
 
 SD merging occurs in the following cases:
 
-- When the `SD_VERSION_MULTIPLE` or `SD_DATA_MULTIPLE` attributes are provided. The SDs passed in these attributes are merged sequentially, with priority given to subsequent SDs over previous ones.
+1. **Multiple SD Input**: When the Multiple SD are provided in `SD_VERSION` or `SD_DATA` parameters. The system merges them sequentially, giving priority to later SDs over earlier ones.
 
-- When the `SD_DELTA` attribute is provided. The SD passed in `SD_VERSION` or `SD_DATA` (or the result of merging elements from `SD_VERSION_MULTIPLE` or `SD_DATA_MULTIPLE`) is merged with the SD already present in the repository.
+2. **Repository Merge**: When `SD_VERSION` or `SD_DATA` parameters are provided and a [Full SD](#full-sd) already exists in the repository for the target environment. The system merges the incoming SD with the existing repository SD.
 
 > [!NOTE]
-> When processing `SD_VERSION_MULTIPLE`/`SD_DATA_MULTIPLE` variables, the first SD is treated as Full,
-> and subsequent ones as Delta, thus the SDs are merged sequentially
+> When processing Multiple SD in `SD_VERSION`/`SD_DATA` variables, the first SD is treated as Full,
+> and subsequent ones as Delta.
 
-There are three merge modes. They differ in their algorithms and output results:
+There are four merge modes. They differ in their algorithms and output results:
 
-- [`basic-merge`](#basic-merge-sd-merge-mode): The merge produces a SD sufficient for EnvGene to calculate the Effective Set. In this mode, SD applications and components are added and/or modified.
-- [`basic-exclusion-merge`](#basic-exclusion-merge-sd-merge-mode): The merge produces a SD sufficient for EnvGene to calculate the Effective Set. In this mode, SD applications and components are removed and/or modified.
-- [`extended-merge`](#extended-merge-sd-merge-mode): The merge produces an SD that can be used (with certain limitations) outside of EnvGene, for deployment or delivery purposes as well as Effective Set calculation by EnvGene. In this mode, SD applications and components are added and/or modified.
+1. [`basic-merge`](#basic-merge-sd-merge-mode): The merge produces a SD sufficient for EnvGene to calculate the Effective Set. In this mode, SD applications and components are added and/or modified.
+2. [`basic-exclusion-merge`](#basic-exclusion-merge-sd-merge-mode): The merge produces a SD sufficient for EnvGene to calculate the Effective Set. In this mode, SD applications and components are removed and/or modified.
+3. [`extended-merge`](#extended-merge-sd-merge-mode): The merge produces an SD that can be used (with certain limitations) outside of EnvGene, for deployment or delivery purposes as well as Effective Set calculation by EnvGene. In this mode, SD applications and components are added and/or modified.
+4. `replace`: Performs complete replacement - the incoming SD entirely overwrites the repository SD without merging.
 
 #### `basic-merge` SD Merge Mode
 
