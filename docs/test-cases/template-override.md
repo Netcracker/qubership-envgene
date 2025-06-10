@@ -7,7 +7,18 @@ This describes test cases for the [Template Override](/docs/features/template-ov
 
 ## TC-002-001: Template override on Cloud and Namespace level. Override includes paramsets with comments
 
-Status: Not Implemented
+Status: Implemented
+
+Files that implement test case:
+
+- test_templates/env_templates/test-solution-structure-template.yaml
+- test_templates/env_templates/test-solution-structure-template/cloud.yml.j2
+- test_templates/env_templates/test-solution-structure-template/Namespaces/app-core.yml.j2
+- test_templates/parameters/paramset-A.yaml
+- test_templates/parameters/app/app-common.yml.j2
+- test_environments/cluster01/env01/cloud.yml
+- test_environments/cluster01/env01/Namespaces/app-core/namespace.yml
+- test_environments/cluster01/env01/cloud.yml
 
 Pre-requisites:
 
