@@ -10,7 +10,11 @@ env:
   IMAGE_NAME: netcracker/qubership-instance-repo-pipeline
 
 jobs:
+  tests:
+    uses: ./.github/workflows/perform_tests.yml
+  
   build-and-push-image:
+    needs: [tests]
     runs-on: ubuntu-latest
     permissions:
       contents: read

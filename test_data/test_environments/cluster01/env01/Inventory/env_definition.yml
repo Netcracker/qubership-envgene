@@ -15,7 +15,7 @@ envTemplate:
       E2E_PARAM_1: e2e-param-val-1
       E2E_PARAM_2: e2e-param-val-2
   sharedTemplateVariables:
-    - test-solution-structure-template-variables
+    - shared-template-variables
   envSpecificParamsets:
     bss: ["env-specific-app"]
   envSpecificTechnicalParamsets:
