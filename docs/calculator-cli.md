@@ -304,23 +304,23 @@ This file describes the parameters of the application artifacts generated during
 The structure of this file is as follows:
 
 ```yaml
-<common-predefined-key-1>: <common-predefined-value-1>
-<common-predefined-key-N>: <common-predefined-value-N>
-deployDescriptor: &id001
-  <service-name-1>:
-    <service-predefined-key-1>: <service-predefined-value-1>
-    <service-predefined-key-N>: <service-predefined-value-N>
-  <service-name-2>:
-    <service-predefined-key-1>: <service-predefined-value-1>
-    <service-predefined-key-N>: <service-predefined-value-N>
-global: &id002
-  deployDescriptor: *id001
-<service-name-1>: &id003
+global: &id001
+  deployDescriptor: &id003
+    <service-name-1>:
+      <service-predefined-key-1>: <service-predefined-value-1>
+      <service-predefined-key-N>: <service-predefined-value-N>
+    <service-name-2>:
+      <service-predefined-key-1>: <service-predefined-value-1>
+      <service-predefined-key-N>: <service-predefined-value-N>
+deployDescriptor: *id003
+<service-name-1>: &id002
   <common-predefined-key-1>: <common-predefined-value-1>
   <common-predefined-key-N>: <common-predefined-value-N>
-  deployDescriptor: *id001
-  global: *id002
-<service-name-2>: *id003
+  deployDescriptor: *id003
+  global: *id001
+<service-name-2>: *id002
+<common-predefined-key-1>: <common-predefined-value-1>
+<common-predefined-key-N>: <common-predefined-value-N>
 ```
 
 ###### Predefined `deploy-descriptor.yaml` parameters
