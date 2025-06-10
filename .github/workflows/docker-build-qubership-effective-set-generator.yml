@@ -10,18 +10,13 @@ env:
   IMAGE_NAME: netcracker/qubership-effective-set-generator
 
 jobs:
-  tests:
-    uses: ./.github/workflows/perform_tests.yml
-  
   build-jar:
-    needs: [tests]
     uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@main
     with:
       maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
       java-version: 17
       upload-artifact: true
       artifact-id: effective_set_jar
-      ref: ${{ github.ref }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }} 
 
