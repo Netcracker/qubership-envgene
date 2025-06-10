@@ -1,7 +1,7 @@
-# Jinja Template Macros
+# Template Macros
 
-- [Jinja Template Macros](#jinja-template-macros)
-  - [Basic macros](#basic-macros)
+- [Template Macros](#template-macros)
+  - [Jinja macros](#jinja-macros)
     - [`templates_dir`](#templates_dir)
     - [`current_env.name`](#current_envname)
     - [`current_env.tenant`](#current_envtenant)
@@ -15,10 +15,14 @@
     - [`current_env.additionalTemplateVariables`](#current_envadditionaltemplatevariables)
     - [`current_env.cloud_passport`](#current_envcloud_passport)
     - [`current_env.solution_structure`](#current_envsolution_structure)
+  - [Envgene macros](#envgene-macros)
+    - [Credential macros](#credential-macros)
 
-This documentation provides a list of Jinja macros that can be used during template generation
+This documentation provides a list of macros that can be used during template generation
 
-## Basic macros
+## Jinja macros
+
+These Jinja macros that can be used during template generation
 
 ### `templates_dir`
 
@@ -258,3 +262,31 @@ Default value is `{}`
 
 - [Sample template](/samples/templates/env_templates/composite-dev/Namespaces/bss.yml.j2)
 - [Sample inventory](/samples/environments/sample-cloud-name/composite-with-creds/)
+
+## Envgene macros
+
+### Credential macros
+
+---
+**Description:** This macro marks parameters as sensitive, triggering special processing that differs from regular parameters.
+
+```text
+${envgen.creds.get('<cred-id>').username|password|secret}
+```
+
+For each `<cred-id>` during Environment Instance generation a [Credential](/docs/envgene-objects.md#credential) object is created in the [Environment Credential File](/docs/envgene-objects.md#environment-credential-file
+
+Type assignment:
+
+- `usernamePassword` for `username` and `password` attributes
+- `secret` for `secret` attribute
+
+**Basic usage:**
+
+```yaml
+kafka_username: ${envgen.creds.get('kafka-cred').username}
+kafka_password: ${envgen.creds.get('kafka-cred').password}
+k8s_token: ${envgen.creds.get('k8s-cred').secret}
+```
+
+**Usage in sample:** [Sample](/samples/templates/parameters/composite-sample/test-deploy-creds.yml)
