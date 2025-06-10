@@ -60,7 +60,7 @@ A partial Solution Descriptor that contains incremental changes to be applied to
 |---|---|---|---|---|---|
 | `SD_VERSION` | string | no | Specifies one or more SD artifacts in `application:version` notation passed via a `\n` separator. EnvGene downloads and sequentially merges them in the mode described in `SD_MULTIPLE_MERGE_MODE`, where subsequent `application:version` takes priority over the previous one. Saves the result to [Delta SD](#delta-sd), then merges with [Full SD](#full-sd) using `SD_REPO_MERGE_MODE` merge mode | None | `solution:0.64.1` |
 | `SD_DATA` | string | no | Specifies the **list** of contents of one or more SD in JSON-in-string format. EnvGene sequentially merges them in the mode described in `SD_MULTIPLE_MERGE_MODE`, where subsequent element takes priority over the previous one. Saves the result to [Delta SD](#delta-sd), then merges with [Full SD](#full-sd) using `SD_REPO_MERGE_MODE` merge mode | None | [Example](#sd_data-example) |
-| `SD_SOURCE_TYPE` | enumerate[`artifact`,`json`] | TBD | Determines the method by which SD is passed in the `SD_VERSION`/`SD_DATA` attributes. If `artifact`, an SD artifact is expected in `SD_VERSION` in app:ver notation. If `json`, SD content is expected in `SD_DATA` in JSON-in-string format | TBD | `artifact` |
+| `SD_SOURCE_TYPE` | enumerate[`artifact`,`json`] | TBD | Determines the method by which SD is passed in the `SD_VERSION`/`SD_DATA` attributes. If `artifact`, an SD artifact is expected in `SD_VERSION` in `application:version` notation. If `json`, SD content is expected in `SD_DATA` in JSON-in-string format | TBD | `artifact` |
 | `SD_DELTA` | enumerate[`true`, `false`] | no | Deprecated. When `true`: behaves identically to `SD_REPO_MERGE_MODE: extended-merge`. When `false` behaves identically to `SD_REPO_MERGE_MODE: replace`. If both `SD_DELTA` and `SD_REPO_MERGE_MODE` are provided, `SD_REPO_MERGE_MODE` takes precedence | `true` | `false` |
 | `SD_MULTIPLE_MERGE_MODE` | enumerate[`basic-merge`, `extended-merge`] | no | Defines SD merge mode between SDs passed in `SD_VERSION`/`SD_DATA`. See details in [SD Merge](#sd-merge) | `basic-merge` | `extended-merge` |
 | `SD_REPO_MERGE_MODE` | enumerate[`basic-merge`, `basic-exclusion-merge`, `extended-merge`, `replace`] | no | Defines SD merge mode between incoming SD and already existed in repository SD. See details in [SD Merge](#sd-merge) | `basic-merge` | `extended-merge` |
@@ -139,11 +139,11 @@ The following set of terms is used to describe the rules and assumptions of SD m
 ##### `basic-merge` SD Merge Mode Assumptions
 
 1. Valid Application models:
-   1. `version: <application:version>`
+   1. `version: <application:version>`  
       `deployPostfix:  <>`
-   2. `version: <application:version>`
-      `deployPostfix: <>`
-      `alias: <>`
+   2. `version: <application:version>`  
+      `deployPostfix: <>`  
+      `alias: <>`  
 
 ##### `basic-merge` SD Merge Mode Rules
 
@@ -231,11 +231,11 @@ The following set of terms is used to describe the rules and assumptions of SD m
 1. The values of the attributes version, type, and `deployMode` in both Full and Delta SDs must match.
 2. All Applications must conform to the same model as in both Full and Delta SDs. Valid models include:
    1. `<application:version>`
-   2. `version: <application:version>`
-      `deployPostfix:  <>`
-   3. `version: <application:version>`
-      `deployPostfix: <>`
-      `alias: <>`
+   2. `version: <application:version>`  
+      `deployPostfix:  <>`  
+   3. `version: <application:version>`  
+      `deployPostfix: <>`  
+      `alias: <>`  
 3. If the Full SD does not contain a `deployGraph`, the Delta SD must not contain one either.
 4. If either the Full or Delta SD contains a `deployGraph`, then all applications listed in applications must also be present in the `deployGraph`
 5. The `deployGraph` in the Delta SD can contains applications that are not listed in its own applications section. (This is a case where the Delta SD contains a complete `deployGraph`)
