@@ -23,6 +23,7 @@ import org.cyclonedx.model.Component;
 import org.cyclonedx.model.Property;
 import org.cyclonedx.model.component.data.ComponentData;
 import org.cyclonedx.model.component.data.Content;
+import org.qubership.cloud.devops.commons.exceptions.BomProcessingException;
 import org.qubership.cloud.devops.commons.pojo.bom.EntitiesMap;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistrySummaryDTO;
@@ -38,6 +39,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.REGISTRY_EXTRACT_FAILED;
@@ -85,8 +87,11 @@ public class BomCommonUtils {
 
     private void getOtherComponents(Map<String, Map<String, Object>> configMap, Component component, String type) {
         Map<String, Object> configParams = new TreeMap<>();
-        Component subComponent;
-        subComponent = component.getComponents().stream().filter(artifact -> artifact.getMimeType().equals(type)).findFirst().orElse(null);
+        List<Component>  subComponents = component.getComponents().stream().filter(artifact -> artifact.getMimeType().equals(type)).collect(Collectors.toList());
+        if (subComponents.size() > 1) {
+            throw new BomProcessingException("Multiple artifacts of type"+ type+" is not allowed");
+        }
+        Component subComponent = subComponents.get(0);
         if (subComponent != null) {
             configParams.put("artifact.gav", String.format("%s:%s:%s", subComponent.getName(), subComponent.getGroup(), subComponent.getVersion()));
             configParams.put("artifact.groupId", subComponent.getGroup());
@@ -193,7 +198,9 @@ public class BomCommonUtils {
     private Map<String, String> extractProfileValues(Component dataComponent, String appName, String serviceName,
                                                      Profile overrideProfile, String baseline) {
         Map<String, String> profileValues = new HashMap<>();
-
+        if (baseline == null) {
+            profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
+        }
         for (ComponentData data : dataComponent.getData()) {
             if (baseline != null && baseline.equals(data.getName().split("\\.")[0])) {
                 Content content = data.getContents();
