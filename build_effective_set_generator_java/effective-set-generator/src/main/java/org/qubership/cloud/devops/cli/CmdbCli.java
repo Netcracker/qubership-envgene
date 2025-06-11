@@ -109,7 +109,7 @@ public class CmdbCli implements Callable<Integer> {
         @CommandLine.Option(names = {"-o", "--output"}, description = "Output directory", required = true)
         String outputDir;
 
-        @CommandLine.Option(names = {"-esv", "--effective-set-version"}, description = "Effective Set Version", defaultValue = "v1.0")
+        @CommandLine.Option(names = {"-esv", "--effective-set-version"}, description = "Effective Set Version", defaultValue = "v2.0")
         String version;
 
         @CommandLine.Option(names = {"-pcssp", "--pipeline-consumer-specific-schema-path"}, description = "Pipeline Consumer Specific path")
