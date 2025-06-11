@@ -15,6 +15,7 @@
     - [Effective Set v2.0](#effective-set-v20)
       - [\[Version 2.0\] Effective Set Structure](#version-20-effective-set-structure)
       - [\[Version 2.0\] Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention)
+      - [\[Version 2.0\] Handling Missing Attributes in SBOM](#version-20-handling-missing-attributes-in-sbom)
       - [\[Version 2.0\] Deployment Parameter Context](#version-20-deployment-parameter-context)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `credentials.yaml`](#version-20deployment-parameter-context-credentialsyaml)
@@ -254,6 +255,20 @@ It includes components from the Application SBOM with these `mime-type`:
 
 The service name is derived from the `name` attribute of the Application SBOM component.
 
+#### [Version 2.0] Handling Missing Attributes in SBOM
+
+> [!IMPORTANT]
+>
+> When a required attribute is missing in the SBOM
+>
+> Mandatory Attributes:
+> If a default exists: The default value is applied  
+> If no default exists: Throws readable error
+>
+> Optional Attributes:
+> If a default exists: The default value is applied  
+> If no default exists: The attribute remains unset  
+
 #### [Version 2.0] Deployment Parameter Context
 
 These parameters establish a dedicated rendering context exclusively applied during application (re)deployment operations for Helm manifest rendering.
@@ -403,18 +418,6 @@ Common Predefined Parameters:
 | `tArtifactNames` | yes | hashmap | always `{}` | `{}` | None |
 | `type` | no | string | None | None | `.components[?name=<service-name>].components[].properties[?name=type].value` |
 | `version` | yes | string | Service version | None | `.components[?name=<service-name>].version` |
-
-> [!IMPORTANT]
->
-> When a required attribute is missing in the SBOM
->
-> Mandatory Attributes:
-> If a default exists: The default value is applied  
-> If no default exists: Throws readable error
->
-> Optional Attributes:
-> If a default exists: The default value is applied  
-> If no default exists: The attribute remains unset  
 
 ###### [Version 2.0] Service Artifacts
 
