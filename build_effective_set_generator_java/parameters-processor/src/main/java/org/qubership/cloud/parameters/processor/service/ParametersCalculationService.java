@@ -109,18 +109,19 @@ public class ParametersCalculationService {
 
         Map<String, Object> deployDescParamMap = new LinkedHashMap<>();
         deployDescParamMap.put("deployDescriptor", deployDescParams);
-        finalDeployDescMap.putAll(commonParamMap);
-        deployDescParamMap.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), entry.getValue()));
+
         Map<String, Object> globalMap = new HashMap<>();
         globalMap.put("global", deployDescParamMap);
         globalMap.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), entry.getValue()));
 
         Map<String, Object> serviceParamsMap = new LinkedHashMap<>();
         commonParamMap.entrySet().stream().forEach(entry -> serviceParamsMap.put(entry.getKey(), entry.getValue()));
-        serviceParamsMap.put("deployDescriptor", finalDeployDescMap.get("deployDescriptor"));
+        serviceParamsMap.put("deployDescriptor", deployDescParamMap.get("deployDescriptor"));
         serviceParamsMap.put("global", finalDeployDescMap.get("global"));
 
+        deployDescParamMap.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), entry.getValue()));
         deployDescParams.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), serviceParamsMap));
+        commonParamMap.entrySet().stream().forEach(entry -> finalDeployDescMap.put(entry.getKey(), entry.getValue()));
 
 
         parameterBundle.setDeployDescParams(finalDeployDescMap);
