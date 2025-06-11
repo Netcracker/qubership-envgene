@@ -15,7 +15,6 @@
   - [`SD_SOURCE_TYPE`](#sd_source_type)
     - [`SD_VERSION`](#sd_version)
     - [`SD_DATA`](#sd_data)
-    - [`SD_MULTIPLE_MERGE_MODE`](#sd_multiple_merge_mode)
     - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
@@ -167,7 +166,7 @@ See details in [SD processing](/docs/sd-processing.md)
 
 **Description**: Specifies one or more SD artifacts in `application:version` notation passed via a `\n` separator.
 
-EnvGene downloads and sequentially merges them in the mode described in `SD_MULTIPLE_MERGE_MODE`, where subsequent `application:version` takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/sd-processing.md#delta-sd), then merges with [Full SD](/docs/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
+EnvGene downloads and sequentially merges them in the `basic-merge` mode, where subsequent `application:version` takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/sd-processing.md#delta-sd), then merges with [Full SD](/docs/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
 See details in [SD processing](/docs/sd-processing.md)
 
@@ -184,7 +183,7 @@ See details in [SD processing](/docs/sd-processing.md)
 
 **Description**: Specifies the **list** of contents of one or more SD in JSON-in-string format.
 
-EnvGene sequentially merges them in the mode described in `SD_MULTIPLE_MERGE_MODE`, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/sd-processing.md#delta-sd), then merges with [Full SD](/docs/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
+EnvGene sequentially merges them in the `basic-merge` mode, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/sd-processing.md#delta-sd), then merges with [Full SD](/docs/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
 See details in [SD processing](/docs/sd-processing.md)
 
@@ -205,23 +204,6 @@ See details in [SD processing](/docs/sd-processing.md)
 ```text
 '[{[{"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "MONITORING:0.64.1", "deployPostfix": "platform-monitoring"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql"}]}, {"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "postgres-services:1.32.6", "deployPostfix": "postgresql"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql-dbaas"}]}]}]'
 ```
-
-### `SD_MULTIPLE_MERGE_MODE`
-
-**Description**: Defines SD merge mode between SDs passed in `SD_VERSION`/`SD_DATA`. See details in [SD Merge](/docs/sd-processing.md#sd-merge)
-
-Available values:
-
-- `basic-merge`
-- `extended-merge`
-
-See details in [SD processing](/docs/sd-processing.md)
-
-**Default Value**: `basic-merge`
-
-**Mandatory**: No
-
-**Example**: `extended-merge`
 
 ### `SD_REPO_MERGE_MODE`
 
