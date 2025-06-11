@@ -23,6 +23,7 @@ import org.cyclonedx.model.Component;
 import org.cyclonedx.model.Property;
 import org.cyclonedx.model.component.data.ComponentData;
 import org.cyclonedx.model.component.data.Content;
+import org.qubership.cloud.devops.commons.exceptions.BomProcessingException;
 import org.qubership.cloud.devops.commons.pojo.bom.EntitiesMap;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistrySummaryDTO;
@@ -38,6 +39,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.REGISTRY_EXTRACT_FAILED;
