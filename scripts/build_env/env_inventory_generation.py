@@ -65,7 +65,7 @@ def generate_env():
     params = json.loads(params_json)
 
     sd_source_type = params['SD_SOURCE_TYPE']
-    sd_version = params['SD_VERSION']
+    sd_version = params['SD_VERSION_MULTIPLE']
     sd_data = params['SD_DATA']
     sd_delta = params['SD_DELTA']
 
