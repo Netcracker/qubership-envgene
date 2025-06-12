@@ -4,6 +4,7 @@ from cryptography.fernet import Fernet
 
 from ..business_helper import getenv_with_error
 from ..yaml_helper import openYaml, writeYamlToFile, get_or_create_nested_yaml_attribute
+from ..logger import logger
 
 from .constants import *
 
@@ -25,7 +26,7 @@ def _decrypt_Fernet(text, fernet: Fernet):
         return text
     if not FERNET_STR in text:
         return text
-    return fernet.decrypt(text.replace(FERNET_STR, '').encode('utf-8')).decode('utf-8') 
+    return fernet.decrypt(text.replace(FERNET_STR, '').encode('utf-8')).decode('utf-8')
 
 def _remove_unnecessary_changes(data: dict, old_data_path: str, fernet: Fernet) -> None:
     if not os.path.exists(old_data_path):
@@ -53,7 +54,7 @@ def extract_value_Fernet(file_path: str, attribute_str: str) -> Any:
 
 def crypt_Fernet(file_path, secret_key, in_place, mode, minimize_diff=None, old_file_path=None, *args, **kwargs):
     if not secret_key:
-        secret_key = getenv_with_error("SECRET_KEY")
+        secret_key = getenv_with_error("SECRET_KEY_REPRODUCING_BUG")
     data = openYaml(file_path)
     fernet = Fernet(secret_key)
     fernet_func = _decrypt_Fernet if mode == "decrypt" else _encrypt_Fernet
