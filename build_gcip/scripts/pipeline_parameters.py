@@ -17,8 +17,9 @@ def get_pipeline_parameters() -> dict:
         'JSON_SCHEMAS_DIR': getenv("JSON_SCHEMAS_DIR", "/module/schemas"),
         'ENV_INVENTORY_GENERATION_PARAMS': {
             "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE"),
-            "SD_VERSION": getenv("SD_VERSION"),
-            "SD_DATA": getenv("SD_DATA"),
+            "SD_VERSION_MULTIPLE": getenv("SD_VERSION_MULTIPLE"),
+            "SD_DATA_MULTIPLE": getenv("SD_DATA_MULTIPLE"),
+			"SD_MERGE_MODE": getenv("SD_MERGE_MODE"),
             "SD_DELTA": getenv("SD_DELTA"),
             "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT"),
             "ENV_SPECIFIC_PARAMETERS": getenv("ENV_SPECIFIC_PARAMS"),
