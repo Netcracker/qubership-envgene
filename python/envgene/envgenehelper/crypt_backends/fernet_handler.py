@@ -54,7 +54,7 @@ def extract_value_Fernet(file_path: str, attribute_str: str) -> Any:
 
 def crypt_Fernet(file_path, secret_key, in_place, mode, minimize_diff=None, old_file_path=None, *args, **kwargs):
     if not secret_key:
-        secret_key = getenv_with_error("SECRET_KEY_REPRODUCING_BUG")
+        secret_key = getenv_with_error("SECRET_KEY")
     data = openYaml(file_path)
     fernet = Fernet(secret_key)
     fernet_func = _decrypt_Fernet if mode == "decrypt" else _encrypt_Fernet
