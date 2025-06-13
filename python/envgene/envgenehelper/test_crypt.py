@@ -113,9 +113,9 @@ def test_ignore_crypt(crypt_kwargs):
     new_yaml = encrypt_file(**crypt_kwargs, ignore_is_crypt=True, is_crypt=False)
     assert init_yaml != new_yaml
 
-    new_yaml = decrypt_file(**crypt_kwargs, ignore_is_crypt=False, is_crypt=True)
-    assert init_yaml != new_yaml
-    new_yaml = decrypt_file(**crypt_kwargs, ignore_is_crypt=True, is_crypt=True)
+    new_yaml = decrypt_file(**crypt_kwargs, ignore_is_crypt=False, is_crypt=False)
+    assert init_yaml != new_yaml # should not try to decrypt with is_crypt false, so new_yaml is still encrypted
+    new_yaml = decrypt_file(**crypt_kwargs, ignore_is_crypt=True, is_crypt=False)
     assert init_yaml == new_yaml
 
 @pytest.mark.parametrize("crypt_func", crypt_functions_data)
