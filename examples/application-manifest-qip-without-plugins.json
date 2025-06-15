@@ -1,6 +1,6 @@
 {
   "serialNumber": "urn:uuid:c7eb7c5f-b8da-4c05-9c48-678a11c00a35",
-  "$schema": "../schemas/application-manifest.schema.json",
+  "$schema": "../schemas/application-manifest-without-plugins.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "version": 1,
@@ -67,60 +67,6 @@
           "name": "full_image_name",
           "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-ui:build22"
         }
-      ],
-      "components": [
-        {
-          "bom-ref": "resource-profile-baselines:7875b590-4b19-4781-b6ef-9b0a1c337111",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.resource-profile-baseline",
-          "name": "resource-profile-baselines",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "dev.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "dev-ha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod-nonha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
-        }
       ]
     },
     {
@@ -180,60 +126,6 @@
         {
           "name": "full_image_name",
           "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-variables-management:build3"
-        }
-      ],
-      "components": [
-        {
-          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.resource-profile-baseline",
-          "name": "resource-profile-baselines",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "dev.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "dev-ha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod-nonha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
         }
       ]
     },
@@ -295,60 +187,6 @@
           "name": "full_image_name",
           "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-systems-catalog:build3"
         }
-      ],
-      "components": [
-        {
-          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.resource-profile-baseline",
-          "name": "resource-profile-baselines",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "dev.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "dev-ha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod-nonha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
-        }
       ]
     },
     {
@@ -408,60 +246,6 @@
         {
           "name": "full_image_name",
           "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-catalog:build3"
-        }
-      ],
-      "components": [
-        {
-          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.resource-profile-baseline",
-          "name": "resource-profile-baselines",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "dev.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "dev-ha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod-nonha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
         }
       ]
     },
@@ -523,60 +307,6 @@
           "name": "full_image_name",
           "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-engine:build3"
         }
-      ],
-      "components": [
-        {
-          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.resource-profile-baseline",
-          "name": "resource-profile-baselines",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "dev.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "dev-ha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod-nonha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
-        }
       ]
     },
     {
@@ -637,60 +367,6 @@
           "name": "full_image_name",
           "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-sessions-management:build3"
         }
-      ],
-      "components": [
-        {
-          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.resource-profile-baseline",
-          "name": "resource-profile-baselines",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "dev.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "dev-ha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod-nonha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
-        }
       ]
     },
     {
@@ -750,60 +426,6 @@
         {
           "name": "full_image_name",
           "value": "artifactory.qubership.org:10004/core/cr-synchonizer:build3"
-        }
-      ],
-      "components": [
-        {
-          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.resource-profile-baseline",
-          "name": "resource-profile-baselines",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "dev.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "dev-ha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod-nonha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
         }
       ]
     },
