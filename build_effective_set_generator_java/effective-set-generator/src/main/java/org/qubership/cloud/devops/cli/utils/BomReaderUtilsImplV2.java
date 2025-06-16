@@ -93,7 +93,7 @@ public class BomReaderUtilsImplV2 {
                 return applicationBomDto;
             }
         } catch (Exception e) {
-            throw new BomProcessingException("Error reading application sbom due to " + e.getMessage());
+            throw new BomProcessingException("error reading application sbom \n Root Cause: " + e.getMessage());
         }
         return null;
     }
@@ -120,10 +120,11 @@ public class BomReaderUtilsImplV2 {
     private void processConfigServiceComponentDeployDescParams(Map<String, Map<String, Object>> deployParamsMap, Component component) {
         Map<String, Object> deployDescParams = new TreeMap<>();
         ServiceArtifactType serviceArtifactType = ServiceArtifactType.of(component.getMimeType());
-        String entity = component.getName();
+        String entity = "service:" +component.getName();
         Map<String, Object> primaryArtifactMap = new TreeMap<>();
         List<Map<String, Object>> artifacts = new ArrayList<>();
         for (Component subComponent : component.getComponents()) {
+            entity = "sub component '"+subComponent.getName() +"' of service:"+component.getName();
             if (subComponent.getMimeType().equalsIgnoreCase(serviceArtifactType.getArtifactMimeType())) {
                 populateOptionalParam(primaryArtifactMap, "artifact.artifactId", subComponent.getName());
                 populateOptionalParam(primaryArtifactMap, "artifact.groupId", subComponent.getGroup());
@@ -139,7 +140,7 @@ public class BomReaderUtilsImplV2 {
                 artifactMap.put("deploy_params", "");
                 artifactMap.put("gav", "");
                 artifactMap.put("group_id", "");
-                artifactMap.put("id", checkIfMandatory(subComponent.getGroup(), "id", entity) + ":" + name + ":" + version);
+                artifactMap.put("id", checkIfMandatory(subComponent.getGroup(), "group", entity) + ":" + name + ":" + version);
                 artifactMap.put("name", name + "-" + version + "." +
                         getPropertyValue(subComponent, "type", null, true, entity));
                 artifactMap.put("repository", "");
@@ -157,7 +158,7 @@ public class BomReaderUtilsImplV2 {
         deployDescParams.put("git_url", getPropertyValue(component, "git_url", null, true, entity));
         deployDescParams.put("maven_repository", getPropertyValue(component, "maven_repository", null, true, entity));
         deployDescParams.put("name", checkIfMandatory(component.getName(), "name", entity));
-        deployDescParams.put("service_name", checkIfMandatory(component.getName(),"service_name", entity));
+        deployDescParams.put("service_name", checkIfMandatory(component.getName(),"name", entity));
         deployDescParams.put("tArtifactNames", new TreeMap<String, String>());
         deployDescParams.put("version", checkIfMandatory(component.getVersion(), "version", entity));
         populateOptionalParam(deployDescParams, "type", getPropertyValue(component, "type", null, false, entity));
@@ -174,13 +175,14 @@ public class BomReaderUtilsImplV2 {
 
     private void processImageServiceComponentDeployDescParams(Map<String, Map<String, Object>> deployParamsMap, Component component) {
         Map<String, Object> deployDescParams = new TreeMap<>();
-        String entity = component.getName();
+        String entity = "service:" +component.getName();
         for (Component subComponent : component.getComponents()) {
+            entity = "sub component '"+subComponent.getName() +"' of service:"+component.getName();
             if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
-                deployDescParams.put("docker_digest", checkIfMandatory(CollectionUtils.isNotEmpty(subComponent.getHashes()) ? subComponent.getHashes().get(0).getValue() : null, "docker_digest", entity));
-                deployDescParams.put("docker_repository_name", checkIfMandatory(subComponent.getGroup(), "docker_repository_name", entity));
-                deployDescParams.put("docker_tag", checkIfMandatory(subComponent.getVersion(), "docker_tag", entity));
-                deployDescParams.put("image_name", checkIfMandatory(subComponent.getName(), "image_name", entity));
+                deployDescParams.put("docker_digest", checkIfMandatory(CollectionUtils.isNotEmpty(subComponent.getHashes()) ? subComponent.getHashes().get(0).getValue() : null, "hashes", entity));
+                deployDescParams.put("docker_repository_name", checkIfMandatory(subComponent.getGroup(), "group", entity));
+                deployDescParams.put("docker_tag", checkIfMandatory(subComponent.getVersion(), "version", entity));
+                deployDescParams.put("image_name", checkIfMandatory(subComponent.getName(), "name", entity));
             }
         }
         deployDescParams.put("deploy_param", getPropertyValue(component, "deploy_param","",true, entity));
@@ -232,11 +234,11 @@ public class BomReaderUtilsImplV2 {
     private void processConfigServiceComponent(Map<String, Map<String, Object>> serviceMap, Component component, String appName, String baseline, Profile override, Bom bomContent) {
         Map<String, String> profileValues = new TreeMap<>();
         Map<String, Object> serviceParams = new TreeMap<>();
-
-        serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", bomContent.getMetadata().getComponent().getVersion());
-        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", component.getName() + "-v1");
+        String entity = "service:" +component.getName();
+        serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(),"version in metadata",  entity));
+        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", checkIfMandatory(component.getName(), "name", entity) + "-v1");
         serviceParams.put("DEPLOYMENT_VERSION", "v1");
-        serviceParams.put("SERVICE_NAME", component.getName());
+        serviceParams.put("SERVICE_NAME", checkIfMandatory(component.getName(),"name", entity ));
 
 
         for (Component subComponent : component.getComponents()) {
@@ -254,15 +256,15 @@ public class BomReaderUtilsImplV2 {
     private void processImageServiceComponent(Map<String, Map<String, Object>> serviceMap, Component component, String appName, String baseline, Profile override, Bom bomContent) {
         Map<String, String> profileValues = new TreeMap<>();
         Map<String, Object> serviceParams = new TreeMap<>();
-        String tag = "";
-
-        serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", bomContent.getMetadata().getComponent().getVersion());
-        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", component.getName() + "-v1");
+        String tag = null;
+        String entity = "service:" +component.getName();
+        serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity));
+        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", checkIfMandatory(component.getName(), "name", entity) + "-v1");
         serviceParams.put("DEPLOYMENT_VERSION", "v1");
-        serviceParams.put("SERVICE_NAME", component.getName());
-        String dockerTag = getPropertyValue(component, "full_image_name", null, false, component.getName());
+        serviceParams.put("SERVICE_NAME", checkIfMandatory(component.getName(), "name", entity));
+        String dockerTag = getPropertyValue(component, "full_image_name", null, true, entity);
         serviceParams.put("DOCKER_TAG", dockerTag);
-        serviceParams.put("IMAGE_REPOSITORY", StringUtils.isNotEmpty(dockerTag) ? dockerTag.split(":")[0] : "");
+        serviceParams.put("IMAGE_REPOSITORY", StringUtils.isNotEmpty(dockerTag) ? dockerTag.split(":")[0] : null);
 
         for (Component subComponent : component.getComponents()) {
             if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
@@ -271,7 +273,7 @@ public class BomReaderUtilsImplV2 {
                 profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
             }
         }
-        serviceParams.put("TAG", tag);
+        serviceParams.put("TAG", checkIfMandatory(tag, "TAG", entity));
         if (profileValues != null && !profileValues.isEmpty()) {
             serviceParams.putAll(profileValues);
         }
