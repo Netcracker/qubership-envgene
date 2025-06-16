@@ -1,4 +1,4 @@
-name: common
+name: core
 version: 25.1
 parameters:
   PARAM_2: value-2
