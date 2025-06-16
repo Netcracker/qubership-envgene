@@ -133,7 +133,8 @@ In this option:
   - [deploy-descriptor.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-deploy-descriptoryaml)
   - per service [deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml)
 
-![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest-without-service.drawio.png)
+![no-application-manifest-model.drawio.png](/docs/images/no-application-manifest-model.drawio.png)
+![no-application-manifest.drawio.png](/docs/images/no-application-manifest.drawio.png)
 
 ## MoMs
 
