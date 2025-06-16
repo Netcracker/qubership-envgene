@@ -14,12 +14,12 @@ deployParameters:
   ENVGENE_CONFIG_REF_NAME: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_REF_NAME')| default('No Ref Name') }}"
   ENVGENE_CONFIG_TAG: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_TAG')| default('No Ref tag') }}"
   OVERRIDE_PARAMETER: "template-value"
-{% if 'application-name-A' in current_env.solution_structure %}
-  param: value-1
+{% if 'bss-app' in current_env.solution_structure %}
+  bss-app-exist: true
 {% else %}
-  param: value-2
+  bss-app-exist: false
 {% endif %}
-  oss_ns: "{{ current_env.solution_structure['oss-app].['oss'].namespace }}"
+  oss_ns: "{{ current_env.solution_structure['oss-app']['oss'].namespace }}"
 {% if current_env.additionalTemplateVariables.ci is defined %}
 e2eParameters: 
 {{ current_env.additionalTemplateVariables.e2eParameters | ansible.builtin.to_nice_yaml | indent(2, true) }}

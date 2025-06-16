@@ -1,0 +1,13 @@
+applications:
+  - version: "core-app:release-1.2.4-20240402.110146-1-RELEASE"
+    deployPostfix: "core"
+  - version: "core-app:release-1.2.4-20240402.110146-1-RELEASE"
+    deployPostfix: "bss"
+  - version: "bss-app:master-20240412.120655-192"
+    deployPostfix: "bss"
+  - version: "core-app:release-1.2.4-20240402.110146-1-RELEASE"
+    deployPostfix: "oss"
+  - version: "oss-app:release-2024-2-1.01.026"
+    deployPostfix: "oss"
+  - version: "billing-app:release-2024-1-1.011.013-RELEASE"
+    deployPostfix: "billing"
