@@ -1,3 +1,5 @@
+version: 2.1
+type: deploy
 applications:
   - version: "core-app:release-1.2.4-20240402.110146-1-RELEASE"
     deployPostfix: "core"
