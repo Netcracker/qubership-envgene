@@ -24,5 +24,5 @@ public class ExceptionMessage {
 
     public static final String REGISTRY_EXTRACT_FAILED = "Could not extract registry information from Application Bom for %s";
 
-    public static final String APP_PROCESS_FAILED = "Failed Processing of application %s from namespace %s due to: \n %s";
+    public static final String APP_PROCESS_FAILED = "Failed to process application %s from namespace %s \n Reason: %s";
 }

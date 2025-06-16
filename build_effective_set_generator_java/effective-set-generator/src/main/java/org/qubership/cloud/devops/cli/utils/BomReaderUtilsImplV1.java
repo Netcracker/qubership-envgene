@@ -73,7 +73,7 @@ public class BomReaderUtilsImplV1 {
                 return applicationBomDto;
             }
         } catch (Exception e) {
-            throw new BomProcessingException("Error reading application sbom due to " + e.getMessage());
+            throw new BomProcessingException("error reading application sbom \n Root Cause: " + e.getMessage());
         }
         return null;
     }
