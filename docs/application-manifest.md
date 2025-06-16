@@ -97,7 +97,7 @@
 
 ![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model-without-plugins.drawio.png)
 
-[Application Manifest without Plugins JSON schema](/schemas/application-manifest-qip-without-plugins.json)
+[Application Manifest without Plugins JSON schema](/schemas/application-manifest-qip-without-plugins.schema.json)
 
 QIP Example:
 
@@ -112,7 +112,7 @@ QIP Example:
 
 ![application-manifest-model-without-service.png](/docs/images/application-manifest-model-without-service.png)
 
-[Application Manifest without Plugins JSON schema](/schemas/application-manifest-model-without-service.json)
+[Application Manifest without Plugins JSON schema](/schemas/application-manifest-model-without-service.schema.json)
 
 QIP Example:
 
