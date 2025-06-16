@@ -1,0 +1,17 @@
+inventory:
+  environmentName: "composite-with-creds"
+  tenantName: "tenant"
+  description: "Sample template for composite environment with credentials in parameters"
+  owners: "qubership team"
+  config:
+    updateRPOverrideNameWithEnvName: false
+    updateCredIdsWithEnvName: true
+envTemplate:
+  name: "composite-dev"
+  artifact: "deployment-configuration-env-templates:1.2.3"
+  additionalTemplateVariables:
+    GLOBAL_LEVEL_PARAM1: global-level-value1
+    CLOUD_LEVEL_PARAM1: cloud-level-value2
+    mergeDeployE2eParameters: true
+    additinalVarInstanceDir: "test1"
+    additinalVarParentDir: "test2"

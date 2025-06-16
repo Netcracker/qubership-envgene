@@ -1,0 +1,25 @@
+# Template for env generation
+---
+tenant: "{{ templates_dir }}/env_templates/composite/tenant.yml.j2"
+cloud: "{{ templates_dir }}/env_templates/composite/cloud.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/core.yml.j2"
+    template_override:
+      profile:
+        name: prod_core_override
+        baseline: prod
+  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/bss.yml.j2"
+    template_override:
+      profile:
+        name: prod_bss_override
+        baseline: prod
+  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/oss.yml.j2"
+    template_override:
+      profile:
+        name: prod_oss_override
+        baseline: prod
+  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/billing.yml.j2"
+    template_override:
+      profile:
+        name: prod_billing_override
+        baseline: prod

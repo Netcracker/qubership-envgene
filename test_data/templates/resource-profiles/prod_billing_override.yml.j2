@@ -1,0 +1,34 @@
+---
+name: "prod_billing_override"
+baseline: "prod"
+description: "Override for dev-profile"
+applications:
+- name: "Core-Extensions"
+  version: "release-2023.3-11.17.0-20231107.113613-36-RELEASE"
+  sd: ""
+  services:
+  - name: "samples-repository"
+    parameters:
+    - name: "CPU_LIMIT"
+      value: "10"
+    - name: "MEMORY_LIMIT"
+      value: "5620Mi"
+    - name: "REPLICAS"
+      value: "3"
+    - name: "CPU_REQUEST"
+      value: "150m"
+- name: "Core"
+  #version: "release-2023.3-8.4.0-20231103.225817-60-RELEASE"
+  #sd: ""
+  services:
+  - name: "tenant-manager"
+    parameters:
+    - name: "CPU_LIMIT"
+      value: "20"
+    - name: "REPLICAS"
+      value: "3"
+    - name: "CPU_REQUEST"
+      value: "150m"
+    - name: "MEMORY_LIMIT"
+      value: "336Mi"
+version: 0
