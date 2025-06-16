@@ -103,7 +103,7 @@ QIP Example:
 
 ![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest-without-plugins.drawio.png)
 
-[QIP Application Manifest example](/examples/application-manifest-qip-without-service.json)
+[QIP Application Manifest example](/examples/application-manifest-qip-without-plugins.json)
 
 ### Option 1.3 Application Manifest without service
 
@@ -118,11 +118,20 @@ QIP Example:
 
 ![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest-without-service.drawio.png)
 
-[QIP Application Manifest example](/examples/application-manifest-qip.json)
+[QIP Application Manifest example](/examples/application-manifest-qip-without-service.json)
 
 ### Option 2 No Application Manifest
 
-Centralized values.yaml generation during CI/CD that dynamically links all dependencies (Helm charts, images, libraries) before deployment.
+Centralized Helm values generation during application build that dynamically links all dependencies (Helm charts, images, libraries) before Effective Set calculation and deployment.
+
+In this option:
+
+- Input for Argo: `app:ver` of the Helm chart or SD with elements referencing the `app:ver` Helm chart  
+- Input for Envgene: SD with elements referencing the `app:ver` Helm chart  
+- Envgene do not calculates per-service parameters, assuming such parameters are already present in values of Helm charts
+- Helm values must contain at least
+  - [deploy-descriptor.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-deploy-descriptoryaml)
+  - per service [deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml)
 
 ![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest-without-service.drawio.png)
 
