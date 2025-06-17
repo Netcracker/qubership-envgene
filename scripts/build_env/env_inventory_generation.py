@@ -20,6 +20,12 @@ CLUSTER_TOKEN_CRED_ID = "cloud-deploy-sa-token"
 SCHEMAS_DIR = getenv("JSON_SCHEMAS_DIR", path.join(path.dirname(path.dirname(path.dirname(__file__))), "schemas"))
 PARAMSET_SCHEMA_PATH = path.join(SCHEMAS_DIR, "paramset.schema.json")
 
+MERGE_METHODS = {
+    "basic-merge": basic_merge,
+    "basic-exclusion-merge": basic_exclusion_merge,
+    "extended-merge": merge
+}
+
 with open(PARAMSET_SCHEMA_PATH, 'r') as f:
     PARAMSET_SCHEMA = json.load(f)
 
@@ -68,6 +74,10 @@ def generate_env():
     sd_version = params['SD_VERSION']
     sd_data = params['SD_DATA']
     sd_delta = params['SD_DELTA']
+    sd_merge_mode = params['SD_MERGE_MODE']
+    logger.info(f"sd_data: " {sd_data})
+    logger.info(f"sd_merge_mode: " {sd_merge_mode})
+
 
     env_inventory_init = params['ENV_INVENTORY_INIT']
     env_specific_params = params['ENV_SPECIFIC_PARAMETERS']
@@ -78,7 +88,7 @@ def generate_env():
     logger.info(f"Starting env inventory generation for env: {env.name} in cluster: {env.cluster}")
 
     handle_env_inventory_init(env, env_inventory_init, env_template_version)
-    handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta)
+    handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
     handle_env_specific_params(env, env_specific_params)
     handle_env_template_name(env, env_template_name)
 
@@ -98,7 +108,7 @@ def merge_sd(env, sd_data):
     helper.merge(full_sd_yaml, sd_data, destination)
     logger.info(f"SD_DELTA has been merged! - {sd_data}")
 
-def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta):
+def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
     base_path = f'{env.env_path}/Inventory/solution-descriptor/'
     if not sd_source_type:
         logger.info("SD_SOURCE_TYPE is not specified, skipping SD file creation")
@@ -115,17 +125,32 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta):
     if sd_source_type == "artifact": 
         download_sd_with_version(env, sd_path, sd_version, sd_delta)
     elif sd_source_type == "json": 
-        extract_sd_from_json(env, sd_path, sd_data, sd_delta)
+        extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode)
     else:
         logger.error(f'SD_SOURCE_TYPE must be set either to "artifact" or "json"')
         exit(1)
 
-def extract_sd_from_json(env, sd_path, sd_data, sd_delta):
+def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
     if not sd_data:
         logger.error(f"SD_SOURCE_TYPE is set to 'json', but SD_DATA was not given in pipeline variables")
         exit(1)
     data = json.loads(sd_data)
-    helper.writeYamlToFile(sd_path, data)
+
+    logger.info(f"printing data inside extract_sd_from_json"{data})
+    final_merged_data = {}
+    final_merged_data = {"applications": data[0].get("applications", [])}
+    selected_merge_function = MERGE_METHODS.get(sd_merge_mode)
+    if selected_merge_function is None:
+        raise ValueError(f"Unsupported merge mode: {sd_merge_mode}")
+    logger.info(f"printing the merge function selected"{selected_merge_function})
+
+    for i in range(1, len(data)):
+        logger.info(f"Merging current result with applications from item {i}...")
+        current_item_sd = {"applications": data[i].get("applications", [])} 
+        final_merged_data = helper.selected_merge_function(final_merged_data, current_item_sd)
+    logger.info(f"Final merged SD data: {json.dumps(final_merged_data, indent=2)}")    
+    helper.writeYamlToFile(sd_path, final_merged_data)
+
     if sd_delta == "true":
         data = helper.openYaml(sd_path)
         merge_sd(env, data)
