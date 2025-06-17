@@ -18,7 +18,7 @@ namespaces:
       profile:
         name: prod_oss_override
         baseline: prod
-  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/billing.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/billing.yaml.j2"
     template_override:
       profile:
         name: prod_billing_override
