@@ -10,13 +10,12 @@ test_data = [
       ("cluster-01", "env-01", "composite-prod"),
       ("cluster-01", "env-02", "composite-dev"),
       ("cluster-01", "env-03", "composite-dev"),
-      ("cluster-01", "env-04", "simple")
-      
+      ("cluster-01", "env-04", "simple"),
+      ("cluster01", "env01", "test-01")
 ]
-g_templates_dir = getAbsPath("../../test_data/templates")
-g_inventory_dir = getAbsPath("../../test_data/environments")
-# g_templates_dir = getAbsPath("../../test_data/test_templates")
-# g_inventory_dir = getAbsPath("../../test_data/test_environments")
+
+g_templates_dir = getAbsPath("../../test_data/test_templates")
+g_inventory_dir = getAbsPath("../../test_data/test_environments")
 g_output_dir = getAbsPath("../../tmp/test_environments")
 g_base_dir = get_parent_dir_for_dir(g_inventory_dir)
 
