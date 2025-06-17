@@ -16,6 +16,7 @@
     - [Option 2 No Application Manifest](#option-2-no-application-manifest)
   - [MoMs](#moms)
     - [09.06](#0906)
+    - [16.06](#1606)
     - [PoC](#poc)
 
 ## Goals
@@ -58,11 +59,13 @@
    4. Multiple non-app charts per application
    5. Xue-xue (???)
 2. Should the Application Manifest be compatible with other deployers?
-3. Should deploying a 3rd-party Application (Helm chart) require an App manifest??
+3. Should deploying a 3rd-party Application (Helm chart) require an Application manifest??
 4. Should profile overrides allow setting parameters not present in the baseline profile?
    1. As an application owner, I want to restrict the set of configurable performance parameters to prevents users from introducing unsupported configurations.
 5. Should CM provide access to baseline profiles?
    1. As a solution configurator, I need to modify performance parameters while seeing baseline values to prevent context switching
+6. Should user be able to customize some parameters from [deploy-descriptor.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-deploy-descriptoryaml) or [per service deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml) in **no Application Manifest** option?
+7. Should the user be able to introduce their own types in the component type in Application Manifest?
 
 ## Use Cases
 
@@ -94,6 +97,7 @@
 
 1. Plugins (CDN, sample repo, smart plug) are described as services. They are not classified as a separate component type
 2. No resource profile baseline exists. Performance parameters are defined in the Helm chart values
+3. The service list is formed according to the principle - **service for each `service` component**
 
 ![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model-without-plugins.drawio.png)
 
@@ -109,6 +113,7 @@ QIP Example:
 
 1. No service component exists
 2. No resource profile baseline exists. Performance parameters are defined in the Helm chart values
+3. The service list is formed according to the principle - **service for each `Helm-chart` component**
 
 ![application-manifest-model-without-service.png](/docs/images/application-manifest-model-without-service.png)
 
@@ -131,7 +136,7 @@ In this option:
 - Envgene do not calculates per-service parameters, assuming such parameters are already present in values of Helm charts
 - Helm values must contain at least
   - [deploy-descriptor.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-deploy-descriptoryaml)
-  - per service [deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml)
+  - [per service deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml)
 
 ![no-application-manifest-model.drawio.png](/docs/images/no-application-manifest-model.drawio.png)
 ![no-application-manifest.drawio.png](/docs/images/no-application-manifest.drawio.png)
@@ -147,6 +152,10 @@ In this option:
 5. Consider early binding of the Helm chart and artifacts (Docker image, Helm library, ZIP, Spar artifacts) during the build. Generate Helm chart values from parameters describing the artifacts (e.g., GAV coordinates) using **Image Updater** or **Image Streams**
 6. No need for AppDefs — G and A are static during publication. The application name (used SD) must match the artifact ID
 7. RegDefs are required to describe the coordinates and access method to the registry
+
+### 16.06
+
+1. Should user be able to customize some parameters from [deploy-descriptor.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-deploy-descriptoryaml) or [per service deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml) ?
 
 ### PoC
 
