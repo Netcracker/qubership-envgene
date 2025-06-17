@@ -7,7 +7,7 @@ from envgenehelper import *
 
 test_data = [
       # (cluster_name, environment_name, template)
-      # ("cluster-01", "env-01", "composite-prod")
+      ("cluster-01", "env-01", "composite-prod")
       ("cluster-01", "env-02", "composite-dev")
 ]
 g_templates_dir = getAbsPath("../../test_data/templates")
