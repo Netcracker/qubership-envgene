@@ -1,6 +1,6 @@
 ---
 applications:
-- name: "сore"
+- name: "Core"
   services:
   - name: "operator"
     parameters:
