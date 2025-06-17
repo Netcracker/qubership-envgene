@@ -11,12 +11,13 @@
   - [Use Cases](#use-cases)
   - [Proposed Approach](#proposed-approach)
     - [Option 1.1 Application Manifest with plugins](#option-11-application-manifest-with-plugins)
-    - [Option 1.2 Application Manifest without plugins](#option-12-application-manifest-without-plugins)
-    - [Option 1.3 Application Manifest without service](#option-13-application-manifest-without-service)
+    - [Option 1.2 Application Manifest without service](#option-12-application-manifest-without-service)
+    - [Option 1.3 Application Manifest without plugins](#option-13-application-manifest-without-plugins)
     - [Option 2 No Application Manifest](#option-2-no-application-manifest)
   - [MoMs](#moms)
     - [09.06](#0906)
     - [16.06](#1606)
+    - [17.06](#1706)
     - [PoC](#poc)
 
 ## Goals
@@ -48,24 +49,41 @@
 7. Application Manifest must be generated via dedicated CLI tool
 8. Application Manifest must be generated at the application build stage
 9. Application Manifest build must use the "new builder's" input contract
-10. The [Effective Set](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#effective-set-v20) structure should remain unchanged
+10. The [Effective Set](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#effective-set-v20) the structure may change
 
 ## Open questions
 
-1. Which Helm chart structures should be supported within this PoC?
-   1. One app chart per application
-   2. Multiple app charts per application
-   3. One non-app chart per application
-   4. Multiple non-app charts per application
-   5. Xue-xue (???)
-2. Should the Application Manifest be compatible with other deployers?
-3. Should deploying a 3rd-party Application (Helm chart) require an Application manifest??
-4. Should profile overrides allow setting parameters not present in the baseline profile?
-   1. As an application owner, I want to restrict the set of configurable performance parameters to prevents users from introducing unsupported configurations.
-5. Should CM provide access to baseline profiles?
-   1. As a solution configurator, I need to modify performance parameters while seeing baseline values to prevent context switching
-6. Should user be able to customize some parameters from [deploy-descriptor.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-deploy-descriptoryaml) or [per service deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml) in **no Application Manifest** option?
-7. Should the user be able to introduce their own types in the component type in Application Manifest?
+**Q1:** Which Helm chart structures should be supported within this PoC?
+    1. One app chart per application
+    2. Multiple app charts per application
+    3. One non-app chart per application
+    4. Multiple non-app charts per application
+    5. Xue-xue (???)
+**A1:** All Helm chart structures used in practice within the company (including those listed above) must be supported by the Application Manifest model
+
+**Q2:** Should the Application Manifest be compatible with other deployers?
+**A2:** No
+
+**Q3:** Should deploying a 3rd-party Application (Helm chart) by Argo require an Application manifest?
+**A3:** Yes
+
+**Q4:** Is there enough information in a 3rd-party Application (Helm chart) to create an Argo Application CR?
+**A4:**
+
+**Q5:** Should profile overrides allow setting parameters not present in the baseline profile? As an application developer, I want to restrict the set of configurable performance parameters to prevents users from introducing unsupported configurations.
+**A5:** Performance parameters should be explicitly distinguished (e.g., via JSON schema). However, restricting their use is unnecessary.
+
+**Q6:** Should CM provide access to baseline profiles? As a environment configurator, I need to modify performance parameters while seeing baseline values to prevent context switching
+**A6:** Yes
+
+**Q7:** Should environment configurator be able to customize some parameters from [deploy-descriptor.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-deploy-descriptoryaml) or [per service deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml) in **no Application Manifest** option?
+**A7:** Yes, but these parameters must be validated for necessity.
+
+**Q8:** Should the application developer be able to introduce their own types in the component type in Application Manifest?
+**A8:** Not at this time, but in the future.
+
+**Q9:** How are Helm app charts and Docker images created, built, and linked in mature open-source projects?
+**A9:**
 
 ## Use Cases
 
@@ -81,6 +99,7 @@
    3. Effective set calculation for a Solution of Qubership applications
    4. Effective set calculation for a Solution of 3rd-party applications
    5. Effective set calculation for a mixed Solution of 3rd-party and Qubership applications
+3. As a environment configurator, I need to modify performance parameters while seeing baseline values to prevent context switching
 
 ## Proposed Approach
 
@@ -93,23 +112,7 @@
 
 [Application Manifest with Plugins JSON schema](/schemas/application-manifest-with-plugins.schema.json)
 
-### Option 1.2 Application Manifest without plugins
-
-1. Plugins (CDN, sample repo, smart plug) are described as services. They are not classified as a separate component type
-2. No resource profile baseline exists. Performance parameters are defined in the Helm chart values
-3. The service list is formed according to the principle - **service for each `service` component**
-
-![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model-without-plugins.drawio.png)
-
-[Application Manifest without Plugins JSON schema](/schemas/application-manifest-without-plugins.schema.json)
-
-QIP Example:
-
-![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest-without-plugins.drawio.png)
-
-[QIP Application Manifest example](/examples/application-manifest-qip-without-plugins.json)
-
-### Option 1.3 Application Manifest without service
+### Option 1.2 Application Manifest without service
 
 1. No service component exists
 2. No resource profile baseline exists. Performance parameters are defined in the Helm chart values
@@ -124,6 +127,22 @@ QIP Example:
 ![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest-without-service.drawio.png)
 
 [QIP Application Manifest example](/examples/application-manifest-qip-without-service.json)
+
+### Option 1.3 Application Manifest without plugins
+
+1. Plugins (CDN, sample repo, smart plug) are described as services. They are not classified as a separate component type
+2. No resource profile baseline exists. Performance parameters are defined in the Helm chart values
+3. The service list is formed according to the principle - **service for each `service` component**
+
+![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model-without-plugins.drawio.png)
+
+[Application Manifest without Plugins JSON schema](/schemas/application-manifest-without-plugins.schema.json)
+
+QIP Example:
+
+![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest-without-plugins.drawio.png)
+
+[QIP Application Manifest example](/examples/application-manifest-qip-without-plugins.json)
 
 ### Option 2 No Application Manifest
 
@@ -156,6 +175,10 @@ In this option:
 ### 16.06
 
 1. Should user be able to customize some parameters from [deploy-descriptor.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-deploy-descriptoryaml) or [per service deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml) ?
+
+### 17.06
+
+1. Need to choose between the following options: `Option 1.3: Application Manifest without plugins` and `Option 2: No Application Manifest`. Other options are rejected
 
 ### PoC
 
