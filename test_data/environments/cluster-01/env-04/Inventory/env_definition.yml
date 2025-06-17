@@ -1,5 +1,5 @@
 inventory:
-  environmentName: "simplest-env"
+  environmentName: "env-04"
   tenantName: "Applications"
 envTemplate:
   name: "simple"
