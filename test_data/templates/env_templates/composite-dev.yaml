@@ -6,4 +6,4 @@ namespaces:
   - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/core.yml.j2"
   - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/bss.yml.j2"
   - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/oss.yml.j2"
-  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/billing.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/billing.yaml.j2"

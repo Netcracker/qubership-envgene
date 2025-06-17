@@ -1,0 +1,21 @@
+# BEGIN ANSIBLE MANAGED BLOCK
+---
+name: "env-02-core"
+credentialsId: "core-namespace-token"
+isServerSideMerge: false
+labels:
+- "solutionInstance-env-02"
+- "solution-tenant"
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+profile:
+  name: dev_core_override
+  baseline: dev
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets:
+- "core"
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+# END ANSIBLE MANAGED BLOCK

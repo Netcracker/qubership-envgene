@@ -1,0 +1,18 @@
+# BEGIN ANSIBLE MANAGED BLOCK
+---
+name: "tenant"
+registryName: "default"
+description: "Sample template for composite environment with credentials in parameters"
+owners: "qubership team"
+deployParameters:
+  ESCAPE_SEQUENCE: "true"
+globalE2EParameters:
+  pipelineDefaultRecipients: ""
+  recipientsStrategy: "merge"
+  mergeTenantsAndE2EParameters: false
+  environmentParameters: {}
+gitRepository: ""
+defaultBranch: ""
+credential: ""
+labels: []
+# END ANSIBLE MANAGED BLOCK

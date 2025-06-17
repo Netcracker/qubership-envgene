@@ -1,0 +1,40 @@
+# BEGIN ANSIBLE MANAGED BLOCK
+---
+name: "cluster_01_env_02"
+apiUrl: ""
+apiPort: ""
+privateUrl: ""
+publicUrl: ""
+dashboardUrl: "https://dashboard."
+labels: []
+defaultCredentialsId: "token" 
+protocol: ""
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+mergeDeployParametersAndE2EParameters: false
+dbMode: "db"
+databases: []
+maasConfig:
+  credentialsId: "maas"
+  maasUrl: "http://maas-service-maas."
+  maasInternalAddress: "http://maas-service.maas:8080"
+  enable: true
+vaultConfig:
+  url: ""
+  credentialsId: ""
+  enable: false
+dbaasConfigs:
+  - credentialsId: "dbaas" 
+    apiUrl: 'http://dbaas-aggregator.dbaas:8080'
+    aggregatorUrl: 'https://aggregator-dbaas.'
+    enable: true
+consulConfig:
+  tokenSecret: "consul-token" 
+  publicUrl: 'https://consul.'
+  enabled: true
+  internalUrl: 'http://consul-server.consul:8500'
+# END ANSIBLE MANAGED BLOCK
