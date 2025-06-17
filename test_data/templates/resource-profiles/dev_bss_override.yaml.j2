@@ -3,11 +3,11 @@ name: "dev_bss_override"
 baseline: "dev"
 description: "Override for dev-profile"
 applications:
-- name: "Core-Extensions"
+- name: "core-app"
   version: "release-2023.3-11.17.0-20231107.113613-36-RELEASE"
   sd: ""
   services:
-  - name: "samples-repository"
+  - name: "core-service"
     parameters:
     - name: "CPU_LIMIT"
       value: "1"
@@ -17,11 +17,11 @@ applications:
       value: "3"
     - name: "CPU_REQUEST"
       value: "150m"
-- name: "Core"
+- name: "bss-app"
   #version: "release-2023.3-8.4.0-20231103.225817-60-RELEASE"
   #sd: ""
   services:
-  - name: "tenant-manager"
+  - name: "bss-service"
     parameters:
     - name: "CPU_LIMIT"
       value: "2"
