@@ -15,3 +15,5 @@ envTemplate:
     mergeDeployE2eParameters: true
     additinalVarInstanceDir: "test1"
     additinalVarParentDir: "test2"
+generatedVersions:
+  generateEnvironmentLatestVersion: "deployment-configuration-env-templates:composite-dev"  # This value is automatically generated during job run.
