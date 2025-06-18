@@ -315,6 +315,11 @@ The structure of this file is as follows:
 ```yaml
 <key-1>: <value-1>
 <key-N>: <value-N>
+global: &id001
+  <key-1>: <value-1>
+  <key-N>: <value-N>
+<service-name-1>: *id001
+<service-name-2>: *id001
 ```
 
 ##### \[Version 2.0][Deployment Parameter Context] `deploy-descriptor.yaml`
