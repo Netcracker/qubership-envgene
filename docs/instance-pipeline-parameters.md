@@ -265,4 +265,6 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 **Description**: This parameter will be included in the deployment context of the Effective Set. The EnvGene passes it to the Calculator CLI using the `--extra_params` attribute. It is used together with `GENERATE_EFFECTIVE_SET`.
 
+This attribute also appears in the git trailer of the commit in the instance repository for the commit made by the `git_commit_job` job.
+
 **Example**: "123e4567-e89b-12d3-a456-426614174000"
