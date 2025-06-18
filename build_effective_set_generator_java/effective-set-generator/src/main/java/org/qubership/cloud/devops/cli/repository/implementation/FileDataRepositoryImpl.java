@@ -248,7 +248,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                     } else if (currentFolder.equals(GenericConstants.NS_FOLDER)) {
                         namespaceMap.replaceAll((name, namespaceDTO) -> {
                             List<ApplicationLinkDTO> applications = appsOnNamespace.get(name);
-                            return namespaceDTO.toBuilder().applications(applications).build();
+                            return namespaceDTO.toBuilder().applications(applications == null ? Collections.emptyList(): applications).build();
                         });
                         inputData.setNamespaceDTOMap(namespaceMap);
 
