@@ -75,8 +75,8 @@ def generate_env():
     sd_data = params['SD_DATA']
     sd_delta = params['SD_DELTA']
     sd_merge_mode = params['SD_MERGE_MODE']
-    logger.info(f"sd_data: " {sd_data})
-    logger.info(f"sd_merge_mode: " {sd_merge_mode})
+    logger.info(f"sd_data: {sd_data}")
+    logger.info(f"sd_merge_mode: {sd_merge_mode}")
 
 
     env_inventory_init = params['ENV_INVENTORY_INIT']
@@ -136,13 +136,13 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         exit(1)
     data = json.loads(sd_data)
 
-    logger.info(f"printing data inside extract_sd_from_json"{data})
+    logger.info(f"printing data inside extract_sd_from_json {data}")
     final_merged_data = {}
     final_merged_data = {"applications": data[0].get("applications", [])}
     selected_merge_function = MERGE_METHODS.get(sd_merge_mode)
     if selected_merge_function is None:
         raise ValueError(f"Unsupported merge mode: {sd_merge_mode}")
-    logger.info(f"printing the merge function selected"{selected_merge_function})
+    logger.info(f"printing the merge function selected {selected_merge_function}")
 
     for i in range(1, len(data)):
         logger.info(f"Merging current result with applications from item {i}...")
