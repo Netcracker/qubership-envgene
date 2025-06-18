@@ -141,11 +141,12 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         logger.error("SD_DATA must be a non-empty list of SD dictionaries.")
         exit(1)
     
-    final_merged_data = {"applications": data[0].get("applications", [])}
+    final_merged_data = data[0].copy()
+    final_merged_data["applications"] = data[0].get("applications", [])
     if not final_merged_data["applications"]:
         logger.error("No applications found in the first SD block.")
         exit(1)
-        
+
     selected_merge_function = MERGE_METHODS.get(sd_merge_mode)
     if selected_merge_function is None:
         raise ValueError(f"Unsupported merge mode: {sd_merge_mode}")
