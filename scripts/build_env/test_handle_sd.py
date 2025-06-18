@@ -74,7 +74,7 @@ def load_test_sd_data(test_case_name):
     sd_source_type = test_data.get("SD_SOURCE_TYPE", "")
     sd_version = test_data.get("SD_VERSION", "")
     sd_delta = test_data.get("SD_DELTA", "")
-    sd_merge_mode = "merge"
+    sd_merge_mode = "basic-merge"
     logger.info(f"Loaded SD parameters:"
                f"\n\tSD_SOURCE_TYPE: {sd_source_type}"
                f"\n\tSD_VERSION: {sd_version}"
