@@ -10,7 +10,7 @@ test_data = [
       # ("cluster-01", "env-01", "composite-prod"),
       # ("cluster-01", "env-02", "composite-dev"),
       # ("cluster-01", "env-03", "composite-dev"),
-      # ("cluster-01", "env-04", "simple"),
+      ("cluster-01", "env-04", "simple"),
       ("cluster01", "env01", "test-01")
 ]
 
