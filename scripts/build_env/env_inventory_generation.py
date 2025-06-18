@@ -138,7 +138,11 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
 
     logger.info(f"printing data inside extract_sd_from_json {data}")
     final_merged_data = {}
-    final_merged_data = {"applications": data[0].get("applications", [])}
+    applications = data.get("applications", [])
+    if not applications:
+        logger.error("No applications found in SD data.")
+        exit(1)
+    final_merged_data = {"applications": [applications[0]]}
     selected_merge_function = MERGE_METHODS.get(sd_merge_mode)
     if selected_merge_function is None:
         raise ValueError(f"Unsupported merge mode: {sd_merge_mode}")
