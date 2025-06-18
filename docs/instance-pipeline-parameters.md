@@ -267,4 +267,8 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 This attribute also appears in the git trailer of the commit in the instance repository for the commit made by the `git_commit_job` job.
 
+The value must comply with [UUID Version 4](https://www.rfc-editor.org/rfc/rfc9562.html#name-uuid-version-4) format. EnvGene performs validation during Effective Set generation and fails the operation if the value is invalid.
+
+If the parameter is not provided, EnvGene generates a value itself
+
 **Example**: "123e4567-e89b-12d3-a456-426614174000"

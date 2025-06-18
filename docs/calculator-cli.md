@@ -375,7 +375,7 @@ Common Predefined Parameters:
 | Attribute | Mandatory | Type | Description | Default | Source in Application SBOM |
 |---|---|---|---|---|---|
 | `APPLICATION_NAME` | yes | string | Name of the application | None | `.metadata.component.name` |
-| `DEPLOYMENT_SESSION_ID` | yes | string | `''`  | None | Taken from input parameter  `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM). If the parameter is not provided, Calculator CLI must generate a value itself. The value must be [UUID Version 4](https://www.rfc-editor.org/rfc/rfc9562.html#name-uuid-version-4) |
+| `DEPLOYMENT_SESSION_ID` | yes | string | Effective Set calculation operation ID  | None | Taken from input parameter  `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM) |
 
 **Image Type** Service Predefined Parameters:
 
