@@ -21,9 +21,9 @@ SCHEMAS_DIR = getenv("JSON_SCHEMAS_DIR", path.join(path.dirname(path.dirname(pat
 PARAMSET_SCHEMA_PATH = path.join(SCHEMAS_DIR, "paramset.schema.json")
 
 MERGE_METHODS = {
-    "basic-merge": basic_merge,
-    "basic-exclusion-merge": basic_exclusion_merge,
-    "extended-merge": merge
+    "basic-merge": helper.basic_merge,
+    "basic-exclusion-merge": helper.basic_exclusion_merge,
+    "extended-merge": helper.merge
 }
 
 with open(PARAMSET_SCHEMA_PATH, 'r') as f:
@@ -147,7 +147,11 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
     for i in range(1, len(data)):
         logger.info(f"Merging current result with applications from item {i}...")
         current_item_sd = {"applications": data[i].get("applications", [])} 
-        final_merged_data = helper.selected_merge_function(final_merged_data, current_item_sd)
+        if selected_merge_function:
+            final_merged_data = selected_merge_function(final_merged_data, current_item_sd)
+        else:
+            logger.error(f"Unknown SD merge mode: {sd_merge_mode}")
+            exit(1)
     logger.info(f"Final merged SD data: {json.dumps(final_merged_data, indent=2)}")    
     helper.writeYamlToFile(sd_path, final_merged_data)
 

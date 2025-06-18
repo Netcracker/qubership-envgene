@@ -212,7 +212,7 @@ def test_sd(cluster_name, env_name, test_case_name):
     
     # Generate SD file
     logger.info("Generating SD file...")
-    handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta)
+    handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
     
     # Compare generated SD with etalon
     expected_dir = os.path.join(ETALON_ENV_DIR, cluster_name, env_name, "Inventory", "solution-descriptor")
