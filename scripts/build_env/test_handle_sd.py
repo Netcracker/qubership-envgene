@@ -74,13 +74,13 @@ def load_test_sd_data(test_case_name):
     sd_source_type = test_data.get("SD_SOURCE_TYPE", "")
     sd_version = test_data.get("SD_VERSION", "")
     sd_delta = test_data.get("SD_DELTA", "")
-    
+    sd_merge_mode = "merge"
     logger.info(f"Loaded SD parameters:"
                f"\n\tSD_SOURCE_TYPE: {sd_source_type}"
                f"\n\tSD_VERSION: {sd_version}"
                f"\n\tSD_DELTA: {sd_delta}")
     
-    return sd_data, sd_source_type, sd_version, sd_delta
+    return sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode
 
 
 def compare_sd_files(expected_dir, actual_dir, sd_filename):
@@ -187,7 +187,7 @@ def test_sd(cluster_name, env_name, test_case_name):
                f"\n\tTest case: {test_case_name}")
     
     # Load test data
-    sd_data, sd_source_type, sd_version, sd_delta = load_test_sd_data(test_case_name)
+    sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = load_test_sd_data(test_case_name)
     
     # Create base output directory with new structure
     base_output_path = os.path.join(OUTPUT_DIR, test_case_name)
