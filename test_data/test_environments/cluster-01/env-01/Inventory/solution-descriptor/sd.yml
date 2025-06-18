@@ -13,3 +13,9 @@ applications:
     deployPostfix: "oss"
   - version: "billing-app:release-2024-1-1.011.013-RELEASE"
     deployPostfix: "billing"
+  - version: Test-App-Name:0.0.1-Test
+    deployPostfix: app
+  - version: Test-App-DB-Name:0.0.1-Test
+    deployPostfix: app-core
+  - version: Test-App-Name:0.0.2-Test
+    deployPostfix: app
