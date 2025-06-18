@@ -370,7 +370,7 @@ Common Predefined Parameters:
 |---|---|---|---|---|---|
 | `artifacts` | yes | list | always `[]` | `[]` | None |
 | `deploy_param` | yes | string | None | `""` | `.components[?name=<service-name>].properties[?name=deploy_param].value` |
-| `docker_digest` | yes | string | Docker image checksum for the service, calculated using `SHA-256` algorithm | None | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].hashes[0].content` |
+| `docker_digest` | yes | string | Docker image checksum for the service, calculated using `SHA-256` algorithm | `""` | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].hashes[0].content` |
 | `docker_registry` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=docker_registry].value` |
 | `docker_repository_name` | yes | string | The registry repository where the Docker image is located | None | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].group` |
 | `docker_tag` | yes | string | Docker image version | None | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].version` |
