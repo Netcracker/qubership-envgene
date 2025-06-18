@@ -30,6 +30,6 @@ envTemplate:
     cloud:
       - cloud-level-params
   sharedMasterCredentialFiles:
-    - prod-integration-creds
+    - integration-creds
 generatedVersions:
   generateEnvironmentLatestVersion: "deployment-configuration-env-templates:composite-prod"  # This value is automatically generated during job run.
