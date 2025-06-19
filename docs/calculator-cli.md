@@ -570,7 +570,7 @@ Path is relative to the Instance repository (i.e., it starts with `/environments
 
 These parameters define a dedicated parameter context used for managing environment lifecycle systems, such as deployment orchestrators or CI/CD workflows.
 
-This context is constructed from parameters defined in the `e2eParameters` sections of the `Cloud` Environment Instance object, as well as parameters [additionally injected](#version-20-pipeline-parameter-context-injected-parameters) by EnvGene. Such parameters are described in [`parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml) and [`credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml).
+This context is constructed from parameters defined in the `e2eParameters` sections of the `Cloud` Environment Instance object. Such parameters are described in [`parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml) and [`credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml).
 
 Optionally, the pipeline context can include file pairs containing **consumer-specific** [sensitive](#version-20pipeline-parameter-context-consumer-credentialsyaml)/[non-sensitive](#version-20pipeline-parameter-context-consumer-parametersyaml) parameters. These parameters, derived as subsets of `parameters.yaml` and `credentials.yaml`, are generated based on a JSON schema provided by the `--pipeline-context-schema-path` attribute. Each attribute results in a separate file pair:
 
