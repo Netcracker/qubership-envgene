@@ -16,7 +16,7 @@ deployParameters:
 {% endif %}
 e2eParameters:
   APP_NAMESPACE: "{{current_env.name}}-app"
-  Variable_2: "{{env_definition.envTemplate.additionalTemplateVariables.Variable_2}}
+  Variable_2: "{{env_definition.envTemplate.additionalTemplateVariables.Variable_2}}"
 {% if "Test-App-Name" in current_env.solution_structure %}
   TEST_SD_VALUE_2: "TEST_SD_VALUE_2"
 {% endif %}

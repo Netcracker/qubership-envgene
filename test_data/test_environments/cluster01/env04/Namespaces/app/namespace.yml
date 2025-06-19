@@ -1,7 +1,7 @@
 # The contents of this file is generated from template artifact: test-template-1.
 # Contents will be overwritten by next generation.
 # Please modify this contents only for development purposes or as workaround.
-name: "test-environment-app" #TC-003-002
+name: "test-environment-app"
 credentialsId: ""
 isServerSideMerge: false
 labels:
