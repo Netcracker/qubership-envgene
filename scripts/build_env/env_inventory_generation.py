@@ -145,12 +145,12 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
 
     sd_delta = str(sd_delta).strip().lower() if sd_delta is not None else "true"
 
-    if sd_delta == "true" and sd_merge_mode:
+    if sd_merge_mode:
         effective_merge_mode = sd_merge_mode
     elif sd_delta == "true":
         effective_merge_mode = "extended-merge"
     else:
-        effective_merge_mode = "replace"
+        effective_merge_mode = "replace"    
 
     if sd_merge_mode == "replace":
         effective_merge_mode = "replace"
