@@ -156,27 +156,26 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         effective_merge_mode = "replace"
         helper.writeYamlToFile(sd_path, data)
     else:
-        final_merged_data = {
-            "version": data[0].get("version"),
-            "type": data[0].get("type"),
-            "deployMode": data[0].get("deployMode"),
-            "applications": data[0].get("applications", [])
-            }
-        if not final_merged_data["applications"]:
+        merged_applications = {"applications": data[0].get("applications", [])}
+        if not merged_applications["applications"]:
             logger.error("No applications found in the first SD block.")
             exit(1)
-
         selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
         if selected_merge_function is None:
             raise ValueError(f"Unsupported merge mode: {effective_merge_mode}")
         logger.info(f"printing the merge function selected {selected_merge_function}")
-
         for i in range(1, len(data)):
             logger.info(f"Merging current result with applications from item {i}...")
             current_item_sd = {"applications": data[i].get("applications", [])} 
-            final_merged_data = selected_merge_function(final_merged_data, current_item_sd)
-        logger.info(f"Final merged SD data: {json.dumps(final_merged_data, indent=2)}")    
-        helper.writeYamlToFile(sd_path, final_merged_data)
+            merged_applications = selected_merge_function(merged_applications, current_item_sd)
+        merged_result = {
+            "version": data[0].get("version"),
+            "type": data[0].get("type"),
+            "deployMode": data[0].get("deployMode"),
+            "applications": merged_applications["applications"]
+            }
+        logger.info(f"Final merged SD data: {json.dumps(merged_result, indent=2)}")    
+        helper.writeYamlToFile(sd_path, merged_result)
 
     logger.info(f"SD successfully extracted from SD_DATA and is saved in {sd_path}")
 
