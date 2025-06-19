@@ -123,7 +123,7 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
         sd_path = base_path + 'sd.yaml'
     helper.check_dir_exist_and_create(path.dirname(sd_path))
     if sd_source_type == "artifact": 
-        download_sd_with_version(env, sd_path, sd_version, sd_delta)
+        download_sd_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode)
     elif sd_source_type == "json": 
         extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode)
     else:
@@ -141,65 +141,93 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         logger.error("SD_DATA must be a non-empty list of SD dictionaries.")
         exit(1)
     
-    final_merged_data = data[0].copy()
-    final_merged_data["applications"] = data[0].get("applications", [])
-    if not final_merged_data["applications"]:
-        logger.error("No applications found in the first SD block.")
-        exit(1)
+    sd_merge_mode = str(sd_merge_mode).strip().lower() if sd_merge_mode else None
 
-    selected_merge_function = MERGE_METHODS.get(sd_merge_mode)
-    if selected_merge_function is None:
-        raise ValueError(f"Unsupported merge mode: {sd_merge_mode}")
-    logger.info(f"printing the merge function selected {selected_merge_function}")
+    sd_delta = str(sd_delta).strip().lower() if sd_delta is not None else "true"
 
-    for i in range(1, len(data)):
-        logger.info(f"Merging current result with applications from item {i}...")
-        current_item_sd = {"applications": data[i].get("applications", [])} 
-        if selected_merge_function:
-            final_merged_data = selected_merge_function(final_merged_data, current_item_sd)
-        else:
-            logger.error(f"Unknown SD merge mode: {sd_merge_mode}")
+    if sd_delta == "true" and sd_merge_mode:
+        effective_merge_mode = sd_merge_mode
+    elif sd_delta == "true":
+        effective_merge_mode = "extended-merge"
+    else:
+        effective_merge_mode = "replace"
+
+    if sd_merge_mode == "replace":
+        effective_merge_mode = "replace"
+        helper.writeYamlToFile(sd_path, data)
+    else:
+        final_merged_data = data[0].copy()
+        final_merged_data["applications"] = data[0].get("applications", [])
+        if not final_merged_data["applications"]:
+            logger.error("No applications found in the first SD block.")
             exit(1)
-    logger.info(f"Final merged SD data: {json.dumps(final_merged_data, indent=2)}")    
-    helper.writeYamlToFile(sd_path, final_merged_data)
 
-    if sd_delta == "true":
-        data = helper.openYaml(sd_path)
-        merge_sd(env, data)
+        selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
+        if selected_merge_function is None:
+            raise ValueError(f"Unsupported merge mode: {effective_merge_mode}")
+        logger.info(f"printing the merge function selected {selected_merge_function}")
+
+        for i in range(1, len(data)):
+            logger.info(f"Merging current result with applications from item {i}...")
+            current_item_sd = {"applications": data[i].get("applications", [])} 
+            final_merged_data = selected_merge_function(final_merged_data, current_item_sd)
+        logger.info(f"Final merged SD data: {json.dumps(final_merged_data, indent=2)}")    
+        helper.writeYamlToFile(sd_path, final_merged_data)
+
     logger.info(f"SD successfully extracted from SD_DATA and is saved in {sd_path}")
 
-def download_sd_with_version(env, sd_path, sd_version, sd_delta):
+def download_sd_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode):
     logger.info(f"sd_version: {sd_version}")
     if not sd_version:
-        logger.error(f"SD_SOURCE_TYPE is set to 'artifact', but SD_VERSION was not given in pipeline variables")
+        logger.error("SD_SOURCE_TYPE is set to 'artifact', but SD_VERSION was not given in pipeline variables")
         exit(1)
 
-    sd_split = sd_version.split(":")
-    source_name, version = sd_split[0], sd_split[1]
-    logger.info(f"Starting download SD {source_name}-{version}")
+    sd_entries = [line.strip() for line in sd_version.strip().splitlines() if line.strip()]
+    if not sd_entries:
+        logger.error("No valid SD versions found in SD_VERSION")
+        exit(1)
 
-    pattern = rf".*/{re.escape(source_name)}\.(ya?ml)$"
-    artifact_definitions = helper.findYamls(f'{env.base_dir}/configuration/artifact_definitions/', "", additionalRegexpPattern=pattern)
-    artifact_definition = helper.openYaml(artifact_definitions[0])
-    logger.info(f'artifact_definition = {artifact_definition}')
+    sd_data_list = []
+    for entry in sd_entries:
+        if ":" not in entry:
+            logger.error(f"Invalid SD_VERSION format: '{entry}'. Expected 'name:version'")
+            exit(1)
 
-    ansible_vars = {}
-    ansible_vars["version"] = version
-    ansible_vars["artifact_definition"] = artifact_definition
-    ansible_vars["envgen_debug"] = 'true'
-    r = ansible_runner.run(playbook='/module/ansible/download_sd_file.yaml',envvars=ansible_vars, verbosity=2)
-    if (r.rc != 0):
-        logger.error(f"Error during ansible execution. Result code is: {r.rc}. Status is: {r.status}")
-        raise ReferenceError(f"Error during ansible execution. See logs above.")
-    else:
-        logger.info(f"Ansible execution status is: {r.status}. Stats is: {r.stats}")
+        source_name, version = entry.split(":", 1)
+        logger.info(f"Starting download of SD: {source_name}-{version}")
 
-    with open("/tmp/sd.json", 'r') as f:
-        sd = json.load(f)
-    helper.writeYamlToFile(sd_path, sd)
-    if sd_delta == "true":
-        sd_data = helper.openYaml(sd_path)
-        merge_sd(env, sd_data)
+        pattern = rf".*/{re.escape(source_name)}\.(ya?ml)$"
+        artifact_definitions = helper.findYamls(
+            f'{env.base_dir}/configuration/artifact_definitions/', "", additionalRegexpPattern=pattern
+        )
+        if not artifact_definitions:
+            logger.error(f"No artifact definition found for {source_name}")
+            exit(1)
+
+        artifact_definition = helper.openYaml(artifact_definitions[0])
+        logger.info(f'Artifact definition for {source_name}: {artifact_definition}')
+
+        ansible_vars = {
+            "version": version,
+            "artifact_definition": artifact_definition,
+            "envgen_debug": "true"
+        }
+
+        r = ansible_runner.run(
+            playbook='/module/ansible/download_sd_file.yaml',
+            envvars=ansible_vars,
+            verbosity=2
+        )
+        if r.rc != 0:
+            logger.error(f"Error during ansible execution. Result code: {r.rc}. Status: {r.status}")
+            raise ReferenceError("Error during ansible execution. See logs above.")
+
+        with open("/tmp/sd.json", 'r') as f:
+            sd_json = json.load(f)
+            sd_data_list.append(sd_json)
+
+    sd_data_json = json.dumps(sd_data_list)
+    extract_sd_from_json(env, sd_path, sd_data_json, sd_delta, sd_merge_mode)
 
 def handle_env_inventory_init(env, env_inventory_init, env_template_version):
     if env_inventory_init != "true":
