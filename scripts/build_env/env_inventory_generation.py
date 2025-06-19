@@ -156,8 +156,12 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         effective_merge_mode = "replace"
         helper.writeYamlToFile(sd_path, data)
     else:
-        final_merged_data = data[0].copy()
-        final_merged_data["applications"] = data[0].get("applications", [])
+        final_merged_data = {
+            "version": data[0].get("version"),
+            "type": data[0].get("type"),
+            "deployMode": data[0].get("deployMode"),
+            "applications": data[0].get("applications", [])
+            }
         if not final_merged_data["applications"]:
             logger.error("No applications found in the first SD block.")
             exit(1)
