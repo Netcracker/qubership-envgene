@@ -19,6 +19,7 @@
       - [\[Version 2.0\] Deployment Parameter Context](#version-20-deployment-parameter-context)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `credentials.yaml`](#version-20deployment-parameter-context-credentialsyaml)
+        - [\[Version 2.0\]\[Deployment Parameter Context\] Collision Parameters](#version-20deployment-parameter-context-collision-parameters)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml)
           - [Predefined `deploy-descriptor.yaml` parameters](#predefined-deploy-descriptoryaml-parameters)
           - [\[Version 2.0\] Service Artifacts](#version-20-service-artifacts)
@@ -204,7 +205,9 @@ Path is relative to the Instance repository (i.e., it starts with `/environments
                 |   |   |       |   ├── <service-name-01>.yaml
                 |   |   |       |   └── <service-name-02>.yaml 
                 |   |   |       ├── deployment-parameters.yaml
+                |   |   |       ├── collision-deployment-parameters.yaml
                 |   |   |       ├── credentials.yaml
+                |   |   |       ├── collision-credentials.yaml
                 |   |   |       └── deploy-descriptor.yaml
                 |   |   └── <application-name-02>
                 |   |       └── values
@@ -213,7 +216,9 @@ Path is relative to the Instance repository (i.e., it starts with `/environments
                 |   |           |   ├── <service-name-01>.yaml
                 |   |           |   └── <service-name-02>.yaml 
                 |   |           ├── deployment-parameters.yaml
-                |   |           ├── credentials.yaml
+                |   |   |       ├── collision-deployment-parameters.yaml
+                |   |   |       ├── credentials.yaml
+                |   |   |       ├── collision-credentials.yaml
                 |   |           └── deploy-descriptor.yaml
                 |   └── <deployPostfix-02>
                 |       ├── <application-name-01>
@@ -223,7 +228,9 @@ Path is relative to the Instance repository (i.e., it starts with `/environments
                 |       |       |   ├── <service-name-01>.yaml
                 |       |       |   └── <service-name-02>.yaml 
                 |       |       ├── deployment-parameters.yaml
+                |       |       ├── collision-deployment-parameters.yaml
                 |       |       ├── credentials.yaml
+                |       |       ├── collision-credentials.yaml
                 |       |       └── deploy-descriptor.yaml
                 |       └── <application-name-02>
                 |           └── values
@@ -232,7 +239,9 @@ Path is relative to the Instance repository (i.e., it starts with `/environments
                 |               |   ├── <service-name-01>.yaml
                 |               |   └── <service-name-02>.yaml 
                 |               ├── deployment-parameters.yaml
+                |               ├── collision-deployment-parameters.yaml
                 |               ├── credentials.yaml
+                |               ├── collision-credentials.yaml
                 |               └── deploy-descriptor.yaml
                 └── runtime
                     ├── mapping.yml
@@ -310,6 +319,10 @@ To avoid repetition, YAML anchors (&) are used for reusability, while aliases (*
 
 The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
 
+> [!IMPORTANT]
+> Parameters whose keys match the name of one of the services must be excluded from this file
+> and placed in [`collision-deployParameters.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
+
 ##### \[Version 2.0][Deployment Parameter Context] `credentials.yaml`
 
 This file contains sensitive parameters defined in the `deployParameters` section. If the parameter is described in the Environment Template via EnvGene credential macro, that parameter will be placed in this file.  
@@ -324,6 +337,26 @@ global: &id001
 <service-name-1>: *id001
 <service-name-2>: *id001
 ```
+
+> [!IMPORTANT]
+> Parameters whose keys match the name of one of the services must be excluded from this file
+> and placed in [`collision-credentials.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
+
+##### \[Version 2.0][Deployment Parameter Context] Collision Parameters
+
+Parameters whose key matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention) are placed in the following files:
+
+- `deployment-parameters.yaml`: if the parameter is non-sensitive (i.e., not defined via a credential macro).
+- `collision-credentials.yaml`: if the parameter is sensitive (i.e., defined via a credential macro).
+
+The structure of both files is following:
+
+```yaml
+<key-1>: <value-1>
+<key-N>: <value-N>
+```
+
+These files must only contain keys that match the name of a [services](#version-20-service-inclusion-criteria-and-naming-convention)
 
 ##### \[Version 2.0][Deployment Parameter Context] `deploy-descriptor.yaml`
 
