@@ -346,7 +346,7 @@ global: &id001
 
 Parameters whose key matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention) are placed in the following files:
 
-- `deployment-parameters.yaml`: if the parameter is non-sensitive (i.e., not defined via a credential macro).
+- `collision-deployment-parameters.yaml`: if the parameter is non-sensitive (i.e., not defined via a credential macro).
 - `collision-credentials.yaml`: if the parameter is sensitive (i.e., defined via a credential macro).
 
 The structure of both files is following:
