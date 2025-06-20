@@ -29,7 +29,8 @@ public class ApplicationBomDTO {
     private String version;
     private String artifactId;
     private String groupId;
-    private String  mavenRepo;
+    private String mavenRepo;
+    private String deployerSessionId;
     private Map<String, Map<String, Object>> services;
     private Map<String, Map<String, Object>> configurations;
     private Map<String, Map<String, Object>> frontends;
