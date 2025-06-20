@@ -216,9 +216,9 @@ Path is relative to the Instance repository (i.e., it starts with `/environments
                 |   |           |   ├── <service-name-01>.yaml
                 |   |           |   └── <service-name-02>.yaml 
                 |   |           ├── deployment-parameters.yaml
-                |   |   |       ├── collision-deployment-parameters.yaml
-                |   |   |       ├── credentials.yaml
-                |   |   |       ├── collision-credentials.yaml
+                |   |           ├── collision-deployment-parameters.yaml
+                |   |           ├── credentials.yaml
+                |   |           ├── collision-credentials.yaml
                 |   |           └── deploy-descriptor.yaml
                 |   └── <deployPostfix-02>
                 |       ├── <application-name-01>
