@@ -1,6 +1,6 @@
 #######################################
 # Stage 1 
-FROM ghcr.io/netcracker/base-images-module-base:main AS build
+FROM ghcr.io/netcracker/base-images-module-base:feature-increase-python AS build
 
 USER root
 
