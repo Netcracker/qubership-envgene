@@ -412,6 +412,7 @@ Common Predefined Parameters:
 |---|---|---|---|---|---|
 | `APPLICATION_NAME` | yes | string | Name of the application | None | `.metadata.component.name` |
 | `DEPLOYMENT_SESSION_ID` | yes | string | Effective Set calculation operation ID  | None | Taken from input parameter  `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM) |
+| `MANAGED_BY` | yes | string | Deployer type. Always `argocd` | `argocd` | None |
 
 **Image Type** Service Predefined Parameters:
 
