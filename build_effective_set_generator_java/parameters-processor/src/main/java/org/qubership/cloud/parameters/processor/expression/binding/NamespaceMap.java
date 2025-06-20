@@ -101,11 +101,11 @@ public class NamespaceMap extends DynamicMap {
                     if ( binding.getDeployerInputs().getSecretId() != null) {
                         setSecretValues(map, credentialUtils);
                     }
-                    if (binding.getDeployerInputs().getDeploySessionId() != null) {
-                        map.put("DEPLOYMENT_SESSION_ID",binding.getDeployerInputs().getDeploySessionId());
-                    } else {
-                        map.put("DEPLOYMENT_SESSION_ID", UUID.randomUUID().toString());
-                    }
+//                    if (binding.getDeployerInputs().getDeploySessionId() != null) {
+//                        map.put("DEPLOYMENT_SESSION_ID",binding.getDeployerInputs().getDeploySessionId());
+//                    } else {
+//                        map.put("DEPLOYMENT_SESSION_ID", UUID.randomUUID().toString());
+//                    }
                 }
             }
 

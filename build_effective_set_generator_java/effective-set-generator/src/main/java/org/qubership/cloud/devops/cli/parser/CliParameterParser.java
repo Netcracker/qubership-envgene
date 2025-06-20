@@ -20,6 +20,7 @@ package org.qubership.cloud.devops.cli.parser;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.qubership.cloud.devops.cli.exceptions.DirectoryCreateException;
 import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
@@ -210,6 +211,15 @@ public class CliParameterParser {
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), perServiceDir, "deployment-parameters.yaml");
+            if (MapUtils.isNotEmpty(parameterBundle.getPerServiceParams())) {
+                parameterBundle.getPerServiceParams().entrySet().stream().forEach(entry -> {
+                    try {
+                        fileDataConverter.writeToFile((Map<String, Object>) entry.getValue(), perServiceDir, entry.getKey() + ".yaml");
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to write per service parameters of service " + entry.getKey());
+                    }
+                });
+            }
             fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), deploymentDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getDeployDescParams(), deploymentDir, "deploy-descriptor.yaml");
 
