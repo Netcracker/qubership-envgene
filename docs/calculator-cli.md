@@ -393,7 +393,7 @@ Common Predefined Parameters:
 | `full_image_name` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=full_image_name].value` |
 | `git_branch` | yes | string | Source code branch name used for service build | None | `.components[?name=<service-name>].properties[?name=git_branch].value` |
 | `git_revision` | yes | string | Git revision of the repository used for the build | None | `.components[?name=<service-name>].properties[?name=git_revision].value` |
-| `git_url` | yes | string | None | None | `.components[?name=<service-name>].components[].properties[?name=git_url].value` |
+| `git_url` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=git_url].value` |
 | `image` | yes | string | The same as `full_image_name` | None | `.components[?name=<service-name>].properties[?name=full_image_name].value` |
 | `image_name` | yes | string | Docker image name | None | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].name` |
 | `image_type` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=image_type].value` |
