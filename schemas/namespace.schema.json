@@ -1,45 +1,176 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$schema": "http://json-schema.org/draft-07/schema#",
     "type": "object",
-    
+    "title": "Namespace Object",
+    "description": "Defines namespace level parameters",
+    "additionalProperties": true,
     "properties": {
-        "name" : { "type": "string" },
-        "credentialsId": { "type": "string" },
-        "version" : { "type": "number" },
-        "isServerSideMerge": { "type": "boolean" },
-        "labels": {
-            "type" :"array",
-            "items": { "type": "string" }
+      "name": {
+        "type": "string",
+        "title": "Name of the Namespace",
+        "description": "Field is used to uniquely identify the Namespace for the Environment",
+        "examples": [
+          "{{current_env.environmentName}}-main",
+          "main"
+        ]
+      },
+      "credentialsId": {
+        "type": "string",
+        "title": "Credentials ID",
+        "description": "The identifier for credentials used by the deployment",
+        "examples": [
+          "main-creds"
+        ]
+      },
+      "version": {
+        "type": "number",
+        "title": "Version Number",
+        "description": "The version number of the namespace configuration",
+        "examples": [
+          1,
+          2
+        ]
+      },
+      "isServerSideMerge": {
+        "type": "boolean",
+        "title": "Server-Side Merge of Parameters",
+        "description": "Enables server-side merge of parameters",
+        "examples": [
+          true,
+          false
+        ]
+      },
+      "labels": {
+        "type": "array",
+        "title": "List of Labels for Namespace",
+        "description": "A list of labels that should be applied to the Namespace in K8s",
+        "items": {
+          "type": "string"
         },
-        "cleanInstallApprovalRequired": { "type": "boolean" },
-        "mergeDeployParametersAndE2EParameters": { "type": "boolean" },
-        "profile": {
-            "type": ["object", "null"],
-            "properties": {
-                "name": { "type": ["string", "null"] },
-                "baseline" : { "type": "string" }
-            }
-        },
-        "deployParameters" : { "type": "object" },
-        "e2eParameters" : { "type": "object" },
-        "technicalConfigurationParameters" : { "type": "object" },   
-        "deployParameterSets": {
-            "type" :"array",
-            "items": { "type": "string" }
-        },
-        "e2eParameterSets": {
-            "type" :"array",
-            "items": { "type": "string" }
-        },
-        "technicalConfigurationParameterSets": {
-            "type" :"array",
-            "items": { "type": "string" }
+        "examples": [
+          [
+            "qubership",
+            "solution"
+          ]
+        ]
+      },
+      "cleanInstallApprovalRequired": {
+        "type": "boolean",
+        "title": "Clean Install Approval Required",
+        "description": "Is approval of clean install required for this namespace",
+        "examples": [
+          true,
+          false
+        ]
+      },
+      "mergeDeployParametersAndE2EParameters": {
+        "type": "boolean",
+        "title": "Merge of deployment and e2e parameters",
+        "description": "Should deployment parameters be merged with e2e parameters",
+        "examples": [
+          true,
+          false
+        ]
+      },
+      "profile": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "title": "Resource profile override",
+        "description": "Resource profile override for namespace. Can be not set",
+        "properties": {
+          "name": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "title": "Name of Resource Profile Override",
+            "description": "<<filename>> of Resource profile override",
+            "examples": [
+              "dev_override"
+            ]
+          },
+          "baseline": {
+            "title": "Baseline of RPO",
+            "description": "Baseline name of Resource profile override",
+            "enum": [
+              "dev",
+              "qa",
+              "prod"
+            ],
+            "examples": [
+              "dev",
+              "qa",
+              "prod"
+            ]
+          }
         }
+      },
+      "deployParameters": {
+        "type": "object",
+        "title": "Deploment parameters",
+        "description": "Section with Deployment parameters for Namespace's applications",
+        "examples": [
+          {
+            "CORE_NAMESPACE": "env1-core"
+          }
+        ]
+      },
+      "e2eParameters": {
+        "type": "object",
+        "title": "e2e parameters",
+        "description": "Section with e2e parameters for Namespace that should be used in e2e pipeline",
+        "examples": [
+          {}
+        ]
+      },
+      "technicalConfigurationParameters": {
+        "type": "object",
+        "title": "Technical (Admin) parameters",
+        "description": "Section with Technical/Admin parameters for Namespace's application",
+        "examples": [
+          {
+            "CORE_NAMESPACE": "env1-core"
+          }
+        ]
+      },
+      "deployParameterSets": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "title": "List of deployment parameter sets",
+        "description": "Section with list of Deployment parameter sets <<filename>> for Namespace's applications",
+        "examples": [
+          "common",
+          "internal"
+        ]
+      },
+      "e2eParameterSets": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "title": "List of e2e parameter sets",
+        "description": "Section with list of e2e parameter sets <<filename>> for Namespace that should be used in e2e pipeline"
+      },
+      "technicalConfigurationParameterSets": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "title": "List of technical (Admin) parameter sets",
+        "description": "Section with list of Technical/Admin parameter sets <<filename>> for Namespace's applications",
+        "examples": [
+          "internal-tech"
+        ]
+      }
     },
-    "required": [  
-        "name",
-        "isServerSideMerge",
-        "cleanInstallApprovalRequired",
-        "mergeDeployParametersAndE2EParameters"
+    "required": [
+      "name",
+      "isServerSideMerge",
+      "cleanInstallApprovalRequired",
+      "mergeDeployParametersAndE2EParameters"
     ]
-}
+  }
