@@ -102,6 +102,7 @@ public class BomReaderUtilsImplV2 {
     private void populateEntityDeployDescParams(EntitiesMap entitiesMap, List<Component> components, Bom bomContent) {
         Map<String, Object> commonParamsMap = new TreeMap<>();
         commonParamsMap.put("APPLICATION_NAME", bomContent.getMetadata().getComponent().getName());
+        commonParamsMap.put("MANAGED_BY", "argocd");
         if (StringUtils.isNotEmpty(sharedData.getExtraParams())) {
             commonParamsMap.put("DEPLOYMENT_SESSION_ID", sharedData.getExtraParams());
             entitiesMap.setDeployerSessionId(sharedData.getExtraParams());
