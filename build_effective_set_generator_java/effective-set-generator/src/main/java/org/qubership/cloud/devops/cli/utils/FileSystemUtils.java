@@ -65,6 +65,8 @@ public class FileSystemUtils {
         file.mkdir();
         Path pipelinePath = getFileFromGivenPath(data.getOutputDir(), "pipeline").toPath();
         Files.createDirectories(pipelinePath);
+        Path topologyPath = getFileFromGivenPath(data.getOutputDir(), "topology").toPath();
+        Files.createDirectories(topologyPath);
         applicationDTOList
                 .forEach(app->{
                     try {

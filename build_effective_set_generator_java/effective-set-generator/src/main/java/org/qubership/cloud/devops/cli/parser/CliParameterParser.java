@@ -39,10 +39,7 @@ import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationService;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.APP_PARSE_ERROR;
@@ -131,11 +128,21 @@ public class CliParameterParser {
         if (parameterBundle.getSecuredE2eParams() == null) {
             parameterBundle.setSecuredE2eParams(new HashMap<>());
         }
-        parameterBundle.getE2eParams().put("composite_structure", inputData.getCompositeStructureMap());
-        parameterBundle.getE2eParams().put("environments", inputData.getClusterMap());
-        parameterBundle.getSecuredE2eParams().put("k8s_tokens", k8TokenMap);
+        createTopologyFiles(parameterBundle, inputData, k8TokenMap);
         createE2EFiles(parameterBundle);
         createConsumerFiles(parameterBundle);
+    }
+
+    private void createTopologyFiles(ParameterBundle parameterBundle, InputData inputData, Map<String, String> k8TokenMap) throws IOException {
+        Map<String, Object> topologyParams = new TreeMap<>();
+        Map<String, Object> topologySecuredParams = new TreeMap<>();
+        topologyParams.put("composite_structure", inputData.getCompositeStructureMap());
+        topologyParams.put("environments", inputData.getClusterMap());
+        topologySecuredParams.put("k8s_tokens", k8TokenMap);
+        String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
+        fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
+        fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
+
     }
 
     private void createConsumerFiles(ParameterBundle parameterBundle) {
