@@ -10,20 +10,20 @@
     create: yes
   when: is_old_format
 
-# - name: Generate Cloud yaml for cloud {{ _cloud }} using cloud.template_path value
-#   ansible.builtin.blockinfile:
-#     path: "{{ current_env_dir }}/cloud.yml"
-#     block: "{{ lookup('template', _template.template_path) }}"
-#     create: yes
-#   when: not is_old_format
+- name: Generate Cloud yaml for cloud {{ _cloud }} using cloud.template_path value
+  ansible.builtin.blockinfile:
+    path: "{{ current_env_dir }}/cloud.yml"
+    block: "{{ lookup('template', _template.template_path) }}"
+    create: yes
+  when: not is_old_format
 
-# - name: Generate override Cloud yaml for {{ _cloud }}
-#   ansible.builtin.blockinfile:
-#     path: "{{ _current_env_dir }}/cloud.yml_override"
-#     block: "{{ _template.template_override | to_nice_yaml }}"
-#     create: yes
-#   when: 
-#     - _template.template_override is defined 
-#     - _template.template_override != ''
-#     - not is_old_format
+- name: Generate override Cloud yaml for {{ _cloud }}
+  ansible.builtin.blockinfile:
+    path: "{{ _current_env_dir }}/cloud.yml_override"
+    block: "{{ _template.template_override | to_nice_yaml }}"
+    create: yes
+  when: 
+    - _template.template_override is defined 
+    - _template.template_override != ''
+    - not is_old_format
 
