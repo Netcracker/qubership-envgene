@@ -8,8 +8,8 @@
     path: "{{ _current_env_dir }}/Profiles"
     state: directory
 
-- name: Generate Envs Namespace yaml {{ _profile_template_name }} for {{ profile.name }} 
-  ansible.builtin.blockinfile:
-    path: "{{ _current_env_dir }}/Profiles/{{ _profile_template_name }}.yml"
-    block: "{{ lookup('template', profile.template_path) }}"
-    create: yes
+# - name: Generate Envs Namespace yaml {{ _profile_template_name }} for {{ profile.name }} 
+#   ansible.builtin.blockinfile:
+#     path: "{{ _current_env_dir }}/Profiles/{{ _profile_template_name }}.yml"
+#     block: "{{ lookup('template', profile.template_path) }}"
+#     create: yes
