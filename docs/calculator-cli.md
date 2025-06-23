@@ -165,15 +165,28 @@ To avoid repetition, YAML anchors (&) are used for reusability, while aliases (*
 
 #### [Version 1.0] mapping.yml
 
-This file defines a mapping between Namespaces and their corresponding folder paths. This mapping is necessary because the Effective Set consumer requires knowledge of the specific Namespace names. However, the Effective Set is stored in the repository in a structure optimized for comparing Effective Sets across Environments.
+This file defines a mapping between Namespace's names and their corresponding folder paths in Effective Set file-structure.
 
-Namespace name is taken from the `name` attribute of Namespace
-Path is relative to the Instance repository (i.e., it starts with `/environments`)
+This mapping is necessary because the Effective Set consumer requires knowledge of the specific Namespace's names. However, the Effective Set is stored in the repository in a structure optimized for comparing Effective Sets across Environments.
 
 ```yaml
 ---
-<namespace-name-01>: <path-to-deployPostfix-folder-01>
-<namespace-name-02>: <path-to-deployPostfix-folder-02>
+<namespace-name-01>: <path-to-deployPostfix-01-folder-in-effective-set-file-structure>
+<namespace-name-02>: <path-to-deployPostfix-02-folder-in-effective-set-file-structure>
+```
+
+Namespace name is taken from the `name` attribute of Namespace
+
+Path is relative to the Instance repository (i.e., it starts with `/environments`)
+
+For example:
+
+```yaml
+---
+env-01-redis: /environments/cluster-01/env-01/effective-set/deployment/redis/
+env-01-postgresql: /environments/cluster-01/env-01/effective-set/deployment/postgresql
+env-01-platform-monitoring: /environments/cluster-01/env-01/effective-set/deployment/platform-monitoring
+env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zookeeper
 ```
 
 ### Effective Set v2.0
