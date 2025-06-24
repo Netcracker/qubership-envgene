@@ -14,6 +14,7 @@
       - [\[Version 1.0\] mapping.yml](#version-10-mappingyml)
     - [Effective Set v2.0](#effective-set-v20)
       - [\[Version 2.0\] Effective Set Structure](#version-20-effective-set-structure)
+      - [\[Version 2.0\] Parameter type conversion](#version-20-parameter-type-conversion)
       - [\[Version 2.0\] Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention)
       - [\[Version 2.0\] Handling Missing Attributes in SBOM](#version-20-handling-missing-attributes-in-sbom)
       - [\[Version 2.0\] Deployment Parameter Context](#version-20-deployment-parameter-context)
@@ -274,6 +275,16 @@ env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zooke
                             ├── parameters.yaml
                             └── credentials.yaml                            
 ```
+
+#### [Version 2.0] Parameter type conversion
+
+The Calculator CLI maintains strict type fidelity for all parameters during Effective Set generation
+All parameters must retain their original types (string, boolean, integer) exactly as defined in:
+
+- Environment Instance
+- Application SBOM
+
+**Absolutely no implicit type conversions are permitted** (e.g., string "42" → integer 42)
 
 #### [Version 2.0] Service Inclusion Criteria and Naming Convention
 
