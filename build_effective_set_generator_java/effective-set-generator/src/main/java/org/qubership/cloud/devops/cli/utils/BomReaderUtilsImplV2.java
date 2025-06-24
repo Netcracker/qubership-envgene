@@ -104,11 +104,11 @@ public class BomReaderUtilsImplV2 {
         commonParamsMap.put("APPLICATION_NAME", bomContent.getMetadata().getComponent().getName());
         commonParamsMap.put("MANAGED_BY", "argocd");
         if (StringUtils.isNotEmpty(sharedData.getExtraParams())) {
-            commonParamsMap.put("DEPLOYMENT-SESSION-ID", sharedData.getExtraParams());
+            commonParamsMap.put("DEPLOYMENT_SESSION_ID", sharedData.getExtraParams());
             entitiesMap.setDeployerSessionId(sharedData.getExtraParams());
         } else {
             String deployerSessionId = UUID.randomUUID().toString();
-            commonParamsMap.put("DEPLOYMENT-SESSION-ID", deployerSessionId);
+            commonParamsMap.put("DEPLOYMENT_SESSION_ID", deployerSessionId);
             entitiesMap.setDeployerSessionId(deployerSessionId);
         }
         for (Component component : components) {

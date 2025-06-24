@@ -85,7 +85,7 @@ public class NamespaceApplicationMap extends DynamicMap {
             map.put("ARTIFACT_DESCRIPTOR_GROUP_ID", applicationBomDto.getGroupId());
             map.put("ARTIFACT_DESCRIPTOR_VERSION", applicationBomDto.getVersion());
             map.put("ARTIFACT_DESCRIPTOR_MAVEN_REPO",applicationBomDto.getMavenRepo());
-            map.put("DEPLOYMENT-SESSION-ID", applicationBomDto.getDeployerSessionId());
+            map.put("DEPLOYMENT_SESSION_ID", applicationBomDto.getDeployerSessionId());
             map.put(SERVICES, applicationBomDto.getServices());
             map.put(CONFIGURATIONS, applicationBomDto.getConfigurations());
             map.put(FRONTENDS, applicationBomDto.getFrontends());
