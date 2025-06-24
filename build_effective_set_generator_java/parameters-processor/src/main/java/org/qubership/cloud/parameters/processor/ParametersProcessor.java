@@ -42,9 +42,9 @@ public class ParametersProcessor implements Serializable {
         this.openTelemetryProvider = openTelemetryProvider;
     }
 
-    public Params processAllParameters(String tenant, String cloud, String namespace, String application, String defaultEscapeSequence, DeployerInputs deployerInputs) {
+    public Params processAllParameters(String tenant, String cloud, String namespace, String application, String defaultEscapeSequence, DeployerInputs deployerInputs, String originalNamespace) {
         return openTelemetryProvider.withSpan("process", () -> {
-            Binding binding = new Binding(defaultEscapeSequence, deployerInputs).init(tenant, cloud, namespace, application);
+            Binding binding = new Binding(defaultEscapeSequence, deployerInputs).init(tenant, cloud, namespace, application, originalNamespace);
             Language lang;
             if (binding.getProcessorType().equals("true")) {
                 lang = new ExpressionLanguage(binding);
@@ -59,9 +59,9 @@ public class ParametersProcessor implements Serializable {
         });
     }
 
-    public Params processE2EParameters(String tenant, String cloud, String namespace, String application, String defaultEscapeSequence, DeployerInputs deployerInputs) {
+    public Params processE2EParameters(String tenant, String cloud, String namespace, String application, String defaultEscapeSequence, DeployerInputs deployerInputs, String originalNamespace) {
         return openTelemetryProvider.withSpan("process", () -> {
-            Binding binding = new Binding(defaultEscapeSequence, deployerInputs).init(tenant, cloud, namespace, application);
+            Binding binding = new Binding(defaultEscapeSequence, deployerInputs).init(tenant, cloud, namespace, application, originalNamespace);
             Language lang;
             if (binding.getProcessorType().equals("true")) {
                 lang = new ExpressionLanguage(binding);

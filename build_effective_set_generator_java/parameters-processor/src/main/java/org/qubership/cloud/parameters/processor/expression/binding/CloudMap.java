@@ -44,12 +44,15 @@ public class CloudMap extends DynamicMap {
     private String defaultApp;
     private String defaultNamespace;
     private boolean mergeE2E;
+    private String originalNamespace;
 
-    public CloudMap(String tenant, String defaultCloud, String defaultNamespace, String defaultApp, Binding binding) {
+    public CloudMap(String tenant, String defaultCloud, String defaultNamespace, String defaultApp,
+                    Binding binding, String originalNamespace) {
         super(defaultCloud, binding);
         this.tenant = tenant;
         this.defaultNamespace = defaultNamespace;
         this.defaultApp = defaultApp;
+        this.originalNamespace = originalNamespace;
     }
 
     public boolean isMergeE2E() {
@@ -174,7 +177,7 @@ public class CloudMap extends DynamicMap {
         }
 
         map.put("PRODUCTION_MODE", Boolean.toString(config.isProductionMode()));
-        map.put("namespace", new Parameter(new NamespaceMap(tenant, cloudName, defaultNamespace, defaultApp, binding).init()));
+        map.put("namespace", new Parameter(new NamespaceMap(tenant, cloudName, defaultNamespace, defaultApp, binding, originalNamespace).init()));
         map.put("CLOUDNAME", cloudName);
         map.put("e2e", new Parameter(e2e));
         map.put("config-server", new Parameter(configServer));

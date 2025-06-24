@@ -28,12 +28,15 @@ public class TenantMap extends DynamicMap {
     private String defaultNamespace;
     private String defaultApp;
     private boolean mergeE2E;
+    private String originalNamespace;
 
-    public TenantMap(String defaultTenant, String defaultCloud, String defaultNamespace, String defaultApp, Binding binding) {
+    public TenantMap(String defaultTenant, String defaultCloud, String defaultNamespace, String defaultApp,
+                     Binding binding, String originalNamespace) {
         super(defaultTenant, binding);
         this.defaultCloud = defaultCloud;
         this.defaultNamespace = defaultNamespace;
         this.defaultApp = defaultApp;
+        this.originalNamespace = originalNamespace;
     }
 
     public boolean isMergeE2E() {
@@ -65,7 +68,7 @@ public class TenantMap extends DynamicMap {
             checkEscape(e2e);
             checkEscape(configServer);
 
-            map.put("cloud", new Parameter(new CloudMap(tenantName, defaultCloud, defaultNamespace, defaultApp, binding).init()));
+            map.put("cloud", new Parameter(new CloudMap(tenantName, defaultCloud, defaultNamespace, defaultApp, binding, originalNamespace).init()));
             map.put("e2e", new Parameter(e2e));
             map.put("TENANTNAME", tenantName);
             map.put("config-server", configServer);
