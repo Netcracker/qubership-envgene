@@ -1,310 +1,288 @@
-#  Credential Files Encryption Using git commit hook Test Cases
+# Credential Files Encryption Using Git Commit Hook — Test Cases
 
 - [ Credentials File Encryption Test Cases](#credentials-file-encryption-test-cases)
-  - [TC-004-001: Common Scenario Encryption Enable/Disable](#tc-004-001-common-scenario-encryption-enabledisable)
-  - [TC-004-002: Secret Key Mandatory for Fernet](#tc-004-002-secret-key-mandatory-for-fernet)
-  - [TC-004-003: Successful Encryption Using Fernet](#tc-004-003-successful-encryption-using-fernet)
-  - [TC-004-004: Skip Encryption if File Already Encrypted Using Fernet](#tc-004-004-skip-encryption-if-file-already-encrypted-using-fernet)
-  - [TC-004-005: age_key Mandatory for SOPS](#tc-004-005-age_key-mandatory-for-sops)
-  - [TC-004-006: Successful Encryption Using SOPS](#tc-004-006-successful-encryption-using-sops)
-  - [TC-004-007: Skip Encryption if File Already Encrypted Using SOPS](#tc-004-007-skip-encryption-if-file-already-encrypted-using-sops)
-
+  - [TC-004-001: Encryption Enabled with Supported Fields](#tc-004-001-encryption-enabled-with-supported-fields)
+  - [TC-004-002: Encryption Skipped When Disabled](#tc-004-002-encryption-skipped-when-disabled)
+  - [TC-004-003: Secret Key Mandatory for Fernet](#tc-004-003-secret-key-mandatory-for-fernet)
+  - [TC-004-004: Successful Encryption Using Fernet](#tc-004-004-successful-encryption-using-fernet)
+  - [TC-004-005: Skip Encryption if File Already Encrypted Using Fernet](#tc-004-005-skip-encryption-if-file-already-encrypted-using-fernet)
+  - [TC-004-006: age_key Mandatory for SOPS](#tc-004-006-age_key-mandatory-for-sops)
+  - [TC-004-007: Successful Encryption Using SOPS](#tc-004-007-successful-encryption-using-sops)
+  - [TC-004-008: Skip Encryption if File Already Encrypted Using SOPS](#tc-004-008-skip-encryption-if-file-already-encrypted-using-sops)
 
 ## Overview
-This document defines test cases to validate the encryption behavior for configurations using SOPS and Fernet as encryption backends using git pre-commit.
 
-  ### How it's work
+This document defines test cases to validate credential file encryption behavior using `Fernet` and `SOPS` backends, enforced via Git pre-commit hooks.
 
-* Credential files (/*/credential.yml) automatically encrypted while commit the code with help of pre-commit script available in .git/hook folder
+###  How it works
 
-* Encryption behavior is controlled by two parameters:
-     
-- `crypt_backend`: Defines the backend used (`Fernet` or `SOPS`)  
-- `crypt`: Enables (`true`) or disables (`false`) encryption
+Credential files are automatically encrypted during Git commits using a pre-commit script located in `.git/hooks`.
 
-    `/configuration/config.yaml`:
+Credential files are considered valid for encryption if they match **one of the following path patterns**:
+- `./*/credentials/*.y*ml`
+- `./*/app-deployer/*creds*.y*ml`
+- `./*/cloud-passport/*creds*.y*ml`
+
+Encryption behavior is governed by:
+
+- `crypt_backend`: Specifies the backend (`Fernet` or `SOPS`)
+- `crypt`: Boolean flag to enable/disable encryption
+
+Example (`/configuration/config.yaml`):
 
 ```yaml
-# Enable encryption
 crypt: true
-crypt_backend: SOPS or Fernet
+crypt_backend: Fernet  # or SOPS
+```
 
-# Disable encryption
-crypt: false
- ```
-* secret_key is require for Fernet and age_key is require for SOPS encryption         
-* Corresponding secret_key or age_key should be available in .git folder in local.           
+**Note:**
 
-## TC-004-001: Common Scenario Encryption Enable/Disable
-- **Description:** Verify that encryption only occurs if the `crypt` flag is `true`.
-- **Test Steps:**
-  1. Set `crypt` to `true`.
-  2. commit the code.
-  3. Validate that the data is encrypted available in **credentials**.yml file.
-  4. Set `crypt` to `false`.
-  5. commit the code.
-  6. Validate that the data remains unencrypted.
-- **Expected Result:**
-  - Data is encrypted only when `crypt` is `true`.
-  - When `crypt` is `false`, encryption does not occur and the data remains in plaintext.
+- `secret_key` is required for **Fernet**
+- `age_public_key` is required for **SOPS**
+- Corresponding keys must be available in the local `.git` directory
 
 ---
 
-## TC-004-002: Secret Key Mandatory for Fernet
+## TC-004-001: Encryption Enabled with Supported Fields
 
-- **Description:** Verify that `secret_key` must be provided if `crypt_backend` is set to `fernet`.
+**Status:** Active
 
-- **Test Steps:**
-  1. Set `crypt_backend` to `fernet`.
-  2. Do **not** provide `secret_key`.
-  3. Attempt to initialize encryption.
-- **Expected Result:**
-  - Initialization fails with a validation error when `secret_key` is missing.
+**Description:** Verify that when `crypt: true` in the configuration, only supported credential attributes (`username`, `password`, `secret`) as per [Credential Object Specification](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#credential) are encrypted using the selected backend (`Fernet` or `SOPS`).
 
-  ### input
+**Test Data:**
 
-```yaml
-app-deployer-username-cred:
-  type: secret
-  data:
-    secret: "admin"
-app-deployer-token-cred:
-  type: secret
-  data:
-    secret: "admin@1213"
-```
+- configuration/config.yaml
+- configuration/credentials/credentials.yml
 
-  ### result
+**Pre-requisites:**
 
-```bash
-    ❌ ERROR: SECRET_KEY is required for Fernet encryption in ./configuration/credentials/credentials.yml
-```
----
+1. Git pre-commit hook is installed
+2. `crypt: true` in config.yaml
+3. Valid credential file with supported fields
+4. Appropriate encryption key available in `.git` directory (i.e., `secret_key.txt` for Fernet or `age_public_key.txt` for SOPS)
 
-## TC-004-003: Successful Encryption Using Fernet
+**Steps:**
 
-- **Description:** Verify that `secret_key` must be provided if `crypt_backend` is set to `fernet`.
+- Ensure `crypt_backend` is correctly configured
+- Modify the credential file  
+- Run `git commit`
 
-- **Test Steps:**
-  1. Set `crypt_backend` to `fernet`.
-  2. add valid `secret_key` file in .git.
-  3. Attempt to initialize encryption.
+**Expected Results:**
 
-- **Expected Result:**
-  - Encryption succeeds when a valid `secret_key` is provided.
-
-### input
-
-```yaml
-app-deployer-username-cred:
-  type: secret
-  data:
-    secret: "admin"
-app-deployer-token-cred:
-  type: secret
-  data:
-    secret: "admin@1213"
-```
-
- ### result
-
- ```yaml
-app-deployer-token-cred:
-  type: secret
-  data:
-    secret: "[encrypted:AES256_Fernet]gAAAAABoRn9kOvOONegZrv6NhjE1uCIQvnoY3LfHQRD2fVNvU8a8mGedQgSkX8qR5oZZ6jGtxNamXEwPtMcDK2P8GMEMRLmxNg=="
-app-deployer-username-cred:
-  type: secret
-  data:
-    secret: "[encrypted:AES256_Fernet]gAAAAABoRn9kNlLWB-vAQTUX52g8mcPlIyBCLWEGnHv-KiM0vj7rXvONficSXyHTMhQZTidlM97eyZNNuaEsDWM-_1ZVPct5lw=="
-```
+- Supported fields are encrypted
+- File remains valid YAML
+- Non-sensitive fields are not modified
 
 ---
 
-## TC-004-004: Skip Encryption if File Already Encrypted Using Fernet
-- **Description:** Verify that if the input file is already encrypted, encryption is skipped with a warning.
-- **Test Steps:**
-  1. Provide an already encrypted file.
-  2. Attempt to encrypt using Fernet backend.
-  3. Check for warning log/message indicating the data is already encrypted
-  4. Confirm the encryption step is skipped.
-- **Expected Result:**
-  - System logs a warning: "File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key.."
-  - No re-encryption happens.
+## TC-004-002: Encryption Skipped When Disabled
 
-  input file:
+**Status:** Active
 
-```yml
-app-deployer-token-cred:
-  type: secret
-  data:
-    secret: "[encrypted:AES256_Fernet]gAAAAABoRn9kOvOONegZrv6NhjE1uCIQvnoY3LfHQRD2fVNvU8a8mGedQgSkX8qR5oZZ6jGtxNamXEwPtMcDK2P8GMEMRLmxNg=="
-app-deployer-username-cred:
-  type: secret
-  data:
-    secret: "[encrypted:AES256_Fernet]gAAAAABoRn9kNlLWB-vAQTUX52g8mcPlIyBCLWEGnHv-KiM0vj7rXvONficSXyHTMhQZTidlM97eyZNNuaEsDWM-_1ZVPct5lw=="
-```
+**Description:** Verify that when `crypt: false`, encryption is not performed and all fields remain in plaintext.
 
+**Test Data:**
 
-  result:
+- configuration/config.yaml
+- configuration/credentials/credentials.yml
 
-  ```bash
-  Skipping ./configuration/credentials/credentials.yml — already encrypted with Fernet
-  Warning: File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key
-  ```
+**Pre-requisites:**
 
----
-## TC-004-005: age_key Mandatory for SOPS
+1. Git pre-commit hook is installed
+2. `crypt: false` in config.yaml
+3. Valid credential file with plaintext values
 
-- **Description:** Verify that `ENVGENE_AGE_PUBLIC_KEY` & `SOPS_AGE_KEY_FILE` must be provided if `crypt_backend` is set to `SOPS`.
+**Steps:**
 
-- **Test Steps:**
-  1. Set `crypt_backend` to `SOPS`.
-  2. Do **not** provide age_public_key.txt & private-age-key.txt.
-  3. Attempt to initialize encryption.
-- **Expected Result:**
-  - Initialization fails with a validation error file is missing.
+- Set `crypt: false` in config.yaml
+- Modify the credential file  
+- Run `git commit`
 
-  ### input
+**Expected Results:**
 
-```yaml
-app-deployer-username-cred:
-  type: secret
-  data:
-    secret: "admin"
-app-deployer-token-cred:
-  type: secret
-  data:
-    secret: "admin@1213"
-```
-
-  ### result
-
-```bash
-    ❌ ERROR: ENVGENE_AGE_PUBLIC_KEY is required for SOPS encryption in ./configuration/credentials/credentials.yml
-```
-
-```bash
-    ❌ ERROR: SOPS_AGE_KEY_FILE is required for SOPS encryption in ./configuration/credentials/credentials.yml
-```
----
-
-## TC-004-006: Successful Encryption Using SOPS
-
-- **Description:** Verify that `secret_key` must be provided if `crypt_backend` is set to `SOPS`.
-
-- **Test Steps:**
-  1. Set `crypt_backend` to `SOPS`.
-  2. add valid age key files in .git.
-  3. Attempt to initialize encryption.
-
-- **Expected Result:**
-  - Encryption succeeds when a valid keys are provided.
-
-### input
-
-```yaml
-app-deployer-username-cred:
-  type: secret
-  data:
-    secret: "admin"
-app-deployer-token-cred:
-  type: secret
-  data:
-    secret: "admin@1213"
-```
-
- ### result
-
- ```bash
-  INFO: ./configuration/credentials/credentials.yml was encrypted with SOPS.
-✅ Create a new commit with encrypted cred files
- ```
- ### encrypted file
-
- ```yaml
-app-deployer-username-cred:
-  type: secret
-  data:
-    secret: ENC[AES256_GCM,data:kZgBvEY=,iv:w25FTRVIrsLQiD+aPmFfy4sdxYframsFFRZVVcu4aN0=,tag:2r8PwW7xQBrF9w1EOcheoQ==,type:str]
-app-deployer-token-cred:
-  type: secret
-  data:
-    secret: ENC[AES256_GCM,data:11Rc3Uq1/8JzPg==,iv:T4zZliQmnvGHQ+t1dk9TlmSdvYDbrK58cmsNYdW0+JY=,tag:CrRZHCqrXkUz7iGre6NO3g==,type:str]
-sops:
-  kms: []
-  gcp_kms: []
-  azure_kv: []
-  hc_vault: []
-  age:
-    - recipient: age1dgtrrrz4jhgzqxqex38myjgawuyaw0vrwla5l7s0mpnnyjlwhpwqmfsf5c
-      enc: |
-        -----BEGIN AGE ENCRYPTED FILE-----
-        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBCQmlSVi9SZEZSU2xrVldo
-        WHF1U3FoaTBWR0M4MmpOVVh6SjU3LzM2dmdBCnF2RzVWNGdLL3VxakVOL0pmM212
-        a3lFWDduVmlUcFI4VnhSZkg2OXhna1EKLS0tIG4yTHZPTmwvR2xpdXk3a1RDQk9E
-        WDU2TVROWlhuckJCSmo1Q3E1QlA4UEUKRTeIw5mFT+0g+/6n8hLOmZA1DNCxMwBz
-        aOSMU8kjVLwu4a17h7kQCts3l+y+WspIqkHQkVpgLFscLoODw8kaew==
-        -----END AGE ENCRYPTED FILE-----
-  lastmodified: "2025-06-09T08:09:37Z"
-  mac: ENC[AES256_GCM,data:+gCPXkOc6uWUcQy3cT0jOHeEa6HxYTopLzcGoeSUVtQg+qoxd317jSayXh/y7CTspJeVArO8ZvxSCkC4Ie5rCoo4t7v8BH1UtaVrX1S3DrtDkyq3q4p3f4NCFZggPdGjgFc/fygmCQ7AzSuBDsbR2jciw6ZWoj48eulE2yE453k=,iv:0r9LK3cnN0jAiB2s/SF0kNTDCQYSKda4ZzoSPgocXxU=,tag:UHLbTYR9sLI0F23oJy5KvQ==,type:str]
-  pgp: []
-  unencrypted_regex: ^type$
-  version: 3.8.1
-
-```
+- No fields are encrypted
+- Credential file remains unchanged
+- No warnings or errors related to encryption
 
 ---
 
-## TC-004-007: Skip Encryption if File Already Encrypted Using SOPS
-- **Description:** Verify that if the input file is already encrypted, encryption is skipped with a warning.
-- **Test Steps:**
-  1. Provide an already encrypted file.
-  2. Attempt to encrypt using SOPS backend.
-  3. Check for warning log/message indicating the data is already encrypted
-  4. Confirm the encryption step is skipped.
-- **Expected Result:**
-  - System logs a warning: "File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key."
-  - No re-encryption happens.
+## TC-004-003: Secret Key Mandatory for Fernet
 
-  input file:
+**Status:** Active
 
-```yml
-app-deployer-username-cred:
-  type: secret
-  data:
-    secret: ENC[AES256_GCM,data:kZgBvEY=,iv:w25FTRVIrsLQiD+aPmFfy4sdxYframsFFRZVVcu4aN0=,tag:2r8PwW7xQBrF9w1EOcheoQ==,type:str]
-app-deployer-token-cred:
-  type: secret
-  data:
-    secret: ENC[AES256_GCM,data:11Rc3Uq1/8JzPg==,iv:T4zZliQmnvGHQ+t1dk9TlmSdvYDbrK58cmsNYdW0+JY=,tag:CrRZHCqrXkUz7iGre6NO3g==,type:str]
-sops:
-  kms: []
-  gcp_kms: []
-  azure_kv: []
-  hc_vault: []
-  age:
-    - recipient: age1dgtrrrz4jhgzqxqex38myjgawuyaw0vrwla5l7s0mpnnyjlwhpwqmfsf5c
-      enc: |
-        -----BEGIN AGE ENCRYPTED FILE-----
-        YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBCQmlSVi9SZEZSU2xrVldo
-        WHF1U3FoaTBWR0M4MmpOVVh6SjU3LzM2dmdBCnF2RzVWNGdLL3VxakVOL0pmM212
-        a3lFWDduVmlUcFI4VnhSZkg2OXhna1EKLS0tIG4yTHZPTmwvR2xpdXk3a1RDQk9E
-        WDU2TVROWlhuckJCSmo1Q3E1QlA4UEUKRTeIw5mFT+0g+/6n8hLOmZA1DNCxMwBz
-        aOSMU8kjVLwu4a17h7kQCts3l+y+WspIqkHQkVpgLFscLoODw8kaew==
-        -----END AGE ENCRYPTED FILE-----
-  lastmodified: "2025-06-09T08:09:37Z"
-  mac: ENC[AES256_GCM,data:+gCPXkOc6uWUcQy3cT0jOHeEa6HxYTopLzcGoeSUVtQg+qoxd317jSayXh/y7CTspJeVArO8ZvxSCkC4Ie5rCoo4t7v8BH1UtaVrX1S3DrtDkyq3q4p3f4NCFZggPdGjgFc/fygmCQ7AzSuBDsbR2jciw6ZWoj48eulE2yE453k=,iv:0r9LK3cnN0jAiB2s/SF0kNTDCQYSKda4ZzoSPgocXxU=,tag:UHLbTYR9sLI0F23oJy5KvQ==,type:str]
-  pgp: []
-  unencrypted_regex: ^type$
-  version: 3.8.1
+**Description:**  
+Verify that encryption fails when `crypt_backend` is `Fernet` and `secret_key` is not provided.
 
-```
+**Test Data:**
 
+- configuration/config.yaml  
+- configuration/credentials/credentials.yml
 
-  result:
+**Pre-requisites:**
 
-  ```bash
- Skipping ./configuration/credentials/credentials.yml — already encrypted with SOPS
- Warning: File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key. 
-  ```
+1. `crypt_backend: Fernet`, `crypt: true`  
+2. No `.git/secret_key.txt` file exists
+
+**Steps:**
+
+- Modify the credential file  
+- Ensure `.git/secret_key.txt` is missing  
+- Run `git commit`
+
+**Expected Results:**
+
+- Commit fails with message:  
+  `SECRET_KEY is required for Fernet encryption in ./configuration/credentials/credentials.yml`
+
+---
+
+## TC-004-004: Successful Encryption Using Fernet
+
+**Status:** Active
+
+**Description:**  
+Verify that encryption succeeds when a valid `.git/secret_key.txt` is provided.  
+Supported fields are encrypted per [Credential Object Specification](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#credential).
+
+**Test Data:**
+
+- configuration/config.yaml  
+- configuration/credentials/credentials.yml  
+- .git/secret_key.txt
+
+**Pre-requisites:**
+
+1. `crypt_backend: Fernet`, `crypt: true`  
+2. Valid Fernet key in `.git/secret_key.txt`
+
+**Steps:**
+
+- Modify credential file  
+- Stage and commit
+
+**Expected Results:**
+
+- `username`, `password`, `secret` fields are encrypted (e.g., `[encrypted:AES256_Fernet]...`)  
+- Other fields are unchanged  
+- YAML remains valid
+
+---
+
+## TC-004-005: Skip Encryption if File Already Encrypted Using Fernet
+
+**Status:** Active
+
+**Description:**  
+Verify that if the credential file is already encrypted with Fernet, the encryption is skipped and warning is logged.
+
+**Test Data:**
+
+- `configuration/credentials/credentials.yml` (already encrypted)
+
+**Pre-requisites:**
+
+1. Valid encrypted credentials file  
+2. `.git/secret_key.txt` available  
+3. `crypt: true`, `crypt_backend: Fernet`
+
+**Steps:**
+
+- Stage and commit encrypted file
+
+**Expected Results:**
+
+- Warning logged:  
+  `File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key.`  
+- File remains unchanged
+
+---
+
+## TC-004-006: age_key Mandatory for SOPS
+
+**Status:** Active
+
+**Description:**  
+Verify that encryption fails when `crypt_backend: SOPS` is used but required age_public_key is missing.
+
+**Test Data:**
+
+- configuration/config.yaml  
+- configuration/credentials/credentials.yml
+
+**Pre-requisites:**
+
+1. `crypt: true`, `crypt_backend: SOPS`  
+2. Missing `age_public_key.txt`
+
+**Steps:**
+
+- Modify credentials  
+- Stage and commit
+
+**Expected Results:**
+
+- Commit fails with clear message on missing key
+   
+    `ERROR: ENVGENE_AGE_PUBLIC_KEY is required for SOPS encryption in configuration/credentials/credentials.yml`
+   
+
+---
+
+## TC-004-007: Successful Encryption Using SOPS
+
+**Status:** Active
+
+**Description:**  
+Verify that credentials are encrypted using SOPS when valid age key is provided.  
+Only supported fields (`username`, `password`, `secret`) are encrypted.  
+See [Credential Object Specification](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#credential).
+
+**Test Data:**
+
+- configuration/config.yaml  
+- configuration/credentials/credentials.yml  
+- .git/ge_public_key.txt  
+
+**Pre-requisites:**
+
+1. SOPS encryption enabled in config  
+2. Valid `age_public_key` in `.git` directory
+
+**Steps:**
+
+- Modify credential file  
+- Stage and commit
+
+**Expected Results:**
+
+- Supported fields are encrypted with `ENC[AES256_GCM,...]`  
+- YAML remains valid and other fields are untouched
+
+---
+
+## TC-004-008: Skip Encryption if File Already Encrypted Using SOPS
+
+**Status:** Active
+
+**Description:**  
+Ensure that encryption is skipped for files already encrypted with SOPS.  
+
+**Test Data:**
+
+- configuration/credentials/credentials.yml (already SOPS encrypted)
+
+**Pre-requisites:**
+
+1. `crypt: true`, `crypt_backend: SOPS`  
+2. Valid encrypted file  
+3. Valid age_public_key.txt is present
+
+**Steps:**
+
+- Stage and commit encrypted file
+
+**Expected Results:**
+
+- Warning logged:  
+  `File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key.`  
+- File remains unchanged
