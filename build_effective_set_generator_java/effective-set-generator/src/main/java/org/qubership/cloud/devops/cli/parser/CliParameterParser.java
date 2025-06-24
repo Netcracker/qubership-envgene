@@ -81,7 +81,8 @@ public class CliParameterParser {
     }
 
     private void processAndSaveParameters(List<SBApplicationDTO> applicationDTOList, String tenantName, String cloudName) throws IOException {
-        Map<String, Object> mappingFileData = new ConcurrentHashMap<>();
+        Map<String, Object> deployMappingFileData = new ConcurrentHashMap<>();
+        Map<String, Object> runtimeMappingFileData = new ConcurrentHashMap<>();
         Map<String, String> errorList = new ConcurrentHashMap<>();
         Map<String, String> k8TokenMap = new ConcurrentHashMap<>();
         applicationDTOList.parallelStream()
@@ -91,11 +92,13 @@ public class CliParameterParser {
                         logInfo("Started processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                         generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), k8TokenMap);
                         String deployPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/');
+                        String runtimePostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/runtime", namespaceName).replace('\\', '/');
                         int index = deployPostFixDir.indexOf("/environments/");
                         if (index != 1) {
                             deployPostFixDir = deployPostFixDir.substring(index);
                         }
-                        mappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
+                        deployMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
+                        runtimeMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), runtimePostFixDir);
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                     } catch (Exception e) {
                         log.debug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
@@ -105,10 +108,10 @@ public class CliParameterParser {
                 });
         if ("v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion())) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap);
-            fileDataConverter.writeToFile(mappingFileData, sharedData.getOutputDir(), "deployment", "mapping.yaml");
-            fileDataConverter.writeToFile(mappingFileData, sharedData.getOutputDir(), "runtime", "mapping.yaml");
+            fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "deployment", "mapping.yaml");
+            fileDataConverter.writeToFile(runtimeMappingFileData, sharedData.getOutputDir(), "runtime", "mapping.yaml");
         } else {
-            fileDataConverter.writeToFile(mappingFileData, sharedData.getOutputDir(), "mapping.yaml");
+            fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "mapping.yaml");
         }
         if (!errorList.isEmpty()) {
             errorList.forEach((key, value) -> {
@@ -188,17 +191,19 @@ public class CliParameterParser {
     public void generateOutput(String tenantName, String cloudName, String namespaceName, String appName,
                                String appVersion, String appFileRef, Map<String, String> k8TokenMap) throws IOException {
         DeployerInputs deployerInputs = DeployerInputs.builder().appVersion(appVersion).appFileRef(appFileRef).build();
+        String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
         ParameterBundle parameterBundle = parametersService.getCliParameter(tenantName,
                 cloudName,
                 namespaceName,
                 appName,
-                deployerInputs);
+                deployerInputs,
+                originalNamespace);
         String credentialsId = findDefaultCredentialsId(namespaceName);
         if (StringUtils.isNotEmpty(credentialsId)) {
             CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
             if (credentialDTO != null) {
                 SecretCredentialsDTO secCred = (SecretCredentialsDTO) credentialDTO.getData();
-                k8TokenMap.put(namespaceName, secCred.getSecret());
+                k8TokenMap.put(originalNamespace, secCred.getSecret());
             }
         }
         createFiles(namespaceName, appName, parameterBundle);
