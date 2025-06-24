@@ -29,29 +29,40 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-001: Using `templates_dir`
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1.yaml
+- test_data/test_templates/env_templates/test-template-2.yaml
+
+**Pre-requisites:**
 
 - Template Descriptor uses `templates_dir` in attributes:
   - `tenant`
   - `cloud`
   - `namespaces.template_path`
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Operation completed successfully
 
 ## TC-003-002: Using `current_env.name`
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1/Namespaces/app.yml.j2
+- test_data/test_templates/parameters/app/Namespaces/test-parameters-1.yml.j2
+- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Namespace template uses `current_env.name` in attributes:
   - `name`
@@ -66,291 +77,372 @@ Pre-requisites:
   - `technicalConfigurationParameterSets`
 - Environment Inventory has `inventory.environmentName` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Namespace in Environment Instance contains values where `current_env.name` was substituted with value from `inventory.environmentName` in Environment Inventory
 
 ## TC-003-003: Using `current_env.tenant`
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1/tenant.yml.j2
+- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Tenant template uses `current_env.tenant` in `name` attribute
 - Environment Inventory has `inventory.tenantName` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Tenant in Environment Instance contains values where `current_env.tenant` was substituted with value from `inventory.tenantName` in Environment Inventory
 
 ## TC-003-004: Using `current_env.cloud`. `inventory.cloudName` set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1/cloud.yml.j2
+- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Cloud template uses `current_env.cloud` in `name` attribute
 - Environment Inventory has `inventory.cloudName` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Cloud in Environment Instance contains values where `current_env.cloud` was substituted with value from `inventory.cloudName` in Environment Inventory
 
 ## TC-003-005: Using `current_env.cloud`. `inventory.cloudName` NOT set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
+- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Cloud template uses `current_env.cloud` in `name` attribute
 - Environment Inventory does NOT have `inventory.cloudName` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Cloud in Environment Instance contains values where `current_env.cloud` was substituted with value from `inventory.environmentName.replace("-","_")` in Environment Inventory
 
 ## TC-003-006: Using `current_env.cloudNameWithCluster`. `inventory.cloudName` set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
+- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Cloud template uses `current_env.cloudNameWithCluster` in `name` attribute
 - Environment Inventory has `inventory.cloudName` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Cloud in Environment Instance contains values where `current_env.cloudNameWithCluster` was substituted with value from `inventory.cloudName` in Environment Inventory
 
 ## TC-003-007: Using `current_env.cloudNameWithCluster`. `inventory.cloudPassport` set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
+- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Cloud template uses `current_env.cloudNameWithCluster` in `name` attribute
 - Environment Inventory has `inventory.cloudPassport` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Cloud in Environment Instance contains values where `current_env.cloudNameWithCluster` was substituted with value from `inventory.cloudPassport_inventory.environmentName.replace("-","_")` in Environment Inventory
 
 ## TC-003-008: Using `current_env.cloudNameWithCluster`. `inventory.cloudName` and `inventory.cloudPassport` NOT set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
+- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Cloud template uses `current_env.cloudNameWithCluster` in `name` attribute
 - Environment Inventory has `inventory.cloudName` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Cloud in Environment Instance contains values where `current_env.cloudNameWithCluster` was substituted with value from `<name of cluster folder>_inventory.environmentName.replace("-","_")` in Environment Inventory
 
 ## TC-003-009: Using `current_env.cmdb_name`. `inventory.deployer` set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1/cloud.yml.j2
+- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Cloud template uses `current_env.cmdb_name` in `e2eParameters` attribute
 - Environment Inventory has `inventory.deployer` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Cloud in Environment Instance contains values where `current_env.cmdb_name` was substituted with value from `inventory.deployer` in Environment Inventory
 
 ## TC-003-010: Using `current_env.cmdb_name`. `inventory.deployer` NOT set in Environment Inventory
 
-Status: Not Implemented
+**Status:** New
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
+- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Cloud template uses `current_env.cmdb_name` in `e2eParameters` attribute
 - Environment Inventory does NOT have `inventory.deployer` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Operation failed
 
 ## TC-003-011: Using `current_env.cmdb_url`. `inventory.deployer` set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1/cloud.yml.j2
+- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Cloud template uses `current_env.cmdb_url` in `e2eParameters` attribute
 - Environment Inventory has `inventory.deployer` attribute set
 - Instance repository has configured deployer specified in `inventory.deployer` attribute
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Cloud in Environment Instance contains values where `current_env.cmdb_url` was substituted with value from `deployerUrl` in deployer configuration, whose name is specified in `inventory.deployer` in Environment Inventory
 
 ## TC-003-012: Using `current_env.cmdb_url`. `inventory.deployer` NOT set in Environment Inventory
 
-Status: Not Implemented
+**Status:** New
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
+- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Cloud template uses `current_env.cmdb_url` in `e2eParameters` attribute
 - Environment Inventory does NOT have `inventory.deployer` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Operation failed
 
 ## TC-003-013: Using `current_env.description`. `inventory.description` set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1/tenant.yml.j2
+- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Tenant template uses `current_env.description` in `description` attribute
 - Environment Inventory has `inventory.description` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Tenant in Environment Instance contains values where `current_env.description` was substituted with value from `inventory.description` in Environment Inventory
 
 ## TC-003-014: Using `current_env.description`. `inventory.description` NOT set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-2/tenant.yml.j2
+- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Tenant template uses `current_env.description` in `description` attribute
 - Environment Inventory does NOT have `inventory.description` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Tenant in Environment Instance contains values where `current_env.description` was substituted with value `""`
 
 ## TC-003-015: Using `current_env.owners`. `inventory.owners` set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1/tenant.yml.j2
+- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Tenant template uses `current_env.owners` in `description` attribute
 - Environment Inventory has `inventory.owners` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Tenant in Environment Instance contains values where `current_env.owners` was substituted with value from `inventory.owners` in Environment Inventory
 
 ## TC-003-016: Using `current_env.owners`. `inventory.owners` NOT set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-2/tenant.yml.j2
+- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Tenant template uses `current_env.owners` in `description` attribute
 - Environment Inventory does NOT have `inventory.owners` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Tenant in Environment Instance contains values where `current_env.owners` was substituted with value `""`
 
 ## TC-003-017: Using `current_env.env_template`
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1/cloud.yml.j2
+- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Cloud template uses `current_env.env_template` in `e2eParameters` attribute
 - Environment Inventory has `envTemplate.name` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Tenant in Environment Instance contains values where `current_env.env_template` was substituted with value from `envTemplate.name` in Environment Inventory
 
 ## TC-003-018: Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1/Namespaces/app.yml.j2
+- test_data/test_templates/parameters/app/test-parameters-1.yml.j2
+- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Namespace template uses (including if/else Jinja expressions) `current_env.additionalTemplateVariables` in attributes:
   - `deployParameters`
@@ -363,20 +455,26 @@ Pre-requisites:
   - `technicalConfigurationParameterSets`
 - Environment Inventory has `envTemplate.additionalTemplateVariables` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Namespace in Environment Instance contains values where `current_env.additionalTemplateVariables` was substituted with value from `envTemplate.additionalTemplateVariables` in Environment Inventory
 
 ## TC-003-019: Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` NOT set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-2/Namespaces/app.yml.j2
+- test_data/test_templates/parameters/app/test-parameters-1.yml.j2
+- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Namespace template uses (including if/else Jinja expressions) `current_env.additionalTemplateVariables` in attributes:
   - `deployParameters`
@@ -389,20 +487,25 @@ Pre-requisites:
   - `technicalConfigurationParameterSets`
 - Environment Inventory does NOT have `envTemplate.additionalTemplateVariables` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Namespace in Environment Instance contains values where `current_env.additionalTemplateVariables` was substituted with value `{}`
 
 ## TC-003-020: Using `current_env.cloud_passport`. `inventory.cloudPassport` set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1/cloud.yml.j2
+- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Namespace template uses (including if/else Jinja expressions) `current_env.cloud_passport` in attributes:
   - `deployParameters`
@@ -416,20 +519,25 @@ Pre-requisites:
 - Environment Inventory has `inventory.cloudPassport` attribute set
 - Instance repo contains valid Cloud Passport
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Namespace in Environment Instance contains values where `current_env.cloud_passport` was substituted with contents of Cloud Passport specified in `inventory.cloudPassport` in Environment Inventory
 
 ## TC-003-021: Using `current_env.cloud_passport`. `inventory.cloudPassport` NOT set in Environment Inventory
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
+- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
+
+**Pre-requisites:**
 
 - Namespace template uses (including if/else Jinja expressions) `current_env.cloud_passport` in attributes:
   - `deployParameters`
@@ -442,20 +550,26 @@ Pre-requisites:
   - `technicalConfigurationParameterSets`
 - Environment Inventory does NOT have `inventory.cloudPassport` attribute set
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Namespace in Environment Instance contains values where `current_env.cloud_passport` was substituted with value `{}`
 
 ## TC-003-022: Using `current_env.solution_structure`. SD exist in Instance repo
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-1/Namespaces/app.yml.j2
+- test_data/test_templates/parameters/app/test-parameters-1.yml.j2
+- test_data/test_environments/cluster01/env03/Inventory/solution-descriptor/sd.yaml
+
+**Pre-requisites:**
 
 - Namespace template uses (including if/else Jinja expressions) `current_env.solution_structure` in attributes:
   - `deployParameters`
@@ -468,20 +582,26 @@ Pre-requisites:
   - `technicalConfigurationParameterSets`
 - Instance repo contains valid SD for this environment
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
-- Namespace in Environment Instance contains values where `current_env.solution_structure` was substituted with value obtained according to principles described [here](/docs/template-macros.md#current_envsolution_structure)
+- Namespace in Environment Instance contains values where `current_env.solution_structure` was substituted with value obtained according to principles described in [Solution Structure](/docs/template-macros.md#current_envsolution_structure)
 
 ## TC-003-023: Using `current_env.solution_structure`. SD NOT in Instance repo
 
-Status: Not Implemented
+**Status:** Active
 
-Pre-requisites:
+**Test Data:**
+
+- test_data/test_templates/env_templates/test-template-2/Namespaces/app.yml.j2
+- test_data/test_templates/parameters/app/test-parameters-1.yml.j2
+- test_data/test_environments/cluster01/env04/Inventory
+
+**Pre-requisites:**
 
 - Namespace template uses (including if/else Jinja expressions) `current_env.solution_structure` in attributes:
   - `deployParameters`
@@ -492,13 +612,13 @@ Pre-requisites:
   - `deployParameterSets`
   - `e2eParameterSets`
   - `technicalConfigurationParameterSets`
-- Instance repo doesnn't contain SD for this environment
+- Instance repo doesn't contain SD for this environment
 
-Inputs:
+**Steps:**
 
 - `ENV_NAMES`: `<env-id>` # Single env-id
 - `ENV_BUILDER`: `true`
 
-Results:
+**Expected Results:**
 
 - Namespace in Environment Instance contains values where `current_env.solution_structure` was substituted with value `{}`

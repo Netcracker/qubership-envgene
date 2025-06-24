@@ -15,8 +15,16 @@
     - [`current_env.additionalTemplateVariables`](#current_envadditionaltemplatevariables)
     - [`current_env.cloud_passport`](#current_envcloud_passport)
     - [`current_env.solution_structure`](#current_envsolution_structure)
-  - [Envgene macros](#envgene-macros)
-    - [Credential macros](#credential-macros)
+    - [`current_env.cluster.cloud_api_protocol`](#current_envclustercloud_api_protocol)
+    - [`current_env.cluster.cloud_api_url`](#current_envclustercloud_api_url)
+    - [`current_env.cluster.cloud_api_port`](#current_envclustercloud_api_port)
+    - [`current_env.cluster.cloud_public_url`](#current_envclustercloud_public_url)
+  - [Credential macro](#credential-macro)
+  - [Deprecated macros](#deprecated-macros)
+    - [`environment.environmentName`](#environmentenvironmentname)
+    - [`tenant`](#tenant)
+    - [`cloud`](#cloud)
+    - [`deployer`](#deployer)
 
 This documentation provides a list of macros that can be used during template generation
 
@@ -118,6 +126,7 @@ name: "{{ current_env.cloudNameWithCluster }}"
 **Basic usage:**
 
 ```yaml
+CMDB-NAME: "{{ current_env.cmdb_name }}"
 ```
 
 **Usage in sample:**  
@@ -132,6 +141,7 @@ name: "{{ current_env.cloudNameWithCluster }}"
 **Basic usage:**
 
 ```yaml
+CMDB-URL: "{{ current_env.current_env.cmdb_url }}"
 ```
 
 **Usage in sample:**  
@@ -143,9 +153,10 @@ name: "{{ current_env.cloudNameWithCluster }}"
 
 **Type:** string  
 
-**Basic usage:** `description: "{{ current_env.description }}"`  
+**Basic usage:**
 
 ```yaml
+description: "{{ current_env.description }}"
 ```
 
 **Usage in sample:** [Sample](samples/templates/env_templates/composite-dev/cloud.yml.j2)  
@@ -157,9 +168,10 @@ name: "{{ current_env.cloudNameWithCluster }}"
 
 **Type:** string  
 
-**Basic usage:** `owners: "{{ current_env.owners }}"`
+**Basic usage:** 
 
 ```yaml
+owners: "{{ current_env.owners }}"
 ```
 
 **Usage in sample:** [Sample](samples/templates/env_templates/composite-dev/cloud.yml.j2)  
@@ -171,9 +183,10 @@ name: "{{ current_env.cloudNameWithCluster }}"
 
 **Type:** string  
 
-**Basic usage:** `TEMPLATE_NAME: "{{ current_env.env_template }}"`
+**Basic usage:** 
 
 ```yaml
+TEMPLATE_NAME: "{{ current_env.env_template }}"
 ```
 
 **Usage in sample:**  
@@ -263,18 +276,92 @@ Default value is `{}`
 - [Sample template](/samples/templates/env_templates/composite-dev/Namespaces/bss.yml.j2)
 - [Sample inventory](/samples/environments/sample-cloud-name/composite-with-creds/)
 
-## Envgene macros
+### `current_env.cluster.cloud_api_protocol`
 
-### Credential macros
+---
+**Description:** HTTP/HTTPS protocol for cluster connection URL
+
+Values is parsed from `env_definition.inventory.clusterUrl`. If Cloud Passport is used for Environment generation, than value will be overwritten from cloud passport file
+
+Default value is `""`
+
+**Type:** HashMap  
+
+**Basic usage:**
+
+`protocol: "{{current_env.cluster.cloud_api_protocol}}"`
+
+**Usage in sample:**
+
+- [Sample](samples/templates/env_templates/composite-dev/cloud.yml.j2)
+
+### `current_env.cluster.cloud_api_url`
+
+---
+**Description:** API URL of a cluster
+
+Values is parsed from `env_definition.inventory.clusterUrl`. If Cloud Passport is used for Environment generation, than value will be overwritten from cloud passport file
+
+Default value is `""`
+
+**Type:** HashMap  
+
+**Basic usage:**
+
+`apiUrl: "{{current_env.cluster.cloud_api_url}}"`
+
+**Usage in sample:**
+
+- [Sample](samples/templates/env_templates/composite-dev/cloud.yml.j2)
+
+### `current_env.cluster.cloud_api_port`
+
+---
+**Description:** Port of a cluster API server
+
+Values is parsed from `env_definition.inventory.clusterUrl`. If Cloud Passport is used for Environment generation, than value will be overwritten from cloud passport file
+
+Default value is `""`
+
+**Type:** HashMap  
+
+**Basic usage:**
+
+`apiPort: "{{current_env.cluster.cloud_api_port}}"`
+
+**Usage in sample:**
+
+- [Sample](samples/templates/env_templates/composite-dev/cloud.yml.j2)
+
+### `current_env.cluster.cloud_public_url`
+
+---
+**Description:** Public URL of a cluster.
+
+Values is parsed from `env_definition.inventory.clusterUrl`. If Cloud Passport is used for Environment generation, than value will be overwritten from cloud passport file
+
+Default value is `""`
+
+**Type:** HashMap  
+
+**Basic usage:**
+
+`apiPort: "{{current_env.cluster.cloud_api_port}}"`
+
+**Usage in sample:**
+
+- [Sample](samples/templates/env_templates/composite-dev/cloud.yml.j2)
+
+## Credential macro
 
 ---
 **Description:** This macro marks parameters as sensitive, triggering special processing that differs from regular parameters.
 
-```text
+```yaml
 ${envgen.creds.get('<cred-id>').username|password|secret}
 ```
 
-For each `<cred-id>` during Environment Instance generation a [Credential](/docs/envgene-objects.md#credential) object is created in the [Environment Credential File](/docs/envgene-objects.md#environment-credential-file
+For each `<cred-id>` during Environment Instance generation a [Credential](/docs/envgene-objects.md#credential) object is created in the [Environment Credential File](/docs/envgene-objects.md#environment-credential-file)
 
 Type assignment:
 
@@ -290,3 +377,21 @@ k8s_token: ${envgen.creds.get('k8s-cred').secret}
 ```
 
 **Usage in sample:** [Sample](/samples/templates/parameters/composite-sample/test-deploy-creds.yml)
+
+## Deprecated macros
+
+### `environment.environmentName`
+
+**Description:** Name of environment
+
+### `tenant`
+
+**Description:** Name of tenant for environment
+
+### `cloud`
+
+**Description:** Name of cloud for environment
+
+### `deployer`
+
+**Description:** Name of deployer used for environment

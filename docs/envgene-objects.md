@@ -252,8 +252,6 @@ In EnvGene, there are:
 
 Only Full SD is used for Effective Set calculation. The Delta SD is only needed for troubleshooting purposes.
 
-[Solution Descriptor JSON schema](/schemas/TBD)
-
 Example:
 
 ```yaml

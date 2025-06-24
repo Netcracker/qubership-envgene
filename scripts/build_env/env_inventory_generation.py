@@ -199,10 +199,21 @@ def handle_env_specific_params(env, env_specific_params):
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.envSpecificParamsets', envSpecificParamsets)
     handle_credentials(env, creds)
     create_paramset_files(env, paramsets)
-    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
-    helper.set_nested_yaml_attribute(env.inventory, 'inventory.deployer', deployer)
+    
+    handle_tenant_name(env,tenantName)
+    handle_deployer(env,deployer)
     
     logger.info(f"ENV_SPECIFIC_PARAMS env details : {vars(env)}")
+
+def handle_tenant_name(env, tenantName):
+    if not tenantName:
+        return
+    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
+
+def handle_deployer(env, deployer):
+    if not deployer:
+        return
+    helper.set_nested_yaml_attribute(env.inventory, 'inventory.deployer', deployer)
 
 def handle_env_template_name(env, env_template_name):
     if not env_template_name:
