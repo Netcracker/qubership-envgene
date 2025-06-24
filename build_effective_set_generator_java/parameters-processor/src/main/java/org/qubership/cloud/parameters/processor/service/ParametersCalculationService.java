@@ -44,21 +44,22 @@ public class ParametersCalculationService {
     }
 
     public ParameterBundle getCliParameter(String tenantName, String cloudName, String namespaceName, String applicationName,
-                                           DeployerInputs deployerInputs) {
-        return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs);
+                                           DeployerInputs deployerInputs, String originalNamespace) {
+        return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace);
     }
 
     public ParameterBundle getCliE2EParameter(String tenantName, String cloudName) {
         return getE2EParameterBundle(tenantName, cloudName);
     }
 
-    private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName, DeployerInputs deployerInputs) {
+    private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName, DeployerInputs deployerInputs, String originalNamespace) {
         Params parameters = parametersProcessor.processAllParameters(tenantName,
                 cloudName,
                 namespaceName,
                 applicationName,
                 "false",
-                deployerInputs);
+                deployerInputs,
+                originalNamespace);
 
 
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
@@ -130,7 +131,7 @@ public class ParametersCalculationService {
     }
 
     private ParameterBundle getE2EParameterBundle(String tenantName, String cloudName) {
-        Params parameters = parametersProcessor.processE2EParameters(tenantName, cloudName, null, null, "false", null);
+        Params parameters = parametersProcessor.processE2EParameters(tenantName, cloudName, null, null, "false", null, null);
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
         prepareSecureInsecureParams(parameters.getE2eParams(), parameterBundle, ParameterType.E2E);
         return parameterBundle;
@@ -147,6 +148,8 @@ public class ParametersCalculationService {
 
         Map<String, Object> finalSecuredParams = ParametersProcessor.convertParameterMapToObject(securedParams);
         Map<String, Object> inSecuredParamsAsObject = ParametersProcessor.convertParameterMapToObject(inSecuredParams);
+        parseBooleanParams(finalSecuredParams);
+        parseBooleanParams(inSecuredParamsAsObject);
         if (parameterType == ParameterType.E2E) {
             parameterBundle.setSecuredE2eParams(finalSecuredParams);
             parameterBundle.setE2eParams(inSecuredParamsAsObject);
@@ -191,6 +194,18 @@ public class ParametersCalculationService {
         }
         orderedMap.putAll(finalMap);
         return orderedMap;
+    }
+
+    private void parseBooleanParams(Map<String, Object> orderedMap) {
+        orderedMap.entrySet().stream().forEach(entry -> {
+            if (entry.getValue() instanceof String) {
+                String text = entry.getValue().toString();
+                boolean isBooleanString = text.equalsIgnoreCase("true") || text.equalsIgnoreCase("false");
+                if (isBooleanString) {
+                    entry.setValue(Boolean.parseBoolean(text));
+                }
+            }
+        });
     }
 
     private void filterSecuredParams(Map<String, Parameter> map, Map<String, Parameter> securedParams, Map<String, Parameter> inSecuredParams, ParameterType parameterType) {
