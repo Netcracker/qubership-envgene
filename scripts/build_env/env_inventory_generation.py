@@ -74,7 +74,7 @@ def generate_env():
     sd_version = params['SD_VERSION']
     sd_data = params['SD_DATA']
     sd_delta = params['SD_DELTA']
-    sd_merge_mode = params['SD_MERGE_MODE']
+    sd_merge_mode = params['SD_REPO_MERGE_MODE']
     logger.info(f"sd_data: {sd_data}")
     logger.info(f"sd_merge_mode: {sd_merge_mode}")
 
