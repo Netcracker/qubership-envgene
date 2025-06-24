@@ -709,6 +709,13 @@
           ]
         }
       ]
+    },
+    {
+      "bom-ref": "qubership-integration-platform:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.app.chart",
+      "name": "qubership-integration-platform",
+      "version": "1.2.3"
     }
   ],
   "dependencies": [

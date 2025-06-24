@@ -72,6 +72,9 @@
           },
           {
             "$ref": "#/$defs/generic-image"
+          },
+          {
+            "$ref": "#/$defs/helm-chart"
           }
         ]
       }
@@ -909,6 +912,55 @@
             ]
           },
           "uniqueItems": true
+        }
+      }
+    },
+    "helm-chart": {
+      "type": "object",
+      "title": "Helm Chart",
+      "description": "Defines helm-chart",
+      "required": [
+        "type",
+        "mime-type",
+        "bom-ref",
+        "name",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "application"
+          ],
+          "title": "Component Type",
+          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": [
+            "application/vnd.qubership.app.chart"
+          ],
+          "title": "Mime-Type",
+          "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
+        },
+        "bom-ref": {
+          "$ref": "#/$defs/refType",
+          "title": "BOM Reference",
+          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
+        },
+        "name": {
+          "type": "string",
+          "title": "Component Name",
+          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
+          "examples": [
+            "common-helm-templates"
+          ]
+        },
+        "version": {
+          "$ref": "#/$defs/version",
+          "title": "Component Version",
+          "description": "The component version. The version should ideally comply with semantic versioning but is not enforced."
         }
       }
     }
