@@ -155,6 +155,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
 
     if sd_merge_mode == "replace":
         effective_merge_mode = "replace"
+        logger.info(f"Final merged SD data: {json.dumps(data, indent=2)}")
         helper.writeYamlToFile(sd_path, data)
     else:
         merged_applications = {"applications": data[0].get("applications", [])}
@@ -164,9 +165,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
         if selected_merge_function is None:
             raise ValueError(f"Unsupported merge mode: {effective_merge_mode}")
-        logger.info(f"printing the merge function selected {selected_merge_function}")
         for i in range(1, len(data)):
-            logger.info(f"Merging current result with applications from item {i}...")
             current_item_sd = {"applications": data[i].get("applications", [])} 
             merged_applications = selected_merge_function(merged_applications, current_item_sd)
         merged_result = {

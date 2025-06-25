@@ -115,7 +115,7 @@ def merge(data1, data2, target_path):
         if counter < length:
             error(NEW_CHUNK_ERROR)
 
-    writeYamlToFile(target_path, data1)
+    return {"applications": data1}
 
 def basic_merge(full_sd, delta_sd):
     """
@@ -130,17 +130,17 @@ def basic_merge(full_sd, delta_sd):
     delta_apps = delta_sd.get("applications", [])
     result_apps = []
 
-
     # Stage 1: Replace Matching apps with Delta versions
     for f_app in full_apps:
         replaced = False
         for d_app in delta_apps:
             if is_duplicating(f_app, d_app):
-                # Rule 3: Duplicating, keep Full SD version
+                # Rule 2: Duplicating, keep Full SD version
+                result_apps.append(f_app)
                 replaced = True
                 break
             elif is_matching(f_app, d_app):
-                # Rule 1: Matching, replace version from Delta
+                # Rule 1: Matching, replace with Delta version
                 result_apps.append(d_app)
                 replaced = True
                 break
@@ -151,7 +151,7 @@ def basic_merge(full_sd, delta_sd):
     # Stage 2: Add New applications from Delta SD
     for d_app in delta_apps:
         if not any(is_matching(f_app, d_app) for f_app in full_apps):
-            # Rule 2: New Application, append
+            # Rule 3: New Application, append
             result_apps.append(d_app)
 
     # Stage 3: Return result with only `applications`
@@ -194,7 +194,8 @@ def basic_exclusion_merge(full_sd, delta_sd):
     # Stage 2: Warn about new apps
     for i, d_app in enumerate(delta_apps):
         if i not in matched_delta_indices:
-            print(f"Warning: New application '{get_app_name_sd(d_app)}' ignored (not present in Full SD)")
+            # Rule 2: New Application, rejects
+            logger.info(f"Warning: New application '{get_app_name_sd(d_app)}' ignored (not present in Full SD)")
 
     # Stage 3: Return only applications
     return {"applications": result_apps}
