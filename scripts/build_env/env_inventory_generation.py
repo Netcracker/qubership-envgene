@@ -153,8 +153,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
     else:
         effective_merge_mode = "replace"    
 
-    if sd_merge_mode == "replace":
-        effective_merge_mode = "replace"
+    if effective_merge_mode == "replace":
         logger.info(f"Final merged SD data: {json.dumps(data, indent=2)}")
         helper.writeYamlToFile(sd_path, data)
     else:
