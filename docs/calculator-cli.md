@@ -41,6 +41,7 @@
         - [\[Version 2.0\]\[Runtime Parameter Context\] `parameters.yaml`](#version-20runtime-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `credentials.yaml`](#version-20runtime-parameter-context-credentialsyaml)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `mapping.yml`](#version-20runtime-parameter-context-mappingyml)
+      - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
     - [Macros](#macros)
   - [Use Cases](#use-cases)
     - [Effective Set Calculation](#effective-set-calculation)
@@ -84,6 +85,7 @@ Below is a **complete** list of attributes
 | `--effective-set-version`/`-esv` | string | no | The version of the effective set to be generated. Available options are `v1.0` and `v2.0` | `v2.0` | `v1.0` |
 | `--pipeline-consumer-specific-schema-path`/`-pcssp` | string | no | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided  | N/A |  |
 | `--extra_params`/`-ex` | string | no | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided | N/A | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000` |
+| `--app_chart_validation`/`-acv` | boolean | no | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped | `true` | `false` | 
 
 ### Registry Configuration
 
@@ -605,6 +607,8 @@ Set of per service keys depends on the service type, determined by the MIME type
 
 | Attribute | Mandatory | Type | Description | Default | Source in Application SBOM |
 |---|---|---|---|---|---|
+| `DEPLOYMENT_SESSION_ID` | yes | string | Effective Set calculation operation ID  | None | Taken from input parameter  `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM) |
+| `MANAGED_BY` | yes | string | Deployer type. Always `argocd` | `argocd` | None |
 | `ARTIFACT_DESCRIPTOR_VERSION` | yes | string | `.metadata.component.version` | None | None |
 | `DEPLOYMENT_RESOURCE_NAME` | yes | string | Is formed by concatenating `<service-name>`-v1 | None | None |
 | `DEPLOYMENT_VERSION` | yes | string | always `v1` | `v1` | None |
@@ -617,6 +621,8 @@ Set of per service keys depends on the service type, determined by the MIME type
 
 | Attribute | Mandatory | Type | Description | Default | Source in Application SBOM |
 |---|---|---|---|---|---|
+| `DEPLOYMENT_SESSION_ID` | yes | string | Effective Set calculation operation ID  | None | Taken from input parameter  `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM) |
+| `MANAGED_BY` | yes | string | Deployer type. Always `argocd` | `argocd` | None |
 | `ARTIFACT_DESCRIPTOR_VERSION` | yes | string | `.metadata.component.version` | None | None |
 | `DEPLOYMENT_RESOURCE_NAME` | yes | string | Is formed by concatenating `<service-name>`-v1 | None | None |
 | `DEPLOYMENT_VERSION` | yes | string | always `v1` | `v1` | None |
@@ -819,6 +825,23 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 ##### \[Version 2.0][Runtime Parameter Context] `mapping.yml`
 
 The contents of this file are identical to [mapping.yml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyml)
+
+#### [Version 2.0] App chart validation
+
+The Calculator CLI performs validation to check for the presence of an `application/vnd.qubership.app.chart` component. The validation follows these rules:
+
+1. If any of the Application SBOMs passed to the calculator does not contain a component with `application/vnd.qubership.app.chart` mime-type:
+
+   - The calculation fails
+   - An error message is logged
+
+2. This validation is only performed for Effective Set version `v2.0`
+
+3. Validation execution depends on the attribute:  
+     [`GENERATE_EFFECTIVE_SET.app_chart_validation`](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/instance-pipeline-parameters.md#effective_set_config)
+   - Behavior:
+     - If `true`: Validation is performed
+     - If `false`: Validation is skipped
 
 ### Macros
 
