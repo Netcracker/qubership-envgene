@@ -161,6 +161,7 @@ if [ -e /tmp/gitlab-ci ]; then
 
   message="${ticket_id} [ci_build_parameters] Update gitlab-ci configurations"
 fi
+
 echo "Deployment session id is ${DEPLOYMENT_SESSION_ID}"
 if [ -n "${DEPLOYMENT_SESSION_ID}" ]; then
     echo "Deployment session id is ${DEPLOYMENT_SESSION_ID}"
@@ -168,6 +169,8 @@ if [ -n "${DEPLOYMENT_SESSION_ID}" ]; then
     echo "Appended commit message with session id"
 fi
 
+
+echo "Deployment session id is $DEPLOYMENT_SESSION_ID"
 echo "Checking changes..."
 git add ./*
 diff_status=0
