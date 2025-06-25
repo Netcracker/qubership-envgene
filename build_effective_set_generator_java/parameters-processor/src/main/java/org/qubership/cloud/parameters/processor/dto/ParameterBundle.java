@@ -32,5 +32,7 @@ public class ParameterBundle {
     Map<String, Object> e2eParams;
     Map<String, Object> deployDescParams;
     Map<String, Object> perServiceParams;
+    Map<String, Object> collisionDeployParameters;
+    Map<String, Object> collisionSecureParameters;
     boolean processPerServiceParams;
 }

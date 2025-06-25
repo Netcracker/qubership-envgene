@@ -154,6 +154,8 @@ public class ParametersCalculationService {
             parameterBundle.setSecuredE2eParams(finalSecuredParams);
             parameterBundle.setE2eParams(inSecuredParamsAsObject);
         } else if (parameterType == ParameterType.DEPLOY) {
+            parameterBundle.setCollisionDeployParameters(getCollisionParams(inSecuredParamsAsObject));
+            parameterBundle.setCollisionSecureParameters(getCollisionParams(finalSecuredParams));
             Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject, parameterBundle.isProcessPerServiceParams());
             parameterBundle.setSecuredDeployParams(prepareFinalParams(finalSecuredParams, false));
             parameterBundle.setDeployParams(finalInsecureParams);
@@ -161,6 +163,22 @@ public class ParametersCalculationService {
             parameterBundle.setSecuredConfigParams(finalSecuredParams);
             parameterBundle.setConfigServerParams(inSecuredParamsAsObject);
         }
+    }
+
+    private Map<String, Object> getCollisionParams(Map<String, Object> parameters) {
+        Map<String, Object> serviceMap = new LinkedHashMap<>();
+        Map<String, Object> collisionParams = new LinkedHashMap<>();
+        entities.stream()
+                .map(key -> (Map<String, Object>) parameters.remove(key))
+                .filter(Objects::nonNull)
+                .forEach(serviceMap::putAll);
+        Set<String> services = serviceMap.keySet();
+        parameters.entrySet().forEach(entry -> {
+                if(services.contains(entry.getKey())){
+                    collisionParams.put(entry.getKey(), entry.getValue());
+            }
+        });
+        return collisionParams;
     }
 
     private Map<String, Object> prepareFinalParams(Map<String, Object> parameters, boolean processPerServiceParams) {

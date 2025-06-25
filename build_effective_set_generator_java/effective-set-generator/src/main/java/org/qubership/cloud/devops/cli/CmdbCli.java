@@ -27,6 +27,7 @@ import picocli.CommandLine;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -87,7 +88,18 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setEffectiveSetVersion(envParams.version);
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
-        sharedData.setExtraParams(envParams.extraParams);
+        populateDeploymentSessionId(envParams.extraParams);
+    }
+
+    private void populateDeploymentSessionId(String[] extraParams) {
+        if(extraParams != null){
+            Arrays.stream(extraParams).forEach(key -> {
+                if(key.contains("DEPLOYMENT_SESSION_ID")){
+                    String[] deployString = key.split("=");
+                    sharedData.setDeploymentSessionId(deployString[1]);
+                }
+            });
+        }
     }
 
     static class EnvCommandSpace {
@@ -116,7 +128,7 @@ public class CmdbCli implements Callable<Integer> {
         String[] pcssp;
 
         @CommandLine.Option(names = {"-ex", "--extra_params"}, description = "Additional params that used to generate effective set")
-        String extraParams;
+        String[] extraParams;
 
     }
 }
