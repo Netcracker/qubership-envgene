@@ -44,5 +44,6 @@ public class SharedData {
 
     private List<String> pcsspPaths;
 
-    private String extraParams;
+    private String deploymentSessionId;
+
 }

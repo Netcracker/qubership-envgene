@@ -103,9 +103,9 @@ public class BomReaderUtilsImplV2 {
         Map<String, Object> commonParamsMap = new TreeMap<>();
         commonParamsMap.put("APPLICATION_NAME", bomContent.getMetadata().getComponent().getName());
         commonParamsMap.put("MANAGED_BY", "argocd");
-        if (StringUtils.isNotEmpty(sharedData.getExtraParams())) {
-            commonParamsMap.put("DEPLOYMENT_SESSION_ID", sharedData.getExtraParams());
-            entitiesMap.setDeployerSessionId(sharedData.getExtraParams());
+        if (StringUtils.isNotEmpty(sharedData.getDeploymentSessionId())) {
+            commonParamsMap.put("DEPLOYMENT_SESSION_ID", sharedData.getDeploymentSessionId());
+            entitiesMap.setDeployerSessionId(sharedData.getDeploymentSessionId());
         } else {
             String deployerSessionId = UUID.randomUUID().toString();
             commonParamsMap.put("DEPLOYMENT_SESSION_ID", deployerSessionId);

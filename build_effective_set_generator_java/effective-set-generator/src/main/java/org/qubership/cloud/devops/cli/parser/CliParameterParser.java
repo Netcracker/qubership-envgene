@@ -97,6 +97,10 @@ public class CliParameterParser {
                         if (index != 1) {
                             deployPostFixDir = deployPostFixDir.substring(index);
                         }
+                        index = runtimePostFixDir.indexOf("/environments/");
+                        if (index != 1) {
+                            runtimePostFixDir = runtimePostFixDir.substring(index);
+                        }
                         deployMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
                         runtimeMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), runtimePostFixDir);
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
@@ -131,21 +135,32 @@ public class CliParameterParser {
         if (parameterBundle.getSecuredE2eParams() == null) {
             parameterBundle.setSecuredE2eParams(new HashMap<>());
         }
-        createTopologyFiles(parameterBundle, inputData, k8TokenMap);
+        createTopologyFiles(k8TokenMap);
         createE2EFiles(parameterBundle);
         createConsumerFiles(parameterBundle);
     }
 
-    private void createTopologyFiles(ParameterBundle parameterBundle, InputData inputData, Map<String, String> k8TokenMap) throws IOException {
+    private void createTopologyFiles(Map<String, String> k8TokenMap) throws IOException {
         Map<String, Object> topologyParams = new TreeMap<>();
         Map<String, Object> topologySecuredParams = new TreeMap<>();
+        Map<String, Object> clusterParameterMap = getClusterMap();
         topologyParams.put("composite_structure", inputData.getCompositeStructureMap());
         topologyParams.put("environments", inputData.getClusterMap());
+        topologyParams.put("cluster", clusterParameterMap);
         topologySecuredParams.put("k8s_tokens", k8TokenMap);
         String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
         fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
         fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
 
+    }
+
+    private Map<String, Object> getClusterMap() {
+        Map<String, Object> clusterParameterMap = new TreeMap<>();
+        clusterParameterMap.put("api_url", inputData.getCloudDTO().getApiUrl());
+        clusterParameterMap.put("api_port", inputData.getCloudDTO().getApiPort());
+        clusterParameterMap.put("public_url", inputData.getCloudDTO().getPublicUrl());
+        clusterParameterMap.put("protocol", inputData.getCloudDTO().getProtocol());
+        return clusterParameterMap;
     }
 
     private void createConsumerFiles(ParameterBundle parameterBundle) {
@@ -223,6 +238,8 @@ public class CliParameterParser {
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), perServiceDir, "deployment-parameters.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), deploymentDir, "collision-deployment-parameters.yaml");
             if (MapUtils.isNotEmpty(parameterBundle.getPerServiceParams())) {
                 parameterBundle.getPerServiceParams().entrySet().stream().forEach(entry -> {
                     try {
