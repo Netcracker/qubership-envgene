@@ -73,7 +73,7 @@ def add_app(entry, list) -> int:
         list.append(entry)
     return 1
 
-def merge(data1, data2, target_path):
+def merge(data1, data2):
     logger.info(f"Full SD: {data1}")
     logger.info(f"Delta SD: {data2}")
 
