@@ -23,7 +23,7 @@ PARAMSET_SCHEMA_PATH = path.join(SCHEMAS_DIR, "paramset.schema.json")
 MERGE_METHODS = {
     "basic-merge": helper.basic_merge,
     "basic-exclusion-merge": helper.basic_exclusion_merge,
-    "extended-merge": helper.merge
+    "extended-merge": helper.extended_merge
 }
 
 with open(PARAMSET_SCHEMA_PATH, 'r') as f:
@@ -173,8 +173,8 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
             "deployMode": data[0].get("deployMode"),
             "applications": merged_applications["applications"]
             }
-        logger.info(f"Final merged SD data: {json.dumps(merged_result, indent=2)}")    
-        helper.writeYamlToFile(sd_path, merged_result)
+        logger.info(f"Final merged SD data: {json.dumps(merged_result, indent=2)}")
+        merge_sd(env, merged_result)   
 
     logger.info(f"SD successfully extracted from SD_DATA and is saved in {sd_path}")
 
