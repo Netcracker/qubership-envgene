@@ -169,9 +169,8 @@ public class ParametersCalculationService {
         Map<String, Object> serviceMap = new LinkedHashMap<>();
         Map<String, Object> collisionParams = new LinkedHashMap<>();
         entities.stream()
-                .map(key -> (Map<String, Object>) parameters.remove(key))
-                .filter(Objects::nonNull)
-                .forEach(serviceMap::putAll);
+                .map(key -> (Map<String, Object>)parameters.get(key))
+                .filter(Objects::nonNull).forEach(serviceMap::putAll);
         Set<String> services = serviceMap.keySet();
         parameters.entrySet().forEach(entry -> {
                 if(services.contains(entry.getKey())){
