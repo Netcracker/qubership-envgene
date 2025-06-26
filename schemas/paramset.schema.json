@@ -1,84 +1,84 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "title": "Parameter Set Object",
-    "description": "Defines the Parameter Set which is container for a group of parameters",
-    "additionalProperties": true,
-    "properties": {
-      "name": {
-        "type": "string",
-        "title": "Parameter Set Name",
-        "description": "Name of the parameter set",
-        "examples": [
-          "paramset1"
-        ]
-      },
-      "version": {
-        "type": "number",
-        "title": "Version Number",
-        "description": "Version number of the specific parameter set",
-        "examples": [
-          1.2,
-          2
-        ]
-      },
-      "parameters": {
-        "type": "object",
-        "title": "Parameter Set Parameters",
-        "description": "Parameters of the Parameter Set",
-        "examples": [
-          {
-            "NAMESPACE": "main",
-            "ESCAPE_SEQUENCE": "true"
-          }
-        ]
-      },
-      "applications": {
-        "type": "array",
-        "items": {
-          "type": "object",
-          "additionalProperties": true,
-          "properties": {
-            "appName": {
-              "type": "string",
-              "title": "Application Name",
-              "description": "Name of the application",
-              "examples": [
-                "app1",
-                "app2"
-              ]
-            },
-            "parameters": {
-              "type": "object",
-              "title": "Application Parameters",
-              "description": "Application level parameters",
-              "examples": [
-                {
-                  "COMPOSITE_PLATFORM": "true"
-                }
-              ]
-            }
-          }
-        },
-        "required": [
-          "appName",
-          "parameters"
-        ]
-      }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Parameter Set Object",
+  "description": "Defines the Parameter Set which is container for a group of parameters",
+  "additionalProperties": true,
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Parameter Set Name",
+      "description": "Name of the parameter set",
+      "examples": [
+        "paramset1"
+      ]
     },
-    "anyOf": [
-      {
-        "required": [
-          "parameters"
-        ]
+    "version": {
+      "type": "number",
+      "title": "Version Number",
+      "description": "Version number of the specific parameter set",
+      "examples": [
+        1.2,
+        2
+      ]
+    },
+    "parameters": {
+      "type": "object",
+      "title": "Parameter Set Parameters",
+      "description": "Parameters of the Parameter Set",
+      "examples": [
+        {
+          "NAMESPACE": "main",
+          "ESCAPE_SEQUENCE": "true"
+        }
+      ]
+    },
+    "applications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "appName": {
+            "type": "string",
+            "title": "Application Name",
+            "description": "Name of the application",
+            "examples": [
+              "app1",
+              "app2"
+            ]
+          },
+          "parameters": {
+            "type": "object",
+            "title": "Application Parameters",
+            "description": "Application level parameters",
+            "examples": [
+              {
+                "COMPOSITE_PLATFORM": "true"
+              }
+            ]
+          }
+        }
       },
-      {
-        "required": [
-          "applications"
-        ]
-      }
-    ],
-    "required": [
-      "name"
-    ]
+      "required": [
+        "appName",
+        "parameters"
+      ]
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "parameters"
+      ]
+    },
+    {
+      "required": [
+        "applications"
+      ]
+    }
+  ],
+  "required": [
+    "name"
+  ]
 }

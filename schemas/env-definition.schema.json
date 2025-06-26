@@ -30,6 +30,15 @@
             "Infrastructure"
           ]
         },
+        "cloudName": {
+          "type": "string",
+          "title": "Cloud Name",
+          "description": "Name of the cloud for your environment",
+          "examples": [
+            "qubership_k8s_01_dev01",
+            "dev_cluster_test10"
+          ]
+        },
         "deployer": {
           "type": "string",
           "title": "Deployer Name",

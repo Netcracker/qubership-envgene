@@ -66,6 +66,9 @@
         "glpat-11223klmno"
       ]
     }
-  }, 
-  "required": ["cp_discovery", "self_token"]
+  },
+  "required": [
+    "cp_discovery",
+    "self_token"
+  ]
 }
