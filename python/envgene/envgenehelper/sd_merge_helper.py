@@ -115,6 +115,8 @@ def extended_merge(data1, data2):
         if counter < length:
             error(NEW_CHUNK_ERROR)
 
+    return data1
+
 def merge(data1, data2, target_path):
     logger.info(f"Full SD: {data1}")
     logger.info(f"Delta SD: {data2}")
