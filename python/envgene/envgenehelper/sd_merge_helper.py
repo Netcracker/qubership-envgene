@@ -76,8 +76,7 @@ def add_app(entry, list) -> int:
 def extended_merge(data1, data2):
     logger.info(f"Full SD: {data1}")
     logger.info(f"Delta SD: {data2}")
-
-    pre_validate(data1, data2)
+    
     counter_ = 0
     apps_list = data1["applications"].copy()
     length = len(data2["applications"])
@@ -120,7 +119,9 @@ def extended_merge(data1, data2):
 def merge(data1, data2, target_path):
     logger.info(f"Full SD: {data1}")
     logger.info(f"Delta SD: {data2}")
+    pre_validate(data1, data2)
     data1 = extended_merge(data1, data2)
+    logger.info(f"Merged data into Target Path! - {data1}")
     writeYamlToFile(target_path, data1)
 
 def basic_merge(full_sd, delta_sd):
