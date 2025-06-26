@@ -174,7 +174,9 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
             "applications": merged_applications["applications"]
             }
         logger.info(f"Final merged SD data: {json.dumps(merged_result, indent=2)}")
-        merge_sd(env, merged_result)   
+        helper.writeYamlToFile(sd_path, merged_result)
+        merged_data = helper.openYaml(sd_path)
+        merge_sd(env, merged_data)   
 
     logger.info(f"SD successfully extracted from SD_DATA and is saved in {sd_path}")
 
