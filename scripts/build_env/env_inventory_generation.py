@@ -100,13 +100,16 @@ def generate_env():
         helper.writeYamlToFile(env.inv_gen_creds_path, env.inv_gen_creds)
         helper.encrypt_file(env.inv_gen_creds_path)
 
-def merge_sd(env, sd_data):
+def merge_sd(env, sd_data, merge_func):
     destination = f'{env.env_path}/Inventory/solution-descriptor/sd.yaml'
     if helper.check_file_exists(destination):
         full_sd_yaml = helper.openYaml(destination)
         logger.info(f"full_sd.yaml before merge: {full_sd_yaml}")
     helper.check_dir_exist_and_create(path.dirname(destination))
-    helper.merge(full_sd_yaml, sd_data, destination)
+    helper.pre_validate(full_sd_yaml, sd_data)
+    result = merge_func(full_sd_yaml, sd_data, destination)
+    helper.writeYamlToFile(destination, result)
+    logger.info(f"Merged data into Target Path! - {result}")
     logger.info(f"SD_DELTA has been merged! - {sd_data}")
 
 def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
@@ -161,12 +164,10 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         if not merged_applications["applications"]:
             logger.error("No applications found in the first SD block.")
             exit(1)
-        selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
-        if selected_merge_function is None:
-            raise ValueError(f"Unsupported merge mode: {effective_merge_mode}")
+        basic_merge_func = MERGE_METHODS.get("basic-merge")
         for i in range(1, len(data)):
             current_item_sd = {"applications": data[i].get("applications", [])} 
-            merged_applications = selected_merge_function(merged_applications, current_item_sd)
+            merged_applications = basic_merge_func(merged_applications, current_item_sd)
         merged_result = {
             "version": data[0].get("version"),
             "type": data[0].get("type"),
@@ -176,7 +177,12 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         logger.info(f"Final merged SD data: {json.dumps(merged_result, indent=2)}")
         helper.writeYamlToFile(sd_path, merged_result)
         merged_data = helper.openYaml(sd_path)
-        merge_sd(env, merged_data)   
+
+        # Call merge_sd with correct merge function
+        selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
+        if not selected_merge_function:
+            raise ValueError(f"Unsupported merge mode: {effective_merge_mode}")
+        merge_sd(env, merged_data, selected_merge_function)  
 
     logger.info(f"SD successfully extracted from SD_DATA and is saved in {sd_path}")
 
