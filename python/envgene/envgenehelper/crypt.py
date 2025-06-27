@@ -13,10 +13,11 @@ from .logger import logger
 from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
 from .crypt_backends.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
 
-
+logger.info("testing it ")
 config = get_envgene_config_yaml()
 IS_CRYPT = config.get('crypt', True)
 CRYPT_BACKEND = config.get('crypt_backend', 'Fernet')
+
 
 BASE_DIR = getenv('CI_PROJECT_DIR', os.getcwd())
 VALID_EXTENSIONS = re.compile(r'\.ya?ml$')
@@ -39,6 +40,8 @@ EXTRACT_FUNCTIONS = {
     'Fernet': extract_value_Fernet
 }
 
+def get_configured_encryption_type():
+    return CRYPT_BACKEND
 
 def _handle_missing_file(file_path, default_yaml, allow_default):
     if check_file_exists(file_path):
