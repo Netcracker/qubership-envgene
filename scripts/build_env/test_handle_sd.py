@@ -19,8 +19,8 @@ yaml = YAML()
 # Test data configuration
 TEST_CASES = [
     # (cluster_name, environment_name, test_case_name)
-    ("cluster01", "env02", "TC-001-002"),
-    ("cluster01", "env02", "TC-001-006")
+    ("cluster01", "single_sd", "TC-001-002"),
+    ("cluster01", "single_sd", "TC-001-006")
 ]
 
 # Directory paths configuration
