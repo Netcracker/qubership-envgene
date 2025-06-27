@@ -1,5 +1,7 @@
 ---
 name: "{{current_env.cloudNameWithCluster}}"
+apiUrl: "{{current_env.cluster.cloud_api_url}}"
+apiPort: "{{current_env.cluster.cloud_api_port}}"
 dbMode: "db"
 databases: []
 defaultCredentialsId: "admin-token"
