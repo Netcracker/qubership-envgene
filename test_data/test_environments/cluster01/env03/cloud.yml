@@ -7,6 +7,7 @@ apiPort: "0000" # cloud passport: test-cloud-passport version: 1.5
 privateUrl: "test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
 publicUrl: "test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
 dashboardUrl: "https://dashboard.test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
+labels: []
 defaultCredentialsId: "cloud-deploy-sa-token" # cloud passport: test-cloud-passport version: 1.5
 protocol: "https" # cloud passport: test-cloud-passport version: 1.5
 dbMode: "db"
@@ -45,3 +46,4 @@ deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []
 productionMode: false # cloud passport: test-cloud-passport version: 1.5
+

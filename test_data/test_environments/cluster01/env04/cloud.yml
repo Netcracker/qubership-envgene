@@ -2,7 +2,14 @@
 # Contents will be overwritten by next generation.
 # Please modify this contents only for development purposes or as workaround.
 name: "_test_environment"
+apiUrl: ""
+apiPort: ""
+privateUrl: ""
+publicUrl: ""
+dashboardUrl: "https://dashboard."
+labels: []
 defaultCredentialsId: "admin-token"
+protocol: ""
 dbMode: "db"
 databases: []
 maasConfig:
@@ -33,3 +40,4 @@ deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []
 productionMode: false # cloud passport: test-cloud-passport version: 1.5
+
