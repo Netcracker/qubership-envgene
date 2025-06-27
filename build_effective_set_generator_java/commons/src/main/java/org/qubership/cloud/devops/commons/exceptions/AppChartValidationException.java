@@ -14,38 +14,24 @@
  * limitations under the License.
  */
 
-package org.qubership.cloud.devops.cli.pojo.dto.shared;
+package org.qubership.cloud.devops.commons.exceptions;
 
+public class AppChartValidationException extends RuntimeException {
 
-import jakarta.enterprise.context.ApplicationScoped;
-import lombok.Getter;
-import lombok.Setter;
+    private static final long serialVersionUID = 7265829704790348836L;
 
-import java.util.List;
+    public AppChartValidationException() {
+    }
 
-@Getter
-@Setter
-@ApplicationScoped
-public class SharedData {
+    public AppChartValidationException(String message) {
+        super(message);
+    }
 
-    private String envId;
+    public AppChartValidationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    private String envsPath;
-
-    private String sbomsPath;
-
-    private String solsbomPath;
-
-    private String registryPath;
-
-    private String outputDir;
-
-    private String effectiveSetVersion;
-
-    private List<String> pcsspPaths;
-
-    private String deploymentSessionId;
-
-    private boolean appChartValidation;
-
+    public AppChartValidationException(Throwable cause) {
+        super(cause);
+    }
 }

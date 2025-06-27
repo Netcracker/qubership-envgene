@@ -30,4 +30,5 @@ public class ApplicationConstants {
     public static final String DEPLOY_DESC = "deploy_desc";
     public static final String COMMON_DEPLOY_DESC = "common_deploy_desc";
     public static final String PER_SERVICE_DEPLOY_PARAMS = "per_service_deploy_params";
+    public static final String APPR_CHART_NAME = "appChartName";
 }

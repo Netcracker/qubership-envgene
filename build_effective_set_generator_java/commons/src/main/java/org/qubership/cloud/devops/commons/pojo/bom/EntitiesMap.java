@@ -40,4 +40,5 @@ public class EntitiesMap {
     public Map<String, Map<String, Object>> commonParamsMap = new TreeMap<>();
     public Map<String, Map<String, Object>> perServiceParams = new TreeMap<>();
     public String deployerSessionId;
+    public String appChartName;
 }
