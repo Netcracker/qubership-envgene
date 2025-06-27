@@ -14,7 +14,7 @@
 
 ## Problem Statements
 
-While Environment Inventory generation creates the necessary configuration files and parameters for an environment, it does not actually build the deployable environment artifacts. Environment Instance generation is needed to transform the inventory into a complete, deployable environment configuration.
+While Environment Inventory generation creates the necessary configuration files and parameters for an environment, it does not actually build the environment instance artifacts. Environment Instance generation is needed to transform the inventory into a complete, deployable environment instance.
 
 ### Goals
 
@@ -22,7 +22,7 @@ Develop a process in EnvGene that enables the transformation of Environment Inve
 
 ## Proposed Approach
 
-The Environment Instance generation process builds upon the Environment Inventory by applying templates, resolving variables, and generating the final deployment artifacts. This is a separate step that occurs after inventory generation and is controlled by the `ENV_BUILDER` parameter.
+The Environment Instance generation process builds upon the Environment Inventory by applying templates, resolving variables, and generating the final instance artifact. This is a separate step that occurs after inventory generation and is controlled by the `ENV_BUILDER` parameter.
 
 The external system will initiate Environment Instance generation by triggering the instance pipeline with `ENV_BUILDER=true`, along with other required parameters. The target Environment for Instance generation is determined by the `ENV_NAMES` attribute, which follows the `<cluster-name>/<env-name>` notation.
 
@@ -37,6 +37,43 @@ The external system will initiate Environment Instance generation by triggering 
 Additional parameters from the [Instance Pipeline Parameters](instance-pipeline-parameters.md) documentation may also be used to control various aspects of the instance generation process.
 
 ### Instance Generation Process
+
+#### Process Flow Diagram
+
+```mermaid
+flowchart TD
+    subgraph "Preparation Phase"
+        A1[Environment Validation] --> A2[Parameter Validation]
+        A2 --> A3[Directory Setup]
+    end
+    
+    subgraph "Template Processing Phase"
+        B1[Template Collection] --> B2[Parameter Collection]
+        B2 --> B3[Template Overrides]
+        B3 --> B4[Resource Profile Collection]
+    end
+    
+    subgraph "Rendering Phase"
+        C1[Jinja2 Template Rendering] --> C2[Parameter Container Processing]
+        C2 --> C3[Template Macros Expansion]
+        C3 --> C4[Resource Profile Application]
+    end
+    
+    subgraph "Artifact Generation Phase"
+        D1[Namespace Generation] --> D2[Application Files]
+    end
+    
+    subgraph "Post-Processing Phase"
+        E1[Credential Processing] --> E2[Artifact Organization]
+        E2 --> E3[Cleanup]
+    end
+    
+    A3 -->|"Validated Structure"| B1
+    B4 -->|"Templates & Parameters"| C1
+    C4 -->|"Rendered Templates"| D1
+    D2 -->|"Instance Files"| E1
+    E3 -->|"Final Instance"| F[Completed Environment Instance]
+```
 
 The Environment Instance generation process includes the following detailed steps:
 
@@ -65,16 +102,16 @@ The Environment Instance generation process includes the following detailed step
 
 4. **Artifact Generation Phase**
    - **Namespace Generation**: Creates namespace configuration files based on templates
-   - **Application Deployment Files**: Generates application deployment files based on templates and parameters
+   - **Application Files**: Generates application files based on templates and parameters
    
-   **Output**: Deployment-ready artifact files organized by namespace and application
+   **Output**: Instance artifact files organized by namespace and application
 
 5. **Post-Processing Phase**
    - **Credential Processing**: Processes and encrypts credential files
    - **Artifact Organization**: Organizes all generated files into the proper directory structure
    - **Cleanup**: Removes temporary files and directories
    
-   **Output**: Final environment instance with properly organized and secured deployment artifacts
+   **Output**: Final environment instance with properly organized and secured instance artifacts
 
 The process is executed in the `env_builder` job within the instance repository pipeline. This job must be executed after the inventory generation job if both are being run in the same pipeline.
 
@@ -114,6 +151,6 @@ After successful instance generation, the environment directory will contain the
 The key differences between Inventory and Instance are:
 
 1. **Inventory** contains only configuration parameters, credentials, and solution descriptors
-2. **Instance** contains the fully rendered templates, namespace configurations, application deployment files, and resource profiles
+2. **Instance** contains the fully rendered templates, namespace configurations, application files, and resource profiles
 
-The Instance generation process transforms the declarative configuration in the Inventory into concrete deployment artifacts that can be applied to the target environment. This includes expanding templates, resolving variables, and generating all necessary deployment files.
+The Instance generation process transforms the declarative configuration in the Inventory into concrete artifacts that can be applied to the target environment. This includes expanding templates, resolving variables, and generating all necessary files.
