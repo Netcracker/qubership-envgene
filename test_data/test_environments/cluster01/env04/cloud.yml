@@ -32,4 +32,4 @@ technicalConfigurationParameters: {}
 deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []
-
+productionMode: false # cloud passport: test-cloud-passport version: 1.5
