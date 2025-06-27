@@ -2,6 +2,11 @@
 name: "{{current_env.cloudNameWithCluster}}"
 apiUrl: "{{current_env.cluster.cloud_api_url}}"
 apiPort: "{{current_env.cluster.cloud_api_port}}"
+privateUrl: ""
+publicUrl: "{{current_env.cluster.cloud_public_url}}"
+dashboardUrl: "https://dashboard.{{current_env.cluster.cloud_public_url}}"
+labels: []
+protocol: "{{current_env.cluster.cloud_api_protocol}}"
 dbMode: "db"
 databases: []
 defaultCredentialsId: "admin-token"
