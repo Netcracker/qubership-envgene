@@ -326,8 +326,6 @@
     "name",
     "apiUrl",
     "apiPort",
-    "privateUrl",
-    "publicUrl",
     "dashboardUrl",
     "labels",
     "defaultCredentialsId",
