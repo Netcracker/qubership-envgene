@@ -28,6 +28,7 @@ import org.cyclonedx.model.component.data.ComponentData;
 import org.cyclonedx.model.component.data.Content;
 import org.qubership.cloud.devops.cli.exceptions.MandatoryParameterException;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
+import org.qubership.cloud.devops.commons.exceptions.AppChartValidationException;
 import org.qubership.cloud.devops.commons.exceptions.BomProcessingException;
 import org.qubership.cloud.devops.commons.pojo.bom.ApplicationBomDTO;
 import org.qubership.cloud.devops.commons.pojo.bom.EntitiesMap;
@@ -80,6 +81,8 @@ public class BomReaderUtilsImplV2 {
 
                 bomCommonUtils.getServiceEntities(entitiesMap, bomContent.getComponents());
 
+                validateAppChart(entitiesMap, bomContent.getComponents());
+
                 getPerServiceEntities(entitiesMap, bomContent.getComponents(), appName, baseline, override, bomContent);
 
                 populateEntityDeployDescParams(entitiesMap, bomContent.getComponents(), bomContent);
@@ -90,6 +93,7 @@ public class BomReaderUtilsImplV2 {
                     applicationBomDto.setPerServiceParams(entitiesMap.getPerServiceParams());
                     applicationBomDto.setDeployDescriptors(entitiesMap.getDeployDescParamsMap());
                     applicationBomDto.setCommonDeployDescriptors(entitiesMap.getCommonParamsMap());
+                    applicationBomDto.setAppChartName(entitiesMap.getAppChartName());
                 }
                 return applicationBomDto;
             }
@@ -234,6 +238,16 @@ public class BomReaderUtilsImplV2 {
             } else if (CONFIG_SERVICE_MIME_TYPES.contains(component.getMimeType())) {
                 processConfigServiceComponent(entitiesMap.getPerServiceParams(), component, appName, baseline, override, bomContent);
             }
+        }
+    }
+
+    private void validateAppChart(EntitiesMap entitiesMap, List<Component> components) {
+        Optional<Component> optional = components.stream().filter(key -> "application/vnd.qubership.app.chart".equalsIgnoreCase(key.getMimeType())).findAny();
+        if (!optional.isPresent() && sharedData.isAppChartValidation()) {
+            throw new AppChartValidationException("Failed to process effective set as appchart validation is mandatory " +
+                    "and the applicable mime type application/vnd.qubership.app.chart is not found");
+        } else if (optional.isPresent() && sharedData.isAppChartValidation()) {
+            entitiesMap.setAppChartName(optional.get().getName());
         }
     }
 
