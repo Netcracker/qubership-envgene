@@ -27,6 +27,7 @@ import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SBApplicationDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
+import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
 import org.qubership.cloud.devops.commons.exceptions.ConsumerFileProcessingException;
 import org.qubership.cloud.devops.commons.exceptions.CreateWorkDirException;
 import org.qubership.cloud.devops.commons.exceptions.NotFoundException;
@@ -39,6 +40,8 @@ import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationService;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -55,17 +58,20 @@ public class CliParameterParser {
     private final InputData inputData;
     private final FileDataConverter fileDataConverter;
     private final SharedData sharedData;
+    private final FileSystemUtils fileSystemUtils;
 
 
     @Inject
     public CliParameterParser(ParametersCalculationService parametersService,
                               InputData inputData,
                               FileDataConverter fileDataConverter,
-                              SharedData sharedData) {
+                              SharedData sharedData,
+                              FileSystemUtils fileSystemUtils) {
         this.parametersService = parametersService;
         this.inputData = inputData;
         this.fileDataConverter = fileDataConverter;
         this.sharedData = sharedData;
+        this.fileSystemUtils = fileSystemUtils;
 
     }
 
@@ -231,19 +237,28 @@ public class CliParameterParser {
 
     private void createFiles(String namespaceName, String appName, ParameterBundle parameterBundle) throws IOException {
         if ("v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion())) {
+            Path appChartPath = null;
+            if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
+                appChartPath = fileSystemUtils.getFileFromGivenPath(sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters", parameterBundle.getAppChartName()).toPath();
+                Files.createDirectories(appChartPath);
+            }
+
             String deploymentDir = String.format("%s/%s/%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName, appName, "values");
-            String perServiceDir = String.format("%s/%s/%s/%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters");
             String runtimeDir = String.format("%s/%s/%s/%s", sharedData.getOutputDir(), "runtime", namespaceName, appName);
 
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
-            fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), perServiceDir, "deployment-parameters.yaml");
+            if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
+                fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
+            }
             fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), deploymentDir, "collision-deployment-parameters.yaml");
             if (MapUtils.isNotEmpty(parameterBundle.getPerServiceParams())) {
                 parameterBundle.getPerServiceParams().entrySet().stream().forEach(entry -> {
                     try {
-                        fileDataConverter.writeToFile((Map<String, Object>) entry.getValue(), perServiceDir, entry.getKey() + ".yaml");
+                        Path servicePath = fileSystemUtils.getFileFromGivenPath(sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters", entry.getKey()).toPath();
+                        Files.createDirectories(servicePath);
+                        fileDataConverter.writeToFile((Map<String, Object>) entry.getValue(), servicePath.toString(), "deployment-parameters.yaml");
                     } catch (IOException e) {
                         throw new RuntimeException("Failed to write per service parameters of service " + entry.getKey());
                     }

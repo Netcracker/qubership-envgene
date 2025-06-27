@@ -88,6 +88,7 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setEffectiveSetVersion(envParams.version);
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
+        sharedData.setAppChartValidation(envParams.appChartValidation);
         populateDeploymentSessionId(envParams.extraParams);
     }
 
@@ -129,6 +130,9 @@ public class CmdbCli implements Callable<Integer> {
 
         @CommandLine.Option(names = {"-ex", "--extra_params"}, description = "Additional params that used to generate effective set")
         String[] extraParams;
+
+        @CommandLine.Option(names = {"-acv", "--app_chart_validation"}, description = "App chart validation parameter on sbom", arity = "1")
+        boolean appChartValidation = true;
 
     }
 }

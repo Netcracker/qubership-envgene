@@ -36,7 +36,7 @@ import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConst
 public class ParametersCalculationService {
     public static final Logger LOGGER = LoggerFactory.getLogger(ParametersCalculationService.class.getName());
     private final ParametersProcessor parametersProcessor;
-    private final List<String> entities = Arrays.asList(SERVICES, CONFIGURATIONS, FRONTENDS, SMARTPLUG, CDN, SAMPLREPO);
+    private final List<String> entities = Arrays.asList(SERVICES, CONFIGURATIONS, FRONTENDS, SMARTPLUG, CDN, SAMPLREPO, APPR_CHART_NAME);
 
     @Inject
     public ParametersCalculationService(ParametersProcessor parametersProcessor) {
@@ -154,10 +154,12 @@ public class ParametersCalculationService {
             parameterBundle.setSecuredE2eParams(finalSecuredParams);
             parameterBundle.setE2eParams(inSecuredParamsAsObject);
         } else if (parameterType == ParameterType.DEPLOY) {
+            Object appChartName = inSecuredParamsAsObject.get(APPR_CHART_NAME);
+            parameterBundle.setAppChartName(appChartName != null ? appChartName.toString() : "");
             parameterBundle.setCollisionDeployParameters(getCollisionParams(inSecuredParamsAsObject));
             parameterBundle.setCollisionSecureParameters(getCollisionParams(finalSecuredParams));
             Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject, parameterBundle.isProcessPerServiceParams());
-            parameterBundle.setSecuredDeployParams(prepareFinalParams(finalSecuredParams, false));
+            parameterBundle.setSecuredDeployParams(prepareFinalParams(finalSecuredParams, true));
             parameterBundle.setDeployParams(finalInsecureParams);
         } else if (parameterType == ParameterType.TECHNICAL) {
             parameterBundle.setSecuredConfigParams(finalSecuredParams);
@@ -168,13 +170,13 @@ public class ParametersCalculationService {
     private Map<String, Object> getCollisionParams(Map<String, Object> parameters) {
         Map<String, Object> serviceMap = new LinkedHashMap<>();
         Map<String, Object> collisionParams = new LinkedHashMap<>();
-        entities.stream()
-                .map(key -> (Map<String, Object>)parameters.get(key))
-                .filter(Objects::nonNull).forEach(serviceMap::putAll);
+        if (parameters.containsKey(SERVICES)) {
+            serviceMap = (Map<String, Object>) parameters.get(SERVICES);
+        }
         Set<String> services = serviceMap.keySet();
         parameters.entrySet().forEach(entry -> {
-                if(services.contains(entry.getKey())){
-                    collisionParams.put(entry.getKey(), entry.getValue());
+            if (services.contains(entry.getKey()) && !entities.contains(entry.getKey())) {
+                collisionParams.put(entry.getKey(), entry.getValue());
             }
         });
         return collisionParams;

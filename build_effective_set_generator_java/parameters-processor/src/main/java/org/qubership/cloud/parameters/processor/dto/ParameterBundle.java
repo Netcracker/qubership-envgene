@@ -35,4 +35,5 @@ public class ParameterBundle {
     Map<String, Object> collisionDeployParameters;
     Map<String, Object> collisionSecureParameters;
     boolean processPerServiceParams;
+    String appChartName;
 }
