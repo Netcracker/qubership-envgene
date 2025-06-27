@@ -107,7 +107,7 @@ def merge_sd(env, sd_data, merge_func):
         logger.info(f"full_sd.yaml before merge: {full_sd_yaml}")
     helper.check_dir_exist_and_create(path.dirname(destination))
     helper.pre_validate(full_sd_yaml, sd_data)
-    result = merge_func(full_sd_yaml, sd_data, destination)
+    result = merge_func(full_sd_yaml, sd_data)
     helper.writeYamlToFile(destination, result)
     logger.info(f"Merged data into Target Path! - {result}")
     logger.info(f"SD_DELTA has been merged! - {sd_data}")
@@ -164,10 +164,9 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         if not merged_applications["applications"]:
             logger.error("No applications found in the first SD block.")
             exit(1)
-        basic_merge_func = MERGE_METHODS.get("basic-merge")
         for i in range(1, len(data)):
             current_item_sd = {"applications": data[i].get("applications", [])} 
-            merged_applications = basic_merge_func(merged_applications, current_item_sd)
+            merged_applications = helper.merge(merged_applications, current_item_sd)
         merged_result = {
             "version": data[0].get("version"),
             "type": data[0].get("type"),
