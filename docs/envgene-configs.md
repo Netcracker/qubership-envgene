@@ -34,7 +34,7 @@ inventory:
   # Name of the Environment, e.g. dev01
   # This attribute's value is available for template rendering via the `current_env.name` variable
   environmentName: string
-  # Mandatory
+  # Optional
   # Name of the Tenant for the Environment
   # This attribute's value is available for template rendering via the `current_env.tenant` variable
   tenantName: string

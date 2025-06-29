@@ -32,7 +32,9 @@ Instance git should have following structure
 ```
 
 ## Description of env_definition.yml
+
 env_definition.yml should have following structure
+
 ```yaml
 # mandatory | Structure that defines inventory of your environment
 inventory:                    
@@ -138,4 +140,5 @@ envTemplate:
     generatedVersions:
         generateEnvironmentLatestVersion: "master-20240209.153935-69"
 ```
-Sample is [here](samples/environments/sample-cloud-name/composite-full/Inventory/env_definition.yml). 
+
+Sample is [here](/samples/environments/sample-cloud-name/composite-full/Inventory/env_definition.yml)
