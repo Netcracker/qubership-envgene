@@ -22,9 +22,10 @@
         - [\[Version 2.0\]\[Deployment Parameter Context\] `credentials.yaml`](#version-20deployment-parameter-context-credentialsyaml)
         - [\[Version 2.0\]\[Deployment Parameter Context\] Collision Parameters](#version-20deployment-parameter-context-collision-parameters)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml)
-          - [Predefined `deploy-descriptor.yaml` parameters](#predefined-deploy-descriptoryaml-parameters)
+          - [\[Version 2.0\] Predefined `deploy-descriptor.yaml` parameters](#version-20-predefined-deploy-descriptoryaml-parameters)
           - [\[Version 2.0\] Service Artifacts](#version-20-service-artifacts)
           - [\[Version 2.0\] Primary Service Artifact](#version-20-primary-service-artifact)
+          - [\[Version 2.0\] `tArtifactNames`](#version-20-tartifactnames)
         - [\[Version 2.0\]\[Deployment Parameter Context\] Per Service parameters](#version-20deployment-parameter-context-per-service-parameters)
           - [\[Version 2.0\]\[Deployment Parameter Context\] Resource Profile Processing](#version-20deployment-parameter-context-resource-profile-processing)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `mapping.yml`](#version-20deployment-parameter-context-mappingyml)
@@ -427,7 +428,7 @@ deployDescriptor: *id003
 <common-predefined-key-N>: <common-predefined-value-N>
 ```
 
-###### Predefined `deploy-descriptor.yaml` parameters
+###### [Version 2.0] Predefined `deploy-descriptor.yaml` parameters
 
 The structure of **service predefined** parameters in deploy-descriptor.yaml depends on the service type, determined by the MIME type assigned to the service in the SBOM. There are two types:
 
@@ -505,7 +506,7 @@ Common Predefined Parameters:
 | `maven_repository` | yes | string | None | None | `.components[?name=<service-name>].components[].properties[?name=maven_repository].value` |
 | `name` | yes | string | Service name | None | `<service-name>` |
 | `service_name` | yes | string | Service name | None | `<service-name>` |
-| `tArtifactNames` | yes | hashmap | always `{}` | `{}` | None |
+| `tArtifactNames` | yes | hashmap | This section defines microservice ZIP artifacts. Artifacts are only populated for services/SBOM components that meet [specified conditions](#version-20-service-artifacts). All other cases should return `{}` Described in [`tArtifactNames`](#version-20-tartifactnames) | `{}` | None |
 | `type` | no | string | None | None | `.components[?name=<service-name>].components[].properties[?name=type].value` |
 | `version` | yes | string | Service version | None | `.components[?name=<service-name>].version` |
 
@@ -545,6 +546,35 @@ Among the artifacts of service, one primary artifact is identified that requires
 >
 > 1. For each such service, only one artifact should meet these criteria. Otherwise, the generation process must fail with a clear error message.
 > 2. For unspecified `mime-type`, there is no primary artifact
+
+###### [Version 2.0] `tArtifactNames`
+
+Generated for **each** component with `type: zip` that is a child of components matching the [specified conditions](#version-20-service-artifacts)
+
+**Key** is value of `classifier`. **Value** is constructed by concatenating the attributes `name`, `version`, and `classifier` using `-` and `.` as separators.
+
+Simplified schema:
+
+```yaml
+tArtifactNames:
+  <classifier>: <name>-<version>-<classifier>.zip
+```
+
+Same but with SBOM references:
+
+```yaml
+tArtifactNames:
+  `.components[?name=<service-name>].components[?type=zip].properties[?name=classifier].value`: `.components[?name=<service-name>].components[?type=zip].name`-`.components[?name=<service-name>].components[?type=zip].version`-`.components[?name=<service-name>].components[?type=zip].properties[?name=classifier].value`.`zip`
+```
+
+If `classifier` is not specified or is an empty string, the default value `ecl` is used:
+
+```yaml
+tArtifactNames:
+  ecl: <name>-<version>.zip
+```
+
+Artifacts with the same `classifier` should overwrite previous entries
 
 ##### \[Version 2.0][Deployment Parameter Context] Per Service parameters
 
