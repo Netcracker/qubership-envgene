@@ -31,6 +31,7 @@ import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
 import org.qubership.cloud.devops.commons.exceptions.ConsumerFileProcessingException;
 import org.qubership.cloud.devops.commons.exceptions.CreateWorkDirException;
 import org.qubership.cloud.devops.commons.exceptions.NotFoundException;
+import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
 import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.SecretCredentialsDTO;
@@ -227,7 +228,7 @@ public class CliParameterParser {
                 k8TokenMap.put(originalNamespace, secCred.getSecret());
             }
         }
-        createFiles(namespaceName, appName, parameterBundle);
+        createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
 
     private String findDefaultCredentialsId(String namespace) {
@@ -235,11 +236,12 @@ public class CliParameterParser {
                 inputData.getNamespaceDTOMap().get(namespace).getCredentialsId() : inputData.getCloudDTO().getDefaultCredentialsId();
     }
 
-    private void createFiles(String namespaceName, String appName, ParameterBundle parameterBundle) throws IOException {
+    private void createFiles(String namespaceName, String appName, ParameterBundle parameterBundle, String originalNamespace) throws IOException {
         if ("v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion())) {
             Path appChartPath = null;
             if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
-                appChartPath = fileSystemUtils.getFileFromGivenPath(sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters", parameterBundle.getAppChartName()).toPath();
+                String normalizedName = HelmNameNormalizer.normalize(parameterBundle.getAppChartName(), originalNamespace);
+                appChartPath = fileSystemUtils.getFileFromGivenPath(sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters", normalizedName).toPath();
                 Files.createDirectories(appChartPath);
             }
 
