@@ -42,7 +42,7 @@
         "deployer": {
           "type": "string",
           "title": "Deployer Name",
-          "description": "Name of the Application Deployer for your environment. Should be listed in /configuration/deployer.yml or /environments/<cluster-name>/app-deployer/deployer.yml",
+          "description": "Name of an external CMDB for your environment. Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems. Should be listed in /configuration/deployer.yml or /environments/<cluster-name>/app-deployer/deployer.yml",
           "examples": [
             "deployer1",
             "deployer2"
