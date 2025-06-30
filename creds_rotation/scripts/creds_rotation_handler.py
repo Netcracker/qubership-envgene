@@ -3,6 +3,8 @@ import re
 import time
 import timeit
 import yaml
+import asyncio
+import aiofiles
 
 from pathlib import Path, PurePath
 from functools import lru_cache
@@ -48,6 +50,21 @@ REVERSE_CONTEXT_MAP = {
     "technicalconfigurationparameters": "pipeline",
     "e2eparameters": "runtime"
 }
+async def read_yaml_file(path: str) -> tuple[str, dict]:
+    try:
+        async with aiofiles.open(path, mode='r') as f:
+            content = await f.read()
+        data = yaml.safe_load(content)
+        return path, data
+    except Exception as e:
+        print(f"❌ Failed to read {path}: {e}")
+        return path, None
+
+
+async def load_yaml_files_parallel(paths: List[str]) -> Dict[str, dict]:
+    tasks = [read_yaml_file(path) for path in paths]
+    results = await asyncio.gather(*tasks)
+    return {path: content for path, content in results if content is not None}
 
 def get_app_and_ns(filename: str, content: dict) -> Tuple[str, Optional[str]]:
     filepath = PurePath(filename)
@@ -107,7 +124,12 @@ def find_matching_keys(data: dict, search_pattern: str, is_target: bool,
                 recurse(v, path + [k])
         elif isinstance(obj, list):
             for idx, item in enumerate(obj):
-                recurse(item, path + [str(idx)])
+               if path:
+                    base_path = path[:-1]
+                    last_key_with_index = f"{path[-1]}[{idx}]"
+                    recurse(item, base_path + [last_key_with_index])
+               else:
+                    recurse(item, [f"[{idx}]"])
         elif isinstance(obj, str) and search_pattern in obj:
             final_key = ".".join(path)
             if not is_target and context != target_context and final_key != target_key:
@@ -233,16 +255,15 @@ def check_if_many_envs_exist(env: str) -> str:
 def scandir_recursive(
     path: str,
     yaml_files_map: Dict[str, Any],
-    ns_files_map: Dict[str, Any],
+    ns_files: List[str],
     env_name: str,
     shared_list: List[str],
     is_encrypted: bool,
-    public_key: str,
-    encrypt_type: str
+    public_key: str
 ) -> None:
     for entry in os.scandir(path):
         if entry.is_dir(follow_symlinks=False):
-            scandir_recursive(entry.path, yaml_files_map, ns_files_map, env_name, shared_list, is_encrypted,public_key, encrypt_type)
+            scandir_recursive(entry.path, yaml_files_map, ns_files, env_name, shared_list, is_encrypted, public_key)
             
         elif entry.is_file(follow_symlinks=False) and entry.name.endswith((".yml", ".yaml")):
             name_wo_ext = os.path.splitext(entry.name)[0]
@@ -264,21 +285,20 @@ def scandir_recursive(
             else:
                 ns_fragment = os.path.normpath(os.path.join(env_name, "Namespaces"))
                 if ns_fragment in normalized_path:
-                    ns_content = get_content_form_file(entry.path)
-                    ns_files_map[entry.path] = ns_content
+                    ns_files.append(entry.path)
 
 def scan_and_get_yaml_files(
     env_dir: str,
     env_name: str,
     shared_list: List[str],
     is_encrypted: bool,
-    public_key: str,
-    encrypt_type: str
+    public_key: str
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
 
     yaml_files_map = {}
-    ns_files_map = {}
-    scandir_recursive(env_dir, yaml_files_map, ns_files_map, env_name, shared_list, is_encrypted, public_key, encrypt_type)
+    ns_files = []
+    scandir_recursive(env_dir, yaml_files_map, ns_files, env_name, shared_list, is_encrypted, public_key)
+    ns_files_map = asyncio.run(load_yaml_files_parallel(ns_files))
     return yaml_files_map, ns_files_map
 
 def get_ns_content(
@@ -406,11 +426,17 @@ def process_entry_in_payload(
 
 def cred_rotation():
     start = time.time()
+    
     env_name, envgene_age_public_key = getenv_with_error('ENV_NAME'), getenv_with_error('ENVGENE_AGE_PUBLIC_KEY')
     creds_rotation_enabled, cred_payload = getenv_with_error('CRED_ROTATION_FORCE'),yaml.safe_load(getenv_with_error('CRED_ROTATION_PAYLOAD'))
     cluster_name, work_dir, env = getenv_with_error('CLUSTER_NAME'),getenv_with_error('CI_PROJECT_DIR'),check_if_many_envs_exist(env_name)
     
-    base_env_path = f"{work_dir}/{cluster_name}/{env}"
+    encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
+    encrypt_type = 'SOPS' ##########################REMOVE HARCODING#####################
+    if encrypt_type == 'Fernet':
+        raise Exception(f"Failed to update credential in file as supported type is only SOPS")
+    
+    base_env_path = f"{work_dir}/environments/{cluster_name}/{env}"
     env_cred_file = f"{base_env_path}/Credentials/credentials.yml"
     output_path = f"{base_env_path}/affected-sensitive-parameters.yaml"
     creds_path = f"{base_env_path}/payload.yml" ##########################CHANGE PATH#####################
@@ -419,10 +445,11 @@ def cred_rotation():
 	
 	
     shared_creds =  collects_shared_Credentials(base_env_path)
-    encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
     logger.info(f"Encryption is {is_encrypted} and type is {encrypt_type}")
-    encrypt_type = 'SOPS' ##########################REMOVE HARCODING#####################
-    shared_content_map, ns_files_map = scan_and_get_yaml_files(work_dir, env_name, shared_creds, is_encrypted, envgene_age_public_key, encrypt_type)
+    
+    fileraed = time.time()
+    shared_content_map, ns_files_map = scan_and_get_yaml_files(work_dir, env_name, shared_creds, is_encrypted, envgene_age_public_key)
+    logger.info(f"✅ Fileread Completed in {round(time.time() - fileraed, 2)} seconds.")
     env_cred_map ={}
     #Decrypt Environment credential file if encrypted
     env_cred_map[env_cred_file] = decrypt_file(envgene_age_public_key, env_cred_file, False, encrypt_type, '')  
@@ -449,11 +476,11 @@ def cred_rotation():
     else:
         raise Exception(f"No affected parameters found for the given target keys. Hence Failing")
 
-    if encrypt_type == 'Fernet':
-        raise Exception(f"Failed to update credential in file as supported type is only SOPS")
     if not creds_rotation_enabled:
         raise Exception(f"Failed to update credential in file as creds rotation is not enabled")
-    write_into_cred_file(processed_cred_and_files, envgene_age_public_key, is_encrypted)
+    updated_content, original_content = update_cred_content(processed_cred_and_files)
+    write_updated_cred_into_file(updated_content, original_content, is_encrypted, envgene_age_public_key)
+
     
     logger.info(f"✅ Completed in {round(time.time() - start, 2)} seconds.")
 
@@ -466,13 +493,11 @@ def decrypt_file(envgene_age_public_key, file_path, in_place, crypt_backend, err
         raise Exception(f"Decryption of payload failed. {error_message} {e}")
     
  
-def write_into_cred_file(
-    processed_cred_and_files: Dict[str, List[CredMap]],
-    envgene_age_public_key: str,
-    is_encrypted: bool,
-) -> None:
-    logger.info("No errors seen. Hence updating the files")
+def update_cred_content(
+    processed_cred_and_files: Dict[str, List[CredMap]]
+):
     updated_files: Dict[str, List[Dict[str, Any]]] = {}
+    original_files: Dict[str, List[Dict[str, Any]]] = {}
 
     try:
         logger.info(f"size is {len(processed_cred_and_files)}")
@@ -482,6 +507,7 @@ def write_into_cred_file(
                 param_value = update.param_value
                 cred_field = update.cred_field.lower()
                 content = update.shared_content
+                original_content = content
 
                 if not content or cred_id not in content:
                     raise Exception(f"Credential ID '{cred_id}' not found in content for file '{cred_file}'")
@@ -495,32 +521,43 @@ def write_into_cred_file(
 
                 data_block[cred_field] = param_value
                 updated_files.setdefault(cred_file, []).append({"cred_file_content": content})
+                original_files.setdefault(cred_file, []).append({"cred_file_content": original_content})
+        return updated_files, original_files
 
     except Exception as e:
-        raise Exception(f"Updation of file failed {e}")
-
-    else:
+        raise Exception(f"Preparation of output data failed {e}")
+        
+       
+                    
+def write_updated_cred_into_file(updated_files, original_files, is_encrypted, envgene_age_public_key):
+    try:
         # All files processed without errors, now write and encrypt if needed
-        for cred_file, data_entries in updated_files.items():
+        update_file(updated_files, is_encrypted, envgene_age_public_key)
+    except Exception as e:
+        logger.error(f"Updation of file failed {e} \n Hence reverting the change")
+        update_file(original_files, is_encrypted, envgene_age_public_key)
+        logger.info(f"Files restored to original state. Creds changes are not updated.")
+
+def update_file(files_to_update, is_encrypted, envgene_age_public_key):
+    for cred_file, data_entries in files_to_update.items():
             for data in data_entries:
                 creds = data["cred_file_content"]
                 writeYamlToFile(cred_file, creds)
 
                 if is_encrypted:
                     crypt.encrypt_file(
-                        cred_file, in_place=True, ignore_is_crypt=True,
-                        public_key=envgene_age_public_key, crypt_backend='SOPS'
-                    )
-                    
+                            cred_file, in_place=True, ignore_is_crypt=True,
+                            public_key=envgene_age_public_key, crypt_backend='SOPS'
+                        )
 
 
 
 if __name__ == "__main__":
     #print("scandir:", timeit.timeit(cred_rotation, number=2))
     cred_rotation()
-    #times = timeit.repeat("cred_rotation()", globals=globals(), repeat=1, number=1)
+    #times = timeit.repeat("cred_rotation()", globals=globals(), repeat=10, number=1)
 
-    # times is a list like [0.36, 0.38, 0.35, 0.37, 0.39]
+     #times is a list like [0.36, 0.38, 0.35, 0.37, 0.39]
     #avg_time = sum(times) / len(times)
     #min_time = min(times)
     #max_time = max(times)
