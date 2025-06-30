@@ -138,7 +138,8 @@ public class BomReaderUtilsImplV2 {
                 populateOptionalParam(primaryArtifactMap, "artifact.artifactId", subComponent.getName());
                 populateOptionalParam(primaryArtifactMap, "artifact.groupId", subComponent.getGroup());
                 populateOptionalParam(primaryArtifactMap, "artifact.version", subComponent.getVersion());
-            } else if (SUB_SERVICE_ARTIFACT_MIME_TYPES.contains(subComponent.getMimeType())) {
+            }
+            if (SUB_SERVICE_ARTIFACT_MIME_TYPES.contains(subComponent.getMimeType())) {
                 String name = checkIfMandatory(subComponent.getName(), "name", entity);
                 String version = checkIfMandatory(subComponent.getVersion(), "version", entity);
                 Map<String, Object> artifactMap = new TreeMap<>();
@@ -153,7 +154,7 @@ public class BomReaderUtilsImplV2 {
                 artifactMap.put("name", name + "-" + version + "." +
                         getPropertyValue(subComponent, "type", null, true, entity));
                 artifactMap.put("repository", "");
-                artifactMap.put("type", getPropertyValue(component, "type", null, true, entity));
+                artifactMap.put("type", getPropertyValue(subComponent, "type", null, true, entity));
                 artifactMap.put("url", "");
                 artifactMap.put("version", "");
                 artifacts.add(artifactMap);
