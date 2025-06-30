@@ -308,7 +308,6 @@ The value of the `namespace` attribute in this variable is obtained from the `na
 **Usage in sample:**
 
 - [Sample template](/docs/samples/templates/env_templates/composite/namespaces/bss.yml.j2)
-- [Sample inventory](/docs/samples/environments/sample-cloud-name/composite-with-creds/)
 
 ### `current_env.cluster.cloud_api_protocol`
 
@@ -416,7 +415,7 @@ kafka_password: ${envgen.creds.get('kafka-cred').password}
 k8s_token: ${envgen.creds.get('k8s-cred').secret}
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/parameters/composite-sample/test-deploy-creds.yml)
+**Usage in sample:** [Sample](/docs/samples/templates/parameters/migration/test-deploy-creds.yml)
 
 ## Deprecated macros
 
