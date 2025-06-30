@@ -157,8 +157,18 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         effective_merge_mode = "replace"    
 
     if effective_merge_mode == "replace":
-        logger.info(f"Final merged SD data: {json.dumps(data, indent=2)}")
-        helper.writeYamlToFile(sd_path, data)
+        destination = f'{env.env_path}/Inventory/solution-descriptor/sd.yaml'
+
+        if helper.check_file_exists(destination):
+            full_sd_yaml = helper.openYaml(destination)
+            logger.info(f"full_sd.yaml before replacement: {json.dumps(full_sd_yaml, indent=2)}")
+        else:
+            logger.info("No existing SD found at destination. Proceeding to write new SD.")
+
+        helper.check_dir_exist_and_create(path.dirname(destination))
+        helper.writeYamlToFile(destination, data)
+        logger.info(f"Replaced existing SD with new data at: {destination}")
+        return
     else:
         merged_applications = {"applications": data[0].get("applications", [])}
         if not merged_applications["applications"]:
