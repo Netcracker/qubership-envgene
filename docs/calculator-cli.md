@@ -219,7 +219,7 @@ env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zooke
                 |   |   ├── <application-name-01>
                 |   |   |   └── values
                 |   |   |       ├── per-service-parameters
-                |   |   |       |   ├── <app-chart-name> # Optional
+                |   |   |       |   ├── <normalized-app-chart-name> # Optional
                 |   |   |       |   |   └── deployment-parameters.yaml
                 |   |   |       |   ├── <service-name-01> # Optional
                 |   |   |       |   |   └── deployment-parameters.yaml
@@ -233,7 +233,7 @@ env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zooke
                 |   |   └── <application-name-02>
                 |   |       └── values
                 |   |           ├── per-service-parameters
-                |   |           |   ├── <app-chart-name># Optional
+                |   |           |   ├── <normalized-app-chart-name># Optional
                 |   |           |   |   └── deployment-parameters.yaml
                 |   |           |   ├── <service-name-01> # Optional
                 |   |           |   |   └── deployment-parameters.yaml
@@ -248,7 +248,7 @@ env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zooke
                 |       ├── <application-name-01>
                 |       |   └── values
                 |       |       ├── per-service-parameters
-                |       |       |   ├── <app-chart-name> # Optional
+                |       |       |   ├── <normalized-app-chart-name> # Optional
                 |       |       |   |   └── deployment-parameters.yaml
                 |       |       |   ├── <service-name-01> # Optional
                 |       |       |   |   └── deployment-parameters.yaml
@@ -262,7 +262,7 @@ env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zooke
                 |       └── <application-name-02>
                 |           └── values
                 |               ├── per-service-parameters
-                |               |   ├── <app-chart-name> # Optional
+                |               |   ├── <normalized-app-chart-name> # Optional
                 |               |   |   └── deployment-parameters.yaml
                 |               |   ├── <service-name-01> # Optional
                 |               |   |   └── deployment-parameters.yaml
@@ -602,7 +602,7 @@ And `deployment-parameters.yaml` has the following structure:
 <per-service-key-N>: <service-value-N>
 ```
 
-The set of parameter in `/<service-name>/deployment-parameters.yaml` and the corresponding service section in `/<app-chart-name>/deployment-parameters.yaml` are identical
+The set of parameter in `/<service-name>/deployment-parameters.yaml` and the corresponding service section in `/<normalized-app-chart-name>/deployment-parameters.yaml` are identical
 
 Set of per service keys depends on the service type, determined by the MIME type assigned to the service in the SBOM. There are two types:
 
