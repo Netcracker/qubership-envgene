@@ -36,7 +36,7 @@ import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConst
 public class ParametersCalculationService {
     public static final Logger LOGGER = LoggerFactory.getLogger(ParametersCalculationService.class.getName());
     private final ParametersProcessor parametersProcessor;
-    private final List<String> entities = Arrays.asList(SERVICES, CONFIGURATIONS, FRONTENDS, SMARTPLUG, CDN, SAMPLREPO, APPR_CHART_NAME);
+    private final List<String> entities = Arrays.asList(SERVICES, CONFIGURATIONS, FRONTENDS, SMARTPLUG, CDN, SAMPLREPO);
 
     @Inject
     public ParametersCalculationService(ParametersProcessor parametersProcessor) {
@@ -156,6 +156,7 @@ public class ParametersCalculationService {
         } else if (parameterType == ParameterType.DEPLOY) {
             Object appChartName = inSecuredParamsAsObject.get(APPR_CHART_NAME);
             parameterBundle.setAppChartName(appChartName != null ? appChartName.toString() : "");
+            inSecuredParamsAsObject.remove(APPR_CHART_NAME);//remove app chart name from parameters once after the usage
             parameterBundle.setCollisionDeployParameters(getCollisionParams(inSecuredParamsAsObject));
             parameterBundle.setCollisionSecureParameters(getCollisionParams(finalSecuredParams));
             Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject, parameterBundle.isProcessPerServiceParams());
