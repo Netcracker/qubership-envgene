@@ -243,10 +243,10 @@ public class BomReaderUtilsImplV2 {
 
     private void validateAppChart(EntitiesMap entitiesMap, List<Component> components) {
         Optional<Component> optional = components.stream().filter(key -> "application/vnd.qubership.app.chart".equalsIgnoreCase(key.getMimeType())).findAny();
-        if (!optional.isPresent() && sharedData.isAppChartValidation()) {
+        if (sharedData.isAppChartValidation() && !optional.isPresent()) {
             throw new AppChartValidationException("Failed to process effective set as appchart validation is mandatory " +
                     "and the applicable mime type application/vnd.qubership.app.chart is not found");
-        } else if (optional.isPresent() && sharedData.isAppChartValidation()) {
+        } else if (optional.isPresent()) {
             entitiesMap.setAppChartName(optional.get().getName());
         }
     }
