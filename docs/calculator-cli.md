@@ -555,9 +555,23 @@ If `application/vnd.qubership.app.chart` component exists in Application SBOM, t
 ```text
 ...
 └── per-service-parameters
-    └── <app-chart-name> 
+    └── <normalized-app-chart-name> 
         └── deployment-parameters.yaml
 ```
+
+The `<normalized-app-chart-name>` is generated using these steps:
+
+1. Convert to lowercase
+  Example: `MyApp_Chart` → `myapp_chart`
+2. Replace underscores with hyphens
+  Example: `myapp_chart` → `myapp-chart`
+3. Encode uppercase letter positions (if original name had mixed case)
+  A base-36 suffix is added to preserve capitalization info (e.g., `myapp-chart-a1b2`)
+4. Enforce Kubernetes length limits
+  Maximum length: `63 - len(namespace) - 1` # where namespace is a `name` attribute of `Namespace` object
+  Recursively truncates the name if needed while preserving the suffix.
+
+This normalization ensures proper naming of application charts while complying with Kubernetes naming conventions and length limitations.
 
 And `deployment-parameters.yaml` has the following structure:
 
