@@ -1,6 +1,6 @@
-# ATP using EnvGene as CM
+# ATP Parameter Management
 
-- [ATP using EnvGene as CM](#atp-using-envgene-as-cm)
+- [ATP Parameter Management](#atp-parameter-management)
   - [Terms](#terms)
   - [Problem Statement](#problem-statement)
   - [Use Cases](#use-cases)
@@ -44,17 +44,11 @@ List of use cases that need to be supported:
 
 TBD
 
-Need to describe an object model that includes:
-
-- EnvGene objects such as environment, cloud/cluster (not all, but those related to ATP-specific parameter generation)
-- ATP objects (their brief description and functional purpose)
-- Their relationships
-
 ## Proposed Approach
 
 Since EnvGene repositories contain:
 
-- inventory of Customer's Environments
+- Inventory of Customer's Environments
 - Parameters describing Customer's Solution Instances
 - Parameters describing Cloud/clusters
 
