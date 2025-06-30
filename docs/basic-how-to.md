@@ -41,4 +41,4 @@
     │   │   │   │   ├── env_specific_paramset.yml
     ```
 
-More details are available in samples [ReadME](/samples/README.md)
+More details are available in samples [ReadME](/docs/samples/README.md)

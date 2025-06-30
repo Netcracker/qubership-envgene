@@ -141,4 +141,4 @@ envTemplate:
         generateEnvironmentLatestVersion: "master-20240209.153935-69"
 ```
 
-Sample is [here](/samples/environments/sample-cloud-name/composite-full/Inventory/env_definition.yml)
+Sample is [here](/docs/samples/environments/sample-cloud-name/composite-full/Inventory/env_definition.yml)

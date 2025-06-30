@@ -24,4 +24,4 @@ Main features:
 
 - [Basic How-To](docs/basic-how-to.md).
 - [Environment specific parameters schema](docs/env-specific-schema.md).
-- [Samples](/samples/README.md)
+- [Samples](/docs/samples/README.md)
