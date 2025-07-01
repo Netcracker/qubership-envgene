@@ -1,29 +1,29 @@
 # Environment Generator (EnvGene)
 
-Environment Generator allows you to easily create environments from predefined templates with version control, automation, and Git-based configuration management.
+Environment Generator allows you to easily create Environments from predefined templates with version control, automation, and Git-based configuration management.
 
 ## What is Environment Generator?
 
-Environment Generator (EnvGene) is a comprehensive solution for managing infrastructure and application environments through a template-based approach. It enables teams to:
+Environment Generator (EnvGene) is a comprehensive solution for managing infrastructure and application Environments through a template-based approach. It enables teams to:
 
-- **Define Templates**: Create reusable environment templates including Tenant, Cloud, Namespaces, and Parameters
-- **Manage Inventory**: Define and maintain your environment inventory with version control
-- **Generate Environments**: Create consistent environments from inventory and versioned templates
-- **Track Changes**: Leverage native Git functionality for environment and parameter change history
+- **Define Templates**: Create reusable Environment templates including Tenant, Cloud, Namespaces, and others
+- **Manage Inventory**: Define and maintain your Environment Inventory with version control
+- **Generate Environments**: Create consistent Environments from inventory and versioned templates
+- **Track Changes**: Leverage native Git functionality for Environment and parameter change history
 
 ## Key Features
 
 ### Version Control Integration
 
-- Get complete history of environment and parameter changes using native Git functionality
-- Compare environment configurations using standard diff tools
+- Get complete history of Environment and parameter changes using native Git functionality
+- Compare Environment configurations using standard diff tools
 - Track template evolution through Git versioning
 - Manage merge requests with clear configuration diffs
 
 ### Automation Capabilities
 
-- Automated environment creation and updates
-- Effective parameter set generation with dependency resolution
+- Automated Environment creation and updates
+- Effective Parameter Set generation
 - Template-driven deployment processes
 - Integration with CI/CD pipelines
 
@@ -44,14 +44,16 @@ Environment Generator (EnvGene) is a comprehensive solution for managing infrast
 ## Core Concepts
 
 ### Templates
-Predefined configurations that serve as blueprints for environments. Templates include:
+Predefined configurations that serve as blueprints for Environments. Templates include:
 
-- **Environment Templates**: Define the overall structure and components
-- **Parameter Templates**: Specify configuration parameters and their relationships  
-- **Resource Profiles**: Define resource allocation and scaling policies
+- **Template Descriptor**: Define the overall structure and components
+- **Cloud Templates**: Defines parameters describing the underlying infrastructure
+- **Namespace Templates**: defines parameters common to applications of particular namespace
+- **ParamSet Templates**: Define containers of configuration parameters  
+- **Resource Profiles**: Define performance parameters
 
 ### Inventory
-The specification of your actual environments, including:
+The specification of your actual Environments, including:
 
 - Environment definitions and metadata
 - Parameter values and overrides
@@ -59,16 +61,7 @@ The specification of your actual environments, including:
 - Deployment targets and credentials
 
 ### Effective Set
-The final computed configuration that results from merging templates, parameters, and environment-specific overrides.
-
-## Architecture
-
-Environment Generator consists of several components:
-
-- **Template Engine**: Processes templates and generates effective configurations
-- **Parameter Calculator**: Resolves parameter dependencies and inheritance
-- **Credential Manager**: Handles encrypted credential storage and retrieval
-- **Environment Builder**: Creates and manages environment deployments
+The final computed consumer (Helm/ArgoCD/Orchestration pipelines) specific configuration that results from merging templates, parameters, and Environment-specific overrides.
 
 ## Getting Started
 
@@ -84,7 +77,7 @@ This documentation is organized into the following sections:
 - **Architecture & Components**: Understand how the system works
 - **Configuration**: Learn how to configure and customize the system
 - **Integrations**: Connect with external systems and tools
-- **Operations**: Maintain and troubleshoot running environments
+- **Operations**: Maintain and troubleshoot running Environments
 
 ## Support and Contribution
 
