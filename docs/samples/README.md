@@ -1,4 +1,33 @@
-# Environment generator (EnvGene) samples
+# Environment Generator (EnvGene) Samples
+
+This section contains comprehensive examples and samples for working with EnvGene. The samples are organized into logical categories to help you understand different aspects of environment configuration and template management.
+
+## Sample Categories
+
+### 🏗️ [Environment Templates](environment-templates.md)
+Templates that define the structure and components of different environment types. Includes simple and composite templates for various deployment scenarios.
+
+### ⚙️ [Parameter Sets](parameter-sets.md)  
+Configuration parameter sets that can be applied to applications within environments. Includes examples for core, BSS, billing, and technical components.
+
+### 📊 [Resource Profiles](resource-profiles.md)
+Resource configuration profiles for different environments and applications. Contains development and production overrides for optimal resource management.
+
+### 🌐 [Environment Configurations](environment-configurations.md)
+Specific environment instances deployed in clusters. Shows how to configure inventories, credentials, parameters, and resource profiles for actual environments.
+
+### 🔧 [Configuration Files](configuration-files.md)
+System-wide configuration files for registry connections, integrations, and external system management.
+
+## Getting Started
+
+If you're new to EnvGene, we recommend exploring the samples in this order:
+
+1. **Environment Templates** - Understand the basic structure
+2. **Parameter Sets** - Learn how to configure applications  
+3. **Resource Profiles** - See how to manage resources
+4. **Environment Configurations** - Put it all together
+5. **Configuration Files** - Configure system integrations
 
 ## Structure
 

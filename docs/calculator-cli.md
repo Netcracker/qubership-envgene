@@ -40,9 +40,9 @@
    1. ~~Deployment token, stored as sensitive parameters, are selected based on the defining object's priority. Tokens can be defined at both the Cloud and Namespace levels. The highest-priority (Namespace) token available is used.~~
 10. ~~Effective Set must includes ssl certificate in sensitive parameters (credentials.yaml)~~
 11. The Calculator CLI must support loading and parsing SBOM files, extracting parameters for calculating the Effective Set
-    1. [Solution SBOM](../schemas/solution.sbom.schema.json)
-    2. [Application SBOM](../schemas/application.sbom.schema.json)
-    3. [Env Template SBOM](../schemas/env-template.sbom.schema.json)
+       1. [Solution SBOM](https://github.com/netcracker/qubership-envgene/blob/main/schemas/solution.sbom.schema.json)
+   2. [Application SBOM](https://github.com/netcracker/qubership-envgene/blob/main/schemas/application.sbom.schema.json)
+   3. [Env Template SBOM](https://github.com/netcracker/qubership-envgene/blob/main/schemas/env-template.sbom.schema.json)
 12. Calculator CLI should generate Effective Set for one environment no more than 1 minute
 
 ## Assumptions
@@ -68,9 +68,9 @@ Below is a **complete** list of attributes
 
 ### Registry Configuration
 
-[Registry config JSON Schema](../schemas/registry.schema.json)
+[Registry config JSON Schema](https://github.com/netcracker/qubership-envgene/blob/main/schemas/registry.schema.json)
 
-[Registry config example](../schemas/registry.yml)
+[Registry config example](https://github.com/netcracker/qubership-envgene/blob/main/examples/registry.yml)
 
 ### Effective Set
 

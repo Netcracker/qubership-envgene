@@ -1,0 +1,160 @@
+site_name: Environment Generator (EnvGene)
+site_description: Environment generator allows you to easily create environments from predefined templates with versioning, automation, and Git-based history tracking.
+site_url: https://netcracker.github.io/qubership-envgene
+
+# Repository
+repo_name: netcracker/qubership-envgene
+repo_url: https://github.com/netcracker/qubership-envgene
+edit_uri: edit/main/docs/
+
+# Configuration
+theme:
+  name: material
+  language: en
+
+  palette:
+    # Dark theme by default
+    - media: "(prefers-color-scheme)"
+      scheme: slate
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    # Light theme option
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Dark theme option (default)
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+
+  # Advanced features
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.path
+    - navigation.indexes
+    - navigation.top
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.tabs.link
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
+
+  # Icons and fonts
+  favicon: assets/favicon.ico
+  icon:
+    logo: material/application-settings
+    repo: fontawesome/brands/github
+    edit: material/pencil
+    view: material/eye
+
+  font:
+    text: Roboto
+    code: Roboto Mono
+
+# Extensions with all requested features
+markdown_extensions:
+  # Basic extensions
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      title: On this page
+      toc_depth: 6
+
+  # Enhanced code highlighting for YAML, JSON, Java, Go, Python
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+      use_pygments: true
+      pygments_style: default
+      noclasses: false
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      base_path: docs
+
+  # Mermaid diagrams support
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+  # Advanced content features
+  - pymdownx.details
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+  # Emoji support
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+  # Additional formatting
+  - pymdownx.keys
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.tilde
+  - pymdownx.caret
+  - pymdownx.betterem:
+      smart_enable: all
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+
+# Navigation
+nav:
+  - Home: README.md
+  - Installation:
+    - Basic How-To: basic-how-to.md
+    - Calculator CLI: calculator-cli.md
+  - Architecture & Components:
+    - Environment Objects: envgene-objects.md
+    - Environment Definition: env_definition.md
+    - Template Macros: template-macros.md
+    - SBOM: sbom.md
+    - SD Processing: sd-processing.md
+  - Configuration:
+    - Environment Configuration: envgene-configs.md
+    - Environment Schema: env-specific-schema.md
+    - Environment Inventory Generation: env-inventory-generation.md
+    - Instance Pipeline Parameters: instance-pipeline-parameters.md
+    - Examples:
+      - samples/README.md
+      - Environment Templates: samples/environment-templates.md
+      - Parameter Sets: samples/parameter-sets.md
+      - Resource Profiles: samples/resource-profiles.md
+      - Environment Configurations: samples/environment-configurations.md
+      - Configuration Files: samples/configuration-files.md
+  - Integrations:
+    - Features:
+      - System Certificate: features/system-certificate.md
+      - Template Override: features/template-override.md
+  - Operations:
+    - Test Cases: test-cases/README.md
