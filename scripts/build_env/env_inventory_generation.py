@@ -185,7 +185,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(destination))
-        helper.writeYamlToFile(destination, data)
+        helper.writeYamlToFile(destination, merged_data)
         logger.info(f"Replaced existing SD with new data at: {destination}")
         return
     
