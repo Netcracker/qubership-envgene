@@ -15,6 +15,7 @@ def prepare_input_params() -> dict:
     pipe_params = PipelineParametersHandler()
     params_log = (f"Input parameters are: ")
     params_log += pipe_params.get_params_str()
+    params_log = re.sub(r'(CRED_ROTATION_PAYLOAD=)[^, ]+', r'\1***', params_log)  
     logger.info(params_log)
     return pipe_params.params
 

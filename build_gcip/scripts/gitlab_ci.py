@@ -73,7 +73,7 @@ def build_pipeline(params: dict):
         # generate_effective_set_job ->
         # git_commit_job (commit) ->
         job_sequence = ["trigger_passport_job", "get_passport_job", "process_decryption_mode_job", "env_inventory_generation_job",
-                    "env_build_job", "generate_effective_set_job", "git_commit_job"]
+                    "credential_rotation_job", "env_build_job", "generate_effective_set_job", "git_commit_job"]
 
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
@@ -90,6 +90,12 @@ def build_pipeline(params: dict):
             jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, env, environment_name, cluster_name, params['ENV_INVENTORY_GENERATION_PARAMS'])
         else:
             logger.info(f'Preparing of env inventory generation job for {env} is skipped because we are in template test mode.')
+        
+        #Credential rotation job
+        if params['CRED_ROTATION_PAYLOAD']:
+            jobs_map["credential_rotation_job"] = prepare_credential_rotation_job(pipeline, env, environment_name, cluster_name, params['CRED_ROTATION_PAYLOAD'], params['CRED_ROTATION_FORCE'])
+        else:
+            logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
 
         if params['ENV_BUILD']:
             if env_definition == None:
