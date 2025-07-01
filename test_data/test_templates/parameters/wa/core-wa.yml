@@ -1,4 +1,0 @@
-version: 23.3
-name: core-wa
-parameters:
-  EVENTS_ENABLED: "true"

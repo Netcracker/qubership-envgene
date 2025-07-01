@@ -1,0 +1,26 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "env-02-billing"
+credentialsId: ""
+isServerSideMerge: true
+labels:
+  - "solutionInstance-env-02"
+  - "solution-tenant"
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+profile:
+  name: "dev_billing_override"
+  baseline: "dev"
+deployParameters:
+  ENVGENE_CONFIG_REF_NAME: ""
+  ENVGENE_CONFIG_TAG: ""
+  PARAM_2: "value-2" # paramset: billing version: 25.1 source: template
+  PARAM_6: "value-6" # paramset: billing version: 25.1 source: template
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+
+

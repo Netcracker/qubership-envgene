@@ -1,14 +1,23 @@
-name: Build qubership-gcip dockerimage
+name: "Dev: Build Qubership GCIP dockerimage"
+
+run-name: "Build Qubership GCIP for commit ${{ github.sha }}"
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - '**'  
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: netcracker/qubership-gcip
 
 jobs:
+  tests:
+    uses: ./.github/workflows/perform_tests.yml
+  
   build-and-push-image:
+    needs: [tests]
     runs-on: ubuntu-latest
     permissions:
       contents: read

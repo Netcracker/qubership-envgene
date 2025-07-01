@@ -1,0 +1,22 @@
+---
+tenant: "{{ templates_dir }}/env_templates/test-solution-structure-template/tenant.yml.j2"
+cloud: 
+  template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/cloud.yml.j2"
+  template_override:
+    deployParameterSets:
+      - paramset-A
+    e2eParameterSets:
+      - paramset-A
+    technicalConfigurationParameterSets:
+      - paramset-A
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/Namespaces/app-core.yml.j2"
+    template_override:
+      deployParameterSets:
+        - paramset-A
+      e2eParameterSets:
+        - paramset-A
+      technicalConfigurationParameterSets:
+        - paramset-A
+  - template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/Namespaces/app.yml.j2"
+

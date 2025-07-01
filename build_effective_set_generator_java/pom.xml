@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.qubership.cloud.devops</groupId>
+    <artifactId>devops-config-plugin-aggregator</artifactId>
+    <version>master-SNAPSHOT</version>
+    <packaging>pom</packaging>
+
+    <name>DevOps Configuration Tool Aggregator</name>
+    <description>DevOps Configuration Tool Aggregator</description>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/TODO+Plugin</url>
+    <modules>
+        <module>parameters-processor</module>
+        <module>commons</module>
+    </modules>
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>https://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+
+
+     <profiles>
+        <profile>
+            <id>default</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+                <module>parameter-calculator-bom</module>
+                <module>gstring-to-jinjava-translator</module>
+                <module>effective-set-generator</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>dev</id>
+            <modules>
+                <module>parameter-calculator-bom</module>
+                <module>gstring-to-jinjava-translator</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>JavaOnly</id>
+            <modules>
+                <module>parameter-calculator-bom</module>
+                <module>gstring-to-jinjava-translator</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>quarkus</id>
+            <modules>
+                <module>parameter-calculator-bom</module>
+                <module>gstring-to-jinjava-translator</module>
+                <module>effective-set-generator</module>
+            </modules>
+        </profile>
+    </profiles>
+</project>

@@ -1,0 +1,14 @@
+name: test-deploy-creds
+version: 1
+parameters:
+  KMS_CERT_IN_BASE64: "${envgen.creds.get('kms-cert').secret}"
+  TEST_ENVGENE_CREDS_GET_VAULT_NAMESPACE: "${envgen.creds.get('envgen-creds-get-vault-cred-namespace').namespace}"
+  TEST_ENVGENE_CREDS_GET_PASSWORD_USERNAME: "${envgen.creds.get('envgen-creds-get-username-cred').username}"
+  TEST_ENVGENE_CREDS_GET_PASSWORD_PASSWORD: "${envgen.creds.get('envgen-creds-get-password-cred').password}"
+  TEST_ENVGENE_CREDS_GET_SECRET_PARAM: "${envgen.creds.get('envgen-creds-get-secret').secret}"
+  TEST_CREDS_GET_PASSWORD_USERNAME: "${envgen.creds.get('creds-get-username-cred').username}"
+  TEST_CREDS_GET_PASSWORD_PASSWORD: "${envgen.creds.get('creds-get-password-cred').password}"
+  TEST_CREDS_GET_SECRET_PARAM: "${envgen.creds.get('creds-get-secret').secret}"
+  TEST_SHARED_CREDS: "${envgen.creds.get('integration-cred').username}"
+  TEST_SHARED_CREDS_ACTIVATOR: "${envgen.creds.get('service-integration-cred').password}"
+applications: []
