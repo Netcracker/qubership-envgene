@@ -22,7 +22,7 @@ TEST_CASES = [
     ("cluster01", "env02", "TC-001-002"),
     ("cluster01", "env02", "TC-001-006"),
     ("cluster01", "env02", "TC-001-004"),
-    ("cluster01", "env02", "TC-001-018"),
+    ("cluster01", "env02", "TC-001-008"),
     ("cluster01", "env02", "TC-001-010"),
     ("cluster01", "env02", "TC-001-012"),
     ("cluster01", "env02", "TC-001-014")
