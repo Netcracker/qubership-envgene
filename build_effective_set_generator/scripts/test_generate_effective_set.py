@@ -5,10 +5,7 @@ from main import generate_effective_set_for_env
 from envgenehelper import *
 
 test_data = [
-      ("etbss-ocp-mdc-09", "cse-toolset", "")
-    , ("etbss-sb-ocp-01", "pl01", "")
-    , ("etbss-sb-ocp-01", "platform-with-overrides", "")
-    , ("cloud-with-passport-override", "cse-toolset", "")
+      ("CLUSTER", "ENV", ""),
 ]
 
 g_inventory_dir = getAbsPath("../../test_data/test_environments")
