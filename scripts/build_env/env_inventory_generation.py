@@ -180,16 +180,8 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
 
     # Call merge_sd with correct merge function
     if effective_merge_mode == "replace":
-        logger.info(f"Inside replace")
-        destination = f'{env.env_path}/Inventory/solution-descriptor/sd.yaml'
-        if helper.check_file_exists(destination):
-            full_sd_yaml = helper.openYaml(destination)
-            logger.info(f"full_sd.yaml before replacement: {json.dumps(full_sd_yaml, indent=2)}")
-        else:
-            logger.info("No existing SD found at destination. Proceeding to write new SD.")
-        helper.check_dir_exist_and_create(path.dirname(destination))
-        helper.writeYamlToFile(destination, merged_data)
-        logger.info(f"Replaced existing SD with new data at: {destination}")
+        helper.writeYamlToFile(sd_path, merged_data)
+        logger.info(f"Replaced existing SD with new data at: {sd_path}")
         return
     
     selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
@@ -197,7 +189,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         raise ValueError(f"Unsupported merge mode: {effective_merge_mode}")
     merge_sd(env, merged_data, selected_merge_function)  
 
-    logger.info(f"SD successfully extracted from SD_DATA and is saved in {sd_path}")
+    logger.info(f"SD successfully extracted from SD_DATA and Saved.")
 
 def download_sd_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode):
     logger.info(f"sd_version: {sd_version}")
