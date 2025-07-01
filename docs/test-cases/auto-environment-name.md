@@ -11,7 +11,7 @@ This describes test cases for the [Automatic Environment Name Derivation](/docs/
 
 ## TC-003-001: Environment with no explicit environmentName defined
 
-**Status:** Active
+**Status:** New
 
 **Test Data:**
 
@@ -46,7 +46,7 @@ envTemplate:
 
 ## TC-003-002: Environment with explicit environmentName defined
 
-**Status:** Active
+**Status:** New
 
 **Test Data:**
 
@@ -81,7 +81,7 @@ envTemplate:
 
 ## TC-003-003: Environment with explicit environmentName different from folder name
 
-**Status:** Active
+**Status:** New
 
 **Test Data:**
 
@@ -116,7 +116,7 @@ envTemplate:
 
 ## TC-003-004: Invalid folder structure for environment
 
-**Status:** Active
+**Status:** New
 
 **Test Data:**
 
@@ -150,7 +150,7 @@ envTemplate:
 
 ## TC-003-005: Template rendering with derived environment name
 
-**Status:** Active
+**Status:** New
 
 **Test Data:**
 
