@@ -1,0 +1,18 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "Applications"
+registryName: "default"
+description: ""
+owners: ""
+gitRepository: ""
+defaultBranch: ""
+credential: ""
+labels: []
+globalE2EParameters:
+  pipelineDefaultRecipients: ""
+  recipientsStrategy: "merge"
+  mergeTenantsAndE2EParameters: false
+  environmentParameters: {}
+deployParameters: {}
+

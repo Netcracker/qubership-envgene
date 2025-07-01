@@ -4,7 +4,7 @@ inventory:
   tenantName: "test-tenant"
   deployer: "test-deployer"
   cloudName: "test-solution-structure"
-  cloudPassport: "test-solution-structure"
+  cloudPassport: "test-cloud-passport"
 envTemplate:
   name: "test-solution-structure-template"
   additionalTemplateVariables:

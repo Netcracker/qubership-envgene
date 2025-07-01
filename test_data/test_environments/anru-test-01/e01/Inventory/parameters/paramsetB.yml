@@ -1,0 +1,5 @@
+version: 2
+name: paramsetB
+parameters:
+  key1: value2
+applications: []
