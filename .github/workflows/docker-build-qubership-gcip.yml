@@ -55,7 +55,7 @@ jobs:
             GIT_TOKEN=${{ secrets.GIT_TOKEN }}
 
       - name: Build and push Credential rotation image
-        id: push
+        id: push-creds
         uses: docker/build-push-action@v6
         with:
           context: .
