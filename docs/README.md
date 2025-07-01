@@ -10,6 +10,7 @@ Environment Generator (EnvGene) is a comprehensive solution for managing infrast
 - **Manage Inventory**: Define and maintain your Environment Inventory with version control
 - **Generate Environments**: Create consistent Environments from inventory and versioned templates
 - **Track Changes**: Leverage native Git functionality for Environment and parameter change history
+- **Generate Effective Set**: Create parameters fit for particular consumer
 
 ## Key Features
 
