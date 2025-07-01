@@ -8,6 +8,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: netcracker/qubership-gcip
+  CRED_ROTATION_IMAGE: netcracker/credential-rotation
 
 jobs:
   tests:
@@ -36,7 +37,9 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            ${{ env.REGISTRY }}/${{ env.CRED_ROTATION_IMAGE }}
       
       - name: Build and push Docker image
         id: push
@@ -44,6 +47,19 @@ jobs:
         with:
           context: .
           file: ./build_gcip/build/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_USER=${{ secrets.GIT_USER }}
+            GIT_TOKEN=${{ secrets.GIT_TOKEN }}
+
+      - name: Build and push Credential rotation image
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./creds_rotation/build/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
