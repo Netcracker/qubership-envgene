@@ -119,7 +119,8 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
         logger.info("SD_SOURCE_TYPE is not specified, skipping SD file creation")
         return
     logger.info(f"printing sd_delta before {sd_delta}")
-    sd_delta = str(sd_delta).strip().lower() if sd_delta is not None else "true"
+    sd_delta = str(sd_delta).strip().lower()
+    sd_delta = sd_delta if sd_delta else "true"
     logger.info(f"printing sd_delta after {sd_delta}")
     if sd_delta == "true":
         sd_path = base_path + 'delta_sd.yaml'
