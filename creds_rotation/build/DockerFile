@@ -1,35 +1,32 @@
 FROM python:3.12-alpine
+
 USER root
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Copy files first to leverage Docker layer caching
 COPY creds_rotation/build/pip.conf /etc/pip.conf
 COPY creds_rotation/build/requirements.txt /build/requirements.txt
 COPY creds_rotation/scripts /module/scripts
 COPY python /python
 COPY scripts /build_env/scripts
 
-# Install necessary system packages (only what’s needed)
-RUN  apk update && \
-    apk add --no-cache \
-        curl \
-        sudo \
-        # Build dependencies
+# Only install minimal build tools temporarily (if needed)
+RUN apk add --no-cache --virtual .build-deps \
         gcc \
         musl-dev \
         libffi-dev \
+        python3-dev \
+        curl \
     && curl --retry 3 --retry-connrefused --retry-delay 5 -LO https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
-    && chmod +x sops-v3.9.0.linux.amd64 \
-    && mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops \
-    && pip install --no-deps --no-cache-dir -r /build/requirements.txt \
-    && apk del musl-dev  libffi-dev \
+    && chmod +x sops-v3.9.0.linux.amd64 && mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops \
+    && pip install --no-cache-dir --no-deps -r /build/requirements.txt \
     && pip install --no-cache-dir /python/envgene \
     && pip install --no-cache-dir /python/jschon-sort \
-    && pip install --no-cache-dir /python/integration \
-    && rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache
+    && apk del .build-deps \
+    && rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache /build /python/*.egg-info
 
 
+##################################
 
-# Default command to run your script (adjust main.py accordingly)
-CMD ["python", "/module/scripts/creds_rotation_handler.py"]
