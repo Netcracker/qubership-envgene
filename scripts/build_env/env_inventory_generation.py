@@ -118,14 +118,18 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
     if not sd_source_type:
         logger.info("SD_SOURCE_TYPE is not specified, skipping SD file creation")
         return
+    logger.info(f"printing sd_delta before {sd_delta}")
     sd_delta = str(sd_delta).strip().lower() if sd_delta is not None else "true"
+    logger.info(f"printing sd_delta after {sd_delta}")
     if sd_delta == "true":
         sd_path = base_path + 'delta_sd.yaml'
+        logger.info(f"printing sd_path sd_delta T {sd_path}")
         full_sd_path = base_path + 'sd.yaml'
         if not helper.check_file_exists(full_sd_path):
             logger.error(f"To use the delta processing mode for SD, a complete SD must already be stored in the repository.\nThe file {full_sd_path} does not exist.")
             exit(1)
     else:
+        logger.info(f"printing sd_path sd_delta F {sd_path}")
         sd_path = base_path + 'sd.yaml'
     helper.check_dir_exist_and_create(path.dirname(sd_path))
     if sd_source_type == "artifact": 
@@ -180,8 +184,16 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
 
     # Call merge_sd with correct merge function
     if effective_merge_mode == "replace":
-        helper.writeYamlToFile(sd_path, merged_data)
-        logger.info(f"Replaced existing SD with new data at: {sd_path}")
+        logger.info(f"Inside replace")
+        destination = f'{env.env_path}/Inventory/solution-descriptor/sd.yaml'
+        if helper.check_file_exists(destination):
+            full_sd_yaml = helper.openYaml(destination)
+            logger.info(f"full_sd.yaml before replacement: {json.dumps(full_sd_yaml, indent=2)}")
+        else:
+            logger.info("No existing SD found at destination. Proceeding to write new SD.")
+        helper.check_dir_exist_and_create(path.dirname(destination))
+        helper.writeYamlToFile(destination, merged_data)
+        logger.info(f"Replaced existing SD with new data at: {destination}")
         return
     
     selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
