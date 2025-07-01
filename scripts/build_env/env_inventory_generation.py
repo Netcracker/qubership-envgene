@@ -9,7 +9,7 @@ import io, yaml
 
 from create_credentials import CRED_TYPE_SECRET
 import envgenehelper as helper
-from envgenehelper import getenv_and_log
+from envgenehelper import *
 import envgenehelper.logger as logger
 
 # const
@@ -173,7 +173,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         "applications": merged_applications["applications"]
         }
     logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
-    merged_result_yaml = yaml.safe_load(io.StringIO(yaml.dump(merged_result)))
+    merged_result_yaml = dump_as_yaml_format(merged_result)
 
     # Call merge_sd with correct merge function
     if effective_merge_mode == "replace":
