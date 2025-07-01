@@ -19,7 +19,9 @@
       - [\[Version 2.0\] Handling Missing Attributes in SBOM](#version-20-handling-missing-attributes-in-sbom)
       - [\[Version 2.0\] Deployment Parameter Context](#version-20-deployment-parameter-context)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml)
+          - [\[Version 2.0\] Predefined `deployment-parameters.yaml` parameters](#version-20-predefined-deployment-parametersyaml-parameters)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `credentials.yaml`](#version-20deployment-parameter-context-credentialsyaml)
+          - [\[Version 2.0\] Predefined `credentials.yaml` parameters](#version-20-predefined-credentialsyaml-parameters)
         - [\[Version 2.0\]\[Deployment Parameter Context\] Collision Parameters](#version-20deployment-parameter-context-collision-parameters)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml)
           - [\[Version 2.0\] Predefined `deploy-descriptor.yaml` parameters](#version-20-predefined-deploy-descriptoryaml-parameters)
@@ -87,7 +89,7 @@ Below is a **complete** list of attributes
 | `--effective-set-version`/`-esv` | string | no | The version of the effective set to be generated. Available options are `v1.0` and `v2.0` | `v2.0` | `v1.0` |
 | `--pipeline-consumer-specific-schema-path`/`-pcssp` | string | no | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided  | N/A |  |
 | `--extra_params`/`-ex` | string | no | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided | N/A | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000` |
-| `--app_chart_validation`/`-acv` | boolean | no | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped | `true` | `false` | 
+| `--app_chart_validation`/`-acv` | boolean | no | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped | `true` | `false` |
 
 ### Registry Configuration
 
@@ -342,14 +344,20 @@ For each namespace/deploy postfix, the context contains files:
 
 This file contains non-sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects.
 
+It also includes a [predefined set of parameters](#version-20-predefined-deployment-parametersyaml-parameters) common to all application services.
+
 The structure of this file is as follows:
 
 ```yaml
 <key-1>: <value-1>
 <key-N>: <value-N>
+<application-predefined-key-1>: <application-predefined-value-1>
+<application-predefined-key-N>: <application-predefined-value-N>
 global: &id001
   <key-1>: <value-1>
   <key-N>: <value-N>
+  <application-predefined-key-1>: <application-predefined-value-1>
+  <application-predefined-key-N>: <application-predefined-value-N>
 <service-name-1>: *id001
 <service-name-2>: *id001
 ```
@@ -360,24 +368,92 @@ To avoid repetition, YAML anchors (&) are used for reusability, while aliases (*
 
 The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
 
+###### [Version 2.0] Predefined `deployment-parameters.yaml` parameters
+
+| Attribute | Mandatory | Type | Description | Default | Source in Environment Instance or SBOM |
+|---|---|---|---|---|---|
+| `DEPLOYMENT_SESSION_ID` | yes | string | Effective Set calculation operation ID  | None | Taken from input parameter  `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM) |
+| `MANAGED_BY` | yes | string | Deployer type. Always `argocd` | `argocd` | None |
+| `CLOUD_API_HOST` | yes | string | Fully Qualified Domain Name of Cluster's API endpoint | None | `apiUrl` in the `Cloud` |
+| `CLOUD_PUBLIC_HOST` | yes | string | Cluster's API endpoint accessible within a cluster network | None | `publicUrl` in the `Cloud` |
+| `CLOUD_PRIVATE_HOST` | yes | string | Cluster's API endpoint accessible outside the cluster network | None | `privateUrl` in the `Cloud` |
+| `CLOUD_PROTOCOL` | yes | string | Cluster's API protocol (http or https) | None | `protocol` in the `Cloud` |
+| `CLOUD_API_PORT` | yes | string | Cluster's API port | None | `apiPort` in the `Cloud` |
+| `SERVER_HOSTNAME` | yes | string | **Deprecated**. Uses `CLOUD_PUBLIC_HOST` if set, otherwise falls back to  `CLOUD_API_HOST`  | None | N/A |
+| `CUSTOM_HOST` | yes | string | **Deprecated**. Uses `CLOUD_PRIVATE_HOST` if set, otherwise falls back to  `SERVER_HOSTNAME` | None | N/A |
+| `OPENSHIFT_SERVER` | yes | string | **Deprecated**. Constructed as `CLOUD_PROTOCOL`://`CLOUD_PUBLIC_HOST`:`CLOUD_API_PORT` | None | N/A |
+| `DBAAS_ENABLED` | boolean | string | Feature toggle indicating whether DBaaS is used | `false` | `dbaasConfigs[0].enable` in the `Cloud` |
+| `API_DBAAS_ADDRESS` | no | string | DBaaS API endpoint accessible within a cluster network. Provided if `DBAAS_ENABLED: true` only  | None | `dbaasConfigs[0].apiUrl` in the `Cloud` |
+| `DBAAS_AGGREGATOR_ADDRESS` | no | string | DBaaS API endpoint accessible outside the cluster network. Provided if `DBAAS_ENABLED: true` only  | None | `dbaasConfigs[0].aggregatorUrl` in the `Cloud` |
+| `MAAS_ENABLED` | yes | boolean | Feature toggle indicating whether MaaS is used | `false` | `maasConfig.enable` in the `Cloud` |
+| `MAAS_INTERNAL_ADDRESS` | no | string | MaaS API endpoint accessible within a cluster network. Provided if `MAAS_ENABLED: true` only | None | `maasConfig.maasInternalAddress` in the `Cloud` |
+| `MAAS_EXTERNAL_ROUTE` | no | string | Maas API endpoint accessible outside the cluster network. Provided if `MAAS_ENABLED: true` only | None | `maasConfig.maasUrl` in the `Cloud` |
+| `MAAS_SERVICE_ADDRESS` | no | string | **Deprecated**. The same as `MAAS_EXTERNAL_ROUTE`. Provided if `MAAS_ENABLED: true` only | None | `maasConfig.maasUrl` in the `Cloud` |
+| `VAULT_ENABLED` | boolean | string | Feature toggle indicating whether Vault is used | `false` | `vaultConfig.enable` in the `Cloud` |
+| `VAULT_ADDR` | no | string | Vault API endpoint accessible within a cluster network. Provided if `VAULT_ENABLED: true` only | None | `vaultConfig.enable` in the `Cloud` |
+| `PUBLIC_VAULT_URL` | no | string | Vault API endpoint accessible outside the cluster network. Provided if `VAULT_ENABLED: true` only | None | `vaultConfig.url` in the `Cloud` |
+| `CONSUL_ENABLED` | boolean | string | Feature toggle indicating whether Consul is used | `false` | `consulConfig.enabled` in the `Cloud` |
+| `CONSUL_URL` | no | string | Consul API endpoint accessible within a cluster network. Provided if `CONSUL_ENABLED: true` only | None | `consulConfig.internalUrl` in the `Cloud` |
+| `CONSUL_PUBLIC_URL` | no | string | Consul API endpoint accessible within a cluster network. Provided if `CONSUL_ENABLED: true` only | None | `consulConfig.internalUrl` in the `Cloud` |
+| `PRODUCTION_MODE` | boolean | string | Defines the deployment environment  (non-production/production) type for restricting Helm chart content | `false` | TBD |
+| `CLOUDNAME` | yes | string | Cloud name | None | `name` in the `Cloud` |
+| `TENANTNAME` | yes | string | Tenant name | None | `name` in the `Tenant` |
+| `NAMESPACE` | yes | string | Namespace name | None | `name` in the corresponding `Namespace` |
+| `GATEWAY_URL` | yes | string | **Deprecated**. TBD | `http://internal-gateway-service:8080` | TBD |
+| `STATIC_CACHE_SERVICE_ROUTE_HOST` | yes | string | **Deprecated** Constructed as static-cache-service-`NAMESPACE`.`CLOUD_PUBLIC_HOST` | None | N/A |
+| `SSL_SECRET` | yes | string | TBD | `defaultsslcertificate` | TBD |
+| `BUILD_TAG_NEW` | yes | string | TBD | `keycloak-database` | TBD |
+| `CLIENT_PREFIX` | yes | string | The same as `NAMESPACE` | None | N/A |
+| `CERTIFICATE_BUNDLE_MD5SUM` | yes | string | TBD | TBD | TBD |
+| `APPLICATION_NAME` | yes | string | Name of the application (not `Application` EnvGene object) | None | `SBOM.metadata.component.name` |
+| `ORIGIN_NAMESPACE` | yes | string | The same as `NAMESPACE` | None | N/A |
+| `BASELINE_PROJ` | yes | string | **Deprecated** | TBD | TBD |
+| `PUBLIC_GATEWAY_URL` | yes | string | TBD | TBD | TBD |
+| `INTERNAL_GATEWAY_URL` | yes | string | TBD | TBD | TBD |
+| `PUBLIC_IDENTITY_PROVIDER_URL` | yes | string | TBD | TBD | TBD |
+| `PRIVATE_GATEWAY_URL` | yes | string | TBD | TBD | TBD |
+| `PRIVATE_IDENTITY_PROVIDER_URL` | yes | string | TBD | TBD | TBD |
+
 > [!IMPORTANT]
 > Parameters whose keys match the name of one of the services must be excluded from this file
 > and placed in [`collision-deployParameters.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
 
 ##### \[Version 2.0][Deployment Parameter Context] `credentials.yaml`
 
-This file contains sensitive parameters defined in the `deployParameters` section. If the parameter is described in the Environment Template via EnvGene credential macro, that parameter will be placed in this file.  
+This file contains sensitive parameters defined in the `deployParameters` section of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects. If the parameter is described via EnvGene credential macro, that parameter will be placed in this file.
+
+It also includes a [predefined set of parameters](#version-20-predefined-credentialsyaml-parameters) common to all application services.
+
 The structure of this file is as follows:
 
 ```yaml
 <key-1>: <value-1>
 <key-N>: <value-N>
+<application-predefined-key-1>: <application-predefined-value-1>
+<application-predefined-key-N>: <application-predefined-value-N>
 global: &id001
   <key-1>: <value-1>
   <key-N>: <value-N>
+  <application-predefined-key-1>: <application-predefined-value-1>
+  <application-predefined-key-N>: <application-predefined-value-N>
 <service-name-1>: *id001
 <service-name-2>: *id001
 ```
+
+###### [Version 2.0] Predefined `credentials.yaml` parameters
+
+| Attribute | Mandatory | Type | Description | Default | Source Environment Instance |
+|---|---|---|---|---|---|
+| `K8S_TOKEN` | yes | string | Cluster's API token | None | Derived from the `data.secret` property of the `Credential` specified via `defaultCredentialsId` attribute in the corresponding `Namespace` or parent `Cloud`. If the attribute is not defined at the `Namespace` level, it is inherited from the parent `Cloud`. If defined at both levels, the `Namespace` value takes precedence |
+| `DBAAS_AGGREGATOR_USERNAME` | no | string |  | None | Derived from the `data.username` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.username` in the `Cloud`  |
+| `DBAAS_AGGREGATOR_PASSWORD` | no | string |  | None | Derived from the `data.password` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.password` in the `Cloud` |
+| `DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME` | no | string |  | None | Derived from the `data.username` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.username` in the `Cloud` |
+| `DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD` | no | string |  | None | Derived from the `data.password` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.password` in the `Cloud` |
+| `MAAS_CREDENTIALS_USERNAME` | no | string |  | None | Derived from the `data.username` property of the `Credential` specified via `maasConfig.credentialsId.username` in the `Cloud` |
+| `MAAS_CREDENTIALS_PASSWORD` | no | string |  | None | Derived from the `data.password` property of the `Credential` specified via `maasConfig.credentialsId.password` in the `Cloud` |
+| `VAULT_TOKEN` | no | string | ? | None | Derived from the `data.secret` property of the `Credential` specified via `vaultConfig.credentialsId.secret` in the `Cloud` |
+| `CONSUL_ADMIN_TOKEN` | no | string |  | None | Derived from the `data.secret` property of the `Credential` specified via `consulConfig.internalUrl` in the `Cloud` |
+| `SSL_SECRET_VALUE` | no | string | TBD | TBD | TBD |
 
 > [!IMPORTANT]
 > Parameters whose keys match the name of one of the services must be excluded from this file
@@ -589,19 +665,21 @@ If `application/vnd.qubership.app.chart` component exists in Application SBOM, t
         └── deployment-parameters.yaml
 ```
 
-The `<normalized-app-chart-name>` is generated using these steps:
-
-1. Convert to lowercase  
-  Example: `MyApp_Chart` → `myapp_chart`  
-2. Replace underscores with hyphens  
-  Example: `myapp_chart` → `myapp-chart`  
-3. Encode uppercase letter positions (if original name had mixed case)  
-  A base-36 suffix is added to preserve capitalization info (e.g., `myapp-chart-a1b2`)  
-4. Enforce Kubernetes length limits  
-  Maximum length: `63 - len(namespace) - 1` # where namespace is a `name` attribute of `Namespace` object  
-  Recursively truncates the name if needed while preserving the suffix.
-
-This normalization ensures proper naming of application charts while complying with Kubernetes naming conventions and length limitations.
+> [!NOTE]
+> The `<normalized-app-chart-name>` is generated using these steps:
+>
+> 1. Convert to lowercase  
+>      Example: `MyApp_Chart` → `myapp_chart`  
+> 2. Replace underscores with hyphens  
+>      Example: `myapp_chart` → `myapp-chart`  
+> 3. Encode uppercase letter positions (if original name had mixed case)  
+>      A base-36 suffix is added to preserve capitalization info (e.g., `myapp-chart-a1b2`)  
+> 4. Enforce Kubernetes length limits  
+>      Maximum length: `63 - len(namespace) - 1` # where namespace is a `name` attribute of `Namespace` object  
+>      Recursively truncates the name if needed while preserving the suffix.
+>
+> This normalization ensures proper naming of application charts while complying with
+> Kubernetes naming conventions and length limitations.
 
 And `deployment-parameters.yaml` has the following structure:
 
