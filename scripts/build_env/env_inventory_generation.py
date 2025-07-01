@@ -5,6 +5,7 @@ import re
 import ansible_runner
 import json
 import jsonschema
+import io, yaml
 
 from create_credentials import CRED_TYPE_SECRET
 import envgenehelper as helper
@@ -172,8 +173,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         "applications": merged_applications["applications"]
         }
     logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
-    helper.writeYamlToFile(sd_path, merged_result)
-    merged_data = helper.openYaml(sd_path)
+    merged_result_yaml = yaml.safe_load(io.StringIO(yaml.dump(merged_result)))
 
     # Call merge_sd with correct merge function
     if effective_merge_mode == "replace":
@@ -185,14 +185,14 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(destination))
-        helper.writeYamlToFile(destination, merged_data)
+        helper.writeYamlToFile(destination, merged_result_yaml)
         logger.info(f"Replaced existing SD with new data at: {destination}")
         return
     
     selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
     if not selected_merge_function:
         raise ValueError(f"Unsupported merge mode: {effective_merge_mode}")
-    merge_sd(env, merged_data, selected_merge_function)  
+    merge_sd(env, merged_result_yaml, selected_merge_function)  
 
     logger.info(f"SD successfully extracted from SD_DATA and is saved in {sd_path}")
 
