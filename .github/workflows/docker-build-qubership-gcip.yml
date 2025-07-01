@@ -64,7 +64,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./creds_rotation/build/Dockerfile
+          file: ./creds_rotation/build/DockerFile
           push: true
           tags: ${{ steps.meta-creds.outputs.tags }}
           labels: ${{ steps.meta-creds.outputs.labels }}
