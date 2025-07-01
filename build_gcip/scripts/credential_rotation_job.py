@@ -21,8 +21,8 @@ def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluste
     "envgen_args": " -vv",
     "envgen_debug": "true"   
   }
-  credential_rotation_job = job_instance(params=generate_effective_set_params, vars=generate_effective_set_vars)
-  env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
+  credential_rotation_job = job_instance(params=credential_rotation_params, vars=credential_rotation_vars)
+  credential_rotation_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{cluster_name}/{environment_name}/affected-sensitive-parameters.yaml")
   credential_rotation_job.artifacts.when = WhenStatement.ALWAYS
   pipeline.add_children(credential_rotation_job)
   return credential_rotation_job

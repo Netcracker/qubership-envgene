@@ -426,6 +426,7 @@ def process_entry_in_payload(
 
 def cred_rotation():
     start = time.time()
+    logger.info(f"printing number of cpu {os.cpu_count()}")
     
     env_name, envgene_age_public_key = getenv_with_error('ENV_NAME'), getenv_with_error('ENVGENE_AGE_PUBLIC_KEY')
     creds_rotation_enabled, cred_payload = getenv_with_error('CRED_ROTATION_FORCE'),yaml.safe_load(getenv_with_error('CRED_ROTATION_PAYLOAD'))
@@ -441,15 +442,16 @@ def cred_rotation():
     output_path = f"{base_env_path}/affected-sensitive-parameters.yaml"
     creds_path = f"{base_env_path}/payload.yml" ##########################CHANGE PATH#####################
 
+    logger.info(f"base env path is {base_env_path}")
     write_yaml_to_file(creds_path, cred_payload)
 	
 	
     shared_creds =  collects_shared_Credentials(base_env_path)
     logger.info(f"Encryption is {is_encrypted} and type is {encrypt_type}")
     
-    fileraed = time.time()
+    fileread = time.time()
     shared_content_map, ns_files_map = scan_and_get_yaml_files(work_dir, env_name, shared_creds, is_encrypted, envgene_age_public_key)
-    logger.info(f"✅ Fileread Completed in {round(time.time() - fileraed, 2)} seconds.")
+    logger.info(f"✅ Fileread Completed in {round(time.time() - fileread, 2)} seconds.")
     env_cred_map ={}
     #Decrypt Environment credential file if encrypted
     env_cred_map[env_cred_file] = decrypt_file(envgene_age_public_key, env_cred_file, False, encrypt_type, '')  
@@ -520,8 +522,10 @@ def update_cred_content(
                     raise Exception(f"Unsupported credential field: '{cred_field}'")
 
                 data_block[cred_field] = param_value
-                updated_files.setdefault(cred_file, []).append({"cred_file_content": content})
-                original_files.setdefault(cred_file, []).append({"cred_file_content": original_content})
+                if not cred_file  in updated_files:
+                    updated_files[cred_file] = content
+                if not cred_file  in original_files:
+                    original_files[cred_file] = original_content
         return updated_files, original_files
 
     except Exception as e:
@@ -539,11 +543,8 @@ def write_updated_cred_into_file(updated_files, original_files, is_encrypted, en
         logger.info(f"Files restored to original state. Creds changes are not updated.")
 
 def update_file(files_to_update, is_encrypted, envgene_age_public_key):
-    for cred_file, data_entries in files_to_update.items():
-            for data in data_entries:
-                creds = data["cred_file_content"]
-                writeYamlToFile(cred_file, creds)
-
+    for cred_file, content in files_to_update.items():
+                writeYamlToFile(cred_file, content)
                 if is_encrypted:
                     crypt.encrypt_file(
                             cred_file, in_place=True, ignore_is_crypt=True,
