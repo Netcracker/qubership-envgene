@@ -1,6 +1,7 @@
 from os import *
 
 import click
+import re
 
 from envgenehelper import logger
 from gitlab_ci import build_pipeline

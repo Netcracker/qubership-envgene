@@ -1,4 +1,5 @@
 import click
+import re
 
 from envgenehelper import logger
 from validations import validate_pipeline
