@@ -43,13 +43,15 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
+
 @ApplicationScoped
 @Slf4j
 public class BomReaderUtilsImplV2 {
     private static final Pattern MAVEN_PATTERN = Pattern.compile("(pkg:maven.*)\\?registry_id=(.*)&repository_id=(.*)");
-    private static final List<String> IMAGE_SERVICE_MIME_TYPES = List.of("application/vnd.qubership.service", "application/octet-stream");
-    private static final List<String> CONFIG_SERVICE_MIME_TYPES = List.of("application/vnd.qubership.configuration.smartplug", "application/vnd.qubership.configuration.frontend", "application/vnd.qubership.configuration.cdn", "application/vnd.qubership.configuration");
-    private static final List<String> SUB_SERVICE_ARTIFACT_MIME_TYPES = List.of("application/xml", "application/zip", "application/vnd.osgi.bundle", "application/java-archive");
+    private static final List<String> IMAGE_SERVICE_MIME_TYPES = List.of(APPLICATION_VND_QUBERSHIP_SERVICE, APPLICATION_OCTET_STREAM);
+    private static final List<String> CONFIG_SERVICE_MIME_TYPES = List.of(APPLICATION_VND_QUBERSHIP_CONFIGURATION_SMARTPLUG, APPLICATION_VND_QUBERSHIP_CONFIGURATION_FRONTEND, APPLICATION_VND_QUBERSHIP_CONFIGURATION_CDN, APPLICATION_VND_QUBERSHIP_CONFIGURATION);
+    private static final List<String> SUB_SERVICE_ARTIFACT_MIME_TYPES = List.of(APPLICATION_XML, APPLICATION_ZIP, APPLICATION_VND_OSGI_BUNDLE, APPLICATION_JAVA_ARCHIVE);
     private final FileDataConverter fileDataConverter;
     private final ProfileService profileService;
     private final RegistryConfigurationService registryConfigurationService;
@@ -132,6 +134,7 @@ public class BomReaderUtilsImplV2 {
         String entity = "service:" + component.getName();
         Map<String, Object> primaryArtifactMap = new TreeMap<>();
         List<Map<String, Object>> artifacts = new ArrayList<>();
+        Map<String, Object> tArtifactMap = new TreeMap<>();
         for (Component subComponent : component.getComponents()) {
             entity = "sub component '" + subComponent.getName() + "' of service:" + component.getName();
             if (subComponent.getMimeType().equalsIgnoreCase(serviceArtifactType.getArtifactMimeType())) {
@@ -159,7 +162,18 @@ public class BomReaderUtilsImplV2 {
                 artifactMap.put("version", "");
                 artifacts.add(artifactMap);
             }
+            if (APPLICATION_ZIP.equalsIgnoreCase(subComponent.getMimeType())) {
+                String classifier = getPropertyValue(subComponent, "classifier", null, true, entity);
+                String name = subComponent.getName();
+                String version = subComponent.getVersion();
+                if (StringUtils.isNotBlank(classifier)) {
+                    tArtifactMap.put(classifier, name + "-" + version + "-" + classifier + ".zip");
+                } else {
+                    tArtifactMap.put("ecl", name + "-" + version + ".zip");
+                }
+            }
         }
+        deployDescParams.put("tArtifactNames", tArtifactMap);
         deployDescParams.put("artifact", primaryArtifactMap);
         deployDescParams.put("artifacts", artifacts);
         deployDescParams.put("build_id_dtrust", getPropertyValue(component, "build_id_dtrust", null, true, entity));
@@ -169,7 +183,6 @@ public class BomReaderUtilsImplV2 {
         deployDescParams.put("maven_repository", getPropertyValue(component, "maven_repository", null, true, entity));
         deployDescParams.put("name", checkIfMandatory(component.getName(), "name", entity));
         deployDescParams.put("service_name", checkIfMandatory(component.getName(), "name", entity));
-        deployDescParams.put("tArtifactNames", new TreeMap<String, String>());
         deployDescParams.put("version", checkIfMandatory(component.getVersion(), "version", entity));
         populateOptionalParam(deployDescParams, "type", getPropertyValue(component, "type", null, false, entity));
 
@@ -285,7 +298,7 @@ public class BomReaderUtilsImplV2 {
         serviceParams.put("SERVICE_NAME", checkIfMandatory(component.getName(), "name", entity));
         String dockerTag = getPropertyValue(component, "full_image_name", null, true, entity);
         serviceParams.put("DOCKER_TAG", dockerTag);
-        serviceParams.put("IMAGE_REPOSITORY", StringUtils.isNotEmpty(dockerTag) ? dockerTag.split(":")[0] : null);
+        serviceParams.put("IMAGE_REPOSITORY", getImageRepository(dockerTag));
 
         for (Component subComponent : component.getComponents()) {
             if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
@@ -299,6 +312,13 @@ public class BomReaderUtilsImplV2 {
             serviceParams.putAll(profileValues);
         }
         serviceMap.put(component.getName(), serviceParams);
+    }
+
+    private String getImageRepository(String dockerTag) {
+        if(StringUtils.isNotEmpty(dockerTag)){
+            return dockerTag.substring(0, dockerTag.lastIndexOf(":"));
+        }
+        return null;
     }
 
     private Map<String, String> extractProfileValues(Component dataComponent, String appName, String serviceName,

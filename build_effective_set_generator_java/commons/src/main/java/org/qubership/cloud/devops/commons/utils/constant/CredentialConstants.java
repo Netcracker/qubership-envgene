@@ -20,9 +20,8 @@ public class CredentialConstants {
     public static final String CALCULABLE_CREDS_FIELD = "#creds";
     public static final String CALCULABLE_CLOUD_CREDS_FIELD = "#credscl";
     public static final String CALCULABLE_NS_CREDS_FIELD = "#credsns";
-    public static final String DEFAULT_DBAAS_AGGREGATOR_LOGIN = "cluster-dba";
-    public static final String DEFAULT_DBAAS_AGGREGATOR_PASSWORD = "Bnmq5567_PO";
-
-    public static final String DEFAULT_MAAS_LOGIN = "client";
-    public static final String DEFAULT_MAAS_PASSWORD = "client";
+    public static final String DEFAULT_DBAAS_AGGREGATOR_LOGIN = "";
+    public static final String DEFAULT_DBAAS_AGGREGATOR_PASSWORD = "";
+    public static final String DEFAULT_MAAS_LOGIN = "";
+    public static final String DEFAULT_MAAS_PASSWORD = "";
 }

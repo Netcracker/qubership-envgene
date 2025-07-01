@@ -31,4 +31,14 @@ public class ApplicationConstants {
     public static final String COMMON_DEPLOY_DESC = "common_deploy_desc";
     public static final String PER_SERVICE_DEPLOY_PARAMS = "per_service_deploy_params";
     public static final String APPR_CHART_NAME = "appChartName";
+    public static final String APPLICATION_ZIP = "application/zip";
+    public static final String APPLICATION_XML = "application/xml";
+    public static final String APPLICATION_VND_OSGI_BUNDLE = "application/vnd.osgi.bundle";
+    public static final String APPLICATION_JAVA_ARCHIVE = "application/java-archive";
+    public static final String APPLICATION_VND_QUBERSHIP_CONFIGURATION_SMARTPLUG = "application/vnd.qubership.configuration.smartplug";
+    public static final String APPLICATION_VND_QUBERSHIP_CONFIGURATION_FRONTEND = "application/vnd.qubership.configuration.frontend";
+    public static final String APPLICATION_VND_QUBERSHIP_CONFIGURATION_CDN = "application/vnd.qubership.configuration.cdn";
+    public static final String APPLICATION_VND_QUBERSHIP_CONFIGURATION = "application/vnd.qubership.configuration";
+    public static final String APPLICATION_VND_QUBERSHIP_SERVICE = "application/vnd.qubership.service";
+    public static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
 }
