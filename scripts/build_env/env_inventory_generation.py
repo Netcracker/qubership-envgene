@@ -156,43 +156,43 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
     else:
         effective_merge_mode = "replace"    
 
-    if effective_merge_mode == "replace":
-        destination = f'{env.env_path}/Inventory/solution-descriptor/sd.yaml'
+    # Perform basic-merge for multiple SDs before applying SD_REPO_MERGE_MODE
+    merged_applications = {"applications": data[0].get("applications", [])}
+    if not merged_applications["applications"]:
+        logger.error("No applications found in the first SD block.")
+        exit(1)
+    for i in range(1, len(data)):
+        logger.info(f"Initiates basic-merge:")
+        current_item_sd = {"applications": data[i].get("applications", [])} 
+        merged_applications = helper.merge(merged_applications, current_item_sd)
+    merged_result = {
+        "version": data[0].get("version"),
+        "type": data[0].get("type"),
+        "deployMode": data[0].get("deployMode"),
+        "applications": merged_applications["applications"]
+        }
+    logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
+    helper.writeYamlToFile(sd_path, merged_result)
+    merged_data = helper.openYaml(sd_path)
 
+    # Call merge_sd with correct merge function
+    if effective_merge_mode == "replace":
+        logger.info(f"Inside replace")
+        destination = f'{env.env_path}/Inventory/solution-descriptor/sd.yaml'
         if helper.check_file_exists(destination):
             full_sd_yaml = helper.openYaml(destination)
             logger.info(f"full_sd.yaml before replacement: {json.dumps(full_sd_yaml, indent=2)}")
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
-
         helper.check_dir_exist_and_create(path.dirname(destination))
-        helper.writeYamlToFile(destination, data)
+        helper.writeYamlToFile(destination, merged_data)
         logger.info(f"Replaced existing SD with new data at: {destination}")
         return
-    else:
-        merged_applications = {"applications": data[0].get("applications", [])}
-        if not merged_applications["applications"]:
-            logger.error("No applications found in the first SD block.")
-            exit(1)
-        for i in range(1, len(data)):
-            logger.info(f"Initiates basic-merge:")
-            current_item_sd = {"applications": data[i].get("applications", [])} 
-            merged_applications = helper.merge(merged_applications, current_item_sd)
-        merged_result = {
-            "version": data[0].get("version"),
-            "type": data[0].get("type"),
-            "deployMode": data[0].get("deployMode"),
-            "applications": merged_applications["applications"]
-            }
-        logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
-        helper.writeYamlToFile(sd_path, merged_result)
-        merged_data = helper.openYaml(sd_path)
-
-        # Call merge_sd with correct merge function
-        selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
-        if not selected_merge_function:
-            raise ValueError(f"Unsupported merge mode: {effective_merge_mode}")
-        merge_sd(env, merged_data, selected_merge_function)  
+    
+    selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
+    if not selected_merge_function:
+        raise ValueError(f"Unsupported merge mode: {effective_merge_mode}")
+    merge_sd(env, merged_data, selected_merge_function)  
 
     logger.info(f"SD successfully extracted from SD_DATA and is saved in {sd_path}")
 
