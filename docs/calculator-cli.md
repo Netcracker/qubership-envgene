@@ -382,20 +382,20 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 | `SERVER_HOSTNAME` | yes | string | **Deprecated**. Uses `CLOUD_PUBLIC_HOST` if set, otherwise falls back to  `CLOUD_API_HOST`  | None | N/A |
 | `CUSTOM_HOST` | yes | string | **Deprecated**. Uses `CLOUD_PRIVATE_HOST` if set, otherwise falls back to  `SERVER_HOSTNAME` | None | N/A |
 | `OPENSHIFT_SERVER` | yes | string | **Deprecated**. Constructed as `CLOUD_PROTOCOL`://`CLOUD_PUBLIC_HOST`:`CLOUD_API_PORT` | None | N/A |
-| `DBAAS_ENABLED` | boolean | string | Feature toggle indicating whether DBaaS is used | `false` | `dbaasConfigs[0].enable` in the `Cloud` |
+| `DBAAS_ENABLED` | yes | boolean | Feature toggle indicating whether DBaaS is used | `false` | `dbaasConfigs[0].enable` in the `Cloud` |
 | `API_DBAAS_ADDRESS` | no | string | DBaaS API endpoint accessible within a cluster network. Provided if `DBAAS_ENABLED: true` only  | None | `dbaasConfigs[0].apiUrl` in the `Cloud` |
 | `DBAAS_AGGREGATOR_ADDRESS` | no | string | DBaaS API endpoint accessible outside the cluster network. Provided if `DBAAS_ENABLED: true` only  | None | `dbaasConfigs[0].aggregatorUrl` in the `Cloud` |
 | `MAAS_ENABLED` | yes | boolean | Feature toggle indicating whether MaaS is used | `false` | `maasConfig.enable` in the `Cloud` |
 | `MAAS_INTERNAL_ADDRESS` | no | string | MaaS API endpoint accessible within a cluster network. Provided if `MAAS_ENABLED: true` only | None | `maasConfig.maasInternalAddress` in the `Cloud` |
 | `MAAS_EXTERNAL_ROUTE` | no | string | Maas API endpoint accessible outside the cluster network. Provided if `MAAS_ENABLED: true` only | None | `maasConfig.maasUrl` in the `Cloud` |
 | `MAAS_SERVICE_ADDRESS` | no | string | **Deprecated**. The same as `MAAS_EXTERNAL_ROUTE`. Provided if `MAAS_ENABLED: true` only | None | `maasConfig.maasUrl` in the `Cloud` |
-| `VAULT_ENABLED` | boolean | string | Feature toggle indicating whether Vault is used | `false` | `vaultConfig.enable` in the `Cloud` |
+| `VAULT_ENABLED` | yes | boolean | Feature toggle indicating whether Vault is used | `false` | `vaultConfig.enable` in the `Cloud` |
 | `VAULT_ADDR` | no | string | Vault API endpoint accessible within a cluster network. Provided if `VAULT_ENABLED: true` only | None | `vaultConfig.enable` in the `Cloud` |
 | `PUBLIC_VAULT_URL` | no | string | Vault API endpoint accessible outside the cluster network. Provided if `VAULT_ENABLED: true` only | None | `vaultConfig.url` in the `Cloud` |
-| `CONSUL_ENABLED` | boolean | string | Feature toggle indicating whether Consul is used | `false` | `consulConfig.enabled` in the `Cloud` |
+| `CONSUL_ENABLED` | yes | boolean | Feature toggle indicating whether Consul is used | `false` | `consulConfig.enabled` in the `Cloud` |
 | `CONSUL_URL` | no | string | Consul API endpoint accessible within a cluster network. Provided if `CONSUL_ENABLED: true` only | None | `consulConfig.internalUrl` in the `Cloud` |
 | `CONSUL_PUBLIC_URL` | no | string | Consul API endpoint accessible within a cluster network. Provided if `CONSUL_ENABLED: true` only | None | `consulConfig.internalUrl` in the `Cloud` |
-| `PRODUCTION_MODE` | boolean | string | Defines the deployment environment  (non-production/production) type for restricting Helm chart content | `false` | TBD |
+| `PRODUCTION_MODE` | no | boolean | Defines the deployment environment  (non-production/production) type for restricting Helm chart content | `false` | TBD |
 | `CLOUDNAME` | yes | string | Cloud name | None | `name` in the `Cloud` |
 | `TENANTNAME` | yes | string | Tenant name | None | `name` in the `Tenant` |
 | `NAMESPACE` | yes | string | Namespace name | None | `name` in the corresponding `Namespace` |
