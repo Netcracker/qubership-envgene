@@ -67,13 +67,23 @@ async def load_yaml_files_parallel(paths: List[str]) -> Dict[str, dict]:
     return {path: content for path, content in results if content is not None}
 
 def get_app_and_ns(filename: str, content: dict) -> Tuple[str, Optional[str]]:
-    filepath = PurePath(filename)
-    namespace_name = filepath.parent.parent.name
-
     if filename.endswith(("namespace.yml", "namespace.yaml")):
         return content.get('name', ''), None
+    
+    filepath = PurePath(filename)
+    parent_dir = filepath.parent.parent
+    ns_file_yaml = parent_dir / "namespace.yaml"
+    ns_file_yml = parent_dir / "namespace.yml"
 
-    return content.get('name', ''), namespace_name
+    try:
+        ns_content = get_content_form_file(ns_file_yml)
+    except Exception:
+        try:
+            ns_content = get_content_form_file(ns_file_yaml)
+        except Exception as e:
+            raise Exception(f"Failed to load namespace file from {parent_dir}: {e}")
+    return content.get('name', ''), ns_content.get('name','')
+
 
 def get_affected_param_map(
     cred_id: str,
@@ -407,7 +417,7 @@ def process_entry_in_payload(
         entry.context,
         target_file
     )
-
+    logger.info(f"Finished processing of  param_key is {entry.parameter_key}")
     if affected:
         return RotationResult(
             target_parameter=ParameterReference(
@@ -472,7 +482,7 @@ def cred_rotation():
         )
         if result:
             final_result.append(result)
-
+    logger.info(f"final result is {final_result}")
     if final_result:
         write_yaml_to_file(output_path, [r.to_dict() for r in final_result])
     else:
