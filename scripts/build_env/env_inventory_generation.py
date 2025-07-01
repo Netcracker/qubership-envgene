@@ -175,6 +175,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
             logger.error("No applications found in the first SD block.")
             exit(1)
         for i in range(1, len(data)):
+            logger.info(f"Initiates basic-merge:")
             current_item_sd = {"applications": data[i].get("applications", [])} 
             merged_applications = helper.merge(merged_applications, current_item_sd)
         merged_result = {
@@ -183,7 +184,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
             "deployMode": data[0].get("deployMode"),
             "applications": merged_applications["applications"]
             }
-        logger.info(f"Final merged SD data: {json.dumps(merged_result, indent=2)}")
+        logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
         helper.writeYamlToFile(sd_path, merged_result)
         merged_data = helper.openYaml(sd_path)
 

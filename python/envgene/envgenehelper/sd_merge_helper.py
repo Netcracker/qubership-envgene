@@ -81,7 +81,8 @@ def merge(full_sd, delta_sd):
       3. New App => append to Full SD
       4. Output contains only `applications` key
     """
-    logger.info(f"Inside basic_merge")
+    logger.info(f"Full SD: {full_sd}")
+    logger.info(f"Delta SD: {delta_sd}")
     full_apps = full_sd.get("applications", [])
     delta_apps = delta_sd.get("applications", [])
     result_apps = []
@@ -114,6 +115,7 @@ def merge(full_sd, delta_sd):
     return {"applications": result_apps}
 
 def extended_merge(data1, data2):
+    logger.info(f"Inside extended_merge")
     logger.info(f"Full SD: {data1}")
     logger.info(f"Delta SD: {data2}")
     
@@ -165,6 +167,8 @@ def basic_merge(full_sd, delta_sd):
       4. Output contains only `applications` key
     """
     logger.info(f"Inside basic_merge")
+    logger.info(f"Full SD: {full_sd}")
+    logger.info(f"Delta SD: {delta_sd}")
     full_apps = full_sd.get("applications", [])
     delta_apps = delta_sd.get("applications", [])
     result_apps = []
@@ -206,6 +210,8 @@ def basic_exclusion_merge(full_sd, delta_sd):
       4. Output contains only `applications` key
     """
     logger.info(f"Inside basic_exclusion_merge")
+    logger.info(f"Full SD: {full_sd}")
+    logger.info(f"Delta SD: {delta_sd}")
     full_apps = full_sd.get("applications", [])
     delta_apps = delta_sd.get("applications", [])
     result_apps = []
