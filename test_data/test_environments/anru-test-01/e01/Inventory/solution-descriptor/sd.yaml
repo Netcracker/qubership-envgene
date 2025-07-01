@@ -1,0 +1,9 @@
+version: 2.2
+type: deploy
+applications:
+  - version: postgres:1.32.6-pg14-20240531.092603-2-RELEASE
+    deployPostfix: bss
+  - version: postgres:1.32.6-pg14-20240531.092603-2-RELEASE
+    deployPostfix: core
+  - version: postgres-toms:1.32.6-pg14-20240531.092603-2-RELEASE
+    deployPostfix: toms

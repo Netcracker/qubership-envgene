@@ -20,7 +20,12 @@ yaml = YAML()
 TEST_CASES = [
     # (cluster_name, environment_name, test_case_name)
     ("cluster01", "env02", "TC-001-002"),
-    ("cluster01", "env02", "TC-001-006")
+    ("cluster01", "env02", "TC-001-006"),
+    ("cluster01", "env02", "TC-001-004"),
+    ("cluster01", "env02", "TC-001-018"),
+    ("cluster01", "env02", "TC-001-010"),
+    ("cluster01", "env02", "TC-001-012"),
+    ("cluster01", "env02", "TC-001-014")
 ]
 
 # Directory paths configuration
@@ -74,7 +79,7 @@ def load_test_sd_data(test_case_name):
     sd_source_type = test_data.get("SD_SOURCE_TYPE", "")
     sd_version = test_data.get("SD_VERSION", "")
     sd_delta = test_data.get("SD_DELTA", "")
-    sd_merge_mode = "basic-merge"
+    sd_merge_mode = test_data.get("SD_REPO_MERGE_MODE", "basic-merge")
     logger.info(f"Loaded SD parameters:"
                f"\n\tSD_SOURCE_TYPE: {sd_source_type}"
                f"\n\tSD_VERSION: {sd_version}"

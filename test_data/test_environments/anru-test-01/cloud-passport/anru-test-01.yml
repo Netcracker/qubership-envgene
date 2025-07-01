@@ -1,0 +1,17 @@
+---
+version: 1.5
+global:
+  VALUE: "true"
+cloud:
+  CLOUD_API_HOST: temp.cloud.com
+  CLOUD_API_PORT: "1111"
+  CLOUD_DEPLOY_TOKEN: cloud-deploy-sa-token
+  CLOUD_PUBLIC_HOST: anru-test-01.managed.temp.cloud
+  CLOUD_PRIVATE_HOST: anru-test-01.managed.temp.cloud
+  CLOUD_DASHBOARD_URL: https://dashboard.anru-test-01.managed.temp.cloud
+  CLOUD_PROTOCOL: https
+  PRODUCTION_MODE: "false"
+  GRAYLOG_UI_URL: https://anru-test-01.managed.temp.cloud
+  TRACING_UI_URL: https://anru-test-01.managed.temp.cloud
+  GRAFANA_UI_URL: https://anru-test-01.managed.temp.cloud
+  CMDB_URL: https://anru-test-01.managed.temp.cloud
