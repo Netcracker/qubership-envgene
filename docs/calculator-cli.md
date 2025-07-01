@@ -658,7 +658,7 @@ Set of per service keys depends on the service type, determined by the MIME type
 | `DEPLOYMENT_RESOURCE_NAME` | yes | string | Is formed by concatenating `<service-name>`-v1 | None | None |
 | `DEPLOYMENT_VERSION` | yes | string | always `v1` | `v1` | None |
 | `DOCKER_TAG` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=full_image_name].value` |
-| `IMAGE_REPOSITORY` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=full_image_name].value.split(':')[0]` |
+| `IMAGE_REPOSITORY` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=full_image_name].value.split(':').join(parts[:2]` |
 | `SERVICE_NAME` | yes | string | `<service-name>` | None | None |
 | `TAG` | yes | string | Docker image version | None | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].version` |
 
