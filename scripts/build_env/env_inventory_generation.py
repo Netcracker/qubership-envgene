@@ -130,8 +130,9 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
             logger.error(f"To use the delta processing mode for SD, a complete SD must already be stored in the repository.\nThe file {full_sd_path} does not exist.")
             exit(1)
     else:
-        logger.info(f"printing sd_path sd_delta F {sd_path}")
         sd_path = base_path + 'sd.yaml'
+        logger.info(f"printing sd_path sd_delta F {sd_path}")
+        
     helper.check_dir_exist_and_create(path.dirname(sd_path))
     if sd_source_type == "artifact": 
         download_sd_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode)
