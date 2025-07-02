@@ -30,8 +30,9 @@ Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](https://github.com/Net
 ```yaml
 # Mandatory 
 inventory:
-  # Mandatory
+  # Optional
   # Name of the Environment, e.g. dev01
+  # If not specified, it will be automatically derived from the parent folder name in the path: /environments/<clusterName>/<environmentName>/Inventory/
   # This attribute's value is available for template rendering via the `current_env.name` variable
   environmentName: string
   # Optional
@@ -117,7 +118,7 @@ Basic example with minimal set of fields:
 
 ```yaml
 inventory:
-  environmentName: "simplest-env"
+  # environmentName will be derived from folder name if not specified
   tenantName: "Applications"
 envTemplate:
   name: "simple"
