@@ -452,8 +452,8 @@ def cred_rotation():
     
     base_env_path = f"{work_dir}/environments/{cluster_name}/{env}"
     env_cred_file = f"{base_env_path}/Credentials/credentials.yml"
-    output_path = f"{base_env_path}/affected-sensitive-parameters.yaml"
-    creds_path = f"{base_env_path}/payload.yml" ##########################CHANGE PATH#####################
+    output_path = f"{work_dir}/affected-sensitive-parameters.yaml"
+    creds_path = f"/tmp/payload.yml" ##########################CHANGE PATH#####################
 
     logger.info(f"base env path is {base_env_path}")
     write_yaml_to_file(creds_path, cred_payload)
