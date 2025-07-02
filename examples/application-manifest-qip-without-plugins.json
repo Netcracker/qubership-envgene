@@ -29,45 +29,7 @@
       "type": "application",
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-ui",
-      "version": "master-20250210.074231-75",
-      "properties": [
-        {
-          "name": "git_branch",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "git_revision",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "image_type",
-          "value": "service"
-        },
-        {
-          "name": "qualifier",
-          "value": "assembly"
-        },
-        {
-          "name": "promote_artifacts",
-          "value": "true"
-        },
-        {
-          "name": "deploy_param",
-          "value": ""
-        },
-        {
-          "name": "git_url",
-          "value": "https://git.qubership.org/tree/960269e6c55e1bd6fd7f7ed5df873241facb542f"
-        },
-        {
-          "name": "docker_registry",
-          "value": "artifactory.qubership.org:10004"
-        },
-        {
-          "name": "full_image_name",
-          "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-ui:build22"
-        }
-      ]
+      "version": "master-20250210.074231-75"
     },
     {
       "bom-ref": "qubership-integration-platform-ui:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
@@ -82,7 +44,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/core/qubership-integration-platform-ui@build22?registry_id=sandbox?repository_id=targetSnapshot"
+      "purl": "pkg:docker/core/qubership-integration-platform-ui@build22?registryName=sandbox"
     },
     {
       "bom-ref": "qubership-integration-platform-variables-management:6dde3587-76a0-4369-8a9b-36c5c7b468be",
@@ -90,44 +52,7 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-variables-management",
       "version": "master-20250210.074231-76",
-      "properties": [
-        {
-          "name": "git_branch",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "git_revision",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "image_type",
-          "value": "service"
-        },
-        {
-          "name": "qualifier",
-          "value": "assembly"
-        },
-        {
-          "name": "promote_artifacts",
-          "value": "true"
-        },
-        {
-          "name": "deploy_param",
-          "value": ""
-        },
-        {
-          "name": "git_url",
-          "value": "https://git.qubership.org/tree/960269e6c55e1bd6fd7f7ed5df873241facb542f"
-        },
-        {
-          "name": "docker_registry",
-          "value": "artifactory.qubership.org:10004"
-        },
-        {
-          "name": "full_image_name",
-          "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-variables-management:build3"
-        }
-      ]
+      "properties": []
     },
     {
       "bom-ref": "qubership-integration-platform-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -142,7 +67,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/core/qubership-integration-platform-variables-management@build3?registry_id=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/qubership-integration-platform-variables-management@build3?registryName=sandbox?repository_id=snapshotUri"
     },
     {
       "bom-ref": "qubership-integration-platform-systems-catalog:6dde3587-76a0-4369-8a9b-36c5c7b468be",
@@ -150,44 +75,7 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-systems-catalog",
       "version": "master-20250210.074231-76",
-      "properties": [
-        {
-          "name": "git_branch",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "git_revision",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "image_type",
-          "value": "service"
-        },
-        {
-          "name": "qualifier",
-          "value": "assembly"
-        },
-        {
-          "name": "promote_artifacts",
-          "value": "true"
-        },
-        {
-          "name": "deploy_param",
-          "value": ""
-        },
-        {
-          "name": "git_url",
-          "value": "https://git.qubership.org/tree/960269e6c55e1bd6fd7f7ed5df873241facb542f"
-        },
-        {
-          "name": "docker_registry",
-          "value": "artifactory.qubership.org:10004"
-        },
-        {
-          "name": "full_image_name",
-          "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-systems-catalog:build3"
-        }
-      ]
+      "properties": []
     },
     {
       "bom-ref": "qubership-integration-platform-systems-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -202,7 +90,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/core/qubership-integration-platform-systems-catalog@build3?registry_id=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/qubership-integration-platform-systems-catalog@build3?registryName=sandbox?repository_id=snapshotUri"
     },
     {
       "bom-ref": "qubership-integration-platform-catalog:6dde3587-76a0-4369-8a9b-36c5c7b468be",
@@ -210,44 +98,7 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-catalog",
       "version": "master-20250210.074231-76",
-      "properties": [
-        {
-          "name": "git_branch",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "git_revision",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "image_type",
-          "value": "service"
-        },
-        {
-          "name": "qualifier",
-          "value": "assembly"
-        },
-        {
-          "name": "promote_artifacts",
-          "value": "true"
-        },
-        {
-          "name": "deploy_param",
-          "value": ""
-        },
-        {
-          "name": "git_url",
-          "value": "https://git.qubership.org/tree/960269e6c55e1bd6fd7f7ed5df873241facb542f"
-        },
-        {
-          "name": "docker_registry",
-          "value": "artifactory.qubership.org:10004"
-        },
-        {
-          "name": "full_image_name",
-          "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-catalog:build3"
-        }
-      ]
+      "properties": []
     },
     {
       "bom-ref": "qubership-integration-platform-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -262,7 +113,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/core/qubership-integration-platform-catalog@build3?registry_id=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/qubership-integration-platform-catalog@build3?registryName=sandbox?repository_id=snapshotUri"
     },
     {
       "bom-ref": "qubership-integration-platform-engine:6dde3587-76a0-4369-8a9b-36c5c7b468be",
@@ -270,44 +121,7 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-engine",
       "version": "master-20250210.074231-76",
-      "properties": [
-        {
-          "name": "git_branch",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "git_revision",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "image_type",
-          "value": "service"
-        },
-        {
-          "name": "qualifier",
-          "value": "assembly"
-        },
-        {
-          "name": "promote_artifacts",
-          "value": "true"
-        },
-        {
-          "name": "deploy_param",
-          "value": ""
-        },
-        {
-          "name": "git_url",
-          "value": "https://git.qubership.org/tree/960269e6c55e1bd6fd7f7ed5df873241facb542f"
-        },
-        {
-          "name": "docker_registry",
-          "value": "artifactory.qubership.org:10004"
-        },
-        {
-          "name": "full_image_name",
-          "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-engine:build3"
-        }
-      ]
+      "properties": []
     },
     {
       "bom-ref": "qubership-integration-platform-engine:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -322,7 +136,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/core/qubership-integration-platform-engine@build3?registry_id=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/qubership-integration-platform-engine@build3?registryName=sandbox?repository_id=snapshotUri"
     },
     {
       "bom-ref": "qubership-integration-platform-sessions-management:6dde3587-76a0-4369-8a9b-36c5c7b468be",
@@ -330,44 +144,7 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-sessions-management",
       "version": "master-20250210.074231-76",
-      "properties": [
-        {
-          "name": "git_branch",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "git_revision",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "image_type",
-          "value": "service"
-        },
-        {
-          "name": "qualifier",
-          "value": "assembly"
-        },
-        {
-          "name": "promote_artifacts",
-          "value": "true"
-        },
-        {
-          "name": "deploy_param",
-          "value": ""
-        },
-        {
-          "name": "git_url",
-          "value": "https://git.qubership.org/tree/960269e6c55e1bd6fd7f7ed5df873241facb542f"
-        },
-        {
-          "name": "docker_registry",
-          "value": "artifactory.qubership.org:10004"
-        },
-        {
-          "name": "full_image_name",
-          "value": "artifactory.qubership.org:10004/core/qubership-integration-platform-sessions-management:build3"
-        }
-      ]
+      "properties": []
     },
     {
       "bom-ref": "qubership-integration-platform-sessions-management:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -382,7 +159,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/core/qubership-integration-platform-sessions-management@build3?registry_id=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/qubership-integration-platform-sessions-management@build3?registryName=sandbox?repository_id=snapshotUri"
     },
     {
       "bom-ref": "cr-synchonizer:6dde3587-76a0-4369-8a9b-36c5c7b468be",
@@ -390,44 +167,7 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "cr-synchonizer",
       "version": "master-20250210.074231-76",
-      "properties": [
-        {
-          "name": "git_branch",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "git_revision",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "image_type",
-          "value": "service"
-        },
-        {
-          "name": "qualifier",
-          "value": "assembly"
-        },
-        {
-          "name": "promote_artifacts",
-          "value": "true"
-        },
-        {
-          "name": "deploy_param",
-          "value": ""
-        },
-        {
-          "name": "git_url",
-          "value": "https://git.qubership.org/tree/960269e6c55e1bd6fd7f7ed5df873241facb542f"
-        },
-        {
-          "name": "docker_registry",
-          "value": "artifactory.qubership.org:10004"
-        },
-        {
-          "name": "full_image_name",
-          "value": "artifactory.qubership.org:10004/core/cr-synchonizer:build3"
-        }
-      ]
+      "properties": []
     },
     {
       "bom-ref": "cr-synchonizer:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -442,7 +182,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/core/cr-synchonizer@build3?registry_id=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/cr-synchonizer@build3?registryName=sandbox?repository_id=snapshotUri"
     },
     {
       "bom-ref": "qubership-integration-platform:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
@@ -456,13 +196,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:helm/example-repo/qubership-integration-platform@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
-      "properties": [
-        {
-          "name": "alias",
-          "value": "app-chart"
-        }
-      ],
+      "purl": "pkg:helm/example-repo/qubership-integration-platform@1.2.3?registryName=sandbox",
       "components": [
         {
           "bom-ref": "qubership-integration-platform-ui:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
@@ -476,7 +210,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-ui@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-ui@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -496,7 +230,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-variables-management@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-variables-management@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -516,7 +250,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-systems-catalog@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-systems-catalog@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -536,7 +270,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-catalog@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-catalog@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -556,7 +290,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-engine@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-engine@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -576,7 +310,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-sessions-management@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-sessions-management@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -596,7 +330,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/cr-synchonizer@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/cr-synchonizer@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -616,7 +350,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-composite-gateway@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-composite-gateway@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -638,13 +372,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:helm/example-repo/core-tpl@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
-      "properties": [
-        {
-          "name": "alias",
-          "value": "core-tpl"
-        }
-      ]
+      "purl": "pkg:helm/example-repo/core-tpl@1.2.3?registryName=sandbox"
     },
     {
       "bom-ref": "core-tpl:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -659,7 +387,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/core/core-tpl@build3?registry_id=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/core-tpl@build3?registryName=sandbox?repository_id=snapshotUri"
     }
   ],
   "dependencies": [

@@ -14,10 +14,15 @@
     - [Option 1.2 Application Manifest without service](#option-12-application-manifest-without-service)
     - [Option 1.3 Application Manifest without plugins](#option-13-application-manifest-without-plugins)
     - [Option 2 No Application Manifest](#option-2-no-application-manifest)
+    - [Application Manifest Build CLI](#application-manifest-build-cli)
+      - [\[Application Manifest Build CLI\] Open Question](#application-manifest-build-cli-open-question)
+      - [\[Application Manifest Build CLI\] Limitation](#application-manifest-build-cli-limitation)
+      - [\[Application Manifest Build CLI\] Requirements](#application-manifest-build-cli-requirements)
   - [MoMs](#moms)
     - [09.06](#0906)
     - [16.06](#1606)
     - [17.06](#1706)
+    - [23.06](#2306)
     - [PoC](#poc)
 
 ## Goals
@@ -48,7 +53,7 @@
 6. Application Manifest should be based CycloneDX specification. Alternative formats may be considered
 7. Application Manifest must be generated via dedicated CLI tool
 8. Application Manifest must be generated at the application build stage
-9. Application Manifest build must use the "new builder's" input contract
+9. Application Manifest build should use the "new builder's" input contract
 10. The [Effective Set](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#effective-set-v20) the structure may change
 
 ## Open questions
@@ -160,6 +165,82 @@ In this option:
 ![no-application-manifest-model.drawio.png](/docs/images/no-application-manifest-model.drawio.png)
 ![no-application-manifest.drawio.png](/docs/images/no-application-manifest.drawio.png)
 
+### Application Manifest Build CLI
+
+#### [Application Manifest Build CLI] Open Question
+
+1. How does Build CLI determine the list of components to include in the Application Manifest (AM)?
+   1. Configuration file as input
+   2. Build workflow discovery
+
+#### [Application Manifest Build CLI] Limitation
+
+1. Only for app chart applications
+2. All application components described in AM (Helm charts, Docker images, ZIPs, SPARs, JARs) must be built in the same repository, within the same workflow as AM build
+3. For each artifact type (Docker, Helm, Maven), application publication goes to one registry per type
+
+#### [Application Manifest Build CLI] Requirements
+
+1. Build CLI runs in the application build pipeline as a job that follows component build jobs in the workflow
+2. Build CLI must generate AM that validates against [JSON Schema]()
+3. AM schema changes without adding new component types must be low-cost
+4. AM build must complete within 30 seconds
+5. AM must be published as a Maven artifact
+   1. Artifact ID must match the application name
+6. Resource profile baseline must be converted to ...TBD...
+7. AM must contain artifact coordinates in PURL notation, for example:
+    `pkg:docker/core/qubership-integration-platform-ui@build22?registryName=sandbox`
+    where `registryName` points to the registry in the registry config:
+
+    ```yaml
+    sandbox:
+      auth:
+        method: <none|basic|token|apiKey|...>
+        username:
+        password:
+        token: 
+        apiKey:
+      docker:
+        auth:
+          ...
+        snapshotRepository: ""
+        stagingRepository: ""
+        releaseRepository: ""
+      maven:
+        auth:
+          ...
+        snapshotRepository: ""
+        stagingRepository: ""
+        releaseRepository: ""
+      helm:
+        auth:
+          ...
+        snapshotRepository: ""
+        stagingRepository: ""
+        releaseRepository: ""
+    ```
+
+8. Registry config is an input for Build CLI
+9. `bom-ref` AM component should be generated as `<component-name>:<uniq-uuid>`
+10. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
+    1. Service -> `application/vnd.qubership.service`
+    2. Docker image -> `application/vnd.docker.image`
+    3. Helm chart -> `application/vnd.qubership.helm.chart`
+    4. ZIP archive -> `application/zip`
+
+<!-- ```yaml
+servicies:
+  <service-name-1>:
+    components:
+      <component-name-1>:
+        type: <dockerImage|helmCharts|zip|jar|spar|...>
+      <component-name-N>:
+        type: <dockerImage|helmCharts|zip|jar|spar|...> 
+  <service-name-N>:
+    ...
+``` -->
+
+
 ## MoMs
 
 ### 09.06
@@ -179,6 +260,10 @@ In this option:
 ### 17.06
 
 1. Need to choose between the following options: `Option 1.3: Application Manifest without plugins` and `Option 2: No Application Manifest`. Other options are rejected
+
+### 23.06
+
+1. `Option 1.3: Application Manifest without plugins` was chosen
 
 ### PoC
 
