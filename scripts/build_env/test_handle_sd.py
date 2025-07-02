@@ -25,7 +25,8 @@ TEST_CASES = [
     ("cluster01", "env02", "TC-001-008"),
     ("cluster01", "env02", "TC-001-010"),
     ("cluster01", "env02", "TC-001-012"),
-    ("cluster01", "env02", "TC-001-014")
+    ("cluster01", "env02", "TC-001-014"),
+    ("cluster01", "env02", "TC-001-016")
 ]
 
 # Directory paths configuration

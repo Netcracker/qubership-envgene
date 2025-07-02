@@ -2,3 +2,4 @@ SD_DATA: '[{"version":"2.1","type":"solutionDeploy","deployMode":"composite","ap
 SD_SOURCE_TYPE: 'json'
 SD_VERSION: ''
 SD_DELTA: False
+SD_REPO_MERGE_MODE: 'replace'
