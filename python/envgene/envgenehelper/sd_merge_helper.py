@@ -81,8 +81,6 @@ def merge(full_sd, delta_sd):
       3. New App => append to Full SD
       4. Output contains only `applications` key
     """
-    logger.info(f"Full SD: {full_sd}")
-    logger.info(f"Delta SD: {delta_sd}")
     full_apps = full_sd.get("applications", [])
     delta_apps = delta_sd.get("applications", [])
     result_apps = []
