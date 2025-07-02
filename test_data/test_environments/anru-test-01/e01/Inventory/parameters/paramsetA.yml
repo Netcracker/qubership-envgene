@@ -1,8 +1,0 @@
-version: 1
-name: paramsetA
-parameters:
-  key1: value2
-applications:
-  - appName: Access-Control
-    parameters:
-      key1: value2

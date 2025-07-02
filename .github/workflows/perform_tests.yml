@@ -1,7 +1,16 @@
-name: Run Pytest
+name: "Tests: Perform Qubership Envgene tests"
+
+run-name: "Perform smoke tests on commit ${{ github.sha }}"
 
 on:
   workflow_dispatch:
+  workflow_call:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches:
+      - main
 
 jobs:
   pytest:
@@ -12,7 +21,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Prepare environment
+      - name: Install dependencies
         run: |
           
           apt-get update && apt-get install -y --no-install-recommends \
@@ -36,21 +45,38 @@ jobs:
               ./python/build_modules.sh
           fi
 
-      - name: Install SOPS
-        run: |
           curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64
           mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops
           chmod +x /usr/local/bin/sops
 
-      - name: Run tests
+      - name: ENVGENE HELPER test
+        run: |
+          cd python/envgene/envgenehelper
+          pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit.xml
+          cd ../../..
+          mv junit.xml junit_envgenehelper.xml  
+      
+      - name: BUILD ENV test
         run: |
           cd scripts/build_env
           pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
           cd ../..
           mv junit.xml junit_build_env.xml
 
+      - name: Merge test results
+        run: |
+          junitparser merge junit_build_env.xml junit_envgenehelper.xml junit.xml    
+
       - name: Upload test results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: junit_build_env.xml
+          path: junit.xml
+
+      - name: Upload test environments
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test_artifact
+          path: tmp/  

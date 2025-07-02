@@ -177,11 +177,7 @@
       "properties": [
         {
           "name": "git_branch",
-          "value": "release/2023.1-7.10.0"
-        },
-        {
-          "name": "git_revision",
-          "value": "release/2023.1-7.10.0"
+          "value": "8157"
         },
         {
           "name": "image_type",
@@ -220,12 +216,6 @@
           "name": "identity-provider-assembly-8157",
           "group": "cloud-core",
           "version": "build3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
           "purl": "pkg:docker/cloud-core/identity-provider-assembly-8157@build3?registry_id=sandbox?repository_id=snapshotUri"
         },
         {

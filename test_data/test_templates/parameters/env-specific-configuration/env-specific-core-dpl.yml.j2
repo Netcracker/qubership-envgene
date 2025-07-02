@@ -1,8 +1,0 @@
-version: 24.3
-name: env-specific-core-dpl
-parameters:
-{% if current_env.additionalTemplateVariables.site | default ('offsite') == 'offsite' %}
-  AUTOBALANCE_RULES: "postgresql=>postgresql:postgres"
-{% else %}
-  AUTOBALANCE_RULES: "envgeneNullValue"  
-{% endif %} 
