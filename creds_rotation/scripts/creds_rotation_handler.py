@@ -444,7 +444,7 @@ def cred_rotation():
     env_name, envgene_age_public_key = getenv_with_error('ENV_NAME'), getenv_with_error('ENVGENE_AGE_PUBLIC_KEY')
     creds_rotation_enabled, cred_payload = getenv_with_error('CRED_ROTATION_FORCE'),yaml.safe_load(getenv_with_error('CRED_ROTATION_PAYLOAD'))
     cluster_name, work_dir, env = getenv_with_error('CLUSTER_NAME'),getenv_with_error('CI_PROJECT_DIR'),check_if_many_envs_exist(env_name)
-    
+    logger.info(f"Input is {creds_rotation_enabled} {env_name}  {work_dir} {cluster_name}")
     encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
     encrypt_type = 'SOPS' ##########################REMOVE HARCODING#####################
     if encrypt_type == 'Fernet':
