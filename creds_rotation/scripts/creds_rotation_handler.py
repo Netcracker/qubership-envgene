@@ -5,7 +5,9 @@ import timeit
 import yaml
 import asyncio
 import aiofiles
+import copy
 
+from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path, PurePath
 from functools import lru_cache
 from typing import Any, Dict, List, Optional,  Tuple
@@ -68,7 +70,7 @@ async def load_yaml_files_parallel(paths: List[str]) -> Dict[str, dict]:
 
 def get_app_and_ns(filename: str, content: dict) -> Tuple[str, Optional[str]]:
     if filename.endswith(("namespace.yml", "namespace.yaml")):
-        return content.get('name', ''), None
+        return '', content.get('name', '')
     
     filepath = PurePath(filename)
     parent_dir = filepath.parent.parent
@@ -142,9 +144,10 @@ def find_matching_keys(data: dict, search_pattern: str, is_target: bool,
                     recurse(item, [f"[{idx}]"])
         elif isinstance(obj, str) and search_pattern in obj:
             final_key = ".".join(path)
-            if not is_target and context != target_context and final_key != target_key:
+            if  is_target and context == target_context and final_key == target_key:
+                logger.debug("skipping target param")
+            else:
                 results.append(final_key)
-
     recurse(data, [])
     return results
 
@@ -414,7 +417,7 @@ def process_entry_in_payload(
         shared_match_files,
         env_cred_file,
         entry.parameter_key,
-        entry.context,
+        param_type,
         target_file
     )
     logger.info(f"Finished processing of  param_key is {entry.parameter_key}")
@@ -460,7 +463,7 @@ def cred_rotation():
     logger.info(f"Encryption is {is_encrypted} and type is {encrypt_type}")
     
     fileread = time.time()
-    shared_content_map, ns_files_map = scan_and_get_yaml_files(work_dir, env_name, shared_creds, is_encrypted, envgene_age_public_key)
+    shared_content_map, ns_files_map = scan_and_get_yaml_files(base_env_path, env_name, shared_creds, is_encrypted, envgene_age_public_key)
     logger.info(f"✅ Fileread Completed in {round(time.time() - fileread, 2)} seconds.")
     env_cred_map ={}
     #Decrypt Environment credential file if encrypted
@@ -514,12 +517,20 @@ def update_cred_content(
     try:
         logger.info(f"size is {len(processed_cred_and_files)}")
         for cred_file, updates in processed_cred_and_files.items():
+            if not updates:
+                logger.warning(f"No updates found for file {cred_file}, skipping")
+                continue
+
+            # Deep copy original content from the first update (assumed all updates share the same original content)
+            original_content = copy.deepcopy(updates[0].shared_content)
+            content = copy.deepcopy(original_content)
+
             for update in updates:
                 cred_id = update.cred_id
                 param_value = update.param_value
                 cred_field = update.cred_field.lower()
-                content = update.shared_content
-                original_content = content
+
+                logger.debug(f"Updating credential '{cred_id}' field '{cred_field}' to '{param_value}' in file '{cred_file}'")
 
                 if not content or cred_id not in content:
                     raise Exception(f"Credential ID '{cred_id}' not found in content for file '{cred_file}'")
@@ -529,17 +540,19 @@ def update_cred_content(
                     raise Exception(f"'data' block missing for credential ID '{cred_id}' in file '{cred_file}'")
 
                 if cred_field not in {"username", "password", "secret"}:
-                    raise Exception(f"Unsupported credential field: '{cred_field}'")
+                    raise Exception(f"Unsupported credential field '{cred_field}' for credential ID '{cred_id}'")
 
+                # Apply the update
                 data_block[cred_field] = param_value
-                if not cred_file  in updated_files:
-                    updated_files[cred_file] = content
-                if not cred_file  in original_files:
-                    original_files[cred_file] = original_content
+
+            # Save results
+            updated_files[cred_file] = content
+            original_files[cred_file] = original_content
         return updated_files, original_files
 
     except Exception as e:
         raise Exception(f"Preparation of output data failed {e}")
+        
         
        
                     
@@ -553,15 +566,29 @@ def write_updated_cred_into_file(updated_files, original_files, is_encrypted, en
         logger.info(f"Files restored to original state. Creds changes are not updated.")
 
 def update_file(files_to_update, is_encrypted, envgene_age_public_key):
-    for cred_file, content in files_to_update.items():
-                writeYamlToFile(cred_file, content)
-                if is_encrypted:
-                    crypt.encrypt_file(
-                            cred_file, in_place=True, ignore_is_crypt=True,
-                            public_key=envgene_age_public_key, crypt_backend='SOPS'
-                        )
+    futures = []
+    with ProcessPoolExecutor(max_workers=min(os.cpu_count(), len(files_to_update))) as executor:
+            for cred_file, creds in files_to_update.items():
+                futures.append(
+                    executor.submit(write_and_encrypt_task, cred_file, creds, is_encrypted, envgene_age_public_key)
+                )
+            # Wait for all to finish (optional)
+    for future in futures:
+        future.result()      
 
-
+def write_and_encrypt_task(cred_file, creds, is_encrypted, public_key):
+    
+    # Write YAML
+    writeYamlToFile(cred_file, creds)
+    
+    # Encrypt if needed
+    
+    if is_encrypted:
+        crypt.encrypt_file(
+            cred_file, in_place=True, ignore_is_crypt=True,
+            public_key=public_key, crypt_backend='SOPS'
+        )
+    
 
 if __name__ == "__main__":
     #print("scandir:", timeit.timeit(cred_rotation, number=2))
