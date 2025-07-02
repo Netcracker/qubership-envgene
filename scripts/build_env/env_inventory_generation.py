@@ -103,6 +103,7 @@ def generate_env():
 
 def merge_sd(env, sd_data, merge_func):
     destination = f'{env.env_path}/Inventory/solution-descriptor/sd.yaml'
+    logger.info(f"Final destination! - {destination}")
     if helper.check_file_exists(destination):
         full_sd_yaml = helper.openYaml(destination)
         logger.info(f"full_sd.yaml before merge: {full_sd_yaml}")
@@ -111,7 +112,6 @@ def merge_sd(env, sd_data, merge_func):
     result = merge_func(full_sd_yaml, sd_data)
     helper.writeYamlToFile(destination, result)
     logger.info(f"Merged data into Target Path! - {result}")
-    logger.info(f"SD_DELTA has been merged! - {sd_data}")
 
 def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
     base_path = f'{env.env_path}/Inventory/solution-descriptor/'
