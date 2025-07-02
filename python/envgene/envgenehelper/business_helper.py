@@ -89,11 +89,12 @@ def findResourcesBottomTop(sourceDir, stopParentDir, pattern, notPattern="", add
     return __findResourcesBottomTop__(sourceDir, stopParentDir, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern, searchJsons, result, foundMap)
 
 def __findResourcesBottomTop__(sourceDir, stopParentDir, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern, searchJsons, result, foundMap):
-    logger.debug(f"Searching files in {sourceDir}. Pattern:{pattern}\nNotPattern:{notPattern}\nResult:\n{dump_as_yaml_format(result)}. foundMap:\n{foundMap}")
+    logger.info(f"Searching files in {sourceDir}. Pattern:{pattern}\nNotPattern:{notPattern}\nResult:\n{dump_as_yaml_format(result)}. foundMap:\n{foundMap}")
     findResults = findYamls(sourceDir, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
     if searchJsons:
         findResults = merge_lists(findResults, findJsons(sourceDir, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern))
     for foundFile in findResults:
+        logger.info(f"found file is {foundFile}")
         fileName = extractNameFromFile(foundFile)
         if fileName not in foundMap: 
             foundMap[fileName] = foundFile

@@ -154,7 +154,7 @@ def mergeAndSaveYaml(yamlPath, newCreds) :
     writeYamlToFile(yamlPath, credsYaml)
 
 def findSharedCredentials(cred_name, env_dir, instances_dir):
-    logger.debug(f"Searching for cred file {cred_name} from {env_dir} to {instances_dir}")
+    logger.info(f"Searching for cred file {cred_name} from {env_dir} to {instances_dir}")
     credFiles = findResourcesBottomTop(env_dir, instances_dir, f"/{cred_name}")
     if len(credFiles) == 1:
         yamlPath = credFiles[0]
