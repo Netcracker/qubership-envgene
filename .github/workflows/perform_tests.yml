@@ -1,20 +1,29 @@
-name: "Tests: Perform Qubership Envgene tests"
+name: "Tests: Qubership Envgene tests"
 
-run-name: "Perform smoke tests on commit ${{ github.sha }}"
+run-name: "Smoke tests on commit ${{ github.sha }}"
 
 on:
   workflow_dispatch:
   workflow_call:
+  pull_request:
+    branches:
+      - '**'
   push:
     branches:
       - '**'
-  pull_request:
-    branches:
-      - main
 
 jobs:
   pytest:
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'workflow_call' ||
+      (github.event_name == 'pull_request') ||
+      (github.event_name == 'push' && 
+       github.ref != 'refs/heads/main' &&
+       !contains(github.event.head_commit.message, 'fix') && 
+       !contains(github.event.head_commit.message, 'feat') && 
+       !contains(github.event.head_commit.message, 'breaking change'))
     container:
       image: python:3.10-slim-bookworm
     steps:
