@@ -27,15 +27,7 @@ on:
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
-    container:
-      image: python:3.10-slim-bookworm
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      
-      - name: Run Tests
-        uses: ./.github/actions/run-tests
+    uses: ./.github/workflows/perform_tests.yml
   
   check-tag:
     needs: [tests]
