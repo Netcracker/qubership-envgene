@@ -14,9 +14,9 @@ def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluste
   } 
 
   credential_rotation_vars = {
-    "CLUSTER_NAME": cluster_name,
-    "ENV_NAME": environment_name,
-    "CRED_ROTATION_PAYLOAD": cred_rotation_payload,
+    #"CLUSTER_NAME": cluster_name,
+    #"ENV_NAME": environment_name,
+    #"CRED_ROTATION_PAYLOAD": cred_rotation_payload,
     #"CRED_ROTATION_FORCE": cred_rotation_force    
     "envgen_args": " -vv",
     "envgen_debug": "true"   
