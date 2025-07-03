@@ -46,6 +46,17 @@ on:
         description: "Environment template version"
         required: false
         default: ""
+      CRED_ROTATION_PAYLOAD:
+        description: "Input for credentials update"
+        required: false
+        default: ""
+        type: string
+      CRED_ROTATION_FORCE:
+        description: "Update sensitive parameters"
+        required: false
+        default: ""
+        type: string
+      
 
 env:
   CI_COMMIT_REF_NAME: ${{ github.ref_name }}
@@ -79,6 +90,8 @@ jobs:
       SD_SOURCE_TYPE: ${{ env.SD_SOURCE_TYPE }}
       SD_DELTA: ${{ env.SD_DELTA }}
       ENV_SPECIFIC_PARAMETERS: ${{ env.ENV_SPECIFIC_PARAMETERS }}
+      CRED_ROTATION_PAYLOAD: ${{ env.CRED_ROTATION_PAYLOAD }}
+      CRED_ROTATION_FORCE: ${{ env.CRED_ROTATION_FORCE }}
 
     steps:
       - name: Repository Checkout
@@ -95,6 +108,8 @@ jobs:
           echo "ENV_TEMPLATE_VERSION=${{ github.event.inputs.ENV_TEMPLATE_VERSION }}" >> $GITHUB_ENV
           echo "COMMIT_MESSAGE=${{ github.event.inputs.commit_message }}" >> $GITHUB_ENV
           echo "DEPLOYMENT_TICKET_ID=${{ github.event.inputs.DEPLOYMENT_TICKET_ID }}" >> $GITHUB_ENV
+          echo "CRED_ROTATION_PAYLOAD=${{ github.event.inputs.CRED_ROTATION_PAYLOAD }}" >> $GITHUB_ENV
+          echo "CRED_ROTATION_FORCE=${{ github.event.inputs.CRED_ROTATION_FORCE }}" >> $GITHUB_ENV
           python .github/scripts/load_env_variables.py .github/vars.yaml >> $GITHUB_ENV
 
       - name: Input Parameters
@@ -115,6 +130,9 @@ jobs:
           echo "SD_DELTA = $SD_DELTA"
           echo "ENV_SPECIFIC_PARAMETERS = $ENV_SPECIFIC_PARAMETERS"\
           echo "COMMIT_MESSAGE = $COMMIT_MESSAGE"
+          echo "::add-mask::$CRED_ROTATION_PAYLOAD"
+          echo "CRED_ROTATION_PAYLOAD = $CRED_ROTATION_PAYLOAD"
+          echo "CRED_ROTATION_FORCE = $CRED_ROTATION_FORCE"
           
       - name: Prepare Parameters
         id: matrix-generator
@@ -222,6 +240,48 @@ jobs:
         with:
           name: generate_inventory_${{ env.SANITIZED_NAME }}
           path: ${{ github.workspace }}/environments/${{ env.FULL_ENV }}
+          
+  credential_rotation:
+    name: "${{ matrix.environment }} - Credential Rotation"
+    runs-on: ubuntu-latest
+    if: always() && needs.show_environment_variables.outputs.CRED_ROTATION_PAYLOAD
+    needs:
+      - parameters_validation
+      - show_environment_variables
+    container:
+      image: ${{ env.ENVGENE_IMAGE }}
+      options: --user root
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(needs.show_environment_variables.outputs.env_matrix) }}
+    env:
+      FULL_ENV: ${{ matrix.environment }}
+      CRED_ROTATION_PAYLOAD: ${{ needs.show_environment_variables.outputs.CRED_ROTATION_PAYLOAD }}
+      CRED_ROTATION_FORCE: ${{ needs.show_environment_variables.outputs.CRED_ROTATION_FORCE }}      
+    steps:
+      - name: Repository Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare variables to work with artifacts
+        run: |
+          echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
+          echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
+
+      - name: Credential Rotation
+        run: |          
+          export CLUSTER_NAME=$(echo "${{ matrix.environment }}" | cut -d'/' -f1)
+          export ENV_NAME=$(echo "${{ matrix.environment }}" | cut -d'/' -f2 | xargs)              
+ 
+          python3 /module/scripts/creds_rotation_handler.py
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: credential_rotation_${{ env.SANITIZED_NAME }}
+          path: |
+            ${{ github.workspace }}/environments/${{ env.FULL_ENV }}
+            ${{ github.workspace }}/affected-sensitive-parameters.yaml
 
   env_build:
     name: "${{ matrix.environment }} - Env Build"
