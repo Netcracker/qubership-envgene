@@ -13,8 +13,8 @@ name: Lint Code Base
 
 on:
   push:
-    branches-ignore:
-      - main
+    branches:
+      - '**'
   pull_request:
     branches:
       - '**'

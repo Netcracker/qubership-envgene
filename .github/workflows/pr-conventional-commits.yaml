@@ -8,10 +8,6 @@ on:
       - opened
       - edited
       - synchronize
-  push:
-    branches:
-      - 'feature/**'
-      - 'bugfix/**'
 
 permissions:
   pull-requests: read
