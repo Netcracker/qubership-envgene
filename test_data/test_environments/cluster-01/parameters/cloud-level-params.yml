@@ -1,5 +1,0 @@
-name: cloud-level-params
-version: 25.1
-parameters:
-    CLOUD_LEVEL_PARAM_1: cloud-level-value-1
-applications: []

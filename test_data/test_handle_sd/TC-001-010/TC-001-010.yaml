@@ -1,3 +1,0 @@
-SD_DATA: '[{"version": "2.1", "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "postgres:1.32.4", "deployPostfix": "postgresql-dbaas"}, {"version": "redis:6.0.9", "deployPostfix": "redis-app"}]}]'
-SD_SOURCE_TYPE: 'json'
-SD_VERSION: ''

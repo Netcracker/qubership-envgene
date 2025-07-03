@@ -1,4 +1,0 @@
-test-deployer:
-  username: envgen.creds.get('test-deployer-username-cred').secret
-  token: envgen.creds.get('test-deployer-token-cred').secret
-  deployerUrl: "https://test-deployer.qubership.org/"

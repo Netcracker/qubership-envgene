@@ -1,3 +1,0 @@
-SD_DATA: '[{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"postgres:1.32.7","deployPostfix":"postgresql"},{"version":"alerting:0.1.0","deployPostfix":"platform-alerting"}]},{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"postgres-services:1.32.7","deployPostfix":"postgresql"},{"version":"alerting:0.1.0","deployPostfix":"platform-alerting"}]}]'
-SD_SOURCE_TYPE: 'json'
-SD_VERSION: ''
