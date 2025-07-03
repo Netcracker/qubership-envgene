@@ -5,7 +5,7 @@ from time import perf_counter
 from typing import Callable
 
 from envgenehelper.business_helper import getenv_with_error
-from envgenehelper.maybe_more_faster_file_search import FileProcessor
+from .cred_files_processor import FileProcessor
 
 from .config_helper import get_envgene_config_yaml
 from .yaml_helper import openYaml, get_empty_yaml
@@ -163,19 +163,19 @@ def check_for_encrypted_files(files):
 
 
 def decrypt_all_cred_files_for_env(**kwargs):
-   # crypt.decrypt_all_cred_files_for_env()
-    start = perf_counter()
-    get_files = FileProcessor(config)
-    files = get_files.get_all_necessary_cred_files()
-    end = perf_counter()
-    print(f"Get all cred files: {end - start:.4f} seconds")
+    processor = FileProcessor(config)
+    files = processor.get_all_necessary_cred_files()
 
     if not IS_CRYPT:
         check_for_encrypted_files(files)
     else:
         if CREATE_SHADES:
             for f in files:
+                start = perf_counter()
                 merge_creds_file(f, decrypt_file)
+                end = perf_counter()
+                print(
+                    f"merge and decrypt one cred file: {end - start:.4f} seconds")
         else:
             for f in files:
                 decrypt_file(f, **kwargs)
@@ -184,22 +184,19 @@ def decrypt_all_cred_files_for_env(**kwargs):
 
 
 def encrypt_all_cred_files_for_env(**kwargs):
-    start = perf_counter()
-    get_files = FileProcessor(config)
-    files_1 = get_files.get_all_necessary_cred_files()
-    end = perf_counter()
-    print(f"Get all cred files: {end - start:.4f} seconds")
-    start = perf_counter()
-    get_files = FileProcessor(config)
-    files = get_all_necessary_cred_files()
-    end = perf_counter()
-    print(f"Get all cred files: {end - start:.4f} seconds")
+    processor = FileProcessor(config)
+    files = processor.get_all_necessary_cred_files()
 
     logger.debug("Attempting to encrypt(if crypt is true) next files:")
     logger.debug(files)
     if CREATE_SHADES:
         for f in files:
+            start = perf_counter()
             split_creds_file(f, encrypt_file)
+            end = perf_counter()
+            print(
+                f"split and encrypt one cred file: {end - start:.4f} seconds")
+
     else:
         for f in files:
             encrypt_file(f, **kwargs)

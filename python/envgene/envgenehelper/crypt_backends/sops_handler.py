@@ -1,3 +1,4 @@
+from distutils import command
 import os
 import subprocess
 import tempfile
@@ -13,8 +14,10 @@ from .constants import *
 def _run_SOPS(arg_str, return_codes_to_ignore=None):
     return_codes_to_ignore = return_codes_to_ignore if return_codes_to_ignore else []
     sops_command = f'sops {arg_str}'
+    # _command = f'for f in /path/to/dir/*; do ' + sops_command + '; done'
+    # print(_command)
     result = subprocess.run(sops_command, shell=True,
-                            capture_output=True, text=True, timeout=5)
+                            capture_output=True, text=True, timeout=10)
     if "metadata not found" in result.stderr:
         raise ValueError('File was already decrypted')
     if "The file you have provided contains a top-level entry called 'sops'" in result.stderr:
@@ -91,6 +94,9 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
     if not is_encrypted and mode == "decrypt":
         logger.warning(f'File is not encrypted. Path: {file_path}')
         return openYaml(file_path)
+# f'for f in {path}; do [ -f "$f" ] && sops -d "$f" > "${{f}}.decrypted"; done'
+# for f in /path/to/dir/*; do sops -d "$f" > "$f.tmp" && mv "$f.tmp" "$f"; done
+# for f in /path/to/dir/*; do sops -i -e "$f"; done
 
     if minimize_diff and mode != "decrypt":
         result = _get_minimized_diff(file_path, old_file_path, public_key)
@@ -102,14 +108,14 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
             sops_args += f' --encrypted-regex "{ENCRYPTED_REGEX_STR}"'
         if in_place:
             sops_args += ' --in-place'
-        sops_args += f' -age {public_key} {file_path}'
+        sops_args += f' -age {public_key} "{file_path}"'
         try:
             result = _run_SOPS(sops_args).stdout
         except ValueError as e:
             logger.warning(f'{str(e)}. Path: {file_path}')
             return openYaml(file_path)
 
-    logger.info(f'The file has been {mode}ed. Path: {file_path}')
+    logger.debug(f'The file has been {mode}ed. Path: {file_path}')
     if not in_place:
         return readYaml(result)
     return openYaml(file_path)
