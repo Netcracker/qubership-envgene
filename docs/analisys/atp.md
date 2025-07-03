@@ -45,10 +45,8 @@ List of use cases that need to be supported:
 2. Generation of QTP-specific parameter set (Effective Set)
    1. Without encryption of sensitive parameters
    2. With encryption of sensitive parameters
-3. Adding/Modifying/Removing parameters in QTP-specific parameter set (Effective Set)
-   1. Parameters defined exclusively by QTP QA team
-   2. Parameters defined by Customer's team
-4. Cluster Creation
+3. Changing the composition of tested applications/systems in the business environment
+5. Environment creation
 
 ## Proposed Approach
 
