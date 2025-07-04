@@ -15,6 +15,7 @@ from .shade_files_helper import split_creds_file, merge_creds_file
 
 from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
 from .crypt_backends.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
+from envgenehelper import shade_files_helper
 
 
 config = get_envgene_config_yaml()
@@ -53,8 +54,16 @@ def _handle_missing_file(file_path, default_yaml, allow_default):
     return default_yaml()
 
 
-def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False,
-                 default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None, **kwargs):
+def decrypt_file(file_path, **kwargs):
+    if CREATE_SHADES:
+        shade_files_helper.merge_creds_file(
+            file_path, _decrypt_file, **kwargs)
+    else:
+        _decrypt_file(file_path, **kwargs)
+
+
+def _decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False,
+                  default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None, **kwargs):
     res = _handle_missing_file(file_path, default_yaml, allow_default)
     if res != 0:
         return res
@@ -66,8 +75,15 @@ def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
     return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place, public_key=public_key, mode='decrypt')
 
 
-def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False, is_crypt=None,
-                 minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False, **kwargs):
+def encrypt_file(file_path, **kwargs):
+    if CREATE_SHADES:
+        shade_files_helper.split_creds_file(file_path, _encrypt_file)
+    else:
+        _encrypt_file(file_path, **kwargs)
+
+
+def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False, is_crypt=None,
+                  minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False, **kwargs):
     if minimize_diff != False:
         if not old_file_path:
             raise ValueError(
@@ -169,16 +185,8 @@ def decrypt_all_cred_files_for_env(**kwargs):
     if not IS_CRYPT:
         check_for_encrypted_files(files)
     else:
-        if CREATE_SHADES:
-            for f in files:
-                start = perf_counter()
-                merge_creds_file(f, decrypt_file)
-                end = perf_counter()
-                print(
-                    f"merge and decrypt one cred file: {end - start:.4f} seconds")
-        else:
-            for f in files:
-                decrypt_file(f, **kwargs)
+        for f in files:
+            decrypt_file(f, **kwargs)
         logger.debug("Decrypted next cred files:")
         logger.debug(files)
 
@@ -189,14 +197,6 @@ def encrypt_all_cred_files_for_env(**kwargs):
 
     logger.debug("Attempting to encrypt(if crypt is true) next files:")
     logger.debug(files)
-    if CREATE_SHADES:
-        for f in files:
-            start = perf_counter()
-            split_creds_file(f, encrypt_file)
-            end = perf_counter()
-            print(
-                f"split and encrypt one cred file: {end - start:.4f} seconds")
 
-    else:
-        for f in files:
-            encrypt_file(f, **kwargs)
+    for f in files:
+        encrypt_file(f, **kwargs)
