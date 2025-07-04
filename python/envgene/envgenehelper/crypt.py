@@ -55,7 +55,7 @@ def _handle_missing_file(file_path, default_yaml, allow_default):
 
 
 def decrypt_file(file_path, **kwargs):
-    if CREATE_SHADES:
+    if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
         shade_files_helper.merge_creds_file(
             file_path, _decrypt_file, **kwargs)
     else:
@@ -76,7 +76,7 @@ def _decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None,
 
 
 def encrypt_file(file_path, **kwargs):
-    if CREATE_SHADES:
+    if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
         shade_files_helper.split_creds_file(file_path, _encrypt_file)
     else:
         _encrypt_file(file_path, **kwargs)
