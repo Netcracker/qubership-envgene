@@ -54,7 +54,7 @@ on:
       CRED_ROTATION_FORCE:
         description: "Update sensitive parameters"
         required: false
-        default: ""
+        default: "false"
         type: string
       
 
