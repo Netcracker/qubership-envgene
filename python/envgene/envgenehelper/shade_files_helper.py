@@ -65,7 +65,7 @@ def split_creds_file(creds_path: str, encryption_func: Callable, **kwargs):
 # FUNCTION FOR CREATE CREDS FILE FROM SHADOW FILES
 
 
-def merge_creds_file(creds_path, encryption_func: Callable):
+def merge_creds_file(creds_path, encryption_func: Callable, **kwargs):
     """merge_creds_file is a function to create creds file from shadow files"""
     shadow_creds_path = init_shadow_creds_dir(creds_path, False)
     if not shadow_creds_path.exists():
@@ -75,7 +75,7 @@ def merge_creds_file(creds_path, encryption_func: Callable):
     shadow_creds_files = shadow_creds_path.iterdir()
     creds = {}
     for file in shadow_creds_files:
-        cred = encryption_func(file)
+        cred = encryption_func(file, **kwargs)
         creds.update(cred)
     delete_dir(shadow_creds_path)
     writeYamlToFile(creds_path, creds)
