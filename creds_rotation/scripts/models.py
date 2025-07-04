@@ -49,7 +49,7 @@ class PayloadEntry:
         required = ['namespace', 'parameter_key', 'context', 'parameter_value', 'credential_field']
         missing = [key for key in required if not data.get(key)]
         if missing:
-            raise ValueError(f"Missing required keys: {', '.join(missing)} in entry: {data}")
+            raise ValueError(f"ERROR: Missing required keys: {', '.join(missing)} in entry: {data}. \n Please check payload")
         return cls(
             namespace=data['namespace'],
             parameter_key=data['parameter_key'],
