@@ -214,12 +214,6 @@ public class CliParameterParser {
                                String appVersion, String appFileRef, Map<String, String> k8TokenMap) throws IOException {
         DeployerInputs deployerInputs = DeployerInputs.builder().appVersion(appVersion).appFileRef(appFileRef).build();
         String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
-        ParameterBundle parameterBundle = parametersService.getCliParameter(tenantName,
-                cloudName,
-                namespaceName,
-                appName,
-                deployerInputs,
-                originalNamespace);
         String credentialsId = findDefaultCredentialsId(namespaceName);
         if (StringUtils.isNotEmpty(credentialsId)) {
             CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
@@ -228,6 +222,13 @@ public class CliParameterParser {
                 k8TokenMap.put(originalNamespace, secCred.getSecret());
             }
         }
+        ParameterBundle parameterBundle = parametersService.getCliParameter(tenantName,
+                cloudName,
+                namespaceName,
+                appName,
+                deployerInputs,
+                originalNamespace,
+                k8TokenMap);
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
 

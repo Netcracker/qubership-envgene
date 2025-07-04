@@ -19,6 +19,9 @@ package org.qubership.cloud.devops.commons.utils.constant;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
+import java.util.Arrays;
+import java.util.List;
+
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class ApplicationConstants {
     public static final String SERVICES = "services";
@@ -41,4 +44,8 @@ public class ApplicationConstants {
     public static final String APPLICATION_VND_QUBERSHIP_CONFIGURATION = "application/vnd.qubership.configuration";
     public static final String APPLICATION_VND_QUBERSHIP_SERVICE = "application/vnd.qubership.service";
     public static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
+    public static final String K8S_TOKEN = "K8S_TOKEN";
+    public static final List<String> SECURED_KEYS = Arrays.asList("DBAAS_AGGREGATOR_USERNAME", "DBAAS_AGGREGATOR_PASSWORD",
+            "DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", "DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", "MAAS_CREDENTIALS_USERNAME",
+            "MAAS_CREDENTIALS_PASSWORD", "VAULT_TOKEN", "CONSUL_ADMIN_TOKEN", "SSL_SECRET_VALUE");
 }

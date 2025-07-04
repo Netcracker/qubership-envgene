@@ -44,15 +44,16 @@ public class ParametersCalculationService {
     }
 
     public ParameterBundle getCliParameter(String tenantName, String cloudName, String namespaceName, String applicationName,
-                                           DeployerInputs deployerInputs, String originalNamespace) {
-        return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace);
+                                           DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap) {
+        return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace, k8TokenMap);
     }
 
     public ParameterBundle getCliE2EParameter(String tenantName, String cloudName) {
         return getE2EParameterBundle(tenantName, cloudName);
     }
 
-    private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName, DeployerInputs deployerInputs, String originalNamespace) {
+    private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName,
+                                               DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap) {
         Params parameters = parametersProcessor.processAllParameters(tenantName,
                 cloudName,
                 namespaceName,
@@ -69,8 +70,8 @@ public class ParametersCalculationService {
         if (MapUtils.isNotEmpty(parameters.getDeployParams()) && parameters.getDeployParams().containsKey(DEPLOY_DESC)) {
             processDeploymentDescriptorParams(parameters, parameterBundle);
         }
-        prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY);
-        prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL);
+        prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, k8TokenMap, originalNamespace);
+        prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL, k8TokenMap, originalNamespace);
         return parameterBundle;
     }
 
@@ -133,11 +134,12 @@ public class ParametersCalculationService {
     private ParameterBundle getE2EParameterBundle(String tenantName, String cloudName) {
         Params parameters = parametersProcessor.processE2EParameters(tenantName, cloudName, null, null, "false", null, null);
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
-        prepareSecureInsecureParams(parameters.getE2eParams(), parameterBundle, ParameterType.E2E);
+        prepareSecureInsecureParams(parameters.getE2eParams(), parameterBundle, ParameterType.E2E, null, null);
         return parameterBundle;
     }
 
-    public void prepareSecureInsecureParams(Map<String, Parameter> parameters, ParameterBundle parameterBundle, ParameterType parameterType) {
+    public void prepareSecureInsecureParams(Map<String, Parameter> parameters, ParameterBundle parameterBundle
+            , ParameterType parameterType, Map<String, String> k8TokenMap, String originalNamespace) {
         Map<String, Parameter> securedParams = new TreeMap<>();
         Map<String, Parameter> inSecuredParams = new TreeMap<>();
         if (parameters == null || parameters.isEmpty()) {
@@ -156,16 +158,29 @@ public class ParametersCalculationService {
         } else if (parameterType == ParameterType.DEPLOY) {
             Object appChartName = inSecuredParamsAsObject.get(APPR_CHART_NAME);
             parameterBundle.setAppChartName(appChartName != null ? appChartName.toString() : "");
-            inSecuredParamsAsObject.remove(APPR_CHART_NAME);//remove app chart name from parameters once after the usage
+            inSecuredParamsAsObject.remove(APPR_CHART_NAME); //remove app chart name from parameters once after the usage
             parameterBundle.setCollisionDeployParameters(getCollisionParams(inSecuredParamsAsObject));
             parameterBundle.setCollisionSecureParameters(getCollisionParams(finalSecuredParams));
+            copyParams(finalSecuredParams, inSecuredParamsAsObject, k8TokenMap, originalNamespace);
             Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject, parameterBundle.isProcessPerServiceParams());
-            parameterBundle.setSecuredDeployParams(prepareFinalParams(finalSecuredParams, true));
+            Map<String, Object> finalSecParams = prepareFinalParams(finalSecuredParams, true);
+            parameterBundle.setSecuredDeployParams(finalSecParams);
             parameterBundle.setDeployParams(finalInsecureParams);
         } else if (parameterType == ParameterType.TECHNICAL) {
             parameterBundle.setSecuredConfigParams(finalSecuredParams);
             parameterBundle.setConfigServerParams(inSecuredParamsAsObject);
         }
+    }
+
+    private void copyParams(Map<String, Object> finalSecParams, Map<String, Object> finalInsecureParams,
+                            Map<String, String> k8TokenMap, String originalNamespace) {
+        SECURED_KEYS.stream()
+                .filter(finalInsecureParams::containsKey)
+                .forEach(key -> {
+                    finalSecParams.put(key, finalInsecureParams.get(key));
+                    finalInsecureParams.remove(key);
+                });
+        finalSecParams.put(K8S_TOKEN, k8TokenMap.get(originalNamespace));
     }
 
     private Map<String, Object> getCollisionParams(Map<String, Object> parameters) {
