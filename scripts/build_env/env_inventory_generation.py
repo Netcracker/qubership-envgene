@@ -181,7 +181,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         }
     logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
     
-    merged_result["version"] = str(merged_result["version"])
+    #merged_result["version"] = str(merged_result["version"])
     helper.writeYamlToFile(sd_path, merged_result)
     merged_data = helper.openYaml(sd_path)
     logger.info(f"Merged_data: {merged_data}")
