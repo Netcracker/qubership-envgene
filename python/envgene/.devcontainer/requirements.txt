@@ -1,0 +1,16 @@
+lxml==4.9.3
+ruamel.yaml==0.18.5
+ruamel.yaml.clib==0.2.8
+ruyaml==0.91.0
+jschon==0.11.0
+jsonschema==4.19.1
+diagrams==0.23.3
+jmespath==1.0.1
+semantic-version==2.10.0
+termcolor==2.4.0
+typing==3.7.4.3
+ansible-core==2.13.3
+ansible-base==2.10.17
+ansible_runner==2.3.5
+cffi==1.16.0
+click==8.1.3
