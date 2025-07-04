@@ -2,7 +2,7 @@ import json
 import pathlib
 import os
 import jschon
-# import jschon_tools
+import jschon_tools
 import ruyaml
 import jsonschema
 import copy
