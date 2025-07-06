@@ -196,6 +196,12 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
+      "properties": [
+        {
+          "name": "isUmbrella",
+          "value": true
+        }
+      ],
       "purl": "pkg:helm/example-repo/qubership-integration-platform@1.2.3?registryName=sandbox",
       "components": [
         {
@@ -204,17 +210,10 @@
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-ui",
           "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-ui@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
-              "value": "km"
+              "value": "qip-ui"
             }
           ]
         },
@@ -224,17 +223,10 @@
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-variables-management",
           "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-variables-management@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
-              "value": "ip"
+              "value": "qip-variables-management"
             }
           ]
         },
@@ -244,17 +236,10 @@
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-systems-catalog",
           "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-systems-catalog@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
-              "value": "ip"
+              "value": "qip-systems-catalog"
             }
           ]
         },
@@ -264,13 +249,6 @@
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-catalog",
           "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-catalog@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -284,17 +262,10 @@
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-engine",
           "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-engine@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
-              "value": "ip"
+              "value": "qip-engine"
             }
           ]
         },
@@ -304,17 +275,10 @@
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-sessions-management",
           "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-sessions-management@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
-              "value": "ip"
+              "value": "qip-sessions-management"
             }
           ]
         },
@@ -324,17 +288,10 @@
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "cr-synchonizer",
           "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/cr-synchonizer@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
-              "value": "ip"
+              "value": "qip-cr-synchonizer"
             }
           ]
         },
@@ -344,17 +301,10 @@
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-composite-gateway",
           "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-composite-gateway@1.2.3?registryName=sandbox",
           "properties": [
             {
               "name": "alias",
-              "value": "qubership-integration-platform-composite-gateway"
+              "value": "qip-composite-gateway"
             }
           ]
         }
@@ -362,14 +312,20 @@
     },
     {
       "bom-ref": "core-tpl:13dac210-3424-4799-9631-667d7b2b0ed8",
-      "type": "library",
-      "mime-type": "application/vnd.qubership.helm.library",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.helm.chart",
       "name": "core-tpl",
       "version": "1.2.3",
       "hashes": [
         {
           "alg": "SHA-256",
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
+        }
+      ],
+      "properties": [
+        {
+          "name": "isLibrary",
+          "value": true
         }
       ],
       "purl": "pkg:helm/example-repo/core-tpl@1.2.3?registryName=sandbox"

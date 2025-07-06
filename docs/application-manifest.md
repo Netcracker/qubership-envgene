@@ -46,25 +46,23 @@
 
 1. Application Manifest must be open-source compatible
 2. Application Manifest must be sufficient for application deploying by Argo
-3. Application Manifest must be sufficient for calculate Effective Set by EnvGene
+3. Application Manifest must be sufficient for calculate [Effective Set](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#effective-set-v20) by EnvGene
 4. Effective Set generation must not require processing application artifacts
    1. EnvGene must generate Effective Set using only EnvGene Environment Instance and Application Manifest
 5. Effective Set generation for an Environment should take no more than 30 seconds
 6. Application Manifest should be based CycloneDX specification. Alternative formats may be considered
 7. Application Manifest must be generated via dedicated CLI tool
 8. Application Manifest must be generated at the application build stage
-9. Application Manifest build should use the "new builder's" input contract
-10. The [Effective Set](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#effective-set-v20) the structure may change
+9. Application Manifest build should use the Builder's input contract
 
 ## Open questions
 
-**Q1:** Which Helm chart structures should be supported within this PoC?
-    1. One app chart per application
-    2. Multiple app charts per application
-    3. One non-app chart per application
-    4. Multiple non-app charts per application
-    5. Xue-xue (???)
-**A1:** All Helm chart structures used in practice within the company (including those listed above) must be supported by the Application Manifest model
+**Q1:** Which Helm chart structures should be supported in Application Manifest?
+    1. One umbrella chart per application
+    2. Multiple umbrella charts per application
+    3. One non-umbrella chart per application
+    4. Multiple non-umbrella charts per application
+**A1:** All Helm chart structures used in practice within the Qubership (including those listed above) must be supported by the Application Manifest model
 
 **Q2:** Should the Application Manifest be compatible with other deployers?
 **A2:** No
@@ -90,9 +88,17 @@
 **Q9:** How are Helm app charts and Docker images created, built, and linked in mature open-source projects?
 **A9:**
 
+**Q10:** How are the version in Chart.yaml and the Helm chart artifact version in OCI registry related? What should be specified in the version attribute of the `application/vnd.qubership.helm.chart` component for release and non-release versions?
+
+**A10:**
+
+**Q11:** How should the `application/vnd.docker.image` component be structured for a multi-architecture Docker image composed of multiple components linked by a manifest?
+
+**A11:**
+
 ## Use Cases
 
-1. Argo Deployment
+1. ArgoCD Deployment
    1. Deployment of a Qubership application
    2. Deployment of a 3rd-party application
    3. Deployment of a Solution of Qubership applications
@@ -105,6 +111,11 @@
    4. Effective set calculation for a Solution of 3rd-party applications
    5. Effective set calculation for a mixed Solution of 3rd-party and Qubership applications
 3. As a environment configurator, I need to modify performance parameters while seeing baseline values to prevent context switching
+4. Application Helm chart structure:
+   1. One umbrella chart per application
+   2. Multiple umbrella charts per application
+   3. One non-umbrella chart per application
+   4. Multiple non-umbrella charts per application
 
 ## Proposed Approach
 
@@ -141,7 +152,7 @@ QIP Example:
 
 ![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model-without-plugins.drawio.png)
 
-[Application Manifest without Plugins JSON schema](/schemas/application-manifest-without-plugins.schema.json)
+[Application Manifest without Plugins JSON schema](/schemas/application-manifest.schema.json)
 
 QIP Example:
 
@@ -175,18 +186,21 @@ In this option:
 
 #### [Application Manifest Build CLI] Limitation
 
-1. Only for app chart applications
-2. All application components described in AM (Helm charts, Docker images, ZIPs, SPARs, JARs) must be built in the same repository, within the same workflow as AM build
-3. For each artifact type (Docker, Helm, Maven), application publication goes to one registry per type
+1. All application components described in AM (Helm charts, Docker images, ZIPs, SPARs, JARs) must be built in the same repository, within the same workflow as AM build
+2. For each artifact type (Docker, Helm, Maven), application publication goes to one registry per type
 
 #### [Application Manifest Build CLI] Requirements
 
-1. Build CLI runs in the application build pipeline as a job that follows component build jobs in the workflow
-2. Build CLI must generate AM that validates against [JSON Schema]()
-3. AM schema changes without adding new component types must be low-cost
-4. AM build must complete within 30 seconds
-5. AM must be published as a Maven artifact
+1. The CLI runs in the application build pipeline in a job that follows component build jobs in the workflow
+2. The CLI must generate AM that validates against [JSON Schema](/schemas/application-manifest.schema.json)
+3. The CLI must generate registry config that validates against [JSON Schema]()
+4. AM must be published as a Maven artifact
    1. Artifact ID must match the application name
+5. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
+    1. Service -> `application/vnd.qubership.service`
+    2. Docker image -> `application/vnd.docker.image`
+    3. Helm chart -> `application/vnd.qubership.helm.chart`
+    4. ZIP archive -> `application/zip`
 6. Resource profile baseline must be converted to ...TBD...
 7. AM must contain artifact coordinates in PURL notation, for example:
     `pkg:docker/core/qubership-integration-platform-ui@build22?registryName=sandbox`
@@ -220,13 +234,9 @@ In this option:
         releaseRepository: ""
     ```
 
-8. Registry config is an input for Build CLI
-9. `bom-ref` AM component should be generated as `<component-name>:<uniq-uuid>`
-10. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
-    1. Service -> `application/vnd.qubership.service`
-    2. Docker image -> `application/vnd.docker.image`
-    3. Helm chart -> `application/vnd.qubership.helm.chart`
-    4. ZIP archive -> `application/zip`
+8. `bom-ref` AM component should be generated as `<component-name>:<uniq-uuid>`
+9. The CLI must complete the AM build for an application with 500 components within 10 seconds
+10. The CLI must support execution in both GitLab CI and GitHub Actions environments
 
 <!-- ```yaml
 servicies:
@@ -239,7 +249,6 @@ servicies:
   <service-name-N>:
     ...
 ``` -->
-
 
 ## MoMs
 
