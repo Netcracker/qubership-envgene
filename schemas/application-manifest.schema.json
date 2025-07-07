@@ -75,6 +75,12 @@
           },
           {
             "$ref": "#/definitions/pipeline"
+          },
+          {
+            "$ref": "#/definitions/zip-artifact"
+          },
+          {
+            "$ref": "#/definitions/spar-library"
           }
         ]
       },

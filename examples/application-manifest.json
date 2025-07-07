@@ -303,24 +303,22 @@
       "type": "data",
       "mime-type": "application/vnd.qubership.pipeline",
       "name": "pipeline",
-      "version": "master-20250210.074231-72",
-      "components": [
+      "version": "master-20250210.074231-72"
+    },
+    {
+      "bom-ref": "pipeline-zip:8aac1141-9c25-46c3-afbe-a0bb37987367",
+      "type": "data",
+      "mime-type": "application/zip",
+      "name": "pipeline-zip",
+      "group": "common",
+      "version": "1.2.3",
+      "hashes": [
         {
-          "bom-ref": "pipeline-zip:8aac1141-9c25-46c3-afbe-a0bb37987367",
-          "type": "data",
-          "mime-type": "application/zip",
-          "name": "pipeline-zip",
-          "group": "common",
-          "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:maven/common/pipeline-zip@1.2.3?registry_id=sandbox"
+          "alg": "SHA-256",
+          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
-      ]
+      ],
+      "purl": "pkg:maven/common/pipeline-zip@1.2.3?registry_id=sandbox"
     },
     {
       "bom-ref": "pipeline-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
@@ -418,13 +416,6 @@
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "key-manager",
           "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/key-manager@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -438,13 +429,6 @@
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "identity-provider",
           "version": "1.2.3",
-          "hashes": [
-            {
-              "alg": "SHA-256",
-              "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-            }
-          ],
-          "purl": "pkg:helm/example-repo/identity-provider@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -488,7 +472,8 @@
     {
       "ref": "pipeline:b2233ee5-d27a-4bde-9d5a-f808f3f0463e",
       "dependsOn": [
-        "pipeline-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f"
+        "pipeline-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
+        "pipeline-zip:8aac1141-9c25-46c3-afbe-a0bb37987367"
       ]
     }
   ]
