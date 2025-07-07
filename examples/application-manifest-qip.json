@@ -29,7 +29,61 @@
       "type": "application",
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-ui",
-      "version": "master-20250210.074231-75"
+      "version": "master-20250210.074231-75",
+      "components": [
+        {
+          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "dev-ha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod-nonha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "bom-ref": "qubership-integration-platform-ui:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
@@ -52,7 +106,61 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-variables-management",
       "version": "master-20250210.074231-76",
-      "properties": []
+      "properties": [],
+      "components": [
+        {
+          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "dev-ha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod-nonha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "bom-ref": "qubership-integration-platform-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -75,7 +183,61 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-systems-catalog",
       "version": "master-20250210.074231-76",
-      "properties": []
+      "properties": [],
+      "components": [
+        {
+          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "dev-ha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod-nonha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "bom-ref": "qubership-integration-platform-systems-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -98,7 +260,61 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-catalog",
       "version": "master-20250210.074231-76",
-      "properties": []
+      "properties": [],
+      "components": [
+        {
+          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "dev-ha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod-nonha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "bom-ref": "qubership-integration-platform-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -121,7 +337,61 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-engine",
       "version": "master-20250210.074231-76",
-      "properties": []
+      "properties": [],
+      "components": [
+        {
+          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "dev-ha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod-nonha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "bom-ref": "qubership-integration-platform-engine:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -144,7 +414,61 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-sessions-management",
       "version": "master-20250210.074231-76",
-      "properties": []
+      "properties": [],
+      "components": [
+        {
+          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "dev-ha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod-nonha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "bom-ref": "qubership-integration-platform-sessions-management:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -167,7 +491,61 @@
       "mime-type": "application/vnd.qubership.service",
       "name": "cr-synchonizer",
       "version": "master-20250210.074231-76",
-      "properties": []
+      "properties": [],
+      "components": [
+        {
+          "bom-ref": "resource-profile-baselines:6fb247d6-adc8-4cf2-a080-100378439535",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "dev-ha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod-nonha.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        }
+      ]
     },
     {
       "bom-ref": "cr-synchonizer:80f031da-024c-4748-a1b9-d548a3dd030f",

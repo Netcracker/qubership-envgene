@@ -905,7 +905,8 @@
         "mime-type",
         "bom-ref",
         "name",
-        "version"
+        "version",
+        "properties"
       ],
       "additionalProperties": false,
       "properties": {

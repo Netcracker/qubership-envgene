@@ -1,8 +1,8 @@
-# Application Manifest PoC
+# Application Manifest
 
 ## Table of Contents
 
-- [Application Manifest PoC](#application-manifest-poc)
+- [Application Manifest](#application-manifest)
   - [Table of Contents](#table-of-contents)
   - [Goals](#goals)
   - [Limitation](#limitation)
@@ -15,9 +15,6 @@
     - [Option 1.3 Application Manifest without plugins](#option-13-application-manifest-without-plugins)
     - [Option 2 No Application Manifest](#option-2-no-application-manifest)
     - [Application Manifest Build CLI](#application-manifest-build-cli)
-      - [\[Application Manifest Build CLI\] Open Question](#application-manifest-build-cli-open-question)
-      - [\[Application Manifest Build CLI\] Limitation](#application-manifest-build-cli-limitation)
-      - [\[Application Manifest Build CLI\] Requirements](#application-manifest-build-cli-requirements)
   - [MoMs](#moms)
     - [09.06](#0906)
     - [16.06](#1606)
@@ -46,25 +43,26 @@
 
 1. Application Manifest must be open-source compatible
 2. Application Manifest must be sufficient for application deploying by Argo
-3. Application Manifest must be sufficient for calculate [Effective Set](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#effective-set-v20) by EnvGene
+3. Application Manifest must be sufficient for calculate Effective Set by EnvGene
 4. Effective Set generation must not require processing application artifacts
    1. EnvGene must generate Effective Set using only EnvGene Environment Instance and Application Manifest
-5. Effective Set generation for an Environment should take no more than 30 seconds
-6. Application Manifest should be based CycloneDX specification. Alternative formats may be considered
-7. Application Manifest must be generated via dedicated CLI tool
-8. Application Manifest must be generated at the application build stage
-9. Application Manifest build should use the Builder's input contract
+   2. Effective Set generation for an Environment should take no more than 30 seconds
+5. Application Manifest should be based CycloneDX specification. Alternative formats may be considered
+6. Application Manifest must be generated via dedicated CLI tool
+7. Application Manifest must be generated at the application build stage
+8. Application Manifest build should use the Builder's input contract
 
 ## Open questions
 
 **Q1:** Which Helm chart structures should be supported in Application Manifest?
-    1. One umbrella chart per application
-    2. Multiple umbrella charts per application
-    3. One non-umbrella chart per application
-    4. Multiple non-umbrella charts per application
+
+   1. One umbrella chart per application
+   2. Multiple umbrella charts per application
+   3. One non-umbrella chart per application
+   4. Multiple non-umbrella charts per application  
 **A1:** All Helm chart structures used in practice within the Qubership (including those listed above) must be supported by the Application Manifest model
 
-**Q2:** Should the Application Manifest be compatible with other deployers?
+**Q2:** Should the Application Manifest be compatible with other deployers?  
 **A2:** No
 
 **Q3:** Should deploying a 3rd-party Application (Helm chart) by Argo require an Application manifest?
@@ -82,19 +80,23 @@
 **Q7:** Should environment configurator be able to customize some parameters from [deploy-descriptor.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-deploy-descriptoryaml) or [per service deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml) in **no Application Manifest** option?
 **A7:** Yes, but these parameters must be validated for necessity.
 
-**Q8:** Should the application developer be able to introduce their own types in the component type in Application Manifest?
-**A8:** Not at this time, but in the future.
+**Q8:** Should the application developer be able to introduce their own types in the component type in the Application Manifest?  
+**A8:** Not at this time, but possibly in the future.
 
-**Q9:** How are Helm app charts and Docker images created, built, and linked in mature open-source projects?
+**Q9:** How are Helm app charts and Docker images created, built, and linked in mature open-source projects?  
 **A9:**
 
-**Q10:** How are the version in Chart.yaml and the Helm chart artifact version in OCI registry related? What should be specified in the version attribute of the `application/vnd.qubership.helm.chart` component for release and non-release versions?
+**Q10:** How are the version in Chart.yaml and the Helm chart artifact version in the OCI registry related? What should be specified in the version attribute of the `application/vnd.qubership.helm.chart` component for release and non-release versions?
 
 **A10:**
 
 **Q11:** How should the `application/vnd.docker.image` component be structured for a multi-architecture Docker image composed of multiple components linked by a manifest?
 
 **A11:**
+
+**Q12:** How to describe external dependencies in AM
+
+**A12:**
 
 ## Use Cases
 
@@ -104,7 +106,7 @@
    3. Deployment of a Solution of Qubership applications
    4. Deployment of a Solution of 3rd-party applications
    5. Deployment of a mixed group of 3rd-party and Qubership applications
-2. Effective Set Calculation by Envgene
+2. Effective Set Calculation by EnvGene
    1. Effective set calculation for a Qubership application
    2. Effective set calculation for a 3rd-party application
    3. Effective set calculation for a Solution of Qubership applications
@@ -149,6 +151,9 @@ QIP Example:
 1. Plugins (CDN, sample repo, smart plug) are described as services. They are not classified as a separate component type
 2. No resource profile baseline exists. Performance parameters are defined in the Helm chart values
 3. The service list is formed according to the principle - **service for each `service` component**
+4. There are two types of dependencies between components:
+   1. dependsOn - For describing external dependencies (logical links), where a component requires another component to function but does not physically include it.
+   2. includes - For describing the physical composition of a component, when a parent artifact includes child components.
 
 ![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model.drawio.png)
 
@@ -178,77 +183,7 @@ In this option:
 
 ### Application Manifest Build CLI
 
-#### [Application Manifest Build CLI] Open Question
-
-1. How does Build CLI determine the list of components to include in the Application Manifest (AM)?
-   1. Configuration file as input
-   2. Build workflow discovery
-
-#### [Application Manifest Build CLI] Limitation
-
-1. All application components described in AM (Helm charts, Docker images, ZIPs, SPARs, JARs) must be built in the same repository, within the same workflow as AM build
-2. For each artifact type (Docker, Helm, Maven), application publication goes to one registry per type
-
-#### [Application Manifest Build CLI] Requirements
-
-1. The CLI runs in the application build pipeline in a job that follows component build jobs in the workflow
-2. The CLI must generate AM that validates against [JSON Schema](/schemas/application-manifest.schema.json)
-3. The CLI must generate registry config that validates against [JSON Schema]()
-4. AM must be published as a Maven artifact
-   1. Artifact ID must match the application name
-5. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
-    1. Service -> `application/vnd.qubership.service`
-    2. Docker image -> `application/vnd.docker.image`
-    3. Helm chart -> `application/vnd.qubership.helm.chart`
-    4. ZIP archive -> `application/zip`
-6. Resource profile baseline must be converted to ...TBD...
-7. AM must contain artifact coordinates in PURL notation, for example:
-    `pkg:docker/core/qubership-integration-platform-ui@build22?registryName=sandbox`
-    where `registryName` points to the registry in the registry config:
-
-    ```yaml
-    sandbox:
-      auth:
-        method: <none|basic|token|apiKey|...>
-        username:
-        password:
-        token: 
-        apiKey:
-      docker:
-        auth:
-          ...
-        snapshotRepository: ""
-        stagingRepository: ""
-        releaseRepository: ""
-      maven:
-        auth:
-          ...
-        snapshotRepository: ""
-        stagingRepository: ""
-        releaseRepository: ""
-      helm:
-        auth:
-          ...
-        snapshotRepository: ""
-        stagingRepository: ""
-        releaseRepository: ""
-    ```
-
-8. `bom-ref` AM component should be generated as `<component-name>:<uniq-uuid>`
-9. The CLI must complete the AM build for an application with 500 components within 10 seconds
-10. The CLI must support execution in both GitLab CI and GitHub Actions environments
-
-<!-- ```yaml
-servicies:
-  <service-name-1>:
-    components:
-      <component-name-1>:
-        type: <dockerImage|helmCharts|zip|jar|spar|...>
-      <component-name-N>:
-        type: <dockerImage|helmCharts|zip|jar|spar|...> 
-  <service-name-N>:
-    ...
-``` -->
+[Application Manifest Build CLI](/docs/application-manifest-build-cli.md)
 
 ## MoMs
 
