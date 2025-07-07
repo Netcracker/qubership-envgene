@@ -1,6 +1,6 @@
 import os
 import time
-import yaml
+import  json
 from typing import List
 from models import PayloadEntry, RotationResult
 from utils.yaml_utils import write_yaml_to_file
@@ -16,6 +16,17 @@ def check_if_many_envs_exist(env: str) -> str:
         raise ValueError("Expected only one environment to be passed. Failing the job")
     return envs[0]
 
+def load_payload(payload: str):
+    if isinstance(payload, str):
+        try:
+            config = json.loads(payload)
+            return config
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse Payload JSON: {e}. Please check payload JSON content")
+            raise
+    else:
+        logger.error(f"Unsupported Payload type: {e}. Please provide JSON in string format")
+
 
 def cred_rotation():
     start = time.time()
@@ -24,7 +35,7 @@ def cred_rotation():
     env_name = getenv_with_error('ENV_NAME')
     envgene_age_public_key = getenv_with_error('ENVGENE_AGE_PUBLIC_KEY')
     creds_rotation_enabled = getenv_with_error('CRED_ROTATION_FORCE') == "true"
-    cred_payload = yaml.safe_load(getenv_with_error('CRED_ROTATION_PAYLOAD'))
+    cred_payload = load_payload(getenv_with_error('CRED_ROTATION_PAYLOAD'))
     cluster_name = getenv_with_error('CLUSTER_NAME')
     work_dir = getenv_with_error('CI_PROJECT_DIR')
     env = check_if_many_envs_exist(env_name)
@@ -40,15 +51,12 @@ def cred_rotation():
     env_cred_file = f"{base_env_path}/Credentials/credentials.yml"
     output_path = f"{work_dir}/affected-sensitive-parameters.yaml"
     creds_path = f"/tmp/payload.yml"
-    logger.info(f"mycred_payload are {cred_payload}")
     logger.info(f"base env path is {base_env_path}")
     write_yaml_to_file(creds_path, cred_payload)
-
+    #Decrypt Payload file if encrypted
+    payload_data = decrypt_file(envgene_age_public_key, creds_path, True, 'SOPS', 'Please check if encryption type is SOPS') 
+    
     shared_creds =  collects_shared_credentials(base_env_path)
-    
-
-    logger.info(f"Encryption is {is_encrypted} and type is {encrypt_type}")
-    
     fileread = time.time()
     final_creds_map = {}
     get_shared_cred_files(shared_creds, base_env_path, work_dir, final_creds_map)
@@ -59,19 +67,15 @@ def cred_rotation():
     #Decrypt Environment credential file if encrypted
     env_cred_map[env_cred_file] = decrypt_file(envgene_age_public_key, env_cred_file, False, encrypt_type, '')  
 
-    #Decrypt Payload file if encrypted
-    payload_data = decrypt_file(envgene_age_public_key, creds_path, True, 'SOPS', 'Please check if encryption type is SOPS') 
+    
     logger.info(f"✅ Fileread Completed in {round(time.time() - fileread, 2)} seconds.")
-    logger.info(f"my payload objects are {payload_data}")
     payload_raw =  payload_data.get("rotation_items", [])
-    logger.info(f"my payload_raw are {payload_raw}")
     payload_objects: List[PayloadEntry] = [PayloadEntry.from_dict(entry) for entry in payload_raw]
     
     final_result: List[RotationResult] = []
     processed_cred_and_files = {}
-    logger.info(f"my payload objects are {payload_objects}")
+    #Collect affected parameters from ns and app files
     for entry in payload_objects:
-        logger.info(f"entering inside {entry}")
         result = process_entry_in_payload(
             entry, env, shared_content_map, env_cred_map, ns_files_map, processed_cred_and_files
         )
