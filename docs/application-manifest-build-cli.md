@@ -15,7 +15,6 @@
       - [`application/vnd.qubership.service`](#applicationvndqubershipservice)
       - [`application/vnd.docker.image`](#applicationvnddockerimage)
       - [`application/vnd.qubership.helm.chart`](#applicationvndqubershiphelmchart)
-      - [`application/zip`](#applicationzip)
   - [Application Manifest Build Config](#application-manifest-build-config)
   - [Registry Config](#registry-config)
 
@@ -64,7 +63,7 @@ flowchart TD
 > mime-type: application/vnd.qubership.helm.chart
 > name: my-chart
 > version: 1.2.3
-> purl: pkg:helm/example-repo/my-chart@1.2.3?> registryName=sandbox
+> purl: pkg:helm/example-repo/my-chart@1.2.3?registryName=sandbox
 > hashes:
 >   - alg: SHA-256
 >     content: 0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91
@@ -75,7 +74,15 @@ flowchart TD
 
 ## Use Cases
 
-TBD
+1. Building a multi-service application with:
+   1. Docker images
+      1. External (built as part of another build process)
+   2. Helm charts
+      1. One umbrella chart per
+      2. One non-umbrella chart per
+      3. Multiple non-umbrella charts
+      4. External (built as part of another build process) non-umbrella charts
+   3. Publishing the Application Manifest
 
 ## Open Question
 
@@ -101,53 +108,18 @@ TBD
 
 ## Requirements
 
-1. The CLI runs in the application build pipeline in a job that follows component build jobs in the workflow
-2. The CLI must generate AM that validates against [JSON Schema](/schemas/application-manifest.schema.json)
-3. The CLI must generate registry config that validates against JSON Schema **TBD**
-4. AM must be published as a Maven artifact
+1. The CLI must generate AM that validates against [JSON Schema](/schemas/application-manifest.schema.json)
+2. The CLI must generate registry config that validates against JSON Schema **TBD**
+3. AM must be published as a Maven artifact
    1. Artifact ID must match the application name
-   2. Параметры реджестри для публикации (url, креды, группа) должны быть параметрами запуска тулы
-5. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
+   2. Registry parameters for publishing (URL, credentials, group) must be provided as CLI arguments.
+4. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
     1. Service -> `application/vnd.qubership.service`
     2. Docker image -> `application/vnd.docker.image`
     3. Helm chart -> `application/vnd.qubership.helm.chart`
-    4. ZIP archive -> `application/zip`
-6. Resource profile baseline must be converted to ...TBD...
-7. AM must contain artifact coordinates in PURL notation, for example:
-    `pkg:docker/core/qubership-integration-platform-ui@build22?registryName=sandbox`
-    where `registryName` points to the registry in the registry config:
-
-    ```yaml
-    sandbox:
-      auth:
-        method: <none|basic|token|apiKey|...>
-        username:
-        password:
-        token: 
-        apiKey:
-      docker:
-        auth:
-          ...
-        snapshotRepository: ""
-        stagingRepository: ""
-        releaseRepository: ""
-      maven:
-        auth:
-          ...
-        snapshotRepository: ""
-        stagingRepository: ""
-        releaseRepository: ""
-      helm:
-        auth:
-          ...
-        snapshotRepository: ""
-        stagingRepository: ""
-        releaseRepository: ""
-    ```
-
-8. `bom-ref` AM component should be generated as `<component-name>:<uniq-uuid>`
-9.  The CLI must complete the AM build for an application with 500 components within 10 seconds
-10. The CLI must support execution in both GitLab CI and GitHub Actions environments
+    <!-- 4. ZIP archive -> `application/zip` -->
+5. The CLI must complete the AM build for an application with 500 components within 10 seconds
+6. The CLI must support execution in both GitLab CI and GitHub Actions environments
 
 ## Application Manifest Structure
 
@@ -266,7 +238,7 @@ Root components of this type describe artifacts, nested helm charts describe abs
 > A nested chart within this array can have its own `components` array to represent
 > its own dependencies
 
-#### `application/zip`
+<!-- #### `application/zip`
 
 Describes ZIP archive as a Maven artifact
 
@@ -281,22 +253,27 @@ Describes ZIP archive as a Maven artifact
 | `purl`          | string | yes       | None    | Package URL (PURL) for the archive                                   | **TBD** |
 | `hashes`        | array  | yes       | `[]`    | List of hashes for the archive (empty array if none)                 | **TBD** |
 | `hashes.alg`    | string | yes       | None    | Hash algorithm, e.g., "SHA-256" (required if hash present)           | **TBD** |
-| `hashes.content`| string | yes       | None    | Hash value as a hex string (required if hash present)                | **TBD** |
+| `hashes.content`| string | yes       | None    | Hash value as a hex string (required if hash present)                | **TBD** | -->
 
 ## Application Manifest Build Config
 
-This file describes which components make up application and where to find them  
-It should be created and stored in application repository  
-The build CLI uses this file as input to generate the Application Manifest  
+This file defines which services and components make up application and how each component is linked to its build job and artifact in your CI/CD pipeline. It is the single source of truth for the CLI to generate the Application Manifest (AM):
+
+- Lists all services and their components to be included in the AM
+- Maps each component to the CI/CD job and artifact that produces it
+
+The config should be stored in application repository
 
 ```yaml
 services:
   <service-name>:
     includes:
       # Type of the service component
-      - type: enum[docker, helm, service]
-        # Path to the component
-        path: string
+      - type: enum[docker, helm]
+        # Name of the CI/CD job that builds this component
+        job: string
+        # Name of the artifact produced by the job      
+        artifact: string
         # Reference to the registry in the registry config
         registry: string
 ```
@@ -305,70 +282,70 @@ services:
 
 ```yaml
 services:
-  qubership-integration-platform-ui:
+  ui:
     includes:
       - type: docker
-        path: /ui/docker/
-        registry: sandbox
+        job: build-ui-image
+        artifact-name: ui-image
       - type: helm
-        path: /ui/charts/
-        registry: sandbox
-  qubership-integration-platform-variables-management:
+        job: build-ui-chart
+        artifact: ui-chart
+  variables-management:
     includes:
       - type: docker
-        path: /platform-variables-management/docker/
-        registry: sandbox
+        job: build-variables-docker
+        artifact: variables-management-image
       - type: helm
-        path: /platform-variables-management/charts/
-        registry: sandbox
-  qubership-integration-platform-systems-catalog:
+        job: build-variables-helm
+        artifact: variables-management-chart
+  systems-catalog:
     includes:
       - type: docker
-        path: /systems-catalog/docker/
-        registry: sandbox
+        job: build-systems-docker
+        artifact: systems-catalog-image
       - type: helm
-        path: /systems-catalog/charts/
-        registry: sandbox
-  qubership-integration-platform-catalog:
+        job: build-systems-helm
+        artifact: systems-catalog-chart
+  platform-catalog:
     includes:
       - type: docker
-        path: /platform-catalog/docker/
-        registry: sandbox
+        job: build-platform-docker
+        artifact: platform-catalog-image
       - type: helm
-        path: /platform-catalog/charts/
-        registry: sandbox
-  qubership-integration-platform-engine:
+        job: build-platform-helm
+        artifact: platform-catalog-chart
+  engine:
     includes:
       - type: docker
-        path: /engine/docker/
-        registry: sandbox
+        job: build-engine-docker
+        artifact: engine-image
       - type: helm
-        path: /engine/charts/
-        registry: sandbox
-  qubership-integration-platform-sessions-management:
+        job: build-engine-helm
+        artifact: engine-chart
+  sessions-management:
     includes:
       - type: docker
-        path: /sessions-management/docker/
-        registry: sandbox
+        job: build-sessions-docker
+        artifact: sessions-management-image
       - type: helm
-        path: /sessions-management/charts/
-        registry: sandbox
-  cr-synchonizer:
+        job: build-sessions-helm
+        artifact: sessions-management-chart
+  cr-synchronizer:
     includes:
       - type: docker
-        path: /cr-synchonizer/docker/
-        registry: sandbox
+        job: build-cr-docker
+        artifact: cr-synchronizer-image
       - type: helm
-        path: /cr-synchonizer/charts/
-        registry: sandbox
-  qubership-integration-platform-backend:
+        job: build-cr-helm
+        artifact: cr-synchronizer-chart
+  backend:
     includes:
       - type: docker
-        path: /backend/docker/
-    registry: sandbox
+        job: build-backend-docker
+        artifact: backend-image
       - type: helm
-        path: /backend/charts/
-    registry: sandbox
+        job: build-backend-helm
+        artifact: backend-chart
 ```
 
 ## Registry Config
