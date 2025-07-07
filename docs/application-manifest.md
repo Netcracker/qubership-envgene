@@ -150,15 +150,15 @@ QIP Example:
 2. No resource profile baseline exists. Performance parameters are defined in the Helm chart values
 3. The service list is formed according to the principle - **service for each `service` component**
 
-![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model-without-plugins.drawio.png)
+![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model.drawio.png)
 
 [Application Manifest without Plugins JSON schema](/schemas/application-manifest.schema.json)
 
 QIP Example:
 
-![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest-without-plugins.drawio.png)
+![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest.drawio.png)
 
-[QIP Application Manifest example](/examples/application-manifest-qip-without-plugins.json)
+[QIP Application Manifest example](/examples/application-manifest-qip.json)
 
 ### Option 2 No Application Manifest
 
