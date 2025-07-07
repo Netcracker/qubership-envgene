@@ -38,55 +38,49 @@ def extract_credential(target_key: str, yaml_content: Dict[str, Any], cred_field
         return match.group(0), match.group(1)
     return None, None
 
-def get_shared_cred_files(shared_creds: List[str], source_dir, stop_dir, final_creds_map):
-    for cred_name in shared_creds:
-        found_map = {}
-        find_cred_file_upwards(Path(source_dir), Path(stop_dir), cred_name, found_map)
+def get_shared_cred_files(shared_creds: List[str], source_dir: str, stop_dir: str, final_creds_map: Dict[str, str]):
+    source_path = Path(source_dir).resolve()
+    stop_path = Path(stop_dir).resolve()
 
+    remaining_creds = set(shared_creds)
+
+    while True:
+        if stop_path not in source_path.parents and source_path != stop_path:
+            raise ReferenceError(f"{stop_dir} is not a parent of {source_path}")
+        logger.info(f"Seraching for shared credentials in {source_path}")
+        found_map = {}
+        scan_dir_for_creds(source_path, remaining_creds, found_map)
+
+        remaining_creds = decide_to_scan(found_map, final_creds_map, remaining_creds)
+
+        if not remaining_creds or source_path == stop_path:
+            break
+
+        source_path = source_path.parent
+
+def decide_to_scan(found_map: Dict[str, List[str]], final_creds_map: Dict[str, str], remaining_creds: set) -> set:
+    next_round = set()
+    for cred_name in remaining_creds:
         matches = found_map.get(cred_name, [])
         if len(matches) == 1:
             final_creds_map[cred_name] = matches[0]
         elif len(matches) > 1:
-            logger.error(f" Duplicate credential file '{cred_name}' found:\n\t" + "\n\t".join(matches))
+            logger.error(f"Duplicate credential file '{cred_name}' found:\n\t" + "\n\t".join(matches))
             raise ReferenceError(f"Duplicate credential file found for: {cred_name}")
         else:
-            logger.warning(f"Credential '{cred_name}' not found between {source_dir} and {stop_dir}")
+            next_round.add(cred_name)
+            logger.info(f"Credential '{cred_name}' not found in current dir. Will scan upwards.")
+    return next_round
 
-def find_cred_file_upwards(
-    current_dir: Path,
-    stop_dir: Path,
-    cred_name: str,
-    found_map: Dict[str, List[str]]
-) -> None:
-
-    current_dir = current_dir.absolute()
-    stop_dir = stop_dir.absolute()
-
-    if stop_dir not in current_dir.parents and current_dir != stop_dir:
-        raise ReferenceError(f"{stop_dir} is not a parent of {current_dir}")
-
-    scan_dir_for_cred(current_dir, cred_name, found_map)
-
-    # Stop recursion early if file found
-    if cred_name in found_map and found_map[cred_name]:
-        logger.debug(f"Credential {cred_name} found in {current_dir}. Stopping upward search.")
-        return
-
-    if current_dir == stop_dir:
-        return
-
-    find_cred_file_upwards(current_dir.parent, stop_dir, cred_name, found_map)
-
-def scan_dir_for_cred(path, shared_cred: str, found_map):
+def scan_dir_for_creds(path: Path, shared_creds: set, found_map: Dict[str, List[str]]):
     for entry in os.scandir(path):
         if entry.is_dir(follow_symlinks=False):
-            scan_dir_for_cred(entry.path, shared_cred, found_map)
-
+            scan_dir_for_creds(Path(entry.path), shared_creds, found_map)
         elif entry.is_file(follow_symlinks=False) and entry.name.endswith((".yml", ".yaml", ".json")):
             name_wo_ext = os.path.splitext(entry.name)[0]
+            if name_wo_ext in shared_creds:
+                found_map.setdefault(name_wo_ext, []).append(entry.path)
 
-            if name_wo_ext == shared_cred:
-                found_map.setdefault(shared_cred, []).append(entry.path)
 
 def read_cred_files(final_creds_map, is_encrypted, public_key):
     shared_creds_map = {}

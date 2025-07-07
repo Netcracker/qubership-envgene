@@ -17,7 +17,7 @@ class AffectedParameter:
     application: str
     context: str
     parameter_key: str
-    cred_filepath: str
+    environment_cred_filepath: str
     shared_cred_filepath: List[str]
     cred_id: str
 

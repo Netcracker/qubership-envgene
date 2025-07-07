@@ -126,6 +126,11 @@ def get_app_and_ns(filename: str, content: dict) -> Tuple[str, Optional[str]]:
             raise Exception(f"Failed to load namespace file from {parent_dir}: {e}")
     return content.get('name', ''), ns_content.get('name','')
 
+def trim_path_from_environments(path: str):
+    normalized = path.replace("\\", "/")
+    marker = "/environments/"
+    idx = normalized.find(marker)
+    return normalized[idx:] if idx != -1 else normalized
 
 def get_affected_param_map(
     cred_id: str,
@@ -147,8 +152,8 @@ def get_affected_param_map(
                 application=app,
                 context=resolve_context(context),
                 parameter_key=key,
-                cred_filepath=env_cred_files,
-                shared_cred_filepath=shared_cred_files,
+                environment_cred_filepath=trim_path_from_environments(env_cred_files),
+                shared_cred_filepath=[trim_path_from_environments(p) for p in shared_cred_files],
                 cred_id=cred_id
             )
             result.append(affected)
