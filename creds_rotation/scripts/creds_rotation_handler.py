@@ -3,7 +3,7 @@ import time
 import  json
 from typing import List
 from models import PayloadEntry, RotationResult
-from utils.yaml_utils import write_yaml_to_file
+from utils.yaml_utils import convert_json_to_yaml, write_yaml_to_file
 from utils.file_utils import  scan_and_get_yaml_files
 from utils.cred_utils import decrypt_file, update_cred_content, write_updated_cred_into_file, get_shared_cred_files, read_cred_files, collects_shared_credentials
 from core_rotation import process_entry_in_payload
@@ -50,9 +50,10 @@ def cred_rotation():
     base_env_path = f"{work_dir}/environments/{cluster_name}/{env}"
     env_cred_file = f"{base_env_path}/Credentials/credentials.yml"
     output_path = f"{work_dir}/affected-sensitive-parameters.yaml"
-    creds_path = f"/tmp/payload.yml"
+    
+    creds_path = "/tmp/payload.yml"
     logger.info(f"base env path is {base_env_path}")
-    write_yaml_to_file(creds_path, cred_payload)
+    convert_json_to_yaml(creds_path, cred_payload)
     #Decrypt Payload file if encrypted
     payload_data = decrypt_file(envgene_age_public_key, creds_path, True, 'SOPS', 'Please check if encryption type is SOPS') 
     
