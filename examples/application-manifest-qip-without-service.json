@@ -37,7 +37,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/core/qubership-integration-platform-ui@build22?registry_id=sandbox?repository_id=targetSnapshot"
+      "purl": "pkg:docker/core/qubership-integration-platform-ui@build22?registry_id=sandbox"
     },
     {
       "bom-ref": "qubership-integration-platform-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -141,7 +141,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:helm/example-repo/qubership-integration-platform@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+      "purl": "pkg:helm/example-repo/qubership-integration-platform@1.2.3?registry_id=sandbox",
       "properties": [
         {
           "name": "alias",
@@ -161,7 +161,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-ui@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-ui@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -181,7 +181,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-variables-management@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-variables-management@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -201,7 +201,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-systems-catalog@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-systems-catalog@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -221,7 +221,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-catalog@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-catalog@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -241,7 +241,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-engine@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-engine@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -261,7 +261,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-sessions-management@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-sessions-management@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -281,7 +281,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/cr-synchonizer@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/cr-synchonizer@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -301,7 +301,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/qubership-integration-platform-composite-gateway@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/qubership-integration-platform-composite-gateway@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -323,7 +323,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:helm/example-repo/core-tpl@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+      "purl": "pkg:helm/example-repo/core-tpl@1.2.3?registry_id=sandbox",
       "properties": [
         {
           "name": "alias",

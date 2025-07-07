@@ -98,7 +98,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/cloud-core/key-manager-assembly-release-2023.1-7.10.0@build22?registry_id=sandbox?repository_id=targetSnapshot"
+      "purl": "pkg:docker/cloud-core/key-manager-assembly-release-2023.1-7.10.0@build22?registry_id=sandbox"
     },
     {
       "bom-ref": "identity-provider:6dde3587-76a0-4369-8a9b-36c5c7b468be",
@@ -196,7 +196,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:maven/org.qubership.cloud.ext-platform-sample-plugins/smartplug-sample-plugin@master-20250205.150132-build5?registry_id=sandbox?repository_id=targetSnapshot"
+          "purl": "pkg:maven/org.qubership.cloud.ext-platform-sample-plugins/smartplug-sample-plugin@master-20250205.150132-build5?registry_id=sandbox"
         }
       ]
     },
@@ -212,7 +212,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:helm/example-repo/smartplug-sample-plugin@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+      "purl": "pkg:helm/example-repo/smartplug-sample-plugin@1.2.3?registry_id=sandbox",
       "properties": [
         {
           "name": "alias",
@@ -240,7 +240,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:maven/org.qubership.cloud.content.common/api_docs@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot"
+          "purl": "pkg:maven/org.qubership.cloud.content.common/api_docs@master-20250205.150410-build5?registry_id=sandbox"
         }
       ]
     },
@@ -256,7 +256,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:helm/example-repo/api-docs@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+      "purl": "pkg:helm/example-repo/api-docs@1.2.3?registry_id=sandbox",
       "properties": [
         {
           "name": "alias",
@@ -284,7 +284,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:maven/common/cdn-zip@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:maven/common/cdn-zip@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "type",
@@ -318,9 +318,24 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:maven/common/cdn-zip@1.2.3?registry_id=sandbox?repository_id=targetSnapshot"
+          "purl": "pkg:maven/common/pipeline-zip@1.2.3?registry_id=sandbox"
         }
       ]
+    },
+    {
+      "bom-ref": "pipeline-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "pipeline-image",
+      "group": "cloud-core",
+      "version": "build22",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
+        }
+      ],
+      "purl": "pkg:docker/cloud-core/pipeline-image@build22?registry_id=sandbox"
     },
     {
       "bom-ref": "cdn-conf:a465b0f4-5f09-4dc2-8033-98cfcf888c52",
@@ -334,7 +349,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:helm/example-repocdn-conf@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+      "purl": "pkg:helm/example-repocdn-conf@1.2.3?registry_id=sandbox",
       "properties": [
         {
           "name": "alias",
@@ -354,7 +369,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:helm/common-templates@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+      "purl": "pkg:helm/common-templates@1.2.3?registry_id=sandbox",
       "properties": [
         {
           "name": "alias",
@@ -375,7 +390,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:docker/cloud-core/key-manager-second@build22?registry_id=sandbox?repository_id=targetSnapshot"
+      "purl": "pkg:docker/cloud-core/key-manager-second@build22?registry_id=sandbox"
     },
     {
       "bom-ref": "Cloud-Core:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
@@ -389,7 +404,7 @@
           "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
         }
       ],
-      "purl": "pkg:helm/example-repo/Cloud-Core@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+      "purl": "pkg:helm/example-repo/Cloud-Core@1.2.3?registry_id=sandbox",
       "properties": [
         {
           "name": "alias",
@@ -409,7 +424,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/key-manager@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/key-manager@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -429,7 +444,7 @@
               "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
             }
           ],
-          "purl": "pkg:helm/example-repo/identity-provider@1.2.3?registry_id=sandbox?repository_id=targetSnapshot",
+          "purl": "pkg:helm/example-repo/identity-provider@1.2.3?registry_id=sandbox",
           "properties": [
             {
               "name": "alias",
@@ -468,6 +483,12 @@
       "ref": "identity-provider:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
       "dependsOn": [
         "common-templates:44bc4550-c3f1-4465-b891-2764c9d3db56"
+      ]
+    },
+    {
+      "ref": "pipeline:b2233ee5-d27a-4bde-9d5a-f808f3f0463e",
+      "dependsOn": [
+        "pipeline-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f"
       ]
     }
   ]
