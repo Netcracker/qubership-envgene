@@ -119,8 +119,12 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
         logger.info("SD_SOURCE_TYPE is not specified, skipping SD file creation")
         return
     logger.info(f"printing sd_delta before {sd_delta}")
-    sd_delta = str(sd_delta).strip().lower()
-    sd_delta = sd_delta if sd_delta else "true"
+
+    if sd_delta is not None and str(sd_delta).strip() != "":
+        sd_delta = str(sd_delta).strip().lower()
+    else:
+        sd_delta = None 
+
     logger.info(f"printing sd_delta after {sd_delta}")
     if sd_delta == "true":
         sd_path = base_path + 'delta_sd.yaml'
@@ -155,14 +159,15 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
     
     sd_merge_mode = str(sd_merge_mode).strip().lower() if sd_merge_mode else None
 
-    sd_delta = str(sd_delta).strip().lower() if sd_delta is not None else "true"
-
+    
     if sd_merge_mode:
         effective_merge_mode = sd_merge_mode
     elif sd_delta == "true":
         effective_merge_mode = "extended-merge"
+    elif sd_delta == "false":
+        effective_merge_mode = "replace"
     else:
-        effective_merge_mode = "replace"    
+        effective_merge_mode = "basic-merge"
 
     # Perform basic-merge for multiple SDs before applying SD_REPO_MERGE_MODE
     merged_applications = {"applications": data[0].get("applications", [])}
