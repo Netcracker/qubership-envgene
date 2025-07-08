@@ -1,4 +1,3 @@
-
 # Solution Descriptor Processing
 
 - [Solution Descriptor Processing](#solution-descriptor-processing)
@@ -23,6 +22,7 @@
         - [`extended-merge` SD Merge Mode Terms](#extended-merge-sd-merge-mode-terms)
         - [`extended-merge` Merge Mode Assumptions](#extended-merge-merge-mode-assumptions)
         - [`extended-merge` SD Merge Mode Rules](#extended-merge-sd-merge-mode-rules)
+  - [Use Cases](#use-cases)
   - [Test Cases](#test-cases)
 
 ## Problem Statement
@@ -246,13 +246,38 @@ The following set of terms is used to describe the rules and assumptions of SD m
 ##### `extended-merge` SD Merge Mode Rules
 
 1. For each Matching Application in Full SD, replace the Application Version with the one from Delta SD. See use cases UC-1-X as examples
-2. For each New Application (See use cases UC-2-X as examples):
+2. For each New Application:
    1. Append the New Application from the Delta SD to the end of the applications list in the Full SD
    2. Append the Alias of the New Application to the end of the apps list in the chunk with the equal as in the Delta SD
 3. Each Duplicating Application must remain unchanged
 4. The order of elements in the applications list must remain unchanged
 5. The order of elements in the deployGraph list must remain unchanged
 6. The order of elements in the apps list must remain unchanged
+
+## Use Cases
+
+| Use Case | SD_SOURCE_TYPE | SD_VERSION / SD_DATA     | SD_REPO_MERGE_MODE / SD_DELTA | Prerequisites | Result |
+|----------|----------------|--------------------------|-------------------------------|---------------|--------|
+| UC-1-1   | `artifact`     | single SD_VERSION      | `replace`                     | AppDef and RegDef must exist for each app:ver in SD_VERSION | Full SD replaced with SD from artifact |
+| UC-1-2   | `artifact`     | single SD_VERSION      | `extended-merge`              | AppDef and RegDef must exist for each app:ver in SD_VERSION | SD merged with repo Full SD (extended-merge), result saved as Full SD |
+| UC-1-3   | `artifact`     | single SD_VERSION      | `basic-merge` (default)       | AppDef and RegDef must exist for each app:ver in SD_VERSION | SD merged with repo Full SD (basic-merge), result saved as Full SD |
+| UC-1-4   | `artifact`     | single SD_VERSION      | `basic-exclusion-merge`       | AppDef and RegDef must exist for each app:ver in SD_VERSION | SD merged with repo Full SD (basic-exclusion-merge), result saved as Full SD |
+| UC-1-5   | `artifact`     | multiple SD_VERSION    | `basic-merge` (default)       | AppDef and RegDef must exist for each app:ver in SD_VERSION | All SDs from SD_VERSION are basic-merged, then merged with repo Full SD using basic-merge, saved as Full SD |
+| UC-1-6   | `artifact`     | multiple SD_VERSION    | `basic-exclusion-merge`       | AppDef and RegDef must exist for each app:ver in SD_VERSION | All SDs from SD_VERSION are basic-merged, then merged with repo Full SD using basic-exclusion-merge, saved as Full SD |
+| UC-1-7   | `artifact`     | multiple SD_VERSION    | `extended-merge`              | AppDef and RegDef must exist for each app:ver in SD_VERSION | All SDs from SD_VERSION are basic-merged, then merged with repo Full SD using extended-merge, saved as Full SD |
+| UC-1-8   | `artifact`     | multiple SD_VERSION    | `replace`                     | AppDef and RegDef must exist for each app:ver in SD_VERSION | All SDs from SD_VERSION are basic-merged, then Full SD replaced with merge result |
+| UC-1-9   | `artifact`     | single SD_VERSION      |  SD_DELTA=true (deprecated)   | AppDef and RegDef must exist for each app:ver in SD_VERSION | Same as for UC-1-2 |
+| UC-1-10  | `artifact`     | single SD_VERSION      |  SD_DELTA=false (deprecated)  | AppDef and RegDef must exist for each app:ver in SD_VERSION | Same as for UC-1-1 |
+| UC-2-1   | `json`         | single SD_DATA         | `replace`                     | None | Full SD replaced with SD from JSON |
+| UC-2-2   | `json`         | single SD_DATA         | `extended-merge`              | None | SD merged with repo Full SD (extended-merge), result saved as Full SD |
+| UC-2-3   | `json`         | single SD_DATA         | `basic-merge` (default)       | None | SD merged with repo Full SD (basic-merge), result saved as Full SD |
+| UC-2-4   | `json`         | single SD_DATA         | `basic-exclusion-merge`       | None | SD merged with repo Full SD (basic-exclusion-merge), result saved as Full SD |
+| UC-2-5   | `json`         | multiple SD_DATA       | `basic-merge` (default)       | None | All SDs from SD_DATA are basic-merged, then merged with repo Full SD using basic-merge, saved as Full SD |
+| UC-2-6   | `json`         | multiple SD_DATA       | `basic-exclusion-merge`       | None | All SDs from SD_DATA are basic-merged, then merged with repo Full SD using basic-exclusion-merge, saved as Full SD |
+| UC-2-7   | `json`         | multiple SD_DATA       | `extended-merge`              | None | All SDs from SD_DATA are basic-merged, then merged with repo Full SD using extended-merge, saved as Full SD |
+| UC-2-8   | `json`         | multiple SD_DATA       | `replace`                     | None | All SDs from SD_DATA are basic-merged, then Full SD replaced with merge result |
+| UC-2-9   | `json`         | single SD_DATA         | SD_DELTA=true (deprecated)    | None | Same as for UC-2-2 |
+| UC-2-10  | `json`         | single SD_DATA         | SD_DELTA=false (deprecated)   | None | Same as for UC-2-1 |
 
 ## Test Cases
 
