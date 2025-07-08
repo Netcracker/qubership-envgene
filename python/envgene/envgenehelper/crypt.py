@@ -59,7 +59,7 @@ def decrypt_file(file_path, **kwargs):
         shade_files_helper.merge_creds_file(
             file_path, _decrypt_file, **kwargs)
     else:
-        _decrypt_file(file_path, **kwargs)
+        return _decrypt_file(file_path, **kwargs)
 
 
 def _decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False,
@@ -79,7 +79,7 @@ def encrypt_file(file_path, **kwargs):
     if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
         shade_files_helper.split_creds_file(file_path, _encrypt_file)
     else:
-        _encrypt_file(file_path, **kwargs)
+        return _encrypt_file(file_path, **kwargs)
 
 
 def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False, is_crypt=None,
