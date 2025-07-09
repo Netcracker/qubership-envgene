@@ -36,5 +36,5 @@ public class GlobalE2EParametersDTO {
     private final String recipientsStrategy;
     private final boolean mergeTenantsAndE2EParameters;
     @JsonDeserialize(using = CustomDeserializer.class)
-    private final Map<String, String> environmentParameters;
+    private final Map<String, Object> environmentParameters;
 }

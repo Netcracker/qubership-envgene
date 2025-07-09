@@ -17,12 +17,14 @@
 package org.qubership.cloud.devops.commons.pojo.applications.dto;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.jackson.Jacksonized;
+import org.qubership.cloud.devops.commons.utils.convert.CustomDeserializer;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -42,7 +44,9 @@ public class ApplicationDTO {
     @NotEmpty
     private final String groupId;
     private final boolean supportParallelDeploy;
-    private final Map<String, String> deployParameters;
-    private final Map<String, String> technicalConfigurationParameters;
+    @JsonDeserialize(using = CustomDeserializer.class)
+    private final Map<String, Object> deployParameters;
+    @JsonDeserialize(using = CustomDeserializer.class)
+    private final Map<String, Object> technicalConfigurationParameters;
     private final boolean solutionDescriptor;
 }
