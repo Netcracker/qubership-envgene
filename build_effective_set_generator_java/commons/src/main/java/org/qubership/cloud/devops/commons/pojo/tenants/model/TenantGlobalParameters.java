@@ -32,10 +32,10 @@ public class TenantGlobalParameters implements Serializable {
     private static final long serialVersionUID = -7474119965082877901L;
 
     @Builder.Default
-    private Map<String, String> deployParameters = Collections.emptyMap();
+    private Map<String, Object> deployParameters = Collections.emptyMap();
     @Builder.Default
     @ToString.Exclude
     private GlobalE2EParameters e2eParameters = GlobalE2EParameters.builder().build();
     @Builder.Default
-    private Map<String, String> technicalConfiguration = Collections.emptyMap();
+    private Map<String, Object> technicalConfiguration = Collections.emptyMap();
 }
