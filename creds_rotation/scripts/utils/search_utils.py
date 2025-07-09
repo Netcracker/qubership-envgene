@@ -8,14 +8,14 @@ import envgenehelper.logger as logger
 
 CONTEXT_MAP = {
     "deployment": "deployParameters",
-    "pipeline": "technicalConfigurationParameters", 
-    "runtime": "e2eParameters"
+    "pipeline": "e2eParameters", 
+    "runtime": "technicalconfigurationparameters"
 }
 
 REVERSE_CONTEXT_MAP = {
     "deployparameters": "deployment",
-    "technicalconfigurationparameters": "pipeline",
-    "e2eparameters": "runtime"
+    "e2eparameters": "pipeline",
+    "technicalconfigurationparameters": "runtime"
 }
 
 
