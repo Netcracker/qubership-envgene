@@ -43,6 +43,9 @@ def split_creds_parallel():
 
 
 def split_creds_file(creds_path: str, encryption_func: Callable, **kwargs):
+    import traceback
+    print("\n>>> split_creds_file() was called")
+    traceback.print_stack()
     """split_cred_file is a function to create shade files from creds file"""
     creds = openYaml(creds_path)
     shadow_creds_path = init_shadow_creds_dir(creds_path, True)
