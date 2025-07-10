@@ -48,7 +48,7 @@ def split_creds_file(creds_path: str, encryption_func: Callable, **kwargs):
     shadow_creds_path = init_shadow_creds_dir(creds_path, True)
     for cred_id, cred_data in creds.items():
         keys_set = set(cred_data['data'].values())
-        if len(keys_set) == 1 and keys_set.pop() == 'valueIsSet':
+        if len(keys_set) == 1 and keys_set.issubset({'envgeneNullValue', 'valueIsSet'}):
             continue
 
         shadow_cred_path = create_shadow_file(
@@ -61,11 +61,15 @@ def split_creds_file(creds_path: str, encryption_func: Callable, **kwargs):
         writeYamlToFile(creds_path, creds)
     del creds
     logger.info(f'File {creds_path} was splitted and encrypted')
+    return 0
 
 # FUNCTION FOR CREATE CREDS FILE FROM SHADOW FILES
 
 
 def merge_creds_file(creds_path, encryption_func: Callable, **kwargs):
+    import traceback
+    print("\n>>>  merge_creds_file() was called")
+    traceback.print_stack()
     """merge_creds_file is a function to create creds file from shadow files"""
     shadow_creds_path = init_shadow_creds_dir(creds_path, False)
     if not shadow_creds_path.exists():
@@ -80,3 +84,4 @@ def merge_creds_file(creds_path, encryption_func: Callable, **kwargs):
     delete_dir(shadow_creds_path)
     writeYamlToFile(creds_path, creds)
     logger.info(f'merged {creds_path}')
+    return creds
