@@ -80,6 +80,54 @@ While the system will load all certificates in the directory, following these na
 - `ca-*.pem` or `ca-*.crt` for CA certificates
 - `client-*.p12` or `client-*.pfx` for client certificates
 
+### Certificate Chain Ordering
+
+When dealing with certificate chains that include multiple levels (root CA, intermediate CAs, and end-entity certificates), proper ordering is crucial for certificate validation. All certificates in the chain should be combined into a single `.crt` or `.pem` file in the correct order.
+
+**Required Order:**
+1. Root CA certificate (first)
+2. Intermediate CA certificates (in hierarchical order)
+3. End-entity certificate (last, if applicable)
+
+**Example Certificate Chain File (`ca-chain.pem`):**
+
+```
+-----BEGIN CERTIFICATE-----
+[Root CA Certificate - First]
+MIIDXTCCAkWgAwIBAgIJAKoK/OvvXMdTMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
+BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
+...
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+[Intermediate CA Certificate - Second]
+MIIDXTCCAkWgAwIBAgIJAKoK/OvvXMdTMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
+BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
+...
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+[End-Entity Certificate - Last (if needed)]
+MIIDXTCCAkWgAwIBAgIJAKoK/OvvXMdTMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
+BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
+...
+-----END CERTIFICATE-----
+```
+
+**Important Notes:**
+- Each certificate must be in PEM format with proper `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` boundaries
+- No blank lines should exist between certificates
+- The order is critical for proper certificate validation
+- If you have multiple certificate chains, create separate files for each chain
+
+**Example Directory Structure with Certificate Chains:**
+
+```
+/configuration
+  /certs
+    ca-chain-internal.pem       # Complete chain for internal services
+    ca-chain-external.pem       # Complete chain for external services
+    client-artifactory.p12      # Client certificate for Artifactory
+```
+
 ## Usage Examples
 
 ### Secure Artifact Repositories
