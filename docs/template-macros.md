@@ -397,7 +397,7 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 **Description:** This macro marks parameters as sensitive, triggering special processing that differs from regular parameters.
 
 ```yaml
-${envgen.creds.get('<cred-id>').username|password|secret}
+${creds.get('<cred-id>').username|password|secret}
 ```
 
 For each `<cred-id>` during Environment Instance generation a [Credential](/docs/envgene-objects.md#credential) object is created in the [Environment Credential File](/docs/envgene-objects.md#environment-credential-file)
@@ -410,9 +410,9 @@ Type assignment:
 **Basic usage:**
 
 ```yaml
-kafka_username: ${envgen.creds.get('kafka-cred').username}
-kafka_password: ${envgen.creds.get('kafka-cred').password}
-k8s_token: ${envgen.creds.get('k8s-cred').secret}
+kafka_username: ${creds.get('kafka-cred').username}
+kafka_password: ${creds.get('kafka-cred').password}
+k8s_token: ${creds.get('k8s-cred').secret}
 ```
 
 **Usage in sample:** [Sample](/docs/samples/templates/parameters/migration/test-deploy-creds.yml)
