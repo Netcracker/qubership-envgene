@@ -7,3 +7,5 @@ venv
 /env-builder/deployers
 __pycache__
 .vscode
+site
+.cursor
