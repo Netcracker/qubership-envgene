@@ -17,6 +17,8 @@
       - [\[Version 2.0\] Parameter type conversion](#version-20-parameter-type-conversion)
       - [\[Version 2.0\] Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention)
       - [\[Version 2.0\] Handling Missing Attributes in SBOM](#version-20-handling-missing-attributes-in-sbom)
+      - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
+      - [\[Version 2.0\] Sensitive parameters processing](#version-20-sensitive-parameters-processing)
       - [\[Version 2.0\] Deployment Parameter Context](#version-20-deployment-parameter-context)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml)
           - [\[Version 2.0\] Predefined `deployment-parameters.yaml` parameters](#version-20-predefined-deployment-parametersyaml-parameters)
@@ -45,7 +47,6 @@
         - [\[Version 2.0\]\[Runtime Parameter Context\] `parameters.yaml`](#version-20runtime-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `credentials.yaml`](#version-20runtime-parameter-context-credentialsyaml)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `mapping.yml`](#version-20runtime-parameter-context-mappingyml)
-      - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
     - [Macros](#macros)
   - [Use Cases](#use-cases)
     - [Effective Set Calculation](#effective-set-calculation)
@@ -332,6 +333,73 @@ The service name is derived from the `name` attribute of the Application SBOM co
 > If a default exists: The default value is applied  
 > If no default exists: The attribute remains unset  
 
+#### [Version 2.0] App chart validation
+
+The Calculator CLI performs validation to check for the presence of an `application/vnd.qubership.app.chart` component. The validation follows these rules:
+
+1. If any of the Application SBOMs passed to the calculator does not contain a component with `application/vnd.qubership.app.chart` mime-type:
+
+   - The calculation fails
+   - An error message is logged
+
+2. This validation is only performed for Effective Set version `v2.0`
+
+3. Validation execution depends on the attribute:  
+     [`GENERATE_EFFECTIVE_SET.app_chart_validation`](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/instance-pipeline-parameters.md#effective_set_config)
+   - Behavior:
+     - If `true`: Validation is performed
+     - If `false`: Validation is skipped
+
+#### [Version 2.0] Sensitive parameters processing
+
+Sensitive parameters in the Effective Set are grouped into dedicated credentials files for encryption and secure handling. The following files contains sensitive parameters:
+
+1. `effective-set/topology/credentials.yaml`
+2. `effective-set/pipeline/credentials.yaml`
+3. `effective-set/pipeline/<consumer-name>-credentials.yaml`
+4. `effective-set/deployment/<deployPostfix>/<application-name>/credentials.yaml`
+5. `effective-set/deployment/<deployPostfix>/<application-name>/collision-credentials.yaml`
+6. `effective-set/runtime/<deployPostfix>/<application-name>/credentials.yaml`
+
+**Splitting principle:**
+
+- If a parameter is defined in the Environment Instance using the [credential macro](/docs/template-macros.md#credential-macro), it is considered sensitive.
+- If a parameter is part of a complex (nested) structure, only the sensitive subfields (those defined via the credential macro) are extracted and placed in the credentials file. The non-sensitive subfields remain in the non-sensitive parameters file.
+- The split is performed recursively for all nested objects.
+
+**Formal rule:**
+
+- For any YAML object, if a key or subkey is defined via the credential macro, that key and its value are moved to the corresponding credentials file, preserving the nested structure. All other keys remain in the non-sensitive parameters file.
+
+**Example:**
+
+Given this parameter in the Environment Instance:
+
+```yaml
+complex_key:
+  key:
+    username: ${creds.get("ssm-cmdb-cred").username}
+    password: ${creds.get("ssm-cmdb-cred").password}
+    url: https://example.com
+```
+
+The Effective Set will be split as:
+
+```yaml
+# Non-sensitive file
+complex_key:
+  key:
+    url: https://example.com
+```
+
+```yaml
+# Sensitive file
+complex_key:
+  key:
+    username: username
+    password: password
+```
+
 #### [Version 2.0] Deployment Parameter Context
 
 These parameters establish a dedicated rendering context exclusively applied during application (re)deployment operations for Helm manifest rendering.
@@ -420,7 +488,9 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ##### \[Version 2.0][Deployment Parameter Context] `credentials.yaml`
 
-This file contains sensitive parameters defined in the `deployParameters` section of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects. If the parameter is described via EnvGene credential macro, that parameter will be placed in this file.
+This file contains sensitive parameters defined in the `deployParameters` section of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects.
+
+For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
 
 It also includes a [predefined set of parameters](#version-20-predefined-credentialsyaml-parameters) common to all application services.
 
@@ -814,7 +884,10 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ##### \[Version 2.0][Pipeline Parameter Context] `credentials.yaml`
 
-This file contains sensitive parameters defined in the `e2eParameters` section. If the parameter is described in the Environment Template via EnvGene credential macro, that parameter will be placed in this file.  
+This file contains sensitive parameters defined in the `e2eParameters` section of the `Cloud` Environment Instance object.
+
+For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
+
 The structure of this file is as follows:
 
 ```yaml
@@ -838,7 +911,9 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ##### \[Version 2.0][Pipeline Parameter Context] `<consumer>-credentials.yaml`
 
-This file contains consumer-specific sensitive parameters. If a consumer-specific parameter is described in the Environment Template via an EnvGene credential macro, that parameter will be placed in this file.
+This file contains consumer-specific sensitive parameters.
+
+For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
 
 The `consumer` value is extracted from the filename (with `.schema.json` removed) of the JSON schema provided via the `--pipeline-context-schema-path` argument.
 
@@ -867,7 +942,9 @@ The calculator forms consumer-specific parameters according to the following pri
 The Topology Context contains information about the relationships between systems and their components. It includes two files:
 
 - `parameters.yaml` for non-sensitive data  
-- `credentials.yaml` for sensitive data  
+- `credentials.yaml` for sensitive data
+
+For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
 
 This context only contains parameters generated by EnvGene:
 
@@ -950,7 +1027,10 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ##### \[Version 2.0][Runtime Parameter Context] `credentials.yaml`
 
-This file contains sensitive parameters defined in the `technicalConfigurationParameters` section. If the parameter is described in the Environment Template via EnvGene credential macro, that parameter will be placed in this file  
+This file contains sensitive parameters defined in the `technicalConfigurationParameters` section.
+
+For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
+
 The structure of this file is as follows:
 
 ```yaml
@@ -963,23 +1043,6 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 ##### \[Version 2.0][Runtime Parameter Context] `mapping.yml`
 
 The contents of this file are identical to [mapping.yml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyml)
-
-#### [Version 2.0] App chart validation
-
-The Calculator CLI performs validation to check for the presence of an `application/vnd.qubership.app.chart` component. The validation follows these rules:
-
-1. If any of the Application SBOMs passed to the calculator does not contain a component with `application/vnd.qubership.app.chart` mime-type:
-
-   - The calculation fails
-   - An error message is logged
-
-2. This validation is only performed for Effective Set version `v2.0`
-
-3. Validation execution depends on the attribute:  
-     [`GENERATE_EFFECTIVE_SET.app_chart_validation`](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/instance-pipeline-parameters.md#effective_set_config)
-   - Behavior:
-     - If `true`: Validation is performed
-     - If `false`: Validation is skipped
 
 ### Macros
 
