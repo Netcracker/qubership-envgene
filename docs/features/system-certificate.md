@@ -5,6 +5,8 @@
   - [Approach](#approach)
     - [Certificate Management Process](#certificate-management-process)
     - [Supported Certificate Types](#supported-certificate-types)
+    - [Certificate Chain Ordering](#certificate-chain-ordering)
+    - [How to Obtain Required Certificates](#how-to-obtain-required-certificates)
   - [Usage Examples](#usage-examples)
     - [Secure Artifact Repositories](#secure-artifact-repositories)
     - [Internal Services with Self-Signed Certificates](#internal-services-with-self-signed-certificates)
@@ -126,6 +128,74 @@ BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
     ca-chain-internal.pem       # Complete chain for internal services
     ca-chain-external.pem       # Complete chain for external services
     client-artifactory.p12      # Client certificate for Artifactory
+```
+### How to Obtain Required Certificates
+
+Before configuring certificate chains, you need to identify and obtain the required certificates from your target services. Here are common methods to retrieve certificates:
+
+#### Using OpenSSL to Retrieve Server Certificates
+
+**For HTTPS services:**
+```bash
+# Get the complete certificate chain from a server
+openssl s_client -connect your-site.com:443 -showcerts
+
+# Save the certificate chain to a file
+openssl s_client -connect your-site.com:443 -showcerts < /dev/null 2>/dev/null | openssl x509 -outform PEM > server-cert.pem
+
+# Get certificate chain with SNI (Server Name Indication) support
+openssl s_client -connect your-site.com:443 -servername your-site.com -showcerts
+```
+
+**For non-HTTPS services (custom ports):**
+```bash
+# For services running on custom ports
+openssl s_client -connect internal-service.company.com:8443 -showcerts
+
+# For services with custom protocols
+openssl s_client -connect ldap-server.company.com:636 -showcerts
+```
+
+#### Extracting Individual Certificates from Chain
+
+When you run `openssl s_client -showcerts`, you'll see output like:
+```
+-----BEGIN CERTIFICATE-----
+[Certificate 1 - Usually the server certificate]
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+[Certificate 2 - Intermediate CA]
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+[Certificate 3 - Root CA]
+-----END CERTIFICATE-----
+```
+
+**To create a proper certificate chain file:**
+1. Copy certificates in reverse order (Root CA first, then intermediates, then server cert if needed)
+2. Save them to a single `.pem` file with proper ordering
+
+#### Using Browser to Export Certificates
+
+**Alternative method for web services:**
+1. Open the website in your browser
+2. Click on the lock icon in the address bar
+3. View certificate details
+4. Export the certificate chain
+5. Convert to PEM format if needed
+
+#### Verifying Certificate Chains
+
+**Before using certificates, verify they form a valid chain:**
+```bash
+# Verify certificate chain
+openssl verify -CAfile ca-chain.pem target-cert.pem
+
+# Check certificate details
+openssl x509 -in certificate.pem -text -noout
+
+# Test certificate chain against a server
+openssl s_client -connect hostname:port -CAfile ca-chain.pem -verify_return_error
 ```
 
 ## Usage Examples
