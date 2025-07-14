@@ -93,7 +93,7 @@ TBD
 
 The diagram below illustrates EnvGene components and the transfer points of sensitive parameters between them where encryption and decryption of sensitive parameters occurs
 
-![cred-encryption.png](./images/cred-encryption.png)
+![cred-encryption.png](/docs/images/cred-encryption.png)
 
 #### Impact of `crypt` on EnvGene's encrypt/decrypt operations
 
