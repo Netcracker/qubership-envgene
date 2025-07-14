@@ -1,7 +1,7 @@
 # Template Macros
 
 - [Template Macros](#template-macros)
-  - [Jinja macros](#jinja-macros)
+  - [Jinja Macros](#jinja-macros)
     - [`templates_dir`](#templates_dir)
     - [`current_env.name`](#current_envname)
     - [`current_env.tenant`](#current_envtenant)
@@ -19,16 +19,17 @@
     - [`current_env.cluster.cloud_api_url`](#current_envclustercloud_api_url)
     - [`current_env.cluster.cloud_api_port`](#current_envclustercloud_api_port)
     - [`current_env.cluster.cloud_public_url`](#current_envclustercloud_public_url)
-  - [Credential macro](#credential-macro)
-  - [Deprecated macros](#deprecated-macros)
+  - [Credential Macro](#credential-macro)
+  - [Deprecated Macros](#deprecated-macros)
     - [`environment.environmentName`](#environmentenvironmentname)
     - [`tenant`](#tenant)
     - [`cloud`](#cloud)
     - [`deployer`](#deployer)
+    - [`${envgene.creds.get('<cred-id>').username|password|secret}`](#envgenecredsgetcred-idusernamepasswordsecret)
 
 This documentation provides a list of macros that can be used during template generation
 
-## Jinja macros
+## Jinja Macros
 
 These Jinja macros that can be used during template generation
 
@@ -391,7 +392,7 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 
 - [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
 
-## Credential macro
+## Credential Macro
 
 ---
 **Description:** This macro marks parameters as sensitive, triggering special processing that differs from regular parameters.
@@ -417,20 +418,34 @@ k8s_token: ${creds.get('k8s-cred').secret}
 
 **Usage in sample:** [Sample](/docs/samples/templates/parameters/migration/test-deploy-creds.yml)
 
-## Deprecated macros
+## Deprecated Macros
 
 ### `environment.environmentName`
 
 **Description:** Name of environment
 
+**Replacement**: [`current_env.name`](#current_envname)
+
 ### `tenant`
 
 **Description:** Name of tenant for environment
+
+**Replacement**: [`current_env.tenant`](#current_envtenant)
 
 ### `cloud`
 
 **Description:** Name of cloud for environment
 
+**Replacement**: [`current_env.cloud`](#current_envcloud)
+
 ### `deployer`
 
 **Description:** Name of deployer used for environment
+
+**Replacement**: [`current_env.cmdb_name`](#current_envcmdb_name)
+
+### `${envgene.creds.get('<cred-id>').username|password|secret}`
+
+**Description:** This macro was used for processing system sensitive parameters—parameters that EnvGene uses to integrate itself with external systems, such as the login and password for a registry or a token for a GitLab instance.
+
+**Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro)
