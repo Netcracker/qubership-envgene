@@ -378,8 +378,8 @@ Given this parameter in the Environment Instance:
 ```yaml
 complex_key:
   key:
-    username: ${creds.get("ssm-cmdb-cred").username}
-    password: ${creds.get("ssm-cmdb-cred").password}
+    username: ${creds.get("cred-id").username}
+    password: ${creds.get("cred-id").password}
     url: https://example.com
 ```
 
