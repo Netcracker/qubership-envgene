@@ -36,8 +36,9 @@
       - [\[Version 2.0\] Pipeline Parameter Context](#version-20-pipeline-parameter-context)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml)
-        - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-parameters.yaml`](#version-20pipeline-parameter-context-consumer-parametersyaml)
-        - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-credentials.yaml`](#version-20pipeline-parameter-context-consumer-credentialsyaml)
+        - [Consumer Specific Context of Pipeline Context](#consumer-specific-context-of-pipeline-context)
+          - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-parameters.yaml`](#version-20pipeline-parameter-context-consumer-parametersyaml)
+          - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-credentials.yaml`](#version-20pipeline-parameter-context-consumer-credentialsyaml)
       - [\[Version 2.0\] Topology Context](#version-20-topology-context)
         - [\[Version 2.0\]\[Topology Context\] `composite_structure` Example](#version-20topology-context-composite_structure-example)
         - [\[Version 2.0\]\[Topology Context\] `k8s_tokens` Example](#version-20topology-context-k8s_tokens-example)
@@ -868,8 +869,6 @@ These parameters define a dedicated parameter context used for managing environm
 
 This context is constructed from parameters defined in the `e2eParameters` sections of the `Cloud` Environment Instance object. Such parameters are described in [`parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml) and [`credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml).
 
-Optionally, the pipeline context can include file pairs containing **consumer-specific** [sensitive](#version-20pipeline-parameter-context-consumer-credentialsyaml)/[non-sensitive](#version-20pipeline-parameter-context-consumer-parametersyaml) parameters. These parameters, derived as subsets of `parameters.yaml` and `credentials.yaml`, are generated based on a JSON schema provided by the `--pipeline-context-schema-path` attribute. Each attribute results in a separate file pair:
-
 ##### \[Version 2.0][Pipeline Parameter Context] `parameters.yaml`
 
 This file contains non-sensitive parameters defined in the `e2eParameters` section.  
@@ -897,34 +896,14 @@ The structure of this file is as follows:
 
 The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
 
-##### \[Version 2.0][Pipeline Parameter Context] `<consumer>-parameters.yaml`
+##### Consumer Specific Context of Pipeline Context
 
-This file contains consumer-specific non-sensitive parameters.
-The structure of this file is as follows:
+Optionally, the pipeline context can include file pairs containing **consumer-specific** [sensitive](#version-20pipeline-parameter-context-consumer-credentialsyaml)/[non-sensitive](#version-20pipeline-parameter-context-consumer-parametersyaml) parameters. These parameters, derived as subsets of `parameters.yaml` and `credentials.yaml`, are generated based on a JSON schema provided by the `--pipeline-context-schema-path` attribute. Each attribute results in a separate file pair:
 
-```yaml
-<key-1>: <value-1>
-<key-N>: <value-N>
-```
-
-The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
-
-##### \[Version 2.0][Pipeline Parameter Context] `<consumer>-credentials.yaml`
-
-This file contains consumer-specific sensitive parameters.
-
-For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
+- `<consumer>-parameters.yaml`
+- `<consumer>-credentials.yaml`
 
 The `consumer` value is extracted from the filename (with `.schema.json` removed) of the JSON schema provided via the `--pipeline-context-schema-path` argument.
-
-The structure of this file is as follows:
-
-```yaml
-<key-1>: <value-1>
-<key-N>: <value-N>
-```
-
-The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
 
 The calculator forms consumer-specific parameters according to the following principles:
 
@@ -936,6 +915,33 @@ The calculator forms consumer-specific parameters according to the following pri
 3. These rules apply only to root-level parameters
 
 [Example of consumer-specific pipeline context component JSON schema](../examples/consumer-v1.0.json)
+
+###### \[Version 2.0][Pipeline Parameter Context] `<consumer>-parameters.yaml`
+
+This file contains consumer-specific non-sensitive parameters.
+The structure of this file is as follows:
+
+```yaml
+<key-1>: <value-1>
+<key-N>: <value-N>
+```
+
+The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
+
+###### \[Version 2.0][Pipeline Parameter Context] `<consumer>-credentials.yaml`
+
+This file contains consumer-specific sensitive parameters.
+
+For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
+
+The structure of this file is as follows:
+
+```yaml
+<key-1>: <value-1>
+<key-N>: <value-N>
+```
+
+The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
 
 #### [Version 2.0] Topology Context
 
