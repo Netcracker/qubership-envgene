@@ -5,7 +5,7 @@ from .business_helper import find_env_instances_dir, findResourcesBottomTop, get
 from .yaml_helper import openYaml, get_or_create_nested_yaml_attribute
 from .file_helper import getDirName, check_file_exists
 from .logger import logger
-from .crypt import extract_encrypted_data, decrypt_file
+from .crypt import extract_encrypted_data, decrypt_file, is_encrypted
 
 def get_cred_file_path(deployer_dir):
     dashes_cred_path = f"{deployer_dir}/deployer-creds.yml"
@@ -89,17 +89,20 @@ def get_deployer_config(env_name, work_dir, instances_dir, secret_key=None, is_t
             raise ReferenceError(f"Deployer with key {deployer_name} not found. See logs above.")
         else:
             return "","",""
-    cmdb_username, cmdb_username_attribute_path = get_value_and_attributes_from_cred(data[deployer_name]['username'], deployer_dir)
-    cmdb_api_token, cmdb_api_token_attribute_path = get_value_and_attributes_from_cred(data[deployer_name]['token'], deployer_dir)
     cmdb_url = data[deployer_name]['deployerUrl']
     envgene_config = get_envgene_config_yaml()
+    credentials_file_path = get_cred_file_path(deployer_dir)
     is_decryption_necessary = secret_key or envgene_config.get('crypt') == True
-    if is_decryption_necessary:
+    is_file_encrypted = is_encrypted(credentials_file_path, crypt_backend=envgene_config.get('crypt_backend'))
+    cmdb_username, cmdb_username_attribute_path = get_value_and_attributes_from_cred(data[deployer_name]['username'], deployer_dir)
+    cmdb_api_token, cmdb_api_token_attribute_path = get_value_and_attributes_from_cred(data[deployer_name]['token'], deployer_dir)
+    if is_decryption_necessary and is_file_encrypted:
         cred_path = get_cred_file_path(deployer_dir)
         if is_test:
-            cred_yaml = decrypt_file(cred_path, in_place=False, ignore_is_crypt=True, secret_key=secret_key, crypt_backend='Fernet')
+            cred_yaml = decrypt_file(credentials_file_path, in_place=False, ignore_is_crypt=True, secret_key=secret_key, crypt_backend='Fernet')
         else:
-            cred_yaml = decrypt_file(cred_path, in_place=False)
+            cred_yaml = decrypt_file(credentials_file_path, in_place=False)
         cmdb_username = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_username_attribute_path)
         cmdb_api_token = get_or_create_nested_yaml_attribute(cred_yaml, cmdb_api_token_attribute_path)
+        return cmdb_url, cmdb_username, cmdb_api_token
     return cmdb_url, cmdb_username, cmdb_api_token
