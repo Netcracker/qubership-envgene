@@ -23,6 +23,7 @@
         - [`extended-merge` Merge Mode Assumptions](#extended-merge-merge-mode-assumptions)
         - [`extended-merge` SD Merge Mode Rules](#extended-merge-sd-merge-mode-rules)
   - [Use Cases](#use-cases)
+  - [Invalid Input Combinations](#invalid-input-combinations)
   - [Test Cases](#test-cases)
 
 ## Problem Statement
@@ -229,7 +230,7 @@ The following set of terms is used to describe the rules and assumptions of SD m
 
 ##### `extended-merge` Merge Mode Assumptions
 
-1. The values of the attributes version, type, and `deployMode` in both Full and Delta SDs must match.
+1. The values of the attributes `version`, `type`, and `deployMode` in both Full and Delta SDs must match.
 2. All Applications must conform to the same model as in both Full and Delta SDs. Valid models include:
    1. `<application:version>`
    2. `version: <application:version>`  
@@ -256,8 +257,8 @@ The following set of terms is used to describe the rules and assumptions of SD m
 
 ## Use Cases
 
-| Use Case | SD_SOURCE_TYPE | SD_VERSION / SD_DATA     | SD_REPO_MERGE_MODE / SD_DELTA | Prerequisites | Result |
-|----------|----------------|--------------------------|-------------------------------|---------------|--------|
+| Use Case | SD_SOURCE_TYPE | SD_VERSION / SD_DATA   | SD_REPO_MERGE_MODE / SD_DELTA | Prerequisites | Result |
+|:--------:|:---------------|:-----------------------|:------------------------------|:--------------|:-------|
 | UC-1-1   | `artifact`     | single SD_VERSION      | `replace`                     | AppDef and RegDef must exist for each app:ver in SD_VERSION | Full SD replaced with SD from artifact |
 | UC-1-2   | `artifact`     | single SD_VERSION      | `extended-merge`              | AppDef and RegDef must exist for each app:ver in SD_VERSION | SD merged with repo Full SD (extended-merge), result saved as Full SD |
 | UC-1-3   | `artifact`     | single SD_VERSION      | `basic-merge` (default)       | AppDef and RegDef must exist for each app:ver in SD_VERSION | SD merged with repo Full SD (basic-merge), result saved as Full SD |
@@ -278,6 +279,22 @@ The following set of terms is used to describe the rules and assumptions of SD m
 | UC-2-8   | `json`         | multiple SD_DATA       | `replace`                     | None | All SDs from SD_DATA are basic-merged, then Full SD replaced with merge result |
 | UC-2-9   | `json`         | single SD_DATA         | SD_DELTA=true (deprecated)    | None | Same as for UC-2-2 |
 | UC-2-10  | `json`         | single SD_DATA         | SD_DELTA=false (deprecated)   | None | Same as for UC-2-1 |
+
+## Invalid Input Combinations
+
+| ID  | Error Condition                                                               |
+|:---:|:------------------------------------------------------------------------------|
+| 1   | `SD_SOURCE_TYPE` undefined with `SD_VERSION`/`SD_DATA`                        |
+| 2   | `SD_VERSION` missing for `artifact` source                                    |
+| 3   | `SD_DATA` missing for `json` source                                           |
+| 4   | Both `SD_REPO_MERGE_MODE` and `SD_DELTA` specified                            |
+| 5   | Malformed JSON in `SD_DATA`                                                   |
+| 6   | Invalid `SD_REPO_MERGE_MODE` value                                            |
+| 7   | `SD_DELTA=true` with no existing Delta SD (only for `extended-merge`)         |
+| 8   | New Application without **corresponding** `deployGraph` entry (only for `extended-merge`) |
+| 9   | `version`/`type`/`deployMode` mismatch between SDs (only for `extended-merge`) |
+| 10  | Delta SD contains Chunk not in Full SD (only for `extended-merge`)            |
+| 11  | `deployGraph` presence mismatch between SDs (only for `extended-merge`)       |
 
 ## Test Cases
 
