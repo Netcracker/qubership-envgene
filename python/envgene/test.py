@@ -1,2 +1,3 @@
 from envgenehelper import crypt
-crypt.encrypt_all_cred_files_for_env()
+crypt.encrypt_file(
+    '/workspace/instance-project/environments/dobp-oob-dev1/dev-3/Credentials/credentials.yml')
