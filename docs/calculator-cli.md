@@ -48,6 +48,10 @@
         - [\[Version 2.0\]\[Runtime Parameter Context\] `parameters.yaml`](#version-20runtime-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `credentials.yaml`](#version-20runtime-parameter-context-credentialsyaml)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `mapping.yml`](#version-20runtime-parameter-context-mappingyml)
+      - [\[Version 2.0\] Cleanup Context](#version-20-cleanup-context)
+        - [\[Version 2.0\]\[Cleanup Context\] `parameters.yaml`](#version-20cleanup-context-parametersyaml)
+        - [\[Version 2.0\]\[Cleanup Context\] `credentials.yaml`](#version-20cleanup-context-credentialsyaml)
+        - [\[Version 2.0\]\[Cleanup Context\] `mapping.yml`](#version-20cleanup-context-mappingyml)
     - [Macros](#macros)
   - [Use Cases](#use-cases)
     - [Effective Set Calculation](#effective-set-calculation)
@@ -278,22 +282,30 @@ env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zooke
                 |               ├── credentials.yaml
                 |               ├── collision-credentials.yaml
                 |               └── deploy-descriptor.yaml
-                └── runtime
+                ├── runtime
+                |   ├── mapping.yml
+                |   ├── <deployPostfix-01>
+                |   |   ├── <application-name-01>
+                |   |   |   ├── parameters.yaml
+                |   |   |   └── credentials.yaml
+                |   |   └── <application-name-02>
+                |   |       ├── parameters.yaml
+                |   |       └── credentials.yaml
+                |   └── <deployPostfix-02>
+                |       ├── <application-name-01>
+                |       |   ├── parameters.yaml
+                |       |   └── credentials.yaml
+                |       └── <application-name-02>
+                |           ├── parameters.yaml
+                |           └── credentials.yaml
+                └── cleanup
                     ├── mapping.yml
                     ├── <deployPostfix-01>
-                    |   ├── <application-name-01>
-                    |   |   ├── parameters.yaml
-                    |   |   └── credentials.yaml
-                    |   └── <application-name-02>
-                    |       ├── parameters.yaml
-                    |       └── credentials.yaml
+                    |   ├── parameters.yaml
+                    |   └── credentials.yaml
                     └── <deployPostfix-02>
-                        ├── <application-name-01>
-                        |   ├── parameters.yaml
-                        |   └── credentials.yaml
-                        └── <application-name-02>
-                            ├── parameters.yaml
-                            └── credentials.yaml                            
+                        ├── parameters.yaml
+                        └── credentials.yaml                            
 ```
 
 #### [Version 2.0] Parameter type conversion
@@ -1052,6 +1064,40 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 ##### \[Version 2.0][Runtime Parameter Context] `mapping.yml`
 
 The contents of this file are identical to [mapping.yml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyml)
+
+#### [Version 2.0] Cleanup Context
+
+The cleanup context is used by systems that perform cleanup operations on cluster entities within a specific namespace. This context is formed by merging parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects.
+
+For each namespace/deploy postfix, the context contains the following files:
+
+##### \[Version 2.0][Cleanup Context] `parameters.yaml`
+
+This file contains non-sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects.
+
+The structure of this file is as follows:
+
+```yaml
+<key-1>: <value-1>
+<key-N>: <value-N>
+```
+
+##### \[Version 2.0][Cleanup Context] `credentials.yaml`
+
+This file contains sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects.
+
+For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
+
+The structure of this file is as follows:
+
+```yaml
+<key-1>: <value-1>
+<key-N>: <value-N>
+```
+
+##### \[Version 2.0][Cleanup Context] `mapping.yml`
+
+The contents of this file are identical to [mapping.yml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyml).
 
 ### Macros
 
