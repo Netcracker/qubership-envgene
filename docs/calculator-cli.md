@@ -867,7 +867,10 @@ env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zooke
 
 These parameters define a dedicated parameter context used for managing environment lifecycle systems, such as deployment orchestrators or CI/CD workflows.
 
-This context is constructed from parameters defined in the `e2eParameters` sections of the `Cloud` Environment Instance object. Such parameters are described in [`parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml) and [`credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml).
+This context is constructed from parameters defined in the `e2eParameters` sections of the `Cloud` Environment Instance object. Such parameters are saved in a separate pair of files:
+
+- `parameters.yaml`
+- `credentials.yaml`
 
 ##### \[Version 2.0][Pipeline Parameter Context] `parameters.yaml`
 
@@ -898,7 +901,7 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ##### Consumer Specific Context of Pipeline Context
 
-Optionally, the pipeline context can include file pairs containing **consumer-specific** [sensitive](#version-20pipeline-parameter-context-consumer-credentialsyaml)/[non-sensitive](#version-20pipeline-parameter-context-consumer-parametersyaml) parameters. These parameters, derived as subsets of `parameters.yaml` and `credentials.yaml`, are generated based on a JSON schema provided by the `--pipeline-context-schema-path` attribute. Each attribute results in a separate file pair:
+Optionally, the pipeline context can include file pairs containing **consumer-specific** [sensitive](#version-20pipeline-parameter-context-consumer-credentialsyaml)/[non-sensitive](#version-20pipeline-parameter-context-consumer-parametersyaml) parameters. These parameters, derived as subsets of `parameters.yaml` and `credentials.yaml`, are generated based on a JSON schema provided by the `--pipeline-context-schema-path` attribute. The resulting parameters are saved in a separate pair of files:
 
 - `<consumer>-parameters.yaml`
 - `<consumer>-credentials.yaml`
