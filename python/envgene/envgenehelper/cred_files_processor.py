@@ -1,10 +1,6 @@
-import chunk
+
 import os
-import re
-from os import cpu_count, getenv, path
-import threading
-from time import perf_counter
-from traceback import TracebackException
+from os import getenv, path
 from typing import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from envgenehelper.business_helper import getenv_with_error
@@ -43,24 +39,30 @@ class FileProcessor:
                         matching_files.add(filepath)
         return matching_files
 
+    def _get_files_with_filter_parallel(self, root, dirs, filter: Callable[[str], bool]):
+        future_to_paths = {}
+        matching_files = set()
+        paths = [os.path.join(root, d) for d in dirs]
+        chunks = FileProcessor._chunks(paths, self.cpu_count)
+        with ThreadPoolExecutor(max_workers=self.cpu_count) as executor:
+            for chunk in chunks:
+                future = executor.submit(
+                    FileProcessor._path_walk, chunk, filter)
+                future_to_paths[future] = chunk
+            for future in as_completed(future_to_paths):
+                try:
+                    result = future.result()
+                    matching_files.update(result)
+                except Exception as e:
+                    print(f"Error while files search: {e}")
+        return matching_files
+
     def _get_files_with_filter(self, path_to_filter: str, filter: Callable[[str], bool]) -> set[str]:
         matching_files = set()
         for root, dirs, files in os.walk(path_to_filter):
             if round(len(dirs)/self.cpu_count) >= 2:
-                future_to_paths = {}
-                paths = [os.path.join(root, d) for d in dirs]
-                chunks = FileProcessor._chunks(paths, self.cpu_count)
-                with ThreadPoolExecutor(max_workers=self.cpu_count) as executor:
-                    for chunk in chunks:
-                        future = executor.submit(
-                            FileProcessor._path_walk, chunk, filter)
-                        future_to_paths[future] = chunk
-                    for future in as_completed(future_to_paths):
-                        try:
-                            result = future.result()
-                            matching_files.update(result)
-                        except Exception as e:
-                            print(f"Ошибка при обработке: {e}")
+                matching_files = self._get_files_with_filter_parallel(
+                    root, dirs, filter)
                 return matching_files
             for file in files:
                 filepath = os.path.join(root, file)

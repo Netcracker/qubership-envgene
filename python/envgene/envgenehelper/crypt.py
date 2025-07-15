@@ -1,3 +1,4 @@
+from bdb import effective
 import os
 import re
 from os import getenv, path
@@ -11,7 +12,6 @@ from .config_helper import get_envgene_config_yaml
 from .yaml_helper import openYaml, get_empty_yaml
 from .file_helper import check_file_exists, get_files_with_filter
 from .logger import logger
-from .shade_files_helper import split_creds_file, merge_creds_file
 
 from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
 from .crypt_backends.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
@@ -46,20 +46,29 @@ EXTRACT_FUNCTIONS = {
 }
 
 
+def encrypt_file(file_path, **kwargs):
+    if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
+        if 'effective-set' in file_path:
+            return _encrypt_file(file_path, **kwargs)
+        return shade_files_helper.split_creds_file(file_path, _encrypt_file)
+    return _encrypt_file(file_path, **kwargs)
+
+
+def decrypt_file(file_path, **kwargs):
+    if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
+        if 'effective-set' in file_path:
+            return _decrypt_file(file_path, **kwargs)
+        return shade_files_helper.merge_creds_file(
+            file_path, _decrypt_file, **kwargs)
+    return _decrypt_file(file_path, **kwargs)
+
+
 def _handle_missing_file(file_path, default_yaml, allow_default):
     if check_file_exists(file_path):
         return 0  # sentinel value
     if not allow_default:
         raise FileNotFoundError(f"{file_path} not found or is not a file")
     return default_yaml()
-
-
-def decrypt_file(file_path, **kwargs):
-    if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
-        return shade_files_helper.merge_creds_file(
-            file_path, _decrypt_file, **kwargs)
-    else:
-        return _decrypt_file(file_path, **kwargs)
 
 
 def _decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False,
@@ -73,13 +82,6 @@ def _decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None,
         logger.info("'crypt' is set to 'false', skipping decryption")
         return openYaml(file_path)
     return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place, public_key=public_key, mode='decrypt')
-
-
-def encrypt_file(file_path, **kwargs):
-    if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
-        return shade_files_helper.split_creds_file(file_path, _encrypt_file)
-    else:
-        return _encrypt_file(file_path, **kwargs)
 
 
 def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False, is_crypt=None,

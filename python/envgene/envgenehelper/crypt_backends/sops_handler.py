@@ -134,8 +134,21 @@ def extract_value_SOPS(file_path, attribute_str):
     return result
 
 
+def _dict_has_value(d, target):
+    stack = [d]
+    while stack:
+        current = stack.pop()
+        if isinstance(current, dict):
+            stack.extend(current.values())
+        elif isinstance(current, list):
+            stack.extend(current)
+        elif current == target:
+            return True
+    return False
+
+
 def is_encrypted_SOPS(file_path):
     content = openYaml(file_path)
-    if 'sops' in content.keys():
+    if 'sops' in content.keys() or _dict_has_value(content, "valueIsSet"):
         return True
     return False
