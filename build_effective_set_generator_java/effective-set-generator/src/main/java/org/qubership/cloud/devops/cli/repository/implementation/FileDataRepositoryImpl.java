@@ -124,6 +124,9 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             sharedData.getPcsspPaths().forEach(path -> {
                 try {
                     String name = FilenameUtils.getBaseName(path);
+                    if (name.contains(".")) {
+                        name = name.substring(0, name.indexOf("."));
+                    }
                     ConsumerDTO consumerDTO = ConsumerDTO.builder().build();
                     List<Property> properties = new ArrayList<>();
                     String jsonContent = new String(Files.readAllBytes(Paths.get(path)));
@@ -185,7 +188,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private Map<String, Object> prepareEnvMap(Map<String, List<NamespacePrefixDTO>> clusterMap) {
-        if(MapUtils.isEmpty(clusterMap)){
+        if (MapUtils.isEmpty(clusterMap)) {
             return new HashMap<>();
         }
         Map<String, Object> finalMap = new TreeMap<>();
@@ -248,7 +251,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                     } else if (currentFolder.equals(GenericConstants.NS_FOLDER)) {
                         namespaceMap.replaceAll((name, namespaceDTO) -> {
                             List<ApplicationLinkDTO> applications = appsOnNamespace.get(name);
-                            return namespaceDTO.toBuilder().applications(applications == null ? Collections.emptyList(): applications).build();
+                            return namespaceDTO.toBuilder().applications(applications == null ? Collections.emptyList() : applications).build();
                         });
                         inputData.setNamespaceDTOMap(namespaceMap);
 
