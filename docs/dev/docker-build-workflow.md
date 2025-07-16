@@ -32,6 +32,7 @@ When commits are pushed to any branch (except `main`), the following workflows r
 ### Pull Request Workflow
 
 On pull requests, the following workflows run regardless of commit message format:
+
 - Super Linter
 - Link Checker  
 - Tests
@@ -53,7 +54,7 @@ The workflow builds four Docker images:
 
 The Docker build workflow automatically triggers when commits are pushed with conventional commit prefixes. Use conventional commit format:
 
-```
+```yaml
 <type>: <description>
 ```
 
@@ -103,14 +104,17 @@ When running manually, you can choose which images to build:
 ### Manual Execution Scenarios
 
 #### Build All Images (Default)
+
 - Leave all options enabled
 - All four Docker images will be built
 
 #### Build Single Image
+
 - Disable three options, enable only the one you need
 - Example: Enable only `build-envgene` to build just the Envgene image
 
 #### Build Multiple Images
+
 - Enable only the specific images you need
 - Example: Enable `build-gcip` and `build-envgene` to build two images
 
@@ -126,6 +130,7 @@ When running manually, you can choose which images to build:
 ### Special Case: Effective Set Generator
 
 The Effective Set Generator has a two-step build process:
+
 1. **build-effective-set-jar** - Builds Java JAR using Maven
 2. **build-effective-set-generator** - Builds Docker image using the JAR
 
@@ -133,7 +138,7 @@ The Effective Set Generator has a two-step build process:
 
 All images are pushed to **GitHub Container Registry (ghcr.io)** with the following naming convention:
 
-```
+```text
 ghcr.io/<repository-owner>/<image-name>
 ```
 
@@ -151,6 +156,7 @@ ghcr.io/<repository-owner>/<image-name>
 **Problem**: Workflow doesn't run on commit push
 
 **Solutions**:
+
 1. Check commit message format - must start with `feat:`, `fix:`, or `BREAKING CHANGE:`
 2. Verify files changed are not in ignored paths
 3. Ensure you're pushing to a branch (not a tag)
@@ -160,6 +166,7 @@ ghcr.io/<repository-owner>/<image-name>
 **Problem**: Some jobs are skipped during execution
 
 **Solutions**:
+
 1. For manual runs: Check if the corresponding option is enabled
 2. For automatic runs: Verify commit message format
 3. Check job dependencies - some jobs require others to complete first
@@ -169,6 +176,7 @@ ghcr.io/<repository-owner>/<image-name>
 **Problem**: Docker build fails
 
 **Solutions**:
+
 1. Check Dockerfile syntax and paths
 2. Verify required secrets are configured:
    - `GITHUB_TOKEN` (automatic)

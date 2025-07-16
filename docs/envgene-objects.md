@@ -29,6 +29,7 @@
     - [Cloud Passport](#cloud-passport)
       - [Main File](#main-file)
       - [Credential File](#credential-file)
+    - [Environments Structure](#environments-structure)
 
 ## Template Repository Objects
 
@@ -374,3 +375,50 @@ Location: `/environments/<cluster-name>/cloud-passport/<any-string>.yml|yaml`
 Contains sensitive Cloud Passport parameters
 
 Location: `/environments/<cluster-name>/cloud-passport/<any-string>-creds.yml|yaml`
+
+### Environments Structure
+
+The Environments Structure object provides a description of all Environments present within the site (Instance repository). For each Environment, it enumerates the associated namespaces, and for each namespace, specifies the corresponding deploy postfix.
+
+- The namespace name is derived from the `name` attribute of the Namespace object within the Environment Instance.
+- The deploy postfix is determined by the namespace template name (specifically, the template filename without its extension).
+
+This object is automatically generated as part of the [Instance on-commit pipeline](/docs/envgene-pipelines.md).
+
+Location: `/environments/environment-structure.yml`
+
+See details in [Environments Structure](/docs/features/environments-structure.md)
+
+The structure of the object is as follows:
+
+```yaml
+environments:
+  <cluster-name>/<environment-name>:
+    namespaces:
+      <namespace-name>:
+        deployPostfix: <deploy-postfix>
+```
+
+Example:
+
+```yaml
+environments:
+  cluster-01/env-1:
+    namespaces:
+      env-1-core:
+        deployPostfix: core
+      env-1-bss:
+        deployPostfix: bss
+  cluster-01/env-2:
+    namespaces:
+      env-2-core:
+        deployPostfix: core
+      env-2-bss:
+        deployPostfix: bss
+  cluster-02/env-1:
+    namespaces:
+      core:
+        deployPostfix: core
+      oss:
+        deployPostfix: oss
+```
