@@ -182,7 +182,7 @@ def check_for_encrypted_files(files):
 
 def decrypt_all_cred_files_for_env(**kwargs):
     processor = FileProcessor(config)
-    files = processor.get_all_necessary_cred_files()
+    files = processor._get_files_subprocess()
 
     if not IS_CRYPT:
         check_for_encrypted_files(files)
@@ -195,7 +195,7 @@ def decrypt_all_cred_files_for_env(**kwargs):
 
 def encrypt_all_cred_files_for_env(**kwargs):
     processor = FileProcessor(config)
-    files = processor.get_all_necessary_cred_files()
+    files = processor._get_files_subprocess()
 
     logger.debug("Attempting to encrypt(if crypt is true) next files:")
     logger.debug(files)
