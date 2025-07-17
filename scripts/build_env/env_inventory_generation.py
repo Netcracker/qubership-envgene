@@ -36,7 +36,7 @@ class Environment:
     cluster: str
     name: str
     env_path: str = field(init=False)
-    inventory: dict = field(init=False) 
+    inventory: dict = field(init=False)
     inventory_path: str = field(init=False)
     creds: dict = field(init=False)
     creds_path: str = field(init=False)
@@ -123,7 +123,7 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
     if sd_delta is not None and str(sd_delta).strip() != "":
         sd_delta = str(sd_delta).strip().lower()
     else:
-        sd_delta = None 
+        sd_delta = None
 
     logger.info(f"printing sd_delta after {sd_delta}")
     if sd_delta == "true":
@@ -136,11 +136,11 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
     else:
         sd_path = base_path + 'sd.yaml'
         logger.info(f"printing sd_path sd_delta F {sd_path}")
-        
+
     helper.check_dir_exist_and_create(path.dirname(sd_path))
-    if sd_source_type == "artifact": 
+    if sd_source_type == "artifact":
         download_sd_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode)
-    elif sd_source_type == "json": 
+    elif sd_source_type == "json":
         extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode)
     else:
         logger.error(f'SD_SOURCE_TYPE must be set either to "artifact" or "json"')
@@ -156,10 +156,8 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
     if not isinstance(data, list) or not data:
         logger.error("SD_DATA must be a non-empty list of SD dictionaries.")
         exit(1)
-    
     sd_merge_mode = str(sd_merge_mode).strip().lower() if sd_merge_mode else None
 
-    
     if sd_merge_mode:
         effective_merge_mode = sd_merge_mode
     elif sd_delta == "true":
@@ -176,7 +174,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         exit(1)
     for i in range(1, len(data)):
         logger.info(f"Initiates basic-merge:")
-        current_item_sd = {"applications": data[i].get("applications", [])} 
+        current_item_sd = {"applications": data[i].get("applications", [])}
         merged_applications = helper.merge(merged_applications, current_item_sd)
     merged_result = {
         "version": data[0].get("version"),
@@ -185,7 +183,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         "applications": merged_applications["applications"]
         }
     logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
-    
+
     #merged_result["version"] = str(merged_result["version"])
     helper.writeYamlToFile(sd_path, merged_result)
     merged_data = helper.openYaml(sd_path)
@@ -204,11 +202,11 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         helper.writeYamlToFile(destination, merged_data)
         logger.info(f"Replaced existing SD with new data at: {destination}")
         return
-    
+
     selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
     if not selected_merge_function:
         raise ValueError(f"Unsupported merge mode: {effective_merge_mode}")
-    merge_sd(env, merged_data, selected_merge_function)  
+    merge_sd(env, merged_data, selected_merge_function)
 
     logger.info(f"SD successfully extracted from SD_DATA and Saved.")
 
@@ -282,6 +280,7 @@ def handle_env_specific_params(env, env_specific_params):
         logger.info(f"ENV_SPECIFIC_PARAMS are not set. Skipping env inventory update")
         return
     logger.info(f"Updating env inventory with ENV_SPECIFIC_PARAMS")
+    logger.info(f"Updating >>> env inventory with ENV_SPECIFIC_PARAMS")
     params = json.loads(env_specific_params)
 
     clusterParams = params.get("clusterParams")
@@ -291,19 +290,21 @@ def handle_env_specific_params(env, env_specific_params):
     creds = params.get("credentials")
     tenantName = params.get("tenantName")
     deployer = params.get("deployer")
-
     logger.info(f"ENV_SPECIFIC_PARAMS TenantName is {tenantName}")
     logger.info(f"ENV_SPECIFIC_PARAMS deployer is {deployer}")
 
     handle_cluster_params(env, clusterParams)
+    helper.merge_yaml_into_target(env.inventory, 'inventory.tenantName', tenantName)
+    helper.merge_yaml_into_target(env.inventory, 'inventory.deployer', deployer)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.additionalTemplateVariables', additionalTemplateVariables)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.envSpecificParamsets', envSpecificParamsets)
+    logger.info("ENV_SPECIFIC_PARAMS env details ",vars(env))
     handle_credentials(env, creds)
     create_paramset_files(env, paramsets)
-    
+
     handle_tenant_name(env,tenantName)
     handle_deployer(env,deployer)
-    
+
     logger.info(f"ENV_SPECIFIC_PARAMS env details : {vars(env)}")
 
 def handle_tenant_name(env, tenantName):
