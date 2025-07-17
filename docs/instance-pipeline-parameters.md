@@ -15,6 +15,9 @@
   - [`SD_VERSION`](#sd_version)
   - [`SD_DATA`](#sd_data)
   - [`SD_DELTA`](#sd_delta)
+  - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
+  - [`PUBLIC_AGE_KEYS`](#public_age_keys)
+  - [`DEPLOYMENT_SESSION_ID`](#deployment_session_id)
 
 The following are the launch parameters for the instance repository pipeline. These parameters influence, the execution of specific jobs within the pipeline.
 
@@ -263,4 +266,37 @@ See details in [SD processing](/docs/sd-processing.md)
 
 **Mandatory**: No
 
-**Example**: `true`
+**Description**: Private key from EnvGene's AGE key pair. Used to encrypt credentials when `crypt_backend` is set to `SOPS` (mandatory in this case).  
+Used by EnvGene at runtime, when using pre-commit hooks, the same value must be specified in `.git/private-age-key.txt`.
+
+>[!Note]
+> These are generally configured as GitLab CI/CD variables or GitHub environment variables.
+
+**Example**: "AGE-SECRET-KEY-1N9APQZ3PZJQY5QZ3PZJQY5QZ3PZJQY5QZ3PZJQY5QZ3PZJQY5QZ3PZJQY6"
+
+## `ENVGENE_AGE_PUBLIC_KEY`
+
+**Description**: Public key from EnvGene's AGE key pair. Added for logical completeness (not currently used in operations). For decryption, `PUBLIC_AGE_KEYS` is used instead.
+
+**Example**: "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p"
+
+## `PUBLIC_AGE_KEYS`
+
+**Description**: Contains a comma-separated list of public AGE keys from EnvGene and external systems (`<key_1>,<key_2>,...,<key_N>`). Used for credential encryption when `crypt_backend` is `SOPS` (mandatory in this case).  
+Must include at least one key: EnvGene's own AGE public key.  
+If an external system provides encrypted parameters, its public AGE key must also be included.  
+Used by EnvGene at runtime, when using pre-commit hooks, the same value must be specified in `.git/public-age-key.txt`.
+
+>[!Note]
+> These are generally configured as GitLab CI/CD variables or GitHub environment variables.
+
+**Example**: "age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p,age113z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmca32p"
+
+## `DEPLOYMENT_SESSION_ID`
+
+**Description**: This parameter is used in two scenarios:
+
+1. If this parameter is provided, the resulting pipeline commit will include a [Git trailer](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt-code--trailerlttokengtltvaluegtcode) in the format: `DEPLOYMENT_SESSION_ID: <value of DEPLOYMENT_SESSION_ID>`.
+2. It will also be part of the deployment context of the Effective Set. The EnvGene passes it to the Calculator CLI using the `--extra_params` attribute. In this case it is used together with `GENERATE_EFFECTIVE_SET`.
+
+**Example**: "123e4567-e89b-12d3-a456-426614174000"
