@@ -194,7 +194,7 @@ If `json`:
 
 See details in [SD processing](/docs/sd-processing.md)
 
-**Default Value**: None
+**Default Value**: `artifact`
 
 **Mandatory**: No
 
