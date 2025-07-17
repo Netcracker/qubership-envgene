@@ -1,0 +1,6 @@
+version: '2.1'
+type: solutionDeploy
+deployMode: composite
+applications:
+  - version: TEST-VALUE:1.0
+    deployPostfix: test

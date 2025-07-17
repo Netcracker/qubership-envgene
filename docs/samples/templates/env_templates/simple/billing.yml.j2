@@ -1,0 +1,21 @@
+---
+name: "{{current_env.name}}-billing"
+credentialsId: ""
+labels:
+- "solutionInstance-{{current_env.name}}"
+- "solution-{{current_env.tenant}}"
+isServerSideMerge: false
+cleanInstallApprovalRequired: true
+mergeDeployParametersAndE2EParameters: false
+profile:
+  name: ""
+  baseline: dev
+deployParameters: 
+  ENVGENE_CONFIG_REF_NAME: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_REF_NAME')| default('No Ref Name') }}"
+  ENVGENE_CONFIG_TAG: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_TAG')| default('No Ref tag') }}"
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+

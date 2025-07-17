@@ -1,0 +1,20 @@
+---
+name: "dev_app_core"
+version: 1
+baseline: "dev"
+description: ""
+applications:
+  - name: "Cloud-Core"
+    version: ""
+    sd: ""
+    services:     
+      - name: "control-plane"
+        parameters:
+          - name: "CPU_REQUEST"
+            value: "10m"
+          - name: "CPU_LIMIT"
+            value: "300m"
+          - name: "MEMORY_REQUEST"
+            value: "120Mi"
+          - name: "MEMORY_LIMIT"
+            value: "120Mi"

@@ -1,8 +1,0 @@
-version: 23.3
-name: cloud-configuration
-parameters:
-    ESCAPE_SEQUENCE: "true"
-    DISABLE_PARALLEL_EXECUTION: true
-    RUN_PARALLEL_EXECUTION: false
-    USE_POSTGRESQL_AS_DB: "true"
-applications: []

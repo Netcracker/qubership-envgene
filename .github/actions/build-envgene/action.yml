@@ -1,0 +1,53 @@
+name: 'Build Qubership Envgene Docker Image'
+description: 'Build and push Qubership Envgene docker image to container registry'
+
+inputs:
+  registry:
+    description: 'Container registry URL'
+    required: false
+    default: 'ghcr.io'
+  image-name:
+    description: 'Docker image name'
+    required: false
+    default: 'qubership-envgene'
+  dockerfile-path:
+    description: 'Path to Dockerfile'
+    required: false
+    default: './build_envgene/build/Dockerfile'
+  gh-access-token:
+    description: 'GitHub access token for build args'
+    required: false
+  github-token:
+    description: 'GitHub token for registry login'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Log in to the Container registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry }}
+        username: ${{ github.actor }}
+        password: ${{ inputs.github-token }}
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}
+    
+    - name: Build and push Docker image
+      id: push
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ${{ inputs.dockerfile-path }}
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        build-args: |
+          GH_ACCESS_TOKEN=${{ inputs.gh-access-token }} 
