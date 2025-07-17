@@ -16,16 +16,16 @@ import envgenehelper.logger as logger
 
 def print_total_memory():
     total_mem = psutil.virtual_memory().total / (1024 ** 2)
-    print(f"Total system memory: {total_mem:.2f} MB")
+    logger.info(f"Total system memory: {total_mem:.2f} MB")
 
 def print_deep_map_size(name: str, map_obj: dict):
     size_in_mb = asizeof.asizeof(map_obj) / (1024 * 1024)
-    print(f"Map '{name}' deep size: {size_in_mb:.2f} MB")
+    logger.info(f"Map '{name}' deep size: {size_in_mb:.2f} MB")
 
 def print_memory_usage():
     process = psutil.Process(os.getpid())
     mem_in_mb = process.memory_info().rss / (1024 * 1024)
-    print(f" Current memory usage: {mem_in_mb:.2f} MB")
+    logger.info(f" Current memory usage: {mem_in_mb:.2f} MB")
 
 def load_payload(payload: str):
     if isinstance(payload, str):
