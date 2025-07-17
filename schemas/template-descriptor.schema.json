@@ -85,11 +85,11 @@
       },
       "examples": [
         {
-          "name": "{{current_env.environmentName}}-baseline",
+          "name": "{{current_env.name}}-baseline",
           "template_path": "{{ templates_dir }}/env_templates/dev/Namespaces/baseline.yml.j2"
         },
         {
-          "name": "{{current_env.environmentName}}-bss",
+          "name": "{{current_env.name}}-bss",
           "template_path": "{{ templates_dir }}/env_templates/dev/Namespaces/bss.yml.j2",
           "template_override": {
             "profile": {

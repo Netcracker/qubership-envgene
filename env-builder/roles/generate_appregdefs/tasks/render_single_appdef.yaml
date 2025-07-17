@@ -1,63 +1,66 @@
----
 # roles/generate_appregdefs/tasks/render_single_appdef.yaml
+- block:
+    - name: Ensure tmp_render_dir and render_timestamp are set
+      set_fact:
+        tmp_render_dir: "{{ tmp_render_dir   | default('/tmp') }}"
+        render_timestamp: >-
+          {{ render_timestamp | default(
+              (ansible_date_time.epoch 
+               if (ansible_date_time is defined and ansible_date_time.epoch is defined)
+               else lookup('pipe','date +%s')
+              )
+            )
+          }}
 
-- name: Ensure tmp_render_dir fact is set
-  set_fact:
-    tmp_render_dir: "{{ tmp_render_dir | default('/tmp') }}"
+    # Prepare overrides for Jinja
+    - name: Prepare appdefs dict for Jinja context
+      set_fact:
+        appdefs:
+          overrides: "{{ appdefs_overrides }}"
 
-- name: Prepare appdefs dict for Jinja context
-  set_fact:
-    appdefs:
-      overrides: "{{ appdefs_overrides }}"
+    # Load the template as raw text
+    - name: Load raw AppDef template via file lookup
+      set_fact:
+        appdef_raw: "{{ lookup('ansible.builtin.file', item.path) }}"
 
-- name: Load raw AppDef template
-  slurp:
-    src: "{{ item.path }}"
-  register: appdef_raw_slurp
+    # Extract name, artifactId, groupId into a dict
+    - name: Extract metadata (name, artifactId, groupId) into dict
+      set_fact:
+        appdef_meta: "{{ dict(appdef_raw | regex_findall('^\\s*(name|artifactId|groupId):\\s*\"([^\\\"]+)\"', multiline=True)) }}"
 
-- name: Decode raw AppDef template
-  set_fact:
-    appdef_raw: "{{ appdef_raw_slurp.content | b64decode }}"
+    # Fail fast if name is missing
+    - name: Ensure AppDef name was parsed
+      assert:
+        that:
+          - appdef_meta.name is defined
+          - appdef_meta.name | length > 0
+        fail_msg: "Template {{ item.path }} is missing name metadata"
 
-- name: Parse raw AppDef YAML into dict
-  set_fact:
-    appdef_parsed: "{{ appdef_raw | from_yaml }}"
+    # Render with Jinja into a temp file
+    - name: Render AppDef template using Jinja
+      template:
+        src: "{{ item.path }}"
+        dest: "{{ tmp_render_dir }}/{{ (item.path | basename | regex_replace('\\.j2$','')) }}.{{ render_timestamp }}.rendered.appdef.yml"
+      vars:
+        current_env:    "{{ current_env }}"
+        appdefs:        "{{ appdefs }}"
+        artifactId:     "{{ appdef_meta.artifactId }}"
+        groupId:        "{{ appdef_meta.groupId }}"
+        app_lookup_key: "{{ appdef_meta.groupId ~ ':' ~ appdef_meta.artifactId }}"
 
-- name: Extract AppDef fields for Jinja context
-  set_fact:
-    artifactId: "{{ appdef_parsed.artifactId }}"
-    groupId:    "{{ appdef_parsed.groupId }}"
-    appdef_name: "{{ appdef_parsed.name }}"
+    # Read and decode the rendered output
+    - name: Read rendered AppDef into string
+      slurp:
+        src: "{{ tmp_render_dir }}/{{ (item.path | basename | regex_replace('\\.j2$','')) }}.{{ render_timestamp }}.rendered.appdef.yml"
+      register: appdef_rendered_slurp
 
-- name: Extract template basename for Jinja context
-  set_fact:
-    template_name: "{{ item.path | basename | regex_replace('\\.j2$', '') }}"
+    - name: Decode rendered AppDef content
+      set_fact:
+        appdef_raw_rendered: "{{ appdef_rendered_slurp.content | b64decode }}"
 
-- name: Render AppDef to temp file
-  template:
-    src: "{{ item.path }}"
-    dest: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.appdef.yml"
-  vars:
-    appdefs:     "{{ appdefs }}"
-    artifactId:  "{{ artifactId }}"
-    groupId:     "{{ groupId }}"
-
-- name: Set rendered AppDef path
-  set_fact:
-    appdef_rendered_path: "{{ tmp_render_dir }}/{{ template_name }}.{{ render_timestamp }}.rendered.appdef.yml"
-
-- name: Read rendered AppDef into raw string
-  slurp:
-    src: "{{ appdef_rendered_path }}"
-  register: appdef_rendered_slurp
-
-- name: Decode rendered AppDef
-  set_fact:
-    appdef_raw_rendered: "{{ appdef_rendered_slurp.content | b64decode }}"
-
-- name: Save rendered AppDef to final path
-  copy:
-    content: "{{ appdef_raw_rendered }}"
-    dest:    "{{ current_env_dir }}/AppDefs/{{ appdef_name }}.appdef.yml"
-    mode:    '0644'
-  when: appdef_name is defined and appdef_name | length > 0
+    # Save final AppDef to the output dir
+    - name: Save final rendered AppDef
+      copy:
+        content: "{{ appdef_raw_rendered }}"
+        dest:    "{{ current_env_dir }}/AppDefs/{{ appdef_meta.name }}.yml"
+        mode:    '0644'

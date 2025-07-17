@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "http://qubership.org/schema/application.sbom.schema.json",
   "type": "object",
   "title": "Cloud application SBOM",
@@ -54,7 +54,7 @@
       ]
     },
     "metadata": {
-      "$ref": "#/definitions/metadata-application",
+      "$ref": "#/$defs/metadata-application",
       "title": "BOM Metadata",
       "description": "Provides additional information about a BOM"
     },
@@ -65,13 +65,16 @@
       "items": {
         "oneOf": [
           {
-            "$ref": "#/definitions/service"
+            "$ref": "#/$defs/service"
           },
           {
-            "$ref": "#/definitions/configuration"
+            "$ref": "#/$defs/configuration"
           },
           {
-            "$ref": "#/definitions/generic-image"
+            "$ref": "#/$defs/generic-image"
+          },
+          {
+            "$ref": "#/$defs/helm-chart"
           }
         ]
       }
@@ -81,15 +84,15 @@
       "title": "Dependencies",
       "description": "Provides the ability to document dependency relationships including provided & implemented components",
       "items": {
-        "$ref": "#/definitions/dependency"
+        "$ref": "#/$defs/dependency"
       },
       "uniqueItems": true
     }
   },
-  "definitions": {
+  "$defs": {
     "refLinkType": {
       "description": "Descriptor for an element identified by the attribute 'bom-ref' in the same BOM document.\nIn contrast to `bomLinkElementType`",
-      "$ref": "#/definitions/refType"
+      "$ref": "#/$defs/refType"
     },
     "refType": {
       "description": "Identifier for referable and therefore interlinkable elements.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links",
@@ -119,7 +122,7 @@
       "additionalProperties": false,
       "properties": {
         "ref": {
-          "$ref": "#/definitions/refLinkType",
+          "$ref": "#/$defs/refLinkType",
           "title": "Reference",
           "description": "References a component or service by its bom-ref attribute"
         }
@@ -173,10 +176,10 @@
       "additionalProperties": false,
       "properties": {
         "alg": {
-          "$ref": "#/definitions/hash-alg"
+          "$ref": "#/$defs/hash-alg"
         },
         "content": {
-          "$ref": "#/definitions/hash-content"
+          "$ref": "#/$defs/hash-content"
         }
       }
     },
@@ -185,18 +188,7 @@
       "title": "Hash Algorithm",
       "description": "The algorithm that generated the hash value.",
       "enum": [
-        "MD5",
-        "SHA-1",
-        "SHA-256",
-        "SHA-384",
-        "SHA-512",
-        "SHA3-256",
-        "SHA3-384",
-        "SHA3-512",
-        "BLAKE2b-256",
-        "BLAKE2b-384",
-        "BLAKE2b-512",
-        "BLAKE3"
+        "SHA-256"
       ]
     },
     "hash-content": {
@@ -206,7 +198,7 @@
       "examples": [
         "3942447fac867ae5cdb3229b658f4d48"
       ],
-      "pattern": "^([a-fA-F0-9]{32}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64}|[a-fA-F0-9]{96}|[a-fA-F0-9]{128})$"
+      "pattern": "^([a-fA-F0-9]{32}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64}|[a-fA-F0-9]{96}|[a-fA-F0-9]{128})]?$"
     },
     "metadata-application": {
       "type": "object",
@@ -254,7 +246,7 @@
               "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable"
             },
             "bom-ref": {
-              "$ref": "#/definitions/refType",
+              "$ref": "#/$defs/refType",
               "title": "BOM Reference",
               "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
             },
@@ -267,7 +259,7 @@
               ]
             },
             "version": {
-              "$ref": "#/definitions/version",
+              "$ref": "#/$defs/version",
               "title": "Component Version",
               "description": "The component version. The version should ideally comply with semantic versioning but is not enforced"
             },
@@ -304,7 +296,7 @@
                     "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable"
                   },
                   "bom-ref": {
-                    "$ref": "#/definitions/refType",
+                    "$ref": "#/$defs/refType",
                     "title": "BOM Reference",
                     "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
                   },
@@ -325,7 +317,7 @@
                     ]
                   },
                   "version": {
-                    "$ref": "#/definitions/version",
+                    "$ref": "#/$defs/version",
                     "title": "Component Version",
                     "description": "The component version. The version should ideally comply with semantic versioning but is not enforced"
                   },
@@ -383,7 +375,7 @@
                     ]
                   },
                   "version": {
-                    "$ref": "#/definitions/version",
+                    "$ref": "#/$defs/version",
                     "title": "Component Version",
                     "description": "The component version. The version should ideally comply with semantic versioning but is not enforced"
                   }
@@ -431,7 +423,7 @@
           "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
         },
         "bom-ref": {
-          "$ref": "#/definitions/refType",
+          "$ref": "#/$defs/refType",
           "title": "BOM Reference",
           "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
         },
@@ -452,14 +444,14 @@
           ]
         },
         "version": {
-          "$ref": "#/definitions/version",
+          "$ref": "#/$defs/version",
           "title": "Component Version",
           "description": "The component version. The version should ideally comply with semantic versioning but is not enforced"
         },
         "hashes": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/hash"
+            "$ref": "#/$defs/hash"
           },
           "title": "Hashes",
           "description": "The hashes of the docker image"
@@ -471,90 +463,6 @@
           "examples": [
             "pkg:docker/com.acme/tomcat-catalina@9.0.14"
           ]
-        }
-      }
-    },
-    "declarative-configuration": {
-      "type": "object",
-      "title": "Declarative Configuration",
-      "description": "Describes declarative configuration",
-      "required": [
-        "type",
-        "mime-type",
-        "bom-ref",
-        "name",
-        "data"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "data"
-          ],
-          "title": "Component Type",
-          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
-        },
-        "mime-type": {
-          "type": "string",
-          "enum": [
-            "application/vnd.qubership.configuration.declarative-configuration"
-          ],
-          "title": "Mime-Type",
-          "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
-        },
-        "bom-ref": {
-          "$ref": "#/definitions/refType",
-          "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
-        },
-        "name": {
-          "type": "string",
-          "title": "Component Name",
-          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
-          "const": "declarative-configuration"
-        },
-        "data": {
-          "type": "array",
-          "title": "Data",
-          "description": "This object SHOULD be specified for any component of type `data` and must not be specified for other component types",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": [
-              "type",
-              "name",
-              "contents"
-            ],
-            "properties": {
-              "type": {
-                "type": "string",
-                "title": "Type of Data",
-                "description": "The general theme or subject matter of the data being specified",
-                "enum": [
-                  "configuration"
-                ]
-              },
-              "name": {
-                "title": "Dataset Name",
-                "description": "The name of the dataset",
-                "type": "string"
-              },
-              "contents": {
-                "type": "object",
-                "title": "Data Contents",
-                "description": "The contents or references to the contents of the data being described",
-                "additionalProperties": false,
-                "properties": {
-                  "attachment": {
-                    "title": "Data Attachment",
-                    "description": "An optional way to include textual or encoded data",
-                    "$ref": "#/definitions/attachment"
-                  }
-                }
-              }
-            }
-          }
         }
       }
     },
@@ -588,7 +496,7 @@
           "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
         },
         "bom-ref": {
-          "$ref": "#/definitions/refType",
+          "$ref": "#/$defs/refType",
           "title": "BOM Reference",
           "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
         },
@@ -635,7 +543,7 @@
                   "attachment": {
                     "title": "Data Attachment",
                     "description": "An optional way to include textual or encoded data",
-                    "$ref": "#/definitions/attachment"
+                    "$ref": "#/$defs/attachment"
                   }
                 }
               }
@@ -676,7 +584,7 @@
           "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
         },
         "bom-ref": {
-          "$ref": "#/definitions/refType",
+          "$ref": "#/$defs/refType",
           "title": "BOM Reference",
           "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
         },
@@ -689,7 +597,7 @@
           ]
         },
         "version": {
-          "$ref": "#/definitions/version",
+          "$ref": "#/$defs/version",
           "title": "Component Version",
           "description": "The component version. The version should ideally comply with semantic versioning but is not enforced."
         },
@@ -726,13 +634,10 @@
           "items": {
             "oneOf": [
               {
-                "$ref": "#/definitions/docker-image"
+                "$ref": "#/$defs/docker-image"
               },
               {
-                "$ref": "#/definitions/declarative-configuration"
-              },
-              {
-                "$ref": "#/definitions/resource-profile-baseline"
+                "$ref": "#/$defs/resource-profile-baseline"
               }
             ]
           },
@@ -774,7 +679,7 @@
           "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
         },
         "bom-ref": {
-          "$ref": "#/definitions/refType",
+          "$ref": "#/$defs/refType",
           "title": "BOM Reference",
           "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
         },
@@ -784,7 +689,7 @@
           "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery"
         },
         "version": {
-          "$ref": "#/definitions/version",
+          "$ref": "#/$defs/version",
           "title": "Component Version",
           "description": "The component version. The version should ideally comply with semantic versioning but is not enforced."
         },
@@ -821,13 +726,10 @@
           "items": {
             "oneOf": [
               {
-                "$ref": "#/definitions/artifact"
+                "$ref": "#/$defs/artifact"
               },
               {
-                "$ref": "#/definitions/declarative-configuration"
-              },
-              {
-                "$ref": "#/definitions/resource-profile-baseline"
+                "$ref": "#/$defs/resource-profile-baseline"
               }
             ]
           },
@@ -870,7 +772,7 @@
           "description": "The format specification for the configuration component"
         },
         "bom-ref": {
-          "$ref": "#/definitions/refType",
+          "$ref": "#/$defs/refType",
           "title": "BOM Reference",
           "description": "Unique identifier for the component within the BOM"
         },
@@ -891,7 +793,7 @@
           ]
         },
         "version": {
-          "$ref": "#/definitions/version",
+          "$ref": "#/$defs/version",
           "title": "Component Version",
           "description": "Version identifier (preferably following semantic versioning)"
         },
@@ -955,7 +857,7 @@
           "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
         },
         "bom-ref": {
-          "$ref": "#/definitions/refType",
+          "$ref": "#/$defs/refType",
           "title": "BOM Reference",
           "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
         },
@@ -968,7 +870,7 @@
           ]
         },
         "version": {
-          "$ref": "#/definitions/version",
+          "$ref": "#/$defs/version",
           "title": "Component Version",
           "description": "The component version. The version should ideally comply with semantic versioning but is not enforced."
         },
@@ -1005,17 +907,60 @@
           "items": {
             "oneOf": [
               {
-                "$ref": "#/definitions/docker-image"
-              },
-              {
-                "$ref": "#/definitions/declarative-configuration"
-              },
-              {
-                "$ref": "#/definitions/resource-profile-baseline"
+                "$ref": "#/$defs/docker-image"
               }
             ]
           },
           "uniqueItems": true
+        }
+      }
+    },
+    "helm-chart": {
+      "type": "object",
+      "title": "Helm Chart",
+      "description": "Defines helm-chart",
+      "required": [
+        "type",
+        "mime-type",
+        "bom-ref",
+        "name",
+        "version"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "application"
+          ],
+          "title": "Component Type",
+          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": [
+            "application/vnd.qubership.app.chart"
+          ],
+          "title": "Mime-Type",
+          "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
+        },
+        "bom-ref": {
+          "$ref": "#/$defs/refType",
+          "title": "BOM Reference",
+          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
+        },
+        "name": {
+          "type": "string",
+          "title": "Component Name",
+          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
+          "examples": [
+            "common-helm-templates"
+          ]
+        },
+        "version": {
+          "$ref": "#/$defs/version",
+          "title": "Component Version",
+          "description": "The component version. The version should ideally comply with semantic versioning but is not enforced."
         }
       }
     }

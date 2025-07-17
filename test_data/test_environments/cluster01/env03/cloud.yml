@@ -1,0 +1,49 @@
+# The contents of this file is generated from template artifact: test-template-1.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "test-cloud"
+apiUrl: "tmp.cloud.com" # cloud passport: test-cloud-passport version: 1.5
+apiPort: "0000" # cloud passport: test-cloud-passport version: 1.5
+privateUrl: "test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
+publicUrl: "test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
+dashboardUrl: "https://dashboard.test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
+labels: []
+defaultCredentialsId: "cloud-deploy-sa-token" # cloud passport: test-cloud-passport version: 1.5
+protocol: "https" # cloud passport: test-cloud-passport version: 1.5
+dbMode: "db"
+databases: []
+maasConfig:
+  credentialsId: "maas"
+  enable: true
+  maasUrl: "http://maas."
+  maasInternalAddress: "http://maas.maas:8888"
+vaultConfig:
+  credentialsId: ""
+  enable: false
+  url: ""
+dbaasConfigs:
+  - credentialsId: "dbaas"
+    enable: true
+    apiUrl: "http://dbaas.dbaas:8888"
+    aggregatorUrl: "https://dbaas."
+consulConfig:
+  tokenSecret: "consul-token"
+  enabled: true
+  publicUrl: "https://consul."
+  internalUrl: "http://consul.consul:8888"
+deployParameters:
+  CLOUD_DASHBOARD_URL: "https://dashboard.test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
+  CMDB_URL: "https://test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
+  GRAFANA_UI_URL: "https://test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
+  GRAYLOG_UI_URL: "https://test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
+  TRACING_UI_URL: "https://test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
+  VALUE: "true" # cloud passport: test-cloud-passport version: 1.5
+e2eParameters:
+  CMDB_NAME: "test-deployer"
+  TEMPLATE_NAME: "test-template-1"
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+productionMode: false # cloud passport: test-cloud-passport version: 1.5
+

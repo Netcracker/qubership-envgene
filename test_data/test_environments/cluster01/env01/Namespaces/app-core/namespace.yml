@@ -1,0 +1,34 @@
+# The contents of this file is generated from template artifact: test-solution-structure.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "test-solution-structure-case-01-app-core"
+credentialsId: ""
+isServerSideMerge: false
+labels:
+  - "solutionInstance-test-solution-structure-case-01"
+  - "solution-test-tenant"
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+profile:
+  name: "dev_app_core"
+  baseline: "dev"
+deployParameters:
+  APP_CORE_NAMESPACE: "test-solution-structure-case-01-app-core"
+  APP_NAMESPACE: "test-solution-structure-case-01-app"
+  ENVGENE_CONFIG_REF_NAME: ""
+  ENVGENE_CONFIG_TAG: ""
+  TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
+  TEST_PARAM_IF_ENDIF_2: "TEST_PARAM_IF_ENDIF_2_value"
+  param-A: "apple" # paramset: paramset-A version: n/a source: template
+e2eParameters:
+  TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
+  param-A: "apple" # paramset: paramset-A version: n/a source: template
+technicalConfigurationParameters:
+  APP_CORE_NAMESPACE: "test-solution-structure-case-01-app-core"
+  APP_NAMESPACE: "test-solution-structure-case-01-app"
+  TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
+  param-A: "apple" # paramset: paramset-A version: n/a source: template
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+tenantName: "test-solution-structure-template"

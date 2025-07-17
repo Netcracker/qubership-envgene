@@ -1,6 +1,6 @@
 {
   "serialNumber": "urn:uuid:c7eb7c5f-b8da-4c05-9c48-678a11c00a35",
-  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "$schema": "../schemas/application.sbom.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "version": 1,
@@ -94,25 +94,6 @@
             }
           ],
           "purl": "pkg:docker/cloud-core/key-manager-assembly-release-2023.1-7.10.0@build22?registry_id=sandbox?repository_id=targetSnapshot"
-        },
-        {
-          "bom-ref": "BomRef.38739830664287533.5397835530905233",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.configuration.declarative-configuration",
-          "name": "declarative-configuration",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "deployment-configuration.yaml",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
         },
         {
           "bom-ref": "BomRef.18464751402787616.6549305883668648",
@@ -227,25 +208,6 @@
             }
           ],
           "purl": "pkg:docker/cloud-core/identity-provider-assembly-8157@build3?registry_id=sandbox?repository_id=snapshotUri"
-        },
-        {
-          "bom-ref": "BomRef.6761624005326978.7212658347443947",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.configuration.declarative-configuration",
-          "name": "declarative-configuration",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "deployment-configuration.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/json",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
         },
         {
           "bom-ref": "BomRef.47142752937464083.8438035837225848",
@@ -371,25 +333,6 @@
           ]
         },
         {
-          "bom-ref": "BomRef.38739830664287533.5397835530905233",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.configuration.declarative-configuration",
-          "name": "declarative-configuration",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "deployment-configuration.yaml",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
-        },
-        {
           "bom-ref": "BomRef.18464751402787616.6549305883668648",
           "type": "data",
           "mime-type": "application/vnd.qubership.resource-profile-baseline",
@@ -495,25 +438,6 @@
           ]
         },
         {
-          "bom-ref": "BomRef.38739830664287533.5397835530905233",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.configuration.declarative-configuration",
-          "name": "declarative-configuration",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "deployment-configuration.yaml",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
-        },
-        {
           "bom-ref": "BomRef.18464751402787616.6549305883668648",
           "type": "data",
           "mime-type": "application/vnd.qubership.resource-profile-baseline",
@@ -615,25 +539,6 @@
             {
               "name": "classifier",
               "value": ""
-            }
-          ]
-        },
-        {
-          "bom-ref": "BomRef.38739830664287533.5397835530905233",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.configuration.declarative-configuration",
-          "name": "declarative-configuration",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "deployment-configuration.yaml",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
             }
           ]
         },
@@ -752,25 +657,6 @@
           "purl": "pkg:docker/cloud-core/platform-bootstrap-cli-assembly-release-2025.1-1.0.12@build22?registry_id=sandbox?repository_id=targetSnapshot"
         },
         {
-          "bom-ref": "BomRef.38739830664287533.5397835530905233",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.configuration.declarative-configuration",
-          "name": "declarative-configuration",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "deployment-configuration.yaml",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
-        },
-        {
           "bom-ref": "BomRef.18464751402787616.6549305883668648",
           "type": "data",
           "mime-type": "application/vnd.qubership.resource-profile-baseline",
@@ -823,6 +709,13 @@
           ]
         }
       ]
+    },
+    {
+      "bom-ref": "qubership-integration-platform:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.app.chart",
+      "name": "qubership-integration-platform",
+      "version": "1.2.3"
     }
   ],
   "dependencies": [

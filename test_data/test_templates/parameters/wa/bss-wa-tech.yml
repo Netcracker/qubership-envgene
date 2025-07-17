@@ -1,6 +1,0 @@
-version: 23.3
-name: bss-wa-tech
-parameters: 
-  application/custom.disconnection-delay: "1"
-  application/custom.mwReminderInterval: "24"
-applications: []
