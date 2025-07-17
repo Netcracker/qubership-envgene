@@ -3,7 +3,9 @@ import asyncio
 import aiofiles
 import yaml, json
 from typing import Any, Dict, List, Tuple
-import envgenehelper.logger as logger
+from utils.error_constants import  *
+from envgenehelper.errors import  ValidationError
+
 
 async def read_yaml_file(path: str) -> tuple[str, dict]:
     try:
@@ -12,8 +14,7 @@ async def read_yaml_file(path: str) -> tuple[str, dict]:
         data = yaml.safe_load(content)
         return path, data
     except Exception as e:
-        print(f"Failed to read {path}: {e}")
-        return path, None
+         raise ValidationError(ErrorMessages.INVALID_YAML_FILE.format(file=path, e=str(e)), ErrorCodes.INVALID_CONFIG_CODE)
 
 
 async def load_yaml_files_parallel(paths: List[str]) -> Dict[str, dict]:
@@ -33,8 +34,7 @@ def scandir_recursive(
             
         elif entry.is_file(follow_symlinks=False) and entry.name.endswith((".yml", ".yaml")):
             normalized_path = os.path.normpath(entry.path)
-            ns_fragment = os.path.normpath(os.path.join(env_name, "Namespaces"))
-            if ns_fragment in normalized_path:
+            if "Namespaces" in normalized_path.split(os.sep):
                 ns_files.append(entry.path)
 
 def scan_and_get_yaml_files(

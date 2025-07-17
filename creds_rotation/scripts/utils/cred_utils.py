@@ -10,7 +10,8 @@ from .file_utils import openJson
 from pathlib import Path
 from envgenehelper import crypt, writeYamlToFile, openYaml, getEnvDefinition, dump_as_yaml_format
 import envgenehelper.logger as logger
-
+from utils.error_constants import  *
+from envgenehelper.errors import ValidationError, ValueError, ReferenceError
 
 
 def collects_shared_credentials(instance_dir: str) -> List[str]:
@@ -28,10 +29,10 @@ def extract_credential(target_key: str, yaml_content: Dict[str, Any], cred_field
     elif "." in target_key:
         value = get_nested_target_key(yaml_content, target_key)
     else:
-        raise KeyError(f"Key '{target_key}' not found in content specified")
+        raise ValidationError(ErrorMessages.PARAM_NOT_FOUND.format(target_key=target_key), ErrorCodes.INVALID_INPUT_CODE)
 
     if not isinstance(value, str):
-        raise ValueError(f"Expected string but got {type(value)} for target_key: {target_key}")
+        raise ValueError(ErrorMessages.INVALID_DATA_TYPE.format(expected="string", value=target_key, type=type(value)), ErrorCodes.INVALID_DATA_TYPE_CODE)
 
     match = pattern.search(value)
     if match:
@@ -46,8 +47,8 @@ def get_shared_cred_files(shared_creds: List[str], source_dir: str, stop_dir: st
 
     while True:
         if stop_path not in source_path.parents and source_path != stop_path:
-            raise ReferenceError(f"{stop_dir} is not a parent of {source_path}")
-        logger.info(f"Seraching for shared credentials in {source_path}")
+            raise ReferenceError(ErrorMessages.INVALID_PATH.format(stop_dir=stop_dir, source_path=source_path), ErrorCodes.INVALID_PATH_CODE)
+        logger.info(f"Searching for shared credentials in {source_path}")
         found_map = {}
         scan_dir_for_creds(source_path, remaining_creds, found_map)
 
@@ -66,7 +67,7 @@ def decide_to_scan(found_map: Dict[str, List[str]], final_creds_map: Dict[str, s
             final_creds_map[cred_name] = matches[0]
         elif len(matches) > 1:
             logger.error(f"Duplicate credential file '{cred_name}' found:\n\t" + "\n\t".join(matches))
-            raise ReferenceError(f"Duplicate credential file found for: {cred_name}")
+            raise ReferenceError(ErrorMessages.DUPLICATE_FILE_ERROR.format(matches=len(matches), cred_name=cred_name), ErrorCodes.DUPLICATE_FILES_CODE)
         else:
             next_round.add(cred_name)
             logger.info(f"Credential '{cred_name}' not found in current dir. Will scan upwards.")
@@ -86,13 +87,7 @@ def read_cred_files(final_creds_map, is_encrypted, public_key):
     shared_creds_map = {}
     for cred_name, filepath in final_creds_map.items():
         if is_encrypted:
-            content = crypt.decrypt_file(
-                            filepath,
-                            in_place=True,
-                            ignore_is_crypt=True,
-                            public_key=public_key,
-                            crypt_backend='SOPS'
-                        )
+            content = decrypt_file(public_key, filepath, True, 'SOPS', ErrorMessages.FILE_DECRYPT_ERROR, ErrorCodes.INVALID_CONFIG_CODE) 
         else:
             if filepath.endswith(".json"):
                 content = openJson(filepath)
@@ -103,13 +98,13 @@ def read_cred_files(final_creds_map, is_encrypted, public_key):
     return shared_creds_map
 
 
-def decrypt_file(envgene_age_public_key, file_path, in_place, crypt_backend, error_message):
+def decrypt_file(envgene_age_public_key, file_path, in_place, crypt_backend, error_msg, error_code):
     try:
         return crypt.decrypt_file(file_path, in_place=in_place, ignore_is_crypt=True,
                            public_key=envgene_age_public_key, crypt_backend=crypt_backend
                            )
     except Exception as e:
-        raise Exception(f"Decryption of payload failed. {error_message} {e}")
+        raise ValidationError(error_msg.format(file=file_path, e=str(e)), error_code=error_code)
 
 
 def update_cred_content(
@@ -119,6 +114,7 @@ def update_cred_content(
     original_files: Dict[str, List[Dict[str, Any]]] = {}
 
     logger.info(f"Preparing updates for {len(processed_cred_and_files)} credential files")
+    logger.info(f"Credential files are {list(processed_cred_and_files.keys())}")
     for cred_file, updates in processed_cred_and_files.items():
         if not updates:
             logger.warning(f"No updates found for file {cred_file}, skipping")
@@ -135,15 +131,9 @@ def update_cred_content(
 
             logger.debug(f"Updating credential '{cred_id}' field '{cred_field}' in file '{cred_file}'")
 
-            if not content or cred_id not in content:
-                raise Exception(f"Credential ID '{cred_id}' not found in  file '{cred_file}'")
-
             data_block = content[cred_id].get("data")
             if not data_block:
-                raise Exception(f"'data' block missing for credential ID '{cred_id}' in file '{cred_file}'")
-
-            if cred_field not in {"username", "password", "secret"}:
-                raise Exception(f"Unsupported credential field '{cred_field}' for credential ID '{cred_id}'")
+                raise ValidationError(ErrorMessages.MISSING_BLOCK.format(block="data", cred_id=cred_id, cred_file=cred_file), ErrorCodes.INVALID_INPUT_CODE)
 
             # Apply the update
             data_block[cred_field] = param_value
@@ -181,8 +171,10 @@ def write_and_encrypt_task(cred_file, creds, is_encrypted, public_key):
     writeYamlToFile(cred_file, creds)
     # Encrypt if needed
     if is_encrypted:
-        crypt.encrypt_file(
-            cred_file, in_place=True, ignore_is_crypt=True,
-            public_key=public_key, crypt_backend='SOPS'
-        )
-
+        try:
+            crypt.encrypt_file(
+                cred_file, in_place=True, ignore_is_crypt=True,
+                public_key=public_key, crypt_backend='SOPS'
+            )
+        except Exception as e:
+           raise ValidationError(ErrorMessages.FILE_ENCRYPT_ERROR.format(file=cred_file, e=str(e)), error_code=ErrorCodes.INVALID_CONFIG_CODE)

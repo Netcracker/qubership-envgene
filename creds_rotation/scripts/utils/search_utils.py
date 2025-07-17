@@ -5,6 +5,8 @@ from models import AffectedParameter
 from utils.yaml_utils import get_content_form_file
 from pathlib import Path, PurePath
 import envgenehelper.logger as logger
+from utils.error_constants import  *
+from envgenehelper.errors import  ReferenceError
 
 CONTEXT_MAP = {
     "deployment": "deployParameters",
@@ -90,17 +92,11 @@ def get_app_content(
             continue
 
         parent_dir = Path(file_name).parent.parent
-        ns_file_yaml = parent_dir / "namespace.yaml"
-        ns_file_yml = parent_dir / "namespace.yml"
+        ns_files = [parent_dir / "namespace.yaml", parent_dir / "namespace.yml"]
+        ns_content = find_namespace(yaml_content_map, ns_files)
 
-        try:
-            ns_content = get_content_form_file(ns_file_yaml)
-        except Exception:
-            try:
-                ns_content = get_content_form_file(ns_file_yml)
-            except Exception as e:
-                logger.warning(f"Failed to load namespace file for {file_name}: {e}")
-                continue
+        if ns_content is None:
+            raise ReferenceError(ErrorMessages.NS_FILE_NOT_FOUND.format(file=str(ns_files[0]).removesuffix("namespace.yaml")), error_code=ErrorCodes.FILE_NOT_FOUND_CODE)
 
         if ns_content and ns_content.get("name") == namespace:
             return file_name, content
@@ -108,23 +104,27 @@ def get_app_content(
     return None
 
 
-def get_app_and_ns(filename: str, content: dict) -> Tuple[str, Optional[str]]:
+def get_app_and_ns(filename: str, content: dict, ns_files_map: Dict[str, Dict[str, Any]]) -> Tuple[str, Optional[str]]:
     if filename.endswith(("namespace.yml", "namespace.yaml")):
         return '', content.get('name', '')
     
     filepath = PurePath(filename)
     parent_dir = filepath.parent.parent
-    ns_file_yaml = parent_dir / "namespace.yaml"
-    ns_file_yml = parent_dir / "namespace.yml"
+    ns_files = [parent_dir / "namespace.yaml", parent_dir / "namespace.yml"]
+    ns_content = find_namespace(ns_files_map, ns_files)
 
-    try:
-        ns_content = get_content_form_file(ns_file_yml)
-    except Exception:
-        try:
-            ns_content = get_content_form_file(ns_file_yaml)
-        except Exception as e:
-            raise Exception(f"Failed to load namespace file from {parent_dir}: {e}")
-    return content.get('name', ''), ns_content.get('name','')
+    if ns_content is None:
+        raise ReferenceError(ErrorMessages.NS_FILE_NOT_FOUND.format(file=str(ns_files[0]).removesuffix("namespace.yaml")), error_code=ErrorCodes.FILE_NOT_FOUND_CODE)
+
+    return content.get("name", ""), ns_content.get("name", "")
+
+def find_namespace(ns_files_map, ns_files):
+    ns_content = None
+    for ns_file in ns_files:
+        ns_content = ns_files_map.get(str(ns_file))
+        if ns_content:
+            break
+    return ns_content
 
 def trim_path_from_environments(path: str):
     normalized = path.replace("\\", "/")
@@ -139,10 +139,11 @@ def get_affected_param_map(
     env_cred_files: list,
     filename: str,
     content: dict,
-    matches: dict
+    matches: dict,
+    ns_files_map: Dict[str, Dict[str, Any]]
 ) -> list[AffectedParameter]:
     result = []
-    app, namespace = get_app_and_ns(filename, content)
+    app, namespace = get_app_and_ns(filename, content, ns_files_map)
 
     for context, param_keys in matches.items():
         for key in param_keys:
@@ -171,6 +172,6 @@ def search_yaml_files(search_string: str, ns_files_map: Dict[str, Dict[str, Any]
         matches = find_in_yaml(content, search_string, is_target, target_key, target_context)
         if matches:
             affected.extend(get_affected_param_map(
-            cred_id, env, shared_cred_files, env_cred_file, filename, content, matches
+            cred_id, env, shared_cred_files, env_cred_file, filename, content, matches, ns_files_map
             ))
     return affected
