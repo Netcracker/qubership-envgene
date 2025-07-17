@@ -9,3 +9,4 @@ cryptography==41.0.3
 cffi>=1.15
 aiofiles
 psutil
+pympler

@@ -2,6 +2,7 @@ import os
 import time
 import  json
 import psutil
+from pympler import asizeof
 from typing import List
 from models import PayloadEntry, RotationResult
 from utils.yaml_utils import convert_json_to_yaml, write_yaml_to_file
@@ -12,6 +13,14 @@ from core_rotation import process_entry_in_payload
 from envgenehelper import getenv_with_error, crypt
 from envgenehelper.errors import ValidationError,  RuntimeError, ValueError
 import envgenehelper.logger as logger
+
+def print_total_memory():
+    total_mem = psutil.virtual_memory().total / (1024 ** 2)
+    print(f"🧠 Total system memory: {total_mem:.2f} MB")
+
+def print_deep_map_size(name: str, map_obj: dict):
+    size_in_mb = asizeof.asizeof(map_obj) / (1024 * 1024)
+    print(f"📊 Map '{name}' deep size: {size_in_mb:.2f} MB")
 
 def print_memory_usage():
     process = psutil.Process(os.getpid())
@@ -30,6 +39,7 @@ def load_payload(payload: str):
 
 
 def cred_rotation():
+    print_total_memory()
     print_memory_usage()
     start = time.time()
     logger.info(f"CPU cores available: {os.cpu_count()}")
@@ -68,6 +78,7 @@ def cred_rotation():
     shared_content_map = read_cred_files(final_creds_map, is_encrypted, envgene_age_public_key)
     ns_files_map = scan_and_get_yaml_files(cluster_path, env_name)
     print_memory_usage()
+    print_deep_map_size("ns_files_map", ns_files_map)
     env_cred_map ={}
     #Decrypt Environment credential file if encrypted
     env_cred_map[env_cred_file] = decrypt_file(envgene_age_public_key, env_cred_file, False, encrypt_type, ErrorMessages.FILE_DECRYPT_ERROR, ErrorCodes.INVALID_CONFIG_CODE)  
