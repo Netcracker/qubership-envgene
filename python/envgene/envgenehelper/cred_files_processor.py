@@ -1,11 +1,11 @@
 
 import os
 from os import getenv, path
+from pathlib import Path
+import subprocess
 from typing import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from envgenehelper.business_helper import getenv_with_error
 
-from .config_helper import get_envgene_config_yaml
 
 from .file_helper import get_files_with_filter
 from .logger import logger
@@ -69,6 +69,14 @@ class FileProcessor:
                 if filter(filepath):
                     matching_files.add(filepath)
         return matching_files
+
+    def _get_files_subprocess(self, full_path=''):
+        cur_path = self.BASE_DIR if not full_path else full_path
+        find_command = f'find {cur_path} \( -iname "*cred*.y*ml" -o -ipath */credentials* \) -a \( ! -ipath */shade-* ! -iname shade-*-cred.y*ml \) -type f'
+        result = subprocess.run(find_command, shell=True,
+                                capture_output=True, text=True, timeout=20)
+
+        return result.stdout.splitlines()
 
     def is_cred_file(self, fp: str) -> bool:
         name = os.path.basename(fp)
