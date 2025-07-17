@@ -1,11 +1,14 @@
 import pathlib
 import re
-from os import getenv
+from os import getenv, path
+from dataclasses import dataclass, field
+
 from .collections_helper import merge_lists
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, validate_yaml_by_scheme_or_fail
 from .json_helper import findJsons
 from .file_helper import getAbsPath, extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, extractNameFromDir
 from .collections_helper import dump_as_yaml_format
+from .crypt import decrypt_file
 from .logger import logger
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
@@ -18,6 +21,7 @@ BUILD_ENV_TAG = "BUILD_ENV"
 CMDB_IMPORT_TAG = "CMDB_IMPORT"
 DEFAULT_PASSPORT_NAME = "passport"
 DEFAULT_PASSPORT_DIR_NAME = "cloud-passport"
+INV_GEN_CREDS_PATH = "Inventory/credentials/inventory_generation_creds.yml"
 
 
 def find_env_instances_dir(env_name, instances_dir) :
@@ -69,12 +73,12 @@ def check_environment_is_valid_or_fail(environment_name, cluster_name, instances
 
 def check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir):
     schemaPath = f"{schemas_dir}/env-definition.schema.json" if schemas_dir else "schemas/env-definition.schema.json"
-    try: 
+    try:
         validate_yaml_by_scheme_or_fail(env_definition_path, schemaPath)
     except ValueError:
         raise ValueError(f"Validation of env_definition in '{env_definition_path} failed. See logs above'") from None
-    
-        
+
+
 def findResourcesBottomTop(sourceDir, stopParentDir, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern="", searchJsons=False):
     result = []
     foundMap = {}
@@ -95,13 +99,13 @@ def __findResourcesBottomTop__(sourceDir, stopParentDir, pattern, notPattern, ad
         findResults = merge_lists(findResults, findJsons(sourceDir, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern))
     for foundFile in findResults:
         fileName = extractNameFromFile(foundFile)
-        if fileName not in foundMap: 
+        if fileName not in foundMap:
             foundMap[fileName] = foundFile
             if len(findResults) == 1:
                 yamlPath = findResults[0]
                 result.append(yamlPath)
                 logger.debug(f"Resource added from: {yamlPath}")
-            elif len(findResults) > 1: 
+            elif len(findResults) > 1:
                 logger.error(f"Duplicate resource file with pattern {pattern} found in {sourceDir}: \n\t" + ",\n\t".join(str(x) for x in findResults))
                 raise ReferenceError(f"Duplicate resource file with pattern {pattern} found. See logs above.")
     if getAbsPath(sourceDir) == getAbsPath(stopParentDir):
@@ -110,7 +114,7 @@ def __findResourcesBottomTop__(sourceDir, stopParentDir, pattern, notPattern, ad
     else:
         parentEnvDirPath = str(pathlib.Path(sourceDir).parent)
         return __findResourcesBottomTop__(parentEnvDirPath, stopParentDir, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern, searchJsons, result, foundMap)
-    
+
 def getTemplateArtifactName(env_definition_yaml):
     if "artifact" in env_definition_yaml["envTemplate"]:
         artifact = env_definition_yaml["envTemplate"]["artifact"]
@@ -185,11 +189,11 @@ def update_generated_versions(env_dir, stage_tag, template_version=""):
     logger.info(f"Generated version {version} updated for stage tag {stage_tag} in environment {env_definition_path}")
 
 def extract_namespace_from_application_path(app_yaml_path):
-    pattern = r'^.+/Namespaces/(.+)/Applications/.+$'   
+    pattern = r'^.+/Namespaces/(.+)/Applications/.+$'
     return re.sub(pattern, r'\1', app_yaml_path)
 
 def extract_namespace_from_namespace_path(namespace_yaml_path):
-    pattern = r'^.+/Namespaces/(.+)/.+$'   
+    pattern = r'^.+/Namespaces/(.+)/.+$'
     return re.sub(pattern, r'\1', namespace_yaml_path)
 
 
@@ -243,7 +247,7 @@ def find_cloud_passport_definition(env_instances_dir, instances_dir) :
             return passportFilePath
         # trying to find passport by default passport name
         return findPassportInDefaultDirByName(cloudDir, DEFAULT_PASSPORT_NAME)
-        
+
 def findPassportByEnvDefinition(env_instances_dir, instances_dir, cloud_passport_file_name) :
     logger.debug(f"Searching for cloud passport file {cloud_passport_file_name} from {env_instances_dir} to {instances_dir}")
     passportFiles = findResourcesBottomTop(env_instances_dir, instances_dir, f"/{cloud_passport_file_name}.y", "redentials/")
@@ -251,7 +255,7 @@ def findPassportByEnvDefinition(env_instances_dir, instances_dir, cloud_passport
         yamlPath = passportFiles[0]
         logger.info(f"Cloud passport file for {cloud_passport_file_name} found in: {yamlPath}")
         return yamlPath
-    elif len(passportFiles) > 1: 
+    elif len(passportFiles) > 1:
         logger.error(f"Duplicate cloud passport files with key {cloud_passport_file_name} found in {instances_dir}: \n\t" + ",\n\t".join(str(x) for x in passportFiles))
         raise ReferenceError(f"Duplicate cloud passport files with key {cloud_passport_file_name} found. See logs above.")
     else:
@@ -270,7 +274,7 @@ def findPassportInDefaultDirByName(env_instances_dir, passport_name) :
     else:
         logger.info(f"Cloud passport for env {env_instances_dir} with name {passport_name} is not found. ")
         return ""
-    
+
 def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
     # checking if inventory is related to cloud passport
     inventoryYaml = getEnvDefinition(source_env_dir)
@@ -291,4 +295,37 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
             return cloudPassportFileName
     else:
         return ""
+
+@dataclass
+class Environment:
+    base_dir: str
+    cluster: str
+    name: str
+    env_path: str = field(init=False)
+    inventory: dict = field(init=False)
+    inventory_path: str = field(init=False)
+    creds: dict = field(init=False)
+    creds_path: str = field(init=False)
+
+    def __post_init__(self):
+        self.env_path = path.join(self.base_dir, "environments", self.cluster, self.name)
+        print(f"env_path: {self.env_path}")
+
+        self.inventory_path = getEnvDefinitionPath(self.env_path)
+        print(f"inventory_path: {self.inventory_path}")
+
+        self.creds_path = getEnvCredentialsPath(self.env_path)
+        print(f"creds_path: {self.creds_path}")
+
+        self.inv_gen_creds_path = path.join(self.env_path, INV_GEN_CREDS_PATH)
+        print(f"inv_gen_creds_path: {self.inv_gen_creds_path}")
+
+        self.inventory = yaml.openYaml(self.inventory_path, allow_default=True)
+        print(f"inventory: {self.inventory}")
+
+        self.creds = decrypt_file(self.creds_path, in_place=False, allow_default=True)
+        print(f"creds: {self.creds}")
+
+        self.inv_gen_creds = decrypt_file(self.inv_gen_creds_path, in_place=False, allow_default=True)
+        print(f"inv_gen_creds: {self.inv_gen_creds}")
 
