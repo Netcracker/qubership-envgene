@@ -1,5 +1,6 @@
 from dataclasses import dataclass, asdict
 from typing import Optional, List, Dict, Any
+import json
 
 @dataclass
 class ParameterReference:
@@ -43,7 +44,7 @@ class PayloadEntry:
     parameter_value: str
     credential_field: str
     application: Optional[str] = None
-
+    
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PayloadEntry":
         required = ['namespace', 'parameter_key', 'context', 'parameter_value', 'credential_field']
@@ -58,7 +59,11 @@ class PayloadEntry:
             credential_field=data['credential_field'],
             application=data.get('application')
         )
-
+    
+    def __str__(self):
+        exclude_fields = {"parameter_value", "cred_field"}
+        filtered_dict = {k: v for k, v in asdict(self).items() if k not in exclude_fields}
+        return json.dumps(filtered_dict, indent=4)
 
 @dataclass
 class RotationResult:

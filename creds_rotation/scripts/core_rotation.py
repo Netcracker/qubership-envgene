@@ -2,8 +2,9 @@ from typing import Optional, Dict, List, Any
 from models import PayloadEntry, RotationResult, ParameterReference, CredMap
 from utils.search_utils import get_ns_content, get_app_content, resolve_param, search_yaml_files
 from utils.cred_utils import extract_credential
+from utils.error_constants import  *
 import envgenehelper.logger as logger
-
+from envgenehelper.errors import ValidationError, ReferenceError
 
 def process_entry_in_payload(
     entry: PayloadEntry,
@@ -15,7 +16,11 @@ def process_entry_in_payload(
 ) -> Optional[RotationResult]:
 
     if entry.application and entry.context == "pipeline":
-        raise ValueError(f"Invalid context 'pipeline' for  param {entry.parameter_key}")
+        raise ValidationError(ErrorMessages.INVALID_CONTEXT.format(param_key=entry.parameter_key), error_code=ErrorCodes.INVALID_INPUT_CODE)
+
+    
+    if entry.credential_field not in {"username", "password", "secret"}:
+        raise ValidationError(ErrorMessages.INVALID_CRED_FIELD.format(cred_field=entry.credential_field), ErrorCodes.INVALID_CONFIG_CODE)
 
     logger.info(f"Processing namespace={entry.namespace}, application={entry.application}, param_key={entry.parameter_key}, context={entry.context}")
     #Get target application or namespace file
@@ -25,21 +30,19 @@ def process_entry_in_payload(
         target = get_ns_content(ns_files_map, entry.namespace)
 
     if not target:
-        raise ValueError(f"ERROR: Target File not found for parameter key {entry.parameter_key}")
+        raise ReferenceError(ErrorMessages.ENTITY_FILE_NOT_FOUND.format(param_key=entry.parameter_key), error_code=ErrorCodes.FILE_NOT_FOUND_CODE)
 
     target_file, target_yaml = target
     param_type = resolve_param(entry.context)
     if param_type not in target_yaml:
-        raise ValueError(f"Context '{entry.context}' not found in target yaml for key {entry.parameter_key}")
+        raise ValidationError(ErrorMessages.MISSING_CONTEXT.format(context=entry.context, target_file=target_file, param_key=entry.parameter_key), error_code=ErrorCodes.INVALID_INPUT_CODE)
 
     sub_content = target_yaml[param_type]
-    try:
-        value_to_search, cred_id = extract_credential(entry.parameter_key, sub_content, entry.credential_field)
-    except Exception as e:
-        raise Exception(f"ERROR: Failed to extract credential for key {entry.parameter_key}. Error {e}")
+    value_to_search, cred_id = extract_credential(entry.parameter_key, sub_content, entry.credential_field)
+
 
     if not value_to_search or not cred_id:
-        raise Exception(f"ERROR: credential '{cred_id}' missing in target file")
+        raise ReferenceError(ErrorMessages.MISSING_CRED.format(target_file=target_file, context=entry.context), error_code=ErrorCodes.INVALID_INPUT_CODE)
 
 
     shared_match_files = [k for k, v in shared_cred_content.items() if cred_id in v]
