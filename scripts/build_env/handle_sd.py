@@ -14,7 +14,7 @@ MERGE_METHODS = {
     "extended-merge": helper.extended_merge
 }
 
-def start_sd_handling():
+def prepare_vars_and_run_sd_handling():
     base_dir = getenv_and_log('CI_PROJECT_DIR')
     env_name = getenv_and_log('ENV_NAME')
     cluster = getenv_and_log('CLUSTER_NAME')
@@ -196,3 +196,6 @@ def download_sd_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode):
 
     sd_data_json = json.dumps(sd_data_list)
     extract_sd_from_json(env, sd_path, sd_data_json, sd_delta, sd_merge_mode)
+
+if __name__ == "__main__":
+    prepare_vars_and_run_sd_handling()
