@@ -19,6 +19,7 @@ package org.qubership.cloud.parameters.processor.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.collections4.MapUtils;
+import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.parameters.processor.ParametersProcessor;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
@@ -244,30 +245,14 @@ public class ParametersCalculationService {
     }
 
     private void filterSecuredParams(Map<String, Parameter> map, Map<String, Parameter> securedParams, Map<String, Parameter> inSecuredParams, ParameterType parameterType) {
+        ParameterUtils.splitBySecure(map, securedParams, inSecuredParams);
         for (Map.Entry<String, Parameter> entry : map.entrySet()) {
             if (parameterType == ParameterType.DEPLOY && entities.contains(entry.getKey())) {
                 securedParams.put(entry.getKey(), entry.getValue());
             }
-            if (!entities.contains(entry.getKey()) && containsSecuredParams(entry.getValue())) {
-                securedParams.put(entry.getKey(), entry.getValue());
-            } else {
+            if (entities.contains(entry.getKey())) {
                 inSecuredParams.put(entry.getKey(), entry.getValue());
             }
         }
-    }
-
-    private boolean containsSecuredParams(Parameter parameter) {
-        if (parameter.isSecured()) {
-            return true;
-        }
-
-        Object params = parameter.getValue();
-        if (params instanceof Map) {
-            return ((Map<String, Parameter>) params).values().stream().anyMatch(this::containsSecuredParams);
-        } else if (params instanceof List) {
-            return ((List<Parameter>) params).stream().anyMatch(this::containsSecuredParams);
-        }
-
-        return false;
     }
 }
