@@ -189,7 +189,7 @@ See details in [Shade Credential Files](#shade-credential-files)
 
 #### SOPS Backend
 
-For [Repository Credential Files](#repository-credential-files) :
+For **[Repository Credential Files](#repository-credential-files)**:
 
 - The `username`, `password`, and `secret` attributes of [Credential objects](/schemas/credential.schema.json) must have one of the following values:
   - `envgeneNullValue` **or**
@@ -228,7 +228,7 @@ cred-2:
     secret: secret
 ```
 
-For [Shade Credential Files](#shade-credential-files):
+For **[Shade Credential Files](#shade-credential-files)**:
 
 - The `username`, `password`, and `secret` attributes of [Credential objects](/schemas/credential.schema.json) must have one of the following values:
   - Match the pattern `ENC[.*]` (encrypted value).
@@ -261,7 +261,7 @@ cred-2:
     secret: secret
 ```
 
-For [Effective Set Credential Files](#effective-set-credential-files):
+For **[Effective Set Credential Files](#effective-set-credential-files)**:
 
 - Every non-object value (i.e., string, number, or boolean) must be either:
   - `envgeneNullValue` **or**
@@ -399,22 +399,22 @@ The hook runs on the following events:
 
 #### Hook Workflow
 
-1. Determine whether encryption is enabled in the repository.
+1. Determine whether encryption is [enabled](/docs/envgene-configs.md#configyml) in the repository.
    1. If encryption is enabled, proceed to the next step. If encryption is disabled, allow the commit.
-2. Determine the encryption backend in use.
+2. Determine the [encryption backend](/docs/envgene-configs.md#configyml) in use.
    1. If the backend is `SOPS`, proceed to the next step. If the backend is `Fernet`, allow the commit.
 3. Identify the list of files that have been changed in the commit.
 4. Filter the changed files to include only those whose paths match the following patterns:
     1. [Repository Credential Files](#repository-credential-files)
     2. [Shade Credential Files](#shade-credential-files)
     3. [Effective Set Credential Files](#effective-set-credential-files)
-5. For each file identified in the previous step, verify that all Credential objects are encrypted in accordance with the [Credential Encryption Marker](#sops-backend).
-    1. If any Credential object is not encrypted:
+5. For each file identified in the previous step, verify that all sensitive parameters  are encrypted in accordance with the [Credential Encryption Marker](#sops-backend) в соотствии со своим типом (Repository Credential Files, Shade Credential Files or Effective Set Credential Files)
+    1. If any sensitive parameters object is not encrypted:
        1. Terminate the process with a non-zero exit code.
        2. Output to stderr:
           1. The path to the file containing the unencrypted credential.
           2. The ID of the unencrypted credential.
-    2. If all Credential objects are encrypted, allow the commit.
+    2. If all sensitive parameters objects are encrypted, allow the commit.
 
 #### User Notification
 
