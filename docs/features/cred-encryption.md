@@ -408,7 +408,7 @@ The hook runs on the following events:
     1. [Repository Credential Files](#repository-credential-files)
     2. [Shade Credential Files](#shade-credential-files)
     3. [Effective Set Credential Files](#effective-set-credential-files)
-5. For each file identified in the previous step, verify that all sensitive parameters  are encrypted in accordance with the [Credential Encryption Marker](#sops-backend) в соотствии со своим типом (Repository Credential Files, Shade Credential Files or Effective Set Credential Files)
+5. For each file identified in the previous step, verify that all sensitive parameters are encrypted in accordance with the [Credential Encryption Marker](#sops-backend) and according to their type (Repository Credential Files, Shade Credential Files, or Effective Set Credential Files).
     1. If any sensitive parameters object is not encrypted:
        1. Terminate the process with a non-zero exit code.
        2. Output to stderr:
