@@ -89,7 +89,7 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
     is_encrypted = is_encrypted_SOPS(file_path)
     is_empty = is_empty_SOPS(file_path)
     if is_empty:
-        logger.info(f'Skipped encryption of {file_path}. File is empty. ')
+        logger.info(f'Skipped {mode}ion of {file_path}. File is empty. ')
         return readYaml(file_path)
     if is_encrypted and mode == "encrypt":
         logger.warning(f'File is already encrypted. Path: {file_path}')
