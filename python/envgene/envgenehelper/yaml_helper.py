@@ -3,6 +3,7 @@ import pathlib
 import os
 import jschon
 import jschon_tools
+import re
 import ruyaml
 import jsonschema
 import copy
