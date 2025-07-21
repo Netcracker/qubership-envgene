@@ -86,8 +86,9 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
     if secret_key:
         os.environ['SOPS_AGE_KEY'] = secret_key
 
-    is_encrypted, empty = is_encrypted_SOPS(file_path)
-    if empty:
+    is_encrypted = is_encrypted_SOPS(file_path)
+    is_empty = is_empty_SOPS(file_path)
+    if is_empty:
         logger.info(f'Skipped encryption of {file_path}. File is empty. ')
         return readYaml(file_path)
     if is_encrypted and mode == "encrypt":
@@ -153,11 +154,14 @@ def _dict_has_value(d, target):
             return True
     return False
 
+def is_empty_SOPS(file_path):
+    content = openYaml(file_path)
+    if not content:
+        return True
+    return False  
 
 def is_encrypted_SOPS(file_path):
     content = openYaml(file_path)
-    if not content:
-        return False, True
     if 'sops' in content.keys() or _dict_has_value(content, "valueIsSet"):
-        return True, False
-    return False, False
+        return True
+    return False
