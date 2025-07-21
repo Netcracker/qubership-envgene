@@ -1,16 +1,13 @@
-from bdb import effective
 import os
 import re
 from os import getenv, path
-from time import perf_counter
 from typing import Callable
 
-from envgenehelper.business_helper import getenv_with_error
 from .cred_files_processor import FileProcessor
 
 from .config_helper import get_envgene_config_yaml
 from .yaml_helper import openYaml, get_empty_yaml
-from .file_helper import check_file_exists, get_files_with_filter
+from .file_helper import check_dir_exists, check_file_exists, get_files_with_filter
 from .logger import logger
 
 from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
@@ -22,6 +19,7 @@ config = get_envgene_config_yaml()
 IS_CRYPT = config.get('crypt', True)
 CRYPT_BACKEND = config.get('crypt_backend', 'Fernet')
 CREATE_SHADES = config.get('crypt_create_shades', True)
+DECRYPT_REPO = config.get('crypt_decrypt_repo', False)
 
 BASE_DIR = getenv('CI_PROJECT_DIR', os.getcwd())
 VALID_EXTENSIONS = re.compile(r'\.ya?ml$')
@@ -64,6 +62,8 @@ def decrypt_file(file_path, **kwargs):
 
 
 def _handle_missing_file(file_path, default_yaml, allow_default):
+    if CREATE_SHADES and check_dir_exists(file_path):
+        return 0
     if check_file_exists(file_path):
         return 0  # sentinel value
     if not allow_default:
@@ -77,8 +77,8 @@ def _decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None,
     if res != 0:
         return res
     crypt_backend = crypt_backend if crypt_backend else CRYPT_BACKEND
-    is_crypt = is_crypt if is_crypt != None else IS_CRYPT
-    if ignore_is_crypt == False and is_crypt == False:
+    is_crypt = is_crypt if is_crypt is not None else IS_CRYPT
+    if not ignore_is_crypt and not is_crypt:
         logger.info("'crypt' is set to 'false', skipping decryption")
         return openYaml(file_path)
     return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place, public_key=public_key, mode='decrypt')
@@ -86,7 +86,7 @@ def _decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None,
 
 def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False, is_crypt=None,
                   minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False, **kwargs):
-    if minimize_diff != False:
+    if minimize_diff:
         if not old_file_path:
             raise ValueError(
                 'minimize_diff was set to true but old_file_path was not specified')
@@ -102,8 +102,8 @@ def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None,
     if res != 0:
         return res
     crypt_backend = crypt_backend if crypt_backend else CRYPT_BACKEND
-    is_crypt = is_crypt if is_crypt != None else IS_CRYPT
-    if ignore_is_crypt == False and is_crypt == False:
+    is_crypt = is_crypt if is_crypt is not None else IS_CRYPT
+    if not ignore_is_crypt and not is_crypt:
         logger.info("'crypt' is set to 'false', skipping encryption")
         return openYaml(file_path)
     return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place, public_key=public_key, mode='encrypt', minimize_diff=minimize_diff, old_file_path=old_file_path)
@@ -182,7 +182,7 @@ def check_for_encrypted_files(files):
 
 def decrypt_all_cred_files_for_env(**kwargs):
     processor = FileProcessor(config)
-    files = processor._get_files_subprocess()
+    files = processor.get_all_necessary_cred_files()
 
     if not IS_CRYPT:
         check_for_encrypted_files(files)
@@ -195,7 +195,7 @@ def decrypt_all_cred_files_for_env(**kwargs):
 
 def encrypt_all_cred_files_for_env(**kwargs):
     processor = FileProcessor(config)
-    files = processor._get_files_subprocess()
+    files = processor.get_all_necessary_cred_files()
 
     logger.debug("Attempting to encrypt(if crypt is true) next files:")
     logger.debug(files)
