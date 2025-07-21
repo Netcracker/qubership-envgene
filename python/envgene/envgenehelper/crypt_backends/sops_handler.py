@@ -14,7 +14,7 @@ from .constants import SOPS_MODES, ENCRYPTED_REGEX_STR
 
 def _run_SOPS(arg_str, return_codes_to_ignore=None):
     return_codes_to_ignore = return_codes_to_ignore if return_codes_to_ignore else []
-    sops_command = f'sops {arg_str}'
+    sops_command = f'{arg_str}'
     result = subprocess.run(sops_command, shell=True,
                             capture_output=True, text=True, timeout=10)
     if "metadata not found" in result.stderr:
@@ -55,7 +55,7 @@ def _sops_edit(file_path, new_content, public_key):
     try:
         os.chmod(editor_path, 0o777)
         os.environ['EDITOR'] = editor_path
-        sops_args = f'edit --age {public_key} {file_path}'
+        sops_args = f'sops edit --age {public_key} {file_path}'
         _run_SOPS(sops_args, [200])  # 200 is FileHasNotBeenModified error code
     finally:
         if os.path.exists(editor_path):
