@@ -3,7 +3,7 @@ from pathlib import Path
 import threading
 from time import perf_counter
 from typing import Callable
-from envgenehelper.shade_file_processor import FileProcessor
+# from envgenehelper.shade_file_processor import FileProcessor
 
 
 from .yaml_helper import addHeaderToYaml, openYaml, writeToFile, readYaml, writeYamlToFile
@@ -72,6 +72,7 @@ def split_creds_file(creds_paths_list: list[str], encryption_func: Callable, **k
     _creds_files = _read_creds_files(creds_paths_list)
     for cred_path in _creds_files.keys():
         create_shadow_creds_dir(cred_path)
+
 
     # with ThreadPoolExecutor(max_workers=cpu_count) as executor:
     #     for chunk in chunks:
