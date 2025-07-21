@@ -3,7 +3,7 @@ import re
 from os import getenv, path
 from typing import Callable
 
-from .cred_files_processor import FileProcessor
+from .cred_files_processor import get_all_necessary_cred_files
 
 from .config_helper import get_envgene_config_yaml
 from .yaml_helper import openYaml, get_empty_yaml
@@ -13,7 +13,6 @@ from .logger import logger
 from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
 from .crypt_backends.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
 from envgenehelper import shade_files_helper
-
 
 config = get_envgene_config_yaml()
 IS_CRYPT = config.get('crypt', True)
@@ -181,8 +180,7 @@ def check_for_encrypted_files(files):
 
 
 def decrypt_all_cred_files_for_env(**kwargs):
-    processor = FileProcessor(config)
-    files = processor.get_all_necessary_cred_files()
+    files = get_all_necessary_cred_files()
 
     if not IS_CRYPT:
         check_for_encrypted_files(files)
@@ -194,8 +192,7 @@ def decrypt_all_cred_files_for_env(**kwargs):
 
 
 def encrypt_all_cred_files_for_env(**kwargs):
-    processor = FileProcessor(config)
-    files = processor.get_all_necessary_cred_files()
+    files = get_all_necessary_cred_files()
 
     logger.debug("Attempting to encrypt(if crypt is true) next files:")
     logger.debug(files)
