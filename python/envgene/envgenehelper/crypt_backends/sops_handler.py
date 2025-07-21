@@ -14,7 +14,7 @@ from .constants import SOPS_MODES, ENCRYPTED_REGEX_STR
 
 def _run_SOPS(arg_str, return_codes_to_ignore=None):
     return_codes_to_ignore = return_codes_to_ignore if return_codes_to_ignore else []
-    sops_command = f'{arg_str}'
+    sops_command = f'sops {arg_str}'
     result = subprocess.run(sops_command, shell=True,
                             capture_output=True, text=True, timeout=10)
     if "metadata not found" in result.stderr:
