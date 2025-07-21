@@ -1,5 +1,6 @@
-from distutils import command
+import logging
 import os
+from pathlib import Path
 import subprocess
 import tempfile
 import shutil
@@ -8,14 +9,12 @@ from ..business_helper import getenv_with_error
 from ..yaml_helper import openYaml, readYaml, get_or_create_nested_yaml_attribute, writeYamlToFile, dumpYamlToStr
 from ..logger import logger
 
-from .constants import *
+from .constants import SOPS_MODES, ENCRYPTED_REGEX_STR
 
 
 def _run_SOPS(arg_str, return_codes_to_ignore=None):
     return_codes_to_ignore = return_codes_to_ignore if return_codes_to_ignore else []
-    sops_command = f'sops {arg_str}'
-    # _command = f'for f in /path/to/dir/*; do ' + sops_command + '; done'
-    # print(_command)
+    sops_command = f'{arg_str}'
     result = subprocess.run(sops_command, shell=True,
                             capture_output=True, text=True, timeout=10)
     if "metadata not found" in result.stderr:
@@ -87,16 +86,16 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
     if secret_key:
         os.environ['SOPS_AGE_KEY'] = secret_key
 
-    is_encrypted = is_encrypted_SOPS(file_path)
+    is_encrypted, empty = is_encrypted_SOPS(file_path)
+    if empty:
+        logger.info(f'Skipped encryption of {file_path}. File is empty. ')
+        return readYaml(file_path)
     if is_encrypted and mode == "encrypt":
         logger.warning(f'File is already encrypted. Path: {file_path}')
         return openYaml(file_path)
     if not is_encrypted and mode == "decrypt":
         logger.warning(f'File is not encrypted. Path: {file_path}')
         return openYaml(file_path)
-# f'for f in {path}; do [ -f "$f" ] && sops -d "$f" > "${{f}}.decrypted"; done'
-# for f in /path/to/dir/*; do sops -d "$f" > "$f.tmp" && mv "$f.tmp" "$f"; done
-# for f in /path/to/dir/*; do sops -i -e "$f"; done
 
     if minimize_diff and mode != "decrypt":
         result = _get_minimized_diff(file_path, old_file_path, public_key)
@@ -109,8 +108,16 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         if in_place:
             sops_args += ' --in-place'
         sops_args += f' -age {public_key} "{file_path}"'
+
+        sops_cmd = (
+            f'find {file_path} -name "*.y*ml" -print0 | '
+            f'xargs - 0 - I{{}} sops {sops_args} "{{}}"'
+        )
         try:
-            result = _run_SOPS(sops_args).stdout
+            if Path(file_path).is_file():
+                result = _run_SOPS(f'sops {sops_args}').stdout
+            if Path(file_path).is_dir():
+                result = _run_SOPS(sops_cmd).stdout
         except ValueError as e:
             logger.warning(f'{str(e)}. Path: {file_path}')
             return openYaml(file_path)
@@ -149,6 +156,8 @@ def _dict_has_value(d, target):
 
 def is_encrypted_SOPS(file_path):
     content = openYaml(file_path)
+    if not content:
+        return False, True
     if 'sops' in content.keys() or _dict_has_value(content, "valueIsSet"):
-        return True
-    return False
+        return True, False
+    return False, False

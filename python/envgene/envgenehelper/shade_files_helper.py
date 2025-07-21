@@ -35,9 +35,6 @@ def create_shadow_file(content: dict, shadow_creds_path,  cred_id: str):
     return shadow_cred_path
 
 
-def split_creds_parallel():
-    pass
-
 
 def split_creds_file(creds_path: str, encryption_func: Callable, **kwargs):
     """split_cred_file is a function to create shade files from creds file"""
@@ -56,6 +53,7 @@ def split_creds_file(creds_path: str, encryption_func: Callable, **kwargs):
             _cred_id: 'valueIsSet' for _cred_id in cred_data['data']}
         encryption_func(shadow_cred_path, **kwargs)
         writeYamlToFile(creds_path, creds)
+
     del creds
     logger.info(f'File {creds_path} was splitted and encrypted')
     return 0
