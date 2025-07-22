@@ -270,30 +270,8 @@ During this pipeline, the generated object is saved by committing it to the Inst
 
 ### Options Comparison
 
-**A:** Fast, simple, but no mapping for UI
-[+] Does not increase the execution time of the Instance repository pipeline
-[-] Does not allow the user to see the current mapping of namespace to deployPostfix
-[-] Does not require any implementation in EnvGene
-
-**B1:** Not always up-to-date mapping for UI
-[-] Increases the execution time of **each** pipeline run:
-
-- to spawning a job (~10-15 seconds)
-- calculating the structure (~1 second)
-
-[-] Does not allow the user to see the current mapping of namespace to deployPostfix for:
-
-- new Environments
-- Environments where the template structure has changed
-
-[-] Requires implementation in EnvGene
-
-**B2:** Always up-to-date mapping for UI. Most complete, but slowest
-[-] Increases the execution time of **each** pipeline run:
-
-- to spawning a job (~10-15 seconds)
-- downloading each SNAPSHOT or changed artifact (up to 5 seconds per artifact)
-- calculating the structure (~1 second)
-
-[+] Allows the user to see the current mapping of namespace to deployPostfix
-[-] Requires implementation in EnvGene
+| Option | Description | Pros | Cons |
+|--------|-------------|------|------|
+| **A**  | Fast, simple, but no mapping for UI | - Does not increase the execution time of the Instance repository pipeline<br>- Does not require any implementation in EnvGene | - Does not allow the user to see the current mapping of namespace to deployPostfix |
+| **B1** | Not always up-to-date mapping for UI |  | - Increases the execution time of **each** pipeline run:<br> • to spawning a job (~10-15 seconds)<br> • calculating the structure (~1 second)<br>- Does not allow the user to see the current mapping of namespace to deployPostfix for:<br> • new Environments<br> • Environments where the template structure has changed<br>- Requires implementation in EnvGene |
+| **B2** | Always up-to-date mapping for UI. Most complete, but slowest | - Allows the user to see the current mapping of namespace to deployPostfix | - Increases the execution time of **each** pipeline run:<br> • to spawning a job (~10-15 seconds)<br> • downloading each SNAPSHOT or changed artifact (up to 5 seconds per artifact)<br> • calculating the structure (~1 second)<br>- Requires implementation in EnvGene |
