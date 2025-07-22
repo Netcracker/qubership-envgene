@@ -12,6 +12,18 @@
     path: "{{ _paramset_target_path }}"
     block: "{{ lookup('template', _paramset_path) }}"
     create: yes
+  register: paramset_result
+  failed_when: false
+
+- name: Log successful paramset generation
+  debug:
+    msg: "Successfully generated paramset: {{ _paramset_template_name }}"
+  when: not paramset_result.failed
+
+- name: Log skipped paramset due to missing variables
+  debug:
+    msg: "Skipped paramset {{ _paramset_template_name }} - template variables not available in current environment"
+  when: paramset_result.failed
 
 - name: Delete jinja template {{ _paramset_path}} after rendering
   ansible.builtin.file:
