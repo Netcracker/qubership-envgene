@@ -53,15 +53,3 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
 8. **git_commit**:
    - **Condition**: Runs if there are jobs requiring changes to the repository AND [`IS_TEMPLATE_TEST: false`](/docs/instance-pipeline-parameters.md#env_template_test)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
-
-## Instance on-commit pipeline
-
-An additional pipeline of the instance repository in which only the [env_structure](/docs/features/environments-sructure.md) object is generated.
-
-This pipeline is triggered by a commit into EnvGene Instance repository event.
-
-### [Instance on-commit pipeline] Job sequence
-
-1. **env_structure_generation_job**:
-   - **Condition**: Always runs
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
