@@ -3,16 +3,22 @@
 
 - [Environments Structure](#environments-structure)
   - [Problem Statement](#problem-statement)
-  - [Requirements](#requirements)
   - [Proposed Approach](#proposed-approach)
     - [Option A. Consumer Calculated Environment List](#option-a-consumer-calculated-environment-list)
       - [\[Option A\] Use Cases](#option-a-use-cases)
+        - [\[Option A\] `app:ver` Deploy](#option-a-appver-deploy)
+        - [\[Option A\] SD Deploy](#option-a-sd-deploy)
     - [Option B. Environments Structure as Separate Object](#option-b-environments-structure-as-separate-object)
       - [\[Option B\] Environments Structure Generation](#option-b-environments-structure-generation)
         - [Generation Option 1](#generation-option-1)
         - [Generation Option 2](#generation-option-2)
         - [On commit Environments Structure generation](#on-commit-environments-structure-generation)
       - [\[Option B\] Use Cases](#option-b-use-cases)
+        - [\[Option B\] On-commit Environments Structure generation. New Environment. No artifact download](#option-b-on-commit-environments-structure-generation-new-environment-no-artifact-download)
+        - [\[Option B\] On-commit Environments Structure generation. New Environment. Artifact download](#option-b-on-commit-environments-structure-generation-new-environment-artifact-download)
+        - [\[Option B\] On-commit Environments Structure generation. Template version change/SNAPSHOT version](#option-b-on-commit-environments-structure-generation-template-version-changesnapshot-version)
+        - [\[Option B\] `app:ver` Deploy](#option-b-appver-deploy)
+        - [\[Option B\] SD Deploy](#option-b-sd-deploy)
     - [Options Comparison](#options-comparison)
 
 ## Problem Statement
@@ -28,14 +34,6 @@ EnvGene is the main source of this information and must provide it.
 
 Getting this information should not require specifying a particular Environment name.
 
-## Requirements
-
-1. Environments Structure generation operation must complete within 1 second (excluding GitLab/GitHub runner span time) for a repository with:
-   1. 50 clusters
-   2. 10 environments in each cluster
-   3. 5 namespaces in each environment
-2. The Environments Structure generation job logs must clearly show how long the job took
-
 ## Proposed Approach
 
 ### Option A. Consumer Calculated Environment List
@@ -47,7 +45,7 @@ Getting this information should not require specifying a particular Environment 
 
 #### [Option A] Use Cases
 
-1. `app:ver` Deployment
+##### [Option A] `app:ver` Deploy
 
    1. The user opens the Environment selection view in the orchestrating deploy pipeline
    2. The orchestrating deploy pipeline retrieves the list of Environments in EnvGene Instance repository:
@@ -67,7 +65,7 @@ Getting this information should not require specifying a particular Environment 
    11. The orchestrating deploy pipeline retrieves the Effective Set
    12. The orchestrating deploy pipeline generates the deploy SD (deploy-sd calculates deployment waves for deploy-app)
 
-2. SD Deploy
+##### [Option A] SD Deploy
 
    1. The user opens the Environment selection view in the orchestrating deploy pipeline
    2. The orchestrating deploy pipeline retrieves the list of Environments in EnvGene Instance repository:
@@ -191,7 +189,7 @@ During this pipeline, the generated object is saved by committing it to the Inst
 
 #### [Option B] Use Cases
 
-1. On-commit Environments Structure generation. New Environment. No artifact download
+##### [Option B] On-commit Environments Structure generation. New Environment. No artifact download
 
    1. User creates Environment Inventory for a new Environment (optional)
    2. User pushes changes to the EnvGene Instance repository
@@ -216,7 +214,7 @@ During this pipeline, the generated object is saved by committing it to the Inst
                   deployPostfix: bss
           ```
 
-2. On-commit Environments Structure generation. New Environment. Artifact download
+##### [Option B] On-commit Environments Structure generation. New Environment. Artifact download
 
    1. User creates Environment Inventory for a new Environment (optional)
    2. User pushes changes to the EnvGene Instance repository
@@ -225,7 +223,7 @@ During this pipeline, the generated object is saved by committing it to the Inst
          1. Pipeline downloads the template artifact and reads namespaces from it (does not generate the Environment, just reads from the template)
       2. Generates a complete Environments Structure for all Environments, including the new one
 
-3. On-commit Environments Structure generation. Template version change/SNAPSHOT version
+##### [Option B] On-commit Environments Structure generation. Template version change/SNAPSHOT version
 
    1. User changes the number of namespaces or `deployPostfix` in the template
    2. User pushes changes to the EnvGene Instance repository (sets new template version)
@@ -234,7 +232,7 @@ During this pipeline, the generated object is saved by committing it to the Inst
          1. Pipeline downloads the template artifact and reads namespaces from it (does not generate the Environment, just reads from the template)
       2. Generates a complete Environments Structure for all Environments
 
-4. `app:ver` Deployment
+##### [Option B] `app:ver` Deploy
 
    1. The user opens the Environment selection view in the orchestrating deploy pipeline
    2. The orchestrating deploy pipeline retrieves the list of Environments in EnvGene Instance repository:
@@ -254,7 +252,7 @@ During this pipeline, the generated object is saved by committing it to the Inst
    11. The orchestrating deploy pipeline retrieves the Effective Set
    12. The orchestrating deploy pipeline generates the deploy SD (deploy-sd calculates deployment waves for deploy-app)
 
-5. SD deployment
+##### [Option B] SD Deploy
 
    1. The user opens the Environment selection view in the orchestrating deploy pipeline
    2. The orchestrating deploy pipeline retrieves the list of Environments in EnvGene Instance repository:
@@ -272,12 +270,12 @@ During this pipeline, the generated object is saved by committing it to the Inst
 
 ### Options Comparison
 
-**A:**
+**A:** Fast, simple, but no mapping for UI
 [+] Does not increase the execution time of the Instance repository pipeline
 [-] Does not allow the user to see the current mapping of namespace to deployPostfix
 [-] Does not require any implementation in EnvGene
 
-**B1:**
+**B1:** Not always up-to-date mapping for UI
 [-] Increases the execution time of **each** pipeline run:
 
 - to spawning a job (~10-15 seconds)
@@ -290,7 +288,7 @@ During this pipeline, the generated object is saved by committing it to the Inst
 
 [-] Requires implementation in EnvGene
 
-**B2:**
+**B2:** Always up-to-date mapping for UI. Most complete, but slowest
 [-] Increases the execution time of **each** pipeline run:
 
 - to spawning a job (~10-15 seconds)
