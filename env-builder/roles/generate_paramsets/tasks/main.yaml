@@ -1,4 +1,5 @@
 ---
+
 - name: Get paramset template name from {{ _paramset_path }}
   set_fact:
     _paramset_template_name: "{{ _paramset_path.split('/')|last|replace('.yml.j2', '')|replace('.yaml.j2', '') }}"
