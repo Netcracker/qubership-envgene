@@ -7,7 +7,7 @@
       - [Tenant Template](#tenant-template)
       - [Cloud Template](#cloud-template)
       - [Namespace Template](#namespace-template)
-      - [ParameterSet](#parameterset)
+      - [ParameterSet (in Template repository)](#parameterset-in-template-repository)
       - [Resource Profile Override (in Template)](#resource-profile-override-in-template)
       - [Composite Structure Template](#composite-structure-template)
     - [System Credentials File (in Template repository)](#system-credentials-file-in-template-repository)
@@ -20,12 +20,13 @@
       - [Resource Profile Override (in Instance)](#resource-profile-override-in-instance)
       - [Composite Structure](#composite-structure)
       - [Environment Credentials File](#environment-credentials-file)
-      - [Solution Descriptor](#solution-descriptor)
+    - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
       - [`secret`](#secret)
     - [Shared Credentials File](#shared-credentials-file)
     - [System Credentials File (in Instance repository)](#system-credentials-file-in-instance-repository)
+      - [ParameterSet (in Instance repository)](#parameterset-in-instance-repository)
     - [Cloud Passport](#cloud-passport)
       - [Main File](#main-file)
       - [Credential File](#credential-file)
@@ -150,7 +151,7 @@ The Namespace template must be developed so that after Jinja rendering, the resu
 **Example:**
 
 ```yaml
-name: "{{ current_env.name }}-core"
+name: "{{ current_env.name }}-{{ current_ns.deployPostfix }}"
 credentialsId: ""
 labels:
   - "solutionInstance-{{current_env.name}}"
@@ -158,6 +159,7 @@ labels:
 isServerSideMerge: false
 cleanInstallApprovalRequired: false
 mergeDeployParametersAndE2EParameters: false
+deployPostfix: core
 profile:
   name: dev-override
   baseline: dev
@@ -385,6 +387,13 @@ cleanInstallApprovalRequired: boolean
 # Whether to merge deployParameters and e2eParameters
 # Controls parameter merging behavior during effective set generation
 mergeDeployParametersAndE2EParameters: boolean
+# Mandatory
+# Defines the role of the namespace in the solution
+# Used for:
+# 1. Linking the Solution Descriptor components and Namespace objects during effective set generation
+# 2. Determining the name of the parent folder for the Namespace when generating the Environment Instance
+# The value comes from the namespace template if specified; if not specified, the name of the namespace template file (without extension) is used
+deployPostfix: core
 # Optional
 # Resource profile configuration for the namespace
 # Used to manage performance parameters of applications in this namespace

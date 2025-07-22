@@ -72,6 +72,16 @@
         false
       ]
     },
+    "deployPostfix": {
+      "type": "string",
+      "title": "deployPostfix",
+      "description": "The identifier for Namespace role",
+      "examples": [
+        "core",
+        "oss",
+        "bss"
+      ]
+    },
     "profile": {
       "type": [
         "object",
@@ -106,16 +116,6 @@
           ]
         }
       }
-    },
-    "deployPostfix": {
-      "type": "string",
-      "title": "deployPostfix",
-      "description": "The identifier for Namespace role",
-      "examples": [
-        "core",
-        "oss",
-        "bss"
-      ]
     },
     "deployParameters": {
       "type": "object",
