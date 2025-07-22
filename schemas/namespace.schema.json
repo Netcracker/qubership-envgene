@@ -107,6 +107,16 @@
         }
       }
     },
+    "deployPostfix": {
+      "type": "string",
+      "title": "deployPostfix",
+      "description": "The identifier for Namespace role",
+      "examples": [
+        "core",
+        "oss",
+        "bss"
+      ]
+    },
     "deployParameters": {
       "type": "object",
       "title": "Deploment parameters",
