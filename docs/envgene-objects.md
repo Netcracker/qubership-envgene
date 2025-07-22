@@ -141,6 +141,48 @@ TBD
 
 #### Namespace Template
 
+This is a Jinja template file used to render the [Namespace](#namespace) object. It defines namespace-level parameters for Environment Instance generation.
+
+The Namespace template must be developed so that after Jinja rendering, the result is a valid Namespace object according to the [schema](/schemas/namespace.schema.json).
+
+[Macros](/docs/template-macros.md) are available for use when developing the template.
+
+**Example:**
+
+```yaml
+name: "{{ current_env.name }}-core"
+credentialsId: ""
+labels:
+  - "solutionInstance-{{current_env.name}}"
+  - "solution-{{current_env.tenant}}"
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+profile:
+  name: dev-override
+  baseline: dev
+deployParameters:
+  AIRFLOW_REDIS_DB: "1"
+  ARTIFACTORY_BASE_URL: "https://artifactory.qubership.org"
+  ESCAPE_SEQUENCE: "true"
+e2eParameters:
+  QTP_DYNAMIC_PARAMETERS: ""
+technicalConfigurationParameters:
+  DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: "${DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD}"
+  DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: "${DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME}"
+  DBAAS_TEMP_PASS: "${DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD}"
+  MAAS_DEPLOYER_CLIENT_PASSWORD: "${MAAS_CREDENTIALS_PASSWORD}"
+  MAAS_DEPLOYER_CLIENT_USERNAME: "${MAAS_CREDENTIALS_USERNAME}"
+deployParameterSets:
+  - core-deploy-common
+{% if current_env.additionalTemplateVariables.site | default ('offsite') == 'offsite' %}
+  - core-deploy-offsite
+{% else %}
+  - core-deploy-onsite
+{% endif %}
+technicalConfigurationParameterSets:
+  - core-runtime
+```
 
 #### ParameterSet (in Template repository)
 
