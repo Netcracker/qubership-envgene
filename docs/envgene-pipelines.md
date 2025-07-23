@@ -47,7 +47,7 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 7. **generate_effective_set**:
-   - **Condition**: Runs if [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set) OR [`SD_VERSION`] OR [`SD_DATA`]
+   - **Condition**: Runs if [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set) OR [`SD_VERSION`](/docs/instance-pipeline-parameters.md#sd_version) OR [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data)
    - **Docker image**: [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
 
 8. **git_commit**:
