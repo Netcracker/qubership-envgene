@@ -8,7 +8,7 @@ from models import PayloadEntry, RotationResult
 from utils.yaml_utils import convert_json_to_yaml, write_yaml_to_file
 from utils.file_utils import  scan_and_get_yaml_files
 from utils.error_constants import  *
-from utils.cred_utils import decrypt_file, update_cred_content, write_updated_cred_into_file, get_shared_cred_files, read_cred_files, collects_shared_credentials
+from utils.cred_utils import decrypt_file, update_cred_content, write_updated_cred_into_file, read_shared_cred_files, read_env_cred_files, collect_shared_credentials
 from core_rotation import process_entry_in_payload
 from envgenehelper import getenv_with_error, crypt
 from envgenehelper.errors import ValidationError,  RuntimeError, ValueError
@@ -57,34 +57,38 @@ def cred_rotation():
 
     encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
     logger.info(f"Detected encryption={is_encrypted}, type={encrypt_type}")
-    if encrypt_type == 'Fernet':
+    if is_encrypted and encrypt_type == 'Fernet':
         raise ValidationError(ErrorMessages.INVALID_ENCRYPT_TYPE, error_code=ErrorCodes.INVALID_CONFIG_CODE)
     
     base_env_path = f"{work_dir}/environments/{cluster_name}/{env_name}"
     cluster_path = f"{work_dir}/environments/{cluster_name}"
-    env_cred_file = f"{base_env_path}/Credentials/credentials.yml"
     output_path = f"{work_dir}/affected-sensitive-parameters.yaml"
     
     creds_path = "/tmp/payload.yml"
     logger.info(f"base env path is {base_env_path}")
     convert_json_to_yaml(creds_path, cred_payload)
+
     #Decrypt Payload file if encrypted
     payload_data = decrypt_file(envgene_age_public_key, creds_path, True, 'SOPS', ErrorMessages.PAYLOAD_DECRYPT_ERROR, ErrorCodes.INVALID_CONFIG_CODE) 
-    
-    shared_creds =  collects_shared_credentials(base_env_path)
+
     fileread = time.time()
-    final_creds_map = {}
-    get_shared_cred_files(shared_creds, base_env_path, work_dir, final_creds_map)
-    shared_content_map = read_cred_files(final_creds_map, is_encrypted, envgene_age_public_key)
-    ns_files_map = scan_and_get_yaml_files(cluster_path, env_name)
+    #Scan and read all required files
+    st1 = time.time()
+    ns_files_map, env_files_map, env_creds_files = scan_and_get_yaml_files(cluster_path)
+    logger.info(f"✅ st1 Completed in {round(time.time() - st1, 2)} seconds.")
+    st2 = time.time()
+    shared_creds =  collect_shared_credentials(env_files_map)
+    logger.info(f"✅ st2 Completed in {round(time.time() - st2, 2)} seconds.")
+    st3 = time.time()
+    shared_content_map = read_shared_cred_files(shared_creds, cluster_path, work_dir, is_encrypted, envgene_age_public_key)
+    logger.info(f"✅ st3 Completed in {round(time.time() - st3, 2)} seconds.")
+    st4 = time.time()
+    env_cred_map = read_env_cred_files(env_creds_files, is_encrypted, envgene_age_public_key)
+    logger.info(f"✅ st4 Completed in {round(time.time() - st4, 2)} seconds. {len(env_creds_files)}")
     print_memory_usage()
     print_deep_map_size("ns_files_map", ns_files_map)
-    env_cred_map ={}
-    #Decrypt Environment credential file if encrypted
-    env_cred_map[env_cred_file] = decrypt_file(envgene_age_public_key, env_cred_file, False, encrypt_type, ErrorMessages.FILE_DECRYPT_ERROR, ErrorCodes.INVALID_CONFIG_CODE)  
-
-    
     logger.info(f"✅ Fileread Completed in {round(time.time() - fileread, 2)} seconds.")
+
     payload_raw =  payload_data.get("rotation_items", [])
     payload_objects: List[PayloadEntry] = [PayloadEntry.from_dict(entry) for entry in payload_raw]
     
@@ -106,6 +110,7 @@ def cred_rotation():
         raise ValidationError(ErrorMessages.EMPTY_PARAM, error_code=ErrorCodes.INVALID_STATE_CODE)
 
     if not creds_rotation_enabled:
+        logger.info(f"✅ Cred Rotation without file updation completed in {round(time.time() - start, 2)} seconds.")
         raise ValidationError(ErrorMessages.CRED_UPDATION_FALSE.format(file=output_path), error_code=ErrorCodes.INVALID_STATE_CODE)
     if processed_cred_and_files:
         updated_content, original_content = update_cred_content(processed_cred_and_files)

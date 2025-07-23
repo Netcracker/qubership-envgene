@@ -25,9 +25,9 @@ def process_entry_in_payload(
     logger.info(f"Processing namespace={entry.namespace}, application={entry.application}, param_key={entry.parameter_key}, context={entry.context}")
     #Get target application or namespace file
     if entry.application:
-        target = get_app_content(ns_files_map, entry.namespace, entry.application)
+        target = get_app_content(ns_files_map, entry.namespace, entry.application, env)
     else:
-        target = get_ns_content(ns_files_map, entry.namespace)
+        target = get_ns_content(ns_files_map, entry.namespace, env)
 
     if not target:
         raise ReferenceError(ErrorMessages.ENTITY_FILE_NOT_FOUND.format(param_key=entry.parameter_key), error_code=ErrorCodes.FILE_NOT_FOUND_CODE)
