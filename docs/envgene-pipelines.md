@@ -35,7 +35,7 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 4. **env_inventory_generation**:
-   - **Condition**: Runs if [`IS_TEMPLATE_TEST: false`](/docs/instance-pipeline-parameters.md#env_template_test) AND ([ENV_SPECIFIC_PARAMETERS]() OR [ENV_TEMPLATE_NAME]())
+   - **Condition**: Runs if [`IS_TEMPLATE_TEST: false`](/docs/instance-pipeline-parameters.md#env_template_test) AND ([ENV_SPECIFIC_PARAMETERS](/docs/instance-pipeline-parameters.md#env_specific_params) OR [ENV_TEMPLATE_NAME](/docs/instance-pipeline-parameters.md#env_template_name))
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 5. **credential_rotation**:
