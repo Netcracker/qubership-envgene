@@ -89,6 +89,11 @@ def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
 def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map, env_specific_params_map, header_text="", env_instances_dir=None):
     params = copy.deepcopy(paramsTemplate[parametersTag])
     for pset in paramsTemplate[paramsetsTag]:
+        # Check if paramset exists in paramset_map before accessing it
+        if pset not in paramset_map:
+            logger.warning(f"Paramset '{pset}' referenced in {paramsetsTag} for template '{templatePath}' was not found. It may have been skipped due to missing variables.")
+            continue
+            
         paramSetDefinition = paramset_map[pset]
         for entry in paramSetDefinition:
             paramSetFile = entry["filePath"]
