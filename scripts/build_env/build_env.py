@@ -185,24 +185,36 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
             logger.info(f"Attaching env-specific deployment paramsets: {dump_as_yaml_format(envSpecificParamsets)} to template {templateName}")
             templateContent["deployParameterSets"] = templateContent["deployParameterSets"] + envSpecificParamsets
             for pset in envSpecificParamsets:
-                for value in paramset_map[pset]:
-                    value["envSpecific"] = True
+                # Check if paramset exists in paramset_map before accessing it
+                if pset in paramset_map:
+                    for value in paramset_map[pset]:
+                        value["envSpecific"] = True
+                else:
+                    logger.warning(f"Paramset '{pset}' referenced in envSpecificParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
     if "envSpecificE2EParamsets" in envDefinitionYaml["envTemplate"]:
         if templateName in envDefinitionYaml["envTemplate"]["envSpecificE2EParamsets"]:
             envSpecificParamsets = envDefinitionYaml["envTemplate"]["envSpecificE2EParamsets"][templateName]
             logger.info(f"Attaching env-specific E2E paramsets: {dump_as_yaml_format(envSpecificParamsets)} to template {templateName}")
             templateContent["e2eParameterSets"] = templateContent["e2eParameterSets"] + envSpecificParamsets
             for pset in envSpecificParamsets:
-                for value in paramset_map[pset]:
-                    value["envSpecific"] = True
+                # Check if paramset exists in paramset_map before accessing it
+                if pset in paramset_map:
+                    for value in paramset_map[pset]:
+                        value["envSpecific"] = True
+                else:
+                    logger.warning(f"Paramset '{pset}' referenced in envSpecificE2EParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
     if "envSpecificTechnicalParamsets" in envDefinitionYaml["envTemplate"]:
         if templateName in envDefinitionYaml["envTemplate"]["envSpecificTechnicalParamsets"]:
             envSpecificParamsets = envDefinitionYaml["envTemplate"]["envSpecificTechnicalParamsets"][templateName]
             logger.info(f"Attaching env-specific technical paramsets: {dump_as_yaml_format(envSpecificParamsets)} to template {templateName}")
             templateContent["technicalConfigurationParameterSets"] = templateContent["technicalConfigurationParameterSets"] + envSpecificParamsets
             for pset in envSpecificParamsets:
-                for value in paramset_map[pset]:
-                    value["envSpecific"] = True
+                # Check if paramset exists in paramset_map before accessing it
+                if pset in paramset_map:
+                    for value in paramset_map[pset]:
+                        value["envSpecific"] = True
+                else:
+                    logger.warning(f"Paramset '{pset}' referenced in envSpecificTechnicalParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
     return result
     
 def processTemplate(templatePath, templateName, env_instances_dir, schema_path, paramset_map, env_specific_params_map, resource_profiles_map=None, header_text="", process_env_specific=True):
