@@ -1,0 +1,11 @@
+id: "env-001"
+name: "clusterA-env-1-composite-structure"
+version: 0
+baseline:
+  name: "env-1-core"
+  type: "namespace"
+satellites:
+  - name: "env-1-bss"
+    type: "namespace"
+  - name: "env-1-oss"
+    type: "namespace"
