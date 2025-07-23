@@ -80,6 +80,23 @@ Failed to parse JSON content in CRED_ROTATION_PAYLOAD. Error:
 Extra data: line 2 column 18 (char 18)
 
 This indicates invalid json content in payload. Please check the payload.
+
+[ENVGENE-4002] Invalid configuration format: Failed to parse JSON content in CRED_ROTATION_PAYLOAD. Error:
+ Extra data: line 2 column 18.
+
+ This indicates input payload provided is in wrong format.It should be given as json string Please check the payload.
+
+ [ENVGENE-4002] Invalid configuration format: Current encryption type is Fernet. Only SOPS is supported for CRED_ROTATION_PAYLOAD and for encrypting/decrypting credential files.Please refer to the configuration at CI_PROJECT_DIR/configurations/config.yaml.
+
+  This indicates that encryption type given in config.yaml is 'Fernet'. Since SOPS is only supported, Only SOPS can be used in cred rotation job to decrypt and encrypt cred rotation payload and credential files.
+
+  [ENVGENE-4002] Invalid configuration format: Invalid configuration format.Failed to Encrypt the credential file {file} due to {error}
+
+  This indicates that Something went wrong while trying to encrypt the credential files back after file updation
+
+  [ENVGENE-4002] Invalid configuration format: Invalid configuration format.Failed to Decrypt the credential file {file} due to {error}
+
+  This indicates that Something went wrong while trying to decrypt the credential files. Please check if the file was encrypted with Fernet and config has it as SOPS. 
 ```
 
 - **Resolution**:
@@ -102,6 +119,14 @@ This indicates invalid json content in payload. Please check the payload.
 Credential macro not found in target file <file> in the context <context>.
 
 Points to absence of credential pattern eg: "${creds.get(<credid>).username} .Please verify the parameter key in target file.
+
+[ENVGENE-4003] Missing required configuration field: Parameter key <param> not found in environment instance for the given context under specified namespace or application in cred rotation payload.
+
+Points to absence of target parameter given in cred rotation payload. Recheck if the target parameter is actually present in file.
+
+[ENVGENE-4003] Missing required configuration field: Context deployment not found in <file> for key <param>. Please check the context for the parameter.
+
+This indicates that context value given in payload is not present in target file. Recheck the files  if this context is available.
 ```
 
 - **Resolution**:
@@ -120,9 +145,14 @@ Points to absence of credential pattern eg: "${creds.get(<credid>).username} .Pl
 
 ```text
 [ENVGENE-4004] Error: Termination condition encountered
-No affected parameters found for the given CRED_ROTATION_PAYLOAD in the current environment instance. Hence Terminating the job
+No affected parameters found for the given CRED_ROTATION_PAYLOAD in the current environment instance. Hence Terminating the job.
 
-The error denotes that there are parameters that had the same cred id as target parameter. Please check if parameter key and other details are correct in payload
+The error denotes that there are parameters that had the same cred id as target parameter. Please check if parameter key and other details are correct in payload.
+
+[ENVGENE-4004] Invalid state for job completion: Affected parameters have been identified. You can find the list of affected parameters in the artifact of this job, in the file <artifcat location>. Credentials updates are skipped because CRED_ROTATION_FORCE is not enabled. Terminating the job.
+
+This error denotes that CRED_ROTATION_FORCE is set as False by user and hence no file updates are done and job will be terminated.
+
 ```
 
 - **Resolution**:
@@ -189,25 +219,6 @@ This indicate that the namespace file is not present in namespace directory . Pl
 - **Resolution**:
 
 1. Ensure environment folder hierarchy follows standard layout
-
-#### ENVGENE-8004: Duplicate Credential Files
-
-- **ID**: ENVGENE-8004
-- **Component**: Credential Rotation CLI
-- **When**: During lookup of shared credential files in cred rotation job
-- **What**: Raised when multiple shared credential files match a single credential name
-- **Error**:
-
-```text
-[ENVGENE-8004] Error: Duplicate Files Found
-<no of files> shared credential files found for: <shared creds name> in the environment instance.
-
-This denotes that there are more than one shared credential files of same name detected in same level.Please remove the duplicate files
-```
-
-- **Resolution**:
-
-1. Only one shared credential file is allowed per level. Please remove any duplicates.
 
 ---
 

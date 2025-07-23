@@ -3,9 +3,9 @@ import os
 import copy
 import re
 from concurrent.futures import ProcessPoolExecutor
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Tuple, Optional, Set
 from models import CredMap
-from .yaml_utils import get_nested_target_key
+from .yaml_utils import get_nested_target_key, get_content_form_file
 from .file_utils import openJson
 from pathlib import Path
 from envgenehelper import crypt, writeYamlToFile, openYaml, getEnvDefinition, dump_as_yaml_format
@@ -14,11 +14,16 @@ from utils.error_constants import  *
 from envgenehelper.errors import ValidationError, ValueError, ReferenceError
 
 
-def collects_shared_credentials(instance_dir: str) -> List[str]:
-    inventory_yaml = getEnvDefinition(instance_dir)
-    shared_cred_names = inventory_yaml.get("envTemplate", {}).get("sharedMasterCredentialFiles", [])
+def collect_shared_credentials(env_files_map: Dict[str, Any]) -> Set[str]:
+    shared_cred_names: Set[str] = set()
+    for file_content in env_files_map.values():
+        creds = file_content.get("envTemplate", {}).get("sharedMasterCredentialFiles", [])
+        if creds:
+            shared_cred_names.update(creds)
+    
     if shared_cred_names:
-        logger.info(f"Inventory shared master creds list:\n{dump_as_yaml_format(shared_cred_names)}")
+        logger.info(f"✅ Inventory shared master creds list collected from all envs:\n{dump_as_yaml_format(sorted(shared_cred_names))}")
+    
     return shared_cred_names
 
 
@@ -39,63 +44,44 @@ def extract_credential(target_key: str, yaml_content: Dict[str, Any], cred_field
         return match.group(0), match.group(1)
     return None, None
 
-def get_shared_cred_files(shared_creds: List[str], source_dir: str, stop_dir: str, final_creds_map: Dict[str, str]):
-    source_path = Path(source_dir).resolve()
-    stop_path = Path(stop_dir).resolve()
+def read_shared_cred_files(shared_creds: Set[str], cluster_dir: str, work_dir: str,  is_encrypted: str, public_key: str):
+    shared_creds_files_set = set()
+    dirs_to_scan = [f'{work_dir}/environments', f'{work_dir}/environments/credentials', f'{work_dir}/environments/Credentials']
+    allowed_exts = ('.yml', '.yaml', '.json')
+    source_path = Path(cluster_dir).resolve()
+    scan_dir_for_creds(source_path, shared_creds, shared_creds_files_set, is_encrypted, public_key)
+    files = [entry.path for d in dirs_to_scan if os.path.exists(d) for entry in os.scandir(d) if entry.is_file() and entry.name.endswith(allowed_exts) and os.path.splitext(entry.name)[0] in shared_creds]
+    shared_creds_files_set.update(files)
+    shared_content_map = read_env_cred_files(shared_creds_files_set, is_encrypted, public_key)
+    return shared_content_map
 
-    remaining_creds = set(shared_creds)
 
-    while True:
-        if stop_path not in source_path.parents and source_path != stop_path:
-            raise ReferenceError(ErrorMessages.INVALID_PATH.format(stop_dir=stop_dir, source_path=source_path), ErrorCodes.INVALID_PATH_CODE)
-        logger.info(f"Searching for shared credentials in {source_path}")
-        found_map = {}
-        scan_dir_for_creds(source_path, remaining_creds, found_map)
-
-        remaining_creds = decide_to_scan(found_map, final_creds_map, remaining_creds)
-
-        if not remaining_creds or source_path == stop_path:
-            break
-
-        source_path = source_path.parent
-
-def decide_to_scan(found_map: Dict[str, List[str]], final_creds_map: Dict[str, str], remaining_creds: set) -> set:
-    next_round = set()
-    for cred_name in remaining_creds:
-        matches = found_map.get(cred_name, [])
-        if len(matches) == 1:
-            final_creds_map[cred_name] = matches[0]
-        elif len(matches) > 1:
-            logger.error(f"Duplicate credential file '{cred_name}' found:\n\t" + "\n\t".join(matches))
-            raise ReferenceError(ErrorMessages.DUPLICATE_FILE_ERROR.format(matches=len(matches), cred_name=cred_name), ErrorCodes.DUPLICATE_FILES_CODE)
-        else:
-            next_round.add(cred_name)
-            logger.info(f"Credential '{cred_name}' not found in current dir. Will scan upwards.")
-    return next_round
-
-def scan_dir_for_creds(path: Path, shared_creds: set, found_map: Dict[str, List[str]]):
+def scan_dir_for_creds(path: Path, shared_creds: set, shared_creds_files_set: List[str], is_encrypted: str, public_key: str):
     for entry in os.scandir(path):
         if entry.is_dir(follow_symlinks=False):
-            scan_dir_for_creds(Path(entry.path), shared_creds, found_map)
+            scan_dir_for_creds(Path(entry.path), shared_creds, shared_creds_files_set, is_encrypted, public_key)
         elif entry.is_file(follow_symlinks=False) and entry.name.endswith((".yml", ".yaml", ".json")):
             name_wo_ext = os.path.splitext(entry.name)[0]
-            if name_wo_ext in shared_creds:
-                found_map.setdefault(name_wo_ext, []).append(entry.path)
+            if name_wo_ext in shared_creds and entry.path not in shared_creds_files_set:
+                logger.debug(f"✅ Found shared credential file: {entry.path}")
+                shared_creds_files_set.add(entry.path)
 
 
-def read_cred_files(final_creds_map, is_encrypted, public_key):
-    shared_creds_map = {}
-    for cred_name, filepath in final_creds_map.items():
-        if is_encrypted:
-            content = decrypt_file(public_key, filepath, True, 'SOPS', ErrorMessages.FILE_DECRYPT_ERROR, ErrorCodes.INVALID_CONFIG_CODE) 
+def read_env_cred_files(creds_files, is_encrypted, public_key):
+    return {
+        filepath: decrypt_and_get_content(is_encrypted, public_key, filepath)
+        for filepath in creds_files
+    }
+
+def decrypt_and_get_content(is_encrypted, public_key, filepath):
+    if is_encrypted:
+        content = decrypt_file(public_key, filepath, True, 'SOPS', ErrorMessages.FILE_DECRYPT_ERROR, ErrorCodes.INVALID_CONFIG_CODE) 
+    else:
+        if filepath.endswith(".json"):
+            content = openJson(filepath)
         else:
-            if filepath.endswith(".json"):
-                content = openJson(filepath)
-            else:
-                content = openYaml(filepath)
-
-        shared_creds_map[filepath] = content
-    return shared_creds_map
+            content = openYaml(filepath)
+    return content
 
 
 def decrypt_file(envgene_age_public_key, file_path, in_place, crypt_backend, error_msg, error_code):

@@ -2,7 +2,6 @@
 from typing import Any, Dict, List, Optional, Tuple
 from functools import lru_cache
 from models import AffectedParameter
-from utils.yaml_utils import get_content_form_file
 from pathlib import Path, PurePath
 import envgenehelper.logger as logger
 from utils.error_constants import  *
@@ -69,29 +68,32 @@ def find_in_yaml(data: dict, search_pattern: str, is_target: bool, target_key: s
 
 def get_ns_content(
     yaml_content_map: Dict[str, Dict[str, Any]],
-    namespace: str
+    namespace: str,
+    env_name: str
 ) -> Optional[Tuple[str, Dict[str, Any]]]:
-    for file_name, content in yaml_content_map.items():
-    
-        if file_name.endswith(("namespace.yml", "namespace.yaml")) and content:
+    for file_path, content in yaml_content_map.items():
+        if f"/{env_name}/Namespaces" not in file_path.replace("\\", "/"):
+            continue
+        if file_path.endswith(("namespace.yml", "namespace.yaml")) and content:
             if namespace == content.get("name"):
-                return file_name, content
+                return file_path, content
     return None
 
 
 def get_app_content(
     yaml_content_map: Dict[str, Dict[str, Any]],
     namespace: str,
-    app: str
+    app: str,
+    env_name: str
 ) -> Optional[Tuple[str, Dict[str, Any]]]:
-    for file_name, content in yaml_content_map.items():
-        if file_name.endswith(("namespace.yml", "namespace.yaml")) or content is None:
+    for file_path, content in yaml_content_map.items():
+        if file_path.endswith(("namespace.yml", "namespace.yaml")) or content is None or f"/{env_name}/Namespaces" not in file_path.replace("\\", "/"):
             continue
 
         if app != content.get("name"):
             continue
 
-        parent_dir = Path(file_name).parent.parent
+        parent_dir = Path(file_path).parent.parent
         ns_files = [parent_dir / "namespace.yaml", parent_dir / "namespace.yml"]
         ns_content = find_namespace(yaml_content_map, ns_files)
 
@@ -99,7 +101,7 @@ def get_app_content(
             raise ReferenceError(ErrorMessages.NS_FILE_NOT_FOUND.format(file=str(ns_files[0]).removesuffix("namespace.yaml")), error_code=ErrorCodes.FILE_NOT_FOUND_CODE)
 
         if ns_content and ns_content.get("name") == namespace:
-            return file_name, content
+            return file_path, content
 
     return None
 
