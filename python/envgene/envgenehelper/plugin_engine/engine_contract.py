@@ -10,5 +10,5 @@ class PluginCore(object, metaclass=IPluginRegistry):
     def __init__(self) -> None:
         pass
 
-    def invoke(self) -> None:
+    def invoke(self) -> object:
         pass
