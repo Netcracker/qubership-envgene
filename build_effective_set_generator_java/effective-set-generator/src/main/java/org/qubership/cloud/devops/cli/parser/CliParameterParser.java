@@ -90,6 +90,7 @@ public class CliParameterParser {
     private void processAndSaveParameters(List<SBApplicationDTO> applicationDTOList, String tenantName, String cloudName) throws IOException {
         Map<String, Object> deployMappingFileData = new ConcurrentHashMap<>();
         Map<String, Object> runtimeMappingFileData = new ConcurrentHashMap<>();
+        Map<String, Object> cleanupMappingFileData = new ConcurrentHashMap<>();
         Map<String, String> errorList = new ConcurrentHashMap<>();
         Map<String, String> k8TokenMap = new ConcurrentHashMap<>();
         applicationDTOList.parallelStream()
@@ -100,6 +101,7 @@ public class CliParameterParser {
                         generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), k8TokenMap);
                         String deployPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/');
                         String runtimePostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/runtime", namespaceName).replace('\\', '/');
+                        String cleanupPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/cleanup", namespaceName).replace('\\', '/');
                         int index = deployPostFixDir.indexOf("/environments/");
                         if (index != 1) {
                             deployPostFixDir = deployPostFixDir.substring(index);
@@ -108,8 +110,13 @@ public class CliParameterParser {
                         if (index != 1) {
                             runtimePostFixDir = runtimePostFixDir.substring(index);
                         }
+                        index = cleanupPostFixDir.indexOf("/environments/");
+                        if (index != 1) {
+                            cleanupPostFixDir = cleanupPostFixDir.substring(index);
+                        }
                         deployMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
                         runtimeMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), runtimePostFixDir);
+                        cleanupMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), cleanupPostFixDir);
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                     } catch (Exception e) {
                         log.debug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
@@ -121,6 +128,7 @@ public class CliParameterParser {
             generateE2EOutput(tenantName, cloudName, k8TokenMap);
             fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "deployment", "mapping.yaml");
             fileDataConverter.writeToFile(runtimeMappingFileData, sharedData.getOutputDir(), "runtime", "mapping.yaml");
+            fileDataConverter.writeToFile(cleanupMappingFileData, sharedData.getOutputDir(), "cleanup", "mapping.yaml");
         } else {
             fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "mapping.yaml");
         }
@@ -134,7 +142,7 @@ public class CliParameterParser {
 
     }
 
-    public void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
+    private void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
         ParameterBundle parameterBundle = parametersService.getCliE2EParameter(tenantName, cloudName);
         if (parameterBundle.getE2eParams() == null) {
             parameterBundle.setE2eParams(new HashMap<>());
@@ -145,6 +153,23 @@ public class CliParameterParser {
         createTopologyFiles(k8TokenMap);
         createE2EFiles(parameterBundle);
         createConsumerFiles(parameterBundle);
+    }
+
+    private void generateCleanupOutput(String tenantName, String cloudName, String namespace, String originalNamespace, Map<String, String> k8TokenMap) throws IOException {
+        ParameterBundle parameterBundle = parametersService.getCleanupParameterBundle(tenantName, cloudName, namespace, null, originalNamespace, k8TokenMap);
+        if (parameterBundle.getCleanupParameters() == null) {
+            parameterBundle.setCleanupParameters(new HashMap<>());
+        }
+        if (parameterBundle.getCleanupSecureParameters() == null) {
+            parameterBundle.setCleanupSecureParameters(new HashMap<>());
+        }
+        createCleanupFiles(parameterBundle, namespace);
+    }
+
+    private void createCleanupFiles(ParameterBundle parameterBundle, String namespace) throws IOException {
+        String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespace);
+        fileDataConverter.writeToFile(parameterBundle.getCleanupParameters(), cleanupDir, "parameters.yaml");
+        fileDataConverter.writeToFile(parameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
     }
 
     private void createTopologyFiles(Map<String, String> k8TokenMap) throws IOException {
@@ -229,6 +254,7 @@ public class CliParameterParser {
                 deployerInputs,
                 originalNamespace,
                 k8TokenMap);
+        generateCleanupOutput(tenantName, cloudName, namespaceName, originalNamespace, k8TokenMap);
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
 
