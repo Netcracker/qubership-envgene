@@ -53,6 +53,22 @@ public class ParametersCalculationService {
         return getE2EParameterBundle(tenantName, cloudName);
     }
 
+    public ParameterBundle getCleanupParameterBundle(String tenantName, String cloudName, String namespaceName,
+                                                     DeployerInputs deployerInputs, String originalNamespace,
+                                                     Map<String, String> k8TokenMap) {
+        Params parameters = parametersProcessor.processNamespaceParameters(tenantName,
+                cloudName,
+                namespaceName,
+                "false",
+                deployerInputs,
+                originalNamespace);
+
+
+        ParameterBundle parameterBundle = ParameterBundle.builder().build();
+        prepareSecureInsecureParams(parameters.getCleanupParams(), parameterBundle, ParameterType.CLEANUP, k8TokenMap, originalNamespace);
+        return parameterBundle;
+    }
+
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName,
                                                DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap) {
         Params parameters = parametersProcessor.processAllParameters(tenantName,
@@ -170,6 +186,10 @@ public class ParametersCalculationService {
         } else if (parameterType == ParameterType.TECHNICAL) {
             parameterBundle.setSecuredConfigParams(finalSecuredParams);
             parameterBundle.setConfigServerParams(inSecuredParamsAsObject);
+        } else if (parameterType == ParameterType.CLEANUP) {
+            finalSecuredParams.put(K8S_TOKEN, k8TokenMap.get(originalNamespace));
+            parameterBundle.setCleanupSecureParameters(finalSecuredParams);
+            parameterBundle.setCleanupParameters(inSecuredParamsAsObject);
         }
     }
 

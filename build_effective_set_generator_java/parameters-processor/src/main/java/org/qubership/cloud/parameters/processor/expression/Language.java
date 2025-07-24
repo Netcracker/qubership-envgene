@@ -30,6 +30,8 @@ public interface Language extends Serializable {
 
     Map<String, Parameter> processNamespaceApp();
 
+    Map<String, Parameter> processNamespace();
+
     Map<String, Parameter> processConfigServerApp();
 
     Map<String, Parameter> processNamespaceAppConfigServer();
