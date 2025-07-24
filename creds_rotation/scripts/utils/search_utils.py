@@ -6,6 +6,7 @@ from pathlib import Path, PurePath
 import envgenehelper.logger as logger
 from utils.error_constants import  *
 from envgenehelper.errors import  ReferenceError
+import re
 
 CONTEXT_MAP = {
     "deployment": "deployParameters",
@@ -19,12 +20,10 @@ REVERSE_CONTEXT_MAP = {
     "technicalconfigurationparameters": "runtime"
 }
 
-
-@lru_cache(maxsize=None)
 def resolve_param(context: str) -> str:
     return CONTEXT_MAP.get(context.lower(), "")
 
-@lru_cache(maxsize=None)
+
 def resolve_context(context: str) -> str:
     return REVERSE_CONTEXT_MAP.get(context.lower(), "")
 
@@ -120,6 +119,14 @@ def get_app_and_ns(filename: str, content: dict, entity_files_map: Dict[str, Dic
 
     return content.get("name", ""), ns_content.get("name", "")
 
+@lru_cache(maxsize=None)
+def extract_env_name(path, cluster_name):
+    pattern = rf"/environments/{re.escape(cluster_name)}/([^/]+)/"
+    match = re.search(pattern, path)
+    if match:
+        return match.group(1)
+    return None
+
 def find_namespace(entity_files_map, ns_files):
     ns_content = None
     for ns_file in ns_files:
@@ -128,6 +135,7 @@ def find_namespace(entity_files_map, ns_files):
             break
     return ns_content
 
+@lru_cache(maxsize=None)
 def trim_path_from_environments(path: str):
     normalized = path.replace("\\", "/")
     marker = "/environments/"
@@ -136,7 +144,7 @@ def trim_path_from_environments(path: str):
 
 def get_affected_param_map(
     cred_id: str,
-    env: str,
+    cluster_name: str,
     shared_cred_files: list,
     env_cred_files: list,
     filename: str,
@@ -146,11 +154,13 @@ def get_affected_param_map(
 ) -> list[AffectedParameter]:
     result = []
     app, namespace = get_app_and_ns(filename, content, entity_files_map)
+    env_name = extract_env_name(filename, cluster_name)
+
 
     for context, param_keys in matches.items():
         for key in param_keys:
             affected = AffectedParameter(
-                environment=env,
+                environment=env_name,
                 namespace=namespace,
                 application=app,
                 context=resolve_context(context),
@@ -164,7 +174,7 @@ def get_affected_param_map(
     return result
 
 
-def search_yaml_files(search_string: str, entity_files_map: Dict[str, Dict[str, Any]], cred_id: str, env: str, shared_cred_files: List[str], env_cred_file: str, target_key: str,
+def search_yaml_files(search_string: str, entity_files_map: Dict[str, Dict[str, Any]], cred_id: str, cluster_name: str, shared_cred_files: List[str], env_cred_file: str, target_key: str,
  target_context: str, target_file: str) -> List[AffectedParameter]:
     affected: List[AffectedParameter] = []
 
@@ -174,6 +184,6 @@ def search_yaml_files(search_string: str, entity_files_map: Dict[str, Dict[str, 
         matches = find_in_yaml(content, search_string, is_target, target_key, target_context)
         if matches:
             affected.extend(get_affected_param_map(
-            cred_id, env, shared_cred_files, env_cred_file, filename, content, matches, entity_files_map
+            cred_id, cluster_name, shared_cred_files, env_cred_file, filename, content, matches, entity_files_map
             ))
     return affected
