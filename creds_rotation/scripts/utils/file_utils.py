@@ -108,19 +108,19 @@ def scan_and_get_yaml_files(
     env_dir: str
 ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
 
-    ns_files = set()
+    entity_files = set()
     env_def_files = set()
     env_creds_files = set()
     sc1 = time.time()
-    scandir_recursive(env_dir,  ns_files, env_def_files, env_creds_files)
+    scandir_recursive(env_dir,  entity_files, env_def_files, env_creds_files)
     logger.info(f"✅ sc1 Completed in {round(time.time() - sc1, 2)} seconds.")
     sc2 = time.time()
-    ns_files_map = asyncio.run(load_yaml_files_parallel(ns_files))
+    entity_files_map = asyncio.run(load_yaml_files_parallel(entity_files))
     logger.info(f"✅ sc2 Completed in {round(time.time() - sc2, 2)} seconds.")
     sc3 = time.time()
     env_files_map = asyncio.run(load_yaml_files_parallel(env_def_files))
     logger.info(f"✅ sc3 Completed in {round(time.time() - sc3, 2)} seconds.")
-    return  ns_files_map, env_files_map, env_creds_files
+    return  entity_files_map, env_files_map, env_creds_files
 
 
 def openJson(path: str) -> dict:
