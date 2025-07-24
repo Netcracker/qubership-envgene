@@ -1,13 +1,13 @@
 import os
 import re
-from os import getenv, path
+from os import getenv
 from typing import Callable
 
 from .cred_files_processor import get_all_necessary_cred_files
 
 from .config_helper import get_envgene_config_yaml
 from .yaml_helper import openYaml, get_empty_yaml
-from .file_helper import check_dir_exists, check_file_exists, get_files_with_filter
+from .file_helper import check_dir_exists, check_file_exists
 from .logger import logger
 
 from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
@@ -42,6 +42,14 @@ EXTRACT_FUNCTIONS = {
     'Fernet': extract_value_Fernet
 }
 
+def _handle_missing_file(file_path, default_yaml, allow_default):
+    if CREATE_SHADES and check_dir_exists(file_path):
+        return 0
+    if check_file_exists(file_path):
+        return 0  # sentinel value
+    if not allow_default:
+        raise FileNotFoundError(f"{file_path} not found or is not a file")
+    return default_yaml()
 
 def encrypt_file(file_path, **kwargs):
     if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
@@ -59,28 +67,6 @@ def decrypt_file(file_path, **kwargs):
             file_path, _decrypt_file, **kwargs)
     return _decrypt_file(file_path, **kwargs)
 
-
-def _handle_missing_file(file_path, default_yaml, allow_default):
-    if CREATE_SHADES and check_dir_exists(file_path):
-        return 0
-    if check_file_exists(file_path):
-        return 0  # sentinel value
-    if not allow_default:
-        raise FileNotFoundError(f"{file_path} not found or is not a file")
-    return default_yaml()
-
-
-def _decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False,
-                  default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None, **kwargs):
-    res = _handle_missing_file(file_path, default_yaml, allow_default)
-    if res != 0:
-        return res
-    crypt_backend = crypt_backend if crypt_backend else CRYPT_BACKEND
-    is_crypt = is_crypt if is_crypt is not None else IS_CRYPT
-    if not ignore_is_crypt and not is_crypt:
-        logger.info("'crypt' is set to 'false', skipping decryption")
-        return openYaml(file_path)
-    return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place, public_key=public_key, mode='decrypt')
 
 
 def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False, is_crypt=None,
@@ -106,6 +92,19 @@ def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None,
         logger.info("'crypt' is set to 'false', skipping encryption")
         return openYaml(file_path)
     return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place, public_key=public_key, mode='encrypt', minimize_diff=minimize_diff, old_file_path=old_file_path)
+
+def _decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False,
+                  default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None, **kwargs):
+    res = _handle_missing_file(file_path, default_yaml, allow_default)
+    if res != 0:
+        return res
+    crypt_backend = crypt_backend if crypt_backend else CRYPT_BACKEND
+    is_crypt = is_crypt if is_crypt is not None else IS_CRYPT
+    if not ignore_is_crypt and not is_crypt:
+        logger.info("'crypt' is set to 'false', skipping decryption")
+        return openYaml(file_path)
+    return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place, public_key=public_key, mode='decrypt')
+
 
 
 def extract_encrypted_data(file_path, attribute_str):
@@ -133,39 +132,6 @@ def is_cred_file(fp: str) -> bool:
     if TARGET_REGEX.search(name_without_ext) or re.search(TARGET_DIR_REGEX, parent_dirs):
         return True
     return False
-
-
-def get_all_necessary_cred_files() -> set[str]:
-    env_names = getenv("ENV_NAMES", None)
-    if not env_names:
-        logger.info("ENV_NAMES not set, running in test mode")
-        return get_files_with_filter(BASE_DIR, is_cred_file)
-    if env_names == "env_template_test":
-        logger.info("Running in env_template_test mode")
-        return get_files_with_filter(BASE_DIR, is_cred_file)
-    env_names_list = env_names.split("\n")
-
-    sources = set()
-    sources.add("configuration")
-    sources.add(path.join("environments", "credentials"))
-
-    for env_name in env_names_list:
-        cluster, env = env_name.strip().split("/")
-        # relative to BASE_DIR/<cluster_name>/
-        env_specific_source_locations = [
-            "credentials", "cloud-passport", "cloud-passports", env]
-        for location in env_specific_source_locations:
-            sources.add(path.join("environments", cluster, location))
-
-    cred_files = set()
-    for source in sources:
-        source = path.join(BASE_DIR, source)
-        if not path.exists(source):
-            continue
-        cred_files.update(get_files_with_filter(source, is_cred_file))
-
-    return cred_files
-
 
 def is_encrypted(file_path, crypt_backend=None):
     crypt_backend = crypt_backend if crypt_backend else CRYPT_BACKEND

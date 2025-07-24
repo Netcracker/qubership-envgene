@@ -6,23 +6,25 @@ import subprocess
 from .logger import logger
 
 BASE_DIR = getenv('CI_PROJECT_DIR', os.getcwd())
+
+# run find command to search all credential files in cur BASE_DIR
 def _get_files_subprocess(full_path=''):
     cur_path = BASE_DIR if not full_path else full_path
-    find_command = f"find {cur_path} \\( -iname '*cred*.y*ml' -o -ipath */credentials* \\) -a \\( ! -ipath */shade-* ! -iname shade-*-cred.y*ml \\) -type f"
+    find_command = f"find {cur_path} \\( -iname '*cred*.y*ml' -o -path */credentials* -o -path */Сredentials* \\) -a \\( ! -path */shade-* ! -iname shade-*-cred.y*ml \\) -type f"
     command_output = subprocess.run(find_command, shell=True,
                                     capture_output=True, text=True, timeout=20)
     result = set(command_output.stdout.splitlines())
     return result
+
 def get_all_necessary_cred_files() -> set[str]:
     env_names = getenv("ENV_NAMES", None)
     if not env_names:
-        logger.info("ENV_NAMES not set, running in test mode")
+        logger.info(f"ENV_NAMES not set, searching for whole dir {BASE_DIR}")
         return _get_files_subprocess(BASE_DIR)
     if env_names == "env_template_test":
         logger.info("Running in env_template_test mode")
         return _get_files_subprocess(BASE_DIR)
     env_names_list = env_names.split("\n")
-
     sources = set()
     sources.add("configuration")
     sources.add(path.join("environments", "credentials"))
