@@ -5,14 +5,16 @@ import re
 from concurrent.futures import ProcessPoolExecutor
 from typing import Any, Dict, List, Tuple, Optional, Set
 from models import CredMap
-from .yaml_utils import get_nested_target_key, get_content_form_file
+from .yaml_utils import get_nested_target_key
 from .file_utils import openJson
 from pathlib import Path
-from envgenehelper import crypt, writeYamlToFile, openYaml, getEnvDefinition, dump_as_yaml_format
+from envgenehelper import crypt, writeYamlToFile, openYaml, dump_as_yaml_format
 import envgenehelper.logger as logger
 from utils.error_constants import  *
-from envgenehelper.errors import ValidationError, ValueError, ReferenceError
+from envgenehelper.errors import ValidationError, ValueError
+from multiprocessing import Pool, cpu_count
 
+pattern  = re.compile(r"\$\{creds\.get\([\"']([^\"']+)[\"']\)\.(username|password|secret)\}")
 
 def collect_shared_credentials(env_files_map: Dict[str, Any]) -> Set[str]:
     shared_cred_names: Set[str] = set()
@@ -27,8 +29,7 @@ def collect_shared_credentials(env_files_map: Dict[str, Any]) -> Set[str]:
     return shared_cred_names
 
 
-def extract_credential(target_key: str, yaml_content: Dict[str, Any], cred_field: str) -> Tuple[Optional[str], Optional[str]]:
-    pattern  = re.compile(r"\$\{creds\.get\([\"']([^\"']+)[\"']\)\.(" + re.escape(cred_field) + r")\}")
+def extract_credential(target_key: str, yaml_content: Dict[str, Any]) -> Tuple[Optional[str], Optional[str]]:
     if  target_key in yaml_content:
          value = yaml_content.get(target_key)
     elif "." in target_key:
@@ -41,8 +42,8 @@ def extract_credential(target_key: str, yaml_content: Dict[str, Any], cred_field
 
     match = pattern.search(value)
     if match:
-        return match.group(0), match.group(1)
-    return None, None
+        return match.group(0), match.group(1), match.group(2)
+    return None
 
 def read_shared_cred_files(shared_creds: Set[str], cluster_dir: str, work_dir: str,  is_encrypted: str, public_key: str):
     shared_creds_files_set = set()
@@ -67,21 +68,40 @@ def scan_dir_for_creds(path: Path, shared_creds: set, shared_creds_files_set: Li
                 shared_creds_files_set.add(entry.path)
 
 
+def decrypt_task(args):
+    is_encrypted, public_key, filepath = args
+    content = decrypt_and_get_content(is_encrypted, public_key, filepath)
+    return filepath, content
+   
+
 def read_env_cred_files(creds_files, is_encrypted, public_key):
-    return {
-        filepath: decrypt_and_get_content(is_encrypted, public_key, filepath)
-        for filepath in creds_files
-    }
+    # Use multiprocessing only if heavy workload
+    parallel_threshold = 8
+    use_parallel = len(creds_files) >= parallel_threshold
+
+    if use_parallel:
+        args_list = [(is_encrypted, public_key, filepath) for filepath in creds_files]
+        with Pool(min(len(creds_files), cpu_count())) as pool:
+            results = pool.map(decrypt_task, args_list)
+        return dict(results)
+
+    # Fall back to sequential for small workloads
+    result = {}
+    for filepath in creds_files:
+        result[filepath] = decrypt_and_get_content(is_encrypted, public_key, filepath)
+    return result
 
 def decrypt_and_get_content(is_encrypted, public_key, filepath):
     if is_encrypted:
-        content = decrypt_file(public_key, filepath, True, 'SOPS', ErrorMessages.FILE_DECRYPT_ERROR, ErrorCodes.INVALID_CONFIG_CODE) 
-    else:
+        return decrypt_file(public_key, filepath, True, 'SOPS', ErrorMessages.FILE_DECRYPT_ERROR, ErrorCodes.INVALID_CONFIG_CODE) 
+    try:
         if filepath.endswith(".json"):
             content = openJson(filepath)
         else:
             content = openYaml(filepath)
-    return content
+        return content
+    except Exception as e:
+        raise ValidationError(ErrorMessages.FILE_READ_ERROR.format(file=filepath, e=str(e)), error_code=ErrorCodes.INVALID_CONFIG_CODE)
 
 
 def decrypt_file(envgene_age_public_key, file_path, in_place, crypt_backend, error_msg, error_code):

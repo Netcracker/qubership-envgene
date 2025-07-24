@@ -53,7 +53,7 @@ def cred_rotation():
     except Exception as e:
         raise ValueError(ErrorMessages.MISSING_ENV.format(e=str(e)), error_code=ErrorCodes.INVALID_INPUT_CODE)
 
-    logger.info(f"Starting rotation for: ENV={env_name}, CLUSTER={cluster_name}, WORKDIR={work_dir}")
+    logger.info(f"Starting rotation for: CLUSTER={cluster_name}, WORKDIR={work_dir}")
 
     encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
     logger.info(f"Detected encryption={is_encrypted}, type={encrypt_type}")
@@ -74,7 +74,7 @@ def cred_rotation():
     fileread = time.time()
     #Scan and read all required files
     st1 = time.time()
-    ns_files_map, env_files_map, env_creds_files = scan_and_get_yaml_files(cluster_path)
+    entity_files_map, env_files_map, env_creds_files = scan_and_get_yaml_files(cluster_path)
     logger.info(f"✅ st1 Completed in {round(time.time() - st1, 2)} seconds.")
     st2 = time.time()
     shared_creds =  collect_shared_credentials(env_files_map)
@@ -86,7 +86,7 @@ def cred_rotation():
     env_cred_map = read_env_cred_files(env_creds_files, is_encrypted, envgene_age_public_key)
     logger.info(f"✅ st4 Completed in {round(time.time() - st4, 2)} seconds. {len(env_creds_files)}")
     print_memory_usage()
-    print_deep_map_size("ns_files_map", ns_files_map)
+    print_deep_map_size("ns_files_map", entity_files_map)
     logger.info(f"✅ Fileread Completed in {round(time.time() - fileread, 2)} seconds.")
 
     payload_raw =  payload_data.get("rotation_items", [])
@@ -98,7 +98,7 @@ def cred_rotation():
     for entry in payload_objects:
         try:
             result = process_entry_in_payload(
-                entry, env_name, shared_content_map, env_cred_map, ns_files_map, processed_cred_and_files
+                entry, env_name, shared_content_map, env_cred_map, entity_files_map, processed_cred_and_files
             )
             if result:
                 final_result.append(result)

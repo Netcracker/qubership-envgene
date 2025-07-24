@@ -26,13 +26,6 @@ class AffectedParameter:
         return asdict(self)
 
 @dataclass
-class CredentialMapping:
-    cred_id: str
-    param_value: str
-    cred_field: str
-    shared_content: Dict[str, Any]
-
-@dataclass
 class FileUpdateEntry:
     cred_file_content: Dict[str, Any]
 
@@ -42,12 +35,11 @@ class PayloadEntry:
     parameter_key: str
     context: str
     parameter_value: str
-    credential_field: str
     application: Optional[str] = None
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PayloadEntry":
-        required = ['namespace', 'parameter_key', 'context', 'parameter_value', 'credential_field']
+        required = ['namespace', 'parameter_key', 'context', 'parameter_value']
         missing = [key for key in required if not data.get(key)]
         if missing:
             raise ValueError(f"ERROR: Missing required keys: {', '.join(missing)} in entry: {data}. \n Please check payload")
@@ -56,7 +48,6 @@ class PayloadEntry:
             parameter_key=data['parameter_key'],
             context=data['context'],
             parameter_value=data['parameter_value'],
-            credential_field=data['credential_field'],
             application=data.get('application')
         )
     

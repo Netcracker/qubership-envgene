@@ -106,24 +106,24 @@ def get_app_content(
     return None
 
 
-def get_app_and_ns(filename: str, content: dict, ns_files_map: Dict[str, Dict[str, Any]]) -> Tuple[str, Optional[str]]:
+def get_app_and_ns(filename: str, content: dict, entity_files_map: Dict[str, Dict[str, Any]]) -> Tuple[str, Optional[str]]:
     if filename.endswith(("namespace.yml", "namespace.yaml")):
         return '', content.get('name', '')
     
     filepath = PurePath(filename)
     parent_dir = filepath.parent.parent
     ns_files = [parent_dir / "namespace.yaml", parent_dir / "namespace.yml"]
-    ns_content = find_namespace(ns_files_map, ns_files)
+    ns_content = find_namespace(entity_files_map, ns_files)
 
     if ns_content is None:
         raise ReferenceError(ErrorMessages.NS_FILE_NOT_FOUND.format(file=str(ns_files[0]).removesuffix("namespace.yaml")), error_code=ErrorCodes.FILE_NOT_FOUND_CODE)
 
     return content.get("name", ""), ns_content.get("name", "")
 
-def find_namespace(ns_files_map, ns_files):
+def find_namespace(entity_files_map, ns_files):
     ns_content = None
     for ns_file in ns_files:
-        ns_content = ns_files_map.get(str(ns_file))
+        ns_content = entity_files_map.get(str(ns_file))
         if ns_content:
             break
     return ns_content
@@ -142,10 +142,10 @@ def get_affected_param_map(
     filename: str,
     content: dict,
     matches: dict,
-    ns_files_map: Dict[str, Dict[str, Any]]
+    entity_files_map: Dict[str, Dict[str, Any]]
 ) -> list[AffectedParameter]:
     result = []
-    app, namespace = get_app_and_ns(filename, content, ns_files_map)
+    app, namespace = get_app_and_ns(filename, content, entity_files_map)
 
     for context, param_keys in matches.items():
         for key in param_keys:
@@ -164,16 +164,16 @@ def get_affected_param_map(
     return result
 
 
-def search_yaml_files(search_string: str, ns_files_map: Dict[str, Dict[str, Any]], cred_id: str, env: str, shared_cred_files: List[str], env_cred_file: str, target_key: str,
+def search_yaml_files(search_string: str, entity_files_map: Dict[str, Dict[str, Any]], cred_id: str, env: str, shared_cred_files: List[str], env_cred_file: str, target_key: str,
  target_context: str, target_file: str) -> List[AffectedParameter]:
     affected: List[AffectedParameter] = []
 
-    for filename, content in ns_files_map.items():
+    for filename, content in entity_files_map.items():
 
         is_target = filename == target_file
         matches = find_in_yaml(content, search_string, is_target, target_key, target_context)
         if matches:
             affected.extend(get_affected_param_map(
-            cred_id, env, shared_cred_files, env_cred_file, filename, content, matches, ns_files_map
+            cred_id, env, shared_cred_files, env_cred_file, filename, content, matches, entity_files_map
             ))
     return affected
