@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import Path
 import subprocess
@@ -104,11 +103,12 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
             writeYamlToFile(file_path, result)
     else:
         sops_args = f' --{SOPS_MODES[mode]} '
-        if mode != "decrypt":
+        if mode != "decrypt" and 'shade-' in Path(file_path).stem:
             sops_args += f' --encrypted-regex "{ENCRYPTED_REGEX_STR}"'
         if in_place:
             sops_args += ' --in-place'
-        sops_args += f' -age {public_key} "{file_path}"'
+
+        sops_args += f' -age {public_key} {file_path}'
 
         sops_cmd = (
             f'find {file_path} -name "*.y*ml" -print0 | '

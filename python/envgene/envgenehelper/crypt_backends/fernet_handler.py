@@ -36,7 +36,7 @@ def _remove_unnecessary_changes(data: dict, old_data_path: str, fernet: Fernet) 
 
 def _reuse_old_fernet_tokens(data: dict, old_data: dict, fernet: Fernet) -> None:
     for k, v in data.items():
-        if not k in old_data.keys():
+        if k not in old_data.keys():
             continue
         if isinstance(v, dict) and isinstance(old_data[k], dict):
             _reuse_old_fernet_tokens(v, old_data[k], fernet)
