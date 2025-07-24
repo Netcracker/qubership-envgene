@@ -1,14 +1,12 @@
 import pathlib
 import re
-from os import getenv, path
-from dataclasses import dataclass, field
+from os import getenv
 
 from .collections_helper import merge_lists
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, validate_yaml_by_scheme_or_fail
 from .json_helper import findJsons
 from .file_helper import getAbsPath, extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, extractNameFromDir
 from .collections_helper import dump_as_yaml_format
-from .crypt import decrypt_file
 from .logger import logger
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
@@ -295,37 +293,4 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
             return cloudPassportFileName
     else:
         return ""
-
-@dataclass
-class Environment:
-    base_dir: str
-    cluster: str
-    name: str
-    env_path: str = field(init=False)
-    inventory: dict = field(init=False)
-    inventory_path: str = field(init=False)
-    creds: dict = field(init=False)
-    creds_path: str = field(init=False)
-
-    def __post_init__(self):
-        self.env_path = path.join(self.base_dir, "environments", self.cluster, self.name)
-        print(f"env_path: {self.env_path}")
-
-        self.inventory_path = getEnvDefinitionPath(self.env_path)
-        print(f"inventory_path: {self.inventory_path}")
-
-        self.creds_path = getEnvCredentialsPath(self.env_path)
-        print(f"creds_path: {self.creds_path}")
-
-        self.inv_gen_creds_path = path.join(self.env_path, INV_GEN_CREDS_PATH)
-        print(f"inv_gen_creds_path: {self.inv_gen_creds_path}")
-
-        self.inventory = yaml.openYaml(self.inventory_path, allow_default=True)
-        print(f"inventory: {self.inventory}")
-
-        self.creds = decrypt_file(self.creds_path, in_place=False, allow_default=True)
-        print(f"creds: {self.creds}")
-
-        self.inv_gen_creds = decrypt_file(self.inv_gen_creds_path, in_place=False, allow_default=True)
-        print(f"inv_gen_creds: {self.inv_gen_creds}")
 

@@ -7,7 +7,8 @@ from create_credentials import CRED_TYPE_SECRET
 import envgenehelper as helper
 from envgenehelper import *
 import envgenehelper.logger as logger
-from envgenehelper.business_helper import Environment, INV_GEN_CREDS_PATH
+from envgenehelper.business_helper import INV_GEN_CREDS_PATH
+from envgenehelper.env_helper import Environment
 
 # const
 PARAMSETS_DIR_PATH = "Inventory/parameters/"
