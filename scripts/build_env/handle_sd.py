@@ -1,3 +1,4 @@
+import asyncio
 from os import path, getenv
 import json
 import re
@@ -5,14 +6,26 @@ import re
 import ansible_runner
 
 import envgenehelper as helper
-from envgenehelper import logger
+from envgenehelper import logger, openYaml
 from envgenehelper.business_helper import getenv_and_log, Environment
+from artifact_searcher import artifact
+from artifact_searcher.utils import models as artifact_models
+from engine_core import PluginEngine
 
 MERGE_METHODS = {
     "basic-merge": helper.basic_merge,
     "basic-exclusion-merge": helper.basic_exclusion_merge,
     "extended-merge": helper.extended_merge
 }
+
+
+ENVIRONMENT_NAME = getenv_with_error('ENVIRONMENT_NAME')
+CLUSTER_NAME = getenv_with_error('CLUSTER_NAME')
+WORK_DIR = getenv_with_error('CI_PROJECT_DIR')
+BASE_ENV_PATH = f"{WORK_DIR}/environments/{CLUSTER_NAME}/{ENVIRONMENT_NAME}"
+APP_DEFS_PATH = f"{BASE_ENV_PATH}/AppDefs"
+REG_DEFS_PATH = f"{BASE_ENV_PATH}/RegDefs"
+
 
 def prepare_vars_and_run_sd_handling():
     base_dir = getenv_and_log('CI_PROJECT_DIR')
@@ -154,8 +167,9 @@ def download_sd_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode):
         logger.error("No valid SD versions found in SD_VERSION")
         exit(1)
 
+    app_def_getter_plugins = PluginEngine(plugins_dir='/module/scripts/handle_sd_plugins/app_def_getter')
     sd_data_list = []
-    for entry in sd_entries:
+    for entry in sd_entries: #appvers
         if ":" not in entry:
             logger.error(f"Invalid SD_VERSION format: '{entry}'. Expected 'name:version'")
             exit(1)
@@ -163,38 +177,36 @@ def download_sd_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode):
         source_name, version = entry.split(":", 1)
         logger.info(f"Starting download of SD: {source_name}-{version}")
 
-        pattern = rf".*/{re.escape(source_name)}\.(ya?ml)$"
-        artifact_definitions = helper.findYamls(
-            f'{env.base_dir}/configuration/artifact_definitions/', "", additionalRegexpPattern=pattern
-        )
-        if not artifact_definitions:
-            logger.error(f"No artifact definition found for {source_name}")
-            exit(1)
+        sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins)
 
-        artifact_definition = helper.openYaml(artifact_definitions[0])
-        logger.info(f'Artifact definition for {source_name}: {artifact_definition}')
-
-        ansible_vars = {
-            "version": version,
-            "artifact_definition": artifact_definition,
-            "envgen_debug": "true"
-        }
-
-        r = ansible_runner.run(
-            playbook='/module/ansible/download_sd_file.yaml',
-            envvars=ansible_vars,
-            verbosity=2
-        )
-        if r.rc != 0:
-            logger.error(f"Error during ansible execution. Result code: {r.rc}. Status: {r.status}")
-            raise ReferenceError("Error during ansible execution. See logs above.")
-
-        with open("/tmp/sd.json", 'r') as f:
-            sd_json = json.load(f)
-            sd_data_list.append(sd_json)
+        sd_data_list.append(sd_data)
 
     sd_data_json = json.dumps(sd_data_list)
     extract_sd_from_json(env, sd_path, sd_data_json, sd_delta, sd_merge_mode)
+
+def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> str:
+    if 'SNAPSHOT' in version:
+        raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
+    # TODO: check if job would fail without plugins
+    app_def = get_appdef_for_app(app_name, plugins)
+
+    artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version))
+    if not artifact_info:
+        raise ValueError(
+            f'Solution descriptor content was not received for {app_name}:{version}')
+    sd_url, _ = artifact_info
+    return json.dumps(artifact.download_json_content(sd_url))
+
+def get_appdef_for_app(app_name: str, plugins: PluginEngine) -> artifact_models.Application:
+    results = plugins.run(app_name=app_name)
+    for result in results:
+        if result is not None:
+            return result
+    app_dict = helper.openYaml(f"{APP_DEFS_PATH}/{app_name}")
+    app_dict['registry'] = artifact_models.Registry.model_validate(helper.openYaml(f"{APP_DEFS_PATH}/{app_name}"))
+    app_def = artifact_models.Application.model_validate(app_dict)
+    return app_def
+
 
 if __name__ == "__main__":
     prepare_vars_and_run_sd_handling()
