@@ -10,7 +10,7 @@ from envgenehelper import logger, openYaml
 from envgenehelper.business_helper import getenv_and_log, Environment
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
-from engine_core import PluginEngine
+from envgenehelper.plugin_engine import PluginEngine
 
 MERGE_METHODS = {
     "basic-merge": helper.basic_merge,

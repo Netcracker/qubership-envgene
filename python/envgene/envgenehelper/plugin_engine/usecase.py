@@ -2,7 +2,7 @@ import os
 from importlib import import_module
 from typing import Any
 
-from envgenehelper import logger
+from ..logger import logger
 
 from .engine_contract import IPluginRegistry
 
