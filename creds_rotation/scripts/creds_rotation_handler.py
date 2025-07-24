@@ -98,7 +98,7 @@ def cred_rotation():
     for entry in payload_objects:
         try:
             result = process_entry_in_payload(
-                entry, env_name, shared_content_map, env_cred_map, entity_files_map, processed_cred_and_files
+                entry, env_name, cluster_name, shared_content_map, env_cred_map, entity_files_map, processed_cred_and_files
             )
             if result:
                 final_result.append(result)

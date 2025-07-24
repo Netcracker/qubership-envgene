@@ -9,6 +9,7 @@ from envgenehelper.errors import ValidationError, ReferenceError
 def process_entry_in_payload(
     entry: PayloadEntry,
     env: str,
+    cluster_name: str,
     shared_cred_content: Dict[str, Any],
     env_cred_content: Dict[str, Any],
     entity_files_map: Dict[str, Dict[str, Any]],
@@ -64,7 +65,7 @@ def process_entry_in_payload(
         value_to_search,
         entity_files_map,
         cred_id,
-        env,
+        cluster_name,
         shared_match_files,
         env_cred_file,
         entry.parameter_key,

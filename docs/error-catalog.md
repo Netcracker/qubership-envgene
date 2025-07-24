@@ -96,7 +96,11 @@ This indicates invalid json content in payload. Please check the payload.
 
   [ENVGENE-4002] Invalid configuration format: Invalid configuration format.Failed to Decrypt the credential file {file} due to {error}
 
-  This indicates that Something went wrong while trying to decrypt the credential files. Please check if the file was encrypted with Fernet and config has it as SOPS. 
+  This indicates that Something went wrong while trying to decrypt the credential files. Please check if the file was encrypted with Fernet and config has it as SOPS.
+
+  [ENVGENE-4002] Invalid configuration format: Invalid configuration format.Failed to read the credential file {file}
+
+  This indicates that Something went wrong while trying to read the credential files. Please check if the syntax of file is correct 
 ```
 
 - **Resolution**:
