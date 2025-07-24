@@ -3,8 +3,6 @@ import re
 from os import getenv, path
 from typing import Callable
 
-from envgenehelper.business_helper import getenv_with_error
-
 from .config_helper import get_envgene_config_yaml
 from .yaml_helper import openYaml, get_empty_yaml
 from .file_helper import check_file_exists, get_files_with_filter
@@ -47,15 +45,15 @@ def _handle_missing_file(file_path, default_yaml, allow_default):
         raise FileNotFoundError(f"{file_path} not found or is not a file")
     return default_yaml()
 
-def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=True, 
+def decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=True,
                  default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None, **kwargs):
     res = _handle_missing_file(file_path, default_yaml, allow_default)
     if res != 0: return res
     crypt_backend = crypt_backend if crypt_backend else CRYPT_BACKEND
     is_crypt = is_crypt if is_crypt!=None else IS_CRYPT
     if ignore_is_crypt==False and is_crypt==True:
-        logger.info("'crypt' is set to 'true', skipping decryption") 
-        return openYaml(file_path) 
+        logger.info("'crypt' is set to 'true', skipping decryption")
+        return openYaml(file_path)
     return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place, public_key=public_key, mode='decrypt')
 
 
@@ -75,7 +73,7 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
     crypt_backend = crypt_backend if crypt_backend else CRYPT_BACKEND
     is_crypt = is_crypt if is_crypt!=None else IS_CRYPT
     if ignore_is_crypt==False and is_crypt==False:
-        logger.info("'crypt' is set to 'false', skipping encryption") 
+        logger.info("'crypt' is set to 'false', skipping encryption")
         return openYaml(file_path)
     return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place, public_key=public_key, mode='encrypt', minimize_diff=minimize_diff, old_file_path=old_file_path)
 
@@ -109,7 +107,7 @@ def get_all_necessary_cred_files() -> set[str]:
         logger.info("Running in env_template_test mode")
         return get_files_with_filter(BASE_DIR, is_cred_file)
     env_names_list = env_names.split("\n")
-    
+
     sources = set()
     sources.add("configuration")
     sources.add(path.join("environments", "credentials"))
