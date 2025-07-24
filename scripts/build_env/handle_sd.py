@@ -85,14 +85,14 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
 
     helper.check_dir_exist_and_create(path.dirname(sd_path))
     if sd_source_type == "artifact":
-        download_sd_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode)
+        download_sds_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode)
     elif sd_source_type == "json":
-        extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode)
+        extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode)
     else:
         logger.error(f'SD_SOURCE_TYPE must be set either to "artifact" or "json"')
         exit(1)
 
-def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
+def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
     if not sd_data:
         logger.error(f"SD_SOURCE_TYPE is set to 'json', but SD_DATA was not given in pipeline variables")
         exit(1)
@@ -156,7 +156,7 @@ def extract_sd_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
 
     logger.info(f"SD successfully extracted from SD_DATA and Saved.")
 
-def download_sd_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode):
+def download_sds_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode):
     logger.info(f"sd_version: {sd_version}")
     if not sd_version:
         logger.error("SD_SOURCE_TYPE is set to 'artifact', but SD_VERSION was not given in pipeline variables")
@@ -182,7 +182,7 @@ def download_sd_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode):
         sd_data_list.append(sd_data)
 
     sd_data_json = json.dumps(sd_data_list)
-    extract_sd_from_json(env, sd_path, sd_data_json, sd_delta, sd_merge_mode)
+    extract_sds_from_json(env, sd_path, sd_data_json, sd_delta, sd_merge_mode)
 
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> str:
     if 'SNAPSHOT' in version:
