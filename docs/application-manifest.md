@@ -59,31 +59,40 @@
    1. One umbrella chart per application
    2. Multiple umbrella charts per application
    3. One non-umbrella chart per application
-   4. Multiple non-umbrella charts per application  
+   4. Multiple non-umbrella charts per application
+
 **A1:** All Helm chart structures used in practice within the Qubership (including those listed above) must be supported by the Application Manifest model
 
-**Q2:** Should the Application Manifest be compatible with other deployers?  
+**Q2:** Should the Application Manifest be compatible with other deployers?
+
 **A2:** No
 
 **Q3:** Should deploying a 3rd-party Application (Helm chart) by Argo require an Application manifest?
+
 **A3:** Yes
 
 **Q4:** Is there enough information in a 3rd-party Application (Helm chart) to create an Argo Application CR?
+
 **A4:**
 
-**Q5:** Should profile overrides allow setting parameters not present in the baseline profile? As an application developer, I want to restrict the set of configurable performance parameters to prevents users from introducing unsupported configurations.
-**A5:** Performance parameters should be explicitly distinguished (e.g., via JSON schema). However, restricting their use is unnecessary.
+**Q5:** Should profile overrides allow setting parameters not present in the baseline profile? As an application developer, I want to restrict the set of configurable performance parameters to prevents users from introducing unsupported configurations
+
+**A5:** Performance parameters should be explicitly distinguished (e.g., via JSON schema). However, restricting their use is unnecessary
 
 **Q6:** Should CM provide access to baseline profiles? As a environment configurator, I need to modify performance parameters while seeing baseline values to prevent context switching
+
 **A6:** Yes
 
 **Q7:** Should environment configurator be able to customize some parameters from [deploy-descriptor.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-deploy-descriptoryaml) or [per service deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml) in **no Application Manifest** option?
+
 **A7:** Yes, but these parameters must be validated for necessity.
 
-**Q8:** Should the application developer be able to introduce their own types in the component type in the Application Manifest?  
+**Q8:** Should the application developer be able to introduce their own types in the component type in the Application Manifest?
+
 **A8:** Not at this time, but possibly in the future.
 
-**Q9:** How are Helm app charts and Docker images created, built, and linked in mature open-source projects?  
+**Q9:** How are Helm app charts and Docker images created, built, and linked in mature open-source projects?
+ 
 **A9:**
 
 **Q10:** How are the version in Chart.yaml and the Helm chart artifact version in the OCI registry related? What should be specified in the version attribute of the `application/vnd.qubership.helm.chart` component for release and non-release versions?
