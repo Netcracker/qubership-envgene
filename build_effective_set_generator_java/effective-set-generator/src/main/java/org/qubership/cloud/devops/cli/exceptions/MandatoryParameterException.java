@@ -14,14 +14,23 @@
  * limitations under the License.
  */
 
-package org.qubership.cloud.devops.commons.utils.constant;
+package org.qubership.cloud.devops.cli.exceptions;
 
-public class CredentialConstants {
-    public static final String CALCULABLE_CREDS_FIELD = "#creds";
-    public static final String CALCULABLE_CLOUD_CREDS_FIELD = "#credscl";
-    public static final String CALCULABLE_NS_CREDS_FIELD = "#credsns";
-    public static final String DEFAULT_DBAAS_AGGREGATOR_LOGIN = "";
-    public static final String DEFAULT_DBAAS_AGGREGATOR_PASSWORD = "";
-    public static final String DEFAULT_MAAS_LOGIN = "";
-    public static final String DEFAULT_MAAS_PASSWORD = "";
+public class MandatoryParameterException extends RuntimeException {
+    private static final long serialVersionUID = -3678828471227079812L;
+
+    public MandatoryParameterException(String message) {
+        super(message);
+    }
+
+    public MandatoryParameterException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public MandatoryParameterException(Throwable cause) {
+        super(cause);
+    }
+
+    public MandatoryParameterException() {
+    }
 }

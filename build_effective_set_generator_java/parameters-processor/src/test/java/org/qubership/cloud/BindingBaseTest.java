@@ -101,7 +101,7 @@ public class BindingBaseTest {
             );
 
             ApplicationService appService = mock(ApplicationService.class);
-            when(appService.getByName("application")).thenReturn(
+            when(appService.getByName("application", "namespace")).thenReturn(
                     Application.builder()
                             .name("application")
                             .params(params.get("appParams") != null ? (Map<String, String>) params.get("appParams") : Collections.emptyMap())
@@ -132,7 +132,7 @@ public class BindingBaseTest {
             Constructor<Binding> constructor = Binding.class.getDeclaredConstructor(String.class);
             constructor.setAccessible(true);
             Binding binding = constructor.newInstance(params.get("defaultEscapeSequence") != null ? params.get("defaultEscapeSequence") : "false")
-                    .init("tenant", "cloud", "namespace", "application");
+                    .init("tenant", "cloud", "namespace", "application", "namespace");
             return binding;
 
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException |

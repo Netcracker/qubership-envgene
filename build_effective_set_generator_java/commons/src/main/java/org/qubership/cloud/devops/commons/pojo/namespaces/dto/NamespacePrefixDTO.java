@@ -14,26 +14,15 @@
  * limitations under the License.
  */
 
-package org.qubership.cloud.parameters.processor.dto;
+package org.qubership.cloud.devops.commons.pojo.namespaces.dto;
 
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.Map;
-
-@Builder
 @Data
-public class ParameterBundle {
-    Map<String, Object> securedDeployParams;
-    Map<String, Object> deployParams;
-    Map<String, Object> securedConfigParams;
-    Map<String, Object> configServerParams;
-    Map<String, Object> securedE2eParams;
-    Map<String, Object> e2eParams;
-    Map<String, Object> deployDescParams;
-    Map<String, Object> perServiceParams;
-    Map<String, Object> collisionDeployParameters;
-    Map<String, Object> collisionSecureParameters;
-    boolean processPerServiceParams;
-    String appChartName;
+@Builder
+public class NamespacePrefixDTO {
+
+    private String name;
+    private String deployPostFix;
 }

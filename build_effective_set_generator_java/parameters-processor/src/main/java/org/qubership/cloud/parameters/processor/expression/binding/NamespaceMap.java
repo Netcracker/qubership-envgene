@@ -40,12 +40,15 @@ public class NamespaceMap extends DynamicMap {
     private final String cloud;
     private String defaultApp;
     private boolean mergeE2E;
+    private final String originalNamespace;
 
-    public NamespaceMap(String tenant, String cloud, String defaultNamespace, String defaultApp, Binding binding) {
+    public NamespaceMap(String tenant, String cloud, String defaultNamespace, String defaultApp,
+                        Binding binding, String originalNamespace) {
         super(defaultNamespace, binding);
         this.tenant = tenant;
         this.cloud = cloud;
         this.defaultApp = defaultApp;
+        this.originalNamespace = originalNamespace;
     }
 
     public boolean isMergeE2E() {
@@ -65,7 +68,7 @@ public class NamespaceMap extends DynamicMap {
         if (config != null) {
             mergeE2E = config.isMergeCustomPramsAndE2EParams();
             EscapeMap map = new EscapeMap(config.getCustomParameters(), binding, String.format(ParametersConstants.NS_ORIGIN, tenant, this.cloud, namespaceName));
-            map.putIfAbsent(NAMESPACE, namespaceName);
+            map.putIfAbsent(NAMESPACE, originalNamespace);
 
             map.put(APP, new Parameter(new NamespaceApplicationMap(config, defaultApp, binding).init()));
 
@@ -84,7 +87,7 @@ public class NamespaceMap extends DynamicMap {
 
                 CredentialUtils credentialUtils = Injector.getInstance().getDi().get(CredentialUtils.class);
 
-                map.put(ORIGIN_NAMESPACE, namespaceName);
+                map.put(ORIGIN_NAMESPACE, originalNamespace);
 
                 // Deprecated deployer parameters
                 map.putIfAbsent(GATEWAY_URL, "http://internal-gateway-service:8080");
@@ -100,11 +103,6 @@ public class NamespaceMap extends DynamicMap {
                     map.put("CLIENT_PREFIX",namespaceName);
                     if ( binding.getDeployerInputs().getSecretId() != null) {
                         setSecretValues(map, credentialUtils);
-                    }
-                    if (binding.getDeployerInputs().getDeploySessionId() != null) {
-                        map.put("DEPLOYMENT_SESSION_ID",binding.getDeployerInputs().getDeploySessionId());
-                    } else {
-                        map.put("DEPLOYMENT_SESSION_ID", UUID.randomUUID().toString());
                     }
                 }
             }

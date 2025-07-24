@@ -14,14 +14,24 @@
  * limitations under the License.
  */
 
-package org.qubership.cloud.devops.commons.utils.constant;
+package org.qubership.cloud.devops.commons.exceptions;
 
-public class CredentialConstants {
-    public static final String CALCULABLE_CREDS_FIELD = "#creds";
-    public static final String CALCULABLE_CLOUD_CREDS_FIELD = "#credscl";
-    public static final String CALCULABLE_NS_CREDS_FIELD = "#credsns";
-    public static final String DEFAULT_DBAAS_AGGREGATOR_LOGIN = "";
-    public static final String DEFAULT_DBAAS_AGGREGATOR_PASSWORD = "";
-    public static final String DEFAULT_MAAS_LOGIN = "";
-    public static final String DEFAULT_MAAS_PASSWORD = "";
+public class AppChartValidationException extends RuntimeException {
+
+    private static final long serialVersionUID = 7265829704790348836L;
+
+    public AppChartValidationException() {
+    }
+
+    public AppChartValidationException(String message) {
+        super(message);
+    }
+
+    public AppChartValidationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public AppChartValidationException(Throwable cause) {
+        super(cause);
+    }
 }

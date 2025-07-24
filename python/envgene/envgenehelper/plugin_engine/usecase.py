@@ -47,6 +47,7 @@ class PluginUseCase:
             logger.error(f'No plugin found in registry for module: {plugin_module}')
 
     def __search_for_plugins_in(self, plugins_path: list[str], package_name: str):
+        plugins_path.sort()
         for directory in plugins_path:
             # Importing the module will cause IPluginRegistry to invoke it's __init__ fun
             import_target_module = f'.{directory}.main'

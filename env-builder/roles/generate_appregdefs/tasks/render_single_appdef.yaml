@@ -5,7 +5,7 @@
         tmp_render_dir: "{{ tmp_render_dir   | default('/tmp') }}"
         render_timestamp: >-
           {{ render_timestamp | default(
-              (ansible_date_time.epoch 
+              (ansible_date_time.epoch
                if (ansible_date_time is defined and ansible_date_time.epoch is defined)
                else lookup('pipe','date +%s')
               )
@@ -62,5 +62,5 @@
     - name: Save final rendered AppDef
       copy:
         content: "{{ appdef_raw_rendered }}"
-        dest:    "{{ current_env_dir }}/AppDefs/{{ appdef_meta.name }}.appdef.yml"
+        dest:    "{{ current_env_dir }}/AppDefs/{{ appdef_meta.name }}.yml"
         mode:    '0644'

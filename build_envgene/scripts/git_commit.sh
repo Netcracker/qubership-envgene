@@ -48,6 +48,7 @@ echo "ENVIRONMENT_NAME=${ENVIRONMENT_NAME}"
 echo "DEPLOYMENT_TICKET_ID=${DEPLOYMENT_TICKET_ID}"
 echo "COMMIT_ENV=${COMMIT_ENV}"
 echo "COMMIT_MESSAGE=${COMMIT_MESSAGE}"
+echo "DEPLOYMENT_SESSION_ID=${DEPLOY_SESSION_ID}"
 
 export ticket_id=${DEPLOYMENT_TICKET_ID}
 
@@ -78,6 +79,12 @@ if [ -e configuration ]; then
   echo "Copy config folder"
   mkdir -p /tmp/configuration
   cp -r configuration /tmp
+  fi
+
+if [ -e sboms ]; then
+    echo "Copy sboms folder"
+    mkdir -p /tmp/sboms
+    cp -r sboms /tmp
 fi
 
 if [ -e gitlab-ci/prefix_build ]; then
@@ -139,6 +146,11 @@ if [ -e /tmp/configuration ]; then
   cp -r /tmp/configuration .
 fi
 
+if [ -e /tmp/sboms ]; then
+  echo "Restoring config folder"
+  cp -r /tmp/sboms .
+fi
+
 if [ -e /tmp/gitlab-ci ]; then
   rm -rf gitlab-ci
   echo "Restoring gitlab-ci folder"
@@ -149,6 +161,12 @@ if [ -e /tmp/gitlab-ci ]; then
   cp -r /tmp/templates .
 
   message="${ticket_id} [ci_build_parameters] Update gitlab-ci configurations"
+fi
+
+if [ -n "${DEPLOY_SESSION_ID}" ]; then
+    echo "Deployment session id is ${DEPLOY_SESSION_ID}"
+    message="${message}"$'\n\n'"DEPLOYMENT-SESSION-ID: ${DEPLOY_SESSION_ID}"
+    echo "Appended commit message with session id"
 fi
 
 echo "Checking changes..."
