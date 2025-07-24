@@ -188,7 +188,7 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
     if 'SNAPSHOT' in version:
         raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
     # TODO: check if job would fail without plugins
-    app_def = get_appdef_for_app(app_name, plugins)
+    app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
     artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version))
     if not artifact_info:
@@ -197,13 +197,13 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
     sd_url, _ = artifact_info
     return json.dumps(artifact.download_json_content(sd_url))
 
-def get_appdef_for_app(app_name: str, plugins: PluginEngine) -> artifact_models.Application:
-    results = plugins.run(app_name=app_name)
+def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> artifact_models.Application:
+    results = plugins.run(appver=appver)
     for result in results:
         if result is not None:
             return result
     app_dict = helper.openYaml(f"{APP_DEFS_PATH}/{app_name}")
-    app_dict['registry'] = artifact_models.Registry.model_validate(helper.openYaml(f"{APP_DEFS_PATH}/{app_name}"))
+    app_dict['registry'] = artifact_models.Registry.model_validate(helper.openYaml(f"{REG_DEFS_PATH}/{app_dict['registry']}"))
     app_def = artifact_models.Application.model_validate(app_dict)
     return app_def
 
