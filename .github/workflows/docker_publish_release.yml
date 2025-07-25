@@ -1,4 +1,4 @@
-name: Release EnvGene
+name: "Release: EnvGene"
 
 run-name: "Release EnvGene: ${{ inputs.version }}"
 
@@ -26,7 +26,19 @@ on:
         required: true
 
 jobs:
+  tests:
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.10-slim-bookworm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Run Tests
+        uses: ./.github/actions/run-tests
+  
   check-tag:
+    needs: [tests]
     runs-on: ubuntu-latest
     steps:
       - name: Input parameters
