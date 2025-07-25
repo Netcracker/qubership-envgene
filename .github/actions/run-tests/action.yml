@@ -30,6 +30,7 @@ runs:
             cp dependencies/sources.list /etc/apt/sources.list
         fi
 
+        pip install --upgrade pip setuptools wheel
         pip install --no-cache-dir -r dependencies/tests_requirements.txt
 
         if [ -f python/build_modules.sh ]; then
