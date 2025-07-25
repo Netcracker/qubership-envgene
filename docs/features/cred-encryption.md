@@ -385,7 +385,9 @@ This server-side hook is designed to prevent publishing unencrypted sensitive pa
 
 #### Enabling the hook in repository
 
-TBD
+The hook should be triggered in each repository where the following CICD variable is set:
+
+`CRED_ENCRYPTION_VALIDATION_HOOK_ENABLED: true`
 
 #### Hook triggers
 
