@@ -34,23 +34,25 @@
 
 ## Problem Statement
 
-Энвген 
+EnvGene-managed configurations contain sensitive parameters (for example, passwords and tokens). Storing such parameters in plain text exposes systems to security risks, including unauthorized access and data breaches.
+A secure end-to-end process for handling sensitive parameters is required, while minimizing user friction.
 
 ## Proposed Approach
 
-TBD
+TBD (add about)
 
 ### Use cases
 
-1. Enabling encryption (incl. GitLab server-side hook enabling)
+1. Preparing the Configurator's local machine (for running the local pre-commit hook)
+2. [Enabling encryption](/docs/use%20cases#1-enabling-sops-encryption-in-repository) (incl. GitLab server-side hook enabling)
    1. In the Instance repository
    2. In the Discovery repository
-2. Preparing the user's local machine (for running the local pre-commit hook)
-3. Adding a sensitive parameter
-4. Modifying the value of a sensitive parameter
-5. Migrating from Fernet to SOPS
-   1. in the instance repository
-   2. in the discovery repository
+3. [Adding a sensitive parameter](/docs/use%20cases#)
+4. [Modifying the value of a sensitive parameter](/docs/use%20cases#4-modifying-the-value-of-a-sensitive-parameter))
+5. [Migrating from Fernet to SOPS](/docs/use%20cases##5-migrating-from-fernet-to-sop)
+   1. in the Instance repository
+   2. in the Discovery repository
+6. Encryption key rotation
 
 ### Assumptions & Limitation
 
@@ -375,7 +377,8 @@ Each Shade Credential File includes the following header:
 
 Sensitive parameter values enter the git repository through user commits and pushes. When encryption is enabled, the local pre-commit hook ensures these values are properly encrypted before being committed to the repository.
 
-TBD
+Должен иметь функционал ручного декрипта
+должен валидировать по схеме
 
 ### GitLab Server-side Git Hooks
 
