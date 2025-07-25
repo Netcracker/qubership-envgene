@@ -1,6 +1,6 @@
-name: "Dev: Tests and Build Qubership EnvGene docker images"
+name: "Dev: Build Qubership EnvGene docker images"
 
-run-name: "Tests and Build EnvGene docker images for commit ${{ github.sha }}"
+run-name: "Build EnvGene docker images for commit ${{ github.sha }}"
 
 on:
   workflow_dispatch:

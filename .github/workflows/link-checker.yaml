@@ -2,9 +2,13 @@
 name: Link Checker
 
 on:
-  push: null
-  repository_dispatch: null
-  workflow_dispatch: null
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
 
 jobs:
   linkChecker:
