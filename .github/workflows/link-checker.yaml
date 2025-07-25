@@ -2,11 +2,14 @@
 name: Link Checker
 
 on:
-  push: null
-  repository_dispatch: null
-  workflow_dispatch: null
-permissions:
-  contents: read
+  push:
+    branches-ignore:
+      - main
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
 jobs:
   linkChecker:
     runs-on: ubuntu-latest
