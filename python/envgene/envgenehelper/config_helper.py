@@ -52,8 +52,7 @@ def validate_variables(crypt_enabled, crypt_backend, crypt_create_shades):
                     f'Following CI/CD variables are not set: \n{empty_parameters}.\nThese variables are mandatory for crypt_backend: {SOPS_ID}')
 
 
-def validate_configuration(config_yaml):
-
+def validate_config_file(config_yaml):
     crypt_backend = config_yaml.get('crypt_backend', 'Fernet')
     crypt_enabled = config_yaml.get('crypt', 'true')
     crypt_create_shades = config_yaml.get('crypt_create_shades', 'false')
@@ -74,6 +73,6 @@ def get_envgene_config_yaml():
     except FileNotFoundError:
         logger.warning(f'Failed to find config file in {ENVGENE_CONFIG_PATH}')
         return get_empty_yaml()
-    validate_configuration(config)
+    validate_config_file(config)
     logger.info(f"Config content: {config}")
     return config

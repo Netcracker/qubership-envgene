@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import Path
 import subprocess
@@ -84,18 +85,10 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
 
     if secret_key:
         os.environ['SOPS_AGE_KEY'] = secret_key
-
-    is_encrypted = is_encrypted_SOPS(file_path)
     is_empty = is_empty_SOPS(file_path)
     if is_empty:
         logger.info(f'Skipped {mode}ion of {file_path}. File is empty. ')
         return readYaml(file_path)
-    if is_encrypted and mode == "encrypt":
-        logger.warning(f'File is already encrypted. Path: {file_path}')
-        return openYaml(file_path)
-    if not is_encrypted and mode == "decrypt":
-        logger.warning(f'File is not encrypted. Path: {file_path}')
-        return openYaml(file_path)
 
     if minimize_diff and mode != "decrypt":
         result = _get_minimized_diff(file_path, old_file_path, public_key)
@@ -122,11 +115,9 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         except ValueError as e:
             logger.warning(f'{str(e)}. Path: {file_path}')
             return openYaml(file_path)
-
     logger.debug(f'The file has been {mode}ed. Path: {file_path}')
     if not in_place:
         return readYaml(result)
-    return openYaml(file_path)
 
 
 def extract_value_SOPS(file_path, attribute_str):
@@ -155,10 +146,8 @@ def _dict_has_value(d, target):
     return False
 
 def is_empty_SOPS(file_path):
-    content = openYaml(file_path)
-    if not content:
-        return True
-    return False  
+    return os.path.getsize(file_path) == 0
+
 
 def is_encrypted_SOPS(file_path):
     content = openYaml(file_path)

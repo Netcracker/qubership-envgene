@@ -13,12 +13,12 @@ from .logger import logger
 from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
 from .crypt_backends.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
 from envgenehelper import shade_files_helper
+from concurrent.futures import ProcessPoolExecutor
 
 config = get_envgene_config_yaml()
 IS_CRYPT = config.get('crypt', True)
 CRYPT_BACKEND = config.get('crypt_backend', 'Fernet')
 CREATE_SHADES = config.get('crypt_create_shades', True)
-DECRYPT_REPO = config.get('crypt_decrypt_repo', False)
 
 BASE_DIR = getenv('CI_PROJECT_DIR', os.getcwd())
 VALID_EXTENSIONS = re.compile(r'\.ya?ml$')
@@ -64,10 +64,8 @@ def decrypt_file(file_path, **kwargs):
         if 'effective-set' in file_path:
             return _decrypt_file(file_path, **kwargs)
         return shade_files_helper.merge_creds_file(
-            file_path, _decrypt_file, **kwargs)
+            file_path, _decrypt_file, in_place=False, **kwargs)
     return _decrypt_file(file_path, **kwargs)
-
-
 
 def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False, is_crypt=None,
                   minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False, **kwargs):
@@ -151,8 +149,10 @@ def decrypt_all_cred_files_for_env(**kwargs):
     if not IS_CRYPT:
         check_for_encrypted_files(files)
     else:
-        for f in files:
-            decrypt_file(f, **kwargs)
+        # for f in files:
+        #     decrypt_file(f, **kwargs)
+        with ProcessPoolExecutor(max_workers=4) as pool:
+           pool.map(decrypt_file, files)
         logger.debug("Decrypted next cred files:")
         logger.debug(files)
 
@@ -162,6 +162,7 @@ def encrypt_all_cred_files_for_env(**kwargs):
 
     logger.debug("Attempting to encrypt(if crypt is true) next files:")
     logger.debug(files)
-
-    for f in files:
-        encrypt_file(f, **kwargs)
+    with ProcessPoolExecutor(max_workers=4) as pool:
+        pool.map(encrypt_file, files)
+    # for f in files:
+    #     encrypt_file(f, **kwargs)
