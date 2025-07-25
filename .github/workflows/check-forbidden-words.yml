@@ -185,7 +185,7 @@ jobs:
           def check_branch_for_forbidden_words(branch_name):
               print(f'\\n=== Checking branch: {branch_name} ===')
               
-              # Сначала проверяем, существует ли ветка в origin
+              # First check if the branch exists in origin
               try:
                   result = subprocess.run(['git', 'ls-remote', '--heads', 'origin', branch_name], capture_output=True, text=True)
                   if not result.stdout.strip():
@@ -198,7 +198,7 @@ jobs:
                   print(f'stderr: {e.stderr}')
                   return None
               
-              # Проверяем текущий статус git
+              # Check current git status
               try:
                   status_result = subprocess.run(['git', 'status', '--porcelain'], capture_output=True, text=True)
                   if status_result.stdout.strip():
@@ -206,14 +206,14 @@ jobs:
               except subprocess.CalledProcessError as e:
                   print(f'Error checking git status: {e}')
               
-              # Пробуем разные способы checkout
+              # Try different checkout methods
               checkout_success = False
               
-              # Способ 1: Проверяем, есть ли локальная ветка
+              # Method 1: Check if local branch exists
               try:
                   result = subprocess.run(['git', 'branch', '--list', branch_name], capture_output=True, text=True)
                   if result.stdout.strip():
-                      # Локальная ветка существует
+                      # Local branch exists
                       print(f'Local branch {branch_name} exists, trying to checkout...')
                       subprocess.run(['git', 'checkout', branch_name], check=True, capture_output=True)
                       checkout_success = True
@@ -224,23 +224,23 @@ jobs:
                   print(f'Failed to checkout existing local branch {branch_name}: {e}')
                   print(f'stderr: {e.stderr}')
               
-              # Способ 2: Если локальной ветки нет, создаем от origin
+              # Method 2: If local branch doesn't exist, create from origin
               if not checkout_success:
                   try:
                       print(f'Trying to fetch and create branch {branch_name} from origin...')
-                      # Сначала убеждаемся, что у нас есть актуальная информация о remote
+                      # First make sure we have up-to-date information about remote
                       fetch_result = subprocess.run(['git', 'fetch', 'origin', branch_name], capture_output=True, text=True)
                       if fetch_result.returncode != 0:
                           print(f'Fetch failed: {fetch_result.stderr}')
                           raise subprocess.CalledProcessError(fetch_result.returncode, fetch_result.args)
                       
-                      # Проверяем, что ветка действительно существует после fetch
+                      # Check that the branch actually exists after fetch
                       ls_result = subprocess.run(['git', 'ls-remote', '--heads', 'origin', branch_name], capture_output=True, text=True)
                       if not ls_result.stdout.strip():
                           print(f'Branch {branch_name} still not found after fetch')
                           raise subprocess.CalledProcessError(1, ['git', 'ls-remote'])
                       
-                      # Создаем локальную ветку от origin
+                      # Create local branch from origin
                       subprocess.run(['git', 'checkout', '-b', branch_name, f'origin/{branch_name}'], check=True, capture_output=True)
                       checkout_success = True
                       print(f'Successfully created and checked out branch: {branch_name}')
@@ -249,7 +249,7 @@ jobs:
                       if hasattr(e, 'stderr') and e.stderr:
                           print(f'stderr: {e.stderr}')
               
-              # Способ 3: Если не удалось создать ветку, пробуем checkout напрямую
+              # Method 3: If failed to create branch, try direct checkout
               if not checkout_success:
                   try:
                       print(f'Trying to checkout remote branch origin/{branch_name} directly...')
@@ -261,7 +261,7 @@ jobs:
                       if hasattr(e, 'stderr') and e.stderr:
                           print(f'stderr: {e.stderr}')
               
-              # Если все способы не сработали, пропускаем ветку
+              # If all methods failed, skip the branch
               if not checkout_success:
                   print(f'All checkout methods failed for branch {branch_name}, skipping...')
                   return None
@@ -349,7 +349,7 @@ jobs:
           
           # Process each branch
           branches = [b.strip() for b in branches_str.split(',') if b.strip()]
-          # Удаляем дубликаты и пустые значения
+          # Remove duplicates and empty values
           branches = list(set([b for b in branches if b and b != '']))
           all_results = []
           total_branches_with_issues = 0
