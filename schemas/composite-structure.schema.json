@@ -53,23 +53,12 @@
       },
       "minItems": 1,
       "description": "List of satellite components"
-    },
-    "id": {
-      "type": "string",
-      "description": "Name of the baseline component"
-    },
-    "version": {
-      "type": "integer",
-      "description": "Version number of the structure definition",
-      "const": 0
     }
   },
   "required": [
     "name",
     "baseline",
-    "satellites",
-    "id",
-    "version"
+    "satellites"
   ],
   "additionalProperties": false
 }
