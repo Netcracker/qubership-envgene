@@ -20,7 +20,12 @@ yaml = YAML()
 TEST_CASES = [
     # (cluster_name, environment_name, test_case_name)
     ("cluster01", "env02", "TC-001-002"),
-    ("cluster01", "env02", "TC-001-006")
+    ("cluster01", "env02", "TC-001-006"),
+    ("cluster01", "env02", "TC-001-004"),
+    ("cluster01", "env02", "TC-001-018"),
+    ("cluster01", "env02", "TC-001-010"),
+    ("cluster01", "env02", "TC-001-012"),
+    ("cluster01", "env02", "TC-001-014")
 ]
 
 # Directory paths configuration
