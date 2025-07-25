@@ -85,7 +85,7 @@ def get_deployer_config(env_name=None, work_dir=None, instances_dir=None, secret
             raise ValueError('get_deployer_config() function must be called either with (env_name, work_dir, instances_dir) or with (deployer_name) params')
         deployer_file_path = basic_deployer_file_path
     deployer_dir = getDirName(deployer_file_path)
-    data = openYaml(deployer_file_path)
+    data = openYaml(deployer_file_path, allow_default=True)
     if deployer_name not in data and fallback_on_root_config:
         logger.info(f"Deployer with key {deployer_name} not found in: {deployer_file_path}. Going to root configuration: {basic_deployer_file_path}")
         deployer_dir = getDirName(basic_deployer_file_path)
