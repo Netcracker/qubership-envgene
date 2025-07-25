@@ -15,7 +15,7 @@ ENV_DEFINITION_FILE_NAME = "env_definition.yml"
 PARAMSET_SCHEMA = "schemas/paramset.schema.json"
 CLOUD_SCHEMA = "schemas/cloud.schema.json"
 NAMESPACE_SCHEMA = "schemas/namespace.schema.json"
-ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/env-specific-resource-profile.schema.json"
+ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
 
 def clear_output_folder(dir) :
     delete_dir(f"{dir}/Namespaces")

@@ -4,6 +4,7 @@ from cryptography.fernet import Fernet
 
 from ..business_helper import getenv_with_error
 from ..yaml_helper import openYaml, writeYamlToFile, get_or_create_nested_yaml_attribute
+from ..logger import logger
 
 from .constants import *
 
@@ -25,7 +26,7 @@ def _decrypt_Fernet(text, fernet: Fernet):
         return text
     if not FERNET_STR in text:
         return text
-    return fernet.decrypt(text.replace(FERNET_STR, '').encode('utf-8')).decode('utf-8') 
+    return fernet.decrypt(text.replace(FERNET_STR, '').encode('utf-8')).decode('utf-8')
 
 def _remove_unnecessary_changes(data: dict, old_data_path: str, fernet: Fernet) -> None:
     if not os.path.exists(old_data_path):
@@ -35,7 +36,7 @@ def _remove_unnecessary_changes(data: dict, old_data_path: str, fernet: Fernet) 
 
 def _reuse_old_fernet_tokens(data: dict, old_data: dict, fernet: Fernet) -> None:
     for k, v in data.items():
-        if not k in old_data.keys():
+        if k not in old_data.keys():
             continue
         if isinstance(v, dict) and isinstance(old_data[k], dict):
             _reuse_old_fernet_tokens(v, old_data[k], fernet)

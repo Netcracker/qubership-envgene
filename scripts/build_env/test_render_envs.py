@@ -6,8 +6,17 @@ from main import render_environment
 from envgenehelper import *
 
 test_data = [
-      ("test-solution-structure", "test-solution-structure-case-01", "test-01")
+      # (cluster_name, environment_name, template)
+      ("cluster-01", "env-01", "composite-prod"),
+      ("cluster-01", "env-02", "composite-dev"),
+      ("cluster-01", "env-03", "composite-dev"),
+      ("cluster-01", "env-04", "simple"),
+      ("cluster01", "env01", "test-01"),
+      ("cluster01", "env01", "test-01"),
+      ("cluster01", "env03", "test-template-1"),
+      ("cluster01", "env04", "test-template-2")
 ]
+
 g_templates_dir = getAbsPath("../../test_data/test_templates")
 g_inventory_dir = getAbsPath("../../test_data/test_environments")
 g_output_dir = getAbsPath("../../tmp/test_environments")

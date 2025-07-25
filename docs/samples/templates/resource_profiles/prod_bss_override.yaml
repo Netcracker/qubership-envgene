@@ -1,0 +1,34 @@
+---
+name: "prod_bss_override"
+baseline: "prod"
+description: "Override for dev-profile"
+applications:
+- name: "core-app"
+  version: "release-2023.3-11.17.0-20231107.113613-36-RELEASE"
+  sd: ""
+  services:
+  - name: "core-service"
+    parameters:
+    - name: "CPU_LIMIT"
+      value: "10"
+    - name: "MEMORY_LIMIT"
+      value: "5620Mi"
+    - name: "REPLICAS"
+      value: "3"
+    - name: "CPU_REQUEST"
+      value: "150m"
+- name: "bss-app"
+  #version: "release-2023.3-8.4.0-20231103.225817-60-RELEASE"
+  #sd: ""
+  services:
+  - name: "bss-service"
+    parameters:
+    - name: "CPU_LIMIT"
+      value: "20"
+    - name: "REPLICAS"
+      value: "3"
+    - name: "CPU_REQUEST"
+      value: "150m"
+    - name: "MEMORY_LIMIT"
+      value: "336Mi"
+version: 0

@@ -16,6 +16,7 @@ SECRET_KEY_ID = "SECRET_KEY"
 FERNET_ID = "Fernet"
 SOPS_ID = "SOPS"
 
+
 def get_schema(schema_name):
     schemas_folder = "schemas"
     potential_paths = ['module', 'build_env', '']
@@ -27,14 +28,35 @@ def get_schema(schema_name):
             return json.load(f)
     return None
 
-def validate_config_file(config_yaml):
-    secret_key = getenv(SECRET_KEY_ID,"")
-    envgene_age_public_key = getenv(ENVGENE_AGE_PUBLIC_KEY_ID,"")
-    envgene_age_private_key = getenv(ENVGENE_AGE_PRIVATE_KEY_ID,"")
-    public_age_keys = getenv(PUBLIC_AGE_KEYS_ID,"")
+
+def validate_variables(crypt_enabled, crypt_backend, crypt_create_shades):
+    secret_key = getenv(SECRET_KEY_ID, "")
+    envgene_age_public_key = getenv(ENVGENE_AGE_PUBLIC_KEY_ID, "")
+    envgene_age_private_key = getenv(ENVGENE_AGE_PRIVATE_KEY_ID, "")
+    public_age_keys = getenv(PUBLIC_AGE_KEYS_ID, "")
+    empty_parameters = []
+    if crypt_enabled:
+        if crypt_backend == FERNET_ID and not secret_key:
+            raise Exception(
+                f'Following CI/CD variables are not set: \n{SECRET_KEY_ID}.\nThis variable is mandatory for crypt_backend: {FERNET_ID}')
+        if crypt_backend == SOPS_ID:
+            if envgene_age_public_key == "":
+                empty_parameters.append(ENVGENE_AGE_PUBLIC_KEY_ID)
+            if public_age_keys == "":
+                empty_parameters.append(PUBLIC_AGE_KEYS_ID)
+            if not crypt_create_shades and envgene_age_private_key == "":
+                empty_parameters.append(ENVGENE_AGE_PRIVATE_KEY_ID)
+            if empty_parameters:
+                logger.info(f'list_of_empty_parameters: {empty_parameters}')
+                raise Exception(
+                    f'Following CI/CD variables are not set: \n{empty_parameters}.\nThese variables are mandatory for crypt_backend: {SOPS_ID}')
+
+
+def validate_configuration(config_yaml):
 
     crypt_backend = config_yaml.get('crypt_backend', 'Fernet')
     crypt_enabled = config_yaml.get('crypt', 'true')
+    crypt_create_shades = config_yaml.get('crypt_create_shades', 'false')
     schema_name = 'config.schema.json'
     schema_data = get_schema(schema_name)
     logger.debug(f'Checking yaml with schema: {schema_name}')
@@ -42,29 +64,16 @@ def validate_config_file(config_yaml):
         jsonschema.validate(config_yaml, schema_data)
     else:
         logger.info(f'Failed to find schema: {schema_name}')
+    validate_variables(crypt_backend=crypt_backend,
+                       crypt_enabled=crypt_enabled, crypt_create_shades=crypt_create_shades)
 
-    empty_parameters = []
-
-    if (crypt_enabled):
-        if crypt_backend == FERNET_ID and secret_key == "":
-            raise Exception(f'Following CI/CD variables are not set: \n{SECRET_KEY_ID}.\nThis variable is mandatory for crypt_backend: {FERNET_ID}')
-        if crypt_backend == SOPS_ID and (envgene_age_public_key == "" or envgene_age_private_key == "" or public_age_keys == ""):
-            if envgene_age_public_key == "":
-                empty_parameters.append(ENVGENE_AGE_PUBLIC_KEY_ID)
-            if envgene_age_private_key == "":
-                empty_parameters.append(ENVGENE_AGE_PRIVATE_KEY_ID)
-            if public_age_keys == "":
-                empty_parameters.append(PUBLIC_AGE_KEYS_ID)
-            logger.info(f'list_of_empty_parameters: {empty_parameters}')
-            raise Exception(f'Following CI/CD variables are not set: \n{empty_parameters}.\nThese variables are mandatory for crypt_backend: {SOPS_ID}')
 
 def get_envgene_config_yaml():
     try:
-        config = openYaml(ENVGENE_CONFIG_PATH) 
+        config = openYaml(ENVGENE_CONFIG_PATH)
     except FileNotFoundError:
         logger.warning(f'Failed to find config file in {ENVGENE_CONFIG_PATH}')
-        return get_empty_yaml() 
-    validate_config_file(config)
+        return get_empty_yaml()
+    validate_configuration(config)
     logger.info(f"Config content: {config}")
     return config
-
