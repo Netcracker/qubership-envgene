@@ -10,18 +10,10 @@ inputs:
     description: 'Docker image name'
     required: false
     default: 'qubership-gcip'
-  cred-rotation-image-name:
-    description: 'credential rotation Docker image name'
-    required: false
-    default: 'credential-rotation'
   dockerfile-path:
     description: 'Path to Dockerfile'
     required: false
     default: './build_gcip/build/Dockerfile'
-  cred-rotation-dockerfile-path:
-    description: 'Path to credential rotation Dockerfile'
-    required: false
-    default: './creds_rotation/build/DockerFile'
   git-user:
     description: 'Git username for build args'
     required: false
@@ -45,38 +37,21 @@ runs:
         username: ${{ github.actor }}
         password: ${{ inputs.github-token }}
 
-    - name: Extract metadata (tags, labels) for GCIP Docker
-      id: meta-gcip
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
       uses: docker/metadata-action@v5
       with:
         images: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}
-
-    - name: Build and push GCIP Docker image
+    
+    - name: Build and push Docker image
+      id: push
       uses: docker/build-push-action@v6
       with:
         context: .
         file: ${{ inputs.dockerfile-path }}
         push: true
-        tags: ${{ steps.meta-gcip.outputs.tags }}
-        labels: ${{ steps.meta-gcip.outputs.labels }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
         build-args: |
           GIT_USER=${{ inputs.git-user }}
-          GIT_TOKEN=${{ inputs.git-token }}
-
-    - name: Extract metadata (tags, labels) for credential rotation Docker
-      id: meta-cred
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.cred-rotation-image-name }}
-
-    - name: Build and push credential rotation Docker image
-      uses: docker/build-push-action@v6
-      with:
-        context: .
-        file: ${{ inputs.cred-rotation-dockerfile-path }}
-        push: true
-        tags: ${{ steps.meta-cred.outputs.tags }}
-        labels: ${{ steps.meta-cred.outputs.labels }}
-        build-args: |
-          GIT_USER=${{ inputs.git-user }}
-          GIT_TOKEN=${{ inputs.git-token }}
+          GIT_TOKEN=${{ inputs.git-token }} 
