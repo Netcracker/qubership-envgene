@@ -100,6 +100,21 @@ public abstract class AbstractLanguage implements Language {
         });
     }
 
+    protected void processNamespace(Map<String, Parameter> map) {
+        process(map, function -> {
+            function.accept("tenant");
+
+            function.accept("application");
+
+            function.accept("tenant.cloud");
+
+            function.accept("tenant.cloud.app");
+
+            function.accept("tenant.cloud.namespace");
+
+        });
+    }
+
     protected void processNamespaceAppConfigServer(Map<String, Parameter> map) {
         process(map, (function) -> {
             function.accept("tenant.config-server");

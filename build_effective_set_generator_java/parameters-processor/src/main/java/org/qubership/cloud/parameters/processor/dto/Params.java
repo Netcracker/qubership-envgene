@@ -12,4 +12,5 @@ public class Params {
     Map<String, Parameter> deployParams;
     Map<String, Parameter> techParams;
     Map<String, Parameter> e2eParams;
+    Map<String, Parameter> cleanupParams;
 }
