@@ -7,9 +7,6 @@ inputs:
     required: false
     default: '3.10'
 
-env:
-  CI_PROJECT_DIR: ${{ github.workspace }}
-
 runs:
   using: composite
   steps:
