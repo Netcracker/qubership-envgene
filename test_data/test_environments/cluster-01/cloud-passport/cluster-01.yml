@@ -1,0 +1,67 @@
+---
+version: 1.5
+cloud:
+  CLOUD_API_HOST: api.cluster-01.qubership.org
+  CLOUD_API_PORT: "6443"
+  CLOUD_DEPLOY_TOKEN: cloud-deploy-sa-token
+  CLOUD_PUBLIC_HOST: cluster-01.qubership.org
+  CLOUD_PRIVATE_HOST: cluster-01.qubership.org
+  CLOUD_DASHBOARD_URL: https://dashboard.cluster-01.qubership.org
+  CLOUD_PROTOCOL: https
+  PRODUCTION_MODE: false
+  GRAYLOG_UI_URL: https://cluster-01.qubership.org
+  TRACING_UI_URL: https://cluster-01.qubership.org
+  GRAFANA_UI_URL: https://cluster-01.qubership.org
+  CMDB_URL: https://cluster-01.qubership.org
+dbaas:
+  API_DBAAS_ADDRESS: http://dbaas.dbaas:8080 
+  DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.qubership.org
+  DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: ${creds.get("dbaas-cred").username}
+  DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: ${creds.get("dbaas-cred").password}
+maas:
+  MAAS_INTERNAL_ADDRESS: http://maas.maas:8080
+  MAAS_SERVICE_ADDRESS: http://maas.cluster-01.qubership.org
+  MAAS_CREDENTIALS_USERNAME: ${creds.get("maas-cred").username}
+  MAAS_CREDENTIALS_PASSWORD: ${creds.get("maas-cred").password}
+consul:
+  CONSUL_URL: http://consul.consul:8080
+  CONSUL_ENABLED: true
+  CONSUL_PUBLIC_URL: http://consul.consul:8080
+  CONSUL_ADMIN_TOKEN: ${creds.get("consul-cred").secret}
+zookeeper:
+  ZOOKEEPER_URL: ${ZOOKEEPER_ADDRESS}
+  ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181
+storage:
+  STORAGE_SERVER_URL: https://minio.cluster-01.qubership.org
+  STORAGE_PROVIDER: s3
+  STORAGE_REGION: eu-west-1
+  STORAGE_USERNAME: ${creds.get("minio-cred").username}
+  STORAGE_PASSWORD: ${creds.get("minio-cred").password}
+  CDN_STORAGE_SERVER_URL: ${STORAGE_SERVER_URL}
+  CDN_STORAGE_PROVIDER: ${STORAGE_PROVIDER}
+  CDN_STORAGE_REGION: ${STORAGE_REGION}
+  CDN_STORAGE_USERNAME: ${STORAGE_USERNAME}
+  CDN_STORAGE_PASSWORD: ${STORAGE_PASSWORD}
+  DOC_STORAGE_SERVER_URL: ${STORAGE_SERVER_URL}
+  DOC_STORAGE_PROVIDER: ${STORAGE_PROVIDER}
+  DOC_STORAGE_REGION: ${STORAGE_REGION}
+  DOC_STORAGE_USERNAME: ${STORAGE_USERNAME}
+  DOC_STORAGE_PASSWORD: ${STORAGE_PASSWORD}
+  STORAGE_RWO_CLASS: standard
+  STORAGE_RWX_CLASS: ""
+core:
+  DEFAULT_TENANT_NAME: tenant
+  DEFAULT_TENANT_ADMIN_LOGIN: admin
+  DEFAULT_TENANT_ADMIN_PASSWORD: password
+  MAVEN_REPO_URL: https://artifactory.qubership.org
+  MAVEN_REPO_NAME: mvn.group
+  MAVEN_REPO_STAGING_NAME: ${MAVEN_REPO_NAME}
+  MAVEN_REPO_DEV_NAME: ${MAVEN_REPO_NAME}
+global:
+  MONITORING_ENABLED: "true"
+  TRACING_ENABLED: "false"
+  TRACING_HOST: tracing-agent
+bss:
+  DOC_STORAGE_TEMPORARY_BUCKET_NAME: temporary-bucket
+  DOC_STORAGE_PERSISTENT_BUCKET_NAME: permanent-bucket
+

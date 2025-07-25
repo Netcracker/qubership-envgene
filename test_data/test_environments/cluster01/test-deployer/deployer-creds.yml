@@ -1,0 +1,8 @@
+test-deployer-token-cred:
+  type: secret
+  data:
+    secret: test_token
+test-deployer-username-cred:
+  type: secret
+  data:
+    secret: test_token
