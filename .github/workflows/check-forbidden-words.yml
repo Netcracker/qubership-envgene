@@ -13,7 +13,7 @@ on:
       forbidden-word:
         description: 'Forbidden word to search and replace'
         required: false
-        default: 'etbss'
+        default: 'YOUR_WORD'
         type: string
       replacement-word:
         description: 'Word to replace forbidden word with'
@@ -30,22 +30,10 @@ on:
         required: false
         default: 'main,master'
         type: string
-  schedule:
-    # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-      - '.github/workflows/check-forbidden-words.yml'
 
 env:
   TARGET_BRANCHES: ${{ github.event.inputs.target-branches || '' }}
-  FORBIDDEN_WORD: ${{ github.event.inputs.forbidden-word || 'etbss' }}
+  FORBIDDEN_WORD: ${{ github.event.inputs.forbidden-word || 'YOUR_WORD' }}
   REPLACEMENT_WORD: ${{ github.event.inputs.replacement-word || 'tmp' }}
   DRY_RUN: ${{ github.event.inputs.dry-run || 'true' }}
   EXCLUDE_BRANCHES: ${{ github.event.inputs.exclude-branches || 'main,master' }}
