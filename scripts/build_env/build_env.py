@@ -162,7 +162,7 @@ def initParametersStructure(map, key, is_app=False) :
 
 def storeToEnvSpecificParametersMap(env_specific_params_map, applicationName, parametersTag, paramKey, paramValue, paramsetName) :
     if applicationName:
-        #todo: прибить гвоздями все 3 тэга параметров
+        #todo: nail all 3 parameter tags
         if applicationName not in env_specific_params_map["applications"]:
             initParametersStructure(env_specific_params_map["applications"], applicationName, is_app=True)
         env_specific_params_map["applications"][applicationName][parametersTag][paramKey] = { "value" : paramValue, "paramsetName" : paramsetName }
