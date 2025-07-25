@@ -1,0 +1,146 @@
+name: "Dev: Build Qubership EnvGene docker images"
+
+run-name: "Build EnvGene docker images for commit ${{ github.sha }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      build-gcip:
+        description: 'Build Qubership GCIP image'
+        required: false
+        default: true
+        type: boolean
+      build-envgene:
+        description: 'Build Qubership Envgene image'
+        required: false
+        default: true
+        type: boolean
+      build-pipeline:
+        description: 'Build Instance Repo Pipeline image'
+        required: false
+        default: true
+        type: boolean
+      build-effective-set:
+        description: 'Build Effective Set Generator image'
+        required: false
+        default: true
+        type: boolean
+  push:
+    branches:
+      - '**'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  tests:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.10-slim-bookworm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Run Tests
+        uses: ./.github/actions/run-tests
+
+  build-qubership-gcip:
+    needs: [tests]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gcip == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Qubership GCIP Docker Image
+        uses: ./.github/actions/build-gcip
+        with:
+          registry: ${{ env.REGISTRY }}
+          git-user: ${{ secrets.GIT_USER }}
+          git-token: ${{ secrets.GIT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-qubership-envgene:
+    needs: [tests]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-envgene == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Qubership Envgene Docker Image
+        uses: ./.github/actions/build-envgene
+        with:
+          registry: ${{ env.REGISTRY }}
+          gh-access-token: ${{ secrets.GH_ACCESS_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-instance-repo-pipeline:
+    needs: [tests]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipeline == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Instance Repo Pipeline Docker Image
+        uses: ./.github/actions/build-pipeline
+        with:
+          registry: ${{ env.REGISTRY }}
+          gh-access-token: ${{ secrets.GH_ACCESS_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-effective-set-jar:
+    needs: [tests]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@main
+    with:
+      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
+      java-version: 17
+      upload-artifact: true
+      artifact-id: effective_set_jar
+      ref: ${{ github.ref }}
+    secrets:
+      maven-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-effective-set-generator:
+    needs: [build-effective-set-jar]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build Effective Set Generator Docker Image
+        uses: ./.github/actions/build-effective-set
+        with:
+          registry: ${{ env.REGISTRY }}
+          git-user: ${{ secrets.GIT_USER }}
+          git-token: ${{ secrets.GIT_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }} 
