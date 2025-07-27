@@ -1,14 +1,26 @@
+
+import subprocess
+from .yaml_helper import readYaml, writeYamlToFile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from .logger import logger
 import os
 from pathlib import Path
 from typing import Callable
-
+import yaml
 from envgenehelper.file_helper import delete_dir
+from envgenehelper.crypt_backends.sops_handler import crypt_SOPS
+CPU_COUNT = os.cpu_count()
 
 
-from .yaml_helper import addHeaderToYaml, openYaml, writeYamlToFile
-
+try:
+    profile
+except NameError:
+    def profile(func):
+        return func
 # Creates shade files directory if not exists
+
+
+@profile
 def _init_shadow_creds_dir(creds_path: str, encryption_mode: bool):
     _creds_path = Path(creds_path)
     creds_file_name = _creds_path.stem
@@ -27,37 +39,40 @@ Contents will be overwritten by next generation.
 Please modify this contents only for development purposes or as workaround.\n"""
 
 
+@profile
 def _create_shadow_file(content: dict, shadow_creds_path,  cred_id: str):
     shadow_file_name = 'shade-' + cred_id + '-cred.yml'
     shadow_cred_path = Path(shadow_creds_path, shadow_file_name)
-    writeYamlToFile(shadow_cred_path, content)
+    with open(shadow_cred_path, 'w+') as f:
+        yaml.dump(content, f)
     del content
     return shadow_cred_path
-
 # Create shade file for each <<credential>> object in credentials files
+
+
 def split_creds_file(creds_path: str, encryption_func: Callable, **kwargs):
     """split_cred_file is a function to create shade files from creds file"""
-    creds = openYaml(creds_path)
+    with open(creds_path) as cred_file:
+        creds = yaml.safe_load(cred_file)
+    if creds:
+        shadow_creds_path = _init_shadow_creds_dir(creds_path, True)
+        for cred_id, cred_data in creds.items():
+            keys_set = set(cred_data['data'].values())
+            if len(keys_set) == 1 and keys_set.issubset({'envgeneNullValue', 'valueIsSet'}):
+                return
+            _create_shadow_file(
+                {cred_id: cred_data}, shadow_creds_path, cred_id)
 
-    shadow_creds_path = _init_shadow_creds_dir(creds_path, True)
-    for cred_id, cred_data in creds.items():
-        keys_set = set(cred_data['data'].values())
-        if len(keys_set) == 1 and keys_set.issubset({'envgeneNullValue', 'valueIsSet'}):
-            continue
-        shadow_cred_path = _create_shadow_file(
-            {cred_id: cred_data}, shadow_creds_path, cred_id)
+            cred_data['data'] = {
+                _cred_id: 'valueIsSet' for _cred_id in cred_data['data']}
+        encryption_func(shadow_creds_path, **kwargs)
 
-        cred_data['data'] = {
-            _cred_id: 'valueIsSet' for _cred_id in cred_data['data']}
-        encryption_func(shadow_cred_path, **kwargs)
-        addHeaderToYaml(str(shadow_cred_path),
-                        _generate_file_header(cred_id, creds_path))
-    writeYamlToFile(creds_path, creds)
-    del creds
-    logger.debug(f'File {creds_path} was splitted and encrypted')
-    return 0
+        writeYamlToFile(creds_path, creds)
+        del creds
+        logger.debug(f'File {creds_path} was splitted and encrypted')
+        return 0
 
-# 
+
 def merge_creds_file(creds_path, encryption_func: Callable, **kwargs):
     """merge_creds_file is a function to create creds file from shadow files"""
     shadow_creds_path = _init_shadow_creds_dir(creds_path, False)
@@ -65,11 +80,11 @@ def merge_creds_file(creds_path, encryption_func: Callable, **kwargs):
         logger.warning(
             f'Failed to find shadow creds dir {shadow_creds_path}. Skip')
         return
-    shadow_creds_files = shadow_creds_path.iterdir()
     creds = {}
-    for file in shadow_creds_files:
-        cred = encryption_func(file, **kwargs)
-        creds.update(cred)
+    encryption_func(shadow_creds_path, ** kwargs)
+    for file in shadow_creds_path.iterdir():
+        with open(file) as f:
+            creds.update(readYaml(f))
     delete_dir(shadow_creds_path)
     writeYamlToFile(creds_path, creds)
     logger.debug(f'File {creds_path} merged and decrypted')

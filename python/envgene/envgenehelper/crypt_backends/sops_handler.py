@@ -1,17 +1,25 @@
-import logging
+
 import os
 from pathlib import Path
 import subprocess
 import tempfile
 import shutil
 
+
 from ..business_helper import getenv_with_error
 from ..yaml_helper import openYaml, readYaml, get_or_create_nested_yaml_attribute, writeYamlToFile, dumpYamlToStr
 from ..logger import logger
 
+
 from .constants import SOPS_MODES, ENCRYPTED_REGEX_STR
+try:
+    profile
+except NameError:
+    def profile(func):
+        return func
 
 
+@profile
 def _run_SOPS(arg_str, return_codes_to_ignore=None):
     return_codes_to_ignore = return_codes_to_ignore if return_codes_to_ignore else []
     sops_command = f'{arg_str}'
@@ -77,7 +85,8 @@ def _get_minimized_diff(file_path, old_file_path, public_key):
     return content_with_minimized_diff
 
 
-def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=False, old_file_path=None, *args, **kwargs):
+@profile
+def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=False, old_file_path=None, crypt_create_shades='', *args, **kwargs):
     if not secret_key and mode == 'decrypt':
         secret_key = getenv_with_error("ENVGENE_AGE_PRIVATE_KEY")
     if not public_key and mode == 'encrypt':
@@ -85,39 +94,30 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
 
     if secret_key:
         os.environ['SOPS_AGE_KEY'] = secret_key
-    is_empty = is_empty_SOPS(file_path)
-    if is_empty:
-        logger.info(f'Skipped {mode}ion of {file_path}. File is empty. ')
-        return readYaml(file_path)
 
     if minimize_diff and mode != "decrypt":
         result = _get_minimized_diff(file_path, old_file_path, public_key)
         if in_place:
             writeYamlToFile(file_path, result)
     else:
+
         sops_args = f' --{SOPS_MODES[mode]} '
-        if mode != "decrypt" and 'shade-' in Path(file_path).stem:
+        if mode != "decrypt" and 'shade' in str(file_path):
             sops_args += f' --encrypted-regex "{ENCRYPTED_REGEX_STR}"'
         if in_place:
             sops_args += ' --in-place'
+        sops_args += f' -age {public_key}'
 
-        sops_args += f' -age {public_key} {file_path}'
+        if Path(file_path).is_file():
+            result = _run_SOPS(f'sops {sops_args} {file_path}').stdout
+        if Path(file_path).is_dir():
+            cpu_ = os.cpu_count() or 2
+            command = f'find {file_path} -type f | xargs -P{2*cpu_} -I {{}}  sops {sops_args} {{}}'
+            result = _run_SOPS(command)
 
-        sops_cmd = (
-            f'find {file_path} -name "*.y*ml" -print0 | '
-            f'xargs - 0 - I{{}} sops {sops_args} "{{}}"'
-        )
-        try:
-            if Path(file_path).is_file():
-                result = _run_SOPS(f'sops {sops_args}').stdout
-            if Path(file_path).is_dir():
-                result = _run_SOPS(sops_cmd).stdout
-        except ValueError as e:
-            logger.warning(f'{str(e)}. Path: {file_path}')
-            return openYaml(file_path)
     logger.debug(f'The file has been {mode}ed. Path: {file_path}')
     if not in_place:
-        return readYaml(result)
+        return readYaml(result.stdout)
 
 
 def extract_value_SOPS(file_path, attribute_str):
@@ -144,9 +144,6 @@ def _dict_has_value(d, target):
         elif current == target:
             return True
     return False
-
-def is_empty_SOPS(file_path):
-    return os.path.getsize(file_path) == 0
 
 
 def is_encrypted_SOPS(file_path):

@@ -13,7 +13,7 @@ from .logger import logger
 from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
 from .crypt_backends.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
 from envgenehelper import shade_files_helper
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 config = get_envgene_config_yaml()
 IS_CRYPT = config.get('crypt', True)
@@ -26,7 +26,13 @@ TARGET_REGEX = re.compile(r'(^credentials$|creds$)')
 TARGET_DIR_REGEX = re.compile(r'/[Cc]redentials(/|$)')
 TARGET_PARENT_DIRS = re.compile(r'/(configuration|environments)(/|$)')
 IGNORE_DIR = re.compile(r'(/shades-.*)')
+CPU_COUNT = os.cpu_count()
 
+try:
+    profile
+except NameError:
+    def profile(func):
+        return func
 CRYPT_FUNCTIONS = {
     'SOPS': crypt_SOPS,
     'Fernet': crypt_Fernet
@@ -42,6 +48,7 @@ EXTRACT_FUNCTIONS = {
     'Fernet': extract_value_Fernet
 }
 
+
 def _handle_missing_file(file_path, default_yaml, allow_default):
     if CREATE_SHADES and check_dir_exists(file_path):
         return 0
@@ -51,11 +58,12 @@ def _handle_missing_file(file_path, default_yaml, allow_default):
         raise FileNotFoundError(f"{file_path} not found or is not a file")
     return default_yaml()
 
+
 def encrypt_file(file_path, **kwargs):
     if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
         if 'effective-set' in file_path:
             return _encrypt_file(file_path, **kwargs)
-        return shade_files_helper.split_creds_file(file_path, _encrypt_file)
+        return shade_files_helper.split_creds_file(file_path, _encrypt_file, **kwargs)
     return _encrypt_file(file_path, **kwargs)
 
 
@@ -64,9 +72,11 @@ def decrypt_file(file_path, **kwargs):
         if 'effective-set' in file_path:
             return _decrypt_file(file_path, **kwargs)
         return shade_files_helper.merge_creds_file(
-            file_path, _decrypt_file, in_place=False, **kwargs)
+            file_path, _decrypt_file, **kwargs)
     return _decrypt_file(file_path, **kwargs)
 
+
+@profile
 def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False, is_crypt=None,
                   minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False, **kwargs):
     if minimize_diff:
@@ -81,9 +91,10 @@ def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None,
             minimize_diff = False
             logger.warning(
                 f"Cred file at {old_file_path} is not encrypted, minimize_diff parameter is ignored")
-    res = _handle_missing_file(file_path, default_yaml, allow_default)
-    if res != 0:
-        return res
+    if not CREATE_SHADES:
+        res = _handle_missing_file(file_path, default_yaml, allow_default)
+        if res != 0:
+            return res
     crypt_backend = crypt_backend if crypt_backend else CRYPT_BACKEND
     is_crypt = is_crypt if is_crypt is not None else IS_CRYPT
     if not ignore_is_crypt and not is_crypt:
@@ -91,18 +102,19 @@ def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None,
         return openYaml(file_path)
     return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place, public_key=public_key, mode='encrypt', minimize_diff=minimize_diff, old_file_path=old_file_path)
 
+
 def _decrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False,
                   default_yaml: Callable = get_empty_yaml, allow_default=False, is_crypt=None, **kwargs):
-    res = _handle_missing_file(file_path, default_yaml, allow_default)
-    if res != 0:
-        return res
+    if not CREATE_SHADES:
+        res = _handle_missing_file(file_path, default_yaml, allow_default)
+        if res != 0:
+            return res
     crypt_backend = crypt_backend if crypt_backend else CRYPT_BACKEND
     is_crypt = is_crypt if is_crypt is not None else IS_CRYPT
     if not ignore_is_crypt and not is_crypt:
         logger.info("'crypt' is set to 'false', skipping decryption")
         return openYaml(file_path)
     return CRYPT_FUNCTIONS[crypt_backend](file_path=file_path, secret_key=secret_key, in_place=in_place, public_key=public_key, mode='decrypt')
-
 
 
 def extract_encrypted_data(file_path, attribute_str):
@@ -131,6 +143,7 @@ def is_cred_file(fp: str) -> bool:
         return True
     return False
 
+
 def is_encrypted(file_path, crypt_backend=None):
     crypt_backend = crypt_backend if crypt_backend else CRYPT_BACKEND
     return IS_ENCRYPTED_FUNCTIONS[crypt_backend](file_path)
@@ -151,18 +164,21 @@ def decrypt_all_cred_files_for_env(**kwargs):
     else:
         # for f in files:
         #     decrypt_file(f, **kwargs)
-        with ProcessPoolExecutor(max_workers=4) as pool:
-           pool.map(decrypt_file, files)
+        with ThreadPoolExecutor(max_workers=4 if not CPU_COUNT else CPU_COUNT) as pool:
+            pool.map(decrypt_file, files)
         logger.debug("Decrypted next cred files:")
         logger.debug(files)
 
 
+@profile
 def encrypt_all_cred_files_for_env(**kwargs):
     files = get_all_necessary_cred_files()
+    print(files)
 
     logger.debug("Attempting to encrypt(if crypt is true) next files:")
     logger.debug(files)
-    with ProcessPoolExecutor(max_workers=4) as pool:
+    with ThreadPoolExecutor(max_workers=4 if not CPU_COUNT else CPU_COUNT * 2) as pool:
         pool.map(encrypt_file, files)
     # for f in files:
     #     encrypt_file(f, **kwargs)
+    logger.info('repo successfully encrypted')
