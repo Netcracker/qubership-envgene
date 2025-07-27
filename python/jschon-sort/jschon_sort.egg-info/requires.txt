@@ -1,0 +1,2 @@
+jschon>=0.9
+ruyaml
