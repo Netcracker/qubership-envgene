@@ -70,7 +70,9 @@ Getting this information should not require specifying a particular Environment 
    1. The user opens the Environment selection view in the orchestrating deploy pipeline
    2. The orchestrating deploy pipeline retrieves the list of Environments in EnvGene Instance repository:
       1. Searches for the list of Environments using the file structure pattern:
-         `find . -type f -name 'env_definition.yml' | sed 's|.*/environments/\(.*\)/Inventory/env_definition\.yml|\1|'`
+
+               `find . -type f -name 'env_definition.yml' | sed 's|.*/environments/\(.*\)/Inventory/env_definition\.yml|\1|'`
+
    3. The Environment selection view displays the full list of Environments
    4. The user selects an Environment
    5. The user specifies:
