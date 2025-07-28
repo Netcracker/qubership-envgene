@@ -1,0 +1,535 @@
+name: "Dev: Check and Replace Forbidden Words"
+
+run-name: "Check and replace forbidden words in all branches"
+
+on:
+  workflow_dispatch:
+    inputs:
+      target-branches:
+        description: 'Comma-separated list of branches to check (leave empty for all branches)'
+        required: false
+        default: ''
+        type: string
+      forbidden-word:
+        description: 'Forbidden word to search and replace'
+        required: false
+        default: 'YOUR_WORD'
+        type: string
+      replacement-word:
+        description: 'Word to replace forbidden word with'
+        required: false
+        default: 'tmp'
+        type: string
+      dry-run:
+        description: 'Only check for forbidden words without making changes'
+        required: false
+        default: true
+        type: boolean
+      exclude-branches:
+        description: 'Comma-separated list of branches to exclude (e.g., main,master)'
+        required: false
+        default: 'main,master'
+        type: string
+
+env:
+  TARGET_BRANCHES: ${{ github.event.inputs.target-branches || '' }}
+  FORBIDDEN_WORD: ${{ github.event.inputs.forbidden-word || 'YOUR_WORD' }}
+  REPLACEMENT_WORD: ${{ github.event.inputs.replacement-word || 'tmp' }}
+  DRY_RUN: ${{ github.event.inputs.dry-run || 'true' }}
+  EXCLUDE_BRANCHES: ${{ github.event.inputs.exclude-branches || 'main,master' }}
+
+jobs:
+  check-and-replace:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get all branches
+        id: get-branches
+        run: |
+          # Get all remote branches
+          git fetch --all
+          
+          # Get list of all branches
+          if [ -n "${{ env.TARGET_BRANCHES }}" ]; then
+            # Use specified branches
+            echo "Using specified branches: ${{ env.TARGET_BRANCHES }}"
+            echo "branches=${{ env.TARGET_BRANCHES }}" >> $GITHUB_OUTPUT
+          else
+            # Get all branches except excluded ones
+            exclude_list="${{ env.EXCLUDE_BRANCHES }}"
+            echo "Excluding branches: $exclude_list"
+            
+            # Get all remote branches and filter out excluded ones
+            all_branches=$(git branch -r | grep -v HEAD | sed 's/origin\///' | tr '\n' ',' | sed 's/,$//')
+            
+            # Filter out excluded branches
+            filtered_branches=""
+            IFS=',' read -ra BRANCH_ARRAY <<< "$all_branches"
+            IFS=',' read -ra EXCLUDE_ARRAY <<< "$exclude_list"
+            
+            for branch in "${BRANCH_ARRAY[@]}"; do
+              branch=$(echo "$branch" | xargs)  # trim whitespace
+              exclude_branch=false
+              
+              for exclude in "${EXCLUDE_ARRAY[@]}"; do
+                exclude=$(echo "$exclude" | xargs)  # trim whitespace
+                if [ "$branch" = "$exclude" ]; then
+                  exclude_branch=true
+                  break
+                fi
+              done
+              
+              if [ "$exclude_branch" = false ]; then
+                if [ -n "$filtered_branches" ]; then
+                  filtered_branches="$filtered_branches,$branch"
+                else
+                  filtered_branches="$branch"
+                fi
+              fi
+            done
+            
+            echo "Found branches to check: $filtered_branches"
+            echo "branches=$filtered_branches" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install gitpython
+
+      - name: Check all branches for forbidden words
+        id: check-all-branches
+        run: |
+          # Configure git identity for the workflow
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          
+          python -c "
+          import os
+          import re
+          import subprocess
+          from pathlib import Path
+          
+          branches_str = '${{ steps.get-branches.outputs.branches }}'
+          forbidden_word = '${{ env.FORBIDDEN_WORD }}'
+          replacement_word = '${{ env.REPLACEMENT_WORD }}'
+          dry_run = '${{ env.DRY_RUN }}' == 'true'
+          
+          print(f'Checking branches: {branches_str}')
+          print(f'Forbidden word: {forbidden_word}')
+          print(f'Replacement word: {replacement_word}')
+          print(f'Dry run: {dry_run}')
+          
+          # Files to ignore
+          ignore_patterns = [
+              '.git/**',
+              'node_modules/**',
+              '__pycache__/**',
+              '*.pyc',
+              '*.pyo',
+              '*.pyd',
+              '.pytest_cache/**',
+              '.coverage',
+              '*.log',
+              '*.tmp',
+              '*.bak',
+              '.env',
+              '.env.*',
+              '*.md',
+              'docs/**',
+              'README.md',
+              'CHANGELOG.md',
+              '.github/workflows/check-forbidden-words.yml'
+          ]
+          
+          def should_ignore_file(file_path):
+              for pattern in ignore_patterns:
+                  if pattern.startswith('**'):
+                      if file_path.endswith(pattern[2:]):
+                          return True
+                  elif pattern.endswith('/**'):
+                      if file_path.startswith(pattern[:-3]):
+                          return True
+                  elif pattern.endswith('**'):
+                      if file_path.startswith(pattern[:-2]):
+                          return True
+                  elif file_path == pattern or file_path.endswith(pattern):
+                      return True
+              return False
+          
+          def check_branch_for_forbidden_words(branch_name):
+              print(f'\\n=== Checking branch: {branch_name} ===')
+              
+              # First check if the branch exists in origin
+              try:
+                  result = subprocess.run(['git', 'ls-remote', '--heads', 'origin', branch_name], capture_output=True, text=True)
+                  if not result.stdout.strip():
+                      print(f'Branch {branch_name} does not exist in origin, skipping...')
+                      return None
+                  else:
+                      print(f'Branch {branch_name} exists in origin: {result.stdout.strip()}')
+              except subprocess.CalledProcessError as e:
+                  print(f'Error checking if branch {branch_name} exists in origin: {e}')
+                  print(f'stderr: {e.stderr}')
+                  return None
+              
+              # Check current git status
+              try:
+                  status_result = subprocess.run(['git', 'status', '--porcelain'], capture_output=True, text=True)
+                  if status_result.stdout.strip():
+                      print(f'Warning: Git working directory is not clean: {status_result.stdout.strip()}')
+              except subprocess.CalledProcessError as e:
+                  print(f'Error checking git status: {e}')
+              
+              # Try different checkout methods
+              checkout_success = False
+              
+              # Method 1: Check if local branch exists
+              try:
+                  result = subprocess.run(['git', 'branch', '--list', branch_name], capture_output=True, text=True)
+                  if result.stdout.strip():
+                      # Local branch exists
+                      print(f'Local branch {branch_name} exists, trying to checkout...')
+                      subprocess.run(['git', 'checkout', branch_name], check=True, capture_output=True)
+                      checkout_success = True
+                      print(f'Successfully checked out existing local branch: {branch_name}')
+                  else:
+                      print(f'Local branch {branch_name} does not exist')
+              except subprocess.CalledProcessError as e:
+                  print(f'Failed to checkout existing local branch {branch_name}: {e}')
+                  print(f'stderr: {e.stderr}')
+              
+              # Method 2: If local branch doesn't exist, create from origin
+              if not checkout_success:
+                  try:
+                      print(f'Trying to fetch and create branch {branch_name} from origin...')
+                      # First make sure we have up-to-date information about remote
+                      fetch_result = subprocess.run(['git', 'fetch', 'origin', branch_name], capture_output=True, text=True)
+                      if fetch_result.returncode != 0:
+                          print(f'Fetch failed: {fetch_result.stderr}')
+                          raise subprocess.CalledProcessError(fetch_result.returncode, fetch_result.args)
+                      
+                      # Check that the branch actually exists after fetch
+                      ls_result = subprocess.run(['git', 'ls-remote', '--heads', 'origin', branch_name], capture_output=True, text=True)
+                      if not ls_result.stdout.strip():
+                          print(f'Branch {branch_name} still not found after fetch')
+                          raise subprocess.CalledProcessError(1, ['git', 'ls-remote'])
+                      
+                      # Create local branch from origin
+                      subprocess.run(['git', 'checkout', '-b', branch_name, f'origin/{branch_name}'], check=True, capture_output=True)
+                      checkout_success = True
+                      print(f'Successfully created and checked out branch: {branch_name}')
+                  except subprocess.CalledProcessError as e:
+                      print(f'Failed to create branch {branch_name} from origin: {e}')
+                      if hasattr(e, 'stderr') and e.stderr:
+                          print(f'stderr: {e.stderr}')
+              
+              # Method 3: If failed to create branch, try direct checkout
+              if not checkout_success:
+                  try:
+                      print(f'Trying to checkout remote branch origin/{branch_name} directly...')
+                      subprocess.run(['git', 'checkout', f'origin/{branch_name}'], check=True, capture_output=True)
+                      checkout_success = True
+                      print(f'Successfully checked out remote branch: origin/{branch_name}')
+                  except subprocess.CalledProcessError as e:
+                      print(f'Failed to checkout remote branch origin/{branch_name}: {e}')
+                      if hasattr(e, 'stderr') and e.stderr:
+                          print(f'stderr: {e.stderr}')
+              
+              # If all methods failed, skip the branch
+              if not checkout_success:
+                  print(f'All checkout methods failed for branch {branch_name}, skipping...')
+                  return None
+              
+              found_files = []
+              total_replacements = 0
+              
+              # Walk through all files
+              try:
+                  for root, dirs, files in os.walk('.'):
+                      # Skip ignored directories
+                      dirs[:] = [d for d in dirs if not should_ignore_file(os.path.join(root, d))]
+                      
+                      for file in files:
+                          file_path = os.path.join(root, file)
+                          if should_ignore_file(file_path):
+                              continue
+                          
+                          try:
+                              # Try to read as text file
+                              with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                  content = f.read()
+                                  
+                              # Check if forbidden word exists
+                              if forbidden_word in content:
+                                  matches = len(re.findall(re.escape(forbidden_word), content))
+                                  found_files.append((file_path, matches))
+                                  total_replacements += matches
+                                  
+                                  if not dry_run:
+                                      # Replace forbidden word with replacement word
+                                      new_content = content.replace(forbidden_word, replacement_word)
+                                      
+                                      # Write back to file
+                                      with open(file_path, 'w', encoding='utf-8') as f:
+                                          f.write(new_content)
+                                          
+                                      print(f'Replaced {matches} occurrences in {file_path}')
+                                  else:
+                                      print(f'Found {matches} occurrences in {file_path}')
+                                      
+                          except Exception as e:
+                              print(f'Error processing {file_path}: {e}')
+                              continue
+              except Exception as e:
+                  print(f'Error walking through files in branch {branch_name}: {e}')
+                  return None
+              
+              if found_files:
+                  print(f'Branch {branch_name}: Found forbidden word "{forbidden_word}" in {len(found_files)} files')
+                  print(f'Total occurrences: {total_replacements}')
+                  
+                  if not dry_run:
+                      print(f'All occurrences in {branch_name} have been replaced.')
+                      
+                  result = {
+                      'branch': branch_name,
+                      'found_files': len(found_files),
+                      'total_replacements': total_replacements,
+                      'files': found_files
+                  }
+                  
+                  # Always reset working directory to clean state for next branch
+                  # The PR creation step will re-process each branch individually
+                  try:
+                      subprocess.run(['git', 'reset', '--hard'], check=True, capture_output=True)
+                      subprocess.run(['git', 'clean', '-fd'], check=True, capture_output=True)
+                      print(f'Reset working directory for next branch')
+                  except subprocess.CalledProcessError as e:
+                      print(f'Warning: Could not reset working directory: {e}')
+                  
+                  return result
+              else:
+                  print(f'Branch {branch_name}: No occurrences of "{forbidden_word}" found.')
+                  
+                  # Reset working directory to clean state for next branch
+                  try:
+                      subprocess.run(['git', 'reset', '--hard'], check=True, capture_output=True)
+                      subprocess.run(['git', 'clean', '-fd'], check=True, capture_output=True)
+                      print(f'Reset working directory for next branch')
+                  except subprocess.CalledProcessError as e:
+                      print(f'Warning: Could not reset working directory: {e}')
+                  
+                  return None
+          
+          # Process each branch
+          branches = [b.strip() for b in branches_str.split(',') if b.strip()]
+          # Remove duplicates and empty values
+          branches = list(set([b for b in branches if b and b != '']))
+          all_results = []
+          total_branches_with_issues = 0
+          total_files_with_issues = 0
+          total_all_replacements = 0
+          
+          print(f'Processing {len(branches)} branches...')
+          
+          for branch in branches:
+              if not branch or branch == '':
+                  continue
+              try:
+                  result = check_branch_for_forbidden_words(branch)
+                  if result and isinstance(result, dict) and 'branch' in result and 'found_files' in result and 'total_replacements' in result:
+                      all_results.append(result)
+                      total_branches_with_issues += 1
+                      total_files_with_issues += result['found_files']
+                      total_all_replacements += result['total_replacements']
+              except Exception as e:
+                  print(f'Error processing branch {branch}: {e}')
+                  continue
+          
+          # Summary
+          print(f'\\n=== SUMMARY ===')
+          print(f'Checked {len(branches)} branches')
+          print(f'Branches with issues: {total_branches_with_issues}')
+          print(f'Total files with issues: {total_files_with_issues}')
+          print(f'Total replacements needed: {total_all_replacements}')
+          print(f'All results count: {len(all_results)}')
+          print(f'All results: {all_results}')
+          
+          if all_results:
+              print(f'\\nBranches with forbidden words:')
+              for i, result in enumerate(all_results):
+                  try:
+                      if result and isinstance(result, dict) and 'branch' in result and 'found_files' in result and 'total_replacements' in result:
+                          print(f'- {result["branch"]}: {result["found_files"]} files, {result["total_replacements"]} replacements')
+                      else:
+                          print(f'- Invalid result format at index {i}: {result}')
+                          # Skip invalid results to avoid KeyError
+                          continue
+                  except Exception as e:
+                      print(f'- Error processing result at index {i}: {e}')
+                      print(f'  Result: {result}')
+                      continue
+              
+              if dry_run:
+                  print('\\nThis was a dry run. No changes were made.')
+                  print('To make actual changes, run this workflow manually with dry-run=false')
+              else:
+                  print('\\nAll occurrences have been replaced in all branches.')
+                  
+              # Set output for next steps
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f'has_issues=true\\n')
+                  f.write(f'total_branches_with_issues={total_branches_with_issues}\\n')
+                  f.write(f'total_files_with_issues={total_files_with_issues}\\n')
+                  f.write(f'total_all_replacements={total_all_replacements}\\n')
+                  branch_names = []
+                  for r in all_results:
+                      try:
+                          if r and isinstance(r, dict) and 'branch' in r and r['branch']:
+                              branch_names.append(r['branch'])
+                      except Exception as e:
+                          print(f'Error processing result for output: {e}')
+                          print(f'  Result: {r}')
+                          continue
+                  branches_list = ','.join(branch_names)
+                  f.write(f'branches_with_issues={branches_list}\\n')
+          else:
+              print('\\n✅ No forbidden words found in any branch!')
+              print('The codebase is clean and follows the naming conventions.')
+              
+              with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                  f.write(f'has_issues=false\\n')
+                  f.write(f'total_branches_with_issues=0\\n')
+                  f.write(f'total_files_with_issues=0\\n')
+                  f.write(f'total_all_replacements=0\\n')
+          "
+
+      - name: Create Pull Requests for changes
+        if: steps.check-all-branches.outputs.has_issues == 'true' && env.DRY_RUN == 'false'
+        run: |
+          # Configure git identity for the workflow
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          
+          python -c "
+          import subprocess
+          import json
+          import os
+          import re
+          
+          branches_with_issues = '${{ steps.check-all-branches.outputs.branches_with_issues }}'.split(',')
+          forbidden_word = '${{ env.FORBIDDEN_WORD }}'
+          replacement_word = '${{ env.REPLACEMENT_WORD }}'
+          
+          print(f'Processing {len(branches_with_issues)} branches with issues...')
+          
+          for branch in branches_with_issues:
+              if not branch.strip():
+                  continue
+                  
+              print(f'Processing branch: {branch}')
+              
+              try:
+                  # Ensure we start with a clean working directory
+                  subprocess.run(['git', 'reset', '--hard'], check=True, capture_output=True)
+                  subprocess.run(['git', 'clean', '-fd'], check=True, capture_output=True)
+                  
+                  # Checkout the branch
+                  subprocess.run(['git', 'checkout', branch], check=True, capture_output=True)
+                  
+                  # Scan for forbidden words and make replacements
+                  found_files = []
+                  total_replacements = 0
+                  
+                  # Walk through all files
+                  for root, dirs, files in os.walk('.'):
+                      # Skip git directory
+                      if '.git' in dirs:
+                          dirs.remove('.git')
+                      
+                      for file in files:
+                          file_path = os.path.join(root, file)
+                          
+                          # Skip certain file types
+                          if file_path.endswith(('.md', '.log', '.tmp', '.bak')):
+                              continue
+                          
+                          try:
+                              # Try to read as text file
+                              with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                                  content = f.read()
+                                  
+                              # Check if forbidden word exists
+                              if forbidden_word in content:
+                                  matches = len(re.findall(re.escape(forbidden_word), content))
+                                  found_files.append((file_path, matches))
+                                  total_replacements += matches
+                                  
+                                  # Replace forbidden word with replacement word
+                                  new_content = content.replace(forbidden_word, replacement_word)
+                                  
+                                  # Write back to file
+                                  with open(file_path, 'w', encoding='utf-8') as f:
+                                      f.write(new_content)
+                                      
+                                  print(f'Replaced {matches} occurrences in {file_path}')
+                                  
+                          except Exception as e:
+                              print(f'Error processing {file_path}: {e}')
+                              continue
+                  
+                  if found_files:
+                      print(f'Found {len(found_files)} files with {total_replacements} replacements in {branch}')
+                      
+                      # Add all changes
+                      subprocess.run(['git', 'add', '.'], check=True, capture_output=True)
+                      
+                      # Commit changes
+                      commit_message = f'fix: replace forbidden word {forbidden_word} with {replacement_word}'
+                      subprocess.run(['git', 'commit', '-m', commit_message], check=True, capture_output=True)
+                      
+                      # Push changes
+                      subprocess.run(['git', 'push', 'origin', branch], check=True, capture_output=True)
+                      
+                      print(f'Successfully updated branch {branch}')
+                  else:
+                      print(f'No forbidden words found in branch {branch}')
+                  
+              except subprocess.CalledProcessError as e:
+                  print(f'Error processing branch {branch}: {e}')
+                  if hasattr(e, 'stderr') and e.stderr:
+                      print(f'stderr: {e.stderr.decode() if isinstance(e.stderr, bytes) else e.stderr}')
+                  continue
+          "
+
+      - name: Success message
+        if: steps.check-all-branches.outputs.has_issues == 'false'
+        run: |
+          echo "✅ No forbidden words found in any branch!"
+          echo "The codebase is clean and follows the naming conventions."
+
+      - name: Report findings for dry run
+        if: steps.check-all-branches.outputs.has_issues == 'true' && env.DRY_RUN == 'true'
+        run: |
+          echo "⚠️ Found forbidden words in multiple branches"
+          echo "Branches with issues: ${{ steps.check-all-branches.outputs.total_branches_with_issues }}"
+          echo "Total files with issues: ${{ steps.check-all-branches.outputs.total_files_with_issues }}"
+          echo "Total replacements needed: ${{ steps.check-all-branches.outputs.total_all_replacements }}"
+          echo ""
+          echo "Branches affected: ${{ steps.check-all-branches.outputs.branches_with_issues }}"
+          echo ""
+          echo "This was a dry run. To automatically fix these issues, run the workflow manually with dry-run=false" 
