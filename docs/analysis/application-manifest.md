@@ -20,7 +20,6 @@
     - [16.06](#1606)
     - [17.06](#1706)
     - [23.06](#2306)
-    - [PoC](#poc)
 
 ## Goals
 
@@ -44,6 +43,7 @@
 1. Application Manifest must be open-source compatible
 2. Application Manifest must be sufficient for application deploying by Argo
 3. Application Manifest must be sufficient for calculate Effective Set by EnvGene
+   1. without downloading application artifacts
 4. Effective Set generation must not require processing application artifacts
    1. EnvGene must generate Effective Set using only EnvGene Environment Instance and Application Manifest
    2. Effective Set generation for an Environment should take no more than 30 seconds
@@ -92,7 +92,7 @@
 **A8:** Not at this time, but possibly in the future.
 
 **Q9:** How are Helm app charts and Docker images created, built, and linked in mature open-source projects?
- 
+
 **A9:**
 
 **Q10:** How are the version in Chart.yaml and the Helm chart artifact version in the OCI registry related? What should be specified in the version attribute of the `application/vnd.qubership.helm.chart` component for release and non-release versions?
@@ -121,8 +121,7 @@
    3. Effective set calculation for a Solution of Qubership applications
    4. Effective set calculation for a Solution of 3rd-party applications
    5. Effective set calculation for a mixed Solution of 3rd-party and Qubership applications
-3. As a environment configurator, I need to modify performance parameters while seeing baseline values to prevent context switching
-4. Application Helm chart structure:
+3. Application Helm chart structure:
    1. One umbrella chart per application
    2. Multiple umbrella charts per application
    3. One non-umbrella chart per application
@@ -187,12 +186,12 @@ In this option:
   - [deploy-descriptor.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-deploy-descriptoryaml)
   - [per service deployment-parameters.yaml](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-deployment-parametersyaml)
 
-![no-application-manifest-model.drawio.png](/docs/images/no-application-manifest-model.drawio.png)
+<!-- ![no-application-manifest-model.drawio.png](/docs/images/no-application-manifest-model.drawio.png) -->
 ![no-application-manifest.drawio.png](/docs/images/no-application-manifest.drawio.png)
 
 ### Application Manifest Build CLI
 
-[Application Manifest Build CLI](/docs/application-manifest-build-cli.md)
+[Application Manifest Build CLI](/docs/analysis/application-manifest-build-cli.md)
 
 ## MoMs
 
@@ -218,6 +217,6 @@ In this option:
 
 1. `Option 1.3: Application Manifest without plugins` was chosen
 
-### PoC
+<!-- ### PoC
 
-![application-manifest-2.drawio.png](/docs/images/poc.png)
+![application-manifest-2.drawio.png](/docs/images/poc.png) -->

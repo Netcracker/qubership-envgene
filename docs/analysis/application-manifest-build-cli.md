@@ -16,21 +16,20 @@
       - [`application/vnd.docker.image`](#applicationvnddockerimage)
       - [`application/vnd.qubership.helm.chart`](#applicationvndqubershiphelmchart)
   - [Application Manifest Build Config](#application-manifest-build-config)
-  - [Registry Config](#registry-config)
 
 ## Proposed Approach
 
 It is proposed to develop a CLI for generating the Application Manifest. The CLI will:
 
-- Identify application components from a configuration file or by automatic discovery,
-- Collect component attributes from the outputs of the application component build jobs,
-- Generate the Application Manifest and registry configuration file and publish it as a Maven artifact.
+- Identify application components from a configuration file or by automatic discovery
+- Collect component attributes from the outputs of the application component build jobs
+- Generate the Application Manifest and registry configuration file and publish it as an artifact
 
 ```mermaid
 flowchart TD
     subgraph Application Repo
       A[application-manifest.config.yaml]
-      B[registry.config.yaml]
+      B[Registry Config Input]
       C[Source code / build scripts]
     end
     subgraph Application Build Pipeline
@@ -78,8 +77,8 @@ flowchart TD
    1. Docker images
       1. External (built as part of another build process)
    2. Helm charts
-      1. One umbrella chart per
-      2. One non-umbrella chart per
+      1. One umbrella chart per application
+      2. One non-umbrella chart per application
       3. Multiple non-umbrella charts
       4. External (built as part of another build process) non-umbrella charts
    3. Publishing the Application Manifest
@@ -110,7 +109,7 @@ flowchart TD
 
 1. The CLI must generate AM that validates against [JSON Schema](/schemas/application-manifest.schema.json)
 2. The CLI must generate registry config that validates against JSON Schema **TBD**
-3. AM must be published as a Maven artifact
+3. AM must be published as a Maven (or OCI) artifact
    1. Artifact ID must match the application name
    2. Registry parameters for publishing (URL, credentials, group) must be provided as CLI arguments.
 4. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
@@ -118,7 +117,7 @@ flowchart TD
     2. Docker image -> `application/vnd.docker.image`
     3. Helm chart -> `application/vnd.qubership.helm.chart`
     <!-- 4. ZIP archive -> `application/zip` -->
-5. The CLI must complete the AM build for an application with 500 components within 10 seconds
+5. The CLI must complete the AM build for an application with 50 components within 10 seconds
 6. The CLI must support execution in both GitLab CI and GitHub Actions environments
 
 ## Application Manifest Structure
@@ -274,8 +273,6 @@ services:
         job: string
         # Name of the artifact produced by the job      
         artifact: string
-        # Reference to the registry in the registry config
-        registry: string
 ```
 
 **Example:**
@@ -348,7 +345,7 @@ services:
         artifact: backend-chart
 ```
 
-## Registry Config
+<!-- ## Registry Config
 
 ```yaml
 sandbox:
@@ -376,4 +373,4 @@ sandbox:
     snapshotRepository: ""
     stagingRepository: ""
     releaseRepository: ""
-```
+``` -->
