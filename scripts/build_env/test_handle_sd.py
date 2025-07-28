@@ -181,6 +181,7 @@ def test_sd(cluster_name, env_name, test_case_name):
     logger.info(f"======TEST HANDLE_SD: {test_case_name}======")
 
     os.environ['ENVIRONMENT_NAME'] = env_name
+    test_var = getenv_with_error('ENVIRONMENT_NAME')
     os.environ['CLUSTER_NAME'] = cluster_name
 
     logger.info(f"Starting SD test:"
