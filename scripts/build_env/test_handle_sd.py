@@ -1,5 +1,4 @@
 # Standard library imports
-import filecmp
 import difflib
 import os
 import shutil
@@ -7,9 +6,10 @@ import shutil
 # Third party imports
 import pytest
 from ruamel.yaml import YAML
-import json
 
 # Local imports
+os.environ['ENVIRONMENT_NAME'] = ""
+os.environ['CLUSTER_NAME'] = ""
 from handle_sd import handle_sd
 from envgenehelper import *
 
@@ -180,10 +180,8 @@ def test_sd(cluster_name, env_name, test_case_name):
     """
     logger.info(f"======TEST HANDLE_SD: {test_case_name}======")
 
-    os.environ['ENVIRONMENT_NAME'] = env_name
-    test_var = getenv_with_error('ENVIRONMENT_NAME')
-    test_var = getenv_with_error('ENVIRONMENT_NAM')
-    os.environ['CLUSTER_NAME'] = cluster_name
+    ENVIRONMENT_NAME = env_name
+    CLUSTER_NAME = cluster_name
 
     logger.info(f"Starting SD test:"
                f"\n\tCluster: {cluster_name}"
