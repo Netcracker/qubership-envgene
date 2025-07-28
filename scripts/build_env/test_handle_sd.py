@@ -10,6 +10,7 @@ from ruamel.yaml import YAML
 # Local imports
 os.environ['ENVIRONMENT_NAME'] = "temporary"
 os.environ['CLUSTER_NAME'] = "temporary"
+os.environ['CI_PROJECT_DIR'] = "temporary"
 from handle_sd import handle_sd
 from envgenehelper import *
 
@@ -182,6 +183,7 @@ def test_sd(cluster_name, env_name, test_case_name):
 
     ENVIRONMENT_NAME = env_name
     CLUSTER_NAME = cluster_name
+    CI_PROJECT_DIR = TEST_SD_DIR
 
     logger.info(f"Starting SD test:"
                f"\n\tCluster: {cluster_name}"
