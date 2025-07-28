@@ -39,6 +39,7 @@ Getting this information should not require specifying a particular Environment 
 ### Option A. Consumer Calculated Environment List
 
 **The list of environments** in the site (Instance repository) is calculated by the EnvGene consumer system. It determines the list by scanning the folder names where inventory files are located, using a command like:
+
 `find . -type f -name 'env_definition.yml' | sed 's|.*/environments/\(.*\)/Inventory/env_definition\.yml|\1|'`
 
 **The mapping of namespace name to deploy postfix** is stored in the Effective Set of a specific Environment, in the [`environments`](/docs/calculator-cli.md#version-20topology-context-environments-example) variable of the [topology](/docs/calculator-cli.md#version-20-topology-context) context.
@@ -49,7 +50,7 @@ Getting this information should not require specifying a particular Environment 
 
    1. The user opens the Environment selection view in the orchestrating deploy pipeline
    2. The orchestrating deploy pipeline retrieves the list of Environments in EnvGene Instance repository:
-      1. Searches for the list of Environments using the file structure pattern:
+      1. Searches for the list of Environments using the file structure pattern:  
          `find . -type f -name 'env_definition.yml' | sed 's|.*/environments/\(.*\)/Inventory/env_definition\.yml|\1|'`
    3. The Environment selection view displays the full list of Environments
    4. The user selects an Environment
@@ -69,10 +70,8 @@ Getting this information should not require specifying a particular Environment 
 
    1. The user opens the Environment selection view in the orchestrating deploy pipeline
    2. The orchestrating deploy pipeline retrieves the list of Environments in EnvGene Instance repository:
-      1. Searches for the list of Environments using the file structure pattern:
-
-               `find . -type f -name 'env_definition.yml' | sed 's|.*/environments/\(.*\)/Inventory/env_definition\.yml|\1|'`
-
+      1. Searches for the list of Environments using the file structure pattern:  
+         `find . -type f -name 'env_definition.yml' | sed 's|.*/environments/\(.*\)/Inventory/env_definition\.yml|\1|'`
    3. The Environment selection view displays the full list of Environments
    4. The user selects an Environment
    5. The user specifies:
