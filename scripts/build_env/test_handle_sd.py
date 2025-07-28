@@ -8,8 +8,8 @@ import pytest
 from ruamel.yaml import YAML
 
 # Local imports
-os.environ['ENVIRONMENT_NAME'] = ""
-os.environ['CLUSTER_NAME'] = ""
+os.environ['ENVIRONMENT_NAME'] = "temporary"
+os.environ['CLUSTER_NAME'] = "temporary"
 from handle_sd import handle_sd
 from envgenehelper import *
 
