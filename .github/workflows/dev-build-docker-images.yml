@@ -42,11 +42,11 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')
     runs-on: ubuntu-latest
     container:
-      image: python:3.10-slim-bookworm
+      image: python:3.12-slim-bookworm
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Run Tests
         uses: ./.github/actions/run-tests
 
@@ -143,4 +143,4 @@ jobs:
           registry: ${{ env.REGISTRY }}
           git-user: ${{ secrets.GIT_USER }}
           git-token: ${{ secrets.GIT_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }} 
+          github-token: ${{ secrets.GITHUB_TOKEN }}
