@@ -6,7 +6,7 @@ from pympler import asizeof
 from typing import List
 from models import PayloadEntry, RotationResult
 from utils.yaml_utils import convert_json_to_yaml, write_yaml_to_file
-from utils.file_utils import  scan_and_get_yaml_files
+from utils.file_utils import  scan_and_get_yaml_files, write_cred_file_path
 from utils.error_constants import  *
 from utils.cred_utils import decrypt_file, update_cred_content, write_updated_cred_into_file, read_shared_cred_files, read_env_cred_files, collect_shared_credentials
 from core_rotation import process_entry_in_payload
@@ -115,6 +115,7 @@ def cred_rotation():
     if processed_cred_and_files:
         updated_content, original_content = update_cred_content(processed_cred_and_files)
         write_updated_cred_into_file(updated_content, original_content, is_encrypted, envgene_age_public_key)
+        write_cred_file_path(list(processed_cred_and_files.keys()))
     else:
         logger.error("Credential IDs are not found in environment and shared credential files. Please check the files")
 

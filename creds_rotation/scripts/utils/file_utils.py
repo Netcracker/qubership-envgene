@@ -127,3 +127,8 @@ def openJson(path: str) -> dict:
     with open(path, "r", encoding="utf-8") as f:
         content = f.read()
     return json.loads(content)
+
+def write_cred_file_path(cred_paths:  List[str]):
+    with open("/tmp/credfilestoupdate.yml", "w") as f:
+        for cred_path in cred_paths:
+            f.write(f"{cred_path}\n")
