@@ -1,20 +1,15 @@
 
 import os
-from os import getenv, path
+from os import getenv
 import subprocess
 
 from .logger import logger
 
 BASE_DIR = getenv('CI_PROJECT_DIR', os.getcwd())
-try:
-    profile
-except NameError:
-    def profile(func):
-        return func
+
 # run find command to search all credential files in cur BASE_DIR
 
 
-@profile
 def _get_files_subprocess(full_path='', env_name=''):
     cur_path = BASE_DIR if not full_path else full_path
 
@@ -26,7 +21,6 @@ def _get_files_subprocess(full_path='', env_name=''):
     return result
 
 
-@profile
 def get_all_necessary_cred_files() -> set[str]:
     env_names = getenv("ENV_NAMES", None)
     if not env_names:

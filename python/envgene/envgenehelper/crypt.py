@@ -13,12 +13,12 @@ from .logger import logger
 from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
 from .crypt_backends.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
 from envgenehelper import shade_files_helper
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 
 config = get_envgene_config_yaml()
 IS_CRYPT = config.get('crypt', True)
 CRYPT_BACKEND = config.get('crypt_backend', 'Fernet')
-CREATE_SHADES = config.get('crypt_create_shades', True)
+CREATE_SHADES = config.get('crypt_create_shades', False)
 
 BASE_DIR = getenv('CI_PROJECT_DIR', os.getcwd())
 VALID_EXTENSIONS = re.compile(r'\.ya?ml$')
@@ -28,11 +28,6 @@ TARGET_PARENT_DIRS = re.compile(r'/(configuration|environments)(/|$)')
 IGNORE_DIR = re.compile(r'(/shades-.*)')
 CPU_COUNT = os.cpu_count()
 
-try:
-    profile
-except NameError:
-    def profile(func):
-        return func
 CRYPT_FUNCTIONS = {
     'SOPS': crypt_SOPS,
     'Fernet': crypt_Fernet
@@ -76,7 +71,6 @@ def decrypt_file(file_path, **kwargs):
     return _decrypt_file(file_path, **kwargs)
 
 
-@profile
 def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False, is_crypt=None,
                   minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False, **kwargs):
     if minimize_diff:
@@ -170,7 +164,6 @@ def decrypt_all_cred_files_for_env(**kwargs):
         logger.debug(files)
 
 
-@profile
 def encrypt_all_cred_files_for_env(**kwargs):
     files = get_all_necessary_cred_files()
     print(files)

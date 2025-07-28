@@ -12,14 +12,8 @@ from ..logger import logger
 
 
 from .constants import SOPS_MODES, ENCRYPTED_REGEX_STR
-try:
-    profile
-except NameError:
-    def profile(func):
-        return func
 
 
-@profile
 def _run_SOPS(arg_str, return_codes_to_ignore=None):
     return_codes_to_ignore = return_codes_to_ignore if return_codes_to_ignore else []
     sops_command = f'{arg_str}'
@@ -85,8 +79,7 @@ def _get_minimized_diff(file_path, old_file_path, public_key):
     return content_with_minimized_diff
 
 
-@profile
-def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=False, old_file_path=None, crypt_create_shades='', *args, **kwargs):
+def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=False, old_file_path=None, *args, **kwargs):
     if not secret_key and mode == 'decrypt':
         secret_key = getenv_with_error("ENVGENE_AGE_PRIVATE_KEY")
     if not public_key and mode == 'encrypt':
@@ -100,7 +93,6 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         if in_place:
             writeYamlToFile(file_path, result)
     else:
-
         sops_args = f' --{SOPS_MODES[mode]} '
         if mode != "decrypt" and 'shade' in str(file_path):
             sops_args += f' --encrypted-regex "{ENCRYPTED_REGEX_STR}"'
@@ -109,15 +101,21 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         sops_args += f' -age {public_key}'
 
         if Path(file_path).is_file():
-            result = _run_SOPS(f'sops {sops_args} {file_path}').stdout
+            try:
+                result = _run_SOPS(f'sops {sops_args} {file_path}').stdout
+            except ValueError as e:
+                logger.warning(f'{str(e)}. Path: {file_path}')
+                return openYaml(file_path)
+        # encryption of shade files dir
         if Path(file_path).is_dir():
             cpu_ = os.cpu_count() or 2
             command = f'find {file_path} -type f | xargs -P{2*cpu_} -I {{}}  sops {sops_args} {{}}'
             result = _run_SOPS(command)
-
+            return
     logger.debug(f'The file has been {mode}ed. Path: {file_path}')
     if not in_place:
-        return readYaml(result.stdout)
+        return readYaml(result)
+    return openYaml(file_path)
 
 
 def extract_value_SOPS(file_path, attribute_str):
