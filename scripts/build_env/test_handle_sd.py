@@ -180,6 +180,9 @@ def test_sd(cluster_name, env_name, test_case_name):
     """
     logger.info(f"======TEST HANDLE_SD: {test_case_name}======")
 
+    os.environ['ENVIRONMENT_NAME'] = env_name
+    os.environ['CLUSTER_NAME'] = cluster_name
+
     logger.info(f"Starting SD test:"
                f"\n\tCluster: {cluster_name}"
                f"\n\tEnvironment: {env_name}"
