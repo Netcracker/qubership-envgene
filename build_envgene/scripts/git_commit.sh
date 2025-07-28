@@ -59,6 +59,23 @@ else
 fi
 echo "Commit message: ${message}"
 
+# Listing the artifact_environments
+echo "listing artifact env"
+ls -lhrt "/tmp/artifact_environments"
+
+# Listing the artifact_environments
+echo "listing environments"
+ls -lhrt "environments"
+
+FILE_PATH="/tmp/credfilestoupdate.yml"
+if [ -f "$FILE_PATH" ]; then
+  echo "File exists: $FILE_PATH"
+  echo "---- File Content ----"
+  cat "$FILE_PATH"
+  echo "----------------------"
+else
+  echo "File does not exist: $FILE_PATH"
+fi
 
 
 # copying environments folder to temp storage
