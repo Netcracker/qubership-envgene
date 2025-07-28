@@ -5,7 +5,7 @@ import json
 
 import envgenehelper as helper
 from envgenehelper.logger import logger
-from envgenehelper.business_helper import getenv_and_log
+from envgenehelper.business_helper import getenv_and_log, getenv_with_error
 from envgenehelper.env_helper import Environment
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
