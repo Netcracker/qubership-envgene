@@ -185,7 +185,7 @@ def download_sds_with_version(env, sd_path, sd_version, sd_delta, sd_merge_mode)
     sd_data_json = json.dumps(sd_data_list)
     extract_sds_from_json(env, sd_path, sd_data_json, sd_delta, sd_merge_mode)
 
-def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> str:
+def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
     if 'SNAPSHOT' in version:
         raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
     # TODO: check if job would fail without plugins
@@ -196,7 +196,7 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')
     sd_url, _ = artifact_info
-    return json.dumps(artifact.download_json_content(sd_url))
+    return artifact.download_json_content(sd_url)
 
 def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> artifact_models.Application:
     results = plugins.run(appver=appver)
@@ -205,7 +205,7 @@ def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> art
             return result
     app_def_path = identify_yaml_extension(f"{APP_DEFS_PATH}/{app_name}")
     app_dict = helper.openYaml(app_def_path)
-    reg_def_path = identify_yaml_extension(f"{REG_DEFS_PATH}/{app_dict['registry']}")
+    reg_def_path = identify_yaml_extension(f"{REG_DEFS_PATH}/{app_dict['registryName']}")
     app_dict['registry'] = artifact_models.Registry.model_validate(helper.openYaml(reg_def_path))
     app_def = artifact_models.Application.model_validate(app_dict)
     return app_def
