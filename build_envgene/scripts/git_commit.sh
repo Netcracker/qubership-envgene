@@ -59,6 +59,38 @@ else
 fi
 echo "Commit message: ${message}"
 
+# Listing the artifact_environments
+echo "listing frst artifact env"
+ls -lhrt "/tmp/artifact_environments"
+
+# Listing the artifact_environments
+echo "listing frst environments"
+ls -lhrt "environments"
+
+# Listing the artifact_environments
+echo "listing frst tmp"
+ls -lhrt "/tmp"
+
+FILE_PATH1="environments/dobp-oob-dev1/dev-9/Credentials/fake-creds.yaml"
+FILE_PATH1="environments/credfilestoupdate.yml"
+if [ -f "$FILE_PATH1" ]; then
+  echo "File frst exists: $FILE_PATH1"
+  echo "---- File frst Content ----"
+  cat "$FILE_PATH1"
+  echo "----------------------"
+else
+  echo "File frst does not exist: $FILE_PATH1"
+fi
+
+FILE_PATH="environments/credfilestoupdate.yml"
+if [ -f "$FILE_PATH" ]; then
+  echo "File frst exists: $FILE_PATH"
+  echo "---- File frst Content ----"
+  cat "$FILE_PATH"
+  echo "----------------------"
+else
+  echo "File frst does not exist: $FILE_PATH"
+fi
 
 
 # copying environments folder to temp storage
@@ -132,7 +164,7 @@ ls -lhrt "environments"
 echo "listing tmp"
 ls -lhrt "/tmp"
 
-FILE_PATH="/tmp/credfilestoupdate.yml"
+FILE_PATH="environments/credfilestoupdate.yml"
 if [ -f "$FILE_PATH" ]; then
   echo "File exists: $FILE_PATH"
   echo "---- File Content ----"

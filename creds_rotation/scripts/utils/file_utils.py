@@ -120,7 +120,7 @@ def openJson(path: str) -> dict:
         content = f.read()
     return json.loads(content)
 
-def write_cred_file_path(cred_paths:  List[str]):
-    with open("/tmp/credfilestoupdate.yml", "w") as f:
+def write_cred_file_path(cred_paths:  List[str], path: str):
+    with open(f"{path}/credfilestoupdate.yml", "w") as f:
         for cred_path in cred_paths:
             f.write(f"{trim_path_from_environments(cred_path)}\n")
