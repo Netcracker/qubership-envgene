@@ -132,7 +132,7 @@ ls -lhrt "environments"
 echo "listing tmp"
 ls -lhrt "/tmp"
 
-FILE_PATH="environments/credfilestoupdate.yml"
+FILE_PATH="/tmp/credfilestoupdate.yml"
 if [ -f "$FILE_PATH" ]; then
   echo "File exists: $FILE_PATH"
   echo "---- File Content ----"
