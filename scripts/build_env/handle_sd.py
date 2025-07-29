@@ -33,14 +33,11 @@ def prepare_vars_and_run_sd_handling():
 
     env = Environment(base_dir, cluster, env_name)
 
-    params_json = getenv_and_log("ENV_INVENTORY_GENERATION_PARAMS")
-    params = json.loads(params_json)
-
-    sd_source_type = params['SD_SOURCE_TYPE']
-    sd_version = params['SD_VERSION']
-    sd_data = params['SD_DATA']
-    sd_delta = params['SD_DELTA']
-    sd_merge_mode = getenv("SD_REPO_MERGE_MODE")
+    sd_source_type = getenv_and_log('SD_SOURCE_TYPE')
+    sd_version = getenv_and_log('SD_VERSION')
+    sd_data = getenv_and_log('SD_DATA')
+    sd_delta = getenv_and_log('SD_DELTA')
+    sd_merge_mode = getenv_and_log("SD_REPO_MERGE_MODE")
     logger.info(f"sd_data: {sd_data}")
     logger.info(f"sd_merge_mode: {sd_merge_mode}")
 
