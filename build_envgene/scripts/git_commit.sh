@@ -59,17 +59,11 @@ else
 fi
 echo "Commit message: ${message}"
 
-# Listing the artifact_environments
-echo "listing frst artifact env"
-ls -lhrt "/tmp/artifact_environments"
 
 # Listing the artifact_environments
 echo "listing frst environments"
 ls -lhrt "environments"
 
-# Listing the artifact_environments
-echo "listing frst tmp"
-ls -lhrt "/tmp"
 
 FILE_PATH1="environments/dobp-oob-dev1/dev-9/Credentials/fake-creds.yaml"
 FILE_PATH1="environments/credfilestoupdate.yml"
