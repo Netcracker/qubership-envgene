@@ -33,7 +33,7 @@ def prepare_vars_and_run_sd_handling():
 
     env = Environment(base_dir, cluster, env_name)
 
-    params_json = getenv_and_log("ENV_GENERATION_PARAMS")
+    params_json = getenv_and_log("ENV_INVENTORY_GENERATION_PARAMS")
     params = json.loads(params_json)
 
     sd_source_type = params['SD_SOURCE_TYPE']
