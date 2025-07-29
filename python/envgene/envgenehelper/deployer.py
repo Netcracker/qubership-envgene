@@ -89,7 +89,10 @@ def get_deployer_config(env_name=None, work_dir=None, instances_dir=None, secret
     if deployer_name not in data and fallback_on_root_config:
         logger.info(f"Deployer with key {deployer_name} not found in: {deployer_file_path}. Going to root configuration: {basic_deployer_file_path}")
         deployer_dir = getDirName(basic_deployer_file_path)
-        data = openYaml(basic_deployer_file_path)
+        if failonerror:
+            data = openYaml(basic_deployer_file_path)
+        else:
+            return "","",""
     if deployer_name not in data:
         logger.error(f"Deployer with key {deployer_name} not found in either: {deployer_file_path} or {basic_deployer_file_path}")
         if failonerror:
