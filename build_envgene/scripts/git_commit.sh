@@ -66,7 +66,6 @@ ls -lhrt "environments"
 
 
 FILE_PATH1="environments/dobp-oob-dev1/dev-9/Credentials/fake-creds.yaml"
-FILE_PATH1="environments/credfilestoupdate.yml"
 if [ -f "$FILE_PATH1" ]; then
   echo "File frst exists: $FILE_PATH1"
   echo "---- File frst Content ----"
