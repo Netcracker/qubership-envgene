@@ -138,7 +138,7 @@ def find_namespace(entity_files_map, ns_files):
 @lru_cache(maxsize=None)
 def trim_path_from_environments(path: str):
     normalized = path.replace("\\", "/")
-    marker = "/environments/"
+    marker = "environments/"
     idx = normalized.find(marker)
     return normalized[idx:] if idx != -1 else normalized
 
