@@ -12,6 +12,10 @@ on:
     branches:
       - '**'
 
+env:
+  CI_COMMIT_REF_NAME: ${{ github.ref_name }}
+  CI_PROJECT_DIR: ${{ github.workspace }}
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
