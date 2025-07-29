@@ -48,6 +48,7 @@ class PluginUseCase:
             logger.error(f'No plugin found in registry for module: {plugin_module}')
 
     def __search_for_plugins_in(self, plugins_paths: list[str]):
+        plugins_paths.sort()
         for directory in plugins_paths:
             try:
                 # Construct the full path to the main.py file
