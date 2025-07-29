@@ -7,6 +7,7 @@ import envgenehelper as helper
 from envgenehelper.logger import logger
 from envgenehelper.business_helper import getenv_and_log, getenv_with_error
 from envgenehelper.env_helper import Environment
+from envgenehelper.file_helper import identify_yaml_extension
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from envgenehelper.plugin_engine import PluginEngine
@@ -202,8 +203,10 @@ def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> art
     for result in results:
         if result is not None:
             return result
-    app_dict = helper.openYaml(f"{APP_DEFS_PATH}/{app_name}")
-    app_dict['registry'] = artifact_models.Registry.model_validate(helper.openYaml(f"{REG_DEFS_PATH}/{app_dict['registry']}"))
+    app_def_path = identify_yaml_extension(f"{APP_DEFS_PATH}/{app_name}")
+    app_dict = helper.openYaml(app_def_path)
+    reg_def_path = identify_yaml_extension(f"{REG_DEFS_PATH}/{app_dict['registry']}")
+    app_dict['registry'] = artifact_models.Registry.model_validate(helper.openYaml(reg_def_path))
     app_def = artifact_models.Application.model_validate(app_dict)
     return app_def
 
