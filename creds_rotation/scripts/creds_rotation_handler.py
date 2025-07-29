@@ -89,7 +89,7 @@ def cred_rotation():
     if processed_cred_and_files:
         updated_content, original_content = update_cred_content(processed_cred_and_files)
         write_updated_cred_into_file(updated_content, original_content, is_encrypted, envgene_age_public_key)
-        write_cred_file_path(list(processed_cred_and_files.keys()), f"{work_dir}/environments")
+        write_cred_file_path(list(processed_cred_and_files.keys()))
     else:
         logger.error("Credential IDs are not found in environment and shared credential files. Please check the files")
 
