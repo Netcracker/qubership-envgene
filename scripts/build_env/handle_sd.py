@@ -60,8 +60,12 @@ def merge_sd(env, sd_data, merge_func):
 
 def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
     base_path = f'{env.env_path}/Inventory/solution-descriptor/'
+    handle_sd_skip_msg = "SD_SOURCE_TYPE is not specified, skipping SD file creation"
     if not sd_source_type:
-        logger.info("SD_SOURCE_TYPE is not specified, skipping SD file creation")
+        if not sd_version and not sd_data:
+            logger.info(handle_sd_skip_msg)
+        else:
+            logger.warning(handle_sd_skip_msg)
         return
     logger.info(f"printing sd_delta before {sd_delta}")
 
