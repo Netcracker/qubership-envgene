@@ -43,6 +43,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: python:3.12-slim-bookworm
+    env:
+      CI_PROJECT_DIR: ${{ github.workspace }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
