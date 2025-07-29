@@ -138,7 +138,6 @@ if [ -f "$CREDS_FILE" ]; then
     else
       echo "Warning: Source file does not exist: $file_path"
     fi
-
   done < "$CREDS_FILE"
 fi
 
