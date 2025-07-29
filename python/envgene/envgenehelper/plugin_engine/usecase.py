@@ -1,8 +1,9 @@
 import os
+import sys
 from importlib import import_module
 from typing import Any
 
-from ..logger import logger
+from envgenehelper import logger
 
 from .engine_contract import IPluginRegistry
 
@@ -46,13 +47,39 @@ class PluginUseCase:
         else:
             logger.error(f'No plugin found in registry for module: {plugin_module}')
 
-    def __search_for_plugins_in(self, plugins_path: list[str], package_name: str):
-        plugins_path.sort()
-        for directory in plugins_path:
-            # Importing the module will cause IPluginRegistry to invoke it's __init__ fun
-            import_target_module = f'.{directory}.main'
-            module = import_module(import_target_module, package_name)
-            self.__check_loaded_plugin_state(module)
+    def __search_for_plugins_in(self, plugins_paths: list[str]):
+        for directory in plugins_paths:
+            try:
+                # Construct the full path to the main.py file
+                main_py_path = os.path.join(self.plugins_dir, directory, 'main.py')
+                if not os.path.exists(main_py_path):
+                    logger.warning(f"main.py not found in {directory}, skipping")
+                    continue
+
+                # Add the plugin directory to sys.path temporarily
+                plugin_dir_parent = os.path.dirname(self.plugins_dir)
+                if plugin_dir_parent not in sys.path:
+                    sys.path.insert(0, plugin_dir_parent)
+                    added_to_path = True
+                else:
+                    added_to_path = False
+
+                # Create module name from the plugins directory structure
+                plugins_dir_name = os.path.basename(self.plugins_dir)
+                module_name = f"{plugins_dir_name}.{directory}.main"
+
+                logger.info(f"Attempting to import: {module_name}")
+                module = import_module(module_name)
+                self.__check_loaded_plugin_state(module)
+
+                # Clean up sys.path if we added to it
+                if added_to_path:
+                    sys.path.remove(plugin_dir_parent)
+
+            except ImportError as e:
+                logger.error(f"Failed to import plugin {directory}: {e}")
+            except Exception as e:
+                logger.error(f"Unexpected error loading plugin {directory}: {e}")
 
     def discover_plugins(self, reload: bool):
         """
@@ -68,9 +95,5 @@ class PluginUseCase:
             logger.info(f"{self.plugins_dir} dir doesn't exist, search for plugins skipped")
             return self.modules
         plugins_paths = filter_plugins_paths(self.plugins_dir)
-        plugins_dir_parts = os.path.normpath(self.plugins_dir).split('/')
-        cut_off_idx = plugins_dir_parts.index('pipegene_plugins')
-        package_name = '.'.join(plugins_dir_parts[cut_off_idx:])
-        self.__search_for_plugins_in(plugins_paths, package_name)
+        self.__search_for_plugins_in(plugins_paths)
         return self.modules
-
