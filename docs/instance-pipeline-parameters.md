@@ -181,7 +181,7 @@ See details in [SD processing](/docs/sd-processing.md)
 
 ### `SD_DATA`
 
-**Description**: Specifies the **list** of contents of one or more SD in JSON-in-string format.
+**Description**: Specifies the content of one or more SDs in JSON-in-string format. In the case of multiple SDs, this should be a **list** of contents of one or more SDs.
 
 EnvGene sequentially merges them in the `basic-merge` mode, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/sd-processing.md#delta-sd), then merges with [Full SD](/docs/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
@@ -196,7 +196,7 @@ See details in [SD processing](/docs/sd-processing.md)
 - Single SD:
 
 ```text
-'[{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"}]},{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"postgres-services:1.32.6","deployPostfix":"postgresql"},{"version":"postgres:1.32.3","deployPostfix":"postgresql-dbaas"}]}]'
+'{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"}]},{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"postgres-services:1.32.6","deployPostfix":"postgresql"},{"version":"postgres:1.32.3","deployPostfix":"postgresql-dbaas"}]}'
 ```
 
 - Multiple SD:
