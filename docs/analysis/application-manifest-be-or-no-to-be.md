@@ -188,12 +188,12 @@ Cons:
    1. dependsOn - For describing external dependencies (logical links), where a component requires another component to function but does not physically include it.
    2. includes - For describing the physical composition of a component, when a parent artifact includes child components.
 
-![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model.drawio.png)
+![/docs/images/application-manifest-model.drawio.png](/docs/images/application-manifest-model.drawio.png)
 
 [Application Manifest JSON schema](/schemas/application-manifest.schema.json)
 
 QIP Example:
 
-![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest.drawio.png)
+![/docs/images/qip-application-manifest.drawio.png](/docs/images/qip-application-manifest.drawio.png)
 
 [QIP Application Manifest example](/examples/application-manifest-qip.json)
