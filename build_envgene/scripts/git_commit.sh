@@ -75,6 +75,18 @@ else
   echo "File frst does not exist: $FILE_PATH1"
 fi
 
+
+DEV3_PATH1="environments/dobp-oob-dev1/dev-3/Credentials/credentials.yml"
+if [ -f "$DEV3_PATH1" ]; then
+  echo "File frst exists: $DEV3_PATH1"
+  echo "---- File frst Content ----"
+  cat "$DEV3_PATH1"
+  echo "----------------------"
+else
+  echo "File frst does not exist: $DEV3_PATH1"
+fi
+
+
 FILE_PATH="environments/credfilestoupdate.yml"
 if [ -f "$FILE_PATH" ]; then
   echo "File frst exists: $FILE_PATH"
