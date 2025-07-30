@@ -40,9 +40,9 @@ public class ApplicationLinkDTO {
     private final String name;
     @Nonnull
     @JsonDeserialize(using = CustomDeserializer.class)
-    private final Map<String, String> deployParameters;
+    private final Map<String, Object> deployParameters;
     @JsonDeserialize(using = CustomDeserializer.class)
-    private final Map<String, String> technicalConfigurationParameters;
+    private final Map<String, Object> technicalConfigurationParameters;
 
     @Override
     public boolean equals(Object o) {

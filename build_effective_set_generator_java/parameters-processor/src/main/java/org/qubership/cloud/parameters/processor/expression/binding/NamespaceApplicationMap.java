@@ -52,8 +52,8 @@ public class NamespaceApplicationMap extends DynamicMap {
                 .findAny()
                 .orElse(null);
 
-        Map<String, String> appParams = applicationParams != null ? applicationParams.getAppParams() : new HashMap<>();
-        Map<String, String> configServerParams = applicationParams != null ? applicationParams.getConfigServerParams() : new HashMap<>();
+        Map<String, Object> appParams = applicationParams != null ? applicationParams.getAppParams() : new HashMap<>();
+        Map<String, Object> configServerParams = applicationParams != null ? applicationParams.getConfigServerParams() : new HashMap<>();
         EscapeMap map = new EscapeMap(appParams, binding,
                 String.format(ParametersConstants.NS_APP_ORIGIN, namespace.getCloud().getTenant().getName(), namespace.getCloud().getName(),
                         namespace.getName(), appName));

@@ -28,6 +28,7 @@ RUN apk update \
     && test -d /module/venv || python3 -m venv /module/venv \
     && source /module/venv/bin/activate \
     && . /module/venv/bin/activate \
+    && python3 -m pip install --upgrade pip setuptools wheel \
     && pip install --no-deps --no-cache-dir -r /build/requirements.txt \
     && pip install ansible --upgrade \
     && ansible-galaxy collection install -r /build/requirements.yml -p /module/ansible/collections \

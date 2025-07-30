@@ -74,6 +74,8 @@ Test case creation should follow pragmatic principles, focusing on validating re
 
 **Status:** [New/Active/Archived]
 
+**Description:**
+
 **Test Data:**
 - [Path/to/test/data/file1]
 - [Path/to/test/data/file2]
@@ -104,6 +106,10 @@ Follows pattern TC-[Feature-ID]-[SEQ]
 New: Case created but not automated  
 Active: In suite  
 Archived: Historical reference only  
+
+**Description:**
+
+Brief title summarizing test scenario
 
 **Test Data:**
 

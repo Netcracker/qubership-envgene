@@ -74,6 +74,8 @@ public class FileSystemUtils {
                         Files.createDirectories(deploymentPath);
                         Path runtimePath = getFileFromGivenPath(data.getOutputDir(), "runtime", app.getNamespace(), app.getAppName()).toPath();
                         Files.createDirectories(runtimePath);
+                        Path cleanupPath = getFileFromGivenPath(data.getOutputDir(), "cleanup", app.getNamespace()).toPath();
+                        Files.createDirectories(cleanupPath);
                     } catch (IOException e) {
                         throw new DirectoryCreateException("Error creating directory for application "+app.getAppName()+" due to "+e.getMessage());
                     }

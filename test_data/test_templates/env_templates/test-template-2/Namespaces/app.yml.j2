@@ -1,0 +1,38 @@
+---
+name: "{{current_env.name}}-app"
+labels:
+- "Instance-{{current_env.name}}"
+credentialsId: ""
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  APP_NAMESPACE: "{{current_env.name}}-app"
+{% if current_env.inventory.envTemplate.additionalTemplateVariables.Variable_1 is defined %} 
+  Variable_1: "{{current_env.inventory.envTemplate.additionalTemplateVariables.Variable_1}}"
+{% endif %}
+{% if current_env.cloudPassport.cloud.CLOUD_PUBLIC_HOST is defined %}
+  CLOUD_PUBLIC_HOST_1: "{{current_env.cloudPassport.cloud.CLOUD_PUBLIC_HOST}}"
+{% endif %}
+e2eParameters:
+  APP_NAMESPACE: "{{current_env.name}}-app"
+{% if current_env.inventory.envTemplate.additionalTemplateVariables.Variable_2 is defined %} 
+  Variable_2: "{{current_env.inventory.envTemplate.additionalTemplateVariables.Variable_2}}"
+{% endif %}
+{% if current_env.cloudPassport.cloud.CLOUD_PUBLIC_HOST is defined %}
+  CLOUD_PUBLIC_HOST_2: "{{current_env.cloudPassport.cloud.CLOUD_PUBLIC_HOST}}"
+{% endif %}
+technicalConfigurationParameters:
+  APP_NAMESPACE: "{{current_env.name}}-app"
+{% if current_env.inventory.envTemplate.additionalTemplateVariables.Variable_3 is defined %} 
+  Variable_3: "{{current_env.inventory.envTemplate.additionalTemplateVariables.Variable_3}}"
+{% endif %}
+{% if current_env.cloudPassport.cloud.CLOUD_PUBLIC_HOST is defined %}
+  CLOUD_PUBLIC_HOST_3: "{{current_env.cloudPassport.cloud.CLOUD_PUBLIC_HOST}}"
+{% endif %}
+deployParameterSets:
+  - "test-parameters-1"
+e2eParameterSets:
+  - "test-parameters-1"
+technicalConfigurationParameterSets:
+  - "test-parameters-1"

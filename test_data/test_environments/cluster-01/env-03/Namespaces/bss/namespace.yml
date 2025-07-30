@@ -1,0 +1,45 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "env-03-bss"
+credentialsId: ""
+isServerSideMerge: false
+labels:
+  - "solutionInstance-env-03"
+  - "solution-tenant"
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+profile:
+  name: "dev_bss_override"
+  baseline: "dev"
+deployParameters:
+  ENVGENE_CONFIG_REF_NAME: ""
+  ENVGENE_CONFIG_TAG: ""
+  KMS_CERT_IN_BASE64: "${envgen.creds.get( \"kms-cert\" ).secret}" # paramset: test-deploy-creds version: 1 source: template
+  OVERRIDE_PARAMETER: "template-value"
+  PARAM_2: "value-2" # paramset: bss version: 25.1 source: template
+  PARAM_6: "value-6" # paramset: bss version: 25.1 source: template
+  TEST_CREDS_GET_PASSWORD_PASSWORD: "${envgen.creds.get('creds-get-password-cred').password}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_CREDS_GET_PASSWORD_USERNAME: "${envgen.creds.get('creds-get-username-cred').username}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_CREDS_GET_SECRET_PARAM: "${envgen.creds.get('creds-get-secret').secret}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_CREDS_GET_VAULT_NAMESPACE: "${envgen.creds.get(   \"creds-get-vault-cred-namespace\"  ).namespace}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_CREDS_GET_VAULT_PATH: "${envgen.creds.get( \"creds-get-vault-cred-path\" ).path}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_CREDS_GET_VAULT_ROLE: "${envgen.creds.get(\"creds-get-vault-cred-role\").roleId}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_CREDS_GET_VAULT_SECRET_ID: "${envgen.creds.get( \"creds-get-vault-cred-secret-id\").secretId}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_ENVGENE_CREDS_GET_PASSWORD_PASSWORD: "${envgen.creds.get('envgen-creds-get-password-cred').password}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_ENVGENE_CREDS_GET_PASSWORD_USERNAME: "${envgen.creds.get('envgen-creds-get-username-cred').username}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_ENVGENE_CREDS_GET_SECRET_PARAM: "${envgen.creds.get('envgen-creds-get-secret').secret}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_ENVGENE_CREDS_GET_VAULT_NAMESPACE: "${envgen.creds.get(   \"envgen-creds-get-vault-cred-namespace\"  ).namespace}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_ENVGENE_CREDS_GET_VAULT_PATH: "${envgen.creds.get( \"envgen-creds-get-vault-cred-path\" ).path}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_ENVGENE_CREDS_GET_VAULT_ROLE: "${envgen.creds.get(\"envgen-creds-get-vault-cred-role\" ).roleId}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_ENVGENE_CREDS_GET_VAULT_SECRET_ID: "${envgen.creds.get( \"envgen-creds-get-vault-cred-secret-id\").secretId}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_SHARED_CREDS: "${envgen.creds.get('integration-cred').username}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_SHARED_CREDS_ACTIVATOR: "${envgen.creds.get('service-integration-cred').password}" # paramset: test-deploy-creds version: 1 source: template
+  bss-app-exist: false
+e2eParameters: {}
+technicalConfigurationParameters:
+  PARAM_2: "value-2" # paramset: bss-tech version: 25.1 source: template
+  PARAM_6: "value-6" # paramset: bss-tech version: 25.1 source: template
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
