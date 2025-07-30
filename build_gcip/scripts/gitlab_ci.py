@@ -91,9 +91,10 @@ def build_pipeline(params: dict):
             jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, env, environment_name, cluster_name, params['ENV_INVENTORY_GENERATION_PARAMS'])
         else:
             logger.info(f'Preparing of env inventory generation job for {env} is skipped because we are in template test mode.')
-
+        credential_rotation_job = None
         if params['CRED_ROTATION_PAYLOAD']:
-            jobs_map["credential_rotation_job"] = prepare_credential_rotation_job(pipeline, env, environment_name, cluster_name)
+            credential_rotation_job = prepare_credential_rotation_job(pipeline, env, environment_name, cluster_name)
+            jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
             
@@ -118,7 +119,7 @@ def build_pipeline(params: dict):
         ## git_commit job
         jobs_requiring_git_commit = ("env_build_job", "generate_effective_set_job", "env_inventory_generation_job")
         if any(job in jobs_map for job in jobs_requiring_git_commit) and not params['IS_TEMPLATE_TEST']:
-            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, jobs_map["credential_rotation_job"])
+            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, credential_rotation_job)
         else:
             logger.info(f'Preparing of git commit job for {env} is skipped.')
 
