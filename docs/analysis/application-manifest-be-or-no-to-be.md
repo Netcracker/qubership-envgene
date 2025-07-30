@@ -2,14 +2,15 @@
 
 ## Problem Statement
 
-Application deployment and calculation of deployment parameters require a specific object — the Deployment Descriptor, which is not available in open source.
+Application deployment and calculation of deployment parameters require a specific object — the Deployment Descriptor, which is not available in open source. в данный момент
 
 It is necessary to:
 
 1. Provide deployment of an individual application in Qubership
 2. Consider the possibility of substituting the Deployment Descriptor in deployment cases
 
-Delivery scenarios are not considered
+ворнинг Delivery scenarios are not considered сейчас
+  деливери сценарий - возможность доставить приложения на нужный энв
 
 ## Challenges  
 
@@ -41,7 +42,7 @@ Delivery scenarios are not considered
     Cons:
       - Error-prone and time-consuming
 
-    ![no-application-manifest-manual.drawio.png7u](/docs/images/no-application-manifest-manual.drawio.png)
+  ![no-application-manifest-manual.drawio.png7u](/docs/images/no-application-manifest-manual.drawio.png)  
 
 ### 2. Generate Helm Values at Application Build Time
 
@@ -55,7 +56,7 @@ Delivery scenarios are not considered
 
     - During solution deployment, the SD is used, which points to the Helm charts
 
-    ![no-application-manifest.drawio.png](/docs/images/no-application-manifest.drawio.png)
+  ![no-application-manifest.drawio.png](/docs/images/no-application-manifest.drawio.png)
 
     Pros:
       - No new entities introduced
@@ -74,7 +75,7 @@ Delivery scenarios are not considered
 
     - Changes to the application's images are applied by Argo
 
-    ![no-application-manifest-storage.drawio.png](/docs/images/no-application-manifest-storage.drawio.png)
+  ![no-application-manifest-storage.drawio.png](/docs/images/no-application-manifest-storage.drawio.png)
 
     Pros:
       - This approach is used in the industry
@@ -87,7 +88,7 @@ Delivery scenarios are not considered
     Use the Application Manifest as a single source of truth for application components (including Helm charts, their structure, and dynamic artifact parameters).
     The Application Manifest is created at build time, published to a repository, and used to generate Helm values. Configuration management generates Helm values as part of the effective set.
 
-    ![application-manifest.drawio.png](/docs/images/application-manifest.drawio.png)
+  ![application-manifest.drawio.png](/docs/images/application-manifest.drawio.png)
 
     Pros:
       - Solves all three problems
