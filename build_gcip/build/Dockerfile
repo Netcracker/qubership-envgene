@@ -22,6 +22,7 @@ RUN apk update \
         bash \
     && test -d /module/venv || python3 -m venv /module/venv \
     && source /module/venv/bin/activate \
+    && python3 -m pip install --upgrade pip setuptools wheel \
     && pip install --no-deps --no-cache-dir -r /build/requirements.txt \
     && python3 -m pip install /python/integration \
     && python3 -m pip install /python/jschon-sort \

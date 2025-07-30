@@ -104,6 +104,11 @@ public class NamespaceMap extends DynamicMap {
                     if ( binding.getDeployerInputs().getSecretId() != null) {
                         setSecretValues(map, credentialUtils);
                     }
+//                    if (binding.getDeployerInputs().getDeploySessionId() != null) {
+//                        map.put("DEPLOYMENT_SESSION_ID",binding.getDeployerInputs().getDeploySessionId());
+//                    } else {
+//                        map.put("DEPLOYMENT_SESSION_ID", UUID.randomUUID().toString());
+//                    }
                 }
             }
 
@@ -138,7 +143,7 @@ public class NamespaceMap extends DynamicMap {
         }
     }
 
-    private void addGatewayIdentityUrls(Map<String, String> customParameters, EscapeMap map, boolean isPublic, String protocol, String host, String namespaceGatewayUrl, String namespaceIdpUrl) {
+    private void addGatewayIdentityUrls(Map<String, Object> customParameters, EscapeMap map, boolean isPublic, String protocol, String host, String namespaceGatewayUrl, String namespaceIdpUrl) {
         String defaultGatewayUrl = isPublic ? String.format("%s://public-gateway-%s.%s", protocol.toLowerCase(), namespaceGatewayUrl, host)
                 : String.format("%s://private-gateway-%s.%s", protocol.toLowerCase(), namespaceGatewayUrl, host);
         String defaultIdpUrl = isPublic ? String.format("%s://public-gateway-%s.%s", protocol.toLowerCase(), namespaceIdpUrl, host)
@@ -147,15 +152,15 @@ public class NamespaceMap extends DynamicMap {
         String gatewayUrl = isPublic ? PUBLIC_GATEWAY_URL : PRIVATE_GATEWAY_URL;
         String identityProviderUrl = isPublic ? PUBLIC_IDENTITY_PROVIDER_URL : PRIVATE_IDENTITY_PROVIDER_URL;
         if (customParameters.containsKey(gatewayUrl) && customParameters.containsKey(identityProviderUrl)) {
-            map.put(gatewayUrl, customParameters.get(gatewayUrl));
-            map.put(identityProviderUrl, customParameters.get(identityProviderUrl));
+            map.put(gatewayUrl, String.valueOf(customParameters.get(gatewayUrl)));
+            map.put(identityProviderUrl, String.valueOf(customParameters.get(identityProviderUrl)));
         } else {
             if (customParameters.containsKey(gatewayUrl)) {
-                map.put(gatewayUrl, customParameters.get(gatewayUrl));
-                map.put(identityProviderUrl, customParameters.get(gatewayUrl));
+                map.put(gatewayUrl, String.valueOf(customParameters.get(gatewayUrl)));
+                map.put(identityProviderUrl, String.valueOf(customParameters.get(gatewayUrl)));
             }
             if (customParameters.containsKey(identityProviderUrl)) {
-                map.put(identityProviderUrl, customParameters.get(identityProviderUrl));
+                map.put(identityProviderUrl, String.valueOf(customParameters.get(identityProviderUrl)));
             }
         }
         map.putIfAbsent(gatewayUrl, defaultGatewayUrl);

@@ -1,0 +1,20 @@
+---
+name: "dev_billing_override"
+baseline: "dev"
+description: "Override for dev-profile"
+applications:
+- name: "billing-app"
+  #version: "release-2023.3-8.4.0-20231103.225817-60-RELEASE"
+  #sd: ""
+  services:
+  - name: "billing-service"
+    parameters:
+    - name: "CPU_LIMIT"
+      value: "2"
+    - name: "REPLICAS"
+      value: "3"
+    - name: "CPU_REQUEST"
+      value: "150m"
+    - name: "MEMORY_LIMIT"
+      value: "336Mi"
+version: 0

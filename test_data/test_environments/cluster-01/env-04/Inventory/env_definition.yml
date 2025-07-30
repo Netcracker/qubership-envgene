@@ -1,0 +1,12 @@
+inventory:
+  environmentName: "env-04"
+  tenantName: "Applications"
+envTemplate:
+  name: "simple"
+  artifact: "deployment-configuration-env-templates:1.2.3"
+  additionalTemplateVariables:
+    GLOBAL_LEVEL_PARAM1: global-level-value1
+    mergeDeployE2eParameters: false
+    additinalVarInstanceDir: "test1"
+generatedVersions:
+  generateEnvironmentLatestVersion: "deployment-configuration-env-templates:simple"  # This value is automatically generated during job run.
