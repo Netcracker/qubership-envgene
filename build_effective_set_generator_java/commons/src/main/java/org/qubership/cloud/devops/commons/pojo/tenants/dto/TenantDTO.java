@@ -43,7 +43,7 @@ public class TenantDTO {
     private final String description;
     private final String owners;
     @JsonDeserialize(using = CustomDeserializer.class)
-    private final Map<String, Object> deployParameters;
+    private final Map<String, String> deployParameters;
     private final GlobalE2EParametersDTO globalE2EParameters;
     private final String gitRepository;
     private final String defaultBranch;
@@ -53,5 +53,5 @@ public class TenantDTO {
     private final List<String> e2eParameterSets;
     private final List<String> technicalParameterSets;
     @JsonDeserialize(using = CustomDeserializer.class)
-    private final Map<String, Object> technicalConfigurationParameters;
+    private final Map<String, String> technicalConfigurationParameters;
 }

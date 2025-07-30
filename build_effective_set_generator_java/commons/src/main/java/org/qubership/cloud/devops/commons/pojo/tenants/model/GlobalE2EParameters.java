@@ -39,6 +39,6 @@ public class GlobalE2EParameters implements Serializable {
     @Builder.Default
     private String recipientsStrategy = "merge";
     @Builder.Default
-    private Map<String, Object> envParameters = Collections.emptyMap();
+    private Map<String, String> envParameters = Collections.emptyMap();
     private boolean mergeTenantAndE2EParams;
 }

@@ -141,7 +141,7 @@
       "properties": [
         {
           "name": "git_branch",
-          "value": "8157"
+          "value": "PSUPCLFRM-8157"
         },
         {
           "name": "image_type",
@@ -153,10 +153,10 @@
           "bom-ref": "BomRef.04555635497184274.9206615845377818",
           "type": "container",
           "mime-type": "application/vnd.docker.image",
-          "name": "identity-provider-assembly-8157",
+          "name": "identity-provider-assembly-psupclfrm-8157",
           "group": "cloud-core",
           "version": "build3",
-          "purl": "pkg:docker/cloud-core/identity-provider-assembly-8157@build3?registry_id=sandbox?repository_id=snapshotUri"
+          "purl": "pkg:docker/cloud-core/identity-provider-assembly-psupclfrm-8157@build3?registry_id=sandbox?repository_id=snapshotUri"
         },
         {
           "bom-ref": "BomRef.6761624005326978.7212658347443947",

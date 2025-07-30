@@ -1,340 +1,80 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "title": "Cloud Configuration Schema",
-  "description": "Defines cloud level parameters",
-  "additionalProperties": true,
-  "properties": {
-    "name": {
-      "type": "string",
-      "title": "Cloud Name",
-      "description": "The name of the cloud configuration",
-      "examples": [
-        "k8s_qubership"
-      ]
-    },
-    "version": {
-      "type": "number",
-      "title": "Version Number",
-      "description": "The version number of the cloud configuration",
-      "examples": [
-        1,
-        2
-      ]
-    },
-    "apiUrl": {
-      "type": "string",
-      "title": "API URL",
-      "description": "The URL of the API endpoint of the cloud",
-      "examples": [
-        "api.k8s-qubership.qubership.org"
-      ]
-    },
-    "apiPort": {
-      "type": [
-        "integer",
-        "string"
-      ],
-      "title": "API Port",
-      "description": "The port on which the API runs",
-      "examples": [
-        6443
-      ]
-    },
-    "privateUrl": {
-      "type": "string",
-      "title": "Private URL",
-      "description": "The private-facing URL for internal access",
-      "examples": [
-        "private.k8s-qubership.qubership.org"
-      ]
-    },
-    "publicUrl": {
-      "type": "string",
-      "title": "Public URL",
-      "description": "The public-facing URL for external access",
-      "examples": [
-        "k8s-qubership.qubership.org"
-      ]
-    },
-    "dashboardUrl": {
-      "type": "string",
-      "title": "Dashboard URL",
-      "description": "The URL for accessing the cloud's k8s dashboard",
-      "examples": [
-        "https://k8s-qubership.qubership.org"
-      ]
-    },
-    "labels": {
-      "type": "array",
-      "title": "Labels",
-      "description": "A list of labels for categorizing or tagging the cloud",
-      "items": {
-        "type": "string"
-      },
-      "examples": [
-        "qubership"
-      ]
-    },
-    "defaultCredentialsId": {
-      "type": "string",
-      "title": "Credentials ID",
-      "description": "The identifier for credentials used by the deployment",
-      "examples": [
-        "deploy-token"
-      ]
-    },
-    "protocol": {
-      "type": "string",
-      "title": "Protocol",
-      "description": "The communication protocol used",
-      "examples": [
-        "https",
-        "http"
-      ]
-    },
-    "dbMode": {
-      "type": "string",
-      "title": "Database Mode",
-      "description": "The database mode",
-      "examples": [
-        "db"
-      ]
-    },
-    "databases": {
-      "type": "array",
-      "title": "Database Configurations",
-      "description": "A list of database configurations associated with the deployment",
-      "items": {
-        "type": "object"
-      }
-    },
-    "mergeDeployParametersAndE2EParameters": {
-      "type": "boolean",
-      "title": "Merge Deploy and E2E Parameters",
-      "description": "Flag indicating whether to merge deployment and end-to-end parameters",
-      "examples": [
-        true,
-        false
-      ]
-    },
-    "maasConfig": {
-      "type": "object",
-      "title": "MaaS Configuration",
-      "description": "Configuration for the monitoring-as-a-service (MaaS)",
-      "additionalProperties": true,
-      "properties": {
-        "credentialsId": {
-          "type": "string",
-          "title": "MaaS Credentials ID",
-          "description": "Credentials identifier for MaaS",
-          "examples": [
-            "maas-cred"
-          ]
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    
+    "properties": {
+        "name" : { "type": "string" },
+        "version" : { "type": "number" },
+        "apiUrl" : { "type": "string" },
+        "apiPort" : { "type": ["integer", "string"] },
+        "privateUrl" : { "type": "string" },
+        "publicUrl" : { "type": "string" },
+        "dashboardUrl" : { "type": "string" },
+        "labels": {
+            "type" :"array",
+            "items": { "type": "string" }
         },
-        "enable": {
-          "type": "boolean",
-          "title": "Enable MaaS",
-          "description": "Flag to enable or disable MaaS",
-          "examples": [
-            true,
-            false
-          ]
+        "defaultCredentialsId" : { "type": "string" },
+        "protocol" : { "type": "string" },
+        "dbMode" : { "type": "string" },
+        "productionMode" : { "type": "boolean" },
+        "databases": {
+            "type" :"array",
+            "items": { "type": "object" }
         },
-        "maasUrl": {
-          "type": "string",
-          "title": "MaaS URL",
-          "description": "URL for accessing MaaS",
-          "examples": [
-            "https://maas.qubership.org"
-          ]
+        "mergeDeployParametersAndE2EParameters": { "type": "boolean" },
+        "maasConfig" : { 
+            "type": "object",
+            "properties": {
+                "credentialsId": { "type": "string" },
+                "enable": { "type": "boolean" },
+                "maasUrl": { "type": "string" },
+                "maasInternalAddress": { "type": "string" }
+              }
         },
-        "maasInternalAddress": {
-          "type": "string",
-          "title": "MaaS Internal Address",
-          "description": "Internal address for MaaS",
-          "examples": [
-            "http://maas-service.maas:8080"
-          ]
+        "vaultConfig" : { 
+            "type": "object",
+            "properties": {
+                "credentialsId": { "type": "string" },
+                "enable": { "type": "boolean" },
+                "url": { "type": "string" }
+              }
+        },
+        "dbaasConfigs" : {
+            "type" :"array",
+            "items": { 
+                "type": "object",
+                "properties": {
+                    "credentialsId": { "type": "string" },
+                    "enable": { "type": "boolean" },
+                    "apiUrl": { "type": "string" },
+                    "aggregatorUrl": { "type": "string" }
+                }
+            }
+        },
+        "consulConfig" : { 
+            "type": "object",
+            "properties": {
+                "tokenSecret": { "type": "string" },
+                "enabled": { "type": "boolean" },
+                "publicUrl": { "type": "string" },
+                "internalUrl": { "type": "string" }
+              }
+        },
+        "deployParameters" : { "type": "object" },
+        "e2eParameters" : { "type": "object" },
+        "technicalConfigurationParameters" : { "type": "object" },   
+        "deployParameterSets": {
+            "type" :"array",
+            "items": { "type": "string" }
+        },
+        "e2eParameterSets": {
+            "type" :"array",
+            "items": { "type": "string" }
+        },
+        "technicalConfigurationParameterSets": {
+            "type" :"array",
+            "items": { "type": "string" }
         }
-      }
-    },
-    "vaultConfig": {
-      "type": "object",
-      "title": "Vault Configuration",
-      "description": "Configuration for the vault service",
-      "additionalProperties": true,
-      "properties": {
-        "credentialsId": {
-          "type": "string",
-          "title": "Vault Credentials ID",
-          "description": "Credentials identifier for the vault"
-        },
-        "enable": {
-          "type": "boolean",
-          "title": "Enable Vault",
-          "description": "Flag to enable or disable vault integration"
-        },
-        "url": {
-          "type": "string",
-          "title": "Vault URL",
-          "description": "The vault service URL"
-        }
-      }
-    },
-    "dbaasConfigs": {
-      "type": "array",
-      "title": "DBaaS Configurations",
-      "description": "Database-as-a-service (DBaaS) configurations",
-      "items": {
-        "type": "object",
-        "additionalProperties": true,
-        "properties": {
-          "credentialsId": {
-            "type": "string",
-            "title": "DBaaS Credentials ID",
-            "description": "Credentials identifier for DBaaS",
-            "examples": [
-              "dbaas-cred"
-            ]
-          },
-          "enable": {
-            "type": "boolean",
-            "title": "Enable DBaaS",
-            "description": "Flag to enable or disable DBaaS",
-            "examples": [
-              true,
-              false
-            ]
-          },
-          "apiUrl": {
-            "type": "string",
-            "title": "DBaaS API URL",
-            "description": "API URL for DBaaS",
-            "examples": [
-              "http://dbaas-aggregator.dbaas:8080"
-            ]
-          },
-          "aggregatorUrl": {
-            "type": "string",
-            "title": "DBaaS Aggregator URL",
-            "description": "URL for the DBaaS aggregator",
-            "examples": [
-              "https://dbaas.qubership.org"
-            ]
-          }
-        }
-      }
-    },
-    "consulConfig": {
-      "type": "object",
-      "title": "Consul Configuration",
-      "description": "Configuration for Consul service integration",
-      "additionalProperties": true,
-      "properties": {
-        "tokenSecret": {
-          "type": "string",
-          "title": "Consul Token Secret",
-          "description": "Secret token for Consul authentication",
-          "examples": [
-            "consul-cred"
-          ]
-        },
-        "enabled": {
-          "type": "boolean",
-          "title": "Enable Consul",
-          "description": "Flag to enable or disable Consul integration",
-          "examples": [
-            true,
-            false
-          ]
-        },
-        "publicUrl": {
-          "type": "string",
-          "title": "Consul Public URL",
-          "description": "The public URL for accessing Consul",
-          "examples": [
-            "http://consul.qubership.org"
-          ]
-        },
-        "internalUrl": {
-          "type": "string",
-          "title": "Consul Internal URL",
-          "description": "The internal URL for accessing Consul",
-          "examples": [
-            "consul.consul"
-          ]
-        }
-      }
-    },
-    "deployParameters": {
-      "type": "object",
-      "title": "Deployment parameters",
-      "description": "Parameters related to the deployment process",
-      "examples": [
-        {
-          "STORAGE_BUCKET": "st-bucket"
-        }
-      ]
-    },
-    "e2eParameters": {
-      "type": "object",
-      "title": "E2E Parameters",
-      "description": "E2E Parameters for the cloud",
-      "examples": [
-        {
-          "CLOUD_LEVEL_PARAM_1": "cloud-level-value-1"
-        }
-      ]
-    },
-    "technicalConfigurationParameters": {
-      "type": "object",
-      "title": "Technical Configuration Parameters",
-      "description": "Technical parameters for the cloud",
-      "examples": [
-        {
-          "CLOUD_LEVEL_PARAM_1": "cloud-level-value-1"
-        }
-      ]
-    },
-    "deployParameterSets": {
-      "type": "array",
-      "title": "Deployment Parameter Sets",
-      "description": "A list of deployment parameter sets for the cloud",
-      "items": {
-        "type": "string"
-      }
-    },
-    "e2eParameterSets": {
-      "type": "array",
-      "title": "E2E Parameter Sets",
-      "description": "A list of e2e parameter sets for the cloud",
-      "items": {
-        "type": "string"
-      }
-    },
-    "technicalConfigurationParameterSets": {
-      "type": "array",
-      "title": "Technical Configuration Parameter Sets",
-      "description": "A list of technical parameter sets for the cloud",
-      "items": {
-        "type": "string"
-      }
     }
-  },
-  "required": [
-    "name",
-    "apiUrl",
-    "apiPort",
-    "dashboardUrl",
-    "labels",
-    "defaultCredentialsId",
-    "protocol",
-    "deployParameters",
-    "e2eParameters",
-    "technicalConfigurationParameters",
-    "maasConfig",
-    "vaultConfig",
-    "consulConfig"
-  ]
 }

@@ -74,22 +74,6 @@ public class ParametersProcessor implements Serializable {
         });
     }
 
-    public Params processNamespaceParameters(String tenant, String cloud, String namespace, String defaultEscapeSequence, DeployerInputs deployerInputs, String originalNamespace) {
-        return openTelemetryProvider.withSpan("process", () -> {
-            Binding binding = new Binding(defaultEscapeSequence, deployerInputs).init(tenant, cloud, namespace, null, originalNamespace);
-            Language lang;
-            if (binding.getProcessorType().equals("true")) {
-                lang = new ExpressionLanguage(binding);
-            } else {
-                lang = new PlainLanguage(binding);
-            }
-
-            Map<String, Parameter>  namespaceParams = lang.processNamespace();
-            binding.additionalParameters(namespaceParams);
-            return Params.builder().cleanupParams(namespaceParams).build();
-        });
-    }
-
     private static Object convertParameterToObject(Object value) {
         if (value instanceof Parameter) {
             value = ((Parameter) value).getValue();

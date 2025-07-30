@@ -1,9 +1,0 @@
-version: 2.1
-type: deploy
-applications:
-  - version: Test-App-Name:0.0.1-Test
-    deployPostfix: app
-  - version: Test-App-DB-Name:0.0.1-Test
-    deployPostfix: app-core
-  - version: Test-App-Name:0.0.2-Test
-    deployPostfix: app

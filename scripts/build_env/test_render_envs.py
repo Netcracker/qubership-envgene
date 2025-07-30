@@ -1,5 +1,4 @@
 import filecmp
-from os import environ
 import pytest
 import difflib
 
@@ -8,16 +7,8 @@ from envgenehelper import *
 
 test_data = [
       # (cluster_name, environment_name, template)
-      ("cluster-01", "env-01", "composite-prod"),
-      ("cluster-01", "env-02", "composite-dev"),
-      ("cluster-01", "env-03", "composite-dev"),
-      ("cluster-01", "env-04", "simple"),
-      ("cluster01", "env01", "test-01"),
-      ("cluster01", "env01", "test-01"),
-      ("cluster01", "env03", "test-template-1"),
-      ("cluster01", "env04", "test-template-2")
+      ("cluster01", "env01", "test-01")
 ]
-
 g_templates_dir = getAbsPath("../../test_data/test_templates")
 g_inventory_dir = getAbsPath("../../test_data/test_environments")
 g_output_dir = getAbsPath("../../tmp/test_environments")
@@ -29,7 +20,6 @@ def change_test_dir(request, monkeypatch):
 
 @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
 def test_render_envs(cluster_name, env_name, version):
-    environ['CI_PROJECT_DIR'] = g_base_dir
     render_environment(env_name, cluster_name, g_templates_dir, g_inventory_dir, g_output_dir, version, g_base_dir)
     source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
     generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"

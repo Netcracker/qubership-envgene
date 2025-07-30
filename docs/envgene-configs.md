@@ -34,7 +34,7 @@ inventory:
   # Name of the Environment, e.g. dev01
   # This attribute's value is available for template rendering via the `current_env.name` variable
   environmentName: string
-  # Optional
+  # Mandatory
   # Name of the Tenant for the Environment
   # This attribute's value is available for template rendering via the `current_env.tenant` variable
   tenantName: string
@@ -189,12 +189,12 @@ artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 # Defines whether cloud passport should be decrypted upon discovery
 cloud_passport_decryption: boolean
 # Optional. Default value - `auto`
-# Defines the auto-discovery mode for Application and Registry Definitions 
+# Defines the auto-discovery mode for Artifact Definition of env template artifact
 # Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
 # `local` - Only repository-located Application and Registry Definitions are used for application:version resolution
 # `cmdb` - Application and Registry Definitions are discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository
 # `auto` - Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
-app_reg_def_mode: enum [`auto`, `cmdb`, `local`]
+app_reg_def_mode: enum (`auto`, `cmdb`, `local`)
 ```
 
 ## `integration.yml`

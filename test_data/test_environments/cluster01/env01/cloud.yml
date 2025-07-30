@@ -2,15 +2,16 @@
 # Contents will be overwritten by next generation.
 # Please modify this contents only for development purposes or as workaround.
 name: "test-solution-structure"
-apiUrl: "tmp.cloud.com" # cloud passport: test-cloud-passport version: 1.5
-apiPort: "0000" # cloud passport: test-cloud-passport version: 1.5
-privateUrl: "test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
-publicUrl: "test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
-dashboardUrl: "https://dashboard.test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
+apiUrl: "tmp.cloud.com" # cloud passport: test-solution-structure version: 1.5
+apiPort: "0000" # cloud passport: test-solution-structure version: 1.5
+privateUrl: "test-host.managed.tmp.cloud" # cloud passport: test-solution-structure version: 1.5
+publicUrl: "test-host.managed.tmp.cloud" # cloud passport: test-solution-structure version: 1.5
+dashboardUrl: "https://dashboard.test-host.managed.tmp.cloud" # cloud passport: test-solution-structure version: 1.5
 labels: []
-defaultCredentialsId: "cloud-deploy-sa-token" # cloud passport: test-cloud-passport version: 1.5
-protocol: "https" # cloud passport: test-cloud-passport version: 1.5
+defaultCredentialsId: "cloud-deploy-sa-token" # cloud passport: test-solution-structure version: 1.5
+protocol: "https" # cloud passport: test-solution-structure version: 1.5
 dbMode: "db"
+productionMode: false # cloud passport: test-solution-structure version: 1.5
 databases: []
 mergeDeployParametersAndE2EParameters: false
 maasConfig:
@@ -33,15 +34,15 @@ consulConfig:
   publicUrl: "https://consul.None"
   internalUrl: "http://consul.consul:8888"
 deployParameters:
-  CLOUD_DASHBOARD_URL: "https://dashboard.test-host.managed.tmp.cloud" # cloud passport: test-cloud-passport version: 1.5
-  CMDB_URL: "https://test-host.managed.tmp.cloud"          # cloud passport: test-cloud-passport version: 1.5
+  CLOUD_DASHBOARD_URL: "https://dashboard.test-host.managed.tmp.cloud" # cloud passport: test-solution-structure version: 1.5
+  CMDB_URL: "https://test-host.managed.tmp.cloud"          # cloud passport: test-solution-structure version: 1.5
   ENV_NAME: "test-solution-structure-case-01"
-  GRAFANA_UI_URL: "https://test-host.managed.tmp.cloud"    # cloud passport: test-cloud-passport version: 1.5
-  GRAYLOG_UI_URL: "https://test-host.managed.tmp.cloud"    # cloud passport: test-cloud-passport version: 1.5
+  GRAFANA_UI_URL: "https://test-host.managed.tmp.cloud"    # cloud passport: test-solution-structure version: 1.5
+  GRAYLOG_UI_URL: "https://test-host.managed.tmp.cloud"    # cloud passport: test-solution-structure version: 1.5
   TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
   TEST_VALUE_SS_cloud_yml: "test-solution-structure-case-01-app"
-  TRACING_UI_URL: "https://test-host.managed.tmp.cloud"    # cloud passport: test-cloud-passport version: 1.5
-  VALUE: "true"                                            # cloud passport: test-cloud-passport version: 1.5
+  TRACING_UI_URL: "https://test-host.managed.tmp.cloud"    # cloud passport: test-solution-structure version: 1.5
+  VALUE: "true"                                            # cloud passport: test-solution-structure version: 1.5
   param-A: "apple" # paramset: paramset-A version: n/a source: template
 e2eParameters:
   INSTANSES_REPO: "https://github.com/Netcracker/qubership-envgene-instance"
@@ -54,4 +55,3 @@ technicalConfigurationParameters:
 deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []
-productionMode: false # cloud passport: test-cloud-passport version: 1.5

@@ -1,144 +1,41 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "title": "Resource Profile Schema",
-  "description": "Defines resource profile parameters",
-  "additionalProperties": true,
-  "properties": {
-    "name": {
-      "type": "string",
-      "title": "Resource Profile Name",
-      "description": "Name of the resource profile",
-      "examples": [
-        "dev_core_override",
-        "prod_core_override"
-      ]
-    },
-    "version": {
-      "type": [
-        "string",
-        "number"
-      ],
-      "title": "Resource Profile Version",
-      "description": "Version of the resource profile",
-      "examples": [
-        "1.0.0",
-        2.1
-      ]
-    },
-    "baseline": {
-      "type": "string",
-      "title": "Resource Profile Baseline",
-      "description": "Baseline from where we override resource profile",
-      "examples": [
-        "dev",
-        "prod",
-        "prod-nonha",
-        "dev-ha"
-      ]
-    },
-    "description": {
-      "type": "string",
-      "description": "Optional description field to provide brief about the resource profile"
-    },
-    "applications": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": true,
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Application Name",
-            "description": "Name of the application",
-            "examples": [
-              "app1",
-              "app2",
-              "app3"
-            ]
-          },
-          "version": {
-            "type": [
-              "string",
-              "number"
-            ],
-            "title": "Application Version",
-            "description": "Version of the application",
-            "examples": [
-              "1.0.0",
-              2.1
-            ]
-          },
-          "sd": {
-            "type": "string",
-            "title": "Solution Descriptor",
-            "examples": [
-              ""
-            ]
-          },
-          "services": {
-            "type": "array",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object",
+    "properties": {
+        "name" : { "type": "string" },
+        "version" : { "type": "number" },
+        "baseline" : { "type": "string" },
+        "description" : { "type": "string" },
+        "applications": {
+            "type" :"array",
             "items": {
-              "type": "object",
-              "additionalProperties": true,
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "title": "Service Name",
-                  "description": "Name of the service",
-                  "examples": [
-                    "service1",
-                    "service2",
-                    "service3"
-                  ]
-                },
-                "parameters": {
-                  "type": "array",
-                  "title": "Service parameters",
-                  "description": "Override parameters for the service",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": true,
-                    "properties": {
-                      "name": {
-                        "type": "string",
-                        "description": "Parameter name",
-                        "examples": [
-                          "timeout",
-                          "retries"
-                        ]
-                      },
-                      "value": {
-                        "type": "string",
-                        "description": "Parameter value",
-                        "examples": [
-                          "30s",
-                          "5"
-                        ]
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "value"
-                    ]
-                  }
+                "type": "object",
+                "properties": {
+                    "name" : { "type": "string" },
+                    "version" : { "type": ["string", "number"] },
+                    "sd" : { "type": ["string", "number"] },
+                    "services" : {
+                        "type" :"array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name" : { "type": "string" },
+                                "parameters" : {
+                                    "type" :"array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "name" : { "type" : "string" },
+                                            "value" : { "type" : "string" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
-              },
-              "required": [
-                "name",
-                "parameters"
-              ]
             }
-          }
-        },
-        "required": [
-          "name",
-          "services"
-        ]
-      }
-    }
-  },
-  "required": [
-    "applications"
-  ]
+        }
+    },
+    "required": [ "name", "applications" ]
 }

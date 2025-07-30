@@ -19,7 +19,6 @@ package org.qubership.cloud.parameters.processor.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.collections4.MapUtils;
-import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.parameters.processor.ParametersProcessor;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
@@ -51,22 +50,6 @@ public class ParametersCalculationService {
 
     public ParameterBundle getCliE2EParameter(String tenantName, String cloudName) {
         return getE2EParameterBundle(tenantName, cloudName);
-    }
-
-    public ParameterBundle getCleanupParameterBundle(String tenantName, String cloudName, String namespaceName,
-                                                     DeployerInputs deployerInputs, String originalNamespace,
-                                                     Map<String, String> k8TokenMap) {
-        Params parameters = parametersProcessor.processNamespaceParameters(tenantName,
-                cloudName,
-                namespaceName,
-                "false",
-                deployerInputs,
-                originalNamespace);
-
-
-        ParameterBundle parameterBundle = ParameterBundle.builder().build();
-        prepareSecureInsecureParams(parameters.getCleanupParams(), parameterBundle, ParameterType.CLEANUP, k8TokenMap, originalNamespace);
-        return parameterBundle;
     }
 
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName,
@@ -186,10 +169,6 @@ public class ParametersCalculationService {
         } else if (parameterType == ParameterType.TECHNICAL) {
             parameterBundle.setSecuredConfigParams(finalSecuredParams);
             parameterBundle.setConfigServerParams(inSecuredParamsAsObject);
-        } else if (parameterType == ParameterType.CLEANUP) {
-            finalSecuredParams.put(K8S_TOKEN, k8TokenMap.get(originalNamespace));
-            parameterBundle.setCleanupSecureParameters(finalSecuredParams);
-            parameterBundle.setCleanupParameters(inSecuredParamsAsObject);
         }
     }
 
@@ -265,14 +244,30 @@ public class ParametersCalculationService {
     }
 
     private void filterSecuredParams(Map<String, Parameter> map, Map<String, Parameter> securedParams, Map<String, Parameter> inSecuredParams, ParameterType parameterType) {
-        ParameterUtils.splitBySecure(map, securedParams, inSecuredParams);
         for (Map.Entry<String, Parameter> entry : map.entrySet()) {
             if (parameterType == ParameterType.DEPLOY && entities.contains(entry.getKey())) {
                 securedParams.put(entry.getKey(), entry.getValue());
             }
-            if (entities.contains(entry.getKey())) {
+            if (!entities.contains(entry.getKey()) && containsSecuredParams(entry.getValue())) {
+                securedParams.put(entry.getKey(), entry.getValue());
+            } else {
                 inSecuredParams.put(entry.getKey(), entry.getValue());
             }
         }
+    }
+
+    private boolean containsSecuredParams(Parameter parameter) {
+        if (parameter.isSecured()) {
+            return true;
+        }
+
+        Object params = parameter.getValue();
+        if (params instanceof Map) {
+            return ((Map<String, Parameter>) params).values().stream().anyMatch(this::containsSecuredParams);
+        } else if (params instanceof List) {
+            return ((List<Parameter>) params).stream().anyMatch(this::containsSecuredParams);
+        }
+
+        return false;
     }
 }

@@ -1,0 +1,17 @@
+{
+	"name": "env-specific-bss",
+	"version": 23.1,
+	"parameters": {
+		"OVERRIDE_PARAMETER": "env-specific-value"
+	},
+	"applications": [
+		{
+			"appName": "NOTIFICATION",
+			"parameters": {
+				"NOTIFICATION_TOPIC": "customer.quote",
+        		"NOTIFICATION_SERVICE_TOPIC" : "product.product",
+        		"ORDER_NOTIFICATION_TOPIC" : "customer.order"
+			}	
+		}
+	]
+}

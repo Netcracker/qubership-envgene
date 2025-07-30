@@ -39,10 +39,10 @@
       "type": "data",
       "mime-type": "application/zip",
       "bom-ref": "BomRef.4568235750934567.4120804118774387",
-      "name": "template-project",
-      "group": "org.qubership.deploy",
+      "name": "prod.template-project",
+      "group": "org.qubership.deploy.product",
       "version": "8518ba0e_20241008-044612",
-      "purl": "pkg:maven/org.qubership.deploy/template-project@8518ba0e_20241008-044612?registry_id=sandbox"
+      "purl": "pkg:maven/org.qubership.deploy.product/prod.template-project@8518ba0e_20241008-044612?registry_id=sandbox"
     }
   ],
   "dependencies": [

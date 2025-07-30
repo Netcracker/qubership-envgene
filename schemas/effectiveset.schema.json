@@ -1,12 +1,4 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "type": "object",
-  "title": "Effective Set Schema",
-  "description": "The schema for defining the effective parameter set which will be used",
-  "properties": {
-    "additionalProperties": {
-      "additionalProperties": true,
-      "description": "Any other section with any number of key-value pairs of any type."
-    }
-  }
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "type": "object"
 }

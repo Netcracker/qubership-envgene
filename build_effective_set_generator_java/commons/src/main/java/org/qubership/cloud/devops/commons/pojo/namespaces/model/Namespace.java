@@ -48,15 +48,15 @@ public final class Namespace implements Serializable {
     @Builder.Default
     private List<ApplicationParams> applications = Collections.emptyList();
     @Builder.Default
-    private Map<String, Object> customParameters = Collections.emptyMap();
+    private Map<String, String> customParameters = Collections.emptyMap();
     @Builder.Default
-    private Map<String, Object> e2eParameters = Collections.emptyMap();
+    private Map<String, String> e2eParameters = Collections.emptyMap();
     private boolean mergeCustomPramsAndE2EParams;
     private boolean cleanInstallApprovalRequired;
     private boolean serverSideMerge;
     @Builder.Default
     private List<String> parameterSets = new ArrayList<>();
-    private Map<String, Object> configServerParameters;
+    private Map<String, String> configServerParameters;
     private List<String> e2eParameterSets;
     private List<String> technicalParameterSets;
     private boolean deprecatedDeployParametersNotAllowed;
@@ -65,7 +65,7 @@ public final class Namespace implements Serializable {
     private Profile profile;
     private String baseline;
 
-    public Map<String, Object> getCustomParameters() {
+    public Map<String, String> getCustomParameters() {
         return customParameters != null ? customParameters : Collections.emptyMap();
     }
 }

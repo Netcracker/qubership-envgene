@@ -29,12 +29,12 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-001: Using `templates_dir`
 
-**Status:** Active
+**Status:** New
 
 **Test Data:**
 
-- test_data/test_templates/env_templates/test-template-1.yaml
-- test_data/test_templates/env_templates/test-template-2.yaml
+- path/to/file1
+- path/fo/file2
 
 **Pre-requisites:**
 
@@ -54,13 +54,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-002: Using `current_env.name`
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-1/Namespaces/app.yml.j2
-- test_data/test_templates/parameters/app/Namespaces/test-parameters-1.yml.j2
-- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -88,12 +84,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-003: Using `current_env.tenant`
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-1/tenant.yml.j2
-- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -111,12 +104,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-004: Using `current_env.cloud`. `inventory.cloudName` set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-1/cloud.yml.j2
-- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -134,12 +124,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-005: Using `current_env.cloud`. `inventory.cloudName` NOT set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
-- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -157,12 +144,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-006: Using `current_env.cloudNameWithCluster`. `inventory.cloudName` set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
-- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -180,12 +164,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-007: Using `current_env.cloudNameWithCluster`. `inventory.cloudPassport` set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
-- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -203,12 +184,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-008: Using `current_env.cloudNameWithCluster`. `inventory.cloudName` and `inventory.cloudPassport` NOT set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
-- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -226,12 +204,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-009: Using `current_env.cmdb_name`. `inventory.deployer` set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-1/cloud.yml.j2
-- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -249,12 +224,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-010: Using `current_env.cmdb_name`. `inventory.deployer` NOT set in Environment Inventory
 
-**Status:** New
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
-- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -272,12 +244,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-011: Using `current_env.cmdb_url`. `inventory.deployer` set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-1/cloud.yml.j2
-- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -296,12 +265,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-012: Using `current_env.cmdb_url`. `inventory.deployer` NOT set in Environment Inventory
 
-**Status:** New
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
-- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -319,12 +285,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-013: Using `current_env.description`. `inventory.description` set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-1/tenant.yml.j2
-- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -342,12 +305,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-014: Using `current_env.description`. `inventory.description` NOT set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-2/tenant.yml.j2
-- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -365,12 +325,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-015: Using `current_env.owners`. `inventory.owners` set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-1/tenant.yml.j2
-- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -388,12 +345,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-016: Using `current_env.owners`. `inventory.owners` NOT set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-2/tenant.yml.j2
-- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -411,12 +365,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-017: Using `current_env.env_template`
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-1/cloud.yml.j2
-- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -434,13 +385,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-018: Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-1/Namespaces/app.yml.j2
-- test_data/test_templates/parameters/app/test-parameters-1.yml.j2
-- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -466,13 +413,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-019: Using `current_env.additionalTemplateVariables`. `envTemplate.additionalTemplateVariables` NOT set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-2/Namespaces/app.yml.j2
-- test_data/test_templates/parameters/app/test-parameters-1.yml.j2
-- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -498,12 +441,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-020: Using `current_env.cloud_passport`. `inventory.cloudPassport` set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-1/cloud.yml.j2
-- test_data/test_environments/cluster01/env03/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -530,12 +470,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-021: Using `current_env.cloud_passport`. `inventory.cloudPassport` NOT set in Environment Inventory
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-2/cloud.yml.j2
-- test_data/test_environments/cluster01/env04/Inventory/env_definition.yml
 
 **Pre-requisites:**
 
@@ -561,13 +498,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-022: Using `current_env.solution_structure`. SD exist in Instance repo
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-1/Namespaces/app.yml.j2
-- test_data/test_templates/parameters/app/test-parameters-1.yml.j2
-- test_data/test_environments/cluster01/env03/Inventory/solution-descriptor/sd.yaml
 
 **Pre-requisites:**
 
@@ -593,13 +526,9 @@ Test Cases for [Template Macros](/docs/template-macros.md)
 
 ## TC-003-023: Using `current_env.solution_structure`. SD NOT in Instance repo
 
-**Status:** Active
+**Status:** Not Implemented
 
 **Test Data:**
-
-- test_data/test_templates/env_templates/test-template-2/Namespaces/app.yml.j2
-- test_data/test_templates/parameters/app/test-parameters-1.yml.j2
-- test_data/test_environments/cluster01/env04/Inventory
 
 **Pre-requisites:**
 
@@ -612,7 +541,7 @@ Test Cases for [Template Macros](/docs/template-macros.md)
   - `deployParameterSets`
   - `e2eParameterSets`
   - `technicalConfigurationParameterSets`
-- Instance repo doesn't contain SD for this environment
+- Instance repo doesnn't contain SD for this environment
 
 **Steps:**
 

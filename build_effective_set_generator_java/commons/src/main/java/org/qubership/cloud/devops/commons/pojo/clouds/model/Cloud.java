@@ -53,9 +53,9 @@ public final class Cloud implements Serializable{
     @Builder.Default
     private String dbMode = "db";
     @Builder.Default
-    private Map<String, Object> cloudParams = new HashMap<>();
+    private Map<String, String> cloudParams = new HashMap<>();
     @Builder.Default
-    private Map<String, Object> e2eParams = new HashMap<>();
+    private Map<String, String> e2eParams = new HashMap<>();
     private boolean mergeCloudAndE2EParameters;
     @Builder.Default
     private Set<DBaaS> dbaasCfg = new HashSet<>();
@@ -72,7 +72,7 @@ public final class Cloud implements Serializable{
     private Profile profile;
     private String baseline;
     @Builder.Default
-    private Map<String, Object> configServerParams = new HashMap<>();
+    private Map<String, String> configServerParams = new HashMap<>();
     @Builder.Default
     private List<String> deploymentParameterSets = new ArrayList<>();
     @Builder.Default

@@ -56,22 +56,22 @@ public class BindingBaseTest {
     protected Binding setupBinding(Map<String, Object> params) {
         try {
             TenantConfigurationService tenantService = mock(TenantConfigurationService.class);
-            Map<String, Object> tenantParams = (Map<String, Object>) params.get("tenantParams");
+            Map<String, String> tenantParams = (Map<String, String>) params.get("tenantParams");
             when(tenantService.getTenantByName("tenant")).thenReturn(Tenant.builder().name("tenant").globalParameters(TenantGlobalParameters.builder().deployParameters(tenantParams).e2eParameters(
-                    new GlobalE2EParameters(null, null, params.containsKey("tenantParamsE2E") ? (Map<String, Object>) params.get("tenantParamsE2E") : new HashMap<>(), false)).build()).build());
+                    new GlobalE2EParameters(null, null, params.containsKey("tenantParamsE2E") ? (Map<String, String>) params.get("tenantParamsE2E") : new HashMap<>(), false)).build()).build());
             CloudConfigurationService cloudService = mock(CloudConfigurationService.class);
             Cloud cloud = Cloud.builder().build();
             cloud.setTenant(new Tenant("tenant"));
             cloud.setName("cloud");
             if (params.get("cloudParams") != null) {
-                cloud.setCloudParams((Map<String, Object>) params.get("cloudParams"));
+                cloud.setCloudParams((Map<String, String>) params.get("cloudParams"));
             } else {
                 cloud.setCloudParams(Collections.emptyMap());
             }
             cloud.setDbaasCfg(Collections.emptySet());
             if (params.get("cloudAppParams") != null) {
                 cloud.setApplicationParams(new LinkedList<>() {{
-                    add(new ApplicationParams("application", (Map<String, Object>) params.get("cloudAppParams")));
+                    add(new ApplicationParams("application", (Map<String, String>) params.get("cloudAppParams")));
                 }});
             } else {
                 cloud.setApplicationParams(Collections.emptyList());
@@ -86,9 +86,9 @@ public class BindingBaseTest {
                             .credId("")
                             .applications(new LinkedList<>() {{
                                 if (params.get("nsAppParams") != null)
-                                    add(new ApplicationParams("application", (Map<String, Object>) params.get("nsAppParams")));
+                                    add(new ApplicationParams("application", (Map<String, String>) params.get("nsAppParams")));
                             }})
-                            .customParameters((Map<String, Object>) params.get("nsParams"))
+                            .customParameters((Map<String, String>) params.get("nsParams"))
                             .e2eParameters(null)
                             .mergeCustomPramsAndE2EParams(false)
                             .cleanInstallApprovalRequired(false)
@@ -104,7 +104,7 @@ public class BindingBaseTest {
             when(appService.getByName("application", "namespace")).thenReturn(
                     Application.builder()
                             .name("application")
-                            .params(params.get("appParams") != null ? (Map<String, Object>) params.get("appParams") : Collections.emptyMap())
+                            .params(params.get("appParams") != null ? (Map<String, String>) params.get("appParams") : Collections.emptyMap())
                             .build()
             );
 

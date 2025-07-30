@@ -41,8 +41,8 @@ public class CloudApplicationMap extends DynamicMap {
                 .findAny()
                 .orElse(null);
 
-        Map<String, Object> appParams = applicationParams != null ? applicationParams.getAppParams() : new HashMap<>();
-        Map<String, Object> configServerParams = applicationParams != null ? applicationParams.getConfigServerParams() : new HashMap<>();
+        Map<String, String> appParams = applicationParams != null ? applicationParams.getAppParams() : new HashMap<>();
+        Map<String, String> configServerParams = applicationParams != null ? applicationParams.getConfigServerParams() : new HashMap<>();
         EscapeMap map = new EscapeMap(appParams, binding,
                 String.format(ParametersConstants.CLOUD_APP_ORIGIN, cloud.getTenant().getName(), cloud.getName(), appName));
         EscapeMap configServerMap = new EscapeMap(configServerParams, binding,

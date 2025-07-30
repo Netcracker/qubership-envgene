@@ -33,7 +33,7 @@ def processFileList(mask, dict, dirPointer):
 def createParamsetsMap(dir):
     result = {}
     dirPointer = pathlib.Path(dir)
-    masks = ["*.json", "*.yml", "*.yaml", "*.j2"]
+    masks = ["*.json", "*.yml", "*.yaml"]
     for mask in masks:
         result = processFileList(mask, result, dirPointer)
     logger.debug(f'List of {dir} paramsets: \n %s', dump_as_yaml_format(result))
@@ -46,17 +46,10 @@ def sortParameters(params) :
             result[k] = params[k]
     return result
 
-def openParamset(path, template_context=None) :
+def openParamset(path) :
     if path.endswith(".json"):
         return openJson(path)
     # using safe load to load without comments
-    if path.endswith(".j2"):
-        # First render the template
-        from jinja2 import Environment, FileSystemLoader
-        env = Environment(loader=FileSystemLoader(os.path.dirname(path)))
-        template = env.get_template(os.path.basename(path))
-        rendered = template.render(**(template_context or {}))
-        return yaml.safe_load(rendered)
     paramsetYaml = openYaml(path, safe_load=True)
     return paramsetYaml
 
@@ -67,26 +60,7 @@ def findParamsetsInDir(dirPath) :
         return fileList + fileListJson
     return fileList
 
-def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
-    # Walk up the directory tree until we find the Inventory/env_definition.yml file
-    current_dir = os.path.dirname(templatePath)
-    while current_dir and os.path.split(current_dir)[1]:
-        env_def_path = os.path.join(current_dir, "Inventory", "env_definition.yml")
-        if os.path.exists(env_def_path):
-            return openYaml(env_def_path)
-        # If we're in the output directory, try to find the corresponding path in the source directory
-        if env_instances_dir and "/tmp/" in current_dir:
-            # Extract the relative path from the tmp directory
-            tmp_index = current_dir.find("/tmp/")
-            if tmp_index >= 0:
-                relative_path = current_dir[tmp_index + 5:]  # Skip "/tmp/"
-                source_path = os.path.join(env_instances_dir, relative_path, "Inventory", "env_definition.yml")
-                if os.path.exists(source_path):
-                    return openYaml(source_path)
-        current_dir = os.path.dirname(current_dir)
-    raise ReferenceError(f"Environment definition not found for template {templatePath}")
-
-def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map, env_specific_params_map, header_text="", env_instances_dir=None):
+def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map, env_specific_params_map, header_text=""):
     params = copy.deepcopy(paramsTemplate[parametersTag])
     for pset in paramsTemplate[paramsetsTag]:
         paramSetDefinition = paramset_map[pset]
@@ -94,22 +68,7 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
             paramSetFile = entry["filePath"]
             logger.info(f"Processing paramset {pset} in file {paramSetFile}")
             isEnvSpecificParamset = entry["envSpecific"]
-            # Get template context from environment definition
-            try:
-                env_definition = findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir)
-                current_env = {
-                    "name": env_definition["inventory"]["environmentName"],
-                    "solution_structure": env_definition.get("solutionStructure", {})
-                }
-                template_context = {
-                    "env_definition": env_definition,
-                    "current_env": current_env
-                }
-                paramSetValues = openParamset(paramSetFile, template_context)
-            except Exception as e:
-                logger.warning(f"Failed to render template for paramset {pset}: {str(e)}")
-                # Fall back to direct YAML loading if template rendering fails
-                paramSetValues = openParamset(paramSetFile)
+            paramSetValues = openParamset(paramSetFile)
             #
             paramSetName = paramSetValues["name"]
             paramSetVersion = paramSetValues["version"] if "version" in paramSetValues else "n/a"
@@ -162,7 +121,7 @@ def initParametersStructure(map, key, is_app=False) :
 
 def storeToEnvSpecificParametersMap(env_specific_params_map, applicationName, parametersTag, paramKey, paramValue, paramsetName) :
     if applicationName:
-        #todo: nail all 3 parameter tags
+        #todo: прибить гвоздями все 3 тэга параметров
         if applicationName not in env_specific_params_map["applications"]:
             initParametersStructure(env_specific_params_map["applications"], applicationName, is_app=True)
         env_specific_params_map["applications"][applicationName][parametersTag][paramKey] = { "value" : paramValue, "paramsetName" : paramsetName }
@@ -211,13 +170,13 @@ def processTemplate(templatePath, templateName, env_instances_dir, schema_path, 
     if process_env_specific:
         updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent, paramset_map)
     #process deployParameters
-    templateContent["deployParameters"] = convertParameterSetsToParameters(templatePath, templateContent, "deployParameterSets", "deployParameters", paramset_map, env_specific_params_map, header_text, env_instances_dir)
+    templateContent["deployParameters"] = convertParameterSetsToParameters(templatePath, templateContent, "deployParameterSets", "deployParameters", paramset_map, env_specific_params_map, header_text)
     templateContent["deployParameterSets"] = []
     #process e2eParameters
-    templateContent["e2eParameters"] = convertParameterSetsToParameters(templatePath, templateContent, "e2eParameterSets", "e2eParameters", paramset_map, env_specific_params_map, header_text, env_instances_dir)
+    templateContent["e2eParameters"] = convertParameterSetsToParameters(templatePath, templateContent, "e2eParameterSets", "e2eParameters", paramset_map, env_specific_params_map, header_text)
     templateContent["e2eParameterSets"] = []
     #process technicalConfigurationParameters
-    templateContent["technicalConfigurationParameters"] = convertParameterSetsToParameters(templatePath, templateContent, "technicalConfigurationParameterSets", "technicalConfigurationParameters", paramset_map, env_specific_params_map, header_text, env_instances_dir)
+    templateContent["technicalConfigurationParameters"] = convertParameterSetsToParameters(templatePath, templateContent, "technicalConfigurationParameterSets", "technicalConfigurationParameters", paramset_map, env_specific_params_map, header_text)
     templateContent["technicalConfigurationParameterSets"] = []
     # preparing map for needed resource profiles
     if "profile" in templateContent and templateContent["profile"] and "name" in templateContent["profile"] and templateContent["profile"]["name"] :

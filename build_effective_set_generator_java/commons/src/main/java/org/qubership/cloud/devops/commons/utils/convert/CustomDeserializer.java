@@ -31,14 +31,14 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-public class CustomDeserializer extends JsonDeserializer<Map<String, Object>> {
+public class CustomDeserializer extends JsonDeserializer<Map<String, String>>  {
 
     @Override
-    public Map<String, Object> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext) {
+    public Map<String, String> deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)  {
         try {
             JsonNode configNode = jsonParser.getCodec().readTree(jsonParser);
             Iterator<Map.Entry<String, JsonNode>> fields = configNode.fields();
-            Map<String, Object> finals = new HashMap<>();
+            Map<String, String> finals = new HashMap<>();
 
             YAMLFactory yamlFactory = new YAMLFactory();
             yamlFactory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
@@ -50,14 +50,6 @@ public class CustomDeserializer extends JsonDeserializer<Map<String, Object>> {
                     String input = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(type);
                     String finalString = "'" + input + "'";
                     finals.put(entry.getKey(), finalString);
-                } else if (type.isDouble()) {
-                    finals.put(entry.getKey(), entry.getValue().doubleValue());
-                } else if (type.isInt()) {
-                    finals.put(entry.getKey(), entry.getValue().intValue());
-                } else if (type.isBoolean()) {
-                    finals.put(entry.getKey(), entry.getValue().booleanValue());
-                } else if (type.isBigDecimal()) {
-                    finals.put(entry.getKey(), entry.getValue().decimalValue());
                 } else {
                     finals.put(entry.getKey(), !type.isNull() ? type.asText() : "");
                 }

@@ -39,11 +39,11 @@ public class ApplicationParams implements Serializable {
 
     private String appName;
     @Builder.Default
-    private Map<String, Object> appParams = Collections.emptyMap();
+    private Map<String, String> appParams = Collections.emptyMap();
     @Builder.Default
-    private Map<String, Object> configServerParams = Collections.emptyMap();
+    private Map<String, String> configServerParams = Collections.emptyMap();
 
-    public ApplicationParams(String appName, Map<String, Object> appParams) {
+    public ApplicationParams(String appName, Map<String, String> appParams) {
         this.appParams = appParams;
         this.appName = appName;
         this.configServerParams = null;

@@ -1,0 +1,19 @@
+---
+name: "{{current_env.name}}-oss"
+credentialsId: ""
+isServerSideMerge: false
+labels:
+- "solutionInstance-{{env}}"
+- "solution-{{tenant}}"
+cleanInstallApprovalRequired: {{ current_env.additionalTemplateVariables.cleanInstallApprovalRequired | default('false') }}
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  ENVGENE_CONFIG_REF_NAME: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_REF_NAME')| default('No Ref Name') }}"
+  ENVGENE_CONFIG_TAG: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_TAG')| default('No Ref tag') }}"
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets:
+- "oss"
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+
