@@ -5,7 +5,7 @@
 To clarify, the topic of this discussion is not the Application Manifest itself, but finding a solution that will:
 
 1. Enable application deployment in Qubership
-2. Consider replacing the Deployment Descriptor (DD) in deployment scenarios
+2. Consider substitution the Deployment Descriptor (DD) in deployment scenarios
 
 Currently, application deployment and deployment parameter calculation require a special object — the Deployment Descriptor — which is not available as open source.
 
@@ -51,7 +51,7 @@ The lack of an open source DD alternative brings the following challenges:
 3. Helm Values Structure Depends on Helm Chart Structure
 
     The structure of Helm values depends on how the application's Helm charts are organized.
-    To generate service parameters (mostly performance parameters), EnvGene must know the structure of the application's Helm charts.
+    To generate service-level parameters (mostly performance parameters), EnvGene must know the structure of the application's Helm charts.
 
     For example, the structure of service-level parameters is different for an app with a single umbrella chart and subcharts versus an app with multiple Helm charts.
 
@@ -67,7 +67,8 @@ Approaches that solve these problems and achieve the goals, including what is us
 
 In this approach:
 
-- Helm values are updated manually during build or deploy
+- Dynamic artifact parameters are set manually as Helm values during build or deploy
+- EnvGene allows the user to set service-level parameters in a structure matching the Helm chart
 - No resource profile baseline; performance parameters are set in Helm chart values
 - All application Helm charts have the same structure: one umbrella chart with child charts
 - Input for Argo: `app:ver` of the Helm chart or SD referencing the `app:ver` Helm chart  
@@ -95,8 +96,8 @@ In this approach:
 - All application Helm charts have the same structure: one umbrella chart with child charts
 - Input for Argo: `app:ver` of the Helm chart or SD referencing the `app:ver` Helm chart  
 - Input for EnvGene: SD referencing the `app:ver` Helm chart  
-- EnvGene does not calculate service parameters, assuming they are already present in Helm chart values
-- EnvGene allows the user to set service parameters in a structure matching the Helm chart
+- EnvGene does not calculate service-level parameters, assuming they are already present in Helm chart values
+- EnvGene allows the user to set service-level parameters in a structure matching the Helm chart
 - To avoid rebuilding the Helm chart when Docker image versions change, Argo Image Updater is used to update images
 
 ![no-application-manifest.drawio.png](/docs/images/no-application-manifest.drawio.png)
@@ -122,8 +123,8 @@ In this approach:
 - All application Helm charts have the same structure: one umbrella chart with child charts
 - Input for Argo: `app:ver` of the Helm chart or SD referencing the `app:ver` Helm chart  
 - Input for EnvGene: SD referencing the `app:ver` Helm chart
-- EnvGene does not calculate service parameters, assuming they are stored in external storage
-- EnvGene allows the user to set service parameters in a structure matching the Helm chart
+- EnvGene does not calculate service-level parameters, assuming they are stored in external storage
+- EnvGene allows the user to set service-level parameters in a structure matching the Helm chart
 
 ![no-application-manifest-storage.drawio.png](/docs/images/no-application-manifest-storage.drawio.png)
 
@@ -145,6 +146,16 @@ Application Manifest (AM) is a structured, versioned JSON that acts as a single 
   - `application/vnd.docker.image` — Docker images
   - `application/vnd.qubership.helm.chart` — Helm charts
 
+![/docs/images/application-manifest-model.drawio.png](/docs/images/application-manifest-model.drawio.png)
+
+[Application Manifest JSON schema](/schemas/application-manifest.schema.json)
+
+QIP Example:
+
+![/docs/images/qip-application-manifest.drawio.png](/docs/images/qip-application-manifest.drawio.png)
+
+[QIP Application Manifest example](/examples/application-manifest-qip.json)
+
 In this approach:
 
 - Use the AM as the single source of truth for application components (including Helm charts, their structure, and dynamic artifact parameters)
@@ -152,8 +163,8 @@ In this approach:
 - No resource profile baseline; performance parameters are set in Helm chart values
 - Input for Argo: `app:ver` of the AM or SD referencing the `app:ver` AM
 - Input for EnvGene: SD referencing the `app:ver` AM
-- EnvGene calculates service parameters based on the AM
-- EnvGene allows the user to set service parameters in a structure matching the Helm chart
+- EnvGene calculates service-level parameters based on the AM
+- EnvGene allows the user to set service-level parameters in a structure matching the Helm chart
 
 ![application-manifest.drawio.png](/docs/images/application-manifest.drawio.png)
 
@@ -176,21 +187,3 @@ Cons:
 | 2. Generate Helm Values at Build Time and Store into Helm Chart  | 1. No new entities introduced<br>2. This approach is used in the industry | 1. No Argo Image Updater for Maven artifacts<br>2. Restrictions on Helm chart structure |
 | 3. Generate Helm Values at Build Time and Store into External Storage | 1. This approach is used in the industry | 1. Restrictions on Helm chart structure |
 | Option 4. Application Manifest Generation | 1. Can be extended to support more configuration management scenarios<br>2. No restrictions on Helm chart structure | 1. Introduces a new entity that must be maintained across different tools and scenarioss<br>2. No 3rd party Helm chart deployment without AM generation<br>3. No direct industry analogs |
-
-### Application Manifest Structure
-
-1. Plugins (CDN, sample repo, smart plug) are described as services. They are not classified as a separate component type
-2. The service list is formed according to the principle: **service for each `service` component**
-3. There are two types of dependencies between components:
-   1. dependsOn - For describing external dependencies (logical links), where a component requires another component to function but does not physically include it.
-   2. includes - For describing the physical composition of a component, when a parent artifact includes child components.
-
-![/docs/images/application-manifest-model.drawio.png](/docs/images/application-manifest-model.drawio.png)
-
-[Application Manifest JSON schema](/schemas/application-manifest.schema.json)
-
-QIP Example:
-
-![/docs/images/qip-application-manifest.drawio.png](/docs/images/qip-application-manifest.drawio.png)
-
-[QIP Application Manifest example](/examples/application-manifest-qip.json)
