@@ -32,56 +32,62 @@ It is necessary to:
 
 ### 1. Manual Update of Helm Values
 
-    Manually update Helm values during the build or deploy process
+Manually update Helm values during the build or deploy process
 
-    Pros:
-      - No extra automation or tooling required
-      - No new entities introduced
-      - This approach is used in the industry
+Pros:
 
-    Cons:
-      - Error-prone and time-consuming
+- No extra automation or tooling required
+- No new entities introduced
+- This approach is used in the industry
+
+Cons:
+
+- Error-prone and time-consuming
 
   ![no-application-manifest-manual.drawio.png7u](/docs/images/no-application-manifest-manual.drawio.png)  
 
 ### 2. Generate Helm Values at Application Build Time
 
-    - During the application build, generate a Helm values file with artifact parameters. This file is then included in the Helm chart build and delivered as part of the chart, to be used during rendering. (Dynamic artifact parameters are set into Helm charts as Helm values during the chart build)
+- During the application build, generate a Helm values file with artifact parameters. This file is then included in the Helm chart build and delivered as part of the chart, to be used during rendering. (Dynamic artifact parameters are set into Helm charts as Helm values during the chart build)
 
-    - Changes to the application's Docker images are applied by Argo Image Updater
+- Changes to the application's Docker images are applied by Argo Image Updater
 
-    - Per-service parameters in a structure aligned with the Helm chart are set by the user via CM
+- Per-service parameters in a structure aligned with the Helm chart are set by the user via CM
 
-    - All application Helm charts have the same structure — one umbrella chart with child charts
+- All application Helm charts have the same structure — one umbrella chart with child charts
 
-    - During solution deployment, the SD is used, which points to the Helm charts
+- During solution deployment, the SD is used, which points to the Helm charts
 
-  ![no-application-manifest.drawio.png](/docs/images/no-application-manifest.drawio.png)
+![no-application-manifest-storage.drawio.png](/docs/images/no-application-manifest-storage.drawio.png)
 
-    Pros:
-      - No new entities introduced
-      - This approach is used in the industry
+Pros:
 
-    Cons:
-      - A procedure for updating dynamic parameters is required
-        - There is no Argo Image Updater for Maven artifacts
-      - Restrictions on the structure of the Helm chart
-      - Delivery process may become more complex and needs additional consideration
+- No new entities introduced
+- This approach is used in the industry
+
+Cons:
+
+- A procedure for updating dynamic parameters is required
+  - There is no Argo Image Updater for Maven artifacts
+- Restrictions on the structure of the Helm chart
+- Delivery process may become more complex and needs additional consideration
 
 ### 3. External Application Metadata Storage
 
-    - Use an external storage (e.g., S3, DB, Git, Vault, etc.) to store information about application components and their metadata.
-    Metadata is saved at build time and used during deployment parameter calculation and deployment.
+- Use an external storage (e.g., S3, DB, Git, Vault, etc.) to store information about application components and their metadata.
+Metadata is saved at build time and used during deployment parameter calculation and deployment.
 
-    - Changes to the application's images are applied by Argo
+- Changes to the application's images are applied by Argo
 
-  ![no-application-manifest-storage.drawio.png](/docs/images/no-application-manifest-storage.drawio.png)
+![no-application-manifest.drawio.png](/docs/images/no-application-manifest.drawio.png)
 
-    Pros:
-      - This approach is used in the industry
+Pros:
 
-    Cons:
-      - Delivery process may become more complex and needs additional consideration
+- This approach is used in the industry
+
+Cons:
+
+- Delivery process may become more complex and needs additional consideration
 
 ### 4. Application Manifest Generation
 
