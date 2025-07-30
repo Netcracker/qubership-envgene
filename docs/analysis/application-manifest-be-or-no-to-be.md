@@ -1,64 +1,105 @@
-# Application Manifest in Deployment cases: To Be or Not To Be?
+# Application Manifest in Deployment Cases: To Be or Not To Be?
 
 ## Problem Statement
 
-Application deployment and calculation of deployment parameters require a specific object — the Deployment Descriptor, which is not available in open source. в данный момент
+To clarify, the topic of this discussion is not the Application Manifest itself, but finding a solution that will:
 
-It is necessary to:
+1. Enable application deployment in Qubership
+2. Consider replacing the Deployment Descriptor (DD) in deployment scenarios
 
-1. Provide deployment of an individual application in Qubership
-2. Consider the possibility of substituting the Deployment Descriptor in deployment cases
+Currently, application deployment and deployment parameter calculation require a special object — the Deployment Descriptor — which is not available as open source.
 
-ворнинг Delivery scenarios are not considered сейчас
-  деливери сценарий - возможность доставить приложения на нужный энв
+The DD is used as both a deployment and delivery unit. In this discussion, we focus only on the deployment aspect; delivery scenarios are out of scope.
 
-## Challenges  
+The lack of an open source DD alternative brings the following challenges:
+
+## Challenges
 
 1. Passing Build-Time Artifact Parameters to Helm Charts
 
-    When deploying applications with Helm, it is necessary to provide artifact's dynamic parameters (such as Docker image names, versions, Maven artifact coordinates, etc.) to Helm values.
+    When deploying applications, we need to pass dynamic artifact parameters (like Docker image names, versions, Maven coordinates, etc.) to Helm values.
 
-    These parameters are determined only at build time, while the build and deployment processes may be separated in time, which requires a mechanism for transferring and maintaining consistency between artifacts and the Helm charts.
+    These parameters are known at build time, but build and deployment can happen at different times. We need a way to transfer and keep these parameters in sync between artifacts and Helm charts.
 
-2. Helm Values Structure Depends on Helm Chart Structure
+    Example of such parameters currently used for deployment:
 
-    The structure of Helm values is determined by the structure of the application's Helm charts (how charts are composed and related). To generate service parameters (including performance parameters), configuration management needs to know the structure of the application's Helm charts.
+    ```yaml
+    # docker image params 
+    docker_digest: 4c7d5713761d9b119635d2e12276d0802f837b97ec5ce32aacd87d79a89faf20
+    docker_registry: registry.qubership.org:10004
+    docker_repository_name: cloud
+    docker_tag: build21
+    full_image_name: registry.qubership.org:10004/cloud/application-assembly-release-2024.3:build21
+    # maven artifact params
+    artifact:
+      artifactId: application-configuration
+      groupId: org.qubership.cloud
+      version: release-2024.3-20240830.135742-build3
+    maven_repository: https://registry.qubership.org/mvn.group
+    ```
 
-3. Multiple Helm Charts in a Single Application Deployment
+2. Resource Profile Baseline Processing
 
-    An application is an atomic deployment unit. If an application consists of several Helm charts, the deployer needs an object that either contains these charts or references them.
+    Currently:
+    - Resource profile baseline files are stored in the zip part of the application
+    - EnvGene processes these parameters when calculating Helm values
+
+    For this, EnvGene has to download the entire application, which leads to:
+    - Increased time to calculate Helm values
+    - The need to maintain a contract for resource profile baseline in Qubership applications
+
+3. Helm Values Structure Depends on Helm Chart Structure
+
+    The structure of Helm values depends on how the application's Helm charts are organized.
+    To generate service parameters (mostly performance parameters), EnvGene must know the structure of the application's Helm charts.
+
+    For example, the structure of service-level parameters is different for an app with a single umbrella chart and subcharts versus an app with multiple Helm charts.
+
+4. Multiple Helm Charts in a Single Application Deployment
+
+    An application is an atomic deployment unit. If it includes several Helm charts, the deployer needs an object that either contains or references all these charts.
 
 ## Proposed Approaches
 
-### 1. Manual Update of Helm Values
+Approaches that solve these problems and achieve the goals, including what is used in the industry:
 
-Manually update Helm values during the build or deploy process
+### Option 1. Manual Update of Helm Values
+
+In this approach:
+
+- Helm values are updated manually during build or deploy
+- No resource profile baseline; performance parameters are set in Helm chart values
+- All application Helm charts have the same structure: one umbrella chart with child charts
+- Input for Argo: `app:ver` of the Helm chart or SD referencing the `app:ver` Helm chart  
+- Input for EnvGene: SD referencing the `app:ver` Helm chart  
 
 Pros:
 
-- No extra automation or tooling required
-- No new entities introduced
+- No extra automation or tooling needed
+- No entities introduced
 - This approach is used in the industry
 
 Cons:
 
 - Error-prone and time-consuming
+- Restrictions on Helm chart structure
 
   ![no-application-manifest-manual.drawio.png7u](/docs/images/no-application-manifest-manual.drawio.png)  
 
-### 2. Generate Helm Values at Application Build Time
+### Option 2. Generate Helm Values at Build Time and Store into Helm Chart
 
-- During the application build, generate a Helm values file with artifact parameters. This file is then included in the Helm chart build and delivered as part of the chart, to be used during rendering. (Dynamic artifact parameters are set into Helm charts as Helm values during the chart build)
+In this approach:
 
-- Changes to the application's Docker images are applied by Argo Image Updater
+- Dynamic artifact parameters are set in Helm charts as Helm values during chart build by builder
+- No resource profile baseline; performance parameters are set in Helm chart values
+- All application Helm charts have the same structure: one umbrella chart with child charts
+- Input for Argo: `app:ver` of the Helm chart or SD referencing the `app:ver` Helm chart  
+- Input for EnvGene: SD referencing the `app:ver` Helm chart  
+- EnvGene does not calculate service parameters, assuming they are already present in Helm chart values
+- EnvGene allows the user to set service parameters in a structure matching the Helm chart
+- To avoid rebuilding the Helm chart when Docker image versions change, Argo Image Updater is used to update images
 
-- Per-service parameters in a structure aligned with the Helm chart are set by the user via CM
-
-- All application Helm charts have the same structure — one umbrella chart with child charts
-
-- During solution deployment, the SD is used, which points to the Helm charts
-
-![no-application-manifest-storage.drawio.png](/docs/images/no-application-manifest-storage.drawio.png)
+![no-application-manifest.drawio.png](/docs/images/no-application-manifest.drawio.png)
 
 Pros:
 
@@ -67,19 +108,24 @@ Pros:
 
 Cons:
 
-- A procedure for updating dynamic parameters is required
-  - There is no Argo Image Updater for Maven artifacts
-- Restrictions on the structure of the Helm chart
-- Delivery process may become more complex and needs additional consideration
+- No Argo Image Updater for Maven artifacts
+- Restrictions on Helm chart structure
 
-### 3. External Application Metadata Storage
+### Option 3. Generate Helm Values at Build Time and Store into External Storage
 
-- Use an external storage (e.g., S3, DB, Git, Vault, etc.) to store information about application components and their metadata.
-Metadata is saved at build time and used during deployment parameter calculation and deployment.
+In this approach:
 
-- Changes to the application's images are applied by Argo
+- Use external storage (e.g., S3, Git, Vault, etc.) to store dynamic artifact parameters
+- Dynamic artifact parameters are stored at build time by builder as Helm values
+- Dynamic artifact parameters are used during deployment
+- No resource profile baseline; performance parameters are set in Helm chart values
+- All application Helm charts have the same structure: one umbrella chart with child charts
+- Input for Argo: `app:ver` of the Helm chart or SD referencing the `app:ver` Helm chart  
+- Input for EnvGene: SD referencing the `app:ver` Helm chart
+- EnvGene does not calculate service parameters, assuming they are stored in external storage
+- EnvGene allows the user to set service parameters in a structure matching the Helm chart
 
-![no-application-manifest.drawio.png](/docs/images/no-application-manifest.drawio.png)
+![no-application-manifest-storage.drawio.png](/docs/images/no-application-manifest-storage.drawio.png)
 
 Pros:
 
@@ -87,41 +133,60 @@ Pros:
 
 Cons:
 
-- Delivery process may become more complex and needs additional consideration
+- Restrictions on Helm chart structure
 
-### 4. Application Manifest Generation
+### Option 4. Application Manifest Generation
 
-    Use the Application Manifest as a single source of truth for application components (including Helm charts, their structure, and dynamic artifact parameters).
-    The Application Manifest is created at build time, published to a repository, and used to generate Helm values. Configuration management generates Helm values as part of the effective set.
+Application Manifest (AM) is a structured, versioned JSON that acts as a single source of truth for describing application components and their metadata. It is an open source alternative to the DD.
 
-  ![application-manifest.drawio.png](/docs/images/application-manifest.drawio.png)
+- Based on CycloneDX 1.6 specification
+- Includes components of different types, such as:
+  - `application/vnd.qubership.service` — abstract services
+  - `application/vnd.docker.image` — Docker images
+  - `application/vnd.qubership.helm.chart` — Helm charts
 
-    Pros:
-      - Solves all three problems
-      - Extendable to support new Configuration Management scenarios (e.g., passing Helm value schemas or baseline performance parameters)
+In this approach:
 
-    Cons:
-      - Introduces a new entity that must be maintained across different tools (Argo, Pipelines, EnvGene, delivery tools, etc.) and scenarios
-      - No direct analogs found in the industry
-      - no 3rd party Helm Chart deployment without Application Manifest
+- Use the AM as the single source of truth for application components (including Helm charts, their structure, and dynamic artifact parameters)
+- The AM is created at build time and published to a repository
+- No resource profile baseline; performance parameters are set in Helm chart values
+- Input for Argo: `app:ver` of the AM or SD referencing the `app:ver` AM
+- Input for EnvGene: SD referencing the `app:ver` AM
+- EnvGene calculates service parameters based on the AM
+- EnvGene allows the user to set service parameters in a structure matching the Helm chart
 
-#### Application Manifest Structure
+![application-manifest.drawio.png](/docs/images/application-manifest.drawio.png)
 
-Application Manifest — это структурированный, версионированный документ, который служит единым источником истины для описания компонентов приложения и их метаданных.
+Pros:
 
-      - Основан на спецификации CycloneDX
-      - Включает компоненты различных типов, таких как:
-        - application/vnd.qubership.service — абстрактные сервисы
-        - application/vnd.docker.image — Docker образы
-        - application/vnd.qubership.helm.chart — Helm чарты
+- Can be extended to support more configuration management scenarios (for example passing Helm value schemas)
+- No restrictions on Helm chart structure
 
+Cons:
 
-    1. Plugins (CDN, sample repo, smart plug) are described as services. They are not classified as a separate component type
-    2. No resource profile baseline exists. Performance parameters are defined in the Helm chart values
-    3. The service list is formed according to the principle - **service for each `service` component**
-    4. There are two types of dependencies between components:
-      1. dependsOn - For describing external dependencies (logical links), where a component requires another component to function but does not physically include it.
-      2. includes - For describing the physical composition of a component, when a parent artifact includes child components.
+- Introduces a new entity that must be maintained across different tools (Argo, Pipelines, EnvGene, delivery tools, etc.) and scenarios
+- No 3rd party Helm chart deployment without AM generation
+- No direct industry analogs
+
+### Approaches comparison
+
+| Approach                              | Pros                                                                                                 | Cons                                                                                                   |
+|----------------------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| 1. Manual update of Helm values |  1. No extra automation or tooling needed<br>2. No additional entity introduction<br>3. This approach is used in the industry | 1. Error-prone and time-consuming<br>2. Restrictions on Helm chart structure |
+
+| 2. Generate Helm Values at Build Time and Store into Helm Chart  | 1. No new entities introduced<br>2. This approach is used in the industry | 1. No Argo Image Updater for Maven artifacts<br>2. Restrictions on Helm chart structure |
+
+| 3. Generate Helm Values at Build Time and Store into External Storage | 1. This approach is used in the industry | 1. Restrictions on Helm chart structure |
+
+| Option 4. Application Manifest Generation | 1. Can be extended to support more configuration management scenarios<br>2. No restrictions on Helm chart structure | 1. Introduces a new entity that must be maintained across different tools and scenarioss<br>2. No 3rd party Helm chart deployment without AM generation<br>3. No direct industry analogs |
+
+### Application Manifest Structure
+
+1. Plugins (CDN, sample repo, smart plug) are described as services. They are not classified as a separate component type
+2. The service list is formed according to the principle: **service for each `service` component**
+3. There are two types of dependencies between components:
+   1. dependsOn - For describing external dependencies (logical links), where a component requires another component to function but does not physically include it.
+   2. includes - For describing the physical composition of a component, when a parent artifact includes child components.
 
 ![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model.drawio.png)
 
@@ -132,12 +197,3 @@ QIP Example:
 ![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest.drawio.png)
 
 [QIP Application Manifest example](/examples/application-manifest-qip.json)
-
-### Pros and Cons Table
-
-| Approach                              | Pros                                                                                                 | Cons                                                                                                   |
-|----------------------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| Helm values generation at build stage  | 1. No need to handle artifact parameters in CM<br>2. No additional entity introduction               | 1. If artifact is rebuilt, Helm chart needs to be updated<br>2. CM does not provide the ability to manage service-level parameters |
-| Manual update of Helm values           | 1. Does not require additional automation or tooling<br>2. No additional entity introduction         | 1. Error-prone and time-consuming<br>2. CM does not provide the ability to manage service-level parameters |
-| External Application Metadata Storage  | 1. Solves all 3 problems<br>2. Approach is used in the industry                                         | 1. Requires introducing a new system (metadata storage)<br>2. Delivery process may become more complex and needs additional consideration |
-| Application Manifest generation        | 1. Solves all 3 problems<br>2. Easily extendable to support new scenarios (e.g., passing Helm value schemas or baseline performance parameters) | 1. Introduces Application Manifest entity that must be maintained across different tools (Argo, Pipelines, EnvGene, ADG, etc.) and scenarios<br>2. No direct industry analogs |
