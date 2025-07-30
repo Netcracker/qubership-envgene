@@ -70,7 +70,7 @@
 
     - Changes to the application's images are applied by Argo
 
-    ![no-application-manifest-storage.drawio.png](/docs/images/no-application-manifest.drawio.png)
+    ![no-application-manifest-storage.drawio.png](/docs/images/no-application-manifest-storage.drawio.png)
 
     Pros:
       - Solves all three problems
@@ -96,21 +96,6 @@
       - No direct analogs found in the industry
       - no 3rd party Helm Chart deployment without Application Manifest
 
-<!-- 4. Kustomize / Helmfile
-
-    Not applicable to the problem being solved, as these tools are intended for configuration modification mechanisms and aggregation from different sources, not for transferring configuration.
-
-1. ArgoCD Image Updater
-
-    Using tools such as ArgoCD Image Updater to automatically update Docker image versions in the Helm values file based on new image tags detected in the container registry.
-
-    Cons:
-      - Limited to Docker images; does not support other artifact types such as Maven artifacts
-      - Does not address the dependency of deployment parameters on the Helm chart structure
-
-2. Renovate Bot / Dependabot
-
-  Is an implementation of the "Generation of Helm values at the application build stage" approach -->
 
 ### Pros and Cons Table
 
