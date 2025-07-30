@@ -1,15 +1,17 @@
-# Application Manifest: To Be or Not To Be?
-
-## Goals
-
-1. Provide deployment of an individual application in Qubership
-2. Deployment Descriptor substitution in deployment cases
-
-## Limitation
-
-1. Delivery scenarios are not considered
+# Application Manifest in Deployment cases: To Be or Not To Be?
 
 ## Problem Statement
+
+Application deployment and calculation of deployment parameters require a specific object — the Deployment Descriptor, which is not available in open source.
+
+It is necessary to:
+
+1. Provide deployment of an individual application in Qubership
+2. Consider the possibility of substituting the Deployment Descriptor in deployment cases
+
+Delivery scenarios are not considered
+
+## Challenges  
 
 1. Passing Build-Time Artifact Parameters to Helm Charts
 
@@ -27,9 +29,9 @@
 
 ## Proposed Approaches
 
-1. Manual Update of Helm Values
+### 1. Manual Update of Helm Values
 
-    Manually update Helm values during the build or deploy process.
+    Manually update Helm values during the build or deploy process
 
     Pros:
       - No extra automation or tooling required
@@ -39,7 +41,9 @@
     Cons:
       - Error-prone and time-consuming
 
-2. Generate Helm Values at Application Build Time
+    ![no-application-manifest-manual.drawio.png7u](/docs/images/no-application-manifest-manual.drawio.png)
+
+### 2. Generate Helm Values at Application Build Time
 
     - During the application build, generate a Helm values file with artifact parameters. This file is then included in the Helm chart build and delivered as part of the chart, to be used during rendering. (Dynamic artifact parameters are set into Helm charts as Helm values during the chart build)
 
@@ -55,15 +59,15 @@
 
     Pros:
       - No new entities introduced
+      - This approach is used in the industry
 
     Cons:
       - A procedure for updating dynamic parameters is required
         - There is no Argo Image Updater for Maven artifacts
       - Restrictions on the structure of the Helm chart
       - Delivery process may become more complex and needs additional consideration
-      - This approach is used in the industry
 
-3. External Application Metadata Storage
+### 3. External Application Metadata Storage
 
     - Use an external storage (e.g., S3, DB, Git, Vault, etc.) to store information about application components and their metadata.
     Metadata is saved at build time and used during deployment parameter calculation and deployment.
@@ -73,14 +77,12 @@
     ![no-application-manifest-storage.drawio.png](/docs/images/no-application-manifest-storage.drawio.png)
 
     Pros:
-      - Solves all three problems
       - This approach is used in the industry
 
     Cons:
-      - Requires introducing a new system
       - Delivery process may become more complex and needs additional consideration
 
-4. Application Manifest Generation
+### 4. Application Manifest Generation
 
     Use the Application Manifest as a single source of truth for application components (including Helm charts, their structure, and dynamic artifact parameters).
     The Application Manifest is created at build time, published to a repository, and used to generate Helm values. Configuration management generates Helm values as part of the effective set.
@@ -89,13 +91,40 @@
 
     Pros:
       - Solves all three problems
-      - Extendable to support new scenarios (e.g., passing Helm value schemas or baseline performance parameters)
+      - Extendable to support new Configuration Management scenarios (e.g., passing Helm value schemas or baseline performance parameters)
 
     Cons:
       - Introduces a new entity that must be maintained across different tools (Argo, Pipelines, EnvGene, delivery tools, etc.) and scenarios
       - No direct analogs found in the industry
       - no 3rd party Helm Chart deployment without Application Manifest
 
+#### Application Manifest Structure
+
+Application Manifest — это структурированный, версионированный документ, который служит единым источником истины для описания компонентов приложения и их метаданных.
+
+      - Основан на спецификации CycloneDX
+      - Включает компоненты различных типов, таких как:
+        - application/vnd.qubership.service — абстрактные сервисы
+        - application/vnd.docker.image — Docker образы
+        - application/vnd.qubership.helm.chart — Helm чарты
+
+
+    1. Plugins (CDN, sample repo, smart plug) are described as services. They are not classified as a separate component type
+    2. No resource profile baseline exists. Performance parameters are defined in the Helm chart values
+    3. The service list is formed according to the principle - **service for each `service` component**
+    4. There are two types of dependencies between components:
+      1. dependsOn - For describing external dependencies (logical links), where a component requires another component to function but does not physically include it.
+      2. includes - For describing the physical composition of a component, when a parent artifact includes child components.
+
+![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model.drawio.png)
+
+[Application Manifest JSON schema](/schemas/application-manifest.schema.json)
+
+QIP Example:
+
+![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest.drawio.png)
+
+[QIP Application Manifest example](/examples/application-manifest-qip.json)
 
 ### Pros and Cons Table
 

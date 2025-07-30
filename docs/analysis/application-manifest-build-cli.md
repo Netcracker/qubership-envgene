@@ -42,7 +42,7 @@ flowchart TD
     end
     F[Application Manifest]
     G[Registry Config Output]
-    H[Maven/Artifact Registry]
+    H[Registry]
     A --> E
     B --> E
     D2 --> E
