@@ -4,7 +4,7 @@ version: 0
 baseline:
   name: "env-1-core"
   type: "namespace"
-satellites:
+test:
   - name: "env-1-bss"
     type: "namespace"
   - name: "env-1-oss"
