@@ -100,8 +100,8 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
     data = json.loads(sd_data)
 
     logger.info(f"printing data inside extract_sd_from_json {data}")
-    if not isinstance(data, list) or not data:
-        logger.error("SD_DATA must be a non-empty list of SD dictionaries.")
+    if not isinstance(data, (list,dict)) or not data:
+        logger.error("SD_DATA must be a non-empty list of SD dictionaries or a single SD.")
         exit(1)
     sd_merge_mode = str(sd_merge_mode).strip().lower() if sd_merge_mode else None
 
@@ -115,21 +115,24 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         effective_merge_mode = "basic-merge"
 
     # Perform basic-merge for multiple SDs before applying SD_REPO_MERGE_MODE
-    merged_applications = {"applications": data[0].get("applications", [])}
-    if not merged_applications["applications"]:
-        logger.error("No applications found in the first SD block.")
-        exit(1)
-    for i in range(1, len(data)):
-        logger.info(f"Initiates basic-merge:")
-        current_item_sd = {"applications": data[i].get("applications", [])}
-        merged_applications = helper.merge(merged_applications, current_item_sd)
-    merged_result = {
-        "version": data[0].get("version"),
-        "type": data[0].get("type"),
-        "deployMode": data[0].get("deployMode"),
-        "applications": merged_applications["applications"]
-        }
-    logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
+    if isinstance(data, list):
+        merged_applications = {"applications": data[0].get("applications", [])}
+        if not merged_applications["applications"]:
+            logger.error("No applications found in the first SD block.")
+            exit(1)
+        for i in range(1, len(data)):
+            logger.info(f"Initiates basic-merge:")
+            current_item_sd = {"applications": data[i].get("applications", [])}
+            merged_applications = helper.merge(merged_applications, current_item_sd)
+        merged_result = {
+            "version": data[0].get("version"),
+            "type": data[0].get("type"),
+            "deployMode": data[0].get("deployMode"),
+            "applications": merged_applications["applications"]
+            }
+        logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
+    else:
+        merged_result = data
 
     #merged_result["version"] = str(merged_result["version"])
     helper.writeYamlToFile(sd_path, merged_result)
