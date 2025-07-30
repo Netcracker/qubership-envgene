@@ -173,11 +173,8 @@ Cons:
 | Approach                              | Pros                                                                                                 | Cons                                                                                                   |
 |----------------------------------------|------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
 | 1. Manual update of Helm values |  1. No extra automation or tooling needed<br>2. No additional entity introduction<br>3. This approach is used in the industry | 1. Error-prone and time-consuming<br>2. Restrictions on Helm chart structure |
-
 | 2. Generate Helm Values at Build Time and Store into Helm Chart  | 1. No new entities introduced<br>2. This approach is used in the industry | 1. No Argo Image Updater for Maven artifacts<br>2. Restrictions on Helm chart structure |
-
 | 3. Generate Helm Values at Build Time and Store into External Storage | 1. This approach is used in the industry | 1. Restrictions on Helm chart structure |
-
 | Option 4. Application Manifest Generation | 1. Can be extended to support more configuration management scenarios<br>2. No restrictions on Helm chart structure | 1. Introduces a new entity that must be maintained across different tools and scenarioss<br>2. No 3rd party Helm chart deployment without AM generation<br>3. No direct industry analogs |
 
 ### Application Manifest Structure
