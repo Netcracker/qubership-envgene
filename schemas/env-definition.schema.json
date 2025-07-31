@@ -112,7 +112,6 @@
         }
       },
       "required": [
-        "environmentName"
       ]
     },
     "envTemplate": {
