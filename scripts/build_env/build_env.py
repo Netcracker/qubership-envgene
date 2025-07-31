@@ -1,6 +1,10 @@
-import copy
-import pathlib
 import os
+import sys
+import copy
+import json
+import yaml
+import re
+import pathlib
 from envgenehelper import *
 from resource_profiles import processResourceProfiles
 from schema_validation import checkEnvSpecificParametersBySchema
@@ -70,10 +74,42 @@ def findParamsetsInDir(dirPath) :
 def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
     # Walk up the directory tree until we find the Inventory/env_definition.yml file
     current_dir = os.path.dirname(templatePath)
+    derived_env_name = None
+    derived_cluster_name = None
+    
     while current_dir and os.path.split(current_dir)[1]:
         env_def_path = os.path.join(current_dir, "Inventory", "env_definition.yml")
+        
+        # Check if this path follows the expected structure /environments/<clusterName>/<environmentName>/
+        path_parts = os.path.normpath(current_dir).replace("\\", "/").split("/")
+        if len(path_parts) >= 3 and "environments" in path_parts:
+            env_index = path_parts.index("environments")
+            if env_index + 2 < len(path_parts):
+                # Extract cluster and environment names from path
+                derived_cluster_name = path_parts[env_index + 1]
+                derived_env_name = path_parts[env_index + 2]
+                
+                # Validate derived names
+                if not derived_cluster_name or not derived_env_name:
+                    logger.warning("Invalid folder structure for environment derivation: empty cluster or environment name in path " + current_dir)
+                elif not re.match(r'^[a-zA-Z0-9_-]+$', derived_env_name):
+                    logger.warning("Invalid environment name '" + derived_env_name + "' derived from path " + current_dir + ". Only alphanumeric characters, hyphens, and underscores are allowed.")
+                    derived_env_name = None
+        
         if os.path.exists(env_def_path):
-            return openYaml(env_def_path)
+            env_definition = openYaml(env_def_path)
+            
+            # If environmentName is not defined, use the derived name
+            if "inventory" in env_definition and not env_definition["inventory"].get("environmentName") and derived_env_name:
+                logger.info("Deriving environment name '" + derived_env_name + "' from folder structure")
+                env_definition["inventory"]["environmentName"] = derived_env_name
+                
+                # Store the derived cluster name for reference if needed
+                if derived_cluster_name:
+                    env_definition["_derived_cluster_name"] = derived_cluster_name
+                    
+            return env_definition
+            
         # If we're in the output directory, try to find the corresponding path in the source directory
         if env_instances_dir and "/tmp/" in current_dir:
             # Extract the relative path from the tmp directory
@@ -82,9 +118,33 @@ def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
                 relative_path = current_dir[tmp_index + 5:]  # Skip "/tmp/"
                 source_path = os.path.join(env_instances_dir, relative_path, "Inventory", "env_definition.yml")
                 if os.path.exists(source_path):
-                    return openYaml(source_path)
+                    env_definition = openYaml(source_path)
+                    
+                    # If environmentName is not defined, use the derived name
+                    if "inventory" in env_definition and not env_definition["inventory"].get("environmentName") and derived_env_name:
+                        logger.info("Deriving environment name '" + derived_env_name + "' from folder structure")
+                        env_definition["inventory"]["environmentName"] = derived_env_name
+                        
+                        # Store the derived cluster name for reference if needed
+                        if derived_cluster_name:
+                            env_definition["_derived_cluster_name"] = derived_cluster_name
+                            
+                    return env_definition
+                    
         current_dir = os.path.dirname(current_dir)
-    raise ReferenceError(f"Environment definition not found for template {templatePath}")
+        
+    if derived_env_name:
+        # If we have a derived name but no env_definition.yml, create a minimal one
+        logger.warning("Creating minimal environment definition with derived name '" + derived_env_name + "'")
+        return {
+            "inventory": {
+                "environmentName": derived_env_name
+            },
+            "_derived_cluster_name": derived_cluster_name if derived_cluster_name else ""
+        }
+        
+    raise ReferenceError("Environment definition not found for template " + templatePath)
+
 
 def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map, env_specific_params_map, header_text="", env_instances_dir=None):
     params = copy.deepcopy(paramsTemplate[parametersTag])
@@ -102,9 +162,32 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
             # Get template context from environment definition
             try:
                 env_definition = findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir)
+                # Get environment name from inventory, with fallback to derived name from path
+                env_name = env_definition["inventory"].get("environmentName")
+                
+                # Get cloud name and cluster information for macro support
+                cloud_name = env_definition["inventory"].get("cloudName", "")
+                cluster_name = env_definition.get("_derived_cluster_name", "")
+                
+                # Create cloudNameWithCluster for macro support
+                cloud_name_with_cluster = f"{cloud_name}-{cluster_name}" if cloud_name and cluster_name else cloud_name
+                
+                # Create environment context with comprehensive macro support
                 current_env = {
-                    "name": env_definition["inventory"]["environmentName"],
-                    "solution_structure": env_definition.get("solutionStructure", {})
+                    "name": env_name,
+                    "environmentName": env_name,  # Alternative access
+                    "cloud": cloud_name,
+                    "cloudNameWithCluster": cloud_name_with_cluster,
+                    "solution_structure": env_definition.get("solutionStructure", {}),
+                    "additionalTemplateVariables": env_definition.get("envTemplate", {}).get("additionalTemplateVariables", {}),
+                    "cluster": {
+                        "name": cluster_name,
+                        # Add cluster-specific properties that might be used in templates
+                        "cloud_api_url": env_definition.get("envTemplate", {}).get("additionalTemplateVariables", {}).get("cloud_api_url", ""),
+                        "cloud_api_port": env_definition.get("envTemplate", {}).get("additionalTemplateVariables", {}).get("cloud_api_port", ""),
+                        "cloud_public_url": env_definition.get("envTemplate", {}).get("additionalTemplateVariables", {}).get("cloud_public_url", ""),
+                        "cloud_api_protocol": env_definition.get("envTemplate", {}).get("additionalTemplateVariables", {}).get("cloud_api_protocol", "https")
+                    }
                 }
                 template_context = {
                     "env_definition": env_definition,
