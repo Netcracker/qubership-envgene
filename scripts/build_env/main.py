@@ -96,8 +96,18 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     # get deployer parameters
     cmdb_url, _, _ = get_deployer_config(f"{cluster_name}/{env_name}", work_dir, all_instances_dir, None, None, False)
     # perform rendering with Jinja2
+    # Load environment definition to get environmentName (including auto-derived names)
+    env_def_path = os.path.join(render_env_dir, "Inventory", "env_definition.yml")
+    env_definition = openYaml(env_def_path) if os.path.exists(env_def_path) else {}
+    
+    # Create env object with environmentName for Ansible template compatibility
+    env_obj = {
+        "name": env_name,
+        "environmentName": env_definition.get("inventory", {}).get("environmentName", env_name)
+    }
+    
     ansible_vars = {}
-    ansible_vars["env"] = env_name
+    ansible_vars["env"] = env_obj
     ansible_vars["cluster_name"] = cluster_name
     ansible_vars["templates_dir"] = templates_dir
     ansible_vars["env_instances_dir"] = getAbsPath(render_env_dir)
