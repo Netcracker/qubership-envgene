@@ -75,6 +75,7 @@ jobs:
       ENV_INVENTORY_INIT: ${{ env.ENV_INVENTORY_INIT }}
       ENV_TEMPLATE_NAME: ${{ env.ENV_INVENTORY_INIT }}
       SD_DATA: ${{ env.SD_DATA }}
+      SD_REPO_MERGE_MODE: ${{ env.SD_REPO_MERGE_MODE }}
       SD_VERSION: ${{ env.SD_VERSION }}
       SD_SOURCE_TYPE: ${{ env.SD_SOURCE_TYPE }}
       SD_DELTA: ${{ env.SD_DELTA }}
@@ -110,6 +111,7 @@ jobs:
           echo "ENV_INVENTORY_INIT = $ENV_INVENTORY_INIT"
           echo "ENV_TEMPLATE_NAME = $ENV_TEMPLATE_NAME"
           echo "SD_DATA = $SD_DATA"
+          echo "SD_REPO_MERGE_MODE = $SD_REPO_MERGE_MODE" 
           echo "SD_VERSION = $SD_VERSION"
           echo "SD_SOURCE_TYPE = $SD_SOURCE_TYPE"
           echo "SD_DELTA = $SD_DELTA"
@@ -173,6 +175,7 @@ jobs:
       SD_SOURCE_TYPE: ${{ needs.show_environment_variables.outputs.SD_SOURCE_TYPE }}
       SD_VERSION: ${{ needs.show_environment_variables.outputs.SD_VERSION }}
       SD_DATA: ${{ needs.show_environment_variables.outputs.SD_DATA }}
+      SD_REPO_MERGE_MODE: ${{ needs.show_environment_variables.outputs.SD_REPO_MERGE_MODE }}
       SD_DELTA: ${{ needs.show_environment_variables.outputs.SD_DELTA }}
       ENV_INVENTORY_INIT: ${{ needs.show_environment_variables.outputs.ENV_INVENTORY_INIT }}
       ENV_SPECIFIC_PARAMETERS: ${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}
@@ -198,6 +201,7 @@ jobs:
             --arg sd_source_type "${SD_SOURCE_TYPE:-""}" \
             --arg sd_version "${SD_VERSION:-""}" \
             --arg sd_data "${SD_DATA:-"{}"}" \
+            --arg sd_repo_merge_mode "${SD_REPO_MERGE_MODE:-""}"
             --arg sd_delta "${SD_DELTA:-""}" \
             --arg env_inventory_init "${ENV_INVENTORY_INIT:-""}" \
             --arg env_specific_params "${ENV_SPECIFIC_PARAMETERS:-""}" \
@@ -207,6 +211,7 @@ jobs:
               "SD_SOURCE_TYPE": $sd_source_type,
               "SD_VERSION": $sd_version,
               "SD_DATA": $sd_data,
+              "SD_REPO_MERGE_MODE": $sd_repo_merge_mode,
               "SD_DELTA": $sd_delta,
               "ENV_INVENTORY_INIT": $env_inventory_init,
               "ENV_SPECIFIC_PARAMETERS": $env_specific_params,

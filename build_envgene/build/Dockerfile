@@ -51,6 +51,7 @@ RUN apk update \
     && pip install /python/jschon-sort \
     && pip install /python/envgene \
     && pip install /python/integration \
+    && pip install /python/artifact-searcher \
     && chmod 754 /module/scripts/* \
     && apk del build-base libxml2-dev libxslt-dev zlib-dev \
     && rm -rf /var/cache/apk/* /tmp/* /var/tmp/* \

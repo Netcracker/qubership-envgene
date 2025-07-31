@@ -3,8 +3,6 @@ import re
 from os import getenv, path
 from typing import Callable
 
-from envgenehelper.business_helper import getenv_with_error
-
 from .config_helper import get_envgene_config_yaml
 from .yaml_helper import openYaml, get_empty_yaml
 from .file_helper import check_file_exists, get_files_with_filter

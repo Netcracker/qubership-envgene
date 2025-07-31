@@ -2,7 +2,7 @@ from os import getenv, listdir
 import os
 from dataclasses import asdict
 
-from plugin_engine import PluginEngine
+from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, getEnvDefinition, get_env_instances_dir
 from gcip import Pipeline
 import pipeline_helper
@@ -57,7 +57,7 @@ def build_pipeline(params: dict):
             cluster_name = ""
             environment_name = env
             env_definition = {}
-        else: 
+        else:
             cluster_name = get_cluster_name_from_full_name(env)
             environment_name = get_environment_name_from_full_name(env)
             if params['ENV_INVENTORY_GENERATION_PARAMS']['ENV_INVENTORY_INIT']:

@@ -71,6 +71,7 @@ def main():
         "ENV_TEMPLATE_NAME": validate_string,
         "SD_DATA": validate_json,
         "SD_VERSION": validate_string,
+        "SD_REPO_MERGE_MODE": validate_string,
         "SD_SOURCE_TYPE": validate_string,
         "SD_DELTA": validate_boolean,
         "ENV_SPECIFIC_PARAMETERS": validate_json,
@@ -108,6 +109,7 @@ def main():
             "SD_VERSION": validated_data["SD_VERSION"],
             "SD_DATA": validated_data["SD_DATA"],
             "SD_DELTA": validated_data["SD_DELTA"],
+            "SD_REPO_MERGE_MODE": validated_data["SD_REPO_MERGE_MODE"],
             "ENV_SPECIFIC_PARAMETERS": json.loads(validated_data.get("ENV_SPECIFIC_PARAMETERS", "{}")),
             "ENV_TEMPLATE_NAME": data.get("ENV_TEMPLATE_NAME", "")
         }
