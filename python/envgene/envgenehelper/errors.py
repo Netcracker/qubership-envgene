@@ -1,6 +1,5 @@
 """
 EnvGene Error Classes
-
 This module defines custom error classes for EnvGene pipelines to ensure consistent
 error handling and reporting across the codebase.
 """
@@ -22,7 +21,7 @@ class EnvGeneError(Exception):
         super().__init__(message)
 
 
-class ValueError(EnvGeneError):
+class EnvGeneValueError(EnvGeneError):
     """
     Raised when a function receives an argument with the right type but inappropriate value.
     
@@ -34,7 +33,7 @@ class ValueError(EnvGeneError):
     pass
 
 
-class TypeError(EnvGeneError):
+class EnvGeneTypeError(EnvGeneError):
     """
     Raised when a function receives an argument of the wrong type.
     
@@ -45,7 +44,7 @@ class TypeError(EnvGeneError):
     pass
 
 
-class ReferenceError(EnvGeneError):
+class EnvGeneReferenceError(EnvGeneError):
     """
     Raised when a required resource is missing or cannot be accessed.
     
@@ -57,7 +56,7 @@ class ReferenceError(EnvGeneError):
     pass
 
 
-class EnvironmentError(EnvGeneError):
+class EnvGeneEnvironmentError(EnvGeneError):
     """
     Raised when an environment-related issue prevents normal operation.
     
@@ -69,7 +68,7 @@ class EnvironmentError(EnvGeneError):
     pass
 
 
-class RuntimeError(EnvGeneError):
+class EnvGeneRuntimeError(EnvGeneError):
     """
     Raised when an error occurs during execution that doesn't fall into other categories.
     
@@ -81,7 +80,7 @@ class RuntimeError(EnvGeneError):
     pass
 
 
-class ValidationError(EnvGeneError):
+class EnvGeneValidationError(EnvGeneError):
     """
     Raised when input validation fails.
     
@@ -93,7 +92,7 @@ class ValidationError(EnvGeneError):
     pass
 
 
-class IntegrationError(EnvGeneError):
+class EnvGeneIntegrationError(EnvGeneError):
     """
     Raised when an error occurs during integration with external systems.
     
@@ -102,4 +101,20 @@ class IntegrationError(EnvGeneError):
         - External service unavailable
         - Authentication failure with external service
     """
+    pass
+
+
+# Optional: You can also inherit from specific built-in exceptions while maintaining your namespace
+class EnvGeneFileNotFoundError(EnvGeneError, FileNotFoundError):
+    """Raised when a required file is not found."""
+    pass
+
+
+class EnvGenePermissionError(EnvGeneError, PermissionError):
+    """Raised when there are insufficient permissions."""
+    pass
+
+
+class EnvGeneConnectionError(EnvGeneError):
+    """Raised when connection to external service fails."""
     pass
