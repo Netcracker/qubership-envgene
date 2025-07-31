@@ -100,14 +100,16 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     env_def_path = os.path.join(render_env_dir, "Inventory", "env_definition.yml")
     env_definition = openYaml(env_def_path) if os.path.exists(env_def_path) else {}
     
-    # Create env object with environmentName for Ansible template compatibility
-    env_obj = {
+    # Create current_env object with environmentName for Jinja2 template compatibility
+    # This is used by templates that expect current_env.environmentName (like composite_structure.yml.j2)
+    current_env = {
         "name": env_name,
         "environmentName": env_definition.get("inventory", {}).get("environmentName", env_name)
     }
     
     ansible_vars = {}
-    ansible_vars["env"] = env_obj
+    ansible_vars["env"] = env_name  # Keep as string for file paths
+    ansible_vars["current_env"] = current_env  # Object for Jinja2 templates that need current_env.environmentName
     ansible_vars["cluster_name"] = cluster_name
     ansible_vars["templates_dir"] = templates_dir
     ansible_vars["env_instances_dir"] = getAbsPath(render_env_dir)
