@@ -20,19 +20,19 @@ runs:
             build-essential \
             curl \
             && rm -rf /var/lib/apt/lists/*
-
+        
         if [ -f dependencies/pip.conf ]; then
             mkdir -p /etc/pip
             cp dependencies/pip.conf /etc/pip.conf
         fi
-
+        
         if [ -f dependencies/sources.list ]; then
             cp dependencies/sources.list /etc/apt/sources.list
         fi
 
         pip install --upgrade pip setuptools wheel
         pip install --no-cache-dir -r dependencies/tests_requirements.txt
-
+        
         if [ -f python/build_modules.sh ]; then
             chmod +x python/build_modules.sh
             ./python/build_modules.sh
@@ -50,8 +50,8 @@ runs:
         cd python/envgene/envgenehelper
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit.xml
         cd ../../..
-        mv junit.xml junit_envgenehelper.xml
-
+        mv junit.xml junit_envgenehelper.xml  
+    
     - name: BUILD ENV test
       shell: bash
       run: |
@@ -63,7 +63,7 @@ runs:
     - name: Merge test results
       shell: bash
       run: |
-        junitparser merge junit_build_env.xml junit_envgenehelper.xml junit.xml
+        junitparser merge junit_build_env.xml junit_envgenehelper.xml junit.xml    
 
     - name: Upload test results
       if: always()
@@ -77,4 +77,4 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: test_artifact
-        path: tmp/
+        path: tmp/ 
