@@ -152,26 +152,28 @@ def check_for_encrypted_files(files):
 
 def decrypt_all_cred_files_for_env(**kwargs):
     files = get_all_necessary_cred_files()
-
     if not IS_CRYPT:
         check_for_encrypted_files(files)
     else:
-        # for f in files:
-        #     decrypt_file(f, **kwargs)
-        with ThreadPoolExecutor(max_workers=4 if not CPU_COUNT else CPU_COUNT) as pool:
-            pool.map(decrypt_file, files)
+        if CREATE_SHADES:
+            with ThreadPoolExecutor(max_workers=4 if not CPU_COUNT else CPU_COUNT+4) as pool:
+                pool.map(decrypt_file, files)
+        else:
+            for f in files:
+                decrypt_file(f, **kwargs)
         logger.debug("Decrypted next cred files:")
         logger.debug(files)
 
 
 def encrypt_all_cred_files_for_env(**kwargs):
     files = get_all_necessary_cred_files()
-    print(files)
 
     logger.debug("Attempting to encrypt(if crypt is true) next files:")
     logger.debug(files)
-    with ThreadPoolExecutor(max_workers=4 if not CPU_COUNT else CPU_COUNT * 2) as pool:
-        pool.map(encrypt_file, files)
-    # for f in files:
-    #     encrypt_file(f, **kwargs)
+    if CREATE_SHADES:
+        with ThreadPoolExecutor(max_workers=4 if not CPU_COUNT else CPU_COUNT+4) as pool:
+            pool.map(encrypt_file, files)
+    else:
+        for f in files:
+            encrypt_file(f, **kwargs)
     logger.info('repo successfully encrypted')

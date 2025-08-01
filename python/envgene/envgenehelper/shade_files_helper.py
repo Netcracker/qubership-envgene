@@ -1,26 +1,13 @@
-
-import subprocess
-from .yaml_helper import readYaml, writeYamlToFile
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import yaml
 from .logger import logger
 import os
 from pathlib import Path
 from typing import Callable
-import yaml
 from envgenehelper.file_helper import delete_dir
-from envgenehelper.crypt_backends.sops_handler import crypt_SOPS
 CPU_COUNT = os.cpu_count()
 
 
-try:
-    profile
-except NameError:
-    def profile(func):
-        return func
 # Creates shade files directory if not exists
-
-
-@profile
 def _init_shadow_creds_dir(creds_path: str, encryption_mode: bool):
     _creds_path = Path(creds_path)
     creds_file_name = _creds_path.stem
@@ -39,11 +26,11 @@ Contents will be overwritten by next generation.
 Please modify this contents only for development purposes or as workaround.\n"""
 
 
-@profile
 def _create_shadow_file(content: dict, shadow_creds_path,  cred_id: str):
     shadow_file_name = 'shade-' + cred_id + '-cred.yml'
     shadow_cred_path = Path(shadow_creds_path, shadow_file_name)
     with open(shadow_cred_path, 'w+') as f:
+
         yaml.dump(content, f)
     del content
     return shadow_cred_path
@@ -59,15 +46,20 @@ def split_creds_file(creds_path: str, encryption_func: Callable, **kwargs):
         for cred_id, cred_data in creds.items():
             keys_set = set(cred_data['data'].values())
             if len(keys_set) == 1 and keys_set.issubset({'envgeneNullValue', 'valueIsSet'}):
-                return
+                continue
             _create_shadow_file(
                 {cred_id: cred_data}, shadow_creds_path, cred_id)
-
-            cred_data['data'] = {
-                _cred_id: 'valueIsSet' for _cred_id in cred_data['data']}
+        creds = {
+            key: {
+                **value,
+                'data': {_id: 'valueIsSet' for _id in value['data']}
+            }
+            for key, value in creds.items()
+        }
+        with open(creds_path, 'w') as f:
+            yaml.dump(creds, f)
         encryption_func(shadow_creds_path, **kwargs)
 
-        writeYamlToFile(creds_path, creds)
         del creds
         logger.debug(f'File {creds_path} was splitted and encrypted')
         return 0
@@ -77,15 +69,19 @@ def merge_creds_file(creds_path, encryption_func: Callable, **kwargs):
     """merge_creds_file is a function to create creds file from shadow files"""
     shadow_creds_path = _init_shadow_creds_dir(creds_path, False)
     if not shadow_creds_path.exists():
-        logger.warning(
+        logger.debug(
             f'Failed to find shadow creds dir {shadow_creds_path}. Skip')
         return
     creds = {}
     encryption_func(shadow_creds_path, ** kwargs)
     for file in shadow_creds_path.iterdir():
         with open(file) as f:
-            creds.update(readYaml(f))
-    delete_dir(shadow_creds_path)
-    writeYamlToFile(creds_path, creds)
+            creds.update(yaml.safe_load(f))
+    try:
+        delete_dir(shadow_creds_path)
+        with open(creds_path, 'w+') as f:
+            yaml.dump(creds, f)
+    except Exception as e:
+        logger.error(e)
     logger.debug(f'File {creds_path} merged and decrypted')
     return creds

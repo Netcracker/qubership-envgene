@@ -1,4 +1,3 @@
-
 import os
 from pathlib import Path
 import subprocess
@@ -108,10 +107,14 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
                 return openYaml(file_path)
         # encryption of shade files dir
         if Path(file_path).is_dir():
-            cpu_ = os.cpu_count() or 2
-            command = f'find {file_path} -type f | xargs -P{2*cpu_} -I {{}}  sops {sops_args} {{}}'
-            result = _run_SOPS(command)
-            return
+            try:
+                cpu_ = os.cpu_count() or 2
+                command = f'find "{file_path}" -type f -print0 | xargs -0 -P{cpu_*2} -n1 sops {sops_args}'
+                result = _run_SOPS(command)
+                return
+            except ValueError as e:
+                logger.warning(f'{str(e)}. Path: {file_path}')
+                return
     logger.debug(f'The file has been {mode}ed. Path: {file_path}')
     if not in_place:
         return readYaml(result)

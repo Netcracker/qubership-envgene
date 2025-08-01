@@ -1,3 +1,34 @@
 #!/bin/sh
-export PATH="./venv/Scripts:$PATH"
-./venv/Scripts/python.exe ./.git/hooks/pre-commit.py "$@"
+
+echo "Detecting Python interpreter for pre-commit hook..."
+
+PYTHON=""
+
+UNAME=$(uname)
+
+if [ -n "$VIRTUAL_ENV" ]; then
+    if [ -x "$VIRTUAL_ENV/bin/python" ]; then
+        PYTHON="$VIRTUAL_ENV/bin/python"
+    elif [ -x "$VIRTUAL_ENV/Scripts/python.exe" ]; then
+        PYTHON="$VIRTUAL_ENV/Scripts/python.exe"
+    else
+        echo "ERROR: No python executable found in VIRTUAL_ENV"
+        exit 1
+    fi
+elif [ -x "./venv/bin/python" ]; then
+    PYTHON="./venv/bin/python"
+elif [ -x "./venv/Scripts/python.exe" ]; then
+    PYTHON="./venv/Scripts/python.exe"
+else
+    if command -v python3 >/dev/null 2>&1; then
+        PYTHON="python3"
+    elif command -v python >/dev/null 2>&1; then
+        PYTHON="python"
+    else
+        echo "ERROR: Python interpreter not found."
+        exit 1
+    fi
+fi
+
+echo "Using python interpreter at: $PYTHON"
+"$PYTHON" ./.git/hooks/pre-commit.py "$@"
