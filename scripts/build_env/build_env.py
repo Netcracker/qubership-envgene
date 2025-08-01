@@ -1,12 +1,10 @@
-
-from cloud_passport import process_cloud_passport
-from schema_validation import checkEnvSpecificParametersBySchema
-from resource_profiles import processResourceProfiles
-
 import copy
 import pathlib
 import os
-import sys
+from envgenehelper import *
+from resource_profiles import processResourceProfiles
+from schema_validation import checkEnvSpecificParametersBySchema
+from cloud_passport import process_cloud_passport
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
@@ -107,9 +105,10 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
     for pset in paramsTemplate[paramsetsTag]:
         # Check if paramset exists in paramset_map before accessing it
         if pset not in paramset_map:
-            logger.warning(f"Paramset '{pset}' referenced in {paramsetsTag} for template '{templatePath}' was not found. It may have been skipped due to missing variables.")
+            logger.warning(
+                f"Paramset '{pset}' referenced in {paramsetsTag} for template '{templatePath}' was not found. It may have been skipped due to missing variables.")
             continue
-            
+
         paramSetDefinition = paramset_map[pset]
         for entry in paramSetDefinition:
             paramSetFile = entry["filePath"]
@@ -198,7 +197,7 @@ def initParametersStructure(map, key, is_app=False):
 
 def storeToEnvSpecificParametersMap(env_specific_params_map, applicationName, parametersTag, paramKey, paramValue, paramsetName):
     if applicationName:
-        #todo: nail all 3 parameter tags
+        # todo: nail all 3 parameter tags
         if applicationName not in env_specific_params_map["applications"]:
             initParametersStructure(
                 env_specific_params_map["applications"], applicationName, is_app=True)
@@ -234,7 +233,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(f"Paramset '{pset}' referenced in envSpecificParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    logger.warning(
+                        f"Paramset '{pset}' referenced in envSpecificParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
     if "envSpecificE2EParamsets" in envDefinitionYaml["envTemplate"]:
         if templateName in envDefinitionYaml["envTemplate"]["envSpecificE2EParamsets"]:
             envSpecificParamsets = envDefinitionYaml["envTemplate"]["envSpecificE2EParamsets"][templateName]
@@ -248,7 +248,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(f"Paramset '{pset}' referenced in envSpecificE2EParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    logger.warning(
+                        f"Paramset '{pset}' referenced in envSpecificE2EParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
     if "envSpecificTechnicalParamsets" in envDefinitionYaml["envTemplate"]:
         if templateName in envDefinitionYaml["envTemplate"]["envSpecificTechnicalParamsets"]:
             envSpecificParamsets = envDefinitionYaml["envTemplate"]["envSpecificTechnicalParamsets"][templateName]
@@ -262,7 +263,8 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                     for value in paramset_map[pset]:
                         value["envSpecific"] = True
                 else:
-                    logger.warning(f"Paramset '{pset}' referenced in envSpecificTechnicalParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
+                    logger.warning(
+                        f"Paramset '{pset}' referenced in envSpecificTechnicalParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
     return result
 
 
