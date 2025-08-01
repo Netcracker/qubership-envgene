@@ -96,9 +96,16 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     # get deployer parameters
     cmdb_url, _, _ = get_deployer_config(f"{cluster_name}/{env_name}", work_dir, all_instances_dir, None, None, False)
     # perform rendering with Jinja2
-    # Load environment definition to get environmentName (including auto-derived names)
+    # Load environment definition and ensure auto-derived environmentName is available
     env_def_path = os.path.join(render_env_dir, "Inventory", "env_definition.yml")
     env_definition = openYaml(env_def_path) if os.path.exists(env_def_path) else {}
+    
+    # Ensure environmentName is set (auto-derive if missing)
+    if "inventory" in env_definition and not env_definition["inventory"].get("environmentName"):
+        env_definition["inventory"]["environmentName"] = env_name
+        # Write the updated definition back to file so Ansible can access it
+        with open(env_def_path, 'w') as f:
+            yaml.dump(env_definition, f, default_flow_style=False)
     
     # Create current_env object with environmentName for Jinja2 template compatibility
     # This is used by templates that expect current_env.environmentName (like composite_structure.yml.j2)
