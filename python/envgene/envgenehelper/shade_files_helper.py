@@ -20,10 +20,10 @@ def _init_shadow_creds_dir(creds_path: str, encryption_mode: bool):
 
 def _generate_file_header(source_credential_ID, cred_path):
     return f"""\
-The contents of this Shade Credential File is generated from Credential: {source_credential_ID}
-located at {cred_path}
-Contents will be overwritten by next generation.
-Please modify this contents only for development purposes or as workaround.\n"""
+# The contents of this Shade Credential File is generated from Credential: {source_credential_ID}
+# located at {cred_path}
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.\n"""
 
 
 def _create_shadow_file(content: dict, shadow_creds_path,  cred_id: str):
@@ -36,12 +36,19 @@ def _create_shadow_file(content: dict, shadow_creds_path,  cred_id: str):
     return shadow_cred_path
 # Create shade file for each <<credential>> object in credentials files
 
+def _add_comment(files):
+    for file, comment in files.items():
+        with open(file, 'r+') as f:
+            content = f.read()
+            f.seek(0)
+            f.write(comment + content)
 
 def split_creds_file(creds_path: str, encryption_func: Callable, **kwargs):
     """split_cred_file is a function to create shade files from creds file"""
     with open(creds_path) as cred_file:
         creds = yaml.safe_load(cred_file)
     if creds:
+        files = {}
         shadow_creds_path = _init_shadow_creds_dir(creds_path, True)
         for cred_id, cred_data in creds.items():
             keys_set = set(cred_data['data'].values())
@@ -49,6 +56,9 @@ def split_creds_file(creds_path: str, encryption_func: Callable, **kwargs):
                 continue
             _create_shadow_file(
                 {cred_id: cred_data}, shadow_creds_path, cred_id)
+            path = _create_shadow_file(
+                {cred_id: cred_data}, shadow_creds_path, cred_id)
+            files[path] = _generate_file_header(cred_id, creds_path)
         creds = {
             key: {
                 **value,
@@ -56,10 +66,11 @@ def split_creds_file(creds_path: str, encryption_func: Callable, **kwargs):
             }
             for key, value in creds.items()
         }
+        
         with open(creds_path, 'w') as f:
             yaml.dump(creds, f)
         encryption_func(shadow_creds_path, **kwargs)
-
+        _add_comment(files)
         del creds
         logger.debug(f'File {creds_path} was splitted and encrypted')
         return 0
