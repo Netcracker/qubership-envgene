@@ -13,7 +13,7 @@ from ..logger import logger
 from .constants import SOPS_MODES, ENCRYPTED_REGEX_STR
 
 
-def _run_SOPS(arg_str, return_codes_to_ignore=None):
+def _run_SOPS(arg_str, return_codes_to_ignore=None, shade=False):
     return_codes_to_ignore = return_codes_to_ignore if return_codes_to_ignore else []
     sops_command = f'{arg_str}'
     result = subprocess.run(sops_command, shell=True,
@@ -21,7 +21,10 @@ def _run_SOPS(arg_str, return_codes_to_ignore=None):
     if "metadata not found" in result.stderr:
         raise ValueError('File was already decrypted')
     if "The file you have provided contains a top-level entry called 'sops'" in result.stderr:
-        raise ValueError('File was already encrypted')
+        if not shade:
+            raise ValueError('File was already encrypted')
+        else: 
+            return
     if result.returncode != 0 and result.returncode not in return_codes_to_ignore:
         logger.error(f"command: {sops_command}")
         logger.error(f"Error: {result.stderr} {result.stdout}")
@@ -110,7 +113,7 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
             try:
                 cpu_ = os.cpu_count() or 2
                 command = f'find "{file_path}" -type f -print0 | xargs -0 -P{cpu_*2} -n1 sops {sops_args}'
-                result = _run_SOPS(command)
+                result = _run_SOPS(command, shade=True)
                 return
             except ValueError as e:
                 logger.warning(f'{str(e)}. Path: {file_path}')

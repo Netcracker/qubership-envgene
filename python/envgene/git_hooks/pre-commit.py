@@ -35,6 +35,7 @@ def decrypt_repo(file_path):
     environ[SECRET_KEY_ID] = get_file_content(
         Path('./.git/SECRET_KEY.txt'))
     import envgenehelper
+
     envgenehelper.crypt.decrypt_all_cred_files_for_env()
 
 

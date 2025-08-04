@@ -55,6 +55,7 @@ def _handle_missing_file(file_path, default_yaml, allow_default):
 
 
 def encrypt_file(file_path, **kwargs):
+    
     if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
         if 'effective-set' in file_path:
             return _encrypt_file(file_path, **kwargs)
@@ -151,6 +152,7 @@ def check_for_encrypted_files(files):
 
 
 def decrypt_all_cred_files_for_env(**kwargs):
+    logger.info('Decryption in progress...Please, wait...')
     files = get_all_necessary_cred_files()
     if not IS_CRYPT:
         check_for_encrypted_files(files)
@@ -163,9 +165,11 @@ def decrypt_all_cred_files_for_env(**kwargs):
                 decrypt_file(f, **kwargs)
         logger.debug("Decrypted next cred files:")
         logger.debug(files)
+    logger.info('repo successfully decrypted')
 
 
 def encrypt_all_cred_files_for_env(**kwargs):
+    logger.info('Encryption in progress...Please, wait...')
     files = get_all_necessary_cred_files()
 
     logger.debug("Attempting to encrypt(if crypt is true) next files:")
