@@ -1,9 +1,12 @@
 import yaml
+
+from .yaml_helper import openYaml
+from .file_helper import delete_dir
 from .logger import logger
 import os
 from pathlib import Path
 from typing import Callable
-from envgenehelper.file_helper import delete_dir
+
 CPU_COUNT = os.cpu_count()
 
 
@@ -82,7 +85,7 @@ def merge_creds_file(creds_path, encryption_func: Callable, **kwargs):
     if not shadow_creds_path.exists():
         logger.debug(
             f'Failed to find shadow creds dir {shadow_creds_path}. Skip')
-        return
+        return openYaml(creds_path)
     creds = {}
     encryption_func(shadow_creds_path, ** kwargs)
     for file in shadow_creds_path.iterdir():
