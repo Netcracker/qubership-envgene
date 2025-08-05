@@ -76,6 +76,7 @@ def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
     current_dir = os.path.dirname(templatePath)
     derived_env_name = None
     derived_cluster_name = None
+    valid_structure_found = False
     
     while current_dir and os.path.split(current_dir)[1]:
         env_def_path = os.path.join(current_dir, "Inventory", "env_definition.yml")
@@ -84,6 +85,7 @@ def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
         path_parts = os.path.normpath(current_dir).replace("\\", "/").split("/")
         if len(path_parts) >= 3 and "environments" in path_parts:
             env_index = path_parts.index("environments")
+            # Strict validation: Must have exactly cluster and environment after "environments"
             if env_index + 2 < len(path_parts):
                 # Extract cluster and environment names from path
                 derived_cluster_name = path_parts[env_index + 1]
@@ -91,10 +93,19 @@ def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
                 
                 # Validate derived names
                 if not derived_cluster_name or not derived_env_name:
-                    logger.warning("Invalid folder structure for environment derivation: empty cluster or environment name in path " + current_dir)
+                    logger.error(f"Invalid folder structure: empty cluster or environment name in path {current_dir}")
+                    raise ReferenceError(f"Invalid folder structure for environment derivation. Expected: environments/<cluster>/<environment>/, found: {current_dir}. Please check the folder structure.")
                 elif not re.match(r'^[a-zA-Z0-9_-]+$', derived_env_name):
-                    logger.warning("Invalid environment name '" + derived_env_name + "' derived from path " + current_dir + ". Only alphanumeric characters, hyphens, and underscores are allowed.")
-                    derived_env_name = None
+                    # Keep invalid name as warning only, don't fail
+                    logger.warning(f"Invalid environment name '{derived_env_name}' derived from path {current_dir}. Only alphanumeric characters, hyphens, and underscores are allowed.")
+                    # Continue with the invalid name, downstream validation will handle it
+                    valid_structure_found = True
+                else:
+                    valid_structure_found = True
+            else:
+                # Missing cluster or environment level in hierarchy
+                logger.error(f"Invalid folder structure: missing required hierarchy levels in path {current_dir}")
+                raise ReferenceError(f"Invalid folder structure. Expected: environments/<cluster>/<environment>/, found incomplete hierarchy in: {current_dir}. Please check the folder structure.")
         
         if os.path.exists(env_def_path):
             env_definition = openYaml(env_def_path)
@@ -133,9 +144,14 @@ def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
                     
         current_dir = os.path.dirname(current_dir)
         
-    if derived_env_name:
-        # If we have a derived name but no env_definition.yml, create a minimal one
-        logger.warning("Creating minimal environment definition with derived name '" + derived_env_name + "'")
+    # Strict validation: If we reach here, no valid folder structure was found
+    if not valid_structure_found:
+        logger.error(f"Invalid folder structure: Could not determine environment name from path for template {templatePath}")
+        raise ReferenceError(f"Invalid folder structure. Expected: environments/<cluster>/<environment>/Inventory/env_definition.yml, but could not find valid hierarchy in path for template {templatePath}. Please check the folder structure.")
+    
+    # If we have valid structure but no env_definition.yml file found
+    if derived_env_name and valid_structure_found:
+        logger.warning(f"Valid folder structure found but env_definition.yml missing. Creating minimal environment definition with derived name '{derived_env_name}'")
         return {
             "inventory": {
                 "environmentName": derived_env_name
@@ -143,7 +159,7 @@ def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
             "_derived_cluster_name": derived_cluster_name if derived_cluster_name else ""
         }
         
-    raise ReferenceError("Environment definition not found for template " + templatePath)
+    raise ReferenceError(f"Environment definition not found for template {templatePath}")
 
 
 def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map, env_specific_params_map, header_text="", env_instances_dir=None):
