@@ -1,32 +1,72 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "$ref": "#/definitions/config",
-    "definitions": {
-        "config": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-                "crypt": {
-                    "type": "boolean"
-                },
-                "crypt_backend": {
-                    "type": "string",
-                    "oneOf": [
-                        {"pattern": "<some-pattern>"},
-                        {"enum": ["Fernet", "SOPS"]}],
-                    "default": "Fernet"
-                },
-                "artifact_definitions_discovery_mode": {
-                    "anyOf": [
-                      {"type": "string"},
-                      {"type": "boolean"}
-                    ]
-                },
-                "cloud_passport_decryption": {
-                    "type": "boolean"
-                }
-            },
-            "title": "config"
-        }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Generic Configuration",
+  "description": "Configuration for the for cryptographic operations, artifact discovery, and cloud passport decryption",
+  "additionalProperties": true,
+  "properties": {
+    "crypt": {
+      "type": "boolean",
+      "title": "Enable Cryptographic Operations",
+      "description": "Specifies whether cryptographic operations should be enabled",
+      "default": true,
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "crypt_backend": {
+      "title": "Cryptographic Backend",
+      "description": "The backend system used for cryptographic operations",
+      "enum": [
+        "Fernet",
+        "SOPS"
+      ],
+      "default": "Fernet",
+      "examples": [
+        "Fernet",
+        "SOPS"
+      ]
+    },
+    "artifact_definitions_discovery_mode": {
+      "title": "Artifact Definitions Discovery Mode",
+      "description": "Configures the mode of discovering Artifact Definitions",
+      "enum": [
+        "true",
+        "false",
+        "auto"
+      ],
+      "default": "auto",
+      "examples": [
+        "true",
+        "false",
+        "auto"
+      ]
+    },
+    "cloud_passport_decryption": {
+      "type": "boolean",
+      "title": "Enable Cloud Passport Decryption",
+      "description": "Determines whether cloud passport decryption is enabled in the configuration",
+      "default": false,
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "app_reg_def_mode": {
+      "title": "Application and Registry Definitions Discovery Mode",
+      "description": "Configures the mode of discovering Application and Registry Definitions",
+      "enum": [
+        "auto",
+        "cmdb",
+        "local"
+      ],
+      "default": "auto",
+      "examples": [
+        "auto",
+        "cmdb",
+        "local"
+      ]
     }
+  }
 }
