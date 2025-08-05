@@ -1,0 +1,224 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "credentialsId": {
+      "type": "string"
+    },
+    "mavenConfig": {
+      "$ref": "#/definitions/MavenConfig"
+    },
+    "dockerConfig": {
+      "$ref": "#/definitions/DockerConfig"
+    },
+    "goConfig": {
+      "$ref": "#/definitions/GoConfig"
+    },
+    "rawConfig": {
+      "$ref": "#/definitions/RawConfig"
+    },
+    "npmConfig": {
+      "$ref": "#/definitions/NpmConfig"
+    },
+    "helmConfig": {
+      "$ref": "#/definitions/HelmConfig"
+    },
+    "helmAppConfig": {
+      "$ref": "#/definitions/HelmAppConfig"
+    }
+  },
+  "required": [
+    "name",
+    "credentialsId",
+    "mavenConfig",
+    "dockerConfig"
+  ],
+  "definitions": {
+    "mapString": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "DockerConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "snapshotUri": {
+          "type": "string"
+        },
+        "stagingUri": {
+          "type": "string"
+        },
+        "releaseUri": {
+          "type": "string"
+        },
+        "groupUri": {
+          "type": "string"
+        },
+        "snapshotRepoName": {
+          "type": "string"
+        },
+        "stagingRepoName": {
+          "type": "string"
+        },
+        "releaseRepoName": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "groupName",
+        "groupUri",
+        "releaseRepoName",
+        "releaseUri",
+        "snapshotRepoName",
+        "snapshotUri",
+        "stagingRepoName",
+        "stagingUri"
+      ]
+    },
+    "MavenConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repositoryDomainName": {
+          "type": "string"
+        },
+        "fullRepositoryUrl": {
+          "type": "string"
+        },
+        "targetSnapshot": {
+          "type": "string"
+        },
+        "targetStaging": {
+          "type": "string"
+        },
+        "targetRelease": {
+          "type": "string"
+        },
+        "snapshotGroup": {
+          "type": "string"
+        },
+        "releaseGroup": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fullRepositoryUrl",
+        "releaseGroup",
+        "repositoryDomainName",
+        "snapshotGroup",
+        "targetRelease",
+        "targetSnapshot",
+        "targetStaging"
+      ]
+    },
+    "GoConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "goTargetSnapshot": {
+          "type": "string"
+        },
+        "goTargetRelease": {
+          "type": "string"
+        },
+        "goProxyRepository": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "goTargetSnapshot",
+        "goTargetRelease",
+        "goProxyRepository"
+      ]
+    },
+    "RawConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rawTargetSnapshot": {
+          "type": "string"
+        },
+        "rawTargetRelease": {
+          "type": "string"
+        },
+        "rawTargetStaging": {
+          "type": "string"
+        },
+        "rawTargetProxy": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "rawTargetSnapshot",
+        "rawTargetRelease",
+        "rawTargetStaging",
+        "rawTargetProxy"
+      ]
+    },
+    "NpmConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "npmTargetSnapshot": {
+          "type": "string"
+        },
+        "npmTargetRelease": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "npmTargetSnapshot",
+        "npmTargetRelease"
+      ]
+    },
+    "HelmConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "helmTargetStaging": {
+          "type": "string"
+        },
+        "helmTargetRelease": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "helmTargetStaging",
+        "helmTargetRelease"
+      ]
+    },
+    "HelmAppConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "helmStagingRepoName": {
+          "type": "string"
+        },
+        "helmReleaseRepoName": {
+          "type": "string"
+        },
+        "helmGroupRepoName": {
+          "type": "string"
+        },
+        "helmDevRepoName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "helmStagingRepoName",
+        "helmReleaseRepoName",
+        "helmGroupRepoName",
+        "helmDevRepoName"
+      ]
+    }
+  }
+}

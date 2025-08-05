@@ -1,0 +1,3 @@
+---
+- name: Run version updater script
+  shell: "cd {{ module_dir }}; python3 {{ module_dir }}/scripts/main.py generate {{ script_args }}"
