@@ -35,7 +35,7 @@ inventory:
   # If not specified, it will be automatically derived from the parent folder name in the path: /environments/<clusterName>/<environmentName>/Inventory/
   # This attribute's value is available for template rendering via the `current_env.name` variable
   environmentName: string
-  # Mandatory
+  # Optional
   # Name of the Tenant for the Environment
   # This attribute's value is available for template rendering via the `current_env.tenant` variable
   tenantName: string
