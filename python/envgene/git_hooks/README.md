@@ -42,15 +42,10 @@ Place the following files (if applicable):
 
 Or pass key files manually with `-f` option in CLI.
 
-> 🔐 You can generate a Fernet key using:
-> ```bash
-> python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-> ```
-
 ### 4. Install the pre-commit hook
 
 ```bash
-cp script.py .git/hooks/pre-commit
+cp pre-commit.py .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 ```
 
@@ -71,7 +66,7 @@ Whenever you run `git commit`, the hook will:
 ### 🔐 Manual Encryption
 
 ```bash
-python script.py encrypt -f ./path/to/public-keys.txt
+python pre-commit.py encrypt -f ./path/to/public-keys.txt
 ```
 
 If `-f` is omitted, it uses `.git/PUBLIC_AGE_KEYS.txt`.
@@ -79,7 +74,7 @@ If `-f` is omitted, it uses `.git/PUBLIC_AGE_KEYS.txt`.
 ### 🔓 Manual Decryption
 
 ```bash
-python script.py decrypt -f ./path/to/private-key.txt
+python pre-commit.py decrypt -f ./path/to/private-key.txt
 ```
 
 If `-f` is omitted, it uses:
@@ -87,6 +82,7 @@ If `-f` is omitted, it uses:
 - `.git/SECRET_KEY.txt` (Fernet key for decryption)
 - Assumes env vars or placeholders are already set
 
+Which type of decryption/encryption will be used depends on `/configuration/config.yml` content
 ---
 
 ## 🧠 Environment Variables Used
@@ -97,16 +93,6 @@ If `-f` is omitted, it uses:
 | `ENVGENE_AGE_PUBLIC_KEY`       | Placeholder to activate logic          |
 | `PUBLIC_AGE_KEYS`              | Public age keys content                |
 | `SECRET_KEY`                   | Symmetric key for Fernet encryption    |
-
----
-
-## 🌐 Cross-platform
-
-- Works on Linux, macOS, Windows
-- Hook script auto-detects the OS and selects appropriate Python binary:
-  - `venv/bin/python` for Unix
-  - `venv/Scripts/python.exe` for Windows
-  - Falls back to `python3` or `python` if no venv
 
 ---
 
