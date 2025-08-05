@@ -36,6 +36,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
+  CI_PROJECT_DIR: ${{ github.workspace }}
 
 jobs:
   tests:
