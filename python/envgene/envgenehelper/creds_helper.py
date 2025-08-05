@@ -84,7 +84,7 @@ def _get_cred_from_string(param_key, param_value, tenant_name, cloud_name, names
         raise ReferenceError(f"Error during credentials preparation. See logs above.")
 
 def _get_cred_id_from_cred_macros(value):
-    match = re.search(r'.*\${.*creds\.get\((.*)\).*}.*', value)
+    match = re.search(r'.*?\${.*?creds\.get\((.*?)\).*?}.*?', value)
     if (match):
         return match.group(1).strip().strip("\\\"").strip("\"")
     else:
@@ -98,7 +98,7 @@ def get_cred_id_from_cred_macros(value):
     return ""
 
 def _remove_first_cred_from_input(value):
-    return re.sub(r'\${.*creds\.get\(.*\).*}', "", value, 1)
+    return re.sub(r'\${.*?creds\.get\(.*?\).*?}', "", value, 1)
 
 # #creds, #credscl, #credsns macroses are not supported
 # vault creds are not supported
