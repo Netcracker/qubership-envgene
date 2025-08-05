@@ -616,7 +616,6 @@ applications:
   - version: "postgres:1.32.6"
     deployPostfix: "postgresql-dbaas"
 ```
-
 ### Credential
 
 This object is used by EnvGene to manage sensitive parameters. It is generated during environment instance creation for each `<cred-id>` specified in [Credential macros](/docs/template-macros.md#credential-macros)
@@ -624,6 +623,8 @@ This object is used by EnvGene to manage sensitive parameters. It is generated d
 There are two Credential types with different structures:
 
 #### `usernamePassword`
+
+Used for credentials requiring username/password pairs. Contains two mandatory credentials fields(`username` and `password`):
 
 ```yaml
 <cred-id>:
@@ -635,9 +636,11 @@ There are two Credential types with different structures:
 
 #### `secret`
 
+Used for single-secret credentials. Contains one mandatory credentials field(`secret`):
+
 ```yaml
 <cred-id>:
-  type: "secret"
+  type: secret
   data:
     secret: <value>
 ```
@@ -645,6 +648,26 @@ There are two Credential types with different structures:
 After generation, `<value>` is set to `envgeneNullValue`. The user must manually set the actual value.
 
 [Credential JSON schema](/schemas/credential.schema.json)
+
+### Environment Credentials File
+
+This file stores all [Credential](#credential) objects of the Environment upon generation
+
+Environment Credentials File is located at the path `/environments/<cloud-name>/<env-name>/Credentials/credentials.yml`
+
+Example:
+
+```yaml
+db_cred:
+  type: usernamePassword
+  data:
+    username: "s3cr3tN3wLogin"
+    password: "s3cr3tN3wP@ss"
+token:
+  type: secret
+  data:
+    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
+```
 
 ### Shared Credentials File
 

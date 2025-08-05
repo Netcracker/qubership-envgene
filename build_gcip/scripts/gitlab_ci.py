@@ -11,6 +11,7 @@ from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job, prepare_decryption_mode_job
 from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
+from credential_rotation_job import prepare_credential_rotation_job
 
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 
@@ -73,7 +74,7 @@ def build_pipeline(params: dict):
         # generate_effective_set_job ->
         # git_commit_job (commit) ->
         job_sequence = ["trigger_passport_job", "get_passport_job", "process_decryption_mode_job", "env_inventory_generation_job",
-                    "env_build_job", "generate_effective_set_job", "git_commit_job"]
+                    "credential_rotation_job", "env_build_job", "generate_effective_set_job", "git_commit_job"]
 
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
@@ -91,6 +92,13 @@ def build_pipeline(params: dict):
         else:
             logger.info(f'Preparing of env inventory generation job for {env} is skipped because we are in template test mode.')
 
+        credential_rotation_job = None
+        if params['CRED_ROTATION_PAYLOAD']:
+            credential_rotation_job = prepare_credential_rotation_job(pipeline, env, environment_name, cluster_name)
+            jobs_map["credential_rotation_job"] = credential_rotation_job
+        else:
+            logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
+            
         if params['ENV_BUILD']:
             if env_definition == None:
                 try:
@@ -110,9 +118,9 @@ def build_pipeline(params: dict):
             logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
 
         ## git_commit job
-        jobs_requiring_git_commit = ("env_build_job", "generate_effective_set_job", "env_inventory_generation_job")
+        jobs_requiring_git_commit = ("env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job")
         if any(job in jobs_map for job in jobs_requiring_git_commit) and not params['IS_TEMPLATE_TEST']:
-            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name)
+            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, credential_rotation_job)
         else:
             logger.info(f'Preparing of git commit job for {env} is skipped.')
 

@@ -7,3 +7,4 @@ venv
 /env-builder/deployers
 __pycache__
 .vscode
+.DS_Store

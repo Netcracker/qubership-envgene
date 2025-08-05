@@ -101,7 +101,7 @@ def prepare_generate_effective_set_job(pipeline, environment_name, cluster_name)
   return generate_effective_set_job
 
 
-def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name):
+def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, credential_rotation_job: None):
   logger.info(f'prepare git_commit job for {full_env}.')
   git_commit_params = {
       "name":   f'git_commit.{full_env}',
@@ -134,6 +134,8 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name):
   git_commit_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
   git_commit_job.artifacts.add_paths("${CI_PROJECT_DIR}/git_envs")
   git_commit_job.artifacts.when = WhenStatement.ALWAYS
+  if (credential_rotation_job is not None):
+    git_commit_job.add_needs(credential_rotation_job)
   pipeline.add_children(git_commit_job)
   return git_commit_job
 
