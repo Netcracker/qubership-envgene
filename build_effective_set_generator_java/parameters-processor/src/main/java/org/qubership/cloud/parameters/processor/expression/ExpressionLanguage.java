@@ -386,6 +386,15 @@ public class ExpressionLanguage extends AbstractLanguage {
     }
 
     @Override
+    public Map<String, Parameter> processNamespace() {
+        Map<String, Parameter> result = new MergeMap();
+
+        processNamespace(result);
+
+        return processMap(result, result, true);
+    }
+
+    @Override
     public Map<String, Parameter> processConfigServerApp() {
         return processConfigServerAppsInternal();
     }

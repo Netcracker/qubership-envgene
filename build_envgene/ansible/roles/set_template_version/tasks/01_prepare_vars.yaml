@@ -29,7 +29,9 @@
 
     - name: Find env_definition path
       find:
-        paths: "{{ reg_env_definition_dir.files[0].path }}"
+        paths: 
+          - "{{ reg_env_definition_dir.files[0].path }}/Inventory"
+          - "{{ reg_env_definition_dir.files[0].path }}/inventory"
         file_type: file
         recurse: yes
         use_regex: yes

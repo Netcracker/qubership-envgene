@@ -26,14 +26,17 @@ import java.util.Map;
 
 public class ApplicationMap extends DynamicMap {
 
-    public ApplicationMap(String defaultApp, Binding binding) {
+    private String namespace;
+
+    public ApplicationMap(String defaultApp, Binding binding, String namespace) {
         super(defaultApp, binding);
+        this.namespace = namespace;
     }
 
     @Override
     public Map<String, Parameter> getMap(String key) {
 
-        Application config = Injector.getInstance().getDi().get(ApplicationService.class).getByName(key);
+        Application config = Injector.getInstance().getDi().get(ApplicationService.class).getByName(key, namespace);
         if (config != null) {
             Map<String, Parameter> map = new EscapeMap(config.getParams(), binding, String.format(ParametersConstants.APP_ORIGIN, key));
             checkEscape(map);

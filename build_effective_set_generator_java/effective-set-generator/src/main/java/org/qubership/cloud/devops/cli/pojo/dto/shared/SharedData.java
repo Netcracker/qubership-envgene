@@ -43,4 +43,9 @@ public class SharedData {
     private String effectiveSetVersion;
 
     private List<String> pcsspPaths;
+
+    private String deploymentSessionId;
+
+    private boolean appChartValidation;
+
 }

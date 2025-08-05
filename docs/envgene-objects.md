@@ -151,7 +151,7 @@ The Namespace template must be developed so that after Jinja rendering, the resu
 **Example:**
 
 ```yaml
-name: "{{ current_env.name }}-{{ current_ns.deployPostfix }}"
+name: "{{ current_env.name }}-core"
 credentialsId: ""
 labels:
   - "solutionInstance-{{current_env.name}}"

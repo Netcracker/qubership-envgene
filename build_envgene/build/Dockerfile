@@ -1,6 +1,6 @@
 #########################################
 ## Stage 1
-FROM ghcr.io/netcracker/base-images-module-base:main as base-image
+FROM ghcr.io/netcracker/qubership-base-module-dockerimage:v2.0.0 as base-image
 
 USER root
 
@@ -51,6 +51,7 @@ RUN apk update \
     && pip install /python/jschon-sort \
     && pip install /python/envgene \
     && pip install /python/integration \
+    && pip install /python/artifact-searcher \
     && chmod 754 /module/scripts/* \
     && apk del build-base libxml2-dev libxslt-dev zlib-dev \
     && rm -rf /var/cache/apk/* /tmp/* /var/tmp/* \
