@@ -1,17 +1,9 @@
 SD_DATA: |
   {
-    "version": "2.1",
+    "version": 2.1,
     "type": "solutionDeploy",
     "deployMode": "composite",
     "applications": [
-      {
-        "version": "MONITORING:0.64.1",
-        "deployPostfix": "platform-monitoring"
-      },
-      {
-        "version": "postgres:1.32.6",
-        "deployPostfix": "postgresql"
-      },
       {
         "version": "postgres-services:1.32.6",
         "deployPostfix": "postgresql"
@@ -24,4 +16,4 @@ SD_DATA: |
   }
 SD_SOURCE_TYPE: 'json'
 SD_VERSION: ''
-SD_DELTA: False
+SD_REPO_MERGE_MODE: 'basic-exclusion-merge'

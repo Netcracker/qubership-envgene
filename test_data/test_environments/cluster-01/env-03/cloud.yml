@@ -11,6 +11,7 @@ labels: []
 defaultCredentialsId: "cloud-deploy-sa-token" # cloud passport: cluster-01 version: 1.5
 protocol: "https" # cloud passport: cluster-01 version: 1.5
 dbMode: "db"
+productionMode: false # cloud passport: cluster-01 version: 1.5
 databases: []
 mergeDeployParametersAndE2EParameters: false
 maasConfig:
@@ -75,4 +76,3 @@ technicalConfigurationParameters: {}
 deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []
-productionMode: false # cloud passport: cluster-01 version: 1.5

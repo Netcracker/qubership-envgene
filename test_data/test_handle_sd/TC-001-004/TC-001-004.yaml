@@ -1,7 +1,7 @@
 SD_DATA: |
   [
     {
-      "version": "2.1",
+      "version": 2.1,
       "type": "solutionDeploy",
       "deployMode": "composite",
       "applications": [
@@ -12,7 +12,14 @@ SD_DATA: |
         {
           "version": "postgres:1.32.6",
           "deployPostfix": "postgresql"
-        },
+        }
+      ]
+    },
+    {
+      "version": 2.1,
+      "type": "solutionDeploy",
+      "deployMode": "composite",
+      "applications": [
         {
           "version": "postgres-services:1.32.6",
           "deployPostfix": "postgresql"
