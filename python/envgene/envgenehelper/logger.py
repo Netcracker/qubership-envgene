@@ -24,9 +24,9 @@ class CustomFormatter(logging.Formatter):
 
 # create logger with 'spam_application'
 logger = logging.getLogger("envgene")
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
-ch.setLevel(logging.DEBUG)
+ch.setLevel(logging.INFO)
 ch.setFormatter(CustomFormatter())
 logger.addHandler(ch)
