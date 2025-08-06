@@ -1,0 +1,16 @@
+name: "ns01"
+credentialsId: ""
+isServerSideMerge: false
+labels:
+  - "DEV"
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  NS_PARAM: "1"
+e2eParameters:
+  NS_E2E_PARAM: "ns-e2e"
+technicalConfigurationParameters:
+  NS_TECH_PARAM: "tech"
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
