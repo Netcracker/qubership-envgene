@@ -50,7 +50,7 @@ crypt_backend: Fernet  # or SOPS
 
 **Status:** Active
 
-**Description:** Verify that when `crypt: true` in the configuration, only supported credential attributes (`username`, `password`, `secret`) as per [Credential Object Specification](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#credential) are encrypted using the selected backend (`Fernet` or `SOPS`).
+**Description:** Verify that when `crypt: true` in the configuration, only supported credential attributes (`username`, `password`, `secret`) as per [Credential Object Specification](/docs/envgene-objects.md#credential) are encrypted using the selected backend (`Fernet` or `SOPS`).
 
 **Test Data:**
 
@@ -145,7 +145,7 @@ Verify that encryption fails when `crypt_backend` is `Fernet` and `secret_key` i
 
 **Description:**  
 Verify that encryption succeeds when a valid `.git/secret_key.txt` is provided.  
-Supported fields are encrypted per [Credential Object Specification](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#credential).
+Supported fields are encrypted per [Credential Object Specification](/docs/envgene-objects.md#credential).
 
 **Test Data:**
 
@@ -239,7 +239,7 @@ Verify that encryption fails when `crypt_backend: SOPS` is used but required age
 **Description:**  
 Verify that credentials are encrypted using SOPS when valid age key is provided.  
 Only supported fields (`username`, `password`, `secret`) are encrypted.  
-See [Credential Object Specification](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#credential).
+See [Credential Object Specification](/docs/envgene-objects.md#credential).
 
 **Test Data:**
 
