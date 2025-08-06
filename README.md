@@ -22,6 +22,6 @@ Main features:
 
 ## How to
 
-- [Basic How-To](docs/basic-how-to.md).
-- [Environment specific parameters schema](docs/env-specific-schema.md).
+- [Basic How-To](/docs/basic-how-to.md).
+- [Environment specific parameters schema](/docs/features/env-specific-schema.md).
 - [Samples](/docs/samples/README.md)

@@ -244,8 +244,6 @@ Located at:
 - `/configuration/deployer.yml`
 - `/environments/<cluster-name>/<env-name>/app-deployer/deployer.yml`
 
-[`deployer.yml` JSON Schema](TBD)
-
 ```yaml
 # Unique name. Must be unique within a single repository
 # Single file may contain multiple definitions

@@ -95,7 +95,7 @@ A solution consists of application groups (domains). Domain teams develop and pr
 
 ### Template Inheritance Configuration
 
-Template inheritance is configured in the [Template Descriptor](./envgene-objects.md#template-descriptor) in the child template repository. Below is a description of such a Template Descriptor
+Template inheritance is configured in the [Template Descriptor](/docs/envgene-objects.md#template-descriptor) in the child template repository. Below is a description of such a Template Descriptor
 
 #### Template Descriptor
 
