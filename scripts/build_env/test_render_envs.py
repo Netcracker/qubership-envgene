@@ -37,6 +37,15 @@ def test_render_envs(cluster_name, env_name, version):
     logger.info(dump_as_yaml_format(files_to_compare))
     match, mismatch, errors = filecmp.cmpfiles(source_dir , generated_dir, files_to_compare, shallow=False)
     logger.info(f"Match: {dump_as_yaml_format(match)}")
+    diff_text = get_differences(mismatch, source_dir, generated_dir)
+    if len(errors) > 0:
+        logger.fatal(f"Errors: {dump_as_yaml_format(errors)}")
+    else:
+        logger.info(f"Errors: {dump_as_yaml_format(errors)}")
+    assert len(diff_text) == 0, f"Files from source and rendering result mismatch: {dump_as_yaml_format(mismatch)}"
+    assert len(errors) == 0, f"Error during comparing source and rendering result: {dump_as_yaml_format(errors)}"
+
+def get_differences(mismatch: list[str], source_dir: str, generated_dir: str) -> str:
     if len(mismatch) > 0:
         logger.error(f"Mismatch: {dump_as_yaml_format(mismatch)}")
         for file in mismatch:
@@ -53,13 +62,10 @@ def test_render_envs(cluster_name, env_name, version):
                     )
                     diff_text = '\n'.join(diff)
                     logger.error(f"Diff for {file}:\n{diff_text}")
+                    return diff_text
             except Exception as e:
                 logger.error(f"Could not read files for diff: {file1}, {file2}. Error: {e}")
     else:
         logger.info(f"Mismatch: {dump_as_yaml_format(mismatch)}")
-    if len(errors) > 0:
-        logger.fatal(f"Errors: {dump_as_yaml_format(errors)}")
-    else:
-        logger.info(f"Errors: {dump_as_yaml_format(errors)}")
-    assert len(mismatch) == 0, f"Files from source and rendering result mismatch: {dump_as_yaml_format(mismatch)}"
-    assert len(errors) == 0, f"Error during comparing source and rendering result: {dump_as_yaml_format(errors)}"
+    return ""
+
