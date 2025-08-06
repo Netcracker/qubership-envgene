@@ -1,12 +1,14 @@
 # Credential Files Encryption Using Git Commit Hook — Test Cases
 
-- [ Credentials File Encryption Test Cases](#credentials-file-encryption-test-cases)
+- [Credential Files Encryption Using Git Commit Hook — Test Cases](#credential-files-encryption-using-git-commit-hook--test-cases)
+  - [Overview](#overview)
+    - [How it works](#how-it-works)
   - [TC-004-001: Encryption Enabled with Supported Fields](#tc-004-001-encryption-enabled-with-supported-fields)
   - [TC-004-002: Encryption Skipped When Disabled](#tc-004-002-encryption-skipped-when-disabled)
   - [TC-004-003: Secret Key Mandatory for Fernet](#tc-004-003-secret-key-mandatory-for-fernet)
   - [TC-004-004: Successful Encryption Using Fernet](#tc-004-004-successful-encryption-using-fernet)
   - [TC-004-005: Skip Encryption if File Already Encrypted Using Fernet](#tc-004-005-skip-encryption-if-file-already-encrypted-using-fernet)
-  - [TC-004-006: age_key Mandatory for SOPS](#tc-004-006-age_key-mandatory-for-sops)
+  - [TC-004-006: age\_key Mandatory for SOPS](#tc-004-006-age_key-mandatory-for-sops)
   - [TC-004-007: Successful Encryption Using SOPS](#tc-004-007-successful-encryption-using-sops)
   - [TC-004-008: Skip Encryption if File Already Encrypted Using SOPS](#tc-004-008-skip-encryption-if-file-already-encrypted-using-sops)
 
@@ -14,11 +16,12 @@
 
 This document defines test cases to validate credential file encryption behavior using `Fernet` and `SOPS` backends, enforced via Git pre-commit hooks.
 
-###  How it works
+### How it works
 
 Credential files are automatically encrypted during Git commits using a pre-commit script located in `.git/hooks`.
 
 Credential files are considered valid for encryption if they match **one of the following path patterns**:
+
 - `./*/credentials/*.y*ml`
 - `./*/app-deployer/*creds*.y*ml`
 - `./*/cloud-passport/*creds*.y*ml`
@@ -222,9 +225,10 @@ Verify that encryption fails when `crypt_backend: SOPS` is used but required age
 **Expected Results:**
 
 - Commit fails with clear message on missing key
-   
+
+```text
     `ERROR: ENVGENE_AGE_PUBLIC_KEY is required for SOPS encryption in configuration/credentials/credentials.yml`
-   
+```
 
 ---
 

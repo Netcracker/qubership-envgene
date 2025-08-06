@@ -16,19 +16,23 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Status:** New
 
 **Test Data:**
+
 - test_data/test_environments/cluster01/env-with-passport/Inventory/env_definition.yml
 - test_data/test_environments/cluster01/env-with-passport/Inventory/cloud-passport/cloud-passport.yml
 
 **Pre-requisites:**
+
 - Environment with Cloud Passport configured
 - Cloud Passport contains cluster endpoint information
 - Calculator CLI available
 
 **Steps:**
+
 - `ENV_NAMES`: `cluster01/env-with-passport`
 - `CALCULATOR_CLI`: `true`
 
 **Expected Results:**
+
 - The topology context in `parameters.yaml` contains a `cluster` object with values from Cloud Passport:
   - `api_url`: Value from Cloud Passport
   - `api_port`: Value from Cloud Passport
@@ -40,18 +44,22 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Status:** New
 
 **Test Data:**
+
 - test_data/test_environments/cluster01/env-without-passport/Inventory/env_definition.yml
 
 **Pre-requisites:**
+
 - Environment without Cloud Passport configured
 - Environment has `inventory.clusterUrl` set to `https://api.cl-03.managed.qubership.cloud:6443`
 - Calculator CLI available
 
 **Steps:**
+
 - `ENV_NAMES`: `cluster01/env-without-passport`
 - `CALCULATOR_CLI`: `true`
 
 **Expected Results:**
+
 - The topology context in `parameters.yaml` contains a `cluster` object with values derived from `inventory.clusterUrl`:
   - `api_url`: `api.cl-03.managed.qubership.cloud`
   - `api_port`: `6443`
@@ -63,18 +71,22 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Status:** New
 
 **Test Data:**
+
 - test_data/test_environments/cluster01/env-nonstandard-port/Inventory/env_definition.yml
 
 **Pre-requisites:**
+
 - Environment without Cloud Passport configured
 - Environment has `inventory.clusterUrl` set to `https://api.cl-03.managed.qubership.cloud:8443`
 - Calculator CLI available
 
 **Steps:**
+
 - `ENV_NAMES`: `cluster01/env-nonstandard-port`
 - `CALCULATOR_CLI`: `true`
 
 **Expected Results:**
+
 - The topology context in `parameters.yaml` contains a `cluster` object with values derived from `inventory.clusterUrl`:
   - `api_url`: `api.cl-03.managed.qubership.cloud`
   - `api_port`: `8443`
@@ -86,18 +98,22 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Status:** New
 
 **Test Data:**
+
 - test_data/test_environments/cluster01/env-http-protocol/Inventory/env_definition.yml
 
 **Pre-requisites:**
+
 - Environment without Cloud Passport configured
 - Environment has `inventory.clusterUrl` set to `http://api.cl-03.managed.qubership.cloud:6443`
 - Calculator CLI available
 
 **Steps:**
+
 - `ENV_NAMES`: `cluster01/env-http-protocol`
 - `CALCULATOR_CLI`: `true`
 
 **Expected Results:**
+
 - The topology context in `parameters.yaml` contains a `cluster` object with values derived from `inventory.clusterUrl`:
   - `api_url`: `api.cl-03.managed.qubership.cloud`
   - `api_port`: `6443`
@@ -109,18 +125,22 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Status:** New
 
 **Test Data:**
+
 - test_data/test_environments/cluster01/env-nonstandard-hostname/Inventory/env_definition.yml
 
 **Pre-requisites:**
+
 - Environment without Cloud Passport configured
 - Environment has `inventory.clusterUrl` set to `https://cluster.cl-03.managed.qubership.cloud:6443`
 - Calculator CLI available
 
 **Steps:**
+
 - `ENV_NAMES`: `cluster01/env-nonstandard-hostname`
 - `CALCULATOR_CLI`: `true`
 
 **Expected Results:**
+
 - The topology context in `parameters.yaml` contains a `cluster` object with values derived from `inventory.clusterUrl`:
   - `api_url`: `cluster.cl-03.managed.qubership.cloud`
   - `api_port`: `6443`
@@ -132,20 +152,24 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Status:** New
 
 **Test Data:**
+
 - test_data/test_environments/cluster01/env-passport-override/Inventory/env_definition.yml
 - test_data/test_environments/cluster01/env-passport-override/Inventory/cloud-passport/cloud-passport.yml
 
 **Pre-requisites:**
+
 - Environment with both Cloud Passport and `inventory.clusterUrl` configured
 - Cloud Passport contains cluster endpoint information
 - Environment has `inventory.clusterUrl` set to `https://api.cl-03.managed.qubership.cloud:6443`
 - Calculator CLI available
 
 **Steps:**
+
 - `ENV_NAMES`: `cluster01/env-passport-override`
 - `CALCULATOR_CLI`: `true`
 
 **Expected Results:**
+
 - The topology context in `parameters.yaml` contains a `cluster` object with values from Cloud Passport, not from `inventory.clusterUrl`
 
 ## TC-CETC-007: Missing Cluster Information
@@ -153,18 +177,22 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Status:** New
 
 **Test Data:**
+
 - test_data/test_environments/cluster01/env-missing-cluster-info/Inventory/env_definition.yml
 
 **Pre-requisites:**
+
 - Environment without Cloud Passport configured
 - Environment does not have `inventory.clusterUrl` specified
 - Calculator CLI available
 
 **Steps:**
+
 - `ENV_NAMES`: `cluster01/env-missing-cluster-info`
 - `CALCULATOR_CLI`: `true`
 
 **Expected Results:**
+
 - The topology context in `parameters.yaml` contains a `cluster` object with empty values:
   - `api_url`: ``
   - `api_port`: ``
