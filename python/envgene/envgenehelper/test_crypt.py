@@ -15,7 +15,7 @@ TEST_CONTENT = """\
 first_cred:
     type: secret
     data:
-        secret: glpat-vxxDsEVkaQyoHasXGCY9 
+        secret: glpat-vxxDsEVkaQyoHasXGCY9
 second_cred:
     type: usernamePassword
     data:
@@ -54,7 +54,7 @@ def reset_test_files():
 def crypt_kwargs(request):
     reset_test_files()
     request.addfinalizer(reset_test_files)
-    
+
     crypt_kwargs = {'file_path': TEST_FILE}
     crypt_kwargs.update(request.param)
 
@@ -158,7 +158,7 @@ def test_minimize_diff(crypt_kwargs):
     initial_enc_content = encrypt_file(**crypt_kwargs)
     old_cred_file = TEST_FILE_OLD
     writeYamlToFile(old_cred_file, initial_enc_content)
-    
+
     # test without changes
     decrypt_file(**crypt_kwargs)
     encrypt_file(**crypt_kwargs, minimize_diff=True, old_file_path=old_cred_file)
@@ -178,3 +178,5 @@ def test_minimize_diff(crypt_kwargs):
     # test wrong parameter combination
     with pytest.raises(ValueError):
         encrypt_file(**crypt_kwargs, minimize_diff=True)
+
+    os.remove(TEST_FILE_OLD)
