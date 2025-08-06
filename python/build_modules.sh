@@ -17,4 +17,4 @@ install_and_clean() {
 install_and_clean "envgene" "envgenehelper"
 install_and_clean "jschon-sort" "jschon_sort"
 install_and_clean "integration" "integration_loader"
-install_and_clean "artifact-searcher" "artifact-searcher"
+install_and_clean "artifact-searcher" "artifact_searcher"
