@@ -39,7 +39,7 @@ Introduce **Template Inheritance** - a feature that enables the creation of chil
 
 This diagram shows parent and child templates with their components. The color of component indicates its source:
 
-![template-inheritance-1.png](./images/template-inheritance-1.png)
+![template-inheritance-1.png](/docs/images/template-inheritance-1.png)
 
 ### Key Capabilities
 
@@ -85,13 +85,13 @@ This feature can be used in scenarios where EnvGene manages configuration parame
 
 A solution comprises multiple applications, where application's teams develop and provide their respective templates. The team responsible for the overall solution collects these templates, combines them into a product-level template, and adds necessary customizations.
 
-![template-inheritance-2.png](./images/template-inheritance-2.png)
+![template-inheritance-2.png](/docs/images/template-inheritance-2.png)
 
 #### Case 2
 
 A solution consists of application groups (domains). Domain teams develop and provide their templates. The product team aggregates these into a product-level template, adding for example integration parameters. Then, a project team customizes this product template for specific project needs. Here, the product template acts as both a parent and child template.
 
-![template-inheritance-3.png](./images/template-inheritance-3.png)
+![template-inheritance-3.png](/docs/images/template-inheritance-3.png)
 
 ### Template Inheritance Configuration
 

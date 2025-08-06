@@ -91,7 +91,9 @@ public class FileDataConverterImpl implements FileDataConverter {
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
         File file = fileSystemUtils.getFileFromGivenPath(args);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            getYamlObject().dump(params, writer);
+            if (params != null && !params.isEmpty()) {
+                getYamlObject().dump(params, writer);
+            }
         }
     }
 
@@ -100,7 +102,7 @@ public class FileDataConverterImpl implements FileDataConverter {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
-        options.setPrettyFlow(true);
+        options.setPrettyFlow(false);
         Representer representer = new Representer(options) {
             @Override
             protected Node representScalar(Tag tag, String value, DumperOptions.ScalarStyle style) {

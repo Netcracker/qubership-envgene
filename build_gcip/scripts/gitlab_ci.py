@@ -2,7 +2,7 @@ from os import getenv, listdir
 import os
 from dataclasses import asdict
 
-from plugin_engine import PluginEngine
+from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, getEnvDefinition, get_env_instances_dir
 from gcip import Pipeline
 import pipeline_helper
@@ -57,7 +57,7 @@ def build_pipeline(params: dict):
             cluster_name = ""
             environment_name = env
             env_definition = {}
-        else: 
+        else:
             cluster_name = get_cluster_name_from_full_name(env)
             environment_name = get_environment_name_from_full_name(env)
             if params['ENV_INVENTORY_GENERATION_PARAMS']['ENV_INVENTORY_INIT']:
@@ -112,7 +112,7 @@ def build_pipeline(params: dict):
         ## git_commit job
         jobs_requiring_git_commit = ("env_build_job", "generate_effective_set_job", "env_inventory_generation_job")
         if any(job in jobs_map for job in jobs_requiring_git_commit) and not params['IS_TEMPLATE_TEST']:
-            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name)
+            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, params['DEPLOYMENT_SESSION_ID'])
         else:
             logger.info(f'Preparing of git commit job for {env} is skipped.')
 

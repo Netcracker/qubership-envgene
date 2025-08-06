@@ -23,7 +23,7 @@ Environment Inventory. The inventory file of a specific Environment. Contains th
 Mandatory for every Environment. Created and updated manually.
 
 Located in the Instance repository at: `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`  
-Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
+Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
 
 [`env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
 

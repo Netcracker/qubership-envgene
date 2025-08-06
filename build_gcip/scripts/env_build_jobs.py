@@ -101,8 +101,9 @@ def prepare_generate_effective_set_job(pipeline, environment_name, cluster_name)
   return generate_effective_set_job
 
 
-def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name):
+def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, deployment_session_id):
   logger.info(f'prepare git_commit job for {full_env}.')
+  logger.info(f'Deployment session id is {deployment_session_id}.')
   git_commit_params = {
       "name":   f'git_commit.{full_env}',
       "image":  '${envgen_image}',
@@ -128,7 +129,8 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name):
       "module_ansible_cfg": "/module/ansible/ansible.cfg",
       "module_config_default": "/module/templates/defaults.yaml",
       "GIT_STRATEGY": "none",
-      "COMMIT_ENV": "true"
+      "COMMIT_ENV": "true",
+      "DEPLOY_SESSION_ID": deployment_session_id
   }
   git_commit_job = job_instance(params=git_commit_params, vars=git_commit_vars)
   git_commit_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")

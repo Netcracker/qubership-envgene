@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.model.Component;
@@ -42,6 +43,7 @@ import org.qubership.cloud.devops.commons.pojo.consumer.Property;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
+import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespacePrefixDTO;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO;
 import org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO;
@@ -108,6 +110,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             loadRegistryData();
             loadConsumerData();
             traverseSourceDirectory(nsWithAppsFromSD, appsToProcess);
+            populateEnvironments();
             fileSystemUtils.createEffectiveSetFolder(solutionDescriptor.getApplications());
         } catch (Exception e) {
             throw new FileParseException("Error preparing data due to " + e.getMessage());
@@ -121,6 +124,9 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             sharedData.getPcsspPaths().forEach(path -> {
                 try {
                     String name = FilenameUtils.getBaseName(path);
+                    if (name.contains(".")) {
+                        name = name.substring(0, name.indexOf("."));
+                    }
                     ConsumerDTO consumerDTO = ConsumerDTO.builder().build();
                     List<Property> properties = new ArrayList<>();
                     String jsonContent = new String(Files.readAllBytes(Paths.get(path)));
@@ -146,6 +152,61 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             });
         }
         inputData.setConsumerDTOMap(consumerDTOMap);
+    }
+
+    private void populateEnvironments() {
+        Path basePath = Paths.get(sharedData.getEnvsPath());
+        Map<String, List<NamespacePrefixDTO>> clusterMap = new HashMap<>();
+        Set<String> foldersToSkip = Set.of("parameters", "credentials", "resource_profiles", "cloud-passport", "app-deployer");
+        try {
+            Files.walkFileTree(basePath, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    if (dir.equals(basePath)) {
+                        return FileVisitResult.CONTINUE;
+                    }
+                    if (foldersToSkip.contains(dir.getFileName().toString())) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                    if (file.toString().endsWith(GenericConstants.YAML_EXT) || file.toString().endsWith(GenericConstants.YML_EXT)) {
+                        handleNamespaceYamlFile(file, clusterMap);
+                    }
+                    return FileVisitResult.CONTINUE;
+                }
+
+            });
+            inputData.setClusterMap(prepareEnvMap(clusterMap));
+        } catch (Exception e) {
+            throw new FileParseException("Failure in reading input Directory", e);
+        }
+
+    }
+
+    private Map<String, Object> prepareEnvMap(Map<String, List<NamespacePrefixDTO>> clusterMap) {
+        if (MapUtils.isEmpty(clusterMap)) {
+            return new HashMap<>();
+        }
+        Map<String, Object> finalMap = new TreeMap<>();
+        clusterMap.entrySet().stream().forEach(
+                entry -> {
+                    Map<String, Object> namespacesMap = new TreeMap<>();
+                    Map<String, Object> namespaceMap = new TreeMap<>();
+                    List<NamespacePrefixDTO> namespacePrefixDTOS = entry.getValue();
+                    namespacePrefixDTOS.stream().forEach(key -> {
+                        Map<String, Object> deployPostFixMap = new TreeMap<>();
+                        deployPostFixMap.put("deployPostfix", key.getDeployPostFix());
+                        namespaceMap.put(key.getName(), deployPostFixMap);
+                    });
+                    namespacesMap.put("namespaces", namespaceMap);
+                    finalMap.put(entry.getKey(), namespacesMap);
+                }
+        );
+        return finalMap;
     }
 
     private void traverseSourceDirectory(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
@@ -188,14 +249,10 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                         inputData.setProfileFullDtoMap(profilesMap);
 
                     } else if (currentFolder.equals(GenericConstants.NS_FOLDER)) {
-                        List<ApplicationLinkDTO> applicationLinkDTOList = new ArrayList<>();
                         namespaceMap.replaceAll((name, namespaceDTO) -> {
                             List<ApplicationLinkDTO> applications = appsOnNamespace.get(name);
-                            applicationLinkDTOList.addAll(applications);
-                            return namespaceDTO.toBuilder().applications(applications).build();
+                            return namespaceDTO.toBuilder().applications(applications == null ? Collections.emptyList() : applications).build();
                         });
-                        inputData.setApplicationLinkDTOMap(applicationLinkDTOList.stream().
-                                collect(Collectors.toMap(ApplicationLinkDTO::getName, applicationLinkDTO -> applicationLinkDTO)));
                         inputData.setNamespaceDTOMap(namespaceMap);
 
                     } else if (currentFolder.equals(basePath.getFileName().toString())) {
@@ -206,6 +263,25 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             });
         } catch (Exception e) {
             throw new FileParseException("Failure in reading input Directory", e);
+        }
+    }
+
+    private void handleNamespaceYamlFile(Path file, Map<String, List<NamespacePrefixDTO>> clusterMap) {
+        Path parent = file.getParent();
+        String name = file.getFileName().toString().split("\\.")[0];
+        if ("namespace".equalsIgnoreCase(name)) {
+            NamespaceDTO namespaceDTO = fileDataConverter.parseInputFile(NamespaceDTO.class, file.toFile());
+            Path environment = parent.getParent().getParent();
+            Path cluster = parent.getParent().getParent().getParent();
+            NamespacePrefixDTO namespacePrefixDTO = NamespacePrefixDTO.builder().build();
+            List<NamespacePrefixDTO> namespacePrefixDTOS = clusterMap.get(cluster.getFileName().toString() + "/" + environment.getFileName().toString());
+            if (CollectionUtils.isEmpty(namespacePrefixDTOS)) {
+                namespacePrefixDTOS = new ArrayList<>();
+            }
+            namespacePrefixDTO.setName(namespaceDTO.getName());
+            namespacePrefixDTO.setDeployPostFix(parent.getFileName().toString());
+            namespacePrefixDTOS.add(namespacePrefixDTO);
+            clusterMap.put(cluster.getFileName().toString() + "/" + environment.getFileName().toString(), namespacePrefixDTOS);
         }
     }
 
@@ -273,7 +349,8 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         ApplicationLinkDTO applicationLinkDTO = fileDataConverter.parseInputFile(ApplicationLinkDTO.class, file.toFile());
         if (parent.getParent().getParent().getFileName().toString().equals(GenericConstants.NS_FOLDER)) {
             String namespace = parent.getParent().getFileName().toString();
-            if (checkIfAppValid(namespace, file.getFileName().toString().split("\\.")[0], nsWithAppsFromSD)) {
+            String appName = file.getFileName().toString().replaceFirst("\\.(ya?ml)$", "");
+            if (checkIfAppValid(namespace, appName, nsWithAppsFromSD)) {
                 appsOnNamespace.computeIfAbsent(namespace, k -> new ArrayList<>()).add(applicationLinkDTO);
             }
         } else {
@@ -315,7 +392,13 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     private void loadRegistryData() {
         Map<String, RegistryDTO> registries = fileDataConverter.parseInputFile(new TypeReference<HashMap<String, RegistryDTO>>() {
         }, new File(sharedData.getRegistryPath()));
-        inputData.setRegistryDTOMap(registries);
+        Map<String, RegistryDTO> registryMap = new HashMap<>();
+
+        for (Map.Entry<String, RegistryDTO> entry : registries.entrySet()) {
+            String cleanKey = entry.getKey().replace("%20", " ");
+            registryMap.put(cleanKey, entry.getValue());
+        }
+        inputData.setRegistryDTOMap(registryMap);
     }
 
     public Map<String, Object> getObjectMap(CompositeStructureDTO compositeStructureDTO) {

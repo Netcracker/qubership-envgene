@@ -52,8 +52,8 @@ public class NamespaceApplicationMap extends DynamicMap {
                 .findAny()
                 .orElse(null);
 
-        Map<String, String> appParams = applicationParams != null ? applicationParams.getAppParams() : new HashMap<>();
-        Map<String, String> configServerParams = applicationParams != null ? applicationParams.getConfigServerParams() : new HashMap<>();
+        Map<String, Object> appParams = applicationParams != null ? applicationParams.getAppParams() : new HashMap<>();
+        Map<String, Object> configServerParams = applicationParams != null ? applicationParams.getConfigServerParams() : new HashMap<>();
         EscapeMap map = new EscapeMap(appParams, binding,
                 String.format(ParametersConstants.NS_APP_ORIGIN, namespace.getCloud().getTenant().getName(), namespace.getCloud().getName(),
                         namespace.getName(), appName));
@@ -68,7 +68,7 @@ public class NamespaceApplicationMap extends DynamicMap {
         checkEscape(configServerMap);
         map.put("config-server", configServerMap);
         try {
-            if (binding.getDeployerInputs() != null && binding.getDeployerInputs().getAppVersion() != null && applicationParams != null) {
+            if (binding.getDeployerInputs() != null && binding.getDeployerInputs().getAppVersion() != null) {
                 populateAdditionalParams(appName, binding.getDeployerInputs().getAppFileRef(), map);
             }
         } catch ( Exception e) {
@@ -84,13 +84,18 @@ public class NamespaceApplicationMap extends DynamicMap {
             map.put("ARTIFACT_DESCRIPTOR_ARTIFACT_ID", applicationBomDto.getArtifactId());
             map.put("ARTIFACT_DESCRIPTOR_GROUP_ID", applicationBomDto.getGroupId());
             map.put("ARTIFACT_DESCRIPTOR_VERSION", applicationBomDto.getVersion());
-            map.put("ARTIFACT_DESCRIPTOR_MAVEN_REPO",applicationBomDto.getMavenRepo() );
+            map.put("ARTIFACT_DESCRIPTOR_MAVEN_REPO",applicationBomDto.getMavenRepo());
+            map.put("DEPLOYMENT_SESSION_ID", applicationBomDto.getDeployerSessionId());
+            map.put(APPR_CHART_NAME, applicationBomDto.getAppChartName());
             map.put(SERVICES, applicationBomDto.getServices());
             map.put(CONFIGURATIONS, applicationBomDto.getConfigurations());
             map.put(FRONTENDS, applicationBomDto.getFrontends());
             map.put(SMARTPLUG, applicationBomDto.getSmartplugs());
             map.put(CDN, applicationBomDto.getCdn());
             map.put(SAMPLREPO, applicationBomDto.getSampleRepo());
+            map.put(DEPLOY_DESC, applicationBomDto.getDeployDescriptors());
+            map.put(COMMON_DEPLOY_DESC, applicationBomDto.getCommonDeployDescriptors());
+            map.put(PER_SERVICE_DEPLOY_PARAMS, applicationBomDto.getPerServiceParams());
         }
     }
 
