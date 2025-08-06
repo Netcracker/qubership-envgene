@@ -216,7 +216,7 @@ def test_sd(cluster_name, env_name, test_case_name):
         # Create parent directory if it doesn't exist
         os.makedirs(os.path.dirname(target_sd_dir), exist_ok=True)
         # Copy the entire directory
-        shutil.copytree(source_sd_dir, target_sd_dir)
+        shutil.copytree(source_sd_dir, target_sd_dir, dirs_exist_ok=True)
     else:
         # If source doesn't exist, just create the target directory
         os.makedirs(target_sd_dir, exist_ok=True)
