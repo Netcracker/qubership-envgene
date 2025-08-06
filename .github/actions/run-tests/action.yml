@@ -5,7 +5,7 @@ inputs:
   python-version:
     description: 'Python version to use for tests'
     required: false
-    default: '3.10'
+    default: '3.12'
 
 runs:
   using: composite
@@ -30,12 +30,15 @@ runs:
             cp dependencies/sources.list /etc/apt/sources.list
         fi
         
+        pip install --upgrade pip setuptools wheel
         pip install --no-cache-dir -r dependencies/tests_requirements.txt
         
         if [ -f python/build_modules.sh ]; then
             chmod +x python/build_modules.sh
             ./python/build_modules.sh
         fi
+
+        pip install python/artifact-searcher
 
         curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64
         mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops
