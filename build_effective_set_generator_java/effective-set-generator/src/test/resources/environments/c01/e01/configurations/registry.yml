@@ -1,0 +1,21 @@
+---
+registry-test:
+  username: xxxx
+  password: xxxx
+  dockerConfig:
+    snapshotUri: "teststorage.com:17034"
+    stagingUri: ""
+    releaseUri: ""
+    groupUri: ""
+    snapshotRepoName: ""
+    stagingRepoName: ""
+    releaseRepoName: ""
+    groupName: ""
+  mavenConfig:
+    repositoryDomainName: ""
+    fullRepositoryUrl: "https://teststorage.com"
+    targetSnapshot: "mvn.snapshot"
+    targetStaging: ""
+    targetRelease: ""
+    snapshotGroup: ""
+    releaseGroup: ""
