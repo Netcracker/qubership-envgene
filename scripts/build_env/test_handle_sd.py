@@ -164,7 +164,7 @@ def compare_sd_files(expected_dir, actual_dir, sd_filename)-> tuple[bool, str]:
 
             # Log the complete error message
             logger.error('\n'.join(error_msg))
-            return False, "".join(diff)
+            return False, '\n'.join(error_msg)
 
         # If we got here, files match exactly (ignoring final newline)
         logger.info("SD files match exactly (ignoring final newline)")
