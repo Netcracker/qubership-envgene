@@ -68,9 +68,9 @@
 8. Calculator CLI must display reason of error
 9. Calculator CLI must must not lookup, download and process any artifacts from a registry
 10. The Calculator CLI must support loading and parsing SBOM files, extracting parameters for calculating the Effective Set
-    1. [Solution SBOM](../schemas/solution.sbom.schema.json)
-    2. [Application SBOM](../schemas/application.sbom.schema.json)
-    3. [Env Template SBOM](../schemas/env-template.sbom.schema.json)
+    1. [Solution SBOM](/schemas/solution.sbom.schema.json)
+    2. [Application SBOM](/schemas/application.sbom.schema.json)
+    3. [Env Template SBOM](/schemas/env-template.sbom.schema.json)
 11. Calculator CLI should generate Effective Set for one environment no more than 1 minute
 12. The Calculator CLI must adhere to the [Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention) when compiling the application's service list.
 13. Parameters in all files of Effective Set must be sorted alphabetically
@@ -78,7 +78,7 @@
 
 ## Proposed Approach
 
-![sbom-generation.png](./images/effective-set-calculation.png)
+![sbom-generation.png](/docs/images/effective-set-calculation.png)
 
 ### Calculator CLI execution attributes
 
@@ -99,9 +99,9 @@ Below is a **complete** list of attributes
 
 ### Registry Configuration
 
-[Registry config JSON Schema](../schemas/registry.schema.json)
+[Registry config JSON Schema](/schemas/registry.schema.json)
 
-[Registry config example](../schemas/registry.yml)
+[Registry config example](/schemas/registry.yml)
 
 ### Effective Set v1.0
 
@@ -931,7 +931,7 @@ The calculator forms consumer-specific parameters according to the following pri
    3. If no default value is set for this parameter and the parameter is mandatory, the generation process will terminate with an error
 3. These rules apply only to root-level parameters
 
-[Example of consumer-specific pipeline context component JSON schema](../examples/consumer-v1.0.json)
+[Example of consumer-specific pipeline context component JSON schema](/examples/consumer-v1.0.json)
 
 ###### \[Version 2.0][Pipeline Parameter Context] `<consumer>-parameters.yaml`
 
