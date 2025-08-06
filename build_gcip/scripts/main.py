@@ -1,6 +1,7 @@
 from os import *
 
 import click
+import re
 
 from envgenehelper import logger
 from gitlab_ci import build_pipeline
@@ -15,6 +16,7 @@ def prepare_input_params() -> dict:
     pipe_params = PipelineParametersHandler()
     params_log = (f"Input parameters are: ")
     params_log += pipe_params.get_params_str()
+    params_log = params_log = re.sub(r"(CRED_ROTATION_PAYLOAD:\s*)\(.*?\)", r"\1***", params_log, flags=re.DOTALL)
     logger.info(params_log)
     return pipe_params.params
 

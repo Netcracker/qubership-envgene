@@ -7,7 +7,4 @@ venv
 /env-builder/deployers
 __pycache__
 .vscode
-python/envgene/environments
-python/envgene/__pycache__
-python/envgene/envgenehelper.egg-info
-python/envgene/build
+.DS_Store
