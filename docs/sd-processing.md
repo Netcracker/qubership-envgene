@@ -3,6 +3,7 @@
 - [Solution Descriptor Processing](#solution-descriptor-processing)
   - [Problem Statement](#problem-statement)
   - [Proposed Approach](#proposed-approach)
+    - [SD processing diagram](#sd-processing-diagram)
     - [Requirements](#requirements)
     - [SD Types](#sd-types)
       - [Full SD](#full-sd)
@@ -22,6 +23,7 @@
         - [`extended-merge` SD Merge Mode Terms](#extended-merge-sd-merge-mode-terms)
         - [`extended-merge` Merge Mode Assumptions](#extended-merge-merge-mode-assumptions)
         - [`extended-merge` SD Merge Mode Rules](#extended-merge-sd-merge-mode-rules)
+  - [`useDeployPostfixAsNamespace` Handling](#usedeploypostfixasnamespace-handling)
   - [Use Cases](#use-cases)
   - [Invalid Input Combinations](#invalid-input-combinations)
   - [Test Cases](#test-cases)
@@ -36,12 +38,15 @@ It is proposed to enhance EnvGene with the capability to retrieve SDs in artifac
 
 To support the deployment of individual applications, the use of Delta SDs is suggested.
 
+### SD processing diagram
+
+![sd-processing.drawio.png](/docs/images/sd-processing.drawio.png)
+
 ### Requirements
 
-1. SD processing must occur **before** to the `generate_effective_set_job`
-2. SD processing should take place in a separate job
-3. The Full and Delta SDs files should be stored in repository and job artifacts
-4. SD merge must occur according to [SD Merge](#sd-merge)
+1. SD processing should take place in the `generate_effective_set_job`
+2. The Full and Delta SDs files should be stored in repository and job artifacts
+3. SD merge must occur according to [SD Merge](#sd-merge)
 
 ### SD Types
 
@@ -254,6 +259,63 @@ The following set of terms is used to describe the rules and assumptions of SD m
 4. The order of elements in the applications list must remain unchanged
 5. The order of elements in the deployGraph list must remain unchanged
 6. The order of elements in the apps list must remain unchanged
+
+## `useDeployPostfixAsNamespace` Handling
+
+In the Solution Descriptor, the `deployPostfix` attribute is required for Effective Set generation, but external systems may only work with the namespace and do not know which `deployPostfix` corresponds to it.
+
+For example, in the case of deploying a single application, the deployment orchestrator receives only the application's `app:ver` and its namespace from the user.
+
+To support this case, EnvGene provides a mode where the SD specifies the `namespace` name as the `deployPostfix`, and EnvGene automatically converts it to the correct `deployPostfix` based on the Environment Instance structure.
+
+The value of the deploy postfix is taken from the name of the parent folder of the Namespace whose `name` attribute matches the value of the `deployPostfix` attribute.
+
+The marker for this transformation is the SD attribute `userData.useDeployPostfixAsNamespace: true`.
+
+Example of such an SD:
+
+```yaml
+version: 2.1
+applications:
+  - version: core:1.2.3
+    deplloyPostfix: env-1-core
+  - version: core-ext:1.2.3
+    deplloyPostfix: env-1-core
+  - version: bss-app:1.2.3
+    deplloyPostfix: env-1-bss
+  - version: oss-app:1.2.3
+    deplloyPostfix: env-1-oss
+userData:
+  useDeployPostfixAsNamespace: true
+```
+
+Example of transformed an SD:
+
+```yaml
+version: 2.1
+applications:
+  - version: core:1.2.3
+    deplloyPostfix: core
+  - version: core-ext:1.2.3
+    deplloyPostfix: core
+  - version: bss-app:1.2.3
+    deplloyPostfix: bss
+  - version: oss-app:1.2.3
+    deplloyPostfix: oss
+userData:
+  useDeployPostfixAsNamespace: true
+```
+
+This operation is performed during SD processing as shown in the [diagram](#sd-processing-diagram).
+
+Mechanism description:
+
+For each SD, check the `userData.useDeployPostfixAsNamespace` attribute (other `userData` attributes are ignored). If this attribute exists and is set to true, EnvGene:
+
+   1. For each element of `applications` in the SD, finds the Namespace object in the Environment Instance (for which the operation is being executed) whose `name` attribute matches the value of `deployPostfix` (before transformation).
+   2. Gets the name of the parent directory of this Namespace object. If such a Namespace is not found, EnvGene throws a clear error.
+   3. Replaces the value of `deployPostfix` with the name of the parent directory.
+   4. Removes the `userData.useDeployPostfixAsNamespace` marker (and removes `userData` itself if it becomes empty).
 
 ## Use Cases
 

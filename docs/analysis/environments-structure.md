@@ -57,7 +57,7 @@ Getting this information should not require specifying a particular Environment 
    5. The user specifies:
       1. Namespace
       2. `app:ver` of Application
-   6. The orchestrating deploy pipeline generates [useDeployPostfixAsNamespace SD](https://github.com/Netcracker/qubership-envgene/blob/feature/deploypostfix-as-sd/docs/sd-processing.md#usedeploypostfixasnamespace-handling)
+   6. The orchestrating deploy pipeline generates [useDeployPostfixAsNamespace SD](/docs/sd-processing.md#d)
    7. The orchestrating deploy pipeline triggers EnvGene to calculate the Effective Set
       1. Passing useDeployPostfixAsNamespace SD
    8. EnvGene generates the Environment Instance
