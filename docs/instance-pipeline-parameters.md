@@ -153,6 +153,7 @@ If `true`:
 ```yaml
 version: <v1.0|v2.0>
 effective_set_expiry: <effective-set-expiry-time>
+app_chart_validation: <boolean>
 contexts:
   pipeline:
     consumers:
@@ -164,6 +165,7 @@ contexts:
 | Attribute | Mandatory | Description | Default | Example |
 |---|---|---|---|---|
 | **version** | Optional | The version of the effective set to be generated. Available options are `v1.0` and `v2.0`. EnvGene uses `--effective-set-version` to pass this attribute to the Calculator CLI. | `v1.0` | `v2.0` |
+| **app_chart_validation** | Optional | [App chart validation](/docs/calculator-cli.md#version-20-app-chart-validation) feature flag. This validation checks whether all applications in the solution for which the effective set is being calculated are built using the app chart model. If at least one is not, the calculation fails. If `true`: validation is performed, if `false`: validation is skipped  | `true` | `false` |
 | **effective_set_expiry** | Optional | The duration for which the effective set (stored as a job artifact) will remain available for download. Envgene passes this value unchanged to: 1) The `retention-days` job attribute in case of GitHub pipeline. 2) The `expire_in` job attribute in case of GitLab pipeline. The exact syntax and constraints differ between platforms. Refer to the GitHub and GitLab documentation for details. | GitLab: `1 hours`, GitHub: `1` (day) | GitLab: `2 hours`, GitHub: `2` |
 | **contexts.pipeline.consumers** | Optional | Each entry in this list adds a [consumer-specific pipeline context component](/docs/calculator-cli.md#version-20-pipeline-parameter-context) to the Effective Set. EnvGene passes the path to the corresponding JSON schema file to the Calculator CLI using the `--pipeline-consumer-specific-schema-path` argument. Each list element is passed as a separate argument. | None | None |
 | **contexts.pipeline.consumers[].name** | Mandatory | The name of the [consumer-specific pipeline context component](/docs/calculator-cli.md#version-20-pipeline-parameter-context). If used without `contexts.pipeline.consumers[].schema`, the component must be pre-registered in EnvGene | None | `dcl` |

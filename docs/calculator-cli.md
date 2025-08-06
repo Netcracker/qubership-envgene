@@ -359,7 +359,7 @@ The Calculator CLI performs validation to check for the presence of an `applicat
 2. This validation is only performed for Effective Set version `v2.0`
 
 3. Validation execution depends on the attribute:  
-     [`GENERATE_EFFECTIVE_SET.app_chart_validation`](https://github.com/Netcracker/qubership-envgene/blob/feature/es_impovement_step_2/docs/instance-pipeline-parameters.md#effective_set_config)
+     [`EFFECTIVE_SET_CONFIG.app_chart_validation`](/docs/instance-pipeline-parameters.md#effective_set_config)
    - Behavior:
      - If `true`: Validation is performed
      - If `false`: Validation is skipped
