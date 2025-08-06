@@ -30,12 +30,6 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Download JAR artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: effective_set_jar
-        path: downloaded_artifact
-
     - name: Log in to the Container registry
       uses: docker/login-action@v3
       with:
