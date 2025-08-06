@@ -51,15 +51,21 @@ class PreCommit:
                 Path('./.git/PUBLIC_AGE_KEYS.txt'))
         environ[ENVGENE_AGE_PUBLIC_KEY_ID] = 'valueIsSet'
         environ[ENVGENE_AGE_PRIVATE_KEY_ID] = 'valueIsSet'
-
+    @staticmethod
+    def _get_staged_files() -> list[str]:
+        repo_root = subprocess.check_output(["git", "rev-parse", "--show-toplevel"], text=True).strip()
+        changed_files = subprocess.check_output(["git", "diff", "--name-only"], text=True).splitlines()
+        return [str(Path(repo_root) / f) for f in changed_files]
+    @staticmethod
     def encrypt_repo():
         PreCommit.init_vars()
         import envgenehelper
-        try:
-            envgenehelper.crypt.encrypt_all_cred_files_for_env()
-        except Exception as e:
-            print(e)
-
+        files = PreCommit._get_staged_files()
+        if files:
+            try:
+                envgenehelper.crypt.encrypt_all_cred_files_for_env(files=files)
+            except Exception as e:
+                print(e)
 
 def main():
     if 'decrypt' in sys.argv:

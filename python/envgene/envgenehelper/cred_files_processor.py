@@ -2,6 +2,7 @@ import os
 from os import getenv
 import subprocess
 
+
 from .logger import logger
 
 BASE_DIR = getenv('CI_PROJECT_DIR', os.getcwd())
@@ -9,14 +10,28 @@ BASE_DIR = getenv('CI_PROJECT_DIR', os.getcwd())
 # run find command to search all credential files in cur BASE_DIR
 
 
+
 def normalize_path(path: str) -> str:
     if os.name == 'nt':
         if path.startswith('/c/'):
-            path = path.replace('/c/', 'C:/').replace('/', '\\')
+            path = path.replace('/c/', 'C:\\', 1).replace('/', '\\')
+        else:
+            path = path.replace('/', '\\')
+        path = os.path.normpath(path)
+    else:
+        path = os.path.normpath(path).replace('\\', '/')
     return path
 
+def _get_files_list(files: list[str]=[]):
+    from .crypt import is_cred_file
+    result = set()
+    for file in files:
+        if is_cred_file(file):
+           result.add(file)
+    return result
 
-def _get_files_subprocess(full_path='', env_name=''):
+def _get_files_subprocess(full_path='', env_name='', ):
+
     cur_path = BASE_DIR if not full_path else full_path
     bash_path = cur_path.replace('\\', '/').replace(':', '').replace('C', '/c')
     if not bash_path.endswith('/'):
@@ -33,7 +48,9 @@ def _get_files_subprocess(full_path='', env_name=''):
     return result
 
 
-def get_all_necessary_cred_files() -> set[str]:
+def get_all_necessary_cred_files(files: list[str] = []) -> set[str]:
+    if files:
+        return _get_files_list(files)
     env_names = getenv("ENV_NAMES", None)
     if not env_names:
         logger.info(f"ENV_NAMES not set, searching for whole dir {BASE_DIR}")

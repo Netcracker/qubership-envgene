@@ -96,28 +96,19 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
             writeYamlToFile(file_path, result)
     else:
         sops_args = f' --{SOPS_MODES[mode]} '
-        if mode != "decrypt" and 'shade' in str(file_path):
+        shade = True if 'shade' in str(file_path) else False
+        if mode != "decrypt" and shade:
             sops_args += f' --encrypted-regex "{ENCRYPTED_REGEX_STR}"'
         if in_place:
             sops_args += ' --in-place'
         sops_args += f' -age {public_key}'
-
-        if Path(file_path).is_file():
-            try:
-                result = _run_SOPS(f'sops {sops_args} {file_path}').stdout
-            except ValueError as e:
-                logger.warning(f'{str(e)}. Path: {file_path}')
-                return openYaml(file_path)
-        # encryption of shade files dir
-        if Path(file_path).is_dir():
-            try:
-                cpu_ = os.cpu_count() or 2
-                command = f'find "{file_path}" -type f -print0 | xargs -0 -P{cpu_*2} -n1 sops {sops_args}'
-                result = _run_SOPS(command, shade=True)
+        try:
+            result = _run_SOPS(f'sops {sops_args} {file_path}').stdout
+            if shade:
                 return
-            except ValueError as e:
-                logger.warning(f'{str(e)}. Path: {file_path}')
-                return
+        except ValueError as e:
+            logger.warning(f'{str(e)}. Path: {file_path}')
+            return openYaml(file_path)
     logger.debug(f'The file has been {mode}ed. Path: {file_path}')
     if not in_place:
         return readYaml(result)

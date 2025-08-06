@@ -1,6 +1,9 @@
+from functools import partial
+from itertools import chain
 import os
 import re
 from os import getenv
+from time import perf_counter
 from typing import Callable
 
 from .cred_files_processor import get_all_necessary_cred_files
@@ -13,7 +16,7 @@ from .logger import logger
 from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
 from .crypt_backends.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
 from envgenehelper import shade_files_helper
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 
 config = get_envgene_config_yaml()
 IS_CRYPT = config.get('crypt', True)
@@ -24,7 +27,7 @@ BASE_DIR = getenv('CI_PROJECT_DIR', os.getcwd())
 VALID_EXTENSIONS = re.compile(r'\.ya?ml$')
 TARGET_REGEX = re.compile(r'(^credentials$|creds$)')
 TARGET_DIR_REGEX = re.compile(r'/[Cc]redentials(/|$)')
-TARGET_PARENT_DIRS = re.compile(r'/(configuration|environments)(/|$)')
+TARGET_PARENT_DIRS = re.compile(r'(configuration|environments)(/|$)')
 IGNORE_DIR = re.compile(r'(/shades-.*)')
 CPU_COUNT = os.cpu_count()
 
@@ -52,25 +55,25 @@ def _handle_missing_file(file_path, default_yaml, allow_default):
     if not allow_default:
         raise FileNotFoundError(f"{file_path} not found or is not a file")
     return default_yaml()
-
-
 def encrypt_file(file_path, **kwargs):
-    
     if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
         if 'effective-set' in file_path:
             return _encrypt_file(file_path, **kwargs)
-        return shade_files_helper.split_creds_file(file_path, _encrypt_file, **kwargs)
+        shade_files = shade_files_helper.split_creds_file(file_path)
+        for file in shade_files:
+            _encrypt_file(file, **kwargs)
+        return
     return _encrypt_file(file_path, **kwargs)
-
 
 def decrypt_file(file_path, **kwargs):
     if CREATE_SHADES and CRYPT_BACKEND != 'Fernet':
         if 'effective-set' in file_path:
             return _decrypt_file(file_path, **kwargs)
-        return shade_files_helper.merge_creds_file(
-            file_path, _decrypt_file, **kwargs)
+        shade_files = shade_files_helper.get_shades_files(file_path)
+        for file in shade_files:
+            _decrypt_file(file, **kwargs)
+        return shade_files_helper.merge_creds_file(file_path , shade_files)
     return _decrypt_file(file_path, **kwargs)
-
 
 def _encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, crypt_backend=None, ignore_is_crypt=False, is_crypt=None,
                   minimize_diff=False, old_file_path=None, default_yaml: Callable = get_empty_yaml, allow_default=False, **kwargs):
@@ -154,30 +157,49 @@ def check_for_encrypted_files(files):
 def decrypt_all_cred_files_for_env(**kwargs):
     logger.info('Decryption in progress...Please, wait...')
     files = get_all_necessary_cred_files()
+
     if not IS_CRYPT:
         check_for_encrypted_files(files)
     else:
-        if CREATE_SHADES:
-            with ThreadPoolExecutor(max_workers=4 if not CPU_COUNT else CPU_COUNT+4) as pool:
-                pool.map(decrypt_file, files)
-        else:
-            for f in files:
-                decrypt_file(f, **kwargs)
+        shades = {}
+
+        for f in files:
+            shades[f] = shade_files_helper.get_shades_files(f)
+        flat_shade_paths = list(chain.from_iterable(filter(None, shades.values())))
+        partial_decrypt = partial(_decrypt_file, kwargs=kwargs)
+        # for file in flat_shade_paths:
+        #     partial_decrypt(file)
+        with ThreadPoolExecutor(max_workers=CPU_COUNT) as executor:
+            executor.map(partial_decrypt, flat_shade_paths)
+        with ThreadPoolExecutor(max_workers=CPU_COUNT) as executor:
+            executor.map(
+                lambda item: shade_files_helper.merge_creds_file(item[0], item[1]),
+                shades.items()
+            )
         logger.debug("Decrypted next cred files:")
         logger.debug(files)
     logger.info('repo successfully decrypted')
 
 
-def encrypt_all_cred_files_for_env(**kwargs):
+def encrypt_all_cred_files_for_env(files=[], **kwargs):
     logger.info('Encryption in progress...Please, wait...')
-    files = get_all_necessary_cred_files()
-
+    files = get_all_necessary_cred_files(files=files)
+    result = set()
     logger.debug("Attempting to encrypt(if crypt is true) next files:")
     logger.debug(files)
     if CREATE_SHADES:
-        with ThreadPoolExecutor(max_workers=4 if not CPU_COUNT else CPU_COUNT+4) as pool:
-            pool.map(encrypt_file, files)
+        logger.info('started create shades')
+        with ThreadPoolExecutor(max_workers=CPU_COUNT) as pool:
+            result = pool.map(shade_files_helper.split_creds_file, files)
+        logger.info('ended create shades')
+        flat_shade_paths = list(chain.from_iterable(filter(None, result)))
+        partial_encrypt = partial(_encrypt_file, kwargs=kwargs)
+        logger.info('started encrypt')
+        with ProcessPoolExecutor(max_workers=CPU_COUNT) as executor:
+            executor.map(partial_encrypt, flat_shade_paths)
+        logger.info('ended encrypt')
+
     else:
         for f in files:
-            encrypt_file(f, **kwargs)
+            _encrypt_file(f, **kwargs)
     logger.info('repo successfully encrypted')
