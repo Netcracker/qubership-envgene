@@ -1,5 +1,6 @@
 import os
 from os import getenv
+from pathlib import Path
 import subprocess
 
 
@@ -26,7 +27,8 @@ def _get_files_list(files: list[str]=[]):
     from .crypt import is_cred_file
     result = set()
     for file in files:
-        if is_cred_file(file):
+        logger.debug("Original: %s, Normalized: %s", file, normalize_path(file))
+        if is_cred_file(Path(file).resolve().as_posix()):
            result.add(file)
     return result
 
@@ -49,6 +51,7 @@ def _get_files_subprocess(full_path='', env_name='', ):
 
 
 def get_all_necessary_cred_files(files: list[str] = []) -> set[str]:
+    logger.debug(files)
     if files:
         return _get_files_list(files)
     env_names = getenv("ENV_NAMES", None)

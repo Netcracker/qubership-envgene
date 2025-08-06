@@ -26,12 +26,28 @@ python -m venv venv
 source venv/bin/activate  # or .\venv\Scripts\activate on Windows
 ```
 
-### 2. Install dependencies
+### 2. Install SOPS 
+
+#### For UNIX
+
+```bash
+curl --retry 3 --retry-connrefused --retry-delay 5 -LO https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64
+chmod +x sops-v3.9.0.linux.amd64 
+mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops 
+```
+#### For Windows+venv
+
+Put sops.exe  in `venv/Scripts`
+### 2. Install python dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
-And also install `envgenehelper`
+And also install `envgenehelper` python lib
+
+```bash
+pip install ./qubership-envgene/python/envgene ./qubership-envgene/python/jschon-sort
+```
 
 ### 3. Provide required keys
 
@@ -95,16 +111,3 @@ Which type of decryption/encryption will be used depends on `/configuration/conf
 | `SECRET_KEY`                   | Symmetric key for Fernet encryption    |
 
 ---
-
-## 🧪 Troubleshooting
-
-Run the pre-commit hook manually to debug:
-
-```bash
-.git/hooks/pre-commit
-```
-
-Make sure:
-- Your keys are placed correctly
-- `envgenehelper` is installed
-- Python executable is found

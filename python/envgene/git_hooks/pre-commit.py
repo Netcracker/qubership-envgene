@@ -37,7 +37,16 @@ def decrypt_repo(file_path):
     import envgenehelper
 
     envgenehelper.crypt.decrypt_all_cred_files_for_env()
-
+@cli.command('encrypt')
+@click.option('--key_file_path', '-f', 'file_path', default="", help="Path to file with creds")
+def encrypt_repo(file_path):
+    environ[ENVGENE_AGE_PRIVATE_KEY_ID] = 'valueIsSet'
+    environ[PUBLIC_AGE_KEYS_ID] =   get_file_content(Path(file_path))
+    environ[ENVGENE_AGE_PUBLIC_KEY_ID] = 'valueIsSet'
+    environ[SECRET_KEY_ID] = get_file_content(
+        Path('./.git/SECRET_KEY.txt'))
+    import envgenehelper
+    envgenehelper.crypt.encrypt_all_cred_files_for_env()
 
 class PreCommit:
     # Init variables from files if exists
@@ -61,6 +70,7 @@ class PreCommit:
         PreCommit.init_vars()
         import envgenehelper
         files = PreCommit._get_staged_files()
+        print(files)
         if files:
             try:
                 envgenehelper.crypt.encrypt_all_cred_files_for_env(files=files)
@@ -68,11 +78,12 @@ class PreCommit:
                 print(e)
 
 def main():
-    if 'decrypt' in sys.argv:
+    if 'decrypt' in sys.argv or 'encrypt' in sys.argv:
         cli()
     else:
         PreCommit.encrypt_repo()
-    subprocess.run('git add .')
+        subprocess.run('git add .')
+        logging.info('Repo sucsessfuly encrypted, please run "git commit -m <message>" to apply changes')
 
 
 if __name__ == "__main__":
