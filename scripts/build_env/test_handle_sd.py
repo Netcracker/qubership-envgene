@@ -90,7 +90,7 @@ def load_test_sd_data(test_case_name):
     return sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode
 
 
-def compare_sd_files(expected_dir, actual_dir, sd_filename):
+def compare_sd_files(expected_dir, actual_dir, sd_filename)-> tuple[bool, str]:
     logger.info(f"Comparing SD files:"
                f"\n\tEtalon SD dir: {expected_dir}"
                f"\n\tRendered test SD dir: {actual_dir}"
@@ -116,11 +116,11 @@ def compare_sd_files(expected_dir, actual_dir, sd_filename):
 
     if not expected_file:
         logger.error(f"Expected SD file not found in: {expected_dir}")
-        return False
+        return False, ""
 
     if not actual_file:
         logger.error(f"Generated SD file not found in: {actual_dir}")
-        return False
+        return False, ""
 
     try:
         # Read files and normalize line endings
@@ -164,15 +164,15 @@ def compare_sd_files(expected_dir, actual_dir, sd_filename):
 
             # Log the complete error message
             logger.error('\n'.join(error_msg))
-            return False
+            return False, diff
 
         # If we got here, files match exactly (ignoring final newline)
         logger.info("SD files match exactly (ignoring final newline)")
-        return True
+        return True, ""
 
     except Exception as e:
         logger.error(f"Error comparing files: {e}")
-        return False
+        return False, ""
 
 
 @pytest.mark.parametrize("cluster_name, env_name, test_case_name", TEST_CASES)
@@ -230,7 +230,8 @@ def test_sd(cluster_name, env_name, test_case_name):
     actual_dir = os.path.join(env.env_path, "Inventory", "solution-descriptor")
 
     # Verify files match - we don't care about the exact filename anymore
-    assert compare_sd_files(expected_dir, actual_dir, "sd"), \
-        "Generated SD file does not match the expected one"
+    result = compare_sd_files(expected_dir, actual_dir, "sd")
+    assert result[0], \
+        f"Generated SD file does not match the expected one, diff: {result[1]}"
 
     logger.info(f"=====SUCCESS - {test_case_name}======")
