@@ -1,6 +1,6 @@
 #######################################
 # Stage 1 
-FROM ghcr.io/netcracker/qubership-base-module-dockerimage:v2.0.0
+FROM ghcr.io/netcracker/base-images-module-base:main
 
 USER root
 
