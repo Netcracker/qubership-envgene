@@ -87,10 +87,11 @@ runs:
           echo "pom.xml not found, skipping tests."
         fi
 
+    #removed junit_build_env.xml temperorily
     - name: Merge test results
       shell: bash
       run: |
-        junitparser merge junit_build_env.xml junit_envgenehelper.xml junit.xml    
+        junitparser merge junit_envgenehelper.xml junit.xml    
 
     - name: Upload test results
       if: always()
