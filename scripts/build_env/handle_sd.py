@@ -49,7 +49,8 @@ def merge_sd(env, sd_data, merge_func):
     logger.info(f"Final destination! - {destination}")
     if helper.check_file_exists(destination):
         full_sd_yaml = helper.openYaml(destination)
-        logger.info(f"full_sd.yaml before merge: {full_sd_yaml}")
+        logger.info(f"full_sd.yaml before merge: ")
+        logger.info(full_sd_yaml)
     helper.check_dir_exist_and_create(path.dirname(destination))
     helper.pre_validate(full_sd_yaml, sd_data)
     result = merge_func(full_sd_yaml, sd_data)
@@ -65,24 +66,28 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
         else:
             logger.warning(handle_sd_skip_msg)
         return
-    logger.info(f"printing sd_delta before {sd_delta}")
+    logger.info(f"printing sd_delta before ")
+    logger.info(sd_delta)
 
     if sd_delta is not None and str(sd_delta).strip() != "":
         sd_delta = str(sd_delta).strip().lower()
     else:
         sd_delta = None
 
-    logger.info(f"printing sd_delta after {sd_delta}")
+    logger.info(f"printing sd_delta after ")
+    logger.info(sd_delta)
     if sd_delta == "true":
         sd_path = base_path + 'delta_sd.yaml'
-        logger.info(f"printing sd_path sd_delta T {sd_path}")
+        logger.info(f"printing sd_path sd_delta T ")
+        logger.info(sd_path)
         full_sd_path = base_path + 'sd.yaml'
         if not helper.check_file_exists(full_sd_path):
             logger.error(f"To use the delta processing mode for SD, a complete SD must already be stored in the repository.\nThe file {full_sd_path} does not exist.")
             exit(1)
     else:
         sd_path = base_path + 'sd.yaml'
-        logger.info(f"printing sd_path sd_delta F {sd_path}")
+        logger.info(f"printing sd_path sd_delta F ")
+        logger.info(sd_path)
 
     helper.check_dir_exist_and_create(path.dirname(sd_path))
     if sd_source_type == "artifact":
@@ -99,7 +104,8 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         exit(1)
     data = json.loads(sd_data)
 
-    logger.info(f"printing data inside extract_sd_from_json {data}")
+    logger.info(f"printing data inside extract_sd_from_json ")
+    logger.info(data)
     if not isinstance(data, (list,dict)) or not data:
         logger.error("SD_DATA must be a non-empty list of SD dictionaries or a single SD.")
         exit(1)
@@ -131,13 +137,15 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
             "applications": merged_applications["applications"]
             }
         logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
+        logger.info(f"{json.dumps(merged_result, indent=2)}")
     else:
         merged_result = data
 
     #merged_result["version"] = str(merged_result["version"])
     helper.writeYamlToFile(sd_path, merged_result)
     merged_data = helper.openYaml(sd_path)
-    logger.info(f"Merged_data: {merged_data}")
+    logger.info(f"Merged_data: ")
+    logger.info(merged_data)
 
     logger.info(f"effective_merge_mode: {effective_merge_mode}")
     # Call merge_sd with correct merge function
@@ -146,7 +154,8 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         destination = f'{env.env_path}/Inventory/solution-descriptor/sd.yaml'
         if helper.check_file_exists(destination):
             full_sd_yaml = helper.openYaml(destination)
-            logger.info(f"full_sd.yaml before replacement: {json.dumps(full_sd_yaml, indent=2)}")
+            logger.info(f"full_sd.yaml before replacement: ")
+            logger.info(f"{json.dumps(full_sd_yaml, indent=2)}")
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(destination))

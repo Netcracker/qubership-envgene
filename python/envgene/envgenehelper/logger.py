@@ -1,5 +1,6 @@
 from os import getenv
 import logging
+from pprint import pformat
 
 class CustomFormatter(logging.Formatter):
 
@@ -19,6 +20,8 @@ class CustomFormatter(logging.Formatter):
     }
 
     def format(self, record):
+        if isinstance(record.msg, (dict, list, tuple)):
+            record.msg = pformat(record.msg)
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
         return formatter.format(record)
