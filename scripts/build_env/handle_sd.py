@@ -139,6 +139,7 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
     merged_data = helper.openYaml(sd_path)
     logger.info(f"Merged_data: {merged_data}")
 
+    logger.info(f"effective_merge_mode: {effective_merge_mode}")
     # Call merge_sd with correct merge function
     if effective_merge_mode == "replace":
         logger.info(f"Inside replace")
