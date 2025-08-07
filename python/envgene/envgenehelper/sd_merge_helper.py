@@ -9,7 +9,7 @@ def pre_validate(data1, data2):
     header_attrs = ["version", "type", "deployMode"]
     for attr in header_attrs:
         if attr in data1.keys() and attr in data2.keys():
-            if data1[attr] != data2[attr]:
+            if str(data1[attr]) != str(data2[attr]):
                 error(SD_HEADER_ERROR)
         else:
             error(SD_HEADER_ERROR)
@@ -35,7 +35,7 @@ def is_duplicating(app1, app2):
     return (
         is_matching(app1, app2) and
         get_version(app1) == get_version(app2)
-    ) 
+    )
 
 def error(str):
     logger.error(str)
@@ -114,9 +114,11 @@ def merge(full_sd, delta_sd):
 
 def extended_merge(data1, data2):
     logger.info(f"Inside extended_merge")
-    logger.info(f"Full SD: {data1}")
-    logger.info(f"Delta SD: {data2}")
-    
+    logger.info(f"Full SD: ")
+    logger.info(data1)
+    logger.info(f"Delta SD: ")
+    logger.info(data2)
+
     counter_ = 0
     apps_list = data1["applications"].copy()
     length = len(data2["applications"])
@@ -196,7 +198,7 @@ def basic_merge(full_sd, delta_sd):
             result_apps.append(d_app)
 
     full_sd["applications"] = result_apps
-    # Stage 3: Return result 
+    # Stage 3: Return result
     return full_sd
 
 def basic_exclusion_merge(full_sd, delta_sd):
