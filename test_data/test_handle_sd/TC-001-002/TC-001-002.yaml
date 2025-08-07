@@ -1,7 +1,7 @@
 SD_DATA: |
   [
     {
-      "version": "2.1",
+      "version": 2.1,
       "type": "solutionDeploy",
       "deployMode": "composite",
       "applications": [
