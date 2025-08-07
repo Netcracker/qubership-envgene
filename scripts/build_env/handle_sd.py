@@ -47,10 +47,11 @@ def prepare_vars_and_run_sd_handling():
 def merge_sd(env, sd_data, merge_func):
     destination = f'{env.env_path}/Inventory/solution-descriptor/sd.yaml'
     logger.info(f"Final destination! - {destination}")
-    if helper.check_file_exists(destination):
-        full_sd_yaml = helper.openYaml(destination)
-        logger.info(f"full_sd.yaml before merge: ")
-        logger.info(full_sd_yaml)
+    if not helper.check_file_exists(destination):
+        logger.info("file not found in final destination, skipping final merge")
+    full_sd_yaml = helper.openYaml(destination)
+    logger.info(f"full_sd.yaml before merge: ")
+    logger.info(full_sd_yaml)
     helper.check_dir_exist_and_create(path.dirname(destination))
     helper.pre_validate(full_sd_yaml, sd_data)
     result = merge_func(full_sd_yaml, sd_data)
