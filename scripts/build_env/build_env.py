@@ -465,6 +465,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
 
     logger.info(f"EnvSpecific parameters are: \n{dump_as_yaml_format(env_specific_parameters_map)}")
     checkEnvSpecificParametersBySchema(env_dir, env_specific_parameters_map, template_namespace_names)
+    
 
     # process resource profiles
     processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, needed_resource_profiles_map, env_specific_resource_profile_map, header_text=generated_header_text)
