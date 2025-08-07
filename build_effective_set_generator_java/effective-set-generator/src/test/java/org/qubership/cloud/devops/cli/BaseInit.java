@@ -38,7 +38,8 @@ import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.mapper.ProfileMapper;
 import org.qubership.cloud.devops.commons.utils.otel.OpenTelemetryProvider;
 import org.qubership.cloud.parameters.processor.ParametersProcessor;
-import org.qubership.cloud.parameters.processor.service.ParametersCalculationService;
+import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1;
+import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV2;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -74,8 +75,9 @@ public class BaseInit {
             }
         };
         ParametersProcessor parametersProcessor = new ParametersProcessor(openTelemetryProvider);
-        ParametersCalculationService parametersCalculationService = new ParametersCalculationService(parametersProcessor);
-        cliParameterParser = new CliParameterParser(parametersCalculationService, inputData, fileDataConverter, sharedData, fileSystemUtils);
+        ParametersCalculationServiceV1 parametersCalculationServiceV1 = new ParametersCalculationServiceV1(parametersProcessor);
+        ParametersCalculationServiceV2 parametersCalculationServiceV2 = new ParametersCalculationServiceV2(parametersProcessor);
+        cliParameterParser = new CliParameterParser(parametersCalculationServiceV1, parametersCalculationServiceV2, inputData, fileDataConverter, sharedData, fileSystemUtils);
         ApplicationService applicationService = new ApplicationServiceCliImpl(inputData);
         TenantConfigurationService tenantConfigurationService = new TenantConfigurationServiceCliImpl(inputData);
         ProfileMapper mapper = new ProfileMapper(new ModelMapper(), applicationService);
