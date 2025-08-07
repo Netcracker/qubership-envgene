@@ -13,6 +13,7 @@
     - [QTP-specific context](#qtp-specific-context)
     - [Sensitive Parameters Encryption](#sensitive-parameters-encryption)
     - [QTP-specific context parameters discovery](#qtp-specific-context-parameters-discovery)
+  - [GAPS](#gaps)
   - [Open Questions](#open-questions)
 
 ## Terms
@@ -208,6 +209,11 @@ The CLI resolves macros like `${dbConnection.get('<db-classifier>').username|pas
 - password
 
 These parameters are retrieved via DBaaS API calls.
+
+## GAPS
+
+1. NS level macros works only on NS level
+2. Generating QTP-specific context affects other Effective Set contexts
 
 ## Open Questions
 
