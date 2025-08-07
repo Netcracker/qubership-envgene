@@ -161,23 +161,27 @@ def decrypt_all_cred_files_for_env(**kwargs):
     if not IS_CRYPT:
         check_for_encrypted_files(files)
     else:
-        shades = {}
 
-        for f in files:
-            shades[f] = shade_files_helper.get_shades_files(f)
-        flat_shade_paths = list(chain.from_iterable(filter(None, shades.values())))
-        partial_decrypt = partial(_decrypt_file, kwargs=kwargs)
-        # for file in flat_shade_paths:
-        #     partial_decrypt(file)
-        with ThreadPoolExecutor(max_workers=CPU_COUNT) as executor:
-            executor.map(partial_decrypt, flat_shade_paths)
-        with ThreadPoolExecutor(max_workers=CPU_COUNT) as executor:
-            executor.map(
-                lambda item: shade_files_helper.merge_creds_file(item[0], item[1]),
-                shades.items()
-            )
-        logger.debug("Decrypted next cred files:")
-        logger.debug(files)
+        if CREATE_SHADES: 
+            shades = {}
+            for f in files:
+                shades[f] = shade_files_helper.get_shades_files(f)
+            flat_shade_paths = list(chain.from_iterable(filter(None, shades.values())))
+            partial_decrypt = partial(_decrypt_file, kwargs=kwargs)
+            # for file in flat_shade_paths:
+            #     partial_decrypt(file)
+            with ThreadPoolExecutor(max_workers=CPU_COUNT) as executor:
+                executor.map(partial_decrypt, flat_shade_paths)
+            with ThreadPoolExecutor(max_workers=CPU_COUNT) as executor:
+                executor.map(
+                    lambda item: shade_files_helper.merge_creds_file(item[0], item[1]),
+                    shades.items()
+                )
+            logger.debug("Decrypted next cred files:")
+            logger.debug(files)
+        else:
+            for f in files:
+                _decrypt_file(f, **kwargs)
     logger.info('repo successfully decrypted')
 
 
