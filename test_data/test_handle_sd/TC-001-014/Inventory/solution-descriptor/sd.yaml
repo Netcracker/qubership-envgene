@@ -1,4 +1,4 @@
-version: '2.1'
+version: 2.1
 type: solutionDeploy
 deployMode: composite
 applications:
@@ -10,3 +10,7 @@ applications:
     deployPostfix: postgresql
   - version: postgres:1.32.6
     deployPostfix: postgresql-dbaas
+  - version: Test-App-Name:0.0.1-Test
+    deployPostfix: app
+  - version: Test-App-DB-Name:0.0.1-Test
+    deployPostfix: app-core
