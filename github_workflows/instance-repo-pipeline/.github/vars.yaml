@@ -1,9 +1,0 @@
----
-
-ENV_TEMPLATE_TEST: False #boolean - only true or false
-ENV_TEMPLATE_NAME: ''
-SD_DATA: '{}'
-SD_VERSION: ''
-SD_SOURCE_TYPE: ''
-SD_DELTA: False
-ENV_SPECIFIC_PARAMETERS: {}
