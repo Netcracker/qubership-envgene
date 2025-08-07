@@ -2,5 +2,5 @@ version: 2.1
 type: solutionDeploy
 deployMode: composite
 applications:
-  - version: TEST-VALUE:1.0
-    deployPostfix: test
+  - version: MONITORING:0.64.1
+    deployPostfix: platform-monitoring
