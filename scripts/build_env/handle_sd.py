@@ -136,14 +136,14 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
             "deployMode": data[0].get("deployMode"),
             "applications": merged_applications["applications"]
             }
-        logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
-        logger.info(f"{json.dumps(merged_result, indent=2)}")
+        logger.info(f"Level-1 SD data: ")
+        logger.info(merged_result)
     else:
         merged_result = data
 
     #merged_result["version"] = str(merged_result["version"])
-    helper.writeYamlToFile(sd_path, merged_result)
-    merged_data = helper.openYaml(sd_path)
+    # helper.writeYamlToFile(sd_path, merged_result)
+    merged_data = merged_result
     logger.info(f"Merged_data: ")
     logger.info(merged_data)
 
@@ -155,7 +155,7 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         if helper.check_file_exists(destination):
             full_sd_yaml = helper.openYaml(destination)
             logger.info(f"full_sd.yaml before replacement: ")
-            logger.info(f"{json.dumps(full_sd_yaml, indent=2)}")
+            logger.info(full_sd_yaml)
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(destination))

@@ -23,11 +23,11 @@ TEST_CASES = [
     # (cluster_name, environment_name, test_case_name)
     ("cluster01", "env02", "TC-001-002"),
     ("cluster01", "env02", "TC-001-004"),
-    # ("cluster01", "env02", "TC-001-006"),
-    # ("cluster01", "env02", "TC-001-008"),
-    # ("cluster01", "env02", "TC-001-010"),
-    # ("cluster01", "env02", "TC-001-012"),
-    # ("cluster01", "env02", "TC-001-014")
+    ("cluster01", "env02", "TC-001-006"),
+    ("cluster01", "env02", "TC-001-008"),
+    ("cluster01", "env02", "TC-001-010"),
+    ("cluster01", "env02", "TC-001-012"),
+    ("cluster01", "env02", "TC-001-014")
 ]
 
 # Directory paths configuration
@@ -174,6 +174,39 @@ def compare_sd_files(expected_dir, actual_dir, sd_filename)-> tuple[bool, str]:
         logger.error(f"Error comparing files: {e}")
         return False, ""
 
+# TODO: move into file_helper
+def cat_all_files_in_dir(directory_path):
+    """
+    Concatenates and prints the contents of all files in a given directory.
+
+    Args:
+        directory_path (str): The path to the directory containing the files.
+    """
+    try:
+        # Get a list of all files and directories in the specified path
+        items = os.listdir(directory_path)
+
+        # Filter out only files (not subdirectories)
+        files = [item for item in items if os.path.isfile(os.path.join(directory_path, item))]
+
+        if not files:
+            print(f"No files found in '{directory_path}'.")
+            return
+
+        for filename in files:
+            filepath = os.path.join(directory_path, filename)
+            try:
+                with open(filepath, 'r') as f:
+                    print(f"--- Contents of '{filename}' ---")
+                    print(f.read())
+                    print("-" * (len(filename) + 20)) # Separator for readability
+            except Exception as e:
+                print(f"Error reading '{filename}': {e}")
+
+    except FileNotFoundError:
+        print(f"Error: Directory '{directory_path}' not found.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
 
 @pytest.mark.parametrize("cluster_name, env_name, test_case_name", TEST_CASES)
 
@@ -223,6 +256,7 @@ def test_sd(cluster_name, env_name, test_case_name):
 
     # Generate SD file
     logger.info("Generating SD file...")
+
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
 
     # Compare generated SD with etalon

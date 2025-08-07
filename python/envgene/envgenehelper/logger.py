@@ -1,6 +1,9 @@
+from collections import OrderedDict
 from os import getenv
 import logging
 from pprint import pformat
+
+from ruyaml.compat import ordereddict
 
 class CustomFormatter(logging.Formatter):
 
@@ -20,7 +23,7 @@ class CustomFormatter(logging.Formatter):
     }
 
     def format(self, record):
-        if isinstance(record.msg, (dict, list, tuple)):
+        if isinstance(record.msg, (dict, list, tuple, ordereddict, OrderedDict)):
             record.msg = pformat(record.msg)
         log_fmt = self.FORMATS.get(record.levelno)
         formatter = logging.Formatter(log_fmt)
