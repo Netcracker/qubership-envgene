@@ -13,7 +13,7 @@ inputs:
   dockerfile-path:
     description: 'Path to Dockerfile'
     required: false
-    default: './build_effective_set_generator/build/Dockerfile'
+    default: './build_effective_set_generator_java/Dockerfile'
   git-user:
     description: 'Git username for build args'
     required: false
@@ -29,6 +29,12 @@ runs:
   steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Download JAR artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: effective_set_jar
+        path: downloaded_artifact
 
     - name: Log in to the Container registry
       uses: docker/login-action@v3
