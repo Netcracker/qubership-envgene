@@ -49,6 +49,7 @@ def merge_sd(env, sd_data, merge_func):
     logger.info(f"Final destination! - {destination}")
     if not helper.check_file_exists(destination):
         logger.info("file not found in final destination, skipping final merge")
+        helper.writeYamlToFile(destination, sd_data)
         return
     full_sd_yaml = helper.openYaml(destination)
     logger.info(f"full_sd.yaml before merge: ")
