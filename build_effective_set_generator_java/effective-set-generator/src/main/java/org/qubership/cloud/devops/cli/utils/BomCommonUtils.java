@@ -123,7 +123,7 @@ public class BomCommonUtils {
                 case "application/vnd.qubership.configuration.declarative-configuration":
                     isFacadeGateway = extractGatewayFlag(subComponent);
                     break;
-                case "application/vnd.qubership.resource-profile-baseline":
+                case "application/vnc.qs.resource-profile-baseline":
                     profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
                     break;
 

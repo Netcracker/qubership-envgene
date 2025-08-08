@@ -38,7 +38,8 @@ import org.qubership.cloud.devops.commons.pojo.credentials.dto.SecretCredentials
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
-import org.qubership.cloud.parameters.processor.service.ParametersCalculationService;
+import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1;
+import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV2;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -55,7 +56,8 @@ import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 @Dependent
 @Slf4j
 public class CliParameterParser {
-    private final ParametersCalculationService parametersService;
+    private final ParametersCalculationServiceV1 parametersServiceV1;
+    private final ParametersCalculationServiceV2 parametersServiceV2;
     private final InputData inputData;
     private final FileDataConverter fileDataConverter;
     private final SharedData sharedData;
@@ -63,12 +65,14 @@ public class CliParameterParser {
 
 
     @Inject
-    public CliParameterParser(ParametersCalculationService parametersService,
+    public CliParameterParser(ParametersCalculationServiceV1 parametersServiceV1,
+                              ParametersCalculationServiceV2 parametersServiceV2,
                               InputData inputData,
                               FileDataConverter fileDataConverter,
                               SharedData sharedData,
                               FileSystemUtils fileSystemUtils) {
-        this.parametersService = parametersService;
+        this.parametersServiceV1 = parametersServiceV1;
+        this.parametersServiceV2 = parametersServiceV2;
         this.inputData = inputData;
         this.fileDataConverter = fileDataConverter;
         this.sharedData = sharedData;
@@ -99,7 +103,8 @@ public class CliParameterParser {
                     try {
                         logInfo("Started processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                         generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), k8TokenMap);
-                        String deployPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/');
+                        String deployPostFixDir = "v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion()) ? String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/') :
+                                String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set", namespaceName).replace('\\', '/');
                         String runtimePostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/runtime", namespaceName).replace('\\', '/');
                         String cleanupPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/cleanup", namespaceName).replace('\\', '/');
                         int index = deployPostFixDir.indexOf("/environments/");
@@ -143,7 +148,7 @@ public class CliParameterParser {
     }
 
     private void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
-        ParameterBundle parameterBundle = parametersService.getCliE2EParameter(tenantName, cloudName);
+        ParameterBundle parameterBundle = parametersServiceV2.getCliE2EParameter(tenantName, cloudName);
         if (parameterBundle.getE2eParams() == null) {
             parameterBundle.setE2eParams(new HashMap<>());
         }
@@ -156,7 +161,7 @@ public class CliParameterParser {
     }
 
     private void generateCleanupOutput(String tenantName, String cloudName, String namespace, String originalNamespace, Map<String, String> k8TokenMap) throws IOException {
-        ParameterBundle parameterBundle = parametersService.getCleanupParameterBundle(tenantName, cloudName, namespace, null, originalNamespace, k8TokenMap);
+        ParameterBundle parameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespace, null, originalNamespace, k8TokenMap);
         if (parameterBundle.getCleanupParameters() == null) {
             parameterBundle.setCleanupParameters(new HashMap<>());
         }
@@ -247,14 +252,26 @@ public class CliParameterParser {
                 k8TokenMap.put(originalNamespace, secCred.getSecret());
             }
         }
-        ParameterBundle parameterBundle = parametersService.getCliParameter(tenantName,
-                cloudName,
-                namespaceName,
-                appName,
-                deployerInputs,
-                originalNamespace,
-                k8TokenMap);
-        generateCleanupOutput(tenantName, cloudName, namespaceName, originalNamespace, k8TokenMap);
+        ParameterBundle parameterBundle = null;
+        if ("v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion())) {
+            parameterBundle = parametersServiceV2.getCliParameter(tenantName,
+                    cloudName,
+                    namespaceName,
+                    appName,
+                    deployerInputs,
+                    originalNamespace,
+                    k8TokenMap);
+            generateCleanupOutput(tenantName, cloudName, namespaceName, originalNamespace, k8TokenMap);
+        } else {
+            parameterBundle = parametersServiceV1.getCliParameter(tenantName,
+                    cloudName,
+                    namespaceName,
+                    appName,
+                    deployerInputs,
+                    originalNamespace,
+                    k8TokenMap);
+
+        }
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
 

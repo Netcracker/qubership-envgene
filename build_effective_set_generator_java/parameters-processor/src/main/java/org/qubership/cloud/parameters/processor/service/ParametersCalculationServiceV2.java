@@ -19,8 +19,8 @@ package org.qubership.cloud.parameters.processor.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.collections4.MapUtils;
-import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
+import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.parameters.processor.ParametersProcessor;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
@@ -34,13 +34,13 @@ import java.util.*;
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
 
 @ApplicationScoped
-public class ParametersCalculationService {
-    public static final Logger LOGGER = LoggerFactory.getLogger(ParametersCalculationService.class.getName());
+public class ParametersCalculationServiceV2 {
+    public static final Logger LOGGER = LoggerFactory.getLogger(ParametersCalculationServiceV2.class.getName());
     private final ParametersProcessor parametersProcessor;
     private final List<String> entities = Arrays.asList(SERVICES, CONFIGURATIONS, FRONTENDS, SMARTPLUG, CDN, SAMPLREPO);
 
     @Inject
-    public ParametersCalculationService(ParametersProcessor parametersProcessor) {
+    public ParametersCalculationServiceV2(ParametersProcessor parametersProcessor) {
         this.parametersProcessor = parametersProcessor;
     }
 
