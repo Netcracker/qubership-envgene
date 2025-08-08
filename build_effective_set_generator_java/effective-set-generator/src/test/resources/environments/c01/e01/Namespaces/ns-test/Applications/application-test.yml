@@ -1,0 +1,4 @@
+name: "application-test"
+deployParameters:
+  APP_PARAM: "app"
+technicalConfigurationParameters: {}

@@ -1,0 +1,145 @@
+{
+  "components": [
+    {
+      "bom-ref": "BomRef.19275452012729688.6419666777140893",
+      "components": [
+        {
+          "bom-ref": "BomRef.32081053626326217.10989333668434675",
+          "group": "application-test",
+          "mime-type": "application/vnd.docker.image",
+          "name": "service-test",
+          "version": "build22",
+          "purl": "pkg:docker/application-test/service-test-assembly-release-xxxx@build22?registry_id=registry-test&repository_id=snapshotUri",
+          "type": "container"
+        },
+        {
+          "bomRef": "BomRef.8111831467428198.055279917449515104",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "deployment-configuration.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "ew0KICAgICJzdGF0dXNQb2xsaW5nIjogew0KICAgICAgICAicmVzb3VyY2VUeXBlIjogImNvbmZpZ21hcHMiLA0KICAgICAgICAicmVzb3VyY2VOYW1lIjogImludGVyYWN0aW9uLWRlc2lnbmVyLWRlZmF1bHQtY29uZmlndXJhdGlvbi1wYWNrYWdlIiwNCiAgICAgICAgInN0YXR1c1BhdGgiOiAiJC5kYXRhIiwNCiAgICAgICAgInN0YXR1c1BhdGhGYWlsIjogIiQuZGF0YSIsDQogICAgICAgICJ0aW1lb3V0IjogMTANCiAgICB9LA0KICAgICJkZXBsb3lPcHRpb25zIjogew0KICAgICAgICAiZ2VuZXJhdGVGYWNhZGVHYXRld2F5IjogZmFsc2UsDQogICAgICAgICJibHVlZ3JlZW4iOiB0cnVlDQogICAgfQ0KfQ0K"
+                }
+              }
+            }
+          ],
+          "type": "data",
+          "mime-type": "application/vnc.qs.configuration.deployment-configuration",
+          "name": "deployment-configuration"
+        },
+        {
+          "bomRef": "BomRef.14407074139909404.06328652696718962",
+          "data": [
+            {
+              "name": "dev.yaml",
+              "type": "configuration",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "Q1BVX1JFUVVFU1Q6ICIxMDBtIg0KQ1BVX0xJTUlUOiAiNCI="
+                }
+              }
+            },
+            {
+              "name": "dev-ha.yaml",
+              "type": "configuration",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "Q1BVX1JFUVVFU1Q6ICIxMDBtIg0KQ1BVX0xJTUlUOiAiNCI="
+                }
+              }
+            },
+            {
+              "name": "prod.yaml",
+              "type": "configuration",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "Q1BVX1JFUVVFU1Q6ICIxMDBtIg0KQ1BVX0xJTUlUOiAiNCI="
+                }
+              }
+            },
+            {
+              "name": "prod-nonha.yaml",
+              "type": "configuration",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "Q1BVX1JFUVVFU1Q6ICIxMDBtIg0KQ1BVX0xJTUlUOiAiNCI="
+                }
+              }
+            }
+          ],
+          "mime-type": "application/vnc.qs.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "type": "data"
+        }
+      ],
+      "mime-type": "application/vnd.qubership.service",
+      "name": "service-test",
+      "properties": [
+        {
+          "name": "git_branch",
+          "value": "release/xxxx"
+        },
+        {
+          "name": "image_type",
+          "value": "service"
+        }
+      ],
+      "type": "application"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "BomRef.9696699760208608.039103779321217225"
+    },
+    {
+      "ref": "BomRef.19275452012729688.6419666777140893"
+    }
+  ],
+  "metadata": {
+    "component": {
+      "bom-ref": "BomRef.9696699760208608.039103779321217225",
+      "components": [
+        {
+          "bom-ref": "BomRef.6879363965010711.48376753618864865",
+          "group": "org.qubership.cloud.devops.deployment-descriptor.platform",
+          "mime-type": "application/vnd.qs.deployment-descriptor",
+          "name": "deployment-artifacts",
+          "purl": "pkg:maven/org.qubership.cloud.devops.deployment-descriptor.platform/deployment-artifacts@release-xxxx-RELEASE?registry_id=registry-test&repository_id=targetSnapshot",
+          "type": "data",
+          "version": "release-xxxx-RELEASE"
+        }
+      ],
+      "mime-type": "application/vnd.qs.application",
+      "name": "application-test",
+      "type": "application",
+      "version": "release-2024.3-XXX-RELEASE"
+    },
+    "timestamp": "2025-02-26T14:21:10.126610+00:00",
+    "tools": {
+      "components": [
+        {
+          "name": "sbom_generator",
+          "type": "application",
+          "version": "0.0.1"
+        }
+      ]
+    }
+  },
+  "serialNumber": "urn:uuid:f2190897-eb2c-4625-81f3-6138acc2f03e",
+  "version": 1,
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6"
+}

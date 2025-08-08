@@ -1,0 +1,45 @@
+name: "cloud"
+apiUrl: "test.cloud.com"
+apiPort: "8888"
+privateUrl: "test.cloud.com"
+publicUrl: "test.cloud.com"
+dashboardUrl: "https://test.cloud.com"
+labels: []
+defaultCredentialsId: "cred-token"
+protocol: "https"
+dbMode: "db"
+databases: []
+mergeDeployParametersAndE2EParameters: false
+maasConfig:
+  credentialsId: ""
+  enable: true
+  maasUrl: "http://test-service.maas:8008"
+  maasInternalAddress: "http://test-service.maas:8008"
+vaultConfig:
+  credentialsId: ""
+  enable: false
+  url: ""
+dbaasConfigs:
+  - credentialsId: ""
+    enable: true
+    apiUrl: "http://test-dbaas:8080"
+    aggregatorUrl: "https://test-dbaas.cloud"
+consulConfig:
+  tokenSecret: ""
+  enabled: true
+  publicUrl: "https://test-consul.cloud"
+  internalUrl: "http://test-consul:8500"
+deployParameters:
+  CLOUD_PARAM: "value"
+e2eParameters:
+  CLOUD_E2E_PARAM: "e2e"
+technicalConfigurationParameters:
+  CLOUD_TECH_PARAM: "tech"
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+productionMode: false
+profile: 
+  baseline: "dev"
+  name: "profile-test"
+

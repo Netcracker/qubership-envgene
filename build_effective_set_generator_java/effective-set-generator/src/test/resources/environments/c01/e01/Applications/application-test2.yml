@@ -1,0 +1,4 @@
+name: "application-test2"
+deployParameters:
+  APP2_PARAM: "value2"
+technicalConfigurationParameters: {}
