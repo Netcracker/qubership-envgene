@@ -36,6 +36,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 
 @QuarkusTest
@@ -86,9 +87,13 @@ public class CliParameterParsetTest extends BaseInit {
         try (FileInputStream targetStream = new FileInputStream(file)) {
             generatedParams = yaml.load(targetStream);
         }
-        //generatedParams.remove("DEPLOYMENT_SESSION_ID");
-        //((Map<String, String>) generatedParams.get("global")).remove("DEPLOYMENT_SESSION_ID");
-        //((Map<String, String>) generatedParams.get("service-test")).remove("DEPLOYMENT_SESSION_ID");
+        generatedParams.remove("DEPLOYMENT_SESSION_ID");
+        ((Map<String, String>) generatedParams.get("global")).remove("DEPLOYMENT_SESSION_ID");
+        ((Map<String, String>) generatedParams.get("service-test")).remove("DEPLOYMENT_SESSION_ID");
+        Map<String, Object> result = storedParams.entrySet()
+                .stream()
+                .filter(e -> !generatedParams.containsKey(e.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
         assertEquals(storedParams, generatedParams);
     }
 

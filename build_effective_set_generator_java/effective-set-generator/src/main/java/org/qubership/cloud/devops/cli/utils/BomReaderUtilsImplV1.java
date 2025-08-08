@@ -50,7 +50,7 @@ public class BomReaderUtilsImplV1 {
         EntitiesMap entitiesMap = new EntitiesMap();
         try {
             Component component = bomContent.getMetadata().getComponent();
-            if (component.getMimeType().equals("application/vnd.qubership.application")) {
+            if (component.getMimeType().equals("application/vnd.qs.application")) {
                 ApplicationBomDTO applicationBomDto = component.getComponents()
                         .stream()
                         .map(subComp -> {
