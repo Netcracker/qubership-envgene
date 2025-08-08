@@ -1,0 +1,17 @@
+# The contents of this file is generated from template artifact: tmnl-env-template.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "profile-test"
+baseline: "dev"
+description: ""
+applications:
+  - name: "application-test"
+    version: "release-2024.3-XXX-RELEASE"
+    sd: ""
+    services:
+      - name: "service-test"
+        parameters:
+          - name: "MEMORY_LIMIT"
+            value: "9000Mi"
+          - name: "REPLICAS"
+            value: "2"

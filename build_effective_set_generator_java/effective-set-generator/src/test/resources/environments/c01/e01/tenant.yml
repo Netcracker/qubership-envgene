@@ -1,0 +1,19 @@
+name: "tenant-test"
+registryName: "registry-test"
+description: ""
+owners: ""
+gitRepository: ""
+defaultBranch: ""
+credential: ""
+labels:
+  - "DEV"
+globalE2EParameters:
+  pipelineDefaultRecipients: ""
+  recipientsStrategy: "merge"
+  mergeTenantsAndE2EParameters: false
+  environmentParameters:
+    BRANCH_NAME: "master"
+deployParameters:
+  ESCAPE_SEQUENCE: "true"
+  TEST_USER: "${creds.get(\"test-cred\").username}"
+  TENANT_PARAM: "test"

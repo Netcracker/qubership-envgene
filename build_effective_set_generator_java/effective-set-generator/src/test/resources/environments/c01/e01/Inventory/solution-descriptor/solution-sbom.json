@@ -1,0 +1,66 @@
+{
+  "components": [
+    {
+      "bom-ref": "BomRef.602054759195322.11983380012218325",
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "file://application-test-sbom.json"
+        }
+      ],
+      "mime-type": "application/vnd.qs.application",
+      "name": "application-test",
+      "properties": [
+        {
+          "name": "deployPostfix",
+          "value": "ns-test"
+        }
+      ],
+      "type": "application",
+      "version": "release-xxxx-RELEASE"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "BomRef.1029772185972071.5391574231266417"
+    },
+    {
+      "ref": "BomRef.602054759195322.11983380012218325"
+    }
+  ],
+  "metadata": {
+    "component": {
+      "bom-ref": "BomRef.1029772185972071.5391574231266417",
+      "components": [
+        {
+          "bom-ref": "BomRef.8241588351812492.6325226948534098",
+          "group": "org.qubership.cloud.devops.deployment-descriptor.platform",
+          "mime-type": "application/vnd.qs.solution-descriptor",
+          "name": "deployment-artifacts",
+          "purl": "pkg:maven/org.qubership.cloud.devops.deployment-descriptor.platform/deployment-artifacts@release-xxxx?registry_id=registry-test?repository_id=targetSnapshot",
+          "type": "data",
+          "version": "release-xxxx"
+        }
+      ],
+      "mime-type": "application/vnd.qs.solution",
+      "name": "test-project-sd",
+      "type": "application",
+      "version": "release-xxxx"
+    },
+    "timestamp": "2025-03-04T17:08:34.176597+00:00",
+    "tools": {
+      "components": [
+        {
+          "name": "sbom_generator",
+          "type": "application",
+          "version": "0.0.1"
+        }
+      ]
+    }
+  },
+  "serialNumber": "urn:uuid:4be7fa75-2123-4622-8b87-a75fb79f0469",
+  "version": 1,
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6"
+}

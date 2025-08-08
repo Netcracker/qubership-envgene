@@ -1,0 +1,109 @@
+API_DBAAS_ADDRESS: http://test-dbaas:8080
+APPLICATION_NAME: application-test
+APP_PARAM: app
+ARTIFACT_DESCRIPTOR_ARTIFACT_ID: deployment-artifacts
+ARTIFACT_DESCRIPTOR_GROUP_ID: org.qubership.cloud.devops.deployment-descriptor.platform
+ARTIFACT_DESCRIPTOR_MAVEN_REPO: https://teststorage.com/mvn.snapshot
+ARTIFACT_DESCRIPTOR_VERSION: release-xxxx-RELEASE
+BUILD_TAG_NEW: keycloak-database
+CLIENT_PREFIX: ns-test
+CLOUDNAME: cloud
+CLOUD_API_HOST: test.cloud.com
+CLOUD_API_PORT: '8888'
+CLOUD_PARAM: value
+CLOUD_PRIVATE_HOST: test.cloud.com
+CLOUD_PROTOCOL: https
+CLOUD_PUBLIC_HOST: test.cloud.com
+CONSUL_ADMIN_TOKEN: ''
+CONSUL_PUBLIC_URL: https://test-consul.cloud
+CONSUL_URL: http://test-consul:8500
+CUSTOM_HOST: test.cloud.com
+DBAAS_AGGREGATOR_ADDRESS: https://test-dbaas.cloud
+DBAAS_AGGREGATOR_PASSWORD: ""
+DBAAS_AGGREGATOR_USERNAME: ""
+DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: ""
+DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: ""
+DBAAS_ENABLED: 'true'
+ESCAPE_SEQUENCE: 'true'
+GATEWAY_URL: http://internal-gateway-service:8080
+MAAS_CREDENTIALS_PASSWORD: ""
+MAAS_CREDENTIALS_USERNAME: ""
+MAAS_ENABLED: 'true'
+MAAS_EXTERNAL_ROUTE: http://test-service.maas:8008
+MAAS_INTERNAL_ADDRESS: http://test-service.maas:8008
+MAAS_SERVICE_ADDRESS: http://test-service.maas:8008
+NAMESPACE: ns01
+NS_PARAM: '1'
+OPENSHIFT_SERVER: https://test.cloud.com:8888
+ORIGIN_NAMESPACE: ns01
+PRIVATE_GATEWAY_URL: https://private-gateway-ns-test.test.cloud.com
+PRIVATE_IDENTITY_PROVIDER_URL: https://private-gateway-ns-test.test.cloud.com
+PRODUCTION_MODE: 'false'
+PUBLIC_GATEWAY_URL: https://public-gateway-ns-test.test.cloud.com
+PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-ns-test.test.cloud.com
+SERVER_HOSTNAME: test.cloud.com
+SSL_SECRET: defaultsslcertificate
+STATIC_CACHE_SERVICE_ROUTE_HOST: static-cache-service-ns-test.test.cloud.com
+TENANTNAME: tenant-test
+TENANT_PARAM: test
+global: &id001
+  API_DBAAS_ADDRESS: http://test-dbaas:8080
+  APPLICATION_NAME: application-test
+  APP_PARAM: app
+  ARTIFACT_DESCRIPTOR_ARTIFACT_ID: deployment-artifacts
+  ARTIFACT_DESCRIPTOR_GROUP_ID: org.qubership.cloud.devops.deployment-descriptor.platform
+  ARTIFACT_DESCRIPTOR_MAVEN_REPO: https://teststorage.com/mvn.snapshot
+  ARTIFACT_DESCRIPTOR_VERSION: release-xxxx-RELEASE
+  BUILD_TAG_NEW: keycloak-database
+  CLIENT_PREFIX: ns-test
+  CLOUDNAME: cloud
+  CLOUD_API_HOST: test.cloud.com
+  CLOUD_API_PORT: '8888'
+  CLOUD_PARAM: value
+  CLOUD_PRIVATE_HOST: test.cloud.com
+  CLOUD_PROTOCOL: https
+  CLOUD_PUBLIC_HOST: test.cloud.com
+  CONSUL_ADMIN_TOKEN: ''
+  CONSUL_PUBLIC_URL: https://test-consul.cloud
+  CONSUL_URL: http://test-consul:8500
+  CUSTOM_HOST: test.cloud.com
+  DBAAS_AGGREGATOR_ADDRESS: https://test-dbaas.cloud
+  DBAAS_AGGREGATOR_PASSWORD: ""
+  DBAAS_AGGREGATOR_USERNAME: ""
+  DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: ""
+  DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: ""
+  DBAAS_ENABLED: 'true'
+  ESCAPE_SEQUENCE: 'true'
+  GATEWAY_URL: http://internal-gateway-service:8080
+  MAAS_CREDENTIALS_PASSWORD: ""
+  MAAS_CREDENTIALS_USERNAME: ""
+  MAAS_ENABLED: 'true'
+  MAAS_EXTERNAL_ROUTE: http://test-service.maas:8008
+  MAAS_INTERNAL_ADDRESS: http://test-service.maas:8008
+  MAAS_SERVICE_ADDRESS: http://test-service.maas:8008
+  NAMESPACE: ns01
+  NS_PARAM: '1'
+  OPENSHIFT_SERVER: https://test.cloud.com:8888
+  ORIGIN_NAMESPACE: ns01
+  PRIVATE_GATEWAY_URL: https://private-gateway-ns-test.test.cloud.com
+  PRIVATE_IDENTITY_PROVIDER_URL: https://private-gateway-ns-test.test.cloud.com
+  PRODUCTION_MODE: 'false'
+  PUBLIC_GATEWAY_URL: https://public-gateway-ns-test.test.cloud.com
+  PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-ns-test.test.cloud.com
+  SERVER_HOSTNAME: test.cloud.com
+  SSL_SECRET: defaultsslcertificate
+  STATIC_CACHE_SERVICE_ROUTE_HOST: static-cache-service-ns-test.test.cloud.com
+  TENANTNAME: tenant-test
+  TENANT_PARAM: test
+service-test:
+  <<: *id001
+  BRANCH: release/xxxx
+  CPU_LIMIT: '4'
+  CPU_REQUEST: 100m
+  DOCKER_TAG: service-test
+  IMAGE_REPOSITORY: teststorage.com:17034/application-test/service-test
+  MEMORY_LIMIT: 9000Mi
+  REPLICAS: '2'
+  SERVICE_NAME: service-test
+  SERVICE_TYPE: service
+  TAG: build22
