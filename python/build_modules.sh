@@ -8,7 +8,6 @@ install_and_clean() {
     local name="$2"
 
     echo "Installing $SCRIPTPATH/$path"
-    uv pip install --system -e "$SCRIPTPATH/$path"
     if [ "$IS_LOCAL_DEV_TEST_ENVGENE" = "true" ]; then
       uv pip install --system -e "$SCRIPTPATH/$path"
     else
