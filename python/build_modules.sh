@@ -10,7 +10,8 @@ install_and_clean() {
 
     echo "Installing $base_path/$path"
     if [ "$IS_LOCAL_DEV_TEST_ENVGENE" = "true" ]; then
-      uv pip install --system -e "$base_path/$path"
+      echo "Installing in local test mode"
+      uv pip install --editable "$base_path/$path"
     else
       uv pip install --system "$base_path/$path"
     fi
