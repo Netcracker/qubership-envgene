@@ -1,0 +1,329 @@
+{
+  "serialNumber": "urn:uuid:c7eb7c5f-b8da-4c05-9c48-678a11c00a35",
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-01-21T12:00:00Z",
+    "component": {
+      "bom-ref": "BomRef.9948595314929558.676764979615473",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "name": "Cloud-Core",
+      "version": "release-2023.3-8.4.0-20230908.094348-15-RELEASE",
+      "components": [
+        {
+          "bom-ref": "BomRef.16199505203612918.06299339993557085",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "name": "Cloud-Core",
+          "group": "org.qubership.cloud.core.deployment-descriptor.platform",
+          "version": "release-2023.3-8.4.0-20230908.094348-15-RELEASE",
+          "purl": "pkg:maven/org.qubership.cloud.core.deployment-descriptor.platform/Cloud-Core@release-2023.3-8.4.0-20230908.094348-15-RELEASE?registry_id=sandbox?repository_id=targetSnapshot"
+        }
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "BomRef.6718235750934567.4830804118774181",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "name": "key-manager",
+      "properties": [
+        {
+          "name": "git_branch",
+          "value": "release/2023.1-7.10.0"
+        },
+        {
+          "name": "image_type",
+          "value": "service"
+        }
+      ],
+      "components": [
+        {
+          "bom-ref": "BomRef.040266745346849264.5256460186508501",
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "name": "key-manager-assembly-release-2023.1-7.10.0",
+          "group": "cloud-core",
+          "version": "build22",
+          "purl": "pkg:docker/cloud-core/key-manager-assembly-release-2023.1-7.10.0@build22?registry_id=sandbox?repository_id=targetSnapshot"
+        },
+        {
+          "bom-ref": "BomRef.38739830664287533.5397835530905233",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.configuration.declarative-configuration",
+          "name": "declarative-configuration",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "deployment-configuration.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "bom-ref": "BomRef.18464751402787616.6549305883668648",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "dev-ha.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod-nonha.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "BomRef.08810137043213928.14345930982770982",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "name": "identity-provider",
+      "properties": [
+        {
+          "name": "git_branch",
+          "value": "8157"
+        },
+        {
+          "name": "image_type",
+          "value": "service"
+        }
+      ],
+      "components": [
+        {
+          "bom-ref": "BomRef.04555635497184274.9206615845377818",
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "name": "identity-provider-assembly-8157",
+          "group": "cloud-core",
+          "version": "build3",
+          "purl": "pkg:docker/cloud-core/identity-provider-assembly-8157@build3?registry_id=sandbox?repository_id=snapshotUri"
+        },
+        {
+          "bom-ref": "BomRef.6761624005326978.7212658347443947",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.configuration.declarative-configuration",
+          "name": "declarative-configuration",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "deployment-configuration.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "bom-ref": "BomRef.47142752937464083.8438035837225848",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "dev-ha.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod-nonha.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "BomRef.42176809416075867.32067885425663456",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.configuration.smartplug",
+      "name": "smartplug-sample-plugin",
+      "components": [
+        {
+          "bom-ref": "BomRef.297500793532955.6255622644092922",
+          "type": "application",
+          "mime-type": "application/vnd.osgi.bundle",
+          "name": "smartplug-sample-plugin",
+          "group": "org.qubership.cloud.ext-platform-sample-plugins",
+          "version": "master-20250205.150132-build5",
+          "purl": "pkg:maven/org.qubership.cloud.ext-platform-sample-plugins/smartplug-sample-plugin@master-20250205.150132-build5?registry_id=sandbox?repository_id=targetSnapshot"
+        }
+      ]
+    },
+    {
+      "bom-ref": "BomRef.7502468308673317.6801421820925295",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.configuration",
+      "name": "dmp-api-docs",
+      "components": [
+        {
+          "bom-ref": "BomRef.3377598499922374.09983633256578817",
+          "type": "application",
+          "mime-type": "application/zip",
+          "name": "dmp_api_docs",
+          "group": "org.qubership.cloud.content.common",
+          "version": "master-20250205.150410-build5",
+          "purl": "pkg:maven/org.qubership.cloud.content.common/dmp_api_docs@master-20250205.150410-build5?registry_id=sandbox?repository_id=targetSnapshot"
+        }
+      ]
+    },
+    {
+      "bom-ref": "BomRef.3130027796005985.7198569024865692",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.configuration.cdn",
+      "name": "<component-name>",
+      "components": [
+        {
+          "bom-ref": "BomRef.5171571098165817.9800475266194008",
+          "type": "application",
+          "mime-type": "application/zip",
+          "name": "<artifact-name>",
+          "group": "<artifact-group>",
+          "version": "<artifact-version>",
+          "purl": "pkg:maven/<artifact-group>/<artifact-name>@<artifact-version>?registry_id=sandbox?repository_id=targetSnapshot"
+        }
+      ]
+    },
+    {
+      "bom-ref": "BomRef.08810137043213928.14345930982770982",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.configuration.frontend",
+      "name": "<component-name>",
+      "components": [
+        {
+          "bom-ref": "BomRef.136844110261647.2004074270598808",
+          "type": "application",
+          "mime-type": "application/zip",
+          "name": "<artifact-name>",
+          "group": "<artifact-group>",
+          "version": "<artifact-version>",
+          "purl": "pkg:maven/<artifact-group>/<artifact-name>@<artifact-version>?registry_id=sandbox?repository_id=targetSnapshot"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "BomRef.9948595314929558.676764979615473"
+    },
+    {
+      "ref": "BomRef.16199505203612918.06299339993557085"
+    },
+    {
+      "ref": "BomRef.6718235750934567.4830804118774181"
+    },
+    {
+      "ref": "BomRef.42176809416075867.32067885425663456"
+    },
+    {
+      "ref": "BomRef.5136804616301178.9566551090179706"
+    },
+    {
+      "ref": "BomRef.7502468308673317.6801421820925295"
+    },
+    {
+      "ref": "BomRef.3130027796005985.7198569024865692"
+    },
+    {
+      "ref": "BomRef.08810137043213928.14345930982770982"
+    }
+  ]
+}

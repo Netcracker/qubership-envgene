@@ -1,0 +1,9 @@
+name: ""
+groupId: "TEMP_GROUP_ID"
+artifactId: ""
+registry:
+  mavenConfig:
+    repositoryDomainName: "TEMP_repo_name"
+    targetSnapshot: "TEMP_targetSnapshot"
+    targetStaging: "TEMP_targetStaging"
+    targetRelease: "TEMP_targetRelease"

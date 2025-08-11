@@ -1,0 +1,59 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:a23b7c5f-d8da-4c05-9c48-678a11c00b78",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-01-21T12:00:00Z",
+    "component": {
+      "type": "data",
+      "mime-type": "application/vnd.qubership.envgene.template",
+      "bom-ref": "BomRef.1148595314929558.676764979615446",
+      "name": "env-templates",
+      "version": "8518ba0e_20241008-044612",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "bom-ref": "BomRef.1348595314929558.676764976615412",
+          "name": "env-templates",
+          "group": "org.qubership.deploy",
+          "version": "8518ba0e_20241008-044612",
+          "purl": "pkg:maven/org.qubership.deploy/env-templates@8518ba0e_20241008-044612?registry_id=sandbox"
+        }
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "data",
+      "mime-type": "application/zip",
+      "bom-ref": "BomRef.4568235750934567.4120804118774387",
+      "name": "template-project",
+      "group": "org.qubership.deploy",
+      "version": "8518ba0e_20241008-044612",
+      "purl": "pkg:maven/org.qubership.deploy/template-project@8518ba0e_20241008-044612?registry_id=sandbox"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "BomRef.1148595314929558.676764979615446"
+    },
+    {
+      "ref": "BomRef.1348595314929558.676764976615412"
+    },
+    {
+      "ref": "BomRef.4568235750934567.4120804118774387"
+    }
+  ]
+}

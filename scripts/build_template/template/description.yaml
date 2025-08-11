@@ -1,0 +1,16 @@
+build:
+  env:
+    type: microservice
+    version: openjdk-11.0.2_gradle-5.6.2_mvn-3.6.0_python-3.7.0
+  variables:
+    DVERSION: "@branch-name"
+  networkRules: sandbox
+
+deploy:
+  dmp:
+    application_id: "@paramater-name"
+
+publication:
+  cloud-dd:
+    configuration:
+      type: configuration

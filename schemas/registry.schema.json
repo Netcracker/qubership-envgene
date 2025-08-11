@@ -1,0 +1,179 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "registry Configuration",
+  "description": "Configuration for the registry service, including credentials and repository URLs",
+  "type": "object",
+  "additionalProperties": {
+    "properties": {
+      "username": {
+        "type": "string",
+        "title": "Username",
+        "description": "Username for accessing the registry service",
+        "examples": [
+          "user",
+          "envgen.creds.get('artifactory-cred').username"
+        ]
+      },
+      "password": {
+        "type": "string",
+        "title": "Password",
+        "description": "Password for accessing the registry service",
+        "examples": [
+          "pass",
+          "envgen.creds.get('artifactory-cred').password"
+        ]
+      },
+      "releaseRepository": {
+        "type": "string",
+        "title": "Release Repository",
+        "description": "URL of the release repository in registry",
+        "examples": [
+          "https://artifactory.qubership.org/mvn.release"
+        ],
+        "format": "uri"
+      },
+      "snapshotRepository": {
+        "type": "string",
+        "title": "Snapshot Repository",
+        "description": "URL of the snapshot repository in registry",
+        "examples": [
+          "https://artifactory.qubership.org/mvn.staging"
+        ],
+        "format": "uri"
+      },
+      "stagingRepository": {
+        "type": "string",
+        "title": "Staging Repository",
+        "description": "URL of the staging repository in registry",
+        "examples": [
+          "https://artifactory.qubership.org/nc.dmp-descriptor.mvn.staging"
+        ],
+        "format": "uri"
+      },
+      "proxyRepository": {
+        "type": "string",
+        "title": "Proxy Repository",
+        "description": "URL of the proxy repository in registry",
+        "examples": [
+          "https://artifactory.qubership.org/mvn.proxy"
+        ],
+        "format": "uri"
+      },
+      "releaseTemplateRepository": {
+        "type": "string",
+        "title": "Release Template Repository",
+        "description": "URL of the release template repository in registry",
+        "examples": [
+          "https://artifactory.qubership.org/mvn.template.release"
+        ],
+        "format": "uri"
+      },
+      "snapshotTemplateRepository": {
+        "type": "string",
+        "title": "Snapshot Template Repository",
+        "description": "URL of the snapshot template repository in registry",
+        "examples": [
+          "https://artifactory.qubership.org/mvn.template.snapshot"
+        ],
+        "format": "uri"
+      },
+      "stagingTemplateRepository": {
+        "type": "string",
+        "title": "Staging Template Repository",
+        "description": "URL of the staging template repository in registry",
+        "examples": [
+          "https://artifactory.qubership.org/mvn.staging"
+        ],
+        "format": "uri"
+      },
+      "mavenConfig": {
+        "$ref": "#/definitions/MavenConfig"
+      },
+      "dockerConfig": {
+        "$ref": "#/definitions/DockerConfig"
+      }
+    },
+    "required": [
+      "username",
+      "password"
+    ],
+    "definitions": {
+      "DockerConfig": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "snapshotUri": {
+            "type": "string"
+          },
+          "stagingUri": {
+            "type": "string"
+          },
+          "releaseUri": {
+            "type": "string"
+          },
+          "groupUri": {
+            "type": "string"
+          },
+          "snapshotRepoName": {
+            "type": "string"
+          },
+          "stagingRepoName": {
+            "type": "string"
+          },
+          "releaseRepoName": {
+            "type": "string"
+          },
+          "groupName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupName",
+          "groupUri",
+          "releaseRepoName",
+          "releaseUri",
+          "snapshotRepoName",
+          "snapshotUri",
+          "stagingRepoName",
+          "stagingUri"
+        ]
+      },
+      "MavenConfig": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "repositoryDomainName": {
+            "type": "string"
+          },
+          "fullRepositoryUrl": {
+            "type": "string"
+          },
+          "targetSnapshot": {
+            "type": "string"
+          },
+          "targetStaging": {
+            "type": "string"
+          },
+          "targetRelease": {
+            "type": "string"
+          },
+          "snapshotGroup": {
+            "type": "string"
+          },
+          "releaseGroup": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fullRepositoryUrl",
+          "releaseGroup",
+          "repositoryDomainName",
+          "snapshotGroup",
+          "targetRelease",
+          "targetSnapshot",
+          "targetStaging"
+        ]
+      }
+    }
+  }
+}

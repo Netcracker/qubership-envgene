@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Artifact Definition Configuration",
+  "description": "Configuration for artifact identifation and associated registry information",
+  "additionalProperties": true,
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Artifact Name",
+      "description": "The name of the artifact",
+      "examples": [
+        "env-templates"
+      ]
+    },
+    "groupId": {
+      "type": "string",
+      "title": "Group ID",
+      "description": "The group ID used to identify the artifact",
+      "examples": [
+        "org.qubership.project.deployment-configuration"
+      ]
+    },
+    "artifactId": {
+      "type": "string",
+      "title": "Artifact ID",
+      "description": "The artifact ID used to identify the artifact",
+      "examples": [
+        "env-templates"
+      ]
+    },
+    "registry": {
+      "type": "object",
+      "title": "Registry Configuration",
+      "description": "Details about the registry configuration",
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Registry Name",
+          "description": "The name of the registry",
+          "examples": [
+            "artifactory"
+          ]
+        },
+        "credentialsId": {
+          "type": "string",
+          "title": "Credentials ID",
+          "description": "The identifier for accessing credentials to connect to the registry",
+          "examples": [
+            "artifactory-cred"
+          ]
+        },
+        "mavenConfig": {
+          "type": "object",
+          "title": "Maven Repository Configuration",
+          "description": "Configuration details for repositories",
+          "additionalProperties": true,
+          "properties": {
+            "repositoryDomainName": {
+              "type": "string",
+              "title": "Repository Domain",
+              "description": "The URL of the Maven repository",
+              "examples": [
+                "https://artifactory.qubership.org"
+              ]
+            },
+            "targetSnapshot": {
+              "type": "string",
+              "title": "Snapshot Repository",
+              "description": "The repository for snapshot versions",
+              "examples": [
+                "project.mvn.snapshots"
+              ]
+            },
+            "targetStaging": {
+              "type": "string",
+              "title": "Staging Repository",
+              "description": "The repository for staging versions",
+              "examples": [
+                "project.mvn.staging"
+              ]
+            },
+            "targetRelease": {
+              "type": "string",
+              "title": "Release Repository",
+              "description": "The repository for release versions",
+              "examples": [
+                "project.mvn"
+              ]
+            }
+          },
+          "required": [
+            "repositoryDomainName",
+            "targetSnapshot",
+            "targetStaging",
+            "targetRelease"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "credentialsId",
+        "mavenConfig"
+      ]
+    }
+  },
+  "required": [
+    "name",
+    "groupId",
+    "artifactId",
+    "registry"
+  ]
+}

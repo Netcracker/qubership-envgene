@@ -1,0 +1,11 @@
+name: "org.qubership:qubership_envgene_templates"
+groupId: "org.qubership"
+artifactId: "qubership_envgene_templates"
+registry:
+  name: "Maven Central"
+  credentialsId: "maven-central"
+  mavenConfig:
+    repositoryDomainName: "https://repo.maven.apache.org/maven2"
+    targetSnapshot: "https://oss.sonatype.org/content/repositories/snapshots"
+    targetStaging: "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+    targetRelease: ""

@@ -1,0 +1,48 @@
+### default paths
+artifact_dest: /tmp/artifact.zip
+dd_dest: /tmp/dd.json
+build_env_path: /build_env
+envgen_debug: "{{ lookup('env', 'envgen_debug') }}"
+tenant_name: "template_testing_{{ lookup('env', 'CI_PROJECT_NAME') }}_{{ lookup('env', 'ENV_NAME') }}"
+definition_env_name: "env-test"
+
+env_name: "{{ lookup('env', 'ENV_NAME') }}"
+cluster_name: "{{ lookup('env', 'CLUSTER_NAME') }}"
+environment_name: "{{ lookup('env', 'ENVIRONMENT_NAME') }}"
+base_dir: "{{ lookup('env', 'CI_PROJECT_DIR') }}"
+env_template_vers: "{{ lookup('env', 'ENV_TEMPLATE_VERSION') }}"
+env_template_vers_split: "{{ env_template_vers.replace('.', '_') }}"
+ggroup_id: "{{ lookup('env', 'GROUP_ID') }}"
+aartifact_id: "{{ lookup('env', 'ARTIFACT_ID') }}"
+env_template_test: "{{ lookup('env', 'ENV_TEMPLATE_TEST') | default('false') }}"
+env_group_id: "{{ lookup('env', 'GROUP_ID') }}"
+env_artifact_id: "{{ lookup('env', 'ARTIFACT_ID') }}"
+
+### configuration files
+envs_directory_path:   "{{ base_dir }}/environments"
+env_definition_conf_path: "{{ base_dir }}/configuration/env_definition.yml"
+configs_conf_path: "{{ base_dir }}/configuration/config.yml"
+registry_config_path:  "{{ base_dir }}/configuration/registry.yml"
+cred_config_path:      "{{ base_dir }}/configuration/credentials/credentials.yml"
+
+instance_secret_key: "{{ lookup('env', 'SECRET_KEY') }}"
+
+###build_env variables
+clusterExampleUrl: "{{ lookup('env', 'ansible_var_clusterExampleUrl') }}"
+artifactory: "{{ lookup('env', 'ansible_var_artifactory') }}"
+
+build_env_registry: "{{ lookup('env', 'ansible_var_build_env_registry') }}"
+build_env_repository: "{{ lookup('env', 'ansible_var_build_env_repository') }}"
+build_env_templateRepository: "{{ lookup('env', 'ansible_var_build_env_templateRepository') }}"
+
+build_env_username: "{{ lookup('env', 'ansible_var_build_env_username') }}"
+build_env_password: "{{ lookup('env', 'ansible_var_build_env_password') }}"
+build_env_releaseRepository: "{{ lookup('env', 'ansible_var_build_env_releaseRepository') }}"
+build_env_snapshotRepository: "{{ lookup('env', 'ansible_var_build_env_snapshotRepository') }}"
+build_env_stagingRepository: "{{ lookup('env', 'ansible_var_build_env_stagingRepository') }}"
+build_env_proxyRepository: "{{ lookup('env', 'ansible_var_build_env_proxyRepository') }}"
+build_env_releaseTemplateRepository: "{{ lookup('env', 'ansible_var_build_env_releaseTemplateRepository') }}"
+build_env_snapshotTemplateRepository: "{{ lookup('env', 'ansible_var_build_env_snapshotTemplateRepository') }}"
+build_env_stagingTemplateRepository: "{{ lookup('env', 'ansible_var_build_env_stagingTemplateRepository') }}"
+
+

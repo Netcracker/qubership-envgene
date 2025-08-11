@@ -1,0 +1,33 @@
+inventory:
+  environmentName: "test-solution-structure-case-01"
+  clusterUrl: "test-val.com"
+  tenantName: "test-tenant"
+  deployer: "test-deployer"
+  cloudName: "test-solution-structure"
+  cloudPassport: "test-cloud-passport"
+envTemplate:
+  name: "test-solution-structure-template"
+  additionalTemplateVariables:
+    ci:
+      CI_PARAM_1: ci-param-val-1
+      CI_PARAM_2: ci-param-val-2
+    e2eParameters:
+      E2E_PARAM_1: e2e-param-val-1
+      E2E_PARAM_2: e2e-param-val-2
+  sharedTemplateVariables:
+    - shared-template-variables
+  envSpecificParamsets:
+    bss: ["env-specific-app"]
+  envSpecificTechnicalParamsets:
+    bss: ["env-specific-tech"]
+  sharedMasterCredentialFiles:
+    - prod-integration-creds
+  templateArtifact:
+    registry: "artifactory"
+    repository: "snapshotRepository"
+    artifact:
+      group_id: "org.qubership.deploy.product"
+      artifact_id: "test-solution-structure"
+      version: "0.0.1"
+generatedVersions:
+  generateEnvironmentLatestVersion: "test-01"  # This value is automatically generated during job run.

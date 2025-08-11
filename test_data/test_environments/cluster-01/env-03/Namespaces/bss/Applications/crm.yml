@@ -1,0 +1,10 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "crm"
+deployParameters:
+  PARAM_1: "value-1" # paramset: bss version: 25.1 source: template
+  PARAM_5: "value-5" # paramset: bss version: 25.1 source: template
+technicalConfigurationParameters:
+  PARAM_1: "value-1" # paramset: bss-tech version: 25.1 source: template
+  PARAM_5: "value-5" # paramset: bss-tech version: 25.1 source: template
