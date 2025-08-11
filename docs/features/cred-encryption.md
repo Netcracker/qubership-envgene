@@ -8,7 +8,6 @@
     - [Assumptions \& Limitation](#assumptions--limitation)
     - [Requirements](#requirements)
     - [Credential Flow Diagram](#credential-flow-diagram)
-      - [Impact of `crypt` on EnvGene's encrypt/decrypt operations](#impact-of-crypt-on-envgenes-encryptdecrypt-operations)
     - [Credentials Files](#credentials-files)
       - [Repository Credential Files](#repository-credential-files)
       - [Shade Credential Files](#shade-credential-files)
@@ -30,16 +29,15 @@
       - [Hook triggers](#hook-triggers)
       - [Hook Workflow](#hook-workflow)
       - [User Notification](#user-notification)
-    - [Instance-Discovery repositories integration](#instance-discovery-repositories-integration)
 
 ## Problem Statement
 
-EnvGene-managed configurations contain sensitive parameters (for example, passwords and tokens). Storing such parameters in plain text exposes systems to security risks, including unauthorized access and data breaches.
+EnvGene-managed configurations contain sensitive parameters (for example, passwords and tokens). Storing such parameters in plain text exposes systems to security risks.
 A secure end-to-end process for handling sensitive parameters is required, while minimizing user friction.
 
 ## Proposed Approach
 
-TBD (add about)
+Introduce encryption of sensitive parameters in the repository
 
 ### Use cases
 
@@ -61,62 +59,45 @@ TBD (add about)
 3. All files referenced in the [Credentials Files](#credentials-files) section are considered to contain sensitive information and must be handled accordingly.
 4. The GitLab server-side hook does not perform validation for unencrypted parameters during the creation of a Merge Request.
 5. The GitLab server-side Git hook is compatible only with the `SOPS` cryptographic backend.
-6. Processing is restricted to shared credential files whose paths conform to the following directory patterns:
-   1. `/environments/*/*/Inventory/credentials/*.y*ml`
-   2. `/environments/*/credentials/*.y*ml`
-   3. `/environments/credentials/*.y*ml`
 
 ### Requirements
 
 1. Credentials must not be stored unencrypted in the remote repository if encryption is enabled
 2. Credentials must not be stored unencrypted in the artifacts of an EnvGene job execution if encryption is enabled
-3. The private key must not be located on the user's local machine
-4. The files described in this [section](#credentials-files) contain Credentials
-5. Only the following Credential attributes must be encrypted:
+3. Sensitive parameters must not be displayed in logs if encryption is enabled
+4. The private key must not be located on the user's local machine
+5. The files described in this [section](#credentials-files) contain Credentials
+6. Only the following Credential attributes must be encrypted:
    1. `username`
    2. `password`
    3. `secret`
-6. The following Credential values must not be encrypted:
+7. The following Credential values must not be encrypted:
    1. `envgeneNullValue`
    2. `ValueIsSet`
-7. `crypt` determines whether Credentials will be encrypted
-8. Repository encryption can be enabled in
+8. `crypt` determines whether Credentials will be encrypted
+9. Repository encryption can be enabled in
    1. Instance repository
    2. Template repository
-9. `crypt_backend` specifies which encryption backend to use (`Fernet` or `SOPS`)
-10. `Fernet` and `SOPS` [backends](#encryption-backend) are supported
-11. `crypt_create_shades` determines whether Shade Credential Files will be created
-12. Shade Credential Files support is only available for the SOPS backend
-13. Shade Credential Files must have the [header](#shade-credential-files-header)
-14. The encrypt function must be identical for EnvGene and the pre-commit hook
-15. In a repository containing 1000 Credential objects across 100 Credential files, the server-side GitLab hook and the local pre-commit must complete within 15 seconds
+10. `crypt_backend` specifies which encryption backend to use (`Fernet` or `SOPS`)
+11. `Fernet` and `SOPS` [backends](#encryption-backend) are supported
+12. `crypt_create_shades` determines whether Shade Credential Files will be created
+13. Shade Credential Files support is only available for the SOPS backend
+14. Shade Credential Files must have the [header](#shade-credential-files-header)
+15. The encrypt function must be identical for EnvGene and the pre-commit hook
+16. A commit containing 100 Credential objects across 10 Credential files must be processed by the Server-side GitLab hook and the Local pre-commit hook within 15 seconds.
 
 ### Credential Flow Diagram
 
-The diagram below illustrates EnvGene components and the transfer points of sensitive parameters between them where encryption and decryption of sensitive parameters occurs
+The diagram below illustrates EnvGene components and the transfer points of sensitive parameters between them where encryption and decryption of sensitive parameters occurs **если включен энкрипт в репозитории**
 
 ![cred-encryption.png](/docs/images/cred-encryption.png)
 
-#### Impact of `crypt` on EnvGene's encrypt/decrypt operations
+An external system, as shown in the diagram, interacts with EnvGene in the following features:
 
-TBD
+- [Credential Rotation](/docs/features/cred-rotation.md)
+- [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
 
-<!-- энкрипта/декрипта быть не должно когда `crypt: false`
-
-Encryption in the following modules should only occur when `crypt: true`:
-
-- `pre-commit hook`
-- `env_inventory_generation_job`
-- `generate_effective_set_job`
-
-Encryption in `cloud_passport_cli` should always occur, regardless of the `crypt` parameter.
-
-Decryption in the following should always occur:
-  
-- `cmdb_import_job` module
-- `decrypt_system_cred_files` function
-
-Decryption in the `process_decryption_mode_job` module should occur based on the `cloud_passport_decryption` parameter, but only when `crypt: true` -->
+Encryption and decryption at the transfer points shown in the diagram always occur **only** based on the [`crypt`](#encryption-enabling) attribute.
 
 ### Credentials Files
 
@@ -292,7 +273,104 @@ secret: secret
 
 #### Fernet Backend
 
-TBD
+For **[Repository Credential Files](#repository-credential-files)**:
+
+- The `username`, `password`, and `secret` attributes of [Credential objects](/schemas/credential.schema.json) must have one of the following values:
+  - `envgeneNullValue` **or**
+  - `ValueIsSet` **or**
+  - Match the pattern `[encrypted:AES256_Fernet]` (encrypted value)
+
+Example:
+
+```yaml
+---
+# Valid
+cred-1:
+  type: "usernamePassword"
+  data:
+    username: "envgeneNullValue"
+    password: "envgeneNullValue"
+cred-2:
+  type: "secret"
+  data:
+    secret: "ValueIsSet"
+cred-3:
+  type: "usernamePassword"
+  data:
+    username: [encrypted:AES256_Fernet]gAAAAAB...
+    password: [encrypted:AES256_Fernet]gAAAAAB...
+---
+# Invalid
+cred-1:
+  type: "usernamePassword"
+  data:
+    username: username
+    password: password
+cred-2:
+  type: "secret"
+  data:
+    secret: secret
+```
+
+For **[Shade Credential Files](#shade-credential-files)**:
+
+- The `username`, `password`, and `secret` attributes of [Credential objects](/schemas/credential.schema.json) must have one of the following values:
+  - Match the pattern `[encrypted:AES256_Fernet]` (encrypted value).
+
+Example:
+
+```yaml
+---
+# Valid
+cred-1:
+  type: "usernamePassword"
+  data:
+    username: "envgeneNullValue"
+    password: "envgeneNullValue"
+cred-3:
+  type: "usernamePassword"
+  data:
+    username: [encrypted:AES256_Fernet]gAAAAAB...
+    password: [encrypted:AES256_Fernet]gAAAAAB...
+---
+# Invalid
+cred-1:
+  type: "usernamePassword"
+  data:
+    username: username
+    password: password
+cred-2:
+  type: "secret"
+  data:
+    secret: secret
+```
+
+For **[Effective Set Credential Files](#effective-set-credential-files)**:
+
+- Every non-object value (i.e., string, number, or boolean) must be either:
+  - `envgeneNullValue` **or**
+  - Match the pattern `[encrypted:AES256_Fernet]` (encrypted value).
+
+Example:
+
+```yaml
+---
+# Valid
+complex_key:
+  - username: [encrypted:AES256_Fernet]gAAAAAB...
+    password: [encrypted:AES256_Fernet]gAAAAAB...
+  - username: [encrypted:AES256_Fernet]gAAAAAB...
+    password: [encrypted:AES256_Fernet]gAAAAAB...
+secret: "envgeneNullValue"
+---
+# Invalid
+complex_key:
+  - username: username
+    password: password
+  - username: username
+    password: password
+secret: secret
+```
 
 ### Encryption enabling
 
@@ -314,17 +392,37 @@ crypt_backend: enum [`Fernet`, `SOPS`]
 
 The encryption backend is a global attribute for the entire repository. For data integrity, all Credentials must be encrypted using the specified mode. A situation where one encryption mode is set, but the repository contains Credentials encrypted using a different mode is invalid
 
+> [!WARNING]
+> Fernet encryption is deprecated and will be removed in future versions of EnvGene.  
+> It is strongly recommended to migrate to the SOPS backend for credential encryption.
+
 #### SOPS Encryption backend
 
-TBD
+SOPS (Secrets OPerationS) is a tool for encrypting YAML, JSON, and binary files. SOPS provides asymmetric encryption method. SOPS provides file-level encryption with integrity verification
 
-Uses [`PUBLIC_AGE_KEYS`](/docs/instance-pipeline-parameters.md#public_age_keys) as the public key and [`ENVGENE_AGE_PRIVATE_KEY`](/docs/instance-pipeline-parameters.md#envgene_age_private_key) as the private key
+It uses [age encryption](https://age-encryption.org/) for secure key management.
+
+- [Age Encryption](https://age-encryption.org/)
+- [SOPS Documentation](https://github.com/mozilla/sops#readme)
+
+EnvGene uses
+
+- [`PUBLIC_AGE_KEYS`](/docs/envgene-repository-variables.md#public_age_keys) as the public key - [`ENVGENE_AGE_PRIVATE_KEY`](/docs/envgene-repository-variables.md#envgene_age_private_key) as the private key
 
 #### Fernet Encryption backend
 
-TBD
+Fernet is a symmetric encryption method used to securely protect data.
 
-Uses [`SECRET_KEY`](/docs/instance-pipeline-parameters.md#secret_key) value as the encryption key
+> [!WARNING]
+> Fernet encryption is deprecated and will be removed in future versions of EnvGene.  
+> It is strongly recommended to migrate to the SOPS backend for credential encryption.
+
+- [Fernet Specification](https://github.com/fernet/spec/blob/master/Spec.md)
+- [Cryptography Library Documentation](https://cryptography.io/en/latest/)
+
+EnvGene uses:
+
+- [`SECRET_KEY`](/docs/envgene-repository-variables.md#secret_key) value as the encryption key
 
 ### Shade Credentials
 
@@ -377,8 +475,9 @@ Each Shade Credential File includes the following header:
 
 Sensitive parameter values enter the git repository through user commits and pushes. When encryption is enabled, the local pre-commit hook ensures these values are properly encrypted before being committed to the repository.
 
-Должен иметь функционал ручного декрипта
-должен валидировать по схеме
+The local pre-commit hook runs a script that uses the same code as the main app to encrypt sensitive values.
+
+The local pre-commit hook only processes the files that were changed in the current commit.
 
 ### GitLab Server-side Git Hooks
 
@@ -428,7 +527,3 @@ When hook validation fails, the user receives notification depending on how the 
 If via **git push**, i.e., when the user pushes changes from local repo copy, notification occurs through git console.
 
 If via **Web IDE commit**, i.e., when the user makes changes through GitLab UI, the user is notified through a popup message with error text.
-
-### Instance-Discovery repositories integration
-
-TBD

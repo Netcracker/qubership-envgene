@@ -180,7 +180,7 @@ crypt: boolean
 # Defines the encryption technology
 # Requires setting an encryption key: `SECRET_KEY` or `ENVGENE_AGE_PRIVATE_KEY`, `PUBLIC_AGE_KEYS`
 crypt_backend: enum [`Fernet`, `SOPS`]
-# Optional. Default value - `true`
+# Optional. Default value - `false`
 # Specifies if Shade Credential Files generation is enabled
 crypt_create_shades: boolean 
 # Optional. Default value - `auto`
