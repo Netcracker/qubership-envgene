@@ -106,6 +106,7 @@ Credential objects in these files must conform to [credential.schema.json](/sche
 
 #### Repository Credential Files
 
+- Located in Instance repository
 - Contain [Credential objects](/docs/envgene-objects.md#credential)
 - Shade credentials are created for them if shade mode is enabled (SOPS backend only)
 - When shade mode is enabled, sensitive values are replaced with `ValueIsSet` in these files and therefore **are not encrypted**
@@ -132,6 +133,7 @@ Includes:
 
 #### Shade Credential Files
 
+- Located in Instance repository
 - Contain [Credential objects](/docs/envgene-objects.md#credential)
 - Auto-generated from [Repository Credential Files](#repository-credential-files) if shade mode is enabled (SOPS backend only)
 - Each file contains a single credential object, named `<Credential-ID>-cred.yml`, in a folder starting with `shades-`
@@ -153,6 +155,7 @@ See details in [Shade Credential Files](#shade-credential-files)
 
 #### Effective Set Credential Files
 
+- Located in Instance repository
 - Do **not** contain [Credential objects](/docs/envgene-objects.md#credential)
 - Shade credentials are **not** created for these files
 - Both SOPS and Fernet encryption backends are supported
