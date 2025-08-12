@@ -27,10 +27,7 @@ RUN apk update \
     && python3 -m pip install /python/integration \
     && python3 -m pip install /python/jschon-sort \
     && python3 -m pip install /python/envgene \
-    && python3 -m pip install PyYAML \
-    && find /module -type d -exec chmod 755 {} + \
-    && find /module -type f -exec chmod 644 {} + \
-    && chmod -R 755 /module/scripts /module/scripts/pipegene_plugins
+    && python3 -m pip install PyYAML
 
 #######################################
 # Stage 2
@@ -39,23 +36,5 @@ FROM ghcr.io/netcracker/qubership-base-module-dockerimage:v2.0.0
 COPY --from=build /module /module
 
 ENV PATH=/module/venv/bin:/usr/bin:/usr/local/bin:$PATH
-
-ARG RUN_UID=1001
-ARG RUN_GID=121
-
-USER root
-RUN set -eux; \
-    apk add --no-cache shadow || true; \
-    if getent group ci >/dev/null 2>&1; then \
-      groupmod -o -g ${RUN_GID} ci || true; \
-    else \
-      addgroup -S -g ${RUN_GID} ci; \
-    fi; \
-    if id -u ci >/dev/null 2>&1; then \
-      usermod -o -u ${RUN_UID} -g ${RUN_GID} -d /home/ci -m ci; \
-    else \
-      adduser -S -D -h /home/ci -u ${RUN_UID} -G ci ci; \
-    fi; \
-    chown -R ${RUN_UID}:${RUN_GID} /home/ci
 
 USER ci:ci
