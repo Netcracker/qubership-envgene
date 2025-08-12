@@ -76,7 +76,7 @@ RUN find /module/venv/lib/python3.12/site-packages -name '__pycache__' -type d -
 RUN rm -rf /module/venv/lib/python3.12/site-packages/ansible_collections/amazon /module/venv/lib/python3.12/site-packages/ansible_collections/azure /module/venv/lib/python3.12/site-packages/ansible_collections/google /module/venv/lib/python3.12/site-packages/ansible_collections/kubernetes 2>/dev/null || true
 # Remove test packages that are not needed in runtime (but keep Ansible test files)
 RUN rm -rf /module/venv/lib/python3.12/site-packages/pytest* /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true
-RUN /module/venv/bin/pip cache purge
+RUN /module/venv/bin/python -m pip cache purge
 
 # Verify collections are still accessible after cleanup
 RUN /module/venv/bin/python -c "import ansible_collections.ansible.posix; print('ansible.posix collection still accessible after cleanup')"
@@ -119,6 +119,7 @@ RUN /module/venv/bin/python -c "import ansible_collections.ansible.posix; print(
 
 # Set permissions
 RUN chmod +x /usr/local/bin/sops
+RUN chmod -R 755 /module/venv/bin || true
 
 # Create directories that might be needed for CI environments
 # These directories are commonly used by GitHub Actions and GitLab CI
