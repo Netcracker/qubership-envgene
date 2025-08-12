@@ -16,7 +16,6 @@ RUN apk add --no-cache \
     curl \
     jq \
     openssh-client \
-    sudo \
     zip \
     unzip
 
@@ -102,7 +101,6 @@ RUN apk add --no-cache \
     age \
     git \
     openssh-client \
-    sudo \
     zip \
     unzip
 
