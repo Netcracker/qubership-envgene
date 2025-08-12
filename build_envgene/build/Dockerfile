@@ -140,14 +140,14 @@ ARG RUN_GID=121
 RUN set -eux; \
     apk add --no-cache shadow; \
     if getent group ci >/dev/null 2>&1; then \
-      groupmod -o -g ${RUN_GID} ci || true; \
+        groupmod -o -g ${RUN_GID} ci || true; \
     else \
-      addgroup -S -g ${RUN_GID} ci; \
+        addgroup -S -g ${RUN_GID} ci; \
     fi; \
     if id -u ci >/dev/null 2>&1; then \
-      usermod -o -u ${RUN_UID} -g ${RUN_GID} -d /home/ci -m ci || true; \
+        usermod -o -u ${RUN_UID} -g ${RUN_GID} -d /home/ci -m ci || true; \
     else \
-      adduser -S -D -h /home/ci -u ${RUN_UID} -G ci ci; \
+        adduser -S -D -h /home/ci -u ${RUN_UID} -G ci ci; \
     fi; \
     mkdir -p /home/ci && chown -R ${RUN_UID}:${RUN_GID} /home/ci /module /build_env || true; \
     apk del shadow; \
