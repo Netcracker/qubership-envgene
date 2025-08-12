@@ -34,7 +34,9 @@ RUN apk update \
     && python3 -m pip install /python/integration \
     && python3 -m pip install /python/jschon-sort \
     && python3 -m pip install /python/envgene \
-    && chmod 755 /module/scripts/*
+    && find /module -type d -exec chmod 755 {} + \
+    && find /module -type f -exec chmod 644 {} + \
+    && chmod -R 755 /module/scripts
 
 # Run container as non-root user to satisfy security best practices
 # The base image already contains user and group `ci`

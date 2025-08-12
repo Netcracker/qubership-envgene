@@ -21,6 +21,11 @@ COPY --from=builder /etc/alternatives/jre/lib/security/java.security /etc/altern
 
 RUN chmod g+rwX /deployments
 
+# Ensure sane permissions on copied tree
+RUN find /deployments -type d -exec chmod 755 {} + && \
+    find /deployments -type f -exec chmod 644 {} + && \
+    chmod 540 /deployments/run-java.sh
+
 USER 1001
 
 ENTRYPOINT [ "/deployments/run-java.sh" ]

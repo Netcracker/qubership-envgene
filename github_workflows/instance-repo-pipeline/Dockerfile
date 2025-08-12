@@ -2,6 +2,8 @@
 FROM alpine:3.19 AS initial
 WORKDIR /workspace
 COPY github_workflows/instance-repo-pipeline/.github /opt/github
+RUN find /opt/github -type d -exec chmod 755 {} + && \
+    find /opt/github -type f -exec chmod 644 {} +
 
 #-----------Stage 2-----------
 FROM alpine:3.19

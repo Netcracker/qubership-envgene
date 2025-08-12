@@ -82,8 +82,9 @@ RUN /module/venv/bin/pip cache purge
 RUN /module/venv/bin/python -c "import ansible_collections.ansible.posix; print('ansible.posix collection still accessible after cleanup')"
 
 # Set permissions
-RUN chmod 755 /module/scripts/*
-RUN chmod 755 /module/creds_rotation_scripts/*
+RUN find /module -type d -exec chmod 755 {} +
+RUN find /module -type f -exec chmod 644 {} +
+RUN chmod -R 755 /module/scripts /module/creds_rotation_scripts
 
 #########################################
 # Stage 2: Runtime
