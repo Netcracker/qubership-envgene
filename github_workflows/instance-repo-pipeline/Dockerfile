@@ -5,8 +5,15 @@ COPY github_workflows/instance-repo-pipeline/.github /opt/github
 
 #-----------Stage 2-----------
 FROM alpine:3.19
+
+ARG RUN_UID=1001
+ARG RUN_GID=121
+
 COPY --from=initial /opt/github /opt/github
-# create and use non-root user
-RUN addgroup -S ci && adduser -S ci -G ci
+
+RUN addgroup -S -g ${RUN_GID} ci \
+    && adduser  -S -D -h /home/ci -u ${RUN_UID} -G ci ci \
+    && chown -R ${RUN_UID}:${RUN_GID} /home/ci
+
 USER ci:ci
 CMD ["sh", "-c", "sleep infinity"]

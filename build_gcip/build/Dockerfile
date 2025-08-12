@@ -37,4 +37,21 @@ COPY --from=build /module /module
 
 ENV PATH=/module/venv/bin:/usr/bin:/usr/local/bin:$PATH
 
+ARG RUN_UID=1001
+ARG RUN_GID=121
+
+RUN set -eux; \
+    apk add --no-cache shadow || true; \
+    if getent group ci >/dev/null 2>&1; then \
+      groupmod -o -g ${RUN_GID} ci || true; \
+    else \
+      addgroup -S -g ${RUN_GID} ci; \
+    fi; \
+    if id -u ci >/dev/null 2>&1; then \
+      usermod -o -u ${RUN_UID} -g ${RUN_GID} -d /home/ci -m ci; \
+    else \
+      adduser -S -D -h /home/ci -u ${RUN_UID} -G ci ci; \
+    fi; \
+    chown -R ${RUN_UID}:${RUN_GID} /home/ci
+
 USER ci:ci

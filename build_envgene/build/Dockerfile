@@ -140,6 +140,24 @@ RUN /module/venv/bin/pip cache purge
 # Keep pip for runtime compatibility, but remove setuptools and wheel
 RUN rm -rf /module/venv/lib/python3.12/site-packages/setuptools* /module/venv/lib/python3.12/site-packages/wheel* 2>/dev/null || true
 
+ARG RUN_UID=1001
+ARG RUN_GID=121
+
+RUN set -eux; \
+    apk add --no-cache shadow; \
+    if getent group ci >/dev/null 2>&1; then \
+      groupmod -o -g ${RUN_GID} ci || true; \
+    else \
+      addgroup -S -g ${RUN_GID} ci; \
+    fi; \
+    if id -u ci >/dev/null 2>&1; then \
+      usermod -o -u ${RUN_UID} -g ${RUN_GID} -d /home/ci -m ci || true; \
+    else \
+      adduser -S -D -h /home/ci -u ${RUN_UID} -G ci ci; \
+    fi; \
+    mkdir -p /home/ci && chown -R ${RUN_UID}:${RUN_GID} /home/ci /module /build_env /python || true
+
+
 # Set environment
 ENV PATH=/module/venv/bin:$PATH \
     PYTHONUNBUFFERED=1 \
@@ -148,7 +166,6 @@ ENV PATH=/module/venv/bin:$PATH \
     ANSIBLE_COLLECTIONS_PATH=/module/venv/lib/python3.12/site-packages/ansible_collections:/module/ansible/collections
 
 # Create and use non-root user for runtime
-RUN addgroup -S ci && adduser -S ci -G ci
 USER ci:ci
 # Set working directory for runtime
 WORKDIR /module/ansible
