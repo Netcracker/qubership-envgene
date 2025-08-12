@@ -83,8 +83,8 @@ RUN /module/venv/bin/pip cache purge
 RUN /module/venv/bin/python -c "import ansible_collections.ansible.posix; print('ansible.posix collection still accessible after cleanup')"
 
 # Set permissions
-RUN chmod 754 /module/scripts/*
-RUN chmod 754 /module/creds_rotation_scripts/*
+RUN chmod 755 /module/scripts/*
+RUN chmod 755 /module/creds_rotation_scripts/*
 
 #########################################
 # Stage 2: Runtime
@@ -149,8 +149,10 @@ ENV PATH=/module/venv/bin:$PATH \
     ANSIBLE_LIBRARY=/module/ansible/library \
     ANSIBLE_COLLECTIONS_PATH=/module/venv/lib/python3.12/site-packages/ansible_collections:/module/ansible/collections
 
-# Simple root-based container for CI/CD environments
-# This container runs as root to avoid permission issues in CI/CD pipelines
+# Create and use non-root user for runtime
+RUN addgroup -S ci && adduser -S ci -G ci
+USER ci:ci
+# Set working directory for runtime
 WORKDIR /module/ansible
 
 # Health check
