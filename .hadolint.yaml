@@ -1,0 +1,11 @@
+ignored:
+  # Version pinning in APK is not feasible for our rolling base images and CI images
+  - DL3018
+  # Multiple RUN consolidation is advisory; we prefer readability in some stages
+  - DL3059
+  # Shellcheck info about non-followed sources in hadolint mock env
+  - SC1091
+
+# Fail only on errors; warnings and infos will not break the build
+failure-threshold: error
+

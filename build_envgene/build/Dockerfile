@@ -41,9 +41,9 @@ ENV ANSIBLE_LIBRARY=/module/ansible/library
 
 # Create virtual environment and install Python packages
 RUN python -m venv /module/venv
-RUN /module/venv/bin/pip install --upgrade pip setuptools wheel
+RUN /module/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
-RUN /module/venv/bin/pip install ansible-core --upgrade
+RUN /module/venv/bin/pip install --no-cache-dir ansible-core --upgrade
 # Install essential Ansible collections
 # Install to virtual environment site-packages for Python module access
 RUN /module/venv/bin/ansible-galaxy collection install ansible.utils -p /module/venv/lib/python3.12/site-packages/ansible_collections
@@ -60,7 +60,7 @@ RUN /module/venv/bin/pip install /python/integration
 RUN /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
 
 # Download and install SOPS for secrets management
-RUN wget --tries=3 \
+RUN wget --progress=dot:giga --tries=3 \
     https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
     -O /usr/local/bin/sops && \
     chmod +x /usr/local/bin/sops
