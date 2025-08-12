@@ -40,6 +40,7 @@ ENV PATH=/module/venv/bin:/usr/bin:/usr/local/bin:$PATH
 ARG RUN_UID=1001
 ARG RUN_GID=121
 
+USER root
 RUN set -eux; \
     apk add --no-cache shadow || true; \
     if getent group ci >/dev/null 2>&1; then \
