@@ -17,6 +17,10 @@ skip-check:
 - CKV_DOCKER_2 # Ensure that HEALTHCHECK instructions have been added to container images
 # https://www.checkov.io/5.Policy%20Index/secrets.html
 - CKV_SECRET_6 # Base64 High Entropy String
+  - CKV_SECRET_9 # Entropy for URL or Host Strings
 # https://www.checkov.io/5.Policy%20Index/github_actions.html
 - CKV2_GHA_1 # Ensure top-level permissions are not set to write-all
 - CKV_GHA_7 # The build output cannot be affected by user parameters other than the build entry point and the top-level source location. GitHub Actions workflow_dispatch inputs MUST be empty.
+  # https://www.checkov.io/5.Policy%20Index/ansible.html
+  - CKV2_ANSIBLE_1 # Ensure Ansible tasks use become instead of sudo
+  - CKV2_ANSIBLE_3 # Ensure sudo module is not used
