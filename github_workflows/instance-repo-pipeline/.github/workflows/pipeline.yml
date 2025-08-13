@@ -61,6 +61,9 @@ env:
   GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
   ENVGENE_AGE_PUBLIC_KEY: ${{ secrets.ENVGENE_AGE_PUBLIC_KEY }}
   ENVGENE_AGE_PRIVATE_KEY: ${{ secrets.ENVGENE_AGE_PRIVATE_KEY }}
+  SANITIZED_NAME: ''
+  PROJECT_DIR: ''
+  artifact_name: ''
 
   # Docker Images
   DOCKER_IMAGE_GCIP: 'ghcr.io/netcracker/qubership-gcip:feature-fix_linters'
@@ -105,38 +108,44 @@ jobs:
       - name: Set Docker Images
         id: docker-images
         run: |
-          echo "DOCKER_IMAGE_GCIP=${{ env.DOCKER_IMAGE_GCIP }}" >> $GITHUB_OUTPUT
-          echo "DOCKER_IMAGE_ENVGENE=${{ env.DOCKER_IMAGE_ENVGENE }}" >> $GITHUB_OUTPUT
-          echo "DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR=${{ env.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}" >> $GITHUB_OUTPUT
+          {
+            echo "DOCKER_IMAGE_GCIP=${{ env.DOCKER_IMAGE_GCIP }}";
+            echo "DOCKER_IMAGE_ENVGENE=${{ env.DOCKER_IMAGE_ENVGENE }}";
+            echo "DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR=${{ env.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}";
+          } >> "$GITHUB_OUTPUT"
 
       - name: Process Input Parameters
         run: |
            # Check if API input is provided
            if [ -n "${{ github.event.inputs.GITHUB_PIPELINE_API_INPUT }}" ]; then
              echo "🔍 API Mode: Processing GITHUB_PIPELINE_API_INPUT"
-             
+            
              # Set the API input variable for the script to use
              export GITHUB_PIPELINE_API_INPUT="${{ github.event.inputs.GITHUB_PIPELINE_API_INPUT }}"
-             echo "GITHUB_PIPELINE_API_INPUT=${{ github.event.inputs.GITHUB_PIPELINE_API_INPUT }}" >> $GITHUB_ENV
-             
+            echo "GITHUB_PIPELINE_API_INPUT=${{ github.event.inputs.GITHUB_PIPELINE_API_INPUT }}" >> "$GITHUB_ENV"
+            
              # Process API input variables
              python .github/scripts/process_api_input.py
-             
+            
              # Set defaults for optional variables if not provided
-             echo "ENV_BUILDER=${ENV_BUILDER:-true}" >> $GITHUB_ENV
-             echo "GET_PASSPORT=${GET_PASSPORT:-false}" >> $GITHUB_ENV
-             echo "CMDB_IMPORT=${CMDB_IMPORT:-false}" >> $GITHUB_ENV
-             echo "DEPLOYMENT_TICKET_ID=${DEPLOYMENT_TICKET_ID:-}" >> $GITHUB_ENV
-             echo "ENV_TEMPLATE_VERSION=${ENV_TEMPLATE_VERSION:-}" >> $GITHUB_ENV
+            {
+              echo "ENV_BUILDER=${ENV_BUILDER:-true}";
+              echo "GET_PASSPORT=${GET_PASSPORT:-false}";
+              echo "CMDB_IMPORT=${CMDB_IMPORT:-false}";
+              echo "DEPLOYMENT_TICKET_ID=${DEPLOYMENT_TICKET_ID:-}";
+              echo "ENV_TEMPLATE_VERSION=${ENV_TEMPLATE_VERSION:-}";
+            } >> "$GITHUB_ENV"
            else
              echo "🔍 UI Mode: Processing manual inputs"
              # Set variables from workflow inputs
-             echo "DEPLOYMENT_TICKET_ID=${{ github.event.inputs.DEPLOYMENT_TICKET_ID }}" >> $GITHUB_ENV
-             echo "ENV_NAMES=${{ github.event.inputs.ENV_NAMES }}" >> $GITHUB_ENV
-             echo "ENV_BUILDER=${{ github.event.inputs.ENV_BUILDER }}" >> $GITHUB_ENV
-             echo "GET_PASSPORT=${{ github.event.inputs.GET_PASSPORT }}" >> $GITHUB_ENV
-             echo "CMDB_IMPORT=${{ github.event.inputs.CMDB_IMPORT }}" >> $GITHUB_ENV
-             echo "ENV_TEMPLATE_VERSION=${{ github.event.inputs.ENV_TEMPLATE_VERSION }}" >> $GITHUB_ENV
+            {
+              echo "DEPLOYMENT_TICKET_ID=${{ github.event.inputs.DEPLOYMENT_TICKET_ID }}";
+              echo "ENV_NAMES=${{ github.event.inputs.ENV_NAMES }}";
+              echo "ENV_BUILDER=${{ github.event.inputs.ENV_BUILDER }}";
+              echo "GET_PASSPORT=${{ github.event.inputs.GET_PASSPORT }}";
+              echo "CMDB_IMPORT=${{ github.event.inputs.CMDB_IMPORT }}";
+              echo "ENV_TEMPLATE_VERSION=${{ github.event.inputs.ENV_TEMPLATE_VERSION }}";
+            } >> "$GITHUB_ENV"
            fi
 
            # Load additional variables from pipeline_vars.yaml (with fallbacks to defaults)
@@ -161,27 +170,29 @@ jobs:
               "ENV_TEMPLATE_NAME": $env_template_name
             }'
           )
-          echo "ENV_GENERATION_PARAMS=$ENV_GENERATION_PARAMS" >> $GITHUB_OUTPUT
-          echo "ENV_GENERATION_PARAMS=$ENV_GENERATION_PARAMS" >> $GITHUB_ENV
+          echo "ENV_GENERATION_PARAMS=$ENV_GENERATION_PARAMS" >> "$GITHUB_OUTPUT"
+          echo "ENV_GENERATION_PARAMS=$ENV_GENERATION_PARAMS" >> "$GITHUB_ENV"
 
           # Set all variables in outputs for downstream jobs (same order as API workflow)
-          echo "ENV_INVENTORY_INIT=$ENV_INVENTORY_INIT" >> $GITHUB_OUTPUT
-          echo "GENERATE_EFFECTIVE_SET=$GENERATE_EFFECTIVE_SET" >> $GITHUB_OUTPUT
-          echo "ENV_TEMPLATE_TEST=$ENV_TEMPLATE_TEST" >> $GITHUB_OUTPUT
-          echo "ENV_TEMPLATE_NAME=$ENV_TEMPLATE_NAME" >> $GITHUB_OUTPUT
-          echo "SD_DATA=$SD_DATA" >> $GITHUB_OUTPUT
-          echo "SD_VERSION=$SD_VERSION" >> $GITHUB_OUTPUT
-          echo "SD_SOURCE_TYPE=$SD_SOURCE_TYPE" >> $GITHUB_OUTPUT
-          echo "SD_DELTA=$SD_DELTA" >> $GITHUB_OUTPUT
-          echo "ENV_SPECIFIC_PARAMETERS=$ENV_SPECIFIC_PARAMETERS" >> $GITHUB_OUTPUT
-          echo "CRED_ROTATION_PAYLOAD=$CRED_ROTATION_PAYLOAD" >> $GITHUB_OUTPUT
-          echo "CRED_ROTATION_FORCE=$CRED_ROTATION_FORCE" >> $GITHUB_OUTPUT
-          echo "ENV_TEMPLATE_VERSION=$ENV_TEMPLATE_VERSION" >> $GITHUB_OUTPUT
-          echo "ENV_BUILDER=$ENV_BUILDER" >> $GITHUB_OUTPUT
-          echo "GET_PASSPORT=$GET_PASSPORT" >> $GITHUB_OUTPUT
-          echo "CMDB_IMPORT=$CMDB_IMPORT" >> $GITHUB_OUTPUT
-          echo "DEPLOYMENT_TICKET_ID=$DEPLOYMENT_TICKET_ID" >> $GITHUB_OUTPUT
-          echo "ENV_NAMES=$ENV_NAMES" >> $GITHUB_OUTPUT
+          {
+            echo "ENV_INVENTORY_INIT=$ENV_INVENTORY_INIT";
+            echo "GENERATE_EFFECTIVE_SET=$GENERATE_EFFECTIVE_SET";
+            echo "ENV_TEMPLATE_TEST=$ENV_TEMPLATE_TEST";
+            echo "ENV_TEMPLATE_NAME=$ENV_TEMPLATE_NAME";
+            echo "SD_DATA=$SD_DATA";
+            echo "SD_VERSION=$SD_VERSION";
+            echo "SD_SOURCE_TYPE=$SD_SOURCE_TYPE";
+            echo "SD_DELTA=$SD_DELTA";
+            echo "ENV_SPECIFIC_PARAMETERS=$ENV_SPECIFIC_PARAMETERS";
+            echo "CRED_ROTATION_PAYLOAD=$CRED_ROTATION_PAYLOAD";
+            echo "CRED_ROTATION_FORCE=$CRED_ROTATION_FORCE";
+            echo "ENV_TEMPLATE_VERSION=$ENV_TEMPLATE_VERSION";
+            echo "ENV_BUILDER=$ENV_BUILDER";
+            echo "GET_PASSPORT=$GET_PASSPORT";
+            echo "CMDB_IMPORT=$CMDB_IMPORT";
+            echo "DEPLOYMENT_TICKET_ID=$DEPLOYMENT_TICKET_ID";
+            echo "ENV_NAMES=$ENV_NAMES";
+          } >> "$GITHUB_OUTPUT"
 
       - name: Input Parameters
         run: |
@@ -404,7 +415,7 @@ jobs:
         run: |
           mkdir -p "${{ env.PROJECT_DIR }}/environments/${{ env.FULL_ENV }}/"
           cp -rf ./downloaded_artifact/* "${{ env.PROJECT_DIR }}/environments/${{ env.FULL_ENV }}/"
-          rm -rf ./downloaded_artifact    
+          rm -rf ./downloaded_artifact
 
       - name: Credential Rotation
         run: |
