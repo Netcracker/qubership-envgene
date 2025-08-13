@@ -48,6 +48,11 @@ def getenv_with_error(var_name):
 def get_env_instances_dir(environment_name, cluster_name, instances_dir):
     return f"{instances_dir}/{cluster_name}/{environment_name}"
 
+def get_current_env_dir_with_env_vars() -> str:
+    instances_dir=getenv_with_error('CI_PROJECT_DIR')
+    env_name=getenv_with_error('ENV_NAME')
+    return f"{instances_dir}/environments/{env_name}"
+
 def check_environment_is_valid_or_fail(environment_name, cluster_name, instances_dir, skip_env_definition_check=False, validate_env_definition_by_schema=False, schemas_dir=""):
     env_dir = get_env_instances_dir(environment_name, cluster_name, instances_dir)
     # check that environment directory exists
