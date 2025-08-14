@@ -7,10 +7,10 @@
     #get env variables
     - name: Get input arguments
       ansible.builtin.set_fact:
-        env: "{{ lookup('ansible.builtin.env', 'env') }}" 
-        cluster_name: "{{ lookup('ansible.builtin.env', 'cluster_name') }}" 
-        templates_dir: "{{ lookup('ansible.builtin.env', 'templates_dir') }}" 
-        env_instances_dir: "{{ lookup('ansible.builtin.env', 'env_instances_dir') }}" 
+        env: "{{ lookup('ansible.builtin.env', 'env') }}"
+        cluster_name: "{{ lookup('ansible.builtin.env', 'cluster_name') }}"
+        templates_dir: "{{ lookup('ansible.builtin.env', 'templates_dir') }}"
+        env_instances_dir: "{{ lookup('ansible.builtin.env', 'env_instances_dir') }}"
         render_dir: "{{ lookup('ansible.builtin.env', 'render_dir') }}"
         template_version: "{{ lookup('ansible.builtin.env', 'template_version') }}"
         cloud_passport_file_path: "{{ lookup('ansible.builtin.env', 'cloud_passport_file_path') }}"
@@ -74,7 +74,7 @@
     - name: Set Env Template
       ansible.builtin.include_vars:
         file: "{{ templates_dir }}/env_templates/{{current_env.env_template}}.yaml"
-        name: current_env_template 
+        name: current_env_template
 
     - name: Generate solution_structure variable
       ansible.builtin.include_role:
@@ -85,7 +85,7 @@
         _env: "{{ env }}"
         _cloud: "{{ current_env.cloud }}"
         _current_env_dir: "{{ current_env_dir }}"
-    
+
     - name: Gen tenant
       ansible.builtin.include_role:
         name: generate_tenant
@@ -106,6 +106,29 @@
         _current_env_dir: "{{ current_env_dir }}"
         _template: "{{ current_env_template.cloud }}"
 
+    - name: Prepare namespace list
+      ansible.builtin.set_fact:
+        filtered_namespaces: >-
+          {%- set filter = lookup('env', 'NS_BUILD_FILTER') -%}
+          {%- if not filter -%}
+            {{ current_env_template.namespaces | list }}
+          {%- else -%}
+            {%- set filter_list = filter.lstrip('!').split(',') -%}
+            {%- if filter.startswith('!') -%}
+              {{ current_env_template.namespaces
+                 | reject('in', filter_list)
+                 | list }}
+            {%- else -%}
+              {{ current_env_template.namespaces
+                 | select('in', filter_list)
+                 | list }}
+            {%- endif -%}
+          {%- endif -%}
+
+    - name: Fall
+      fail:
+        msg: "{{ current_env_template.namespaces }} and {{ filtered_namespaces }} and {{ lookup('env', 'NS_BUILD_FILTER')}}"
+
     - name: Gen namespaces
       ansible.builtin.include_role:
         name: generate_namespaces
@@ -114,11 +137,11 @@
         _tenant: "{{ tenant }}"
         _cloud: "{{ current_env.cloud }}"
         _current_env_dir: "{{ current_env_dir }}"
-      loop: "{{ current_env_template.namespaces }}"
+      loop: "{{ filtered_namespaces }}"
       loop_control:
         loop_var: namespace
 
-    - name: Gen resource profiles 
+    - name: Gen resource profiles
       ansible.builtin.include_role:
         name: generate_profiles
       vars:
@@ -141,7 +164,7 @@
         _current_env_dir: "{{ current_env_dir }}"
         _template: "{{current_env_template.composite_structure}}"
       when: current_env_template.composite_structure is defined
-        
+
     - name: Generate environment specific schema
       ansible.builtin.copy:
         src: "{{ current_env_template.envSpecificSchema }}"
@@ -194,7 +217,7 @@
             src: "{{ jenkins_artifacts_dir }}/{{ app_reg_defs_job }}/definitions.zip"
             dest: "/tmp/external_defs"
             remote_src: true
-          
+
         - name: Copy external AppDefs to environment
           ansible.builtin.copy:
             src: "/tmp/external_defs/{{ app_defs_path }}/"
