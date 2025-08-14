@@ -55,7 +55,7 @@ jobs:
       github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     container:
-      image: python:3.10-slim-bookworm
+      image: python:3.12-slim-bookworm
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
