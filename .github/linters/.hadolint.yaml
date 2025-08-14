@@ -1,2 +1,0 @@
-# Fail only on errors; warnings and infos will not break the build
-failure-threshold: error
