@@ -42,10 +42,10 @@ RUN python -m venv /module/venv && \
     /module/venv/bin/pip install /python/integration /python/jschon-sort /python/envgene && \
     /module/venv/bin/pip install PyYAML
 
-# Download and install SOPS for secrets management
-RUN wget --tries=3 --progress=dot:giga \
+# Download and install SOPS for secrets management (use curl for BusyBox compatibility)
+RUN curl --fail --show-error --location --retry 3 \
     https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
-    -O /usr/local/bin/sops && \
+    -o /usr/local/bin/sops && \
     chmod +x /usr/local/bin/sops
 
 # Aggressive cleanup to reduce image size
