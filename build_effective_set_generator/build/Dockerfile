@@ -1,6 +1,7 @@
 #######################################
-# Stage 1 
+# Stage 1
 FROM ghcr.io/netcracker/qubership-base-module-dockerimage:v2.0.0
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
 USER root
 
@@ -12,27 +13,31 @@ COPY build_effective_set_generator/ansible /module/ansible
 COPY python /python
 COPY schemas /module/schemas
 COPY python/integration /python/integration
-ENV ANSIBLE_LIBRARY /module/ansible/library:$ANSIBLE_LIBRARY
+ENV ANSIBLE_LIBRARY=/module/ansible/library:$ANSIBLE_LIBRARY
 
-RUN apk update \
-    && apk add --update --no-cache \
-        git \
-        gcc \
-        musl-dev \
-        libffi-dev \
-        sudo \
-        curl \
-    && curl --retry 3 --retry-connrefused --retry-delay 5 -LO https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
-    && chmod +x sops-v3.9.0.linux.amd64 \
-    && mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops \
-    && test -d /module/venv || python3 -m venv /module/venv \
-    && source /module/venv/bin/activate \
-    && . /module/venv/bin/activate \
-    && python3 -m pip install --upgrade pip setuptools wheel \
-    && pip install --no-deps --no-cache-dir -r /build/requirements.txt \
-    && pip install ansible --upgrade \
-    && ansible-galaxy collection install -r /build/requirements.yml -p /module/ansible/collections \
-    && python3 -m pip install /python/integration \
-    && python3 -m pip install /python/jschon-sort \
-    && python3 -m pip install /python/envgene \
-    && chmod 744 /module/scripts/*
+RUN set -eux; \
+    apk update; \
+    ver() { apk list --verbose --available "$1" | head -n1 | sed -E "s/^$1-//; s/ .*//"; }; \
+    apk add --no-cache \
+        git="$(ver git)" \
+        gcc="$(ver gcc)" \
+        musl-dev="$(ver musl-dev)" \
+        libffi-dev="$(ver libffi-dev)" \
+        curl="$(ver curl)"; \
+    curl --fail --show-error --location --retry 3 \
+        -o /usr/local/bin/sops \
+        https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
+    && chmod +x /usr/local/bin/sops \
+    && python3 -m venv /module/venv \
+    && /module/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && /module/venv/bin/pip install --no-deps --no-cache-dir -r /build/requirements.txt \
+    && /module/venv/bin/pip install --no-cache-dir --upgrade ansible \
+    && /module/venv/bin/ansible-galaxy collection install -r /build/requirements.yml -p /module/ansible/collections \
+    && /module/venv/bin/pip install /python/integration /python/jschon-sort /python/envgene \
+    && find /module -type d -exec chmod 755 {} + \
+    && find /module -type f -exec chmod 644 {} + \
+    && chmod -R 755 /module/scripts
+
+# Run container as non-root user to satisfy security best practices
+# The base image already contains user and group `ci`
+USER ci:ci

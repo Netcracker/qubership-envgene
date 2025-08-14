@@ -1,3 +1,4 @@
+# This action is hidden from the GitHub Actions UI
 name: 'Build Instance Repo Pipeline Docker Image'
 description: 'Build and push Instance Repo Pipeline docker image to container registry'
 

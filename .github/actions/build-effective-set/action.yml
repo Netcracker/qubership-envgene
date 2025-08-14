@@ -1,3 +1,4 @@
+# This action is hidden from the GitHub Actions UI
 name: 'Build Effective Set Generator Docker Image'
 description: 'Build and push Effective Set Generator docker image to container registry'
 
