@@ -23,7 +23,7 @@ debugging.
 1. Create `devtest/wdebug_plugin/main.py` file with this content
 
     ```Python
-    from plugin_engine import PluginCore
+    from envgenehelper.plugin_engine import PluginCore
     from envgenehelper import logger
 
     class EffectiveSetJobPlugin(PluginCore):
@@ -58,13 +58,13 @@ debugging.
 
 1. Create copies of files from envgene repo in instance repo using hard links `ln -f <path_to_file_in_envene> <path_to_instance>/devtest/`
 By using hardlinks changes you make will be reflected in both envgene and instance repo files.
-1. Create debug.sh file with code that you need(use example below as base)
+1. Create debug.sh file in devtest/ with code that you need(use example below as base)
 
     ```bash
     echo 'debug plugin is active'
     # check job name("$CI_JOB_NAME") or job image("$CI_JOB_IMAGE") to ensure replacements happen in right places
-    if [[ "$CI_JOB_NAME" = "generate-effective"* ]]; then 
-      echo "CI_JOB_NAME is '$CI_JOB_NAME'"
+    if [[ "$CI_JOB_IMAGE" = *latest_build_effective_set_generator* ]]; then 
+      echo "CI_JOB_IMAGE is '$CI_JOB_IMAGE'"
       # Examples
       # Sometimes you can get paths in container from error logs, if not look at the related Dockerfile to tell where file ends up in container
       cp "$CI_PROJECT_DIR/devtest/appver_resolver.py" /module/venv/lib/python3.10/site-packages/appver_resolver/appversion_resolver.py
