@@ -12,28 +12,24 @@ COPY build_effective_set_generator/ansible /module/ansible
 COPY python /python
 COPY schemas /module/schemas
 COPY python/integration /python/integration
-ENV ANSIBLE_LIBRARY /module/ansible/library:$ANSIBLE_LIBRARY
+ENV ANSIBLE_LIBRARY=/module/ansible/library:$ANSIBLE_LIBRARY
 
-RUN apk update \
-    && apk add --update --no-cache \
+RUN apk add --no-cache \
         git \
         gcc \
         musl-dev \
         libffi-dev \
         curl \
-    && curl --retry 3 --retry-connrefused --retry-delay 5 -LO https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
-    && chmod +x sops-v3.9.0.linux.amd64 \
-    && mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops \
-    && test -d /module/venv || python3 -m venv /module/venv \
-    && source /module/venv/bin/activate \
-    && . /module/venv/bin/activate \
-    && python3 -m pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-deps --no-cache-dir -r /build/requirements.txt \
-    && pip install --no-cache-dir ansible --upgrade \
-    && ansible-galaxy collection install -r /build/requirements.yml -p /module/ansible/collections \
-    && python3 -m pip install /python/integration \
-    && python3 -m pip install /python/jschon-sort \
-    && python3 -m pip install /python/envgene \
+    && curl --fail --show-error --location --retry 3 \
+        -o /usr/local/bin/sops \
+        https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
+    && chmod +x /usr/local/bin/sops \
+    && python3 -m venv /module/venv \
+    && /module/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && /module/venv/bin/pip install --no-deps --no-cache-dir -r /build/requirements.txt \
+    && /module/venv/bin/pip install --no-cache-dir --upgrade ansible \
+    && /module/venv/bin/ansible-galaxy collection install -r /build/requirements.yml -p /module/ansible/collections \
+    && /module/venv/bin/pip install /python/integration /python/jschon-sort /python/envgene \
     && find /module -type d -exec chmod 755 {} + \
     && find /module -type f -exec chmod 644 {} + \
     && chmod -R 755 /module/scripts

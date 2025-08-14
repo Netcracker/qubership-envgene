@@ -291,34 +291,11 @@ jobs:
            echo "Generated matrix with $count environment(s): $arr"
            echo "env_matrix=$arr" >> $GITHUB_OUTPUT
 
-  parameters_validation:
-    name: "${{ matrix.environment }} - Parameters Validation"
-    runs-on: ubuntu-22.04
-    if: needs.show_environment_variables.outputs.env_matrix != '[]'
-    needs: show_environment_variables
-    container:
-      image: ${{ needs.show_environment_variables.outputs.DOCKER_IMAGE_GCIP }}
-      options: --user root
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: ${{ fromJson(needs.show_environment_variables.outputs.env_matrix) }}
-    steps:
-      - name: Repository Checkout
-        uses: actions/checkout@v4
-
-      - name: EnvGene parameters validation
-        run: |
-          ENV_NAMES="${{ matrix.environment }}"
-          export ENV_NAMES
-          python /module/scripts/github_actions.py validate_pipeline
-
   generate_inventory:
     name: "${{ matrix.environment }} - Generate Inventory"
     runs-on: ubuntu-22.04
     if: always() && needs.show_environment_variables.outputs.env_matrix != '[]' && needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '{}' && needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
     needs:
-      - parameters_validation
       - show_environment_variables
     container:
       image: ${{ needs.show_environment_variables.outputs.DOCKER_IMAGE_ENVGENE }}
@@ -374,7 +351,6 @@ jobs:
     runs-on: ubuntu-22.04
     if: always() && needs.show_environment_variables.outputs.env_matrix != '[]' && needs.show_environment_variables.outputs.CRED_ROTATION_PAYLOAD != '{}'
     needs:
-      - parameters_validation
       - show_environment_variables
       - generate_inventory
     container:
@@ -447,7 +423,6 @@ jobs:
     if: always() && needs.show_environment_variables.outputs.env_matrix != '[]' && needs.show_environment_variables.outputs.ENV_BUILDER == 'true'
     runs-on: ubuntu-22.04
     needs:
-      - parameters_validation
       - show_environment_variables
       - generate_inventory
       - credential_rotation
@@ -589,7 +564,11 @@ jobs:
     name: "${{ matrix.environment }} - Generate Effective Set"
     if: always() && needs.show_environment_variables.outputs.env_matrix != '[]' && needs.show_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
     runs-on: ubuntu-22.04
-    needs: [parameters_validation,show_environment_variables,generate_inventory,credential_rotation,env_build]
+    needs:
+      - show_environment_variables
+      - generate_inventory
+      - credential_rotation
+      - env_build
     container:
       image: ${{ needs.show_environment_variables.outputs.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}
       options: --user root
@@ -711,7 +690,12 @@ jobs:
   git_commit:
     name: "${{ matrix.environment }} - Git Commit"
     runs-on: ubuntu-22.04
-    needs: [parameters_validation,show_environment_variables,generate_inventory,credential_rotation,env_build,generate_effective_set]
+    needs:
+      - show_environment_variables
+      - generate_inventory
+      - credential_rotation
+      - env_build
+      - generate_effective_set
     if: always() && needs.show_environment_variables.outputs.env_matrix != '[]' && (needs.show_environment_variables.outputs.ENV_INVENTORY_INIT == 'true' || needs.show_environment_variables.outputs.ENV_BUILDER == 'true' || needs.show_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true' || needs.show_environment_variables.outputs.CRED_ROTATION_PAYLOAD != '{}')
     container:
       image: ${{ needs.show_environment_variables.outputs.DOCKER_IMAGE_ENVGENE }}

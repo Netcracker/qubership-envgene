@@ -39,19 +39,13 @@ COPY schemas /build_env/schemas
 ENV ANSIBLE_LIBRARY=/module/ansible/library
 
 # Create virtual environment and install Python packages
-RUN python -m venv /module/venv
-RUN /module/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel
-RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
-RUN /module/venv/bin/pip install --no-cache-dir ansible-core --upgrade
-# Install essential Ansible collections only to runtime collections dir (avoid duplication)
-RUN /module/venv/bin/ansible-galaxy collection install ansible.utils -p /module/ansible/collections && \
-    /module/venv/bin/ansible-galaxy collection install ansible.posix -p /module/ansible/collections && \
-    /module/venv/bin/ansible-galaxy collection install community.general -p /module/ansible/collections
-
-RUN /module/venv/bin/pip install /python/jschon-sort
-RUN /module/venv/bin/pip install /python/envgene
-RUN /module/venv/bin/pip install /python/integration
-RUN /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
+RUN python -m venv /module/venv && \
+    /module/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt && \
+    /module/venv/bin/pip install --no-cache-dir --upgrade ansible-core && \
+    /module/venv/bin/ansible-galaxy collection install -p /module/ansible/collections ansible.utils ansible.posix community.general && \
+    /module/venv/bin/pip install /python/jschon-sort /python/envgene /python/integration && \
+    /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
 
 # Download and install SOPS for secrets management (use curl for BusyBox compatibility)
 RUN curl --fail --show-error --location --retry 3 \
@@ -104,10 +98,6 @@ RUN apk add --no-cache \
 COPY --from=build /module /module
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=build /build_env /build_env
-# Do not copy build-time Python sources to slim runtime
-# COPY --from=build /python /python
-# /etc/pip.conf is not needed at runtime
-# COPY --from=build /etc/pip.conf /etc/pip.conf
 
 # Set permissions
 RUN chmod +x /usr/local/bin/sops && \
