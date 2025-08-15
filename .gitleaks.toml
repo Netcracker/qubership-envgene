@@ -40,5 +40,16 @@ regexes = [
     '''.*Example.*:.*REDACTED''',
     '''secret:.*REDACTED''',
     '''password:.*REDACTED''',
-    '''.*secret_key.*:.*REDACTED'''
+    '''.*secret_key.*:.*REDACTED''',
+    '''\*\*Example\*\*:.*REDACTED'''
+]
+
+# Specific file exclusions for documentation
+[[allowlist]]
+description = "Allow repository variables documentation examples"
+paths = [
+    '''docs/envgene-repository-variables.md'''
+]
+regexes = [
+    '''AGE-SECRET-KEY.*'''
 ]

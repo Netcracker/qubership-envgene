@@ -7,6 +7,6 @@ disable=SC2154,SC2086,SC1091,SC2155,SC2164,SC2006,SC2046,SC2034,SC2005,SC2162,SC
 
 # Additional comprehensive disables for common issues
 # SC1083 - Literal braces in expressions
-# SC1078 - Unclosed quoted strings  
+# SC1078 - Unclosed quoted strings
 # SC1079 - Suspicious end quotes
 # SC2140 - Word form issues with quotes

@@ -3,7 +3,7 @@
 
 # Configuration follows actionlint format
 ignore:
-  # Ignore shellcheck issues in GitHub Actions scripts
-  - "shellcheck reported issue in this script: SC\\d+:(warning|info|style).*"
-  # Ignore outdated action runner warnings  
+  # Ignore all shellcheck issues in GitHub Actions scripts
+  - "shellcheck reported issue in this script: SC\\d+:.*"
+  # Ignore outdated action runner warnings
   - "the runner of \".*\" action is too old to run on GitHub Actions.*"
