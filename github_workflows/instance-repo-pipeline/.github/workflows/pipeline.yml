@@ -288,8 +288,8 @@ jobs:
              exit 0
            fi
 
-           echo "Generated matrix with $count environment(s): $arr"
-           echo "env_matrix=$arr" >> $GITHUB_OUTPUT
+           echo "Generated matrix with \"$count\" environment(s): \"$arr\""
+           echo "env_matrix=\"$arr\"" >> "$GITHUB_OUTPUT"
 
   generate_inventory:
     name: "${{ matrix.environment }} - Generate Inventory"
