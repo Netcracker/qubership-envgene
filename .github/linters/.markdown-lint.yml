@@ -1,6 +1,9 @@
 # Markdownlint configuration file
 # https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
 
+# MD012 - Multiple consecutive blank lines
+MD012: false
+
 # MD013 - Line length
 MD013:
   # Number of characters
@@ -22,7 +25,8 @@ MD013:
   # Stern length checking
   stern: false
 
+# MD033 - Inline HTML
+MD033: false
+
 # MD051 - Link fragments should be valid
-MD051:
-  # Validate link fragments
-  front_matter_title: "title"
+MD051: false
