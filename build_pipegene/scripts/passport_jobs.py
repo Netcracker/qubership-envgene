@@ -27,7 +27,6 @@ def prepare_trigger_passport_job(pipeline, full_env):
     )
   trigger_job.add_variables(ENV_NAME=full_env, GET_PASSPORT="true")
   pipeline.add_children(trigger_job)
-  
   return trigger_job
 
 def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, need_commit):

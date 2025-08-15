@@ -6,5 +6,3 @@ class ImportJobPlugin(PluginCore):
 
     def invoke(self, *args, **kwargs) -> None:
         pass  # This is a stub that does nothing
-    
-

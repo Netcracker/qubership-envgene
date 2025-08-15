@@ -29,4 +29,4 @@ jobs:
         uses: webiny/action-conventional-commits@v1.3.0
 
       - name: Run Tests
-        uses: ./.github/actions/run-tests 
+        uses: ./.github/actions/run-tests

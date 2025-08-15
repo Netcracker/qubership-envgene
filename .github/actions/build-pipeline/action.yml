@@ -51,4 +51,4 @@ runs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build-args: |
-          GH_ACCESS_TOKEN=${{ inputs.gh-access-token }} 
+          GH_ACCESS_TOKEN=${{ inputs.gh-access-token }}
