@@ -1,0 +1,3 @@
+# ShellCheck configuration file
+# Ignore info and style messages, only show errors and warnings
+severity=error
