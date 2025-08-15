@@ -32,6 +32,8 @@
       - [Credential File](#credential-file)
     - [Artifact Definition](#artifact-definition)
     - [Registry Definition](#registry-definition)
+      - [Registry Definition v1.0](#registry-definition-v10)
+      - [Registry Definition v2.0](#registry-definition-v20)
     - [Application Definition](#application-definition)
 
 ## Template Repository Objects
@@ -61,22 +63,24 @@ It has the following structure:
 # Template Inheritance configuration
 # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
 parent-templates:
-  <parent-template-name>: <app:ver-of-parent-template>
+  # Optional
+  # Value must be in `application:version` notation
+  <parent-template-name>: string
 # Mandatory
 # Can be specified either as direct template path (string) or as an object
-tenant: <path-to-the-tenant-template-file>
+tenant: string
 # or
 tenant:
   # Template Inheritance configuration
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
-  parent: <parent-template-name>
+  parent: string
 # Mandatory
 # Can be specified either as direct template path (string) or as an object
-cloud: <path-to-the-cloud-template-file>
+cloud: string
 # or
 cloud:
   # Optional
-  template_path: <path-to-the-cloud-template-file>
+  template_path: string
   # Optional
   # Template Override configuration
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
@@ -85,54 +89,55 @@ cloud:
   # Optional
   # Template Inheritance configuration
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
-  parent: <parent-template-name>
+  parent: string
   # Optional
   # Template Inheritance configuration
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
   overrides-parent:
     profile:
-      override-profile-name: <resource-profile-override-name>
-      parent-profile-name: <resource-profile-override-name>
-      baseline-profile-name: <resource-profile-baseline-name>
-      merge-with-parent: <boolean>
-    deployParameters: <hashmap-with-parameters>
-    e2eParameters: <hashmap-with-parameters>
-    technicalConfigurationParameters: <hashmap-with-parameters>
-    deployParameterSets: <list-with-parameter-sets>
-    e2eParameterSets: <list-with-parameter-sets>
-    technicalConfigurationParameterSets: <list-with-parameter-sets>
-composite_structure: <path-to-the-composite-structure-template-file>
+      override-profile-name: string
+      parent-profile-name: string
+      baseline-profile-name: string
+      merge-with-parent: string
+    deployParameters: hashmap
+    e2eParameters: hashmap
+    technicalConfigurationParameters: hashmap
+    deployParameterSets: list
+    e2eParameterSets: list
+    technicalConfigurationParameterSets: list
+composite_structure: string
 namespaces:
   - # Optional
-    template_path: <path-to-the-namespace-template-file>
+    # Path to the namespace template file
+    template_path: string
     # Optional
     # See details https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
     template_override:
       <yaml or jinja expression>
     # Optional
-    # Template Inheritance configuration
+    # Name of Namespace in Parent Template
     # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
-    name: <namespace-name-in-parent-template>
+    name: string
     # Optional
-    # Template Inheritance configuration
+    # Parent template name
     # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
-    parent: <parent-template-name>
+    parent: string
     # Optional
     # Template Inheritance configuration
     # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
     overrides-parent:
       profile:
-        override-profile-name: <resource-profile-override-name>
-        parent-profile-name: <resource-profile-override-name>
-        baseline-profile-name: <resource-profile-baseline-name>
-        merge-with-parent: true
-      deployParameters: <hashmap-with-parameters>
-      e2eParameters: <hashmap-with-parameters>
-      technicalConfigurationParameters: <hashmap-with-parameters>
-      deployParameterSets: <list-with-parameter-sets>
-      e2eParameterSets: <list-with-parameter-sets>
-      technicalConfigurationParameterSets: <list-with-parameter-sets>
-      template_path: <path-to-the-namespace-template-file>
+        override-profile-name: string
+        parent-profile-name: string
+        baseline-profile-name: string
+        merge-with-parent: boolean
+      deployParameters: hashmap
+      e2eParameters: hashmap
+      technicalConfigurationParameters: hashmap
+      deployParameterSets: list
+      e2eParameterSets: list
+      technicalConfigurationParameterSets: list
+      template_path: string
 ```
 
 [Template Descriptor JSON schema](/schemas/template-descriptor.schema.json)
@@ -213,28 +218,24 @@ ParameterSets can be parameterized using Jinja and [macros](/docs/template-macro
 ```yaml
 # Optional
 # Deprecated
-version: <paramset-version>
+version: string
 # Mandatory
 # The name of the Parameter Set
 # Used to reference the Parameter Set in templates
 # Must match the Parameter Set file name
-name: "parameter-set-name"
+name: string
 # Mandatory
 # Key-value pairs of parameters
 # The actual parameters that will be set when this Parameter Set is referenced
-parameters:
-  <key-1>: <value-1>
-  <key-N>: <value-N>
+parameters: hashmap
 # Optional
 # Section describing application-level parameters
 # For each `appName`, an Application object will be created with parameters specified in `parameters`
 application:
   - # Mandatory
-    appName: <application-name>
+    appName: string
     # Mandatory
-    parameters:
-      <key-1>: <value-1>
-      <key-N>: <value-N>
+    parameters: hashmap
 ```
 
 **Example:**
@@ -372,17 +373,15 @@ For each parameter in the Namespace, a comment is added indicating the source Pa
 # Mandatory
 # The name of the namespace
 # The same as the Kubernetes namespace name
-name: <namespace-name>
+name: string
 # Optional
-# The credentials ID for accessing the namespace
+# Pointer to the credentials ID for accessing the namespace
 # Used for authentication when performing deployment in this namespace
-credentialsId: <credential-name-with-deployment-token>
+credentialsId: string
 # Optional
-# Labels for the namespace
+# List of labels for the namespace
 # Used for filtering, organization, and grouping
-labels:
-  - <label-1>
-  - <label-N>
+labels: list
 # Mandatory
 # Whether to perform parameter merging on the server side
 # Controls where parameter merging happens during deployment
@@ -402,49 +401,37 @@ profile:
   # Mandatory
   # The name of the resource profile override to use
   # Used to determine which resource profile override to apply to applications in this namespace
-  name: <resource-profile-override-name>
+  name: string
   # Mandatory
   # The baseline profile to use
   # Used as the base resource profile before applying overrides
-  baseline: <resource-profile-baseline-name>
+  baseline: string
 # Optional
 # Key-value pairs of deployment parameters at the namespace level
 # Used to set parameters that will be used for rendering Helm charts of applications for this namespace
-deployParameters:
-  <key-1>: <value-1>
-  <key-N>: <value-N>
+deployParameters: hashmap
 # Optional
 # Key-value pairs of e2e parameters at the namespace level
 # Used to configure the systems/pipelines managing the Environment lifecycle for this namespace
-e2eParameters:
-  <key-1>: <value-1>
-  <key-N>: <value-N>
+e2eParameters: hashmap
 # Optional
 # Key-value pairs of technical configuration parameters at the namespace level
 # Used to set parameters that can be applied to the application at runtime
 # without redeployment for this namespace
-technicalConfigurationParameters:
-  <key-1>: <value-1>
-  <key-N>: <value-N>
+technicalConfigurationParameters: hashmap
 # Optional
 # List of deployment Parameter Set names to include at the namespace level
 # Used to set parameters that will be used for rendering Helm charts of applications for this namespace
-deployParameterSets:
-  - <parameter-set-1>
-  - <parameter-set-N>
+deployParameterSets: list
 # Optional
 # List of e2e Parameter Set names to include at the namespace level
 # Used to configure the systems/pipelines managing the Environment lifecycle for this namespace
-e2eParameterSets:
-  - <parameter-set-1>
-  - <parameter-set-N>
+e2eParameterSets: list
 # Optional
 # List of technical configuration Parameter Set names to include at the namespace level
 # Used to include predefined sets of parameters that can be applied to the application at runtime
 # without redeployment for this namespace
-technicalConfigurationParameterSets:
-  - <parameter-set-1>
-  - <parameter-set-N>
+technicalConfigurationParameterSets: list
 ```
 
 **Example:**
@@ -498,21 +485,17 @@ The Application object is used to generate Effective Set by providing applicatio
 # Mandatory
 # The name of the Application, generated based on the `applications[].appName`
 # attribute of Parameter Set
-name: <application-name>
+name: string
 # Optional
 # Key-value pairs of deployment parameters at the application level
 # If the Parameter Set is associated in `deployParameterSets`, then the parameters
 # from `application[].parameters` will be set in this section
-deployParameters:
-  <key-1>: <value-1>
-  <key-N>: <value-N>
+deployParameters: hashmap
 # Optional
 # Key-value pairs of technical configuration parameters at the application level
 # If the Parameter Set is associated in `technicalConfigurationParameterSets`, then the parameters
 # from `application[].parameters` will be set in this section
-technicalConfigurationParameters:
-  <key-1>: <value-1>
-  <key-N>: <value-N>
+technicalConfigurationParameters: hashmap
 ```
 
 **Example:**
@@ -621,8 +604,8 @@ Used for credentials requiring username/password pairs. Contains two mandatory c
 <cred-id>:
   type: usernamePassword
   data:
-    username: <value>
-    password: <value>
+    username: string
+    password: string
 ```
 
 #### `secret`
@@ -633,7 +616,7 @@ Used for single-secret credentials. Contains one mandatory credentials field(`se
 <cred-id>:
   type: secret
   data:
-    secret: <value>
+    secret: string
 ```
 
 After generation, `<value>` is set to `envgeneNullValue`. The user must manually set the actual value.
@@ -752,38 +735,38 @@ The file name must match the value of the `name` attribute.
 ```yaml
 # Mandatory
 # Name of the artifact template. This corresponds to the `application` part in the `application:version` notation.
-name: <artifact-template-name>
+name: string
 # Mandatory
-# Maven group id
-groupId: <group-id>
+# Artifact template Maven group id
+groupId: string
 # Mandatory
-# Maven artifact id
-artifactId: <artifact-id>
+# Artifact template Maven artifact id
+artifactId: string
 # Mandatory
 registry:
   # Mandatory
   # Name of the registry where the artifact is stored
-  name: <registry-name>
+  name: string
   # Mandatory
   # Pointer to the EnvGene Credential object.
   # Credential with this id must be located in /configuration/credentials/credentials.yml
-  credentialsId: <registry-cred-id>
+  credentialsId: string
   # Mandatory
   mavenConfig:
     # Mandatory
     # URL of the registry where the artifact is stored
-    repositoryDomainName: <registry-url>
+    repositoryDomainName: string
     # Mandatory
     # Snapshot repository name
     # EnvGene checks repositories in this order: release -> staging -> snapshot
     # It stops when it finds the artifact
-    targetSnapshot: <snapshot-repository>
+    targetSnapshot: string
     # Mandatory
     # Staging repository name
-    targetStaging: <staging-repository>
+    targetStaging: string
     # Mandatory
     # Release repository name
-    targetRelease: <release-repository>
+    targetRelease: string
 ```
 
 **Example:**
@@ -816,123 +799,369 @@ The file name must match the value of the `name` attribute.
 
 **Location:** `/environments/<cluster-name>/<env-name>/AppDefs/<registry-name>.yml`
 
+Two versions of this object are supported
+
+#### Registry Definition v1.0
+
 ```yaml
 # Mandatory
 # Name of the registry
-name: <registry-name>
+name: string
 # Mandatory
 # Pointer to the EnvGene Credential object.
 # Credential with this id must be located in /environments/<cluster-name>/<env-name>/Credentials/credentials.yml
-credentialsId: <credentials-id>
+credentialsId: string
 # Mandatory
 mavenConfig:
   # Mandatory
   # Domain name of the Maven registry
-  repositoryDomainName: <repository-domain-name>
+  repositoryDomainName: string
   # Mandatory
   # Full URL of the Maven registry
-  fullRepositoryUrl: <full-repository-url>
+  fullRepositoryUrl: string
   # Mandatory
   # Snapshot Maven repository name
-  targetSnapshot: <snapshot-repository>
+  targetSnapshot: string
   # Mandatory
   # Staging Maven repository name
-  targetStaging: <staging-repository>
+  targetStaging: string
   # Mandatory
   # Release Maven repository name
-  targetRelease: <release-repository>
+  targetRelease: string
   # Mandatory
   # Snapshot Maven repository name
-  snapshotGroup: <snapshot-group>
+  snapshotGroup: string
   # Mandatory
   # Release Maven repository name
-  releaseGroup: <release-group>
+  releaseGroup: string
 # Mandatory
 dockerConfig:
   # Mandatory
   # URI for Docker snapshot registry
-  snapshotUri: <docker-snapshot-uri>
+  snapshotUri: string
   # Mandatory
   # URI for Docker staging repository
-  stagingUri: <docker-staging-uri>
+  stagingUri: string
   # Mandatory
   # URI for Docker release repository
-  releaseUri: <docker-release-uri>
+  releaseUri: string
   # Mandatory
   # URI for Docker group repository
-  groupUri: <docker-group-uri>
+  groupUri: string
   # Mandatory
   # Name of Docker snapshot repository
-  snapshotRepoName: <docker-snapshot-repo-name>
+  snapshotRepoName: string
   # Mandatory
   # Name of Docker staging repository
-  stagingRepoName: <docker-staging-repo-name>
+  stagingRepoName: string
   # Mandatory
   # Name of Docker release repository
-  releaseRepoName: <docker-release-repo-name>
+  releaseRepoName: string
   # Mandatory
   # Name of Docker group
-  groupName: <docker-group-name>
-# Optional
-goConfig:
-  # Mandatory
-  # Go snapshot repository name
-  goTargetSnapshot: <go-snapshot>
-  # Mandatory
-  # Go release repository name
-  goTargetRelease: <go-release>
-  # Mandatory
-  # Go proxy repository URL
-  goProxyRepository: <go-proxy-repository>
-# Optional
-rawConfig:
-  # Mandatory
-  # Raw snapshot repository name
-  rawTargetSnapshot: <raw-snapshot>
-  # Mandatory
-  # Raw release repository name
-  rawTargetRelease: <raw-release>
-  # Mandatory
-  # Raw staging repository name
-  rawTargetStaging: <raw-staging>
-  # Mandatory
-  # Raw proxy repository name
-  rawTargetProxy: <raw-proxy>
-# Optional
-npmConfig:
-  # Mandatory
-  # NPM snapshot repository name
-  npmTargetSnapshot: <npm-snapshot>
-  # Mandatory
-  # NPM release repository name
-  npmTargetRelease: <npm-release>
-# Optional
+  groupName: string
+  # Optional
 helmConfig:
   # Mandatory
   # Helm staging repository name
-  helmTargetStaging: <helm-staging>
+  helmTargetStaging: string
   # Mandatory
   # Helm release repository name
-  helmTargetRelease: <helm-release>
+  helmTargetRelease: string
 # Optional
 helmAppConfig:
   # Mandatory
   # Helm staging repository name for application charts
-  helmStagingRepoName: <helm-staging-repo-name>
+  helmStagingRepoName: string
   # Mandatory
   # Helm release repository name for application charts
-  helmReleaseRepoName: <helm-release-repo-name>
+  helmReleaseRepoName: string
   # Mandatory
   # Helm group repository name for application charts
-  helmGroupRepoName: <helm-group-repo-name>
+  helmGroupRepoName: string
   # Mandatory
   # Helm dev repository name for application charts
-  helmDevRepoName: <helm-dev-repo-name>
+  helmDevRepoName: string
+# Optional
+goConfig:
+  # Mandatory
+  # Go snapshot repository name
+  goTargetSnapshot: string
+  # Mandatory
+  # Go release repository name
+  goTargetRelease: string
+  # Mandatory
+  # Go proxy repository URL
+  goProxyRepository: string
+# Optional
+rawConfig:
+  # Mandatory
+  # Raw snapshot repository name
+  rawTargetSnapshot: string
+  # Mandatory
+  # Raw release repository name
+  rawTargetRelease: string
+  # Mandatory
+  # Raw staging repository name
+  rawTargetStaging: string
+  # Mandatory
+  # Raw proxy repository name
+  rawTargetProxy: string
+# Optional
+npmConfig:
+  # Mandatory
+  # NPM snapshot repository name
+  npmTargetSnapshot: string
+  # Mandatory
+  # NPM release repository name
+  npmTargetRelease: string
 ```
 
 **Example:**
 
-[Registry Definition JSON schema](/schemas/regdef.schema.json)
+```yaml
+name: sandbox
+credentialsId: nexus-credentials
+mavenConfig:
+  repositoryDomainName: nexus.qubership.org
+  fullRepositoryUrl: https://nexus.qubership.org/repository
+  targetSnapshot: maven-snapshots
+  targetStaging: maven-staging
+  targetRelease: maven-releases
+  snapshotGroup: maven-snapshots-group
+  releaseGroup: maven-releases-group
+dockerConfig:
+  snapshotUri: docker.qubership.org/snapshots
+  stagingUri: docker.qubership.org/staging
+  releaseUri: docker.qubership.org/releases
+  groupUri: docker.qubership.org/group
+  snapshotRepoName: docker-snapshots
+  stagingRepoName: docker-staging
+  releaseRepoName: docker-releases
+  groupName: docker-group
+```
+
+[Registry Definition v1.0 JSON schema](/schemas/regdef.schema.json)
+
+#### Registry Definition v2.0
+
+```yaml
+# Optional
+# Registry Definition object version
+version: "2.0"
+# Mandatory
+# Name of the registry
+name: string
+# Optional
+# Authentication config
+# Cannot be set in if anonymous access is used
+authConfig:
+  <auth-config-name>:
+    # Mandatory
+    # Name of credential in credential storage
+    credentialId: string 
+    # Optional
+    # Public cloud registry authentication strategy
+    # Used in case of public cloud registries
+    authType: enum [ shortLived, longLived ]
+    # Optional
+    # Public cloud registry type
+    # Used in case of public cloud registries
+    provider: enum [ aws, azure, gcp ]
+    # Optional
+    # Public cloud registry authentication method
+    # Used in case of public cloud registries
+    authMethod: enum [ assume-role, managed-identity, oauth2-client, federation, service-account, user-pass ]
+# Mandatory
+mavenConfig:
+  # Mandatory
+  # Pointer to authentication config described in `authConfig` section
+  # Cannot be set in if anonymous access is used
+  authConfig: string
+  # Mandatory
+  # Domain name of the Maven registry
+  repositoryDomainName: string
+  # Mandatory
+  # Snapshot Maven repository name
+  targetSnapshot: string
+  # Mandatory
+  # Staging Maven repository name
+  targetStaging: string
+  # Mandatory
+  # Release Maven repository name
+  targetRelease: string
+  # Mandatory
+  # Snapshot Maven repository name
+  snapshotGroup: string
+  # Mandatory
+  # Release Maven repository name
+  releaseGroup: string
+# Mandatory
+dockerConfig:
+  # Mandatory
+  # Pointer to authentication config described in `authConfig` section
+  # Cannot be set in if anonymous access is used
+  authConfig: string
+  # Mandatory
+  # Domain name of the Docker registry
+  repositoryDomainName: string
+  # Mandatory
+  # URI for Docker snapshot registry
+  snapshotUri: string
+  # Mandatory
+  # URI for Docker staging repository
+  stagingUri: string
+  # Mandatory
+  # URI for Docker release repository
+  releaseUri: string
+  # Mandatory
+  # URI for Docker group repository
+  groupUri: string
+  # Mandatory
+  # Name of Docker snapshot repository
+  snapshotRepoName: string
+  # Mandatory
+  # Name of Docker staging repository
+  stagingRepoName: string
+  # Mandatory
+  # Name of Docker release repository
+  releaseRepoName: string
+  # Mandatory
+  # Name of Docker group
+  groupName: string
+# Optional
+helmConfig:
+  # Mandatory
+  # Pointer to authentication config described in `authConfig` section
+  # Cannot be set in if anonymous access is used
+  authConfig: string
+  # Mandatory
+  # Domain name of the Docker registry
+  repositoryDomainName: string
+  # Mandatory
+  # Helm staging repository name
+  helmTargetStaging: string
+  # Mandatory
+  # Helm release repository name
+  helmTargetRelease: string
+# Optional
+helmAppConfig:
+  # Mandatory
+  # Pointer to authentication config described in `authConfig` section
+  # Cannot be set in if anonymous access is used
+  authConfig: string
+  # Mandatory
+  # Domain name of the Docker registry
+  repositoryDomainName: string
+  # Mandatory
+  # Helm staging repository name for application charts
+  helmStagingRepoName: string
+  # Mandatory
+  # Helm release repository name for application charts
+  helmReleaseRepoName: string
+  # Mandatory
+  # Helm group repository name for application charts
+  helmGroupRepoName: string
+  # Mandatory
+  # Helm dev repository name for application charts
+  helmDevRepoName: string
+# Optional
+goConfig:
+  # Mandatory
+  # Pointer to authentication config described in `authConfig` section
+  # Cannot be set in if anonymous access is used
+  goTargetSnapshot: string
+  # Mandatory
+  # Go release repository name
+  goTargetRelease: string
+  # Mandatory
+  # Go proxy repository URL
+  goProxyRepository: string
+# Optional
+rawConfig:
+  # Mandatory
+  # Pointer to authentication config described in `authConfig` section
+  # Cannot be set in if anonymous access is used
+  rawTargetSnapshot: string
+  # Mandatory
+  # Raw release repository name
+  rawTargetRelease: string
+  # Mandatory
+  # Raw staging repository name
+  rawTargetStaging: string
+  # Mandatory
+  # Raw proxy repository name
+  rawTargetProxy: string
+# Optional
+npmConfig:
+  # Mandatory
+  # NPM snapshot repository name
+  npmTargetSnapshot: string
+  # Mandatory
+  # NPM release repository name
+  npmTargetRelease: string
+```
+
+**Example:**
+
+```yaml
+version: "2.0"
+name: sandbox
+authConfig:
+  aws:
+    authType: shortLived
+    provider: aws
+    authMethod: assume-role
+    credentialId: role-aws
+  helm:
+    authType: longLived
+    credentialId: cred-nexus
+mavenConfig:
+  repositoryDomainName: https://codeartifact.eu-west-1.amazonaws.com/maven/app
+  authConfig: aws
+  targetSnapshot: snapshots
+  targetStaging: staging
+  targetRelease: releases
+  snapshotGroup: org.qubership.app
+  releaseGroup: org.qubership.app
+dockerConfig:
+  repositoryDomainName: https://123456789.dkr.ecr.eu-west-1.amazonaws.com
+  authConfig: aws
+  snapshotUri: docker/snapshots
+  stagingUri: docker/staging
+  releaseUri: docker/releases
+  groupUri: docker
+  snapshotRepoName: docker-snapshots
+  stagingRepoName: docker-staging
+  releaseRepoName: docker-releases
+  groupName: docker
+helmConfig:
+  authConfig: helm
+  repositoryDomainName: https://nexus.mycompany.internal/repository/helm-charts
+  helmTargetStaging: helm-staging
+  helmTargetRelease: helm-releases
+helmAppConfig:
+  repositoryDomainName: https://nexus.mycompany.internal/repository/helm-charts
+  helmStagingRepoName: helm-staging
+  helmReleaseRepoName: helm-releases
+  helmGroupRepoName: helm-group
+  helmDevRepoName: helm-dev
+  authConfig: helm
+goConfig:
+  goTargetSnapshot: go-snapshots
+  goTargetRelease: go-releases
+  goProxyRepository: https://goproxy.internal/go/
+rawConfig:
+  rawTargetSnapshot: raw/snapshots
+  rawTargetRelease: raw/releases
+  rawTargetStaging: raw/staging
+  rawTargetProxy: https://proxy.raw.local/
+npmConfig:
+  npmTargetSnapshot: npm-snapshots
+  npmTargetRelease: npm-releases
+```
+
+[Registry Definition v2.0 JSON schema](/schemas/regdef-v2.schema.json)
 
 ### Application Definition
 
@@ -949,16 +1178,16 @@ The file name must match the value of the `name` attribute.
 ```yaml
 # Mandatory
 # Name of the artifact application. This corresponds to the `application` part in the `application:version` notation.
-name: <application-name>
+name: string
 # Mandatory
 # Reference to Registry Definition
-registryName: <registry-definition-name>
+registryName: string
 # Mandatory
 # Application artifact ID
-artifactId: <artifact-id>
+artifactId: string
 # Mandatory
 # Application group ID
-groupId: <artifact-id>
+groupId: string
 ```
 
 **Example:**

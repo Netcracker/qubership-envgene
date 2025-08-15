@@ -1,0 +1,270 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "enum": ["2.0"]
+    },
+    "name": {
+      "type": "string"
+    },
+    "authConfig": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/AuthConfig"
+      }
+    },
+    "mavenConfig": {
+      "$ref": "#/definitions/MavenConfigV2"
+    },
+    "dockerConfig": {
+      "$ref": "#/definitions/DockerConfigV2"
+    },
+    "helmConfig": {
+      "$ref": "#/definitions/HelmConfigV2"
+    },
+    "helmAppConfig": {
+      "$ref": "#/definitions/HelmAppConfigV2"
+    },
+    "goConfig": {
+      "$ref": "#/definitions/GoConfigV2"
+    },
+    "rawConfig": {
+      "$ref": "#/definitions/RawConfigV2"
+    },
+    "npmConfig": {
+      "$ref": "#/definitions/NpmConfigV2"
+    }
+  },
+  "required": [
+    "name",
+    "mavenConfig",
+    "dockerConfig"
+  ],
+  "definitions": {
+    "AuthConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "credentialId": {
+          "type": "string"
+        },
+        "authType": {
+          "type": "string",
+          "enum": ["shortLived", "longLived"]
+        },
+        "provider": {
+          "type": "string",
+          "enum": ["aws", "azure", "gcp"]
+        },
+        "authMethod": {
+          "type": "string",
+          "enum": ["assume-role", "managed-identity", "oauth2-client", "federation", "service-account", "user-pass"]
+        }
+      },
+      "required": [
+        "credentialId"
+      ]
+    },
+    "MavenConfigV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authConfig": {
+          "type": "string"
+        },
+        "repositoryDomainName": {
+          "type": "string"
+        },
+        "targetSnapshot": {
+          "type": "string"
+        },
+        "targetStaging": {
+          "type": "string"
+        },
+        "targetRelease": {
+          "type": "string"
+        },
+        "snapshotGroup": {
+          "type": "string"
+        },
+        "releaseGroup": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "repositoryDomainName",
+        "targetSnapshot",
+        "targetStaging",
+        "targetRelease",
+        "snapshotGroup",
+        "releaseGroup"
+      ]
+    },
+    "DockerConfigV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authConfig": {
+          "type": "string"
+        },
+        "repositoryDomainName": {
+          "type": "string"
+        },
+        "snapshotUri": {
+          "type": "string"
+        },
+        "stagingUri": {
+          "type": "string"
+        },
+        "releaseUri": {
+          "type": "string"
+        },
+        "groupUri": {
+          "type": "string"
+        },
+        "snapshotRepoName": {
+          "type": "string"
+        },
+        "stagingRepoName": {
+          "type": "string"
+        },
+        "releaseRepoName": {
+          "type": "string"
+        },
+        "groupName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "repositoryDomainName",
+        "snapshotUri",
+        "stagingUri",
+        "releaseUri",
+        "groupUri",
+        "snapshotRepoName",
+        "stagingRepoName",
+        "releaseRepoName",
+        "groupName"
+      ]
+    },
+    "HelmConfigV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authConfig": {
+          "type": "string"
+        },
+        "repositoryDomainName": {
+          "type": "string"
+        },
+        "helmTargetStaging": {
+          "type": "string"
+        },
+        "helmTargetRelease": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "authConfig",
+        "repositoryDomainName",
+        "helmTargetStaging",
+        "helmTargetRelease"
+      ]
+    },
+    "HelmAppConfigV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authConfig": {
+          "type": "string"
+        },
+        "repositoryDomainName": {
+          "type": "string"
+        },
+        "helmStagingRepoName": {
+          "type": "string"
+        },
+        "helmReleaseRepoName": {
+          "type": "string"
+        },
+        "helmGroupRepoName": {
+          "type": "string"
+        },
+        "helmDevRepoName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "authConfig",
+        "repositoryDomainName",
+        "helmStagingRepoName",
+        "helmReleaseRepoName",
+        "helmGroupRepoName",
+        "helmDevRepoName"
+      ]
+    },
+    "GoConfigV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "goTargetSnapshot": {
+          "type": "string"
+        },
+        "goTargetRelease": {
+          "type": "string"
+        },
+        "goProxyRepository": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "goTargetSnapshot",
+        "goTargetRelease",
+        "goProxyRepository"
+      ]
+    },
+    "RawConfigV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "rawTargetSnapshot": {
+          "type": "string"
+        },
+        "rawTargetRelease": {
+          "type": "string"
+        },
+        "rawTargetStaging": {
+          "type": "string"
+        },
+        "rawTargetProxy": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "rawTargetSnapshot",
+        "rawTargetRelease",
+        "rawTargetStaging",
+        "rawTargetProxy"
+      ]
+    },
+    "NpmConfigV2": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "npmTargetSnapshot": {
+          "type": "string"
+        },
+        "npmTargetRelease": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "npmTargetSnapshot",
+        "npmTargetRelease"
+      ]
+    }
+  }
+} 
