@@ -1,22 +1,9 @@
-# Actionlint configuration - ignore warnings, info, and style issues
-paths:
-  .github/workflows/**/*.{yml,yaml}:
-    ignore:
-      # Ignore all shellcheck warnings, info, and style messages
-      - 'shellcheck reported issue in this script: SC\d+:warning.+'
-      - 'shellcheck reported issue in this script: SC\d+:info.+'
-      - 'shellcheck reported issue in this script: SC\d+:style.+'
-      # Ignore runner version warnings for commonly used actions
-      - 'the runner of ".+" action is too old to run on GitHub Actions.+'
-  workflows-templates/**/*.{yml,yaml}:
-    ignore:
-      - 'shellcheck reported issue in this script: SC\d+:warning.+'
-      - 'shellcheck reported issue in this script: SC\d+:info.+'
-      - 'shellcheck reported issue in this script: SC\d+:style.+'
-      - 'the runner of ".+" action is too old to run on GitHub Actions.+'
-  actions/**/*.{yml,yaml}:
-    ignore:
-      - 'shellcheck reported issue in this script: SC\d+:warning.+'
-      - 'shellcheck reported issue in this script: SC\d+:info.+'
-      - 'shellcheck reported issue in this script: SC\d+:style.+'
-      - 'the runner of ".+" action is too old to run on GitHub Actions.+'
+# Actionlint configuration for Super-linter
+# This configuration is used to ignore specific actionlint rules
+
+# Configuration follows actionlint format
+ignore:
+  # Ignore shellcheck issues in GitHub Actions scripts
+  - "shellcheck reported issue in this script: SC\\d+:(warning|info|style).*"
+  # Ignore outdated action runner warnings  
+  - "the runner of \".*\" action is too old to run on GitHub Actions.*"
