@@ -1,6 +1,6 @@
 ---
   name: Link Checker
-  
+
   on:
     push: null
     repository_dispatch: null
@@ -12,7 +12,7 @@
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
-  
+
         - name: Link Checker
           id: lychee
           uses: lycheeverse/lychee-action@v2
