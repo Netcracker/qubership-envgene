@@ -375,7 +375,7 @@ jobs:
 
       - name: Create the naming for artifact
         run: |
-          if [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST }}" = "false" ] && ([ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
+          if [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST }}" = "false" ] && { [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]; }; then
             echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> "$GITHUB_ENV"
           fi
 
@@ -395,8 +395,10 @@ jobs:
 
       - name: Credential Rotation
         run: |
-          export CLUSTER_NAME=$(echo "${{ matrix.environment }}" | cut -d'/' -f1)
-          export ENV_NAME=$(echo "${{ matrix.environment }}" | cut -d'/' -f2 | xargs)
+          CLUSTER_NAME=$(echo "${{ matrix.environment }}" | cut -d'/' -f1)
+          export CLUSTER_NAME
+          ENV_NAME=$(echo "${{ matrix.environment }}" | cut -d'/' -f2 | xargs)
+          export ENV_NAME
 
           CRED_ROTATION_FORCE="${{ needs.show_environment_variables.outputs.CRED_ROTATION_FORCE }}"
           export CRED_ROTATION_FORCE
@@ -549,7 +551,7 @@ jobs:
           fi
 
           env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
-          for path in "$env_path"; do
+          for path in $env_path; do
             if [ -d "$path/Credentials" ]; then
               chmod ugo+rw "$path/Credentials/"*
             fi
@@ -592,7 +594,7 @@ jobs:
 
       - name: Create the naming for artifact
         run: |
-          if [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST }}" = "false" ] && ([ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
+          if [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST }}" = "false" ] && { [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]; }; then
             echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> "$GITHUB_ENV"
           fi
           if [ "${{ needs.show_environment_variables.outputs.CRED_ROTATION_PAYLOAD }}" != "{}" ]; then
@@ -720,7 +722,7 @@ jobs:
 
       - name: Create the naming for artifact
         run: |
-          if [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST }}" = "false" ] && ([ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
+          if [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST }}" = "false" ] && { [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]; }; then
             echo "artifact_name=generate_inventory_${{ env.SANITIFIED_NAME }}" >> "$GITHUB_ENV"
           fi
           if [ "${{ needs.show_environment_variables.outputs.CRED_ROTATION_PAYLOAD }}" != "{}" ]; then
@@ -806,7 +808,7 @@ jobs:
 
           if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
             env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs")
-            for path in "$env_path"; do
+            for path in $env_path; do
               bash /module/scripts/update_ca_cert.sh "${CI_PROJECT_DIR}/configuration/certs/$path"
             done
           fi
@@ -816,13 +818,13 @@ jobs:
           /module/scripts/prepare.sh "git_commit.yaml"
 
           env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
-          for path in "$env_path"; do
+          for path in $env_path; do
             if [ -d "$path/Credentials" ]; then
               chmod ugo+rw "$path/Credentials/"*
             fi
           done
 
-          cp -rf ${CI_PROJECT_DIR}/environments ${CI_PROJECT_DIR}/git_envs
+          cp -rf "${CI_PROJECT_DIR}/environments" "${CI_PROJECT_DIR}/git_envs"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
