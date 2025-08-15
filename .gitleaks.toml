@@ -1,0 +1,25 @@
+# Gitleaks configuration file
+# Exclude test data directory from secret scanning
+
+[extend]
+# Enable all default rules
+rules = []
+
+[[rules]]
+description = "Exclude test_data directory"
+id = "test_data_exclusion"
+regex = '''.*'''
+path = '''test_data/.*'''
+allowlist = true
+
+[[allowlist]]
+description = "Ignore all secrets in test_data directory"
+paths = [
+    '''test_data/.*'''
+]
+
+[[allowlist]]
+description = "Ignore documentation examples in envgene-objects.md"
+paths = [
+    '''docs/envgene-objects.md'''
+]

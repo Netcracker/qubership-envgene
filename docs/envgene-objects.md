@@ -306,7 +306,7 @@ artifactory-cred:
 gitlab-token-cred:
   type: secret
   data:
-    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
+    secret: "example-secret-token-for-documentation-purposes-only"
 ```
 
 ## Instance Repository Objects
@@ -586,7 +586,7 @@ db_cred:
 token:
   type: secret
   data:
-    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
+    secret: "example-secret-token-for-documentation-purposes-only"
 ```
 
 ### Solution Descriptor
@@ -688,7 +688,7 @@ db_cred:
 token:
   type: secret
   data:
-    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
+    secret: "example-secret-token-for-documentation-purposes-only"
 ```
 
 ### System Credentials File (in Instance repository)
@@ -711,7 +711,7 @@ registry-cred:
 gitlab-token-cred:
   type: secret
   data:
-    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
+    secret: "example-secret-token-for-documentation-purposes-only"
 ```
 
 #### ParameterSet (in Instance repository)
