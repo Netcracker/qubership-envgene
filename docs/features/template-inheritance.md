@@ -105,7 +105,7 @@ Template inheritance is configured in the [Template Descriptor](/docs/envgene-ob
 # If not set than no Templates Inheritance is assumed
 parent-templates:
   # Кey is a parent template name
-  # Value is a parent template artifact is a in app:ver notation. SNAPSHOT version is not supported 
+  # Value is a parent template artifact is a in app:ver notation. SNAPSHOT version is not supported
   default-bss: bss-product-template:2.0.0
   basic-template: basic-product-template:10.1.3
 # Optional
@@ -117,7 +117,7 @@ composite_structure: "{{ templates_dir }}/env_templates/composite/composite_stru
 # example of string value
 tenant: "{{ templates_dir }}/env_templates/default/tenant.yml.j2"
 # example of dict value
-tenant: 
+tenant:
   parent: basic-template
 # Optional
 # If not set, the most recent Cloud found in the parent templates referenced by the `namespaces` attribute will be used
@@ -125,10 +125,10 @@ tenant:
 # example of string value
 cloud: "{{ templates_dir }}/env_templates/default/cloud.yml.j2"
 # example of dict value
-cloud: 
+cloud:
   parent: basic-template
   # Optional
-  # Section with parameters that should override parent 
+  # Section with parameters that should override parent
   overrides-parent:
     # Optional
     # Section to override resource profile
@@ -163,7 +163,7 @@ cloud:
       - "bss-overrides"
     # Optional
     # Parameters that extend/override the parent template's values
-    e2eParameterSets: 
+    e2eParameterSets:
       - "bss-e2e-overrides"
     # Optional
     # Parameters that extend/override the parent template's values
@@ -211,7 +211,7 @@ namespaces:
         - "bss-overrides"
       # Optional
       # Parameters Sets that extend/override the parent template's values
-      e2eParameterSets: 
+      e2eParameterSets:
         - "bss-e2e-overrides"
       # Optional
       # Parameters Sets that extend/override the parent template's values
@@ -227,7 +227,7 @@ namespaces:
 ---
 parent-templates:
   basic-cloud: basic-product-template:10.1.3
-tenant: 
+tenant:
   parent: basic-cloud
 cloud:
   parent: basic-cloud
@@ -245,7 +245,7 @@ parent-templates:
   default-oss: core-product-templates:1.5.3
   default-billing: billing-product-templates:3.7.12
   default-bss: bss-product-templates:2.0.0
-tenant: 
+tenant:
   parent: basic-cloud
 cloud: "{{ templates_dir }}/env_templates/composite/cloud.yml.j2"
 composite_structure: "{{ templates_dir }}/env_templates/composite/composite_structure.yml.j2"

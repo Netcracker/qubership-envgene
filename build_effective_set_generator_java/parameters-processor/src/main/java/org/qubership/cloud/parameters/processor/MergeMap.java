@@ -59,7 +59,7 @@ public class MergeMap extends HashMap<String, Parameter> {
         }
         return source;
     }
-    
+
     @Override
     public void putAll(Map<? extends String, ? extends Parameter> override) {
         merge(this, override);

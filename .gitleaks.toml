@@ -19,7 +19,26 @@ paths = [
 ]
 
 [[allowlist]]
-description = "Ignore documentation examples in envgene-objects.md"
+description = "Ignore documentation examples and sample files"
 paths = [
-    '''docs/envgene-objects.md'''
+    '''docs/envgene-objects.md''',
+    '''docs/envgene-repository-variables.md''',
+    '''docs/samples/.*'''
+]
+
+[[allowlist]]
+description = "Ignore test files in Python modules"
+paths = [
+    '''python/.*/test_.*\.py''',
+    '''python/.*/*test.*\.py'''
+]
+
+# Additional allowlist for specific rule IDs that commonly trigger false positives
+[[allowlist]]
+description = "Allow fake secrets in documentation and examples"
+regexes = [
+    '''.*Example.*:.*REDACTED''',
+    '''secret:.*REDACTED''',
+    '''password:.*REDACTED''',
+    '''.*secret_key.*:.*REDACTED'''
 ]

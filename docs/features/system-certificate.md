@@ -239,7 +239,7 @@ openssl s_client -connect hostname:port -CAfile ca-chain.pem -verify_return_erro
 sequenceDiagram
     participant EnvGene
     participant SecureRepo
-    
+
     EnvGene->>SecureRepo: Request with client certificate
     SecureRepo->>EnvGene: Authenticate and respond
 ```

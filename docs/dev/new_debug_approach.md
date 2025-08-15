@@ -63,7 +63,7 @@ By using hardlinks changes you make will be reflected in both envgene and instan
     ```bash
     echo 'debug plugin is active'
     # check job name("$CI_JOB_NAME") or job image("$CI_JOB_IMAGE") to ensure replacements happen in right places
-    if [[ "$CI_JOB_NAME" = "generate-effective"* ]]; then 
+    if [[ "$CI_JOB_NAME" = "generate-effective"* ]]; then
       echo "CI_JOB_NAME is '$CI_JOB_NAME'"
       # Examples
       # Sometimes you can get paths in container from error logs, if not look at the related Dockerfile to tell where file ends up in container

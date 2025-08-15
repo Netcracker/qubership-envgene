@@ -71,7 +71,7 @@ cloud:
   # Optional
   # Template Override configuration
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
-  template_override:     
+  template_override:
     "<yaml or jinja expression>"
   # Optional
   # Template Inheritance configuration
@@ -313,11 +313,11 @@ gitlab-token-cred:
 
 ### Environment Instance Objects
 
-An Environment Instance is a file structure within the Envgene Instance Repository that describes the configuration for a specific environment/solution instance.  
+An Environment Instance is a file structure within the Envgene Instance Repository that describes the configuration for a specific environment/solution instance.
 
-It is generated during the rendering process of an Environment Template. During this rendering process, environment-agnostic parameters from the Environment Template are combined with environment-specific parameters, such as Cloud Passport, environment-specific ParameterSet, environment-specific Resource Profile Overrides, to produce a set of parameters specific to a particular environment/solution instance.  
+It is generated during the rendering process of an Environment Template. During this rendering process, environment-agnostic parameters from the Environment Template are combined with environment-specific parameters, such as Cloud Passport, environment-specific ParameterSet, environment-specific Resource Profile Overrides, to produce a set of parameters specific to a particular environment/solution instance.
 
-The Environment Inventory is mandatory for creating an Environment Instance. It is a configuration file that describes a specific environment, including which Environment Template artifact to use and which environment-specific parameters to apply during rendering. It serves as the "recipe" for creating an Environment Instance.  
+The Environment Inventory is mandatory for creating an Environment Instance. It is a configuration file that describes a specific environment, including which Environment Template artifact to use and which environment-specific parameters to apply during rendering. It serves as the "recipe" for creating an Environment Instance.
 
 The Environment Instance has a human-readable structure and is not directly used by parameter consumers. For parameter consumers, a consumer-specific structure is generated based on the Environment Instance. For example, for ArgoCD, an Effective Set is generated.
 
@@ -666,11 +666,11 @@ The relationship between Shared Credentials and Environment is established throu
 
 Credentials can be defined at three scopes with different precedence:
 
-1. **Environment-level**  
+1. **Environment-level**
    **Location:** `/environments/<cluster-name>/<env-name>/Inventory/credentials/`
-2. **Cluster-level**  
+2. **Cluster-level**
    **Location:** `/environments/<cluster-name>/credentials/`
-3. **Site-level**  
+3. **Site-level**
    **Location:** `/environments/credentials/`
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
@@ -696,7 +696,7 @@ token:
 This file contains [Credential](#credential) objects used by EnvGene to integrate with external systems like artifact registries, GitLab, GitHub, and others.
 
 Location:
-  
+
 - `/environments/configuration/credentials/credentials.yml|yaml`
 - `/environments/<cluster-name>/app-deployer/<any-string>-creds.yml|yaml`
 
