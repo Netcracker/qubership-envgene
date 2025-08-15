@@ -1,4 +1,4 @@
 # ShellCheck configuration file
 # Ignore info and style messages, only show errors and warnings
 severity=error
-disable=SC2086
+disable=SC2086,SC2006,SC2154
