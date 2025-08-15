@@ -244,22 +244,22 @@ jobs:
         run: |
            echo "🔧 Generating environment matrix from ENV_NAMES..."
            echo "ENV_NAMES value: '$ENV_NAMES'"
-           echo "🔍 ENV_NAMES length: ${#ENV_NAMES}"
-           echo "🔍 ENV_NAMES contains comma: $(echo "$ENV_NAMES" | grep -c ',' || echo '0')"
+           echo "🔍 ENV_NAMES length: \"${#ENV_NAMES}\""
+           echo "🔍 ENV_NAMES contains comma: \"$(echo \"$ENV_NAMES\" | grep -c ',' || echo '0')\""
            
            if [ -z "$ENV_NAMES" ]; then
              echo "❌ ERROR: ENV_NAMES is empty or not set!"
              echo "This likely means the input processing failed."
              echo "Creating empty matrix to skip downstream jobs..."
-             echo 'env_matrix=[]' >> $GITHUB_OUTPUT
+             echo 'env_matrix=[]' >> "$GITHUB_OUTPUT"
              exit 0
            fi
 
            # Validate ENV_NAMES is not just whitespace
-           if [ -z "$(echo "$ENV_NAMES" | tr -d '[:space:]')" ]; then
+           if [ -z "$(echo \"$ENV_NAMES\" | tr -d '[:space:]')" ]; then
              echo "❌ ERROR: ENV_NAMES contains only whitespace!"
              echo "Creating empty matrix to skip downstream jobs..."
-             echo 'env_matrix=[]' >> $GITHUB_OUTPUT
+             echo 'env_matrix=[]' >> "$GITHUB_OUTPUT"
              exit 0
            fi
 
@@ -284,7 +284,7 @@ jobs:
            if [ "$count" -eq 0 ]; then
              echo "❌ ERROR: No valid environments found in ENV_NAMES!"
              echo "Creating empty matrix to skip downstream jobs..."
-             echo 'env_matrix=[]' >> $GITHUB_OUTPUT
+             echo 'env_matrix=[]' >> "$GITHUB_OUTPUT"
              exit 0
            fi
 
@@ -320,8 +320,8 @@ jobs:
 
       - name: Prepare variables to work with artifacts
         run: |
-          echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
+          echo "SANITIZED_NAME=$(echo \"${{ matrix.environment }}\" | sed 's|/|_|g')" >> "$GITHUB_ENV"
+          echo "PROJECT_DIR=$(pwd)" >> "$GITHUB_ENV"
 
       - name: Generate inventory
         run: |
@@ -370,13 +370,13 @@ jobs:
 
       - name: Prepare variables to download the artifacts
         run: |
-          echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
+          echo "SANITIZED_NAME=$(echo \"${{ matrix.environment }}\" | sed 's|/|_|g')" >> "$GITHUB_ENV"
+          echo "PROJECT_DIR=$(pwd)" >> "$GITHUB_ENV"
 
       - name: Create the naming for artifact
         run: |
           if [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST }}" = "false" ] && ([ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
-            echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
+            echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> "$GITHUB_ENV"
           fi
 
       - name: Download artifact
@@ -440,16 +440,16 @@ jobs:
 
       - name: Prepare variables to download the artifacts
         run: |
-          echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
+          echo "SANITIZED_NAME=$(echo \"${{ matrix.environment }}\" | sed 's|/|_|g')" >> "$GITHUB_ENV"
+          echo "PROJECT_DIR=$(pwd)" >> "$GITHUB_ENV"
 
       - name: Create the naming for artifact
         run: |
           if [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST }}" = "false" ] && ([ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
-            echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
+            echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> "$GITHUB_ENV"
           fi
           if [ "${{ needs.show_environment_variables.outputs.CRED_ROTATION_PAYLOAD }}" != "{}" ]; then
-            echo "artifact_name=credential_rotation_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
+            echo "artifact_name=credential_rotation_${{ env.SANITIZED_NAME }}" >> "$GITHUB_ENV"
           fi
 
       - name: Download artifact
@@ -528,7 +528,7 @@ jobs:
 
           if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
           env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs");
-          for path in $env_path; do bash /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/$path; done; fi
+          for path in "$env_path"; do bash /module/scripts/update_ca_cert.sh "${CI_PROJECT_DIR}/configuration/certs/$path"; done; fi
 
           if [ "$ENV_TEMPLATE_VERSION" != "" ] && [ "$ENV_TEMPLATE_TEST" == "false" ]; then
             /module/scripts/prepare.sh "set_template_version.yaml"
@@ -546,7 +546,7 @@ jobs:
           fi
 
           env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
-          for path in $env_path; do
+          for path in "$env_path"; do
             if [ -d "$path/Credentials" ]; then
               chmod ugo+rw "$path/Credentials/"*
             fi
@@ -584,19 +584,19 @@ jobs:
 
       - name: Prepare variables to work with artifacts
         run: |
-          echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
+          echo "SANITIZED_NAME=$(echo \"${{ matrix.environment }}\" | sed 's|/|_|g')" >> "$GITHUB_ENV"
+          echo "PROJECT_DIR=$(pwd)" >> "$GITHUB_ENV"
 
       - name: Create the naming for artifact
         run: |
           if [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST }}" = "false" ] && ([ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
-            echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
+            echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> "$GITHUB_ENV"
           fi
           if [ "${{ needs.show_environment_variables.outputs.CRED_ROTATION_PAYLOAD }}" != "{}" ]; then
-            echo "artifact_name=credential_rotation_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
+            echo "artifact_name=credential_rotation_${{ env.SANITIFIED_NAME }}" >> "$GITHUB_ENV"
           fi
           if [ "${{ needs.show_environment_variables.outputs.ENV_BUILDER }}" = "true" ]; then
-            echo "artifact_name=env_build_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
+            echo "artifact_name=env_build_${{ env.SANITIFIED_NAME }}" >> "$GITHUB_ENV"
           fi
 
       - name: Download artifact
@@ -712,22 +712,22 @@ jobs:
 
       - name: Prepare variables to work with artifacts
         run: |
-          echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
+          echo "SANITIFIED_NAME=$(echo \"${{ matrix.environment }}\" | sed 's|/|_|g')" >> "$GITHUB_ENV"
+          echo "PROJECT_DIR=$(pwd)" >> "$GITHUB_ENV"
 
       - name: Create the naming for artifact
         run: |
           if [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST }}" = "false" ] && ([ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
-            echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
+            echo "artifact_name=generate_inventory_${{ env.SANITIFIED_NAME }}" >> "$GITHUB_ENV"
           fi
           if [ "${{ needs.show_environment_variables.outputs.CRED_ROTATION_PAYLOAD }}" != "{}" ]; then
-            echo "artifact_name=credential_rotation_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
+            echo "artifact_name=credential_rotation_${{ env.SANITIFIED_NAME }}" >> "$GITHUB_ENV"
           fi
           if [ "${{ needs.show_environment_variables.outputs.ENV_BUILDER }}" = "true" ]; then
-            echo "artifact_name=env_build_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
+            echo "artifact_name=env_build_${{ env.SANITIFIED_NAME }}" >> "$GITHUB_ENV"
           fi
           if [ "${{ needs.show_environment_variables.outputs.GENERATE_EFFECTIVE_SET }}" = "true" ]; then
-            echo "artifact_name=generate_effective_set_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
+            echo "artifact_name=generate_effective_set_${{ env.SANITIFIED_NAME }}" >> "$GITHUB_ENV"
           fi
 
       - name: Download artifact
@@ -803,7 +803,7 @@ jobs:
 
           if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
             env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs")
-            for path in $env_path; do
+            for path in "$env_path"; do
               bash /module/scripts/update_ca_cert.sh "${CI_PROJECT_DIR}/configuration/certs/$path"
             done
           fi
@@ -813,7 +813,7 @@ jobs:
           /module/scripts/prepare.sh "git_commit.yaml"
 
           env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
-          for path in $env_path; do
+          for path in "$env_path"; do
             if [ -d "$path/Credentials" ]; then
               chmod ugo+rw "$path/Credentials/"*
             fi
