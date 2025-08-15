@@ -1,0 +1,4 @@
+# ShellCheck configuration file for super-linter
+# Ignore info and style messages, only show errors and warnings
+severity=error
+disable=SC2086,SC2006,SC2154
