@@ -2,7 +2,6 @@ from gcip import WhenStatement
 from envgenehelper import logger
 from pipeline_helper import job_instance
 import json
-import os
 
 def is_inventory_generation_needed(is_template_test, inv_gen_params):
     if is_template_test:
@@ -23,7 +22,7 @@ def prepare_inventory_generation_job(pipeline, full_env, environment_name, clust
         "image": "${envgen_image}",
         "stage": "env_inventory_generation",
         "script": [
-            f"python3 /build_env/scripts/build_env/env_inventory_generation.py",
+            "python3 /build_env/scripts/build_env/env_inventory_generation.py",
         ],
     }
     vars = {

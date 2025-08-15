@@ -1,6 +1,6 @@
 # This action is hidden from the GitHub Actions UI
-name: 'Build Qubership Envgene Docker Image'
-description: 'Build and push Qubership Envgene docker image to container registry'
+name: 'Build Effective Set Generator Python Docker Image'
+description: 'Build and push Effective Set Generator Python docker image to container registry'
 
 inputs:
   registry:
@@ -10,11 +10,11 @@ inputs:
   image-name:
     description: 'Docker image name'
     required: false
-    default: 'qubership-envgene'
+    default: 'qubership-effective-set-python'
   dockerfile-path:
     description: 'Path to Dockerfile'
     required: false
-    default: './build_envgene/build/Dockerfile'
+    default: './build_effective_set_generator/build/Dockerfile'
   gh-access-token:
     description: 'GitHub access token for build args'
     required: false

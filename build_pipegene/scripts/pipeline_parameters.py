@@ -1,7 +1,7 @@
 from os import getenv
 from pprint import pformat
 
-from envgenehelper.plugin_engine import PluginEngine
+from plugin_engine import PluginEngine
 
 def get_pipeline_parameters() -> dict:
     return {
@@ -19,13 +19,14 @@ def get_pipeline_parameters() -> dict:
             "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE"),
             "SD_VERSION": getenv("SD_VERSION"),
             "SD_DATA": getenv("SD_DATA"),
-			"SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE"),
             "SD_DELTA": getenv("SD_DELTA"),
             "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT"),
             "ENV_SPECIFIC_PARAMETERS": getenv("ENV_SPECIFIC_PARAMS"),
             "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
             "ENV_TEMPLATE_VERSION": getenv("ENV_TEMPLATE_VERSION"),
-        }
+        },
+        'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
+        'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "")
     }
 
 class PipelineParametersHandler:

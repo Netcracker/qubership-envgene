@@ -1,11 +1,10 @@
-from cryptography.fernet import Fernet
 from .config_helper import get_envgene_config_yaml
 from .creds_helper import check_is_envgen_cred, get_cred_id_and_property_from_cred_macros
 from .business_helper import find_env_instances_dir, findResourcesBottomTop, getEnvDefinition, getenv_with_error
 from .yaml_helper import openYaml, get_or_create_nested_yaml_attribute
 from .file_helper import getDirName, check_file_exists
 from .logger import logger
-from .crypt import extract_encrypted_data, decrypt_file
+from .crypt import decrypt_file
 
 def get_cred_file_path(deployer_dir):
     dashes_cred_path = f"{deployer_dir}/deployer-creds.yml"
@@ -17,7 +16,7 @@ def get_cred_file_path(deployer_dir):
         cred_path = folder_cred_path
     else:
         logger.error(f"Credentials definition for deployer not found in either {dashes_cred_path} or {folder_cred_path}")
-        raise ReferenceError(f"Credentials definition for deployer not found. See logs above.")
+        raise ReferenceError("Credentials definition for deployer not found. See logs above.")
     logger.info(f"Credentials definition for deployer is found in: {cred_path}")
     return cred_path
 
@@ -44,10 +43,10 @@ def get_value_with_path_and_attribute(fp, attr_str, default_value=None):
 def get_deployer(env_name, instances_dir, failonerror=True):
     env_path = find_env_instances_dir(env_name, instances_dir)
     data = getEnvDefinition(env_path)
-    if not "deployer" in data["inventory"]:
+    if "deployer" not in data["inventory"]:
         logger.error(f"Deployer definition for environment {env_path} is not specified in environment definition.")
         if failonerror:
-            raise ReferenceError(f"Deployer definition for environment is not specified in environment definition. See logs above.")
+            raise ReferenceError("Deployer definition for environment is not specified in environment definition. See logs above.")
         else:
             return ""
     deployer_name = data['inventory']['deployer']
@@ -78,10 +77,10 @@ def get_deployer_config(env_name=None, work_dir=None, instances_dir=None, secret
         deployer_name = get_deployer(env_name, instances_dir, failonerror)
         deployer_file_path = find_deployer_definition(env_name, work_dir, instances_dir, failonerror)
         if not deployer_file_path:
-            logger.info(f"Deployer definition file is not found, exiting.")
+            logger.info("Deployer definition file is not found, exiting.")
             return "","",""
     else:
-        if deployer_name==None:
+        if deployer_name is None:
             raise ValueError('get_deployer_config() function must be called either with (env_name, work_dir, instances_dir) or with (deployer_name) params')
         deployer_file_path = basic_deployer_file_path
     deployer_dir = getDirName(deployer_file_path)
@@ -101,7 +100,7 @@ def get_deployer_config(env_name=None, work_dir=None, instances_dir=None, secret
     cmdb_api_token, cmdb_api_token_attribute_path = get_value_and_attributes_from_cred(data[deployer_name]['token'], deployer_dir)
     cmdb_url = data[deployer_name]['deployerUrl']
     envgene_config = get_envgene_config_yaml()
-    is_decryption_necessary = secret_key or envgene_config.get('crypt') == True
+    is_decryption_necessary = secret_key or envgene_config.get('crypt')
     if is_decryption_necessary:
         cred_path = get_cred_file_path(deployer_dir)
         if is_test:
