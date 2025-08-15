@@ -1,5 +1,5 @@
-#Important!
-#Please use your own runner and docker-images
+# Important!
+# Please use your own runner and docker-images
 
 name: "EnvGene Execution"
 
@@ -556,8 +556,6 @@ jobs:
               chmod ugo+rw "$path/Credentials/"*
             fi
           done
-
-
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
