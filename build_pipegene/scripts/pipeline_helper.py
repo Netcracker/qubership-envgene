@@ -1,4 +1,4 @@
-from gcip import Job
+from gcip import Job, Need
 from typing import Optional, List, Dict, Union, Any
 from envgenehelper import (
     logger,
