@@ -126,7 +126,7 @@ BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
 **Important Notes:**
 
 - Each certificate must be in PEM format with proper `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` boundaries
-- No blank lines should exist between certificates
+- No empty lines should exist between certificates
 - The order is critical for proper certificate validation
 - If you have multiple certificate chains, create separate files for each chain
 
@@ -194,7 +194,7 @@ When you run `openssl s_client -showcerts`, you'll see output like:
 
 **Alternative method for web services:**
 
-1. Open the website in your browser
+1. Open the site in your browser
 2. Click on the lock icon in the address bar
 3. View certificate details
 4. Export the certificate chain

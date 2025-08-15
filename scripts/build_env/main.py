@@ -123,7 +123,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir, env_specific_resource_profile_map, all_instances_dir)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir)
     validate_appregdefs(render_dir, env_name)
-    
+
     return resulting_dir
 
 
@@ -155,7 +155,7 @@ def validate_parameters(templates_dir, all_instances_dir, cluster_name=None, env
             logger.info(f'Validate {all_instances_dir}/{cluster_name}/parameters')
             param_files = findAllYamlsInDir(f'{all_instances_dir}/{cluster_name}/parameters')
             errors = errors + validate_parameter_files(param_files)
-            
+
             # Only validate the specific environment if provided
             if env_name:
                 env_base_path = f'{all_instances_dir}/{cluster_name}/{env_name}'
@@ -171,7 +171,7 @@ def validate_parameters(templates_dir, all_instances_dir, cluster_name=None, env
     else:
         # If no specific cluster/env provided, validate all (original behavior)
         sub_dirs = find_all_sub_dir(all_instances_dir)
-        
+
         for sub_dir in next(sub_dirs)[1]:
             if sub_dir != "parameters":
                 logger.info(f'Validate {all_instances_dir}/{sub_dir}/parameters')

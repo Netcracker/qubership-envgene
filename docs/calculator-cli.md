@@ -86,7 +86,7 @@ Below is a **complete** list of attributes
 
 | Attribute | Type | Mandatory | Description | Default | Example |
 |---|---|---|---|---|--|
-| `--env-id`/`-e` | string | yes | Environment id in `<cluster-name>/<environment-name>` notation | N/A | `cluster/platform-00` |
+| `--env-id`/`-e` | string | yes | Environment ID in `<cluster-name>/<environment-name>` notation | N/A | `cluster/platform-00` |
 | `--envs-path`/`-ep` | string | yes | Path to `/environments` folder | N/A |  `/environments` |
 | `--sboms-path`/`-sp`| string | yes | Path to the folder with Application and Environment Template SBOMs. In Solution SBOM, the path to Application SBOM and Environment Template SBOM is specified relative to this folder. | N/A |`/sboms` |
 | `--solution-sbom-path`/`-ssp`| string | yes | Path to the Solution SBOM. | N/A | `/environments/cluster/platform-00/Inventory/solution-descriptor/solution.sbom.json` |
