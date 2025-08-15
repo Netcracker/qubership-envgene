@@ -1,6 +1,4 @@
-from types import ModuleType
 
-from gcip import Pipeline
 
 class IPluginRegistry(type):
     plugin_registries: list[type] = list()

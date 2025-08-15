@@ -1,6 +1,6 @@
 import logging
 
-from os import getenv
+
 from yaml import safe_load, safe_dump
 import click
 from cryptography.fernet import Fernet

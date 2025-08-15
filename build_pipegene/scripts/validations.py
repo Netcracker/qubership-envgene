@@ -1,5 +1,4 @@
 import os
-from os import *
 
 from envgenehelper import check_for_cyrillic, logger, findAllYamlsInDir, openYaml, check_dir_exists, get_cluster_name_from_full_name, get_environment_name_from_full_name, check_environment_is_valid_or_fail, check_file_exists, validate_yaml_by_scheme_or_fail
 
@@ -20,8 +19,8 @@ def validate_pipeline(params: dict):
 
 def basic_checks(env_names):
     if not env_names:
-        logger.error(f'"ENV_NAMES" variable is not found or empty')
-        raise ReferenceError(f"Execution is aborted as validation is not successful. See logs above.")
+        logger.error('"ENV_NAMES" variable is not found or empty')
+        raise ReferenceError("Execution is aborted as validation is not successful. See logs above.")
 
 
 def template_test_checks():
@@ -38,7 +37,7 @@ def template_test_checks():
         logger.error(f"Directory with templates '{templates_dir}' not found.")
         errorFound = True
     if errorFound:
-        raise ReferenceError(f"Execution is aborted as validation is not successful. See logs above.")
+        raise ReferenceError("Execution is aborted as validation is not successful. See logs above.")
 
 def real_execution_checks(env_names, get_passport, env_build, env_inventory_init):
     for env in env_names.split("\n"):
@@ -69,4 +68,4 @@ def check_passport_params(get_passport):
             validate_yaml_by_scheme_or_fail(integration_path, integration_schema_path)
         else:
             logger.error(f'File configuration/integration.yml not exists in {integration_path}')
-            raise ReferenceError(f"Execution is aborted as validation is not successful. See logs above.")
+            raise ReferenceError("Execution is aborted as validation is not successful. See logs above.")

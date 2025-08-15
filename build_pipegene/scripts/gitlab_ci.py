@@ -1,6 +1,4 @@
-from os import getenv, listdir
 import os
-from dataclasses import asdict
 
 from plugin_engine import PluginEngine
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, getEnvDefinition, get_env_instances_dir
@@ -100,7 +98,7 @@ def build_pipeline(params: dict):
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
             
         if params['ENV_BUILD']:
-            if env_definition == None:
+            if env_definition is None:
                 try:
                     env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{ci_project_dir}/environments"))
                 except ReferenceError:
@@ -133,7 +131,7 @@ def build_pipeline(params: dict):
         per_env_plugin_engine.run(params=plugin_params, pipeline=pipeline, pipeline_helper=pipeline_helper)
 
         for job in job_sequence:
-            if not job in jobs_map.keys():
+            if job not in jobs_map.keys():
                 continue
             job_instance = jobs_map[job]
             if job_instance.name in queued_job_names:

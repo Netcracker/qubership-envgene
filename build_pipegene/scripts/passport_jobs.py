@@ -44,7 +44,7 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, need
               ],
   }
   if need_commit:
-     get_passport_params['script'].append(f'/module/scripts/prepare.sh "git_commit.yaml"')
+     get_passport_params['script'].append('/module/scripts/prepare.sh "git_commit.yaml"')
   get_passport_vars = {
     "ENV_NAME": full_env,
     "CLUSTER_NAME": cluster_name,
@@ -73,8 +73,8 @@ def prepare_decryption_mode_job(pipeline, full_env, cluster_name):
         "name":   f'process_decryption_mode.{full_env}',
         "image":  '${envgen_image}',
         "stage":  'process_passport',
-        "script": [ f'python3 /module/scripts/process_decryption_mode.py -e "$ENV_NAME"',
-                    f'/module/scripts/prepare.sh "git_commit.yaml"'
+        "script": [ 'python3 /module/scripts/process_decryption_mode.py -e "$ENV_NAME"',
+                    '/module/scripts/prepare.sh "git_commit.yaml"'
                   ]
     }
 

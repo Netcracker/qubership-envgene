@@ -4,7 +4,6 @@ from envgenehelper import (
     logger,
     check_file_exists,
     openYaml,
-    config_helper,
     getAppDefinitionPath,
     get_envgene_config_yaml,
     get_or_create_nested_yaml_attribute,
@@ -47,7 +46,8 @@ def job_instance(params, vars, needs=None, rules=None):
         job.prepend_scripts(params['before_script'])
     if 'after_script' in params.keys():
         job.append_scripts(params['after_script'])
-    if needs==None: needs = []
+    if needs is None:
+        needs = []
     job.set_needs(needs)
     job.add_tags("NETCRACKER")
     if rules:
@@ -73,10 +73,10 @@ def get_gav_coordinates_from_build():
             logger.info(f'version: {result["version"]}')
         else:
             logger.error(f"File '{file_path_gav}' is empty. No build information available.")
-            raise ReferenceError(f"Execution is aborted build artifact is not valid. See logs above.")
+            raise ReferenceError("Execution is aborted build artifact is not valid. See logs above.")
     else:
         logger.error(f"No build results found. File '{file_path_gav}' not found.")
-        raise ReferenceError(f"Execution is aborted build artifact is not valid. See logs above.")
+        raise ReferenceError("Execution is aborted build artifact is not valid. See logs above.")
     return result
 
 def find_predecessor_job(job_name, jobs_map, jobs_sequence):
@@ -110,7 +110,7 @@ def check_discovery_job_needed(env_definition: dict, env_template_vers: str) -> 
 
     if mode == 'false':
         raise Exception(f"\nartifact definition for artifact with name: {template_name} is not found in the path: /configuration/artifact_definitions\n\n"
-                        +f'artifact definition discovery is disable in /configuration/config.yml: \n'
-                        +f'artifact_definitions_discovery_mode: false\n\n'
-                        +f'set artifact definition manually or enable artifact definition discovery \n')
+                        +'artifact definition discovery is disable in /configuration/config.yml: \n'
+                        +'artifact_definitions_discovery_mode: false\n\n'
+                        +'set artifact definition manually or enable artifact definition discovery \n')
     return True

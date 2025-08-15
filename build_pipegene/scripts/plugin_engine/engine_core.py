@@ -1,4 +1,3 @@
-from envgenehelper import logger
 from .usecase import PluginUseCase
 
 class PluginEngine:

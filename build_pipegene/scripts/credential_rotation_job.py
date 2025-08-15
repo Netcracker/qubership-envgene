@@ -9,7 +9,7 @@ def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluste
     "image":  '${envgen_image}',
     "stage":  'credential_rotation',
     "script": [
-            f"python3 /module/creds_rotation_scripts/creds_rotation_handler.py",
+            "python3 /module/creds_rotation_scripts/creds_rotation_handler.py",
         ],    
   } 
 
