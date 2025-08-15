@@ -119,14 +119,14 @@ jobs:
            # Check if API input is provided
            if [ -n "${{ github.event.inputs.GITHUB_PIPELINE_API_INPUT }}" ]; then
              echo "🔍 API Mode: Processing GITHUB_PIPELINE_API_INPUT"
-            
+
              # Set the API input variable for the script to use
              export GITHUB_PIPELINE_API_INPUT="${{ github.event.inputs.GITHUB_PIPELINE_API_INPUT }}"
             echo "GITHUB_PIPELINE_API_INPUT=${{ github.event.inputs.GITHUB_PIPELINE_API_INPUT }}" >> "$GITHUB_ENV"
-            
+
              # Process API input variables
              python .github/scripts/process_api_input.py
-            
+
              # Set defaults for optional variables if not provided
             {
               echo "ENV_BUILDER=${ENV_BUILDER:-true}";
@@ -246,7 +246,7 @@ jobs:
            echo "ENV_NAMES value: '$ENV_NAMES'"
            echo "🔍 ENV_NAMES length: ${#ENV_NAMES}"
            echo "🔍 ENV_NAMES contains comma: $(echo "$ENV_NAMES" | grep -c ',' || echo '0')"
-           
+
            if [ -z "$ENV_NAMES" ]; then
              echo "❌ ERROR: ENV_NAMES is empty or not set!"
              echo "This likely means the input processing failed."

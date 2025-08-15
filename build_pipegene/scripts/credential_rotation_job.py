@@ -10,14 +10,14 @@ def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluste
     "stage":  'credential_rotation',
     "script": [
             "python3 /module/creds_rotation_scripts/creds_rotation_handler.py",
-        ],    
-  } 
+        ],
+  }
 
   credential_rotation_vars = {
     "CLUSTER_NAME": cluster_name,
-    "ENV_NAME": environment_name,    
+    "ENV_NAME": environment_name,
     "envgen_args": " -vv",
-    "envgen_debug": "true"   
+    "envgen_debug": "true"
   }
   credential_rotation_job = job_instance(params=credential_rotation_params, vars=credential_rotation_vars)
   credential_rotation_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments")

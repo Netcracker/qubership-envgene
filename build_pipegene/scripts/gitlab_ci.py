@@ -57,7 +57,7 @@ def build_pipeline(params: dict):
             cluster_name = ""
             environment_name = env
             env_definition = {}
-        else: 
+        else:
             cluster_name = get_cluster_name_from_full_name(env)
             environment_name = get_environment_name_from_full_name(env)
             if params['ENV_INVENTORY_GENERATION_PARAMS']['ENV_INVENTORY_INIT']:
@@ -97,7 +97,7 @@ def build_pipeline(params: dict):
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
-            
+
         if params['ENV_BUILD']:
             if env_definition is None:
                 try:

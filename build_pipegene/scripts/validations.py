@@ -43,7 +43,7 @@ def template_test_checks():
 def real_execution_checks(env_names, get_passport, env_build, env_inventory_init):
     for env in env_names.split("\n"):
         # now we are using only complex environment names that contain both cluster_name and environment_name
-        if env.count('/') != 1: 
+        if env.count('/') != 1:
             logger.fatal(f"Wrong env_name given: {env}. Env_name should contain both cloud name and environment name by pattern '<cluster_name>/<environment_name>'")
             exit(1)
         logger.info(f"Parsing environment name for: {env}")

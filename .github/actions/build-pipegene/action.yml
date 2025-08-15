@@ -43,7 +43,7 @@ runs:
       uses: docker/metadata-action@v5
       with:
         images: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}
-    
+
     - name: Build and push Docker image
       id: push
       uses: docker/build-push-action@v6

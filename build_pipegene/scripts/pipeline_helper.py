@@ -64,12 +64,12 @@ def get_gav_coordinates_from_build():
     file_path_gav = f"{getenv('CI_PROJECT_DIR')}/GAV_coordinates.yaml"
     if check_file_exists(file_path_gav):
         content = openYaml(file_path_gav, safe_load=True)
-        if content and "artifact" in content: 
+        if content and "artifact" in content:
             result["group_id"] = content["artifact"]["group_id"]
             result["artifact_id"] = content["artifact"]["artifact_id"]
             result["version"] = content["artifact"]["version"]
             logger.info(f'group_id: {result["group_id"]}')
-            logger.info(f'artifact_id: {result["artifact_id"]}') 
+            logger.info(f'artifact_id: {result["artifact_id"]}')
             logger.info(f'version: {result["version"]}')
         else:
             logger.error(f"File '{file_path_gav}' is empty. No build information available.")
