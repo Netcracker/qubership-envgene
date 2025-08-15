@@ -3,8 +3,8 @@ name: "Tests: Qubership Envgene tests"
 run-name: "Smoke tests on commit ${{ github.sha }}"
 
 on:
-  workflow_dispatch:
-  workflow_call:
+  workflow_dispatch: {}
+  workflow_call: {}
   pull_request:
     branches:
       - '**'
