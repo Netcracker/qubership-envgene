@@ -7,7 +7,7 @@
   set_fact:
     _paramset_target_path: "{{ _paramset_path|replace('.yml.j2', '.yml')|replace('.yaml.j2', '.yml') }}"
 
-- name: Generate paramset yaml {{ _paramset_template_name }} 
+- name: Generate paramset yaml {{ _paramset_template_name }}
   ansible.builtin.blockinfile:
     path: "{{ _paramset_target_path }}"
     block: "{{ lookup('template', _paramset_path) }}"
