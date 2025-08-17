@@ -19,6 +19,7 @@
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
     - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
+    - [`NS_BUILD_FILTER`](#ns_build_filter)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
@@ -226,6 +227,17 @@ See details in [SD processing](/docs/sd-processing.md)
 **Mandatory**: No
 
 **Example**: `extended-merge`
+
+### `NS_BUILD_FILTER`
+**Description**: It allows to generate or update only specific Namespaces without touching the others.
+
+See details in [Namespace Render Filtering](/docs/features/namespace-render-filtering.md)
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `${controller}`
 
 ## Deprecated Parameters
 
