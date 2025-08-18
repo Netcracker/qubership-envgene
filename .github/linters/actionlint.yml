@@ -1,9 +1,0 @@
-# Actionlint configuration for Super-linter
-# This configuration is used to ignore specific actionlint rules
-
-# Configuration follows actionlint format
-ignore:
-  # Ignore all shellcheck issues in GitHub Actions scripts
-  - "shellcheck reported issue in this script: SC\\d+:.*"
-  # Ignore outdated action runner warnings
-  - "the runner of \".*\" action is too old to run on GitHub Actions.*"
