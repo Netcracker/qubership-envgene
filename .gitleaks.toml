@@ -19,11 +19,9 @@ paths = [
 ]
 
 [[allowlist]]
-description = "Ignore documentation examples and sample files"
+description = "Ignore all documentation files - contain examples with fake secrets"
 paths = [
-    '''docs/envgene-objects.md''',
-    '''docs/envgene-repository-variables.md''',
-    '''docs/samples/.*'''
+    '''docs/.*'''
 ]
 
 [[allowlist]]
@@ -44,12 +42,4 @@ regexes = [
     '''\*\*Example\*\*:.*REDACTED'''
 ]
 
-# Specific file exclusions for documentation
-[[allowlist]]
-description = "Allow repository variables documentation examples"
-paths = [
-    '''docs/envgene-repository-variables.md'''
-]
-regexes = [
-    '''AGE-SECRET-KEY.*'''
-]
+# Note: All docs files are now excluded via docs/.* pattern above
