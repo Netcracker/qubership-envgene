@@ -106,28 +106,14 @@
         _current_env_dir: "{{ current_env_dir }}"
         _template: "{{ current_env_template.cloud }}"
 
-    - name: Prepare namespace list
-      ansible.builtin.set_fact:
-        filtered_namespaces: >-
-          {%- set filter = lookup('env', 'NS_BUILD_FILTER') -%}
-          {%- if not filter -%}
-            {{ current_env_template.namespaces | list }}
-          {%- else -%}
-            {%- set filter_list = filter.lstrip('!').split(',') -%}
-            {%- if filter.startswith('!') -%}
-              {{ current_env_template.namespaces
-                 | reject('in', filter_list)
-                 | list }}
-            {%- else -%}
-              {{ current_env_template.namespaces
-                 | select('in', filter_list)
-                 | list }}
-            {%- endif -%}
-          {%- endif -%}
+    - name: Read filter from env
+      set_fact:
+        _ns_build_filter: "{{ lookup('env', 'NS_BUILD_FILTER') | default('', true) }}"
 
-    - name: Fall
-      fail:
-        msg: "{{ current_env_template.namespaces }} and {{ filtered_namespaces }} and {{ lookup('env', 'NS_BUILD_FILTER')}}"
+    - name: Normalize filter
+      set_fact:
+        _ns_filter_invert: "{{ _ns_build_filter.startswith('!') }}"
+        _ns_filter_list: "{{ _ns_build_filter.lstrip('!').split(',') if _ns_build_filter else [] }}"
 
     - name: Gen namespaces
       ansible.builtin.include_role:
@@ -137,9 +123,16 @@
         _tenant: "{{ tenant }}"
         _cloud: "{{ current_env.cloud }}"
         _current_env_dir: "{{ current_env_dir }}"
-      loop: "{{ filtered_namespaces }}"
+        _namespace_template_name: "{{ namespace.template_path.split('/')|last|replace('.yml.j2', '')|replace('.yaml.j2', '') }}"
+      loop: "{{ current_env_template.namespaces }}"
       loop_control:
         loop_var: namespace
+      when: >
+        (not _ns_build_filter)
+        or
+        (_ns_filter_invert and (_namespace_template_name not in _ns_filter_list))
+        or
+        (not _ns_filter_invert and (_namespace_template_name in _ns_filter_list))
 
     - name: Gen resource profiles
       ansible.builtin.include_role:
@@ -286,4 +279,3 @@
         not use_external_defs and
         ((appdef_templates.files is defined and appdef_templates.files | length > 0) or
         (regdef_templates.files is defined and regdef_templates.files | length > 0))
-
