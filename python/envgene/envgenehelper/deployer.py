@@ -113,7 +113,8 @@ def get_deployer_config(env_name=None, work_dir=None, instances_dir=None, secret
 
 def get_sbom_generator_deployer_config():
     work_dir = getenv_with_error('CI_PROJECT_DIR')
-    env_name = getenv_with_error("ENV_NAME")
+    cluster_name = getenv_with_error("CLUSTER_NAME")
+    env_name = getenv_with_error("ENVIRONMENT_NAME")
     instances_dir = work_dir + '/environments'
-    return get_deployer_config(env_name, work_dir, instances_dir, fallback_on_root_config=False)
+    return get_deployer_config(f"{cluster_name}/{env_name}", work_dir, instances_dir, fallback_on_root_config=False)
 
