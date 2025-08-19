@@ -1,23 +1,30 @@
-import pathlib
 import os
 import glob
 import re
 import shutil
 from typing import Callable
+from pathlib import Path
+import cp
+
 from .logger import logger
 
+
 def extractNameFromFile(filePath):
-    return pathlib.Path(filePath).stem
+    return Path(filePath).stem
+
 
 def extractNameWithExtensionFromFile(filePath):
-    return pathlib.Path(filePath).name
+    return Path(filePath).name
+
 
 def extractNameFromDir(dirName):
-    return pathlib.Path(dirName).stem
+    return Path(dirName).stem
 
-def check_dir_exists(dir_path) :
-    dir = pathlib.Path(dir_path)
+
+def check_dir_exists(dir_path):
+    dir = Path(dir_path)
     return dir.exists() and dir.is_dir()
+
 
 def identify_yaml_extension(file_path: str) -> str:
     """
@@ -28,62 +35,96 @@ def identify_yaml_extension(file_path: str) -> str:
     for file in possible_files:
         if os.path.isfile(file):
             return file
-    raise FileNotFoundError(f"Neither of these files: {possible_files} exist.") 
+    raise FileNotFoundError(f"Neither of these files: {possible_files} exist.")
+
 
 def find_all_sub_dir(dir_path):
     return os.walk(dir_path)
 
-def check_file_exists(file_path) :
-    file = pathlib.Path(file_path)
+
+def check_file_exists(file_path):
+    file = Path(file_path)
     return file.exists() and file.is_file()
 
-def check_dir_exist_and_create(dir_path) :
+
+def check_dir_exist_and_create(dir_path):
     logger.debug(f'Checking that dir exists or create dir in path: {dir_path}')
     os.makedirs(dir_path, exist_ok=True)
 
-def delete_dir(path) :
+
+def delete_dir(path):
     try:
         shutil.rmtree(path)
     except:
         logger.info(f'{path} directory does not exist')
 
-def copy_path(source_path, target_path) :
-    # check that we are not trying to copy file to itself, or 'cp' will exit with error
-    if getDirName(source_path) == getDirName(target_path) and (check_file_exists(source_path) and source_path == target_path + extractNameWithExtensionFromFile(source_path)):
-        logger.info(f"Trying to copy {source_path} to itself (target path: {target_path}). Skipping...")
-    elif glob.glob(source_path) : 
-        logger.info(f'Copying from {source_path} to {target_path}')
-        logger.debug(f'Checking target path {target_path} exists: {os.path.exists(target_path)}')
-        if not os.path.exists(target_path) :
-            if os.path.isdir(target_path) :
-                dirPath = target_path
-            else :
-                dirPath = os.path.dirname(target_path)
-            logger.debug(f'Creating dir {dirPath}')
-            os.makedirs(dirPath, exist_ok=True)
-        exit_code = os.system(f"cp -rf {source_path} {target_path}")
-        if (exit_code) :
-            logger.error(f"Error during copying from {source_path} to {target_path}")
-            exit(1)
-    else :
-        logger.info(f"Path {source_path} doesn't exist. Skipping...")
 
-def move_path(source_path, target_path) :
-    if glob.glob(source_path) : 
+def is_glob(path: str) -> bool:
+    return any(ch in str(path) for ch in ["*", "?", "["])
+
+
+def is_source_path_valid(source_path: Path, target_path: Path) -> bool:
+    if not source_path.exists():
+        logger.info(f"Path {source_path} doesn't exist. Skipping...")
+        return False
+    if source_path == target_path:
+        logger.info(f"Trying to copy {source_path} to itself ({target_path}). Skipping...")
+        return False
+    return True
+
+
+def _is_glob(path: str) -> bool:
+    return any(ch in str(path) for ch in ["*", "?", "["])
+
+
+def copy_path(source_path: str, target_dir: str):
+    target_dir = Path(target_dir)
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    if _is_glob(source_path):
+        matches = sorted(glob.glob(source_path))
+        if not matches:
+            return
+        for match in matches:
+            _copy_single(Path(match), target_dir, is_from_glob=True)
+    else:
+        _copy_single(Path(source_path), target_dir, is_from_glob=False)
+
+
+def _copy_single(src: Path, target_dir: Path, is_from_glob: bool):
+    is_source_path_valid(src, target_dir)
+
+    if src.is_dir():
+        for item in src.rglob("*"):
+            rel = item.relative_to(src.parent if is_from_glob else src)
+            dst = target_dir / rel
+            if item.is_dir():
+                dst.mkdir(parents=True, exist_ok=True)
+            else:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(item, dst)
+    elif src.is_file():
+        dst = target_dir / src.name
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
+
+
+def move_path(source_path, target_path):
+    if glob.glob(source_path):
         logger.info(f'Moving from {source_path} to {target_path}')
         logger.debug(f'Checking target path {target_path} exists: {os.path.exists(target_path)}')
-        if not os.path.exists(target_path) :
-            if os.path.isdir(target_path) :
+        if not os.path.exists(target_path):
+            if os.path.isdir(target_path):
                 dirPath = target_path
-            else :
+            else:
                 dirPath = os.path.dirname(target_path)
             logger.debug(f'Creating dir {dirPath}')
             os.makedirs(dirPath, exist_ok=True)
         exit_code = os.system(f"mv -f {source_path} {target_path}")
-        if (exit_code) :
+        if (exit_code):
             logger.error(f"Error during Moving from {source_path} to {target_path}")
             exit(1)
-    else :
+    else:
         logger.info(f"Path {source_path} doesn't exist. Skipping...")
 
 
@@ -92,8 +133,10 @@ def openFileAsString(filePath):
         result = f.read()
     return result
 
+
 def deleteFile(filePath):
     os.remove(filePath)
+
 
 def writeToFile(filePath, contents):
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
@@ -101,23 +144,29 @@ def writeToFile(filePath, contents):
         f.write(contents)
     return
 
+
 def getAbsPath(path):
     return os.path.abspath(path)
+
 
 def getRelPath(path, start_path=None):
     if start_path:
         return os.path.relpath(path, start_path)
     return os.path.relpath(path, os.getenv('CI_PROJECT_DIR'))
 
+
 def get_parent_dir_for_dir(dirPath):
-    path = pathlib.Path(dirPath)
+    path = Path(dirPath)
     return str(path.parent.absolute())
+
 
 def getDirName(filePath):
     return os.path.dirname(filePath)
 
+
 def getParentDirName(filePath):
     return os.path.dirname(getDirName(filePath))
+
 
 def get_files_with_filter(path_to_filter: str, filter: Callable[[str], bool]) -> set[str]:
     matching_files = set()
@@ -128,50 +177,40 @@ def get_files_with_filter(path_to_filter: str, filter: Callable[[str], bool]) ->
                 matching_files.add(filepath)
     return matching_files
 
+
 def findAllFilesInDir(dir, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern=""):
     result = []
-    dirPointer = pathlib.Path(dir)
+    dirPointer = Path(dir)
     fileList = list(dirPointer.rglob("*.*"))
     for f in fileList:
         result.append(str(f))
     return findFiles(result, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
 
-def findFiles(fileList, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern="") :
+
+def findFiles(fileList: list[Path], pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern=""):
     result = []
     for filePath in fileList:
+        # this ensures that pattern matching works correctly on both Windows (\) and Unix (/)
+        file_path_posix = Path(filePath).as_posix()
         if (
-            pattern in filePath 
-            and (notPattern=="" or notPattern not in filePath) 
-            and (additionalRegexpPattern=="" or re.match(additionalRegexpPattern, filePath))
-            and (additionalRegexpNotPattern=="" or not re.match(additionalRegexpNotPattern, filePath))
+                pattern in file_path_posix
+                and (notPattern == "" or notPattern not in file_path_posix)
+                and (additionalRegexpPattern == "" or re.match(additionalRegexpPattern, file_path_posix))
+                and (additionalRegexpNotPattern == "" or not re.match(additionalRegexpNotPattern, file_path_posix))
         ):
             result.append(filePath)
-            logger.debug(f"Path {filePath} match pattern: {pattern} or notPattern: {notPattern} or additionalPattern: {additionalRegexpPattern}")
+            logger.debug(
+                f"Path {filePath} match pattern: {pattern} or notPattern: {notPattern} or additionalPattern: {additionalRegexpPattern}")
         else:
-            logger.debug(f"Path {filePath} doesn't match pattern: {pattern} or notPattern: {notPattern} or additionalPattern: {additionalRegexpPattern}")
+            logger.debug(
+                f"Path {filePath} doesn't match pattern: {pattern} or notPattern: {notPattern} or additionalPattern: {additionalRegexpPattern}")
     return result
 
-def removeAnsibleTrashFromFile(filePath) :
-    ansible_trash = [
-        "# BEGIN ANSIBLE MANAGED BLOCK\n---",
-        "# END ANSIBLE MANAGED BLOCK",
-        "# BEGIN ANSIBLE MANAGED BLOCK"
-    ]
-    with open(filePath, 'r') as f:
-        fileContent = f.read()
-        for trash in ansible_trash:
-            fileContent = fileContent.replace(trash, "")
-    with open(filePath, 'w') as f:
-        f.write(fileContent)
 
-
-def get_all_files_in_dir(dir, pathToRemove=""):
+def get_all_files_in_dir(dir):
+    dir_path = Path(dir)
     result = []
-    dirPath = pathlib.Path(dir)
-    for item in dirPath.rglob("*"):
+    for item in dir_path.rglob("*"):
         if item.is_file():
-             itemStr = str(item)
-             if pathToRemove:
-                 itemStr = itemStr.replace(pathToRemove, "")
-             result.append(itemStr)
+            result.append(str(item.relative_to(dir_path)))
     return result

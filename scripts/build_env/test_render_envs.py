@@ -1,39 +1,42 @@
-import filecmp
-import pytest
 import difflib
+import filecmp
 
-from main import render_environment
+import pytest
 from envgenehelper import *
 
+from main import render_environment
+
 test_data = [
-      # (cluster_name, environment_name, template)
-      ("cluster-01", "env-01", "composite-prod"),
-      ("cluster-01", "env-02", "composite-dev"),
-      ("cluster-01", "env-03", "composite-dev"),
-      ("cluster-01", "env-04", "simple"),
-      ("cluster01", "env01", "test-01"),
-      ("cluster01", "env01", "test-01"),
-      ("cluster01", "env03", "test-template-1"),
-      ("cluster01", "env04", "test-template-2")
+    # (cluster_name, environment_name, template)
+    ("cluster-01", "env-01", "composite-prod"),
+    ("cluster-01", "env-02", "composite-dev"),
+    ("cluster-01", "env-03", "composite-dev"),
+    ("cluster-01", "env-04", "simple"),
+    ("cluster01", "env01", "test-01"),
+    ("cluster01", "env03", "test-template-1"),
+    ("cluster01", "env04", "test-template-2")
 ]
 
-g_templates_dir = getAbsPath("../../test_data/test_templates")
-g_inventory_dir = getAbsPath("../../test_data/test_environments")
-g_output_dir = getAbsPath("../../tmp/test_environments")
+base_dir = Path(__file__).parent.resolve()
+g_templates_dir = str((base_dir / "../../test_data/test_templates").resolve())
+g_inventory_dir = str((base_dir / "../../test_data/test_environments").resolve())
+g_output_dir = str((base_dir / "../../tmp/test_environments").resolve())
 g_base_dir = get_parent_dir_for_dir(g_inventory_dir)
+
 
 @pytest.fixture(autouse=True)
 def change_test_dir(request, monkeypatch):
-    monkeypatch.chdir(request.fspath.dirname+"/../..")
+    monkeypatch.chdir(request.fspath.dirname + "/../..")
+
 
 @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
 def test_render_envs(cluster_name, env_name, version):
     render_environment(env_name, cluster_name, g_templates_dir, g_inventory_dir, g_output_dir, version, g_base_dir)
     source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
     generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
-    files_to_compare = get_all_files_in_dir(source_dir, source_dir+"/")
+    files_to_compare = get_all_files_in_dir(source_dir)
     logger.info(dump_as_yaml_format(files_to_compare))
-    match, mismatch, errors = filecmp.cmpfiles(source_dir , generated_dir, files_to_compare, shallow=False)
+    match, mismatch, errors = filecmp.cmpfiles(source_dir, generated_dir, files_to_compare, shallow=False)
     logger.info(f"Match: {dump_as_yaml_format(match)}")
     if len(mismatch) > 0:
         logger.error(f"Mismatch: {dump_as_yaml_format(mismatch)}")
