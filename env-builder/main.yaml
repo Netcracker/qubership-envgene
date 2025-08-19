@@ -106,14 +106,28 @@
         _current_env_dir: "{{ current_env_dir }}"
         _template: "{{ current_env_template.cloud }}"
 
+    - name: Gen BG Domain
+      ansible.builtin.include_role:
+        name: generate_bgd
+      vars:
+        _env: "{{ env }}"
+        _tenant: "{{ tenant }}"
+        _cloud: "{{ current_env.cloud }}"
+        _current_env_dir: "{{ current_env_dir }}"
+        _template: "{{current_env_template.bg_domain}}"
+      when: current_env_template.bg_domain is defined
+
     - name: Read filter from env
       set_fact:
         _ns_build_filter: "{{ lookup('env', 'NS_BUILD_FILTER') | default('', true) }}"
-
-    - name: Normalize filter
-      set_fact:
-        _ns_filter_invert: "{{ _ns_build_filter.startswith('!') }}"
-        _ns_filter_list: "{{ _ns_build_filter.lstrip('!').split(',') if _ns_build_filter else [] }}"
+    #
+    # - name: Read bg_domain_object from file
+    #   set_fact:
+    #     bg_domain_object: "{{ lookup('file', current_env_dir ~ '/bg_domain.yml') | from_yaml }}"
+    #
+    # - name: Filter namespaces and save into var
+    #   set_fact:
+    #     filtered_namespaces: "{{ current_env_template.namespaces | filter_namespaces(_ns_build_filter, bg_domain_object)}}"
 
     - name: Gen namespaces
       ansible.builtin.include_role:
@@ -127,12 +141,6 @@
       loop: "{{ current_env_template.namespaces }}"
       loop_control:
         loop_var: namespace
-      when: >
-        (not _ns_build_filter)
-        or
-        (_ns_filter_invert and (_namespace_template_name not in _ns_filter_list))
-        or
-        (not _ns_filter_invert and (_namespace_template_name in _ns_filter_list))
 
     - name: Gen resource profiles
       ansible.builtin.include_role:
