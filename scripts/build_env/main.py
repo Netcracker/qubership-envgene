@@ -103,13 +103,13 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     except Exception as e:
         logger.warning(f"Failed to load environment definition from {env_def_path}: {str(e)}. Using empty definition.")
         env_definition = {}
-    
+
     # Ensure environmentName is set (auto-derive if missing)
     # Handle missing inventory section
     if "inventory" not in env_definition:
         env_definition["inventory"] = {}
         logger.debug(f"Created missing inventory section in environment definition")
-    
+
     if not env_definition["inventory"].get("environmentName"):
         env_definition["inventory"]["environmentName"] = env_name
         logger.info(f"Auto-derived environment name '{env_name}' for environment definition")
@@ -120,42 +120,42 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
         except Exception as e:
             logger.error(f"Failed to write updated environment definition to {env_def_path}: {str(e)}")
             # Continue execution - the in-memory definition still has the environmentName
-    
+
     # Create current_env object with environmentName for Jinja2 template compatibility
     # This is used by templates that expect current_env.environmentName (like composite_structure.yml.j2)
     derived_env_name = env_definition.get("inventory", {}).get("environmentName", env_name)
-    
+
     # Validate environment name
     if not derived_env_name or not isinstance(derived_env_name, str):
         logger.warning(f"Invalid environment name '{derived_env_name}', falling back to folder name '{env_name}'")
         derived_env_name = env_name
-    
+
     current_env = {
         "name": env_name,  # Always use folder name for consistency
         "environmentName": derived_env_name  # Use derived or explicit name
     }
-    
+
     logger.debug(f"Created environment context: name='{current_env['name']}', environmentName='{current_env['environmentName']}'")
-    
-    ansible_vars = {}
-    ansible_vars["env"] = env_name  # Keep as string for file paths
-    ansible_vars["current_env"] = current_env  # Object for Jinja2 templates that need current_env.environmentName
-    ansible_vars["cluster_name"] = cluster_name
-    ansible_vars["templates_dir"] = templates_dir
-    ansible_vars["env_instances_dir"] = getAbsPath(render_env_dir)
-    ansible_vars["render_dir"] = getAbsPath(render_dir)
-    ansible_vars["render_parameters_dir"] = getAbsPath(render_parameters_dir)
-    ansible_vars["template_version"] = g_template_version
-    ansible_vars["cloud_passport_file_path"] = find_cloud_passport_definition(source_env_dir, all_instances_dir)
-    ansible_vars["cmdb_url"] = cmdb_url
-    ansible_vars["output_dir"] = output_dir
-    logger.info(f"Starting rendering environment {env_name} with ansible. Input params are:\n{dump_as_yaml_format(ansible_vars)}")
-    r = ansible_runner.run(playbook=getAbsPath('env-builder/main.yaml'), envvars=ansible_vars, verbosity=2)
-    if (r.rc != 0):
-        logger.error(f"Error during ansible execution. Result code is: {r.rc}. Status is: {r.status}")
-        raise ReferenceError(f"Error during ansible execution. See logs above.")
-    else:
-        logger.info(f"Ansible execution status is: {r.status}. Stats is: {r.stats}")
+
+    envvars = {}
+    envvars["env"] = env_name  # Keep as string for file paths
+    envvars["current_env"] = current_env  # Object for Jinja2 templates that need current_env.environmentName
+    envvars["cluster_name"] = cluster_name
+    envvars["templates_dir"] = templates_dir
+    envvars["env_instances_dir"] = getAbsPath(render_env_dir)
+    envvars["render_dir"] = getAbsPath(render_dir)
+    envvars["render_parameters_dir"] = getAbsPath(render_parameters_dir)
+    envvars["template_version"] = g_template_version
+    envvars["cloud_passport_file_path"] = find_cloud_passport_definition(source_env_dir, all_instances_dir)
+    envvars["cmdb_url"] = cmdb_url
+    envvars["output_dir"] = output_dir
+    logger.info(f"Starting rendering environment {env_name} with ansible. Input params are:\n{dump_as_yaml_format(envvars)}")
+    # r = ansible_runner.run(playbook=getAbsPath('env-builder/main.yaml'), envvars=ansible_vars, verbosity=2)
+    # if (r.rc != 0):
+    #     logger.error(f"Error during ansible execution. Result code is: {r.rc}. Status is: {r.status}")
+    #     raise ReferenceError(f"Error during ansible execution. See logs above.")
+    # else:
+    #     logger.info(f"Ansible execution status is: {r.status}. Stats is: {r.stats}")
 
     handle_template_override(render_dir)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir, ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
@@ -165,7 +165,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir, env_specific_resource_profile_map, all_instances_dir)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir)
     validate_appregdefs(render_dir, env_name)
-    
+
     return resulting_dir
 
 
@@ -197,7 +197,7 @@ def validate_parameters(templates_dir, all_instances_dir, cluster_name=None, env
             logger.info(f'Validate {all_instances_dir}/{cluster_name}/parameters')
             param_files = findAllYamlsInDir(f'{all_instances_dir}/{cluster_name}/parameters')
             errors = errors + validate_parameter_files(param_files)
-            
+
             # Only validate the specific environment if provided
             if env_name:
                 env_base_path = f'{all_instances_dir}/{cluster_name}/{env_name}'
@@ -213,7 +213,7 @@ def validate_parameters(templates_dir, all_instances_dir, cluster_name=None, env
     else:
         # If no specific cluster/env provided, validate all (original behavior)
         sub_dirs = find_all_sub_dir(all_instances_dir)
-        
+
         for sub_dir in next(sub_dirs)[1]:
             if sub_dir != "parameters":
                 logger.info(f'Validate {all_instances_dir}/{sub_dir}/parameters')
