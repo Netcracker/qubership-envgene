@@ -2,10 +2,10 @@
 environment:
   name: {{env_definition.inventory.environmentName}}
   environmentName: {{env_definition.inventory.environmentName}}
-{% if env_definition.inventory.tenantName is defined %}  
+{% if env_definition.inventory.tenantName is defined %}
   tenant: {{env_definition.inventory.tenantName}}
-{% endif %}  
-{% if env_definition.inventory.cloudName is defined %}  
+{% endif %}
+{% if env_definition.inventory.cloudName is defined %}
   cloud: {{env_definition.inventory.cloudName}}
 {% elif env_definition.inventory.passportCloudName is defined %}
   cloud: {{ env_definition.inventory.passportCloudName | replace("-","_") }}
@@ -14,7 +14,7 @@ environment:
 {% else %}
   cloud: {{env_definition.inventory.environmentName | replace("-","_") }}
 {% endif %}
-{% if env_definition.inventory.cloudName is defined %}  
+{% if env_definition.inventory.cloudName is defined %}
   cloudNameWithCluster: {{env_definition.inventory.cloudName}}
 {% elif env_definition.inventory.passportCloudName is defined %}
   cloudNameWithCluster: {{ (env_definition.inventory.passportCloudName ~ '_' ~ env_definition.inventory.environmentName) | replace("-","_") }}
@@ -23,31 +23,31 @@ environment:
 {% else %}
   cloudNameWithCluster: {{ (cluster_name ~ '_' ~ env_definition.inventory.environmentName) | replace("-","_") }}
 {% endif %}
-{% if env_definition.inventory.deployer is defined %}  
+{% if env_definition.inventory.deployer is defined %}
   deployer: {{env_definition.inventory.deployer}}
   cmdb_url: {{cmdb_url}}
   cmdb_name: {{env_definition.inventory.deployer}}
 {% endif %}
-{% if env_definition.inventory.description is defined %}  
+{% if env_definition.inventory.description is defined %}
   description: {{env_definition.inventory.description}}
 {% else %}
   description: ""
 {% endif %}
-{% if env_definition.inventory.owners is defined %}  
+{% if env_definition.inventory.owners is defined %}
   owners: {{env_definition.inventory.owners}}
 {% else %}
   owners: ""
 {% endif %}
   env_template: {{env_definition.envTemplate.name}}
 {% if env_definition.envTemplate.envSpecificParamsets is defined %}
-  envSpecificParamsets: 
-{{env_definition.envTemplate.envSpecificParamsets | ansible.builtin.to_nice_yaml | indent(4, true) }}
+  envSpecificParamsets:
+{{env_definition.envTemplate.envSpecificParamsets | to_nice_yaml | indent(4, true) }}
 {% else %}
   envSpecificParamsets: {}
 {% endif %}
 {% if env_definition.envTemplate.additionalTemplateVariables is defined %}
-  additionalTemplateVariables: 
-{{env_definition.envTemplate.additionalTemplateVariables | ansible.builtin.to_nice_yaml | indent(4, true) }}
+  additionalTemplateVariables:
+{{env_definition.envTemplate.additionalTemplateVariables | to_nice_yaml | indent(4, true) }}
 {% else %}
   additionalTemplateVariables: {}
 {% endif %}
@@ -64,8 +64,8 @@ environment:
     cloud_public_url: ""
 {% endif %}
 {% if cloud_passport is defined %}
-  cloud_passport: 
-{{cloud_passport | ansible.builtin.to_nice_yaml | indent(4, true) }}
+  cloud_passport:
+{{cloud_passport | to_nice_yaml | indent(4, true) }}
 {% else %}
   cloud_passport: {}
 {% endif %}

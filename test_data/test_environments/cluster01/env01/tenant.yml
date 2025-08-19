@@ -15,4 +15,3 @@ globalE2EParameters:
   mergeTenantsAndE2EParameters: false
   environmentParameters: {}
 deployParameters: {}
-

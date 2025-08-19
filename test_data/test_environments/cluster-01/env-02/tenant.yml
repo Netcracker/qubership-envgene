@@ -16,4 +16,3 @@ globalE2EParameters:
   environmentParameters: {}
 deployParameters:
   ESCAPE_SEQUENCE: "true"
-

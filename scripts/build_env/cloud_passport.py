@@ -5,7 +5,7 @@ from envgenehelper import *
 from schema_validation import checkCloudPassportBySchema
 
 # const
-CLOUD_SUBSTITUTIONS = { 
+CLOUD_SUBSTITUTIONS = {
     "apiUrl": "CLOUD_API_HOST",
     "apiPort": "CLOUD_API_PORT",
     "privateUrl": "CLOUD_PRIVATE_HOST",
@@ -34,7 +34,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
     for cloudKey, passportKey in CLOUD_SUBSTITUTIONS.items() :
         process_and_update_key(cloudKey, cloudYaml, passportKey, cloudPassportYaml["cloud"], comment)
         if (passportKey == "CLOUD_DASHBOARD_URL"):
-          # CLOUD_DASHBOARD_URL variable should be both in cloud section and in deploy parameters 
+          # CLOUD_DASHBOARD_URL variable should be both in cloud section and in deploy parameters
           store_value_to_yaml(cloudYaml["deployParameters"], "CLOUD_DASHBOARD_URL", cloudYaml[cloudKey], comment)
     # maas
     if "maas" in cloudPassportYaml :
@@ -57,7 +57,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
             store_value_to_yaml(cloudYaml["vaultConfig"], "enable", False, comment)
             store_value_to_yaml(cloudYaml["vaultConfig"], "url", "", comment)
         del cloudPassportYaml["vault"]
-    if "dbaas" in cloudPassportYaml : 
+    if "dbaas" in cloudPassportYaml :
         dbaasPassportYaml = cloudPassportYaml["dbaas"]
         if "dbaasConfigs" not in cloudYaml or len(cloudYaml["dbaasConfigs"]) != 1 :
             cloudYaml["dbaasConfigs"] = yaml.load("[]")
@@ -75,7 +75,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
           process_and_update_key("enabled", consulConfigYaml, "CONSUL_ENABLED", consulPassportYaml, comment)
           process_and_update_key("publicUrl", consulConfigYaml, "CONSUL_PUBLIC_URL", consulPassportYaml, comment)
           process_and_update_key("internalUrl", consulConfigYaml, "CONSUL_URL", consulPassportYaml, comment)
-          # CONSUL_ENABLED variable should be both in consul section and in deploy parameters 
+          # CONSUL_ENABLED variable should be both in consul section and in deploy parameters
           store_value_to_yaml(cloudYaml["deployParameters"], "CONSUL_ENABLED", f"{consulConfigYaml['enabled']}".lower(), comment)
           del cloudPassportYaml["consul"]
     # adding rest of cloud passport parameters to cloud deploy parameters
@@ -88,7 +88,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
 def add_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path, env_dir, comment):
     logger.info(f"Searching credentials for cloud passport {cloud_passport_file_path}")
     credsSchema="schemas/credential.schema.json"
-    # first searching in subfolder 
+    # first searching in subfolder
     passportSubfolderPath = f'{getDirName(cloud_passport_file_path)}/credentials/{cloud_passport_name}.yml'
     # then searching in the same folder with name pattern "{cloud_passport_name}-creds.yml"
     passportSameFolderPath = f'{getDirName(cloud_passport_file_path)}/{cloud_passport_name}-creds.yml'
@@ -121,7 +121,7 @@ def update_env_definition_with_cloud_name(render_env_dir, source_env_dir, all_in
         inventoryYaml["inventory"]["passportCloudName"] = cloudName
         writeYamlToFile(getEnvDefinitionPath(render_env_dir), inventoryYaml)
     else:
-        logger.info(f"No cloud name found for env {render_env_dir} from passport") 
+        logger.info(f"No cloud name found for env {render_env_dir} from passport")
 
 def process_cloud_passport(render_env_dir, env_instances_dir, instances_dir) :
     logger.info(f"Trying to find cloud passport definition file")

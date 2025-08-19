@@ -60,8 +60,8 @@ def convert_dict_to_yaml(d):
 
 def remove_empty_list_comments(data):
     # There are cases when list has values and those values have comments related
-    # to them. When all values are removed from list, comments are left behind 
-    # and when rendered by ruyaml create an invalid file content that makes 
+    # to them. When all values are removed from list, comments are left behind
+    # and when rendered by ruyaml create an invalid file content that makes
     # future parsing to fail. To avoid this we clean up those comments
     if isinstance(data, CommentedMap):
         for key, value in data.items():
@@ -78,7 +78,8 @@ def remove_empty_list_comments(data):
                 remove_empty_list_comments(item)
 
 def writeYamlToFile(filePath, contents):
-    logger.debug(f"Writing yaml to file: {filePath}")
+    filePath = Path(filePath)
+    logger.info(f"Writing yaml to file: {filePath}")
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
     remove_empty_list_comments(contents)
     with open(filePath, 'w+') as f:
@@ -341,8 +342,8 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str, schema_file_path: str) 
     yaml_content = openYaml(yaml_file_path)
     schema_content = openJson(schema_file_path)
     errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
-    if len(errors) > 0:    
-        rel_path = getRelPath(yaml_file_path) 
+    if len(errors) > 0:
+        rel_path = getRelPath(yaml_file_path)
         logger.error(f"Validation of {rel_path} file has failed")
         for err in errors:
             log_jsonschema_validation_error(err)
