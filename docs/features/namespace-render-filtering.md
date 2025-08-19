@@ -2,9 +2,9 @@
 
 ## Description
 
-Namespace render filter feature lets select which Environment [Namespaces](../envgene-objects.md#namespace) will be rendered. It does not affect rendering of other objects like cloud or tenant.
+Namespace render filter feature lets select which Environment [Namespaces](/docs/envgene-objects.md#namespace) will be rendered. It does not affect rendering of other objects like cloud or tenant.
 
-This feature uses the [`NS_BUILD_FILTER`](../instance-pipeline-parameters.md#parameters) Instance pipeline parameter. This parameter is used during the Environment Instance generation in the `env_build` job.
+This feature uses the [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#parameters) Instance pipeline parameter. This parameter is used during the Environment Instance generation in the `env_build` job.
 
 It allows to generate or update only specific Namespaces without touching the others. This is useful, for example, in Blue-Green deployment scenarios.
 
@@ -20,7 +20,7 @@ You can use BG Domain role aliases as namespace selectors:
 - `${origin}` - origin namespace  
 - `${peer}` - peer namespace
 
-EnvGene resolves these aliases using the [BG Domain](../envgene-objects.md#bg-domain) object. To use aliases, the BG Domain object must exist in the Environment.
+EnvGene resolves these aliases using the [BG Domain](/docs/envgene-objects.md#bg-domain) object. To use aliases, the BG Domain object must exist in the Environment.
 
 ### Direct namespace names
 
@@ -32,7 +32,7 @@ You can specify the namespace name directly, as defined in the `name` attribute 
 
 The following operators are available:
 
-- `!` - exclusion operator. When used, it excludes specified namespaces from processing
+- `!` - exclusion operator. When used at the beginning, it excludes the specified namespaces from processing. **Important**: The `!` operator applies to the entire expression, not to individual namespaces within a comma-separated list.
 - `,` - multiple selection operator. Separates multiple namespace selectors
 
 ## Usage examples
