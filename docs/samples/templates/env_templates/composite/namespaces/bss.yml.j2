@@ -20,7 +20,7 @@ deployParameters:
   bss-app-exist: false
 {% endif %}
 {% if current_env.additionalTemplateVariables.ci is defined %}
-e2eParameters: 
+e2eParameters:
 {{ current_env.additionalTemplateVariables.e2eParameters | ansible.builtin.to_nice_yaml | indent(2, true) }}
 {% else %}
 e2eParameters: {}

@@ -36,7 +36,7 @@ The solution supports creation of:
 
 The created objects are validated according to the corresponding schemes.
 
-Generation will occur in a dedicated job within the Instance repository pipeline.  
+Generation will occur in a dedicated job within the Instance repository pipeline.
 The generated Environment Inventory must be reused by other jobs in the same pipeline. In order to be able to generate an Environment Inventory and get an Environment Instance or Effective Set in a single run of the pipeline. To make this possible, it must be executed before any jobs that consume the inventory.
 
 When the inventory already exists, update rules vary depending on parameters. See details in [ENV_SPECIFIC_PARAMS](#env_specific_params)

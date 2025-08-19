@@ -1,3 +1,4 @@
+# This action is hidden from the GitHub Actions UI
 name: 'Build Instance Repo Pipeline Docker Image'
 description: 'Build and push Instance Repo Pipeline docker image to container registry'
 
@@ -39,7 +40,7 @@ runs:
       uses: docker/metadata-action@v5
       with:
         images: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}
-    
+
     - name: Build and push Docker image
       id: push
       uses: docker/build-push-action@v6
@@ -50,4 +51,4 @@ runs:
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build-args: |
-          GH_ACCESS_TOKEN=${{ inputs.gh-access-token }} 
+          GH_ACCESS_TOKEN=${{ inputs.gh-access-token }}

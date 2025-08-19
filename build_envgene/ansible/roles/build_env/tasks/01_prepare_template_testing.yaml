@@ -85,5 +85,5 @@
     environment_name: "{{ tenant_name }}_{{ env_template_vers_split.replace('-', '_') }}"
 
 - name: Transfer env_name variable
-  shell: | 
+  shell: |
     echo "{{ env_name }}" > "{{ base_dir }}"/set_variable.txt

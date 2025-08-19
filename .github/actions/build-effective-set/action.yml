@@ -1,3 +1,4 @@
+# This action is hidden from the GitHub Actions UI
 name: 'Build Effective Set Generator Docker Image'
 description: 'Build and push Effective Set Generator docker image to container registry'
 
@@ -48,7 +49,7 @@ runs:
       uses: docker/metadata-action@v5
       with:
         images: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}
-    
+
     - name: Build and push Docker image
       id: push
       uses: docker/build-push-action@v6
@@ -60,4 +61,4 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         build-args: |
           GIT_USER=${{ inputs.git-user }}
-          GIT_TOKEN=${{ inputs.git-token }} 
+          GIT_TOKEN=${{ inputs.git-token }}

@@ -59,7 +59,7 @@ public class TenantMap extends DynamicMap {
             mergeE2E = config.getGlobalParameters().getE2eParameters().isMergeTenantAndE2EParams();
             EscapeMap map = new EscapeMap(config
                     .getGlobalParameters()
-                    .getDeployParameters(), binding, 
+                    .getDeployParameters(), binding,
                     String.format(ParametersConstants.TENANT_ORIGIN, tenantName));
             EscapeMap e2e = new EscapeMap(config.getGlobalParameters().getE2eParameters().getEnvParameters(), binding, String.format(ParametersConstants.TENANT_E2E_ORIGIN, tenantName));
             EscapeMap configServer = new EscapeMap(config.getGlobalParameters().getTechnicalConfiguration(), binding, String.format(ParametersConstants.TENANT_CONFIG_SERVER_ORIGIN, tenantName));

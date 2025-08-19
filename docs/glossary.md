@@ -26,4 +26,4 @@ A versioned template used to generate Environment Instances. Maven artifact.
 
 ## Instance Repository
 
-The git repository containing Environment Inventories, generated Environment Instances, and related configuration.
+The Git repository containing Environment Inventories, generated Environment Instances, and related configuration.

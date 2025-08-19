@@ -50,7 +50,7 @@ Getting this information should not require specifying a particular Environment 
 
    1. The user opens the Environment selection view in the orchestrating deploy pipeline
    2. The orchestrating deploy pipeline retrieves the list of Environments in EnvGene Instance repository:
-      1. Searches for the list of Environments using the file structure pattern:  
+      1. Searches for the list of Environments using the file structure pattern:
          `find . -type f -name 'env_definition.yml' | sed 's|.*/environments/\(.*\)/Inventory/env_definition\.yml|\1|'`
    3. The Environment selection view displays the full list of Environments
    4. The user selects an Environment
@@ -70,7 +70,7 @@ Getting this information should not require specifying a particular Environment 
 
    1. The user opens the Environment selection view in the orchestrating deploy pipeline
    2. The orchestrating deploy pipeline retrieves the list of Environments in EnvGene Instance repository:
-      1. Searches for the list of Environments using the file structure pattern:  
+      1. Searches for the list of Environments using the file structure pattern:
          `find . -type f -name 'env_definition.yml' | sed 's|.*/environments/\(.*\)/Inventory/env_definition\.yml|\1|'`
    3. The Environment selection view displays the full list of Environments
    4. The user selects an Environment
@@ -139,16 +139,16 @@ Triggers for initiating the Environment Structure generation:
 
 1. Identify the list of Environments that match the following conditions:
 
-   a. The Environment Inventory exists, but there are no namespace folders  
-   b. The Environment Inventory exists, and the `artifact` field contains `-SNAPSHOT`  
-   c. The Environment Inventory exists, there are namespace folders, and the template version has changed (compare `generateEnvironmentLatestVersion` and `artifact`)  
+   a. The Environment Inventory exists, but there are no namespace folders
+   b. The Environment Inventory exists, and the `artifact` field contains `-SNAPSHOT`
+   c. The Environment Inventory exists, there are namespace folders, and the template version has changed (compare `generateEnvironmentLatestVersion` and `artifact`)
    d. All other cases
 
 2. For these Environments, perform the following actions:
 
-   a. For such an Environment, download the template artifact and extract the namespaces and deploy postfixes  
-   b. For such an Environment, download the template artifact and extract the namespaces and deploy postfixes  
-   c. For such an Environment, resolve the SNAPSHOT, download the template artifact, and extract the namespaces and deploy postfixes  
+   a. For such an Environment, download the template artifact and extract the namespaces and deploy postfixes
+   b. For such an Environment, download the template artifact and extract the namespaces and deploy postfixes
+   c. For such an Environment, resolve the SNAPSHOT, download the template artifact, and extract the namespaces and deploy postfixes
    d. For such an Environment, do nothing
 
 3. Using the information from step 2, generate the complete Environments Structure

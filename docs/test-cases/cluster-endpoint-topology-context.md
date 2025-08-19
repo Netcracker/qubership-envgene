@@ -34,8 +34,8 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Expected Results:**
 
 - The topology context in `parameters.yaml` contains a `cluster` object with values from Cloud Passport:
-  - `api_url`: Value from Cloud Passport
-  - `api_port`: Value from Cloud Passport
+  - `API_url`: Value from Cloud Passport
+  - `API_port`: Value from Cloud Passport
   - `public_url`: Value from Cloud Passport
   - `protocol`: Value from Cloud Passport
 
@@ -50,7 +50,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Pre-requisites:**
 
 - Environment without Cloud Passport configured
-- Environment has `inventory.clusterUrl` set to `https://api.cl-03.managed.qubership.cloud:6443`
+- Environment has `inventory.clusterUrl` set to `https://API.cl-03.managed.qubership.cloud:6443`
 - Calculator CLI available
 
 **Steps:**
@@ -61,9 +61,9 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Expected Results:**
 
 - The topology context in `parameters.yaml` contains a `cluster` object with values derived from `inventory.clusterUrl`:
-  - `api_url`: `api.cl-03.managed.qubership.cloud`
-  - `api_port`: `6443`
-  - `public_url`: `apps.cl-03.managed.qubership.cloud` (derived by removing 'api.' prefix)
+  - `API_url`: `API.cl-03.managed.qubership.cloud`
+  - `API_port`: `6443`
+  - `public_url`: `apps.cl-03.managed.qubership.cloud` (derived by removing 'API.' prefix)
   - `protocol`: `https`
 
 ## TC-CETC-003: Cluster Endpoint Information with Non-Standard Port
@@ -77,7 +77,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Pre-requisites:**
 
 - Environment without Cloud Passport configured
-- Environment has `inventory.clusterUrl` set to `https://api.cl-03.managed.qubership.cloud:8443`
+- Environment has `inventory.clusterUrl` set to `https://API.cl-03.managed.qubership.cloud:8443`
 - Calculator CLI available
 
 **Steps:**
@@ -88,9 +88,9 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Expected Results:**
 
 - The topology context in `parameters.yaml` contains a `cluster` object with values derived from `inventory.clusterUrl`:
-  - `api_url`: `api.cl-03.managed.qubership.cloud`
-  - `api_port`: `8443`
-  - `public_url`: `apps.cl-03.managed.qubership.cloud` (derived by removing 'api.' prefix)
+  - `API_url`: `API.cl-03.managed.qubership.cloud`
+  - `API_port`: `8443`
+  - `public_url`: `apps.cl-03.managed.qubership.cloud` (derived by removing 'API.' prefix)
   - `protocol`: `https`
 
 ## TC-CETC-004: Cluster Endpoint Information with HTTP Protocol
@@ -104,7 +104,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Pre-requisites:**
 
 - Environment without Cloud Passport configured
-- Environment has `inventory.clusterUrl` set to `http://api.cl-03.managed.qubership.cloud:6443`
+- Environment has `inventory.clusterUrl` set to `http://API.cl-03.managed.qubership.cloud:6443`
 - Calculator CLI available
 
 **Steps:**
@@ -115,9 +115,9 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Expected Results:**
 
 - The topology context in `parameters.yaml` contains a `cluster` object with values derived from `inventory.clusterUrl`:
-  - `api_url`: `api.cl-03.managed.qubership.cloud`
-  - `api_port`: `6443`
-  - `public_url`: `apps.cl-03.managed.qubership.cloud` (derived by removing 'api.' prefix)
+  - `API_url`: `API.cl-03.managed.qubership.cloud`
+  - `API_port`: `6443`
+  - `public_url`: `apps.cl-03.managed.qubership.cloud` (derived by removing 'API.' prefix)
   - `protocol`: `http`
 
 ## TC-CETC-005: Cluster Endpoint Information with Non-Standard Hostname
@@ -142,9 +142,9 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Expected Results:**
 
 - The topology context in `parameters.yaml` contains a `cluster` object with values derived from `inventory.clusterUrl`:
-  - `api_url`: `cluster.cl-03.managed.qubership.cloud`
-  - `api_port`: `6443`
-  - `public_url`: `cluster.cl-03.managed.qubership.cloud` (unchanged since it doesn't start with 'api.')
+  - `API_url`: `cluster.cl-03.managed.qubership.cloud`
+  - `API_port`: `6443`
+  - `public_url`: `cluster.cl-03.managed.qubership.cloud` (unchanged since it doesn't start with 'API.')
   - `protocol`: `https`
 
 ## TC-CETC-006: Cluster Endpoint Information with Cloud Passport Overriding clusterUrl
@@ -160,7 +160,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 
 - Environment with both Cloud Passport and `inventory.clusterUrl` configured
 - Cloud Passport contains cluster endpoint information
-- Environment has `inventory.clusterUrl` set to `https://api.cl-03.managed.qubership.cloud:6443`
+- Environment has `inventory.clusterUrl` set to `https://API.cl-03.managed.qubership.cloud:6443`
 - Calculator CLI available
 
 **Steps:**
@@ -194,7 +194,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 **Expected Results:**
 
 - The topology context in `parameters.yaml` contains a `cluster` object with empty values:
-  - `api_url`: ``
-  - `api_port`: ``
+  - `API_url`: ``
+  - `API_port`: ``
   - `public_url`: ``
   - `protocol`: ``

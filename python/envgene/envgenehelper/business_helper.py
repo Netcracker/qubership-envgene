@@ -160,7 +160,7 @@ def getTemplateLatestSnapshotVersion(env_definition_yaml):
 def update_generated_versions(env_dir, stage_tag, template_version=""):
     comment = "This value is automatically generated during job run."
     env_definition_yaml = getEnvDefinition(env_dir)
-    if not "generatedVersions" in env_definition_yaml:
+    if "generatedVersions" not in env_definition_yaml:
         versionsYaml = yaml.load("{}")
         env_definition_yaml["generatedVersions"] = versionsYaml
     else:

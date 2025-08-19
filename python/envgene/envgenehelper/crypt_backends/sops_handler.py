@@ -21,7 +21,7 @@ def _run_SOPS(arg_str, return_codes_to_ignore=None):
         logger.error(f"command: {sops_command}")
         logger.error(f"Error: {result.stderr} {result.stdout}")
         raise subprocess.SubprocessError()
-    return result 
+    return result
 
 def _create_replace_content_sh(content):
     delimiter = 'ENVGENE_SOPS_EDIT_CUSTOM_EOF'
@@ -90,7 +90,7 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
             writeYamlToFile(file_path, result)
     else:
         sops_args = f' --{SOPS_MODES[mode]} '
-        if mode != "decrypt": 
+        if mode != "decrypt":
             sops_args += f' --unencrypted-regex "{UNENCRYPTED_REGEX_STR}"'
         if in_place:
             sops_args += ' --in-place'

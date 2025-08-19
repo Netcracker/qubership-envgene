@@ -2,23 +2,27 @@
 # Stage 1: Build
 # Multi-stage build to reduce final image size
 FROM python:3.12-alpine3.19 AS build
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
-# Install build dependencies
-RUN apk add --no-cache \
-    gcc \
-    musl-dev \
-    libffi-dev \
-    openssl-dev \
-    libxml2-dev \
-    libxslt-dev \
-    zlib-dev \
-    git \
-    curl \
-    jq \
-    openssh-client \
-    sudo \
-    zip \
-    unzip
+# Install build dependencies (pin versions for reproducibility)
+RUN set -eux; \
+    apk update; \
+    ver() { apk list --verbose --available "$1" | head -n1 | sed -E "s/^$1-//; s/ .*//"; }; \
+    apk add --no-cache \
+        gcc="$(ver gcc)" \
+        musl-dev="$(ver musl-dev)" \
+        libffi-dev="$(ver libffi-dev)" \
+        openssl-dev="$(ver openssl-dev)" \
+        libxml2-dev="$(ver libxml2-dev)" \
+        libxslt-dev="$(ver libxslt-dev)" \
+        zlib-dev="$(ver zlib-dev)" \
+        git="$(ver git)" \
+        curl="$(ver curl)" \
+        jq="$(ver jq)" \
+        openssh="$(ver openssh)" \
+        zip="$(ver zip)" \
+        unzip="$(ver unzip)"; \
+    rm -rf /var/cache/apk/*
 
 # Copy configuration files
 COPY build_envgene/build/pip.conf /etc/pip.conf
@@ -40,87 +44,77 @@ COPY schemas /build_env/schemas
 ENV ANSIBLE_LIBRARY=/module/ansible/library
 
 # Create virtual environment and install Python packages
-RUN python -m venv /module/venv
-RUN /module/venv/bin/pip install --upgrade pip setuptools wheel
-RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
-RUN /module/venv/bin/pip install ansible-core --upgrade
-# Install essential Ansible collections
-# Install to virtual environment site-packages for Python module access
-RUN /module/venv/bin/ansible-galaxy collection install ansible.utils -p /module/venv/lib/python3.12/site-packages/ansible_collections
-RUN /module/venv/bin/ansible-galaxy collection install ansible.posix -p /module/venv/lib/python3.12/site-packages/ansible_collections
-RUN /module/venv/bin/ansible-galaxy collection install community.general -p /module/venv/lib/python3.12/site-packages/ansible_collections
-# Also install to custom location for playbook usage
-RUN /module/venv/bin/ansible-galaxy collection install ansible.utils -p /module/ansible/collections
-RUN /module/venv/bin/ansible-galaxy collection install ansible.posix -p /module/ansible/collections
-RUN /module/venv/bin/ansible-galaxy collection install community.general -p /module/ansible/collections
+RUN python -m venv /module/venv && \
+    /module/venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt && \
+    /module/venv/bin/pip install --no-cache-dir --upgrade ansible-core && \
+    /module/venv/bin/ansible-galaxy collection install -p /module/ansible/collections ansible.utils ansible.posix community.general && \
+    /module/venv/bin/pip install /python/jschon-sort /python/envgene /python/integration && \
+    /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
 
-RUN /module/venv/bin/pip install /python/jschon-sort
-RUN /module/venv/bin/pip install /python/envgene
-RUN /module/venv/bin/pip install /python/integration
-RUN /module/venv/bin/pip install /python/artifact-searcher
-RUN /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
-
-# Download and install SOPS for secrets management
-RUN wget --tries=3 \
+# Download and install SOPS for secrets management (use curl for BusyBox compatibility)
+RUN curl --fail --show-error --location --retry 3 \
     https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
-    -O /usr/local/bin/sops && \
+    -o /usr/local/bin/sops && \
     chmod +x /usr/local/bin/sops
 
 # Aggressive cleanup to reduce image size
-RUN apk del gcc musl-dev libffi-dev openssl-dev libxml2-dev libxslt-dev zlib-dev
-RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache
-# Remove unnecessary files from Python packages
-RUN find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete
-# Don't remove test directories as they might be needed by Ansible
-RUN find /module/venv/lib/python3.12/site-packages -name '*.pyo' -delete
-RUN find /module/venv/lib/python3.12/site-packages -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
-# Remove heavy Ansible collections that are not essential (but keep ansible.posix and ansible.utils)
-RUN rm -rf /module/venv/lib/python3.12/site-packages/ansible_collections/amazon /module/venv/lib/python3.12/site-packages/ansible_collections/azure /module/venv/lib/python3.12/site-packages/ansible_collections/google /module/venv/lib/python3.12/site-packages/ansible_collections/kubernetes 2>/dev/null || true
-# Remove test packages that are not needed in runtime (but keep Ansible test files)
-RUN rm -rf /module/venv/lib/python3.12/site-packages/pytest* /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true
-RUN /module/venv/bin/pip cache purge
-
-# Verify collections are still accessible after cleanup
-RUN /module/venv/bin/python -c "import ansible_collections.ansible.posix; print('ansible.posix collection still accessible after cleanup')"
+RUN apk del gcc musl-dev libffi-dev openssl-dev libxml2-dev libxslt-dev zlib-dev && \
+    rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
+    find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
+    find /module/venv/lib/python3.12/site-packages -name '*.pyo' -delete && \
+    ( find /module/venv/lib/python3.12/site-packages -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true ) && \
+    # Remove heavy, unused Ansible collections
+        ( rm -rf /module/ansible/collections/ansible_collections/amazon \
+                /module/ansible/collections/ansible_collections/azure \
+                /module/ansible/collections/ansible_collections/google \
+                /module/ansible/collections/ansible_collections/kubernetes 2>/dev/null || true ) && \
+    # Remove pytest from venv
+    ( rm -rf /module/venv/lib/python3.12/site-packages/pytest* /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true ) && \
+    ( /module/venv/bin/python -m pip cache purge || true ) && \
+    # Remove Ansible/galaxy caches if any
+    rm -rf /root/.ansible
 
 # Set permissions
-RUN chmod 754 /module/scripts/*
-RUN chmod 754 /module/creds_rotation_scripts/*
+RUN find /module -type d -exec chmod 755 {} + && \
+    find /module -type f -exec chmod 644 {} + && \
+    chmod -R 755 /module/scripts /module/creds_rotation_scripts
 
 #########################################
 # Stage 2: Runtime
 # Lightweight runtime image with only essential dependencies
 FROM python:3.12-alpine3.19 AS runtime
+SHELL ["/bin/ash", "-eo", "pipefail", "-c"]
 
-# Install only essential runtime dependencies
-RUN apk add --no-cache \
-    bash \
-    ca-certificates \
-    curl \
-    jq \
-    yq \
-    gettext \
-    age \
-    git \
-    openssh-client \
-    sudo \
-    zip \
-    unzip
+# Install only essential runtime dependencies (pinned versions)
+RUN set -eux; \
+    apk update; \
+    ver() { apk list --verbose --available "$1" | head -n1 | sed -E "s/^$1-//; s/ .*//"; }; \
+    # yq may be packaged as yq or yq-go depending on repo; prefer yq, fallback to yq-go
+    YQ_PKG=yq; \
+    if ! apk list --available yq >/dev/null 2>&1; then YQ_PKG=yq-go; fi; \
+    apk add --no-cache \
+        bash="$(ver bash)" \
+        ca-certificates="$(ver ca-certificates)" \
+        curl="$(ver curl)" \
+        jq="$(ver jq)" \
+        "${YQ_PKG}=$(ver "${YQ_PKG}")" \
+        gettext="$(ver gettext)" \
+        age="$(ver age)" \
+        git="$(ver git)" \
+        openssh="$(ver openssh)" \
+        zip="$(ver zip)" \
+        unzip="$(ver unzip)"; \
+    rm -rf /var/cache/apk/*
 
 # Copy everything from build stage
 COPY --from=build /module /module
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=build /build_env /build_env
-COPY --from=build /python /python
-COPY --from=build /etc/pip.conf /etc/pip.conf
-
-# Verify collections are accessible in runtime stage
-RUN /module/venv/bin/python -c "import ansible_collections.ansible.posix; print('ansible.posix collection accessible in runtime')"
-
-
 
 # Set permissions
-RUN chmod +x /usr/local/bin/sops
+RUN chmod +x /usr/local/bin/sops && \
+    ( chmod -R 755 /module/venv/bin || true )
 
 # Create directories that might be needed for CI environments
 # These directories are commonly used by GitHub Actions and GitLab CI
@@ -136,22 +130,45 @@ RUN mkdir -p /__w/_temp/_runner_file_commands && \
     chmod 777 /cache
 
 # Final cleanup
-RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache
-RUN find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete
-# Don't remove test directories as they might be needed by Ansible
-RUN /module/venv/bin/pip cache purge
-# Keep pip for runtime compatibility, but remove setuptools and wheel
-RUN rm -rf /module/venv/lib/python3.12/site-packages/setuptools* /module/venv/lib/python3.12/site-packages/wheel* 2>/dev/null || true
+RUN set -eux; \
+    rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache; \
+    find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete; \
+    /module/venv/bin/pip cache purge 2>/dev/null || true; \
+    # Keep pip for runtime compatibility, but remove setuptools and wheel
+    rm -rf /module/venv/lib/python3.12/site-packages/setuptools* /module/venv/lib/python3.12/site-packages/wheel* 2>/dev/null || true
+
+ARG RUN_UID=1001
+ARG RUN_GID=121
+
+# Create and configure non-root user then remove shadow to save space (pinned)
+RUN set -eux; \
+    apk update; \
+    ver() { apk list --verbose --available "$1" | head -n1 | sed -E "s/^$1-//; s/ .*//"; }; \
+    apk add --no-cache shadow="$(ver shadow)"; \
+    if getent group ci >/dev/null 2>&1; then \
+        groupmod -o -g "${RUN_GID}" ci || true; \
+    else \
+        addgroup -S -g "${RUN_GID}" ci; \
+    fi; \
+    if id -u ci >/dev/null 2>&1; then \
+        usermod -o -u "${RUN_UID}" -g "${RUN_GID}" -d /home/ci -m ci || true; \
+    else \
+        adduser -S -D -h /home/ci -u "${RUN_UID}" -G ci ci; \
+    fi; \
+    mkdir -p /home/ci && ( chown -R "${RUN_UID}:${RUN_GID}" /home/ci /module /build_env || true ); \
+    apk del shadow; \
+    rm -rf /root/.ansible /home/ci/.ansible
 
 # Set environment
 ENV PATH=/module/venv/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     ANSIBLE_LIBRARY=/module/ansible/library \
-    ANSIBLE_COLLECTIONS_PATH=/module/venv/lib/python3.12/site-packages/ansible_collections:/module/ansible/collections
+    ANSIBLE_COLLECTIONS_PATH=/module/ansible/collections
 
-# Simple root-based container for CI/CD environments
-# This container runs as root to avoid permission issues in CI/CD pipelines
+# Create and use non-root user for runtime
+USER ci:ci
+# Set working directory for runtime
 WORKDIR /module/ansible
 
 # Health check

@@ -69,7 +69,7 @@ def check_is_creds_list_and_expand_creds(key: str, value_list: list, result_yaml
     result_list = []
     creds_list = []
     is_cred_found = False
-    
+
     for idx, value in enumerate(value_list):
         if isinstance(value, dict):
             res_yaml = empty_yaml()
@@ -89,7 +89,7 @@ def check_is_creds_list_and_expand_creds(key: str, value_list: list, result_yaml
             nested_result_yaml = empty_yaml()
             nested_creds_yaml = empty_yaml()
             nested_key = "temp_key"  # Temporary key for nested processing
-            
+
             if check_is_creds_list_and_expand_creds(nested_key, value, nested_result_yaml, nested_creds_yaml, env_creds, comment):
                 is_cred_found = True
                 if nested_key in nested_result_yaml:
@@ -105,12 +105,12 @@ def check_is_creds_list_and_expand_creds(key: str, value_list: list, result_yaml
         else:
             # Regular value, add to result_yaml
             result_list.append(value)
-    
+
     # Always store the complete list with all nested fields in result_yaml
     # This ensures fields like secretName and insecureSkipVerify are preserved
     if result_list:
         store_value_to_yaml(result_yaml, key, result_list, comment)
-    
+
     if is_cred_found:
         # For credentials, use the updatedValueList which contains all fields
         store_value_to_yaml(credentials_yaml, key, creds_list, comment)

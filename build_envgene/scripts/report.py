@@ -41,7 +41,7 @@ if response.status_code == 200:
     array_maven = maven_repository.split('/')
     array_name = json_path.split('/')
     array_id = artifacts_id.split(':')
-    
+
 group_id = '.'.join(array_name[4:-3])
 artifact_id = array_name[-3]
 snapshot_version = array_name[-2]

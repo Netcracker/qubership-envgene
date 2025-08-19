@@ -54,7 +54,7 @@ When commits are pushed to any branch (except `main`), the following workflows r
    - Runs across all supported languages
 
 2. **Link Checker** (`.github/workflows/link-checker.yaml`)
-   - Validates all links in markdown files
+   - Validates all links in Markdown files
    - Ensures documentation links are working
 
 3. **Conditional Execution Based on Commit Message**:
@@ -74,7 +74,7 @@ When commits are pushed to any branch (except `main`), the following workflows r
 On pull requests, the following workflows run regardless of commit message format:
 
 - Super Linter
-- Link Checker  
+- Link Checker
 - Tests
 
 This ensures comprehensive validation before code is merged. Docker builds are not triggered on pull requests to avoid unnecessary builds during code review.
@@ -85,7 +85,7 @@ The workflow builds four Docker images:
 
 1. **Qubership GCIP** (`qubership-gcip`)
 2. **Qubership Envgene** (`qubership-envgene`)
-3. **Instance Repo Pipeline** (`qubership-instance-repo-pipeline`)
+3. **Instance repository Pipeline** (`qubership-instance-repo-pipeline`)
 4. **Effective Set Generator** (`qubership-effective-set-generator`)
 
 ## Automatic Triggering
@@ -103,7 +103,7 @@ The Docker build workflow automatically triggers when commits are pushed with co
 | Type | Description | Example |
 |------|-------------|---------|
 | `feat:` | New features | `feat: add new authentication system` |
-| `fix:` | Bug fixes | `fix: resolve docker build issue` |
+| `fix:` | Bugfixes | `fix: resolve docker build issue` |
 | `BREAKING CHANGE:` | Breaking changes | `BREAKING CHANGE: major refactor` |
 
 ### Examples of Valid Commit Messages
@@ -138,7 +138,7 @@ When running manually, you can choose which images to build:
 |--------|-------------|---------|
 | `build-gcip` | Build Qubership GCIP image | ✅ Enabled |
 | `build-envgene` | Build Qubership Envgene image | ✅ Enabled |
-| `build-pipeline` | Build Instance Repo Pipeline image | ✅ Enabled |
+| `build-pipeline` | Build Instance repository Pipeline image | ✅ Enabled |
 | `build-effective-set` | Build Effective Set Generator image | ✅ Enabled |
 
 ### Manual Execution Scenarios
@@ -272,7 +272,7 @@ The `super-linter.yaml` workflow automatically checks code quality and style acr
 
 ### Link Checker
 
-The `link-checker.yaml` workflow validates all links in markdown files to ensure they are working correctly.
+The `link-checker.yaml` workflow validates all links in Markdown files to ensure they are working correctly.
 
 #### Link Checker Triggering Conditions
 
@@ -284,7 +284,7 @@ The `link-checker.yaml` workflow validates all links in markdown files to ensure
 
 - Scans all `.md` files in the repository
 - Validates HTTP/HTTPS links
-- Reports broken or inaccessible links
+- repositoryrts broken or inaccessible links
 - Accepts status codes: 100-103, 200-299, 429 (rate limiting)
 
 #### Link Checker Configuration

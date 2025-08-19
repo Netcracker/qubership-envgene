@@ -81,10 +81,10 @@ def simple_dict_value_comparator(whiteList, yamlContent, errors, level):
             if validator.regexpPattern and not re.match(validator.regexpPattern, str(yamlContent)):
                 errors["checkMismatch"].append(getMismatchErrorStruct(level, yamlContent, validator.type, "REGEXP_PATTERN", regexpPattern=validator.regexpPattern))
         else:
-            raise ReferenceError(f"Unknown white list validation item for {level}: \n{dump_as_yaml_format(whiteList)}")    
+            raise ReferenceError(f"Unknown white list validation item for {level}: \n{dump_as_yaml_format(whiteList)}")
     else:
             raise ReferenceError(f"Unknown white list validation item for {level}: \n{dump_as_yaml_format(whiteList)}")
-    
+
 def complex_dict_value_comparator(whiteList, yamlContent, errors, level):
     if isinstance(whiteList, dict) or isinstance(whiteList, str):
         validator = SchemaValidatorDefinition(definition=whiteList) if isinstance(whiteList, dict) else SchemaValidatorDefinition(type=whiteList)
@@ -109,13 +109,13 @@ def complex_dict_value_comparator(whiteList, yamlContent, errors, level):
             if validator.regexpPattern and not re.match(validator.regexpPattern, str(paramValue)):
                 errors["checkMismatch"].append(getMismatchErrorStruct(level, paramValue, validator.type, "REGEXP_PATTERN", regexpPattern=validator.regexpPattern, additionalText=paramsetText))
         else:
-            raise ReferenceError(f"Unknown white list validation item for {level}: \n{dump_as_yaml_format(validator)}")    
+            raise ReferenceError(f"Unknown white list validation item for {level}: \n{dump_as_yaml_format(validator)}")
     else:
             raise ReferenceError(f"Unknown white list validation item for {level}: \n{dump_as_yaml_format(whiteList)}")
 
 def getMismatchErrorStruct(key, value, expectedType, checkType, regexpPattern="", additionalText=""):
     struct = {
-        "key": key, 
+        "key": key,
         "value": value,
         "type": type(value),
         "expectedType": expectedType,
@@ -129,7 +129,7 @@ def getMismatchErrorStruct(key, value, expectedType, checkType, regexpPattern=""
     elif struct["checkType"] == "REGEXP_PATTERN":
         struct["message"] = f"{struct['key']}{additionalText}: value '{struct['value']}' failed regexp '{struct['regexpPattern']}' validation"
     return struct
-    
+
 
 def checkDictIsSchemaValidator(item):
     if isinstance(item, dict):
@@ -166,9 +166,9 @@ class SchemaValidatorDefinition:
             self.type = definition["type"] if "type" in definition else None
             self.allowNone = definition["allowNone"] if "allowNone" in definition else False
             self.regexpPattern = definition["regexpPattern"] if "regexpPattern" in definition else None
-    
+
     def __str__(self):
         return f'SchemaValidatorDefinition(type="{self.type}", allowNone={self.allowNone}, regexpPattern="{self.regexpPattern}")'
-    
+
     def __repr__(self):
         return f'SchemaValidatorDefinition(type="{self.type}", allowNone={self.allowNone}, regexpPattern="{self.regexpPattern}")'

@@ -20,7 +20,7 @@ delete_dir(g_test_dir)
 def change_test_dir(request, monkeypatch):
     monkeypatch.chdir(request.fspath.dirname+"/../..")
 
-def fill_creds(env_dir): 
+def fill_creds(env_dir):
     cred_file_name = f"{env_dir}/Credentials/credentials.yml"
     if check_file_exists(cred_file_name):
       logger.info(f'File with creds exists: {cred_file_name}. Filling cred values.')
