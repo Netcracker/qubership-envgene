@@ -87,5 +87,5 @@ block-beta
 
 ## Links
 
-[Purl specification](https://github.com/package-url/purl-spec)  
+[Purl specification](https://github.com/package-url/purl-spec)
 [CycloneDX specification](https://cyclonedx.org/docs/1.6/json/)

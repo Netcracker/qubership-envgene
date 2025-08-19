@@ -70,7 +70,7 @@ tenant: "{{ templates_dir }}/env_templates/composite/tenant.yml.j2"
 **Basic usage:**
 
 ```yaml
-name: "{{current_env.name }}-oss" 
+name: "{{current_env.name }}-oss"
 ```
 
 **Usage in sample:** [Sample](/docs/samples/templates/env_templates/composite/namespaces/oss.yml.j2)
@@ -115,9 +115,9 @@ name: "{{ current_env.cloud }}"
 **Description:** Name of the Environment's Cloud incorporating cluster and environment names. Used to generate environment-specific Cloud names. Generated using these rules:
 
 1. Uses `inventory.cloudName` value from [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) if defined
-2. When `inventory.cloudPassport` in [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) if defined:  
-   `(<inventory.cloudPassport> + '_' + <current_env.name>).replace("-", "_")`  
-3. Otherwise combines:  
+2. When `inventory.cloudPassport` in [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) if defined:
+   `(<inventory.cloudPassport> + '_' + <current_env.name>).replace("-", "_")`
+3. Otherwise combines:
    `(<clusterName> + '_' + <current_env.name>).replace("-", "_")`
 
 Notes:

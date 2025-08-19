@@ -9,7 +9,7 @@
 				"APP_QUOTE_NOTIFICATION_TOPIC": "DV.Customer.QuoteManagement.Quote",
         		"PROJECT_APP_NOTIFICATION_SERVICE_TOPIC" : "DV.Product.ProductInventory.Product",
         		"APP_PROJECT_ORDER_NOTIFICATION_TOPIC" : "DV.Customer.ProductOrdering.ProductOrder"
-			}	
+			}
 		}
 	]
 }

@@ -10,12 +10,12 @@
       register: integration_result
 
     - name: load integration data
-      ansible.builtin.include_vars: 
+      ansible.builtin.include_vars:
         file:  "{{ integration_config_path }}"
         name: integration
       when: integration_result.stat.exists
 
     - import_role:
         name: get_cloud_passport
-      vars: 
+      vars:
         integration_data: "{{ integration | from_yaml }}"

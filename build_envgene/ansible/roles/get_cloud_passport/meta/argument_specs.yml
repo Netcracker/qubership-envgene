@@ -26,5 +26,4 @@ argument_specs:
           self_token:
             type: "str"
             required: true
-          
-          
+

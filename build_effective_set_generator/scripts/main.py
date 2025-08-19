@@ -19,12 +19,12 @@ def generate(cluster_name ,environment_name, instances_dir):
 
 
 def generate_effective_set_for_env(cluster_name ,environment_name, instances_dir):
-    decrypt_all_cred_files_for_env() 
+    decrypt_all_cred_files_for_env()
     full_env_name = f"{cluster_name}/{environment_name}"
     env_dir = get_env_instances_dir(environment_name, cluster_name, instances_dir)
     logger.info(f"Env dir is: {env_dir}")
     env_creds = get_and_check_env_creds_or_fail(env_dir)
-    # clearing effective set folder in env env 
+    # clearing effective set folder in env env
     output_dir = f"{env_dir}/{EFFECTIVE_SET_FOLDER}"
     if check_dir_exists(output_dir):
         logger.info(f"Clearing folder for effective set calculation: {output_dir}")
@@ -34,7 +34,7 @@ def generate_effective_set_for_env(cluster_name ,environment_name, instances_dir
     apps_dict = get_application_dict_from_sd(full_env_name, env_dir)
     # generating effective set
     generate_effective_set(full_env_name, env_dir, output_dir, apps_dict, env_creds)
-    encrypt_all_cred_files_for_env() 
+    encrypt_all_cred_files_for_env()
 
 if __name__ == "__main__":
     effective_set_generator()

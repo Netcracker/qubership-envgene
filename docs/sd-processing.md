@@ -146,11 +146,11 @@ The following set of terms is used to describe the rules and assumptions of SD m
 ##### `basic-merge` SD Merge Mode Assumptions
 
 1. Valid Application models:
-   1. `version: <application:version>`  
+   1. `version: <application:version>`
       `deployPostfix:  <>`
-   2. `version: <application:version>`  
-      `deployPostfix: <>`  
-      `alias: <>`  
+   2. `version: <application:version>`
+      `deployPostfix: <>`
+      `alias: <>`
 
 ##### `basic-merge` SD Merge Mode Rules
 
@@ -238,11 +238,11 @@ The following set of terms is used to describe the rules and assumptions of SD m
 1. The values of the attributes `version`, `type`, and `deployMode` in both Full and Delta SDs must match.
 2. All Applications must conform to the same model as in both Full and Delta SDs. Valid models include:
    1. `<application:version>`
-   2. `version: <application:version>`  
-      `deployPostfix:  <>`  
-   3. `version: <application:version>`  
-      `deployPostfix: <>`  
-      `alias: <>`  
+   2. `version: <application:version>`
+      `deployPostfix:  <>`
+   3. `version: <application:version>`
+      `deployPostfix: <>`
+      `alias: <>`
 3. If the Full SD does not contain a `deployGraph`, the Delta SD must not contain one either.
 4. If either the Full or Delta SD contains a `deployGraph`, then all applications listed in applications must also be present in the `deployGraph`
 5. The `deployGraph` in the Delta SD can contains applications that are not listed in its own applications section. (This is a case where the Delta SD contains a complete `deployGraph`)

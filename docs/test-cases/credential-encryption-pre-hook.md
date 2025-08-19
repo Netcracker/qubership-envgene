@@ -67,7 +67,7 @@ crypt_backend: Fernet  # or SOPS
 **Steps:**
 
 - Ensure `crypt_backend` is correctly configured
-- Modify the credential file  
+- Modify the credential file
 - Run `git commit`
 
 **Expected Results:**
@@ -98,7 +98,7 @@ crypt_backend: Fernet  # or SOPS
 **Steps:**
 
 - Set `crypt: false` in config.yaml
-- Modify the credential file  
+- Modify the credential file
 - Run `git commit`
 
 **Expected Results:**
@@ -113,28 +113,28 @@ crypt_backend: Fernet  # or SOPS
 
 **Status:** Active
 
-**Description:**  
+**Description:**
 Verify that encryption fails when `crypt_backend` is `Fernet` and `secret_key` is not provided.
 
 **Test Data:**
 
-- configuration/config.yaml  
+- configuration/config.yaml
 - configuration/credentials/credentials.yml
 
 **Pre-requisites:**
 
-1. `crypt_backend: Fernet`, `crypt: true`  
+1. `crypt_backend: Fernet`, `crypt: true`
 2. No `.git/secret_key.txt` file exists
 
 **Steps:**
 
-- Modify the credential file  
-- Ensure `.git/secret_key.txt` is missing  
+- Modify the credential file
+- Ensure `.git/secret_key.txt` is missing
 - Run `git commit`
 
 **Expected Results:**
 
-- Commit fails with message:  
+- Commit fails with message:
   `SECRET_KEY is required for Fernet encryption in ./configuration/credentials/credentials.yml`
 
 ---
@@ -143,30 +143,30 @@ Verify that encryption fails when `crypt_backend` is `Fernet` and `secret_key` i
 
 **Status:** Active
 
-**Description:**  
-Verify that encryption succeeds when a valid `.git/secret_key.txt` is provided.  
+**Description:**
+Verify that encryption succeeds when a valid `.git/secret_key.txt` is provided.
 Supported fields are encrypted per [Credential Object Specification](/docs/envgene-objects.md#credential).
 
 **Test Data:**
 
-- configuration/config.yaml  
-- configuration/credentials/credentials.yml  
+- configuration/config.yaml
+- configuration/credentials/credentials.yml
 - .git/secret_key.txt
 
 **Pre-requisites:**
 
-1. `crypt_backend: Fernet`, `crypt: true`  
+1. `crypt_backend: Fernet`, `crypt: true`
 2. Valid Fernet key in `.git/secret_key.txt`
 
 **Steps:**
 
-- Modify credential file  
+- Modify credential file
 - Stage and commit
 
 **Expected Results:**
 
-- `username`, `password`, `secret` fields are encrypted (e.g., `[encrypted:AES256_Fernet]...`)  
-- Other fields are unchanged  
+- `username`, `password`, `secret` fields are encrypted (e.g., `[encrypted:AES256_Fernet]...`)
+- Other fields are unchanged
 - YAML remains valid
 
 ---
@@ -175,7 +175,7 @@ Supported fields are encrypted per [Credential Object Specification](/docs/envge
 
 **Status:** Active
 
-**Description:**  
+**Description:**
 Verify that if the credential file is already encrypted with Fernet, the encryption is skipped and warning is logged.
 
 **Test Data:**
@@ -184,8 +184,8 @@ Verify that if the credential file is already encrypted with Fernet, the encrypt
 
 **Pre-requisites:**
 
-1. Valid encrypted credentials file  
-2. `.git/secret_key.txt` available  
+1. Valid encrypted credentials file
+2. `.git/secret_key.txt` available
 3. `crypt: true`, `crypt_backend: Fernet`
 
 **Steps:**
@@ -194,8 +194,8 @@ Verify that if the credential file is already encrypted with Fernet, the encrypt
 
 **Expected Results:**
 
-- Warning logged:  
-  `File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key.`  
+- Warning logged:
+  `File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key.`
 - File remains unchanged
 
 ---
@@ -204,22 +204,22 @@ Verify that if the credential file is already encrypted with Fernet, the encrypt
 
 **Status:** Active
 
-**Description:**  
+**Description:**
 Verify that encryption fails when `crypt_backend: SOPS` is used but required age_public_key is missing.
 
 **Test Data:**
 
-- configuration/config.yaml  
+- configuration/config.yaml
 - configuration/credentials/credentials.yml
 
 **Pre-requisites:**
 
-1. `crypt: true`, `crypt_backend: SOPS`  
+1. `crypt: true`, `crypt_backend: SOPS`
 2. Missing `age_public_key.txt`
 
 **Steps:**
 
-- Modify credentials  
+- Modify credentials
 - Stage and commit
 
 **Expected Results:**
@@ -236,30 +236,30 @@ Verify that encryption fails when `crypt_backend: SOPS` is used but required age
 
 **Status:** Active
 
-**Description:**  
-Verify that credentials are encrypted using SOPS when valid age key is provided.  
-Only supported fields (`username`, `password`, `secret`) are encrypted.  
+**Description:**
+Verify that credentials are encrypted using SOPS when valid age key is provided.
+Only supported fields (`username`, `password`, `secret`) are encrypted.
 See [Credential Object Specification](/docs/envgene-objects.md#credential).
 
 **Test Data:**
 
-- configuration/config.yaml  
-- configuration/credentials/credentials.yml  
-- .git/ge_public_key.txt  
+- configuration/config.yaml
+- configuration/credentials/credentials.yml
+- .git/ge_public_key.txt
 
 **Pre-requisites:**
 
-1. SOPS encryption enabled in config  
+1. SOPS encryption enabled in config
 2. Valid `age_public_key` in `.git` directory
 
 **Steps:**
 
-- Modify credential file  
+- Modify credential file
 - Stage and commit
 
 **Expected Results:**
 
-- Supported fields are encrypted with `ENC[AES256_GCM,...]`  
+- Supported fields are encrypted with `ENC[AES256_GCM,...]`
 - YAML remains valid and other fields are untouched
 
 ---
@@ -268,8 +268,8 @@ See [Credential Object Specification](/docs/envgene-objects.md#credential).
 
 **Status:** Active
 
-**Description:**  
-Ensure that encryption is skipped for files already encrypted with SOPS.  
+**Description:**
+Ensure that encryption is skipped for files already encrypted with SOPS.
 
 **Test Data:**
 
@@ -277,8 +277,8 @@ Ensure that encryption is skipped for files already encrypted with SOPS.
 
 **Pre-requisites:**
 
-1. `crypt: true`, `crypt_backend: SOPS`  
-2. Valid encrypted file  
+1. `crypt: true`, `crypt_backend: SOPS`
+2. Valid encrypted file
 3. Valid age_public_key.txt is present
 
 **Steps:**
@@ -287,6 +287,6 @@ Ensure that encryption is skipped for files already encrypted with SOPS.
 
 **Expected Results:**
 
-- Warning logged:  
-  `File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key.`  
+- Warning logged:
+  `File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key.`
 - File remains unchanged

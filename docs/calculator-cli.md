@@ -215,7 +215,7 @@ env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zooke
             └── effective-set
                 ├── topology
                 |   ├── parameters.yaml
-                |   └── credentials.yaml              
+                |   └── credentials.yaml
                 ├── pipeline
                 |   ├── parameters.yaml
                 |   ├── credentials.yaml
@@ -306,7 +306,7 @@ env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zooke
                     |   └── credentials.yaml
                     └── <deployPostfix-02>
                         ├── parameters.yaml
-                        └── credentials.yaml                            
+                        └── credentials.yaml
 ```
 
 #### [Version 2.0] Parameter type conversion
@@ -321,7 +321,7 @@ All parameters must retain their original types (string, boolean, integer) exact
 
 #### [Version 2.0] Service Inclusion Criteria and Naming Convention
 
-The services list for an individual application is generated from the Application SBOM according to the following principles.  
+The services list for an individual application is generated from the Application SBOM according to the following principles.
 It includes components from the Application SBOM with these `mime-type`:
 
 - `application/vnd.qubership.service`
@@ -340,12 +340,12 @@ The service name is derived from the `name` attribute of the Application SBOM co
 > When a required attribute is missing in the SBOM
 >
 > Mandatory Attributes:
-> If a default exists: The default value is applied  
+> If a default exists: The default value is applied
 > If no default exists: Throws readable error
 >
 > Optional Attributes:
-> If a default exists: The default value is applied  
-> If no default exists: The attribute remains unset  
+> If a default exists: The default value is applied
+> If no default exists: The attribute remains unset
 
 #### [Version 2.0] App chart validation
 
@@ -358,7 +358,7 @@ The Calculator CLI performs validation to check for the presence of an `applicat
 
 2. This validation is only performed for Effective Set version `v2.0`
 
-3. Validation execution depends on the attribute:  
+3. Validation execution depends on the attribute:
      [`EFFECTIVE_SET_CONFIG.app_chart_validation`](/docs/instance-pipeline-parameters.md#effective_set_config)
    - Behavior:
      - If `true`: Validation is performed
@@ -674,9 +674,9 @@ Common Predefined Parameters:
 
 Only services in the SBOM that have these MIME types may contain artifacts:
 
-- `application/vnd.qubership.configuration.smartplug`  
-- `application/vnd.qubership.configuration.frontend`  
-- `application/vnd.qubership.configuration.cdn`  
+- `application/vnd.qubership.configuration.smartplug`
+- `application/vnd.qubership.configuration.frontend`
+- `application/vnd.qubership.configuration.cdn`
 - `application/vnd.qubership.configuration`
 
 If such SBOM components contain child components of these types, an `artifacts[]` element is created for each child component:
@@ -690,16 +690,16 @@ If such SBOM components contain child components of these types, an `artifacts[]
 
 Among the artifacts of service, one primary artifact is identified that requires special processing during service deployment. The selection criteria are as follows:
 
-- For `application/vnd.qubership.configuration.smartplug` select the `application/vnd.osgi.bundle` component:  
+- For `application/vnd.qubership.configuration.smartplug` select the `application/vnd.osgi.bundle` component:
   `.components[?name=<service-name>].components[?mime-type=application/vnd.osgi.bundle]`
 
-- For `application/vnd.qubership.configuration.frontend` select the `application/zip` component:  
+- For `application/vnd.qubership.configuration.frontend` select the `application/zip` component:
   `.components[?name=<service-name>].components[?mime-type=application/zip]`
 
-- For `application/vnd.qubership.configuration.cdn` select the `application/zip` component:  
+- For `application/vnd.qubership.configuration.cdn` select the `application/zip` component:
   `.components[?name=<service-name>].components[?mime-type=application/zip]`
 
-- For `application/vnd.qubership.configuration` select the `application/zip` component:  
+- For `application/vnd.qubership.configuration` select the `application/zip` component:
   `.components[?name=<service-name>].components[?mime-type=application/zip]`
 
 > [!IMPORTANT]
@@ -745,21 +745,21 @@ If `application/vnd.qubership.app.chart` component exists in Application SBOM, t
 ```text
 ...
 └── per-service-parameters
-    └── <normalized-app-chart-name> 
+    └── <normalized-app-chart-name>
         └── deployment-parameters.yaml
 ```
 
 > [!NOTE]
 > The `<normalized-app-chart-name>` is generated using these steps:
 >
-> 1. Convert to lowercase  
->      Example: `MyApp_Chart` → `myapp_chart`  
-> 2. Replace underscores with hyphens  
->      Example: `myapp_chart` → `myapp-chart`  
-> 3. Encode uppercase letter positions (if original name had mixed case)  
->      A base-36 suffix is added to preserve capitalization info (e.g., `myapp-chart-a1b2`)  
-> 4. Enforce Kubernetes length limits  
->      Maximum length: `63 - len(namespace) - 1` # where namespace is a `name` attribute of `Namespace` object  
+> 1. Convert to lowercase
+>      Example: `MyApp_Chart` → `myapp_chart`
+> 2. Replace underscores with hyphens
+>      Example: `myapp_chart` → `myapp-chart`
+> 3. Encode uppercase letter positions (if original name had mixed case)
+>      A base-36 suffix is added to preserve capitalization info (e.g., `myapp-chart-a1b2`)
+> 4. Enforce Kubernetes length limits
+>      Maximum length: `63 - len(namespace) - 1` # where namespace is a `name` attribute of `Namespace` object
 >      Recursively truncates the name if needed while preserving the suffix.
 >
 > This normalization ensures proper naming of application charts while complying with
@@ -888,7 +888,7 @@ This context is constructed from parameters defined in the `e2eParameters` secti
 
 ##### \[Version 2.0][Pipeline Parameter Context] `parameters.yaml`
 
-This file contains non-sensitive parameters defined in the `e2eParameters` section.  
+This file contains non-sensitive parameters defined in the `e2eParameters` section.
 The structure of this file is as follows:
 
 ```yaml
@@ -964,7 +964,7 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 The Topology Context contains information about the relationships between systems and their components. It includes two files:
 
-- `parameters.yaml` for non-sensitive data  
+- `parameters.yaml` for non-sensitive data
 - `credentials.yaml` for sensitive data
 
 For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).

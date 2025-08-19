@@ -37,7 +37,7 @@ All parameters are of the string data type
 **Mandatory**: Yes
 
 **Example**:
-  
+
 - Single environment: `ocp-01/platform`
 - Multiple environments (separated by \n) `k8s-01/env-1\nk8s-01/env2`
 
@@ -45,27 +45,27 @@ All parameters are of the string data type
 
 **Description**: Feature flag. Valid values ​​are `true` or `false`.
 
-If `true`:  
+If `true`:
 In the pipeline, Environment Instance generation job is executed. Environment Instance generation will be launched.
 
 **Default Value**: `false`
 
 **Mandatory**: No
 
-**Example**: `true`  
+**Example**: `true`
 
 ### `GET_PASSPORT`
 
 **Description**: Feature flag. Valid values ​​are `true` or `false`.
 
-If `true`:  
+If `true`:
   In the pipeline, Cloud Passport discovery job is executed. Cloud Passport discovery will be launched.
 
 **Default Value**: `false`
 
 **Mandatory**: No
 
-**Example**: `true`  
+**Example**: `true`
 
 ### `DEPLOYMENT_TICKET_ID`
 
@@ -91,7 +91,7 @@ If `true`:
 
 **Description**:
 
-If `true`:  
+If `true`:
   In the pipeline, a job for generating the environment inventory is executed. The new Environment Inventory will be generated in the path `/environments/<ENV_NAME>/Inventory/env_definition.yml`. See details in [Environment Inventory Generation](/docs/env-inventory-generation.md)
 
 **Default Value**: `false`
@@ -137,7 +137,7 @@ envTemplate:
 
 **Description**: Feature flag. Valid values ​​are `true` or `false`.
 
-If `true`:  
+If `true`:
   In the pipeline, Effective Set generation job is executed. Effective Parameter set generation will be launched
 
 **Default Value**: `false`
@@ -182,10 +182,10 @@ Consumer-specific pipeline context components registered in EnvGene:
 
 **Description**: Defines the method by which SD is passed in the `SD_DATA` or `SD_VERSION` attributes. Valid values ​​are `artifact` OR `json`.
 
-If `artifact`:  
+If `artifact`:
   An SD artifact is expected in `SD_VERSION` in `application:version` notation. The system should download the artifact, transform it into YAML format, and save it to the repository.
 
-If `json`:  
+If `json`:
   SD content is expected in `SD_DATA`. The system should transform it into YAML format, and save it to the repository.
 
 See details in [SD processing](/docs/sd-processing.md)

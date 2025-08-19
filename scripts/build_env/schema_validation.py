@@ -36,7 +36,7 @@ def normalize_item_params(item):
     if not "e2eParameters" in item:
         item["e2eParameters"] = {}
     if not "technicalConfigurationParameters" in item:
-        item["technicalConfigurationParameters"] = {}            
+        item["technicalConfigurationParameters"] = {}
 
 def checkByMandatoryList(params_map, mandatory_list):
     missing_keys = []

@@ -74,7 +74,7 @@ When commits are pushed to any branch (except `main`), the following workflows r
 On pull requests, the following workflows run regardless of commit message format:
 
 - Super Linter
-- Link Checker  
+- Link Checker
 - Tests
 
 This ensures comprehensive validation before code is merged. Docker builds are not triggered on pull requests to avoid unnecessary builds during code review.
