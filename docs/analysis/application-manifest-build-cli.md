@@ -9,13 +9,16 @@
   - [Open Question](#open-question)
   - [Limitation](#limitation)
   - [Requirements](#requirements)
+  - [Application Manifest Model](#application-manifest-model)
   - [Application Manifest Structure](#application-manifest-structure)
     - [Metadata](#metadata)
     - [Components](#components)
       - [`application/vnd.qubership.service`](#applicationvndqubershipservice)
-      - [`application/vnd.docker.image`](#applicationvnddockerimage)
-      - [`application/vnd.qubership.helm.chart`](#applicationvndqubershiphelmchart)
   - [Application Manifest Build Config](#application-manifest-build-config)
+  - [Output Transformer](#output-transformer)
+    - [`application/vnd.docker.image`](#applicationvnddockerimage)
+    - [`application/vnd.qubership.helm.chart`](#applicationvndqubershiphelmchart)
+  - [Registry Config](#registry-config)
 
 ## Proposed Approach
 
@@ -28,48 +31,32 @@ It is proposed to develop a CLI for generating the Application Manifest. The CLI
 ```mermaid
 flowchart TD
     subgraph Application Repo
-      A[application-manifest.config.yaml]
-      B[Registry Config Input]
-      C[Source code / build scripts]
+      A[AM\nBuild Config]
+      B[Registry\nConfig]
+      C[Source\ncode]
     end
-    subgraph Application Build Pipeline
-      subgraph Build Job
-        D1[Default Action]
-        D2[Output Transformer]
+    subgraph Registry
+      F[Application Manifest]
+      H[Component Artifact]
+    end
+    subgraph Application Build Workflow
+      subgraph Component Build Job
+        D1[[Component\nBuild\nAction]]
+        D2[[Component\nMetadata Transformer\nAction]]
+        D3[Component Metadata]
         D1 --> D2
+        D2 --> D3
       end
-      E[AM Build Job]
+      E[[AM\nBuild Job]]
     end
-    F[Application Manifest]
-    G[Registry Config Output]
-    H[Registry]
     A --> E
     B --> E
-    D2 --> E
+    D1 --> H
+    D3 --> E
+    H --> D2
     C --> D1
     E --> F
-    E --> G
-    F --> H
 ```
-
-> **Note:**
-> The Output Transformer transforms the output of the default build action to the standard schema expected by the CLI. This approach decouples the CLI from changes in job outputs, solving the problem described in Open Question 7.
->
-> For example:
->
-> ```yaml
-> type: application
-> mime-type: application/vnd.qubership.helm.chart
-> name: my-chart
-> version: 1.2.3
-> purl: pkg:helm/example-repo/my-chart@1.2.3?registryName=sandbox
-> hashes:
->   - alg: SHA-256
->     content: 0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91
-> properties:
->   - name: isUmbrella
->     value: true
-> ```
 
 ## Use Cases
 
@@ -81,7 +68,9 @@ flowchart TD
       2. One non-umbrella chart per application
       3. Multiple non-umbrella charts
       4. External (built as part of another build process) non-umbrella charts
-   3. Publishing the Application Manifest
+2. Publishing the Application Manifest
+3. Build only the Application Manifest when component artifacts already exist
+4. Build AM when only a single component has been updated
 
 ## Open Question
 
@@ -108,10 +97,10 @@ flowchart TD
 ## Requirements
 
 1. The CLI must generate AM that validates against [JSON Schema](/schemas/application-manifest.schema.json)
-2. The CLI must generate registry config that validates against JSON Schema **TBD**
-3. AM must be published as a Maven (or OCI) artifact
+2. The CLI must generate registry config that validates against [JSON Schema](https://github.com/Netcracker/qubership-envgene/blob/feature/reg-def-v2/schemas/regdef-v2.schema.json)
+3. AM must be published as OCI artifact
    1. Artifact ID must match the application name
-   2. Registry parameters for publishing (URL, credentials, group) must be provided as CLI arguments.
+   2. Registry parameters for publishing (URL, credentials, group) must be get from Registry Config
 4. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
     1. Service -> `application/vnd.qubership.service`
     2. Docker image -> `application/vnd.docker.image`
@@ -119,6 +108,18 @@ flowchart TD
     <!-- 4. ZIP archive -> `application/zip` -->
 5. The CLI must complete the AM build for an application with 50 components within 10 seconds
 6. The CLI must support execution in both GitLab CI and GitHub Actions environments
+
+## Application Manifest Model
+
+![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model.drawio.png)
+
+[Application Manifest without Plugins JSON schema](/schemas/application-manifest.schema.json)
+
+QIP Example:
+
+![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest.drawio.png)
+
+[QIP Application Manifest example](/examples/application-manifest-qip.json)
 
 ## Application Manifest Structure
 
@@ -181,13 +182,14 @@ An abstract component necessary to link artifacts of different types together
 | `components[0].data[n].contents.attachment.encoding` | string | yes | `base64` | Encoding                                                                                           | N/A     |
 | `components[0].data[n].contents.attachment.content` | string | yes | None | Base64-encoded file contents. The file content is encoded using `base64`                                | The file content is encoded using `base64`  |
 
+<!-- 
 #### `application/vnd.docker.image`
 
 Describes Docker image as an artifact
 
 | Attribute       | Type   | Mandatory | Default                        | Description                                                          | Source  |
 |-----------------|--------|-----------|--------------------------------|----------------------------------------------------------------------|---------|
-| `bom-ref`       | string | yes       | None                           | Unique component identifier within the AM                             | `${component-name}:${generated-uuid-v4}` |
+| `bom-ref`       | string | yes       | None                           | Unique component identifier within the AM                            | `${component-name}:${generated-uuid-v4}` |
 | `type`          | string | yes       | `container`                    | Component type                                                       | N/A |
 | `mime-type`     | string | yes       | `application/vnd.docker.image` | Component MIME type                                                  | N/A |
 | `name`          | string | yes       | None                           | Docker image name                                                    | **TBD** |
@@ -235,7 +237,7 @@ Root components of this type describe artifacts, nested helm charts describe abs
 > [!NOTE]
 > The `components` array is recursive
 > A nested chart within this array can have its own `components` array to represent
-> its own dependencies
+> its own dependencies -->
 
 <!-- #### `application/zip`
 
@@ -345,32 +347,73 @@ services:
         artifact: backend-chart
 ```
 
-<!-- ## Registry Config
+## Output Transformer
+
+The output transformer must obtain information from the built artifact.
+
+The output transformer must produce the same output for a specific `mime-type` regardless of the action used to build the component.
+
+Below are the supported `mime-type` values:
+
+### `application/vnd.docker.image`
 
 ```yaml
-sandbox:
-  auth:
-    method: <none|basic|token|apiKey|...>
-    username:
-    password:
-    token: 
-    apiKey:
-  docker:
-    auth:
-      ...
-    snapshotRepository: ""
-    stagingRepository: ""
-    releaseRepository: ""
-  maven:
-    auth:
-      ...
-    snapshotRepository: ""
-    stagingRepository: ""
-    releaseRepository: ""
-  helm:
-    auth:
-      ...
-    snapshotRepository: ""
-    stagingRepository: ""
-    releaseRepository: ""
-``` -->
+# Always `container`
+# Mandatory. No default
+type: container
+# Always `application/vnd.docker.image`
+# Mandatory. No default
+mime-type: application/vnd.docker.image
+# Mandatory. No default
+name: my-docker-image
+# Mandatory. No default
+group: core
+# Mandatory. No default
+version: build22
+purl: pkg:docker/<group>/<name>@<version>?registryName=<pointer-to-registry-in-registry-config>
+# Always `[]`
+# Mandatory. No default
+properties: []
+```
+
+### `application/vnd.qubership.helm.chart`
+
+```yaml
+# Always `application`
+# Mandatory. No default
+type: application
+# Always `application/vnd.qubership.helm.chart`
+# Mandatory. No default
+mime-type: application/vnd.qubership.helm.chart
+# `name` attribute of the Helm Chart artifact
+# Mandatory. No default
+name: my-chart
+# Mandatory. No default
+version: 1.2.3
+# Mandatory. No default
+purl: pkg:helm/<group>/<name>@<version>?registryName=<pointer-to-registry-in-registry-config>
+# Mandatory. No default
+properties:
+  # Set if the chart has a child chart
+  - name: isUmbrella
+    value: true
+# In case of umbrella chart for each child chart nested component should be created 
+# Mandatory. Default - []
+components:
+  - # Always `application`
+    # Mandatory. No default
+    type: application
+    # Always `application/vnd.qubership.helm.chart`
+    # Mandatory. No default
+    mime-type: application/vnd.qubership.helm.chart
+    # Name of the child Helm Chart
+    # Mandatory. No default
+    name: my-nested-chart
+    # Always `[]`
+    # Mandatory. No default
+    properties: []
+```
+
+## Registry Config
+
+[Registry Definition v2.0](https://github.com/Netcracker/qubership-envgene/blob/feature/reg-def-v2/docs/envgene-objects.md#registry-definition-v20)
