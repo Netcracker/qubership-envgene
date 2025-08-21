@@ -182,7 +182,7 @@ def unzip_file(artifact_id: str, app_name: str, app_version: str, zip_url: str):
     except Exception as e:
         logger.error(f"Error unpacking {e}")
     if not extracted:
-        raise ValueError(f"No files were extracted for application {app_name}:{app_version} - skipping post-processing")
+        logger.warning(f"No files were extracted for application {app_name}:{app_version}")
 
 
 def create_aql_artifacts(aqls: list[str]):
