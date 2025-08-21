@@ -135,7 +135,7 @@ def generate_solution_structure(context: dict):
 
 
 def generate_tenant_file(context: dict):
-    tenant_file = Path(f"{context["current_env_dir"]}/tenant.yml")
+    tenant_file = Path(f'{context["current_env_dir"]}/tenant.yml')
     tenant_template_path = context["current_env_template"]["tenant"]
     tenant_template = openYaml(filePath=tenant_template_path, safe_load=True)
     rendered = Template(tenant_template).render(context)
