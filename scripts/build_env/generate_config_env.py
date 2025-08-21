@@ -1,7 +1,7 @@
 import os
 from deepmerge import always_merger
 from pathlib import Path
-from envgenehelper import logger, openYaml, readYaml, safe_yaml
+from envgenehelper import logger, openYaml, readYaml, safe_yaml, dumpYamlToStr
 from jinja2 import Environment, FileSystemLoader, Template
 
 
@@ -24,16 +24,16 @@ def get_cloud_passport(context: dict) -> dict | None:
 def generate_config(context: dict) -> dict:
     cloud_passport = get_cloud_passport(context)
     if cloud_passport:
-        context["cloud_passport"] = safe_yaml.safe_dump(cloud_passport, sort_keys=False)
-    env_template = context["env_definition"]["envTemplate"]
+        context["cloud_passport"] = safe_yaml.dump(cloud_passport)
+    env_template = context["env_definition"].get("envTemplate")
     if env_template:
-        env_specific_paramsets = env_template["envSpecificParamsets"]
+        env_specific_paramsets = env_template.get("envSpecificParamsets")
         if env_specific_paramsets:
-            env_specific_paramsets = safe_yaml.safe_dump(env_specific_paramsets, sort_keys=False)
+            env_specific_paramsets = safe_yaml.dump(env_specific_paramsets)
             env_template["envSpecificParamsets"] = env_specific_paramsets
-        additional_template_variables = env_template["additionalTemplateVariables"]
+        additional_template_variables = env_template.get("additionalTemplateVariables")
         if additional_template_variables:
-            additional_template_variables = safe_yaml.safe_dump(additional_template_variables, sort_keys=False)
+            additional_template_variables = safe_yaml.dump(additional_template_variables)
             env_template["envSpecificParamsets"] = additional_template_variables
         context["env_definition"]["envTemplate"] = env_template
     templates_dir = Path(__file__).parent / "templates"
@@ -129,8 +129,7 @@ def generate_solution_structure(context: dict):
 
         namespace_template_paths = []
         for ns_template in namespace_template_paths_raw:
-            template = Template(ns_template)
-            namespace_template_paths.append(template.render(context))
+            namespace_template_paths.append(Template(ns_template).render(context))
         logger.info("List of found namespace template: %s", namespace_template_paths)
 
         postfix_template_map = {}
@@ -142,16 +141,16 @@ def generate_solution_structure(context: dict):
                                                                            postfix_template_map)
 
         template_str = str(solution_structure_template)
-        template = Template(template_str)
-        solution_structure = template.render(context)
+        solution_structure = dumpYamlToStr(Template(template_str).render(context))
         logger.info("Rendered solution_structure: %s", solution_structure)
         always_merger.merge(context["current_env"], {"solution_structure": solution_structure})
 
 
 def generate_tenant_file(context: dict):
     tenant_file = Path(f'{context["current_env_dir"]}/tenant.yml')
-    tenant_template_path = context["current_env_template"]["tenant"]
-    tenant_template = openYaml(filePath=tenant_template_path, safe_load=True)
+    tenant_tmpl_path = context["current_env_template"]["tenant"]
+    rendered_tenant_tmp_path = Template(tenant_tmpl_path).render(context)
+    tenant_template = openYaml(filePath=rendered_tenant_tmp_path, safe_load=True)
     rendered = Template(tenant_template).render(context)
     tenant_file.parent.mkdir(parents=True, exist_ok=True)
     tenant_file.write_text(rendered, encoding="utf-8")
@@ -161,7 +160,7 @@ def generate_override_by_type(template_override, current_env_dir, type):
     if template_override:
         override_file = Path(f'{current_env_dir}/"{type}.yml_override')
         override_file.parent.mkdir(parents=True, exist_ok=True)
-        rendered_override = safe_yaml.safe_dump(template_override, sort_keys=False)
+        rendered_override = dumpYamlToStr(template_override)
         override_file.write_text(rendered_override, encoding="utf-8")
 
 

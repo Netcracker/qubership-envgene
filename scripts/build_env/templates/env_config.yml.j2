@@ -40,14 +40,12 @@ environment:
 {% endif %}
   env_template: {{env_definition.envTemplate.name}}
 {% if env_definition.envTemplate.envSpecificParamsets is defined %}
-  envSpecificParamsets:
-{{env_definition.envTemplate.envSpecificParamsets}}
+  envSpecificParamsets: {{env_definition.envTemplate.envSpecificParamsets}}
 {% else %}
   envSpecificParamsets: {}
 {% endif %}
 {% if env_definition.envTemplate.additionalTemplateVariables is defined %}
-  additionalTemplateVariables:
-{{env_definition.envTemplate.additionalTemplateVariables}}
+  additionalTemplateVariables: {{env_definition.envTemplate.additionalTemplateVariables}}
 {% else %}
   additionalTemplateVariables: {}
 {% endif %}
@@ -64,8 +62,7 @@ environment:
     cloud_public_url: ""
 {% endif %}
 {% if cloud_passport is defined %}
-  cloud_passport:
-{{cloud_passport }}
+  cloud_passport: {{cloud_passport }}
 {% else %}
   cloud_passport: {}
 {% endif %}
