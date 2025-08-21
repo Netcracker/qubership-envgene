@@ -31,9 +31,9 @@ It is proposed to develop a CLI for generating the Application Manifest. The CLI
 ```mermaid
 flowchart TD
     subgraph Application Repo
-      A[AM\nBuild Config]
-      B[Registry\nConfig]
-      C[Source\ncode]
+      A[AM<br>Build Config]
+      B[Registry<br>Config]
+      C[Source<br>code]
     end
     subgraph Registry
       F[Application Manifest]
@@ -41,17 +41,16 @@ flowchart TD
     end
     subgraph Application Build Workflow
       subgraph Component Build Job
-        D1[[Component\nBuild\nAction]]
-        D2[[Component\nMetadata Transformer\nAction]]
+        D1[[Component<br>Build<br>Action]]
+        D2[[Component<br>Metadata Transformer<br>Action]]
         D3[Component Metadata]
         D1 --> D2
         D2 --> D3
       end
-      E[[AM\nBuild Job]]
+      E[[AM<br>Build Job]]
     end
     A --> E
     B --> E
-    D1 --> H
     D3 --> E
     H --> D2
     C --> D1
@@ -160,7 +159,6 @@ An abstract component necessary to link artifacts of different types together
 | `type`                                      | string | yes       | `application`                      | Component type                             | N/A     |
 | `mime-type`                                 | string | yes       | `application/vnd.qubership.service`| Component MIME type                        | N/A     |
 | `name`                                      | string | yes       | None                               | Service name                               | **TBD** |
-| `version`                                   | string | yes       | None                               | Service version                            | **TBD** |
 | `components`                                | array  | no        | `[]`                               | Always `[]`                                | N/A     |
 
 <!-- 
