@@ -22,6 +22,20 @@ def get_cloud_passport(context: dict) -> dict | None:
 
 
 def generate_config(context: dict) -> dict:
+    cloud_passport = get_cloud_passport(context)
+    if cloud_passport:
+        context["cloud_passport"] = safe_yaml.safe_dump(cloud_passport, sort_keys=False)
+    env_template = context["env_definition"]["envTemplate"]
+    if env_template:
+        env_specific_paramsets = env_template["envSpecificParamsets"]
+        if env_specific_paramsets:
+            env_specific_paramsets = safe_yaml.safe_dump(env_specific_paramsets, sort_keys=False)
+            env_template["envSpecificParamsets"] = env_specific_paramsets
+        additional_template_variables = env_template["additionalTemplateVariables"]
+        if additional_template_variables:
+            additional_template_variables = safe_yaml.safe_dump(additional_template_variables, sort_keys=False)
+            env_template["envSpecificParamsets"] = additional_template_variables
+        context["env_definition"]["envTemplate"] = env_template
     templates_dir = Path(__file__).parent / "templates"
     j2env = Environment(loader=FileSystemLoader(str(templates_dir)))
     template = j2env.get_template("env_config.yml.j2")
