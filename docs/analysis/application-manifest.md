@@ -43,14 +43,16 @@
 1. Application Manifest must be open-source compatible
 2. Application Manifest must be sufficient for application deploying by Argo
 3. Application Manifest must be sufficient for calculate Effective Set by EnvGene
-   1. without downloading application artifacts
-4. Effective Set generation must not require processing application artifacts
-   1. EnvGene must generate Effective Set using only EnvGene Environment Instance and Application Manifest
-   2. Effective Set generation for an Environment should take no more than 30 seconds
-5. Application Manifest should be based CycloneDX specification. Alternative formats may be considered
-6. Application Manifest must be generated via dedicated CLI tool
-7. Application Manifest must be generated at the application build stage
-8. Application Manifest build should use the Builder's input contract
+   1. Without downloading application artifacts
+   2. EnvGene must generate Effective Set using only EnvGene Environment Instance and Application Manifest
+4. Application Manifest must unambiguously describe the logical structure of the application
+5. Application Manifest must unambiguously define the types of application components, including
+   1. ...
+6. Application Manifest should be based CycloneDX specification
+7. Application Manifest must be generated via dedicated CLI tool
+8. Application Manifest must be generated at the application build stage
+9. Application Manifest must include the resource profile baseline
+10. Application Manifest must include the values schema
 
 ## Open questions
 

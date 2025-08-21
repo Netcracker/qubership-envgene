@@ -111,15 +111,9 @@ flowchart TD
 
 ## Application Manifest Model
 
-![application-manifest-model-without-plugins.drawio.png](/docs/images/application-manifest-model.drawio.png)
+![application-manifest-model-with-plugins.drawio.png](/docs/images/application-manifest-model-with-plugins.drawio.png)
 
-[Application Manifest without Plugins JSON schema](/schemas/application-manifest.schema.json)
-
-QIP Example:
-
-![application-manifest-model-with-plugins.drawio.png](/docs/images/qip-application-manifest.drawio.png)
-
-[QIP Application Manifest example](/examples/application-manifest-qip.json)
+[Application Manifest JSON schema](/schemas/application-manifest-with-plugins.schema.json)
 
 ## Application Manifest Structure
 
@@ -253,90 +247,111 @@ This file defines which services and components make up application and how each
 The config should be stored in application repository
 
 ```yaml
-services:
-  <service-name>:
-    includes:
-      # Type of the service component
-      - type: enum[docker, helm]
-        # Name of the CI/CD job that builds this component
-        # Mutually exclusive with `purl`
-        job: string
-        # Name of the artifact produced by the job
-        # Mutually exclusive with `purl`   
-        artifact: string
-        # Coordinates of an external artifact
-        # Mutually exclusive with `job` and `artifact`
-        purl: pkg:<docker|helm>/<group>/<name>@<version>?registryName=sandbox
+components:
+  <component-name>:
+    mime-type: enum [application/vnd.qubership.service, application/vnd.qubership.job, application/vnd.qubership.configuration, application/vnd.docker.image, application/vnd.qubership.helm.chart]
+    purl: pkg:<type>/<group>/<name>:<version>?registryName=<registry-id>
+    source: <a-job-id>
+    depends_on:
+      - <component-name>
 ```
 
 **Example:**
 
 ```yaml
-services:
-  ui:
-    includes:
-      - type: docker
-        job: build-ui-image
-        artifact-name: ui-image
-      - type: helm
-        job: build-ui-chart
-        artifact: ui-chart
-  variables-management:
-    includes:
-      - type: docker
-        job: build-variables-docker
-        artifact: variables-management-image
-      - type: helm
-        job: build-variables-helm
-        artifact: variables-management-chart
-  systems-catalog:
-    includes:
-      - type: docker
-        job: build-systems-docker
-        artifact: systems-catalog-image
-      - type: helm
-        job: build-systems-helm
-        artifact: systems-catalog-chart
-  platform-catalog:
-    includes:
-      - type: docker
-        job: build-platform-docker
-        artifact: platform-catalog-image
-      - type: helm
-        job: build-platform-helm
-        artifact: platform-catalog-chart
-  engine:
-    includes:
-      - type: docker
-        job: build-engine-docker
-        artifact: engine-image
-      - type: helm
-        job: build-engine-helm
-        artifact: engine-chart
-  sessions-management:
-    includes:
-      - type: docker
-        job: build-sessions-docker
-        artifact: sessions-management-image
-      - type: helm
-        job: build-sessions-helm
-        artifact: sessions-management-chart
-  cr-synchronizer:
-    includes:
-      - type: docker
-        job: build-cr-docker
-        artifact: cr-synchronizer-image
-      - type: helm
-        job: build-cr-helm
-        artifact: cr-synchronizer-chart
-  backend:
-    includes:
-      - type: docker
-        job: build-backend-docker
-        artifact: backend-image
-      - type: helm
-        job: build-backend-helm
-        artifact: backend-chart
+components:
+  # services
+  cassandra:
+    mime-type: application/vnd.qubership.job
+    depends_on:
+      - jaeger-cassandra-schema
+      - qubership-jaeger
+  collector:
+    mime-type: application/vnd.qubership.service
+    depends_on:
+      - jaeger
+      - jaeger-readiness-probe
+      - qubership-jaeger
+  hotrod:
+    mime-type: application/vnd.qubership.service
+    depends_on:
+      - example-hotrod
+      - qubership-jaeger
+  integration-tests:
+    mime-type: application/vnd.qubership.service
+    depends_on:
+      - jaeger-integration-tests
+      - qubership-jaeger
+  observability:
+    mime-type: application/vnd.qubership.configuration
+    depends_on:
+      - qubership-jaeger
+  opensearch:
+    mime-type: application/vnd.qubership.job
+    depends_on:
+      - jaeger-es-index-cleaner
+      - jaeger-es-rollover
+      - qubership-jaeger
+  query:
+    mime-type: application/vnd.qubership.service
+    depends_on:
+      - jaeger
+      - envoy
+      - jaeger-readiness-probe
+      - qubership-jaeger
+  remote-grpc:
+    mime-type: application/vnd.qubership.configuration
+    depends_on:
+      - qubership-jaeger
+  spark-dependencies:
+    mime-type: application/vnd.qubership.job
+    depends_on:
+      - openjdk
+      - spark-dependencies
+      - qubership-jaeger
+  status-provisioner:
+    mime-type: application/vnd.qubership.job
+    depends_on:
+      - qubership-deployment-status-provisioner
+      - qubership-jaeger
+  # Docker images
+  jaeger-cassandra-schema:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/jaegertracing/jaeger-cassandra-schema:1.72.0?registryName=sandbox
+  jaeger:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/jaegertracing/jaeger:2.9.0?registryName=sandbox
+  jaeger-readiness-probe:
+    mime-type: application/vnd.docker.image
+    source: <a-job-id>
+  example-hotrod:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/jaegertracing/example-hotrod:1.72.0?registryName=sandbox
+  jaeger-integration-tests:
+    mime-type: application/vnd.docker.image
+    source: <a-job-id>
+  jaeger-es-index-cleaner:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/jaegertracing/jaeger-es-index-cleaner:1.72.0?registryName=sandbox
+  jaeger-es-rollover:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/jaegertracing/jaeger-es-rollover:1.72.0?registryName=sandbox
+  envoy:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/envoyproxy/envoy:v1.32.6?registryName=sandbox
+  openjdk:
+    mime-type: application/vnd.docker.image
+    purl: openjdk:11 ### ????
+  spark-dependencies-image:
+    mime-type: application/vnd.docker.image
+    source: <a-job-id>
+  qubership-deployment-status-provisioner:
+    mime-type: application/vnd.docker.image
+    source: <a-job-id>
+  # Helm Chart
+  qubership-jaeger:
+    mime-type: application/vnd.qubership.helm.chart
+    source: <a-job-id>
 ```
 
 ## Output Transformer
