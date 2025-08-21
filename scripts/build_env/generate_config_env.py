@@ -22,8 +22,8 @@ def get_cloud_passport(context: dict) -> dict | None:
 
 
 def generate_config(context: dict) -> dict:
-    templates_dir = context["templates_dir"]
-    j2env = Environment(loader=FileSystemLoader(templates_dir))
+    templates_dir = Path(__file__).parent / "templates"
+    j2env = Environment(loader=FileSystemLoader(str(templates_dir)))
     template = j2env.get_template("env_config.yml.j2")
     rendered_yaml = template.render(context)
     config = readYaml(text=rendered_yaml, safe_load=True)
@@ -206,7 +206,7 @@ def generate_config_env(envvars: dict):
 
     context["ND_CMDB_CONFIG_REF"] = os.environ.get('CI_COMMIT_SHORT_SHA', 'No SHA')
     context["ND_CMDB_CONFIG_REF_NAME"] = os.environ.get('CI_COMMIT_REF_NAME', 'No SHA')
-    context["ND_CMDB_CONFIG_TAG"] = os.environ.get('CI_COMMIT_TAG', 'No Ref Nam')
+    context["ND_CMDB_CONFIG_TAG"] = os.environ.get('CI_COMMIT_TAG', 'No Ref Name')
     context["ND_CDMB_REPOSITORY_URL"] = os.environ.get('CI_REPOSITORY_URL', 'No Ref URL')
     env_template = context.get("env_template")
     if env_template:
