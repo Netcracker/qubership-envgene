@@ -187,7 +187,7 @@ def generate_namespace_file(context: dict):
                                   type="namespace")
 
 
-def handler(envvars: dict):
+def generate_config_env(envvars: dict):
     context = {}
     context.update(envvars)
     context["env_definition"] = get_inventory(context)

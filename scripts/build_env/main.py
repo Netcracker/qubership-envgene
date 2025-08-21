@@ -7,7 +7,7 @@ from cloud_passport import update_env_definition_with_cloud_name
 from resource_profiles import get_env_specific_resource_profiles
 from envgenehelper import *
 from envgenehelper.deployer import *
-import ansible_runner
+from generate_config_env import generate_config_env
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -149,13 +149,8 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     envvars["cloud_passport_file_path"] = find_cloud_passport_definition(source_env_dir, all_instances_dir)
     envvars["cmdb_url"] = cmdb_url
     envvars["output_dir"] = output_dir
-    logger.info(f"Starting rendering environment {env_name} with ansible. Input params are:\n{dump_as_yaml_format(envvars)}")
-    # r = ansible_runner.run(playbook=getAbsPath('env-builder/main.yaml'), envvars=ansible_vars, verbosity=2)
-    # if (r.rc != 0):
-    #     logger.error(f"Error during ansible execution. Result code is: {r.rc}. Status is: {r.status}")
-    #     raise ReferenceError(f"Error during ansible execution. See logs above.")
-    # else:
-    #     logger.info(f"Ansible execution status is: {r.status}. Stats is: {r.stats}")
+    logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(envvars)}")
+    generate_config_env(envvars)
 
     handle_template_override(render_dir)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir, ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
