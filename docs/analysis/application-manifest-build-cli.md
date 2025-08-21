@@ -160,27 +160,14 @@ Describes BOM metadata.
 
 An abstract component necessary to link artifacts of different types together
 
-| Attribute                                   | Type   | Mandatory | Default                            | Description                                                                 | Source  |
-|---------------------------------------------|--------|-----------|------------------------------------|-----------------------------------------------------------------------------|---------|
-| `bom-ref`                                   | string | yes       | None                               | Unique component identifier within the AM                                   | `${component-name}:${generated-uuid-v4}` |
-| `type`                                      | string | yes       | `application`                      | Component type                                                              | N/A     |
-| `mime-type`                                 | string | yes       | `application/vnd.qubership.service`| Component MIME type                                                         | N/A     |
-| `name`                                      | string | yes       | None                               | Service name                                                                | **TBD** |
-| `version`                                   | string | yes       | None                               | Service version                                                             | **TBD** |
-| `components`                                | array  | no        | None                               | List of nested components                                                   | N/A     |
-| `components[0]`                             | object | no        | None                               | Describes resource profile baselines for the service.                       | N/A     |
-| `components[0].bom-ref`                     | string | yes       | None                               | Unique component identifier within the AM for the resource profile baseline | `${component-name}:${generated-uuid-v4}` |
-| `components[0].type`                        | string | yes       | `configuration`                    | Component type                                                              | N/A     |
-| `components[0].mime-type`                   | string | yes       | `application/vnd.qubership.resource-profile-baseline` | MIME type for the resource profile baseline              | N/A     |
-| `components[0].name`                        | string | yes       | `resource-profile-baselines`        | Name of the resource profile baseline component                            | N/A     |
-| `components[0].data`                        | array  | yes       | None                               | Array of resource profile baseline configurations                           | For each file in `/${service-name}/charts/${service-name}/resource-profiles/`, an element is generated. If the file is JSON, it is transformed to YAML |
-| `components[0].data[n].type`                | string | yes       | `configuration`                    | Configuration type                                                          | N/A     |
-| `components[0].data[n].name`                | string | yes       | None                               | Name of the configuration file, e.g., `dev.yaml`                            | N/A     |
-| `components[0].data[n].contents`            | object | yes       | None                               | Contains the configuration data                                             | N/A     |
-| `components[0].data[n].contents.attachment` | object | yes       | None                               | Attachment object containing the file data                                  | N/A     |
-| `components[0].data[n].contents.attachment.contentType` | string | yes | `application/yaml` | Attachment object MIME type                                                           | N/A     |
-| `components[0].data[n].contents.attachment.encoding` | string | yes | `base64` | Encoding                                                                                           | N/A     |
-| `components[0].data[n].contents.attachment.content` | string | yes | None | Base64-encoded file contents. The file content is encoded using `base64`                                | The file content is encoded using `base64`  |
+| Attribute                                   | Type   | Mandatory | Default                            | Description                                | Source  |
+|---------------------------------------------|--------|-----------|------------------------------------|------------------------------------------- |---------|
+| `bom-ref`                                   | string | yes       | None                               | Unique component identifier within the AM  | `${component-name}:${generated-uuid-v4}` |
+| `type`                                      | string | yes       | `application`                      | Component type                             | N/A     |
+| `mime-type`                                 | string | yes       | `application/vnd.qubership.service`| Component MIME type                        | N/A     |
+| `name`                                      | string | yes       | None                               | Service name                               | **TBD** |
+| `version`                                   | string | yes       | None                               | Service version                            | **TBD** |
+| `components`                                | array  | no        | `[]`                               | Always `[]`                                | N/A     |
 
 <!-- 
 #### `application/vnd.docker.image`
@@ -258,7 +245,7 @@ Describes ZIP archive as a Maven artifact
 
 ## Application Manifest Build Config
 
-This file defines which services and components make up application and how each component is linked to its build job and artifact in your CI/CD pipeline. It is the single source of truth for the CLI to generate the Application Manifest (AM):
+This file defines which services and components make up application and how each component is linked to its build job and artifact in your CI/CD pipeline.
 
 - Lists all services and their components to be included in the AM
 - Maps each component to the CI/CD job and artifact that produces it
@@ -272,9 +259,14 @@ services:
       # Type of the service component
       - type: enum[docker, helm]
         # Name of the CI/CD job that builds this component
+        # Mutually exclusive with `purl`
         job: string
-        # Name of the artifact produced by the job      
+        # Name of the artifact produced by the job
+        # Mutually exclusive with `purl`   
         artifact: string
+        # Coordinates of an external artifact
+        # Mutually exclusive with `job` and `artifact`
+        purl: pkg:<docker|helm>/<group>/<name>@<version>?registryName=sandbox
 ```
 
 **Example:**

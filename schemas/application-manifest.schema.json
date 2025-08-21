@@ -353,7 +353,6 @@
         "group",
         "name",
         "version",
-        "hashes",
         "purl"
       ],
       "additionalProperties": false,
@@ -515,8 +514,7 @@
         "type",
         "mime-type",
         "bom-ref",
-        "name",
-        "version"
+        "name"
       ],
       "additionalProperties": false,
       "properties": {
@@ -905,7 +903,6 @@
         "mime-type",
         "bom-ref",
         "name",
-        "version",
         "properties"
       ],
       "additionalProperties": false,

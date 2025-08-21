@@ -29,7 +29,7 @@
       "type": "application",
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-ui",
-      "version": "master-20250210.074231-75",
+      "properties": [],
       "components": []
     },
     {
@@ -39,12 +39,6 @@
       "name": "qubership-integration-platform-ui",
       "group": "core",
       "version": "build22",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
       "purl": "pkg:docker/core/qubership-integration-platform-ui@build22?registryName=sandbox"
     },
     {
@@ -52,7 +46,6 @@
       "type": "application",
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-variables-management",
-      "version": "master-20250210.074231-76",
       "properties": [],
       "components": []
     },
@@ -63,20 +56,13 @@
       "name": "qubership-integration-platform-variables-management",
       "group": "core",
       "version": "build3",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
-      "purl": "pkg:docker/core/qubership-integration-platform-variables-management@build3?registryName=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/qubership-integration-platform-variables-management@build3?registryName=sandbox"
     },
     {
       "bom-ref": "qubership-integration-platform-systems-catalog:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "type": "application",
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-systems-catalog",
-      "version": "master-20250210.074231-76",
       "properties": [],
       "components": []
     },
@@ -87,20 +73,13 @@
       "name": "qubership-integration-platform-systems-catalog",
       "group": "core",
       "version": "build3",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
-      "purl": "pkg:docker/core/qubership-integration-platform-systems-catalog@build3?registryName=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/qubership-integration-platform-systems-catalog@build3?registryName=sandbox"
     },
     {
       "bom-ref": "qubership-integration-platform-catalog:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "type": "application",
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-catalog",
-      "version": "master-20250210.074231-76",
       "properties": [],
       "components": []
     },
@@ -111,20 +90,13 @@
       "name": "qubership-integration-platform-catalog",
       "group": "core",
       "version": "build3",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
-      "purl": "pkg:docker/core/qubership-integration-platform-catalog@build3?registryName=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/qubership-integration-platform-catalog@build3?registryName=sandbox"
     },
     {
       "bom-ref": "qubership-integration-platform-engine:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "type": "application",
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-engine",
-      "version": "master-20250210.074231-76",
       "properties": [],
       "components": []
     },
@@ -135,20 +107,13 @@
       "name": "qubership-integration-platform-engine",
       "group": "core",
       "version": "build3",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
-      "purl": "pkg:docker/core/qubership-integration-platform-engine@build3?registryName=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/qubership-integration-platform-engine@build3?registryName=sandbox"
     },
     {
       "bom-ref": "qubership-integration-platform-sessions-management:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "type": "application",
       "mime-type": "application/vnd.qubership.service",
       "name": "qubership-integration-platform-sessions-management",
-      "version": "master-20250210.074231-76",
       "properties": [],
       "components": []
     },
@@ -159,20 +124,13 @@
       "name": "qubership-integration-platform-sessions-management",
       "group": "core",
       "version": "build3",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
-      "purl": "pkg:docker/core/qubership-integration-platform-sessions-management@build3?registryName=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/qubership-integration-platform-sessions-management@build3?registryName=sandbox"
     },
     {
       "bom-ref": "cr-synchonizer:6dde3587-76a0-4369-8a9b-36c5c7b468be",
       "type": "application",
       "mime-type": "application/vnd.qubership.service",
       "name": "cr-synchonizer",
-      "version": "master-20250210.074231-76",
       "properties": [],
       "components": []
     },
@@ -183,13 +141,7 @@
       "name": "cr-synchonizer",
       "group": "core",
       "version": "build3",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
-      "purl": "pkg:docker/core/cr-synchonizer@build3?registryName=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/cr-synchonizer@build3?registryName=sandbox"
     },
     {
       "bom-ref": "qubership-integration-platform:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
@@ -197,12 +149,6 @@
       "mime-type": "application/vnd.qubership.helm.chart",
       "name": "qubership-integration-platform",
       "version": "1.2.3",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
       "properties": [
         {
           "name": "isUmbrella",
@@ -216,104 +162,56 @@
           "type": "application",
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-ui",
-          "version": "1.2.3",
-          "properties": [
-            {
-              "name": "alias",
-              "value": "qip-ui"
-            }
-          ]
+          "properties": []
         },
         {
           "bom-ref": "qubership-integration-platform-variables-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
           "type": "application",
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-variables-management",
-          "version": "1.2.3",
-          "properties": [
-            {
-              "name": "alias",
-              "value": "qip-variables-management"
-            }
-          ]
+          "properties": []
         },
         {
           "bom-ref": "qubership-integration-platform-systems-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
           "type": "application",
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-systems-catalog",
-          "version": "1.2.3",
-          "properties": [
-            {
-              "name": "alias",
-              "value": "qip-systems-catalog"
-            }
-          ]
+          "properties": []
         },
         {
           "bom-ref": "qubership-integration-platform-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
           "type": "application",
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-catalog",
-          "version": "1.2.3",
-          "properties": [
-            {
-              "name": "alias",
-              "value": "ip"
-            }
-          ]
+          "properties": []
         },
         {
           "bom-ref": "qubership-integration-platform-engine:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
           "type": "application",
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-engine",
-          "version": "1.2.3",
-          "properties": [
-            {
-              "name": "alias",
-              "value": "qip-engine"
-            }
-          ]
+          "properties": []
         },
         {
           "bom-ref": "qubership-integration-platform-sessions-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
           "type": "application",
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-sessions-management",
-          "version": "1.2.3",
-          "properties": [
-            {
-              "name": "alias",
-              "value": "qip-sessions-management"
-            }
-          ]
+          "properties": []
         },
         {
           "bom-ref": "cr-synchonizer:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
           "type": "application",
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "cr-synchonizer",
-          "version": "1.2.3",
-          "properties": [
-            {
-              "name": "alias",
-              "value": "qip-cr-synchonizer"
-            }
-          ]
+          "properties": []
         },
         {
           "bom-ref": "qubership-integration-platform-composite-gateway:13dac210-3424-4799-9631-667d7b2b0ed8",
           "type": "application",
           "mime-type": "application/vnd.qubership.helm.chart",
           "name": "qubership-integration-platform-composite-gateway",
-          "version": "1.2.3",
-          "properties": [
-            {
-              "name": "alias",
-              "value": "qip-composite-gateway"
-            }
-          ]
+          "properties": []
         }
       ]
     },
@@ -323,12 +221,6 @@
       "mime-type": "application/vnd.qubership.helm.chart",
       "name": "core-tpl",
       "version": "1.2.3",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
       "properties": [
         {
           "name": "isLibrary",
@@ -344,13 +236,7 @@
       "name": "core-tpl",
       "group": "core",
       "version": "build3",
-      "hashes": [
-        {
-          "alg": "SHA-256",
-          "content": "0af86284290a31b9b4d6d0fa6710584a8f6016a0155c8dc9951a317c81938d91"
-        }
-      ],
-      "purl": "pkg:docker/core/core-tpl@build3?registryName=sandbox?repository_id=snapshotUri"
+      "purl": "pkg:docker/core/core-tpl@build3?registryName=sandbox"
     }
   ],
   "dependencies": [
