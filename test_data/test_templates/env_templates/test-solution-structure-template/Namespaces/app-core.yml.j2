@@ -12,8 +12,8 @@ profile:
   name: dev_app_core
   baseline: dev
 deployParameters:
-  ENVGENE_CONFIG_REF_NAME: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_REF_NAME')| default('No Ref Name') }}"
-  ENVGENE_CONFIG_TAG: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_TAG')| default('No Ref tag') }}"
+  ENVGENE_CONFIG_REF_NAME: "{{ env_vars.CI_COMMIT_REF_NAME | default('No Ref Name', true) }}"
+  ENVGENE_CONFIG_TAG: "{{ env_vars.CI_COMMIT_TAG | default('No Ref tag', true) }}"
   APP_CORE_NAMESPACE: "{{current_env.name}}-app-core"
   APP_NAMESPACE: "{{current_env.name}}-app"
 {% if "TEST-VALUE-IF-ENDIF" in current_env.solution_structure %}
@@ -28,10 +28,10 @@ technicalConfigurationParameters:
   APP_NAMESPACE: "{{current_env.name}}-app"
 deployParameterSets:
   # comment line
-  - "app-common" 
+  - "app-common"
 e2eParameterSets:
   # comment line
-  - "app-common" 
+  - "app-common"
 technicalConfigurationParameterSets:
   # comment line
-  - "app-common" 
+  - "app-common"

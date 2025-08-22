@@ -7,8 +7,8 @@ isServerSideMerge: false
 cleanInstallApprovalRequired: false
 mergeDeployParametersAndE2EParameters: false
 deployParameters:
-  ENVGENE_CONFIG_REF_NAME: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_REF_NAME')| default('No Ref Name') }}"
-  ENVGENE_CONFIG_TAG: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_TAG')| default('No Ref tag') }}"
+  ENVGENE_CONFIG_REF_NAME: "{{ env_vars.CI_COMMIT_REF_NAME | default('No Ref Name', true) }}"
+  ENVGENE_CONFIG_TAG: "{{ env_vars.CI_COMMIT_TAG | default('No Ref tag', true) }}"
   APP_NAMESPACE: "{{current_env.name}}-app"
   Variable_1: "{{env_definition.envTemplate.additionalTemplateVariables.Variable_1}}"
 {% if "Test-App-Name" in current_env.solution_structure %}

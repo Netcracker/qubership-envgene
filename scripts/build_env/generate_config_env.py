@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from urllib.parse import urlsplit
 
 from deepmerge import always_merger
 from envgenehelper import logger, openYaml, readYaml, dumpYamlToStr, writeYamlToFile, openFileAsString
@@ -86,32 +85,6 @@ def validate_applications(sd_config: dict):
         logger.info("Valid application: %s", app)
 
 
-def generate_solution_structure_template(applications, postfix_template_map):
-    solution_structure = {}
-    for app in applications:
-        app_version = app["version"]
-        app_name, version = app_version.split(":", 1)
-        postfix = app["deployPostfix"]
-
-        ns_template_path = postfix_template_map.get(postfix)
-        ns_template_name = None
-
-        if ns_template_path:
-            ns_template_name = openYaml(filePath=ns_template_path, safe_load=True)
-
-        small_dict = {
-            app_name: {
-                postfix: {
-                    "version": version,
-                    "namespace": ns_template_name
-                }
-            }
-        }
-        always_merger.merge(solution_structure, small_dict)
-    logger.info("solution_structure before render: %s", solution_structure)
-    return solution_structure
-
-
 def generate_solution_structure(context: dict):
     sd_path_stem = f'{context["current_env_dir"]}/Inventory/solution-descriptor/sd'
     sd_path = next(iter(find_all_yaml_files_by_stem(sd_path_stem)), None)
@@ -139,13 +112,29 @@ def generate_solution_structure(context: dict):
             postfix = os.path.basename(path).split('.')[0]  # get base name(deploy postfix) without extensions
             postfix_template_map[postfix] = path
 
-        solution_structure_template = generate_solution_structure_template(sd_config["applications"],
-                                                                           postfix_template_map)
+        solution_structure = {}
+        for app in sd_config["applications"]:
+            app_version = app["version"]
+            app_name, version = app_version.split(":", 1)
+            postfix = app["deployPostfix"]
 
-        template_str = str(solution_structure_template)
-        solution_structure = readYaml(Template(template_str).render(context))
+            ns_template_path = postfix_template_map.get(postfix)
+            ns_name = None
+            if ns_template_path:
+                rendered_ns = render_from_file_to_obj(ns_template_path, context)
+                ns_name = rendered_ns.get("name")
+
+            small_dict = {
+                app_name: {
+                    postfix: {
+                        "version": version,
+                        "namespace": ns_name
+                    }
+                }
+            }
+            always_merger.merge(solution_structure, small_dict)
+
         logger.info("Rendered solution_structure: %s", solution_structure)
-        #TODO for what here merge?? it's not necessary.
         always_merger.merge(context["current_env"], {"solution_structure": solution_structure})
 
 
@@ -153,6 +142,12 @@ def render_from_file_to_file(src_template_path, target_file_path, context):
     template = openFileAsString(src_template_path)
     rendered = Template(template).render(context)
     writeYamlToFile(target_file_path, readYaml(rendered))
+
+
+def render_from_file_to_obj(src_template_path, context) -> dict:
+    template = openFileAsString(src_template_path)
+    rendered = Template(template).render(context)
+    return readYaml(rendered)
 
 
 # def render_from_str_to_file(template_str, target_file_path, context):
@@ -230,8 +225,10 @@ def calculate_cloud_name(context):
 def generate_config_env(envvars: dict):
     context = {}
     env_vars = dict(os.environ)
-    logger.info("env_vars: %s", env_vars)
-    context["env_vars"] = env_vars
+    context["env_vars"] = {
+        "CI_COMMIT_TAG": env_vars.get("CI_COMMIT_TAG"),
+        "CI_COMMIT_REF_NAME": env_vars.get("CI_COMMIT_REF_NAME"),
+    }
     context.update(envvars)
     context["env_definition"] = get_inventory(context)
 
