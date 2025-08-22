@@ -72,6 +72,10 @@ public class FileDataConverterImpl implements FileDataConverter {
             bomMapper.addMixIn(Bom.class, BomMixin.class);
             return bomMapper.readValue(file, Bom.class);
         } catch (IOException | IllegalArgumentException e) {
+            if(e instanceof FileNotFoundException){
+                log.error("Issue while reading the file "+e.getMessage());
+                return null;
+            }
             throw new FileParseException(String.format(ExceptionMessage.FILE_READ_ERROR, file.getAbsolutePath(), e.getMessage()));
         }
     }
