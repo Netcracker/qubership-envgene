@@ -14,31 +14,24 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
     script.append('/module/scripts/prepare.sh "build_env.yaml"')
   else:
     script.append('/module/scripts/prepare.sh "build_env.yaml"')
-  
-  if is_template_test: 
-     script.append("env_name=$(cat set_variable.txt)") 
+
+  if is_template_test:
+     script.append("env_name=$(cat set_variable.txt)")
      script.append('sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "$CI_PROJECT_DIR/environments/$env_name/Credentials/credentials.yml"')
   else:
-     script.append("export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')") 
-  
+     script.append("export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')")
+
   script.extend([
       'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
       'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
   ])
-  # add after script
-  after_script = [
-    'mkdir -p "$CI_PROJECT_DIR/tmp"',
-    'cp -r /build_env/tmp/* $CI_PROJECT_DIR/tmp'
-  ]
-  # 
   env_build_params = {
-      "name":   f'env_builder.{full_env}', 
+      "name":   f'env_builder.{full_env}',
       "image":  '${envgen_image}',
       "stage":  'env_builder',
       "script": script,
-      "after_script": after_script
-  } 
-  
+  }
+
   env_build_vars = {
       "ENV_NAME": full_env,
       "CLUSTER_NAME": cluster_name,
@@ -61,7 +54,7 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
   if is_template_test:
     env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments")
     env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/set_variable.txt")
-  else: 
+  else:
     env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
     env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
     env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")

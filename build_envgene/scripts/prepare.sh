@@ -22,4 +22,16 @@ export ANSIBLE_CONFIG=${module_ansible_cfg}
 
 #### Run ansible
 echo "ansible-playbook playbooks/$playbook_name -i ${module_inventory} ${envgen_args}"
-ansible-playbook playbooks/$playbook_name -i ${module_inventory} ${envgen_args}
+if ansible-playbook "playbooks/$playbook_name" -i "${module_inventory}" ${envgen_args}; then
+    status=0
+else
+    status=$?
+fi
+
+mkdir -p "$CI_PROJECT_DIR/build_env/tmp"
+if [ -d "/build_env/tmp" ]; then
+    cp -r /build_env/tmp/* "$CI_PROJECT_DIR/build_env/tmp/" || true
+fi
+
+exit $status
+
