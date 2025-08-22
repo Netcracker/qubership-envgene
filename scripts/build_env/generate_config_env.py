@@ -1,8 +1,10 @@
 import os
 from deepmerge import always_merger
 from pathlib import Path
-from envgenehelper import logger, openYaml, readYaml, safe_yaml, dumpYamlToStr
+from envgenehelper import logger, openYaml, readYaml, safe_yaml, dumpYamlToStr, writeYamlToFile
 from jinja2 import Environment, FileSystemLoader, Template
+
+from python.envgene.envgenehelper import openFileAsString
 
 
 def get_inventory(context: dict) -> dict:
@@ -29,6 +31,7 @@ def generate_config(context: dict) -> dict:
     if env_template:
         env_specific_paramsets = env_template.get("envSpecificParamsets")
         if env_specific_paramsets:
+            # TODO may be delete dump = to_nice_yaml
             env_specific_paramsets = safe_yaml.dump(env_specific_paramsets)
             env_template["envSpecificParamsets"] = env_specific_paramsets
         additional_template_variables = env_template.get("additionalTemplateVariables")
@@ -39,8 +42,7 @@ def generate_config(context: dict) -> dict:
     templates_dir = Path(__file__).parent / "templates"
     j2env = Environment(loader=FileSystemLoader(str(templates_dir)))
     template = j2env.get_template("env_config.yml.j2")
-    rendered_yaml = template.render(context)
-    config = readYaml(text=rendered_yaml, safe_load=True)
+    config = readYaml(text=template.render(context), safe_load=True)
     logger.info("config = %s", config)
     return config
 
@@ -150,19 +152,17 @@ def generate_tenant_file(context: dict):
     tenant_file = Path(f'{context["current_env_dir"]}/tenant.yml')
     tenant_tmpl_path = context["current_env_template"]["tenant"]
     rendered_tenant_tmp_path = Template(tenant_tmpl_path).render(context)
-    tenant_template = openYaml(filePath=rendered_tenant_tmp_path, safe_load=True)
+    tenant_template = openFileAsString(rendered_tenant_tmp_path)
     logger.info("tenant_template: %s", tenant_template)
-    rendered = Environment().from_string(tenant_template).render(context)
-    tenant_file.parent.mkdir(parents=True, exist_ok=True)
-    tenant_file.write_text(rendered, encoding="utf-8")
+    rendered = Template(tenant_template).render(context)
+    writeYamlToFile(tenant_file, rendered)
 
 
 def generate_override_by_type(template_override, current_env_dir, type):
     if template_override:
         override_file = Path(f'{current_env_dir}/"{type}.yml_override')
-        override_file.parent.mkdir(parents=True, exist_ok=True)
         rendered_override = dumpYamlToStr(template_override)
-        override_file.write_text(rendered_override, encoding="utf-8")
+        writeYamlToFile(override_file, rendered_override)
 
 
 def generate_cloud_file(context: dict):
@@ -170,7 +170,6 @@ def generate_cloud_file(context: dict):
     is_template_override = isinstance(cloud_template, dict)
     current_env_dir = context["current_env_dir"]
     cloud_file = Path(f'{current_env_dir}/"cloud.yml')
-    cloud_file.parent.mkdir(parents=True, exist_ok=True)
     cloud_template_path = context["current_env_template"]["cloud"]
     if is_template_override:
         cloud_template = Path(cloud_template_path["template_path"])
@@ -180,7 +179,7 @@ def generate_cloud_file(context: dict):
     else:
         cloud_template = openYaml(filePath=cloud_template_path, safe_load=True)
     rendered = Template(cloud_template).render(context)
-    cloud_file.write_text(rendered, encoding="utf-8")
+    writeYamlToFile(cloud_file, rendered)
 
 
 def generate_namespace_file(context: dict):
@@ -190,13 +189,12 @@ def generate_namespace_file(context: dict):
         ns_template_name = Path(ns_template_path).name
         ns_template_name = ns_template_name.replace(".yml.j2", "").replace(".yaml.j2", "")
         ns_dir = Path(f'{context["current_env_dir"]}/"Namespaces"/{ns_template_name}')
-        ns_dir.mkdir(parents=True, exist_ok=True)
         context["template_override"] = ns.get("template_override", "")
 
         ns_template = openYaml(filePath=ns_template_path, safe_load=True)
         rendered = Template(ns_template).render(context)
         namespace_file = ns_dir / "namespace.yml"
-        namespace_file.write_text(rendered, encoding="utf-8")
+        writeYamlToFile(namespace_file, rendered)
         generate_override_by_type(template_override=ns["template_override"], current_env_dir=context["current_env_dir"],
                                   type="namespace")
 
