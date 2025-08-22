@@ -47,6 +47,9 @@ public class BomReaderUtilsImplV1 {
 
     public ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override) {
         Bom bomContent = fileDataConverter.parseSbomFile(new File(appFileRef));
+        if (bomContent == null) {
+            return null;
+        }
         EntitiesMap entitiesMap = new EntitiesMap();
         try {
             Component component = bomContent.getMetadata().getComponent();
