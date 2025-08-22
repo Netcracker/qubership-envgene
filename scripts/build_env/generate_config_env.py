@@ -160,7 +160,7 @@ def render_from_file_to_file(source_template_file_path, target_file_path, contex
 
 
 def generate_tenant_file(context: dict):
-    logger.info("Generate Tenant yaml %s", context["tenant"])
+    logger.info("Generate Tenant yaml for %s", context["tenant"])
     tenant_file = Path(f'{context["current_env_dir"]}/tenant.yml')
     tenant_tmpl_path = context["current_env_template"]["tenant"]
     render_from_file_to_file(Template(tenant_tmpl_path).render(context), tenant_file, context)
@@ -175,14 +175,15 @@ def generate_override_tmpl_by_type(template_override, current_env_dir, type):
 
 
 def generate_cloud_file(context: dict):
-    cloud = context["current_env"]["cloud"]
+    cloud = context["cloud"]
     logger.info("Generate Cloud yaml for cloud %s", cloud)
     cloud_template = context["current_env_template"]["cloud"]
     cloud_file = Path(f'{context["current_env_dir"]}/"cloud.yml')
     is_template_override = isinstance(cloud_template, dict)
     if is_template_override:
+        cloud_tmpl_path = cloud_template["template_path"]
         logger.info("Generate Cloud yaml for cloud %s using cloud.template_path value", cloud)
-        render_from_file_to_file(Path(cloud_template["template_path"]), cloud_file, context)
+        render_from_file_to_file(Template(cloud_tmpl_path).render(context), cloud_file, context)
 
         template_override = cloud_template.get("template_override")
         generate_override_tmpl_by_type(template_override=template_override,
@@ -190,7 +191,7 @@ def generate_cloud_file(context: dict):
                                        type="cloud")
     else:
         logger.info("Generate Cloud yaml for cloud %s", cloud)
-        render_from_file_to_file(cloud_template, cloud_file, context)
+        render_from_file_to_file(Template(cloud_template).render(context), cloud_file, context)
 
 
 def generate_namespace_file(context: dict):
