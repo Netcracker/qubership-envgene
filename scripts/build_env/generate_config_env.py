@@ -22,21 +22,21 @@ def get_cloud_passport(context: dict) -> dict | None:
 
 
 def generate_config(context: dict) -> dict:
-    cloud_passport = context["cloud_passport"]
-    if cloud_passport:
-        context["cloud_passport"] = safe_yaml.dump(cloud_passport)
-    env_template = context["env_definition"].get("envTemplate")
-    if env_template:
-        env_specific_paramsets = env_template.get("envSpecificParamsets")
-        if env_specific_paramsets:
-            # TODO may be delete dump = to_nice_yaml
-            env_specific_paramsets = safe_yaml.dump(env_specific_paramsets)
-            env_template["envSpecificParamsets"] = env_specific_paramsets
-        additional_template_variables = env_template.get("additionalTemplateVariables")
-        if additional_template_variables:
-            additional_template_variables = safe_yaml.dump(additional_template_variables)
-            env_template["envSpecificParamsets"] = additional_template_variables
-        context["env_definition"]["envTemplate"] = env_template
+    # cloud_passport = context.get("cloud_passport")
+    # if cloud_passport:
+    #     context["cloud_passport"] = safe_yaml.dump(cloud_passport)
+    # env_template = context["env_definition"].get("envTemplate")
+    # if env_template:
+    #     env_specific_paramsets = env_template.get("envSpecificParamsets")
+    #     if env_specific_paramsets:
+    #         # TODO may be delete dump = to_nice_yaml
+    #         env_specific_paramsets = safe_yaml.dump(env_specific_paramsets)
+    #         env_template["envSpecificParamsets"] = env_specific_paramsets
+    #     additional_template_variables = env_template.get("additionalTemplateVariables")
+    #     if additional_template_variables:
+    #         additional_template_variables = safe_yaml.dump(additional_template_variables)
+    #         env_template["envSpecificParamsets"] = additional_template_variables
+    #     context["env_definition"]["envTemplate"] = env_template
     templates_dir = Path(__file__).parent / "templates"
     j2env = Environment(loader=FileSystemLoader(str(templates_dir)))
     template = j2env.get_template("env_config.yml.j2")
