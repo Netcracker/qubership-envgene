@@ -229,6 +229,9 @@ def calculate_cloud_name(context):
 
 def generate_config_env(envvars: dict):
     context = {}
+    env_vars = dict(os.environ)
+    logger.info("env_vars: %s", env_vars)
+    context["env_vars"] = env_vars
     context.update(envvars)
     context["env_definition"] = get_inventory(context)
 
