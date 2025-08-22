@@ -178,11 +178,11 @@ def generate_cloud_file(context: dict):
     cloud = context["cloud"]
     logger.info("Generate Cloud yaml for cloud %s", cloud)
     cloud_template = context["current_env_template"]["cloud"]
-    cloud_file = Path(f'{context["current_env_dir"]}/"cloud.yml')
+    cloud_file = Path(f'{context["current_env_dir"]}/cloud.yml')
     is_template_override = isinstance(cloud_template, dict)
     if is_template_override:
-        cloud_tmpl_path = cloud_template["template_path"]
         logger.info("Generate Cloud yaml for cloud %s using cloud.template_path value", cloud)
+        cloud_tmpl_path = cloud_template["template_path"]
         render_from_file_to_file(Template(cloud_tmpl_path).render(context), cloud_file, context)
 
         template_override = cloud_template.get("template_override")
