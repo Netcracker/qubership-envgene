@@ -10,11 +10,11 @@
   - [Limitation](#limitation)
   - [Requirements](#requirements)
   - [Application Manifest Model](#application-manifest-model)
+  - [Application Manifest Build Config](#application-manifest-build-config)
   - [Application Manifest Structure](#application-manifest-structure)
     - [Metadata](#metadata)
     - [Components](#components)
       - [`application/vnd.qubership.service`](#applicationvndqubershipservice)
-  - [Application Manifest Build Config](#application-manifest-build-config)
   - [Output Transformer](#output-transformer)
     - [`application/vnd.docker.image`](#applicationvnddockerimage)
     - [`application/vnd.qubership.helm.chart`](#applicationvndqubershiphelmchart)
@@ -113,6 +113,125 @@ flowchart TD
 ![application-manifest-model-with-plugins.drawio.png](/docs/images/application-manifest-model-with-plugins.drawio.png)
 
 [Application Manifest JSON schema](/schemas/application-manifest-with-plugins.schema.json)
+
+## Application Manifest Build Config
+
+This file defines which services and components make up application and how each component is linked to its build job and artifact in your CI/CD pipeline.
+
+- Lists all services and their components to be included in the AM
+- Maps each component to the CI/CD job and artifact that produces it
+
+The config should be stored in application repository
+
+```yaml
+version: 1.2.3
+components:
+  <component-name>:
+    mime-type: enum [application/vnd.qubership.service, application/vnd.qubership.job, application/vnd.qubership.configuration, application/vnd.docker.image, application/vnd.qubership.helm.chart]
+    purl: pkg:<type>/<group>/<name>:<version>?registryName=<registry-id>
+    source: <a-job-id>
+    depends_on:
+      - <component-name>
+```
+
+**Example:**
+
+```yaml
+version: 1.2.3
+components:
+  # services
+  cassandra:
+    mime-type: application/vnd.qubership.job
+    depends_on:
+      - jaeger-cassandra-schema
+      - qubership-jaeger
+  collector:
+    mime-type: application/vnd.qubership.service
+    depends_on:
+      - jaeger
+      - jaeger-readiness-probe
+      - qubership-jaeger
+  hotrod:
+    mime-type: application/vnd.qubership.service
+    depends_on:
+      - example-hotrod
+      - qubership-jaeger
+  integration-tests:
+    mime-type: application/vnd.qubership.service
+    depends_on:
+      - jaeger-integration-tests
+      - qubership-jaeger
+  observability:
+    mime-type: application/vnd.qubership.configuration
+    depends_on:
+      - qubership-jaeger
+  opensearch:
+    mime-type: application/vnd.qubership.job
+    depends_on:
+      - jaeger-es-index-cleaner
+      - jaeger-es-rollover
+      - qubership-jaeger
+  query:
+    mime-type: application/vnd.qubership.service
+    depends_on:
+      - jaeger
+      - envoy
+      - jaeger-readiness-probe
+      - qubership-jaeger
+  remote-grpc:
+    mime-type: application/vnd.qubership.configuration
+    depends_on:
+      - qubership-jaeger
+  spark-dependencies:
+    mime-type: application/vnd.qubership.job
+    depends_on:
+      - openjdk
+      - spark-dependencies
+      - qubership-jaeger
+  status-provisioner:
+    mime-type: application/vnd.qubership.job
+    depends_on:
+      - qubership-deployment-status-provisioner
+      - qubership-jaeger
+  # Docker images
+  jaeger-cassandra-schema:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/jaegertracing/jaeger-cassandra-schema:1.72.0?registryName=sandbox
+  jaeger:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/jaegertracing/jaeger:2.9.0?registryName=sandbox
+  jaeger-readiness-probe:
+    mime-type: application/vnd.docker.image
+    source: <a-job-id>
+  example-hotrod:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/jaegertracing/example-hotrod:1.72.0?registryName=sandbox
+  jaeger-integration-tests:
+    mime-type: application/vnd.docker.image
+    source: <a-job-id>
+  jaeger-es-index-cleaner:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/jaegertracing/jaeger-es-index-cleaner:1.72.0?registryName=sandbox
+  jaeger-es-rollover:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/jaegertracing/jaeger-es-rollover:1.72.0?registryName=sandbox
+  envoy:
+    mime-type: application/vnd.docker.image
+    purl: pkg:docker/envoyproxy/envoy:v1.32.6?registryName=sandbox
+  openjdk:
+    mime-type: application/vnd.docker.image
+    purl: openjdk:11 ### ????
+  spark-dependencies-image:
+    mime-type: application/vnd.docker.image
+    source: <a-job-id>
+  qubership-deployment-status-provisioner:
+    mime-type: application/vnd.docker.image
+    source: <a-job-id>
+  # Helm Chart
+  qubership-jaeger:
+    mime-type: application/vnd.qubership.helm.chart
+    source: <a-job-id>
+```
 
 ## Application Manifest Structure
 
@@ -234,123 +353,6 @@ Describes ZIP archive as a Maven artifact
 | `hashes`        | array  | yes       | `[]`    | List of hashes for the archive (empty array if none)                 | **TBD** |
 | `hashes.alg`    | string | yes       | None    | Hash algorithm, e.g., "SHA-256" (required if hash present)           | **TBD** |
 | `hashes.content`| string | yes       | None    | Hash value as a hex string (required if hash present)                | **TBD** | -->
-
-## Application Manifest Build Config
-
-This file defines which services and components make up application and how each component is linked to its build job and artifact in your CI/CD pipeline.
-
-- Lists all services and their components to be included in the AM
-- Maps each component to the CI/CD job and artifact that produces it
-
-The config should be stored in application repository
-
-```yaml
-components:
-  <component-name>:
-    mime-type: enum [application/vnd.qubership.service, application/vnd.qubership.job, application/vnd.qubership.configuration, application/vnd.docker.image, application/vnd.qubership.helm.chart]
-    purl: pkg:<type>/<group>/<name>:<version>?registryName=<registry-id>
-    source: <a-job-id>
-    depends_on:
-      - <component-name>
-```
-
-**Example:**
-
-```yaml
-components:
-  # services
-  cassandra:
-    mime-type: application/vnd.qubership.job
-    depends_on:
-      - jaeger-cassandra-schema
-      - qubership-jaeger
-  collector:
-    mime-type: application/vnd.qubership.service
-    depends_on:
-      - jaeger
-      - jaeger-readiness-probe
-      - qubership-jaeger
-  hotrod:
-    mime-type: application/vnd.qubership.service
-    depends_on:
-      - example-hotrod
-      - qubership-jaeger
-  integration-tests:
-    mime-type: application/vnd.qubership.service
-    depends_on:
-      - jaeger-integration-tests
-      - qubership-jaeger
-  observability:
-    mime-type: application/vnd.qubership.configuration
-    depends_on:
-      - qubership-jaeger
-  opensearch:
-    mime-type: application/vnd.qubership.job
-    depends_on:
-      - jaeger-es-index-cleaner
-      - jaeger-es-rollover
-      - qubership-jaeger
-  query:
-    mime-type: application/vnd.qubership.service
-    depends_on:
-      - jaeger
-      - envoy
-      - jaeger-readiness-probe
-      - qubership-jaeger
-  remote-grpc:
-    mime-type: application/vnd.qubership.configuration
-    depends_on:
-      - qubership-jaeger
-  spark-dependencies:
-    mime-type: application/vnd.qubership.job
-    depends_on:
-      - openjdk
-      - spark-dependencies
-      - qubership-jaeger
-  status-provisioner:
-    mime-type: application/vnd.qubership.job
-    depends_on:
-      - qubership-deployment-status-provisioner
-      - qubership-jaeger
-  # Docker images
-  jaeger-cassandra-schema:
-    mime-type: application/vnd.docker.image
-    purl: pkg:docker/jaegertracing/jaeger-cassandra-schema:1.72.0?registryName=sandbox
-  jaeger:
-    mime-type: application/vnd.docker.image
-    purl: pkg:docker/jaegertracing/jaeger:2.9.0?registryName=sandbox
-  jaeger-readiness-probe:
-    mime-type: application/vnd.docker.image
-    source: <a-job-id>
-  example-hotrod:
-    mime-type: application/vnd.docker.image
-    purl: pkg:docker/jaegertracing/example-hotrod:1.72.0?registryName=sandbox
-  jaeger-integration-tests:
-    mime-type: application/vnd.docker.image
-    source: <a-job-id>
-  jaeger-es-index-cleaner:
-    mime-type: application/vnd.docker.image
-    purl: pkg:docker/jaegertracing/jaeger-es-index-cleaner:1.72.0?registryName=sandbox
-  jaeger-es-rollover:
-    mime-type: application/vnd.docker.image
-    purl: pkg:docker/jaegertracing/jaeger-es-rollover:1.72.0?registryName=sandbox
-  envoy:
-    mime-type: application/vnd.docker.image
-    purl: pkg:docker/envoyproxy/envoy:v1.32.6?registryName=sandbox
-  openjdk:
-    mime-type: application/vnd.docker.image
-    purl: openjdk:11 ### ????
-  spark-dependencies-image:
-    mime-type: application/vnd.docker.image
-    source: <a-job-id>
-  qubership-deployment-status-provisioner:
-    mime-type: application/vnd.docker.image
-    source: <a-job-id>
-  # Helm Chart
-  qubership-jaeger:
-    mime-type: application/vnd.qubership.helm.chart
-    source: <a-job-id>
-```
 
 ## Output Transformer
 
