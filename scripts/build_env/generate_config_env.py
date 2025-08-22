@@ -148,8 +148,8 @@ def generate_solution_structure(context: dict):
         always_merger.merge(context["current_env"], {"solution_structure": solution_structure})
 
 
-def render_from_file_to_file(source_template_file_path, target_file_path, context):
-    template = openFileAsString(source_template_file_path)
+def render_from_file_to_file(src_template_path, target_file_path, context):
+    template = openFileAsString(src_template_path)
     rendered = Template(template).render(context)
     writeYamlToFile(target_file_path, readYaml(rendered))
 
@@ -166,19 +166,19 @@ def generate_tenant_file(context: dict):
     render_from_file_to_file(Template(tenant_tmpl_path).render(context), tenant_file, context)
 
 
-def generate_override_tmpl_by_type(template_override, current_env_dir, type):
+def generate_override_tmpl_by_type(template_override, template_path: Path, name):
     if template_override:
-        logger.info("Generate override Cloud yaml for %s", type)
-        override_file = Path(f'{current_env_dir}/"{type}.yml_override')
+        logger.info("Generate override %s yaml for %s", template_path.stem, name)
         rendered_override = dumpYamlToStr(template_override)
-        writeYamlToFile(filePath=override_file, contents=rendered_override)
+        writeYamlToFile(filePath=template_path, contents=rendered_override)
 
 
 def generate_cloud_file(context: dict):
-    cloud = context["cloud"]
+    cloud = calculate_cloud_name(context)
     logger.info("Generate Cloud yaml for cloud %s", cloud)
     cloud_template = context["current_env_template"]["cloud"]
-    cloud_file = Path(f'{context["current_env_dir"]}/cloud.yml')
+    current_env_dir = context["current_env_dir"]
+    cloud_file = Path(f'{current_env_dir}/cloud.yml')
     is_template_override = isinstance(cloud_template, dict)
     if is_template_override:
         logger.info("Generate Cloud yaml for cloud %s using cloud.template_path value", cloud)
@@ -187,8 +187,8 @@ def generate_cloud_file(context: dict):
 
         template_override = cloud_template.get("template_override")
         generate_override_tmpl_by_type(template_override=template_override,
-                                       current_env_dir=context["current_env_dir"],
-                                       type="cloud")
+                                       template_path=Path(f'{current_env_dir}/"cloud.yml_override'),
+                                       name=cloud)
     else:
         logger.info("Generate Cloud yaml for cloud %s", cloud)
         render_from_file_to_file(Template(cloud_template).render(context), cloud_file, context)
@@ -197,19 +197,34 @@ def generate_cloud_file(context: dict):
 def generate_namespace_file(context: dict):
     namespaces = context["current_env_template"]["namespaces"]
     for ns in namespaces:
-        ns_template_path = ns["template_path"]
-        ns_template_name = Path(ns_template_path).name
-        ns_template_name = ns_template_name.replace(".yml.j2", "").replace(".yaml.j2", "")
-        ns_dir = Path(f'{context["current_env_dir"]}/"Namespaces"/{ns_template_name}')
-        context["template_override"] = ns.get("template_override", "")
-
-        ns_template = openYaml(filePath=ns_template_path, safe_load=True)
-        rendered = Template(ns_template).render(context)
+        name = ns.get("name")
+        logger.info("Generate Envs Namespace yaml for %s", name)
+        current_env_dir = context["current_env_dir"]
+        ns_template_path = Template(ns["template_path"]).render(context)
+        ns_template_name = Path(ns_template_path).name.replace(".yml.j2", "").replace(".yaml.j2", "")
+        ns_dir = Path(f'{current_env_dir}/"Namespaces"/{ns_template_name}')
         namespace_file = ns_dir / "namespace.yml"
-        writeYamlToFile(namespace_file, rendered)
-        generate_override_tmpl_by_type(template_override=ns["template_override"],
-                                       current_env_dir=context["current_env_dir"],
-                                       type="namespace")
+        render_from_file_to_file(ns_template_path, namespace_file, context)
+
+        generate_override_tmpl_by_type(template_override=ns.get("template_override"),
+                                       template_path=Path(
+                                           f'{current_env_dir}/Namespaces/{ns_dir}/namespace.yml_override'),
+                                       name=name)
+
+
+def calculate_cloud_name(context):
+    inv = context["env_definition"]["inventory"]
+    cluster_name = context["cluster_name"]
+    candidates = [
+        inv.get("cloudName"),
+        inv.get("passportCloudName", "").replace("-", "_") if inv.get("passportCloudName") else "",
+        inv.get("cloudPassport", "").replace("-", "_") if inv.get("cloudPassport") else "",
+        inv.get("environmentName", "").replace("-", "_"),
+        f"{cluster_name}_{inv.get('environmentName', '')}".replace("-", "_")
+        if cluster_name and inv.get("environmentName") else ""
+    ]
+
+    return next((c for c in candidates if c), "")
 
 
 def generate_config_env(envvars: dict):
@@ -224,7 +239,7 @@ def generate_config_env(envvars: dict):
     context["config"] = generate_config(context)
     current_env = context["config"]["environment"]
     context["current_env"] = current_env
-    context["cloud"] = current_env["cloud"]
+    context["cloud"] = calculate_cloud_name(context)
     context["tenant"] = current_env.get("tenant", '')
     context["deployer"] = current_env.get('deployer', '')
     logger.info("current_env = %s", context["current_env"])
