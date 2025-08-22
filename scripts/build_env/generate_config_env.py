@@ -22,7 +22,7 @@ def get_cloud_passport(context: dict) -> dict | None:
 
 
 def generate_config(context: dict) -> dict:
-    cloud_passport = get_cloud_passport(context)
+    cloud_passport = context["cloud_passport"]
     if cloud_passport:
         context["cloud_passport"] = safe_yaml.dump(cloud_passport)
     env_template = context["env_definition"].get("envTemplate")
@@ -112,6 +112,7 @@ def generate_solution_structure_template(applications, postfix_template_map):
 
 def generate_solution_structure(context: dict):
     sd_path_stem = f'{context["current_env_dir"]}/Inventory/solution-descriptor/sd'
+    logger.info("sd_path_stem: %s", sd_path_stem)
     sd_path = next(iter(find_all_yaml_files_by_stem(sd_path_stem)), None)
     if sd_path:
         context["sd_file_path"] = str(sd_path)
