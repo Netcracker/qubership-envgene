@@ -1,10 +1,8 @@
 import os
 from deepmerge import always_merger
 from pathlib import Path
-from envgenehelper import logger, openYaml, readYaml, safe_yaml, dumpYamlToStr, writeYamlToFile
+from envgenehelper import logger, openYaml, readYaml, safe_yaml, dumpYamlToStr, writeYamlToFile, openFileAsString
 from jinja2 import Environment, FileSystemLoader, Template
-
-from python.envgene.envgenehelper import openFileAsString
 
 
 def get_inventory(context: dict) -> dict:
