@@ -151,6 +151,7 @@ def generate_tenant_file(context: dict):
     tenant_tmpl_path = context["current_env_template"]["tenant"]
     rendered_tenant_tmp_path = Template(tenant_tmpl_path).render(context)
     tenant_template = openYaml(filePath=rendered_tenant_tmp_path, safe_load=True)
+    logger.info("tenant_template: %s", tenant_template)
     rendered = Environment().from_string(tenant_template).render(context)
     tenant_file.parent.mkdir(parents=True, exist_ok=True)
     tenant_file.write_text(rendered, encoding="utf-8")
