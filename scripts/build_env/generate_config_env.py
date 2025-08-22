@@ -1,7 +1,8 @@
 import os
-from deepmerge import always_merger
 from pathlib import Path
-from envgenehelper import logger, openYaml, readYaml, safe_yaml, dumpYamlToStr, writeYamlToFile, openFileAsString
+
+from deepmerge import always_merger
+from envgenehelper import logger, openYaml, readYaml, dumpYamlToStr, writeYamlToFile, openFileAsString
 from jinja2 import Environment, FileSystemLoader, Template
 
 
@@ -110,9 +111,9 @@ def generate_solution_structure_template(applications, postfix_template_map):
     return solution_structure
 
 
+# TODO no tests for that
 def generate_solution_structure(context: dict):
     sd_path_stem = f'{context["current_env_dir"]}/Inventory/solution-descriptor/sd'
-    logger.info("sd_path_stem: %s", sd_path_stem)
     sd_path = next(iter(find_all_yaml_files_by_stem(sd_path_stem)), None)
     if sd_path:
         context["sd_file_path"] = str(sd_path)
@@ -147,38 +148,49 @@ def generate_solution_structure(context: dict):
         always_merger.merge(context["current_env"], {"solution_structure": solution_structure})
 
 
+def render_from_file_to_file(source_template_file_path, target_file_path, context):
+    template = openFileAsString(source_template_file_path)
+    rendered = Template(template).render(context)
+    writeYamlToFile(target_file_path, readYaml(rendered))
+
+
+# def render_from_str_to_file(template_str, target_file_path, context):
+#     rendered = Template(template_str).render(context)
+#     writeYamlToFile(target_file_path, readYaml(rendered))
+
+
 def generate_tenant_file(context: dict):
+    logger.info("Generate Tenant yaml %s", context["tenant"])
     tenant_file = Path(f'{context["current_env_dir"]}/tenant.yml')
     tenant_tmpl_path = context["current_env_template"]["tenant"]
-    rendered_tenant_tmp_path = Template(tenant_tmpl_path).render(context)
-    tenant_template = openFileAsString(rendered_tenant_tmp_path)
-    logger.info("tenant_template: %s", tenant_template)
-    rendered = Template(tenant_template).render(context)
-    writeYamlToFile(tenant_file, rendered)
+    render_from_file_to_file(Template(tenant_tmpl_path).render(context), tenant_file, context)
 
 
-def generate_override_by_type(template_override, current_env_dir, type):
+def generate_override_tmpl_by_type(template_override, current_env_dir, type):
     if template_override:
+        logger.info("Generate override Cloud yaml for %s", type)
         override_file = Path(f'{current_env_dir}/"{type}.yml_override')
         rendered_override = dumpYamlToStr(template_override)
-        writeYamlToFile(override_file, rendered_override)
+        writeYamlToFile(filePath=override_file, contents=rendered_override)
 
 
 def generate_cloud_file(context: dict):
+    cloud = context["current_env"]["cloud"]
+    logger.info("Generate Cloud yaml for cloud %s", cloud)
     cloud_template = context["current_env_template"]["cloud"]
+    cloud_file = Path(f'{context["current_env_dir"]}/"cloud.yml')
     is_template_override = isinstance(cloud_template, dict)
-    current_env_dir = context["current_env_dir"]
-    cloud_file = Path(f'{current_env_dir}/"cloud.yml')
-    cloud_template_path = context["current_env_template"]["cloud"]
     if is_template_override:
-        cloud_template = Path(cloud_template_path["template_path"])
-        generate_override_by_type(template_override=cloud_template_path["template_override"],
-                                  current_env_dir=context["current_env_dir"],
-                                  type="cloud")
+        logger.info("Generate Cloud yaml for cloud %s using cloud.template_path value", cloud)
+        render_from_file_to_file(Path(cloud_template["template_path"]), cloud_file, context)
+
+        template_override = cloud_template.get("template_override")
+        generate_override_tmpl_by_type(template_override=template_override,
+                                       current_env_dir=context["current_env_dir"],
+                                       type="cloud")
     else:
-        cloud_template = openYaml(filePath=cloud_template_path, safe_load=True)
-    rendered = Template(cloud_template).render(context)
-    writeYamlToFile(cloud_file, rendered)
+        logger.info("Generate Cloud yaml for cloud %s", cloud)
+        render_from_file_to_file(cloud_template, cloud_file, context)
 
 
 def generate_namespace_file(context: dict):
@@ -194,8 +206,9 @@ def generate_namespace_file(context: dict):
         rendered = Template(ns_template).render(context)
         namespace_file = ns_dir / "namespace.yml"
         writeYamlToFile(namespace_file, rendered)
-        generate_override_by_type(template_override=ns["template_override"], current_env_dir=context["current_env_dir"],
-                                  type="namespace")
+        generate_override_tmpl_by_type(template_override=ns["template_override"],
+                                       current_env_dir=context["current_env_dir"],
+                                       type="namespace")
 
 
 def generate_config_env(envvars: dict):
@@ -232,3 +245,4 @@ def generate_config_env(envvars: dict):
     generate_solution_structure(context)
     generate_tenant_file(context)
     generate_cloud_file(context)
+    generate_namespace_file(context)
