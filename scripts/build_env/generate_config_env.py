@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from deepmerge import always_merger
 from envgenehelper import logger, openYaml, readYaml, dumpYamlToStr, writeYamlToFile, openFileAsString
@@ -107,11 +108,10 @@ def generate_solution_structure_template(applications, postfix_template_map):
             }
         }
         always_merger.merge(solution_structure, small_dict)
-
+    logger.info("solution_structure before render: %s", solution_structure)
     return solution_structure
 
 
-# TODO no tests for that
 def generate_solution_structure(context: dict):
     sd_path_stem = f'{context["current_env_dir"]}/Inventory/solution-descriptor/sd'
     sd_path = next(iter(find_all_yaml_files_by_stem(sd_path_stem)), None)
@@ -139,12 +139,13 @@ def generate_solution_structure(context: dict):
             postfix = os.path.basename(path).split('.')[0]  # get base name(deploy postfix) without extensions
             postfix_template_map[postfix] = path
 
-        solution_structure_template = generate_solution_structure_template(sd_config["application"],
+        solution_structure_template = generate_solution_structure_template(sd_config["applications"],
                                                                            postfix_template_map)
 
         template_str = str(solution_structure_template)
-        solution_structure = dumpYamlToStr(Template(template_str).render(context))
+        solution_structure = readYaml(Template(template_str).render(context))
         logger.info("Rendered solution_structure: %s", solution_structure)
+        #TODO for what here merge?? it's not necessary.
         always_merger.merge(context["current_env"], {"solution_structure": solution_structure})
 
 
@@ -197,11 +198,10 @@ def generate_cloud_file(context: dict):
 def generate_namespace_file(context: dict):
     namespaces = context["current_env_template"]["namespaces"]
     for ns in namespaces:
-        name = ns.get("name")
-        logger.info("Generate Envs Namespace yaml for %s", name)
-        current_env_dir = context["current_env_dir"]
         ns_template_path = Template(ns["template_path"]).render(context)
         ns_template_name = Path(ns_template_path).name.replace(".yml.j2", "").replace(".yaml.j2", "")
+        logger.info("Generate Namespace yaml for %s", ns_template_name)
+        current_env_dir = context["current_env_dir"]
         ns_dir = Path(f'{current_env_dir}/"Namespaces"/{ns_template_name}')
         namespace_file = ns_dir / "namespace.yml"
         render_from_file_to_file(ns_template_path, namespace_file, context)
@@ -209,7 +209,7 @@ def generate_namespace_file(context: dict):
         generate_override_tmpl_by_type(template_override=ns.get("template_override"),
                                        template_path=Path(
                                            f'{current_env_dir}/Namespaces/{ns_dir}/namespace.yml_override'),
-                                       name=name)
+                                       name=ns_template_name)
 
 
 def calculate_cloud_name(context):
