@@ -23,7 +23,7 @@ debugging.
 1. Create `devtest/wdebug_plugin/main.py` file with this content
 
     ```Python
-    from plugin_engine import PluginCore
+    from envgenehelper.plugin_engine import PluginCore
     from envgenehelper import logger
 
     class EffectiveSetJobPlugin(PluginCore):
