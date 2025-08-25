@@ -50,6 +50,13 @@ permissions:
   id-token: write
 
 jobs:
+  linters:
+    uses: ./.github/workflows/super-linter.yaml
+    if: |
+      github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    with:
+      full_scan: false
+  
   tests:
     if: |
       github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
@@ -67,7 +74,7 @@ jobs:
         uses: ./.github/actions/run-tests
 
   build-qubership-pipegene:
-    needs: [tests]
+    needs: [linters, tests]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
@@ -88,7 +95,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-qubership-envgene:
-    needs: [tests]
+    needs: [linters, tests]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-envgene == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
@@ -108,7 +115,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-instance-repo-pipeline:
-    needs: [tests]
+    needs: [linters, tests]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipeline == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
@@ -128,7 +135,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-effective-set-jar:
-    needs: [tests]
+    needs: [linters, tests]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@main
     with:
@@ -162,7 +169,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-effective-set-generator-python:
-    needs: [tests]
+    needs: [linters, tests]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set-python == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
