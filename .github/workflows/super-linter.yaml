@@ -25,6 +25,13 @@ on:
         default: false
         required: false
         description: "Lint all codebase"
+  workflow_call:
+    inputs:
+      full_scan:
+        type: boolean
+        default: false
+        required: false
+        description: "Lint all codebase"
 permissions:
   contents: read
 
