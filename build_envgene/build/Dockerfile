@@ -1,9 +1,12 @@
+# checkov:skip=CKV_DOCKER_3:This build container requires root privileges for CI/CD operations
+
 #########################################
 # Stage 1: Build
 # Multi-stage build to reduce final image size
 FROM python:3.12-alpine3.19 AS build
 
 # Install build dependencies
+# checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
 RUN apk add --no-cache \
     gcc \
     musl-dev \
@@ -93,6 +96,7 @@ RUN chmod 754 /module/creds_rotation_scripts/*
 FROM python:3.12-alpine3.19 AS runtime
 
 # Install only essential runtime dependencies
+# checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
 RUN apk add --no-cache \
     bash \
     ca-certificates \
