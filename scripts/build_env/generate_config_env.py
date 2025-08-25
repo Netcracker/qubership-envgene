@@ -3,7 +3,9 @@ from pathlib import Path
 
 from deepmerge import always_merger
 from envgenehelper import logger, openYaml, readYaml, dumpYamlToStr, writeYamlToFile, openFileAsString
-from jinja2 import Environment, FileSystemLoader, Template
+from jinja2 import Environment, FileSystemLoader, Template, ChainableUndefined
+
+env = Environment(undefined=ChainableUndefined)
 
 
 def get_inventory(context: dict) -> dict:
@@ -140,7 +142,7 @@ def generate_solution_structure(context: dict):
 
 def render_from_file_to_file(src_template_path, target_file_path, context):
     template = openFileAsString(src_template_path)
-    rendered = Template(template).render(context)
+    rendered = env.from_string(template).render(context)
     writeYamlToFile(target_file_path, readYaml(rendered))
 
 
@@ -197,7 +199,7 @@ def generate_namespace_file(context: dict):
         ns_template_name = Path(ns_template_path).name.replace(".yml.j2", "").replace(".yaml.j2", "")
         logger.info("Generate Namespace yaml for %s", ns_template_name)
         current_env_dir = context["current_env_dir"]
-        ns_dir = Path(f'{current_env_dir}/"Namespaces"/{ns_template_name}')
+        ns_dir = Path(f'{current_env_dir}/Namespaces/{ns_template_name}')
         namespace_file = ns_dir / "namespace.yml"
         render_from_file_to_file(ns_template_path, namespace_file, context)
 
