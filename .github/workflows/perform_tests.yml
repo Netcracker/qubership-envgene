@@ -20,6 +20,9 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call' || github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main' && !startsWith(github.event.head_commit.message, 'fix:') && !startsWith(github.event.head_commit.message, 'feat:') && !startsWith(github.event.head_commit.message, 'breaking change') && !startsWith(github.event.head_commit.message, 'BREAKING CHANGE')) }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
       - name: Run linters checks
         uses: ./.github/workflows/super-linter.yaml
   
