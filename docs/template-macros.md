@@ -19,19 +19,53 @@
     - [`current_env.cluster.cloud_api_url`](#current_envclustercloud_api_url)
     - [`current_env.cluster.cloud_api_port`](#current_envclustercloud_api_port)
     - [`current_env.cluster.cloud_public_url`](#current_envclustercloud_public_url)
+  - [Calculator CLI macros](#calculator-cli-macros)
+    - [`APPLICATION_NAME`](#application_name)
+    - [`NAMESPACE`](#namespace)
+    - [`CLOUDNAME`](#cloudname)
+    - [`TENANTNAME`](#tenantname)
+    - [`CLOUD_API_HOST`](#cloud_api_host)
+    - [`CLOUD_PRIVATE_HOST`](#cloud_private_host)
+    - [`CLOUD_PUBLIC_HOST`](#cloud_public_host)
+    - [`CLOUD_PROTOCOL`](#cloud_protocol)
+    - [`CLOUD_API_PORT`](#cloud_api_port)
+    - [`PRIVATE_GATEWAY_URL`](#private_gateway_url)
+    - [`PUBLIC_GATEWAY_URL`](#public_gateway_url)
+    - [`API_DBAAS_ADDRESS`](#api_dbaas_address)
+    - [`DBAAS_AGGREGATOR_ADDRESS`](#dbaas_aggregator_address)
+    - [`DBAAS_AGGREGATOR_USERNAME`](#dbaas_aggregator_username)
+    - [`DBAAS_AGGREGATOR_PASSWORD`](#dbaas_aggregator_password)
+    - [`DBAAS_ENABLED`](#dbaas_enabled)
+    - [`MAAS_INTERNAL_ADDRESS`](#maas_internal_address)
+    - [`MAAS_EXTERNAL_ROUTE`](#maas_external_route)
+    - [`MAAS_CREDENTIALS_USERNAME`](#maas_credentials_username)
+    - [`MAAS_CREDENTIALS_PASSWORD`](#maas_credentials_password)
+    - [`MAAS_ENABLED`](#maas_enabled)
+    - [`VAULT_ADDR`](#vault_addr)
+    - [`PUBLIC_VAULT_URL`](#public_vault_url)
+    - [`VAULT_TOKEN`](#vault_token)
+    - [`VAULT_ENABLED`](#vault_enabled)
+    - [`CONSUL_URL`](#consul_url)
+    - [`CONSUL_PUBLIC_URL`](#consul_public_url)
+    - [`CONSUL_ADMIN_TOKEN`](#consul_admin_token)
+    - [`CONSUL_ENABLED`](#consul_enabled)
   - [Credential Macro](#credential-macro)
   - [Deprecated Macros](#deprecated-macros)
-    - [`environment.environmentName`](#environmentenvironmentname)
-    - [`tenant`](#tenant)
-    - [`cloud`](#cloud)
-    - [`deployer`](#deployer)
-    - [`${envgene.creds.get('<cred-id>').username|password|secret}`](#envgenecredsgetcred-idusernamepasswordsecret)
+    - [Deprecated Jinja Macros](#deprecated-jinja-macros)
+      - [`environment.environmentName`](#environmentenvironmentname)
+      - [`tenant`](#tenant)
+      - [`cloud`](#cloud)
+      - [`deployer`](#deployer)
+    - [Deprecated Credential Macros](#deprecated-credential-macros)
+      - [`${envgene.creds.get('<cred-id>').username|password|secret}`](#envgenecredsgetcred-idusernamepasswordsecret)
 
-This documentation provides a list of macros that can be used during template generation
+This documentation provides a list of macros that can be used in environment templates and environment-specific parameter sets.
 
 ## Jinja Macros
 
-These Jinja macros that can be used during template generation
+These Jinja macros are rendered at the stage of [Environment Instance](/docs/envgene-objects.md#environment-instance-objects) generation and are present in it as rendered values.
+
+The usage rules for these macros are limited by the Jinja engine.
 
 ### `templates_dir`
 
@@ -392,6 +426,528 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 
 - [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
 
+## Calculator CLI macros
+
+These macros are rendered at the stage of calculating the [Effective Set](/docs/calculator-cli.md#effective-set-structure) and are present in it as rendered values.
+
+### `APPLICATION_NAME`
+
+---
+**Description:** Application name.
+
+Value is get from `name` of the [Application](/docs/envgene-objects.md#application) object
+
+Application-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tenant), [Cloud](/docs/envgene-objects.md#cloud) and [Namespace](/docs/envgene-objects.md#namespace) objects
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`app_name: "${APPLICATION_NAME}"`
+
+**Usage in sample:** TBD
+
+### `NAMESPACE`
+
+---
+**Description:** Namespace name.
+
+Value is get from `name` of the [Namespace](/docs/envgene-objects.md#namespace) object
+
+Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tenant) or [Cloud](/docs/envgene-objects.md#cloud) objects
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`ns: "${NAMESPACE}"`
+
+**Usage in sample:** TBD
+
+### `CLOUDNAME`
+
+---
+**Description:** Cloud name.
+
+Value is get from `name` of the [Cloud](/docs/envgene-objects.md#cloud)
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`cloud: "${CLOUDNAME}"`
+
+**Usage in sample:** TBD
+
+### `TENANTNAME`
+
+---
+**Description:** Tenant name.
+
+Value is get from `name` of the [Tenant](/docs/envgene-objects.md#tenant) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`tenant: "${TENANTNAME}"`
+
+**Usage in sample:** TBD
+
+### `CLOUD_API_HOST`
+
+---
+**Description:** URL of the cluster API.
+
+Value is get from `apiUrl` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`cluster_api: "${CLOUD_API_HOST}"`
+
+**Usage in sample:** TBD
+
+### `CLOUD_PRIVATE_HOST`
+
+---
+**Description:** Internal host of the cluster. For example - `qubership.org`
+
+Value is get from `privateUrl` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`public_cluster_host: "${CLOUD_PRIVATE_HOST}"`
+
+**Usage in sample:** TBD
+
+### `CLOUD_PUBLIC_HOST`
+
+---
+**Description:** External URL of the cluster API. For example - `qubership.org`
+
+Value is get from `publicUrl` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`public_cluster_host: "${CLOUD_PUBLIC_HOST}"`
+
+**Usage in sample:** TBD
+
+### `CLOUD_PROTOCOL`
+
+---
+**Description:** Protocol/Schema (http or https) of the cluster API.
+
+Value is get from `protocol` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`schema: "${CLOUD_PROTOCOL}"`
+
+**Usage in sample:** TBD
+
+### `CLOUD_API_PORT`
+
+---
+**Description:** Port of the cluster API.
+
+Value is get from `dbaasConfigs[0].apiPort` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`port: "${CLOUD_API_PORT}"`
+
+**Usage in sample:** TBD
+
+### `PRIVATE_GATEWAY_URL`
+
+---
+**Description:** Defines URL of private gateway in the namespace.
+
+The value is calculated as `${CLOUD_PROTOCOL}://${PRIVATE_GATEWAY_ROUTE_HOST}` if `${PRIVATE_GATEWAY_ROUTE_HOST}` is set, otherwise as `${CLOUD_PROTOCOL}://private-gateway-${ORIGIN_NAMESPACE}.${CLOUD_PUBLIC_HOST}`.
+
+Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tenant) or [Cloud](/docs/envgene-objects.md#cloud) objects
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`private_gw: "${PRIVATE_GATEWAY_URL}"`
+
+**Usage in sample:** TBD
+
+### `PUBLIC_GATEWAY_URL`
+
+---
+**Description:** Defines URL of public gateway in the namespace.
+
+The value is calculated as `${CLOUD_PROTOCOL}://${PUBLIC_GATEWAY_ROUTE_HOST}` if `${PUBLIC_GATEWAY_ROUTE_HOST}` is set, otherwise as `${CLOUD_PROTOCOL}://public-gateway-${NAMESPACE}.${CLOUD_PUBLIC_HOST}`.
+
+Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tenant) or [Cloud](/docs/envgene-objects.md#cloud) objects
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`public_gw: "${PRIVATE_GATEWAY_URL}"`
+
+**Usage in sample:** TBD
+
+---
+**Description:** Defines URL of private gateway in the namespace.
+
+The value is calculated as `${CLOUD_PROTOCOL}://${PRIVATE_GATEWAY_ROUTE_HOST}` if `${PRIVATE_GATEWAY_ROUTE_HOST}` is set, otherwise as `${CLOUD_PROTOCOL}://private-gateway-${NAMESPACE}.${CLOUD_PUBLIC_HOST}`.
+
+Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tenant) or [Cloud](/docs/envgene-objects.md#cloud) objects
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`private_gw: "${PRIVATE_GATEWAY_URL}"`
+
+**Usage in sample:** TBD
+
+### `API_DBAAS_ADDRESS`
+
+---
+**Description:** Internal URL of the DBaaS.
+
+Value is get from `dbaasConfigs[0].apiUrl` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `""`
+
+**Basic usage:**
+
+`private_dbaas_address: "${API_DBAAS_ADDRESS}"`
+
+**Usage in sample:** TBD
+
+### `DBAAS_AGGREGATOR_ADDRESS`
+
+---
+**Description:** External URL of the DBaaS.
+
+Value is get from `dbaasConfigs[0].aggregatorUrl` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `""`
+
+**Basic usage:**
+
+`public_dbaas_address: "${DBAAS_AGGREGATOR_ADDRESS}"`
+
+**Usage in sample:** TBD
+
+### `DBAAS_AGGREGATOR_USERNAME`
+
+---
+**Description:** Username for access to the DBaaS.
+
+Value is get from `dbaasConfigs[0].credentialsId.username` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`dbaas_username: "${DBAAS_AGGREGATOR_USERNAME}"`
+
+**Usage in sample:** TBD
+
+### `DBAAS_AGGREGATOR_PASSWORD`
+
+---
+**Description:** Password for access to the DBaaS.
+
+Value is get from `dbaasConfigs[0].credentialsId.password` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`dbaas_password: "${DBAAS_AGGREGATOR_PASSWORD}"`
+
+**Usage in sample:** TBD
+
+### `DBAAS_ENABLED`
+
+---
+**Description:** Determines whether DBaaS is used
+
+Value is get from `dbaasConfigs[0].enable` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** Boolean
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`dbaas_is_used: "${DBAAS_ENABLED}"`
+
+**Usage in sample:** TBD
+
+### `MAAS_INTERNAL_ADDRESS`
+
+---
+**Description:** Internal URL of the MaaS.
+
+Value is get from `maasConfig.maasInternalAddress` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`private_maas_address: "${MAAS_INTERNAL_ADDRESS}"`
+
+**Usage in sample:** TBD
+
+### `MAAS_EXTERNAL_ROUTE`
+
+---
+**Description:** External URL of the MaaS.
+
+Value is get from `maasConfig.maasUrl` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`public_maas_address: "${MAAS_EXTERNAL_ROUTE}"`
+
+**Usage in sample:** TBD
+
+### `MAAS_CREDENTIALS_USERNAME`
+
+---
+**Description:** Username for access to the MaaS.
+
+Value is get from `maasConfig.credentialsId.username` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`maas_username: "${MAAS_CREDENTIALS_USERNAME}"`
+
+**Usage in sample:** TBD
+
+### `MAAS_CREDENTIALS_PASSWORD`
+
+---
+**Description:** Password for access to the MaaS.
+
+Value is get from `maasConfig.credentialsId.password` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`maas_password: "${MAAS_CREDENTIALS_PASSWORD}"`
+
+**Usage in sample:** TBD
+
+### `MAAS_ENABLED`
+
+---
+**Description:** Determines whether MaaS is used
+
+Value is get from `maasConfig.enable` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** Boolean
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`maas_is_used: "${MAAS_ENABLED}"`
+
+**Usage in sample:** TBD
+
+### `VAULT_ADDR`
+
+---
+**Description:** Internal URL of the Vault.
+
+Value is get from `vaultConfig.url` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`private_vault_address: "${VAULT_ADDR}"`
+
+**Usage in sample:** TBD
+
+### `PUBLIC_VAULT_URL`
+
+---
+**Description:** External URL of the Vault.
+
+Value is get from `vaultConfig.url` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`public_vault_address: "${PUBLIC_VAULT_URL}"`
+
+**Usage in sample:** TBD
+
+### `VAULT_TOKEN`
+
+---
+**Description:** Token for access to the Vault.
+
+Value is get from `vaultConfig.credentialsId.secret` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `""`
+
+**Basic usage:**
+
+`vault_token: "${VAULT_TOKEN}"`
+
+**Usage in sample:** TBD
+
+### `VAULT_ENABLED`
+
+---
+**Description:** Determines whether Vault is used
+
+Value is get from `vaultConfig.enable` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** Boolean
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`vault_is_used: "${PUBLIC_VAULT_URL}"`
+
+**Usage in sample:** TBD
+
+### `CONSUL_URL`
+
+---
+**Description:** Internal URL of the Consul.
+
+Value is get from `consulConfig.internalUrl` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`private_consul_address: "${CONSUL_URL}"`
+
+**Usage in sample:** TBD
+
+### `CONSUL_PUBLIC_URL`
+
+---
+**Description:** External URL of the Consul.
+
+Value is get from `consulConfig.publicUrl` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`public_consul_address: "${CONSUL_PUBLIC_URL}"`
+
+**Usage in sample:** TBD
+
+### `CONSUL_ADMIN_TOKEN`
+
+---
+**Description:** Token for access to the Consul.
+
+Value is get from `consulConfig.tokenSecret` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** String
+
+**Default Value:** `""`
+
+**Basic usage:**
+
+`consul_token: "${CONSUL_ADMIN_TOKEN}"`
+
+**Usage in sample:** TBD
+
+### `CONSUL_ENABLED`
+
+---
+**Description:** Determines whether Consul is used
+
+Value is get from `vaultConfig.enable` of the Environment's [Cloud](/docs/envgene-objects.md#cloud) object
+
+**Type:** Boolean
+
+**Default Value:** `None`
+
+**Basic usage:**
+
+`consul_is_used: "${CONSUL_ENABLED}"`
+
+**Usage in sample:** TBD
+
 ## Credential Macro
 
 ---
@@ -400,6 +956,7 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 ```text
 ${creds.get('<cred-id>').username|password|secret}
 ```
+
 Where `username`, `password`, and `secret` are **credential fields** that define the type of sensitive data being referenced.
 
 For each `<cred-id>` during Environment Instance generation a [Credential](/docs/envgene-objects.md#credential) object is created in the [Environment Credential File](/docs/envgene-objects.md#environment-credential-file)
@@ -421,31 +978,35 @@ k8s_token: ${creds.get('k8s-cred').secret}
 
 ## Deprecated Macros
 
-### `environment.environmentName`
+### Deprecated Jinja Macros
+
+#### `environment.environmentName`
 
 **Description:** Name of environment
 
 **Replacement**: [`current_env.name`](#current_envname)
 
-### `tenant`
+#### `tenant`
 
 **Description:** Name of tenant for environment
 
 **Replacement**: [`current_env.tenant`](#current_envtenant)
 
-### `cloud`
+#### `cloud`
 
 **Description:** Name of cloud for environment
 
 **Replacement**: [`current_env.cloud`](#current_envcloud)
 
-### `deployer`
+#### `deployer`
 
 **Description:** Name of deployer used for environment
 
 **Replacement**: [`current_env.cmdb_name`](#current_envcmdb_name)
 
-### `${envgene.creds.get('<cred-id>').username|password|secret}`
+### Deprecated Credential Macros
+
+#### `${envgene.creds.get('<cred-id>').username|password|secret}`
 
 **Description:** This macro was used for processing system sensitive parameters—parameters that EnvGene uses to integrate itself with external systems, such as the login and password for a registry or a token for a GitLab instance.
 

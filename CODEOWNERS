@@ -1,3 +1,12 @@
-/docs/* /schemas/* /examples/* @popoveugene
+#####################################################
+#
+# List of approvers for this repository
+#
+#####################################################
 
-* @GlimmerCape
+#
+# Learn about CODEOWNERS file format:
+#  https://help.github.com/en/articles/about-code-owners
+#
+
+* @andyroode @popoveugene @GlimmerCape
