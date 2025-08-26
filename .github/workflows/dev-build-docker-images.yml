@@ -1,6 +1,6 @@
 name: "Dev: Build Qubership EnvGene docker images"
 
-run-name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.build-envgene == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE'))) && 'Build EnvGene docker images for commit ${{ github.sha }}' || 'Test EnvGene for commit ${{ github.sha }}' }}
+run-name: ${{ ((github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build-pipegene == 'true' || github.event.inputs.build-envgene == 'true' || github.event.inputs.build-pipeline == 'true' || github.event.inputs.build-effective-set == 'true' || github.event.inputs.build-effective-set-python == 'true'))) && 'Build EnvGene docker images for commit ${{ github.sha }}' || 'Test EnvGene for commit ${{ github.sha }}' }}
 
 on:
   workflow_dispatch:
