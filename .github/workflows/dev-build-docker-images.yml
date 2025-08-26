@@ -56,7 +56,7 @@ jobs:
   link-check:
     needs: [conventional-commits]
     uses: ./.github/workflows/link-checker.yaml
-  
+
   linters:
     needs: [conventional-commits]
     uses: ./.github/workflows/super-linter.yaml
@@ -71,7 +71,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
       - name: Run Tests
         uses: ./.github/actions/run-tests
 
