@@ -53,28 +53,22 @@ jobs:
   conventional-commits:
     uses: ./.github/workflows/pr-conventional-commits.yaml
 
+  link-check:
+    needs: [conventional-commits]
+    uses: ./.github/workflows/link-checker.yaml
+  
   linters:
     needs: [conventional-commits]
     uses: ./.github/workflows/super-linter.yaml
-    if: |
-      github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     with:
       full_scan: false
 
   tests:
     needs: [conventional-commits]
-    if: |
-      github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     container:
       image: python:3.12-slim-bookworm
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Check Conventional Commits
-        uses: webiny/action-conventional-commits@v1.3.0
-
       - name: Run Tests
         uses: ./.github/actions/run-tests
 

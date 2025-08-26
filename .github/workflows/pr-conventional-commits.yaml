@@ -8,7 +8,7 @@ on:
       - opened
       - edited
       - synchronize
-  workflow_call:
+  workflow_call: null
 
 permissions:
   contents: read
