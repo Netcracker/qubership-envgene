@@ -31,7 +31,7 @@ def test_render_envs(cluster_name, env_name, version):
     render_environment(env_name, cluster_name, g_templates_dir, g_inventory_dir, g_output_dir, version, g_base_dir)
     source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
     generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
-    files_to_compare = get_all_files_in_dir(source_dir, source_dir+"/")
+    files_to_compare = get_all_files_in_dir(source_dir)
     logger.info(dump_as_yaml_format(files_to_compare))
     match, mismatch, errors = filecmp.cmpfiles(source_dir , generated_dir, files_to_compare, shallow=False)
     logger.info(f"Match: {dump_as_yaml_format(match)}")

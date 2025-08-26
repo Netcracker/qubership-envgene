@@ -199,13 +199,11 @@ def removeAnsibleTrashFromFile(filePath):
         f.write(fileContent)
 
 
-def get_all_files_in_dir(dir, pathToRemove=""):
+def get_all_files_in_dir(dir):
+    dir_path = Path(dir)
     result = []
-    dirPath = Path(dir)
-    for item in dirPath.rglob("*"):
+    for item in dir_path.rglob("*"):
         if item.is_file():
-            itemStr = str(item)
-            if pathToRemove:
-                itemStr = itemStr.replace(pathToRemove, "")
-            result.append(itemStr)
+            result.append(str(item.relative_to(dir_path)))
     return result
+
