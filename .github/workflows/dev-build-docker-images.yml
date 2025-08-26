@@ -1,6 +1,6 @@
 name: "Dev: Build Qubership EnvGene docker images"
 
-run-name: ${{ ((github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build-pipegene == 'true' || github.event.inputs.build-envgene == 'true' || github.event.inputs.build-pipeline == 'true' || github.event.inputs.build-effective-set == 'true' || github.event.inputs.build-effective-set-python == 'true'))) && format('Build EnvGene docker images for commit {0}', github.sha) || format('Test EnvGene for commit {0}', github.sha) }}
+run-name: ${{ ((github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build-pipegene == 'true' || github.event.inputs.build-envgene == 'true' || github.event.inputs.build-pipeline == 'true' || github.event.inputs.build-effective-set == 'true' || github.event.inputs.build-effective-set-python == 'true'))) && format('Build EnvGene for commit {0}', github.sha) || format('Test EnvGene for commit {0}', github.sha) }}
 
 on:
   workflow_dispatch:
@@ -76,7 +76,7 @@ jobs:
         uses: ./.github/actions/run-tests
 
   build-qubership-pipegene:
-    needs: [linters, tests]
+    needs: [link-check, linters, tests]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
@@ -97,7 +97,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-qubership-envgene:
-    needs: [linters, tests]
+    needs: [link-check, linters, tests]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-envgene == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
@@ -117,7 +117,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-instance-repo-pipeline:
-    needs: [linters, tests]
+    needs: [linters, tests  ]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipeline == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
@@ -137,7 +137,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-effective-set-jar:
-    needs: [linters, tests]
+    needs: [link-check, linters, tests]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@main
     with:
@@ -171,7 +171,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-effective-set-generator-python:
-    needs: [linters, tests]
+    needs: [link-check, linters, tests]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set-python == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:

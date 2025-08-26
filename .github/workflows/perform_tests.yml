@@ -8,10 +8,7 @@ on:
   pull_request:
     branches:
       - '**'
-  push:
-    branches:
-      - '**'
-
+  
 env:
   CI_PROJECT_DIR: ${{ github.workspace }}
 

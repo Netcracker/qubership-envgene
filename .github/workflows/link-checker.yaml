@@ -2,10 +2,10 @@
 name: Link Checker
 
 on:
-  push: null
   repository_dispatch: null
   workflow_dispatch: null
   workflow_call: null
+
 permissions:
   contents: read
 jobs:
