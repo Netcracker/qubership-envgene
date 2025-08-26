@@ -11,8 +11,8 @@ on:
   workflow_call:
 
 permissions:
-  pull-requests: read
-  contents: read
+  pull-requests: write
+  contents: write
 jobs:
   build:
     name: Conventional Commits
