@@ -69,6 +69,9 @@ jobs:
     container:
       image: python:3.12-slim-bookworm
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
       - name: Run Tests
         uses: ./.github/actions/run-tests
 
