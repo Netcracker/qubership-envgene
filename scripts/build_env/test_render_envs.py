@@ -6,15 +6,15 @@ from main import render_environment
 from envgenehelper import *
 
 test_data = [
-      # (cluster_name, environment_name, template)
-      # ("cluster-01", "env-01", "composite-prod"),
-      # ("cluster-01", "env-02", "composite-dev"),
-      # ("cluster-01", "env-03", "composite-dev"),
-      # ("cluster-01", "env-04", "simple"),
-      # ("cluster01", "env01", "test-01"),
-      # ("cluster01", "env01", "test-01"),
-      # ("cluster01", "env03", "test-template-1"),
-      ("cluster01", "env04", "test-template-2")
+    # (cluster_name, environment_name, template)
+    # ("cluster-01", "env-01", "composite-prod"),
+    # ("cluster-01", "env-02", "composite-dev"),
+    # ("cluster-01", "env-03", "composite-dev"),
+    # ("cluster-01", "env-04", "simple"),
+    # ("cluster01", "env01", "test-01"),
+    # ("cluster01", "env01", "test-01"),
+    # ("cluster01", "env03", "test-template-1"),
+    ("cluster01", "env04", "test-template-2")
 ]
 
 g_templates_dir = getAbsPath("../../test_data/test_templates")
@@ -22,9 +22,19 @@ g_inventory_dir = getAbsPath("../../test_data/test_environments")
 g_output_dir = getAbsPath("../../tmp/test_environments")
 g_base_dir = get_parent_dir_for_dir(g_inventory_dir)
 
+
+@pytest.fixture(autouse=True)
+def clean_output_dir():
+    g_output_dir_path = Path(g_output_dir)
+    if g_output_dir_path.exists() and g_output_dir_path.is_dir():
+        shutil.rmtree(g_output_dir_path)
+    g_output_dir_path.mkdir(parents=True, exist_ok=True)
+
+
 @pytest.fixture(autouse=True)
 def change_test_dir(request, monkeypatch):
-    monkeypatch.chdir(request.fspath.dirname+"/../..")
+    monkeypatch.chdir(request.fspath.dirname + "/../..")
+
 
 @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
 def test_render_envs(cluster_name, env_name, version):
@@ -33,7 +43,7 @@ def test_render_envs(cluster_name, env_name, version):
     generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
     files_to_compare = get_all_files_in_dir(source_dir)
     logger.info(dump_as_yaml_format(files_to_compare))
-    match, mismatch, errors = filecmp.cmpfiles(source_dir , generated_dir, files_to_compare, shallow=False)
+    match, mismatch, errors = filecmp.cmpfiles(source_dir, generated_dir, files_to_compare, shallow=False)
     logger.info(f"Match: {dump_as_yaml_format(match)}")
     if len(mismatch) > 0:
         logger.error(f"Mismatch: {dump_as_yaml_format(mismatch)}")

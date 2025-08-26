@@ -63,30 +63,34 @@ def is_glob(path: str) -> bool:
     return any(ch in str(path) for ch in ["*", "?", "["])
 
 
+def is_source_path_valid(source_path: Path, target_path: Path) -> bool:
+    if not source_path.exists():
+        logger.info(f"Path {source_path} doesn't exist. Skipping...")
+        return False
+    if source_path == target_path:
+        logger.info(f"Trying to copy {source_path} to itself ({target_path}). Skipping...")
+        return False
+    return True
+
+
 def copy_path(source_path: str, target_path: str):
     target_path = Path(target_path).resolve()
-
     if is_glob(source_path):
         matches = glob.glob(source_path)
         if not matches:
-            logger.info(f"Path {source_path} doesn't exist. Skipping...")
+            logger.info(f"No files matched the pattern '{source_path}'. Nothing to copy. Skipping...")
             return
-
         for src in matches:
             src_path = Path(src).resolve()
-            if not src_path.exists() or src_path == target_path:
-                continue
-            final_target = target_path / src_path.name if src_path.is_dir() else target_path
-            final_target.parent.mkdir(parents=True, exist_ok=True)
-            cp.cp(str(src_path), str(final_target), force=True)
+            if is_source_path_valid(src_path, target_path):
+                final_target = target_path / src_path.name if src_path.is_dir() else target_path
+                final_target.parent.mkdir(parents=True, exist_ok=True)
+                cp.cp(str(src_path), str(final_target), force=True)
     else:
         src_path = Path(source_path).resolve()
-        if not src_path.exists() or src_path == target_path:
-            logger.info(f"Path {src_path} doesn't exist or trying to copy to itself. Skipping...")
-            return
-        final_target = target_path
-        final_target.parent.mkdir(parents=True, exist_ok=True)
-        cp.cp(str(src_path), str(final_target), force=True)
+        if is_source_path_valid(src_path, target_path):
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            cp.cp(str(src_path), str(target_path), force=True)
 
 
 def move_path(source_path, target_path):
@@ -185,20 +189,6 @@ def findFiles(fileList, pattern, notPattern="", additionalRegexpPattern="", addi
     return result
 
 
-def removeAnsibleTrashFromFile(filePath):
-    ansible_trash = [
-        "# BEGIN ANSIBLE MANAGED BLOCK\n---",
-        "# END ANSIBLE MANAGED BLOCK",
-        "# BEGIN ANSIBLE MANAGED BLOCK"
-    ]
-    with open(filePath, 'r') as f:
-        fileContent = f.read()
-        for trash in ansible_trash:
-            fileContent = fileContent.replace(trash, "")
-    with open(filePath, 'w') as f:
-        f.write(fileContent)
-
-
 def get_all_files_in_dir(dir):
     dir_path = Path(dir)
     result = []
@@ -206,4 +196,3 @@ def get_all_files_in_dir(dir):
         if item.is_file():
             result.append(str(item.relative_to(dir_path)))
     return result
-
