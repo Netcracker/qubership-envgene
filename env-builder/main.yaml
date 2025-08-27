@@ -4,22 +4,6 @@
   connection: local
   gather_facts: false
   tasks:
-    - name: Find parametersets with Jinja templates
-      ansible.builtin.find:
-        paths: "{{ render_parameters_dir }}"
-        patterns: '*.yml.j2,*.yaml.j2'
-        recurse: true
-      register: paramset_templates
-
-    - name: Generate paramsets defined using Jinja templates
-      ansible.builtin.include_role:
-        name: generate_paramsets
-      vars:
-        _paramset_path: "{{ paramset_file.path }}"
-      loop: "{{ paramset_templates.files }}"
-      loop_control:
-        loop_var: paramset_file
-      when: paramset_templates.files | length > 0
 
 # Validate Required Variables
 

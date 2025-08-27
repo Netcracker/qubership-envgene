@@ -1,6 +1,3 @@
-import os
-from os import *
-
 import ansible_runner
 from envgenehelper import *
 

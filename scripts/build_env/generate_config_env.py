@@ -3,7 +3,7 @@ from pathlib import Path
 
 from deepmerge import always_merger
 from envgenehelper import logger, openYaml, readYaml, dumpYamlToStr, writeYamlToFile, openFileAsString, copy_path
-from jinja2 import Environment, FileSystemLoader, Template, ChainableUndefined
+from jinja2 import Environment, FileSystemLoader, Template, ChainableUndefined, TemplateError
 
 env = Environment(undefined=ChainableUndefined)
 
@@ -219,20 +219,23 @@ def calculate_cloud_name(context):
     return next((c for c in candidates if c), "")
 
 
-# TODO need to creare tests
-def generate_profile(profile, context):
-    current_env_dir = context["current_env_dir"]
-    template_path = Path(profile["template_path"])
-    template_name = (
+def get_template_name(template_path: Path) -> str:
+    return (
         template_path.name
         .replace(".yml.j2", "")
         .replace(".yaml.j2", "")
     )
-    logger.info("Generate profile yaml for %s", template_path)
-    profiles_dir = Path(current_env_dir) / "Profiles"
-    profiles_dir.mkdir(parents=True, exist_ok=True)
-    profile_path = profiles_dir / f"{template_name}.yml"
-    render_from_file_to_file(Template(str(template_path)).render(context), profile_path, context)
+
+
+# def generate_profile(profile, context):
+#     current_env_dir = context["current_env_dir"]
+#     template_path = Path(profile["template_path"])
+#     template_name = get_template_name(template_path)
+#     logger.info("Generate profile yaml for %s", template_path)
+#     profiles_dir = Path(current_env_dir) / "Profiles"
+#     profiles_dir.mkdir(parents=True, exist_ok=True)
+#     profile_path = profiles_dir / f"{template_name}.yml"
+#     render_from_file_to_file(Template(str(template_path)).render(context), profile_path, context)
 
 
 def generate_composite_structure(composite_structure, context):
@@ -241,6 +244,32 @@ def generate_composite_structure(composite_structure, context):
     cs_file = Path(current_env_dir) / "composite_structure.yml"
     cs_file.parent.mkdir(parents=True, exist_ok=True)
     render_from_file_to_file(Template(composite_structure).render(context), cs_file, context)
+
+
+def generate_paramset_templates(context):
+    render_dir = Path(context["render_parameters_dir"]).resolve()
+    patterns = ["*.yml.j2", "*.yaml.j2"]
+
+    paramset_templates = []
+    for pattern in patterns:
+        paramset_templates.extend(render_dir.rglob(pattern))
+    logger.info("Total parameter set templates list found: %s", paramset_templates)
+
+    for template_path in paramset_templates:
+        template_name = get_template_name(template_path)
+        target_path = Path(str(template_path).replace(".yml.j2", ".yml").replace(".yaml.j2", ".yml"))
+
+        try:
+            logger.info("Try to render paramset %s", template_name)
+            render_from_file_to_file(Template(str(template_path)).render(context), target_path, context)
+            logger.info("Successfully generated paramset: %s", template_name)
+            if template_path.exists():
+                template_path.unlink()
+        except TemplateError as e:
+            logger.warning("Skipped paramset %s - template variables not available in current environment",
+                           template_name, e)
+            if target_path.exists():
+                target_path.unlink()
 
 
 def generate_config_env(envvars: dict):
@@ -285,10 +314,10 @@ def generate_config_env(envvars: dict):
     generate_namespace_file(context)
 
     current_env_template = context["current_env_template"]
-    resource_profiles = current_env_template.get("resourceProfiles")
-    if resource_profiles:
-        for profile in resource_profiles:
-            generate_profile(profile, context)
+    # resource_profiles = current_env_template.get("resourceProfiles")
+    # if resource_profiles:
+    #     for profile in resource_profiles:
+    #         generate_profile(profile, context)
 
     composite_structure = current_env_template.get("composite_structure")
     if composite_structure:
@@ -299,3 +328,4 @@ def generate_config_env(envvars: dict):
     if env_specific_schema:
         schema_target_path = current_env_dir + "/env-specific-schema.yml"
         copy_path(source_path=env_specific_schema, target_path=schema_target_path)
+    generate_paramset_templates(context)
