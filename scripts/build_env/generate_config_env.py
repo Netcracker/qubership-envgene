@@ -3,9 +3,18 @@ from pathlib import Path
 
 from deepmerge import always_merger
 from envgenehelper import logger, openYaml, readYaml, dumpYamlToStr, writeYamlToFile, openFileAsString, copy_path
-from jinja2 import Environment, FileSystemLoader, Template, ChainableUndefined, TemplateError
+from jinja2 import Environment, FileSystemLoader, Template, ChainableUndefined, TemplateError, BaseLoader
 
-env = Environment(undefined=ChainableUndefined)
+
+def create_jinja_env(templates_dir: str = "") -> Environment:
+    loader = FileSystemLoader(templates_dir) if templates_dir else BaseLoader()
+    env = Environment(
+        loader=loader,
+        undefined=ChainableUndefined,
+        trim_blocks=True,
+        lstrip_blocks=True,
+    )
+    return env
 
 
 def get_inventory(context: dict) -> dict:
@@ -41,8 +50,7 @@ def generate_config(context: dict) -> dict:
     #         env_template["envSpecificParamsets"] = additional_template_variables
     #     context["env_definition"]["envTemplate"] = env_template
     templates_dir = Path(__file__).parent / "templates"
-    j2env = Environment(loader=FileSystemLoader(str(templates_dir)))
-    template = j2env.get_template("env_config.yml.j2")
+    template = create_jinja_env(str(templates_dir)).get_template("env_config.yml.j2")
     config = readYaml(text=template.render(context), safe_load=True)
     logger.info("config = %s", config)
     return config
@@ -142,7 +150,7 @@ def generate_solution_structure(context: dict):
 
 def render_from_file_to_file(src_template_path, target_file_path, context):
     template = openFileAsString(src_template_path)
-    rendered = env.from_string(template).render(context)
+    rendered = create_jinja_env().from_string(template).render(context)
     writeYamlToFile(target_file_path, readYaml(rendered))
 
 
@@ -282,6 +290,13 @@ def validate_required_variables(context, required: list[str]):
     logger.info("All required %s variables are defined", required)
 
 
+def process_external_defs(context):
+    use_external_defs = bool(context.get("app_reg_defs_job"))
+    if use_external_defs:
+        logger.info("APP_REG_DEFS_JOB variable is set, "
+                    "Application and Registry definitions from corresponding job will be used for the Environment")
+
+
 def generate_config_env(envvars: dict):
     context = {}
     env_vars = dict(os.environ)
@@ -342,3 +357,4 @@ def generate_config_env(envvars: dict):
 
     validate_required_variables(context,
                                 required=["templates_dir", "env_instances_dir", "cluster_name", "current_env_dir"])
+    process_external_defs(context)

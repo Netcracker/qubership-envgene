@@ -4,18 +4,6 @@
   connection: local
   gather_facts: false
   tasks:
-
-# Check for APP_REG_DEFS_JOB Parameter
-
-    - name: Check if APP_REG_DEFS_JOB is defined
-      ansible.builtin.set_fact:
-        use_external_defs: "{{ app_reg_defs_job is defined and app_reg_defs_job | length > 0 }}"
-
-    - name: Log external definitions usage
-      ansible.builtin.debug:
-        msg: "APP_REG_DEFS_JOB variable is set, Application and Registry definitions from corresponding job will be used for the Environment"
-      when: use_external_defs
-
     - name: Process external definitions
       block:
         - name: Get and unpack external definitions
