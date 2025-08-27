@@ -5,9 +5,9 @@
 
 - name: 02. prepare vars
   include_tasks: 02_prepare_vars.yaml
-#
-# - name: 03. upload template
-#   include_tasks: 03_upload_template.yaml
+
+- name: 03. upload template
+  include_tasks: 03_upload_template.yaml
 
 - name: 04. execute_script
   include_tasks: 04_execute_script.yaml

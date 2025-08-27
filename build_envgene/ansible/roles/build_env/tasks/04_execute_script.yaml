@@ -1,7 +1,7 @@
 ---
 - name: Prepare script arguments
   set_fact:
-    script_args: "-e {{ environment_name }} -c {{ cluster_name }} -o {{ base_dir }}/environments -t /template -i {{ base_dir }}/environments -k {{ atrifact_latest_version | default(version)}}"
+    script_args: "-e {{ environment_name }} -c {{ cluster_name }} -o {{ base_dir }}/environments -t {{ build_env_path }}/templates -i {{ base_dir }}/environments -k {{ atrifact_latest_version | default(version)}}"
 
 - name: Log script args
   debug:
