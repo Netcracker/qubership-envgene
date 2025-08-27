@@ -123,13 +123,11 @@
 
     - name: Read bg_domain_object from file
       set_fact:
-        bg_domain_object: "{{ lookup('file', current_env_dir ~ '/bg_domain.yml') | from_yaml }}"
-      when: current_env_template.bg_domain is defined
+        bg_domain_object: "{{ lookup('file', current_env_dir ~ '/bg_domain.yml', errors='ignore') | default('') | from_yaml | default({}) }}"
 
     - name: Filter namespaces and save into var
       set_fact:
         filtered_namespaces: "{{ current_env_template.namespaces | filter_namespaces(_ns_build_filter, bg_domain_object)}}"
-      when: bg_domain_object is defined
 
     - name: Gen namespaces
       ansible.builtin.include_role:
