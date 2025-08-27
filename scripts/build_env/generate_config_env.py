@@ -152,11 +152,6 @@ def render_from_file_to_obj(src_template_path, context) -> dict:
     return readYaml(rendered)
 
 
-# def render_from_str_to_file(template_str, target_file_path, context):
-#     rendered = Template(template_str).render(context)
-#     writeYamlToFile(target_file_path, readYaml(rendered))
-
-
 def generate_tenant_file(context: dict):
     logger.info("Generate Tenant yaml for %s", context["tenant"])
     tenant_file = Path(f'{context["current_env_dir"]}/tenant.yml')
@@ -224,6 +219,30 @@ def calculate_cloud_name(context):
     return next((c for c in candidates if c), "")
 
 
+# TODO need to creare tests
+def generate_profile(profile, context):
+    current_env_dir = context["current_env_dir"]
+    template_path = Path(profile["template_path"])
+    template_name = (
+        template_path.name
+        .replace(".yml.j2", "")
+        .replace(".yaml.j2", "")
+    )
+    logger.info("Generate profile yaml for %s", template_path)
+    profiles_dir = Path(current_env_dir) / "Profiles"
+    profiles_dir.mkdir(parents=True, exist_ok=True)
+    profile_path = profiles_dir / f"{template_name}.yml"
+    render_from_file_to_file(Template(str(template_path)).render(context), profile_path, context)
+
+
+def generate_composite_structure(composite_structure, context):
+    logger.info("Generate Composite Structure yaml for %s", composite_structure)
+    current_env_dir = context["current_env_dir"]
+    cs_file = Path(current_env_dir) / "composite_structure.yml"
+    cs_file.parent.mkdir(parents=True, exist_ok=True)
+    render_from_file_to_file(Template(composite_structure).render(context), cs_file, context)
+
+
 def generate_config_env(envvars: dict):
     context = {}
     env_vars = dict(os.environ)
@@ -264,3 +283,13 @@ def generate_config_env(envvars: dict):
     generate_tenant_file(context)
     generate_cloud_file(context)
     generate_namespace_file(context)
+
+    current_env_template = context["current_env_template"]
+    resource_profiles = current_env_template.get("resourceProfiles")
+    if resource_profiles:
+        for profile in resource_profiles:
+            generate_profile(profile, context)
+
+    composite_structure = current_env_template.get("composite_structure")
+    if composite_structure:
+        generate_composite_structure(composite_structure, context)
