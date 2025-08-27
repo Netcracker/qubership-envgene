@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from deepmerge import always_merger
-from envgenehelper import logger, openYaml, readYaml, dumpYamlToStr, writeYamlToFile, openFileAsString
+from envgenehelper import logger, openYaml, readYaml, dumpYamlToStr, writeYamlToFile, openFileAsString, copy_path
 from jinja2 import Environment, FileSystemLoader, Template, ChainableUndefined
 
 env = Environment(undefined=ChainableUndefined)
@@ -293,3 +293,9 @@ def generate_config_env(envvars: dict):
     composite_structure = current_env_template.get("composite_structure")
     if composite_structure:
         generate_composite_structure(composite_structure, context)
+
+    env_specific_schema = current_env_template.get("envSpecificSchema")
+    current_env_dir = context["current_env_dir"]
+    if env_specific_schema:
+        schema_target_path = current_env_dir + "/env-specific-schema.yml"
+        copy_path(source_path=env_specific_schema, target_path=schema_target_path)

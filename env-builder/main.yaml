@@ -4,12 +4,6 @@
   connection: local
   gather_facts: false
   tasks:
-    - name: Generate environment specific schema
-      ansible.builtin.copy:
-        src: "{{ current_env_template.envSpecificSchema }}"
-        dest: "{{ current_env_dir }}/env-specific-schema.yml"
-      when: current_env_template.envSpecificSchema is defined
-
     - name: Find parametersets with Jinja templates
       ansible.builtin.find:
         paths: "{{ render_parameters_dir }}"
