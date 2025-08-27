@@ -272,6 +272,16 @@ def generate_paramset_templates(context):
                 target_path.unlink()
 
 
+def validate_required_variables(context, required: list[str]):
+    missing = [var for var in required if var not in context]
+    if missing:
+        raise ValueError(
+            f"Required variables: {', '.join(required)}. "
+            f"Not found: {', '.join(missing)}"
+        )
+    logger.info("All required %s variables are defined", required)
+
+
 def generate_config_env(envvars: dict):
     context = {}
     env_vars = dict(os.environ)
@@ -329,3 +339,6 @@ def generate_config_env(envvars: dict):
         schema_target_path = current_env_dir + "/env-specific-schema.yml"
         copy_path(source_path=env_specific_schema, target_path=schema_target_path)
     generate_paramset_templates(context)
+
+    validate_required_variables(context,
+                                required=["templates_dir", "env_instances_dir", "cluster_name", "current_env_dir"])

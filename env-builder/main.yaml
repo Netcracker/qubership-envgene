@@ -5,17 +5,6 @@
   gather_facts: false
   tasks:
 
-# Validate Required Variables
-
-    - name: Validate required variables
-      ansible.builtin.assert:
-        that:
-          - templates_dir is defined
-          - env_instances_dir is defined
-          - cluster_name is defined
-          - current_env_dir is defined
-        fail_msg: "Missing one or more required variables: templates_dir, env_instances_dir, cluster_name, current_env_dir. Please check your configuration."
-
 # Check for APP_REG_DEFS_JOB Parameter
 
     - name: Check if APP_REG_DEFS_JOB is defined
