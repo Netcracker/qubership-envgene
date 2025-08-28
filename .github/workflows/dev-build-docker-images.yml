@@ -52,7 +52,7 @@ on:
       - '**.md'
       - 'docs/**'
       - 'README.md'
-      - 'CHANGELOG.md'    
+      - 'CHANGELOG.md'
 
 env:
   REGISTRY: ghcr.io
@@ -210,15 +210,15 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-instance-repo-pipeline:
-    needs: 
+    needs:
       - tests
       - build-qubership-pipegene
       - build-qubership-envgene
       - build-effective-set-generator
       - build-effective-set-generator-python
     if: |
-      always() && 
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipeline == 'true') || 
+      always() &&
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipeline == 'true') ||
       (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
@@ -245,20 +245,17 @@ jobs:
         run: |
           # Use outputs from previous jobs instead of regenerating tags
           echo "Using tags from previous job outputs:"
-          
+
           # Check which images were built and update accordingly
-          if [[ "${{ needs.build-qubership-gcip.result }}" == "success" ]]; then
-            sed -i "s|qubership-gcip:[^']*|qubership-gcip:${{ needs.build-qubership-gcip.outputs.custom_tag }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
+          if [[ "${{ needs.build-qubership-pipegene.result }}" == "success" ]]; then
+            sed -i "s|qubership-pipegene:[^']*|qubership-pipegene:${{ needs.build-qubership-pipegene.outputs.custom_tag }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
           fi
-          
           if [[ "${{ needs.build-qubership-envgene.result }}" == "success" ]]; then
             sed -i "s|qubership-envgene:[^']*|qubership-envgene:${{ needs.build-qubership-envgene.outputs.custom_tag }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
           fi
-          
           if [[ "${{ needs.build-effective-set-generator.result }}" == "success" ]]; then
             sed -i "s|qubership-effective-set-generator:[^']*|qubership-effective-set-generator:${{ needs.build-effective-set-generator.outputs.custom_tag }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
           fi
-          
           if [[ "${{ needs.build-effective-set-generator-python.result }}" == "success" ]]; then
             sed -i "s|qubership-effective-set-generator-python:[^']*|qubership-effective-set-generator-python:${{ needs.build-effective-set-generator-python.outputs.custom_tag }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
           fi
