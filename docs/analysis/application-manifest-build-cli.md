@@ -356,7 +356,7 @@ Describes ZIP archive as a Maven artifact
 
 ## Output Transformer
 
-The output transformer must obtain information from the built artifact.
+The output transformer must obtain information from the built artifact OR build job artifact.
 
 The output transformer must produce the same output for a specific `mime-type` regardless of the action used to build the component.
 
