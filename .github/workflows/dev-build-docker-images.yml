@@ -36,9 +36,8 @@ on:
         default: true
         type: boolean
   push:
-    branches:
-      - '**'
-      - '!main'
+    branches-ignore:
+      - main
     paths-ignore:
       - '**.md'
       - 'docs/**'
