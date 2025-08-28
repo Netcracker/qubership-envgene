@@ -8,13 +8,10 @@ on:
       - opened
       - edited
       - synchronize
-  push:
-    branches:
-      - 'feature/**'
-      - 'bugfix/**'
+  workflow_call: null
 
 permissions:
-  pull-requests: read
+  contents: read
 jobs:
   build:
     name: Conventional Commits

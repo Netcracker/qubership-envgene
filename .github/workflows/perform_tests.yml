@@ -8,14 +8,17 @@ on:
   pull_request:
     branches:
       - '**'
-  push:
-    branches:
-      - '**'
 
 env:
   CI_PROJECT_DIR: ${{ github.workspace }}
 
 jobs:
+  linters:
+    uses: ./.github/workflows/super-linter.yaml
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call' || github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main' && !startsWith(github.event.head_commit.message, 'fix:') && !startsWith(github.event.head_commit.message, 'feat:') && !startsWith(github.event.head_commit.message, 'breaking change') && !startsWith(github.event.head_commit.message, 'BREAKING CHANGE')) }}
+    with:
+      full_scan: false
+
   pytest:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call' || github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main' && !startsWith(github.event.head_commit.message, 'fix:') && !startsWith(github.event.head_commit.message, 'feat:') && !startsWith(github.event.head_commit.message, 'breaking change') && !startsWith(github.event.head_commit.message, 'BREAKING CHANGE')) }}
