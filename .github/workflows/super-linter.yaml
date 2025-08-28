@@ -9,7 +9,7 @@
 # .github/super-linter.env
 # Configuration files for individual linters should be placed in .github/linters
 
-name: "Pull Request: Lint Code Base"
+name: "Lint Code Base"
 
 on:
   pull_request:

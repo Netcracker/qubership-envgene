@@ -1,5 +1,5 @@
 ---
-name: "Pull Request: Link Checker"
+name: "Link Checker"
 
 on:
   pull_request:
