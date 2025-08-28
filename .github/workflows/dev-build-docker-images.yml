@@ -258,25 +258,25 @@ jobs:
           if [[ "${{ needs.build-effective-set-generator-python.result }}" == "success" ]]; then
             sed -i "s|qubership-effective-set-generator-python:[^']*|qubership-effective-set-generator-python:${{ needs.build-effective-set-generator-python.outputs.custom_tag }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
           fi
-          
+
           # Check if any images were updated
           if git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml; then
             echo "No changes to commit - no images were built or tags were already up to date"
           else
             echo "Updated pipeline.yml with docker tags from job outputs"
           fi
-          
+
           # Show the changes
           echo "Changes made to pipeline.yml:"
           git diff github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml || true
-          
+
           # Commit the changes only if there are actual changes
           if ! git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml; then
             git config --global user.name "qubership-actions[bot]"
             git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
             git add github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
             git commit -m "chore: Update docker image tags from job outputs for branch ${{ github.ref_name }}"
-            
+  
             # Push the changes
             git push origin HEAD:${{ github.ref_name }} || echo "Failed to push changes"
           else
