@@ -1,4 +1,7 @@
+import base64
 import os
+import re
+import time
 from pathlib import Path
 
 from deepmerge import always_merger
@@ -280,21 +283,137 @@ def generate_paramset_templates(context):
                 target_path.unlink()
 
 
-def validate_required_variables(context, required: list[str]):
+def process_external_defs(context):
+    logger.info("APP_REG_DEFS_JOB variable is set, "
+                "Application and Registry definitions from corresponding job will be used for the Environment")
+
+
+def find_templates(templates_dir: str, def_type: str) -> list[Path]:
+    search_path = Path(templates_dir) / def_type
+    if not search_path.exists():
+        logger.info(f"Directory with templates for {def_type} not found: {search_path}")
+        return []
+
+    patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
+    templates = []
+
+    for pattern in patterns:
+        for f in search_path.rglob(pattern):
+            if f.is_file():
+                templates.append(f)
+
+    logger.info(f"{def_type.capitalize()} Found: {len(templates)}")
+    return templates
+
+
+def ensure_directory(path: Path, mode: int = 0o755):
+    if not path.exists():
+        path.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Created directory: {path}")
+    else:
+        logger.info(f"Directory already exists: {path}")
+    path.chmod(mode)
+    logger.info(f"Set permissions {oct(mode)} for {path}")
+
+
+def render_app_defs(context):
+    for def_tmpl_path in context.get("appdef_templates"):
+        app_def_str = openFileAsString(def_tmpl_path)
+        matches = re.findall(
+            r'^\s*(name|artifactId|groupId):\s*"([^"]+)"',
+            app_def_str,
+            flags=re.MULTILINE,
+        )
+        appdef_meta = dict(matches)
+        ensure_valid_fields(appdef_meta, ["artifactId", "groupId", "name"])
+        group_id = appdef_meta["groupId"]
+        artifact_id = appdef_meta["artifactId"]
+        context.update({
+            "app_lookup_key": f"{group_id}:{artifact_id}",
+            "groupId": group_id,
+            "artifactId": artifact_id,
+        })
+        basename = os.path.basename(def_tmpl_path)
+        name_no_j2 = re.sub(r"\.j2$", "", basename)
+        app_def_trg_path = os.path.join(
+            context["tmp_render_dir"],
+            f"{name_no_j2}.{context['render_timestamp']}.rendered.appdef.yml",
+        )
+        render_from_file_to_file(def_tmpl_path, app_def_trg_path, context)
+
+        # text_content = openFileAsString(app_def_trg_path)
+        # encoded = base64.b64encode(text_content.encode("utf-8")).decode("utf-8")
+        # decoded_content = base64.b64decode(encoded).decode("utf-8")
+        # output_dir = Path(current_env_dir) / "AppDefs"
+        # output_dir.mkdir(parents=True, exist_ok=True)
+        # dest = output_dir / f"{appdef_meta['name']}.yml"
+        # dest.write_text(decoded_content, encoding="utf-8")
+        # dest.chmod(0o644)
+
+
+def ensure_required_keys(context, required: list[str]):
     missing = [var for var in required if var not in context]
     if missing:
-        raise ValueError(
-            f"Required variables: {', '.join(required)}. "
-            f"Not found: {', '.join(missing)}"
-        )
+        raise ValueError(f"Required variables: {', '.join(required)}. "f"Not found: {', '.join(missing)}")
     logger.info("All required %s variables are defined", required)
 
 
-def process_external_defs(context):
-    use_external_defs = bool(context.get("app_reg_defs_job"))
+def ensure_valid_fields(context, fields: list[str]):
+    invalid = []
+    for field in fields:
+        value = context.get(field)
+        if not value:
+            invalid.append(f"{field}={value!r}")
+
+    if invalid:
+        raise ValueError(
+            f"Invalid or empty fields found: {', '.join(invalid)}. "f"Required fields: {', '.join(fields)}")
+    logger.info("All required fields are present and non-empty: %s", ", ".join(fields))
+
+
+def process_app_reg_defs(context):
+    current_env_dir = context["current_env_dir"]
+    use_external_defs = bool(context.get("APP_REG_DEFS_JOB"))
+    context["use_external_defs"] = use_external_defs
     if use_external_defs:
-        logger.info("APP_REG_DEFS_JOB variable is set, "
-                    "Application and Registry definitions from corresponding job will be used for the Environment")
+        process_external_defs(context)
+    else:
+        templates_dir = context["templates_dir"]
+        appdef_templates = find_templates(templates_dir, "appdefs")
+        regdef_templates = find_templates(templates_dir, "regdefs")
+        context["appdef_templates"] = appdef_templates
+        context["regdef_templates"] = regdef_templates
+
+        ensure_directory(Path(current_env_dir).joinpath("AppDefs"))
+        ensure_directory(Path(current_env_dir).joinpath("RegDefs"))
+
+        output_dir = Path(context["output_dir"])
+        cluster_name = context["cluster_name"]
+        config_file_name_yaml = Path("configuration") / "appregdef_config.yaml"
+        config_file_name_yml = Path("configuration") / "appregdef_config.yml"
+
+        potential_config_files = [
+            output_dir / cluster_name / config_file_name_yaml,
+            output_dir / cluster_name / config_file_name_yml,
+            output_dir.parent / config_file_name_yaml,
+            output_dir.parent / config_file_name_yml,
+        ]
+        appregdef_config_paths = [f for f in potential_config_files if f.exists()]
+        if appregdef_config_paths:
+            appregdef_config = {}
+            appregdef_config_path = appregdef_config_paths[0]
+            try:
+                appregdef_config = openYaml(appregdef_config_path)
+                logger.info(f"Overrides applications registries definitions config found at: {appregdef_config_path}")
+            except Exception as e:
+                logger.warning(f"Failed to load config at: {appregdef_config_path}. Error: {e}")
+
+        context["appdefs"]["overrides"] = appregdef_config.get("appdefs", {}).get("overrides", {})
+        context["regdefs"]["overrides"] = appregdef_config.get("regdefs", {}).get("overrides", {})
+        render_timestamp = int(time.time())
+        context["render_timestamp"] = render_timestamp
+        context["tmp_render_dir"] = "/tmp"
+        render_app_defs(context)
 
 
 def generate_config_env(envvars: dict):
@@ -303,6 +422,7 @@ def generate_config_env(envvars: dict):
     context["env_vars"] = {
         "CI_COMMIT_TAG": env_vars.get("CI_COMMIT_TAG"),
         "CI_COMMIT_REF_NAME": env_vars.get("CI_COMMIT_REF_NAME"),
+        "APP_REG_DEFS_JOB": env_vars.get("APP_REG_DEFS_JOB")
     }
     context.update(envvars)
     context["env_definition"] = get_inventory(context)
@@ -355,6 +475,6 @@ def generate_config_env(envvars: dict):
         copy_path(source_path=env_specific_schema, target_path=schema_target_path)
     generate_paramset_templates(context)
 
-    validate_required_variables(context,
-                                required=["templates_dir", "env_instances_dir", "cluster_name", "current_env_dir"])
-    process_external_defs(context)
+    ensure_required_keys(context,
+                         required=["templates_dir", "env_instances_dir", "cluster_name", "current_env_dir"])
+    process_app_reg_defs(context)

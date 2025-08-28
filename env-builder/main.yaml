@@ -4,80 +4,26 @@
   connection: local
   gather_facts: false
   tasks:
-    - name: Process external definitions
-      block:
-        - name: Get and unpack external definitions
-          ansible.builtin.unarchive:
-            src: "{{ jenkins_artifacts_dir }}/{{ app_reg_defs_job }}/definitions.zip"
-            dest: "/tmp/external_defs"
-            remote_src: true
-
-        - name: Copy external AppDefs to environment
-          ansible.builtin.copy:
-            src: "/tmp/external_defs/{{ app_defs_path }}/"
-            dest: "{{ current_env_dir }}/AppDefs/"
-            remote_src: true
-          when: app_defs_path is defined
-
-        - name: Copy external RegDefs to environment
-          ansible.builtin.copy:
-            src: "/tmp/external_defs/{{ reg_defs_path }}/"
-            dest: "{{ current_env_dir }}/RegDefs/"
-            remote_src: true
-          when: reg_defs_path is defined
-      when: use_external_defs
-
-# Discover and Render AppDef / RegDef Templates
-
-    - name: Find AppDef templates
-      ansible.builtin.find:
-        paths: "{{ templates_dir }}/appdefs"
-        patterns:
-          - "*.yaml.j2"
-          - "*.yml.j2"
-          - "*.j2"
-          - "*.yaml"
-          - "*.yml"
-        recurse: true
-        use_regex: false
-        file_type: file
-      register: appdef_templates
-      ignore_errors: true
-      when: not use_external_defs
-
-    - name: Find RegDef templates
-      ansible.builtin.find:
-        paths: "{{ templates_dir }}/regdefs"
-        patterns:
-          - "*.yaml.j2"
-          - "*.yml.j2"
-          - "*.j2"
-          - "*.yaml"
-          - "*.yml"
-        recurse: true
-        use_regex: false
-        file_type: file
-      register: regdef_templates
-      ignore_errors: true
-      when: not use_external_defs
-
-    - name: Debug - Found AppDef and RegDef templates
-      ansible.builtin.debug:
-        msg:
-          - "AppDefs Found: {{ appdef_templates.files | default([]) | length }}"
-          - "RegDefs Found: {{ regdef_templates.files | default([]) | length }}"
-      when: not use_external_defs
-
-# Conditionally Render Templates if Present
-
-    - name: Render AppDef / RegDef templates
-      ansible.builtin.include_role:
-        name: generate_appregdefs
-      vars:
-        appdef_templates_files: "{{ appdef_templates.files | default([]) }}"
-        regdef_templates_files: "{{ regdef_templates.files | default([]) }}"
-      when: >
-        not use_external_defs and
-        ((appdef_templates.files is defined and appdef_templates.files | length > 0) or
-        (regdef_templates.files is defined and regdef_templates.files | length > 0))
+#    - name: Process external definitions
+#      block:
+#        - name: Get and unpack external definitions
+#          ansible.builtin.unarchive:
+#            src: "{{ jenkins_artifacts_dir }}/{{ app_reg_defs_job }}/definitions.zip"
+#            dest: "/tmp/external_defs"
+#            remote_src: true
+#
+#        - name: Copy external AppDefs to environment
+#          ansible.builtin.copy:
+#            src: "/tmp/external_defs/{{ app_defs_path }}/"
+#            dest: "{{ current_env_dir }}/AppDefs/"
+#            remote_src: true
+#          when: app_defs_path is defined
+#
+#        - name: Copy external RegDefs to environment
+#          ansible.builtin.copy:
+#            src: "/tmp/external_defs/{{ reg_defs_path }}/"
+#            dest: "{{ current_env_dir }}/RegDefs/"
+#            remote_src: true
+#          when: reg_defs_path is defined
+#      when: use_external_defs
 
