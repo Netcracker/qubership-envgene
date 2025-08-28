@@ -1,0 +1,37 @@
+# This action is hidden from the GitHub Actions UI
+name: 'Generate Docker Tags'
+description: 'Generate custom Docker tags with timestamp and branch information'
+
+outputs:
+  custom_tag:
+    description: 'Custom tag with timestamp'
+    value: ${{ steps.tags.outputs.custom_tag }}
+  branch_tag:
+    description: 'Branch-based tag'
+    value: ${{ steps.tags.outputs.branch_tag }}
+  timestamp:
+    description: 'Generated timestamp'
+    value: ${{ steps.tags.outputs.timestamp }}
+  branch_latest_tag:
+    description: 'Branch latest tag'
+    value: ${{ steps.tags.outputs.branch_latest_tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Generate custom tags with timestamp
+      id: tags
+      shell: bash
+      run: |
+        # Transform branch name to docker tag format
+        BRANCH_NAME="${{ github.ref_name }}"
+        DOCKER_TAG=$(echo "$BRANCH_NAME" | sed 's|/|_|g')
+        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+        CUSTOM_TAG="${DOCKER_TAG}_${TIMESTAMP}"
+        BRANCH_LATEST_TAG="${DOCKER_TAG}"
+        
+        # Set output for next steps
+        echo "custom_tag=$CUSTOM_TAG" >> $GITHUB_OUTPUT
+        echo "branch_tag=$DOCKER_TAG" >> $GITHUB_OUTPUT
+        echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+        echo "branch_latest_tag=$BRANCH_LATEST_TAG" >> $GITHUB_OUTPUT
