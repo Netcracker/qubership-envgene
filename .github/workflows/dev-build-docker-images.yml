@@ -38,11 +38,21 @@ on:
   push:
     branches:
       - '**'
+      - '!main'
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - 'README.md'
       - 'CHANGELOG.md'
+  pull_request:
+    types: [closed]
+    branches:
+      - 'main'
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'README.md'
+      - 'CHANGELOG.md'    
 
 env:
   REGISTRY: ghcr.io
@@ -89,17 +99,23 @@ jobs:
       packages: write
       attestations: write
       id-token: write
+    outputs:
+      custom_tag: ${{ steps.build-pipegene.outputs.custom_tag }}
+      branch_tag: ${{ steps.build-pipegene.outputs.branch_tag }}
+      timestamp: ${{ steps.build-pipegene.outputs.timestamp }}
+      branch_latest_tag: ${{ steps.build-pipegene.outputs.branch_latest_tag }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Build Qubership PipeGene Docker Image
-        uses: ./.github/actions/build-pipegene
-        with:
-          registry: ${{ env.REGISTRY }}
-          git-user: ${{ secrets.GIT_USER }}
-          git-token: ${{ secrets.GIT_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build Qubership PipeGene Docker Image
+      uses: ./.github/actions/build-pipegene
+      id: build-pipegene
+      with:
+        registry: ${{ env.REGISTRY }}
+        git-user: ${{ secrets.GIT_USER }}
+        git-token: ${{ secrets.GIT_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-qubership-envgene:
     needs: [link-check, linters, tests]
