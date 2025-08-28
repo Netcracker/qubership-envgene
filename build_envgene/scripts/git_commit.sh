@@ -90,6 +90,31 @@ if [ -e gitlab-ci/prefix_build ]; then
   cp -r templates /tmp
 fi
 
+#Copying cred files modified as part of cred rotation job.
+CREDS_FILE="environments/credfilestoupdate.yml"
+if [ -f "$CREDS_FILE" ]; then
+  echo "Processing $CREDS_FILE for copying filtered creds..."
+
+  mkdir -p /tmp/updated_creds
+
+  while IFS= read -r file_path; do
+
+    [[ -z "$file_path" || "$file_path" == \#* ]] && continue
+
+    if echo "$file_path" | grep -q "${CLUSTER_NAME}/${ENVIRONMENT_NAME}"; then
+      continue
+    fi
+
+    if [ -f "$file_path" ]; then
+      echo "Copying $file_path to /tmp/updated_creds/"
+      target_path="/tmp/updated_creds/$file_path"
+      mkdir -p "$(dirname "$target_path")"
+      cp "$file_path" "$target_path"
+    else
+      echo "Warning: Source file does not exist: $file_path"
+    fi
+  done < "$CREDS_FILE"
+fi
 
 # remove all contents including hidden files, it will be given from git pull
 echo "Clearing contents of repository"
@@ -120,8 +145,6 @@ git remote add origin "${REMOTE_URL}"
 echo "Pulling contents from GIT (branch: ${REF_NAME})"
 git pull origin "${REF_NAME}"
 
-
-
 # moving back environments folder and committing
 echo "Restoring environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
 if [ "${COMMIT_ENV}" = "true" ]; then
@@ -147,8 +170,19 @@ if [ -e /tmp/gitlab-ci ]; then
   rm -rf templates
   echo "Restoring templates folder"
   cp -r /tmp/templates .
-
   message="${ticket_id} [ci_build_parameters] Update gitlab-ci configurations"
+fi
+
+if [ -d /tmp/updated_creds ]; then
+  find /tmp/updated_creds -type f | while read tmp_file; do
+    rel_path="${tmp_file#/tmp/updated_creds/}"  # Remove the /tmp path prefix
+    if [ -f "$rel_path" ]; then
+      echo "Overwriting $tmp_file with existing file: $rel_path"
+      cp "$tmp_file" "$rel_path"
+    else
+      echo "Skipping: $rel_path does not exist in repo after pull"
+    fi
+  done
 fi
 
 echo "Checking changes..."

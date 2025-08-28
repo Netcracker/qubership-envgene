@@ -1,11 +1,8 @@
+# This action is hidden from the GitHub Actions UI
 name: 'Run Tests'
 description: 'Run Qubership Envgene tests'
 
-inputs:
-  python-version:
-    description: 'Python version to use for tests'
-    required: false
-    default: '3.10'
+inputs: {}
 
 runs:
   using: composite

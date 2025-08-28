@@ -18,77 +18,15 @@ env:
 jobs:
   pytest:
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'workflow_call' ||
-      (github.event_name == 'pull_request') ||
-      (github.event_name == 'push' && 
-       github.ref != 'refs/heads/main' &&
-       !contains(github.event.head_commit.message, 'fix') && 
-       !contains(github.event.head_commit.message, 'feat') && 
-       !contains(github.event.head_commit.message, 'breaking change'))
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'workflow_call' || github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main' && !startsWith(github.event.head_commit.message, 'fix:') && !startsWith(github.event.head_commit.message, 'feat:') && !startsWith(github.event.head_commit.message, 'breaking change') && !startsWith(github.event.head_commit.message, 'BREAKING CHANGE')) }}
     container:
       image: python:3.10-slim-bookworm
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install dependencies
-        run: |
-          
-          apt-get update && apt-get install -y --no-install-recommends \
-              build-essential \
-              curl \
-              && rm -rf /var/lib/apt/lists/*
-          
-          if [ -f dependencies/pip.conf ]; then
-              mkdir -p /etc/pip
-              cp dependencies/pip.conf /etc/pip.conf
-          fi
-          
-          if [ -f dependencies/sources.list ]; then
-              cp dependencies/sources.list /etc/apt/sources.list
-          fi
-          
-          pip install --no-cache-dir -r dependencies/tests_requirements.txt
-          
-          if [ -f python/build_modules.sh ]; then
-              chmod +x python/build_modules.sh
-              ./python/build_modules.sh
-          fi
+      - name: Check Conventional Commits
+        uses: webiny/action-conventional-commits@v1.3.0
 
-          curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64
-          mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops
-          chmod +x /usr/local/bin/sops
-
-      - name: ENVGENE HELPER test
-        run: |
-          cd python/envgene/envgenehelper
-          pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit.xml
-          cd ../../..
-          mv junit.xml junit_envgenehelper.xml  
-      
-      - name: BUILD ENV test
-        run: |
-          cd scripts/build_env
-          pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-          cd ../..
-          mv junit.xml junit_build_env.xml
-
-      - name: Merge test results
-        run: |
-          junitparser merge junit_build_env.xml junit_envgenehelper.xml junit.xml    
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-results
-          path: junit.xml
-
-      - name: Upload test environments
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test_artifact
-          path: tmp/  
+      - name: Run Tests
+        uses: ./.github/actions/run-tests  

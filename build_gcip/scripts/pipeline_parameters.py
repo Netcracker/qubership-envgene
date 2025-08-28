@@ -24,7 +24,9 @@ def get_pipeline_parameters() -> dict:
             "ENV_SPECIFIC_PARAMETERS": getenv("ENV_SPECIFIC_PARAMS"),
             "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
             "ENV_TEMPLATE_VERSION": getenv("ENV_TEMPLATE_VERSION"),
-        }
+        },
+        'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
+        'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "")
     }
 
 class PipelineParametersHandler:

@@ -1,3 +1,4 @@
+# This workflow is hidden from the GitHub Actions UI
 ---
 
 name: Conventional Commits PR Check
@@ -8,10 +9,7 @@ on:
       - opened
       - edited
       - synchronize
-  push:
-    branches:
-      - 'feature/**'
-      - 'bugfix/**'
+  workflow_call:
 
 permissions:
   pull-requests: read

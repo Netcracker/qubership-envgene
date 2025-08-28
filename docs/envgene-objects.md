@@ -7,7 +7,7 @@
       - [Tenant Template](#tenant-template)
       - [Cloud Template](#cloud-template)
       - [Namespace Template](#namespace-template)
-      - [ParameterSet](#parameterset)
+      - [ParameterSet (in Template repository)](#parameterset-in-template-repository)
       - [Resource Profile Override (in Template)](#resource-profile-override-in-template)
       - [Composite Structure Template](#composite-structure-template)
     - [System Credentials File (in Template repository)](#system-credentials-file-in-template-repository)
@@ -19,16 +19,20 @@
       - [Application](#application)
       - [Resource Profile Override (in Instance)](#resource-profile-override-in-instance)
       - [Composite Structure](#composite-structure)
-      - [Environment Credentials File](#environment-credentials-file)
-      - [Solution Descriptor](#solution-descriptor)
+    - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
       - [`secret`](#secret)
+    - [Environment Credentials File](#environment-credentials-file)
     - [Shared Credentials File](#shared-credentials-file)
     - [System Credentials File (in Instance repository)](#system-credentials-file-in-instance-repository)
+      - [ParameterSet (in Instance repository)](#parameterset-in-instance-repository)
     - [Cloud Passport](#cloud-passport)
       - [Main File](#main-file)
       - [Credential File](#credential-file)
+    - [Artifact Definition](#artifact-definition)
+    - [Registry Definition](#registry-definition)
+    - [Application Definition](#application-definition)
 
 ## Template Repository Objects
 
@@ -44,34 +48,94 @@ When a commit is made to the Template Repository, an artifact is built and publi
 
 #### Template Descriptor
 
-This object is a describes the structure of a solution, links to solution's components. It has the following structure:
+This object is a describes the structure of a solution, links to solution's components.
+
+The name of this file serves as the name of the Environment Template. In the Environment Inventory, this name is used to specify which Environment Template from the artifact should be used.
+
+**Location:** Any YAML file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
+
+It has the following structure:
 
 ```yaml
-tenant: "<path-to-the-tenant-template-file>"
-# Cloud configuration can be specified either as direct template path (string) 
-# or as an object with template_path and optional overrides
-cloud: "<path-to-the-cloud-template-file>"
+# Optional
+# Template Inheritance configuration
+# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+parent-templates:
+  <parent-template-name>: <app:ver-of-parent-template>
+# Mandatory
+# Can be specified either as direct template path (string) or as an object
+tenant: <path-to-the-tenant-template-file>
+# or
+tenant:
+  # Template Inheritance configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  parent: <parent-template-name>
+# Mandatory
+# Can be specified either as direct template path (string) or as an object
+cloud: <path-to-the-cloud-template-file>
 # or
 cloud:
-  template_path: "<path-to-the-cloud-template-file>"
   # Optional
-  # See details https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
+  template_path: <path-to-the-cloud-template-file>
+  # Optional
+  # Template Override configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
   template_override:     
-    "<yaml or jinja expression>"
-composite_structure: "<path-to-the-composite-structure-template-file>"
+    <yaml or jinja expression>
+  # Optional
+  # Template Inheritance configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  parent: <parent-template-name>
+  # Optional
+  # Template Inheritance configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  overrides-parent:
+    profile:
+      override-profile-name: <resource-profile-override-name>
+      parent-profile-name: <resource-profile-override-name>
+      baseline-profile-name: <resource-profile-baseline-name>
+      merge-with-parent: <boolean>
+    deployParameters: <hashmap-with-parameters>
+    e2eParameters: <hashmap-with-parameters>
+    technicalConfigurationParameters: <hashmap-with-parameters>
+    deployParameterSets: <list-with-parameter-sets>
+    e2eParameterSets: <list-with-parameter-sets>
+    technicalConfigurationParameterSets: <list-with-parameter-sets>
+composite_structure: <path-to-the-composite-structure-template-file>
 namespaces:
-  - template_path: "<path-to-the-namespace-template-file>"
+  - # Optional
+    template_path: <path-to-the-namespace-template-file>
     # Optional
     # See details https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
     template_override:
-      "<yaml or jinja expression>"
+      <yaml or jinja expression>
+    # Optional
+    # Template Inheritance configuration
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    name: <namespace-name-in-parent-template>
+    # Optional
+    # Template Inheritance configuration
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    parent: <parent-template-name>
+    # Optional
+    # Template Inheritance configuration
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    overrides-parent:
+      profile:
+        override-profile-name: <resource-profile-override-name>
+        parent-profile-name: <resource-profile-override-name>
+        baseline-profile-name: <resource-profile-baseline-name>
+        merge-with-parent: true
+      deployParameters: <hashmap-with-parameters>
+      e2eParameters: <hashmap-with-parameters>
+      technicalConfigurationParameters: <hashmap-with-parameters>
+      deployParameterSets: <list-with-parameter-sets>
+      e2eParameterSets: <list-with-parameter-sets>
+      technicalConfigurationParameterSets: <list-with-parameter-sets>
+      template_path: <path-to-the-namespace-template-file>
 ```
 
 [Template Descriptor JSON schema](/schemas/template-descriptor.schema.json)
-
-Any YAML file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
-
-The name of this file serves as the name of the Environment Template. In the Environment Inventory, this name is used to specify which Environment Template from the artifact should be used.
 
 #### Tenant Template
 
@@ -83,11 +147,131 @@ TBD
 
 #### Namespace Template
 
-TBD
+This is a Jinja template file used to render the [Namespace](#namespace) object. It defines namespace-level parameters for Environment Instance generation.
 
-#### ParameterSet
+The Namespace template must be developed so that after Jinja rendering, the result is a valid Namespace object according to the [schema](/schemas/namespace.schema.json).
 
-TBD
+[Macros](/docs/template-macros.md) are available for use when developing the template.
+
+**Location:** The Namespace template is located at `/templates/env_templates/*/`
+
+**Example:**
+
+```yaml
+name: "{{ current_env.name }}-core"
+credentialsId: ""
+labels:
+  - "solutionInstance-{{current_env.name}}"
+  - "solution-{{current_env.tenant}}"
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+profile:
+  name: dev-override
+  baseline: dev
+deployParameters:
+  AIRFLOW_REDIS_DB: "1"
+  ARTIFACTORY_BASE_URL: "https://artifactory.qubership.org"
+  ESCAPE_SEQUENCE: "true"
+e2eParameters:
+  QTP_DYNAMIC_PARAMETERS: ""
+technicalConfigurationParameters:
+  DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: "${DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD}"
+  DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: "${DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME}"
+  DBAAS_TEMP_PASS: "${DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD}"
+  MAAS_DEPLOYER_CLIENT_PASSWORD: "${MAAS_CREDENTIALS_PASSWORD}"
+  MAAS_DEPLOYER_CLIENT_USERNAME: "${MAAS_CREDENTIALS_USERNAME}"
+deployParameterSets:
+  - core-deploy-common
+{% if current_env.additionalTemplateVariables.site | default ('offsite') == 'offsite' %}
+  - core-deploy-offsite
+{% else %}
+  - core-deploy-onsite
+{% endif %}
+technicalConfigurationParameterSets:
+  - core-runtime
+```
+
+#### ParameterSet (in Template repository)
+
+A ParameterSet is a container for a set of parameters that can be reused across multiple templates. This helps to avoid duplication and simplifies parameter management. ParameterSets are processed during the generation of an Environment Instance.
+
+ParameterSets are referenced in the `deployParameterSets`, `e2eParameterSets`, and `technicalConfigurationParameterSets` arrays in the [Cloud](#cloud-template), and [Namespace](#namespace-template) templates.
+
+During the generation of an Environment Instance the parameters from the `parameters` section of a ParameterSet are assigned to the corresponding attributes of the object with which the ParameterSet is associated, as follows:
+
+- Parameters from the `parameters` section of a ParameterSet referenced in `deployParameterSets` are set on the `deployParameters` attribute of the same object.
+- Parameters from the `parameters` section of a ParameterSet referenced in  `e2eParameterSets` are set on `e2eParameters`.
+- Parameters from the `parameters` section of a ParameterSet referenced in  `technicalConfigurationParameterSets` are set on `technicalConfigurationParameters`.
+
+ParameterSets also allow to define application-level parameters, i.e., parameters specific to a particular application, using the `application` section of a ParameterSet. The parameters from `application[].parameters` are set on the [Application](#application) object, which is created for each `application` entry and has the name `application[].appName`.
+
+ParameterSets can be parameterized using Jinja and [macros](/docs/template-macros.md). In this case, the file should be named `<paramset-name>.yaml.j2` or `<paramset-name>.yml.j2`.
+
+**Location:** `/templates/parameters/` folder and its subfolders, but with a nesting level of no more than three
+
+```yaml
+# Optional
+# Deprecated
+version: <paramset-version>
+# Mandatory
+# The name of the Parameter Set
+# Used to reference the Parameter Set in templates
+# Must match the Parameter Set file name
+name: "parameter-set-name"
+# Mandatory
+# Key-value pairs of parameters
+# The actual parameters that will be set when this Parameter Set is referenced
+parameters:
+  <key-1>: <value-1>
+  <key-N>: <value-N>
+# Optional
+# Section describing application-level parameters
+# For each `appName`, an Application object will be created with parameters specified in `parameters`
+application:
+  - # Mandatory
+    appName: <application-name>
+    # Mandatory
+    parameters:
+      <key-1>: <value-1>
+      <key-N>: <value-N>
+```
+
+**Example:**
+
+```yaml
+version: 1
+name: configuration
+parameters:
+  CONFIGURATION:
+    DEFAULT_MAIN_SD: "Toolset-SD"
+{% if current_env.additionalTemplateVariables.site | default ('offsite') == 'offsite' %}
+  DBAAS_LODB_PER_NAMESPACE_AUTOBALANCE_RULES: "postgresql=>postgresql:postgres"
+{% else %}
+  DBAAS_LODB_PER_NAMESPACE_AUTOBALANCE_RULES: "envgeneNullValue"
+{% endif %}
+applications:
+  - appName: "core"
+    parameters:
+      securityContexts:
+        pod:
+          runAsNonRoot: true
+          runAsUser: null
+          fsGroup: null
+          seccompProfile:
+            type: RuntimeDefault
+        containers:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+```
+
+The file name of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the template repository. This is validated during processing; if the validation fails, the operation will stop with an error.
+
+The Parameter Set schema in the template repository is identical to the Parameter Sets in the [Instance repository](#parameterset-in-instance-repository).
+
+[ParameterSet JSON schema](/schemas/paramset.schema.json)
 
 #### Resource Profile Override (in Template)
 
@@ -97,7 +281,9 @@ TBD
 
 This is a Jinja template file used to render the [Composite Structure](#composite-structure) object.
 
-Example:
+**Location:** The object is located at `/templates/env_templates/*/`
+
+**Example:**
 
 ```yaml
 name: "{{ current_env.cloudNameWithCluster }}-composite-structure"
@@ -115,9 +301,9 @@ satellites:
 
 This file contains [Credential](#credential) objects used by EnvGene to integrate with external systems like artifact registries, GitLab, GitHub, and others.
 
-Location: `/environments/configuration/credentials/credentials.yml|yaml`
+**Location:** `/environments/configuration/credentials/credentials.yml|yaml`
 
-Example:
+**Example:**
 
 ```yaml
 artifactory-cred:
@@ -168,11 +354,183 @@ TBD
 
 #### Namespace
 
-TBD
+The Namespace object contains namespace-level parameters — parameters that are specific to all applications within this namespace.
+
+The Namespace object is used to generate Effective Set
+
+The Namespace object is generated during Environment Instance generation based on:
+
+- [Namespace Template](#namespace-template)
+- [Template ParamSet](#parameterset-in-template-repository)
+- [Instance ParamSet](#parameterset-in-instance-repository)
+
+For each parameter in the Namespace, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
+
+**Location:** `/environments/<cluster-name>/<env-name>/Namespaces/<deploy-postfix>/namespace.yml`.
+
+```yaml
+# Mandatory
+# The name of the namespace
+# The same as the Kubernetes namespace name
+name: <namespace-name>
+# Optional
+# The credentials ID for accessing the namespace
+# Used for authentication when performing deployment in this namespace
+credentialsId: <credential-name-with-deployment-token>
+# Optional
+# Labels for the namespace
+# Used for filtering, organization, and grouping
+labels:
+  - <label-1>
+  - <label-N>
+# Mandatory
+# Whether to perform parameter merging on the server side
+# Controls where parameter merging happens during deployment
+isServerSideMerge: boolean
+# Mandatory
+# Whether clean installations require approval
+# Controls the approval workflow for clean installations in this namespace
+cleanInstallApprovalRequired: boolean
+# Mandatory
+# Whether to merge deployParameters and e2eParameters
+# Controls parameter merging behavior during effective set generation
+mergeDeployParametersAndE2EParameters: boolean
+# Optional
+# Resource profile configuration for the namespace
+# Used to manage performance parameters of applications in this namespace
+profile:
+  # Mandatory
+  # The name of the resource profile override to use
+  # Used to determine which resource profile override to apply to applications in this namespace
+  name: <resource-profile-override-name>
+  # Mandatory
+  # The baseline profile to use
+  # Used as the base resource profile before applying overrides
+  baseline: <resource-profile-baseline-name>
+# Optional
+# Key-value pairs of deployment parameters at the namespace level
+# Used to set parameters that will be used for rendering Helm charts of applications for this namespace
+deployParameters:
+  <key-1>: <value-1>
+  <key-N>: <value-N>
+# Optional
+# Key-value pairs of e2e parameters at the namespace level
+# Used to configure the systems/pipelines managing the Environment lifecycle for this namespace
+e2eParameters:
+  <key-1>: <value-1>
+  <key-N>: <value-N>
+# Optional
+# Key-value pairs of technical configuration parameters at the namespace level
+# Used to set parameters that can be applied to the application at runtime
+# without redeployment for this namespace
+technicalConfigurationParameters:
+  <key-1>: <value-1>
+  <key-N>: <value-N>
+# Optional
+# List of deployment Parameter Set names to include at the namespace level
+# Used to set parameters that will be used for rendering Helm charts of applications for this namespace
+deployParameterSets:
+  - <parameter-set-1>
+  - <parameter-set-N>
+# Optional
+# List of e2e Parameter Set names to include at the namespace level
+# Used to configure the systems/pipelines managing the Environment lifecycle for this namespace
+e2eParameterSets:
+  - <parameter-set-1>
+  - <parameter-set-N>
+# Optional
+# List of technical configuration Parameter Set names to include at the namespace level
+# Used to include predefined sets of parameters that can be applied to the application at runtime
+# without redeployment for this namespace
+technicalConfigurationParameterSets:
+  - <parameter-set-1>
+  - <parameter-set-N>
+```
+
+**Example:**
+
+```yaml
+# The contents of this file is generated from template artifact: sample-template:v1.2.3.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "env-1-core"
+credentialsId: ""
+isServerSideMerge: false
+labels:
+  - "solutionInstance-env-1-core"
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  AIRFLOW_REDIS_DB: "1"
+  ARTIFACTORY_BASE_URL: "https://artifactory.qubership.org" # paramset: Namespace-common version: 23.4 source: template
+  ESCAPE_SEQUENCE: "true"
+e2eParameters:
+  QTP_DYNAMIC_PARAMETERS: "" # paramset: nightly-parameters version: 23.4 source: template
+technicalConfigurationParameters:
+  DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: "${DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD}" # paramset: Namespace-commom-technicalConfiguration version: 23.4 source: template
+  DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: "${DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME}" # paramset: Namespace-commom-technicalConfiguration version: 23.4 source: template
+  DBAAS_TEMP_PASS: "${DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD}" # paramset: Namespace-commom-technicalConfiguration version: 23.4 source: template
+  MAAS_DEPLOYER_CLIENT_PASSWORD: "${MAAS_CREDENTIALS_PASSWORD}" # paramset: Namespace-commom-technicalConfiguration version: 23.4 source: template
+  MAAS_DEPLOYER_CLIENT_USERNAME: "${MAAS_CREDENTIALS_USERNAME}" # paramset: Namespace-commom-technicalConfiguration version: 23.4 source: template
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+```
+
+[Namespace JSON schema](/schemas/namespace.schema.json)
 
 #### Application
 
-TBD
+The Application object defines parameters that are specific to a particular application. These parameters are isolated to the application and do not affect other applications.
+
+The Application object is generated during the Environment Instance generation process, based on ParameterSets that contain an `applications` section. Generation occurs from both [ParameterSets in the template repository](#parameterset-in-template-repository) and [ParameterSets in the instance repository](#parameterset-in-instance-repository).
+
+For each parameter in the Application, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
+
+The Application object is used to generate Effective Set by providing application-specific parameters.
+
+**Location:** Depends on which object the ParameterSet was associated with:
+
+- Cloud: `/environments/<cluster-name>/<env-name>/Applications/<application-name>.yml`
+- Namespace: `/environments/<cluster-name>/<env-name>/Namespaces/<deploy-postfix>/Applications/<application-name>.yml`
+
+```yaml
+# Mandatory
+# The name of the Application, generated based on the `applications[].appName`
+# attribute of Parameter Set
+name: <application-name>
+# Optional
+# Key-value pairs of deployment parameters at the application level
+# If the Parameter Set is associated in `deployParameterSets`, then the parameters
+# from `application[].parameters` will be set in this section
+deployParameters:
+  <key-1>: <value-1>
+  <key-N>: <value-N>
+# Optional
+# Key-value pairs of technical configuration parameters at the application level
+# If the Parameter Set is associated in `technicalConfigurationParameterSets`, then the parameters
+# from `application[].parameters` will be set in this section
+technicalConfigurationParameters:
+  <key-1>: <value-1>
+  <key-N>: <value-N>
+```
+
+**Example:**
+
+```yaml
+# The contents of this file is generated from template artifact: sample-template:v1.2.3
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "Core"
+deployParameters:
+  DBAAS_ISOLATION_ENABLED: "false"  # paramset: wa version: 23.3
+  global.secrets.password: "${creds.get(\"streaming-cred\").password}" # paramset: management version: 23.3
+  global.secrets.username: "${creds.get(\"streaming-cred\").username}" # paramset: management version: 23.3
+technicalConfigurationParameters: {}
+
+```
+
+[Application JSON schema](/schemas/application.schema.json)
 
 #### Resource Profile Override (in Instance)
 
@@ -194,11 +552,11 @@ satellites:
     type: namespace
 ```
 
-The Composite Structure is located in the path `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/composite-structure.yml`
+**Location:** `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/composite-structure.yml`
 
 [Composite Structure JSON schema](/schemas/composite-structure.schema.json)
 
-Example:
+**Example:**
 
 ```yaml
 name: "clusterA-env-1-composite-structure"
@@ -212,27 +570,7 @@ satellites:
     type: "namespace"
 ```
 
-#### Environment Credentials File
-
-This file stores all [Credential](#credential) objects of the Environment Instance upon generation
-
-Location: `/environments/<cluster-name>/<env-name>/Credentials/credentials.yml`
-
-Example:
-
-```yaml
-db_cred:
-  type: usernamePassword
-  data:
-    username: "s3cr3tN3wLogin"
-    password: "s3cr3tN3wP@ss"
-token:
-  type: secret
-  data:
-    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
-```
-
-#### Solution Descriptor
+### Solution Descriptor
 
 The Solution Descriptor (SD) defines the application composition of a solution. In EnvGene it serves as the primary input for EnvGene's Effective Set calculations. The SD can also be used for template rendering through the [`current_env.solution_structure`](/docs/template-macros.md#current_envsolution_structure) variable.
 
@@ -240,7 +578,7 @@ Other systems can use it for other reasons, for example as a deployment blueprin
 
 Only SD versions 2.1 and 2.2 can be used by EnvGene for the purposes described above, as their `application` list elements contain the `deployPostfix` and `version` attributes.
 
-SD processing in EnvGene is described [here](/docs/sd-processing.md).
+For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/sd-processing.md).
 
 SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [pipeline](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
 
@@ -252,7 +590,7 @@ In EnvGene, there are:
 
 Only Full SD is used for Effective Set calculation. The Delta SD is only needed for troubleshooting purposes.
 
-Example:
+**Example:**
 
 ```yaml
 version: 2.1
@@ -277,6 +615,8 @@ There are two Credential types with different structures:
 
 #### `usernamePassword`
 
+Used for credentials requiring username/password pairs. Contains two mandatory credentials fields(`username` and `password`):
+
 ```yaml
 <cred-id>:
   type: usernamePassword
@@ -287,9 +627,11 @@ There are two Credential types with different structures:
 
 #### `secret`
 
+Used for single-secret credentials. Contains one mandatory credentials field(`secret`):
+
 ```yaml
 <cred-id>:
-  type: "secret"
+  type: secret
   data:
     secret: <value>
 ```
@@ -297,6 +639,26 @@ There are two Credential types with different structures:
 After generation, `<value>` is set to `envgeneNullValue`. The user must manually set the actual value.
 
 [Credential JSON schema](/schemas/credential.schema.json)
+
+### Environment Credentials File
+
+This file stores all [Credential](#credential) objects of the Environment upon generation
+
+**Location:** `/environments/<cloud-name>/<env-name>/Credentials/credentials.yml`
+
+**Example:**
+
+```yaml
+db_cred:
+  type: usernamePassword
+  data:
+    username: "s3cr3tN3wLogin"
+    password: "s3cr3tN3wP@ss"
+token:
+  type: secret
+  data:
+    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
+```
 
 ### Shared Credentials File
 
@@ -310,17 +672,17 @@ The relationship between Shared Credentials and Environment is established throu
 Credentials can be defined at three scopes with different precedence:
 
 1. **Environment-level**  
-   Location: `/environments/<cluster-name>/<env-name>/Inventory/credentials/`
+   **Location:** `/environments/<cluster-name>/<env-name>/Inventory/credentials/`
 2. **Cluster-level**  
-   Location: `/environments/<cluster-name>/credentials/`
+   **Location:** `/environments/<cluster-name>/credentials/`
 3. **Site-level**  
-   Location: `/environments/credentials/`
+   **Location:** `/environments/credentials/`
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
 Any YAML file located in these folders is treated as a Shared Credentials File.
 
-Example:
+**Example:**
 
 ```yaml
 db_cred:
@@ -343,7 +705,7 @@ Location:
 - `/environments/configuration/credentials/credentials.yml|yaml`
 - `/environments/<cluster-name>/app-deployer/<any-string>-creds.yml|yaml`
 
-Example:
+**Example:**
 
 ```yaml
 registry-cred:
@@ -357,6 +719,10 @@ gitlab-token-cred:
     secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
 ```
 
+#### ParameterSet (in Instance repository)
+
+TBD
+
 ### Cloud Passport
 
 Cloud Passport is contracted set of environment-specific deployment parameters that enables a business solution instance's (Environment) applications to access cloud infrastructure resources from a platform solution instance (Environment).
@@ -367,10 +733,241 @@ A Cloud Passport can be obtained either through cloud discovery (using the Cloud
 
 Contains non-sensitive Cloud Passport parameters
 
-Location: `/environments/<cluster-name>/cloud-passport/<any-string>.yml|yaml`
+**Location:** `/environments/<cluster-name>/cloud-passport/<any-string>.yml|yaml`
 
 #### Credential File
 
 Contains sensitive Cloud Passport parameters
 
-Location: `/environments/<cluster-name>/cloud-passport/<any-string>-creds.yml|yaml`
+**Location:** `/environments/<cluster-name>/cloud-passport/<any-string>-creds.yml|yaml`
+
+### Artifact Definition
+
+This object describes where the **environment template artifact** is stored in the registry. It is used to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters needed to download it.
+
+**Location:** `/configuration/artifact_definitions/<artifact-definition-name>.yaml`
+
+The file name must match the value of the `name` attribute.
+
+```yaml
+# Mandatory
+# Name of the artifact template. This corresponds to the `application` part in the `application:version` notation.
+name: <artifact-template-name>
+# Mandatory
+# Maven group id
+groupId: <group-id>
+# Mandatory
+# Maven artifact id
+artifactId: <artifact-id>
+# Mandatory
+registry:
+  # Mandatory
+  # Name of the registry where the artifact is stored
+  name: <registry-name>
+  # Mandatory
+  # Pointer to the EnvGene Credential object.
+  # Credential with this id must be located in /configuration/credentials/credentials.yml
+  credentialsId: <registry-cred-id>
+  # Mandatory
+  mavenConfig:
+    # Mandatory
+    # URL of the registry where the artifact is stored
+    repositoryDomainName: <registry-url>
+    # Mandatory
+    # Snapshot repository name
+    # EnvGene checks repositories in this order: release -> staging -> snapshot
+    # It stops when it finds the artifact
+    targetSnapshot: <snapshot-repository>
+    # Mandatory
+    # Staging repository name
+    targetStaging: <staging-repository>
+    # Mandatory
+    # Release repository name
+    targetRelease: <release-repository>
+```
+
+**Example:**
+
+```yaml
+name: "env-template"
+groupId: "org.qubership"
+artifactId: "env-template"
+registry:
+  name: "sandbox"
+  credentialsId: "artifactory-cred"
+  mavenConfig:
+    repositoryDomainName: "https://artifactory.qubership.org"
+    targetSnapshot: "mvn.snapshot"
+    targetStaging: "mvn.staging"
+    targetRelease: "mvn.release"
+```
+
+[Artifact Definition JSON schema](/schemas/artifact-definition.schema.json)
+
+### Registry Definition
+
+This object describes registry where artifacts (other than environment template artifacts) are stored.
+
+It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
+
+A separate definition file is used for each individual registry. Each Environment uses its own set of Registry Definitions.
+
+The file name must match the value of the `name` attribute.
+
+**Location:** `/environments/<cluster-name>/<env-name>/AppDefs/<registry-name>.yml`
+
+```yaml
+# Mandatory
+# Name of the registry
+name: <registry-name>
+# Mandatory
+# Pointer to the EnvGene Credential object.
+# Credential with this id must be located in /environments/<cluster-name>/<env-name>/Credentials/credentials.yml
+credentialsId: <credentials-id>
+# Mandatory
+mavenConfig:
+  # Mandatory
+  # Domain name of the Maven registry
+  repositoryDomainName: <repository-domain-name>
+  # Mandatory
+  # Full URL of the Maven registry
+  fullRepositoryUrl: <full-repository-url>
+  # Mandatory
+  # Snapshot Maven repository name
+  targetSnapshot: <snapshot-repository>
+  # Mandatory
+  # Staging Maven repository name
+  targetStaging: <staging-repository>
+  # Mandatory
+  # Release Maven repository name
+  targetRelease: <release-repository>
+  # Mandatory
+  # Snapshot Maven repository name
+  snapshotGroup: <snapshot-group>
+  # Mandatory
+  # Release Maven repository name
+  releaseGroup: <release-group>
+# Mandatory
+dockerConfig:
+  # Mandatory
+  # URI for Docker snapshot registry
+  snapshotUri: <docker-snapshot-uri>
+  # Mandatory
+  # URI for Docker staging repository
+  stagingUri: <docker-staging-uri>
+  # Mandatory
+  # URI for Docker release repository
+  releaseUri: <docker-release-uri>
+  # Mandatory
+  # URI for Docker group repository
+  groupUri: <docker-group-uri>
+  # Mandatory
+  # Name of Docker snapshot repository
+  snapshotRepoName: <docker-snapshot-repo-name>
+  # Mandatory
+  # Name of Docker staging repository
+  stagingRepoName: <docker-staging-repo-name>
+  # Mandatory
+  # Name of Docker release repository
+  releaseRepoName: <docker-release-repo-name>
+  # Mandatory
+  # Name of Docker group
+  groupName: <docker-group-name>
+# Optional
+goConfig:
+  # Mandatory
+  # Go snapshot repository name
+  goTargetSnapshot: <go-snapshot>
+  # Mandatory
+  # Go release repository name
+  goTargetRelease: <go-release>
+  # Mandatory
+  # Go proxy repository URL
+  goProxyRepository: <go-proxy-repository>
+# Optional
+rawConfig:
+  # Mandatory
+  # Raw snapshot repository name
+  rawTargetSnapshot: <raw-snapshot>
+  # Mandatory
+  # Raw release repository name
+  rawTargetRelease: <raw-release>
+  # Mandatory
+  # Raw staging repository name
+  rawTargetStaging: <raw-staging>
+  # Mandatory
+  # Raw proxy repository name
+  rawTargetProxy: <raw-proxy>
+# Optional
+npmConfig:
+  # Mandatory
+  # NPM snapshot repository name
+  npmTargetSnapshot: <npm-snapshot>
+  # Mandatory
+  # NPM release repository name
+  npmTargetRelease: <npm-release>
+# Optional
+helmConfig:
+  # Mandatory
+  # Helm staging repository name
+  helmTargetStaging: <helm-staging>
+  # Mandatory
+  # Helm release repository name
+  helmTargetRelease: <helm-release>
+# Optional
+helmAppConfig:
+  # Mandatory
+  # Helm staging repository name for application charts
+  helmStagingRepoName: <helm-staging-repo-name>
+  # Mandatory
+  # Helm release repository name for application charts
+  helmReleaseRepoName: <helm-release-repo-name>
+  # Mandatory
+  # Helm group repository name for application charts
+  helmGroupRepoName: <helm-group-repo-name>
+  # Mandatory
+  # Helm dev repository name for application charts
+  helmDevRepoName: <helm-dev-repo-name>
+```
+
+**Example:**
+
+[Registry Definition JSON schema](/schemas/regdef.schema.json)
+
+### Application Definition
+
+This object describes application artifact parameters - artifact id, group id and pointer to [Registry Definition](#registry-definition)
+
+It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
+
+A separate definition file is used for each individual application. Each Environment uses its own set of Application Definitions.
+
+The file name must match the value of the `name` attribute.
+
+**Location:** `/environments/<cluster-name>/<env-name>/AppDefs/<application-name>.yml`
+
+```yaml
+# Mandatory
+# Name of the artifact application. This corresponds to the `application` part in the `application:version` notation.
+name: <application-name>
+# Mandatory
+# Reference to Registry Definition
+registryName: <registry-definition-name>
+# Mandatory
+# Application artifact ID
+artifactId: <artifact-id>
+# Mandatory
+# Application group ID
+groupId: <artifact-id>
+```
+
+**Example:**
+
+```yaml
+name: qip
+registryName: sandbox
+artifactId: qip
+groupId: org.qubership
+```
+
+[Application Definition JSON schema](/schemas/appdef.schema.json)

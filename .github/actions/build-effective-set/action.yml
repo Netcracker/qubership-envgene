@@ -1,3 +1,4 @@
+# This action is hidden from the GitHub Actions UI
 name: 'Build Effective Set Generator Docker Image'
 description: 'Build and push Effective Set Generator docker image to container registry'
 
@@ -6,6 +7,10 @@ inputs:
     description: 'Container registry URL'
     required: false
     default: 'ghcr.io'
+  repository-owner:
+    description: 'Repository owner for Docker images'
+    required: false
+    default: 'netcracker'
   image-name:
     description: 'Docker image name'
     required: false
@@ -23,6 +28,20 @@ inputs:
   github-token:
     description: 'GitHub token for registry login'
     required: true
+
+outputs:
+  custom_tag:
+    description: 'Custom tag with timestamp'
+    value: ${{ steps.tags.outputs.custom_tag }}
+  branch_tag:
+    description: 'Branch-based tag'
+    value: ${{ steps.tags.outputs.branch_tag }}
+  timestamp:
+    description: 'Generated timestamp'
+    value: ${{ steps.tags.outputs.timestamp }}
+  branch_latest_tag:
+    description: 'Branch latest tag'
+    value: ${{ steps.tags.outputs.branch_latest_tag }}
 
 runs:
   using: composite
@@ -43,11 +62,20 @@ runs:
         username: ${{ github.actor }}
         password: ${{ inputs.github-token }}
 
+    - name: Generate Docker tags
+      id: tags
+      uses: ./.github/actions/generate-docker-tags
+
     - name: Extract metadata (tags, labels) for Docker
       id: meta
       uses: docker/metadata-action@v5
       with:
-        images: ${{ inputs.registry }}/${{ github.repository_owner }}/${{ inputs.image-name }}
+        images: ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-{{sha}},suffix={{date 'YYYYMMDD-HHMMSS'}}
+          type=raw,value={{branch}}_{{date 'YYYYMMDD-HHMMSS'}}
     
     - name: Build and push Docker image
       id: push
@@ -56,7 +84,10 @@ runs:
         context: .
         file: ${{ inputs.dockerfile-path }}
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
+        tags: |
+          ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.custom_tag }}
+          ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.branch_latest_tag }}
+          ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build-args: |
           GIT_USER=${{ inputs.git-user }}

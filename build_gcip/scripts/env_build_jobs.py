@@ -14,31 +14,24 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
     script.append('/module/scripts/prepare.sh "build_env.yaml"')
   else:
     script.append('/module/scripts/prepare.sh "build_env.yaml"')
-  
-  if is_template_test: 
-     script.append("env_name=$(cat set_variable.txt)") 
+
+  if is_template_test:
+     script.append("env_name=$(cat set_variable.txt)")
      script.append('sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "$CI_PROJECT_DIR/environments/$env_name/Credentials/credentials.yml"')
   else:
-     script.append("export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')") 
-  
+     script.append("export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')")
+
   script.extend([
       'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
       'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
   ])
-  # add after script
-  after_script = [
-    'mkdir -p "$CI_PROJECT_DIR/tmp"',
-    'cp -r /build_env/tmp/* $CI_PROJECT_DIR/tmp'
-  ]
-  # 
   env_build_params = {
-      "name":   f'env_builder.{full_env}', 
+      "name":   f'env_builder.{full_env}',
       "image":  '${envgen_image}',
       "stage":  'env_builder',
       "script": script,
-      "after_script": after_script
-  } 
-  
+  }
+
   env_build_vars = {
       "ENV_NAME": full_env,
       "CLUSTER_NAME": cluster_name,
@@ -61,7 +54,7 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
   if is_template_test:
     env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments")
     env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/set_variable.txt")
-  else: 
+  else:
     env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
     env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
     env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
@@ -101,7 +94,7 @@ def prepare_generate_effective_set_job(pipeline, environment_name, cluster_name)
   return generate_effective_set_job
 
 
-def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name):
+def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, credential_rotation_job: None):
   logger.info(f'prepare git_commit job for {full_env}.')
   git_commit_params = {
       "name":   f'git_commit.{full_env}',
@@ -134,6 +127,8 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name):
   git_commit_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
   git_commit_job.artifacts.add_paths("${CI_PROJECT_DIR}/git_envs")
   git_commit_job.artifacts.when = WhenStatement.ALWAYS
+  if (credential_rotation_job is not None):
+    git_commit_job.add_needs(credential_rotation_job)
   pipeline.add_children(git_commit_job)
   return git_commit_job
 
