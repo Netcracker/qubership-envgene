@@ -151,7 +151,7 @@ def generate_solution_structure(context: dict):
         always_merger.merge(context["current_env"], {"solution_structure": solution_structure})
 
 
-def render_from_file_to_file(src_template_path, target_file_path, context):
+def render_from_file_to_file(src_template_path: str, target_file_path: str, context):
     template = openFileAsString(src_template_path)
     rendered = create_jinja_env().from_string(template).render(context)
     writeYamlToFile(target_file_path, readYaml(rendered))
@@ -333,22 +333,22 @@ def render_app_defs(context):
             "groupId": group_id,
             "artifactId": artifact_id,
         })
-        basename = os.path.basename(def_tmpl_path)
-        name_no_j2 = re.sub(r"\.j2$", "", basename)
-        app_def_trg_path = os.path.join(
-            context["tmp_render_dir"],
-            f"{name_no_j2}.{context['render_timestamp']}.rendered.appdef.yml",
-        )
+        app_def_trg_path = f"{context["current_env_dir"]}/AppDefs/{appdef_meta.name}.yml"
         render_from_file_to_file(def_tmpl_path, app_def_trg_path, context)
 
-        # text_content = openFileAsString(app_def_trg_path)
-        # encoded = base64.b64encode(text_content.encode("utf-8")).decode("utf-8")
-        # decoded_content = base64.b64decode(encoded).decode("utf-8")
-        # output_dir = Path(current_env_dir) / "AppDefs"
-        # output_dir.mkdir(parents=True, exist_ok=True)
-        # dest = output_dir / f"{appdef_meta['name']}.yml"
-        # dest.write_text(decoded_content, encoding="utf-8")
-        # dest.chmod(0o644)
+
+def render_reg_defs(context):
+    for def_tmpl_path in context.get("regdef_templates"):
+        reg_def_str = openFileAsString(def_tmpl_path)
+        matches = re.findall(
+            r'^\s*(name):\s*"([^"]+)"',
+            reg_def_str,
+            flags=re.MULTILINE,
+        )
+        regdef_meta = dict(matches)
+        ensure_valid_fields(regdef_meta, ["name"])
+        reg_def_trg_path = f"{context["current_env_dir"]}/RegDefs/{regdef_meta["name"]}.yml"
+        render_from_file_to_file(def_tmpl_path, reg_def_trg_path, context)
 
 
 def ensure_required_keys(context, required: list[str]):
@@ -410,9 +410,6 @@ def process_app_reg_defs(context):
 
         context["appdefs"]["overrides"] = appregdef_config.get("appdefs", {}).get("overrides", {})
         context["regdefs"]["overrides"] = appregdef_config.get("regdefs", {}).get("overrides", {})
-        render_timestamp = int(time.time())
-        context["render_timestamp"] = render_timestamp
-        context["tmp_render_dir"] = "/tmp"
         render_app_defs(context)
 
 
