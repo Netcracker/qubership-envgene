@@ -18,7 +18,7 @@ on:
       component:
         default: '[
                   {"name": "qubership-envgene", "file": "./build_envgene/build/Dockerfile", "context": "."},
-                  {"name": "qubership-gcip", "file": "./build_gcip/build/Dockerfile", "context": "."},
+                  {"name": "qubership-pipegene", "file": "./build_pipegene/build/Dockerfile", "context": "."},
                   {"name": "qubership-effective-set-generator", "file": "./build_effective_set_generator/build/Dockerfile", "context": "."},
                   {"name": "qubership-instance-repo-pipeline", "file": "./github_workflows/instance-repo-pipeline/Dockerfile", "context": "."}
                 ]'
@@ -99,7 +99,7 @@ jobs:
         
         - name: Update Docker Image Tags in Pipeline
           run: |
-            sed -i "s|qubership-gcip:[^']*|qubership-gcip:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
+            sed -i "s|qubership-pipegene:[^']*|qubership-pipegene:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
             sed -i "s|qubership-envgene:[^']*|qubership-envgene:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
             sed -i "s|qubership-effective-set-generator:[^']*|qubership-effective-set-generator:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
             sed -i "s|qubership-effective-set-generator-python:[^']*|qubership-effective-set-generator-python:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
