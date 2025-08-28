@@ -65,11 +65,23 @@ permissions:
 
 jobs:
   conventional-commits:
-    uses: ./.github/workflows/pr-conventional-commits.yaml
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate Conventional Commits
+        uses: ./.github/actions/conventional-commits
 
   link-check:
     needs: [conventional-commits]
-    uses: ./.github/workflows/link-checker.yaml
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Link Checker
+        uses: ./.github/actions/link-checker
 
   linters:
     needs: [conventional-commits]

@@ -1,0 +1,32 @@
+name: Lint Code Base
+
+on:
+  workflow_call:
+    inputs:
+      full_scan:
+        type: boolean
+        default: false
+        required: false
+        description: "Lint all codebase"
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: "Load super-linter environment file"
+      run: |
+        # shellcheck disable=2086
+        if [ -f "./.github/super-linter.env" ]; then
+          grep "\S" ./.github/super-linter.env | grep -v "^#"
+          grep "\S" ./.github/super-linter.env | grep -v "^#" >> $GITHUB_ENV
+        fi
+
+    - name: Lint Code Base
+      uses: super-linter/super-linter@v7.4.0
+      env:
+        VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan || false }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
