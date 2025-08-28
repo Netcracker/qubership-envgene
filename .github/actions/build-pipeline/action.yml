@@ -39,6 +39,23 @@ runs:
         username: ${{ github.actor }}
         password: ${{ inputs.github-token }}
 
+    - name: Generate custom tags with timestamp
+      id: tags
+      shell: bash
+      run: |
+        # Transform branch name to docker tag format
+        BRANCH_NAME="${{ github.ref_name }}"
+        DOCKER_TAG=$(echo "$BRANCH_NAME" | sed 's|/|_|g')
+        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+        CUSTOM_TAG="${DOCKER_TAG}_${TIMESTAMP}"
+        BRANCH_LATEST_TAG="${DOCKER_TAG}"
+
+        # Set output for next steps
+        echo "custom_tag=$CUSTOM_TAG" >> $GITHUB_OUTPUT
+        echo "branch_tag=$DOCKER_TAG" >> $GITHUB_OUTPUT
+        echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+        echo "branch_latest_tag=$BRANCH_LATEST_TAG" >> $GITHUB_OUTPUT
+
     - name: Extract metadata (tags, labels) for Docker
       id: meta
       uses: docker/metadata-action@v5
@@ -49,7 +66,7 @@ runs:
           type=ref,event=pr
           type=sha,prefix={{branch}}-{{sha}},suffix={{timestamp}}
           type=raw,value={{branch}}_{{timestamp}}
-    
+
     - name: Build and push Docker image
       id: push
       uses: docker/build-push-action@v6
