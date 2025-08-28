@@ -1,13 +1,13 @@
 name: Lint Code Base
 
-on:
-  workflow_call:
-    inputs:
-      full_scan:
-        type: boolean
-        default: false
-        required: false
-        description: "Lint all codebase"
+inputs:
+  full_scan:
+    description: "Lint all codebase"
+    required: false
+    default: 'false'
+  github-token:
+    description: "GitHub token"
+    required: true
 
 runs:
   using: 'composite'
@@ -18,6 +18,7 @@ runs:
         fetch-depth: 0
 
     - name: "Load super-linter environment file"
+      shell: bash
       run: |
         # shellcheck disable=2086
         if [ -f "./.github/super-linter.env" ]; then
@@ -28,5 +29,5 @@ runs:
     - name: Lint Code Base
       uses: super-linter/super-linter@v7.4.0
       env:
-        VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan || false }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan == 'true' }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}

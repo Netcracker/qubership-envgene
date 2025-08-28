@@ -94,6 +94,7 @@ jobs:
         uses: ./.github/actions/super-linter
         with:
           full_scan: false
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   tests:
     needs: [conventional-commits]
