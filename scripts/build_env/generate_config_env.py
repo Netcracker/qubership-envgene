@@ -347,7 +347,7 @@ def render_reg_defs(context):
         )
         regdef_meta = dict(matches)
         ensure_valid_fields(regdef_meta, ["name"])
-        reg_def_trg_path = f"{context['current_env_dir']}/RegDefs/{regdef_meta["name"]}.yml"
+        reg_def_trg_path = f"{context['current_env_dir']}/RegDefs/{regdef_meta['name']}.yml"
         render_from_file_to_file(def_tmpl_path, reg_def_trg_path, context)
 
 
