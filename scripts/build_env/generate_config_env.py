@@ -333,7 +333,7 @@ def render_app_defs(context):
             "groupId": group_id,
             "artifactId": artifact_id,
         })
-        app_def_trg_path = f"{context["current_env_dir"]}/AppDefs/{appdef_meta.name}.yml"
+        app_def_trg_path = f"{context['current_env_dir']}/AppDefs/{appdef_meta.name}.yml"
         render_from_file_to_file(def_tmpl_path, app_def_trg_path, context)
 
 
