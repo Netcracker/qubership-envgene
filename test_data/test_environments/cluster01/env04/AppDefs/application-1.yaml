@@ -1,0 +1,4 @@
+name: "application-1"
+registryName: "registry-2"
+artifactId: "application-1"
+groupId: "org.qubership"
