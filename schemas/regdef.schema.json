@@ -112,9 +112,7 @@
       },
       "required": [
         "fullRepositoryUrl",
-        "releaseGroup",
         "repositoryDomainName",
-        "snapshotGroup",
         "targetRelease",
         "targetSnapshot",
         "targetStaging"
