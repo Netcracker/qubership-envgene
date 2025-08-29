@@ -18,7 +18,7 @@ RUN apk add --no-cache \
     openssh-client \
     sudo \
     zip \
-    unzip \
+    unzip
 
 # Copy configuration files
 COPY build_envgene/build/pip.conf /etc/pip.conf
