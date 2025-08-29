@@ -408,9 +408,10 @@ def process_app_reg_defs(context):
             except Exception as e:
                 logger.warning(f"Failed to load config at: {appregdef_config_path}. Error: {e}")
 
-        context["appdefs"]["overrides"] = appregdef_config.get("appdefs", {}).get("overrides", {})
-        context["regdefs"]["overrides"] = appregdef_config.get("regdefs", {}).get("overrides", {})
-        render_app_defs(context)
+            context["appdefs"]["overrides"] = appregdef_config.get("appdefs", {}).get("overrides", {})
+            context["regdefs"]["overrides"] = appregdef_config.get("regdefs", {}).get("overrides", {})
+            render_app_defs(context)
+            render_reg_defs(context)
 
 
 def generate_config_env(envvars: dict):
