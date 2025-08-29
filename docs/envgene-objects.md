@@ -10,6 +10,8 @@
       - [ParameterSet (in Template repository)](#parameterset-in-template-repository)
       - [Resource Profile Override (in Template)](#resource-profile-override-in-template)
       - [Composite Structure Template](#composite-structure-template)
+      - [Registry Definition Template](#registry-definition-template)
+      - [Application Definition Template](#application-definition-template)
     - [System Credentials File (in Template repository)](#system-credentials-file-in-template-repository)
   - [Instance Repository Objects](#instance-repository-objects)
     - [Environment Instance Objects](#environment-instance-objects)
@@ -295,6 +297,49 @@ satellites:
     type: "namespace"
   - name: "{{ current_env.name }}-oss"
     type: "namespace"
+```
+
+#### Registry Definition Template
+
+This is a Jinja template file used to render the [Registry Definition](#registry-definition) object.
+
+**Location:** `/templates/regdefs/<registry-name>.yaml|yml|yml.j2|yaml.j2`
+
+**Example:**
+
+```yaml
+name: "registry-1"
+credentialsId: "registry-cred"
+mavenConfig:
+  repositoryDomainName: "{{ regdefs.overrides.maven.RepositoryDomainName | default('maven.qubership.org') }}"
+  fullRepositoryUrl: "{{ regdefs.overrides.maven.fullRepositoryUrl | default('https://maven.qubership.org/repository') }}"
+  targetSnapshot: "snapshot"
+  targetStaging: "staging"
+  targetRelease: "release"
+dockerConfig:
+  snapshotUri: "{{ regdefs.overrides.docker.snapshotUri | default('docker.qubership.org/snapshot') }}"
+  stagingUri: "{{ regdefs.overrides.docker.stagingUri | default('docker.qubership.org/staging') }}"
+  releaseUri: "{{ regdefs.overrides.docker.releaseUri | default('docker.qubership.org/release') }}"
+  groupUri: "{{ regdefs.overrides.docker.groupUri | default('docker.qubership.org/group') }}"
+  snapshotRepoName: "docker-snapshot"
+  stagingRepoName: "docker-staging"
+  releaseRepoName: "docker-release"
+  groupName: "docker-group"
+```
+
+#### Application Definition Template
+
+This is a Jinja template file used to render the [Application Definition](#application-definition) object.
+
+**Location:** `/templates/appdefs/<application-name>.yaml|yml|yml.j2|yaml.j2`
+
+**Example:**
+
+```yaml
+name: "application-1"
+registryName: "{{ appdefs.overrides.registryName | default('registry-1') }}"
+artifactId: "application-1"
+groupId: "org.qubership"
 ```
 
 ### System Credentials File (in Template repository)

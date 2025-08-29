@@ -1,78 +1,18 @@
-# Global configuration for AppDef/RegDef template management
-app_reg_def_mode: template  # Options: template, external
-default_values:
-  # Default values for AppDef templates
-  appdef:
-    supportParallelDeploy: true
-    solutionDescriptor: false
-    deployParameters:
-      param1: "default_value1"
-      param2: "default_value2"
-    technicalConfigurationParameters:
-      tech_param1: "default_tech_value1"
-      tech_param2: "default_tech_value2"
-  
-  # Default values for RegDef templates
-  regdef:
-    mavenConfig:
-      repositoryDomainName: "maven.example.com"
-      fullRepositoryUrl: "https://maven.example.com/repository"
-      targetSnapshot: "snapshots"
-      targetStaging: "staging"
-      targetRelease: "releases"
-    dockerConfig:
-      snapshotUri: "docker.example.com/snapshot"
-      stagingUri: "docker.example.com/staging"
-      releaseUri: "docker.example.com/release"
-      groupUri: "docker.example.com/group"
-      snapshotRepoName: "docker-snapshot"
-      stagingRepoName: "docker-staging"
-      releaseRepoName: "docker-release"
-      groupName: "docker-group"
+appdefs:
+  overrides:
+    registryName: registry-2
+regdefs:
+  overrides:
+    maven:
+      RepositoryDomainName: maven-2.qubership.org
+      fullRepositoryUrl: https://maven-2.qubership.org/repository
+    docker:
+      snapshotUri: docker-2.qubership.org/snapshot
+      stagingUri: docker-2.qubership.org/staging
+      releaseUri: docker-2.qubership.org/release
+      groupUri: docker-2.qubership.org/group
 
-# Override patterns
-override_patterns:
-  # Pattern for environment-specific overrides
-  environment:
-    pattern: "{{ env_name }}"
-    values:
-      dev:
-        appdef:
-          deployParameters:
-            param1: "dev_value1"
-        regdef:
-          mavenConfig:
-            targetSnapshot: "dev-snapshots"
-      test:
-        appdef:
-          deployParameters:
-            param1: "test_value1"
-        regdef:
-          mavenConfig:
-            targetSnapshot: "test-snapshots"
-      prod:
-        appdef:
-          deployParameters:
-            param1: "prod_value1"
-        regdef:
-          mavenConfig:
-            targetSnapshot: "prod-snapshots"
-  
-  # Pattern for cluster-specific overrides
-  cluster:
-    pattern: "{{ cluster_name }}"
-    values:
-      cluster-01:
-        appdef:
-          deployParameters:
-            param2: "cluster01_value2"
-        regdef:
-          dockerConfig:
-            snapshotUri: "docker.cluster01.example.com/snapshot"
-      cluster-02:
-        appdef:
-          deployParameters:
-            param2: "cluster02_value2"
-        regdef:
-          dockerConfig:
-            snapshotUri: "docker.cluster02.example.com/snapshot"
+
+
+
+

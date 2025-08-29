@@ -19,11 +19,8 @@
     - [`current_env.cluster.cloud_api_url`](#current_envclustercloud_api_url)
     - [`current_env.cluster.cloud_api_port`](#current_envclustercloud_api_port)
     - [`current_env.cluster.cloud_public_url`](#current_envclustercloud_public_url)
-  - [AppDef/RegDef macros](#appdefregdef-macros)
     - [`appdefs.overrides`](#appdefsoverrides)
     - [`regdefs.overrides`](#regdefsoverrides)
-    - [`app_lookup_key`](#app_lookup_key)
-    - [`env`](#env)
   - [Calculator CLI macros](#calculator-cli-macros)
     - [`APPLICATION_NAME`](#application_name)
     - [`NAMESPACE`](#namespace)
@@ -431,77 +428,46 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 
 - [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
 
-## AppDef/RegDef macros
-
-These macros are specifically used in AppDef and RegDef templates for rendering environment-specific configurations.
-
 ### `appdefs.overrides`
 
 ---
-**Description:** Provides access to AppDef override values defined in the `appregdef_config.yaml` file. Used to customize application definitions for specific environments or clusters.
+**Description:** Includes parameters for [Application Definition](/docs/envgene-objects.md#application-definition) template rendering defined in the [`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
+
+Used to customize Application Definitions during the solution delivery.
+
+**This macro is available only for rendering Application Definitions.**
 
 **Type:** HashMap
 
 **Basic usage:**
 
 ```yaml
-name: "{{ artifactId }}"
-registryName: "{{ appdefs.overrides[app_lookup_key].registry | default('default-registry') }}"
-supportParallelDeploy: {{ appdefs.overrides[app_lookup_key].supportParallelDeploy | default('true') }}
-deployParameters:
-  replicas: "{{ appdefs.overrides[artifactId].replicas | default('1') }}"
+registryName: "{{ appdefs.overrides.registryName }}"
 ```
 
-**Usage in sample:** [Sample](test_data/test_templates/appdefs/app1.yaml.j2)
+**Usage in sample:** [Sample](/test_data/test_templates/appdefs/application-1.yaml.j2)
 
 ### `regdefs.overrides`
 
+These macros are specifically used in AppDef and RegDef templates for rendering environment-specific configurations.
+
 ---
-**Description:** Provides access to RegDef override values defined in the `appregdef_config.yaml` file. Used to customize registry definitions for specific environments or clusters.
+**Description:** Includes parameters for [Registry Definition](/docs/envgene-objects.md#registry-definition) template rendering defined in the [`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
+
+Used to customize Registry Definitions during the solution delivery.
+
+**This macro is available only for rendering Registry Definitions.**
 
 **Type:** HashMap
 
 **Basic usage:**
 
 ```yaml
-name: "{{ registry_name }}"
-credentialsId: "{{ regdefs.overrides[registry_name].credentialsId | default('default-creds') }}"
 mavenConfig:
-  repositoryDomainName: "{{ regdefs.overrides[registry_name].mavenConfig.repositoryDomainName | default('maven.example.com') }}"
+  repositoryDomainName: "{{ regdefs.overrides.maven.RepositoryDomainName }}"
 ```
 
-**Usage in sample:** [Sample](test_data/test_templates/regdefs/registry1.yaml.j2)
-
-### `app_lookup_key`
-
----
-**Description:** A special variable used to look up application-specific overrides in the configuration. Typically set to the artifactId or application name.
-
-**Type:** string
-
-**Basic usage:**
-
-```yaml
-# app_lookup_key is typically set during template rendering
-registryName: "{{ appdefs.overrides[app_lookup_key].registry | default('default-registry') }}"
-```
-
-### `env`
-
----
-**Description:** Provides access to environment variables during template rendering. Useful for passing external parameters to templates.
-
-**Type:** HashMap
-
-**Basic usage:**
-
-```yaml
-name: {{ env['APP_NAME'] | default('default-app-name') }}
-registryName: {{ env['REGISTRY_NAME'] | default('default-registry') }}
-artifactId: {{ env['ARTIFACT_ID'] | default('com.example.default') }}
-```
-
-**Usage in sample:** [Sample](test_data/test_templates/appdefs/app_with_env_vars.yaml.j2)
+**Usage in sample:** [Sample](/test_data/test_templates/regdefs/registry-1.yaml.j2)
 
 ## Calculator CLI macros
 
