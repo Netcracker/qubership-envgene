@@ -13,20 +13,22 @@ test_data = [
     # ("cluster-01", "env-04", "simple"),
     # ("cluster01", "env01", "test-01"),
     # ("cluster01", "env01", "test-01"),
-    # ("cluster01", "env03", "test-template-1"),
-    ("cluster01", "env04", "test-template-2")
+    ("cluster01", "env03", "test-template-1"),
+    # ("cluster01", "env04", "test-template-2")
 ]
 
-g_templates_dir = getAbsPath("../../test_data/test_templates")
-g_inventory_dir = getAbsPath("../../test_data/test_environments")
-g_output_dir = getAbsPath("../../tmp/test_environments")
+base_dir = Path(__file__).parent.resolve()
+g_templates_dir = str((base_dir / "../../test_data/test_templates").resolve())
+g_inventory_dir = str((base_dir / "../../test_data/test_environments").resolve())
+g_output_dir = str((base_dir / "../../tmp/test_environments").resolve())
+
 g_base_dir = get_parent_dir_for_dir(g_inventory_dir)
 
 
 @pytest.fixture(autouse=True)
 def clean_output_dir():
-    g_output_dir_path = Path(g_output_dir)
-    if g_output_dir_path.exists() and g_output_dir_path.is_dir():
+    g_output_dir_path = (base_dir / "../../tmp").resolve()
+    if g_output_dir_path.exists():
         shutil.rmtree(g_output_dir_path)
     g_output_dir_path.mkdir(parents=True, exist_ok=True)
 
