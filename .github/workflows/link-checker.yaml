@@ -1,25 +1,22 @@
 ---
-  name: Link Checker
+  name: "Link Checker"
   
   on:
-    push:
-      branches-ignore:
-        - main
     pull_request:
-      branches:
-        - '**'
-    workflow_dispatch:
+      types:
+        - opened
+        - edited
+        - synchronize
+    workflow_dispatch: null
   
+  permissions:
+    contents: read
   jobs:
-    linkChecker:
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
+      linkChecker:
+        runs-on: ubuntu-latest
+        steps:
+          - uses: actions/checkout@v4
   
-        - name: Link Checker
-          id: lychee
-          uses: lycheeverse/lychee-action@v2
-          with:
-            args: --base . --verbose --no-progress './**/*.md' --accept 100..=103,200..=299,429
-            format: markdown
-            fail: true
+          - name: Link Checker
+            uses: ./.github/actions/link-checker
+  
