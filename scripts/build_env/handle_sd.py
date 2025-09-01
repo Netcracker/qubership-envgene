@@ -1,6 +1,9 @@
 import asyncio
+import os
 from os import path, getenv
 import json
+import yaml
+
 
 
 import envgenehelper as helper
@@ -26,6 +29,37 @@ BASE_ENV_PATH = f"{WORK_DIR}/environments/{CLUSTER_NAME}/{ENVIRONMENT_NAME}"
 APP_DEFS_PATH = f"{BASE_ENV_PATH}/AppDefs"
 REG_DEFS_PATH = f"{BASE_ENV_PATH}/RegDefs"
 
+def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict: dict) -> dict:
+    """
+    Transforms the SD data before writing:
+    - If userData.useDeployPostfixAsNamespace == True:
+        - Replace deployPostfix with corresponding folder name from namespace_dict if exists.
+        - If userData contains ONLY field useDeployPostfixAsNamespace, remove userData.
+        - If other keys exist, remove only useDeployPostfixAsNamespace.
+    """
+    logger.info(f"[Pre handle_deploy_postfix_namespace_transformation] Original SD data: {json.dumps(sd_data, indent=2)}")
+    user_data = sd_data.get("userData", {})
+
+    if isinstance(user_data, dict) and user_data.get("useDeployPostfixAsNamespace") is True:
+        for app in sd_data.get("applications", []):
+            if "deployPostfix" in app and isinstance(app["deployPostfix"], str):
+                current_postfix = app["deployPostfix"]
+                replacement = namespace_dict.get(current_postfix)
+                if replacement:
+                    logger.info(f"Replacing deployPostfix '{current_postfix}' with '{replacement}'")
+                    app["deployPostfix"] = replacement
+                else:
+                    logger.error(f"No replacement found for deployPostfix '{current_postfix}', cannot continue.")
+                    exit(1)
+        # Remove entire userData if it has only one key
+        if len(user_data) == 1:
+            sd_data.pop("userData", None)
+        else:
+            user_data.pop("useDeployPostfixAsNamespace", None)
+            sd_data["userData"] = user_data  # Reassign to make sure it's updated
+
+    return sd_data
+
 
 def prepare_vars_and_run_sd_handling():
     base_dir = getenv_and_log('CI_PROJECT_DIR')
@@ -44,6 +78,30 @@ def prepare_vars_and_run_sd_handling():
 
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
 
+def build_namespace_dict(env) -> dict:
+    namespaces_dir = f'{env.env_path}/Namespaces/'
+    result = {}
+
+    # Iterate over all items in Namespaces directory
+    for folder_name in os.listdir(namespaces_dir):
+        folder_path = os.path.join(namespaces_dir, folder_name)
+        if os.path.isdir(folder_path):
+            namespace_file = os.path.join(folder_path, "namespace.yml")
+            if os.path.isfile(namespace_file):
+                with open(namespace_file, 'r') as f:
+                    data = yaml.safe_load(f)
+                # Extract 'name' property
+                ns_name = data.get("name")
+                if ns_name and isinstance(ns_name, str):
+                    result[ns_name] = folder_name
+                else:
+                    logger.warning(f"Warning: 'name' property missing or invalid in {namespace_file}")
+            else:
+                # logger.warning(f"Warning: namespace.yml not found in {folder_path}")
+                continue
+
+    return result
+
 def merge_sd(env, sd_data, merge_func):
     destination = f'{env.env_path}/Inventory/solution-descriptor/sd.yaml'
     logger.info(f"Final destination! - {destination}")
@@ -53,8 +111,10 @@ def merge_sd(env, sd_data, merge_func):
     helper.check_dir_exist_and_create(path.dirname(destination))
     helper.pre_validate(full_sd_yaml, sd_data)
     result = merge_func(full_sd_yaml, sd_data)
-    helper.writeYamlToFile(destination, result)
-    logger.info(f"Merged data into Target Path! - {result}")
+    namespace_dict = build_namespace_dict(env)
+    transformed_result = handle_deploy_postfix_namespace_transformation(result, namespace_dict)
+    helper.writeYamlToFile(destination, transformed_result)
+    logger.info(f"Merged data into Target Path! - {transformed_result}")
 
 def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
     base_path = f'{env.env_path}/Inventory/solution-descriptor/'
@@ -135,7 +195,9 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         merged_result = data
 
     #merged_result["version"] = str(merged_result["version"])
-    helper.writeYamlToFile(sd_path, merged_result)
+    namespace_dict = build_namespace_dict(env)
+    transformed_result = handle_deploy_postfix_namespace_transformation(merged_result,namespace_dict)
+    helper.writeYamlToFile(sd_path, transformed_result)
     merged_data = helper.openYaml(sd_path)
     logger.info(f"Merged_data: {merged_data}")
 
@@ -149,7 +211,8 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(destination))
-        helper.writeYamlToFile(destination, merged_data)
+        transformed_result = handle_deploy_postfix_namespace_transformation(merged_data,namespace_dict)
+        helper.writeYamlToFile(destination, transformed_result)
         logger.info(f"Replaced existing SD with new data at: {destination}")
         return
 
