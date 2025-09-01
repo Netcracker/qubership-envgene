@@ -27,6 +27,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   run-lint:
@@ -42,3 +43,4 @@ jobs:
         uses: ./.github/actions/super-linter
         with:
           full_scan: ${{ inputs.full_scan || false }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
