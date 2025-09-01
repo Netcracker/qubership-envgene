@@ -113,7 +113,8 @@ RUN apk add --no-cache \
     openssh-client \
     sudo \
     zip \
-    unzip
+    unzip \
+    tar
 
 # Copy everything from build stage
 COPY --from=build /module /module
