@@ -3,9 +3,10 @@
 # Rules: https://yamllint.readthedocs.io/en/stable/rules.html
 
 # Exclude not required files
-# ignore-from-file:
-# - .gitignore
-# - .yamlignore
+ignore: |
+  test_data/**
+  test_data/
+  **/test_data/**
 
 rules:
   braces:

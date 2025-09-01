@@ -1,23 +1,22 @@
 ---
 
-  name: "Conventional Commits"
-  
-  on:
-    pull_request:
-      types:
-        - opened
-        - edited
-        - synchronize
-    workflow_dispatch: null
-  
-  permissions:
-    contents: read
-  jobs:
-    build:
-      name: Conventional Commits
-      runs-on: ubuntu-latest
-      steps:
-        - uses: actions/checkout@v4
-  
-        - uses: ./.github/actions/conventional-commits
-  
+name: "Conventional Commits"
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+  workflow_dispatch: null
+
+permissions:
+  contents: read
+jobs:
+  build:
+    name: Conventional Commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/conventional-commits

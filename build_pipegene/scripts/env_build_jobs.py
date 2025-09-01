@@ -25,11 +25,18 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
       'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
       'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
   ])
+  # add after script
+  after_script = [
+    'mkdir -p "$CI_PROJECT_DIR/tmp"',
+    'cp -r /build_env/tmp/* $CI_PROJECT_DIR/tmp'
+  ]
+  #
   env_build_params = {
       "name":   f'env_builder.{full_env}',
       "image":  '${envgen_image}',
       "stage":  'env_builder',
       "script": script,
+      "after_script": after_script
   }
 
   env_build_vars = {
@@ -68,7 +75,7 @@ def prepare_generate_effective_set_job(pipeline, environment_name, cluster_name)
     "name":   f'generate_effective_set.{cluster_name}/{environment_name}',
     "image":  '${effective_set_generator_image}',
     "stage":  'generate_effective_set',
-    "script": [ f'/module/scripts/prepare.sh "generate_effective_set.yaml"',
+    "script": [ '/module/scripts/prepare.sh "generate_effective_set.yaml"',
                 "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
                 'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
                 'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
@@ -101,7 +108,7 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, cr
       "image":  '${envgen_image}',
       "stage":  'git_commit',
       "script": [ 'if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then cert_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs"); for path in $cert_path; do . /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/$path; done; fi',
-                  f'/module/scripts/prepare.sh "git_commit.yaml"',
+                  '/module/scripts/prepare.sh "git_commit.yaml"',
                   "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
                   'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
                   'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done',

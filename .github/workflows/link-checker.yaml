@@ -1,22 +1,21 @@
 ---
-  name: "Link Checker"
-  
-  on:
-    pull_request:
-      types:
-        - opened
-        - edited
-        - synchronize
-    workflow_dispatch: null
-  
-  permissions:
-    contents: read
-  jobs:
-      linkChecker:
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4
-  
-          - name: Link Checker
-            uses: ./.github/actions/link-checker
-  
+name: "Link Checker"
+
+on:
+  pull_request:
+    types:
+      - opened
+      - edited
+      - synchronize
+  workflow_dispatch: null
+
+permissions:
+  contents: read
+jobs:
+    linkChecker:
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v4
+
+        - name: Link Checker
+          uses: ./.github/actions/link-checker

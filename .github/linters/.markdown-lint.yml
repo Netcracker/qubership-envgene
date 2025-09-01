@@ -1,0 +1,32 @@
+# Markdownlint configuration file
+# https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+
+# MD012 - Multiple consecutive blank lines
+MD012: false
+
+# MD013 - Line length
+MD013:
+  # Number of characters
+  line_length: 1000
+  # Number of characters for headings
+  heading_line_length: 1000
+  # Number of characters for code blocks
+  code_block_line_length: 1000
+  # Include code blocks
+  code_blocks: true
+  # Include tables
+  tables: true
+  # Include headings
+  headings: true
+  # Include headers
+  headers: true
+  # Strict length checking
+  strict: false
+  # Stern length checking
+  stern: false
+
+# MD033 - Inline HTML
+MD033: false
+
+# MD051 - Link fragments should be valid
+MD051: false
