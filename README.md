@@ -19,9 +19,3 @@ Main features:
 - Automation for effective parameters set generation
 - Templates versioning
 - Credentials management in GIT using encryption
-
-## How to
-
-- [Basic How-To](docs/basic-how-to.md).
-- [Environment specific parameters schema](docs/env-specific-schema.md).
-- [Samples](/docs/samples/README.md)
