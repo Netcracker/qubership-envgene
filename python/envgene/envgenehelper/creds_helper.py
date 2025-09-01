@@ -11,7 +11,7 @@ CRED_VALUE_TYPE_PASSWORD = "password"
 CRED_VALUE_TYPE_SECRET = "secret"
 
 def check_is_cred(param_key, param_value):
-    if isinstance(param_value, str): 
+    if isinstance(param_value, str):
         # if we are iterationg through array, than cred macros can't be in key (it is integer)
         credKey = param_key.replace(" ", "") if isinstance(param_key, str) else ""
         credValue = param_value.replace("'", "\"")
@@ -46,7 +46,7 @@ def _process_cred_in_string(param_key, param_value, tenant_name, cloud_name, nam
 def _get_cred_from_string(param_key, param_value, tenant_name, cloud_name, namespace_name, update_cred_id):
     credId = ""
     credType = ""
-    if isinstance(param_value, str): 
+    if isinstance(param_value, str):
         # if we are iterationg through array, than cred macros can't be in key (it is integer)
         credKey = param_key.replace(" ", "") if isinstance(param_key, str) else ""
         credValue = param_value.replace("'", "\"")
@@ -90,7 +90,7 @@ def _get_cred_id_from_cred_macros(value):
     else:
         logger.error(f"Can't obtain credId from: {value}")
         raise ReferenceError(f"Error during credentials preparation. See logs above.")
-    
+
 def get_cred_id_from_cred_macros(value):
     if (value):
         credValue = value.replace("'", "\"").strip().strip("\\\"").strip("\"")
@@ -145,7 +145,7 @@ def check_is_envgen_cred(value):
     elif re.search(r'envgen\.creds\.get.*\.secret', credValue):
         return True
     return False
-   
+
 def get_cred_id_and_property_from_cred_macros(value):
     credValue = value.replace("'", "\"").strip().strip("\\\"").strip("\"")
     pattern = r'.*\${.*creds\.get\((.*)\).(\w+)}.*'
