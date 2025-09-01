@@ -22,13 +22,13 @@ Environment Inventory. The inventory file of a specific Environment. Contains th
 
 Mandatory for every Environment. Created and updated manually.
 
-Located in the Instance repository at: `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`  
-Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
+Located in the Instance repository at: `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
+Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
 
 [`env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
 
 ```yaml
-# Mandatory 
+# Mandatory
 inventory:
   # Optional
   # Name of the Environment, e.g. dev01
@@ -52,7 +52,7 @@ inventory:
   # Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
   # Should be listed in configuration/deployer.yml
   deployer: string
-  # Optional 
+  # Optional
   # Environment description
   # This attribute's value is available for template rendering via the `current_env.description` variable
   description: string
@@ -166,8 +166,8 @@ envTemplate:
 
 ## `config.yml`
 
-The primary system configuration file  
-Located at `/configuration/config.yml`  
+The primary system configuration file
+Located at `/configuration/config.yml`
 
 [`config.yml` JSON Schema](/schemas/config.schema.json)
 
@@ -190,7 +190,7 @@ artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 # Defines whether cloud passport should be decrypted upon discovery
 cloud_passport_decryption: boolean
 # Optional. Default value - `auto`
-# Defines the auto-discovery mode for Application and Registry Definitions 
+# Defines the auto-discovery mode for Application and Registry Definitions
 # Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
 # `local` - Only repository-located Application and Registry Definitions are used for application:version resolution
 # `cmdb` - Application and Registry Definitions are discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository

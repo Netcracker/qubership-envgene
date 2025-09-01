@@ -190,8 +190,7 @@
                   "bom-ref",
                   "group",
                   "name",
-                  "version",
-                  "purl"
+                  "version"
                 ],
                 "additionalProperties": false,
                 "properties": {
@@ -298,7 +297,6 @@
                 }
               },
               "uniqueItems": true
-              
             }
           }
         }
