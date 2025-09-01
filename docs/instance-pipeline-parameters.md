@@ -78,7 +78,7 @@ If `true`:
 
 **Description**: Feature flag. Valid values are `true` or `false`.
 
-If `true`:  
+If `true`:
   The Environment Instance will be exported to an external CMDB system.
 
 This parameter serves as a configuration for an extension point. Integration with a specific CMDB is not implemented in EnvGene.
@@ -87,7 +87,7 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 **Mandatory**: No
 
-**Example**: `true`  
+**Example**: `true`
 
 ### `DEPLOYMENT_TICKET_ID`
 

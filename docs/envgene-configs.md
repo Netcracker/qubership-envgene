@@ -287,14 +287,14 @@ If both repository-wide and cluster-wide configuration files are present, then w
 [appregdef_config.yaml JSON Schema](/schemas/appregdef-config.schema.json)
 
 ```yaml
-# Optional 
+# Optional
 # Defines parameters for rendering Application Definition templates
 appdefs:
   # Mandatory
   overrides:
     <key-1>: <value-1>
     <key-2>: <value-2>
-# Optional 
+# Optional
 # Defines parameters for rendering Registry Definition templates
 regdefs:
   # Mandatory
@@ -311,5 +311,5 @@ appdefs:
     registryName: sandbox
 regdefs:
   overrides:
-    hostName: "registry.qubership.org" 
+    hostName: "registry.qubership.org"
 ```

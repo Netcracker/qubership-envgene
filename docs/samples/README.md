@@ -141,4 +141,4 @@ envTemplate:
         generateEnvironmentLatestVersion: "master-20240209.153935-69"
 ```
 
-Sample is [here](/docs/samples/environments/cluster-01/env-01/Inventory/env_definition.yml)
+Find the sample in [env_definition.yml](/docs/samples/environments/cluster-01/env-01/Inventory/env_definition.yml)
