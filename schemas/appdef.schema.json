@@ -40,9 +40,6 @@
       "name",
       "registryName",
       "artifactId",
-      "groupId",
-      "supportParallelDeploy",
-      "deployParameters",
-      "technicalConfigurationParameters"
+      "groupId"
     ]
   }
