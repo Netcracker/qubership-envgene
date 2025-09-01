@@ -35,23 +35,7 @@ on:
         required: false
         default: true
         type: boolean
-  push:
-    branches-ignore:
-      - main
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-  pull_request:
-    types: [closed]
-    branches:
-      - 'main'
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
+  push: null
 
 env:
   REGISTRY: ghcr.io
