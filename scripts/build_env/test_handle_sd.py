@@ -215,6 +215,18 @@ def test_sd(cluster_name, env_name, test_case_name):
         # If source doesn't exist, just create the target directory
         os.makedirs(target_sd_dir, exist_ok=True)
 
+    # Ensure Namespaces directory exists
+    namespaces_dir = os.path.join(env.env_path, "Namespaces")
+    os.makedirs(namespaces_dir, exist_ok=True)
+
+    # Optionally create a dummy namespace.yml to avoid warnings/errors
+    dummy_ns_path = os.path.join(namespaces_dir, "dummy-ns")
+    os.makedirs(dummy_ns_path, exist_ok=True)
+
+    with open(os.path.join(dummy_ns_path, "namespace.yml"), "w") as f:
+        f.write("name: dummy-ns\n")
+
+
     # Generate SD file
     logger.info("Generating SD file...")
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
