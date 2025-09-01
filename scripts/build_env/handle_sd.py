@@ -82,6 +82,10 @@ def build_namespace_dict(env) -> dict:
     namespaces_dir = f'{env.env_path}/Namespaces/'
     result = {}
 
+    if not os.path.exists(namespaces_dir):
+        logger.warning(f"Namespaces directory does not exist: {namespaces_dir}")
+        return result  # Return empty dict instead of throwing an error
+    
     # Iterate over all items in Namespaces directory
     for folder_name in os.listdir(namespaces_dir):
         folder_path = os.path.join(namespaces_dir, folder_name)
