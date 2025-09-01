@@ -1,5 +1,5 @@
-#Important!
-#Please use your own runner and docker-images
+# Important!
+# Please use your own runner and docker-images
 
 name: "EnvGene Execution"
 
@@ -63,9 +63,9 @@ env:
   ENVGENE_AGE_PRIVATE_KEY: ${{ secrets.ENVGENE_AGE_PRIVATE_KEY }}
 
   # Docker Images
-  DOCKER_IMAGE_PIPEGENE: 'ghcr.io/netcracker/qubership-pipegene:main_20250831-203927'
-  DOCKER_IMAGE_ENVGENE: 'ghcr.io/netcracker/qubership-envgene:main_20250831-203927'
-  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: 'ghcr.io/netcracker/qubership-effective-set-generator:main_20250831-204026'
+  DOCKER_IMAGE_PIPEGENE: 'ghcr.io/netcracker/qubership-pipegene:feature_rc-effective-set-improvement_20250829-082018'
+  DOCKER_IMAGE_ENVGENE: 'ghcr.io/netcracker/qubership-envgene:feature_rc-effective-set-improvement_20250829-082021'
+  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: 'ghcr.io/netcracker/qubership-effective-set-generator:feature_rc-effective-set-improvement_20250829-082118'
 
 jobs:
   show_environment_variables:
@@ -114,14 +114,13 @@ jobs:
            # Check if API input is provided
            if [ -n "${{ github.event.inputs.GITHUB_PIPELINE_API_INPUT }}" ]; then
              echo "🔍 API Mode: Processing GITHUB_PIPELINE_API_INPUT"
-             
+
              # Set the API input variable for the script to use
              export GITHUB_PIPELINE_API_INPUT="${{ github.event.inputs.GITHUB_PIPELINE_API_INPUT }}"
              echo "GITHUB_PIPELINE_API_INPUT=${{ github.event.inputs.GITHUB_PIPELINE_API_INPUT }}" >> $GITHUB_ENV
-             
+
              # Process API input variables
              python .github/scripts/process_api_input.py
-             
              # Set defaults for optional variables if not provided
              echo "ENV_BUILDER=${ENV_BUILDER:-true}" >> $GITHUB_ENV
              echo "GET_PASSPORT=${GET_PASSPORT:-false}" >> $GITHUB_ENV
@@ -235,7 +234,6 @@ jobs:
            echo "ENV_NAMES value: '$ENV_NAMES'"
            echo "🔍 ENV_NAMES length: ${#ENV_NAMES}"
            echo "🔍 ENV_NAMES contains comma: $(echo "$ENV_NAMES" | grep -c ',' || echo '0')"
-           
            if [ -z "$ENV_NAMES" ]; then
              echo "❌ ERROR: ENV_NAMES is empty or not set!"
              echo "This likely means the input processing failed."
@@ -280,34 +278,11 @@ jobs:
            echo "Generated matrix with $count environment(s): $arr"
            echo "env_matrix=$arr" >> $GITHUB_OUTPUT
 
-  parameters_validation:
-    name: "${{ matrix.environment }} - Parameters Validation"
-    runs-on: ubuntu-22.04
-    if: needs.show_environment_variables.outputs.env_matrix != '[]'
-    needs: show_environment_variables
-    container:
-      image: ${{ needs.show_environment_variables.outputs.DOCKER_IMAGE_PIPEGENE }}
-      options: --user root
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: ${{ fromJson(needs.show_environment_variables.outputs.env_matrix) }}
-    steps:
-      - name: Repository Checkout
-        uses: actions/checkout@v4
-
-      - name: EnvGene parameters validation
-        run: |
-          ENV_NAMES="${{ matrix.environment }}"
-          export ENV_NAMES
-          python /module/scripts/github_actions.py validate_pipeline
-
   generate_inventory:
     name: "${{ matrix.environment }} - Generate Inventory"
     runs-on: ubuntu-22.04
     if: always() && needs.show_environment_variables.outputs.env_matrix != '[]' && needs.show_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '{}' && needs.show_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.show_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
     needs:
-      - parameters_validation
       - show_environment_variables
     container:
       image: ${{ needs.show_environment_variables.outputs.DOCKER_IMAGE_ENVGENE }}
@@ -363,7 +338,6 @@ jobs:
     runs-on: ubuntu-22.04
     if: always() && needs.show_environment_variables.outputs.env_matrix != '[]' && needs.show_environment_variables.outputs.CRED_ROTATION_PAYLOAD != '{}'
     needs:
-      - parameters_validation
       - show_environment_variables
       - generate_inventory
     container:
@@ -404,7 +378,7 @@ jobs:
         run: |
           mkdir -p "${{ env.PROJECT_DIR }}/environments/${{ env.FULL_ENV }}/"
           cp -rf ./downloaded_artifact/* "${{ env.PROJECT_DIR }}/environments/${{ env.FULL_ENV }}/"
-          rm -rf ./downloaded_artifact    
+          rm -rf ./downloaded_artifact
 
       - name: Credential Rotation
         run: |
@@ -436,7 +410,6 @@ jobs:
     if: always() && needs.show_environment_variables.outputs.env_matrix != '[]' && needs.show_environment_variables.outputs.ENV_BUILDER == 'true'
     runs-on: ubuntu-22.04
     needs:
-      - parameters_validation
       - show_environment_variables
       - generate_inventory
       - credential_rotation
@@ -567,7 +540,6 @@ jobs:
           done
 
 
-
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -578,7 +550,7 @@ jobs:
     name: "${{ matrix.environment }} - Generate Effective Set"
     if: always() && needs.show_environment_variables.outputs.env_matrix != '[]' && needs.show_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
     runs-on: ubuntu-22.04
-    needs: [parameters_validation,show_environment_variables,generate_inventory,credential_rotation,env_build]
+    needs: [show_environment_variables, generate_inventory, credential_rotation, env_build]
     container:
       image: ${{ needs.show_environment_variables.outputs.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}
       options: --user root
@@ -700,7 +672,7 @@ jobs:
   git_commit:
     name: "${{ matrix.environment }} - Git Commit"
     runs-on: ubuntu-22.04
-    needs: [parameters_validation,show_environment_variables,generate_inventory,credential_rotation,env_build,generate_effective_set]
+    needs: [show_environment_variables, generate_inventory, credential_rotation, env_build, generate_effective_set]
     if: always() && needs.show_environment_variables.outputs.env_matrix != '[]' && (needs.show_environment_variables.outputs.ENV_INVENTORY_INIT == 'true' || needs.show_environment_variables.outputs.ENV_BUILDER == 'true' || needs.show_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true' || needs.show_environment_variables.outputs.CRED_ROTATION_PAYLOAD != '{}')
     container:
       image: ${{ needs.show_environment_variables.outputs.DOCKER_IMAGE_ENVGENE }}

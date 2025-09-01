@@ -76,7 +76,7 @@ runs:
           type=ref,event=pr
           type=sha,prefix={{branch}}-{{sha}},suffix={{date 'YYYYMMDD-HHMMSS'}}
           type=raw,value={{branch}}_{{date 'YYYYMMDD-HHMMSS'}}
-    
+
     - name: Build and push Docker image
       id: push
       uses: docker/build-push-action@v6
@@ -91,4 +91,4 @@ runs:
         labels: ${{ steps.meta.outputs.labels }}
         build-args: |
           GIT_USER=${{ inputs.git-user }}
-          GIT_TOKEN=${{ inputs.git-token }} 
+          GIT_TOKEN=${{ inputs.git-token }}

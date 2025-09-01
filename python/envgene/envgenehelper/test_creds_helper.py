@@ -13,8 +13,8 @@ check_is_cred_test_data = [
     ('#credscl{TEST_CREDS_CLOUD_LOGIN, TEST_CREDS_CLOUD_PASSWORD}', "test-cred-cloud", True),
     ('#credsns{TEST_CREDS_NS_LOGIN, TEST_CREDS_NS_PASSWORD}', "test-cred-namespace", True),
     ('some_string #credsns{TEST_CREDS_NS_LOGIN, TEST_CREDS_NS_PASSWORD}', "test-cred-namespace", False),
-    ("USERNAME1", "${creds.get(\"velero-s3-cred\").username}", True), 
-    ("USERNAME2", "${cmdb.creds.get(\"velero-s3-cred\").username}", True), 
+    ("USERNAME1", "${creds.get(\"velero-s3-cred\").username}", True),
+    ("USERNAME2", "${cmdb.creds.get(\"velero-s3-cred\").username}", True),
     ("PASSWORD1", "${creds.get('velero-s3-cred').password} ", True),
     ("PASSWORD2", '${creds.get(\"velero-s3-cred\").username}', True),
     ("PASSWORD3", '${creds.get("velero-s3-cred").username}', True),
@@ -52,8 +52,8 @@ get_cred_list_from_param_test_data = [
     ('#creds{TEST_CREDS_LOGIN,TEST_CREDS_PASSWORD}', "test-cred", [create_cred_definition("test-cred", CRED_TYPE_USERPASS)]),
     ('#credscl{TEST_CREDS_CLOUD_LOGIN, TEST_CREDS_CLOUD_PASSWORD}', "test-cred-cloud", [create_cred_definition(f"{TEST_TENANT}-{TEST_CLOUD}-test-cred-cloud", CRED_TYPE_USERPASS)]),
     ('#credsns{TEST_CREDS_NS_LOGIN, TEST_CREDS_NS_PASSWORD}', "test-cred-namespace", [create_cred_definition(f"{TEST_TENANT}-{TEST_CLOUD}-{TEST_NAMESPACE}-test-cred-namespace", CRED_TYPE_USERPASS)]),
-    ("USERNAME1", "${creds.get(\"velero-s3-cred\").username}", [create_cred_definition("velero-s3-cred", CRED_TYPE_USERPASS)]), 
-    ("USERNAME2", "${cmdb.creds.get(\"velero-s3-cred\").username}", [create_cred_definition("velero-s3-cred", CRED_TYPE_USERPASS)]), 
+    ("USERNAME1", "${creds.get(\"velero-s3-cred\").username}", [create_cred_definition("velero-s3-cred", CRED_TYPE_USERPASS)]),
+    ("USERNAME2", "${cmdb.creds.get(\"velero-s3-cred\").username}", [create_cred_definition("velero-s3-cred", CRED_TYPE_USERPASS)]),
     ("PASSWORD1", "${creds.get('velero-s3-cred').password} ", [create_cred_definition("velero-s3-cred", CRED_TYPE_USERPASS)]),
     ("PASSWORD2", '${creds.get(\"velero-s3-cred\").username}', [create_cred_definition("velero-s3-cred", CRED_TYPE_USERPASS)]),
     ("PASSWORD3", '${creds.get("velero-s3-cred").username}', [create_cred_definition("velero-s3-cred", CRED_TYPE_USERPASS)]),
@@ -89,8 +89,8 @@ def test_get_cred_list_from_yaml(yaml_file):
         assert get_cred_list_from_param(param_key, param_value, True, TEST_TENANT, TEST_CLOUD, TEST_NAMESPACE) == expected, f"Param {param_key}={param_value} expected cred list result should be: {dump_as_yaml_format(expected)}"
 
 get_cred_id_from_cred_macros_test_data = [
-    ("${creds.get(\"velero-s3-cred\").username}", "velero-s3-cred"), 
-    ("${cmdb.creds.get(\"velero-s3-cred\").username}", "velero-s3-cred"), 
+    ("${creds.get(\"velero-s3-cred\").username}", "velero-s3-cred"),
+    ("${cmdb.creds.get(\"velero-s3-cred\").username}", "velero-s3-cred"),
     ("${creds.get('velero-s3-cred').password} ", "velero-s3-cred"),
     ('${creds.get(\"velero-s3-cred\").username}', "velero-s3-cred"),
     ('${creds.get("velero-s3-cred").username}', "velero-s3-cred"),
@@ -127,14 +127,14 @@ get_cred_list_from_param_without_update_test_data = [
     ('#creds{TEST_CREDS_LOGIN, TEST_CREDS_PASSWORD}', "test-cred", [create_cred_definition("test-cred", CRED_TYPE_USERPASS)]),
     ('#credscl{TEST_CREDS_CLOUD_LOGIN, TEST_CREDS_CLOUD_PASSWORD}', "test-cred-cloud", [create_cred_definition(f"test-cred-cloud", CRED_TYPE_USERPASS)]),
     ('#credsns{TEST_CREDS_NS_LOGIN, TEST_CREDS_NS_PASSWORD}', "test-cred-namespace", [create_cred_definition(f"test-cred-namespace", CRED_TYPE_USERPASS)]),
-    ("USERNAME1", "${creds.get(\"velero-s3-cred\").username}", [create_cred_definition("velero-s3-cred", CRED_TYPE_USERPASS)]), 
+    ("USERNAME1", "${creds.get(\"velero-s3-cred\").username}", [create_cred_definition("velero-s3-cred", CRED_TYPE_USERPASS)]),
 ]
 @pytest.mark.parametrize("param_key, param_value, expected", get_cred_list_from_param_without_update_test_data)
 def test_get_cred_list_from_param_without_update(param_key, param_value, expected):
     assert get_cred_list_from_param(param_key, param_value) == expected, f"Param {param_key}={param_value} expected cred list result should be: {dump_as_yaml_format(expected)}"
 
 get_cred_id_and_property_from_cred_macros_test_data = [
-    ("${creds.get(\"velero-s3-cred\").username}", "velero-s3-cred", "username"), 
+    ("${creds.get(\"velero-s3-cred\").username}", "velero-s3-cred", "username"),
     ("envgen.creds.get('cloud-deployer-username-cred').secret", "cloud-deployer-username-cred", "secret"),
     ("envgen.creds.get('cloud-deployer-username-cred').username", "cloud-deployer-username-cred", "username"),
     ("envgen.creds.get('cloud-deployer-username-cred').password", "cloud-deployer-username-cred", "password"),
@@ -148,13 +148,13 @@ def test_get_cred_id_and_property_from_cred_macros(cred_macros, expected_cred_id
     assert cred_property == expected_property, f"Invalid cred property in cred macros {cred_macros}, expected {expected_property}, got {cred_property}"
 
 expand_cred_macro_and_return_param_map_test_data = [
-    ("USERNAME1", "${creds.get(\"ci-atp-auth-cred\").username}", "ci-atp-auth-user"), 
+    ("USERNAME1", "${creds.get(\"ci-atp-auth-cred\").username}", "ci-atp-auth-user"),
     ("PASSWORD1", "${creds.get('ci-atp-auth-cred').password} ", "ci-atp-auth-password"),
-    ("USERNAME2", "${cmdb.creds.get(\"cmdb-creds\").username}", "[encrypted:AES256_Fernet]gAAAAABly1j-qcE3_bG0HrnbtPi8ACfcEenXixMQK7tARsI_arZRDri8fEhg5UWfNvirHaOm1oiFO9ds3PfiXMn3ygdhnCV_zQ=="), 
+    ("USERNAME2", "${cmdb.creds.get(\"cmdb-creds\").username}", "[encrypted:AES256_Fernet]gAAAAABly1j-qcE3_bG0HrnbtPi8ACfcEenXixMQK7tARsI_arZRDri8fEhg5UWfNvirHaOm1oiFO9ds3PfiXMn3ygdhnCV_zQ=="),
     ("PASSWORD2", "${creds.get('cmdb-creds').password} ", "[encrypted:AES256_Fernet]gAAAAABly1j-N4FzSjUH4FnQPrRny1RdxXliVw50dOLVOO6FAFx4LjICIQG8fPwqDh8bPiiGZVGWbGerIGW9YafwdjEc_Ig_L8e2P48NOuUUBnVCjvs3ZK6QviIsbBVBgh-9FA0pwfHA"),
     (
-        "SEVERAL_CREDS", 
-        "[default]\n        aws_access_key_id = ${creds.get(\"velero-s3-cred\").username}\n        aws_secret_access_key = ${creds.get(\"velero-s3-cred\").password}", 
+        "SEVERAL_CREDS",
+        "[default]\n        aws_access_key_id = ${creds.get(\"velero-s3-cred\").username}\n        aws_secret_access_key = ${creds.get(\"velero-s3-cred\").password}",
         "[default]\n        aws_access_key_id = velero-s3-cred-user\n        aws_secret_access_key = velero-s3-cred-password"
     ),
     (2, "${cmdb.creds.get('test-not-rewrite-cred').secret}", "DO_NOT_REWRITE_SECRET"),
