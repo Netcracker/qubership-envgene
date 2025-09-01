@@ -1,6 +1,6 @@
 # This action is hidden from the GitHub Actions UI
-name: 'Build Instance Repo Pipeline Docker Image'
-description: 'Build and push Instance Repo Pipeline docker image to container registry'
+name: 'Build Qubership PipeGene Docker Image'
+description: 'Build and push Qubership PipeGene docker image to container registry'
 
 inputs:
   registry:
@@ -14,17 +14,34 @@ inputs:
   image-name:
     description: 'Docker image name'
     required: false
-    default: 'qubership-instance-repo-pipeline'
+    default: 'qubership-pipegene'
   dockerfile-path:
     description: 'Path to Dockerfile'
     required: false
-    default: './github_workflows/instance-repo-pipeline/Dockerfile'
-  gh-access-token:
-    description: 'GitHub access token for build args'
+    default: './build_pipegene/build/Dockerfile'
+  git-user:
+    description: 'Git username for build args'
+    required: false
+  git-token:
+    description: 'Git token for build args'
     required: false
   github-token:
     description: 'GitHub token for registry login'
     required: true
+
+outputs:
+  custom_tag:
+    description: 'Custom tag with timestamp'
+    value: ${{ steps.tags.outputs.custom_tag }}
+  branch_tag:
+    description: 'Branch-based tag'
+    value: ${{ steps.tags.outputs.branch_tag }}
+  timestamp:
+    description: 'Generated timestamp'
+    value: ${{ steps.tags.outputs.timestamp }}
+  branch_latest_tag:
+    description: 'Branch latest tag'
+    value: ${{ steps.tags.outputs.branch_latest_tag }}
 
 runs:
   using: composite
@@ -39,22 +56,9 @@ runs:
         username: ${{ github.actor }}
         password: ${{ inputs.github-token }}
 
-    - name: Generate custom tags with timestamp
+    - name: Generate Docker tags
       id: tags
-      shell: bash
-      run: |
-        # Transform branch name to docker tag format
-        BRANCH_NAME="${{ github.ref_name }}"
-        DOCKER_TAG=$(echo "$BRANCH_NAME" | sed 's|/|_|g')
-        TIMESTAMP=$(date +%Y%m%d-%H%M%S)
-        CUSTOM_TAG="${DOCKER_TAG}_${TIMESTAMP}"
-        BRANCH_LATEST_TAG="${DOCKER_TAG}"
-        
-        # Set output for next steps
-        echo "custom_tag=$CUSTOM_TAG" >> $GITHUB_OUTPUT
-        echo "branch_tag=$DOCKER_TAG" >> $GITHUB_OUTPUT
-        echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
-        echo "branch_latest_tag=$BRANCH_LATEST_TAG" >> $GITHUB_OUTPUT
+      uses: ./.github/actions/generate-docker-tags
 
     - name: Extract metadata (tags, labels) for Docker
       id: meta
@@ -64,8 +68,8 @@ runs:
         tags: |
           type=ref,event=branch
           type=ref,event=pr
-          type=sha,prefix={{branch}}-{{sha}},suffix={{timestamp}}
-          type=raw,value={{branch}}_{{timestamp}}
+          type=sha,prefix={{branch}}-{{sha}},suffix={{date 'YYYYMMDD-HHMMSS'}}
+          type=raw,value={{branch}}_{{date 'YYYYMMDD-HHMMSS'}}
     
     - name: Build and push Docker image
       id: push
@@ -80,4 +84,5 @@ runs:
           ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build-args: |
-          GH_ACCESS_TOKEN=${{ inputs.gh-access-token }} 
+          GIT_USER=${{ inputs.git-user }}
+          GIT_TOKEN=${{ inputs.git-token }} 

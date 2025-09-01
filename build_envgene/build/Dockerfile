@@ -104,7 +104,8 @@ RUN apk add --no-cache \
     openssh-client \
     sudo \
     zip \
-    unzip
+    unzip \
+    tar
 
 # Copy everything from build stage
 COPY --from=build /module /module
@@ -115,8 +116,6 @@ COPY --from=build /etc/pip.conf /etc/pip.conf
 
 # Verify collections are accessible in runtime stage
 RUN /module/venv/bin/python -c "import ansible_collections.ansible.posix; print('ansible.posix collection accessible in runtime')"
-
-
 
 # Set permissions
 RUN chmod +x /usr/local/bin/sops

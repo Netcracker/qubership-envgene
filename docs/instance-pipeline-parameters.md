@@ -6,22 +6,26 @@
     - [`ENV_NAMES`](#env_names)
     - [`ENV_BUILDER`](#env_builder)
     - [`GET_PASSPORT`](#get_passport)
+    - [`CMDB_IMPORT`](#cmdb_import)
     - [`DEPLOYMENT_TICKET_ID`](#deployment_ticket_id)
     - [`ENV_TEMPLATE_VERSION`](#env_template_version)
     - [`ENV_INVENTORY_INIT`](#env_inventory_init)
     - [`ENV_TEMPLATE_NAME`](#env_template_name)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
+    - [`APP_REG_DEFS_JOB`](#app_reg_defs_job)
+    - [`APP_DEFS_PATH`](#app_defs_path)
+    - [`REG_DEFS_PATH`](#reg_defs_path)
     - [`SD_SOURCE_TYPE`](#sd_source_type)
     - [`SD_VERSION`](#sd_version)
     - [`SD_DATA`](#sd_data)
+    - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
-    - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
+  - [Archived Parameters](#archived-parameters)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
-  - [Archived Parameters](#archived-parameters)
 
 The following are the launch parameters for the instance repository pipeline. These parameters influence, the execution of specific jobs within the pipeline.
 
@@ -61,6 +65,21 @@ In the pipeline, Environment Instance generation job is executed. Environment In
 
 If `true`:  
   In the pipeline, Cloud Passport discovery job is executed. Cloud Passport discovery will be launched.
+
+**Default Value**: `false`
+
+**Mandatory**: No
+
+**Example**: `true`  
+
+### `CMDB_IMPORT`
+
+**Description**: Feature flag. Valid values are `true` or `false`.
+
+If `true`:  
+  The Environment Instance will be exported to an external CMDB system.
+
+This parameter serves as a configuration for an extension point. Integration with a specific CMDB is not implemented in EnvGene.
 
 **Default Value**: `false`
 
@@ -147,6 +166,46 @@ If `true`:
 
 **Example**: `true`
 
+### `APP_REG_DEFS_JOB`
+
+**Description**: Specifies the name of the job that is the source of [Application Definition](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition).
+
+This job must exist in the EnvGene instance pipeline.
+
+When this parameter is set, the system will:
+
+1. Download and unpack the `definitions.zip` file from the specified job artifact.
+2. Copy (with overwrite) Application Definitions from the extracted `definitions.zip` from the path specified in [`APP_DEFS_PATH`](#app_defs_path) to the `AppDefs` folder of the target Environment.
+3. Copy (with overwrite) Registry Definitions from the extracted `definitions.zip` from the path specified in [`REG_DEFS_PATH`](#reg_defs_path) to the `RegDefs` folder of the target Environment.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example Values**:
+
+- `appdef-generation-job`
+
+### `APP_DEFS_PATH`
+
+**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Application Definitions are located. The contents from this path will be copied to the `AppDefs` folder of the target Environment.
+
+**Default Value**: `AppDefs`
+
+**Mandatory**: No
+
+**Example Values**: `definitions/applications`
+
+### `REG_DEFS_PATH`
+
+**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Registry Definitions are located. The contents from this path will be copied to the `RegDefs` folder of the target Environment.
+
+**Default Value**: `RegDefs`
+
+**Mandatory**: No
+
+**Example Values**: `definitions/registries`
+
 ### `SD_SOURCE_TYPE`
 
 **Description**: Defines the method by which SD is passed in the `SD_DATA` or `SD_VERSION` attributes. Valid values ​​are `artifact` OR `json`.
@@ -227,27 +286,7 @@ See details in [SD processing](/docs/sd-processing.md)
 
 **Example**: `extended-merge`
 
-## Deprecated Parameters
-
-The following parameters are planned for removal
-
-### `SD_DELTA`
-
-**Description**: Deprecated
-
-If `true`: behaves identically to `SD_REPO_MERGE_MODE: extended-merge`
-
-If `false`: behaves identically to `SD_REPO_MERGE_MODE: replace`
-
-See details in [SD processing](/docs/sd-processing.md)
-
-**Default Value**: None
-
-**Mandatory**: No
-
-**Example**: `true`
-
-## `CRED_ROTATION_PAYLOAD`
+### `CRED_ROTATION_PAYLOAD`
 
 **Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macros)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
 
@@ -318,7 +357,7 @@ See details in [SD processing](/docs/sd-processing.md)
 }
 ```
 
-### Affected Parameters and Troubleshooting
+#### Affected Parameters and Troubleshooting
 
 When rotating sensitive parameters, EnvGene checks if the Credential is [shared](https://github.com/Netcracker/qubership-envgene/blob/feature/cred-rotation/docs/features/cred-rotation.md#affected-parameters) (used by multiple parameters or Environments). If shared Credentials are detected and force mode is not enabled, the credential_rotation job will fail to prevent accidental mass updates.
 
@@ -331,7 +370,7 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 
 > **Note:** When rotating a shared credential, all parameters in all Environments that reference this credential will be updated. This is why force mode is required for such operations to avoid accidental mass changes. The `affected-sensitive-parameters.yaml` file will list all such parameters and environments.
 
-## `CRED_ROTATION_FORCE`
+### `CRED_ROTATION_FORCE`
 
 **Description**: Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential. See details in [Credential Rotation](/docs/cred-rotation.md)
 
@@ -344,3 +383,23 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 ## Archived Parameters
 
 These parameters are no longer in use and are maintained for historical reference
+
+## Deprecated Parameters
+
+The following parameters are planned for removal
+
+### `SD_DELTA`
+
+**Description**: Deprecated
+
+If `true`: behaves identically to `SD_REPO_MERGE_MODE: extended-merge`
+
+If `false`: behaves identically to `SD_REPO_MERGE_MODE: replace`
+
+See details in [SD processing](/docs/sd-processing.md)
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `true`

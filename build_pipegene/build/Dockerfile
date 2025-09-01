@@ -7,10 +7,10 @@ USER root
 COPY python/integration /python/integration
 COPY schemas /module/schemas
 COPY python /python
-COPY build_gcip/build/pip.conf /etc/pip.conf
-COPY build_gcip/build/requirements.txt /build/requirements.txt
-COPY build_gcip/scripts /module/scripts
-COPY build_gcip/pipegene_plugins /module/scripts/pipegene_plugins
+COPY build_pipegene/build/pip.conf /etc/pip.conf
+COPY build_pipegene/build/requirements.txt /build/requirements.txt
+COPY build_pipegene/scripts /module/scripts
+COPY build_pipegene/pipegene_plugins /module/scripts/pipegene_plugins
 
 RUN apk update \
     && apk add --no-cache \

@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Deployer Configuration",
+  "description": "Configuration for integration with external CMDB systems. File may contain multiple named deployer definitions.",
+  "additionalProperties": false,
+  "patternProperties": {
+    ".+": {
+      "type": "object",
+      "title": "Deployer Definition",
+      "description": "Single deployer definition identified by a unique name",
+      "additionalProperties": true,
+      "properties": {
+        "username": {
+          "type": "string",
+          "title": "Username",
+          "description": "Username for authentication with external CMDB"
+        },
+        "token": {
+          "type": "string",
+          "title": "Access Token",
+          "description": "Token for authentication with external CMDB"
+        },
+        "deployerUrl": {
+          "type": "string",
+          "title": "Deployer URL",
+          "description": "URL of external CMDB",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "username",
+        "token",
+        "deployerUrl"
+      ]
+    }
+  }
+} 

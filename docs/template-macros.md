@@ -19,6 +19,8 @@
     - [`current_env.cluster.cloud_api_url`](#current_envclustercloud_api_url)
     - [`current_env.cluster.cloud_api_port`](#current_envclustercloud_api_port)
     - [`current_env.cluster.cloud_public_url`](#current_envclustercloud_public_url)
+    - [`appdefs.overrides`](#appdefsoverrides)
+    - [`regdefs.overrides`](#regdefsoverrides)
   - [Calculator CLI macros](#calculator-cli-macros)
     - [`APPLICATION_NAME`](#application_name)
     - [`NAMESPACE`](#namespace)
@@ -425,6 +427,47 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 **Usage in sample:**
 
 - [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+
+### `appdefs.overrides`
+
+---
+**Description:** Includes parameters for [Application Definition](/docs/envgene-objects.md#application-definition) template rendering defined in the [`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
+
+Used to customize Application Definitions during the solution delivery.
+
+**This macro is available only for rendering Application Definitions.**
+
+**Type:** HashMap
+
+**Basic usage:**
+
+```yaml
+registryName: "{{ appdefs.overrides.registryName }}"
+```
+
+**Usage in sample:** [Sample](/test_data/test_templates/appdefs/application-1.yaml.j2)
+
+### `regdefs.overrides`
+
+These macros are specifically used in AppDef and RegDef templates for rendering environment-specific configurations.
+
+---
+**Description:** Includes parameters for [Registry Definition](/docs/envgene-objects.md#registry-definition) template rendering defined in the [`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
+
+Used to customize Registry Definitions during the solution delivery.
+
+**This macro is available only for rendering Registry Definitions.**
+
+**Type:** HashMap
+
+**Basic usage:**
+
+```yaml
+mavenConfig:
+  repositoryDomainName: "{{ regdefs.overrides.maven.RepositoryDomainName }}"
+```
+
+**Usage in sample:** [Sample](/test_data/test_templates/regdefs/registry-1.yaml.j2)
 
 ## Calculator CLI macros
 
