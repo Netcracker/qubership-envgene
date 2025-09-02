@@ -17,12 +17,12 @@
     src: "/tmp/decrypted_credentials.yml"
     dest: "/tmp/rendered_credentials.yml"
     mode: '0600'
+  ignore_errors: yes
 
 - name: Clean up temp decrypted file
   file:
     path: "/tmp/decrypted_credentials.yml"
     state: absent
-  when: always
 
 - name: Set env_definition path
   set_fact:
