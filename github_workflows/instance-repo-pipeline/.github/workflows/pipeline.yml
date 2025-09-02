@@ -63,9 +63,9 @@ env:
   ENVGENE_AGE_PRIVATE_KEY: ${{ secrets.ENVGENE_AGE_PRIVATE_KEY }}
 
   # Docker Images
-  DOCKER_IMAGE_PIPEGENE: 'ghcr.io/netcracker/qubership-pipegene:feature_rc-effective-set-improvement_20250829-082018'
-  DOCKER_IMAGE_ENVGENE: 'ghcr.io/netcracker/qubership-envgene:feature_rc-effective-set-improvement_20250829-082021'
-  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: 'ghcr.io/netcracker/qubership-effective-set-generator:feature_rc-effective-set-improvement_20250829-082118'
+  DOCKER_IMAGE_PIPEGENE: 'ghcr.io/netcracker/qubership-pipegene:feature_enchance_creds_ansible_20250902-124737'
+  DOCKER_IMAGE_ENVGENE: 'ghcr.io/netcracker/qubership-envgene:feature_enchance_creds_ansible_20250902-124739'
+  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: 'ghcr.io/netcracker/qubership-effective-set-generator:feature_enchance_creds_ansible_20250902-124848'
 
 jobs:
   show_environment_variables:
