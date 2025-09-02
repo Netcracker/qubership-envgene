@@ -322,7 +322,7 @@ The variable is obtained by transforming the file defined in the path `/configur
 
 The value of the `namespace` attribute in this variable is obtained from the `name` attribute of the **already rendered** `Namespace` object. The definition of the object is located at `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/Namespaces/<deployPostfix>/namespace.yml`. If the corresponding `Namespace` object is not found, the `namespace` value is set to `Null`.
 
-The value of the `<deploy-postfix>` attribute in this variable is obtained from the `deployPostfix` attribute of the **already rendered** `Namespace` object.
+The value of the `<application-name>`, `<deploy-postfix>` and `version` in this variable is obtained from the SD.
 
 **Type:** HashMap
 

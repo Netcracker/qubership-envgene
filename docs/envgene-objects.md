@@ -108,6 +108,10 @@ namespaces:
   - # Optional
     template_path: <path-to-the-namespace-template-file>
     # Optional
+    # Used for determining the name of the parent folder for the Namespace when generating the Environment Instance
+    # If the value is not specified, the name of the namespace template file (without extension) is used
+    deploy_postfix: <deploy-postfix>
+    # Optional
     # See details https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
     template_override:
       <yaml or jinja expression>
@@ -172,7 +176,6 @@ labels:
 isServerSideMerge: false
 cleanInstallApprovalRequired: false
 mergeDeployParametersAndE2EParameters: false
-deployPostfix: core
 profile:
   name: dev-override
   baseline: dev
@@ -445,13 +448,6 @@ cleanInstallApprovalRequired: boolean
 # Whether to merge deployParameters and e2eParameters
 # Controls parameter merging behavior during effective set generation
 mergeDeployParametersAndE2EParameters: boolean
-# Optional
-# Defines the role of the namespace in the solution
-# Used for:
-# 1. Linking the Solution Descriptor components and Namespace objects during effective set generation
-# 2. Determining the name of the parent folder for the Namespace when generating the Environment Instance
-# The value comes from the namespace template if specified; if not specified, the name of the namespace template file (without extension) is used
-deployPostfix: core
 # Optional
 # Resource profile configuration for the namespace
 # Used to manage performance parameters of applications in this namespace
