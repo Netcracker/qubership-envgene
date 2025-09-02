@@ -357,7 +357,7 @@ jobs:
         with:
           name: generate_inventory_${{ env.SANITIZED_NAME }}
           path: ${{ github.workspace }}/environments/${{ env.FULL_ENV }}
-
+# --- JOBS:BEFORE_ALL ---
   credential_rotation:
     name: "${{ matrix.environment }} - Credential Rotation"
     runs-on: ubuntu-22.04
@@ -831,3 +831,4 @@ jobs:
         with:
           name: git_commit_${{ env.SANITIZED_NAME }}
           path: ${{ github.workspace }}/git_envs
+# --- JOBS:AFTER_ALL ---
