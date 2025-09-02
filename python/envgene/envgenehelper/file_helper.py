@@ -171,12 +171,14 @@ def findAllFilesInDir(dir, pattern, notPattern="", additionalRegexpPattern="", a
     return findFiles(result, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
 
 
-def findFiles(fileList, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern=""):
+def findFiles(fileList: list[Path], pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern=""):
     result = []
     for filePath in fileList:
+        # this ensures that pattern matching works correctly on both Windows (\) and Unix (/)
+        file_path_posix = Path(filePath).as_posix()
         if (
-                pattern in filePath
-                and (notPattern == "" or notPattern not in filePath)
+                pattern in file_path_posix
+                and (notPattern == "" or notPattern not in file_path_posix)
                 and (additionalRegexpPattern == "" or re.match(additionalRegexpPattern, filePath))
                 and (additionalRegexpNotPattern == "" or not re.match(additionalRegexpNotPattern, filePath))
         ):

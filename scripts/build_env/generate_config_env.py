@@ -417,6 +417,7 @@ def process_app_reg_defs(context):
 def generate_config_env(envvars: dict):
     context = {}
     env_vars = dict(os.environ)
+    logger.info("env_vars: %s", env_vars)
     context["env_vars"] = {
         "CI_COMMIT_TAG": env_vars.get("CI_COMMIT_TAG"),
         "CI_COMMIT_REF_NAME": env_vars.get("CI_COMMIT_REF_NAME"),
@@ -438,8 +439,8 @@ def generate_config_env(envvars: dict):
     logger.info("current_env = %s", context["current_env"])
 
     context["ND_CMDB_CONFIG_REF"] = os.environ.get('CI_COMMIT_SHORT_SHA', 'No SHA')
-    context["ND_CMDB_CONFIG_REF_NAME"] = os.environ.get('CI_COMMIT_REF_NAME', 'No SHA')
-    context["ND_CMDB_CONFIG_TAG"] = os.environ.get('CI_COMMIT_TAG', 'No Ref Name')
+    context["ND_CMDB_CONFIG_REF_NAME"] = os.environ.get('CI_COMMIT_REF_NAME', 'No Ref Name')
+    context["ND_CMDB_CONFIG_TAG"] = os.environ.get('CI_COMMIT_TAG', 'No Ref tag')
     context["ND_CDMB_REPOSITORY_URL"] = os.environ.get('CI_REPOSITORY_URL', 'No Ref URL')
     env_template = context.get("env_template")
     if env_template:

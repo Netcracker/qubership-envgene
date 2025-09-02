@@ -2,4 +2,3 @@ cloud-deploy-sa-token:
   type: "secret"
   data:
     secret: "test_secret"
-  
