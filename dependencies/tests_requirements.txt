@@ -23,7 +23,8 @@ referencing==0.33.0
 rpds-py==0.17.1
 jsonschema-specifications==2023.12.1
 cryptography==41.0.3
-ansible==9.2.0
+ansible-core==2.13.3
+ansible-base==2.10.17
 ansible_runner==2.3.5
 pytest==7.4.3
 junitparser==3.1.2
