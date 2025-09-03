@@ -1,4 +1,4 @@
-from plugin_engine import PluginCore
+from envgenehelper.plugin_engine import PluginCore
 
 class ImportJobPlugin(PluginCore):
     def __init__(self, *args, **kwargs) -> None:

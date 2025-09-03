@@ -73,6 +73,9 @@
           "template_path": {
             "type": "string"
           },
+          "deploy_postfix": {
+            "type": "string"
+          },
           "template_override": {
             "type": "object",
             "additionalProperties": true,

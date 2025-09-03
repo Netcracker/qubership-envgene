@@ -9,15 +9,14 @@
 # .github/super-linter.env
 # Configuration files for individual linters should be placed in .github/linters
 
-name: Lint Code Base
+name: "Lint Code Base"
 
 on:
-  push:
-    branches-ignore:
-      - main
   pull_request:
-    branches:
-      - '**'
+    types:
+      - opened
+      - edited
+      - synchronize
   workflow_dispatch:
     inputs:
       full_scan:
@@ -25,6 +24,7 @@ on:
         default: false
         required: false
         description: "Lint all codebase"
+
 permissions:
   contents: read
 
@@ -38,16 +38,7 @@ jobs:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
 
-      - name: "Load super-linter environment file"
-        run: |
-          # shellcheck disable=2086
-          if [ -f "./.github/super-linter.env" ]; then
-            grep "\S" ./.github/super-linter.env | grep -v "^#"
-            grep "\S" ./.github/super-linter.env | grep -v "^#" >> $GITHUB_ENV
-          fi
-
       - name: Lint Code Base
-        uses: super-linter/super-linter@v7.4.0
-        env:
-          VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan || false }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ./.github/actions/super-linter
+        with:
+          full_scan: ${{ inputs.full_scan || false }}
