@@ -103,7 +103,7 @@ def build_namespace_dict(env) -> dict:
             else:
                 # logger.warning(f"Warning: namespace.yml not found in {folder_path}")
                 continue
-
+    logger.info("Namespace dict built:", result)
     return result
 
 def merge_sd(env, sd_data, merge_func):
