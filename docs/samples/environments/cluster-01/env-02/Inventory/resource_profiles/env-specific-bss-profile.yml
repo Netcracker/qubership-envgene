@@ -9,9 +9,9 @@ applications:
   - name: service # new
     parameters:
     - name: "MEMORY_LIMIT"
-      value: "96Mi"  
+      value: "96Mi"
     - name: "CPU_REQUEST"
-      value: "50m"  
+      value: "50m"
 - name: "crm"
   version: "release-2025.3"
   sd: ""
@@ -21,7 +21,7 @@ applications:
     - name: "MEMORY_LIMIT"
       value: "256Mi" # override
     - name: "MEMORY_LIMIT2" #new
-      value: "512Mi" 
+      value: "512Mi"
 - name: "bss" # new
   version: "release-2025.3"
   sd: ""
@@ -32,4 +32,4 @@ applications:
       value: "96Mi"
     - name: "CPU_REQUEST"
       value: "50m"
- 
+

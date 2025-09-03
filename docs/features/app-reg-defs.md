@@ -30,12 +30,12 @@ Also need to support:
 
 Use two types of objects:
 
-1. [Application Definition](/docs/envgene-objects.md#application-definition)  
-   This object contains the main info about an application artifact: artifact id, group id, and a link to the Registry Definition.  
+1. [Application Definition](/docs/envgene-objects.md#application-definition)
+   This object contains the main info about an application artifact: artifact id, group id, and a link to the Registry Definition.
    Each Environment has its own set of Application Definitions, stored in the Instance repository at `/environments/<cluster-name>/<env-name>/AppDefs/<application-name>.yml`.
 
-2. [Registry Definition](/docs/envgene-objects.md#registry-definition)  
-   This object describes the registry where artifacts are stored.  
+2. [Registry Definition](/docs/envgene-objects.md#registry-definition)
+   This object describes the registry where artifacts are stored.
    Each Environment has its own set of Registry Definitions, stored in the Instance repository at `/environments/<cluster-name>/<env-name>/AppDefs/<registry-name>.yml`.
 
 These objects are used to resolve application pointers written in the `application:version` format. They provide all the details needed to download the artifact from the correct registry.
@@ -152,4 +152,3 @@ For example:
 - [appregdef_config.yaml example](/test_data/configuration/appregdef_config.yaml)
 - [Application Definition template](/test_data/test_templates/appdefs/application-1.yaml.j2)
 - [Registry Definition template](/test_data/test_templates/regdefs/registry-1.yaml.j2)
-- 

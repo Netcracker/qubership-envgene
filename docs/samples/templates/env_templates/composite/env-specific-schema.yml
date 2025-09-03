@@ -1,12 +1,12 @@
 # Cloud passport parameters validation
 cloudPassport:
-  # list of white listed parameters, 
-  # contains the list of parameters that can be defined on cloud passport level 
-  # during passport generation we will go thorough parameters 
-  # and check that all of them are present and no other parameters are present. 
+  # list of white listed parameters,
+  # contains the list of parameters that can be defined on cloud passport level
+  # during passport generation we will go thorough parameters
+  # and check that all of them are present and no other parameters are present.
   # If no env_builder job will fail
   whiteList:
-    version: 
+    version:
       type: "number"
       regexpPattern: "1.5"
     cloud:
@@ -15,12 +15,12 @@ cloudPassport:
       CLOUD_DEPLOY_TOKEN: "string"
       CLOUD_PUBLIC_HOST: "string"
       CLOUD_PRIVATE_HOST: "string"
-      CLOUD_DASHBOARD_URL: 
+      CLOUD_DASHBOARD_URL:
         type: "string"
         regexpPattern: "^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$"
       CLOUD_PROTOCOL: "string"
     dbaas:
-      API_DBAAS_ADDRESS: 
+      API_DBAAS_ADDRESS:
         type: "string"
         regexpPattern: "^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$"
       DBAAS_AGGREGATOR_ADDRESS: "string"
@@ -47,8 +47,8 @@ cloudPassport:
       VAULT_AUTH_NAMESPACE: "string"
 envSpecific:
   # list of white listed parameters, that can be present on environment specific level
-  # during environment specific parameters generation we will go thorough parameters 
-  # and check that all of them are present and no other parameters are present. 
+  # during environment specific parameters generation we will go thorough parameters
+  # and check that all of them are present and no other parameters are present.
   # If no env_builder job will fail
   whiteList:
     cloud:
@@ -60,7 +60,7 @@ envSpecific:
           TECHNICAL_PARAM_1: "string"
         applications:
           NOTIFICATION:
-            deployParameters: 
+            deployParameters:
               NOTIFICATION_TOPIC: "string"
               NOTIFICATION_SERVICE_TOPIC:
                 type: "string"
@@ -74,4 +74,4 @@ envSpecific:
     e2eParameters:
       - "key10"
     technicalConfigurationParameters: []
-    
+

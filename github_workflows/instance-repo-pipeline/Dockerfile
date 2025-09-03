@@ -6,4 +6,5 @@ COPY github_workflows/instance-repo-pipeline/.github /opt/github
 #-----------Stage 2-----------
 FROM scratch
 COPY --from=initial /opt/github /opt/github
+USER 1000
 CMD ["sh", "-c", "sleep infinity"]

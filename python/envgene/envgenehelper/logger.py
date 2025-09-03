@@ -1,3 +1,4 @@
+from os import getenv
 import logging
 
 class CustomFormatter(logging.Formatter):
@@ -27,6 +28,9 @@ logger = logging.getLogger("envgene")
 logger.setLevel(logging.INFO)
 # create console handler with a higher log level
 ch = logging.StreamHandler()
-ch.setLevel(logging.INFO)
+# get logging level from env var
+log_level_str = getenv('ENVGENE_LOG_LEVEL', 'INFO').upper()
+log_level = getattr(logging, log_level_str, logging.INFO)
+ch.setLevel(log_level)
 ch.setFormatter(CustomFormatter())
 logger.addHandler(ch)

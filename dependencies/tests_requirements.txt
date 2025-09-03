@@ -3,7 +3,6 @@ botocore==1.32.3
 gcip==3.0.2
 jmespath==1.0.1
 packaging==23.2
-pip==22.0.2
 python-dateutil==2.8.2
 PyYAML==6.0.1
 s3transfer==0.7.0

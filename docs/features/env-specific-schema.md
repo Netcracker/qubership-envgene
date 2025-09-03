@@ -24,8 +24,8 @@ I as DevOps want to define the set of parameters that should be specified by cus
 
 envSpecific:
   # list of white listed parameters, that can be present on environment specific level
-  # during environment specific parameters generation we will go thorough parameters 
-  # and check that all of them are present and no other parameters are present. 
+  # during environment specific parameters generation we will go thorough parameters
+  # and check that all of them are present and no other parameters are present.
   # If no env_builder job will fail
   whiteList:
     cloud:
@@ -33,19 +33,19 @@ envSpecific:
         key3: "boolean"
       applications:
         APP:
-          deployParameters: 
+          deployParameters:
             key5: "string"
     namespaces:
       oss:
-        deployParameters: 
+        deployParameters:
           key4: "string"
         applications:
           OSS:
-            deployParameters: 
+            deployParameters:
               key5: "string"
 # list of mandatory listed parameters that may be present at the environment level
 # during generation of environment parameters we will go through all the parameters
-# and check that they are present if they are not then we will show an error 
+# and check that they are present if they are not then we will show an error
 # with the list of parameters that need to be filled in.
 # If there is no env_builder task, it will end with an error
   mandatoryList:
@@ -54,15 +54,15 @@ envSpecific:
         key3: "boolean"
       applications:
         APP:
-          deployParameters: 
+          deployParameters:
             key5: "string"
     namespaces:
       oss:
-        deployParameters: 
+        deployParameters:
           key4: "string"
         applications:
           OSS:
-            deployParameters: 
+            deployParameters:
               key5: "string"
   # list of black listed parameters, that can be present on environment specific level
   # if they will be present in the result of generation on any level, than env_builder job will fail

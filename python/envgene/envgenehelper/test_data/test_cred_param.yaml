@@ -3,18 +3,18 @@ secretContents:
     [default]
     aws_access_key_id = ${creds.get(\"velero-s3-cred\").username}
     aws_secret_access_key = ${creds.get(\'velero-s3-cred\').password}
-  expected_result: 
+  expected_result:
     - credentialsId: "velero-s3-cred"
       type: "usernamePassword"
     - credentialsId: "velero-s3-cred"
       type: "usernamePassword"
-secretContents.cloud2: 
-  test_value: | 
+secretContents.cloud2:
+  test_value: |
     [default]
     aws_access_key_id = ${creds.get("velero-s3-cred-1").username}
     aws_secret_access_key = ${creds.get("velero-s3-cred-2").password}
     aws_secret = ${creds.get("velero-s3-cred-3").secret}
-  expected_result: 
+  expected_result:
     - credentialsId: "velero-s3-cred-1"
       type: "usernamePassword"
     - credentialsId: "velero-s3-cred-2"

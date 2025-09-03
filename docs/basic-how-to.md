@@ -1,6 +1,6 @@
 # Basic How-To
 
-1. Create your git for templates with structure
+1. Create your Git for templates with structure
 
     ```text
     ├── templates
@@ -21,7 +21,7 @@
     │   │   ├── resource_profile2.yml
     ```
 
-2. Create your git for instances with structure
+2. Create your Git for instances with structure
 
     ```text
     ├── configuration
@@ -41,4 +41,4 @@
     │   │   │   │   ├── env_specific_paramset.yml
     ```
 
-More details are available in samples [ReadME](/docs/samples/README.md)
+More details are available in samples [Readme](/docs/samples/README.md)

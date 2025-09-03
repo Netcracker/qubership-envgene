@@ -1,3 +1,4 @@
+from os import path, makedirs
 import json
 import pathlib
 from .file_helper import findFiles
@@ -21,3 +22,9 @@ def findJsons(dir, pattern, notPattern="", additionalRegexpPattern="", additiona
     fileList = findAllJsonsInDir(dir)
     return findFiles(fileList, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
 
+def writeJsonToFile(file_path: str, content: dict):
+    logger.debug(f"Writing json to file: {file_path}")
+    makedirs(path.dirname(file_path), exist_ok=True)
+    with open(file_path, 'w+') as f:
+        json.dump(content, f, indent=2, ensure_ascii=False)
+    return

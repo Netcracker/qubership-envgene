@@ -60,10 +60,10 @@ def validate_config_file(config_yaml):
 
 def get_envgene_config_yaml():
     try:
-        config = openYaml(ENVGENE_CONFIG_PATH) 
+        config = openYaml(ENVGENE_CONFIG_PATH)
     except FileNotFoundError:
         logger.warning(f'Failed to find config file in {ENVGENE_CONFIG_PATH}')
-        return get_empty_yaml() 
+        return get_empty_yaml()
     validate_config_file(config)
     logger.info(f"Config content: {config}")
     return config

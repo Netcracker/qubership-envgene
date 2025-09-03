@@ -9,7 +9,7 @@ Instance git should have following structure
 │   ├── credentials # Credentials, that can be used in configuration
 │   │   └── credentials.yml
 │   └── registry.yml # Definition of the list of registries for templates
-│   └── integration.yml # Configuration of integrations with discovery repository. Also here a token is set for committing to itself (to the instance repository) 
+│   └── integration.yml # Configuration of integrations with discovery repository. Also here a token is set for committing to itself (to the instance repository)
 │   └── config.yml # Repository wide configuration.
 └── environments
     ├── <cloud_name> #Grouping level of the environments, only 1 grouping level is supported
@@ -37,35 +37,35 @@ env_definition.yml should have following structure
 
 ```yaml
 # mandatory | Structure that defines inventory of your environment
-inventory:                    
-    # mandatory 
+inventory:
+    # mandatory
     # name of the environment, e.g. dev01
     environmentName: string
-    # mandatory 
+    # mandatory
     # name of the tenant for your environment
     tenantName: string
     # optional
     # name of the cloud for your environment
     cloudName: string
-    # optional 
+    # optional
     # URL of the cluster from kube_config
-    clusterUrl: string         
-    # optional 
+    clusterUrl: string
+    # optional
     # Environment description
-    description: string        
+    description: string
     # optional
     # Environment owners
-    owners: string                   
+    owners: string
     config:
         # optional, default false
-        # if true, during CMDB import credentials IDs, 
-        # except defined with #"credscl" or "credsns" 
+        # if true, during CMDB import credentials IDs,
+        # except defined with #"credscl" or "credsns"
         # will be update using pattern:
         # <tenant-name>-<cloud-name>-<env-name>-<cred-id>
         updateCredIdsWithEnvName: boolean
         # optional, default false
         # if true, during CMDB import resource profile
-        # override (RPO) names will be update with env 
+        # override (RPO) names will be update with env
         # name will be update using pattern:
         # <tenant-name>-<cloud-name>-<env-name>-<RPO-name>
         updateRPOverrideNameWithEnvName: boolean
@@ -73,7 +73,7 @@ inventory:
 # definition of template that will be used
 envTemplate:
     # mandatory
-    # name of the template, name should correspond to 
+    # name of the template, name should correspond to
     # the name of namespace in your template artifact
     name: "multidb"
     # optional
@@ -87,28 +87,28 @@ envTemplate:
     # during template processing
     additionalTemplateVariables: hashmap
     # optional
-    # envronment specific resource profiles override, 
+    # envronment specific resource profiles override,
     # array items should contain file name (w/o extension)
     # to the file located in "resource_profiles" dir
     envSpecificResourceProfiles: hashmap
         cloud: [ "env-specific-cloud-RP-override" ]
         bss: [ "env-specific-bss-RP-overrde" ]
     # optional
-    # envronment specific deployment parameters set, 
+    # envronment specific deployment parameters set,
     # array items should contain file name (w/o extension)
     # to the file located in "parameters" dir
     envSpecificParamsets: hashmap
         cloud: [ "env-specific-cloud" ]
         bss: [ "env-specific-bss" ]
     # optional
-    # envronment specific e2e parameters set, 
+    # envronment specific e2e parameters set,
     # array items should contain file name (w/o extension)
     # to the file located in "parameters" dir
     envSpecificE2EParamsets: hashmap
         cloud: [ "env-specific-tech-cloud" ]
         bss: [ "env-specific-e2e-bss" ]
     # optional
-    # envronment specific technical parameters set, 
+    # envronment specific technical parameters set,
     # array items should contain file name (w/o extension)
     # to the file located in "parameters" dir
     envSpecificTechnicalParamsets: hashmap
@@ -130,7 +130,7 @@ envTemplate:
         # should be listed in configuration/registry.yml
         templateRepository: "stagingTemplateRepository"
         # mandatory
-        # definition of template artifact that will be 
+        # definition of template artifact that will be
         # used for environment generation
         artifact:
             group_id: "deployment-configuration"
@@ -141,4 +141,4 @@ envTemplate:
         generateEnvironmentLatestVersion: "master-20240209.153935-69"
 ```
 
-Sample is [here](/docs/samples/environments/cluster-01/env-01/Inventory/env_definition.yml)
+Find the sample in [env_definition.yml](/docs/samples/environments/cluster-01/env-01/Inventory/env_definition.yml)

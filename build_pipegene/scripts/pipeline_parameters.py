@@ -1,7 +1,7 @@
 from os import getenv
 from pprint import pformat
 
-from plugin_engine import PluginEngine
+from envgenehelper.plugin_engine import PluginEngine
 
 def get_pipeline_parameters() -> dict:
     return {

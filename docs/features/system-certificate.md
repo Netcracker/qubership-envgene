@@ -7,9 +7,17 @@
     - [Supported Certificate Types](#supported-certificate-types)
     - [Certificate Chain Ordering](#certificate-chain-ordering)
     - [How to Obtain Required Certificates](#how-to-obtain-required-certificates)
+      - [Using OpenSSL to Retrieve Server Certificates](#using-openssl-to-retrieve-server-certificates)
+      - [Extracting Individual Certificates from Chain](#extracting-individual-certificates-from-chain)
+      - [Using Browser to Export Certificates](#using-browser-to-export-certificates)
+      - [Verifying Certificate Chains](#verifying-certificate-chains)
   - [Usage Examples](#usage-examples)
     - [Secure Artifact Repositories](#secure-artifact-repositories)
     - [Internal Services with Self-Signed Certificates](#internal-services-with-self-signed-certificates)
+  - [Technical Implementation](#technical-implementation)
+  - [Troubleshooting](#troubleshooting)
+    - [Common Issues](#common-issues)
+    - [Debugging Tips](#debugging-tips)
 
 ## Problem Statement
 
@@ -59,12 +67,12 @@ To use this feature:
 
 1. Create a `certs` directory within the `configuration` folder of your environment instance repository:
 
-```
-/configuration
-  /certs
-    your-ca-cert.pem
-    your-client-cert.p12
-```
+   ```text
+   /configuration
+   /certs
+      your-ca-cert.pem
+      your-client-cert.p12
+   ```
 
 2. Place your certificate files in this directory
 3. Commit and push these changes to your repository
@@ -87,13 +95,14 @@ While the system will load all certificates in the directory, following these na
 When dealing with certificate chains that include multiple levels (root CA, intermediate CAs, and end-entity certificates), proper ordering is crucial for certificate validation. All certificates in the chain should be combined into a single `.crt` or `.pem` file in the correct order.
 
 **Required Order:**
+
 1. Root CA certificate (first)
 2. Intermediate CA certificates (in hierarchical order)
 3. End-entity certificate (last, if applicable)
 
 **Example Certificate Chain File (`ca-chain.pem`):**
 
-```
+```text
 -----BEGIN CERTIFICATE-----
 [Root CA Certificate - First]
 MIIDXTCCAkWgAwIBAgIJAKoK/OvvXMdTMA0GCSqGSIb3DQEBCwUAMEUxCzAJBgNV
@@ -115,20 +124,22 @@ BAYTAkFVMRMwEQYDVQQIDApTb21lLVN0YXRlMSEwHwYDVQQKDBhJbnRlcm5ldCBX
 ```
 
 **Important Notes:**
+
 - Each certificate must be in PEM format with proper `-----BEGIN CERTIFICATE-----` and `-----END CERTIFICATE-----` boundaries
-- No blank lines should exist between certificates
+- No empty lines should exist between certificates
 - The order is critical for proper certificate validation
 - If you have multiple certificate chains, create separate files for each chain
 
 **Example Directory Structure with Certificate Chains:**
 
-```
+```text
 /configuration
   /certs
     ca-chain-internal.pem       # Complete chain for internal services
     ca-chain-external.pem       # Complete chain for external services
     client-artifactory.p12      # Client certificate for Artifactory
 ```
+
 ### How to Obtain Required Certificates
 
 Before configuring certificate chains, you need to identify and obtain the required certificates from your target services. Here are common methods to retrieve certificates:
@@ -136,6 +147,7 @@ Before configuring certificate chains, you need to identify and obtain the requi
 #### Using OpenSSL to Retrieve Server Certificates
 
 **For HTTPS services:**
+
 ```bash
 # Get the complete certificate chain from a server
 openssl s_client -connect your-site.com:443 -showcerts
@@ -148,6 +160,7 @@ openssl s_client -connect your-site.com:443 -servername your-site.com -showcerts
 ```
 
 **For non-HTTPS services (custom ports):**
+
 ```bash
 # For services running on custom ports
 openssl s_client -connect internal-service.company.com:8443 -showcerts
@@ -159,7 +172,8 @@ openssl s_client -connect ldap-server.company.com:636 -showcerts
 #### Extracting Individual Certificates from Chain
 
 When you run `openssl s_client -showcerts`, you'll see output like:
-```
+
+```text
 -----BEGIN CERTIFICATE-----
 [Certificate 1 - Usually the server certificate]
 -----END CERTIFICATE-----
@@ -172,13 +186,15 @@ When you run `openssl s_client -showcerts`, you'll see output like:
 ```
 
 **To create a proper certificate chain file:**
+
 1. Copy certificates in reverse order (Root CA first, then intermediates, then server cert if needed)
 2. Save them to a single `.pem` file with proper ordering
 
 #### Using Browser to Export Certificates
 
 **Alternative method for web services:**
-1. Open the website in your browser
+
+1. Open the site in your browser
 2. Click on the lock icon in the address bar
 3. View certificate details
 4. Export the certificate chain
@@ -187,6 +203,7 @@ When you run `openssl s_client -showcerts`, you'll see output like:
 #### Verifying Certificate Chains
 
 **Before using certificates, verify they form a valid chain:**
+
 ```bash
 # Verify certificate chain
 openssl verify -CAfile ca-chain.pem target-cert.pem
@@ -209,12 +226,12 @@ openssl s_client -connect hostname:port -CAfile ca-chain.pem -verify_return_erro
 1. Obtain the client certificate for the artifact repository
 2. Place the files in the `configuration/certs/` directory:
 
-```
-/configuration
-  /certs
-    ca.pem          # CA certificate
-    client-artifactory.p12    # Client certificate for Artifactory
-```
+   ```text
+   /configuration
+   /certs
+      ca.pem          # CA certificate
+      client-artifactory.p12    # Client certificate for Artifactory
+   ```
 
 3. The certificate will be automatically used for authentication during pipeline execution
 
@@ -222,7 +239,7 @@ openssl s_client -connect hostname:port -CAfile ca-chain.pem -verify_return_erro
 sequenceDiagram
     participant EnvGene
     participant SecureRepo
-    
+
     EnvGene->>SecureRepo: Request with client certificate
     SecureRepo->>EnvGene: Authenticate and respond
 ```
@@ -236,11 +253,11 @@ sequenceDiagram
 1. Obtain the self-signed certificate used by the internal service
 2. Place the certificate in the `configuration/certs/` directory:
 
-```
-/configuration
-  /certs
-    ca-internal-service.pem  # Self-signed certificate
-```
+   ```text
+   /configuration
+   /certs
+      ca-internal-service.pem  # Self-signed certificate
+   ```
 
 3. The certificate will be automatically added to the trusted root store during pipeline execution
 

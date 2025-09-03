@@ -33,10 +33,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Run Tests
         uses: ./.github/actions/run-tests
-  
+
   check-tag:
     needs: [tests]
     runs-on: ubuntu-latest
@@ -81,47 +81,47 @@ jobs:
       contents: write
       packages: write
       attestations: write
-      id-token: write     
+      id-token: write
     steps:
         - name: "Prepare app token"
-          if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}  
+          if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
           uses: actions/create-github-app-token@v2
           id: app-token
           with:
             app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
-            private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}  
-        
+            private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+
         - name: Checkout repository
           uses: actions/checkout@v4
           with:
             fetch-depth: 0
             token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
-        
+
         - name: Update Docker Image Tags in Pipeline
           run: |
             sed -i "s|qubership-pipegene:[^']*|qubership-pipegene:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
             sed -i "s|qubership-envgene:[^']*|qubership-envgene:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
             sed -i "s|qubership-effective-set-generator:[^']*|qubership-effective-set-generator:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
             sed -i "s|qubership-effective-set-generator-python:[^']*|qubership-effective-set-generator-python:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
-            
+
             if git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml; then
               echo "No changes to commit - no images were built or tags were already up to date"
             else
               echo "Updated pipeline.yml with docker tags from job outputs"
             fi
-            
+
             git diff github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml || true
-            
+
             if ! git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml; then
               git config --global user.name "qubership-actions[bot]"
               git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
               git add github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
               git commit -m "chore: Update docker image tags from job outputs for branch ${{ github.ref_name }} [skip ci]"
-              
+
               git push origin HEAD:${{ github.ref_name }} || echo "Failed to push changes"
             else
               echo "No changes to commit - skipping git operations"
-            fi   
+            fi
 
   docker-build-publish:
     needs: [update_image_tags]

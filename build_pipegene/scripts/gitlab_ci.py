@@ -1,8 +1,7 @@
-from os import getenv, listdir
 import os
-from dataclasses import asdict
+from os import listdir
 
-from plugin_engine import PluginEngine
+from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, getEnvDefinition, get_env_instances_dir
 from gcip import Pipeline
 import pipeline_helper
@@ -58,7 +57,7 @@ def build_pipeline(params: dict):
             cluster_name = ""
             environment_name = env
             env_definition = {}
-        else: 
+        else:
             cluster_name = get_cluster_name_from_full_name(env)
             environment_name = get_environment_name_from_full_name(env)
             if params['ENV_INVENTORY_GENERATION_PARAMS']['ENV_INVENTORY_INIT']:
@@ -98,9 +97,9 @@ def build_pipeline(params: dict):
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
-            
+
         if params['ENV_BUILD']:
-            if env_definition == None:
+            if env_definition is None:
                 try:
                     env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{ci_project_dir}/environments"))
                 except ReferenceError:
@@ -133,7 +132,7 @@ def build_pipeline(params: dict):
         per_env_plugin_engine.run(params=plugin_params, pipeline=pipeline, pipeline_helper=pipeline_helper)
 
         for job in job_sequence:
-            if not job in jobs_map.keys():
+            if job not in jobs_map.keys():
                 continue
             job_instance = jobs_map[job]
             if job_instance.name in queued_job_names:

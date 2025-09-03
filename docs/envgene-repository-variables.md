@@ -51,8 +51,8 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 **Description**: Contains a comma-separated list of public AGE keys from EnvGene and external systems (`<key_1>,<key_2>,...,<key_N>`). Used for credential encryption when [`crypt_backend`](/docs/envgene-configs.md#configyml) is `SOPS`
 
-Must include at least one key: EnvGene's own AGE public key.  
-If an external system provides encrypted parameters, its public AGE key must also be included.  
+Must include at least one key: EnvGene's own AGE public key.
+If an external system provides encrypted parameters, its public AGE key must also be included.
 Used by EnvGene at runtime, when using pre-commit hooks, the same value must be specified in `.git/public-age-key.txt`.
 
 **Default Value**: None

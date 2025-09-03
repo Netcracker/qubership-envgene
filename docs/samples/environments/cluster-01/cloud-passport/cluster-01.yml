@@ -14,7 +14,7 @@ cloud:
   GRAFANA_UI_URL: https://cluster-01.qubership.org
   CMDB_URL: https://cluster-01.qubership.org
 dbaas:
-  API_DBAAS_ADDRESS: http://dbaas.dbaas:8080 
+  API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
   DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.qubership.org
   DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: ${creds.get("dbaas-cred").username}
   DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: ${creds.get("dbaas-cred").password}

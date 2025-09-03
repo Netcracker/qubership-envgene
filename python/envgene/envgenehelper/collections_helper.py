@@ -19,16 +19,16 @@ def dump_as_yaml_format(collection) :
         stream = StringIO()
         yaml.dump(tmp, stream)
         return stream.getvalue()
-    else: 
+    else:
         return pformat(collection)
-    
+
 def get_merged_param_value(key, source_dict, override_dict):
     if isinstance(override_dict[key], dict):
         # if source_dict has the same key
         if key in source_dict:
             return dict_merge(source_dict[key], override_dict[key])
     return override_dict[key]
-        
+
 
 def dict_merge(a, b):
     """
@@ -66,7 +66,7 @@ def compare_dicts(source: dict, target: dict) -> tuple[list[DictPath], list[Dict
     _compare_dicts_recurse(source, target, path, diff_paths, removed_paths)
     return diff_paths, removed_paths
 
-def _compare_dicts_recurse(source: object, target: object, path: DictPath, diff_paths: list[DictPath], removed_paths: list[DictPath]) -> None: 
+def _compare_dicts_recurse(source: object, target: object, path: DictPath, diff_paths: list[DictPath], removed_paths: list[DictPath]) -> None:
     if isinstance(target, list) and isinstance(source, list):
         sl = len(source)
         tl = len(target)
@@ -94,4 +94,4 @@ def _compare_dicts_recurse(source: object, target: object, path: DictPath, diff_
             _compare_dicts_recurse(source[k], target[k], new_path, diff_paths, removed_paths)
     elif source != target:
         diff_paths.append(path.copy())
- 
+

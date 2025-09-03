@@ -1,4 +1,5 @@
 import filecmp
+from os import environ
 import pytest
 import difflib
 
@@ -28,6 +29,7 @@ def change_test_dir(request, monkeypatch):
 
 @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
 def test_render_envs(cluster_name, env_name, version):
+    environ['CI_PROJECT_DIR'] = g_base_dir
     render_environment(env_name, cluster_name, g_templates_dir, g_inventory_dir, g_output_dir, version, g_base_dir)
     source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
     generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"

@@ -61,7 +61,7 @@
     - [Deprecated Credential Macros](#deprecated-credential-macros)
       - [`${envgene.creds.get('<cred-id>').username|password|secret}`](#envgenecredsgetcred-idusernamepasswordsecret)
 
-This documentation provides a list of macros that can be used in environment templates and environment-specific parameter sets.
+This documentation provides a list of macros that can be used during template generation
 
 ## Jinja Macros
 
@@ -106,7 +106,7 @@ tenant: "{{ templates_dir }}/env_templates/composite/tenant.yml.j2"
 **Basic usage:**
 
 ```yaml
-name: "{{current_env.name }}-oss" 
+name: "{{current_env.name }}-oss"
 ```
 
 **Usage in sample:** [Sample](/docs/samples/templates/env_templates/composite/namespaces/oss.yml.j2)
@@ -151,9 +151,9 @@ name: "{{ current_env.cloud }}"
 **Description:** Name of the Environment's Cloud incorporating cluster and environment names. Used to generate environment-specific Cloud names. Generated using these rules:
 
 1. Uses `inventory.cloudName` value from [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) if defined
-2. When `inventory.cloudPassport` in [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) if defined:  
-   `(<inventory.cloudPassport> + '_' + <current_env.name>).replace("-", "_")`  
-3. Otherwise combines:  
+2. When `inventory.cloudPassport` in [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) if defined:
+   `(<inventory.cloudPassport> + '_' + <current_env.name>).replace("-", "_")`
+3. Otherwise combines:
    `(<clusterName> + '_' + <current_env.name>).replace("-", "_")`
 
 Notes:
@@ -321,6 +321,8 @@ deployParameters:
 The variable is obtained by transforming the file defined in the path `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/solution-descriptor/sd.yml`.
 
 The value of the `namespace` attribute in this variable is obtained from the `name` attribute of the **already rendered** `Namespace` object. The definition of the object is located at `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/Namespaces/<deployPostfix>/namespace.yml`. If the corresponding `Namespace` object is not found, the `namespace` value is set to `Null`.
+
+The value of the `<application-name>`, `<deploy-postfix>` and `version` in this variable is obtained from the SD.
 
 **Type:** HashMap
 
