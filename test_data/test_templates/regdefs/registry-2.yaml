@@ -6,6 +6,8 @@ mavenConfig:
   targetSnapshot: "snapshot"
   targetStaging: "staging"
   targetRelease: "release"
+  releaseGroup: ""
+  snapshotGroup: ""
 dockerConfig:
   snapshotUri: "docker.qubership.org/snapshot"
   stagingUri: "docker.qubership.org/staging"
