@@ -8,8 +8,10 @@
     - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
     - [`PUBLIC_AGE_KEYS`](#public_age_keys)
     - [`IS_OFFSITE`](#is_offsite)
+    - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
   - [Template EnvGene Repository](#template-envgene-repository)
-    - [`IS_TEMPLATE_TEST`](#is_template_test)
+    - [`ENV_TEMPLATE_TEST`](#env_template_test)
+    - [`DOCKER_REGISTRY` (in template repository)](#docker_registry-in-template-repository)
 
 The following are parameters that are set in GitLab CI/CD variables or GitHub environment variables.
 
@@ -73,9 +75,19 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 **Example**: `false`
 
+### `DOCKER_REGISTRY` (in instance repository)
+
+**Description**: Specifies the registry where the EnvGene Docker images are located
+
+**Default Value**: `ghcr.io/netcracker`
+
+**Mandatory**: No
+
+**Example**: `registry.example.com/docker`
+
 ## Template EnvGene Repository
 
-### `IS_TEMPLATE_TEST`
+### `ENV_TEMPLATE_TEST`
 
 **Description**: Determines whether the generation of the Environment Instance is running in Template Testing mode.
 
@@ -84,3 +96,7 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 **Mandatory**: No
 
 **Example**: `true`
+
+### `DOCKER_REGISTRY` (in template repository)
+
+The same as [`DOCKER_REGISTRY` in instance repository](#docker_registry-in-instance-repository)
