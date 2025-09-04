@@ -181,7 +181,7 @@ def generate_tenant_file(context: dict):
 def generate_override_tmpl_by_type(template_override, template_path: Path, name):
     if template_override:
         logger.info("Generate override %s yaml for %s", template_path.stem, name)
-        writeYamlToFile(file_path=template_path, contents=template_override)
+        writeYamlToFile(template_path, template_override)
 
 
 def generate_cloud_file(context: dict):
