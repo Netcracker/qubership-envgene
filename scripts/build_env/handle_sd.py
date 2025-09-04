@@ -94,8 +94,10 @@ def build_namespace_dict(env) -> dict:
             if os.path.isfile(namespace_file):
                 with open(namespace_file, 'r') as f:
                     data = yaml.safe_load(f)
+                    logger.info(f"Parsed content of {namespace_file}: {data}")
                 # Extract 'name' property
                 ns_name = data.get("name")
+                logger.info(f"ns_name = {ns_name}")
                 if ns_name and isinstance(ns_name, str):
                     result[ns_name] = folder_name
                 else:
