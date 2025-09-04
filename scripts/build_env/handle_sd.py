@@ -201,9 +201,7 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         merged_result = data
 
     #merged_result["version"] = str(merged_result["version"])
-    namespace_dict = build_namespace_dict(env)
-    transformed_result = handle_deploy_postfix_namespace_transformation(merged_result,namespace_dict)
-    helper.writeYamlToFile(sd_path, transformed_result)
+    helper.writeYamlToFile(sd_path, merged_result)
     merged_data = helper.openYaml(sd_path)
     logger.info(f"Merged_data: {merged_data}")
 
@@ -217,6 +215,7 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(destination))
+        namespace_dict = build_namespace_dict(env)
         transformed_result = handle_deploy_postfix_namespace_transformation(merged_data,namespace_dict)
         helper.writeYamlToFile(destination, transformed_result)
         logger.info(f"Replaced existing SD with new data at: {destination}")
