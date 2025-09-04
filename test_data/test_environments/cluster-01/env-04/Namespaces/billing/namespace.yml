@@ -13,12 +13,10 @@ profile:
   name: ""
   baseline: "dev"
 deployParameters:
-  ENVGENE_CONFIG_REF_NAME: ""
-  ENVGENE_CONFIG_TAG: ""
+  ENVGENE_CONFIG_REF_NAME: "No Ref Name"
+  ENVGENE_CONFIG_TAG: "No Ref tag"
 e2eParameters: {}
 technicalConfigurationParameters: {}
 deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []
-
-
