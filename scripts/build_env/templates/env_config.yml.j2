@@ -51,11 +51,10 @@ environment:
 {% endif %}
   cluster:
 {% if env_definition.inventory.clusterUrl is defined %}
-    {% set url = env_definition.inventory.clusterUrl %}
-    cloud_api_protocol: {{ url.split('://')[0] | upper }}
-    cloud_api_url: {{ url.split('://')[1].split('/')[0].split(':')[0] }}
-    cloud_api_port: {{ url.split('://')[1].split('/')[0].split(':')[1] if ':' in url.split('://')[1].split('/')[0] else '' }}
-    cloud_public_url: {{ url.split('://')[1].split('/')[0].replace('api.', '') }}
+    cloud_api_protocol: "{{ env_definition.inventory.clusterUrl | urlsplit('scheme') | upper }}"
+    cloud_api_url: "{{ env_definition.inventory.clusterUrl | urlsplit('hostname') }}"
+    cloud_api_port: "{{ env_definition.inventory.clusterUrl | urlsplit('port') }}"
+    cloud_public_url: "{{ env_definition.inventory.clusterUrl | urlsplit('hostname') | replace('api.', '') }}"
 {% else %}
     cloud_api_protocol: ""
     cloud_api_url: ""

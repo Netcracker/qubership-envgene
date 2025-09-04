@@ -1,0 +1,28 @@
+from jinja2 import Environment
+from urllib.parse import urlsplit
+
+
+def urlsplit_filter(value, part=None):
+    if not isinstance(value, str): return ""
+    try:
+        parts = urlsplit(value)
+    except ValueError as e:
+        return f"Invalid url: {e}"
+    if part:
+        return getattr(parts, part, "")
+    return parts
+
+
+JINJA_FILTERS = {
+    "urlsplit": urlsplit_filter,
+}
+
+
+class JinjaFilters:
+    @staticmethod
+    def register(env: Environment, filters=None):
+        if filters is None:
+            filters = JINJA_FILTERS.keys()
+        for name in filters:
+            if name in JINJA_FILTERS:
+                env.filters[name] = JINJA_FILTERS[name]

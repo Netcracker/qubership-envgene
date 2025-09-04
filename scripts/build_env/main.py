@@ -17,13 +17,15 @@ CLOUD_SCHEMA = "schemas/cloud.schema.json"
 NAMESPACE_SCHEMA = "schemas/namespace.schema.json"
 ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
 
-def clear_output_folder(dir) :
+
+def clear_output_folder(dir):
     delete_dir(f"{dir}/Namespaces")
     delete_dir(f"{dir}/Applications")
     delete_dir(f"{dir}/Profiles")
 
 
-def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir, render_parameters_dir, render_profiles_dir, output_dir):
+def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
+                                  render_parameters_dir, render_profiles_dir, output_dir):
     # clearing folders
     delete_dir(render_dir)
     delete_dir(render_parameters_dir)
@@ -60,7 +62,8 @@ def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, a
     resulting_dir = f'{output_dir}/{env_instances_relative_dir}'
     check_dir_exist_and_create(resulting_dir)
     # overwrite env definition from instances, as it can mutate during generation
-    copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/{ENV_DEFINITION_FILE_NAME}', f"{render_env_dir}/{INVENTORY_DIR_NAME}")
+    copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/{ENV_DEFINITION_FILE_NAME}',
+              f"{render_env_dir}/{INVENTORY_DIR_NAME}")
     # pushing all to output dir
     copy_path(f'{render_env_dir}/*', resulting_dir)
     return resulting_dir
@@ -85,13 +88,15 @@ def handle_template_override(render_dir):
         deleteFile(file)
 
 
-def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all_instances_dir, output_dir, g_template_version, work_dir) :
+def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all_instances_dir, output_dir,
+                      g_template_version, work_dir):
     # defining folders that will be used during generation
     render_dir = getAbsPath('tmp/render')
     render_parameters_dir = getAbsPath('tmp/parameters_templates')
     render_profiles_dir = getAbsPath('tmp/resource_profiles')
     # preparing folders for generation
-    render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir, render_parameters_dir, render_profiles_dir, output_dir)
+    render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
+                                                   render_parameters_dir, render_profiles_dir, output_dir)
     pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instances_dir)
     # get deployer parameters
     cmdb_url, _, _ = get_deployer_config(f"{cluster_name}/{env_name}", work_dir, all_instances_dir, None, None, False)
@@ -135,7 +140,8 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
         "environmentName": derived_env_name  # Use derived or explicit name
     }
 
-    logger.debug(f"Created environment context: name='{current_env['name']}', environmentName='{current_env['environmentName']}'")
+    logger.debug(
+        f"Created environment context: name='{current_env['name']}', environmentName='{current_env['environmentName']}'")
 
     envvars = {}
     envvars["env"] = env_name  # Keep as string for file paths
@@ -153,12 +159,13 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     generate_config_env(envvars)
 
     handle_template_override(render_dir)
-    env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir, ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
+    env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
+                                                                           ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
     # building env
-    handle_parameter_container(env_name, cluster_name, templates_dir, all_instances_dir, getAbsPath(render_dir))
-
-    build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir, env_specific_resource_profile_map, all_instances_dir)
-    resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir)
+    build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
+              env_specific_resource_profile_map, all_instances_dir)
+    resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
+                                                     output_dir)
     validate_appregdefs(render_dir, env_name)
 
     return resulting_dir
@@ -246,83 +253,6 @@ def validate_parameter_files(param_files):
     return errors
 
 
-def handle_parameter_container(env_name, cluster_name, templates_dir, all_instances_dir, render_dir):
-    logger.info(f'start handle_parameter_container')
-    env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
-    env_definition_yaml = getEnvDefinition(env_dir)
-    template_name = env_definition_yaml["envTemplate"]["name"]
-    logger.info(f'handle "{template_name}" template')
-    template_file = findYamls(f'{templates_dir}/env_templates', f'{template_name}.y')
-
-    for file in template_file:
-        template_yml = openYaml(file)
-        merge_template_parameters(template_yml, templates_dir, True)
-        namespaces = template_yml["namespaces"]
-        for namespace in namespaces:
-            if "parameterContainer" in namespace:
-                namespace_path_name = namespace["template_path"].split("/")[-1]
-                namespace_path_name = namespace_path_name.split(".")[0]
-                namespace_path = f'{render_dir}/{env_name}/Namespaces/{namespace_path_name}/namespace.yml'
-                namespaces_yml = openYaml(namespace_path)
-                deployment_parameters = namespaces_yml["deployParameters"]
-
-                for parameterContainer in namespace["parameterContainer"]:
-                    if parameterContainer["source"]["name"] == "":
-                        source_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',
-                                                           f'source/{parameterContainer["override"]["name"]}.y')
-                        source_file_name = extractNameFromFile(source_parameters_path[0])
-                    else:
-                        source_file_name = parameterContainer["source"]["name"].split(":")[0]
-                        source_file_version = parameterContainer["source"]["name"].split(":")[1]
-                        source_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',f'source/{source_file_name}-{source_file_version}.y')
-                    source_parameters_yaml = openYaml(source_parameters_path[0])
-
-                    if "base" in source_parameters_yaml:
-                        for key in source_parameters_yaml["base"]["parameters"]:
-                            merge_dict_key_with_comment(key, deployment_parameters, "value", source_parameters_yaml["base"]["parameters"][key], f'# parameterContainer "{source_file_name}", base')
-
-                    if "features" in parameterContainer:
-                        for features in parameterContainer["features"]:
-                            for key in source_parameters_yaml["features"][features]["parameters"]:
-                                merge_dict_key_with_comment(key, deployment_parameters, "value", source_parameters_yaml["features"][features]["parameters"][key], f'# parameterContainer "{source_file_name}", feature "{features}"')
-
-                writeYamlToFile(namespace_path, namespaces_yml)
-
-
-def merge_template_parameters(template_yml, templates_dir, override_source=False):
-    namespaces = template_yml["namespaces"]
-    for namespace in namespaces:
-        if "parameterContainer" in namespace:
-            for parameterContainer in namespace["parameterContainer"]:
-                logger.info(f'handle {parameterContainer["source"]["name"]}')
-                if not ":" in parameterContainer["source"]["name"]:
-                    override_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',
-                                                         f'override/{parameterContainer["override"]["name"]}.y')
-                    if override_source:
-                        copy_path(override_parameters_path[0],f'{templates_dir}/parameters_containers/source/{extractNameWithExtensionFromFile(override_parameters_path[0])}')
-                    else:
-                        copy_path(override_parameters_path[0],f'{templates_dir}/parameters_containers/merge/{extractNameWithExtensionFromFile(override_parameters_path[0])}')
-                else:
-                    source_file_name = parameterContainer["source"]["name"].split(":")[0]
-                    source_file_version = parameterContainer["source"]["name"].split(":")[1]
-                    source_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',   f'source/{source_file_name}-{source_file_version}.y')
-                    if "override" in parameterContainer:
-                        override_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',
-                                                             f'override/{parameterContainer["override"]["name"]}.y')
-                        logger.info(f'merge parameters from {override_parameters_path} to {source_parameters_path}')
-
-                        yaml_to_override = openYaml(source_parameters_path)
-                        src = openYaml(override_parameters_path)
-                        merge_yaml_into_target(yaml_to_override, '', src)
-
-                        source_parameters_path = source_parameters_path[0]
-                        if not override_source:
-                            merged_yaml['name'] = parameterContainer["override"]["artifact_name"]
-                            source_parameters_path = source_parameters_path.replace("/source/", "/merge/")
-                            source_parameters_path = source_parameters_path.replace(f'/{source_file_name}-{source_file_version}.', f'/{parameterContainer["override"]["artifact_name"]}.')
-
-                        writeYamlToFile(source_parameters_path, yaml_to_override)
-
 def validate_appregdefs(render_dir, env_name):
     appdef_dir = f"{render_dir}/{env_name}/AppDefs"
     regdef_dir = f"{render_dir}/{env_name}/RegDefs"
@@ -344,7 +274,8 @@ def validate_appregdefs(render_dir, env_name):
             validate_yaml_by_scheme_or_fail(file, "schemas/regdef.schema.json")
 
 
-def render_environment(env_name, cluster_name, templates_dir, all_instances_dir, output_dir, g_template_version, work_dir):
+def render_environment(env_name, cluster_name, templates_dir, all_instances_dir, output_dir, g_template_version,
+                       work_dir):
     logger.info(f'env: {env_name}')
     logger.info(f'cluster_name: {cluster_name}')
     logger.info(f'templates_dir: {templates_dir}')
@@ -353,13 +284,15 @@ def render_environment(env_name, cluster_name, templates_dir, all_instances_dir,
     logger.info(f'template_version: {g_template_version}')
     logger.info(f'work_dir: {work_dir}')
     # checking that directory is valid
-    check_environment_is_valid_or_fail(env_name, cluster_name, all_instances_dir, validate_env_definition_by_schema=True)
+    check_environment_is_valid_or_fail(env_name, cluster_name, all_instances_dir,
+                                       validate_env_definition_by_schema=True)
     # searching for env directory in instances
     validate_parameters(templates_dir, all_instances_dir, cluster_name, env_name)
     env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
     logger.info(f"Environment {env_name} directory is {env_dir}")
     # build env
-    resulting_env_dir = build_environment(env_name, cluster_name, templates_dir, env_dir, all_instances_dir, output_dir, g_template_version, work_dir)
+    resulting_env_dir = build_environment(env_name, cluster_name, templates_dir, env_dir, all_instances_dir, output_dir,
+                                          g_template_version, work_dir)
     # create credentials
     create_credentials(resulting_env_dir, env_dir, all_instances_dir)
     # update versions
@@ -370,9 +303,10 @@ if __name__ == "__main__":
     # Initialize parser
     parser = argparse.ArgumentParser()
     # Adding optional argument
-    parser.add_argument("-e", "--env_name", help = "Environment name is not set with -e argument")
-    parser.add_argument("-c", "--cluster", help = "Cluster name is not set with -c argument")
-    parser.add_argument("-t", "--templates_dir", help="Templates directory is not set with -t argument", default="environment_templates")
+    parser.add_argument("-e", "--env_name", help="Environment name is not set with -e argument")
+    parser.add_argument("-c", "--cluster", help="Cluster name is not set with -c argument")
+    parser.add_argument("-t", "--templates_dir", help="Templates directory is not set with -t argument",
+                        default="environment_templates")
     parser.add_argument("-i", "--instances_dir", help="Environment instances directory is not set with -i argument")
     parser.add_argument("-k", "--template_version", help="Artifact version is not set with -k argument")
     parser.add_argument("-o", "--output_dir", help="Output directory is not set with -o argument")
@@ -387,5 +321,6 @@ if __name__ == "__main__":
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
 
     decrypt_all_cred_files_for_env()
-    render_environment(g_input_env_name, g_input_cluster_name, g_templates_dir, g_all_instances_dir, g_output_dir, g_template_version, g_work_dir)
+    render_environment(g_input_env_name, g_input_cluster_name, g_templates_dir, g_all_instances_dir, g_output_dir,
+                       g_template_version, g_work_dir)
     encrypt_all_cred_files_for_env()

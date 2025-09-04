@@ -84,12 +84,12 @@ def copy_path(source_path: str, target_path: str):
             src_path = Path(src).resolve()
             if is_source_path_valid(src_path, target_path):
                 final_target = target_path / src_path.name if src_path.is_dir() else target_path
-                final_target.parent.mkdir(parents=True, exist_ok=True)
+                final_target.mkdir(parents=True, exist_ok=True)
                 cp.cp(str(src_path), str(final_target), force=True)
     else:
         src_path = Path(source_path).resolve()
         if is_source_path_valid(src_path, target_path):
-            target_path.parent.mkdir(parents=True, exist_ok=True)
+            target_path.mkdir(parents=True, exist_ok=True)
             cp.cp(str(src_path), str(target_path), force=True)
 
 

@@ -11,9 +11,9 @@ test_data = [
     # ("cluster-01", "env-02", "composite-dev"),
     # ("cluster-01", "env-03", "composite-dev"),
     # ("cluster-01", "env-04", "simple"),
-    # ("cluster01", "env01", "test-01"),
-    # ("cluster01", "env01", "test-01"),
-    ("cluster01", "env03", "test-template-1"),
+    # ("cluster01", "env02", "test-01"),
+    ("cluster01", "env01", "test-01"),
+    # ("cluster01", "env03", "test-template-1"),
     # ("cluster01", "env04", "test-template-2")
 ]
 
