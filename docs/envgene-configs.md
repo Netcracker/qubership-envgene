@@ -87,24 +87,24 @@ envTemplate:
   # File must NOT located in a `parameters` directory
   sharedTemplateVariables: array
   # Optional
-  # Environment specific deployment parameters set
-  # The key must contain an association point - either `cloud` or name of namespace template.
-  # The value must contain parameters set file name (w/o extension) located in a `parameters` directory
+  # Set of environment-specific deployment parameters
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` in the Template Descriptor, or by the Namespace template file name without extension)
+  # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificParamsets: hashmap
   # Optional
   # Environment specific pipeline (e2e) parameters set
-  # The key must contain an association point - either `cloud` or name of namespace template.
-  # The value must contain parameters set file name (w/o extension) located in a `parameters` directory
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` in the Template Descriptor, or by the Namespace template file name without extension)
+  # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificE2EParamsets: hashmap
   # Optional
   # Environment specific runtime (technical) parameters set
-  # The key must contain an association point - either `cloud` or name of namespace template.
-  # The value must contain parameters set file name (w/o extension) located in a `parameters` directory
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` in the Template Descriptor, or by the Namespace template file name without extension)
+  # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificTechnicalParamsets: hashmap
   # Optional
   # Environment specific resource profile overrides
-  # The key must contain an association point - either `cloud` or name of namespace template.
-  # The value must contain resource profile override file name (w/o extension) located in a `resource_profiles` directory
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` in the Template Descriptor, or by the Namespace template file name without extension)
+  # Values are the names of resource profile files without extension located in the `resource_profiles` directory
   envSpecificResourceProfiles: hashmap
   # Optional
   # Array of file names in a 'credentials' folder that will override generated and defined for instance credentials
