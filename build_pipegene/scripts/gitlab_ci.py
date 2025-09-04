@@ -119,7 +119,7 @@ def build_pipeline(params: dict):
         ## git_commit job
         jobs_requiring_git_commit = ("env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job")
         if any(job in jobs_map for job in jobs_requiring_git_commit) and not params['IS_TEMPLATE_TEST']:
-            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, credential_rotation_job)
+            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, params['DEPLOYMENT_SESSION_ID'], credential_rotation_job)
         else:
             logger.info(f'Preparing of git commit job for {env} is skipped.')
 
