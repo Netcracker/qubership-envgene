@@ -65,7 +65,7 @@
       "items": {
         "oneOf": [
           {
-            "$ref": "#/definitions/service"
+            "$ref": "#/definitions/standalone-runnable"
           },
           {
             "$ref": "#/definitions/helm-chart"
@@ -423,191 +423,6 @@
         }
       }
     },
-    "resource-profile-baseline": {
-      "type": "object",
-      "title": "Resource Profile Baseline",
-      "description": "Describes resource profile baseline",
-      "required": [
-        "type",
-        "mime-type",
-        "bom-ref",
-        "name",
-        "data"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "data"
-          ],
-          "title": "Component Type",
-          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
-        },
-        "mime-type": {
-          "type": "string",
-          "enum": [
-            "application/vnd.qubership.resource-profile-baseline"
-          ],
-          "title": "Mime-Type",
-          "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
-        },
-        "bom-ref": {
-          "$ref": "#/definitions/refType",
-          "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
-        },
-        "name": {
-          "type": "string",
-          "title": "Component Name",
-          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
-          "const": "resource-profile-baselines"
-        },
-        "data": {
-          "type": "array",
-          "title": "Data",
-          "description": "This object SHOULD be specified for any component of type `data` and must not be specified for other component types",
-          "items": {
-            "type": "object",
-            "title": "Resource Profile Baseline",
-            "description": "Describes resource profile baseline",
-            "required": [
-              "type",
-              "name",
-              "contents"
-            ],
-            "additionalProperties": false,
-            "properties": {
-              "type": {
-                "type": "string",
-                "title": "Type of Data",
-                "description": "The general theme or subject matter of the data being specified",
-                "enum": [
-                  "configuration"
-                ]
-              },
-              "name": {
-                "title": "Resource Profile Baseline Name",
-                "description": "The name of resource profile baseline",
-                "type": "string"
-              },
-              "contents": {
-                "type": "object",
-                "title": "Data Contents",
-                "description": "The contents or references to the contents of the data being described",
-                "additionalProperties": false,
-                "properties": {
-                  "attachment": {
-                    "title": "Data Attachment",
-                    "description": "An optional way to include textual or encoded data",
-                    "$ref": "#/definitions/attachment"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "service": {
-      "type": "object",
-      "title": "Qubership specific service",
-      "description": "Defines the service's composition",
-      "required": [
-        "type",
-        "mime-type",
-        "bom-ref",
-        "name"
-      ],
-      "additionalProperties": false,
-      "properties": {
-        "type": {
-          "type": "string",
-          "enum": [
-            "application"
-          ],
-          "title": "Component Type",
-          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
-        },
-        "mime-type": {
-          "type": "string",
-          "enum": [
-            "application/vnd.qubership.service"
-          ],
-          "title": "Mime-Type",
-          "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
-        },
-        "bom-ref": {
-          "$ref": "#/definitions/refType",
-          "title": "BOM Reference",
-          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
-        },
-        "name": {
-          "type": "string",
-          "title": "Component Name",
-          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
-          "examples": [
-            "tomcat-catalina"
-          ]
-        },
-        "version": {
-          "$ref": "#/definitions/version",
-          "title": "Component Version",
-          "description": "The component version. The version should ideally comply with semantic versioning but is not enforced."
-        },
-        "properties": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "required": [
-              "name",
-              "value"
-            ],
-            "additionalProperties": false,
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "value": {
-                "oneOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "boolean"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        "components": {
-          "type": "array",
-          "title": "Components",
-          "description": "A list of service components",
-          "items": {
-            "oneOf": [
-              {
-                "$ref": "#/definitions/zip-artifact"
-              },
-              {
-                "$ref": "#/definitions/spar-library"
-              },
-              {
-                "$ref": "#/definitions/resource-profile-baseline"
-              }
-            ]
-          },
-          "uniqueItems": true
-        }
-      }
-    },
     "pipeline": {
       "type": "object",
       "title": "Qubership specific service",
@@ -632,7 +447,7 @@
         "mime-type": {
           "type": "string",
           "enum": [
-            "application/vnd.qubership.service"
+            "application/vnd.qubership.standalone-runnable"
           ],
           "title": "Mime-Type",
           "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
@@ -813,108 +628,174 @@
         }
       }
     },
-    "spar-library": {
+    "resource-profile-baseline": {
       "type": "object",
-      "title": "Component's Artifact",
-      "description": "Defines component's artifacts",
+      "title": "Resource Profile Baseline",
+      "description": "Describes resource profile baseline",
       "required": [
         "type",
         "mime-type",
         "bom-ref",
-        "group",
         "name",
-        "version",
-        "hashes",
-        "purl"
+        "data"
       ],
       "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
           "enum": [
-            "library"
+            "data"
           ],
           "title": "Component Type",
-          "description": "Specifies the component type (always 'application' for these configuration children)"
+          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
         },
         "mime-type": {
           "type": "string",
           "enum": [
-            "application/vnd.osgi.bundle"
+            "application/vnd.qubership.resource-profile-baseline"
           ],
-          "title": "MIME Type",
-          "description": "The format specification for the configuration component"
+          "title": "Mime-Type",
+          "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
         },
         "bom-ref": {
           "$ref": "#/definitions/refType",
           "title": "BOM Reference",
-          "description": "Unique identifier for the component within the BOM"
-        },
-        "group": {
-          "type": "string",
-          "title": "Component Group",
-          "description": "Organization/project grouping identifier",
-          "examples": [
-            "com.acme"
-          ]
+          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
         },
         "name": {
           "type": "string",
           "title": "Component Name",
-          "description": "Shortened identifier for the component",
-          "examples": [
-            "tomcat-catalina"
-          ]
+          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
+          "const": "resource-profile-baselines"
         },
-        "version": {
-          "$ref": "#/definitions/version",
-          "title": "Component Version",
-          "description": "Version identifier (preferably following semantic versioning)"
-        },
-        "hashes": {
+        "data": {
           "type": "array",
-          "items": {
-            "$ref": "#/definitions/hash"
-          },
-          "title": "Hashes",
-          "description": "The hashes of the docker image"
-        },
-        "purl": {
-          "type": "string",
-          "title": "Package URL (purl)",
-          "description": "Asserts the identity of the component using package-url (purl). The purl, if specified, must be valid and conform to the specification defined at: [https://github.com/package-url/purl-spec](https://github.com/package-url/purl-spec). Refer to `@.evidence.identity` to optionally provide evidence that substantiates the assertion of the component's identity",
-          "examples": [
-            "pkg:docker/com.acme/tomcat-catalina@9.0.14"
-          ]
-        },
-        "properties": {
-          "type": "array",
+          "title": "Data",
+          "description": "This object SHOULD be specified for any component of type `data` and must not be specified for other component types",
           "items": {
             "type": "object",
+            "title": "Resource Profile Baseline",
+            "description": "Describes resource profile baseline",
             "required": [
+              "type",
               "name",
-              "value"
+              "contents"
             ],
             "additionalProperties": false,
             "properties": {
+              "type": {
+                "type": "string",
+                "title": "Type of Data",
+                "description": "The general theme or subject matter of the data being specified",
+                "enum": [
+                  "configuration"
+                ]
+              },
               "name": {
+                "title": "Resource Profile Baseline Name",
+                "description": "The name of resource profile baseline",
                 "type": "string"
               },
-              "value": {
-                "oneOf": [
-                  {
-                    "type": "string"
-                  },
-                  {
-                    "type": "array"
-                  },
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "type": "boolean"
+              "contents": {
+                "type": "object",
+                "title": "Data Contents",
+                "description": "The contents or references to the contents of the data being described",
+                "additionalProperties": false,
+                "properties": {
+                  "attachment": {
+                    "title": "Data Attachment",
+                    "description": "An optional way to include textual or encoded data",
+                    "$ref": "#/definitions/attachment"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "helm-values-schema": {
+      "type": "object",
+      "title": "Helm Values Schema",
+      "description": "Defines JSON schema for Helm chart values",
+      "required": [
+        "type",
+        "mime-type",
+        "bom-ref",
+        "name",
+        "data"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "data"
+          ],
+          "title": "Component Type",
+          "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": [
+            "application/vnd.qubership.helm.values.schema"
+          ],
+          "title": "Mime-Type",
+          "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType",
+          "title": "BOM Reference",
+          "description": "An optional identifier which can be used to reference the component elsewhere in the BOM. Every bom-ref must be unique within the BOM.\nValue SHOULD not start with the BOM-Link intro 'urn:cdx:' to avoid conflicts with BOM-Links"
+        },
+        "name": {
+          "type": "string",
+          "title": "Component Name",
+          "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
+          "examples": [
+            "values.schema.json"
+          ]
+        },
+        "data": {
+          "type": "array",
+          "title": "Data",
+          "description": "This object SHOULD be specified for any component of type `data` and must not be specified for other component types",
+          "items": {
+            "type": "object",
+            "title": "Helm Values Schema Data",
+            "description": "Describes Helm values schema data",
+            "required": [
+              "type",
+              "name",
+              "contents"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "title": "Type of Data",
+                "description": "The general theme or subject matter of the data being specified",
+                "enum": [
+                  "configuration"
                 ]
+              },
+              "name": {
+                "title": "Schema Name",
+                "description": "The name of the schema file",
+                "type": "string"
+              },
+              "contents": {
+                "type": "object",
+                "title": "Data Contents",
+                "description": "The contents or references to the contents of the data being described",
+                "additionalProperties": false,
+                "properties": {
+                  "attachment": {
+                    "title": "Data Attachment",
+                    "description": "An optional way to include textual or encoded data",
+                    "$ref": "#/definitions/attachment"
+                  }
+                }
               }
             }
           }
@@ -930,7 +811,8 @@
         "mime-type",
         "bom-ref",
         "name",
-        "properties"
+        "properties",
+        "components"
       ],
       "additionalProperties": false,
       "properties": {
@@ -1021,7 +903,7 @@
           "title": "Components",
           "description": "A list of software and hardware components included in the parent component. This is not a dependency tree. It provides a way to specify a hierarchical representation of component assemblies, similar to system &#8594; subsystem &#8594; parts assembly in physical supply chains",
           "items": {
-            "oneOf": [
+            "anyOf": [
               {
                 "$ref": "#/definitions/helm-chart"
               },
@@ -1034,23 +916,16 @@
         }
       }
     },
-    "helm-values-schema": {
+    "application-component": {
       "type": "object",
-      "title": "Helm Values Schema",
-      "description": "Defines JSON schema for Helm chart values",
-      "required": [
-        "type",
-        "mime-type",
-        "bom-ref",
-        "name",
-        "data"
-      ],
+      "title": "Application Component",
+      "description": "Typed part of the application",
       "additionalProperties": false,
       "properties": {
         "type": {
           "type": "string",
           "enum": [
-            "data"
+            "application"
           ],
           "title": "Component Type",
           "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
@@ -1058,7 +933,7 @@
         "mime-type": {
           "type": "string",
           "enum": [
-            "application/vnd.qubership.helm.values.schema"
+            "application/vnd.qubership.standalone-runnable"
           ],
           "title": "Mime-Type",
           "description": "The mime-type of the component. When used on file components, the mime-type can provide additional context about the kind of file being represented, such as an image, font, or executable. Some library or framework components may also have an associated mime-type"
@@ -1073,7 +948,7 @@
           "title": "Component Name",
           "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
           "examples": [
-            "values.schema.json"
+            "tomcat-catalina"
           ]
         },
         "version": {
@@ -1081,49 +956,50 @@
           "title": "Component Version",
           "description": "The component version. The version should ideally comply with semantic versioning but is not enforced."
         },
-        "data": {
+        "properties": {
           "type": "array",
-          "title": "Data",
-          "description": "This object SHOULD be specified for any component of type `data` and must not be specified for other component types",
           "items": {
             "type": "object",
-            "title": "Helm Values Schema Data",
-            "description": "Describes Helm values schema data",
             "required": [
-              "type",
               "name",
-              "contents"
+              "value"
             ],
             "additionalProperties": false,
             "properties": {
-              "type": {
-                "type": "string",
-                "title": "Type of Data",
-                "description": "The general theme or subject matter of the data being specified",
-                "enum": [
-                  "configuration"
-                ]
-              },
               "name": {
-                "title": "Schema Name",
-                "description": "The name of the schema file",
                 "type": "string"
               },
-              "contents": {
-                "type": "object",
-                "title": "Data Contents",
-                "description": "The contents or references to the contents of the data being described",
-                "additionalProperties": false,
-                "properties": {
-                  "attachment": {
-                    "title": "Data Attachment",
-                    "description": "An optional way to include textual or encoded data",
-                    "$ref": "#/definitions/attachment"
+              "value": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "array"
+                  },
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "type": "boolean"
                   }
-                }
+                ]
               }
             }
           }
+        },
+        "components": {
+          "type": "array",
+          "title": "Components",
+          "description": "A list of service components",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/resource-profile-baseline"
+              }
+            ]
+          },
+          "uniqueItems": true
         }
       }
     }

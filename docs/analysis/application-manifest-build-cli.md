@@ -9,12 +9,17 @@
   - [Open Question](#open-question)
   - [Limitation](#limitation)
   - [Requirements](#requirements)
-  - [Application Manifest Model](#application-manifest-model)
+  - [Application Manifest Examples](#application-manifest-examples)
+    - [Simple](#simple)
+    - [Jaeger](#jaeger)
+    - [QIP](#qip)
   - [Application Manifest Build Config](#application-manifest-build-config)
   - [Application Manifest Structure](#application-manifest-structure)
     - [Metadata](#metadata)
     - [Components](#components)
-      - [`application/vnd.qubership.service`](#applicationvndqubershipservice)
+      - [\[Components\] `application/vnd.qubership.standalone-runnable`](#components-applicationvndqubershipstandalone-runnable)
+      - [\[Components\] `application/vnd.docker.image`](#components-applicationvnddockerimage)
+      - [\[Components\] `application/vnd.qubership.helm.chart`](#components-applicationvndqubershiphelmchart)
   - [Output Transformer](#output-transformer)
     - [`application/vnd.docker.image`](#applicationvnddockerimage)
     - [`application/vnd.qubership.helm.chart`](#applicationvndqubershiphelmchart)
@@ -101,18 +106,34 @@ flowchart TD
    1. Artifact ID must match the application name
    2. Registry parameters for publishing (URL, credentials, group) must be get from Registry Config
 4. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
-    1. Service -> `application/vnd.qubership.service`
+    1. Service -> `application/vnd.qubership.standalone-runnable`
     2. Docker image -> `application/vnd.docker.image`
     3. Helm chart -> `application/vnd.qubership.helm.chart`
     <!-- 4. ZIP archive -> `application/zip` -->
 5. The CLI must complete the AM build for an application with 50 components within 10 seconds
 6. The CLI must support execution in both GitLab CI and GitHub Actions environments
 
-## Application Manifest Model
-
-![application-manifest-model-with-plugins.drawio.png](/docs/images/application-manifest-model-with-plugins.drawio.png)
+## Application Manifest Examples
 
 [Application Manifest JSON schema](/schemas/application-manifest-with-plugins.schema.json)
+
+### Simple
+
+![application-manifest-example-drawio.png](/docs/images/application-manifest-example-drawio.png)
+
+[Simple Application Manifest](/examples/application-manifest.json)
+
+### Jaeger
+
+![application-manifest-example-jaeger.drawio.png](/docs/images/application-manifest-example-jaeger.drawio.png)
+
+[Jaeger Application Manifest](/examples/application-manifest-jaeger.json)
+
+### QIP
+
+![application-manifest-example-qip.drawio.png](/docs/images/application-manifest-example-qip.drawio.png)
+
+[QIP Application Manifest](/examples/application-manifest-qip.json)
 
 ## Application Manifest Build Config
 
@@ -127,73 +148,66 @@ The config should be stored in application repository
 version: 1.2.3
 components:
   <component-name>:
-    mime-type: enum [application/vnd.qubership.service, application/vnd.qubership.job, application/vnd.qubership.configuration, application/vnd.docker.image, application/vnd.qubership.helm.chart]
+    # Mandatory
+    mime-type: enum [ application/vnd.qubership.standalone-runnable, application/vnd.docker.image, application/vnd.qubership.helm.chart ]
+    # Optional
     purl: pkg:<type>/<group>/<name>:<version>?registryName=<registry-id>
+    # Optional
     source: <a-job-id>
-    depends_on:
+    # Optional
+    depends-on:
       - <component-name>
 ```
 
-**Example:**
+**Simple Example:**
 
 ```yaml
 version: 1.2.3
 components:
-  # services
+  # application/vnd.qubership.standalone-runnable
+  a-standalone-runnable:
+    mime-type: application/vnd.qubership.standalone-runnable
+    depends-on:
+      - a-helm-chart
+  # application/vnd.qubership.helm.chart
+  a-helm-chart:
+    mime-type: application/vnd.qubership.helm.chart
+    source: <a-job-id>
+    depends-on:
+      - a-docker-image
+  # application/vnd.docker.image
+  a-docker-image:
+    mime-type: application/vnd.docker.image
+    source: <a-job-id>
+```
+
+**Jaeger Example:**
+
+```yaml
+version: 1.2.3
+components:
+  # application/vnd.qubership.standalone-runnable
   cassandra:
-    mime-type: application/vnd.qubership.job
-    depends_on:
-      - jaeger-cassandra-schema
+    mime-type: application/vnd.qubership.standalone-runnable
+    depends-on:
       - qubership-jaeger
-  collector:
-    mime-type: application/vnd.qubership.service
-    depends_on:
+  # application/vnd.qubership.helm.chart
+  qubership-jaeger:
+    mime-type: application/vnd.qubership.helm.chart
+    source: <a-job-id>
+    depends-on:
+      - jaeger-cassandra-schema
       - jaeger
       - jaeger-readiness-probe
-      - qubership-jaeger
-  hotrod:
-    mime-type: application/vnd.qubership.service
-    depends_on:
       - example-hotrod
-      - qubership-jaeger
-  integration-tests:
-    mime-type: application/vnd.qubership.service
-    depends_on:
       - jaeger-integration-tests
-      - qubership-jaeger
-  observability:
-    mime-type: application/vnd.qubership.configuration
-    depends_on:
-      - qubership-jaeger
-  opensearch:
-    mime-type: application/vnd.qubership.job
-    depends_on:
       - jaeger-es-index-cleaner
       - jaeger-es-rollover
-      - qubership-jaeger
-  query:
-    mime-type: application/vnd.qubership.service
-    depends_on:
-      - jaeger
       - envoy
-      - jaeger-readiness-probe
-      - qubership-jaeger
-  remote-grpc:
-    mime-type: application/vnd.qubership.configuration
-    depends_on:
-      - qubership-jaeger
-  spark-dependencies:
-    mime-type: application/vnd.qubership.job
-    depends_on:
       - openjdk
-      - spark-dependencies
-      - qubership-jaeger
-  status-provisioner:
-    mime-type: application/vnd.qubership.job
-    depends_on:
+      - spark-dependencies-image
       - qubership-deployment-status-provisioner
-      - qubership-jaeger
-  # Docker images
+  # application/vnd.docker.image
   jaeger-cassandra-schema:
     mime-type: application/vnd.docker.image
     purl: pkg:docker/jaegertracing/jaeger-cassandra-schema:1.72.0?registryName=sandbox
@@ -227,11 +241,9 @@ components:
   qubership-deployment-status-provisioner:
     mime-type: application/vnd.docker.image
     source: <a-job-id>
-  # Helm Chart
-  qubership-jaeger:
-    mime-type: application/vnd.qubership.helm.chart
-    source: <a-job-id>
 ```
+
+**QIP Example:**
 
 ## Application Manifest Structure
 
@@ -251,91 +263,90 @@ components:
 
 Describes BOM metadata.
 
-| Attribute                     | Type   | Mandatory | Default                                 | Description                                       | Source  |
-|-------------------------------|--------|-----------|-----------------------------------------|---------------------------------------------------|---------|
-| `timestamp`                   | string | yes       | None                                    | Specifies the date and time of the AM creation    | N/A     |
-| `component`                   | object | yes       | None                                    | Describes the application itself                  | N/A     |
-| `component.type`              | string | yes       | `application`                           | Type of the component                             | N/A     |
-| `component.mime-type`         | string | yes       | `application/vnd.qubership.application` | Mime-type of the component                        | N/A     |
-| `component.bom-ref`           | string | yes       | None                                    | Unique component identifier within the AM         | `${component-name}:${generated-uuid-v4}` |
-| `component.name`              | string | yes       | None                                    | Name of the application                           | **TBD** |
-| `component.version`           | string | yes       | None                                    | Version of the application                        | **TBD** |
-| `tools`                       | object | yes       | None                                    | The tool(s) used to create the AM                 | N/A     |
-| `tools.components`            | array  | yes       | `[]`                                    | A list of components used as tools                | N/A     |
-| `tools.components[n].type`    | string | yes       | `application`                           | Type of the tool component                        | N/A     |
-| `tools.components[n].name`    | string | yes       | `am-build-cli`                          | Name of the tool component (e.g., `am-build-cli`) | N/A     |
-| `tools.components[n].version` | string | yes       | None                                    | Version of the tool component                     | N/A     |
+| Attribute                     | Type   | Mandatory | Default                                 | Description                                       |
+|-------------------------------|--------|-----------|-----------------------------------------|---------------------------------------------------|
+| `timestamp`                   | string | yes       | None                                    | Specifies the date and time of the AM creation    |
+| `component`                   | object | yes       | None                                    | Describes the application itself                  |
+| `component.type`              | string | yes       | `application`                           | Type of the component                             |
+| `component.mime-type`         | string | yes       | `application/vnd.qubership.application` | Mime-type of the component                        |
+| `component.bom-ref`           | string | yes       | None                                    | Unique component identifier within the AM         |
+| `component.name`              | string | yes       | None                                    | Name of the application                           |
+| `component.version`           | string | yes       | None                                    | Version of the application                        |
+| `tools`                       | object | yes       | None                                    | The tool(s) used to create the AM                 |
+| `tools.components`            | array  | yes       | `[]`                                    | A list of components used as tools                |
+| `tools.components[n].type`    | string | yes       | `application`                           | Type of the tool component                        |
+| `tools.components[n].name`    | string | yes       | `am-build-cli`                          | Name of the tool component (e.g., `am-build-cli`) |
+| `tools.components[n].version` | string | yes       | None                                    | Version of the tool component                     |
 
 ### Components
 
-#### `application/vnd.qubership.service`
+#### [Components] `application/vnd.qubership.standalone-runnable`
 
 An abstract component necessary to link artifacts of different types together
 
-| Attribute                                   | Type   | Mandatory | Default                            | Description                                | Source  |
-|---------------------------------------------|--------|-----------|------------------------------------|------------------------------------------- |---------|
-| `bom-ref`                                   | string | yes       | None                               | Unique component identifier within the AM  | `${component-name}:${generated-uuid-v4}` |
-| `type`                                      | string | yes       | `application`                      | Component type                             | N/A     |
-| `mime-type`                                 | string | yes       | `application/vnd.qubership.service`| Component MIME type                        | N/A     |
-| `name`                                      | string | yes       | None                               | Service name                               | **TBD** |
-| `components`                                | array  | no        | `[]`                               | Always `[]`                                | N/A     |
+| Attribute                     | Type   | Mandatory | Default                                        | Description                                |
+|-------------------------------|--------|-----------|------------------------------------------------|--------------------------------------------|
+| `bom-ref`                     | string | yes       | None                                           | Unique component identifier within the AM  |
+| `type`                        | string | yes       | `application`                                  | Component type                             |
+| `mime-type`                   | string | yes       | `application/vnd.qubership.standalone-runnable`| Component MIME type                        |
+| `name`                        | string | yes       | None                                           | Service name                               |
+| `components`                  | array  | no        | `[]`                                           | Always `[]`                                |
 
-<!-- 
-#### `application/vnd.docker.image`
+#### [Components] `application/vnd.docker.image`
 
 Describes Docker image as an artifact
 
-| Attribute       | Type   | Mandatory | Default                        | Description                                                          | Source  |
-|-----------------|--------|-----------|--------------------------------|----------------------------------------------------------------------|---------|
-| `bom-ref`       | string | yes       | None                           | Unique component identifier within the AM                            | `${component-name}:${generated-uuid-v4}` |
-| `type`          | string | yes       | `container`                    | Component type                                                       | N/A |
-| `mime-type`     | string | yes       | `application/vnd.docker.image` | Component MIME type                                                  | N/A |
-| `name`          | string | yes       | None                           | Docker image name                                                    | **TBD** |
-| `group`         | string | yes       | `""`                           | Group or namespace for the image (empty string if none)              | **TBD** |
-| `version`       | string | yes       | None                           | Docker image version (tag)                                           | **TBD** |
-| `purl`          | string | yes       | None                           | Package URL (PURL) for the image                                     | **TBD** |
-| `hashes`        | array  | yes       | `[]`                           | List of hashes for the image (empty array if none)                   | **TBD** |
-| `hashes.alg`    | string | yes       | None                           | Hash algorithm, e.g., "SHA-256" (required if hash present)           | **TBD** |
-| `hashes.content`| string | yes       | None                           | Hash value as a hex string (required if hash present)                | **TBD** |
+| Attribute       | Type   | Mandatory | Default                        | Description                                                          |
+|-----------------|--------|-----------|--------------------------------|----------------------------------------------------------------------|
+| `bom-ref`       | string | yes       | None                           | Unique component identifier within the AM                            |
+| `type`          | string | yes       | `container`                    | Component type                                                       |
+| `mime-type`     | string | yes       | `application/vnd.docker.image` | Component MIME type                                                  |
+| `name`          | string | yes       | None                           | Docker image name                                                    |
+| `group`         | string | yes       | `""`                           | Group or namespace for the image (empty string if none)              |
+| `version`       | string | yes       | None                           | Docker image version (tag)                                           |
+| `purl`          | string | yes       | None                           | Package URL (PURL) for the image                                     |
+| `hashes`        | array  | yes       | `[]`                           | List of hashes for the image (empty array if none)                   |
+| `hashes.alg`    | string | yes       | None                           | Hash algorithm, e.g., "SHA-256" (required if hash present)           |
+| `hashes.content`| string | yes       | None                           | Hash value as a hex string (required if hash present)                |
 
-#### `application/vnd.qubership.helm.chart`
+#### [Components] `application/vnd.qubership.helm.chart`
 
 Root components of this type describe artifacts, nested helm charts describe abstract helm charts (this is necessary to properly form values.yaml)
 
-| Attribute                  | Type    | Mandatory | Default                              | Description                                                                 | Source  |
-|----------------------------|---------|-----------|--------------------------------------|-----------------------------------------------------------------------------|---------|
-| `bom-ref`                  | string  | yes       | None                                 | Unique component identifier within the AM                                    | `${component-name}:${generated-uuid-v4}` |
-| `type`                     | string  | yes       | `application`                        | Component type                                                              | N/A |
-| `mime-type`                | string  | yes       | `application/vnd.qubership.helm.chart`| Component MIME type                                                         | N/A |
-| `name`                     | string  | yes       | None                                 | Helm chart name                                                             | **TBD** |
-| `version`                  | string  | yes       | None                                 | Helm chart version                                                          | **TBD** |
-| `purl`                     | string  | yes       | `""`                                 | Package URL (PURL) for the chart. Not set for nested charts under umbrella chart | **TBD** |
-| `hashes`                   | array   | no        | None                                 | List of hashes for the chart (empty array if none). Not set for nested charts under umbrella chart | **TBD** |
-| `hashes.alg`               | string  | yes       | None                                 | Hash algorithm, e.g., "SHA-256" (required if hash present)                   | **TBD** |
-| `hashes.content`           | string  | yes       | None                                 | Hash value as a hex string (required if hash present)                       | **TBD** |
-| `properties`               | array   | yes       | None                                 | List of additional properties                                               | **TBD** |
-| `properties[n].name`       | string  | yes       | `isUmbrella`                         | Always set to "isUmbrella" for this property entry.                         | **TBD** |
-| `properties[n].value`      | boolean | yes       | None                                 | Indicates if the chart is an umbrella chart.                                 | **TBD** |
-| `properties[n].name`       | string  | yes       | `isLibrary`                          | Always set to "isLibrary" for this property entry.                          | **TBD** |
-| `properties[n].value`      | boolean | yes       | None                                 | Indicates if the chart is a library chart.                                  | **TBD** |
-| `properties[n].name`       | string  | yes       | `alias`                              | Always set to "alias" for this property entry.                              | **TBD** |
-| `properties[n].value`      | string  | yes       | `""`                                 | Alias for the Helm chart.                                                   | **TBD** |
-| `components`               | array   | no        | None                                 | List of nested Helm charts. A nested chart is not an artifact and has no `purl` or `hashes`. | **TBD** |
-| `components[n].bom-ref`    | string  | yes       | None                                 | Unique identifier for the nested chart.                                     | **TBD** |
-| `components[n].type`       | string  | yes       | `application`                        | Component type for the nested chart.                                        | N/A     |
-| `components[n].mime-type`  | string  | yes       | `application/vnd.qubership.helm.chart`| MIME type for the nested chart.                                            | N/A     |
-| `components[n].name`       | string  | yes       | None                                 | Name of the nested chart.                                                   | **TBD** |
-| `components[n].version`    | string  | yes       | None                                 | Version of the nested chart.                                                  | **TBD** |
-| `components[n].properties` | array   | yes       | `[]`                                 | Additional properties for the nested chart.                                 | **TBD** |
-| `properties[n].name`       | string  | yes       | `isLibrary`                          | Always set to "isLibrary" for this property entry.                          | **TBD** |
-| `properties[n].value`      | boolean | yes       | None                                 | Indicates if the nested chart is a library chart.                           | **TBD** |
-| `properties[n].name`       | string  | yes       | `alias`                              | Always set to "alias" for this property entry.                              | **TBD** |
-| `properties[n].value`      | string  | yes       | `""`                                 | Alias for the nested chart.                                                 | **TBD** |
+| Attribute                  | Type    | Mandatory | Default                              | Description                                                                 |
+|----------------------------|---------|-----------|--------------------------------------|-----------------------------------------------------------------------------|
+| `bom-ref`                  | string  | yes       | None                                 | Unique component identifier within the AM                                    |
+| `type`                     | string  | yes       | `application`                        | Component type                                                              |
+| `mime-type`                | string  | yes       | `application/vnd.qubership.helm.chart`| Component MIME type                                                         |
+| `name`                     | string  | yes       | None                                 | Helm chart name                                                             |
+| `version`                  | string  | yes       | None                                 | Helm chart version                                                          |
+| `purl`                     | string  | yes       | `""`                                 | Package URL (PURL) for the chart. Not set for nested charts under umbrella chart |
+| `hashes`                   | array   | no        | None                                 | List of hashes for the chart (empty array if none). Not set for nested charts under umbrella chart |
+| `hashes.alg`               | string  | yes       | None                                 | Hash algorithm, e.g., "SHA-256" (required if hash present)                   |
+| `hashes.content`           | string  | yes       | None                                 | Hash value as a hex string (required if hash present)                       |
+| `properties`               | array   | yes       | None                                 | List of additional properties                                               |
+| `properties[n].name`       | string  | yes       | `isUmbrella`                         | Always set to "isUmbrella" for this property entry.                         |
+| `properties[n].value`      | boolean | yes       | None                                 | Indicates if the chart is an umbrella chart.                                 |
+| `properties[n].name`       | string  | yes       | `isLibrary`                          | Always set to "isLibrary" for this property entry.                          |
+| `properties[n].value`      | boolean | yes       | None                                 | Indicates if the chart is a library chart.                                  |
+| `properties[n].name`       | string  | yes       | `alias`                              | Always set to "alias" for this property entry.                              |
+| `properties[n].value`      | string  | yes       | `""`                                 | Alias for the Helm chart.                                                   |
+| `components`               | array   | no        | None                                 | List of nested Helm charts. A nested chart is not an artifact and has no `purl` or `hashes`. |
+| `components[n].bom-ref`    | string  | yes       | None                                 | Unique identifier for the nested chart.                                     |
+| `components[n].type`       | string  | yes       | `application`                        | Component type for the nested chart.                                        |
+| `components[n].mime-type`  | string  | yes       | `application/vnd.qubership.helm.chart`| MIME type for the nested chart.                                            |
+| `components[n].name`       | string  | yes       | None                                 | Name of the nested chart.                                                   |
+| `components[n].version`    | string  | yes       | None                                 | Version of the nested chart.                                                |
+| `components[n].properties` | array   | yes       | `[]`                                 | Additional properties for the nested chart.                                 |
+| `properties[n].name`       | string  | yes       | `isLibrary`                          | Always set to "isLibrary" for this property entry.                          |
+| `properties[n].value`      | boolean | yes       | None                                 | Indicates if the nested chart is a library chart.                           |
+| `properties[n].name`       | string  | yes       | `alias`                              | Always set to "alias" for this property entry.                              |
+| `properties[n].value`      | string  | yes       | `""`                                 | Alias for the nested chart.                                                 |
 
 > [!NOTE]
 > The `components` array is recursive
 > A nested chart within this array can have its own `components` array to represent
-> its own dependencies -->
+> its own dependencies
 
 <!-- #### `application/zip`
 
