@@ -110,7 +110,7 @@ public class BomCommonUtils {
         String dockerTag = null;
         boolean isFacadeGateway = false;
         RegistrySummaryDTO registrySummaryDTO = null;
-        Map<String, String> profileValues = new HashMap<>();
+        Map<String, Object> profileValues = new HashMap<>();
 
         for (Component subComponent : component.getComponents()) {
             switch (subComponent.getMimeType()) {
@@ -195,9 +195,9 @@ public class BomCommonUtils {
         return registrySummaryDTO;
     }
 
-    private Map<String, String> extractProfileValues(Component dataComponent, String appName, String serviceName,
+    private Map<String, Object> extractProfileValues(Component dataComponent, String appName, String serviceName,
                                                      Profile overrideProfile, String baseline) {
-        Map<String, String> profileValues = new HashMap<>();
+        Map<String, Object> profileValues = new HashMap<>();
         if (baseline == null) {
             profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
         }
@@ -205,7 +205,7 @@ public class BomCommonUtils {
             if (baseline != null && baseline.equals(data.getName().split("\\.")[0])) {
                 Content content = data.getContents();
                 String encodedText = content.getAttachment().getText();
-                profileValues = fileDataConverter.decodeAndParse(encodedText, new TypeReference<HashMap<String, String>>() {
+                profileValues = fileDataConverter.decodeAndParse(encodedText, new TypeReference<HashMap<String, Object>>() {
                 });
 
                 profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);

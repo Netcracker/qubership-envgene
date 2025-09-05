@@ -269,7 +269,7 @@ public class BomReaderUtilsImplV2 {
     }
 
     private void processConfigServiceComponent(Map<String, Map<String, Object>> serviceMap, Component component, String appName, String baseline, Profile override, Bom bomContent) {
-        Map<String, String> profileValues = new TreeMap<>();
+        Map<String, Object> profileValues = new TreeMap<>();
         Map<String, Object> serviceParams = new TreeMap<>();
         String entity = "service:" + component.getName();
         serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity));
@@ -291,7 +291,7 @@ public class BomReaderUtilsImplV2 {
     }
 
     private void processImageServiceComponent(Map<String, Map<String, Object>> serviceMap, Component component, String appName, String baseline, Profile override, Bom bomContent) {
-        Map<String, String> profileValues = new TreeMap<>();
+        Map<String, Object> profileValues = new TreeMap<>();
         Map<String, Object> serviceParams = new TreeMap<>();
         String tag = null;
         String entity = "service:" + component.getName();
@@ -324,9 +324,9 @@ public class BomReaderUtilsImplV2 {
         return null;
     }
 
-    private Map<String, String> extractProfileValues(Component dataComponent, String appName, String serviceName,
+    private Map<String, Object> extractProfileValues(Component dataComponent, String appName, String serviceName,
                                                      Profile overrideProfile, String baseline) {
-        Map<String, String> profileValues = new TreeMap<>();
+        Map<String, Object> profileValues = new TreeMap<>();
         if (baseline == null) {
             profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
         }
@@ -334,7 +334,7 @@ public class BomReaderUtilsImplV2 {
             if (baseline != null && baseline.equals(data.getName().split("\\.")[0])) {
                 Content content = data.getContents();
                 String encodedText = content.getAttachment().getText();
-                profileValues = fileDataConverter.decodeAndParse(encodedText, new TypeReference<TreeMap<String, String>>() {
+                profileValues = fileDataConverter.decodeAndParse(encodedText, new TypeReference<TreeMap<String, Object>>() {
                 });
 
                 profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
