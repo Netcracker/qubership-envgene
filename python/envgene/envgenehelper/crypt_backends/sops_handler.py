@@ -78,7 +78,7 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
 
     file_content = openYaml(file_path)
     if file_content == {}:
-        logger.info('File is empty, skipping de/encryption')
+        logger.info(f'File is empty, skipping de/encryption. Path: {file_path}')
         return file_content
 
     is_encrypted = is_encrypted_SOPS(file_path)
