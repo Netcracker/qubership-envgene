@@ -21,3 +21,4 @@ minio-cred:
   data:
     username: "minio-username"
     password: "minio-password"
+

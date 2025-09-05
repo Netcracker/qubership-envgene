@@ -179,8 +179,8 @@ def findFiles(fileList: list[Path], pattern, notPattern="", additionalRegexpPatt
         if (
                 pattern in file_path_posix
                 and (notPattern == "" or notPattern not in file_path_posix)
-                and (additionalRegexpPattern == "" or re.match(additionalRegexpPattern, filePath))
-                and (additionalRegexpNotPattern == "" or not re.match(additionalRegexpNotPattern, filePath))
+                and (additionalRegexpPattern == "" or re.match(additionalRegexpPattern, file_path_posix))
+                and (additionalRegexpNotPattern == "" or not re.match(additionalRegexpNotPattern, file_path_posix))
         ):
             result.append(filePath)
             logger.debug(

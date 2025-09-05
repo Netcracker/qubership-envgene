@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 from deepmerge import always_merger
-from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileAsString, copy_path, writeToFile
+from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileAsString, copy_path, dumpYamlToStr
 from jinja2 import Environment, FileSystemLoader, Template, ChainableUndefined, TemplateError, BaseLoader
 
 from jinja_filters import JinjaFilters
@@ -159,6 +159,12 @@ def render_from_file_to_obj(src_template_path, context) -> dict:
     return readYaml(rendered)
 
 
+def render_from_obj_to_file(template, target_file_path, context):
+    template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
+    rendered = create_jinja_env().from_string(template).render(context)
+    writeYamlToFile(target_file_path, readYaml(rendered))
+
+
 def generate_tenant_file(context: dict):
     logger.info("Generate Tenant yaml for %s", context["tenant"])
     tenant_file = Path(f'{context["current_env_dir"]}/tenant.yml')
@@ -166,10 +172,10 @@ def generate_tenant_file(context: dict):
     render_from_file_to_file(Template(tenant_tmpl_path).render(context), tenant_file, context)
 
 
-def generate_override_tmpl_by_type(template_override, template_path: Path, name):
+def generate_override_template(context, template_override, template_path: Path, name):
     if template_override:
         logger.info("Generate override %s yaml for %s", template_path.stem, name)
-        writeYamlToFile(template_path, template_override)
+        render_from_obj_to_file(template_override, template_path, context)
 
 
 def generate_cloud_file(context: dict):
@@ -185,9 +191,7 @@ def generate_cloud_file(context: dict):
         render_from_file_to_file(Template(cloud_tmpl_path).render(context), cloud_file, context)
 
         template_override = cloud_template.get("template_override")
-        generate_override_tmpl_by_type(template_override=template_override,
-                                       template_path=Path(f'{current_env_dir}/cloud.yml_override'),
-                                       name=cloud)
+        generate_override_template(context, template_override, Path(f'{current_env_dir}/cloud.yml_override'), cloud)
     else:
         logger.info("Generate Cloud yaml for cloud %s", cloud)
         render_from_file_to_file(Template(cloud_template).render(context), cloud_file, context)
@@ -204,9 +208,8 @@ def generate_namespace_file(context: dict):
         namespace_file = ns_dir / "namespace.yml"
         render_from_file_to_file(ns_template_path, namespace_file, context)
 
-        generate_override_tmpl_by_type(template_override=ns.get("template_override"),
-                                       template_path=Path(f'{ns_dir}/namespace.yml_override'),
-                                       name=ns_template_name)
+        generate_override_template(context, ns.get("template_override"), Path(f'{ns_dir}/namespace.yml_override'),
+                                   ns_template_name)
 
 
 def calculate_cloud_name(context):
