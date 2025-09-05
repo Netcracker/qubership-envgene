@@ -13,8 +13,8 @@ profile:
   name: "dev_billing_override"
   baseline: "dev"
 deployParameters:
-  ENVGENE_CONFIG_REF_NAME: ""
-  ENVGENE_CONFIG_TAG: ""
+  ENVGENE_CONFIG_REF_NAME: "No Ref Name"
+  ENVGENE_CONFIG_TAG: "No Ref tag"
   PARAM_2: "value-2" # paramset: billing version: 25.1 source: template
   PARAM_6: "value-6" # paramset: billing version: 25.1 source: template
 e2eParameters: {}
@@ -22,5 +22,3 @@ technicalConfigurationParameters: {}
 deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []
-
-
