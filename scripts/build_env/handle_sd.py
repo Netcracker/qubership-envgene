@@ -103,7 +103,6 @@ def build_namespace_dict(env) -> dict:
                 else:
                     logger.warning(f"Warning: 'name' property missing or invalid in {namespace_file}")
             else:
-                # logger.warning(f"Warning: namespace.yml not found in {folder_path}")
                 continue
     logger.info(f"Namespace dict built: {result}")
     return result
