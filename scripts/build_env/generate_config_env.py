@@ -3,10 +3,11 @@ import re
 from pathlib import Path
 
 from deepmerge import always_merger
-from envgenehelper import logger, openYaml, readYaml, dumpYamlToStr, writeYamlToFile, openFileAsString, copy_path
+from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileAsString, copy_path, writeToFile
 from jinja2 import Environment, FileSystemLoader, Template, ChainableUndefined, TemplateError, BaseLoader
 
 from jinja_filters import JinjaFilters
+from replace_ansible_stuff import replace_ansible_stuff
 
 
 def create_jinja_env(templates_dir: str = "") -> Environment:
@@ -45,21 +46,6 @@ def get_cloud_passport(context: dict) -> dict | None:
 
 
 def generate_config(context: dict) -> dict:
-    # cloud_passport = context.get("cloud_passport")
-    # if cloud_passport:
-    #     context["cloud_passport"] = safe_yaml.dump(cloud_passport)
-    # env_template = context["env_definition"].get("envTemplate")
-    # if env_template:
-    #     env_specific_paramsets = env_template.get("envSpecificParamsets")
-    #     if env_specific_paramsets:
-    #         # TODO may be delete dump = to_nice_yaml
-    #         env_specific_paramsets = safe_yaml.dump(env_specific_paramsets)
-    #         env_template["envSpecificParamsets"] = env_specific_paramsets
-    #     additional_template_variables = env_template.get("additionalTemplateVariables")
-    #     if additional_template_variables:
-    #         additional_template_variables = safe_yaml.dump(additional_template_variables)
-    #         env_template["envSpecificParamsets"] = additional_template_variables
-    #     context["env_definition"]["envTemplate"] = env_template
     templates_dir = Path(__file__).parent / "templates"
     template = create_jinja_env(str(templates_dir)).get_template("env_config.yml.j2")
     config = readYaml(text=template.render(context), safe_load=True)
@@ -161,12 +147,14 @@ def generate_solution_structure(context: dict):
 
 def render_from_file_to_file(src_template_path: str, target_file_path: str, context):
     template = openFileAsString(src_template_path)
+    template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
     rendered = create_jinja_env().from_string(template).render(context)
     writeYamlToFile(target_file_path, readYaml(rendered))
 
 
 def render_from_file_to_obj(src_template_path, context) -> dict:
     template = openFileAsString(src_template_path)
+    template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
     rendered = create_jinja_env().from_string(template).render(context)
     return readYaml(rendered)
 

@@ -11,12 +11,11 @@ profile:
   name: dev_billing_override
   baseline: dev
 deployParameters:
-  ENVGENE_CONFIG_REF_NAME: "{{ env_vars.CI_COMMIT_REF_NAME | default('No Ref Name', true) }}"
-  ENVGENE_CONFIG_TAG: "{{ env_vars.CI_COMMIT_TAG | default('No Ref tag', true) }}"
+  ENVGENE_CONFIG_REF_NAME: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_REF_NAME')| default('No Ref Name') }}"
+  ENVGENE_CONFIG_TAG: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_TAG')| default('No Ref tag') }}"
 e2eParameters: {}
 technicalConfigurationParameters: {}
 deployParameterSets:
 - "billing"
 e2eParameterSets: []
 technicalConfigurationParameterSets: []
-

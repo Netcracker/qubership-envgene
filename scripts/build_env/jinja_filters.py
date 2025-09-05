@@ -1,5 +1,7 @@
-from jinja2 import Environment
 from urllib.parse import urlsplit
+
+from envgenehelper import dumpYamlToStr
+from jinja2 import Environment
 
 
 def urlsplit_filter(value, part=None):
@@ -15,6 +17,7 @@ def urlsplit_filter(value, part=None):
 
 JINJA_FILTERS = {
     "urlsplit": urlsplit_filter,
+    "to_nice_yaml": dumpYamlToStr
 }
 
 
