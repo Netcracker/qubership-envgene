@@ -1,6 +1,6 @@
 # This action is hidden from the GitHub Actions UI
-name: 'Build Qubership GCIP Docker Image'
-description: 'Build and push Qubership GCIP docker image to container registry'
+name: 'Build Qubership Pipegene Docker Image'
+description: 'Build and push Qubership Pipegene docker image to container registry'
 
 inputs:
   registry:
@@ -14,7 +14,7 @@ inputs:
   image-name:
     description: 'Docker image name'
     required: false
-    default: 'qubership-gcip'
+    default: 'qubership-pipegene'
   dockerfile-path:
     description: 'Path to Dockerfile'
     required: false
