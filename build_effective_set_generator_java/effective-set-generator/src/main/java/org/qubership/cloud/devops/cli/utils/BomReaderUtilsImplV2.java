@@ -141,9 +141,9 @@ public class BomReaderUtilsImplV2 {
         for (Component subComponent : component.getComponents()) {
             entity = "sub component '" + subComponent.getName() + "' of service:" + component.getName();
             if (subComponent.getMimeType().equalsIgnoreCase(serviceArtifactType.getArtifactMimeType())) {
-                populateOptionalParam(primaryArtifactMap, "artifact.artifactId", subComponent.getName());
-                populateOptionalParam(primaryArtifactMap, "artifact.groupId", subComponent.getGroup());
-                populateOptionalParam(primaryArtifactMap, "artifact.version", subComponent.getVersion());
+                populateOptionalParam(primaryArtifactMap, "artifactId", subComponent.getName());
+                populateOptionalParam(primaryArtifactMap, "groupId", subComponent.getGroup());
+                populateOptionalParam(primaryArtifactMap, "version", subComponent.getVersion());
             }
             if (SUB_SERVICE_ARTIFACT_MIME_TYPES.contains(subComponent.getMimeType())) {
                 String name = checkIfMandatory(subComponent.getName(), "name", entity);
