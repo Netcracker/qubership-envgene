@@ -165,6 +165,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir, env_specific_resource_profile_map, all_instances_dir)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir)
     validate_appregdefs(render_dir, env_name)
+    validate_composite_structure(render_dir, env_name)
     
     return resulting_dir
 
@@ -327,6 +328,18 @@ def merge_template_parameters(template_yml, templates_dir, override_source=False
                             source_parameters_path = source_parameters_path.replace(f'/{source_file_name}-{source_file_version}.', f'/{parameterContainer["override"]["artifact_name"]}.')
 
                         writeYamlToFile(source_parameters_path, yaml_to_override)
+
+
+def validate_composite_structure(render_dir, env_name):
+    env_dir = f"{render_dir}/{env_name}"
+    composite_structure_file = f"{env_dir}/composite_structure.yml"
+    
+    if os.path.exists(composite_structure_file):
+        print(f"[VALIDATING] Composite Structure file: {composite_structure_file}")
+        validate_yaml_by_scheme_or_fail(composite_structure_file, "schemas/composite-structure.schema.json")
+    else:
+        print(f"[INFO] No composite structure file found at {composite_structure_file}")
+
 
 def validate_appregdefs(render_dir, env_name):
     appdef_dir = f"{render_dir}/{env_name}/AppDefs"
