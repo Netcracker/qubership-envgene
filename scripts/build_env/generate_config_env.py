@@ -3,11 +3,14 @@ import re
 from pathlib import Path
 
 from deepmerge import always_merger
-from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileAsString, copy_path, dumpYamlToStr
+from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileAsString, copy_path, dumpYamlToStr, \
+    create_yaml_processor
 from jinja2 import Environment, FileSystemLoader, Template, ChainableUndefined, TemplateError, BaseLoader
 
 from jinja_filters import JinjaFilters
 from replace_ansible_stuff import replace_ansible_stuff
+
+yml = create_yaml_processor()
 
 
 def create_jinja_env(templates_dir: str = "") -> Environment:
