@@ -34,7 +34,9 @@ class JobExtended(Job):
         return job_data
 
 def job_instance(params, vars, needs=None, rules=None):
+    logger.info(f"Printing all parameters in Job instance: {params}")
     timeout = params.get('timeout', '10m')
+    custom_tag = params.get('custom_tag', 'NETCRACKER')
     job = JobExtended(
         name=params['name'],
         image=params['image'],
@@ -49,7 +51,7 @@ def job_instance(params, vars, needs=None, rules=None):
         job.append_scripts(params['after_script'])
     if needs==None: needs = []
     job.set_needs(needs)
-    job.add_tags("TEST_ONSITE_TCT")
+    job.add_tags(custom_tag)
     if rules:
         job.rules.extend(rules)
     return job
