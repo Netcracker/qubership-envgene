@@ -1,5 +1,4 @@
 name: "Dev: Build Qubership EnvGene docker images"
-name: "Dev: Build Qubership EnvGene docker images"
 
 run-name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.tests-only == 'true') && format('Test EnvGene for commit {0}', github.sha) || ((github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build-pipegene == 'true' || github.event.inputs.build-envgene == 'true' || github.event.inputs.build-pipeline == 'true' || github.event.inputs.build-effective-set == 'true' || github.event.inputs.build-effective-set-python == 'true') && github.event.inputs.tests-only == 'false')) && format('Build EnvGene for commit {0}', github.sha) || format('Test EnvGene for commit {0}', github.sha) }}
 
@@ -21,6 +20,11 @@ on:
         required: false
         default: true
         type: boolean
+      build-pipeline:
+        description: 'Build Instance Repo Pipeline image'
+        required: false
+        default: true
+        type: boolean
       build-effective-set:
         description: 'Build Effective Set Generator image'
         required: false
@@ -31,29 +35,7 @@ on:
         required: false
         default: true
         type: boolean
-      build-pipeline:
-        description: 'Build Instance Repo Pipeline image'
-        required: false
-        default: true
-        type: boolean
-
-  push:
-    branches-ignore:
-      - main
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
-  pull_request:
-    types: [closed]
-    branches:
-      - 'main'
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'README.md'
-      - 'CHANGELOG.md'
+  push: null
 
 env:
   REGISTRY: ghcr.io
@@ -99,8 +81,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
   tests:
-    if: |
-      github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    needs: [conventional-commits]
     runs-on: ubuntu-latest
     container:
       image: python:3.12-slim-bookworm
@@ -108,15 +89,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Check Conventional Commits
-        uses: webiny/action-conventional-commits@v1.3.0
-      
       - name: Run Tests
         uses: ./.github/actions/run-tests
 
   build-qubership-pipegene:
-    needs: [tests]
-    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    needs: [link-check, linters, tests]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -132,14 +110,14 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-      - name: Build Qubership Pipegene Docker Image
-        id: build-pipegene
-        uses: ./.github/actions/build-pipegene
-        with:
-          registry: ${{ env.REGISTRY }}
-          git-user: ${{ secrets.GIT_USER }}
-          git-token: ${{ secrets.GIT_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build Qubership PipeGene Docker Image
+      uses: ./.github/actions/build-pipegene
+      id: build-pipegene
+      with:
+        registry: ${{ env.REGISTRY }}
+        git-user: ${{ secrets.GIT_USER }}
+        git-token: ${{ secrets.GIT_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-qubership-envgene:
     needs: [link-check, linters, tests]
@@ -159,13 +137,13 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-      - name: Build Qubership Envgene Docker Image
-        id: build-envgene
-        uses: ./.github/actions/build-envgene
-        with:
-          registry: ${{ env.REGISTRY }}
-          gh-access-token: ${{ secrets.GH_ACCESS_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build Qubership Envgene Docker Image
+      uses: ./.github/actions/build-envgene
+      id: build-envgene
+      with:
+        registry: ${{ env.REGISTRY }}
+        gh-access-token: ${{ secrets.GH_ACCESS_TOKEN }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-effective-set-jar:
     needs: [link-check, linters, tests]

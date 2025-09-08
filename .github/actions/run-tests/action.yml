@@ -1,4 +1,3 @@
-# This action is hidden from the GitHub Actions UI
 name: 'Run Tests'
 description: 'Run Qubership Envgene tests'
 
