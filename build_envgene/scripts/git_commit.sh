@@ -100,27 +100,27 @@ fi
 #Copying cred files modified as part of cred rotation job.
 CREDS_FILE="environments/credfilestoupdate.yml"
 if [ -f "$CREDS_FILE" ]; then
-    echo "Processing $CREDS_FILE for copying filtered creds..."
+  echo "Processing $CREDS_FILE for copying filtered creds..."
 
-    mkdir -p /tmp/updated_creds
+  mkdir -p /tmp/updated_creds
 
-    while IFS= read -r file_path; do
+  while IFS= read -r file_path; do
 
-      [[ -z "$file_path" || "$file_path" == \#* ]] && continue
+    [[ -z "$file_path" || "$file_path" == \#* ]] && continue
 
-      if echo "$file_path" | grep -q "${CLUSTER_NAME}/${ENVIRONMENT_NAME}"; then
-        continue
-      fi
+    if echo "$file_path" | grep -q "${CLUSTER_NAME}/${ENVIRONMENT_NAME}"; then
+      continue
+    fi
 
-      if [ -f "$file_path" ]; then
-        echo "Copying $file_path to /tmp/updated_creds/"
-        target_path="/tmp/updated_creds/$file_path"
-        mkdir -p "$(dirname "$target_path")"
-        cp "$file_path" "$target_path"
-      else
-        echo "Warning: Source file does not exist: $file_path"
-      fi
-    done < "$CREDS_FILE"
+    if [ -f "$file_path" ]; then
+      echo "Copying $file_path to /tmp/updated_creds/"
+      target_path="/tmp/updated_creds/$file_path"
+      mkdir -p "$(dirname "$target_path")"
+      cp "$file_path" "$target_path"
+    else
+      echo "Warning: Source file does not exist: $file_path"
+    fi
+  done < "$CREDS_FILE"
 fi
 
 # remove all contents including hidden files, it will be given from git pull
@@ -201,6 +201,18 @@ if [ -d /tmp/updated_creds ]; then
         echo "Skipping: $rel_path does not exist in repo after pull"
       fi
     done
+fi
+
+if [ -d /tmp/updated_creds ]; then
+  find /tmp/updated_creds -type f | while read tmp_file; do
+    rel_path="${tmp_file#/tmp/updated_creds/}"  # Remove the /tmp path prefix
+    if [ -f "$rel_path" ]; then
+      echo "Overwriting $tmp_file with existing file: $rel_path"
+      cp "$tmp_file" "$rel_path"
+    else
+      echo "Skipping: $rel_path does not exist in repo after pull"
+    fi
+  done
 fi
 
 echo "Checking changes..."

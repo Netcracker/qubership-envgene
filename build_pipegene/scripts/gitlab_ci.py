@@ -97,7 +97,6 @@ def build_pipeline(params: dict):
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
-
         if params['ENV_BUILD']:
             if env_definition is None:
                 try:

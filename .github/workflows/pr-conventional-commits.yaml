@@ -1,3 +1,4 @@
+# This workflow is hidden from the GitHub Actions UI
 ---
 
 name: "Conventional Commits"

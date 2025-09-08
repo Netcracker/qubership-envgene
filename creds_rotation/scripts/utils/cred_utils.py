@@ -22,10 +22,10 @@ def collect_shared_credentials(env_files_map: Dict[str, Any]) -> Set[str]:
         creds = file_content.get("envTemplate", {}).get("sharedMasterCredentialFiles", [])
         if creds:
             shared_cred_names.update(creds)
-
+    
     if shared_cred_names:
         logger.info(f"✅ Inventory shared master creds list collected from all envs:\n{dump_as_yaml_format(sorted(shared_cred_names))}")
-
+    
     return shared_cred_names
 
 
@@ -72,7 +72,6 @@ def decrypt_task(args):
     is_encrypted, public_key, filepath = args
     content = decrypt_and_get_content(is_encrypted, public_key, filepath)
     return filepath, content
-
 
 def read_env_cred_files(creds_files, is_encrypted, public_key):
     # Use multiprocessing only if heavy workload

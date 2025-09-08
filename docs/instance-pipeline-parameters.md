@@ -6,6 +6,7 @@
     - [`ENV_NAMES`](#env_names)
     - [`ENV_BUILDER`](#env_builder)
     - [`GET_PASSPORT`](#get_passport)
+    - [`CMDB_IMPORT`](#cmdb_import)
     - [`DEPLOYMENT_TICKET_ID`](#deployment_ticket_id)
     - [`ENV_TEMPLATE_VERSION`](#env_template_version)
     - [`ENV_INVENTORY_INIT`](#env_inventory_init)
@@ -13,14 +14,20 @@
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
     - [`EFFECTIVE_SET_CONFIG`](#effective_set_config)
+    - [`APP_REG_DEFS_JOB`](#app_reg_defs_job)
+    - [`APP_DEFS_PATH`](#app_defs_path)
+    - [`REG_DEFS_PATH`](#reg_defs_path)
     - [`SD_SOURCE_TYPE`](#sd_source_type)
     - [`SD_VERSION`](#sd_version)
     - [`SD_DATA`](#sd_data)
     - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
     - [`DEPLOYMENT_SESSION_ID`](#deployment_session_id)
+    - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
+      - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
+    - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
+  - [Archived Parameters](#archived-parameters)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
-  - [Archived Parameters](#archived-parameters)
 
 The following are the launch parameters for the instance repository pipeline. These parameters influence, the execution of specific jobs within the pipeline.
 
@@ -66,6 +73,21 @@ If `true`:
 **Mandatory**: No
 
 **Example**: `true`
+
+### `CMDB_IMPORT`
+
+**Description**: Feature flag. Valid values are `true` or `false`.
+
+If `true`:  
+  The Environment Instance will be exported to an external CMDB system.
+
+This parameter serves as a configuration for an extension point. Integration with a specific CMDB is not implemented in EnvGene.
+
+**Default Value**: `false`
+
+**Mandatory**: No
+
+**Example**: `true`  
 
 ### `DEPLOYMENT_TICKET_ID`
 
@@ -177,6 +199,45 @@ Registered component JSON schemas are stored in the EnvGene Docker image as JSON
 Consumer-specific pipeline context components registered in EnvGene:
 
 1. None
+### `APP_REG_DEFS_JOB`
+
+**Description**: Specifies the name of the job that is the source of [Application Definition](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition).
+
+This job must exist in the EnvGene instance pipeline.
+
+When this parameter is set, the system will:
+
+1. Download and unpack the `definitions.zip` file from the specified job artifact.
+2. Copy (with overwrite) Application Definitions from the extracted `definitions.zip` from the path specified in [`APP_DEFS_PATH`](#app_defs_path) to the `AppDefs` folder of the target Environment.
+3. Copy (with overwrite) Registry Definitions from the extracted `definitions.zip` from the path specified in [`REG_DEFS_PATH`](#reg_defs_path) to the `RegDefs` folder of the target Environment.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example Values**:
+
+- `appdef-generation-job`
+
+### `APP_DEFS_PATH`
+
+**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Application Definitions are located. The contents from this path will be copied to the `AppDefs` folder of the target Environment.
+
+**Default Value**: `AppDefs`
+
+**Mandatory**: No
+
+**Example Values**: `definitions/applications`
+
+### `REG_DEFS_PATH`
+
+**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Registry Definitions are located. The contents from this path will be copied to the `RegDefs` folder of the target Environment.
+
+**Default Value**: `RegDefs`
+
+**Mandatory**: No
+
+**Example Values**: `definitions/registries`
 
 ### `SD_SOURCE_TYPE`
 
@@ -266,6 +327,103 @@ See details in [SD processing](/docs/sd-processing.md)
 2. It will also be part of the deployment context of the Effective Set. The EnvGene passes it to the Calculator CLI using the `--extra_params` attribute. In this case it is used together with `GENERATE_EFFECTIVE_SET`.
 
 **Example**: "123e4567-e89b-12d3-a456-426614174000"
+### `CRED_ROTATION_PAYLOAD`
+
+**Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macros)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
+
+```json
+{
+  "rotation_items": [
+    {
+      "namespace": "<namespace>",
+      "application": "<application-name>",
+      "context": "enum[`pipeline`,`deployment`, `runtime`]",
+      "parameter_key": "<parameter-key>",
+      "parameter_value": "<new-parameter-value>"
+    }
+  ]
+}
+```
+
+| Attribute         | Mandatory | Description                                                                                                                                                                                                 | Default | Example |
+|-------------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|---------|
+| `namespace`       | Mandatory | The name of the Namespace where the parameter to be modified is defined                                                                                               | None    | `env-1-platform-monitoring` |
+| `application`     | Optional  | The name of the Application (sub-resource under `namespace`) where the parameter to be modified is defined. Cannot be used with `pipeline` context                   | None    | `MONITORING` |
+| `context`         | Mandatory | The context of the parameter being modified. Valid values: `pipeline`, `deployment`, `runtime`                                                                       | None    | `deployment` |
+| `parameter_key`   | Mandatory | The name (key) of the parameter to be modified | None    | `login` or `db.connection.password` |
+| `parameter_value` | Mandatory | New value (plaintext or encrypted). Envgene, depending on the value of the [`crypt`](/docs/envgene-configs.md#configyml) attribute, will either decrypt, encrypt, or leave the value unchanged. If an encrypted value is passed, it must be encrypted with a key that Envgene can decrypt. | None    | `admin` |
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**:
+
+```json
+{
+  "rotation_items": [
+    {
+      "namespace": "env-1-platform-monitoring",
+      "application": "MONITORING",
+      "context": "deployment",
+      "parameter_key": "db_login",
+      "parameter_value": "s3cr3tN3wLogin"
+    },
+    {
+      "namespace": "env-1-platform-monitoring",
+      "application": "MONITORING",
+      "context": "deployment",
+      "parameter_key": "db_password",
+      "parameter_value": "s3cr3tN3wP@ss"
+    },
+    {
+      "namespace": "env-1-platform-monitoring",
+      "context": "deployment",
+      "parameter_key": "db_password",
+      "parameter_value": "s3cr3tN3wP@ss"
+    },
+    {
+      "namespace": "env-1-platform-monitoring",
+      "context": "deployment",
+      "parameter_key": "global.secrets.password",
+      "parameter_value": "user"
+    },
+    {
+      "namespace": "env-1-platform-monitoring",
+      "context": "deployment",
+      "parameter_key": "a.b.c.d",
+      "parameter_value": "somevalue"
+    }
+  ]
+}
+```
+
+#### Affected Parameters and Troubleshooting
+
+When rotating sensitive parameters, EnvGene checks if the Credential is [shared](https://github.com/Netcracker/qubership-envgene/blob/feature/cred-rotation/docs/features/cred-rotation.md#affected-parameters) (used by multiple parameters or Environments). If shared Credentials are detected and force mode is not enabled, the credential_rotation job will fail to prevent accidental mass updates.
+
+- In this case, the job will generate an [`affected-sensitive-parameters.yaml`](https://github.com/Netcracker/qubership-envgene/blob/feature/cred-rotation/docs/features/cred-rotation.md#affected-parameters-reporting) file as an artifact. This file lists all parameters and locations affected by the Credential change, including those in shared Credentials files and all Environments that reference this credential.
+- To resolve:
+  - Review `affected-sensitive-parameters.yaml` to see which parameters and environments are linked by the shared Credential.
+  - Either:
+    - Manually split the shared Credential in the repository so each parameter uses its own Credential, **or**
+    - Rerun the Credential rotation job with force mode enabled (`CRED_ROTATION_FORCE=true`) to update all linked parameters.
+
+> **Note:** When rotating a shared credential, all parameters in all Environments that reference this credential will be updated. This is why force mode is required for such operations to avoid accidental mass changes. The `affected-sensitive-parameters.yaml` file will list all such parameters and environments.
+
+### `CRED_ROTATION_FORCE`
+
+**Description**: Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential. See details in [Credential Rotation](/docs/cred-rotation.md)
+
+**Default Value**: `false`
+
+**Mandatory**: No
+
+**Example**: `true`
+
+## Archived Parameters
+
+These parameters are no longer in use and are maintained for historical reference
 
 ## Deprecated Parameters
 
@@ -286,7 +444,3 @@ See details in [SD processing](/docs/sd-processing.md)
 **Mandatory**: No
 
 **Example**: `true`
-
-## Archived Parameters
-
-These parameters are no longer in use and are maintained for historical reference

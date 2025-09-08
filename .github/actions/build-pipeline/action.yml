@@ -49,7 +49,7 @@ runs:
         TIMESTAMP=$(date +%Y%m%d-%H%M%S)
         CUSTOM_TAG="${DOCKER_TAG}_${TIMESTAMP}"
         BRANCH_LATEST_TAG="${DOCKER_TAG}"
-
+        
         # Set output for next steps
         echo "custom_tag=$CUSTOM_TAG" >> $GITHUB_OUTPUT
         echo "branch_tag=$DOCKER_TAG" >> $GITHUB_OUTPUT
@@ -66,7 +66,7 @@ runs:
           type=ref,event=pr
           type=sha,prefix={{branch}}-{{sha}},suffix={{timestamp}}
           type=raw,value={{branch}}_{{timestamp}}
-
+    
     - name: Build and push Docker image
       id: push
       uses: docker/build-push-action@v6

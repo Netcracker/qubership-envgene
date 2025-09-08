@@ -278,6 +278,26 @@ jobs:
            echo "Generated matrix with $count environment(s): $arr"
            echo "env_matrix=$arr" >> $GITHUB_OUTPUT
 
+  parameters_validation:
+    name: "${{ matrix.environment }} - Parameters Validation"
+    runs-on: ubuntu-latest
+    needs: show_environment_variables
+    container:
+      image: ghcr.io/netcracker/qubership-gcip:1.1.2
+      options: --user root
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: ${{ fromJson(needs.show_environment_variables.outputs.env_matrix) }}
+    steps:
+      - name: Repository Checkout
+        uses: actions/checkout@v4
+
+      - name: EnvGene parameters validation
+        run: |
+          export ENV_NAMES="${{ matrix.environment }}"
+          python /module/scripts/github_actions.py validate_pipeline
+
   generate_inventory:
     name: "${{ matrix.environment }} - Generate Inventory"
     runs-on: ubuntu-22.04

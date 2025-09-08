@@ -82,20 +82,17 @@ def scandir_recursive(
     definition_files: Set[str],
     env_creds_files: Set[str]
 ) -> None:
-
     yaml_extensions = ('.yml', '.yaml')
 
     for entry in os.scandir(path):
         if entry.is_dir(follow_symlinks=False):
             scandir_recursive(entry.path,  ns_files, definition_files, env_creds_files)
-
         elif entry.is_file(follow_symlinks=False) and entry.name.endswith(yaml_extensions):
             path_obj = Path(entry.path)
             path_parts = path_obj.parts
 
             if "Namespaces" in path_parts:
                 ns_files.add(entry.path)
-
             elif entry.name == "env_definition.yml" and "Inventory" in path_parts:
                 definition_files.add(entry.path)
 

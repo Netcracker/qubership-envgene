@@ -108,7 +108,7 @@ def get_app_content(
 def get_app_and_ns(filename: str, content: dict, entity_files_map: Dict[str, Dict[str, Any]]) -> Tuple[str, Optional[str]]:
     if filename.endswith(("namespace.yml", "namespace.yaml")):
         return '', content.get('name', '')
-
+    
     filepath = PurePath(filename)
     parent_dir = filepath.parent.parent
     ns_files = [parent_dir / "namespace.yaml", parent_dir / "namespace.yml"]

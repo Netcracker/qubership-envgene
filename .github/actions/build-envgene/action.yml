@@ -11,6 +11,10 @@ inputs:
     description: 'Repository owner for Docker images'
     required: false
     default: 'netcracker'
+  repository-owner:
+    description: 'Repository owner for Docker images'
+    required: false
+    default: 'netcracker'
   image-name:
     description: 'Docker image name'
     required: false
@@ -56,6 +60,23 @@ runs:
     - name: Generate Docker tags
       id: tags
       uses: ./.github/actions/generate-docker-tags
+
+    - name: Debug outputs
+      shell: bash
+      run: |
+        echo "DEBUG: Checking outputs from generate-docker-tags action:"
+        echo "custom_tag: ${{ steps.tags.outputs.custom_tag }}"
+        echo "branch_tag: ${{ steps.tags.outputs.branch_tag }}"
+        echo "timestamp: ${{ steps.tags.outputs.timestamp }}"
+        echo "branch_latest_tag: ${{ steps.tags.outputs.branch_latest_tag }}"
+
+    - name: Debug Docker tags
+      shell: bash
+      run: |
+        echo "DEBUG: Docker tags that will be used:"
+        echo "Tag 1: ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.custom_tag }}"
+        echo "Tag 2: ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.branch_latest_tag }}"
+        echo "Meta tags: ${{ steps.meta.outputs.tags }}"
 
     - name: Extract metadata (tags, labels) for Docker
       id: meta

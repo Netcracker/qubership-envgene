@@ -96,14 +96,12 @@ jobs:
           with:
             fetch-depth: 0
             token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
-
         - name: Update Docker Image Tags in Pipeline
           run: |
             sed -i "s|qubership-pipegene:[^']*|qubership-pipegene:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
             sed -i "s|qubership-envgene:[^']*|qubership-envgene:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
             sed -i "s|qubership-effective-set-generator:[^']*|qubership-effective-set-generator:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
             sed -i "s|qubership-effective-set-generator-python:[^']*|qubership-effective-set-generator-python:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
-
             if git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml; then
               echo "No changes to commit - no images were built or tags were already up to date"
             else

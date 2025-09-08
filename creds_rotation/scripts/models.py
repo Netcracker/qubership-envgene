@@ -36,7 +36,6 @@ class PayloadEntry:
     context: str
     parameter_value: str
     application: Optional[str] = None
-
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "PayloadEntry":
         required = ['namespace', 'parameter_key', 'context', 'parameter_value']
@@ -50,7 +49,6 @@ class PayloadEntry:
             parameter_value=data['parameter_value'],
             application=data.get('application')
         )
-
     def __str__(self):
         exclude_fields = {"parameter_value", "cred_field"}
         filtered_dict = {k: v for k, v in asdict(self).items() if k not in exclude_fields}

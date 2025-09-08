@@ -25,7 +25,6 @@ class EnvGeneError(Exception):
 class ValueError(EnvGeneError):
     """
     Raised when a function receives an argument with the right type but inappropriate value.
-
     Examples:
         - Invalid input format
         - Value out of allowed range
@@ -37,7 +36,6 @@ class ValueError(EnvGeneError):
 class TypeError(EnvGeneError):
     """
     Raised when a function receives an argument of the wrong type.
-
     Examples:
         - Expected string but received integer
         - Expected dictionary but received list
@@ -48,7 +46,6 @@ class TypeError(EnvGeneError):
 class ReferenceError(EnvGeneError):
     """
     Raised when a required resource is missing or cannot be accessed.
-
     Examples:
         - Required file not found
         - Required configuration not available
@@ -60,7 +57,6 @@ class ReferenceError(EnvGeneError):
 class EnvironmentError(EnvGeneError):
     """
     Raised when an environment-related issue prevents normal operation.
-
     Examples:
         - Missing environment variables
         - Insufficient permissions
@@ -72,7 +68,6 @@ class EnvironmentError(EnvGeneError):
 class RuntimeError(EnvGeneError):
     """
     Raised when an error occurs during execution that doesn't fall into other categories.
-
     Examples:
         - Unexpected state in the application
         - Internal error in processing logic
@@ -84,7 +79,6 @@ class RuntimeError(EnvGeneError):
 class ValidationError(EnvGeneError):
     """
     Raised when input validation fails.
-
     Examples:
         - Schema validation failure
         - Data integrity check failure
@@ -96,7 +90,6 @@ class ValidationError(EnvGeneError):
 class IntegrationError(EnvGeneError):
     """
     Raised when an error occurs during integration with external systems.
-
     Examples:
         - API call failure
         - External service unavailable
