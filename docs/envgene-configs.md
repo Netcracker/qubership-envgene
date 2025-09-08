@@ -32,7 +32,8 @@ Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipelin
 inventory:
   # Optional
   # Name of the Environment, e.g. dev01
-  # If not specified, it will be automatically derived from the parent folder name in the path: /environments/<clusterName>/<environmentName>/Inventory/
+  # If not specified, it will be automatically derived from the parent folder name in the path:
+  # /environments/<clusterName>/<environmentName>/Inventory/
   # This attribute's value is available for template rendering via the `current_env.name` variable
   environmentName: string
   # Optional
