@@ -36,7 +36,10 @@ class JobExtended(Job):
 def job_instance(params, vars, needs=None, rules=None):
     logger.info(f"Printing all parameters in Job instance: {params}")
     timeout = params.get('timeout', '10m')
-    custom_tag = params.get('custom_tag', 'NETCRACKER')
+    gitlab_runner_tag=params.get('GITLAB_RUNNER_TAG_NAME')
+    gitlab_runner_tag_1=vars['GITLAB_RUNNER_TAG_NAME']
+    logger.info(f"Printing GITLAB_RUNNER_TAG_NAME param: {gitlab_runner_tag}")
+    logger.info(f"Printing GITLAB_RUNNER_TAG_NAME vars: {gitlab_runner_tag_1}")
     job = JobExtended(
         name=params['name'],
         image=params['image'],
@@ -51,8 +54,8 @@ def job_instance(params, vars, needs=None, rules=None):
         job.append_scripts(params['after_script'])
     if needs==None: needs = []
     job.set_needs(needs)
-    job.add_tags(getenv("TAGS", "NETCRACKER1"))
-    logger.info(f"Printing TAG in Job instance from getenv : {getenv("TAGS")}")
+    job.add_tags(gitlab_runner_tag)
+
     if rules:
         job.rules.extend(rules)
     return job
