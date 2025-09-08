@@ -24,3 +24,4 @@ pip install uv # pip replacer, makes this script run ~2.8x faster
 install_and_clean "envgene" "envgenehelper"
 install_and_clean "jschon-sort" "jschon_sort"
 install_and_clean "integration" "integration_loader"
+install_and_clean "artifact-searcher" "artifact_searcher"
