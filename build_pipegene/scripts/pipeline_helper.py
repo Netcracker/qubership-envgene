@@ -51,7 +51,8 @@ def job_instance(params, vars, needs=None, rules=None):
         job.append_scripts(params['after_script'])
     if needs==None: needs = []
     job.set_needs(needs)
-    job.add_tags(custom_tag)
+    job.add_tags(getenv("TAGS", "NETCRACKER1"))
+    logger.info(f"Printing TAG in Job instance from getenv : {getenv("TAGS")}")
     if rules:
         job.rules.extend(rules)
     return job
