@@ -114,7 +114,7 @@ This parameter serves as a configuration for an extension point. Integration wit
 **Description**:
 
 If `true`:
-  In the pipeline, a job for generating the environment inventory is executed. The new Environment Inventory will be generated in the path `/environments/<ENV_NAME>/Inventory/env_definition.yml`. See details in [Environment Inventory Generation](/docs/env-inventory-generation.md)
+  In the pipeline, a job for generating the environment inventory is executed. The new Environment Inventory will be generated in the path `/environments/<ENV_NAME>/Inventory/env_definition.yml`. See details in [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
 
 **Default Value**: `false`
 
@@ -143,7 +143,7 @@ envTemplate:
 
 ### `ENV_SPECIFIC_PARAMS`
 
-**Description**: Specifies Environment Inventory and env-specific parameters. This is can used together with `ENV_INVENTORY_INIT`. **JSON in string** format. See details in [Environment Inventory Generation](/docs/env-inventory-generation.md)
+**Description**: Specifies Environment Inventory and env-specific parameters. This is can used together with `ENV_INVENTORY_INIT`. **JSON in string** format. See details in [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
 
 **Default Value**: None
 
