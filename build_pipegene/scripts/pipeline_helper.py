@@ -37,9 +37,8 @@ def job_instance(params, vars, needs=None, rules=None):
     logger.info(f"Printing all parameters in Job instance: {params}")
     timeout = params.get('timeout', '10m')
     gitlab_runner_tag=params.get('GITLAB_RUNNER_TAG_NAME')
-    gitlab_runner_tag_1=vars['GITLAB_RUNNER_TAG_NAME']
-    logger.info(f"Printing GITLAB_RUNNER_TAG_NAME param: {gitlab_runner_tag}")
-    logger.info(f"Printing GITLAB_RUNNER_TAG_NAME vars: {gitlab_runner_tag_1}")
+    logger.info(f"Printing GITLAB_RUNNER_TAG_NAME : {gitlab_runner_tag}")
+    
     job = JobExtended(
         name=params['name'],
         image=params['image'],
