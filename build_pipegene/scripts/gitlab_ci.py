@@ -81,7 +81,7 @@ def build_pipeline(params: dict):
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
             jobs_map["trigger_passport_job"] = prepare_trigger_passport_job(pipeline, env)
-            jobs_map["get_passport_job"] = prepare_passport_job(pipeline, env, environment_name, cluster_name, need_commit=not params['IS_OFFSITE'],tags)
+            jobs_map["get_passport_job"] = prepare_passport_job(pipeline, env, environment_name, cluster_name, tags, need_commit=not params['IS_OFFSITE'])
             get_passport_jobs[cluster_name] = True
             ## process_decryption_mode job is for offsite only
             if params['IS_OFFSITE']:

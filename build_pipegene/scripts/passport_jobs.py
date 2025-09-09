@@ -30,7 +30,7 @@ def prepare_trigger_passport_job(pipeline, full_env):
   
   return trigger_job
 
-def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, need_commit,tags):
+def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags,need_commit):
   logger.info(f'prepare get_passport job for {full_env}')
   ## set get_passport
   get_passport_params = {
