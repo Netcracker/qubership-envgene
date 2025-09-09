@@ -47,7 +47,6 @@ ENV ANSIBLE_LIBRARY=/module/ansible/library
 RUN python -m venv /module/venv
 RUN /module/venv/bin/pip install --upgrade pip setuptools wheel
 RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
-RUN /module/venv/bin/pip install ansible-core --upgrade
 # Install essential Ansible collections
 # Install to virtual environment site-packages for Python module access
 RUN /module/venv/bin/ansible-galaxy collection install ansible.utils -p /module/venv/lib/python3.12/site-packages/ansible_collections
