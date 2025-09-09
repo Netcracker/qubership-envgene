@@ -18,7 +18,6 @@ def prepare_input_params() -> dict:
     params_log += pipe_params.get_params_str()
     params_log = params_log = re.sub(r"(CRED_ROTATION_PAYLOAD:\s*)\(.*?\)", r"\1***", params_log, flags=re.DOTALL)
     logger.info(params_log)
-    #PIPELINE_PARAMS = pipe_params.params
     return pipe_params.params
 
 @gcip.command("generate_pipeline")
