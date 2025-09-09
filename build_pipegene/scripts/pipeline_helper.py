@@ -49,7 +49,7 @@ def job_instance(params, vars, needs=None, rules=None):
         job.append_scripts(params['after_script'])
     if needs==None: needs = []
     job.set_needs(needs)
-    job.add_tags("NETCRACKER")
+    job.add_tags(PIPELINE_PARAMS.get('GITLAB_RUNNER_TAG_NAME'))
     if rules:
         job.rules.extend(rules)
     return job
