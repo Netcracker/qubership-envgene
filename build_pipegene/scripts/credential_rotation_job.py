@@ -20,7 +20,7 @@ def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluste
     "envgen_debug": "true",
     "GITLAB_RUNNER_TAG_NAME": tags
     
-  }
+ }
   credential_rotation_job = job_instance(params=credential_rotation_params, vars=credential_rotation_vars)
   credential_rotation_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments")
   credential_rotation_job.artifacts.add_paths("${CI_PROJECT_DIR}/affected-sensitive-parameters.yaml")
