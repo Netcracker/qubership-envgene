@@ -22,6 +22,8 @@ logger.info(f"Detected environment - GitLab: {is_gitlab}, GitHub: {is_github}")
 
 def build_pipeline(params: dict):
     # if we are in template testing during template build
+    tags=params['GITLAB_RUNNER_TAG_NAME']
+    
     if params['IS_TEMPLATE_TEST']:
         logger.info("We are generating jobs in template test mode.")
         templates_dir = f"{project_dir}/templates/env_templates"
@@ -79,7 +81,7 @@ def build_pipeline(params: dict):
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
             jobs_map["trigger_passport_job"] = prepare_trigger_passport_job(pipeline, env)
-            jobs_map["get_passport_job"] = prepare_passport_job(pipeline, env, environment_name, cluster_name, need_commit=not params['IS_OFFSITE'])
+            jobs_map["get_passport_job"] = prepare_passport_job(pipeline, env, environment_name, cluster_name, need_commit=not params['IS_OFFSITE'],tags)
             get_passport_jobs[cluster_name] = True
             ## process_decryption_mode job is for offsite only
             if params['IS_OFFSITE']:
@@ -88,13 +90,13 @@ def build_pipeline(params: dict):
             logger.info(f"Generation of cloud passport for environment '{env}' is skipped")
 
         if is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params['ENV_INVENTORY_GENERATION_PARAMS']):
-            jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, env, environment_name, cluster_name, params['ENV_INVENTORY_GENERATION_PARAMS'])
+            jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, env, environment_name, cluster_name, params['ENV_INVENTORY_GENERATION_PARAMS'],tags)
         else:
             logger.info(f'Preparing of env inventory generation job for {env} is skipped because we are in template test mode.')
 
         credential_rotation_job = None
         if params['CRED_ROTATION_PAYLOAD']:
-            credential_rotation_job = prepare_credential_rotation_job(pipeline, env, environment_name, cluster_name)
+            credential_rotation_job = prepare_credential_rotation_job(pipeline, env, environment_name, cluster_name,tags)
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
@@ -107,20 +109,20 @@ def build_pipeline(params: dict):
                     pass
 
             # env_builder job
-            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id)
+            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id,tags)
         else:
             logger.info(f'Preparing of env_build job for {env} is skipped.')
 
         # generate_effective_set job
         if params['GENERATE_EFFECTIVE_SET']:
-            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name, cluster_name)
+            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name, cluster_name,tags)
         else:
             logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
 
         ## git_commit job
         jobs_requiring_git_commit = ("env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job")
         if any(job in jobs_map for job in jobs_requiring_git_commit) and not params['IS_TEMPLATE_TEST']:
-            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, credential_rotation_job)
+            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, credential_rotation_job,tags)
         else:
             logger.info(f'Preparing of git commit job for {env} is skipped.')
 

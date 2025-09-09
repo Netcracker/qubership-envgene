@@ -35,6 +35,7 @@ class JobExtended(Job):
 
 def job_instance(params, vars, needs=None, rules=None):
     timeout = params.get('timeout', '10m')
+    gitlab_runner_tag = vars.get('GITLAB_RUNNER_TAG_NAME')
     job = JobExtended(
         name=params['name'],
         image=params['image'],
@@ -49,7 +50,8 @@ def job_instance(params, vars, needs=None, rules=None):
         job.append_scripts(params['after_script'])
     if needs==None: needs = []
     job.set_needs(needs)
-    job.add_tags(PIPELINE_PARAMS.get('GITLAB_RUNNER_TAG_NAME'))
+    #job.add_tags(PIPELINE_PARAMS.get('GITLAB_RUNNER_TAG_NAME'))
+    job.add_tags(gitlab_runner_tag)
     if rules:
         job.rules.extend(rules)
     return job
