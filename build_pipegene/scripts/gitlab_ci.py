@@ -49,7 +49,9 @@ def build_pipeline(params: dict):
     queued_job_names = []
 
     per_env_plugin_engine = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/per_env')
-
+    logger.info(f'--------------before set pipeline: {pipeline}')            
+    pipeline.add_tags(params['GITLAB_RUNNER_TAG_NAME'])
+    logger.info(f'--------------for pipeline: {pipeline}')
     for env in params['ENV_NAMES'].split("\n"):
         logger.info(f'----------------start processing for {env}---------------------')
         ci_project_dir = project_dir
