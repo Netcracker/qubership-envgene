@@ -49,9 +49,6 @@ def build_pipeline(params: dict):
     queued_job_names = []
 
     per_env_plugin_engine = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/per_env')
-    logger.info(f'--------------before set pipeline : {pipeline}')            
-    pipeline.add_tags(params['GITLAB_RUNNER_TAG_NAME'])
-    logger.info(f'--------------for pipeline : {pipeline}')
     for env in params['ENV_NAMES'].split("\n"):
         logger.info(f'----------------start processing for {env}---------------------')
         ci_project_dir = project_dir
@@ -81,7 +78,7 @@ def build_pipeline(params: dict):
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
             jobs_map["trigger_passport_job"] = prepare_trigger_passport_job(pipeline, env)
-            jobs_map["get_passport_job"] = prepare_passport_job(pipeline, env, environment_name, cluster_name, need_commit=not params['IS_OFFSITE'])
+            jobs_map["get_passport_job"] = prepare_passport_job(pipeline, env, environment_name, cluster_name, need_commit=not params['IS_OFFSITE'],params['GITLAB_RUNNER_TAG_NAME'])
             get_passport_jobs[cluster_name] = True
             ## process_decryption_mode job is for offsite only
             if params['IS_OFFSITE']:
@@ -96,7 +93,7 @@ def build_pipeline(params: dict):
 
         credential_rotation_job = None
         if params['CRED_ROTATION_PAYLOAD']:
-            credential_rotation_job = prepare_credential_rotation_job(pipeline, env, environment_name, cluster_name)
+            credential_rotation_job = prepare_credential_rotation_job(pipeline, env, environment_name, cluster_name,params['GITLAB_RUNNER_TAG_NAME'])
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
@@ -109,20 +106,20 @@ def build_pipeline(params: dict):
                     pass
 
             # env_builder job
-            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id)
+            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id,params['GITLAB_RUNNER_TAG_NAME'])
         else:
             logger.info(f'Preparing of env_build job for {env} is skipped.')
 
         # generate_effective_set job
         if params['GENERATE_EFFECTIVE_SET']:
-            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name, cluster_name)
+            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name, cluster_name,params['GITLAB_RUNNER_TAG_NAME'])
         else:
             logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
 
         ## git_commit job
         jobs_requiring_git_commit = ("env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job")
         if any(job in jobs_map for job in jobs_requiring_git_commit) and not params['IS_TEMPLATE_TEST']:
-            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, credential_rotation_job)
+            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, credential_rotation_job,params['GITLAB_RUNNER_TAG_NAME'])
         else:
             logger.info(f'Preparing of git commit job for {env} is skipped.')
 
