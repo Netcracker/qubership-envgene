@@ -16,21 +16,13 @@
 
 package org.qubership.cloud.devops.commons.utils.mapper;
 
-import org.qubership.cloud.devops.commons.exceptions.NotFoundException;
-import org.qubership.cloud.devops.commons.exceptions.constant.ExceptionAdditionalInfoMessages;
-import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
-import org.qubership.cloud.devops.commons.service.interfaces.ApplicationService;
-import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
-import org.qubership.cloud.devops.commons.pojo.profile.model.ApplicationProfile;
-import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.modelmapper.ModelMapper;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static java.util.Objects.isNull;
+import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
+import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
+import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
+import org.qubership.cloud.devops.commons.service.interfaces.ApplicationService;
 
 @ApplicationScoped
 public class ProfileMapper {
