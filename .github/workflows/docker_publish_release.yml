@@ -50,7 +50,7 @@ jobs:
 
       - name: Check if tag exists
         id: check_tag
-        uses: netcracker/qubership-workflow-hub/actions/tag-checker@main
+        uses: netcracker/qubership-workflow-hub/actions/tag-checker@v1.0.3
         with:
           tag: 'v${{ github.event.inputs.version }}'
         env:
@@ -70,7 +70,7 @@ jobs:
 
   tag:
     needs: [check-tag]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@main
+    uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@v1.0.3
     with:
       tag-name: v${{ github.event.inputs.version }}
 
@@ -125,7 +125,7 @@ jobs:
 
   docker-build-publish:
     needs: [update_image_tags]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/docker-publish.yml@main
+    uses: netcracker/qubership-workflow-hub/.github/workflows/docker-publish.yml@v1.0.3
     with:
       ref: v${{ inputs.version }}
       download-artifact: false
@@ -134,7 +134,7 @@ jobs:
 
   github-release:
     needs: [docker-build-publish]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@main
+    uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v1.0.3
     with:
       version: ${{ github.event.inputs.version }}
       publish: false

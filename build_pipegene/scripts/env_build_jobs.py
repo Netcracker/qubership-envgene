@@ -2,7 +2,7 @@ from gcip import WhenStatement
 from envgenehelper import logger
 from pipeline_helper import job_instance
 
-def prepare_env_build_job(pipeline, is_template_test, env_template_version, full_env, enviroment_name, cluster_name, group_id, artifact_id):
+def prepare_env_build_job(pipeline, is_template_test, env_template_version, full_env, enviroment_name, cluster_name, group_id, artifact_id,tags):
   logger.info(f'prepare env_build job for {full_env}')
   # prepare script
   script = [
@@ -54,7 +54,8 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
       "module_ansible_dir": "/module/ansible",
       "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
       "module_ansible_cfg": "/module/ansible/ansible.cfg",
-      "module_config_default": "/module/templates/defaults.yaml"
+      "module_config_default": "/module/templates/defaults.yaml",
+      "GITLAB_RUNNER_TAG_NAME" : tags
   }
 
   env_build_job = job_instance(params=env_build_params, vars=env_build_vars)
@@ -69,7 +70,7 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
   pipeline.add_children(env_build_job)
   return env_build_job
 
-def prepare_generate_effective_set_job(pipeline, environment_name, cluster_name):
+def prepare_generate_effective_set_job(pipeline, environment_name, cluster_name,tags):
   logger.info(f'Prepare generate_effective_set job for {cluster_name}/{environment_name}.')
   generate_effective_set_params = {
     "name":   f'generate_effective_set.{cluster_name}/{environment_name}',
@@ -92,7 +93,8 @@ def prepare_generate_effective_set_job(pipeline, environment_name, cluster_name)
     "module_ansible_dir": "/module/ansible",
     "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
     "module_ansible_cfg": "/module/ansible/ansible.cfg",
-    "module_config_default": "/module/templates/defaults.yaml"
+    "module_config_default": "/module/templates/defaults.yaml",
+    "GITLAB_RUNNER_TAG_NAME" : tags
   }
   generate_effective_set_job = job_instance(params=generate_effective_set_params, vars=generate_effective_set_vars)
   generate_effective_set_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{cluster_name}/{environment_name}")
@@ -101,7 +103,7 @@ def prepare_generate_effective_set_job(pipeline, environment_name, cluster_name)
   return generate_effective_set_job
 
 
-def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, deployment_session_id, credential_rotation_job: object=None):
+def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, deployment_session_id, credential_rotation_job: object=None,tags):
   logger.info(f'prepare git_commit job for {full_env}.')
   logger.info(f'Deployment session id is {deployment_session_id}.')
   git_commit_params = {
@@ -130,6 +132,7 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
       "module_config_default": "/module/templates/defaults.yaml",
       "GIT_STRATEGY": "none",
       "COMMIT_ENV": "true",
+      "GITLAB_RUNNER_TAG_NAME" : tags,
       "DEPLOY_SESSION_ID": deployment_session_id
   }
   git_commit_job = job_instance(params=git_commit_params, vars=git_commit_vars)

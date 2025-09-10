@@ -2,7 +2,7 @@ from gcip import WhenStatement
 from envgenehelper import logger
 from pipeline_helper import job_instance
 
-def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluster_name):
+def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluster_name,tags):
   logger.info(f'Prepare credential_rotation_job job for {full_env}.')
   credential_rotation_params = {
     "name":   f'credential_rotation.{full_env}',
@@ -17,7 +17,8 @@ def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluste
     "CLUSTER_NAME": cluster_name,
     "ENV_NAME": environment_name,
     "envgen_args": " -vv",
-    "envgen_debug": "true"
+    "envgen_debug": "true",
+    "GITLAB_RUNNER_TAG_NAME" : tags  
   }
   credential_rotation_job = job_instance(params=credential_rotation_params, vars=credential_rotation_vars)
   credential_rotation_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments")

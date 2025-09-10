@@ -26,7 +26,9 @@ def get_pipeline_parameters() -> dict:
             "ENV_TEMPLATE_VERSION": getenv("ENV_TEMPLATE_VERSION"),
         },
         'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
-        'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "")
+        'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", ""),
+        'GITLAB_RUNNER_TAG_NAME' : getenv("GITLAB_RUNNER_TAG_NAME", "")
+        
     }
 
 class PipelineParametersHandler:

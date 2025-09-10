@@ -8,6 +8,7 @@
     - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
     - [`PUBLIC_AGE_KEYS`](#public_age_keys)
     - [`IS_OFFSITE`](#is_offsite)
+    - [`GITLAB_RUNNER_TAG_NAME`](#gitlab_runner_tag_name)
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
@@ -74,6 +75,14 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 **Mandatory**: No
 
 **Example**: `false`
+
+### `GITLAB_RUNNER_TAG_NAME`
+
+**Description**: The tag that identifies the GitLab runner used for executing CI jobs. This tag helps specify which runner will pick up and execute the job in the CI pipeline.
+
+**Default Value**: None
+
+**Mandatory**: No
 
 ### `DOCKER_REGISTRY` (in instance repository)
 

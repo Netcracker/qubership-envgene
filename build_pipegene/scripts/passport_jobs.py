@@ -29,7 +29,7 @@ def prepare_trigger_passport_job(pipeline, full_env):
   pipeline.add_children(trigger_job)
   return trigger_job
 
-def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, need_commit):
+def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags,need_commit):
   logger.info(f'prepare get_passport job for {full_env}')
   ## set get_passport
   get_passport_params = {
@@ -56,7 +56,8 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, need
     "module_ansible_cfg": "/module/ansible/ansible.cfg",
     "module_config_default": "/module/templates/defaults.yaml",
     "COMMIT_ENV": "false",
-    "COMMIT_MESSAGE": f"[ci_skip] update cloud passport for {cluster_name}"
+    "COMMIT_MESSAGE": f"[ci_skip] update cloud passport for {cluster_name}",
+    "GITLAB_RUNNER_TAG_NAME" : tags
   }
   get_passport_job = job_instance(params=get_passport_params, vars=get_passport_vars)
   get_passport_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
