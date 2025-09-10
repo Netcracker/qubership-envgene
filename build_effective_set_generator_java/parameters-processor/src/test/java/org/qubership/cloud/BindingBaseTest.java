@@ -16,41 +16,32 @@
 
 package org.qubership.cloud;
 
-import static org.mockito.ArgumentMatchers.any;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import io.opentelemetry.api.trace.NoopTracer;
+import io.opentelemetry.api.trace.Tracer;
 import org.qubership.cloud.devops.commons.Injector;
 import org.qubership.cloud.devops.commons.pojo.applications.model.Application;
 import org.qubership.cloud.devops.commons.pojo.applications.model.ApplicationParams;
 import org.qubership.cloud.devops.commons.pojo.clouds.model.Cloud;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
+import org.qubership.cloud.devops.commons.pojo.cs.CompositeEntityDTO;
+import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.model.Namespace;
-import org.qubership.cloud.devops.commons.pojo.parameterset.ParameterSet;
-import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
 import org.qubership.cloud.devops.commons.pojo.tenants.model.GlobalE2EParameters;
+import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
 import org.qubership.cloud.devops.commons.pojo.tenants.model.TenantGlobalParameters;
-import org.qubership.cloud.devops.commons.service.interfaces.ApplicationService;
-import org.qubership.cloud.devops.commons.service.interfaces.CloudConfigurationService;
-import org.qubership.cloud.devops.commons.service.interfaces.NamespaceConfigurationService;
-import org.qubership.cloud.devops.commons.service.interfaces.ParameterSetService;
-import org.qubership.cloud.devops.commons.service.interfaces.TenantConfigurationService;
+import org.qubership.cloud.devops.commons.service.interfaces.*;
 import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.di.MapDI;
 import org.qubership.cloud.devops.commons.utils.otel.OpenTelemetryProvider;
 import org.qubership.cloud.parameters.processor.expression.binding.Binding;
 
-import io.opentelemetry.api.trace.NoopTracer;
-import io.opentelemetry.api.trace.Tracer;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class BindingBaseTest {
     protected Binding setupBinding(Map<String, Object> params) {
@@ -108,6 +99,9 @@ public class BindingBaseTest {
                             .build()
             );
 
+            InputDataService inputDataService = mock(InputDataService.class);
+            when(inputDataService.getCompositeData()).thenReturn(buildDummyCompositeStructure());
+
             CredentialUtils credentialUtils = mock(CredentialUtils.class);
             when(credentialUtils.getCredentialsById(any())).thenReturn(new UsernamePasswordCredentials("username", "pa$$word"));
 
@@ -128,6 +122,7 @@ public class BindingBaseTest {
             provider.setTenantConfigurationService(tenantService);
             provider.setCloudConfigurationService(cloudService);
             provider.setNamespaceConfigurationService(nsService);
+            provider.setInputDataService(inputDataService);
             provider.add(appService);
             Constructor<Binding> constructor = Binding.class.getDeclaredConstructor(String.class);
             constructor.setAccessible(true);
@@ -139,5 +134,29 @@ public class BindingBaseTest {
                  InvocationTargetException | SecurityException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static CompositeStructureDTO buildDummyCompositeStructure() {
+        return CompositeStructureDTO.builder()
+                .name("SampleComposite")
+                .version(1.0f)
+                .id("comp-001")
+                .baseline(
+                        CompositeEntityDTO.builder()
+                                .name("BaselineEntity")
+                                .type("BASE")
+                                .build()
+                )
+                .satellites(List.of(
+                        CompositeEntityDTO.builder()
+                                .name("SatelliteEntity-1")
+                                .type("SAT")
+                                .build(),
+                        CompositeEntityDTO.builder()
+                                .name("SatelliteEntity-2")
+                                .type("SAT")
+                                .build()
+                ))
+                .build();
     }
 }
