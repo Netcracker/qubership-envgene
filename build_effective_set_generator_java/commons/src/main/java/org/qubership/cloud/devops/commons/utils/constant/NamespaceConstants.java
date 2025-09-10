@@ -37,5 +37,17 @@ public class NamespaceConstants {
     public static final String CONFIG_SERVER = "config-server";
     public static final String SSL_SECRET = "SSL_SECRET";
     public static final String ORIGIN_NAMESPACE = "ORIGIN_NAMESPACE";
+    public static final String PEER_NAMESPACE = "PEER_NAMESPACE";
+    public static final String CONTROLLER_NAMESPACE = "CONTROLLER_NAMESPACE";
+    public static final String BASELINE_ORIGIN = "BASELINE_ORIGIN";
+    public static final String BASELINE_PEER = "BASELINE_PEER";
+    public static final String BASELINE_CONTROLLER = "BASELINE_CONTROLLER";
+    public static final String BASELINE_PROJ = "BASELINE_PROJ";
+    public static final String BG_CONTROLLER_URL = "BG_CONTROLLER_URL";
+    public static final String BG_CONTROLLER_LOGIN = "BG_CONTROLLER_LOGIN";
+    public static final String BG_CONTROLLER_PASSWORD = "BG_CONTROLLER_PASSWORD";
+    public static final String CMDB_CALLBACK_URL = "CMDB_CALLBACK_URL";
+    public static final String CMDB_CALLBACK_TOKEN = "CMDB_CALLBACK_TOKEN";
+    public static final String BG_DOMAIN = "bgdomain";
 
 }
