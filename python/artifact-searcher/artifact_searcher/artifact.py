@@ -20,7 +20,7 @@ WORKSPACE = limit = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
 
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension, folder: str) -> str:
     artifact_id = app.artifact_id
-    registry_url = app.registry.maven_config.repository_domain_name
+    registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
     group_id = app.group_id.replace(".", "/")
     path = f"{folder}/{artifact_id}-{version}.{artifact_extension.value}"
     return urljoin(registry_url, "/".join([repo, group_id, artifact_id, path]))
@@ -124,7 +124,7 @@ async def check_artifact_by_full_url_async(app: Application, version: str, repo,
         except Exception as e:
             logger.warning(f"Failed while checking if artifact is present with URL {full_url}, {e}")
     else:
-        logger.warning(f"Repository {repo_pointer} is not configured for registry {app.registry.registry_name}")
+        logger.warning(f"Repository {repo_pointer} is not configured for registry {app.registry.name}")
 
 
 def get_repo_value_pointer_dict(registry: Registry):

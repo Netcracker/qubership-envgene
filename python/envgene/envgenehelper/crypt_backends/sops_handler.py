@@ -76,6 +76,11 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         public_key = getenv_with_error("PUBLIC_AGE_KEYS")
     os.environ['SOPS_AGE_KEY'] = secret_key
 
+    file_content = openYaml(file_path)
+    if file_content == {}:
+        logger.info(f'File is empty, skipping de/encryption. Path: {file_path}')
+        return file_content
+
     is_encrypted = is_encrypted_SOPS(file_path)
     if is_encrypted and mode == "encrypt":
         logger.warning(f'File is already encrypted. Path: {file_path}')
