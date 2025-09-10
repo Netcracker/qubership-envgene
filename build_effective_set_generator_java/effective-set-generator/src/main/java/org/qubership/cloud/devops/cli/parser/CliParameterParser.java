@@ -181,7 +181,7 @@ public class CliParameterParser {
         Map<String, Object> topologyParams = new TreeMap<>();
         Map<String, Object> topologySecuredParams = new TreeMap<>();
         Map<String, Object> clusterParameterMap = getClusterMap();
-        topologyParams.put("composite_structure", inputData.getCompositeStructureMap());
+        topologyParams.put("composite_structure", fileDataConverter.getObjectMap(inputData.getCompositeStructureDTO()));
         topologyParams.put("environments", inputData.getClusterMap());
         topologyParams.put("cluster", clusterParameterMap);
         topologySecuredParams.put("k8s_tokens", k8TokenMap);

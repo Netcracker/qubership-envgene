@@ -103,6 +103,12 @@ public class FileDataConverterImpl implements FileDataConverter {
         }
     }
 
+    @Override
+    public <T> Map<String, Object> getObjectMap(T inputObject) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.convertValue(inputObject, new TypeReference<Map<String, Object>>() {});
+    }
+
 
     private static Yaml getYamlObject() {
         DumperOptions options = new DumperOptions();

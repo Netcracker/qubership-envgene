@@ -40,7 +40,8 @@ public class InjectorProvider {
             ParameterSetService parameterSetService,
             RegistryConfigurationService registryConfigurationService,
             CredentialUtils credentialUtils,
-            BomReaderUtils bomReaderUtils
+            BomReaderUtils bomReaderUtils,
+            InputDataService inputDataService
     ) {
         CliDI cliDI = new CliDI();
         Injector di = new Injector(cliDI);
@@ -51,6 +52,7 @@ public class InjectorProvider {
         di.setRegistryConfigurationService(registryConfigurationService);
         di.setCredentialUtils(credentialUtils);
         di.setBomReaderUtils(bomReaderUtils);
+        di.setInputDataService(inputDataService);
         return di;
     }
 }
