@@ -16,20 +16,25 @@
 
 package org.qubership.cloud.parameters.processor.expression.binding;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.qubership.cloud.devops.commons.Injector;
 import org.qubership.cloud.devops.commons.exceptions.NotFoundException;
+import org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO;
 import org.qubership.cloud.devops.commons.pojo.clouds.model.Cloud;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.SecretCredentials;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
+import org.qubership.cloud.devops.commons.pojo.cs.CompositeEntityDTO;
+import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.model.Namespace;
+import org.qubership.cloud.devops.commons.service.interfaces.InputDataService;
 import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
-import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.UUID;
 
 import static org.qubership.cloud.devops.commons.utils.constant.NamespaceConstants.*;
 
@@ -65,6 +70,9 @@ public class NamespaceMap extends DynamicMap {
     @Override
     public Map<String, Parameter> getMap(String namespaceName) {
         Namespace config = Injector.getInstance().getNamespaceConfigurationService().getNamespaceByCloud(cloud, tenant, namespaceName);
+        InputDataService inputDataService = Injector.getInstance().getInputDataService();
+        CompositeStructureDTO compositeStructureDTO = inputDataService.getCompositeData();
+        BgDomainEntityDTO bgDomainEntityDTO = inputDataService.getBGDomainData();
         if (config != null) {
             mergeE2E = config.isMergeCustomPramsAndE2EParams();
             EscapeMap map = new EscapeMap(config.getCustomParameters(), binding, String.format(ParametersConstants.NS_ORIGIN, tenant, this.cloud, namespaceName));
@@ -95,15 +103,15 @@ public class NamespaceMap extends DynamicMap {
                     BgDomainEntityDTO.NamespaceDTO controller = bgDomainEntityDTO.getController();
 
                     //Primary Namespace & Secondary Namespace
-                    if (origin.getName().equalsIgnoreCase(originalNamespace)) {
-                        map.put(ORIGIN_NAMESPACE, originalNamespace);
+                    if (origin.getName().equalsIgnoreCase(namespaceName)) {
+                        map.put(ORIGIN_NAMESPACE, namespaceName);
                         map.put(PEER_NAMESPACE, peer.getName());
                         map.put(CONTROLLER_NAMESPACE, controller.getName());
-                    } else if (controller.getName().equalsIgnoreCase(originalNamespace)) { //Controller Namespace
+                    } else if (controller.getName().equalsIgnoreCase(namespaceName)) { //Controller Namespace
                         if (origin != null) {
                             map.put(ORIGIN_NAMESPACE, origin.getName());
                         } else {
-                            map.put(ORIGIN_NAMESPACE, originalNamespace);
+                            map.put(ORIGIN_NAMESPACE, namespaceName);
                         }
                         map.put(PEER_NAMESPACE, peer.getName());
                         map.put(CONTROLLER_NAMESPACE, controller.getName());
@@ -112,7 +120,7 @@ public class NamespaceMap extends DynamicMap {
                             if (controller.getUrl() != null && !controller.getUrl().isEmpty()) {
                                 map.put(BG_CONTROLLER_URL, controller.getUrl());
                             } else {
-                                String bg_url = String.format("%s://bluegreen-controller-%s.%s", protocol.toLowerCase(), originalNamespace, customHost);
+                                String bg_url = String.format("%s://bluegreen-controller-%s.%s", protocol.toLowerCase(), namespaceName, customHost);
                                 map.put(BG_CONTROLLER_URL, bg_url);
                             }
 
@@ -138,7 +146,7 @@ public class NamespaceMap extends DynamicMap {
 //                                rootUrl, tenant, cloud));
                     }
                 } else {
-                    map.put(ORIGIN_NAMESPACE, originalNamespace);
+                    map.put(ORIGIN_NAMESPACE, namespaceName);
                 }
 
                 if (compositeStructureDTO != null) {
@@ -180,21 +188,40 @@ public class NamespaceMap extends DynamicMap {
                     idpUrlNamespace = originalNamespace;
                 }
 
+                String gatewayNamespace = "";
+                String idpUrlNamespace = "";
+
+                if (bgDomainEntityDTO != null) {
+                    if (bgDomainEntityDTO.getType().equalsIgnoreCase(BG_DOMAIN)) {
+                        gatewayNamespace = bgDomainEntityDTO.getOriginNamespace().getName();
+                        idpUrlNamespace = bgDomainEntityDTO.getName();
+                    } else {
+                        String originNamespaceName = bgDomainEntityDTO.getOriginNamespace().getName();
+                        gatewayNamespace = originNamespaceName;
+                        idpUrlNamespace = originNamespaceName;
+                    }
+                } else if (compositeStructureDTO != null) {
+                    CompositeEntityDTO compositeEntityBase = compositeStructureDTO.getBaseline();
+                    String namespaceFromBaseline = compositeEntityBase.getName();
+                    gatewayNamespace = namespaceName;
+                    idpUrlNamespace = namespaceFromBaseline;
+                } else {
+                    gatewayNamespace = namespaceName;
+                    idpUrlNamespace = namespaceName;
+                }
+
+
                 // Deployer parameters
                 addGatewayIdentityUrls(config.getCustomParameters(), map, false, protocol.toLowerCase(), customHost, gatewayNamespace, idpUrlNamespace);
                 addGatewayIdentityUrls(config.getCustomParameters(), map, true, protocol.toLowerCase(), cloudHostname, gatewayNamespace, idpUrlNamespace);
+                map.putIfAbsent(NAMESPACE, namespaceName);
                 map.putIfAbsent(SSL_SECRET, "defaultsslcertificate");
                 map.putIfAbsent(BUILD_TAG_NEW, "keycloak-database");
                 if (binding.getDeployerInputs() != null) {
-                    map.put("CLIENT_PREFIX", originalNamespace);
+                    map.put("CLIENT_PREFIX", namespaceName);
                     if (binding.getDeployerInputs().getSecretId() != null) {
                         setSecretValues(map, credentialUtils);
                     }
-//                    if (binding.getDeployerInputs().getDeploySessionId() != null) {
-//                        map.put("DEPLOYMENT_SESSION_ID",binding.getDeployerInputs().getDeploySessionId());
-//                    } else {
-//                        map.put("DEPLOYMENT_SESSION_ID", UUID.randomUUID().toString());
-//                    }
                 }
             }
 
@@ -220,8 +247,7 @@ public class NamespaceMap extends DynamicMap {
                 map.put(BASELINE_PEER, bgDomainEntityDTO.getPeerNamespace().getName());
                 map.put(BASELINE_CONTROLLER, bgDomainEntityDTO.getController().getName());
                 map.put(BASELINE_PROJ, bgDomainEntityDTO.getController().getName());
-            } else if (baselineEntity.getType().equalsIgnoreCase(NAMESPACE) &&
-                    !baselineEntity.getName().equalsIgnoreCase(originalNamespace)) {
+            } else if (baselineEntity.getType().equalsIgnoreCase(NAMESPACE)) {
                 map.put(BASELINE_ORIGIN, baselineEntity.getName());
                 map.put(BASELINE_PROJ, baselineEntity.getName());
             }
@@ -230,7 +256,7 @@ public class NamespaceMap extends DynamicMap {
 
     private void setSecretValues(EscapeMap map, CredentialUtils credentialUtils) {
         String credId = binding.getDeployerInputs().getSecretId();
-        String credentialValue ;
+        String credentialValue;
         if (org.apache.commons.lang.StringUtils.isNotEmpty(credId)) {
             SecretCredentials ca = (SecretCredentials) credentialUtils.getCredentialsById(credId);
             if (ca == null) {
@@ -239,8 +265,8 @@ public class NamespaceMap extends DynamicMap {
             }
             credentialValue = ca.getSecret();
             credentialValue = credentialValue.replace("\r\n", "\n");
-            map.put("SSL_SECRET_VALUE",credentialValue);
-            map.put("CERTIFICATE_BUNDLE_MD5SUM",DigestUtils.md5Hex(DigestUtils.getMd5Digest().digest(credentialValue.getBytes(StandardCharsets.UTF_8))));
+            map.put("SSL_SECRET_VALUE", credentialValue);
+            map.put("CERTIFICATE_BUNDLE_MD5SUM", DigestUtils.md5Hex(DigestUtils.getMd5Digest().digest(credentialValue.getBytes(StandardCharsets.UTF_8))));
         }
     }
 
