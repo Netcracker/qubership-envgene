@@ -336,6 +336,9 @@ public class ExpressionLanguage extends AbstractLanguage {
                         if (insecure) {
                             return failedParameter(entry);
                         } else {
+                            if(entry.getValue() != null && entry.getValue().toString().contains("cmdb.creds[")){
+                                throw new ExpressionLanguageException(String.format("Expressions started with \"cmdb\" is not supported (parameter %s, value: %s)", entry.getKey(), entry.getValue()), e);
+                            }
                             throw new ExpressionLanguageException(String.format("Could not process expression for parameter %s with value: %s", entry.getKey(), entry.getValue()), e);
                         }
                     }
