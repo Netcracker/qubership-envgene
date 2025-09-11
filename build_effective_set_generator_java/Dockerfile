@@ -11,7 +11,7 @@ RUN microdnf install -y curl ca-certificates ${JAVA_PACKAGE} && \
     chmod 540 /deployments/run-java.sh && \
     echo "securerandom.source=file:/dev/urandom" >> /etc/alternatives/jre/lib/security/java.security
 
-COPY downloaded_artifact/build_effective_set_generator_java/effective-set-generator/target/*.jar /deployments/app.jar
+COPY build_effective_set_generator_java/effective-set-generator/target/*.jar /deployments/app.jar
 
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1
 

@@ -22,7 +22,7 @@ on:
         default: '[
                   {"name": "qubership-envgene", "file": "./build_envgene/build/Dockerfile", "context": "."},
                   {"name": "qubership-pipegene", "file": "./build_pipegene/build/Dockerfile", "context": "."},
-                  {"name": "qubership-effective-set-generator", "file": "./build_effective_set_generator/build/Dockerfile", "context": "."},
+                  {"name": "qubership-effective-set-generator", "file": "./build_effective_set_generator_java/Dockerfile", "context": "."},
                   {"name": "qubership-instance-repo-pipeline", "file": "./github_workflows/instance-repo-pipeline/Dockerfile", "context": "."}
                 ]'
         description: 'component'
@@ -126,12 +126,25 @@ jobs:
               echo "No changes to commit - skipping git operations"
             fi
 
-  docker-build-publish:
+  build-effective-set-jar:
     needs: [update_image_tags]
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
+    with:
+      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
+      java-version: 17
+      upload-artifact: true
+      artifact-id: effective_set_jar
+      ref: ${{ github.ref }}
+    secrets:
+      maven-token: ${{ secrets.GITHUB_TOKEN }}
+
+  docker-build-publish:
+    needs: [build-effective-set-jar]
     uses: netcracker/qubership-workflow-hub/.github/workflows/docker-publish.yml@v1.0.3
     with:
       ref: v${{ inputs.version }}
-      download-artifact: false
+      download-artifact: true
+      artifact-id: effective_set_jar
       dry-run: ${{ inputs.dry-run }}
       component: ${{ inputs.component }}
 
