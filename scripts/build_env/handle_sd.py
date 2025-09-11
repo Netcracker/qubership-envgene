@@ -116,10 +116,8 @@ def merge_sd(env, sd_data, merge_func):
     helper.check_dir_exist_and_create(path.dirname(destination))
     helper.pre_validate(full_sd_yaml, sd_data)
     result = merge_func(full_sd_yaml, sd_data)
-    namespace_dict = build_namespace_dict(env)
-    transformed_result = handle_deploy_postfix_namespace_transformation(result, namespace_dict)
-    helper.writeYamlToFile(destination, transformed_result)
-    logger.info(f"Merged data into Target Path! - {transformed_result}")
+    helper.writeYamlToFile(destination, result)
+    logger.info(f"Merged data into Target Path! - {result}")
 
 def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
     base_path = f'{env.env_path}/Inventory/solution-descriptor/'
@@ -179,25 +177,36 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
     else:
         effective_merge_mode = "basic-merge"
 
-    # Perform basic-merge for multiple SDs before applying SD_REPO_MERGE_MODE
+    # Build namespace mapping and transform each SD before any operations
+    namespace_dict = build_namespace_dict(env)
+
+    # Transform each SD item before processing
     if isinstance(data, list):
-        merged_applications = {"applications": data[0].get("applications", [])}
+        transformed_data = [
+            handle_deploy_postfix_namespace_transformation(item, namespace_dict) for item in data
+        ]
+    else:
+        transformed_data = handle_deploy_postfix_namespace_transformation(data, namespace_dict)
+
+    # Perform basic-merge for multiple SDs before applying SD_REPO_MERGE_MODE
+    if isinstance(transformed_data, list):
+        merged_applications = {"applications": transformed_data[0].get("applications", [])}
         if not merged_applications["applications"]:
             logger.error("No applications found in the first SD block.")
             exit(1)
-        for i in range(1, len(data)):
+        for i in range(1, len(transformed_data)):
             logger.info(f"Initiates basic-merge:")
-            current_item_sd = {"applications": data[i].get("applications", [])}
+            current_item_sd = {"applications": transformed_data[i].get("applications", [])}
             merged_applications = helper.merge(merged_applications, current_item_sd)
         merged_result = {
-            "version": data[0].get("version"),
-            "type": data[0].get("type"),
-            "deployMode": data[0].get("deployMode"),
+            "version": transformed_data[0].get("version"),
+            "type": transformed_data[0].get("type"),
+            "deployMode": transformed_data[0].get("deployMode"),
             "applications": merged_applications["applications"]
             }
         logger.info(f"Level-1 SD data: {json.dumps(merged_result, indent=2)}")
     else:
-        merged_result = data
+        merged_result = transformed_data
 
     #merged_result["version"] = str(merged_result["version"])
     helper.writeYamlToFile(sd_path, merged_result)
@@ -214,9 +223,7 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(destination))
-        namespace_dict = build_namespace_dict(env)
-        transformed_result = handle_deploy_postfix_namespace_transformation(merged_data,namespace_dict)
-        helper.writeYamlToFile(destination, transformed_result)
+        helper.writeYamlToFile(destination, merged_data)
         logger.info(f"Replaced existing SD with new data at: {destination}")
         return
 
