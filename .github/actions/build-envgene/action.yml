@@ -50,12 +50,19 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Log in to the Container registry
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v4
+
+    - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ inputs.registry }}
+        registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ inputs.github-token }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
 
     - name: Generate Docker tags
       id: tags
@@ -74,6 +81,7 @@ runs:
       id: push
       uses: docker/build-push-action@v6
       with:
+        provenance: false
         context: .
         file: ${{ inputs.dockerfile-path }}
         push: true
@@ -83,5 +91,3 @@ runs:
           ${{ inputs.version != '' && format('{0}/{1}/{2}:{3}', inputs.registry, inputs.repository-owner, inputs.image-name, inputs.version) || '' }}
           ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        build-args: |
-          GH_ACCESS_TOKEN=${{ inputs.gh-access-token }}
