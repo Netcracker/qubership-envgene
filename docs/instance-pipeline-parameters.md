@@ -199,6 +199,7 @@ Registered component JSON schemas are stored in the EnvGene Docker image as JSON
 Consumer-specific pipeline context components registered in EnvGene:
 
 1. None
+
 ### `APP_REG_DEFS_JOB`
 
 **Description**: Specifies the name of the job that is the source of [Application Definition](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition).
@@ -327,6 +328,7 @@ See details in [SD processing](/docs/sd-processing.md)
 2. It will also be part of the deployment context of the Effective Set. The EnvGene passes it to the Calculator CLI using the `--extra_params` attribute. In this case it is used together with `GENERATE_EFFECTIVE_SET`.
 
 **Example**: "123e4567-e89b-12d3-a456-426614174000"
+
 ### `CRED_ROTATION_PAYLOAD`
 
 **Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macros)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)

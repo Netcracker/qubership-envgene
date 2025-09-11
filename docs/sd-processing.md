@@ -8,7 +8,7 @@
     - [SD Types](#sd-types)
       - [Full SD](#full-sd)
       - [Delta SD](#delta-sd)
-    - [Instance Repository Pipeline Parameters](#instance-repositorysitory-pipeline-parameters)
+    - [Instance Repository Pipeline Parameters](#instance-repository-pipeline-parameters)
       - [`SD_DATA` Example](#sd_data-example)
     - [SD merge](#sd-merge)
       - [`basic-merge` SD Merge Mode](#basic-merge-sd-merge-mode)

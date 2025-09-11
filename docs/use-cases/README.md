@@ -6,20 +6,20 @@ This catalog provides an overview of common use cases for EnvGene. Each use case
 
 | Use Case | Description | Related Features |
 |----------|-------------|-----------------|
-| [Simplified Environment Configuration](auto-environment-name.md) | Automatically derive environment names from folder structure to reduce redundancy and prevent inconsistencies | [Environment Inventory Generation](../env-inventory-generation.md#automatic-environment-name-derivation) |
+| [Simplified Environment Configuration](auto-environment-name.md) | Automatically derive environment names from folder structure to reduce redundancy and prevent inconsistencies | [Environment Inventory Generation](/docs/features/env-inventory-generation.md#automatic-environment-name-derivation) |
 
 ## Template Management
 
 | Use Case | Description | Related Features |
 |----------|-------------|-----------------|
-| Template Overrides | Customize specific parts of templates without modifying the original template files | [Template Override](../features/template-override.md) |
+| Template Overrides | Customize specific parts of templates without modifying the original template files | [Template Override](/docs/features/features/template-override.md) |
 | AppDef/RegDef Template Management | Manage application definitions and registry definitions using templates | [AppDef/RegDef Template Management](../features/appdef-regdef-template-management.md) |
 
 ## Deployment
 
 | Use Case | Description | Related Features |
 |----------|-------------|-----------------|
-| Environment Instance Generation | Generate environment instances from templates | [Environment Inventory Generation](../env-inventory-generation.md) |
+| Environment Instance Generation | Generate environment instances from templates | [Environment Inventory Generation](/docs/features//env-inventory-generation.md) |
 
 ## How to Add New Use Cases
 

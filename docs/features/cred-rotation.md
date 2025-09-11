@@ -67,7 +67,7 @@ Supports working with SOPS encryption.
 6. The operation must support the following [Credential](/docs/envgene-objects.md#credential) types:
    1. `usernamePassword`
    2. `secret`
-7. Encryption principles described [here](#encryption) must be followed
+7. Encryption principles described in [encryption section](#encryption) must be followed
 8. If any error occurs during the processing of a single key in `CRED_ROTATION_PAYLOAD`, the system shall:
    - Preserve the system state prior to the failed operation
    - Terminate the entire credential rotation job with a failure status

@@ -1,15 +1,25 @@
 # EnvGene Error Catalog
 
+- [EnvGene Error Catalog](#envgene-error-catalog)
+  - [Error Structure](#error-structure)
+  - [Error Code Format](#error-code-format)
+  - [Error Codes](#error-codes)
+    - [Credential Validation Errors](#credential-validation-errors)
+      - [ENVGENE-4001: Missing Credential](#envgene-4001-missing-credential)
+      - [ENVGENE-4002: Invalid configuration format](#envgene-4002-invalid-configuration-format)
+      - [ENVGENE-4003: Missing required configuration field](#envgene-4003-missing-required-configuration-field)
+      - [ENVGENE-4004: Termination condition encountered](#envgene-4004-termination-condition-encountered)
+    - [Data Validation Errors](#data-validation-errors)
+      - [ENVGENE-3002: Invalid Data Type](#envgene-3002-invalid-data-type)
+    - [File and Integration Errors](#file-and-integration-errors)
+      - [ENVGENE-8001: File not found](#envgene-8001-file-not-found)
+      - [ENVGENE-8003: Invalid Path](#envgene-8003-invalid-path)
+  - [Future Error Codes](#future-error-codes)
+    - [Validation Errors (4000-6999)](#validation-errors-4000-6999)
+    - [Integration Errors (7000-7999)](#integration-errors-7000-7999)
+    - [Data Source Errors (8000-8999)](#data-source-errors-8000-8999)
+
 This document catalogs all errors and validations performed by EnvGene components, providing a reference for troubleshooting and understanding the error handling process.
-
-## Index
-
-- [Error Structure](#error-structure)
-- [Error Code Format](#error-code-format)
-- [Error Codes](#error-codes)
-  - [Credential Validation Errors](#credential-validation-errors)
-    - [ENVGENE-4001: Missing or Undefined Credential](#envgene-4001-missing-or-undefined-credential)
-- [Future Error Codes](#future-error-codes)
 
 ## Error Structure
 
