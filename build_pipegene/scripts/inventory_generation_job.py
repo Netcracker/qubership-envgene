@@ -15,7 +15,7 @@ def is_inventory_generation_needed(is_template_test, inv_gen_params):
             return True
     return False
 
-def prepare_inventory_generation_job(pipeline, full_env, environment_name, cluster_name, env_generation_params,tags):
+def prepare_inventory_generation_job(pipeline, full_env, environment_name, cluster_name, env_generation_params, tags):
     logger.info(f"prepare env_generation job for {full_env}")
     params = {
         "name": f"env_inventory_generation.{full_env}",
