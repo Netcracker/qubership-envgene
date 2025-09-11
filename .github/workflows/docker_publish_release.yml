@@ -2,6 +2,9 @@ name: "Release: EnvGene"
 
 run-name: "Release EnvGene: ${{ inputs.version }}"
 
+env:
+  CI_PROJECT_DIR: ${{ github.workspace }}
+
 on:
   workflow_dispatch:
     inputs:
