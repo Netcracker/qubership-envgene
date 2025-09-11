@@ -13,7 +13,7 @@ This catalog provides an overview of common use cases for EnvGene. Each use case
 | Use Case | Description | Related Features |
 |----------|-------------|-----------------|
 | Template Overrides | Customize specific parts of templates without modifying the original template files | [Template Override](/docs/features/features/template-override.md) |
-| AppDef/RegDef Template Management | Manage application definitions and registry definitions using templates | [AppDef/RegDef Template Management](../features/appdef-regdef-template-management.md) |
+| AppDef/RegDef Template Management | Manage application definitions and registry definitions using templates | [AppDef/RegDef Template Management](/docs/features/app-reg-defs.md) |
 
 ## Deployment
 
