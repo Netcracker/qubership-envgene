@@ -402,9 +402,9 @@ See details in [SD processing](/docs/sd-processing.md)
 
 #### Affected Parameters and Troubleshooting
 
-When rotating sensitive parameters, EnvGene checks if the Credential is [shared](https://github.com/Netcracker/qubership-envgene/blob/feature/cred-rotation/docs/features/cred-rotation.md#affected-parameters) (used by multiple parameters or Environments). If shared Credentials are detected and force mode is not enabled, the credential_rotation job will fail to prevent accidental mass updates.
+When rotating sensitive parameters, EnvGene checks if the Credential is [shared](/docs/features/cred-rotation.md#affected-parameters) (used by multiple parameters or Environments). If shared Credentials are detected and force mode is not enabled, the credential_rotation job will fail to prevent accidental mass updates.
 
-- In this case, the job will generate an [`affected-sensitive-parameters.yaml`](https://github.com/Netcracker/qubership-envgene/blob/feature/cred-rotation/docs/features/cred-rotation.md#affected-parameters-reporting) file as an artifact. This file lists all parameters and locations affected by the Credential change, including those in shared Credentials files and all Environments that reference this credential.
+- In this case, the job will generate an [`affected-sensitive-parameters.yaml`](/docs/features/cred-rotation.md#affected-parameters-reporting) file as an artifact. This file lists all parameters and locations affected by the Credential change, including those in shared Credentials files and all Environments that reference this credential.
 - To resolve:
   - Review `affected-sensitive-parameters.yaml` to see which parameters and environments are linked by the shared Credential.
   - Either:
