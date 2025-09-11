@@ -25,9 +25,9 @@
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
-  - [Archived Parameters](#archived-parameters)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
+  - [Archived Parameters](#archived-parameters)
 
 The following are the launch parameters for the instance repository pipeline. These parameters influence, the execution of specific jobs within the pipeline.
 
@@ -78,7 +78,7 @@ If `true`:
 
 **Description**: Feature flag. Valid values are `true` or `false`.
 
-If `true`:  
+If `true`:
   The Environment Instance will be exported to an external CMDB system.
 
 This parameter serves as a configuration for an extension point. Integration with a specific CMDB is not implemented in EnvGene.
@@ -87,7 +87,7 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 **Mandatory**: No
 
-**Example**: `true`  
+**Example**: `true`
 
 ### `DEPLOYMENT_TICKET_ID`
 
@@ -423,10 +423,6 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 
 **Example**: `true`
 
-## Archived Parameters
-
-These parameters are no longer in use and are maintained for historical reference
-
 ## Deprecated Parameters
 
 The following parameters are planned for removal
@@ -446,3 +442,7 @@ See details in [SD processing](/docs/sd-processing.md)
 **Mandatory**: No
 
 **Example**: `true`
+
+## Archived Parameters
+
+These parameters are no longer in use and are maintained for historical reference

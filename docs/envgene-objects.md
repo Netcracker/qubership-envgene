@@ -21,7 +21,6 @@
       - [Application](#application)
       - [Resource Profile Override (in Instance)](#resource-profile-override-in-instance)
       - [Composite Structure](#composite-structure)
-      - [Environment Credentials File](#environment-credentials-file)
     - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
@@ -84,7 +83,7 @@ cloud:
   # Template Override configuration
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
   template_override:
-    "<yaml or jinja expression>"
+    <yaml or jinja expression>
   # Optional
   # Template Inheritance configuration
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
@@ -143,6 +142,10 @@ namespaces:
 ```
 
 [Template Descriptor JSON schema](/schemas/template-descriptor.schema.json)
+
+Any YAML file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
+
+The name of this file serves as the name of the Environment Template. In the Environment Inventory, this name is used to specify which Environment Template from the artifact should be used.
 
 #### Tenant Template
 
@@ -224,7 +227,7 @@ version: <paramset-version>
 # Mandatory
 # The name of the Parameter Set
 # Used to reference the Parameter Set in templates
-# Must match the Parameter Set filename
+# Must match the Parameter Set file name
 name: "parameter-set-name"
 # Mandatory
 # Key-value pairs of parameters
@@ -274,7 +277,7 @@ applications:
               - ALL
 ```
 
-The filename of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the template repository. This is validated during processing; if the validation fails, the operation will stop with an error.
+The file name of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the template repository. This is validated during processing; if the validation fails, the operation will stop with an error.
 
 The Parameter Set schema in the template repository is identical to the Parameter Sets in the [Instance repository](#parameterset-in-instance-repository).
 
@@ -364,7 +367,7 @@ artifactory-cred:
 gitlab-token-cred:
   type: secret
   data:
-    secret: "example-secret-token-for-documentation-purposes-only"
+    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
 ```
 
 ## Instance Repository Objects
@@ -620,26 +623,6 @@ satellites:
     type: "namespace"
 ```
 
-#### Environment Credentials File
-
-This file stores all [Credential](#credential) objects of the Environment Instance upon generation
-
-**Location:** `/environments/<cluster-name>/<env-name>/Credentials/credentials.yml`
-
-**Example:**
-
-```yaml
-db_cred:
-  type: usernamePassword
-  data:
-    username: "s3cr3tN3wLogin"
-    password: "s3cr3tN3wP@ss"
-token:
-  type: secret
-  data:
-    secret: "example-secret-token-for-documentation-purposes-only"
-```
-
 ### Solution Descriptor
 
 The Solution Descriptor (SD) defines the application composition of a solution. In EnvGene it serves as the primary input for EnvGene's Effective Set calculations. The SD can also be used for template rendering through the [`current_env.solution_structure`](/docs/template-macros.md#current_envsolution_structure) variable.
@@ -763,7 +746,7 @@ db_cred:
 token:
   type: secret
   data:
-    secret: "example-secret-token-for-documentation-purposes-only"
+    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
 ```
 
 ### System Credentials File (in Instance repository)
@@ -786,7 +769,7 @@ registry-cred:
 gitlab-token-cred:
   type: secret
   data:
-    secret: "example-secret-token-for-documentation-purposes-only"
+    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
 ```
 
 #### ParameterSet (in Instance repository)

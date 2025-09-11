@@ -32,7 +32,8 @@ Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipelin
 inventory:
   # Optional
   # Name of the Environment, e.g. dev01
-  # If not specified, it will be automatically derived from the parent folder name in the path: /environments/<clusterName>/<environmentName>/Inventory/
+  # If not specified, it will be automatically derived from the parent folder name in the path:
+  # /environments/<clusterName>/<environmentName>/Inventory/
   # This attribute's value is available for template rendering via the `current_env.name` variable
   environmentName: string
   # Optional
@@ -88,29 +89,34 @@ envTemplate:
   sharedTemplateVariables: array
   # Optional
   # Set of environment-specific deployment parameters
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` in the Template Descriptor, or by the Namespace template file name without extension)
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` 
+  # in the Template Descriptor, or by the Namespace template file name without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificParamsets: hashmap
   # Optional
   # Environment specific pipeline (e2e) parameters set
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` in the Template Descriptor, or by the Namespace template file name without extension)
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
+  # in the Template Descriptor, or by the Namespace template file name without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificE2EParamsets: hashmap
   # Optional
   # Environment specific runtime (technical) parameters set
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` in the Template Descriptor, or by the Namespace template file name without extension)
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
+  # in the Template Descriptor, or by the Namespace template file name without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificTechnicalParamsets: hashmap
   # Optional
   # Environment specific resource profile overrides
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` in the Template Descriptor, or by the Namespace template file name without extension)
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
+  # in the Template Descriptor, or by the Namespace template file name without extension)
   # Values are the names of resource profile files without extension located in the `resource_profiles` directory
   envSpecificResourceProfiles: hashmap
   # Optional
   # Array of file names in a 'credentials' folder that will override generated and defined for instance credentials
   # File must contain a set of credential objects
   sharedMasterCredentialFiles: array
-  # Following parameters are automatically generated during job and display that application:version artifact of template was used for last Environment generation
+  # Following parameters are automatically generated during job and display that application:version artifact
+  # of template was used for last Environment generation
   generatedVersions: hashmap
 ```
 
@@ -275,8 +281,6 @@ The parameters specified in this configuration file are used with macros:
 - [`appdefs.overrides`](/docs/template-macros.md#appdefsoverrides)
 - [`regdefs.overrides`](/docs/template-macros.md#regdefsoverrides)
 
-The Artifact Definition can be created manually or discovered via external system. The Artifact Definition discovery mechanism is controlled by `config.yaml:artifact_definitions_discovery_mode`
-The discovery is not part of EnvGene Core and can be implemented in EnvGene extensions
 For more info, see [Application and Registry Definition](/docs/features/app-reg-defs.md).
 
 Location:
@@ -289,14 +293,14 @@ If both repository-wide and cluster-wide configuration files are present, then w
 [appregdef_config.yaml JSON Schema](/schemas/appregdef-config.schema.json)
 
 ```yaml
-# Optional 
+# Optional
 # Defines parameters for rendering Application Definition templates
 appdefs:
   # Mandatory
   overrides:
     <key-1>: <value-1>
     <key-2>: <value-2>
-# Optional 
+# Optional
 # Defines parameters for rendering Registry Definition templates
 regdefs:
   # Mandatory
@@ -313,5 +317,5 @@ appdefs:
     registryName: sandbox
 regdefs:
   overrides:
-    hostName: "registry.qubership.org" 
+    hostName: "registry.qubership.org"
 ```

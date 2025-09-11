@@ -60,7 +60,7 @@ force_sync: false
 
 ```bash
 # Принудительная синхронизация во все ветки
-target_branches: 
+target_branches:
 force_sync: true
 ```
 

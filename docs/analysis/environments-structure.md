@@ -240,7 +240,7 @@ During this pipeline, the generated object is saved by committing it to the Inst
       1. Gets `/environments/environment-structure.yml`
    3. The Environment selection view displays the full list of Environments
    4. User selects an Environment
-      1. Если для этого энва сгенерировалась complete Environments Structure, то неймспейс можно выбрать из списка
+      1. If a complete Environments Structure has been generated for this environment, the namespace can be selected from the list
    5. User specifies:
       1. Namespace
       2. `app:ver` of Application

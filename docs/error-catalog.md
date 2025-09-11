@@ -110,7 +110,7 @@ This indicates invalid json content in payload. Please check the payload.
 
   [ENVGENE-4002] Invalid configuration format: Invalid configuration format.Failed to read the credential file {file}
 
-  This indicates that Something went wrong while trying to read the credential files. Please check if the syntax of file is correct 
+  This indicates that Something went wrong while trying to read the credential files. Please check if the syntax of file is correct
 ```
 
 - **Resolution**:
@@ -227,7 +227,7 @@ This indicate that the namespace file is not present in namespace directory . Pl
 
 ```text
 [ENVGENE-8003] Error: Invalid path hierarchy
-<folder> is not a parent of <folder>. Something wrong with the folder structure in environment instance. Expected structure: project_dir/environments/cluster/env. 
+<folder> is not a parent of <folder>. Something wrong with the folder structure in environment instance. Expected structure: project_dir/environments/cluster/env.
 ```
 
 - **Resolution**:

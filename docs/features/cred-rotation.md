@@ -67,7 +67,7 @@ Supports working with SOPS encryption.
 6. The operation must support the following [Credential](/docs/envgene-objects.md#credential) types:
    1. `usernamePassword`
    2. `secret`
-7. Encryption principles described in [encryption section](#encryption) must be followed
+7. Encryption principles described in [Encryptio](#encryption) section must be followed
 8. If any error occurs during the processing of a single key in `CRED_ROTATION_PAYLOAD`, the system shall:
    - Preserve the system state prior to the failed operation
    - Terminate the entire credential rotation job with a failure status
@@ -226,7 +226,7 @@ Sensitive parameters defined across one or more objects in one or more Environme
 
 This linkage occurs when multiple parameters reference the same:
 
-1. Credential ID (`cred-id`)  
+1. Credential ID (`cred-id`)
 AND
 2. Credential field (`username`, `password`, or `secret`)
 
@@ -262,7 +262,7 @@ The `affected-sensitive-parameters.yaml` is created using the reverse logic desc
   # Taken from `CRED_ROTATION_PAYLOAD` item
   target_parameter:
     environment: string
-    namespace: string  
+    namespace: string
     application: string
     context: enum[`pipeline`,`deployment`,`runtime`]
     parameter_key: string

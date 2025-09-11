@@ -10,7 +10,7 @@ As an environment administrator, I want to avoid redundantly specifying the envi
 
 ## Features Used
 
-- [Environment Inventory Generation](/docs/features/env-inventory-generation.md#automatic-environment-name-derivation)
+- [Automatic Environment Name Derivation](/docs/features/auto-env-name-derivation.md)
 
 ## Benefits
 
