@@ -36,6 +36,4 @@ public interface FileDataConverter {
     <T> T decodeAndParse(String encodedText, Class<T> clazz);
 
     void writeToFile(Map<String, Object> params, String... args) throws IOException;
-
-    <T> Map<String, Object> getObjectMap(T inputObject);
 }

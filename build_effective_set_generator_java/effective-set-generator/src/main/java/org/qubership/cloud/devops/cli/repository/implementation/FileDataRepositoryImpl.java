@@ -37,7 +37,6 @@ import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
 import org.qubership.cloud.devops.commons.exceptions.FileParseException;
 import org.qubership.cloud.devops.commons.pojo.applications.dto.ApplicationLinkDTO;
-import org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO;
 import org.qubership.cloud.devops.commons.pojo.clouds.dto.CloudDTO;
 import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.consumer.Property;
@@ -319,11 +318,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 break;
             case "composite_structure":
                 CompositeStructureDTO compositeStructureDTO = fileDataConverter.parseInputFile(CompositeStructureDTO.class, file.toFile());
-                inputData.setCompositeStructureDTO(compositeStructureDTO);
-                break;
-            case "bg-domain":
-                BgDomainEntityDTO bgDomainEntityDTO = fileDataConverter.parseInputFile(BgDomainEntityDTO.class, file.toFile());
-                inputData.setBgDomainEntityDTO(bgDomainEntityDTO);
+                inputData.setCompositeStructureMap(getObjectMap(compositeStructureDTO));
                 break;
             default:
                 processOtherFiles(file, parent, profilesMap, appsOnNamespace, nsWithAppsFromSD, cloudApps, appsToProcess);
@@ -405,5 +400,13 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         }
         inputData.setRegistryDTOMap(registryMap);
     }
+
+    public Map<String, Object> getObjectMap(CompositeStructureDTO compositeStructureDTO) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper
+                .convertValue(compositeStructureDTO, new TypeReference<Map<String, Object>>() {
+                });
+    }
+
 
 }
