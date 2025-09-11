@@ -25,6 +25,10 @@ inputs:
   github-token:
     description: 'GitHub token for registry login'
     required: true
+  version:
+    description: 'Version for Docker tag'
+    required: false
+    default: ''
 
 outputs:
   custom_tag:
@@ -76,6 +80,7 @@ runs:
         tags: |
           ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.custom_tag }}
           ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.branch_latest_tag }}
+          ${{ inputs.version != '' && format('{0}/{1}/{2}:{3}', inputs.registry, inputs.repository-owner, inputs.image-name, inputs.version) || '' }}
           ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         build-args: |

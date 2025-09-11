@@ -30,11 +30,6 @@ on:
         required: false
         default: true
         type: boolean
-      build-effective-set-python:
-        description: 'Build Effective Set Generator Python image'
-        required: false
-        default: true
-        type: boolean
   push: null
 
 env:
@@ -56,6 +51,16 @@ jobs:
 
       - name: Validate Conventional Commits
         uses: ./.github/actions/conventional-commits
+
+  link-check:
+    needs: [conventional-commits]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Link Checker
+        uses: ./.github/actions/link-checker
 
   linters:
     needs: [conventional-commits]
@@ -83,7 +88,7 @@ jobs:
         uses: ./.github/actions/run-tests
 
   build-qubership-pipegene:
-    needs: [linters, tests]
+    needs: [linters, tests, link-check]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
@@ -105,12 +110,10 @@ jobs:
       id: build-pipegene
       with:
         registry: ${{ env.REGISTRY }}
-        git-user: ${{ secrets.GIT_USER }}
-        git-token: ${{ secrets.GIT_TOKEN }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-qubership-envgene:
-    needs: [linters, tests]
+    needs: [linters, tests, link-check]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-envgene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
     permissions:
@@ -132,11 +135,10 @@ jobs:
       id: build-envgene
       with:
         registry: ${{ env.REGISTRY }}
-        gh-access-token: ${{ secrets.GH_ACCESS_TOKEN }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-effective-set-jar:
-    needs: [linters, tests]
+    needs: [linters, tests, link-check]
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@main
     with:
@@ -171,42 +173,16 @@ jobs:
       id: build-effective-set-generator
       with:
         registry: ${{ env.REGISTRY }}
-        git-user: ${{ secrets.GIT_USER }}
-        git-token: ${{ secrets.GIT_TOKEN }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-
-  build-effective-set-generator-python:
-    needs: [linters, tests]
-    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set-python == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-    outputs:
-      custom_tag: ${{ steps.build-effective-set-python.outputs.custom_tag }}
-      branch_tag: ${{ steps.build-effective-set-python.outputs.branch_tag }}
-      timestamp: ${{ steps.build-effective-set-python.outputs.timestamp }}
-      branch_latest_tag: ${{ steps.build-effective-set-python.outputs.branch_latest_tag }}
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Build Effective Set Generator Python Docker Image
-      uses: ./.github/actions/build-effective-set-python
-      id: build-effective-set-python
-      with:
-        registry: ${{ env.REGISTRY }}
-        gh-access-token: ${{ secrets.GH_ACCESS_TOKEN }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-instance-repo-pipeline:
     needs:
+      - linters
+      - tests
+      - link-check
       - build-qubership-pipegene
       - build-qubership-envgene
       - build-effective-set-generator
-      - build-effective-set-generator-python
     if: |
       always() &&
       (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipeline == 'true') ||
@@ -247,9 +223,6 @@ jobs:
           if [[ "${{ needs.build-effective-set-generator.result }}" == "success" ]]; then
             sed -i "s|qubership-effective-set-generator:[^']*|qubership-effective-set-generator:${{ needs.build-effective-set-generator.outputs.custom_tag }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
           fi
-          if [[ "${{ needs.build-effective-set-generator-python.result }}" == "success" ]]; then
-            sed -i "s|qubership-effective-set-generator-python:[^']*|qubership-effective-set-generator-python:${{ needs.build-effective-set-generator-python.outputs.custom_tag }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
-          fi
 
           # Check if any images were updated
           if git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml; then
@@ -279,5 +252,4 @@ jobs:
         uses: ./.github/actions/build-pipeline
         with:
           registry: ${{ env.REGISTRY }}
-          gh-access-token: ${{ secrets.GH_ACCESS_TOKEN }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

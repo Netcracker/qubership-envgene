@@ -84,7 +84,7 @@ def build_pipeline(params: dict):
             get_passport_jobs[cluster_name] = True
             ## process_decryption_mode job is for offsite only
             if params['IS_OFFSITE']:
-                jobs_map["process_decryption_mode_job"] = prepare_decryption_mode_job(pipeline, env, cluster_name)
+                jobs_map["process_decryption_mode_job"] = prepare_decryption_mode_job(pipeline, env, cluster_name,tags)
         else:
             logger.info(f"Generation of cloud passport for environment '{env}' is skipped")
 
