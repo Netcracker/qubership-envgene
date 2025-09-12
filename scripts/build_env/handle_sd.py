@@ -181,10 +181,17 @@ def extract_sds_from_json(env, sd_path, sd_data, sd_delta, sd_merge_mode):
     namespace_dict = build_namespace_dict(env)
 
     # Transform each SD item before processing
+    transformed_data = None
     if isinstance(data, list):
-        transformed_data = [
-            handle_deploy_postfix_namespace_transformation(item, namespace_dict) for item in data
-        ]
+        transformed_data = []
+        logger.info(f"Before transforming  transformed_data is :  {transformed_data}")
+        logger.info(f"Before transforming data is :  {json.dumps(data, indent=2)}")
+        for item in data:
+            logger.info(f"calling for item : {json.dumps(item, indent=2)}")
+            transformed_item = handle_deploy_postfix_namespace_transformation(item, namespace_dict)
+            logger.info(f"transformed_item : {json.dumps(transformed_item, indent=2)}")
+            transformed_data.append(transformed_item)
+        logger.info(f"Transformed data:  {json.dumps(transformed_data, indent=2)}")
     else:
         transformed_data = handle_deploy_postfix_namespace_transformation(data, namespace_dict)
 
