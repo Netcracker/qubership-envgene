@@ -28,6 +28,10 @@ inputs:
   github-token:
     description: 'GitHub token for registry login'
     required: true
+  version:
+    description: 'Version for Docker tag'
+    required: false
+    default: ''
 
 outputs:
   custom_tag:
@@ -49,10 +53,16 @@ runs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Log in to the Container registry
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
       uses: docker/login-action@v3
       with:
-        registry: ${{ inputs.registry }}
+        registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ inputs.github-token }}
 
@@ -68,21 +78,18 @@ runs:
         tags: |
           type=ref,event=branch
           type=ref,event=pr
-          type=sha,prefix={{branch}}-{{sha}},suffix={{date 'YYYYMMDD-HHMMSS'}}
-          type=raw,value={{branch}}_{{date 'YYYYMMDD-HHMMSS'}}
 
     - name: Build and push Docker image
       id: push
       uses: docker/build-push-action@v6
       with:
+        provenance: false
         context: .
         file: ${{ inputs.dockerfile-path }}
         push: true
         tags: |
           ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.custom_tag }}
           ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.branch_latest_tag }}
+          ${{ inputs.version != '' && format('{0}/{1}/{2}:{3}', inputs.registry, inputs.repository-owner, inputs.image-name, inputs.version) || '' }}
           ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
-        build-args: |
-          GIT_USER=${{ inputs.git-user }}
-          GIT_TOKEN=${{ inputs.git-token }}

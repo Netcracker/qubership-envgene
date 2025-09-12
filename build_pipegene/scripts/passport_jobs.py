@@ -67,7 +67,7 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
   return get_passport_job
 
 
-def prepare_decryption_mode_job(pipeline, full_env, cluster_name):
+def prepare_decryption_mode_job(pipeline, full_env, cluster_name,tags):
     logger.info(f'prepare process_decryption_mode job for {full_env}')
     params = {
         "name":   f'process_decryption_mode.{full_env}',
@@ -85,7 +85,9 @@ def prepare_decryption_mode_job(pipeline, full_env, cluster_name):
         "envgen_args": " -vv",
         "envgen_debug": "true",
         "COMMIT_ENV": "false",
-        "COMMIT_MESSAGE": f"[ci_skip] decrypt cloud passport for {cluster_name}"
+        "COMMIT_MESSAGE": f"[ci_skip] decrypt cloud passport for {cluster_name}",
+        "GITLAB_RUNNER_TAG_NAME" : tags
+        
     }
 
     job = job_instance(params=params, vars=vars)

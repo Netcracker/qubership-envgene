@@ -8,7 +8,7 @@
     - [SD Types](#sd-types)
       - [Full SD](#full-sd)
       - [Delta SD](#delta-sd)
-    - [Instance Repository Pipeline Parameters](#instance-repositorysitory-pipeline-parameters)
+    - [Instance Repository Pipeline Parameters](#instance-repository-pipeline-parameters)
       - [`SD_DATA` Example](#sd_data-example)
     - [SD merge](#sd-merge)
       - [`basic-merge` SD Merge Mode](#basic-merge-sd-merge-mode)
@@ -34,7 +34,7 @@ EnvGene requires the Solution Descriptor (SD), as it lacks knowledge of whole So
 
 ## Proposed Approach
 
-It is proposed to enhance EnvGene with the capability to retrieve SDs in artifact or JSON format and store them in a repositorysitory. These SDs will be utilized for Effective Set calculations and will also be accessible to external systems for deployment purposes.
+It is proposed to enhance EnvGene with the capability to retrieve SDs in artifact or JSON format and store them in a repository. These SDs will be utilized for Effective Set calculations and will also be accessible to external systems for deployment purposes.
 
 To support the deployment of individual applications, the use of Delta SDs is suggested.
 
@@ -45,7 +45,7 @@ To support the deployment of individual applications, the use of Delta SDs is su
 ### Requirements
 
 1. SD processing should take place in the `generate_effective_set_job`
-2. The Full and Delta SDs files should be stored in repositorysitory and job artifacts
+2. The Full and Delta SDs files should be stored in repository and job artifacts
 3. SD merge must occur according to [SD Merge](#sd-merge)
 
 ### SD Types
@@ -60,7 +60,7 @@ Defines the complete application composition of a solution. There can be only on
 
 A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. There can be only one Delta SD per environment, located at the path `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yml`.
 
-The Delta SD is saved (created or modified) in the repositorysitory only when a [Repository Merge](#sd-merge)occurs, meaning when a Full SD is already present in the repositorysitory and `SD_REPO_MERGE_MODE` is NOT set to `replace`.
+The Delta SD is saved (created or modified) in the repository only when a [Repository Merge](#sd-merge)occurs, meaning when a Full SD is already present in the repository and `SD_REPO_MERGE_MODE` is NOT set to `replace`.
 
 ### Instance Repository Pipeline Parameters
 
@@ -70,7 +70,7 @@ The Delta SD is saved (created or modified) in the repositorysitory only when a 
 | `SD_DATA` | string | no | Specifies the **list** of contents of one or more SD in JSON-in-string format. EnvGene sequentially merges them in the `basic-merge` mode described, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](#delta-sd), then merges with [Full SD](#full-sd) using `SD_REPO_MERGE_MODE` merge mode | None | [Example](#sd_data-example) |
 | `SD_SOURCE_TYPE` | enumerate[`artifact`,`json`] | TBD | Determines the method by which SD is passed in the `SD_VERSION`/`SD_DATA` attributes. If `artifact`, an SD artifact is expected in `SD_VERSION` in `application:version` notation. If `json`, SD content is expected in `SD_DATA` in JSON-in-string format | TBD | `artifact` |
 | `SD_DELTA` | enumerate[`true`, `false`] | no | Deprecated. When `true`: behaves identically to `SD_REPO_MERGE_MODE: extended-merge`. When `false` behaves identically to `SD_REPO_MERGE_MODE: replace`. If both `SD_DELTA` and `SD_REPO_MERGE_MODE` are provided, `SD_REPO_MERGE_MODE` takes precedence | `true` | `false` |
-| `SD_REPO_MERGE_MODE` | enumerate[`basic-merge`, `basic-exclusion-merge`, `extended-merge`, `replace`] | no | Defines SD merge mode between incoming SD and already existed in repositorysitory SD. See details in [SD Merge](#sd-merge) | `basic-merge` | `extended-merge` |
+| `SD_REPO_MERGE_MODE` | enumerate[`basic-merge`, `basic-exclusion-merge`, `extended-merge`, `replace`] | no | Defines SD merge mode between incoming SD and already existed in repository SD. See details in [SD Merge](#sd-merge) | `basic-merge` | `extended-merge` |
 
 #### `SD_DATA` Example
 
@@ -95,7 +95,7 @@ SD merging occurs in the following cases:
 
 1. **Multiple SD Input**: When the Multiple SD are provided in `SD_VERSION` or `SD_DATA` parameters. The system merges them sequentially, giving priority to later SDs over earlier ones.
 
-2. **Repository Merge**: When `SD_VERSION` or `SD_DATA` parameters are provided and a [Full SD](#full-sd) already exists in the repositorysitory for the target environment. The system merges the incoming SD with the existing repositorysitory SD.
+2. **Repository Merge**: When `SD_VERSION` or `SD_DATA` parameters are provided and a [Full SD](#full-sd) already exists in the repository for the target environment. The system merges the incoming SD with the existing repository SD.
 
 > [!NOTE]
 > When processing Multiple SD in `SD_VERSION`/`SD_DATA` variables, the first SD is treated as Full,
@@ -106,7 +106,7 @@ There are four merge modes. They differ in their algorithms and output results:
 1. [`basic-merge`](#basic-merge-sd-merge-mode): The merge produces a SD sufficient for EnvGene to calculate the Effective Set. In this mode, SD applications and components are added and/or modified.
 2. [`basic-exclusion-merge`](#basic-exclusion-merge-sd-merge-mode): The merge produces a SD sufficient for EnvGene to calculate the Effective Set. In this mode, SD applications and components are removed and/or modified.
 3. [`extended-merge`](#extended-merge-sd-merge-mode): The merge produces an SD that can be used (with certain limitations) outside of EnvGene, for deployment or delivery purposes as well as Effective Set calculation by EnvGene. In this mode, SD applications and components are added and/or modified.
-4. `replace`: Performs complete replacement - the incoming SD entirely overwrites the repositorysitory SD without merging.
+4. `replace`: Performs complete replacement - the incoming SD entirely overwrites the repository SD without merging.
 
 #### `basic-merge` SD Merge Mode
 

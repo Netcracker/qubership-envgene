@@ -25,9 +25,9 @@
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
-  - [Archived Parameters](#archived-parameters)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
+  - [Archived Parameters](#archived-parameters)
 
 The following are the launch parameters for the instance repository pipeline. These parameters influence, the execution of specific jobs within the pipeline.
 
@@ -78,7 +78,7 @@ If `true`:
 
 **Description**: Feature flag. Valid values are `true` or `false`.
 
-If `true`:  
+If `true`:
   The Environment Instance will be exported to an external CMDB system.
 
 This parameter serves as a configuration for an extension point. Integration with a specific CMDB is not implemented in EnvGene.
@@ -87,7 +87,7 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 **Mandatory**: No
 
-**Example**: `true`  
+**Example**: `true`
 
 ### `DEPLOYMENT_TICKET_ID`
 
@@ -199,6 +199,7 @@ Registered component JSON schemas are stored in the EnvGene Docker image as JSON
 Consumer-specific pipeline context components registered in EnvGene:
 
 1. None
+
 ### `APP_REG_DEFS_JOB`
 
 **Description**: Specifies the name of the job that is the source of [Application Definition](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition).
@@ -327,6 +328,7 @@ See details in [SD processing](/docs/sd-processing.md)
 2. It will also be part of the deployment context of the Effective Set. The EnvGene passes it to the Calculator CLI using the `--extra_params` attribute. In this case it is used together with `GENERATE_EFFECTIVE_SET`.
 
 **Example**: "123e4567-e89b-12d3-a456-426614174000"
+
 ### `CRED_ROTATION_PAYLOAD`
 
 **Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macros)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
@@ -400,9 +402,9 @@ See details in [SD processing](/docs/sd-processing.md)
 
 #### Affected Parameters and Troubleshooting
 
-When rotating sensitive parameters, EnvGene checks if the Credential is [shared](https://github.com/Netcracker/qubership-envgene/blob/feature/cred-rotation/docs/features/cred-rotation.md#affected-parameters) (used by multiple parameters or Environments). If shared Credentials are detected and force mode is not enabled, the credential_rotation job will fail to prevent accidental mass updates.
+When rotating sensitive parameters, EnvGene checks if the Credential is [shared](/docs/features/cred-rotation.md#affected-parameters) (used by multiple parameters or Environments). If shared Credentials are detected and force mode is not enabled, the credential_rotation job will fail to prevent accidental mass updates.
 
-- In this case, the job will generate an [`affected-sensitive-parameters.yaml`](https://github.com/Netcracker/qubership-envgene/blob/feature/cred-rotation/docs/features/cred-rotation.md#affected-parameters-reporting) file as an artifact. This file lists all parameters and locations affected by the Credential change, including those in shared Credentials files and all Environments that reference this credential.
+- In this case, the job will generate an [`affected-sensitive-parameters.yaml`](/docs/features/cred-rotation.md#affected-parameters-reporting) file as an artifact. This file lists all parameters and locations affected by the Credential change, including those in shared Credentials files and all Environments that reference this credential.
 - To resolve:
   - Review `affected-sensitive-parameters.yaml` to see which parameters and environments are linked by the shared Credential.
   - Either:
@@ -420,10 +422,6 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 **Mandatory**: No
 
 **Example**: `true`
-
-## Archived Parameters
-
-These parameters are no longer in use and are maintained for historical reference
 
 ## Deprecated Parameters
 
@@ -444,3 +442,7 @@ See details in [SD processing](/docs/sd-processing.md)
 **Mandatory**: No
 
 **Example**: `true`
+
+## Archived Parameters
+
+These parameters are no longer in use and are maintained for historical reference
