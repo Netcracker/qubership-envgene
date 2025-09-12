@@ -29,23 +29,23 @@ runs:
       shell: bash
       run: |
         ENV_ARTIFACT_NAME="${{ inputs.sanitized_name }}"
-        
+
         ARTIFACTS_JSON=$(curl -s \
         -H "Authorization: Bearer ${{ github.token }}" \
         -H "Accept: application/vnd.github.v3+json" \
         "https://api.github.com/repos/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts")
-        
+
         MATCHING_ARTIFACT_ID=$(echo "$ARTIFACTS_JSON" |
         awk "/\"name\": \"$ENV_ARTIFACT_NAME\"/,/\}/" |
         grep '"id":' |
         grep -o '[0-9]\{5,\}' |
         head -n1)
-        
+
         if [ -z "$MATCHING_ARTIFACT_ID" ]; then
         echo "Was not able to find artifact with name $ENV_ARTIFACT_NAME"
         exit 1
         fi
-        
+
         echo "artifact_id=$MATCHING_ARTIFACT_ID" >> "$GITHUB_OUTPUT"
         echo "Found artifact ID: $MATCHING_ARTIFACT_ID (contains '$ENV_ARTIFACT_NAME')"
 
@@ -54,10 +54,10 @@ runs:
       run: |
         ARTIFACT_ID="${{ steps.get-artifact.outputs.artifact_id }}"
         ARTIFACT_URL="https://api.github.com/repos/${{ github.repository }}/actions/artifacts/${ARTIFACT_ID}/zip"
-        
+
         REDIRECT_URL=$(curl -L -s -o /dev/null -w "%{url_effective}" \
           -H "Authorization: Bearer ${{ github.token }}" \
           -H "Accept: application/vnd.github.v3+json" \
           "$ARTIFACT_URL")
-        
+
         curl -L -o artifact.zip "$REDIRECT_URL"
