@@ -123,13 +123,13 @@ If the same parameter key is set in multiple sources or levels, the Calculator u
 
 1. User-defined in [resource profile override](/docs/envgene-objects.md#resource-profile-override-in-instance) of the Environment Instance
 2. Calculator-generated at the service level
-3. User-defined at the [Application](/docs/envgene-objects.md#application) level of the Environment Instance
+3. User-defined at the [Application](/docs/envgene-objects.md#application) level in Environment Instance
 4. Calculator-generated at the application level
-5. User-defined at the [Namespace](/docs/envgene-objects.md#namespace) level of the Environment Instance
+5. User-defined at the [Namespace](/docs/envgene-objects.md#namespace) level in Environment Instance
 6. Calculator-generated at the namespace level
-7. User-defined at the [Cloud](/docs/envgene-objects.md#cloud) level of the Environment Instance
+7. User-defined at the [Cloud](/docs/envgene-objects.md#cloud) level in Environment Instance
 8. Calculator-generated at the cloud level
-9. User-defined at the [Tenant](/docs/envgene-objects.md#tenant) level of the Environment Instance
+9. User-defined at the [Tenant](/docs/envgene-objects.md#tenant) level in Environment Instance
 
 For example, if a user sets `BASELINE_PROJ` at the namespace level, this value will override the value calculated by the calculator. But if `BASELINE_PROJ` is set at the cloud level, the calculator's value will have higher priority.
 
