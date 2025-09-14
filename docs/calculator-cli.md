@@ -6,6 +6,7 @@
   - [Proposed Approach](#proposed-approach)
     - [Calculator CLI execution attributes](#calculator-cli-execution-attributes)
     - [Registry Configuration](#registry-configuration)
+    - [Solution Descriptor](#solution-descriptor)
     - [Effective Set v1.0](#effective-set-v10)
       - [\[Version 1.0\] Effective Set Structure](#version-10-effective-set-structure)
       - [\[Version 1.0\] deployment-parameters.yaml](#version-10-deployment-parametersyaml)
@@ -52,9 +53,6 @@
         - [\[Version 2.0\]\[Cleanup Context\] `parameters.yaml`](#version-20cleanup-context-parametersyaml)
         - [\[Version 2.0\]\[Cleanup Context\] `credentials.yaml`](#version-20cleanup-context-credentialsyaml)
         - [\[Version 2.0\]\[Cleanup Context\] `mapping.yml`](#version-20cleanup-context-mappingyml)
-    - [Macros](#macros)
-  - [Use Cases](#use-cases)
-    - [Effective Set Calculation](#effective-set-calculation)
 
 ## Requirements
 
@@ -62,15 +60,12 @@
 2. Calculator CLI must support [Effective Set version 2.0](#effective-set-v20) generation
 3. Calculator CLI must process [execution attributes](#calculator-cli-execution-attributes)
 4. Calculator CLI must not encrypt or decrypt sensitive parameters (credentials.yaml)
-5. Calculator CLI must resolve [macros](#macros)
+5. Calculator CLI must resolve [macros](/docs/template-macros.md#calculator-cli-macros)
 6. Calculator CLI should not process Parameter Sets
 7. Calculator CLI must not cast parameters type
 8. Calculator CLI must display reason of error
 9. Calculator CLI must must not lookup, download and process any artifacts from a registry
-10. The Calculator CLI must support loading and parsing SBOM files, extracting parameters for calculating the Effective Set
-    1. [Solution SBOM](/schemas/solution.sbom.schema.json)
-    2. [Application SBOM](/schemas/application.sbom.schema.json)
-    3. [Env Template SBOM](/schemas/env-template.sbom.schema.json)
+10. The Calculator CLI must support loading and parsing [Application SBOM](/schemas/application.sbom.schema.json), extracting parameters for calculating the Effective Set
 11. Calculator CLI should generate Effective Set for one environment no more than 1 minute
 12. The Calculator CLI must adhere to the [Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention) when compiling the application's service list.
 13. Parameters in all files of Effective Set must be sorted alphabetically
@@ -88,8 +83,8 @@ Below is a **complete** list of attributes
 |---|---|---|---|---|--|
 | `--env-id`/`-e` | string | yes | Environment ID in `<cluster-name>/<environment-name>` notation | N/A | `cluster/platform-00` |
 | `--envs-path`/`-ep` | string | yes | Path to `/environments` folder | N/A |  `/environments` |
-| `--sboms-path`/`-sp`| string | yes | Path to the folder with Application and Environment Template SBOMs. In Solution SBOM, the path to Application SBOM and Environment Template SBOM is specified relative to this folder. | N/A |`/sboms` |
-| `--solution-sbom-path`/`-ssp`| string | yes | Path to the Solution SBOM. | N/A | `/environments/cluster/platform-00/Inventory/solution-descriptor/solution.sbom.json` |
+| `--sboms-path`/`-sp`| string | yes | Path to the folder with Application SBOMs | N/A |`/sboms` |
+| `--sd-path`/`-sdp`| string | yes | Path to the Solution Descriptor | N/A | `/environments/cluster/platform-00/Inventory/solution-descriptor/sd.yaml` |
 | `--registries`/`-r`| string | yes | Path to the [registry configuration](#registry-configuration) | N/A | `/configuration/registry.yml` |
 | `--output`/`-o` | string | yes | Folder where the result will be put by Calculator CLI | N/A | `/environments/cluster/platform-00/effective-set` |
 | `--effective-set-version`/`-esv` | string | no | The version of the effective set to be generated. Available options are `v1.0` and `v2.0` | `v2.0` | `v1.0` |
@@ -101,7 +96,27 @@ Below is a **complete** list of attributes
 
 [Registry config JSON Schema](/schemas/registry.schema.json)
 
-[Registry config example](/schemas/registry.yml)
+[Registry config example](/examples/registry.yml)
+
+### Solution Descriptor
+
+The Calculator CLI uses the Solution Descriptor (SD) as the source of structure for generating the Effective Set: it determines which applications and in which namespaces/roles (deployPostfix) should be included.
+
+Parameters at the namespace, application, and service levels are calculated only for applications specified in the SD. All other objects from the Environment Instance that are not described in the SD are ignored and do not appear in the Effective Set.
+
+For example:
+
+1. If the Environment Instance contains a namespace X, but the SD does not have an application with the corresponding deployPostfix, the parameters of this namespace will not be included in the Effective Set.
+
+2. If the Environment Instance contains an application Y, but it is absent in the SD, the parameters of this application will also not be included in the Effective Set.
+
+In both cases, the generation of the Effective Set continues for the remaining applications specified in the SD.
+
+At the same time:
+
+If the SD contains an application with a deployPostfix corresponding to a namespace that does not exist in the Environment Instance, generation terminates with an error.
+
+If the SD contains an application that is absent in the Environment Instance, generation completes successfully, but without user-defined parameters for this application.
 
 ### Effective Set v1.0
 
@@ -1115,13 +1130,3 @@ The structure of this file is as follows:
 ##### \[Version 2.0][Cleanup Context] `mapping.yml`
 
 The contents of this file are identical to [mapping.yml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyml).
-
-### Macros
-
-TBD
-
-## Use Cases
-
-### Effective Set Calculation
-
-TBD
