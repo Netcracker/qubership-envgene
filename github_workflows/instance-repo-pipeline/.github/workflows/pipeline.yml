@@ -1,6 +1,3 @@
-# Important!
-# Please use your own runner and docker-images
-
 name: "EnvGene Execution"
 
 run-name: "EnvGene Execution - ${{ github.event.inputs.ENV_NAMES }}"
@@ -70,9 +67,9 @@ env:
 
   # Docker Images
   DOCKER_REGISTRY: 'ghcr.io/netcracker'
-  DOCKER_IMAGE_PIPEGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene:feature_update_instance_pipe_20250915-073907"
-  DOCKER_IMAGE_ENVGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene:feature_update_instance_pipe_20250915-073906"
-  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator:feature_update_instance_pipe_20250915-074007"
+  DOCKER_IMAGE_PIPEGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene:feature_enchance_creds_ansible_20250902-132735"
+  DOCKER_IMAGE_ENVGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene:feature_enchance_creds_ansible_20250902-134333"
+  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator:feature_enchance_creds_ansible_20250902-132827"
 
 jobs:
   process_environment_variables:
@@ -127,11 +124,11 @@ jobs:
            else
              echo "UI Mode: Processing manual inputs"
              echo "PIPELINE_MODE=MANUAL" >> $GITHUB_ENV
-
+             
              # Load pipeline_vars.yaml only in Manual Mode
              python .github/scripts/load_pipeline_vars.py
            fi
-
+           
       - name: Create env_generation_params
         run: |
           python .github/scripts/create_env_generation_params.py
@@ -160,7 +157,7 @@ jobs:
             echo "Parameters source: Manual inputs + pipeline_vars.yaml"
           fi
           echo ""
-
+          
           # Use dynamic variable display script
           python .github/scripts/display_pipeline_vars.py
 
@@ -188,20 +185,20 @@ jobs:
       - name: Repository Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare variables to work with artifacts
+      - name: Prepare Variables to Work With Packages
         run: |
           echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
           echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
 
-      - name: Generate inventory
+      - name: Generate Inventory
         run: |
           # Export all variables using unified exporter
           eval "$(.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
-
+          
           # All variables are now available from the unified exporter
           python3 /build_env/scripts/build_env/env_inventory_generation.py
 
-      - name: Upload package
+      - name: Upload Package
         uses: actions/upload-artifact@v4
         with:
           name: generate_inventory_${{ env.SANITIZED_NAME }}
@@ -227,18 +224,18 @@ jobs:
       - name: Repository Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare variables to download the previous step package
+      - name: Prepare Variables to Download the Previous Step Package
         run: |
           echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
           echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
 
-      - name: Create the naming for package
+      - name: Create the Naming for Package
         run: |
           if [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST }}" == "false" ] && ([ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
             echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
           fi
 
-      - name: Download package
+      - name: Download Package
         if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         uses: ./.github/actions/download_artifact
         with:
@@ -250,11 +247,11 @@ jobs:
         run: |
           # Export all variables using unified exporter
           eval "$(.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
-
+          
           # All variables are now available from the unified exporter
           python3 /module/creds_rotation_scripts/creds_rotation_handler.py
 
-      - name: Upload package
+      - name: Upload Package
         uses: actions/upload-artifact@v4
         with:
           name: credential_rotation_${{ env.SANITIZED_NAME }}
@@ -282,12 +279,12 @@ jobs:
       - name: Repository Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare variables to download the previous step package
+      - name: Prepare Variables to Download the Previous Step Package
         run: |
           echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
           echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
 
-      - name: Create the naming for package
+      - name: Create the Naming for Package
         run: |
           if [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST }}" == "false" ] && ([ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
             echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
@@ -296,7 +293,7 @@ jobs:
             echo "artifact_name=credential_rotation_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
           fi
 
-      - name: Download package
+      - name: Download Package
         if: (needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' && needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')) || needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         uses: ./.github/actions/download_artifact
         with:
@@ -308,12 +305,12 @@ jobs:
         run: |
           # Export all variables using unified exporter
           eval "$(.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
-
+          
           if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
           env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs");
           for path in $env_path; do bash /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/$path; done; fi
 
-          if [ "$ENV_TEMPLATE_VERSION" != "" ] && [ "$ENV_TEMPLATE_TEST" == "false" ]; then
+          if [ "$ENV_TEMPLATE_VERSION" != "" ] && [ "$ENV_TEMPLATE_TEST" != "true" ]; then
             /module/scripts/prepare.sh "set_template_version.yaml"
             /module/scripts/prepare.sh "build_env.yaml"
           else
@@ -335,7 +332,7 @@ jobs:
             fi
           done
 
-      - name: Upload package
+      - name: Upload Package
         uses: actions/upload-artifact@v4
         with:
           name: env_build_${{ env.SANITIZED_NAME }}
@@ -359,12 +356,12 @@ jobs:
       - name: Repository Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare variables to download the previous step package
+      - name: Prepare Variables to Download the Previous Step Package
         run: |
           echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
           echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
 
-      - name: Create the naming for package
+      - name: Create the Naming for Package
         run: |
           if [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST }}" == "false" ] && ([ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
             echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
@@ -376,7 +373,7 @@ jobs:
             echo "artifact_name=env_build_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
           fi
 
-      - name: Download package
+      - name: Download Package
         if: (needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')) || needs.process_environment_variables.outputs.ENV_BUILDER == 'true' || needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         uses: ./.github/actions/download_artifact
         with:
@@ -388,7 +385,7 @@ jobs:
         run: |
           # Export all variables using unified exporter
           eval "$(.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
-
+          
           # All variables are now available from the unified exporter
           echo "ENV_TEMPLATE_VERSION value: $ENV_TEMPLATE_VERSION"
 
@@ -398,7 +395,7 @@ jobs:
               bash /module/scripts/update_ca_cert.sh "${CI_PROJECT_DIR}/configuration/certs/$path"
             done
           fi
-
+          
           /module/scripts/prepare.sh "generate_effective_set.yaml"
 
           env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
@@ -408,7 +405,7 @@ jobs:
             fi
           done
 
-      - name: Upload package
+      - name: Upload Package
         uses: actions/upload-artifact@v4
         with:
           name: generate_effective_set_${{ env.SANITIZED_NAME }}
@@ -432,12 +429,12 @@ jobs:
       - name: Repository Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare variables to download the previous step package
+      - name: Prepare Variables to Download the Previous Step Package
         run: |
           echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
           echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
 
-      - name: Create the naming for package
+      - name: Create the Naming for Package
         run: |
           if [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST }}" == "false" ] && ([ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
             echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
@@ -452,7 +449,7 @@ jobs:
             echo "artifact_name=generate_effective_set_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
           fi
 
-      - name: Download package
+      - name: Download Package
         if: (needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')) || needs.process_environment_variables.outputs.ENV_BUILDER == 'true' || needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true' || needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         uses: ./.github/actions/download_artifact
         with:
@@ -464,7 +461,7 @@ jobs:
         run: |
           # Export all variables using unified exporter
           eval "$(.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
-
+          
           # All variables are now available from the unified exporter
           echo "Prepare git_commit job for ${ENVIRONMENT_NAME}..."
 
@@ -488,7 +485,7 @@ jobs:
 
           cp -rf ${CI_PROJECT_DIR}/environments ${CI_PROJECT_DIR}/git_envs
 
-      - name: Upload artifact
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: git_commit_${{ env.SANITIZED_NAME }}
