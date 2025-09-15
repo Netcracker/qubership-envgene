@@ -98,6 +98,7 @@ if [ -e gitlab-ci/prefix_build ]; then
 fi
 
 #Copying cred files modified as part of cred rotation job.
+
 CREDS_FILE="environments/credfilestoupdate.yml"
 if [ -f "$CREDS_FILE" ]; then
   echo "Processing $CREDS_FILE for copying filtered creds..."
@@ -105,10 +106,10 @@ if [ -f "$CREDS_FILE" ]; then
   mkdir -p /tmp/updated_creds
 
   while IFS= read -r file_path; do
-
+    echo "Credential file update for  $file_path"
     [[ -z "$file_path" || "$file_path" == \#* ]] && continue
 
-    if echo "$file_path" | grep -q "${CLUSTER_NAME}/${ENVIRONMENT_NAME}"; then
+    if echo "$file_path" | grep -q "${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"; then
       continue
     fi
 

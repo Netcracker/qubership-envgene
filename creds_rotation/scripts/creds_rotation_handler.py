@@ -5,9 +5,9 @@ from typing import List
 
 import envgenehelper.logger as logger
 from core_rotation import process_entry_in_payload
-from envgenehelper import crypt, getenv_with_error
+from envgenehelper import crypt
 from envgenehelper.errors import RuntimeError, ValidationError, ValueError
-from models import PayloadEntry, RotationResult
+from models import PayloadEntry, RotationResult, EnvConfig
 from utils.cred_utils import (
     collect_shared_credentials,
     decrypt_file,
@@ -19,6 +19,60 @@ from utils.cred_utils import (
 from utils.error_constants import *
 from utils.file_utils import scan_and_get_yaml_files, write_cred_file_path
 from utils.yaml_utils import convert_json_to_yaml, write_yaml_to_file
+
+def validate_env_vars(is_encrypted: bool, encrypt_type: str):
+    missing_params = []
+    values = {}
+    creds_path = "/tmp/payload.yml"
+    def check_env(var_name):
+        value = os.getenv(var_name)
+        if value is None or value.strip() == "":
+            missing_params.append(var_name)
+        else:
+            values[var_name] = value
+
+    # Always required
+    check_env("ENV_NAME")
+    check_env("CRED_ROTATION_FORCE")
+    check_env("CRED_ROTATION_PAYLOAD")
+    check_env("CLUSTER_NAME")
+    check_env("CI_PROJECT_DIR")
+
+    cred_payload = load_payload(values["CRED_ROTATION_PAYLOAD"])
+    payload_data = cred_payload
+    if is_encrypted:
+        if encrypt_type == "Fernet":
+            raise ValidationError(
+                ErrorMessages.INVALID_ENCRYPT_TYPE,
+                error_code=ErrorCodes.INVALID_CONFIG_CODE,
+            )
+        elif encrypt_type == "SOPS":
+            # Decrypt the Payload file if encrypted with SOPS
+            convert_json_to_yaml(creds_path, cred_payload)
+            payload_data = decrypt_file(
+                os.getenv("ENVGENE_AGE_PUBLIC_KEY"),
+                creds_path,
+                True,
+                "SOPS",
+                ErrorMessages.PAYLOAD_DECRYPT_ERROR,
+                ErrorCodes.INVALID_CONFIG_CODE,
+            )
+
+
+    if missing_params:
+        raise ValueError(
+            ErrorMessages.MISSING_ENV.format(params=missing_params),
+            error_code=ErrorCodes.INVALID_INPUT_CODE,
+        )
+
+    return EnvConfig(
+        env_name=values["ENV_NAME"],
+        envgene_age_public_key=values.get("ENVGENE_AGE_PUBLIC_KEY"),
+        creds_rotation_enabled=values["CRED_ROTATION_FORCE"] == "true",
+        payload_data=payload_data,
+        cluster_name=values["CLUSTER_NAME"],
+        work_dir=values["CI_PROJECT_DIR"]
+    )
 
 
 def load_payload(payload: str):
@@ -67,50 +121,20 @@ def load_payload(payload: str):
 
 def cred_rotation():
     start = time.time()
-    logger.info(f"CPU cores available: {os.cpu_count()}")
-    try:
-        env_name = getenv_with_error("ENV_NAME")
-        envgene_age_public_key = getenv_with_error("ENVGENE_AGE_PUBLIC_KEY")
-        creds_rotation_enabled = getenv_with_error("CRED_ROTATION_FORCE") == "true"
-
-        raw_payload = getenv_with_error("CRED_ROTATION_PAYLOAD")
-        cred_payload = load_payload(raw_payload)
-        cluster_name = getenv_with_error("CLUSTER_NAME")
-        work_dir = getenv_with_error("CI_PROJECT_DIR")
-    except Exception as e:
-        raise ValueError(
-            ErrorMessages.MISSING_ENV.format(e=str(e)),
-            error_code=ErrorCodes.INVALID_INPUT_CODE,
-        )
-
-    logger.info(f"Starting rotation for: CLUSTER={cluster_name}, WORKDIR={work_dir}")
-
     encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
+    config = validate_env_vars(is_encrypted, encrypt_type)
+    
+    logger.info(f"Starting rotation for: CLUSTER={config.cluster_name}, WORKDIR={config.work_dir}")
+ 
     logger.info(f"Detected encryption={is_encrypted}, type={encrypt_type}")
-    if is_encrypted and encrypt_type == "Fernet":
-        raise ValidationError(
-            ErrorMessages.INVALID_ENCRYPT_TYPE,
-            error_code=ErrorCodes.INVALID_CONFIG_CODE,
-        )
 
-    base_env_path = f"{work_dir}/environments/{cluster_name}/{env_name}"
-    cluster_path = f"{work_dir}/environments/{cluster_name}"
-    output_path = f"{work_dir}/affected-sensitive-parameters.yaml"
+    base_env_path = f"{config.work_dir}/environments/{config.cluster_name}/{config.env_name}"
+    cluster_path = f"{config.work_dir}/environments/{config.cluster_name}"
+    output_path = f"{config.work_dir}/affected-sensitive-parameters.yaml"
 
-    creds_path = "/tmp/payload.yml"
     logger.info(f"base env path is {base_env_path}")
-    convert_json_to_yaml(creds_path, cred_payload)
 
-    # Decrypt the Payload file if encrypted
-    payload_data = decrypt_file(
-        envgene_age_public_key,
-        creds_path,
-        True,
-        "SOPS",
-        ErrorMessages.PAYLOAD_DECRYPT_ERROR,
-        ErrorCodes.INVALID_CONFIG_CODE,
-    )
-
+   
     fileread = time.time()
     # Scan and read all required files
     entity_files_map, env_files_map, env_creds_files = scan_and_get_yaml_files(
@@ -118,14 +142,14 @@ def cred_rotation():
     )
     shared_creds = collect_shared_credentials(env_files_map)
     shared_content_map = read_shared_cred_files(
-        shared_creds, cluster_path, work_dir, is_encrypted, envgene_age_public_key
+        shared_creds, cluster_path, config.work_dir, is_encrypted, config.envgene_age_public_key
     )
     env_cred_map = read_env_cred_files(
-        env_creds_files, is_encrypted, envgene_age_public_key
+        env_creds_files, is_encrypted, config.envgene_age_public_key
     )
     logger.info(f"✅ Fileread Completed in {round(time.time() - fileread, 2)} seconds.")
 
-    payload_raw = payload_data.get("rotation_items", [])
+    payload_raw = config.payload_data.get("rotation_items", [])
     payload_objects: List[PayloadEntry] = [
         PayloadEntry.from_dict(entry) for entry in payload_raw
     ]
@@ -137,8 +161,8 @@ def cred_rotation():
         try:
             result = process_entry_in_payload(
                 entry,
-                env_name,
-                cluster_name,
+                config.env_name,
+                config.cluster_name,
                 shared_content_map,
                 env_cred_map,
                 entity_files_map,
@@ -155,7 +179,7 @@ def cred_rotation():
             ErrorMessages.EMPTY_PARAM, error_code=ErrorCodes.INVALID_STATE_CODE
         )
 
-    if not creds_rotation_enabled:
+    if not config.creds_rotation_enabled:
         logger.info(
             f"✅ Cred Rotation without file updation completed in {round(time.time() - start, 2)} seconds."
         )
@@ -168,10 +192,10 @@ def cred_rotation():
             processed_cred_and_files
         )
         write_updated_cred_into_file(
-            updated_content, original_content, is_encrypted, envgene_age_public_key
+            updated_content, original_content, is_encrypted, config.envgene_age_public_key
         )
         write_cred_file_path(
-            list(processed_cred_and_files.keys()), f"{work_dir}/environments"
+            list(processed_cred_and_files.keys()), f"{config.work_dir}/environments"
         )
     else:
         logger.error(
