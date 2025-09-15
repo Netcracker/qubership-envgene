@@ -73,7 +73,6 @@ class CredMap:
 @dataclass
 class EnvConfig:
     env_name: str
-    envgene_age_public_key: Optional[str] = None
     creds_rotation_enabled: bool = False
     payload_data: Dict[str, Any] = None
     cluster_name: str = ""

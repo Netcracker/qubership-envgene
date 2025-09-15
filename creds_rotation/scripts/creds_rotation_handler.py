@@ -50,7 +50,6 @@ def validate_env_vars(is_encrypted: bool, encrypt_type: str):
             # Decrypt the Payload file if encrypted with SOPS
             convert_json_to_yaml(creds_path, cred_payload)
             payload_data = decrypt_file(
-                os.getenv("ENVGENE_AGE_PUBLIC_KEY"),
                 creds_path,
                 True,
                 "SOPS",
@@ -67,7 +66,6 @@ def validate_env_vars(is_encrypted: bool, encrypt_type: str):
 
     return EnvConfig(
         env_name=values["ENV_NAME"],
-        envgene_age_public_key=values.get("ENVGENE_AGE_PUBLIC_KEY"),
         creds_rotation_enabled=values["CRED_ROTATION_FORCE"] == "true",
         payload_data=payload_data,
         cluster_name=values["CLUSTER_NAME"],
@@ -142,10 +140,10 @@ def cred_rotation():
     )
     shared_creds = collect_shared_credentials(env_files_map)
     shared_content_map = read_shared_cred_files(
-        shared_creds, cluster_path, config.work_dir, is_encrypted, config.envgene_age_public_key
+        shared_creds, cluster_path, config.work_dir, is_encrypted
     )
     env_cred_map = read_env_cred_files(
-        env_creds_files, is_encrypted, config.envgene_age_public_key
+        env_creds_files, is_encrypted
     )
     logger.info(f"✅ Fileread Completed in {round(time.time() - fileread, 2)} seconds.")
 
@@ -192,7 +190,7 @@ def cred_rotation():
             processed_cred_and_files
         )
         write_updated_cred_into_file(
-            updated_content, original_content, is_encrypted, config.envgene_age_public_key
+            updated_content, original_content, is_encrypted
         )
         write_cred_file_path(
             list(processed_cred_and_files.keys()), f"{config.work_dir}/environments"
