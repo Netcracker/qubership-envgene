@@ -116,7 +116,7 @@ if [ -f "$CREDS_FILE" ]; then
 
     [[ -z "$file_path" || "$file_path" == \#* ]] && continue
 
-    if echo "$file_path" | grep -q "${CLUSTER_NAME}/${ENVIRONMENT_NAME}"; then
+    if echo "$file_path" | grep -q "${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"; then
       continue
     fi
 
