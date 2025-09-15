@@ -50,17 +50,17 @@ def read_shared_cred_files(shared_creds: Set[str], cluster_dir: str, work_dir: s
     dirs_to_scan = [f'{work_dir}/environments', f'{work_dir}/environments/credentials', f'{work_dir}/environments/Credentials']
     allowed_exts = ('.yml', '.yaml', '.json')
     source_path = Path(cluster_dir).resolve()
-    scan_dir_for_creds(source_path, shared_creds, shared_creds_files_set, is_encrypted, public_key)
+    scan_dir_for_creds(source_path, shared_creds, shared_creds_files_set)
     files = [entry.path for d in dirs_to_scan if os.path.exists(d) for entry in os.scandir(d) if entry.is_file() and entry.name.endswith(allowed_exts) and os.path.splitext(entry.name)[0] in shared_creds]
     shared_creds_files_set.update(files)
     shared_content_map = read_env_cred_files(shared_creds_files_set, is_encrypted, public_key)
     return shared_content_map
 
 
-def scan_dir_for_creds(path: Path, shared_creds: set, shared_creds_files_set: List[str], is_encrypted: str, public_key: str):
+def scan_dir_for_creds(path: Path, shared_creds: set, shared_creds_files_set: List[str]):
     for entry in os.scandir(path):
         if entry.is_dir(follow_symlinks=False):
-            scan_dir_for_creds(Path(entry.path), shared_creds, shared_creds_files_set, is_encrypted, public_key)
+            scan_dir_for_creds(Path(entry.path), shared_creds, shared_creds_files_set)
         elif entry.is_file(follow_symlinks=False) and entry.name.endswith((".yml", ".yaml", ".json")):
             name_wo_ext = os.path.splitext(entry.name)[0]
             if name_wo_ext in shared_creds and entry.path not in shared_creds_files_set:
