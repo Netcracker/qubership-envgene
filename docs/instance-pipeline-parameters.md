@@ -25,6 +25,7 @@
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
+    - [`NS_BUILD_FILTER`](#ns_build_filter)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
@@ -422,6 +423,17 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 **Mandatory**: No
 
 **Example**: `true`
+
+### `NS_BUILD_FILTER`
+**Description**: It allows to generate or update only specific Namespaces without touching the others.
+
+See details in [Namespace Render Filtering](/docs/features/namespace-render-filtering.md)
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `${controller}`
 
 ## Deprecated Parameters
 
