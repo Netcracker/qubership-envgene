@@ -271,8 +271,11 @@ def handle_parameter_container(env_name, cluster_name, templates_dir, all_instan
                         for features in parameterContainer["features"]:
                             for key in source_parameters_yaml["features"][features]["parameters"]:
                                 merge_dict_key_with_comment(key, deployment_parameters, "value", source_parameters_yaml["features"][features]["parameters"][key], f'# parameterContainer "{source_file_name}", feature "{features}"')
-
+                logger.info(f"Before writing YAML for {namespace_path}:\n{yaml.dump(namespaces_yml, default_flow_style=False)}")
                 writeYamlToFile(namespace_path, namespaces_yml)
+                logger.info(f"Finished writing YAML for {namespace_path}")
+                
+
 
 
 def merge_template_parameters(template_yml, templates_dir, override_source=False):
