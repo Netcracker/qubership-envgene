@@ -63,9 +63,9 @@ env:
   ENVGENE_AGE_PRIVATE_KEY: ${{ secrets.ENVGENE_AGE_PRIVATE_KEY }}
 
   # Docker Images
-  DOCKER_IMAGE_PIPEGENE: 'ghcr.io/netcracker/qubership-pipegene:bugfix_remove_check_for_public_key_20250915-072257'
-  DOCKER_IMAGE_ENVGENE: 'ghcr.io/netcracker/qubership-envgene:bugfix_remove_check_for_public_key_20250915-072255'
-  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: 'ghcr.io/netcracker/qubership-effective-set-generator:bugfix_remove_check_for_public_key_20250915-072416'
+  DOCKER_IMAGE_PIPEGENE: 'ghcr.io/netcracker/qubership-pipegene:bugfix_remove_check_for_public_key_20250915-104038'
+  DOCKER_IMAGE_ENVGENE: 'ghcr.io/netcracker/qubership-envgene:bugfix_remove_check_for_public_key_20250915-104048'
+  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: 'ghcr.io/netcracker/qubership-effective-set-generator:bugfix_remove_check_for_public_key_20250915-104145'
 
 jobs:
   show_environment_variables:
