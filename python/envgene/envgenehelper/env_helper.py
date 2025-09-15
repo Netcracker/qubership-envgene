@@ -16,7 +16,6 @@ class Environment:
     env_path: str = field(init=False)
     inventory: dict = field(init=False)
     inventory_path: str = field(init=False)
-    # TODO better to add exact models for credentials, not dict
     creds: dict = field(init=False)
     creds_path: str = field(init=False)
 
