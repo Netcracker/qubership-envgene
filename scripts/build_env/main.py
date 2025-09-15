@@ -77,11 +77,11 @@ def handle_template_override(render_dir):
         logger.info(f"Processing override file: {file}")
 
         yaml_to_override = openYaml(template_path)
-        logger.debug(f"YAML BEFORE override:\n{yaml.dump(yaml_to_override)}")
+        logger.info(f"YAML BEFORE override:\n{yaml.dump(yaml_to_override)}")
 
         src = openYaml(file)
         merge_yaml_into_target(yaml_to_override, '', src)
-        logger.debug(f"YAML AFTER merge (before writeYamlToFile):\n{yaml.dump(yaml_to_override)}")
+        logger.info(f"YAML AFTER merge (before writeYamlToFile):\n{yaml.dump(yaml_to_override)}")
 
         # First write: check if this causes quoting
         writeYamlToFile(template_path, yaml_to_override)
@@ -89,7 +89,7 @@ def handle_template_override(render_dir):
         # Read file after first write to inspect formatting
         with open(template_path, 'r') as f:
             written_yaml = f.read()
-        logger.debug(f"YAML ON DISK after writeYamlToFile:\n{written_yaml}")
+        logger.info(f"YAML ON DISK after writeYamlToFile:\n{written_yaml}")
 
         template_path_stem = pathlib.Path(template_path).stem
         schema_path = ""
@@ -104,7 +104,7 @@ def handle_template_override(render_dir):
         # Read file again after beautify
         with open(template_path, 'r') as f:
             beautified_yaml = f.read()
-        logger.debug(f"YAML ON DISK after beautifyYaml:\n{beautified_yaml}")
+        logger.info(f"YAML ON DISK after beautifyYaml:\n{beautified_yaml}")
 
         deleteFile(file)
 
