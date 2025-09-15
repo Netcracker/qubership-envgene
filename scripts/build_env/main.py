@@ -68,20 +68,44 @@ def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, a
 
 def handle_template_override(render_dir):
     logger.info(f'start handle_template_override')
+    logger.info('Starting handle_template_override')
+
     all_files = findAllFilesInDir(render_dir, "ml_override")
+
     for file in all_files:
         template_path = file.replace("_override", "")
+        logger.info(f"Processing override file: {file}")
+
         yaml_to_override = openYaml(template_path)
+        logger.info(f"YAML BEFORE override:\n{yaml.dump(yaml_to_override)}")
+
         src = openYaml(file)
         merge_yaml_into_target(yaml_to_override, '', src)
+        logger.info(f"YAML AFTER merge (before writeYamlToFile):\n{yaml.dump(yaml_to_override)}")
+
+        # First write: check if this causes quoting
         writeYamlToFile(template_path, yaml_to_override)
+
+        # Read file after first write to inspect formatting
+        with open(template_path, 'r') as f:
+            written_yaml = f.read()
+        logger.info(f"YAML ON DISK after writeYamlToFile:\n{written_yaml}")
+
         template_path_stem = pathlib.Path(template_path).stem
         schema_path = ""
         if template_path_stem == 'cloud':
             schema_path = CLOUD_SCHEMA
         if template_path_stem == 'namespace':
             schema_path = NAMESPACE_SCHEMA
+
+        # Beautify: second point of interest
         beautifyYaml(template_path, schema_path)
+
+        # Read file again after beautify
+        with open(template_path, 'r') as f:
+            beautified_yaml = f.read()
+        logger.info(f"YAML ON DISK after beautifyYaml:\n{beautified_yaml}")
+
         deleteFile(file)
 
 
