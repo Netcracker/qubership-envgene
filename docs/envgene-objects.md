@@ -356,27 +356,24 @@ groupId: "org.qubership"
 
 This is a Jinja template file used to render the [BG Domain](#bg-domain) object for environments that use Blue-Green Domain (BGD) support.
 
-**Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
-
-[Macros](/docs/template-macros.md) are available for use when developing the template.
+**Location:** `/templates/env_templates/*/bg-domain.yml.j2`
 
 **Example:**
 
 ```yaml
-# BG Domain template with Jinja2 templating
 name: {{ current_env.environmentName ~ '-bg-domain' }}
 type: bgdomain
-origin:
+originNamespace:
   name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('origin-ns', current_env.environmentName ~ '-origin') }}
   type: namespace
-peer:
+peerNamespace:
   name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('peer-ns', current_env.environmentName ~ '-peer') }}
   type: namespace
-controller:
+controllerNamespace:
   name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}
   type: namespace
-  credentialsIs: ${creds.get("bgd-controller-token").secret}
-  url: {{ current_env.cloud_passport.bg_operator_url }}
+  credentialsId: ${creds.get("bgd-controller-token").secret}
+  url: https://controller-{{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}.{{ current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST}}
 ```
 
 ### System Credentials File (in Template repository)
@@ -654,18 +651,15 @@ satellites:
 
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `NS_BUILD_FILTER` parameter and BGD lifecycle management.
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support.
 
-The BG Domain object is generated during Environment Instance generation based on:
-- [BG Domain Template](#bg-domain-template)
-
-**Location:** `/environments/<cluster-name>/<env-name>/bg-domain.yml`
+The BG Domain object is generated during Environment Instance generation based on [BG Domain Template](#bg-domain-template)
 
 ```yaml
 # Mandatory
 # The name of the BG Domain object
 # Used to identify the BGD configuration
-name: <environment-name>-bg-domain
+name: <environment--bg-domain-name>
 # Mandatory
 # The type of the object
 # Always set to 'bgdomain' for BG Domain objects
@@ -673,7 +667,7 @@ type: bgdomain
 # Mandatory
 # Origin namespace definition
 # Used to define the currently active BGD namespace
-origin:
+originNamespace:
   # Mandatory
   # The name of the origin namespace
   # Used for BGD alias resolution and lifecycle operations
@@ -685,7 +679,7 @@ origin:
 # Mandatory
 # Peer namespace definition
 # Used to define the standby BGD namespace
-peer:
+peerNamespace:
   # Mandatory
   # The name of the peer namespace
   # Used for BGD alias resolution and lifecycle operations
@@ -697,7 +691,7 @@ peer:
 # Mandatory
 # Controller namespace definition
 # Used for BGD lifecycle management and coordination
-controller:
+controllerNamespace:
   # Mandatory
   # The name of the controller namespace
   # Used by BGD operations for lifecycle coordination
@@ -709,14 +703,35 @@ controller:
   # Mandatory
   # Credentials for accessing the BGD controller
   # Used for authentication with BG-Operator
-  credentialsIs: <bgd-controller-credentials>
+  credentialsId: <bgd-controller-credentials>
   # Mandatory
   # URL of the BG-Operator service
   # Used for BGD lifecycle operations
   url: <bg-operator-url>
 ```
 
+**Location:** `/environments/<cluster-name>/<env-name>/bg-domain.yml`
+
+**Example:**
+
+```yaml
+bg_domain:
+  name: env-1-bg-domain
+  type: bgdomain
+  originNamespace:
+    name: env-1-bss-origin
+    type: namespace
+  peerNamespace:
+    name: env-1-bss-peer
+    type: namespace
+  controllerNamespace:
+    name: env-1-controller
+    type: namespace
+    url: https://controller-env-1-controller.qubership.org
+```
+
 **BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
+
 - `${controller}` → controller namespace
 - `${origin}` → origin namespaces
 - `${peer}` → peer namespaces

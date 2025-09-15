@@ -1036,11 +1036,11 @@ environments:
 ```yaml
 cluster:
   # Taken from the `apiUrl` attribute of the Cloud
-  api_url: "api.cl-03.managed.qubership.cloud"
+  api_url: "api.cl-03.managed.qubership.org"
   # Taken from the `apiPort` attribute of the Cloud
   api_port: "6443"
   # Taken from the `publicUrl` attribute of the Cloud
-  public_url: "apps.cl-03.managed.qubership.cloud"
+  public_url: "apps.cl-03.managed.qubership.org"
   # Taken from the `protocol` attribute of the Cloud
   protocol: "https"
 ```
@@ -1053,24 +1053,24 @@ cluster:
 bg_domain:
   name: env-1-bg-domain
   type: bgdomain
-  origin:
+  originNamespace:
     name: env-1-bss-origin
     type: namespace
-  peer:
+  peerNamespace:
     name: env-1-bss-peer
     type: namespace
-  controller:
+  controllerNamespace:
     name: env-1-controller
     type: namespace
-    url: https://controller-env-1-controller.qubership.cloud
+    url: https://controller-env-1-controller.qubership.org
 ```
 
 **`credentials.yaml`**
 
 ```yaml
 bg_domain:
-  controller:
-    credentialsIs: 1234567890abcdefghijklmnopqrstuvwxyzABCDEF
+  controllerNamespace:
+    credentialsId: 1234567890abcdefghijklmnopqrstuvwxyzABCDEF
 ```
 
 #### [Version 2.0] Runtime Parameter Context
