@@ -66,23 +66,7 @@ def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, a
     return resulting_dir
 
 
-def handle_template_override(render_dir):
-    logger.info(f'start handle_template_override')
-    all_files = findAllFilesInDir(render_dir, "ml_override")
-    for file in all_files:
-        template_path = file.replace("_override", "")
-        yaml_to_override = openYaml(template_path)
-        src = openYaml(file)
-        merge_yaml_into_target(yaml_to_override, '', src)
-        writeYamlToFile(template_path, yaml_to_override)
-        template_path_stem = pathlib.Path(template_path).stem
-        schema_path = ""
-        if template_path_stem == 'cloud':
-            schema_path = CLOUD_SCHEMA
-        if template_path_stem == 'namespace':
-            schema_path = NAMESPACE_SCHEMA
-        beautifyYaml(template_path, schema_path)
-        deleteFile(file)
+extra quotes in key
 
 
 def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all_instances_dir, output_dir, g_template_version, work_dir) :
