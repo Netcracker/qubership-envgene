@@ -9,6 +9,7 @@ CRED_TYPE_VAULT="vaultAppRole"
 CRED_VALUE_TYPE_USERNAME = "username"
 CRED_VALUE_TYPE_PASSWORD = "password"
 CRED_VALUE_TYPE_SECRET = "secret"
+CONCEALED_SECRET_MASK = "*****"
 
 def check_is_cred(param_key, param_value):
     if isinstance(param_value, str):
@@ -161,3 +162,15 @@ def get_cred_id_and_property_from_cred_macros(value):
     else:
         logger.error(f"Can't obtain credId from: {value}")
         raise ReferenceError(f"Error during credentials preparation. See logs above.")
+
+
+def mask_sensitive(data: dict, keys_to_mask=(CRED_VALUE_TYPE_SECRET, CRED_VALUE_TYPE_PASSWORD, CRED_VALUE_TYPE_USERNAME)) -> dict:
+    masked = {}
+    for k, v in data.items():
+        if isinstance(v, dict):
+            masked[k] = mask_sensitive(v, keys_to_mask)
+        elif any(key in k.lower() for key in keys_to_mask):
+            masked[k] = CONCEALED_SECRET_MASK
+        else:
+            masked[k] = v
+    return masked
