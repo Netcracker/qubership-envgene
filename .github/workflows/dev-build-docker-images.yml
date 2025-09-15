@@ -184,7 +184,6 @@ jobs:
       - build-qubership-envgene
       - build-effective-set-generator
     if: |
-      always() &&
       (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipeline == 'true') ||
       (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     runs-on: ubuntu-latest
