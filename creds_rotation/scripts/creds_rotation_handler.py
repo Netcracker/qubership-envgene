@@ -194,6 +194,7 @@ def cred_rotation():
         write_updated_cred_into_file(
             updated_content, original_content, is_encrypted, config.envgene_age_public_key
         )
+        logger.info(f" the files are {processed_cred_and_files.keys()}")
         write_cred_file_path(
             list(processed_cred_and_files.keys()), f"{config.work_dir}/environments"
         )

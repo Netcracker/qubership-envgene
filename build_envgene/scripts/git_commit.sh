@@ -97,8 +97,16 @@ if [ -e gitlab-ci/prefix_build ]; then
     cp -r templates /tmp
 fi
 
-#Copying cred files modified as part of cred rotation job.
 CREDS_FILE="environments/credfilestoupdate.yml"
+##Temprorly added to debug
+if [ -n "$CREDS_FILE" ]; then
+  cat "$CREDS_FILE"
+else
+  echo "CREDS_FILE is not set"
+fi
+
+#Copying cred files modified as part of cred rotation job.
+
 if [ -f "$CREDS_FILE" ]; then
   echo "Processing $CREDS_FILE for copying filtered creds..."
 
