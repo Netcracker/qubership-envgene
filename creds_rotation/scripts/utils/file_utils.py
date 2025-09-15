@@ -120,5 +120,4 @@ def openJson(path: str) -> dict:
 def write_cred_file_path(cred_paths:  List[str], env_dir: str):
     with open(f"{env_dir}/credfilestoupdate.yml", "w") as f:
         for cred_path in cred_paths:
-            print(f"cred path i s{cred_path}")
             f.write(f"{trim_path_from_environments(cred_path)}\n")

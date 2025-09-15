@@ -97,23 +97,15 @@ if [ -e gitlab-ci/prefix_build ]; then
     cp -r templates /tmp
 fi
 
-CREDS_FILE="environments/credfilestoupdate.yml"
-##Temprorly added to debug
-if [ -n "$CREDS_FILE" ]; then
-  cat "$CREDS_FILE"
-else
-  echo "CREDS_FILE is not set"
-fi
-
 #Copying cred files modified as part of cred rotation job.
-
+CREDS_FILE="environments/credfilestoupdate.yml"
 if [ -f "$CREDS_FILE" ]; then
   echo "Processing $CREDS_FILE for copying filtered creds..."
 
   mkdir -p /tmp/updated_creds
 
   while IFS= read -r file_path; do
-
+    echo "Credential update for $file_path"
     [[ -z "$file_path" || "$file_path" == \#* ]] && continue
 
     if echo "$file_path" | grep -q "${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"; then
@@ -203,24 +195,12 @@ if [ -d /tmp/updated_creds ]; then
     find /tmp/updated_creds -type f | while read tmp_file; do
       rel_path="${tmp_file#/tmp/updated_creds/}"  # Remove the /tmp path prefix
       if [ -f "$rel_path" ]; then
-        echo "Overwriting $tmp_file with existing file: $rel_path"
+        echo "Copying file from $tmp_file to $rel_path"
         cp "$tmp_file" "$rel_path"
       else
         echo "Skipping: $rel_path does not exist in repo after pull"
       fi
     done
-fi
-
-if [ -d /tmp/updated_creds ]; then
-  find /tmp/updated_creds -type f | while read tmp_file; do
-    rel_path="${tmp_file#/tmp/updated_creds/}"  # Remove the /tmp path prefix
-    if [ -f "$rel_path" ]; then
-      echo "Overwriting $tmp_file with existing file: $rel_path"
-      cp "$tmp_file" "$rel_path"
-    else
-      echo "Skipping: $rel_path does not exist in repo after pull"
-    fi
-  done
 fi
 
 echo "Checking changes..."
