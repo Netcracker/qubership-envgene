@@ -77,11 +77,11 @@ def handle_template_override(render_dir):
         logger.info(f"Processing override file: {file}")
 
         yaml_to_override = openYaml(template_path)
-        logger.info(f"YAML BEFORE override:\n{yaml.dump(yaml_to_override)}")
+        logger.info(f"YAML BEFORE override:\n{yaml.safe_dump(yaml_to_override)}")
 
         src = openYaml(file)
         merge_yaml_into_target(yaml_to_override, '', src)
-        logger.info(f"YAML AFTER merge (before writeYamlToFile):\n{yaml.dump(yaml_to_override)}")
+        logger.info(f"YAML AFTER merge (before writeYamlToFile):\n{yaml.safe_dump(yaml_to_override)}")
 
         # First write: check if this causes quoting
         writeYamlToFile(template_path, yaml_to_override)
