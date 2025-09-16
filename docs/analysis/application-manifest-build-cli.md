@@ -176,7 +176,6 @@ components:
   # application/vnd.qubership.helm.chart
   - name: a-helm-chart
     mime-type: application/vnd.qubership.helm.chart
-    source: <a-job-id>
     depends-on:
       - a-docker-image
     helm-values-artifact-mappings:
@@ -185,7 +184,6 @@ components:
   # application/vnd.docker.image
   - name: a-docker-image
     mime-type: application/vnd.docker.image
-    source: <a-job-id>
 ```
 
 **Jaeger Example:**
@@ -201,7 +199,6 @@ components:
   # application/vnd.qubership.helm.chart
   - name: qubership-jaeger
     mime-type: application/vnd.qubership.helm.chart
-    source: <a-job-id>
     depends-on:
       - jaeger-cassandra-schema
       - jaeger
@@ -232,13 +229,11 @@ components:
     mime-type: application/vnd.docker.image
   - name: jaeger-readiness-probe
     mime-type: application/vnd.docker.image
-    source: <a-job-id>
   - name: example-hotrod
     mime-type: application/vnd.docker.image
     purl: pkg:docker/jaegertracing/example-hotrod:1.72.0?registryName=sandbox
   - name: jaeger-integration-tests
     mime-type: application/vnd.docker.image
-    source: <a-job-id>
   - name: jaeger-es-index-cleaner
     mime-type: application/vnd.docker.image
     purl: pkg:docker/jaegertracing/jaeger-es-index-cleaner:1.72.0?registryName=sandbox
@@ -253,10 +248,8 @@ components:
     purl: openjdk:11 ### ????
   - name: spark-dependencies-image
     mime-type: application/vnd.docker.image
-    source: <a-job-id>
   - name: qubership-deployment-status-provisioner
     mime-type: application/vnd.docker.image
-    source: <a-job-id>
 ```
 
 **QIP Example:**
