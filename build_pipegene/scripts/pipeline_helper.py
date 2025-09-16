@@ -33,7 +33,7 @@ class JobExtended(Job):
         return job_data
 
 def job_instance(params, vars, needs=None, rules=None):
-    timeout = os.getenv('RUNNER_SCRIPT_TIMEOUT', '10m')
+    timeout = getenv('RUNNER_SCRIPT_TIMEOUT', '10m')
     gitlab_runner_tag = vars.get('GITLAB_RUNNER_TAG_NAME')
     job = JobExtended(
         name=params['name'],
