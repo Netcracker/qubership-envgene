@@ -143,6 +143,8 @@ This config file defines the set of components in the application manifest, thei
 The config is stored in the application repository.
 
 ```yaml
+# Mandatory
+# Application Manifest == Application version
 version: 1.2.3
 components:
   - # Mandatory
