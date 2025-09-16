@@ -425,6 +425,7 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 **Example**: `true`
 
 ### `NS_BUILD_FILTER`
+
 **Description**: It allows to generate or update only specific Namespaces without touching the others.
 
 See details in [Namespace Render Filtering](/docs/features/namespace-render-filtering.md)
