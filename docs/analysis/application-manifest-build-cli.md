@@ -160,7 +160,8 @@ components:
     # Used to organize relationships between components
     depends-on:
       - component: <component-name>
-    # Optional. See "Artifact mappings for Helm charts" for details
+    # Optional
+    # See "Artifact mappings for Helm charts" for details
     helm-values-artifact-mappings:
       - artifact: <component-name>
         valuesPathPrefix: <path-or-dot>
