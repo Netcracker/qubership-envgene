@@ -67,9 +67,9 @@ env:
 
   # Docker Images
   DOCKER_REGISTRY: 'ghcr.io/netcracker'
-  DOCKER_IMAGE_PIPEGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene:feature_update_instance_pipe_20250915-121638"
-  DOCKER_IMAGE_ENVGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene:feature_update_instance_pipe_20250915-121647"
-  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator:feature_update_instance_pipe_20250915-121806"
+  DOCKER_IMAGE_PIPEGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene:feature_update_instance_pipe_20250916-081107"
+  DOCKER_IMAGE_ENVGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene:feature_update_instance_pipe_20250916-081100"
+  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator:feature_update_instance_pipe_20250916-081224"
 
 jobs:
   process_environment_variables:
