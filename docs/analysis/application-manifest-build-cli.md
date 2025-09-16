@@ -138,23 +138,26 @@ flowchart TD
 
 ## Application Manifest Build Config
 
-This file defines which services and components make up application and how each component is linked to its build job and artifact in your CI/CD pipeline.
+This config file defines the set of components in the application manifest, their relationships, parameter sources, and additional attributes. It serves as an input for the AM build CLI.
 
-- Lists all services and their components to be included in the AM
-- Maps each component to the CI/CD job and artifact that produces it
-
-The config should be stored in application repository
+The config is stored in the application repository.
 
 ```yaml
 version: 1.2.3
 components:
+  - # Mandatory
+    # Component name
+    name: <component-name>
     # Mandatory
-  - name: <component-name>
-    # Mandatory
+    # Component mime-type
     mime-type: enum [ application/vnd.qubership.standalone-runnable, application/vnd.docker.image, application/vnd.qubership.helm.chart ]
     # Optional
+    # If specified, the component's attributes should be collected from an external artifact.
+    # Used when the AM is generated for an already built artifact that is NOT built within the same pipeline as the AM.
+    # Applicable for application/vnd.docker.image and application/vnd.qubership.helm.chart.
     purl: pkg:<type>/<group>/<name>:<version>?registryName=<registry-id>
     # Optional
+    # Used to organize relationships between components
     depends-on:
       - component: <component-name>
     # Optional. See "Artifact mappings for Helm charts" for details
@@ -381,7 +384,7 @@ An abstract component necessary to link artifacts of different types together
 | `bom-ref`                     | string | yes       | None                                           | Unique component identifier within the AM  |
 | `type`                        | string | yes       | `application`                                  | Component type                             |
 | `mime-type`                   | string | yes       | `application/vnd.qubership.standalone-runnable`| Component MIME type                        |
-| `name`                        | string | yes       | None                                           | Service name                               |
+| `name`                        | string | yes       | None                                           | Component name                             |
 | `components`                  | array  | no        | `[]`                                           | Always `[]`                                |
 
 | Child Component            | Type    | Mandatory | Default                               | Description                                                                 |
