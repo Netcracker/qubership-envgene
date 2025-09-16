@@ -23,15 +23,6 @@
 - Набор параметров должен быть стандартизован
 - Набор параметров должен соответствовать типу артефакта
 
-<!-- ## Use Cases -->
-
-<!-- 1. `application/vnd.qubership.standalone-runnable` depends on ONE `application/vnd.qubership.helm.chart`
-2. `application/vnd.qubership.standalone-runnable` depends on MULTIPLE  `application/vnd.qubership.helm.chart`
-3. `application/vnd.qubership.standalone-runnable` depends on ONE `application/vnd.qubership.helm.chart`. `application/vnd.qubership.helm.chart` without `qubership:helm.values.artifactMappings` depends on ONE `application/vnd.docker.image`
-4. `application/vnd.qubership.standalone-runnable` depends on ONE `application/vnd.qubership.helm.chart`. `application/vnd.qubership.helm.chart` without `qubership:helm.values.artifactMappings` depends on MULTIPLE `application/vnd.docker.image` (not valid)
-5. `application/vnd.qubership.standalone-runnable` depends on ONE `application/vnd.qubership.helm.chart`. `application/vnd.qubership.helm.chart` with `qubership:helm.values.artifactMappings` depends on ONE `application/vnd.docker.image`
-6. `application/vnd.qubership.standalone-runnable` depends on ONE `application/vnd.qubership.helm.chart`. `application/vnd.qubership.helm.chart` with `qubership:helm.values.artifactMappings` depends on MULTIPLE `application/vnd.docker.image` -->
-
 ## Proposed Approach
 
 Предлагается для формирования таких параметров использовать аппликейшен манифест, который будет содержать:
