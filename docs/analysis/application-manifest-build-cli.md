@@ -178,12 +178,14 @@ components:
   - name: a-standalone-runnable
     mime-type: application/vnd.qubership.standalone-runnable
     depends-on:
-      - a-helm-chart
+      - name: a-helm-chart
+        mime-type: application/vnd.qubership.helm.chart
   # application/vnd.qubership.helm.chart
   - name: a-helm-chart
     mime-type: application/vnd.qubership.helm.chart
     depends-on:
-      - a-docker-image
+      - name: a-docker-image
+        mime-type: application/vnd.docker.image
     helm-values-artifact-mappings:
       - artifact: a-docker-image
         valuesPathPrefix: .
