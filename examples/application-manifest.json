@@ -106,9 +106,7 @@
           }
         }
       ],
-      "components": [
-        
-      ]
+      "components": []
     },
     {
       "bom-ref": "a-docker-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",

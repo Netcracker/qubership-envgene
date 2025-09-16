@@ -42,12 +42,12 @@
 
 ### Динамические параметры артифактов
 
-Использовать аттрибут `qubership:helm.values.artifactMappings` компонента `application/vnd.qubership.helm.chart` аппликейшен манифеста, который описывает идентификатор артифакта (`artifactRef`) и ключ в структуре helm values (`valuesYamlPath`) под который будут помещены параметры, описывающие артифакт:
+Использовать аттрибут `qubership:helm.values.artifactMappings` компонента `application/vnd.qubership.helm.chart` аппликейшен манифеста, который описывает идентификатор артифакта (`artifactRef`) и ключ в структуре helm values (`valuesPathPrefix`) под который будут помещены параметры, описывающие артифакт:
 
 ```json
 {
    "jaeger:80f031da-024c-4748-a1b9-d548a3dd030f": {
-      "valuesYamlPath": "jaeger.main"
+      "valuesPathPrefix": "jaeger.main"
       }
 }
 ```
@@ -56,7 +56,7 @@
 - name в Charts.yaml должен совпадать с name артифакта чарта
 - Каждый докер имадж должен в АМ должен быть связан хотя бы с одним хелм чартом
 - `qubership:helm.values.artifactMappings` обязательный аттрибут для `application/vnd.qubership.helm.chart`
-- дефолтное значение `valuesYamlPath` - `.`
+- дефолтное значение `valuesPathPrefix` - `.`
 
 ![artifactMappings.drawio.png](/docs/images/artifactMappings.drawio.png)
 
@@ -65,14 +65,14 @@
 1. Для каждого `application/vnd.qubership.standalone-runnable` найти депенд компоненты которые non-child `application/vnd.qubership.helm.chart`
 2. Для каждого такого `application/vnd.qubership.helm.chart` найти депенд компоненты, которые [`application/vnd.docker.image`]
 3. Для каждого такого [`application/vnd.docker.image`]
-   1. Найти значение `valuesYamlPath` по `artifactRef` в аттрибуте `qubership:helm.values.artifactMappings` компонента `application/vnd.qubership.helm.chart`
-   2. Добавить параметры [`application/vnd.docker.image`] (набор параметров зависит от mime-type) **под ключ `valuesYamlPath`** в
+   1. Найти значение `valuesPathPrefix` по `artifactRef` в аттрибуте `qubership:helm.values.artifactMappings` компонента `application/vnd.qubership.helm.chart`
+   2. Добавить параметры [`application/vnd.docker.image`] (набор параметров зависит от mime-type) **под ключ `valuesPathPrefix`** в
          - `/deployment/<deployPostfix>/<runnable-name>/values/per-service-parameters/<non-child-normalized-chart-name>/deployment-parametrs.yaml`
          - `/deployment/<deployPostfix>/<runnable-name>/values/deploy-descriptor.yaml`
 4. Для каждого такого `application/vnd.qubership.helm.chart` найти нестед компоненты, которые `application/vnd.qubership.helm.chart`
 5. Для каждого такого нестед `application/vnd.qubership.helm.chart` найти депенд компоненты, которые [`application/vnd.docker.image`]
-   1. Найти значение `valuesYamlPath` по `artifactRef` в аттрибуте `qubership:helm.values.artifactMappings` компонента `application/vnd.qubership.helm.chart`
-   2. Добавить параметры [`application/vnd.docker.image`] (набор параметров зависит от mime-type) **под ключ `<child-chart-name>`.`valuesYamlPath`** в
+   1. Найти значение `valuesPathPrefix` по `artifactRef` в аттрибуте `qubership:helm.values.artifactMappings` компонента `application/vnd.qubership.helm.chart`
+   2. Добавить параметры [`application/vnd.docker.image`] (набор параметров зависит от mime-type) **под ключ `<child-chart-name>`.`valuesPathPrefix`** в
          - `/deployment/<deployPostfix>/<runnable-name>/values/per-service-parameters/<non-child-normalized-chart-name>/deployment-parametrs.yaml`
          - `/deployment/<deployPostfix>/<runnable-name>/values/deploy-descriptor.yaml`
 

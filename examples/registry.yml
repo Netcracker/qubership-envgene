@@ -12,7 +12,7 @@ registry-2:
   snapshotRepository: "https://nexus.qubership.org/mvn.snapshot"
   stagingRepository: "https://nexus.qubership.org/mvn.staging"
   proxyRepository: "https://nexus.qubership.org/mvn.proxy"
-sandbox:
+registry:
   username: envgen.creds.get('nexus-cred').username
   password: envgen.creds.get('nexus-cred').password
   DockerConfig:
