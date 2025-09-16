@@ -106,6 +106,12 @@
         _current_env_dir: "{{ current_env_dir }}"
         _template: "{{ current_env_template.cloud }}"
 
+    - name: Cleanup namespaces to keep it free from stale data
+      ansible.builtin.include_role:
+        name: cleanup_namespaces
+      vars:
+        _current_env_dir: "{{ current_env_dir }}"
+
     - name: Gen namespaces
       ansible.builtin.include_role:
         name: generate_namespaces

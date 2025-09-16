@@ -1,0 +1,25 @@
+- name: Find all directories under Namespaces recursively
+  ansible.builtin.find:
+    paths: "{{ _current_env_dir }}/Namespaces"
+    file_type: directory
+    recurse: yes
+  register: found_dirs
+
+- name: Debug log - directories to delete
+  ansible.builtin.debug:
+    msg: |
+      Deleting directories:
+      {{ found_dirs.files | map(attribute='path') | join('\n') }}
+  when: found_dirs.matched > 0
+
+- name: Delete all directories inside Namespaces
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: absent
+  loop: "{{ found_dirs.files }}"
+  when: found_dirs.matched > 0
+
+- name: Debug log - deletion completed
+  ansible.builtin.debug:
+    msg: "Deleted all directories inside {{ _current_env_dir }}/Namespaces"
+  when: found_dirs.matched > 0

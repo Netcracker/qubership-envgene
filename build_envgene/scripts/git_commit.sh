@@ -216,7 +216,6 @@ if [ -d /tmp/updated_creds ]; then
 fi
 
 echo "Checking changes..."
-# Stage all changes including deletions and new files
 git add -A
 diff_status=0
 git diff --cached --exit-code || diff_status=$?
