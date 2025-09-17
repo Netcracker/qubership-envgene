@@ -22,6 +22,7 @@ import jakarta.inject.Inject;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.qubership.cloud.devops.cli.exceptions.DirectoryCreateException;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SBApplicationDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
@@ -31,6 +32,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
 
 @ApplicationScoped
 @Slf4j
@@ -77,6 +80,7 @@ public class FileSystemUtils {
                         Path cleanupPath = getFileFromGivenPath(data.getOutputDir(), "cleanup", app.getNamespace()).toPath();
                         Files.createDirectories(cleanupPath);
                     } catch (IOException e) {
+                        logError(String.format("Directory creation exception %s", ExceptionUtils.getStackTrace(e)));
                         throw new DirectoryCreateException("Error creating directory for application "+app.getAppName()+" due to "+e.getMessage());
                     }
 
