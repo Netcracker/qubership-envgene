@@ -24,6 +24,7 @@ import jakarta.inject.Inject;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.model.Component;
 import org.json.JSONArray;
@@ -60,6 +61,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.qubership.cloud.devops.cli.constants.GenericConstants.*;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
 
 
 @ApplicationScoped
@@ -114,6 +116,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             populateEnvironments();
             fileSystemUtils.createEffectiveSetFolder(solutionDescriptor.getApplications());
         } catch (Exception e) {
+            logError(String.format("Failed process dir/files %s", ExceptionUtils.getStackTrace(e)));
             throw new FileParseException("Error preparing data due to " + e.getMessage());
         }
 
@@ -162,7 +165,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         try {
             Files.walkFileTree(basePath, new SimpleFileVisitor<>() {
                 @Override
-                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                     if (dir.equals(basePath)) {
                         return FileVisitResult.CONTINUE;
                     }
@@ -173,7 +176,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 }
 
                 @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                     if (file.toString().endsWith(GenericConstants.YAML_EXT) || file.toString().endsWith(GenericConstants.YML_EXT)) {
                         handleNamespaceYamlFile(file, clusterMap);
                     }
@@ -183,6 +186,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             });
             inputData.setClusterMap(prepareEnvMap(clusterMap));
         } catch (Exception e) {
+            logError(String.format("Failure in reading input Directory populateEnvironments %s", ExceptionUtils.getStackTrace(e)));
             throw new FileParseException("Failure in reading input Directory", e);
         }
 
@@ -263,6 +267,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 }
             });
         } catch (Exception e) {
+            logError(String.format("Failure in reading input Directory traverseSourceDirectory %s", ExceptionUtils.getStackTrace(e)));
             throw new FileParseException("Failure in reading input Directory", e);
         }
     }

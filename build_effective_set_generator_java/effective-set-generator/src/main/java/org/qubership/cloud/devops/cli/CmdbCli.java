@@ -17,6 +17,7 @@
 package org.qubership.cloud.devops.cli;
 
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.qubership.cloud.devops.cli.parser.CliParameterParser;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.repository.implementation.FileDataRepositoryImpl;
@@ -63,7 +64,7 @@ public class CmdbCli implements Callable<Integer> {
             logInfo("Total Time taken : "+ timeElapsed.toMillis() +" milliseconds");
             return 0;
         } catch (Exception e) {
-            logError(String.format(EFFECTIVE_SET_FAILED, e.getMessage()));
+            logError(String.format(EFFECTIVE_SET_FAILED, ExceptionUtils.getStackTrace(e)));
             log.debug("stack trace="+e);
             return 1;
         }
