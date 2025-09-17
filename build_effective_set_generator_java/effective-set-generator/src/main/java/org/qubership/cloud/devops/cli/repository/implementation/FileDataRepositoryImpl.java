@@ -18,7 +18,6 @@ package org.qubership.cloud.devops.cli.repository.implementation;
 
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.apache.commons.collections4.CollectionUtils;
@@ -62,6 +61,7 @@ import java.util.stream.Collectors;
 
 import static org.qubership.cloud.devops.cli.constants.GenericConstants.*;
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logInfo;
 
 
 @ApplicationScoped
@@ -108,6 +108,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         try {
             Map<String, List<String>> nsWithAppsFromSD = new HashMap<>();
             Set<String> appsToProcess = new HashSet<>();
+            printSourceFiles(sourceDir);
             loadSDData(nsWithAppsFromSD, appsToProcess);
             SolutionBomDTO solutionDescriptor = inputData.getSolutionBomDTO();
             loadRegistryData();
@@ -120,6 +121,25 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             throw new FileParseException("Error preparing data due to " + e.getMessage());
         }
 
+    }
+
+    private void printSourceFiles(String sourceDir) throws IOException{
+        logInfo("Printing files and directories under source folder: " + sourceDir);
+        Path path = Paths.get(sourceDir); // change to your path
+
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                logInfo("File: " + file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                logInfo("Directory: " + dir);
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     private void loadConsumerData() {
