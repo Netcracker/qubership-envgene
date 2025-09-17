@@ -15,7 +15,6 @@
     - [QIP](#qip)
   - [Application Manifest Build Config](#application-manifest-build-config)
     - [`helm-values-artifact-mappings` Processing](#helm-values-artifact-mappings-processing)
-  - [Output Transformer](#output-transformer)
   - [Application Manifest Structure](#application-manifest-structure)
     - [Metadata](#metadata)
     - [Components](#components)
@@ -151,8 +150,8 @@ components:
     # Component name
     name: <component-name>
     # Mandatory
-    # Component mime-type
-    mime-type: enum [ application/vnd.qubership.standalone-runnable, application/vnd.docker.image, application/vnd.qubership.helm.chart ]
+    # Component mimeType
+    mimeType: enum [ application/vnd.qubership.standalone-runnable, application/vnd.docker.image, application/vnd.qubership.helm.chart ]
     # Optional
     # If specified, the component's attributes should be collected from an external artifact.
     # Used when the AM is generated for an already built artifact that is NOT built within the same pipeline as the AM.
@@ -160,13 +159,12 @@ components:
     purl: pkg:<type>/<group>/<name>:<version>?registryName=<registry-id>
     # Optional
     # Used to organize relationships between components
-    depends-on:
+    dependsOn:
       - component: <component-name>
-    # Optional
-    # See "Artifact mappings for Helm charts" for details
-    helm-values-artifact-mappings:
-      - artifact: <component-name>
-        valuesPathPrefix: <path-or-dot>
+        mimeType: <mime-type>
+        # Optional
+        # See "Artifact mappings for Helm charts" for details
+        valuesPathPrefix: <path-or-dot>       
 ```
 
 **Simple Example:**
@@ -176,22 +174,19 @@ version: 1.2.3
 components:
   # application/vnd.qubership.standalone-runnable
   - name: a-standalone-runnable
-    mime-type: application/vnd.qubership.standalone-runnable
-    depends-on:
+    mimeType: application/vnd.qubership.standalone-runnable
+    dependsOn:
       - name: a-helm-chart
-        mime-type: application/vnd.qubership.helm.chart
+        mimeType: application/vnd.qubership.helm.chart
   # application/vnd.qubership.helm.chart
   - name: a-helm-chart
-    mime-type: application/vnd.qubership.helm.chart
-    depends-on:
+    mimeType: application/vnd.qubership.helm.chart
+    dependsOn:
       - name: a-docker-image
-        mime-type: application/vnd.docker.image
-    helm-values-artifact-mappings:
-      - artifact: a-docker-image
-        valuesPathPrefix: .
+        mimeType: application/vnd.docker.image
   # application/vnd.docker.image
   - name: a-docker-image
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
 ```
 
 **Jaeger Example:**
@@ -201,63 +196,79 @@ version: 1.2.3
 components:
   # application/vnd.qubership.standalone-runnable
   - name: cassandra
-    mime-type: application/vnd.qubership.standalone-runnable
-    depends-on:
-      - qubership-jaeger
+    mimeType: application/vnd.qubership.standalone-runnable
+    dependsOn:
+      - name: qubership-jaeger
+        mimeType: application/vnd.qubership.helm.chart
   # application/vnd.qubership.helm.chart
   - name: qubership-jaeger
-    mime-type: application/vnd.qubership.helm.chart
-    depends-on:
-      - jaeger-cassandra-schema
-      - jaeger
-      - jaeger-readiness-probe
-      - example-hotrod
-      - jaeger-integration-tests
-      - jaeger-es-index-cleaner
-      - jaeger-es-rollover
-      - envoy
-      - openjdk
-      - spark-dependencies-image
-      - qubership-deployment-status-provisioner
-    helm-values-artifact-mappings:
-      - artifact: jaeger
-        valuesPathPrefix: jaeger.main
-      - artifact: jaeger-cassandra-schema
-        valuesPathPrefix: jaeger.cassandra.schema
-      - artifact: example-hotrod
-        valuesPathPrefix: examples.hotrod
+    mimeType: application/vnd.qubership.helm.chart
+    dependsOn:
+      - name: jaeger-cassandra-schema
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: cassandraSchema
+      - name: jaeger
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: jaeger
+      - name: jaeger-readiness-probe
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: readinessProbe
+      - name: example-hotrod
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: exampleHotrod
+      - name: jaeger-integration-tests
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: integrationTests
+      - name: jaeger-es-index-cleaner
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: elasticsearch.indexCleaner
+      - name: jaeger-es-rollover
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: elasticsearch.rollover
+      - name: envoy
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: proxy
+      - name: openjdk
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: .
+      - name: spark-dependencies-image
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: spark
+      - name: qubership-deployment-status-provisioner
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: statusProvisioner
   # application/vnd.docker.image
   - name: jaeger-cassandra-schema
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
     purl: pkg:docker/jaegertracing/jaeger-cassandra-schema:1.72.0?registryName=sandbox
   - name: jaeger
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
     purl: pkg:docker/jaegertracing/jaeger:2.9.0?registryName=sandbox
   - name: jaeger-readiness-probe
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
   - name: jaeger-readiness-probe
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
   - name: example-hotrod
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
     purl: pkg:docker/jaegertracing/example-hotrod:1.72.0?registryName=sandbox
   - name: jaeger-integration-tests
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
   - name: jaeger-es-index-cleaner
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
     purl: pkg:docker/jaegertracing/jaeger-es-index-cleaner:1.72.0?registryName=sandbox
   - name: jaeger-es-rollover
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
     purl: pkg:docker/jaegertracing/jaeger-es-rollover:1.72.0?registryName=sandbox
   - name: envoy
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
     purl: pkg:docker/envoyproxy/envoy:v1.32.6?registryName=sandbox
   - name: openjdk
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
     purl: openjdk:11 ### ????
   - name: spark-dependencies-image
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
   - name: qubership-deployment-status-provisioner
-    mime-type: application/vnd.docker.image
+    mimeType: application/vnd.docker.image
 ```
 
 **QIP Example:**
@@ -276,15 +287,15 @@ For components with `mime-type: application/vnd.qubership.helm.chart`, you can d
 Notes:
 
 - The CLI will resolve `artifact` to the artifact component's identifier and emit AM attribute `qubership:helm.values.artifactMappings` accordingly
-- Ensure the Helm chart component declares `depends-on` to each referenced artifact component
+- Ensure the Helm chart component declares `dependsOn` to each referenced artifact component
 
-## Output Transformer
+<!-- ## Output Transformer
 
 The output transformer must obtain information from the built artifact OR build job artifact.
 
 The output transformer must produce the same output for a specific `mime-type` regardless of the action used to build the component.
 
-Below are the supported `mime-type` values:
+Below are the supported `mime-type` values: -->
 
 <!-- ### `application/vnd.docker.image`
 
@@ -384,38 +395,38 @@ Describes BOM metadata.
 
 An abstract component necessary to link artifacts of different types together
 
-| Attribute                     | Type   | Mandatory | Default                                        | Description                                |
-|-------------------------------|--------|-----------|------------------------------------------------|--------------------------------------------|
-| `bom-ref`                     | string | yes       | None                                           | Unique component identifier within the AM  |
-| `type`                        | string | yes       | `application`                                  | Component type                             |
-| `mime-type`                   | string | yes       | `application/vnd.qubership.standalone-runnable`| Component MIME type                        |
-| `name`                        | string | yes       | None                                           | Component name                             |
-| `components`                  | array  | no        | `[]`                                           | Always `[]`                                |
+| Attribute                  | Type   | Mandatory | Default                                        | Description                                |
+|----------------------------|--------|-----------|------------------------------------------------|--------------------------------------------|
+| `bom-ref`                  | string | yes       | None                                           | Unique component identifier within the AM  |
+| `type`                     | string | yes       | `application`                                  | Component type                             |
+| `mime-type`                | string | yes       | `application/vnd.qubership.standalone-runnable`| Component MIME type                        |
+| `name`                     | string | yes       | None                                           | Component name                             |
+| `components`               | array  | yes       | `[]`                                           | List of child components. See bellow       |
 
-| Child Component            | Type    | Mandatory | Default                               | Description                                                                 |
-|----------------------------|---------|-----------|---------------------------------------|-----------------------------------------------------------------------------|
-| `components[0]`            | object  | no        | None                                  | Child `application/vnd.qubership.resource-profile-baseline` component              |
+| Child Component            | Type   | Mandatory | Default                               | Description                                                                 |
+|----------------------------|--------|-----------|---------------------------------------|-----------------------------------------------------------------------------|
+| `components[0]`            | object | no        | None                                  | Child `application/vnd.qubership.resource-profile-baseline` component       |
 
 #### [Components] `application/vnd.qubership.resource-profile-baseline`
 
 Describes a set of sized resource profile baselines that are embedded into the AM as configuration data entries.
 
-| Attribute                  | Type   | Mandatory | Default                                               | Description                                                    |
-|----------------------------|--------|-----------|-------------------------------------------------------|----------------------------------------------------------------|
-| `bom-ref`                  | string | yes       | None                                                  | Unique component identifier within the AM                      |
-| `type`                     | string | yes       | `data`                                                | Component type                                                 |
-| `mime-type`                | string | yes       | `application/vnd.qubership.resource-profile-baseline` | Component MIME type                                            |
-| `name`                     | string | yes       | `resource-profile-baselines`                          | Logical name of the bundle                                     |
-| `properties`               | array  | no        | `[]`                                                  | Always `[]`                                                    |
-| `components`               | array  | no        | `[]`                                                  | Always `[]`                                                    |
-| `data`                     | array  | yes       | `[]`                                                  | List of configuration entries (see below)                      |
-| `data[n].type`             | string | yes       | `configuration`                                       | Entry type                                                     |
-| `data[n].name`             | string | yes       | None                                                  | Filename of the baseline, e.g. `small.yaml`, `dev.yaml`        |
-| `data[n].contents`         | object | yes       | None                                                  | Wrapper for the attachment                                     |
-| `contents.attachment`      | object | yes       | None                                                  | Embedded file payload                                          |
-| `attachment.contentType`   | string | yes       | None                                                  | MIME of payload, e.g. `application/yaml`, `application/json`   |
-| `attachment.encoding`      | string | yes       | `base64`                                              | Encoding of the payload                                        |
-| `attachment.content`       | string | yes       | None                                                  | Base64-encoded file contents                                   |
+| Attribute                          | Type   | Mandatory | Default                                               | Description                                                    |
+|------------------------------------|--------|-----------|-------------------------------------------------------|----------------------------------------------------------------|
+| `bom-ref`                          | string | yes       | None                                                  | Unique component identifier within the AM                      |
+| `type`                             | string | yes       | `data`                                                | Component type                                                 |
+| `mime-type`                        | string | yes       | `application/vnd.qubership.resource-profile-baseline` | Component MIME type                                            |
+| `name`                             | string | yes       | `resource-profile-baselines`                          | Logical name of the bundle                                     |
+| `properties`                       | array  | yes       | `[]`                                                  | Always `[]`                                                    |
+| `components`                       | array  | yes       | `[]`                                                  | Always `[]`                                                    |
+| `data`                             | array  | yes       | None                                                  | List of configuration entries (see below)                      |
+| `data[n].type`                     | string | yes       | `configuration`                                       | Entry type                                                     |
+| `data[n].name`                     | string | yes       | None                                                  | Filename of the baseline, e.g. `small.yaml`, `dev.yaml`        |
+| `data[n].contents`                 | object | yes       | None                                                  | Wrapper for the attachment                                     |
+| `data[n].contents.attachment`      | object | yes       | None                                                  | Embedded file payload                                          |
+| `data[n].attachment.contentType`   | string | yes       | None                                                  | MIME of payload, e.g. `application/yaml`, `application/json`   |
+| `data[n].attachment.encoding`      | string | yes       | `base64`                                              | Encoding of the payload                                        |
+| `data[n].attachment.content`       | string | yes       | None                                                  | Base64-encoded file contents                                   |
 
 > [!NOTE]
 >
@@ -432,10 +443,10 @@ Describes Docker image as an artifact
 | `type`          | string | yes       | `container`                    | Component type                                                       |
 | `mime-type`     | string | yes       | `application/vnd.docker.image` | Component MIME type                                                  |
 | `name`          | string | yes       | None                           | Docker image name                                                    |
-| `group`         | string | yes       | `""`                           | Group or namespace for the image (empty string if none)              |
+| `group`         | string | yes       | None                           | Group or namespace for the image (empty string if none)              |
 | `version`       | string | yes       | None                           | Docker image version (tag)                                           |
 | `purl`          | string | yes       | None                           | Package URL (PURL) for the image                                     |
-| `hashes`        | array  | yes       | `[]`                           | List of hashes for the image (empty array if none)                   |
+| `hashes`        | array  | yes       | None                           | List of hashes for the image (empty array if none)                   |
 | `hashes.alg`    | string | yes       | None                           | Hash algorithm, e.g., "SHA-256" (required if hash present)           |
 | `hashes.content`| string | yes       | None                           | Hash value as a hex string (required if hash present)                |
 
@@ -443,34 +454,28 @@ Describes Docker image as an artifact
 
 Root components of this type describe Helm Chart artifact, nested helm charts describe abstract helm charts (this is necessary to properly form values.yaml)
 
-| Attribute                  | Type    | Mandatory | Default                               | Description                                                                 |
-|----------------------------|---------|-----------|---------------------------------------|-----------------------------------------------------------------------------|
-| `bom-ref`                  | string  | yes       | None                                  | Unique component identifier within the AM                                   |
-| `type`                     | string  | yes       | `application`                         | Component type                                                              |
-| `mime-type`                | string  | yes       | `application/vnd.qubership.helm.chart`| Component MIME type                                                         |
-| `name`                     | string  | yes       | None                                  | Helm chart name                                                             |
-| `version`                  | string  | yes       | None                                  | Helm chart version                                                          |
-| `purl`                     | string  | no        | `""`                                  | Package URL (PURL) for the image  |
-| `hashes`                   | array   | no        | `[]`                                  | List of hashes for the chart (empty array if none)     |
-| `hashes.alg`               | string  | yes       | None                                  | Hash algorithm, e.g., "SHA-256" (required if hash present)                  |
-| `hashes.content`           | string  | yes       | None                                  | Hash value as a hex string (required if hash present)                       |
-| `properties`               | array   | yes       | None                                  | List of additional properties                                               |
-| `properties[n].name`       | string  | yes       | `isLibrary`                           | Set to `isLibrary`                                                          |
-| `properties[n].value`      | boolean | yes       | None                                  | Indicates if the chart is a library chart                                   |
-| `properties[n].name`       | string  | no        | `qubership:helm.values.artifactMappings` | Mapping name used to bind artifacts to values  )     |
-| `properties[n].value`      | object  | no        | `{}`                                  | Object mapping `<artifact-ref> -> { valuesPathPrefix }`                     |
-| `components`               | array   | no        | `[]`                                  | Nested components. May include values schema data and/or nested charts      |
+| Attribute                  | Type    | Mandatory | Default                                  | Description                                                                 |
+|----------------------------|---------|-----------|------------------------------------------|-----------------------------------------------------------------------------|
+| `bom-ref`                  | string  | yes       | None                                     | Unique component identifier within the AM                                   |
+| `type`                     | string  | yes       | `application`                            | Component type                                                              |
+| `mime-type`                | string  | yes       | `application/vnd.qubership.helm.chart`   | Component MIME type                                                         |
+| `name`                     | string  | yes       | None                                     | Helm chart name                                                             |
+| `version`                  | string  | yes       | None                                     | Helm chart version                                                          |
+| `purl`                     | string  | no        | None                                     | Package URL (PURL) for the chart                                            |
+| `hashes`                   | array   | no        | None                                     | List of hashes for the chart (empty array if none)                          |
+| `hashes.alg`               | string  | yes       | None                                     | Hash algorithm, e.g., "SHA-256" (required if hash present)                  |
+| `hashes.content`           | string  | yes       | None                                     | Hash value as a hex string (required if hash present)                       |
+| `properties`               | array   | yes       | None                                     | List of additional properties                                               |
+| `properties[n].name`       | string  | yes       | `isLibrary`                              | Set to `isLibrary`                                                          |
+| `properties[n].value`      | boolean | yes       | None                                     | Indicates if the chart is a library chart                                   |
+| `properties[n].name`       | string  | no        | `qubership:helm.values.artifactMappings` | Mapping name used to bind artifacts to values                               |
+| `properties[n].value`      | object  | no        | `{}`                                     | Object mapping `<artifact-ref> -> { valuesPathPrefix }`                     |
+| `components`               | array   | no        | `[]`                                     | Nested components. May include values schema data and/or nested charts      |
 
 | Child Component            | Type    | Mandatory | Default                               | Description                                                                 |
 |----------------------------|---------|-----------|---------------------------------------|-----------------------------------------------------------------------------|
 | `components[0]`            | object  | no        | None                                  | Child `application/vnd.qubership.helm.values.schema` component              |
 | `components[n]`            | object  | no        | None                                  | Child Helm chart; MIME: `application/vnd.qubership.helm.chart`              |
-
-> [!NOTE]
->
-> - Examples show `properties` include `isLibrary` and optionally `qubership:helm.values.artifactMappings` (object mapping). `isUmbrella`/`alias` are not present in provided examples.
-> - Examples include a `data` child with `mime-type: application/vnd.qubership.helm.values.schema` carrying `values.schema.json` as base64.
-> - When modeling umbrella charts with nested child charts, use `components[n].mime-type = application/vnd.qubership.helm.chart` and omit `purl`/`hashes` on nested charts.
 
 #### [Components] `application/vnd.qubership.helm.values.schema`
 
