@@ -190,7 +190,6 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir, ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
     # building env
     handle_parameter_container(env_name, cluster_name, templates_dir, all_instances_dir, getAbsPath(render_dir))
-    
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir, env_specific_resource_profile_map, all_instances_dir)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir)
     validate_appregdefs(render_dir, env_name)
