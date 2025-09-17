@@ -160,5 +160,9 @@ public class PlainLanguage extends AbstractLanguage {
         processNamespaceAppConfigServer(result);
         return processMap(result);
     }
+    @Override
+    public Map<String, Parameter> processParameters(Map<String, String> parameters) {
+        return new HashMap<>();
+    }
 
 }

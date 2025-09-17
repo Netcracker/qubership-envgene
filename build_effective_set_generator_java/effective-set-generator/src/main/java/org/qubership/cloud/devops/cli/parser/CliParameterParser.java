@@ -31,11 +31,13 @@ import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
 import org.qubership.cloud.devops.commons.exceptions.ConsumerFileProcessingException;
 import org.qubership.cloud.devops.commons.exceptions.CreateWorkDirException;
 import org.qubership.cloud.devops.commons.exceptions.NotFoundException;
+import org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO;
 import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
 import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.SecretCredentialsDTO;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
+import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1;
@@ -155,6 +157,7 @@ public class CliParameterParser {
         if (parameterBundle.getSecuredE2eParams() == null) {
             parameterBundle.setSecuredE2eParams(new HashMap<>());
         }
+        processBgDomainParameters();
         createTopologyFiles(k8TokenMap);
         createE2EFiles(parameterBundle);
         createConsumerFiles(parameterBundle);
@@ -171,6 +174,18 @@ public class CliParameterParser {
         createCleanupFiles(parameterBundle, namespace);
     }
 
+    private void processBgDomainParameters() {
+        Map<String, String> parameters = new HashMap<>();
+        BgDomainEntityDTO bgDomainEntityDTO = inputData.getBgDomainEntityDTO();
+        if (bgDomainEntityDTO != null && bgDomainEntityDTO.getControllerNamespace().getCredentialsId() != null) {
+            parameters.put("bg_credId", bgDomainEntityDTO.getControllerNamespace().getCredentialsId());
+            Map<String, Object> processedParameters = parametersServiceV2.getProcessedParameters(parameters);
+            if (MapUtils.isNotEmpty(processedParameters)) {
+                bgDomainEntityDTO.getControllerNamespace().setCredentialsId(String.valueOf(processedParameters.get("bg_credId")));
+            }
+        }
+    }
+
     private void createCleanupFiles(ParameterBundle parameterBundle, String namespace) throws IOException {
         String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespace);
         fileDataConverter.writeToFile(parameterBundle.getCleanupParameters(), cleanupDir, "parameters.yaml");
@@ -181,14 +196,24 @@ public class CliParameterParser {
         Map<String, Object> topologyParams = new TreeMap<>();
         Map<String, Object> topologySecuredParams = new TreeMap<>();
         Map<String, Object> clusterParameterMap = getClusterMap();
-        topologyParams.put("composite_structure", fileDataConverter.getObjectMap(inputData.getCompositeStructureDTO()));
+        topologyParams.put("composite_structure", getObjectMap(inputData.getCompositeStructureDTO()));
         topologyParams.put("environments", inputData.getClusterMap());
         topologyParams.put("cluster", clusterParameterMap);
         topologySecuredParams.put("k8s_tokens", k8TokenMap);
+        Map<String, Object> bgDomainMap = getObjectMap(inputData.getBgDomainEntityDTO());
+        Map<String, Object> bgDomainSecureMap = new LinkedHashMap<>();
+        Map<String, Object> bgDomainParamsMap = new LinkedHashMap<>();
+        ParameterUtils.splitBgDomainParams(bgDomainMap, bgDomainSecureMap, bgDomainParamsMap);
+        topologySecuredParams.put("bg_domain", bgDomainSecureMap);
+        topologyParams.put("bg_domain", bgDomainParamsMap);
         String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
         fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
         fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
 
+    }
+
+    private <T> Map<String, Object> getObjectMap(T input) {
+        return fileDataConverter.getObjectMap(input != null ? input : new HashMap<>());
     }
 
     private Map<String, Object> getClusterMap() {

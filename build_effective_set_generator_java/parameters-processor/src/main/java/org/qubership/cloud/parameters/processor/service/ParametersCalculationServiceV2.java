@@ -92,6 +92,11 @@ public class ParametersCalculationServiceV2 {
         return parameterBundle;
     }
 
+    public Map<String, Object> getProcessedParameters(Map<String, String> parameters) {
+        Map<String, Parameter> processedParameters = parametersProcessor.processParameters(parameters);
+        return ParametersProcessor.convertParameterMapToObject(processedParameters);
+    }
+
     private static void processPerServiceParams(Params parameters, ParameterBundle parameterBundle) {
         Parameter parameter = parameters.getDeployParams().get(PER_SERVICE_DEPLOY_PARAMS);
         if (parameter.getValue() == null) {

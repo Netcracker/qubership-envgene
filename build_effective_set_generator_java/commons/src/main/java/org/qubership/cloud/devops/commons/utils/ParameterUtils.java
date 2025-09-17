@@ -17,11 +17,14 @@
 package org.qubership.cloud.devops.commons.utils;
 
 import lombok.experimental.UtilityClass;
+import org.apache.commons.collections4.MapUtils;
 
 import java.util.*;
 
 @UtilityClass
 public class ParameterUtils {
+
+    public static final String CONTROLLER_NAMESPACE = "controllerNamespace";
 
     @SuppressWarnings("unchecked")
     public static void splitBySecure(
@@ -111,6 +114,19 @@ public class ParameterUtils {
                 .build();
     }
 
+    public static void splitBgDomainParams(Map<String, Object> bgDomainMap,
+                                           Map<String, Object> bgDomainSecureMap,
+                                           Map<String, Object> bgDomainParamsMap) {
+        if (MapUtils.isEmpty(bgDomainMap)) {
+            return;
+        }
+        bgDomainParamsMap.putAll(bgDomainMap);
+        Map<String, Object> controller = (Map<String, Object>) bgDomainParamsMap.get(CONTROLLER_NAMESPACE);
+        Object credentialsId = controller.remove("credentialsId");
+        bgDomainParamsMap.put("controllerNamespace", controller);
+        bgDomainSecureMap.put(CONTROLLER_NAMESPACE, Map.of("credentialsId", credentialsId));
+
+    }
 }
 
 
