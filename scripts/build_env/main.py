@@ -66,8 +66,6 @@ def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, a
     return resulting_dir
 
 
-import io
-
 def handle_template_override(render_dir):
     logger.info(f'start handle_template_override')
     logger.info('Starting handle_template_override')
@@ -192,7 +190,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir, ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
     # building env
     handle_parameter_container(env_name, cluster_name, templates_dir, all_instances_dir, getAbsPath(render_dir))
-
+    
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir, env_specific_resource_profile_map, all_instances_dir)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir)
     validate_appregdefs(render_dir, env_name)
@@ -283,46 +281,92 @@ def validate_parameter_files(param_files):
 
 
 def handle_parameter_container(env_name, cluster_name, templates_dir, all_instances_dir, render_dir):
-    logger.info(f'start handle_parameter_container')
+    logger.info(f"➡️ Start handling parameter containers for env: {env_name}, cluster: {cluster_name}")
+
+    # Get environment directories and template name
     env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
     env_definition_yaml = getEnvDefinition(env_dir)
     template_name = env_definition_yaml["envTemplate"]["name"]
-    logger.info(f'handle "{template_name}" template')
-    template_file = findYamls(f'{templates_dir}/env_templates', f'{template_name}.y')
+    logger.info(f'📦 Using template: "{template_name}"')
 
-    for file in template_file:
+    template_files = findYamls(f'{templates_dir}/env_templates', f'{template_name}.y')
+
+    for file in template_files:
+        logger.info(f'🔍 Processing template file: {file}')
         template_yml = openYaml(file)
+
         merge_template_parameters(template_yml, templates_dir, True)
-        namespaces = template_yml["namespaces"]
+
+        namespaces = template_yml.get("namespaces", [])
         for namespace in namespaces:
-            if "parameterContainer" in namespace:
-                namespace_path_name = namespace["template_path"].split("/")[-1]
-                namespace_path_name = namespace_path_name.split(".")[0]
-                namespace_path = f'{render_dir}/{env_name}/Namespaces/{namespace_path_name}/namespace.yml'
-                namespaces_yml = openYaml(namespace_path)
-                deployment_parameters = namespaces_yml["deployParameters"]
+            if "parameterContainer" not in namespace:
+                continue
 
-                for parameterContainer in namespace["parameterContainer"]:
-                    if parameterContainer["source"]["name"] == "":
-                        source_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',
-                                                           f'source/{parameterContainer["override"]["name"]}.y')
-                        source_file_name = extractNameFromFile(source_parameters_path[0])
-                    else:
-                        source_file_name = parameterContainer["source"]["name"].split(":")[0]
-                        source_file_version = parameterContainer["source"]["name"].split(":")[1]
-                        source_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',f'source/{source_file_name}-{source_file_version}.y')
-                    source_parameters_yaml = openYaml(source_parameters_path[0])
+            namespace_file = namespace["template_path"].split("/")[-1].split(".")[0]
+            namespace_path = os.path.join(render_dir, env_name, "Namespaces", namespace_file, "namespace.yml")
+            logger.info(f'📄 Loading namespace YAML: {namespace_path}')
 
-                    if "base" in source_parameters_yaml:
-                        for key in source_parameters_yaml["base"]["parameters"]:
-                            merge_dict_key_with_comment(key, deployment_parameters, "value", source_parameters_yaml["base"]["parameters"][key], f'# parameterContainer "{source_file_name}", base')
+            namespaces_yml = openYaml(namespace_path)
+            deployment_parameters = namespaces_yml.setdefault("deployParameters", {})
 
-                    if "features" in parameterContainer:
-                        for features in parameterContainer["features"]:
-                            for key in source_parameters_yaml["features"][features]["parameters"]:
-                                merge_dict_key_with_comment(key, deployment_parameters, "value", source_parameters_yaml["features"][features]["parameters"][key], f'# parameterContainer "{source_file_name}", feature "{features}"')
+            for parameter_container in namespace["parameterContainer"]:
+                source_name = parameter_container["source"]["name"]
+                override_name = parameter_container["override"]["name"]
 
-                writeYamlToFile(namespace_path, namespaces_yml)
+                if source_name == "":
+                    # No version specified, fallback to override name
+                    source_path = findYamls(f'{templates_dir}/parameters_containers/', f'source/{override_name}.y')
+                    source_file_name = extractNameFromFile(source_path[0])
+                else:
+                    # Split into name and version
+                    source_file_name, source_version = source_name.split(":")
+                    source_path = findYamls(
+                        f'{templates_dir}/parameters_containers/',
+                        f'source/{source_file_name}-{source_version}.y'
+                    )
+
+                logger.info(f'🧩 Merging parameters from container: {source_file_name}')
+                source_yaml = openYaml(source_path[0])
+
+                # Merge base parameters
+                if "base" in source_yaml:
+                    for key, value in source_yaml["base"].get("parameters", {}).items():
+                        logger.debug(f'🔧 Merging base parameter: {key} = {value}')
+                        merge_dict_key_with_comment(
+                            key,
+                            deployment_parameters,
+                            "value",
+                            value,
+                            f'# parameterContainer "{source_file_name}", base'
+                        )
+
+                # Merge feature parameters
+                for feature in parameter_container.get("features", []):
+                    feature_params = source_yaml.get("features", {}).get(feature, {}).get("parameters", {})
+                    for key, value in feature_params.items():
+                        logger.debug(f'🔧 Merging feature "{feature}" parameter: {key} = {value}')
+                        merge_dict_key_with_comment(
+                            key,
+                            deployment_parameters,
+                            "value",
+                            value,
+                            f'# parameterContainer "{source_file_name}", feature "{feature}"'
+                        )
+
+            # 🔍 Dump before writing to file
+            stream = io.StringIO()
+            yaml.dump(namespaces_yml, stream)
+            logger.info(f'📤 YAML BEFORE writing to file {namespace_path}:\n{stream.getvalue()}')
+
+            writeYamlToFile(namespace_path, namespaces_yml)
+            try:
+    with open(namespace_path, 'r') as f:
+        written_content = f.read()
+    logger.info(f'📄 YAML AFTER writing to {namespace_path}:\n{written_content}')
+except Exception as e:
+    logger.error(f'❌ Failed to read back YAML file at {namespace_path}: {e}')
+
+    logger.info("✅ Finished handling parameter containers.")
 
 
 def merge_template_parameters(template_yml, templates_dir, override_source=False):
