@@ -123,7 +123,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
 
     }
 
-    private void printSourceFiles(String sourceDir) throws IOException{
+    private void printSourceFiles(String sourceDir) throws IOException {
         logInfo("Printing files and directories under source folder: " + sourceDir);
         Path path = Paths.get(sourceDir); // change to your path
 
@@ -280,8 +280,6 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                         });
                         inputData.setNamespaceDTOMap(namespaceMap);
 
-                    } else if (currentFolder.equals(basePath.getFileName().toString())) {
-                        inputData.setCloudDTO(inputData.getCloudDTO().toBuilder().applications(cloudApps).build());
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -290,6 +288,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             logError(String.format("Failure in reading input Directory traverseSourceDirectory %s", ExceptionUtils.getStackTrace(e)));
             throw new FileParseException("Failure in reading input Directory", e);
         }
+        inputData.setCloudDTO(inputData.getCloudDTO().toBuilder().applications(cloudApps).build());
     }
 
     private void handleNamespaceYamlFile(Path file, Map<String, List<NamespacePrefixDTO>> clusterMap) {
