@@ -1,4 +1,6 @@
 import pytest
+
+from github_actions import prepare_input_params
 from main import perform_generation
 from envgenehelper import getAbsPath, openYaml, dump_as_yaml_format
 import os
@@ -70,4 +72,5 @@ def test_build_pipeline(pipeline_vars, expected_sequence):
     result = openYaml("generated-config.yml")
     err_msg = f"Stages after generation should be: {dump_as_yaml_format(expected_sequence)}\nenv_template_version: {pipeline_vars['ENV_TEMPLATE_VERSION']}"
     assert result["stages"] == expected_sequence, err_msg
+    prepare_input_params()
     # os.remove("generated-config.yml")

@@ -226,6 +226,7 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
     full_sd_from_pipe = multiply_sds_to_single(transformed_data)
 
     sd_path = base_sd_path.joinpath("sd.yaml")
+    sd_delta_path = base_sd_path.joinpath("delta_sd.yaml")
     if effective_merge_mode == MergeType.REPLACE:
         logger.info("Inside replace")
         if helper.check_file_exists(sd_path):
@@ -235,13 +236,14 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(sd_path))
         helper.writeYamlToFile(sd_path, full_sd_from_pipe)
+        if helper.check_file_exists(sd_delta_path):
+            helper.deleteFile(sd_delta_path)
         logger.info(f"Replaced existing SD with new data at: {sd_path}")
     else:
-        sd_delta_path = base_sd_path.joinpath("delta_sd.yaml")
-        helper.writeYamlToFile(sd_delta_path, full_sd_from_pipe)
         if not helper.check_file_exists(sd_path):
             helper.writeYamlToFile(sd_path, full_sd_from_pipe)
         else:
+            helper.writeYamlToFile(sd_delta_path, full_sd_from_pipe)
             # Call merge_sd with correct merge function
             selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
             if not selected_merge_function:
