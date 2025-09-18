@@ -11,7 +11,7 @@ import re
 CONTEXT_MAP = {
     "deployment": "deployParameters",
     "pipeline": "e2eParameters",
-    "runtime": "technicalconfigurationparameters"
+    "runtime": "technicalConfigurationParameters"
 }
 
 REVERSE_CONTEXT_MAP = {
@@ -165,7 +165,7 @@ def get_affected_param_map(
                 application=app,
                 context=resolve_context(context),
                 parameter_key=key,
-                environment_cred_filepath=trim_path_from_environments(env_cred_files),
+                environment_cred_filepath=[trim_path_from_environments(p) for p in env_cred_files],
                 shared_cred_filepath=[trim_path_from_environments(p) for p in shared_cred_files],
                 cred_id=cred_id
             )
@@ -174,16 +174,15 @@ def get_affected_param_map(
     return result
 
 
-def search_yaml_files(search_string: str, entity_files_map: Dict[str, Dict[str, Any]], cred_id: str, cluster_name: str, shared_cred_files: List[str], env_cred_file: str, target_key: str,
+def search_yaml_files(search_string: str, entity_files_map: Dict[str, Dict[str, Any]], cred_id: str, cluster_name: str, shared_cred_files: List[str], env_cred_files : List[str], target_key: str,
  target_context: str, target_file: str) -> List[AffectedParameter]:
     affected: List[AffectedParameter] = []
 
     for filename, content in entity_files_map.items():
-
         is_target = filename == target_file
         matches = find_in_yaml(content, search_string, is_target, target_key, target_context)
         if matches:
             affected.extend(get_affected_param_map(
-            cred_id, cluster_name, shared_cred_files, env_cred_file, filename, content, matches, entity_files_map
+            cred_id, cluster_name, shared_cred_files, env_cred_files, filename, content, matches, entity_files_map
             ))
     return affected
