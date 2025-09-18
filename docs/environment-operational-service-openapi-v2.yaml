@@ -1,0 +1,270 @@
+---
+openapi: 3.1.0
+paths:
+  /inventory-service/v1/auth-status:
+    get:
+      responses:
+        "200":
+          description: OK
+      summary: Get Auth Status
+      tags:
+      - Cluster Resources Rest
+  /inventory-service/v1/clusters:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClusterDTO"
+      summary: Get Clusters
+      tags:
+      - Cluster Resources Rest
+  /inventory-service/v1/clusters/{clusterName}:
+    post:
+      parameters:
+      - name: clusterName
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+        required: true
+      responses:
+        "201":
+          description: Created
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Save Cluster
+      tags:
+      - Cluster Resources Rest
+      security:
+      - SecurityScheme:
+        - admin
+  /inventory-service/v1/environments:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnvironmentDTO"
+      summary: Get Environments
+      tags:
+      - Cluster Resources Rest
+  /inventory-service/v1/environments/{envId}:
+    post:
+      parameters:
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                owner:
+                  type: string
+                description:
+                  type: string
+                status:
+                  type: string
+                labels:
+                  type: array
+                  items:
+                    type: string
+                type:
+                  type: string
+                team:
+                  type: string
+                deploymentStatus:
+                  type: string
+                ticketLinks:
+                  type: string
+                expirationDate:
+                  type: string
+        required: true
+      responses:
+        "201":
+          description: Created
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Save Environment
+      tags:
+      - Cluster Resources Rest
+      security:
+      - SecurityScheme:
+        - admin
+    delete:
+      parameters:
+      - name: envId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          description: Not Authorized
+        "403":
+          description: Not Allowed
+      summary: Delete Environment
+      tags:
+      - Cluster Resources Rest
+      security:
+      - SecurityScheme:
+        - admin
+  /inventory-service/v1/metadata:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ApplicationMetadata"
+      summary: Get Metadata
+      tags:
+      - Cluster Resources Rest
+  /inventory-service/v1/tick:
+    post:
+      responses:
+        "201":
+          description: Created
+      summary: Load Environments Manually
+      tags:
+      - Cluster Resources Rest
+components:
+  schemas:
+    ApplicationMetadata:
+      type: object
+      properties:
+        monitoringColumns:
+          type: array
+          items:
+            type: string
+    ClusterDTO:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        synced:
+          type: boolean
+    DeploymentStatus:
+      type: string
+      enum:
+      - DEPLOYED
+      - FAILED
+      - IN_PROGRESS
+      - NOT_STARTED
+    EnvironmentDTO:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "Уникальный идентификатор объекта"
+        name:
+          type: string
+          description: "Имя энвайрмента в <cluster>"
+        namespaces:
+          type: array
+          items:
+            $ref: "#/components/schemas/NamespaceDTO"
+        cluster:
+          $ref: "#/components/schemas/ClusterDTO"
+        owner:
+          type: string
+        team:
+          type: string
+        status:
+          $ref: "#/components/schemas/EnvironmentStatus"
+        expirationDate:
+          $ref: "#/components/schemas/LocalDate"
+        type:
+          $ref: "#/components/schemas/EnvironmentType"
+        labels:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        deploymentVersion:
+          type: string
+        cleanInstallationDate:
+          $ref: "#/components/schemas/Instant"
+        monitoringData:
+          type: object
+          additionalProperties:
+            type: string
+        deploymentStatus:
+          $ref: "#/components/schemas/DeploymentStatus"
+        ticketLinks:
+          type: string
+    EnvironmentStatus:
+      type: string
+      enum:
+      - IN_USE
+      - RESERVED
+      - FREE
+      - MIGRATING
+    EnvironmentType:
+      type: string
+      enum:
+      - ENVIRONMENT
+      - CSE_TOOLSET
+      - DESIGN_TIME
+      - APP_DEPLOYER
+      - INFRASTRUCTURE
+      - UNDEFINED
+    Instant:
+      type: string
+      format: date-time
+      examples:
+      - 2022-03-10T16:15:50Z
+    LocalDate:
+      type: string
+      format: date
+      examples:
+      - 2022-03-10
+    NamespaceDTO:
+      type: object
+      properties:
+        uid:
+          type: string
+        name:
+          type: string
+        existsInK8s:
+          type: boolean
+  securitySchemes:
+    SecurityScheme:
+      type: openIdConnect
+      description: Authentication
+      openIdConnectUrl: http://host.docker.internal:8180/realms/quarkus/.well-known/openid-configuration
+info:
+  title: environment-operational-service API
+  version: 1.0.0-SNAPSHOT
