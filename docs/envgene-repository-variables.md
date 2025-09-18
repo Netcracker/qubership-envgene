@@ -9,6 +9,7 @@
     - [`PUBLIC_AGE_KEYS`](#public_age_keys)
     - [`IS_OFFSITE`](#is_offsite)
     - [`GITLAB_RUNNER_TAG_NAME`](#gitlab_runner_tag_name)
+    - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
@@ -83,6 +84,16 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 **Default Value**: None
 
 **Mandatory**: No
+
+### `RUNNER_SCRIPT_TIMEOUT`
+
+**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner. This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running processes.The parameter value must be specified in [Go's duration format](https://pkg.go.dev/time#ParseDuration).
+
+**Default Value**: 10m
+
+**Mandatory**: No
+
+**Example**: `15m`
 
 ### `DOCKER_REGISTRY` (in instance repository)
 
