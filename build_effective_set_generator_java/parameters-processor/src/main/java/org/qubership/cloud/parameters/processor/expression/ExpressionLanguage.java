@@ -457,4 +457,17 @@ public class ExpressionLanguage extends AbstractLanguage {
     private Parameter processValue(Object value) throws IOException {
         return processValue(value, this.binding, true);
     }
+
+    @Override
+    public Map<String, Parameter> processParameters(Map<String, String> parameters) {
+        Map<String, Parameter> processedParams = new HashMap<>();
+        parameters.forEach((key, value) -> {
+            try {
+                processedParams.put(key, processValue(value, this.binding, true));
+            } catch (IOException e) {
+                log.error(String.format("Error in processing the parameter key %s and value %s", key, value));
+            }
+        });
+        return processedParams;
+    }
 }
