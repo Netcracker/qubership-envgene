@@ -39,6 +39,7 @@
     }
   },
   "required": [
+    "version",
     "name",
     "mavenConfig",
     "dockerConfig"
@@ -48,7 +49,7 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "credentialId": {
+        "credentialsId": {
           "type": "string"
         },
         "authType": {
@@ -61,11 +62,66 @@
         },
         "authMethod": {
           "type": "string",
-          "enum": ["assume-role", "managed-identity", "oauth2-client", "federation", "service-account", "user-pass"]
+          "enum": ["secret", "assume_role", "federation", "service_account", "oauth2", "user_pass"]
+        },
+        "awsRegion": {
+          "type": "string"
+        },
+        "awsDomain": {
+          "type": "string"
+        },
+        "awsRoleARN": {
+          "type": "string"
+        },
+        "awsRoleSessionPrefix": {
+          "type": "string"
+        },
+        "gcpOIDC": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "URL": {
+              "type": "string"
+            },
+            "customParams": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": ["URL"]
+        },
+        "gcpRegProject": {
+          "type": "string"
+        },
+        "gcpRegPoolId": {
+          "type": "string"
+        },
+        "gcpRegProviderId": {
+          "type": "string"
+        },
+        "gcpRegSAEmail": {
+          "type": "string"
+        },
+        "azureTenantId": {
+          "type": "string"
+        },
+        "azureACRResource": {
+          "type": "string"
+        },
+        "azureACRName": {
+          "type": "string"
+        },
+        "azureArtifactsResource": {
+          "type": "string"
         }
       },
       "required": [
-        "credentialId"
+        "credentialsId"
       ]
     },
     "MavenConfigV2": {
@@ -210,6 +266,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "authConfig": {
+          "type": "string"
+        },
         "goTargetSnapshot": {
           "type": "string"
         },
@@ -230,6 +289,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "authConfig": {
+          "type": "string"
+        },
         "rawTargetSnapshot": {
           "type": "string"
         },
@@ -254,6 +316,9 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
+        "authConfig": {
+          "type": "string"
+        },
         "npmTargetSnapshot": {
           "type": "string"
         },
@@ -267,4 +332,4 @@
       ]
     }
   }
-} 
+}
