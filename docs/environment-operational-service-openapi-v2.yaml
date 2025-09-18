@@ -1,11 +1,18 @@
 ---
 openapi: 3.1.0
+info:
+  title: environment-operational-service API
+  version: 1.0.0
 paths:
   /inventory-service/v1/auth-status:
     get:
       responses:
         "200":
           description: OK
+          headers:
+            X-API-Version:
+              schema:
+                type: string
       summary: Get Auth Status
       tags:
       - Cluster Resources Rest
@@ -14,6 +21,10 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            X-API-Version:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -43,10 +54,22 @@ paths:
       responses:
         "201":
           description: Created
+          headers:
+            X-API-Version:
+              schema:
+                type: string
         "401":
           description: Not Authorized
+          headers:
+            X-API-Version:
+              schema:
+                type: string
         "403":
           description: Not Allowed
+          headers:
+            X-API-Version:
+              schema:
+                type: string
       summary: Save Cluster
       tags:
       - Cluster Resources Rest
@@ -58,6 +81,10 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            X-API-Version:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -107,10 +134,22 @@ paths:
       responses:
         "201":
           description: Created
+          headers:
+            X-API-Version:
+              schema:
+                type: string
         "401":
           description: Not Authorized
+          headers:
+            X-API-Version:
+              schema:
+                type: string
         "403":
           description: Not Allowed
+          headers:
+            X-API-Version:
+              schema:
+                type: string
       summary: Save Environment
       tags:
       - Cluster Resources Rest
@@ -127,10 +166,22 @@ paths:
       responses:
         "204":
           description: No Content
+          headers:
+            X-API-Version:
+              schema:
+                type: string
         "401":
           description: Not Authorized
+          headers:
+            X-API-Version:
+              schema:
+                type: string
         "403":
           description: Not Allowed
+          headers:
+            X-API-Version:
+              schema:
+                type: string
       summary: Delete Environment
       tags:
       - Cluster Resources Rest
@@ -142,6 +193,10 @@ paths:
       responses:
         "200":
           description: OK
+          headers:
+            X-API-Version:
+              schema:
+                type: string
           content:
             application/json:
               schema:
@@ -154,6 +209,10 @@ paths:
       responses:
         "201":
           description: Created
+          headers:
+            X-API-Version:
+              schema:
+                type: string
       summary: Load Environments Manually
       tags:
       - Cluster Resources Rest
@@ -187,10 +246,8 @@ components:
       properties:
         id:
           type: string
-          description: "Уникальный идентификатор объекта"
         name:
           type: string
-          description: "Имя энвайрмента в <cluster>"
         namespaces:
           type: array
           items:
@@ -265,6 +322,3 @@ components:
       type: openIdConnect
       description: Authentication
       openIdConnectUrl: http://host.docker.internal:8180/realms/quarkus/.well-known/openid-configuration
-info:
-  title: environment-operational-service API
-  version: 1.0.0-SNAPSHOT
