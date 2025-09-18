@@ -20,6 +20,7 @@ def get_pipeline_parameters() -> dict:
             "SD_VERSION": getenv("SD_VERSION"),
             "SD_DATA": getenv("SD_DATA"),
             "SD_DELTA": getenv("SD_DELTA"),
+            "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE"),
             "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT"),
             "ENV_SPECIFIC_PARAMETERS": getenv("ENV_SPECIFIC_PARAMS"),
             "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
@@ -28,7 +29,7 @@ def get_pipeline_parameters() -> dict:
         'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
         'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", ""),
         'GITLAB_RUNNER_TAG_NAME' : getenv("GITLAB_RUNNER_TAG_NAME", "")
-        
+
     }
 
 class PipelineParametersHandler:

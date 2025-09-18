@@ -122,7 +122,7 @@ def extended_merge(data1, data2):
 
     # stage 1: Stage delta_sd applications with suitable deployGraph
     for j in data2["applications"]:
-        if (isinstance(j, ruyaml.CommentedMap) and checkDeployGraph(get_app_name(j["version"]), data2)) or (not isinstance(j, ruyaml.CommentedMap) and checkDeployGraph(get_app_name(j), data2)):
+        if (isinstance(j, ruyaml.CommentedMap) and checkDeployGraph(get_app_name(j["version"]), data2)) or (not isinstance(j, ruyaml.CommentedMap) and checkDeployGraph(get_app_name(j["version"]), data2)):
             counter_ += add_app(j, apps_list)
 
     # stage 2: Merge rest of applications
