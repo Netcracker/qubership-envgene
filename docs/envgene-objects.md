@@ -991,7 +991,7 @@ dockerConfig:
 #### Registry Definition v2.0
 
 ```yaml
-# Optional
+# Mandatory
 # Registry Definition object version
 version: "2.0"
 # Mandatory
@@ -1004,7 +1004,7 @@ authConfig:
   <auth-config-name>:
     # Mandatory
     # Name of credential in credential storage
-    credentialId: string 
+    credentialsId: string 
     # Optional
     # Public cloud registry authentication strategy
     # Used in case of public cloud registries
@@ -1014,9 +1014,74 @@ authConfig:
     # Used in case of public cloud registries
     provider: enum [ aws, azure, gcp ]
     # Optional
-    # Public cloud registry authentication method
-    # Used in case of public cloud registries
-    authMethod: enum [ assume-role, managed-identity, oauth2-client, federation, service-account, user-pass ]
+    # In case of non-cloud public registries, `user_pass` is used
+    # In case of public cloud registries valid values, depends on `provider`:
+    # `aws`: `secret` or `assume_role`
+    # `gcp`: `federation` or `service_account`
+    # `azure`: `oauth2`
+    authMethod: enum [ secret, assume_role, federation, service_account, oauth2, user_pass ]
+    # Optional
+    # Region of the AWS cloud
+    # Used with `provider: aws` only
+    awsRegion: string
+    # Optional
+    # Domain of the AWS cloud
+    # Used with `provider: aws` only
+    # Required for CodeArtifact
+    awsDomain: string
+    # Optional
+    # Amazon Resource Name (ARN) of the role to assume
+    # Used with `provider: aws` AND `authMethod: assume_role` only
+    awsRoleARN: string
+    # Optional
+    # Constant session name part to be used to generate --role-session-name parameter for AssumeRole
+    # Used with `provider: aws` AND `authMethod: assume_role` only
+    awsRoleSessionPrefix: string
+    # Optional
+    # Section, that describes OIDC interaction
+    # Used with `provider: gcp` AND `authMethod: federation` only
+    gcpOIDC:
+      # Mandatory
+      # URL of external OIDC server
+      URL: string
+      # Optional
+      # Custom parameters for external OIDC server
+      customParams:
+        - <key>: <value>
+        - <keyN>: <valueN>
+    # Optional
+    # GCP project number
+    # Used with `provider: gcp` AND `authMethod: federation` only
+    gcpRegProject: string
+    # Optional
+    # Workload identity pool ID
+    # Used with `provider: gcp` AND `authMethod: federation` only
+    gcpRegPoolId: string
+    # Optional
+    # Workload identity Provider ID
+    # Used with `provider: gcp` AND `authMethod: federation` only
+    gcpRegProviderId: string
+    # Optional
+    # Service account email
+    # Used with `provider: gcp` AND `authMethod: federation` only
+    gcpRegSAEmail: string
+    # Optional
+    # Azure AD tenant ID
+    # Used with `provider: azure` only
+    azureTenantId: string
+    # Optional
+    # Target resource for ACR
+    # Used with `provider: azure` only
+    azureACRResource: string
+    # Optional
+    # Azure Container Registry name
+    # Used with `provider: azure` only
+    # Required for ACR
+    azureACRName: string
+    # Optional
+    # Target resource for Azure Artifacts
+    # Used with `provider: azure` only
+    azureArtifactsResource: string
 # Mandatory
 mavenConfig:
   # Mandatory
@@ -1147,63 +1212,126 @@ npmConfig:
   npmTargetRelease: string
 ```
 
+**Examples of different auth sections**:
+
+```yaml
+authConfig:
+  maven-aws-secret:
+    authType: longLived
+    provider: aws
+    authMethod: secret
+    credentialsId: aws-key-secret
+    awsRegion: aws-region
+    awsDomain: codeartifact-domain
+
+  maven-aws-assume-role:
+    authType: shortLived
+    provider: aws
+    authMethod: assume_role
+    credentialsId: aws-key-secret
+    awsRoleARN: arn:aws:iam::123456789012:role/YourRole
+    awsRegion: aws-region
+    awsDomain: codeartifact-domain
+    awsRoleSessionPrefix: devops-custom-session-prefix
+
+  maven-gcp-federation:
+    authType: shortLived
+    provider: gcp
+    authMethod: federation
+    credentialsId: oidc-token
+    gcpOIDC:
+      URL: https://external-oidc-server-url
+      customParams:
+        - key1: value1
+        - key2: value2
+    gcpRegProject: 123456789012
+    gcpRegPoolId: idp-pool-id
+    gcpRegProviderId: idp-provider
+    gcpRegSAEmail: test@test.iam.gserviceaccount.com
+
+  maven-gcp-sa:
+    authType: shortLived
+    provider: gcp
+    authMethod: service_account
+    credentialsId: sa-json
+
+  maven-azure-oauth2:
+    authType: shortLived
+    provider: azure
+    authMethod: oauth2
+    credentialsId: azure-ad
+    azureTenantId: tenant-id
+    azureACRResource: management
+    azureACRName: acr-name
+    azureArtifactsResource: 499b84ac-1321-427f-aa17-267ca6975798
+
+  helm-nexus:
+    authType: longLived
+    authMethod: user_pass
+    credentialsId: cred-nexus
+```
+
 **Example:**
 
 ```yaml
 version: "2.0"
-name: sandbox
+name: "registry"
 authConfig:
   aws:
     authType: shortLived
     provider: aws
-    authMethod: assume-role
-    credentialId: role-aws
+    authMethod: assume_role
+    credentialsId: role-aws
+    awsRegion: eu-west-1
+    awsDomain: codeartifact.eu-west-1.amazonaws.com
+    awsRoleARN: arn:aws:iam::123456789012:role/YourRole
   helm:
     authType: longLived
-    credentialId: cred-nexus
+    authMethod: user_pass
+    credentialsId: cred-nexus
 mavenConfig:
-  repositoryDomainName: https://codeartifact.eu-west-1.amazonaws.com/maven/app
+  repositoryDomainName: "https://codeartifact.eu-west-1.amazonaws.com/maven/app"
+  targetSnapshot: "snapshots"
+  targetStaging: "staging"
+  targetRelease: "releases"
+  snapshotGroup: "com.mycompany.app"
+  releaseGroup: "com.mycompany.app"
   authConfig: aws
-  targetSnapshot: snapshots
-  targetStaging: staging
-  targetRelease: releases
-  snapshotGroup: org.qubership.app
-  releaseGroup: org.qubership.app
 dockerConfig:
-  repositoryDomainName: https://123456789.dkr.ecr.eu-west-1.amazonaws.com
+  repositoryDomainName: "https://123456789.dkr.ecr.eu-west-1.amazonaws.com"
+  snapshotUri: "docker/snapshots"
+  stagingUri: "docker/staging"
+  releaseUri: "docker/releases"
+  groupUri: "docker"
+  snapshotRepoName: "docker-snapshots"
+  stagingRepoName: "docker-staging"
+  releaseRepoName: "docker-releases"
+  groupName: "docker"
   authConfig: aws
-  snapshotUri: docker/snapshots
-  stagingUri: docker/staging
-  releaseUri: docker/releases
-  groupUri: docker
-  snapshotRepoName: docker-snapshots
-  stagingRepoName: docker-staging
-  releaseRepoName: docker-releases
-  groupName: docker
 helmConfig:
+  repositoryDomainName: "https://nexus.mycompany.internal/repository/helm-charts"
+  helmTargetStaging: "helm-staging"
+  helmTargetRelease: "helm-releases"
   authConfig: helm
-  repositoryDomainName: https://nexus.mycompany.internal/repository/helm-charts
-  helmTargetStaging: helm-staging
-  helmTargetRelease: helm-releases
 helmAppConfig:
-  repositoryDomainName: https://nexus.mycompany.internal/repository/helm-charts
-  helmStagingRepoName: helm-staging
-  helmReleaseRepoName: helm-releases
-  helmGroupRepoName: helm-group
-  helmDevRepoName: helm-dev
+  repositoryDomainName: "https://nexus.mycompany.internal/repository/helm-charts"
+  helmStagingRepoName: "helm-staging"
+  helmReleaseRepoName: "helm-releases"
+  helmGroupRepoName: "helm-group"
+  helmDevRepoName: "helm-dev"
   authConfig: helm
 goConfig:
-  goTargetSnapshot: go-snapshots
-  goTargetRelease: go-releases
-  goProxyRepository: https://goproxy.internal/go/
+  goTargetSnapshot: "go-snapshots"
+  goTargetRelease: "go-releases"
+  goProxyRepository: "https://goproxy.internal/go/"
 rawConfig:
-  rawTargetSnapshot: raw/snapshots
-  rawTargetRelease: raw/releases
-  rawTargetStaging: raw/staging
-  rawTargetProxy: https://proxy.raw.local/
+  rawTargetSnapshot: "raw/snapshots"
+  rawTargetRelease: "raw/releases"
+  rawTargetStaging: "raw/staging"
+  rawTargetProxy: "https://proxy.raw.local/"
 npmConfig:
-  npmTargetSnapshot: npm-snapshots
-  npmTargetRelease: npm-releases
+  npmTargetSnapshot: "npm-snapshots"
+  npmTargetRelease: "npm-releases"
 ```
 
 [Registry Definition v2.0 JSON schema](/schemas/regdef-v2.schema.json)
