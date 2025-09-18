@@ -50,11 +50,7 @@ on:
         type: string
         description: ""
         default: ""
-      GITHUB_RUNNER:
-        required: false
-        type: string
-        description: ""
-        default: "ubuntu-22.04"
+
 env:
   CI_COMMIT_REF_NAME: ${{ github.ref_name }}
   CI_PROJECT_DIR: ${{ github.workspace }}
@@ -64,18 +60,32 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ENVGENE_AGE_PUBLIC_KEY: ${{ secrets.ENVGENE_AGE_PUBLIC_KEY }}
   ENVGENE_AGE_PRIVATE_KEY: ${{ secrets.ENVGENE_AGE_PRIVATE_KEY }}
-
-  # Docker Images
-  DOCKER_IMAGE_PIPEGENE: 'ghcr.io/netcracker/qubership-pipegene:1.4.9'
-  DOCKER_IMAGE_ENVGENE: 'ghcr.io/netcracker/qubership-envgene:1.4.9'
-  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: 'ghcr.io/netcracker/qubership-effective-set-generator:1.4.9'
+  DOCKER_IMAGE_PIPEGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene:feature_update_instance_pipe_20250916-081107"
+  DOCKER_IMAGE_ENVGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene:feature_update_instance_pipe_20250916-081100"
+  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator:feature_update_instance_pipe_20250916-081224"
 
 jobs:
+  set_docker_images:
+    name: "Set Docker Images"
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
+    outputs:
+      DOCKER_IMAGE_PIPEGENE: ${{ env.DOCKER_IMAGE_PIPEGENE }}
+      DOCKER_IMAGE_ENVGENE: ${{ env.DOCKER_IMAGE_ENVGENE }}
+      DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: ${{ env.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}
+    steps:
+      - name: Set Docker Images
+        run: |
+          echo "DOCKER_IMAGE_PIPEGENE=${{ env.DOCKER_IMAGE_PIPEGENE }}" >> $GITHUB_ENV
+          echo "DOCKER_IMAGE_ENVGENE=${{ env.DOCKER_IMAGE_ENVGENE }}" >> $GITHUB_ENV
+          echo "DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR=${{ env.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}" >> $GITHUB_ENV
+
   process_environment_variables:
     name: "Input Parameters Processing"
-    runs-on: ${{ github.event.inputs.GITHUB_RUNNER }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
+    needs:
+      - set_docker_images
     container:
-      image: ${{ vars.DOCKER_IMAGE_PIPEGENE }}
+      image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_PIPEGENE }}
       options: --user root
     outputs:
       env_matrix: ${{ steps.matrix-generator.outputs.env_matrix }}
@@ -87,19 +97,9 @@ jobs:
       ENV_BUILDER: ${{ env.ENV_BUILDER }}
       GENERATE_EFFECTIVE_SET: ${{ env.GENERATE_EFFECTIVE_SET }}
       ENV_INVENTORY_INIT: ${{ env.ENV_INVENTORY_INIT }}
-      DOCKER_IMAGE_PIPEGENE: ${{ env.DOCKER_IMAGE_PIPEGENE }}
-      DOCKER_IMAGE_ENVGENE: ${{ env.DOCKER_IMAGE_ENVGENE }}
-      DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: ${{ env.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}
-
     steps:
       - name: Repository Checkout
         uses: actions/checkout@v4
-
-      - name: Set Docker Images
-        run: |
-          echo "DOCKER_IMAGE_PIPEGENE=${{ env.DOCKER_IMAGE_PIPEGENE }}" >> $GITHUB_ENV
-          echo "DOCKER_IMAGE_ENVGENE=${{ env.DOCKER_IMAGE_ENVGENE }}" >> $GITHUB_ENV
-          echo "DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR=${{ env.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}" >> $GITHUB_ENV
 
       - name: Process Input Parameters
         run: |
@@ -167,12 +167,12 @@ jobs:
 
   generate_inventory:
     name: "${{ matrix.environment }} - Generate Inventory"
-    runs-on: ${{ github.event.inputs.GITHUB_RUNNER }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
     if: always() && needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
     needs:
       - process_environment_variables
     container:
-      image: ${{ needs.process_environment_variables.outputs.DOCKER_IMAGE_ENVGENE }}
+      image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
       options: --user root
     strategy:
       fail-fast: false
@@ -205,13 +205,13 @@ jobs:
 
   credential_rotation:
     name: "${{ matrix.environment }} - Credential Rotation"
-    runs-on: ${{ github.event.inputs.GITHUB_RUNNER }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
     if: always() && needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
     needs:
       - process_environment_variables
       - generate_inventory
     container:
-      image: ${{ needs.process_environment_variables.outputs.DOCKER_IMAGE_ENVGENE }}
+      image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
       options: --user root
     strategy:
       fail-fast: false
@@ -261,13 +261,13 @@ jobs:
   env_build:
     name: "${{ matrix.environment }} - Env Build"
     if: always() && needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
-    runs-on: ${{ github.event.inputs.GITHUB_RUNNER }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
     needs:
       - process_environment_variables
       - generate_inventory
       - credential_rotation
     container:
-      image: ${{ needs.process_environment_variables.outputs.DOCKER_IMAGE_ENVGENE }}
+      image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
     strategy:
       fail-fast: false
       matrix:
@@ -340,10 +340,10 @@ jobs:
   generate_effective_set:
     name: "${{ matrix.environment }} - Generate Effective Set"
     if: always() && needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
-    runs-on: ${{ github.event.inputs.GITHUB_RUNNER }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
     needs: [process_environment_variables, generate_inventory, credential_rotation, env_build]
     container:
-      image: ${{ needs.process_environment_variables.outputs.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}
+      image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}
       options: --user root
     strategy:
       fail-fast: false
@@ -412,11 +412,11 @@ jobs:
 
   git_commit:
     name: "${{ matrix.environment }} - Git Commit"
-    runs-on: ${{ github.event.inputs.GITHUB_RUNNER }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
     needs: [process_environment_variables, generate_inventory, credential_rotation, env_build, generate_effective_set]
     if: always() && needs.process_environment_variables.outputs.env_matrix != '[]' && (needs.process_environment_variables.outputs.ENV_INVENTORY_INIT == 'true' || needs.process_environment_variables.outputs.ENV_BUILDER == 'true' || needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true' || needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != '')
     container:
-      image: ${{ needs.process_environment_variables.outputs.DOCKER_IMAGE_ENVGENE }}
+      image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
       options: --user root
     strategy:
       fail-fast: false
