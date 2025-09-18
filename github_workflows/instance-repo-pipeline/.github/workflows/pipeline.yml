@@ -57,7 +57,7 @@ env:
   SECRET_KEY: ${{ secrets.SECRET_KEY }}
   GITHUB_USER_EMAIL: 'envgene@qubership.org'
   GITHUB_USER_NAME: 'envgene'
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
   ENVGENE_AGE_PUBLIC_KEY: ${{ secrets.ENVGENE_AGE_PUBLIC_KEY }}
   ENVGENE_AGE_PRIVATE_KEY: ${{ secrets.ENVGENE_AGE_PRIVATE_KEY }}
   DOCKER_IMAGE_PIPEGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene:feature_update_instance_pipe_20250916-081107"
@@ -67,7 +67,7 @@ env:
 jobs:
   set_docker_images:
     name: "Set Docker Images"
-    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     outputs:
       DOCKER_IMAGE_PIPEGENE: ${{ env.DOCKER_IMAGE_PIPEGENE }}
       DOCKER_IMAGE_ENVGENE: ${{ env.DOCKER_IMAGE_ENVGENE }}
@@ -81,7 +81,7 @@ jobs:
 
   process_environment_variables:
     name: "Input Parameters Processing"
-    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04'  }}
     needs:
       - set_docker_images
     container:
@@ -167,7 +167,7 @@ jobs:
 
   generate_inventory:
     name: "${{ matrix.environment }} - Generate Inventory"
-    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     if: always() && needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
     needs:
       - set_docker_images
@@ -206,7 +206,7 @@ jobs:
 
   credential_rotation:
     name: "${{ matrix.environment }} - Credential Rotation"
-    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     if: always() && needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
     needs:
       - set_docker_images
@@ -263,7 +263,7 @@ jobs:
   env_build:
     name: "${{ matrix.environment }} - Env Build"
     if: always() && needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
-    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     needs:
       - set_docker_images
       - process_environment_variables
@@ -343,7 +343,7 @@ jobs:
   generate_effective_set:
     name: "${{ matrix.environment }} - Generate Effective Set"
     if: always() && needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
-    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     needs:
       - set_docker_images
       - process_environment_variables
@@ -420,7 +420,7 @@ jobs:
 
   git_commit:
     name: "${{ matrix.environment }} - Git Commit"
-    runs-on: ${{ vars.GH_RUNNER_TAG_NAME }}
+    runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     needs:
       - set_docker_images
       - process_environment_variables
