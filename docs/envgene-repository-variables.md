@@ -87,7 +87,7 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 ### `RUNNER_SCRIPT_TIMEOUT`
 
-**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner. This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running processes.
+**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner. This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running processes.The parameter value must be specified in [Go's duration format](https://pkg.go.dev/time#ParseDuration).
 
 **Default Value**: 10m
 
