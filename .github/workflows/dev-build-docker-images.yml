@@ -214,13 +214,13 @@ jobs:
 
           # Check which images were built and update accordingly
           if [[ "${{ needs.build-qubership-pipegene.result }}" == "success" ]]; then
-            sed -i "s|DOCKER_IMAGE_PIPEGENE: ${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene:*|${{ needs.build-qubership-pipegene.outputs.custom_tag }}\"|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
+            sed -i "s|DOCKER_IMAGE_PIPEGENE: \${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene:.*|DOCKER_IMAGE_PIPEGENE: \${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene:${{ needs.build-qubership-pipegene.outputs.custom_tag }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
           fi
           if [[ "${{ needs.build-qubership-envgene.result }}" == "success" ]]; then
-            sed -i "s|DOCKER_IMAGE_ENVGENE: ${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene:*|${{ needs.build-qubership-envgene.outputs.custom_tag }}\"|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
-            fi
+            sed -i "s|DOCKER_IMAGE_ENVGENE: \${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene:.*|DOCKER_IMAGE_ENVGENE: \${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene:${{ needs.build-qubership-envgene.outputs.custom_tag }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
+          fi
           if [[ "${{ needs.build-effective-set-generator.result }}" == "success" ]]; then
-            sed -i "s|DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: ${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator:*|${{ needs.build-effective-set-generator.outputs.custom_tag }}\"|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
+            sed -i "s|DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: \${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator:.*|DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: \${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator:${{ needs.build-effective-set-generator.outputs.custom_tag }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
           fi
 
           # Check if any images were updated
