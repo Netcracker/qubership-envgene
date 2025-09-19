@@ -1084,12 +1084,12 @@ authConfig:
     azureArtifactsResource: string
 # Mandatory
 mavenConfig:
-  # Mandatory
+  # Optional
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
-  # Domain name of the Maven registry
+  # Domain name of the registry
   repositoryDomainName: string
   # Mandatory
   # Snapshot Maven repository name
@@ -1108,13 +1108,10 @@ mavenConfig:
   releaseGroup: string
 # Mandatory
 dockerConfig:
-  # Mandatory
+  # Optional
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
   authConfig: string
-  # Mandatory
-  # Domain name of the Docker registry
-  repositoryDomainName: string
   # Mandatory
   # URI for Docker snapshot registry
   snapshotUri: string
@@ -1141,12 +1138,12 @@ dockerConfig:
   groupName: string
 # Optional
 helmConfig:
-  # Mandatory
+  # Optional
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
-  # Domain name of the Docker registry
+  # Domain name of the registry
   repositoryDomainName: string
   # Mandatory
   # Helm staging repository name
@@ -1156,12 +1153,12 @@ helmConfig:
   helmTargetRelease: string
 # Optional
 helmAppConfig:
-  # Mandatory
+  # Optional
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
-  # Domain name of the Docker registry
+  # Domain name of the registry
   repositoryDomainName: string
   # Mandatory
   # Helm staging repository name for application charts
@@ -1177,6 +1174,13 @@ helmAppConfig:
   helmDevRepoName: string
 # Optional
 goConfig:
+  # Optional
+  # Pointer to authentication config described in `authConfig` section
+  # Cannot be set in if anonymous access is used
+  authConfig: string
+  # Mandatory
+  # Domain name of the registry
+  repositoryDomainName: string
   # Mandatory
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
@@ -1189,6 +1193,13 @@ goConfig:
   goProxyRepository: string
 # Optional
 rawConfig:
+  # Optional
+  # Pointer to authentication config described in `authConfig` section
+  # Cannot be set in if anonymous access is used
+  authConfig: string
+  # Mandatory
+  # Domain name of the registry
+  repositoryDomainName: string
   # Mandatory
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
@@ -1204,6 +1215,13 @@ rawConfig:
   rawTargetProxy: string
 # Optional
 npmConfig:
+  # Optional
+  # Pointer to authentication config described in `authConfig` section
+  # Cannot be set in if anonymous access is used
+  authConfig: string
+  # Mandatory
+  # Domain name of the registry
+  repositoryDomainName: string
   # Mandatory
   # NPM snapshot repository name
   npmTargetSnapshot: string

@@ -166,9 +166,6 @@
         "authConfig": {
           "type": "string"
         },
-        "repositoryDomainName": {
-          "type": "string"
-        },
         "snapshotUri": {
           "type": "string"
         },
@@ -195,7 +192,6 @@
         }
       },
       "required": [
-        "repositoryDomainName",
         "snapshotUri",
         "stagingUri",
         "releaseUri",
@@ -224,7 +220,6 @@
         }
       },
       "required": [
-        "authConfig",
         "repositoryDomainName",
         "helmTargetStaging",
         "helmTargetRelease"
@@ -254,7 +249,6 @@
         }
       },
       "required": [
-        "authConfig",
         "repositoryDomainName",
         "helmStagingRepoName",
         "helmReleaseRepoName",
@@ -269,6 +263,9 @@
         "authConfig": {
           "type": "string"
         },
+        "repositoryDomainName": {
+          "type": "string"
+        },
         "goTargetSnapshot": {
           "type": "string"
         },
@@ -280,6 +277,7 @@
         }
       },
       "required": [
+        "repositoryDomainName",
         "goTargetSnapshot",
         "goTargetRelease",
         "goProxyRepository"
@@ -290,6 +288,9 @@
       "additionalProperties": false,
       "properties": {
         "authConfig": {
+          "type": "string"
+        },
+        "repositoryDomainName": {
           "type": "string"
         },
         "rawTargetSnapshot": {
@@ -306,6 +307,7 @@
         }
       },
       "required": [
+        "repositoryDomainName",
         "rawTargetSnapshot",
         "rawTargetRelease",
         "rawTargetStaging",
@@ -319,6 +321,9 @@
         "authConfig": {
           "type": "string"
         },
+        "repositoryDomainName": {
+          "type": "string"
+        },
         "npmTargetSnapshot": {
           "type": "string"
         },
@@ -327,6 +332,7 @@
         }
       },
       "required": [
+        "repositoryDomainName",
         "npmTargetSnapshot",
         "npmTargetRelease"
       ]
