@@ -214,7 +214,7 @@ jobs:
 
           # Check which images were built and update accordingly
           TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml"
-          
+
           if [[ "${{ needs.build-qubership-pipegene.result }}" == "success" ]]; then
             # Store the new tag in a variable to avoid complex escaping
             NEW_TAG="${{ needs.build-qubership-pipegene.outputs.custom_tag }}"
