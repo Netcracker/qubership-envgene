@@ -223,4 +223,4 @@ jobs:
     uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v1.0.3
     with:
       version: ${{ github.event.inputs.version }}
-      publish: false
+      publish: true
