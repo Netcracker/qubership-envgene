@@ -28,7 +28,7 @@ def identify_yaml_extension(file_path: str) -> str:
     for file in possible_files:
         if os.path.isfile(file):
             return file
-    raise FileNotFoundError(f"Neither of these files: {possible_files} exist.") 
+    raise FileNotFoundError(f"Neither of these files: {possible_files} exist.")
 
 def find_all_sub_dir(dir_path):
     return os.walk(dir_path)
@@ -51,7 +51,7 @@ def copy_path(source_path, target_path) :
     # check that we are not trying to copy file to itself, or 'cp' will exit with error
     if getDirName(source_path) == getDirName(target_path) and (check_file_exists(source_path) and source_path == target_path + extractNameWithExtensionFromFile(source_path)):
         logger.info(f"Trying to copy {source_path} to itself (target path: {target_path}). Skipping...")
-    elif glob.glob(source_path) : 
+    elif glob.glob(source_path) :
         logger.info(f'Copying from {source_path} to {target_path}')
         logger.debug(f'Checking target path {target_path} exists: {os.path.exists(target_path)}')
         if not os.path.exists(target_path) :
@@ -69,7 +69,7 @@ def copy_path(source_path, target_path) :
         logger.info(f"Path {source_path} doesn't exist. Skipping...")
 
 def move_path(source_path, target_path) :
-    if glob.glob(source_path) : 
+    if glob.glob(source_path) :
         logger.info(f'Moving from {source_path} to {target_path}')
         logger.debug(f'Checking target path {target_path} exists: {os.path.exists(target_path)}')
         if not os.path.exists(target_path) :
@@ -94,6 +94,10 @@ def openFileAsString(filePath):
 
 def deleteFile(filePath):
     os.remove(filePath)
+
+def deleteFileIfExists(filePath):
+    if check_file_exists(filePath):
+        os.remove(filePath)
 
 def writeToFile(filePath, contents):
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
@@ -140,8 +144,8 @@ def findFiles(fileList, pattern, notPattern="", additionalRegexpPattern="", addi
     result = []
     for filePath in fileList:
         if (
-            pattern in filePath 
-            and (notPattern=="" or notPattern not in filePath) 
+            pattern in filePath
+            and (notPattern=="" or notPattern not in filePath)
             and (additionalRegexpPattern=="" or re.match(additionalRegexpPattern, filePath))
             and (additionalRegexpNotPattern=="" or not re.match(additionalRegexpNotPattern, filePath))
         ):
