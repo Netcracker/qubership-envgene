@@ -61,24 +61,24 @@ env:
   ENVGENE_AGE_PUBLIC_KEY: ${{ secrets.ENVGENE_AGE_PUBLIC_KEY }}
   ENVGENE_AGE_PRIVATE_KEY: ${{ secrets.ENVGENE_AGE_PRIVATE_KEY }}
 
-  DOCKER_IMAGE_PIPEGENE: ${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene:1.5.0
-  DOCKER_IMAGE_ENVGENE: ${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene:1.5.0
-  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: ${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator:1.5.0
+  DOCKER_IMAGE_PIPEGENE: ghcr.io/netcracker/qubership-pipegene:feature_add_token_render_ansible_20250919-123618
+  DOCKER_IMAGE_ENVGENE: ghcr.io/netcracker/qubership-envgene:feature_add_token_render_ansible_20250919-123618
+  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: ghcr.io/netcracker/qubership-effective-set-generator:feature_add_token_render_ansible_20250919-123723
 
 jobs:
   set_docker_images:
     name: "Set Docker Images"
     runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
     outputs:
-      DOCKER_IMAGE_PIPEGENE: ${{ env.DOCKER_IMAGE_PIPEGENE }}
-      DOCKER_IMAGE_ENVGENE: ${{ env.DOCKER_IMAGE_ENVGENE }}
-      DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: ${{ env.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}
+  DOCKER_IMAGE_PIPEGENE: ghcr.io/netcracker/qubership-pipegene:feature_add_token_render_ansible_20250919-123618
+  DOCKER_IMAGE_ENVGENE: ghcr.io/netcracker/qubership-envgene:feature_add_token_render_ansible_20250919-123618
+  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: ghcr.io/netcracker/qubership-effective-set-generator:feature_add_token_render_ansible_20250919-123723
     steps:
       - name: Set Docker Images
         run: |
-          echo "DOCKER_IMAGE_PIPEGENE: "${{ env.DOCKER_IMAGE_PIPEGENE }}" >> $GITHUB_ENV
-          echo "DOCKER_IMAGE_ENVGENE: "${{ env.DOCKER_IMAGE_ENVGENE }}" >> $GITHUB_ENV
-          echo "DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: "${{ env.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}" >> $GITHUB_ENV
+  DOCKER_IMAGE_PIPEGENE: ghcr.io/netcracker/qubership-pipegene:feature_add_token_render_ansible_20250919-123618
+  DOCKER_IMAGE_ENVGENE: ghcr.io/netcracker/qubership-envgene:feature_add_token_render_ansible_20250919-123618
+  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: ghcr.io/netcracker/qubership-effective-set-generator:feature_add_token_render_ansible_20250919-123723
 
   process_environment_variables:
     name: "Input Parameters Processing"
