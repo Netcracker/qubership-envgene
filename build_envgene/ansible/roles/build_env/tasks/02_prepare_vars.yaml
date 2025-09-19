@@ -6,6 +6,24 @@
   register: decrypt_creds
   no_log: false
 
+- name: Write decrypted credentials to temp file
+  copy:
+    content: "{{ decrypt_creds.result }}"
+    dest: "/tmp/decrypted_credentials.yml"
+    mode: '0600'
+
+- name: Render credentials template to evaluate Jinja lookups
+  template:
+    src: "/tmp/decrypted_credentials.yml"
+    dest: "/tmp/rendered_credentials.yml"
+    mode: '0600'
+  ignore_errors: yes
+
+- name: Clean up temp decrypted file
+  file:
+    path: "/tmp/decrypted_credentials.yml"
+    state: absent
+
 - name: Set env_definition path
   set_fact:
     env_definition_path: "{{ envs_directory_path + '/' + cluster_name + '/' + environment_name + '/Inventory/env_definition.yml' }}"
@@ -16,7 +34,7 @@
 
 - name: Include vars from credentials file
   set_fact:
-    cred_config: "{{ decrypt_creds.result | from_yaml }}"
+    cred_config: "{{ lookup('file', '/tmp/rendered_credentials.yml') | from_yaml }}"
   no_log: false
 
 - name: include old logic
