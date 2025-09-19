@@ -24,8 +24,8 @@ class MergeType(Enum):
 
     @classmethod
     def from_value(cls, value: str):
-        if not value or not isinstance(value, str):
-            raise ValueError(f"SD_REPO_MERGE_MODE value: '{value}' cannot be empty or non-string")
+        if not isinstance(value, str):
+            raise ValueError(f"SD_REPO_MERGE_MODE value: '{value}' cannot be non-string")
         value_lower = value.strip().lower()
         for member in cls:
             if member.value == value_lower:
@@ -34,6 +34,7 @@ class MergeType(Enum):
         raise ValueError(
             f"Invalid SD_REPO_MERGE_MODE: '{value}'. Valid values are: {valid_values}"
         )
+
 
 MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,
@@ -143,10 +144,12 @@ def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
         effective_merge_mode = MergeType.from_value(sd_merge_mode)
     elif sd_delta == "true":
         effective_merge_mode = MergeType.EXTENDED
-        logger.info(f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
+        logger.info(
+            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
     elif sd_delta == "false":
         effective_merge_mode = MergeType.REPLACE
-        logger.info(f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
+        logger.info(
+            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
     else:
         effective_merge_mode = MergeType.BASIC
         logger.info(f"SD_REPO_MERGE_MODE not passed. Default value: {effective_merge_mode.value}")
