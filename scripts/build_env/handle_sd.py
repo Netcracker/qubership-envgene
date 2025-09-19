@@ -22,6 +22,19 @@ class MergeType(Enum):
     BASIC = "basic-merge"
     BASIC_EXCLUSION = "basic-exclusion-merge"
 
+    @classmethod
+    def from_value(cls, value: str):
+        if not isinstance(value, str):
+            raise ValueError(f"SD_REPO_MERGE_MODE value: '{value}' cannot be non-string")
+        value_lower = value.strip().lower()
+        for member in cls:
+            if member.value == value_lower:
+                return member
+        valid_values = [member.value for member in cls]
+        raise ValueError(
+            f"Invalid SD_REPO_MERGE_MODE: '{value}'. Valid values are: {valid_values}"
+        )
+
 
 MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,
@@ -82,9 +95,6 @@ def prepare_vars_and_run_sd_handling():
     sd_data = getenv_and_log('SD_DATA')
     sd_delta = getenv_and_log('SD_DELTA')
     sd_merge_mode = getenv_and_log("SD_REPO_MERGE_MODE")
-    logger.info(f"sd_data: {sd_data}")
-    logger.info(f"sd_merge_mode: {sd_merge_mode}")
-
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
 
 
@@ -130,17 +140,19 @@ def merge_sd(sd_path: Path, sd_data, merge_func):
 
 
 def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
-    sd_merge_mode = str(sd_merge_mode).strip().lower() if sd_merge_mode else None
-    if sd_merge_mode:
-        effective_merge_mode = MergeType(sd_merge_mode)
+    if sd_merge_mode is not None:
+        effective_merge_mode = MergeType.from_value(sd_merge_mode)
     elif sd_delta == "true":
         effective_merge_mode = MergeType.EXTENDED
+        logger.info(
+            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
     elif sd_delta == "false":
         effective_merge_mode = MergeType.REPLACE
+        logger.info(
+            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
     else:
         effective_merge_mode = MergeType.BASIC
-
-    logger.info(f"Effective merge mode: {effective_merge_mode}")
+        logger.info(f"SD_REPO_MERGE_MODE not passed. Default value: {effective_merge_mode.value}")
     return effective_merge_mode
 
 
