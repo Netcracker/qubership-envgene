@@ -27,22 +27,22 @@ on:
         description: ""
       ENV_BUILDER:
         required: false
-        default: ""
+        default: "true"
         type: string
         description: ""
       GENERATE_EFFECTIVE_SET:
         required: false
-        default: ""
+        default: "false"
         type: string
         description: ""
       GET_PASSPORT:
         required: false
-        default: ""
+        default: "false"
         type: string
         description: ""
       CMDB_IMPORT:
         required: false
-        default: ""
+        default: "false"
         type: string
         description: ""
       GITHUB_PIPELINE_API_INPUT:
