@@ -225,7 +225,7 @@ jobs:
         version: ${{ inputs.version }}
 
   github-release:
-    needs: 
+    needs:
       - build-qubership-pipegene
       - build-qubership-envgene
       - build-effective-set-generator
