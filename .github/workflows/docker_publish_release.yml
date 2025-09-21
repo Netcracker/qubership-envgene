@@ -89,9 +89,11 @@ jobs:
 
         - name: Update Docker Image Tags in Pipeline
           run: |
-            sed -i "s|qubership-pipegene:[^']*|qubership-pipegene:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
-            sed -i "s|qubership-envgene:[^']*|qubership-envgene:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
-            sed -i "s|qubership-effective-set-generator:[^']*|qubership-effective-set-generator:${{ github.event.inputs.version }}|g" github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
+            TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml"
+            NEW_TAG="${{ github.event.inputs.version }}"
+            sed -i "/DOCKER_IMAGE_TAG_PIPEGENE:/c\\  DOCKER_IMAGE_TAG_PIPEGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
+            sed -i "/DOCKER_IMAGE_TAG_ENVGENE:/c\\  DOCKER_IMAGE_TAG_ENVGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
+            sed -i "/DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR:/c\\  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: \"${NEW_TAG}\"" "$TARGET_FILE"
 
             if git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml; then
               echo "No changes to commit - no images were built or tags were already up to date"
@@ -223,4 +225,4 @@ jobs:
     uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v1.0.3
     with:
       version: ${{ github.event.inputs.version }}
-      publish: false
+      publish: true

@@ -27,22 +27,22 @@ on:
         description: ""
       ENV_BUILDER:
         required: false
-        default: ""
+        default: "true"
         type: string
         description: ""
       GENERATE_EFFECTIVE_SET:
         required: false
-        default: ""
+        default: "false"
         type: string
         description: ""
       GET_PASSPORT:
         required: false
-        default: ""
+        default: "false"
         type: string
         description: ""
       CMDB_IMPORT:
         required: false
-        default: ""
+        default: "false"
         type: string
         description: ""
       GITHUB_PIPELINE_API_INPUT:
@@ -54,16 +54,25 @@ on:
 env:
   CI_COMMIT_REF_NAME: ${{ github.ref_name }}
   CI_PROJECT_DIR: ${{ github.workspace }}
+
   SECRET_KEY: ${{ secrets.SECRET_KEY }}
-  GITHUB_USER_EMAIL: 'envgene@qubership.org'
-  GITHUB_USER_NAME: 'envgene'
-  GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
   ENVGENE_AGE_PUBLIC_KEY: ${{ secrets.ENVGENE_AGE_PUBLIC_KEY }}
   ENVGENE_AGE_PRIVATE_KEY: ${{ secrets.ENVGENE_AGE_PRIVATE_KEY }}
 
-  DOCKER_IMAGE_PIPEGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene:1.5.3
-  DOCKER_IMAGE_ENVGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene:1.5.3
-  DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator:1.5.3
+  GITHUB_USER_EMAIL: 'envgene@qubership.org'
+  GITHUB_USER_NAME: 'envgene'
+  GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+
+
+  #DOCKER_IMAGE_NAMES
+  DOCKER_IMAGE_NAME_PIPEGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene"
+  DOCKER_IMAGE_NAME_ENVGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene"
+  DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator"
+
+  #DOCKER_IMAGE_TAGS
+  DOCKER_IMAGE_TAG_PIPEGENE: "feature_add_token_render_ansible_20250919-150148"
+  DOCKER_IMAGE_TAG_ENVGENE: "feature_add_token_render_ansible_20250919-150136"
+  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "feature_add_token_render_ansible_20250919-150242"
 
 jobs:
   set_docker_images:
@@ -74,11 +83,11 @@ jobs:
       DOCKER_IMAGE_ENVGENE: ${{ env.DOCKER_IMAGE_ENVGENE }}
       DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR: ${{ env.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}
     steps:
-      - name: Set Docker Images
-        run: |
-          echo "DOCKER_IMAGE_PIPEGENE=${{ env.DOCKER_IMAGE_PIPEGENE }}" >> $GITHUB_ENV
-          echo "DOCKER_IMAGE_ENVGENE=${{ env.DOCKER_IMAGE_ENVGENE }}" >> $GITHUB_ENV
-          echo "DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR=${{ env.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}" >> $GITHUB_ENV
+    - name: Set Docker Images
+      run: |
+        echo "DOCKER_IMAGE_PIPEGENE=${{ env.DOCKER_IMAGE_NAME_PIPEGENE }}:${{ env.DOCKER_IMAGE_TAG_PIPEGENE }}" >> $GITHUB_ENV
+        echo "DOCKER_IMAGE_ENVGENE=${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }}" >> $GITHUB_ENV
+        echo "DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR=${{ env.DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR }}:${{ env.DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR }}" >> $GITHUB_ENV
 
   process_environment_variables:
     name: "Input Parameters Processing"
