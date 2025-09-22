@@ -5,7 +5,9 @@
   "properties": {
     "version": {
       "type": "string",
-      "enum": ["2.0"]
+      "enum": [
+        "2.0"
+      ]
     },
     "name": {
       "type": "string"
@@ -17,25 +19,25 @@
       }
     },
     "mavenConfig": {
-      "$ref": "#/definitions/MavenConfigV2"
+      "$ref": "#/definitions/MavenConfig"
     },
     "dockerConfig": {
-      "$ref": "#/definitions/DockerConfigV2"
-    },
-    "helmConfig": {
-      "$ref": "#/definitions/HelmConfigV2"
-    },
-    "helmAppConfig": {
-      "$ref": "#/definitions/HelmAppConfigV2"
+      "$ref": "#/definitions/DockerConfig"
     },
     "goConfig": {
-      "$ref": "#/definitions/GoConfigV2"
+      "$ref": "#/definitions/GoConfig"
     },
     "rawConfig": {
-      "$ref": "#/definitions/RawConfigV2"
+      "$ref": "#/definitions/RawConfig"
     },
     "npmConfig": {
-      "$ref": "#/definitions/NpmConfigV2"
+      "$ref": "#/definitions/NpmConfig"
+    },
+    "helmConfig": {
+      "$ref": "#/definitions/HelmConfig"
+    },
+    "helmAppConfig": {
+      "$ref": "#/definitions/HelmAppConfig"
     }
   },
   "required": [
@@ -54,15 +56,29 @@
         },
         "authType": {
           "type": "string",
-          "enum": ["shortLived", "longLived"]
+          "enum": [
+            "shortLived",
+            "longLived"
+          ]
         },
         "provider": {
           "type": "string",
-          "enum": ["aws", "azure", "gcp"]
+          "enum": [
+            "aws",
+            "azure",
+            "gcp"
+          ]
         },
         "authMethod": {
           "type": "string",
-          "enum": ["secret", "assume_role", "federation", "service_account", "oauth2", "user_pass"]
+          "enum": [
+            "secret",
+            "assume_role",
+            "federation",
+            "service_account",
+            "oauth2",
+            "user_pass"
+          ]
         },
         "awsRegion": {
           "type": "string"
@@ -93,7 +109,9 @@
               }
             }
           },
-          "required": ["URL"]
+          "required": [
+            "URL"
+          ]
         },
         "gcpRegProject": {
           "type": "string"
@@ -124,42 +142,7 @@
         "credentialsId"
       ]
     },
-    "MavenConfigV2": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "authConfig": {
-          "type": "string"
-        },
-        "repositoryDomainName": {
-          "type": "string"
-        },
-        "targetSnapshot": {
-          "type": "string"
-        },
-        "targetStaging": {
-          "type": "string"
-        },
-        "targetRelease": {
-          "type": "string"
-        },
-        "snapshotGroup": {
-          "type": "string"
-        },
-        "releaseGroup": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "repositoryDomainName",
-        "targetSnapshot",
-        "targetStaging",
-        "targetRelease",
-        "snapshotGroup",
-        "releaseGroup"
-      ]
-    },
-    "DockerConfigV2": {
+    "DockerConfig": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -192,71 +175,52 @@
         }
       },
       "required": [
-        "snapshotUri",
-        "stagingUri",
-        "releaseUri",
+        "groupName",
         "groupUri",
-        "snapshotRepoName",
-        "stagingRepoName",
         "releaseRepoName",
-        "groupName"
+        "releaseUri",
+        "snapshotRepoName",
+        "snapshotUri",
+        "stagingRepoName",
+        "stagingUri"
       ]
     },
-    "HelmConfigV2": {
+    "MavenConfig": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "authConfig": {
-          "type": "string"
-        },
         "repositoryDomainName": {
           "type": "string"
         },
-        "helmTargetStaging": {
+        "authConfig": {
           "type": "string"
         },
-        "helmTargetRelease": {
+        "targetSnapshot": {
+          "type": "string"
+        },
+        "targetStaging": {
+          "type": "string"
+        },
+        "targetRelease": {
+          "type": "string"
+        },
+        "snapshotGroup": {
+          "type": "string"
+        },
+        "releaseGroup": {
           "type": "string"
         }
       },
       "required": [
+        "releaseGroup",
         "repositoryDomainName",
-        "helmTargetStaging",
-        "helmTargetRelease"
+        "snapshotGroup",
+        "targetRelease",
+        "targetSnapshot",
+        "targetStaging"
       ]
     },
-    "HelmAppConfigV2": {
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "authConfig": {
-          "type": "string"
-        },
-        "repositoryDomainName": {
-          "type": "string"
-        },
-        "helmStagingRepoName": {
-          "type": "string"
-        },
-        "helmReleaseRepoName": {
-          "type": "string"
-        },
-        "helmGroupRepoName": {
-          "type": "string"
-        },
-        "helmDevRepoName": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "repositoryDomainName",
-        "helmStagingRepoName",
-        "helmReleaseRepoName",
-        "helmGroupRepoName",
-        "helmDevRepoName"
-      ]
-    },
-    "GoConfigV2": {
+    "GoConfig": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -283,7 +247,7 @@
         "goProxyRepository"
       ]
     },
-    "RawConfigV2": {
+    "RawConfig": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -314,7 +278,7 @@
         "rawTargetProxy"
       ]
     },
-    "NpmConfigV2": {
+    "NpmConfig": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
@@ -335,6 +299,60 @@
         "repositoryDomainName",
         "npmTargetSnapshot",
         "npmTargetRelease"
+      ]
+    },
+    "HelmConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authConfig": {
+          "type": "string"
+        },
+        "repositoryDomainName": {
+          "type": "string"
+        },
+        "helmTargetStaging": {
+          "type": "string"
+        },
+        "helmTargetRelease": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "repositoryDomainName",
+        "helmTargetStaging",
+        "helmTargetRelease"
+      ]
+    },
+    "HelmAppConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "authConfig": {
+          "type": "string"
+        },
+        "repositoryDomainName": {
+          "type": "string"
+        },
+        "helmStagingRepoName": {
+          "type": "string"
+        },
+        "helmReleaseRepoName": {
+          "type": "string"
+        },
+        "helmGroupRepoName": {
+          "type": "string"
+        },
+        "helmDevRepoName": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "repositoryDomainName",
+        "helmStagingRepoName",
+        "helmReleaseRepoName",
+        "helmGroupRepoName",
+        "helmDevRepoName"
       ]
     }
   }
