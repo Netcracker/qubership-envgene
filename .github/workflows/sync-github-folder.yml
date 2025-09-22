@@ -32,7 +32,7 @@ jobs:
     permissions:
       contents: write
       actions: read
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -57,12 +57,12 @@ jobs:
           else
             TARGET_BRANCHES="${{ github.event.inputs.target_branches }}"
           fi
-          
+
           # Process exclude branches
           EXCLUDE_BRANCHES="${{ github.event.inputs.exclude_branch }}"
           echo "exclude_branches=$EXCLUDE_BRANCHES" >> $GITHUB_OUTPUT
           echo "Exclude branches: $EXCLUDE_BRANCHES"
-          
+
           echo "target_branches=$TARGET_BRANCHES" >> $GITHUB_OUTPUT
           echo "Target branches: $TARGET_BRANCHES"
 
@@ -74,4 +74,4 @@ jobs:
             "${{ steps.parse-targets.outputs.exclude_branches }}" \
             "${{ github.event.inputs.check_only }}" \
             "${{ github.event.inputs.include_files }}" \
-            "${{ steps.get-branches.outputs.branches }}" 
+            "${{ steps.get-branches.outputs.branches }}"
