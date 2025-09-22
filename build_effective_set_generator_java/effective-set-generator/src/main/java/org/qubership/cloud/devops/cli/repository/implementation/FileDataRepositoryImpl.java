@@ -255,9 +255,6 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                             return namespaceDTO.toBuilder().applications(applications == null ? Collections.emptyList() : applications).build();
                         });
                         inputData.setNamespaceDTOMap(namespaceMap);
-
-                    } else if (currentFolder.equals(basePath.getFileName().toString())) {
-                        inputData.setCloudDTO(inputData.getCloudDTO().toBuilder().applications(cloudApps).build());
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -265,6 +262,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         } catch (Exception e) {
             throw new FileParseException("Failure in reading input Directory", e);
         }
+        inputData.setCloudDTO(inputData.getCloudDTO().toBuilder().applications(cloudApps).build());
     }
 
     private void handleNamespaceYamlFile(Path file, Map<String, List<NamespacePrefixDTO>> clusterMap) {
