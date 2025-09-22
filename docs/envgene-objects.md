@@ -105,7 +105,11 @@ cloud:
     deployParameterSets: <list-with-parameter-sets>
     e2eParameterSets: <list-with-parameter-sets>
     technicalConfigurationParameterSets: <list-with-parameter-sets>
+# Optional
 composite_structure: <path-to-the-composite-structure-template-file>
+# Optional
+bg_domain: <path-to-the-bg-domain-template-file>
+# Optional
 namespaces:
   - # Optional
     template_path: <path-to-the-namespace-template-file>
@@ -709,6 +713,9 @@ controllerNamespace:
   # Used for BGD lifecycle operations
   url: <bg-operator-url>
 ```
+
+When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentialsId`.  
+The [`inventory.config.updateCredIdsWithEnvName`](/docs/envgene-configs.md#env_definitionyml) mechanism works for this Credential as well as for all other Credentials.
 
 **Location:** `/environments/<cluster-name>/<env-name>/bg-domain.yml`
 
