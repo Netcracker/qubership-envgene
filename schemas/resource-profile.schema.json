@@ -109,11 +109,12 @@
                         ]
                       },
                       "value": {
-                        "type": "string",
+                        "type": ["string", "integer", "boolean"],
                         "description": "Parameter value",
                         "examples": [
                           "30s",
-                          "5"
+                          5,
+                          true
                         ]
                       }
                     },

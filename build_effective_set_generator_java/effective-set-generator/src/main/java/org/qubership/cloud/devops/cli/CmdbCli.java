@@ -26,6 +26,8 @@ import picocli.CommandLine;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -85,7 +87,20 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setRegistryPath(envParams.registryPath);
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setEffectiveSetVersion(envParams.version);
-        sharedData.setPcsspPaths(List.of(envParams.pcssp));
+        sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
+        sharedData.setAppChartValidation(envParams.appChartValidation);
+        populateDeploymentSessionId(envParams.extraParams);
+    }
+
+    private void populateDeploymentSessionId(String[] extraParams) {
+        if(extraParams != null){
+            Arrays.stream(extraParams).forEach(key -> {
+                if(key.contains("DEPLOYMENT_SESSION_ID")){
+                    String[] deployString = key.split("=");
+                    sharedData.setDeploymentSessionId(deployString[1]);
+                }
+            });
+        }
     }
 
     static class EnvCommandSpace {
@@ -107,10 +122,17 @@ public class CmdbCli implements Callable<Integer> {
         @CommandLine.Option(names = {"-o", "--output"}, description = "Output directory", required = true)
         String outputDir;
 
-        @CommandLine.Option(names = {"-esv", "--effective-set-version"}, description = "Effective Set Version", defaultValue = "v1.0")
+        @CommandLine.Option(names = {"-esv", "--effective-set-version"}, description = "Effective Set Version", defaultValue = "v2.0")
         String version;
 
         @CommandLine.Option(names = {"-pcssp", "--pipeline-consumer-specific-schema-path"}, description = "Pipeline Consumer Specific path")
         String[] pcssp;
+
+        @CommandLine.Option(names = {"-ex", "--extra_params"}, description = "Additional params that used to generate effective set")
+        String[] extraParams;
+
+        @CommandLine.Option(names = {"-acv", "--app_chart_validation"}, description = "App chart validation parameter on sbom", arity = "1")
+        boolean appChartValidation = true;
+
     }
 }

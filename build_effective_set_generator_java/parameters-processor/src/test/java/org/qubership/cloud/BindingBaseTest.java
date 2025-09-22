@@ -16,62 +16,53 @@
 
 package org.qubership.cloud;
 
-import static org.mockito.ArgumentMatchers.any;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
+import io.opentelemetry.api.trace.NoopTracer;
+import io.opentelemetry.api.trace.Tracer;
 import org.qubership.cloud.devops.commons.Injector;
 import org.qubership.cloud.devops.commons.pojo.applications.model.Application;
 import org.qubership.cloud.devops.commons.pojo.applications.model.ApplicationParams;
 import org.qubership.cloud.devops.commons.pojo.clouds.model.Cloud;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
+import org.qubership.cloud.devops.commons.pojo.cs.CompositeEntityDTO;
+import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.model.Namespace;
-import org.qubership.cloud.devops.commons.pojo.parameterset.ParameterSet;
-import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
 import org.qubership.cloud.devops.commons.pojo.tenants.model.GlobalE2EParameters;
+import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
 import org.qubership.cloud.devops.commons.pojo.tenants.model.TenantGlobalParameters;
-import org.qubership.cloud.devops.commons.service.interfaces.ApplicationService;
-import org.qubership.cloud.devops.commons.service.interfaces.CloudConfigurationService;
-import org.qubership.cloud.devops.commons.service.interfaces.NamespaceConfigurationService;
-import org.qubership.cloud.devops.commons.service.interfaces.ParameterSetService;
-import org.qubership.cloud.devops.commons.service.interfaces.TenantConfigurationService;
+import org.qubership.cloud.devops.commons.service.interfaces.*;
 import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.di.MapDI;
 import org.qubership.cloud.devops.commons.utils.otel.OpenTelemetryProvider;
 import org.qubership.cloud.parameters.processor.expression.binding.Binding;
 
-import io.opentelemetry.api.trace.NoopTracer;
-import io.opentelemetry.api.trace.Tracer;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class BindingBaseTest {
     protected Binding setupBinding(Map<String, Object> params) {
         try {
             TenantConfigurationService tenantService = mock(TenantConfigurationService.class);
-            Map<String, String> tenantParams = (Map<String, String>) params.get("tenantParams");
+            Map<String, Object> tenantParams = (Map<String, Object>) params.get("tenantParams");
             when(tenantService.getTenantByName("tenant")).thenReturn(Tenant.builder().name("tenant").globalParameters(TenantGlobalParameters.builder().deployParameters(tenantParams).e2eParameters(
-                    new GlobalE2EParameters(null, null, params.containsKey("tenantParamsE2E") ? (Map<String, String>) params.get("tenantParamsE2E") : new HashMap<>(), false)).build()).build());
+                    new GlobalE2EParameters(null, null, params.containsKey("tenantParamsE2E") ? (Map<String, Object>) params.get("tenantParamsE2E") : new HashMap<>(), false)).build()).build());
             CloudConfigurationService cloudService = mock(CloudConfigurationService.class);
             Cloud cloud = Cloud.builder().build();
             cloud.setTenant(new Tenant("tenant"));
             cloud.setName("cloud");
             if (params.get("cloudParams") != null) {
-                cloud.setCloudParams((Map<String, String>) params.get("cloudParams"));
+                cloud.setCloudParams((Map<String, Object>) params.get("cloudParams"));
             } else {
                 cloud.setCloudParams(Collections.emptyMap());
             }
             cloud.setDbaasCfg(Collections.emptySet());
             if (params.get("cloudAppParams") != null) {
                 cloud.setApplicationParams(new LinkedList<>() {{
-                    add(new ApplicationParams("application", (Map<String, String>) params.get("cloudAppParams")));
+                    add(new ApplicationParams("application", (Map<String, Object>) params.get("cloudAppParams")));
                 }});
             } else {
                 cloud.setApplicationParams(Collections.emptyList());
@@ -86,9 +77,9 @@ public class BindingBaseTest {
                             .credId("")
                             .applications(new LinkedList<>() {{
                                 if (params.get("nsAppParams") != null)
-                                    add(new ApplicationParams("application", (Map<String, String>) params.get("nsAppParams")));
+                                    add(new ApplicationParams("application", (Map<String, Object>) params.get("nsAppParams")));
                             }})
-                            .customParameters((Map<String, String>) params.get("nsParams"))
+                            .customParameters((Map<String, Object>) params.get("nsParams"))
                             .e2eParameters(null)
                             .mergeCustomPramsAndE2EParams(false)
                             .cleanInstallApprovalRequired(false)
@@ -101,12 +92,15 @@ public class BindingBaseTest {
             );
 
             ApplicationService appService = mock(ApplicationService.class);
-            when(appService.getByName("application")).thenReturn(
+            when(appService.getByName("application", "namespace")).thenReturn(
                     Application.builder()
                             .name("application")
-                            .params(params.get("appParams") != null ? (Map<String, String>) params.get("appParams") : Collections.emptyMap())
+                            .params(params.get("appParams") != null ? (Map<String, Object>) params.get("appParams") : Collections.emptyMap())
                             .build()
             );
+
+            InputDataService inputDataService = mock(InputDataService.class);
+            when(inputDataService.getCompositeData()).thenReturn(buildDummyCompositeStructure());
 
             CredentialUtils credentialUtils = mock(CredentialUtils.class);
             when(credentialUtils.getCredentialsById(any())).thenReturn(new UsernamePasswordCredentials("username", "pa$$word"));
@@ -128,16 +122,41 @@ public class BindingBaseTest {
             provider.setTenantConfigurationService(tenantService);
             provider.setCloudConfigurationService(cloudService);
             provider.setNamespaceConfigurationService(nsService);
+            provider.setInputDataService(inputDataService);
             provider.add(appService);
             Constructor<Binding> constructor = Binding.class.getDeclaredConstructor(String.class);
             constructor.setAccessible(true);
             Binding binding = constructor.newInstance(params.get("defaultEscapeSequence") != null ? params.get("defaultEscapeSequence") : "false")
-                    .init("tenant", "cloud", "namespace", "application");
+                    .init("tenant", "cloud", "namespace", "application", "namespace");
             return binding;
 
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException |
                  InvocationTargetException | SecurityException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static CompositeStructureDTO buildDummyCompositeStructure() {
+        return CompositeStructureDTO.builder()
+                .name("SampleComposite")
+                .version(1.0f)
+                .id("comp-001")
+                .baseline(
+                        CompositeEntityDTO.builder()
+                                .name("BaselineEntity")
+                                .type("BASE")
+                                .build()
+                )
+                .satellites(List.of(
+                        CompositeEntityDTO.builder()
+                                .name("SatelliteEntity-1")
+                                .type("SAT")
+                                .build(),
+                        CompositeEntityDTO.builder()
+                                .name("SatelliteEntity-2")
+                                .type("SAT")
+                                .build()
+                ))
+                .build();
     }
 }

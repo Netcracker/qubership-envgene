@@ -1,49 +1,48 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "type": "object",
-    "additionalProperties": false,
-    "properties": {
-      "name": {
-        "type": "string"
-      },
-      "registryName": {
-        "type": "string"
-      },
-      "artifactId": {
-        "type": "string"
-      },
-      "groupId": {
-        "type": "string"
-      },
-      "supportParallelDeploy": {
-        "type": "boolean"
-      },
-      "deployParameters": {
-        "$ref": "#/definitions/mapString"
-      },
-      "technicalConfigurationParameters": {
-        "$ref": "#/definitions/mapString"
-      },
-      "solutionDescriptor": {
-        "type": "boolean"
-      }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string"
     },
-    "definitions": {
-      "mapString": {
-        "type": "object",
-        "additionalProperties": {
-          "type": "string"
-        }
-      }
+    "registryName": {
+      "type": "string"
     },
-    "required": [
-      "name",
-      "registryName",
-      "artifactId",
-      "groupId",
-      "supportParallelDeploy",
-      "deployParameters",
-      "technicalConfigurationParameters"
-    ]
-  }
-  
+    "artifactId": {
+      "type": "string"
+    },
+    "groupId": {
+      "type": "string"
+    },
+    "supportParallelDeploy": {
+      "type": "boolean"
+    },
+    "deployParameters": {
+      "$ref": "#/definitions/mapString"
+    },
+    "technicalConfigurationParameters": {
+      "$ref": "#/definitions/mapString"
+    },
+    "solutionDescriptor": {
+      "type": "boolean"
+    }
+  },
+  "definitions": {
+    "mapString": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "name",
+    "registryName",
+    "artifactId",
+    "groupId",
+    "supportParallelDeploy",
+    "deployParameters",
+    "technicalConfigurationParameters"
+  ]
+}

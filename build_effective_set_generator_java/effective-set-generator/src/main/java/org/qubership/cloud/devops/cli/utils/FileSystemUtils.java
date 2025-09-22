@@ -65,13 +65,17 @@ public class FileSystemUtils {
         file.mkdir();
         Path pipelinePath = getFileFromGivenPath(data.getOutputDir(), "pipeline").toPath();
         Files.createDirectories(pipelinePath);
+        Path topologyPath = getFileFromGivenPath(data.getOutputDir(), "topology").toPath();
+        Files.createDirectories(topologyPath);
         applicationDTOList
                 .forEach(app->{
                     try {
-                        Path deploymentPath = getFileFromGivenPath(data.getOutputDir(), "deployment", app.getNamespace(), app.getAppName(), "values").toPath();
+                        Path deploymentPath = getFileFromGivenPath(data.getOutputDir(), "deployment", app.getNamespace(), app.getAppName(), "values", "per-service-parameters").toPath();
                         Files.createDirectories(deploymentPath);
                         Path runtimePath = getFileFromGivenPath(data.getOutputDir(), "runtime", app.getNamespace(), app.getAppName()).toPath();
                         Files.createDirectories(runtimePath);
+                        Path cleanupPath = getFileFromGivenPath(data.getOutputDir(), "cleanup", app.getNamespace()).toPath();
+                        Files.createDirectories(cleanupPath);
                     } catch (IOException e) {
                         throw new DirectoryCreateException("Error creating directory for application "+app.getAppName()+" due to "+e.getMessage());
                     }

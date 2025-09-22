@@ -16,18 +16,22 @@
 
 package org.qubership.cloud.devops.cli.service.implementation;
 
+import lombok.extern.slf4j.Slf4j;
 import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
-import org.qubership.cloud.devops.commons.exceptions.NotFoundException;
 import org.qubership.cloud.devops.commons.pojo.applications.model.Application;
 import org.qubership.cloud.devops.commons.pojo.applications.dto.ApplicationLinkDTO;
+import org.qubership.cloud.devops.commons.pojo.clouds.dto.CloudDTO;
+import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.service.interfaces.ApplicationService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import java.util.List;
 
 import static org.qubership.cloud.devops.commons.exceptions.constant.ExceptionAdditionalInfoMessages.ENTITY_NOT_FOUND;
 
 
 @ApplicationScoped
+@Slf4j
 public class ApplicationServiceCliImpl implements ApplicationService {
 
     private final InputData inputData;
@@ -38,17 +42,31 @@ public class ApplicationServiceCliImpl implements ApplicationService {
     }
 
     @Override
-    public Application getByName(String applicationName) {
-        ApplicationLinkDTO applicationDTO = getApplicationFromYaml(applicationName);
-        if (applicationDTO == null) {
-            throw new NotFoundException(String.format(ENTITY_NOT_FOUND, "Application"));
+    public Application getByName(String applicationName,  String namespace) {
+        NamespaceDTO namespaceDTO = inputData.getNamespaceDTOMap().get(namespace);
+        if (namespaceDTO == null) {
+            return null;
         }
-        return Application.builder().name(applicationDTO.getName()).technicalParams(applicationDTO.getTechnicalConfigurationParameters())
-                .params(applicationDTO.getDeployParameters()).build();
+        ApplicationLinkDTO application = getApplicationLinkDTO(applicationName, namespaceDTO.getApplications());
+
+        if (application == null) {
+            CloudDTO cloudDTO = inputData.getCloudDTO();
+            application = getApplicationLinkDTO(applicationName, cloudDTO.getApplications());
+            if (application == null) {
+                log.warn(String.format(ENTITY_NOT_FOUND, "Application"));
+                return null;
+            }
+        }
+        return Application.builder().name(application.getName()).technicalParams(application.getTechnicalConfigurationParameters())
+                .params(application.getDeployParameters()).build();
     }
 
-    @Override
-    public ApplicationLinkDTO getApplicationFromYaml(String applicationName) {
-        return inputData.getApplicationLinkDTOMap().get(applicationName);
+    private static ApplicationLinkDTO getApplicationLinkDTO(String applicationName, List<ApplicationLinkDTO> applications) {
+        return applications
+                .stream()
+                .filter(app -> app.getName().equals(applicationName))
+                .findFirst()
+                .orElse(null);
     }
+
 }

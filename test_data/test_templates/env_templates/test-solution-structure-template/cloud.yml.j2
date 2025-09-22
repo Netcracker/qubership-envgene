@@ -33,7 +33,7 @@ consulConfig:
 deployParameters:
   ENV_NAME: "{{current_env.name}}"
   TEST_VALUE_SS_cloud_yml: "{{ current_env.solution_structure["Test-App-Name"]["app"].namespace }}"
-e2eParameters: 
+e2eParameters:
 {% if current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST is defined %}
     url: "https://toolset.{{ current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST }}"
 {% endif %}
@@ -41,7 +41,7 @@ e2eParameters:
 technicalConfigurationParameters: {}
 deployParameterSets:
   # comment line
-  - "app-common"  
+  - "app-common"
 e2eParameterSets:
   # comment line
   - "app-common"

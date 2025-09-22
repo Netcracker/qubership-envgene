@@ -21,7 +21,7 @@ def _run_SOPS(arg_str, return_codes_to_ignore=None):
         logger.error(f"command: {sops_command}")
         logger.error(f"Error: {result.stderr} {result.stdout}")
         raise subprocess.SubprocessError()
-    return result 
+    return result
 
 def _create_replace_content_sh(content):
     delimiter = 'ENVGENE_SOPS_EDIT_CUSTOM_EOF'
@@ -76,6 +76,11 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         public_key = getenv_with_error("PUBLIC_AGE_KEYS")
     os.environ['SOPS_AGE_KEY'] = secret_key
 
+    file_content = openYaml(file_path)
+    if file_content == {}:
+        logger.info(f'File is empty, skipping de/encryption. Path: {file_path}')
+        return file_content
+
     is_encrypted = is_encrypted_SOPS(file_path)
     if is_encrypted and mode == "encrypt":
         logger.warning(f'File is already encrypted. Path: {file_path}')
@@ -90,7 +95,7 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
             writeYamlToFile(file_path, result)
     else:
         sops_args = f' --{SOPS_MODES[mode]} '
-        if mode != "decrypt": 
+        if mode != "decrypt":
             sops_args += f' --unencrypted-regex "{UNENCRYPTED_REGEX_STR}"'
         if in_place:
             sops_args += ' --in-place'

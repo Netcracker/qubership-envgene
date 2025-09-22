@@ -16,21 +16,13 @@
 
 package org.qubership.cloud.devops.commons.utils.mapper;
 
-import org.qubership.cloud.devops.commons.exceptions.NotFoundException;
-import org.qubership.cloud.devops.commons.exceptions.constant.ExceptionAdditionalInfoMessages;
-import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
-import org.qubership.cloud.devops.commons.service.interfaces.ApplicationService;
-import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
-import org.qubership.cloud.devops.commons.pojo.profile.model.ApplicationProfile;
-import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.modelmapper.ModelMapper;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static java.util.Objects.isNull;
+import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
+import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
+import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
+import org.qubership.cloud.devops.commons.service.interfaces.ApplicationService;
 
 @ApplicationScoped
 public class ProfileMapper {
@@ -47,7 +39,6 @@ public class ProfileMapper {
     public Profile convertToEntity(ProfileFullDto profileDto, Tenant tenant) {
         Profile profileEntity = mapper.map(profileDto, Profile.class);
         if (profileEntity.getApplications() != null) {
-            enrichFromDatabase(profileEntity);
             profileEntity.getApplications().forEach(a -> {
                 a.getServices().forEach(s -> {
                     s.getParameters().forEach(p -> p.setServiceProfile(s));
@@ -58,14 +49,6 @@ public class ProfileMapper {
         }
         profileEntity.setTenant(tenant);
         return profileEntity;
-    }
-
-    private void enrichFromDatabase(Profile profileEntity) {
-        List<String> applicationNames = profileEntity.getApplications().stream().map(ApplicationProfile::getName).collect(Collectors.toList());
-        List<String> nonExistingApplications = applicationNames.stream().filter(name -> isNull(applicationService.getApplicationFromYaml(name))).distinct().collect(Collectors.toList());
-        if (!nonExistingApplications.isEmpty()) {
-            throw new NotFoundException(String.format(ExceptionAdditionalInfoMessages.APPLICATION_MULTIPLE_NOT_FOUND_FORMAT, String.join(",", nonExistingApplications)));
-        }
     }
 
 }

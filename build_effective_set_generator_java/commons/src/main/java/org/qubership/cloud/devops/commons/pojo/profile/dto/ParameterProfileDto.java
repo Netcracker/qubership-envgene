@@ -27,5 +27,5 @@ import lombok.NoArgsConstructor;
 @EqualsAndHashCode(exclude = "value")
 public class ParameterProfileDto {
     private String name;
-    private String value;
+    private Object value;
 }

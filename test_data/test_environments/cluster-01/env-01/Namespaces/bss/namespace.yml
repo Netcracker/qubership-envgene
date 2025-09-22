@@ -37,7 +37,7 @@ deployParameters:
   TEST_SHARED_CREDS: "${envgen.creds.get('integration-cred').username}" # paramset: test-deploy-creds version: 1 source: template
   TEST_SHARED_CREDS_ACTIVATOR: "${envgen.creds.get('service-integration-cred').password}" # paramset: test-deploy-creds version: 1 source: template
   bss-app-exist: true
-  'oss_ns': "env-01-oss"
+  oss_ns: "env-01-oss"
 e2eParameters:
   E2E_PARAM_1: "e2e-param-val-1"
   E2E_PARAM_2: "e2e-param-val-2"

@@ -1,6 +1,6 @@
 ---
 tenant: "{{ templates_dir }}/env_templates/test-solution-structure-template/tenant.yml.j2"
-cloud: 
+cloud:
   template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/cloud.yml.j2"
   template_override:
     deployParameterSets:
@@ -11,6 +11,7 @@ cloud:
       - paramset-A
 namespaces:
   - template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/Namespaces/app-core.yml.j2"
+    deploy_postfix: "app-core"
     template_override:
       deployParameterSets:
         - paramset-A
@@ -19,4 +20,5 @@ namespaces:
       technicalConfigurationParameterSets:
         - paramset-A
   - template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/Namespaces/app.yml.j2"
+    deploy_postfix: "app"
 

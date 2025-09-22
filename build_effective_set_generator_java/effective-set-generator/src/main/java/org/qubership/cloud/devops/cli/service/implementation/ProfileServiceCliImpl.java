@@ -71,7 +71,7 @@ public class ProfileServiceCliImpl implements ProfileService {
         return profileMapper.convertToEntity(profileFullDto, tenant);
     }
 
-    public void setOverrideProfiles(String appName, String serviceName, Profile overrideProfile, Map<String, String> profileValues) {
+    public void setOverrideProfiles(String appName, String serviceName, Profile overrideProfile, Map<String, Object> profileValues) {
         if (overrideProfile != null) {
             ApplicationProfile override = overrideProfile.getApplications().stream()
                     .filter(app -> appName.equals(app.getName()))
@@ -83,7 +83,7 @@ public class ProfileServiceCliImpl implements ProfileService {
                         .filter(serviceProfileEntity -> serviceName.equals(serviceProfileEntity.getName()))
                         .findFirst().orElse(null);
                 if (serviceOverride != null) {
-                    Map<String, String> overrideMap = serviceOverride.getParameters().stream()
+                    Map<String, Object> overrideMap = serviceOverride.getParameters().stream()
                             .collect(Collectors.toMap(ParameterProfile::getName, ParameterProfile::getValue));
                     profileValues.putAll(overrideMap);
                 }

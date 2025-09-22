@@ -23,5 +23,6 @@ import lombok.NoArgsConstructor;
 public enum ParameterType {
     DEPLOY,
     E2E,
-    TECHNICAL
+    TECHNICAL,
+    CLEANUP
 }

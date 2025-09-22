@@ -1,7 +1,7 @@
 first_cred:
     type: secret
     data:
-        secret: glpat-vxxDsEVkaQyoHasXGCY9 
+        secret: glpat-vxxDsEVkaQyoHasXGCY9
 second_cred:
     type: usernamePassword
     data:

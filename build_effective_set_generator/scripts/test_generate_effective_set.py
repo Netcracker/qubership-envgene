@@ -5,7 +5,10 @@ from main import generate_effective_set_for_env
 from envgenehelper import *
 
 test_data = [
-      ("CLUSTER", "ENV", ""),
+      ("REPLACED_WORD-ocp-mdc-09", "cse-toolset", "")
+    , ("REPLACED_WORD-sb-ocp-01", "pl01", "")
+    , ("REPLACED_WORD-sb-ocp-01", "platform-with-overrides", "")
+    , ("cloud-with-passport-override", "cse-toolset", "")
 ]
 
 g_inventory_dir = getAbsPath("../../test_data/test_environments")
@@ -17,7 +20,7 @@ delete_dir(g_test_dir)
 def change_test_dir(request, monkeypatch):
     monkeypatch.chdir(request.fspath.dirname+"/../..")
 
-def fill_creds(env_dir): 
+def fill_creds(env_dir):
     cred_file_name = f"{env_dir}/Credentials/credentials.yml"
     if check_file_exists(cred_file_name):
       logger.info(f'File with creds exists: {cred_file_name}. Filling cred values.')
