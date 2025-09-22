@@ -28,7 +28,7 @@ This describes test cases for the [Template Override](/docs/features/template-ov
 ...
 cloud:
   template_path: <path-to-the-cloud-template-file>
-  template_override:     
+  template_override:
     deployParameterSets:
       - paramset-A
     e2eParameters:

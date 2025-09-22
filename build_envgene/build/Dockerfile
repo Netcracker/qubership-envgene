@@ -1,9 +1,13 @@
+# checkov:skip=CKV_DOCKER_3:This build container requires root privileges for CI/CD operations
+
 #########################################
 # Stage 1: Build
 # Multi-stage build to reduce final image size
 FROM python:3.12-alpine3.19 AS build
 
 # Install build dependencies
+# checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     gcc \
     musl-dev \
@@ -43,7 +47,6 @@ ENV ANSIBLE_LIBRARY=/module/ansible/library
 RUN python -m venv /module/venv
 RUN /module/venv/bin/pip install --upgrade pip setuptools wheel
 RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
-RUN /module/venv/bin/pip install ansible-core --upgrade
 # Install essential Ansible collections
 # Install to virtual environment site-packages for Python module access
 RUN /module/venv/bin/ansible-galaxy collection install ansible.utils -p /module/venv/lib/python3.12/site-packages/ansible_collections
@@ -92,6 +95,8 @@ RUN chmod 754 /module/creds_rotation_scripts/*
 FROM python:3.12-alpine3.19 AS runtime
 
 # Install only essential runtime dependencies
+# checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     bash \
     ca-certificates \

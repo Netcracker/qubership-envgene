@@ -10,7 +10,7 @@ import re
 
 CONTEXT_MAP = {
     "deployment": "deployParameters",
-    "pipeline": "e2eParameters", 
+    "pipeline": "e2eParameters",
     "runtime": "technicalconfigurationparameters"
 }
 

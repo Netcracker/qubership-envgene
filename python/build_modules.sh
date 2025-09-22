@@ -10,17 +10,20 @@ install_and_clean() {
 
     echo "Installing $base_path/$path"
     if [ "$IS_LOCAL_DEV_TEST_ENVGENE" = "true" ]; then
-      uv pip install --system -e "$base_path/$path"
+      uv pip install --editable "$base_path/$path"
     else
-      uv pip install --system "$base_path/$path"
+      pip install "$base_path/$path"
     fi
 
     echo "Removing build trash..."
     rm -rf "$base_path/$path/build" "$base_path/$path/$name.egg-info"
 }
 
-pip install uv # pip replacer, makes this script run ~2.8x faster
+if [ "$IS_LOCAL_DEV_TEST_ENVGENE" = "true" ]; then
+  echo "Installing in local test mode"
+  pip install uv # pip replacer, makes this script run ~2.8x faster
+fi
 install_and_clean "envgene" "envgenehelper"
 install_and_clean "jschon-sort" "jschon_sort"
 install_and_clean "integration" "integration_loader"
-
+install_and_clean "artifact-searcher" "artifact_searcher"

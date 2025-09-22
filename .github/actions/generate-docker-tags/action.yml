@@ -29,7 +29,7 @@ runs:
         TIMESTAMP=$(date +%Y%m%d-%H%M%S)
         CUSTOM_TAG="${DOCKER_TAG}_${TIMESTAMP}"
         BRANCH_LATEST_TAG="${DOCKER_TAG}"
-        
+
         # Set output for next steps
         echo "custom_tag=$CUSTOM_TAG" >> $GITHUB_OUTPUT
         echo "branch_tag=$DOCKER_TAG" >> $GITHUB_OUTPUT

@@ -35,7 +35,7 @@ public class ParameterProfile implements Serializable {
     private static final long serialVersionUID = -9001965696822574447L;
 
     private String name;
-    private String value;
+    private Object value;
     @JsonBackReference
     private ServiceProfile serviceProfile;
 

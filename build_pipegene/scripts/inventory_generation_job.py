@@ -2,7 +2,6 @@ from gcip import WhenStatement
 from envgenehelper import logger
 from pipeline_helper import job_instance
 import json
-import os
 
 def is_inventory_generation_needed(is_template_test, inv_gen_params):
     if is_template_test:
@@ -16,14 +15,14 @@ def is_inventory_generation_needed(is_template_test, inv_gen_params):
             return True
     return False
 
-def prepare_inventory_generation_job(pipeline, full_env, environment_name, cluster_name, env_generation_params):
+def prepare_inventory_generation_job(pipeline, full_env, environment_name, cluster_name, env_generation_params, tags):
     logger.info(f"prepare env_generation job for {full_env}")
     params = {
         "name": f"env_inventory_generation.{full_env}",
         "image": "${envgen_image}",
         "stage": "env_inventory_generation",
         "script": [
-            f"python3 /build_env/scripts/build_env/env_inventory_generation.py",
+            "python3 /build_env/scripts/build_env/env_inventory_generation.py",
         ],
     }
     vars = {
@@ -37,6 +36,7 @@ def prepare_inventory_generation_job(pipeline, full_env, environment_name, clust
         "module_ansible_cfg": "/module/ansible/ansible.cfg",
         "module_config_default": "/module/templates/defaults.yaml",
         "ENV_GENERATION_PARAMS": json.dumps(env_generation_params, ensure_ascii=False, indent=2),
+        "GITLAB_RUNNER_TAG_NAME" : tags
     }
     job = job_instance(params=params, vars=vars)
     job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env)

@@ -27,24 +27,23 @@ def prepare_trigger_passport_job(pipeline, full_env):
     )
   trigger_job.add_variables(ENV_NAME=full_env, GET_PASSPORT="true")
   pipeline.add_children(trigger_job)
-  
   return trigger_job
 
-def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, need_commit):
+def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags,need_commit):
   logger.info(f'prepare get_passport job for {full_env}')
   ## set get_passport
   get_passport_params = {
     "name":   f'get_passport.{full_env}',
     "image":  '${envgen_image}',
     "stage":  'process_passport',
-    "script": [ '/module/scripts/prepare.sh "get_cloud_passport.yaml"', 
+    "script": [ '/module/scripts/prepare.sh "get_cloud_passport.yaml"',
                 "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
                 'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
                 'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
               ],
   }
   if need_commit:
-     get_passport_params['script'].append(f'/module/scripts/prepare.sh "git_commit.yaml"')
+     get_passport_params['script'].append('/module/scripts/prepare.sh "git_commit.yaml"')
   get_passport_vars = {
     "ENV_NAME": full_env,
     "CLUSTER_NAME": cluster_name,
@@ -57,7 +56,8 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, need
     "module_ansible_cfg": "/module/ansible/ansible.cfg",
     "module_config_default": "/module/templates/defaults.yaml",
     "COMMIT_ENV": "false",
-    "COMMIT_MESSAGE": f"[ci_skip] update cloud passport for {cluster_name}"
+    "COMMIT_MESSAGE": f"[ci_skip] update cloud passport for {cluster_name}",
+    "GITLAB_RUNNER_TAG_NAME" : tags
   }
   get_passport_job = job_instance(params=get_passport_params, vars=get_passport_vars)
   get_passport_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
@@ -67,14 +67,14 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, need
   return get_passport_job
 
 
-def prepare_decryption_mode_job(pipeline, full_env, cluster_name):
+def prepare_decryption_mode_job(pipeline, full_env, cluster_name,tags):
     logger.info(f'prepare process_decryption_mode job for {full_env}')
     params = {
         "name":   f'process_decryption_mode.{full_env}',
         "image":  '${envgen_image}',
         "stage":  'process_passport',
-        "script": [ f'python3 /module/scripts/process_decryption_mode.py -e "$ENV_NAME"',
-                    f'/module/scripts/prepare.sh "git_commit.yaml"'
+        "script": [ 'python3 /module/scripts/process_decryption_mode.py -e "$ENV_NAME"',
+                    '/module/scripts/prepare.sh "git_commit.yaml"'
                   ]
     }
 
@@ -85,7 +85,9 @@ def prepare_decryption_mode_job(pipeline, full_env, cluster_name):
         "envgen_args": " -vv",
         "envgen_debug": "true",
         "COMMIT_ENV": "false",
-        "COMMIT_MESSAGE": f"[ci_skip] decrypt cloud passport for {cluster_name}"
+        "COMMIT_MESSAGE": f"[ci_skip] decrypt cloud passport for {cluster_name}",
+        "GITLAB_RUNNER_TAG_NAME" : tags
+        
     }
 
     job = job_instance(params=params, vars=vars)

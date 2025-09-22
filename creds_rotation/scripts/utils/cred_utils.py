@@ -72,7 +72,6 @@ def decrypt_task(args):
     is_encrypted, public_key, filepath = args
     content = decrypt_and_get_content(is_encrypted, public_key, filepath)
     return filepath, content
-   
 
 def read_env_cred_files(creds_files, is_encrypted, public_key):
     # Use multiprocessing only if heavy workload
@@ -93,7 +92,7 @@ def read_env_cred_files(creds_files, is_encrypted, public_key):
 
 def decrypt_and_get_content(is_encrypted, public_key, filepath):
     if is_encrypted:
-        return decrypt_file(public_key, filepath, True, 'SOPS', ErrorMessages.FILE_DECRYPT_ERROR, ErrorCodes.INVALID_CONFIG_CODE) 
+        return decrypt_file(public_key, filepath, True, 'SOPS', ErrorMessages.FILE_DECRYPT_ERROR, ErrorCodes.INVALID_CONFIG_CODE)
     try:
         if filepath.endswith(".json"):
             content = openJson(filepath)
@@ -168,11 +167,11 @@ def update_file(files_to_update, is_encrypted, envgene_age_public_key):
                     executor.submit(write_and_encrypt_task, cred_file, creds, is_encrypted, envgene_age_public_key)
                 )
     for future in futures:
-        future.result()      
+        future.result()
 
 
 def write_and_encrypt_task(cred_file, creds, is_encrypted, public_key):
-    
+
     # Write YAML
     writeYamlToFile(cred_file, creds)
     # Encrypt if needed

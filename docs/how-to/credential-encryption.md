@@ -184,10 +184,10 @@ If you're currently using Fernet encryption and want to upgrade to SOPS (recomme
    # Set environment variables
    export ENV_NAME=<your_env_name>
    export SECRET_KEY=$(cat .git/secret_key.txt)
-   
+
    # Decrypt each credentials file
    python3 git_hooks/crypt.py decrypt_cred_file -f <path-to-cred-file> -s $SECRET_KEY
-   
+
    # Example for multiple files:
    python3 git_hooks/crypt.py decrypt_cred_file -f environments/<cloud-name>/<env-name>/Inventory/credentials/dev-creds.yaml -s $SECRET_KEY
    python3 git_hooks/crypt.py decrypt_cred_file -f environments/<cloud-name>/<env-name>/Inventory/credentials/staging-creds.yaml -s $SECRET_KEY
@@ -200,7 +200,7 @@ If you're currently using Fernet encryption and want to upgrade to SOPS (recomme
    # Set environment variables
    set ENV_NAME=<your_env_name>
    set /p SECRET_KEY=<.git\secret_key.txt
-   
+
    # Decrypt each credentials file
    python git_hooks\crypt.py decrypt_cred_file -f <path-to-cred-file> -s %SECRET_KEY%
    ```

@@ -2,3 +2,6 @@ name: "application-2"
 registryName: "registry-2"
 artifactId: "application-2"
 groupId: "org.qubership"
+supportParallelDeploy: true
+deployParameters: {}
+technicalConfigurationParameters: {}

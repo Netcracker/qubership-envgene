@@ -44,11 +44,11 @@
       loop: "{{ sd_config.applications }}"
       loop_control:
         label: "Application {{ item.version | default('unknown') }}"
-      
+
     - name: All checks passed
       debug:
         msg: "All required fields are present and valid!"
-      
+
     - name: Checking the existence of template descriptor
       stat:
         path: "{{ templates_dir }}/env_templates/{{ _template_name }}.{{ item }}"
@@ -92,7 +92,7 @@
     - name: "Namespace templates: Write path to temp file"
       copy:
         content: "{{ namespace_template_paths }}"
-        dest: "{{ temp_template.path }}"  
+        dest: "{{ temp_template.path }}"
 
     - name: "Namespace templates: Render file and parse JSON"
       set_fact:
@@ -101,7 +101,7 @@
     - name: "Namespace templates: Render file and parse JSONDelete temporary template file"
       file:
         path: "{{ temp_template.path }}"
-        state: absent    
+        state: absent
 
     - name: "Namespace templates: list of found namespace templates"
       debug:
@@ -124,7 +124,7 @@
       no_log: True
       set_fact:
         solution_structure: {}
-      
+
     - name: Build solution_structure variable
       no_log: True
       set_fact:
@@ -162,28 +162,28 @@
           } %}
 
           {{ small_dict | to_json }}
-      
+
     - name: Update formatting in solution_structure variable
       no_log: True
       set_fact:
         solution_structure: "{{ solution_structure | regex_replace('({{)\\s*([^}\\s]+)\\s*(}})', '\\1 \\2 \\3') }}"
-      
+
     - name: "Solution_structure: Create temporary template file to render the variable"
       tempfile:
         state: file
         suffix: .j2
       register: temp_template
-      
+
     - name: "Solution_structure: Write solution_structure to temp template file"
       copy:
         content: "{{ solution_structure }}"
         dest: "{{ temp_template.path }}"
-      
+
     - name: "Solution_structure: Render template and parse JSON"
       no_log: True
       set_fact:
         solution_structure: "{{ lookup('template', temp_template.path) }}"
-      
+
     - name: "Solution_structure: Delete temporary template file"
       file:
         path: "{{ temp_template.path }}"
@@ -192,9 +192,8 @@
     - name: Show rendered solution_structure
       debug:
         var: solution_structure
-      
+
     - name: Merge solution_structure into current_env
       no_log: True
       set_fact:
         current_env: "{{ current_env | combine({'solution_structure': solution_structure}, recursive=True) }}"
-      

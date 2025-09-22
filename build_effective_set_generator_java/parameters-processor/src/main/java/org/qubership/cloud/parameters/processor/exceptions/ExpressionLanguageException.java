@@ -25,7 +25,7 @@ public class ExpressionLanguageException extends RuntimeException {
     public ExpressionLanguageException(String message) {
         super(message);
     }
-    
+
     public ExpressionLanguageException(String message, Throwable cause) {
         super(message, cause);
     }

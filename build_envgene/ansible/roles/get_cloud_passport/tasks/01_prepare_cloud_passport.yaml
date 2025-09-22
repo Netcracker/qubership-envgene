@@ -26,12 +26,12 @@
     - name: Split "{{ env_name }}" by folder name
       ansible.builtin.set_fact:
         env_paths: "{{ env_name.split('/') }}"
-    
+
     - name: Check that name of environment "{{ env_name }}" contains cloud name
       fail:
         msg: Cloud passport discovery can be run only for environments with name containing cloud. Provided "{{ env_name }}"
       when: env_paths|length == 1
-    
+
     - name: Set env_directory for complex env_name "{{ env_name }}"
       ansible.builtin.set_fact:
         discovery_cloud_dir: "{{ envs_directory_path + '/' + env_paths.0 }}"

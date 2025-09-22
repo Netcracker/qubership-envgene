@@ -12,6 +12,7 @@ setuptools-git-versioning==1.13.5
 six==1.16.0
 toml==0.10.2
 urllib3==2.0.7
+platformdirs>=3.0.0
 lxml==4.9.3
 ruamel.yaml==0.18.5
 ruamel.yaml.clib==0.2.8
@@ -26,3 +27,12 @@ jsonschema-specifications==2023.12.1
 cryptography==41.0.3
 cffi==1.16.0
 click==8.1.3
+shyaml==0.6.2
+yamale==4.0.4
+prettytable==3.5.0
+PyGithub==1.59.0
+certifi==2023.11.17
+platformdirs==3.11.0
+jaraco.text>=3.11.0
+jaraco.functools>=3.5.0
+jaraco.collections>=3.5.0
