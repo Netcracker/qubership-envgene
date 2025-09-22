@@ -550,6 +550,7 @@ Registry configuration where in particular in the sections:
 pkg:[TYPE]/[NAMESPACE]/[NAME]@[VERSION]?[QUALIFIERS]#[SUBPATH]
 ```
 
+```text
 `pkg:` - обязательный префикс, указывающий что это Package URL
 `TYPE`- тип пакета/артефакта (docker, helm, github)
 `NAMESPACE` - группа/организация
@@ -557,6 +558,7 @@ pkg:[TYPE]/[NAMESPACE]/[NAME]@[VERSION]?[QUALIFIERS]#[SUBPATH]
 `@VERSION` - версия
 `?QUALIFIERS` - дополнительные параметры
 `#SUBPATH` - подпуть к файлу
+```
 
 ### Artifact Reference Formats
 
@@ -574,11 +576,13 @@ REGISTRY_HOST[:PORT]/NAMESPACE/REPOSITORY:TAG
 oci://REGISTRY_HOST[:PORT]/NAMESPACE/REPOSITORY:TAG
 ```
 
+```text
 `oci://` - префикс для OCI registry
 `REGISTRY_HOST[:PORT]` - хост OCI реестра
 `NAMESPACE` - группа/организация
 `REPOSITORY` - имя Helm чарта
 `TAG` - версия чарта
+```
 
 #### GitHub Release
 
@@ -588,10 +592,12 @@ oci://REGISTRY_HOST[:PORT]/NAMESPACE/REPOSITORY:TAG
 https://github.com/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
 ```
 
+```text
 `OWNER` - владелец репозитория
 `REPO` - название репозитория
 `TAG` - тег релиза
 `ARTIFACT-FILE` - имя файла артефакта
+```
 
 ### Artifact Reference -> PURL
 
