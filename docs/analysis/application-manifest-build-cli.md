@@ -452,8 +452,8 @@ Root components of this type describe Helm Chart artifact, nested helm charts de
 
 Describes JSON Schema for Helm chart values embedded as data entries.
 
-The schema is located at `charts/<chart-name>/values.schema.json` in the chart artifact, at the same level as `Chart.yaml`
-The schema is optional for the chart; if no schema exists at this path, the AM build CLI does not add a child component and AM generation completes successfully
+The schema is located at `charts/<chart-name>/values.schema.json` in the chart artifact, at the same level as `Chart.yaml`  
+The schema is optional for the chart; if no schema exists at this path, the AM build CLI does not add a child component and AM generation completes successfully  
 
 | Attribute                  | Type   | Mandatory | Default                                        | Description                                                    |
 |----------------------------|--------|-----------|------------------------------------------------|----------------------------------------------------------------|
@@ -476,10 +476,10 @@ The schema is optional for the chart; if no schema exists at this path, the AM b
 
 Describes a set of sized resource profile baselines that are embedded into the AM as configuration data entries.
 
-The resource profile baselines are located at `charts/<chart-name>/resource-profiles/` in the chart artifact, at the same level as `Chart.yaml`
-Any `yaml` or `json` file located in this folder is considered a resource profile
-The structure of resource profile baselines is not specified; any valid `yaml` or `json` file is considered a valid resource profile
-The resource profile baselines are optional; if no baselines exist at this path, the AM build CLI does not add a child component and AM generation completes successfully
+The resource profile baselines are located at `charts/<chart-name>/resource-profiles/` in the chart artifact, at the same level as `Chart.yaml`  
+Any `yaml` or `json` file located in this folder is considered a resource profile  
+The structure of resource profile baselines is not specified; any valid `yaml` or `json` file is considered a valid resource profile  
+The resource profile baselines are optional; if no baselines exist at this path, the AM build CLI does not add a child component and AM generation completes successfully  
 
 | Attribute                          | Type   | Mandatory | Default                                               | Description                                                    |
 |------------------------------------|--------|-----------|-------------------------------------------------------|----------------------------------------------------------------|
