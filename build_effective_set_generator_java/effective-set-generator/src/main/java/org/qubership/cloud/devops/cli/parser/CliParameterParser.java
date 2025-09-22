@@ -177,11 +177,11 @@ public class CliParameterParser {
     private void processBgDomainParameters() {
         Map<String, String> parameters = new HashMap<>();
         BgDomainEntityDTO bgDomainEntityDTO = inputData.getBgDomainEntityDTO();
-        if (bgDomainEntityDTO != null && bgDomainEntityDTO.getControllerNamespace().getCredentialsId() != null) {
-            parameters.put("bg_credId", bgDomainEntityDTO.getControllerNamespace().getCredentialsId());
+        if (bgDomainEntityDTO != null && bgDomainEntityDTO.getController().getCredentialsId() != null) {
+            parameters.put("bg_credId", bgDomainEntityDTO.getController().getCredentialsId());
             Map<String, Object> processedParameters = parametersServiceV2.getProcessedParameters(parameters);
             if (MapUtils.isNotEmpty(processedParameters)) {
-                bgDomainEntityDTO.getControllerNamespace().setCredentialsId(String.valueOf(processedParameters.get("bg_credId")));
+                bgDomainEntityDTO.getController().setCredentialsId(String.valueOf(processedParameters.get("bg_credId")));
             }
         }
     }

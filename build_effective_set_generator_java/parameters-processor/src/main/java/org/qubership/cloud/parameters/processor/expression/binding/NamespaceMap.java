@@ -98,9 +98,9 @@ public class NamespaceMap extends DynamicMap {
 
                 if (bgDomainEntityDTO != null) {
 
-                    BgDomainEntityDTO.NamespaceDTO origin = bgDomainEntityDTO.getOriginNamespace();
-                    BgDomainEntityDTO.NamespaceDTO peer = bgDomainEntityDTO.getPeerNamespace();
-                    BgDomainEntityDTO.NamespaceDTO controller = bgDomainEntityDTO.getControllerNamespace();
+                    BgDomainEntityDTO.NamespaceDTO origin = bgDomainEntityDTO.getOrigin();
+                    BgDomainEntityDTO.NamespaceDTO peer = bgDomainEntityDTO.getPeer();
+                    BgDomainEntityDTO.NamespaceDTO controller = bgDomainEntityDTO.getController();
 
                     //Primary Namespace & Secondary Namespace
                     if (origin.getName().equalsIgnoreCase(originalNamespace)) {
@@ -167,10 +167,10 @@ public class NamespaceMap extends DynamicMap {
 
                 if (bgDomainEntityDTO != null) {
                     if (bgDomainEntityDTO.getType().equalsIgnoreCase(BG_DOMAIN)) {
-                        gatewayNamespace = bgDomainEntityDTO.getOriginNamespace().getName();
+                        gatewayNamespace = bgDomainEntityDTO.getOrigin().getName();
                         idpUrlNamespace = bgDomainEntityDTO.getName();
                     } else {
-                        String originNamespaceName = bgDomainEntityDTO.getOriginNamespace().getName();
+                        String originNamespaceName = bgDomainEntityDTO.getOrigin().getName();
                         gatewayNamespace = originNamespaceName;
                         idpUrlNamespace = originNamespaceName;
                     }
@@ -219,10 +219,10 @@ public class NamespaceMap extends DynamicMap {
     private void setBaselineVars(EscapeMap map, CompositeEntityDTO baselineEntity, BgDomainEntityDTO bgDomainEntityDTO) {
         if (baselineEntity != null) {
             if (baselineEntity.getType().equalsIgnoreCase(BG_DOMAIN) && bgDomainEntityDTO != null) {
-                map.put(BASELINE_ORIGIN, bgDomainEntityDTO.getOriginNamespace().getName());
-                map.put(BASELINE_PEER, bgDomainEntityDTO.getPeerNamespace().getName());
-                map.put(BASELINE_CONTROLLER, bgDomainEntityDTO.getControllerNamespace().getName());
-                map.put(BASELINE_PROJ, bgDomainEntityDTO.getControllerNamespace().getName());
+                map.put(BASELINE_ORIGIN, bgDomainEntityDTO.getOrigin().getName());
+                map.put(BASELINE_PEER, bgDomainEntityDTO.getPeer().getName());
+                map.put(BASELINE_CONTROLLER, bgDomainEntityDTO.getController().getName());
+                map.put(BASELINE_PROJ, bgDomainEntityDTO.getController().getName());
             } else if (baselineEntity.getType().equalsIgnoreCase(NAMESPACE) &&
                     !baselineEntity.getName().equalsIgnoreCase(originalNamespace)) {
                 map.put(BASELINE_ORIGIN, baselineEntity.getName());

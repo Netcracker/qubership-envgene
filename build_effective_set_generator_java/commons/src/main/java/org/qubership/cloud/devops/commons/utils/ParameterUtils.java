@@ -24,7 +24,8 @@ import java.util.*;
 @UtilityClass
 public class ParameterUtils {
 
-    public static final String CONTROLLER_NAMESPACE = "controllerNamespace";
+    private static final String CONTROLLER = "controller";
+    private static final String CREDENTIALS_ID = "credentialsId";
 
     @SuppressWarnings("unchecked")
     public static void splitBySecure(
@@ -121,10 +122,10 @@ public class ParameterUtils {
             return;
         }
         bgDomainParamsMap.putAll(bgDomainMap);
-        Map<String, Object> controller = (Map<String, Object>) bgDomainParamsMap.get(CONTROLLER_NAMESPACE);
-        Object credentialsId = controller.remove("credentialsId");
-        bgDomainParamsMap.put("controllerNamespace", controller);
-        bgDomainSecureMap.put(CONTROLLER_NAMESPACE, Map.of("credentialsId", credentialsId));
+        Map<String, Object> controller = (Map<String, Object>) bgDomainParamsMap.get(CONTROLLER);
+        Object credentialsId = controller.remove(CREDENTIALS_ID);
+        bgDomainParamsMap.put(CONTROLLER, controller);
+        bgDomainSecureMap.put(CONTROLLER, Map.of(CREDENTIALS_ID, credentialsId));
 
     }
 }
