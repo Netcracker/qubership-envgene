@@ -24,6 +24,13 @@
         - [\[Components\] `application/vnd.qubership.helm.values.schema`](#components-applicationvndqubershiphelmvaluesschema)
         - [\[Components\] `application/vnd.qubership.resource-profile-baseline`](#components-applicationvndqubershipresource-profile-baseline)
   - [Registry Config](#registry-config)
+  - [Artifact Reference to PURL and Vice Versa](#artifact-reference-to-purl-and-vice-versa)
+    - [PURL Format](#purl-format)
+    - [Artifact Reference Formats](#artifact-reference-formats)
+      - [Docker and OCI Registry](#docker-and-oci-registry)
+      - [GitHub Release](#github-release)
+    - [Artifact Reference -\> PURL](#artifact-reference---purl)
+    - [PURL -\> Artifact Reference](#purl---artifact-reference)
 
 ## Proposed Approach
 
@@ -446,7 +453,7 @@ Root components of this type describe Helm Chart artifact, nested helm charts de
 |----------------------------|---------|-----------|------------------------------------------|-----------------------------------------------------------------------------|
 | `components[0]`            | object  | no        | None                                     | Child `application/vnd.qubership.helm.values.schema` component              |
 | `components[1]`            | object  | no        | None                                     | Child `application/vnd.qubership.resource-profile-baseline` component       |
-| `components[n]`            | object  | no        | None                                     | Child Helm chart; MIME: `application/vnd.qubership.helm.chart`              |
+| `components[n]`            | object  | no        | None                                     | Child `application/vnd.qubership.helm.chart` component                      |
 
 ##### [Components] `application/vnd.qubership.helm.values.schema`
 
@@ -522,4 +529,168 @@ Describes ZIP archive as a Maven artifact
 
 ## Registry Config
 
-[Registry Definition v2.0](https://github.com/Netcracker/qubership-envgene/blob/feature/reg-def-v2/docs/envgene-objects.md#registry-definition-v20)
+Registry configuration where in particular in the sections:
+
+- `dockerConfig` describes the registry configuration where Docker artifacts are stored
+- `helmConfig` describes the registry configuration where Helm artifacts are stored
+
+Каждый отдельный реджестри описывается отдельным `yaml` файлом в `/configurations/RegDefs/` фолдере в сорс код репозитории
+
+Аттрибут `name` должен совпадать с именем файла без расширения
+
+[Registry Definition v2.0](/schemas/regdef-v2.schema.json)
+
+[Example](/examples/sandbox.yml)
+
+## Artifact Reference to PURL and Vice Versa
+
+### PURL Format
+
+```text
+pkg:[TYPE]/[NAMESPACE]/[NAME]@[VERSION]?[QUALIFIERS]#[SUBPATH]
+```
+
+`pkg:` - обязательный префикс, указывающий что это Package URL
+`TYPE`- тип пакета/артефакта (docker, helm, github)
+`NAMESPACE` - группа/организация
+`NAME` - имя пакета/артефакта
+`@VERSION` - версия
+`?QUALIFIERS` - дополнительные параметры
+`#SUBPATH` - подпуть к файлу
+
+### Artifact Reference Formats
+
+#### Docker and OCI Registry
+
+для докер имаджа (для docker pull)
+
+```text
+REGISTRY_HOST[:PORT]/NAMESPACE/REPOSITORY:TAG
+```
+
+для хелм чарта (для helm pull)
+
+```text
+oci://REGISTRY_HOST[:PORT]/NAMESPACE/REPOSITORY:TAG
+```
+
+`oci://` - префикс для OCI registry
+`REGISTRY_HOST[:PORT]` - хост OCI реестра
+`NAMESPACE` - группа/организация
+`REPOSITORY` - имя Helm чарта
+`TAG` - версия чарта
+
+#### GitHub Release
+
+для хелм чарта (для helm pull)
+
+```text
+https://github.com/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
+```
+
+`OWNER` - владелец репозитория
+`REPO` - название репозитория
+`TAG` - тег релиза
+`ARTIFACT-FILE` - имя файла артефакта
+
+### Artifact Reference -> PURL
+
+1. **Определение `TYPE` для PURL**
+
+    По `mime-type` из [AM Build Config или Component Metadata](#proposed-approach) - `docker`, `helm`
+    Если Artifact Reference содержит `https://github.com/` - `github`
+
+2. **Разбор Artifact Reference**
+
+    Выделить `REGISTRY_HOST[:PORT]`, `NAMESPACE`, `REPOSITORY`, `TAG` для `docker`, `helm`
+    Выделить `OWNER`, `REPO`, `TAG` `ARTIFACT-FILE` для `github`
+
+3. **Поиск `?QUALIFIERS` (`registryName`)**
+
+    Найти Registry Definition у которого значения
+
+    В случае `docker`
+
+   - `dockerConfig.repositoryDomainName`/`dockerConfig.snapshotUri` ИЛИ
+   - `dockerConfig.repositoryDomainName`/`dockerConfig.stagingUri` ИЛИ
+   - `dockerConfig.repositoryDomainName`/`dockerConfig.releaseUri` ИЛИ
+   - `dockerConfig.repositoryDomainName`/`dockerConfig.groupUri`
+
+    Для случае `helm` или `github`
+
+   - `helmConfig.repositoryDomainName`/`helmConfig.helmTargetStaging` ИЛИ
+   - `helmConfig.repositoryDomainName`/`helmConfig.helmTargetRelease`
+
+    Совпадают с `[oci://]REGISTRY_HOST[:PORT]/NAMESPACE` (для `docker`, `helm`) или `https://github.com/OWNER/REPO` (для `github`)
+
+    Значение аттрибута `name` такого реджестри будет искомым значением для `?QUALIFIERS` (`registryName`)
+
+4. **Поиск частей PURL**
+
+   - `NAMESPACE`: `NAMESPACE`, `REPOSITORY`, кроме последнего
+   - `NAME` - имя пакета/артефакта
+   - `@VERSION` - версия
+   - `?QUALIFIERS` - дополнительные параметры
+   - `#SUBPATH` - подпуть к файлу
+
+5. **Сборка PURL**
+
+    | Параметр PURL   | Источник значения                                                                 |
+    |-----------------|-----------------------------------------------------------------------------------|
+    | `TYPE`          | из П1                                                                             |
+    | `NAMESPACE`     | из П2. `NAMESPACE` (для `docker`, `helm`) или `OWNER` (для `github`)              |
+    | `NAME`          | из П2. `REPOSITORY` (для `docker`, `helm`) или `REPO` (для `github`)              |
+    | `@VERSION`      | из П2. `TAG`                                                                      |
+    | `?QUALIFIERS`   | из П3. registryName из найденного Registry Definition                             |
+    | `#SUBPATH`      | из П2. `ARTIFACT-FILE` (только для `github`)                                      |
+
+**Примеры:**
+
+- `https://<sandbox-host>/netcracker/qubership-core:2.1.0` -> `pkg:docker/netcracker/qubership-core@2.1.0?registryName=sandbox`
+- `https://github.com/Netcracker/qubership-airflow/releases/download/2.0.1/airflow-1.19.0-dev.tgz` -> `pkg:github/Netcracker/qubership-airflow@2.0.1?registryName=sandbox#airflow-1.19.0-dev.tgz`
+- `oci://<sandbox-host>/app-team/service-api:v3.2.1` -> `pkg:helm/app-team/service-api@v3.2.1?registryName=sandbox`
+
+### PURL -> Artifact Reference
+
+1. **Разбор PURL**
+
+    Извлечь `TYPE`, `NAMESPACE`, `NAME`, `@VERSION`, `?QUALIFIERS`, `#SUBPATH`
+
+2. **Определить список потенциальных `REGISTRY_HOST[:PORT]`**
+
+    По `TYPE` и `?QUALIFIERS` `registryName` получить из Registry Definition список потенциальных расположений артифакта:
+
+    В случае докер имаджа
+
+   - `dockerConfig.repositoryDomainName`/`dockerConfig.snapshotUri`
+   - `dockerConfig.repositoryDomainName`/`dockerConfig.stagingUri`
+   - `dockerConfig.repositoryDomainName`/`dockerConfig.releaseUri`
+   - `dockerConfig.repositoryDomainName`/`dockerConfig.groupUri`
+
+    Для случае хелм чарта
+
+   - `helmConfig.repositoryDomainName`/`helmConfig.helmTargetStaging`
+   - `helmConfig.repositoryDomainName`/`helmConfig.helmTargetRelease`
+
+3. **Определить `REGISTRY_HOST[:PORT]`**
+
+    Через проверку наличия такого артифакта в порядке release -> snapshot
+
+4. **Сборка Artifact Reference**
+
+    | Параметр Artifact Reference | Источник значения                                 |
+    |-----------------------------|---------------------------------------------------|
+    | `REGISTRY_HOST[:PORT]`      | `dockerConfig.repositoryDomainName` или `helmConfig.repositoryDomainName` из Registry Definition |
+    | `NAMESPACE`                 | `NAMESPACE` из PURL                               |
+    | `REPOSITORY`                | `NAME` из PURL                                    |
+    | `TAG`                       | `@VERSION` из PURL                                |
+    | `OWNER`                     | `NAMESPACE` из PURL (для github)                  |
+    | `REPO`                      | `NAME` из PURL (для github)                       |
+    | `TAG`                       | `@VERSION` из PURL (для github)                   |
+    | `ARTIFACT-FILE`             | `#SUBPATH` из PURL (для github)                   |
+
+**Примеры:**
+
+- `pkg:docker/envoyproxy/envoy:v1.32.6?registryName=sandbox`-> `https://<sandbox-host>/envoyproxy/envoy:v1.32.6`
+- `pkg:github/Netcracker/qubership-airflow@2.0.1?registryName=sandbox#airflow-1.19.0-dev.tgz`-> `https://github.com/Netcracker/qubership-airflow/releases/download/2.0.1/airflow-1.19.0-dev.tgz`
+- `pkg:helm/netcracker/qubership-core@2.1.0?registryName=sandbox`-> `oci://<sandbox-host>/netcracker/qubership-core:2.1.0`
