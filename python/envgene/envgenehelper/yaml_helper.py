@@ -197,7 +197,7 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
             target_yaml[k] = v
             target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
             continue
-
+        clean_key = str(k)
         if overwrite_existing_comments:
             target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
 
