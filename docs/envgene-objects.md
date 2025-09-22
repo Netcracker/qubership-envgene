@@ -372,7 +372,7 @@ peerNamespace:
 controllerNamespace:
   name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}
   type: namespace
-  credentialsId: ${creds.get("bgd-controller-token").secret}
+  credentialsId: controller-cred
   url: https://controller-{{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}.{{ current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST}}
 ```
 
@@ -726,6 +726,7 @@ bg_domain:
     type: namespace
   controllerNamespace:
     name: env-1-controller
+    credentialsId: controller-cred
     type: namespace
     url: https://controller-env-1-controller.qubership.org
 ```
