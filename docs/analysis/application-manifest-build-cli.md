@@ -603,12 +603,12 @@ https://github.com/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
 
 1. **Определение `TYPE` для PURL**
 
-    По `mime-type` из [AM Build Config или Component Metadata](#proposed-approach) - `docker`, `helm`
+    По `mime-type` из [AM Build Config или Component Metadata](#proposed-approach) - `docker`, `helm`  
     Если Artifact Reference содержит `https://github.com/` - `github`
 
 2. **Разбор Artifact Reference**
 
-    Выделить `REGISTRY_HOST[:PORT]`, `NAMESPACE`, `REPOSITORY`, `TAG` для `docker`, `helm`
+    Выделить `REGISTRY_HOST[:PORT]`, `NAMESPACE`, `REPOSITORY`, `TAG` для `docker`, `helm`  
     Выделить `OWNER`, `REPO`, `TAG` `ARTIFACT-FILE` для `github`
 
 3. **Поиск `?QUALIFIERS` (`registryName`)**
