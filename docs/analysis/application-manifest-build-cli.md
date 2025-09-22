@@ -19,10 +19,10 @@
     - [Metadata](#metadata)
     - [Components](#components)
       - [\[Components\] `application/vnd.qubership.standalone-runnable`](#components-applicationvndqubershipstandalone-runnable)
-      - [\[Components\] `application/vnd.qubership.resource-profile-baseline`](#components-applicationvndqubershipresource-profile-baseline)
       - [\[Components\] `application/vnd.docker.image`](#components-applicationvnddockerimage)
       - [\[Components\] `application/vnd.qubership.helm.chart`](#components-applicationvndqubershiphelmchart)
       - [\[Components\] `application/vnd.qubership.helm.values.schema`](#components-applicationvndqubershiphelmvaluesschema)
+      - [\[Components\] `application/vnd.qubership.resource-profile-baseline`](#components-applicationvndqubershipresource-profile-baseline)
   - [Registry Config](#registry-config)
 
 ## Proposed Approach
@@ -403,36 +403,6 @@ An abstract component necessary to link artifacts of different types together
 | `name`                     | string | yes       | None                                           | Component name                             |
 | `components`               | array  | yes       | `[]`                                           | List of child components. See bellow       |
 
-| Child Component            | Type   | Mandatory | Default                               | Description                                                                 |
-|----------------------------|--------|-----------|---------------------------------------|-----------------------------------------------------------------------------|
-| `components[0]`            | object | no        | None                                  | Child `application/vnd.qubership.resource-profile-baseline` component       |
-
-#### [Components] `application/vnd.qubership.resource-profile-baseline`
-
-Describes a set of sized resource profile baselines that are embedded into the AM as configuration data entries.
-
-| Attribute                          | Type   | Mandatory | Default                                               | Description                                                    |
-|------------------------------------|--------|-----------|-------------------------------------------------------|----------------------------------------------------------------|
-| `bom-ref`                          | string | yes       | None                                                  | Unique component identifier within the AM                      |
-| `type`                             | string | yes       | `data`                                                | Component type                                                 |
-| `mime-type`                        | string | yes       | `application/vnd.qubership.resource-profile-baseline` | Component MIME type                                            |
-| `name`                             | string | yes       | `resource-profile-baselines`                          | Logical name of the bundle                                     |
-| `properties`                       | array  | yes       | `[]`                                                  | Always `[]`                                                    |
-| `components`                       | array  | yes       | `[]`                                                  | Always `[]`                                                    |
-| `data`                             | array  | yes       | None                                                  | List of configuration entries (see below)                      |
-| `data[n].type`                     | string | yes       | `configuration`                                       | Entry type                                                     |
-| `data[n].name`                     | string | yes       | None                                                  | Filename of the baseline, e.g. `small.yaml`, `dev.yaml`        |
-| `data[n].contents`                 | object | yes       | None                                                  | Wrapper for the attachment                                     |
-| `data[n].contents.attachment`      | object | yes       | None                                                  | Embedded file payload                                          |
-| `data[n].attachment.contentType`   | string | yes       | None                                                  | MIME of payload, e.g. `application/yaml`, `application/json`   |
-| `data[n].attachment.encoding`      | string | yes       | `base64`                                              | Encoding of the payload                                        |
-| `data[n].attachment.content`       | string | yes       | None                                                  | Base64-encoded file contents                                   |
-
-> [!NOTE]
->
-> - `data` holds multiple size profiles (e.g., `small.yaml`, `medium.yaml`, `large.yaml`) or environment profiles (`dev.yaml`, `prod.yaml`).
-> - The payload is stored inline using base64 and should decode to a valid YAML or JSON document consistent with `contentType`.
-
 #### [Components] `application/vnd.docker.image`
 
 Describes Docker image as an artifact
@@ -472,14 +442,18 @@ Root components of this type describe Helm Chart artifact, nested helm charts de
 | `properties[n].value`      | object  | no        | `{}`                                     | Object mapping `<artifact-ref> -> { valuesPathPrefix }`                     |
 | `components`               | array   | no        | `[]`                                     | Nested components. May include values schema data and/or nested charts      |
 
-| Child Component            | Type    | Mandatory | Default                               | Description                                                                 |
-|----------------------------|---------|-----------|---------------------------------------|-----------------------------------------------------------------------------|
-| `components[0]`            | object  | no        | None                                  | Child `application/vnd.qubership.helm.values.schema` component              |
-| `components[n]`            | object  | no        | None                                  | Child Helm chart; MIME: `application/vnd.qubership.helm.chart`              |
+| Child Component            | Type    | Mandatory | Default                                  | Description                                                                 |
+|----------------------------|---------|-----------|------------------------------------------|-----------------------------------------------------------------------------|
+| `components[0]`            | object  | no        | None                                     | Child `application/vnd.qubership.helm.values.schema` component              |
+| `components[1]`            | object  | no        | None                                     | Child `application/vnd.qubership.resource-profile-baseline` component       |
+| `components[n]`            | object  | no        | None                                     | Child Helm chart; MIME: `application/vnd.qubership.helm.chart`              |
 
 #### [Components] `application/vnd.qubership.helm.values.schema`
 
-Describes JSON Schema for Helm chart values embedded as data entries. See examples: `application-manifest-jaeger.json`, `application-manifest-qip.json`.
+Describes JSON Schema for Helm chart values embedded as data entries.
+
+The schema is located at `charts/<chart-name>/values.schema.json` in the chart artifact, at the same level as `Chart.yaml`
+The schema is optional for the chart; if no schema exists at this path, the AM build CLI does not add a child component and AM generation completes successfully
 
 | Attribute                  | Type   | Mandatory | Default                                        | Description                                                    |
 |----------------------------|--------|-----------|------------------------------------------------|----------------------------------------------------------------|
@@ -497,6 +471,37 @@ Describes JSON Schema for Helm chart values embedded as data entries. See exampl
 | `attachment.contentType`   | string | yes       | `application/json`                             | MIME of payload                                                |
 | `attachment.encoding`      | string | no        | `base64`                                       | Encoding of the payload                                        |
 | `attachment.content`       | string | yes       | None                                           | Base64-encoded schema contents                                 |
+
+#### [Components] `application/vnd.qubership.resource-profile-baseline`
+
+Describes a set of sized resource profile baselines that are embedded into the AM as configuration data entries.
+
+The resource profile baselines are located at `charts/<chart-name>/resource-profiles/` in the chart artifact, at the same level as `Chart.yaml`
+Any `yaml` or `json` file located in this folder is considered a resource profile
+The structure of resource profile baselines is not specified; any valid `yaml` or `json` file is considered a valid resource profile
+The resource profile baselines are optional; if no baselines exist at this path, the AM build CLI does not add a child component and AM generation completes successfully
+
+| Attribute                          | Type   | Mandatory | Default                                               | Description                                                    |
+|------------------------------------|--------|-----------|-------------------------------------------------------|----------------------------------------------------------------|
+| `bom-ref`                          | string | yes       | None                                                  | Unique component identifier within the AM                      |
+| `type`                             | string | yes       | `data`                                                | Component type                                                 |
+| `mime-type`                        | string | yes       | `application/vnd.qubership.resource-profile-baseline` | Component MIME type                                            |
+| `name`                             | string | yes       | `resource-profile-baselines`                          | Logical name of the bundle                                     |
+| `properties`                       | array  | yes       | `[]`                                                  | Always `[]`                                                    |
+| `components`                       | array  | yes       | `[]`                                                  | Always `[]`                                                    |
+| `data`                             | array  | yes       | None                                                  | List of configuration entries (see below)                      |
+| `data[n].type`                     | string | yes       | `configuration`                                       | Entry type                                                     |
+| `data[n].name`                     | string | yes       | None                                                  | Filename of the baseline, e.g. `small.yaml`, `dev.yaml`        |
+| `data[n].contents`                 | object | yes       | None                                                  | Wrapper for the attachment                                     |
+| `data[n].contents.attachment`      | object | yes       | None                                                  | Embedded file payload                                          |
+| `data[n].attachment.contentType`   | string | yes       | None                                                  | MIME of payload, e.g. `application/yaml`, `application/json`   |
+| `data[n].attachment.encoding`      | string | yes       | `base64`                                              | Encoding of the payload                                        |
+| `data[n].attachment.content`       | string | yes       | None                                                  | Base64-encoded file contents                                   |
+
+> [!NOTE]
+>
+> - `data` holds multiple size profiles (e.g., `small.yaml`, `medium.yaml`, `large.yaml`) or environment profiles (`dev.yaml`, `prod.yaml`).
+> - The payload is stored inline using base64 and should decode to a valid YAML or JSON document consistent with `contentType`.
 
 <!-- #### [Components] `application/zip`
 
