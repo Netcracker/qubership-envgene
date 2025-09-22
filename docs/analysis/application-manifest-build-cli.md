@@ -21,8 +21,8 @@
       - [\[Components\] `application/vnd.qubership.standalone-runnable`](#components-applicationvndqubershipstandalone-runnable)
       - [\[Components\] `application/vnd.docker.image`](#components-applicationvnddockerimage)
       - [\[Components\] `application/vnd.qubership.helm.chart`](#components-applicationvndqubershiphelmchart)
-      - [\[Components\] `application/vnd.qubership.helm.values.schema`](#components-applicationvndqubershiphelmvaluesschema)
-      - [\[Components\] `application/vnd.qubership.resource-profile-baseline`](#components-applicationvndqubershipresource-profile-baseline)
+        - [\[Components\] `application/vnd.qubership.helm.values.schema`](#components-applicationvndqubershiphelmvaluesschema)
+        - [\[Components\] `application/vnd.qubership.resource-profile-baseline`](#components-applicationvndqubershipresource-profile-baseline)
   - [Registry Config](#registry-config)
 
 ## Proposed Approach
@@ -448,7 +448,7 @@ Root components of this type describe Helm Chart artifact, nested helm charts de
 | `components[1]`            | object  | no        | None                                     | Child `application/vnd.qubership.resource-profile-baseline` component       |
 | `components[n]`            | object  | no        | None                                     | Child Helm chart; MIME: `application/vnd.qubership.helm.chart`              |
 
-#### [Components] `application/vnd.qubership.helm.values.schema`
+##### [Components] `application/vnd.qubership.helm.values.schema`
 
 Describes JSON Schema for Helm chart values embedded as data entries.
 
@@ -472,7 +472,7 @@ The schema is optional for the chart; if no schema exists at this path, the AM b
 | `attachment.encoding`      | string | no        | `base64`                                       | Encoding of the payload                                        |
 | `attachment.content`       | string | yes       | None                                           | Base64-encoded schema contents                                 |
 
-#### [Components] `application/vnd.qubership.resource-profile-baseline`
+##### [Components] `application/vnd.qubership.resource-profile-baseline`
 
 Describes a set of sized resource profile baselines that are embedded into the AM as configuration data entries.
 
