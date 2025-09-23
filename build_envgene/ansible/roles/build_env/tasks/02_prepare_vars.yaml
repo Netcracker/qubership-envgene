@@ -37,6 +37,11 @@
     cred_config: "{{ lookup('file', '/tmp/rendered_credentials.yml') | from_yaml }}"
   no_log: false
 
+- name: Clean up temp rendered file
+  file:
+    path: "/tmp/rendered_credentials.yml"
+    state: absent
+
 - name: include old logic
   include_tasks: 02_prepare_vars_old.yaml
   when: env_definition['envTemplate']['artifact'] is undefined
