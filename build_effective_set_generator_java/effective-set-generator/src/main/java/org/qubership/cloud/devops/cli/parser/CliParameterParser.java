@@ -28,15 +28,19 @@ import org.qubership.cloud.devops.cli.pojo.dto.sd.SBApplicationDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
+import org.qubership.cloud.devops.commons.Injector;
 import org.qubership.cloud.devops.commons.exceptions.ConsumerFileProcessingException;
 import org.qubership.cloud.devops.commons.exceptions.CreateWorkDirException;
 import org.qubership.cloud.devops.commons.exceptions.NotFoundException;
 import org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO;
-import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
 import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.SecretCredentialsDTO;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
+import org.qubership.cloud.devops.commons.utils.CredentialUtils;
+import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
@@ -175,13 +179,14 @@ public class CliParameterParser {
     }
 
     private void processBgDomainParameters() {
-        Map<String, String> parameters = new HashMap<>();
         BgDomainEntityDTO bgDomainEntityDTO = inputData.getBgDomainEntityDTO();
         if (bgDomainEntityDTO != null && bgDomainEntityDTO.getControllerNamespace().getCredentialsId() != null) {
-            parameters.put("bg_credId", bgDomainEntityDTO.getControllerNamespace().getCredentialsId());
-            Map<String, Object> processedParameters = parametersServiceV2.getProcessedParameters(parameters);
-            if (MapUtils.isNotEmpty(processedParameters)) {
-                bgDomainEntityDTO.getControllerNamespace().setCredentialsId(String.valueOf(processedParameters.get("bg_credId")));
+            CredentialUtils credentialUtils = Injector.getInstance().getDi().get(CredentialUtils.class);
+            Credential credentialPojo = credentialUtils.getCredentialsById(bgDomainEntityDTO.getControllerNamespace().getCredentialsId());
+            if (credentialPojo instanceof UsernamePasswordCredentials) {
+                UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentialPojo;
+                bgDomainEntityDTO.getControllerNamespace().setUserName(usernamePasswordCredentials.getUsername());
+                bgDomainEntityDTO.getControllerNamespace().setPassword(usernamePasswordCredentials.getPassword());
             }
         }
     }

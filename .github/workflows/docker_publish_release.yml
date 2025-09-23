@@ -14,6 +14,11 @@ on:
         default: '1.0.0'
         type: string
         description: 'Release version (e.g., 1.0.0)'
+      publish:
+        required: false
+        default: true
+        type: boolean
+        description: 'Publish the release'
 
 jobs:
   tests:
@@ -58,14 +63,8 @@ jobs:
           echo "Tag already exists: v${{ github.event.inputs.version }}"
           exit 1
 
-  tag:
-    needs: [check-tag]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@v1.0.3
-    with:
-      tag-name: v${{ github.event.inputs.version }}
-
   update_image_tags:
-    needs: [tag]
+    needs: [check-tag]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -113,9 +112,14 @@ jobs:
             else
               echo "No changes to commit - skipping git operations"
             fi
+  tag:
+    needs: [update_image_tags]
+    uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@v1.0.3
+    with:
+      tag-name: v${{ github.event.inputs.version }}
 
   build-qubership-pipegene:
-    needs: [update_image_tags]
+    needs: [tag]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -140,7 +144,7 @@ jobs:
         version: ${{ inputs.version }}
 
   build-qubership-envgene:
-    needs: [update_image_tags]
+    needs: [tag]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -165,7 +169,7 @@ jobs:
         version: ${{ inputs.version }}
 
   build-effective-set-jar:
-    needs: [update_image_tags]
+    needs: [tag]
     uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
     with:
       maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
@@ -202,7 +206,7 @@ jobs:
         version: ${{ inputs.version }}
 
   build-instance-repo-pipeline:
-    needs: [update_image_tags]
+    needs: [tag]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -221,8 +225,12 @@ jobs:
         version: ${{ inputs.version }}
 
   github-release:
-    needs: [build-qubership-pipegene, build-qubership-envgene, build-effective-set-generator, build-instance-repo-pipeline]
+    needs:
+      - build-qubership-pipegene
+      - build-qubership-envgene
+      - build-effective-set-generator
+      - build-instance-repo-pipeline
     uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v1.0.3
     with:
       version: ${{ github.event.inputs.version }}
-      publish: true
+      publish: ${{ github.event.inputs.publish }}
