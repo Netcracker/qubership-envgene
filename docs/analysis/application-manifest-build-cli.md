@@ -552,9 +552,9 @@ pkg:[TYPE]/[NAMESPACE]/[NAME]@[VERSION]?[QUALIFIERS]#[SUBPATH]
 
 ```text
 `pkg:` - обязательный префикс, указывающий что это Package URL
-`TYPE`- тип пакета/артефакта (docker, helm, github)
-`NAMESPACE` - группа/организация
-`NAME` - имя пакета/артефакта
+`TYPE`- тип артефакта (docker, helm, github)
+`NAMESPACE` - группа или организация
+`NAME` - имя артефакта
 `@VERSION` - версия
 `?QUALIFIERS` - дополнительные параметры
 `#SUBPATH` - подпуть к файлу
@@ -579,7 +579,7 @@ oci://REGISTRY_HOST[:PORT]/NAMESPACE/REPOSITORY:TAG
 ```text
 `oci://` - префикс для OCI registry
 `REGISTRY_HOST[:PORT]` - хост OCI реестра
-`NAMESPACE` - группа/организация
+`NAMESPACE` - группа или организация
 `REPOSITORY` - имя Helm чарта
 `TAG` - версия чарта
 ```
