@@ -247,31 +247,31 @@ components:
   # application/vnd.docker.image
   - name: jaeger-cassandra-schema
     mimeType: application/vnd.docker.image
-    purl: pkg:docker/jaegertracing/jaeger-cassandra-schema:1.72.0?registryName=sandbox
+    reference: docker.io/jaegertracing/jaeger-cassandra-schema:1.72.0
   - name: jaeger
     mimeType: application/vnd.docker.image
-    purl: pkg:docker/jaegertracing/jaeger:2.9.0?registryName=sandbox
+    reference: docker.io/jaegertracing/jaeger:2.9.0
   - name: jaeger-readiness-probe
     mimeType: application/vnd.docker.image
   - name: jaeger-readiness-probe
     mimeType: application/vnd.docker.image
   - name: example-hotrod
     mimeType: application/vnd.docker.image
-    purl: pkg:docker/jaegertracing/example-hotrod:1.72.0?registryName=sandbox
+    reference: docker.io/jaegertracing/example-hotrod:1.72.0
   - name: jaeger-integration-tests
     mimeType: application/vnd.docker.image
   - name: jaeger-es-index-cleaner
     mimeType: application/vnd.docker.image
-    purl: pkg:docker/jaegertracing/jaeger-es-index-cleaner:1.72.0?registryName=sandbox
+    reference: docker.io/jaegertracing/jaeger-es-index-cleaner:1.72.0
   - name: jaeger-es-rollover
     mimeType: application/vnd.docker.image
-    purl: pkg:docker/jaegertracing/jaeger-es-rollover:1.72.0?registryName=sandbox
+    reference: docker.io/jaegertracing/jaeger-es-rollover:1.72.0
   - name: envoy
     mimeType: application/vnd.docker.image
-    purl: pkg:docker/envoyproxy/envoy:v1.32.6?registryName=sandbox
+    reference: docker.io/envoyproxy/envoy:v1.32.6
   - name: openjdk
     mimeType: application/vnd.docker.image
-    purl: openjdk:11 ### ????
+    reference: docker.io/openjdk:11
   - name: spark-dependencies-image
     mimeType: application/vnd.docker.image
   - name: qubership-deployment-status-provisioner
@@ -570,17 +570,28 @@ pkg:[TYPE]/[NAMESPACE]/[NAME]@[VERSION]?[QUALIFIERS]#[SUBPATH]
 REGISTRY_HOST[:PORT]/NAMESPACE/IMAGE:TAG
 ```
 
+| Поле               | Тип    | Обязательность | По умолчанию | Описание                          |
+|--------------------|--------|----------------|--------------|-----------------------------------|
+| `REGISTRY_HOST`    | string | да             | `docker.io`  | Хост Docker реестра               |
+| `PORT`             | number | нет            | 443          | Порт Docker реестра               |
+| `NAMESPACE`        | string | да             | None         | Группа или организация            |
+| `IMAGE`            | string | да             | None         | Имя Docker образа                 |
+| `TAG`              | string | да             | latest       | Версия образа                     |
+
 для хелм чарта
 
 ```text
 oci://REGISTRY_HOST[:PORT]/NAMESPACE/IMAGE:TAG
 ```
 
-`oci://` - префикс для OCI registry  
-`REGISTRY_HOST[:PORT]` - хост OCI реестра  
-`NAMESPACE` - группа или организация  
-`IMAGE` - имя Helm чарта  
-`TAG` - версия чарта  
+| Поле               | Тип    | Обязательность | По умолчанию | Описание                          |
+|--------------------|--------|----------------|--------------|-----------------------------------|
+| `oci://`           | string | да             | None         | префикс для OCI registry          |
+| `REGISTRY_HOST`    | string | да             | None         | хост OCI реестра                  |
+| `PORT`             | number | нет            | 443          | порт OCI реестра                  |
+| `NAMESPACE`        | string | да             | None         | группа или организация            |
+| `IMAGE`            | string | да             | None         | имя Helm чарта                    |
+| `TAG`              | string | да             | None         | версия чарта                      |
 
 #### GitHub Release
 
@@ -590,10 +601,12 @@ oci://REGISTRY_HOST[:PORT]/NAMESPACE/IMAGE:TAG
 REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
 ```
 
-`OWNER` - владелец репозитория  
-`REPO` - название репозитория  
-`TAG` - тег релиза  
-`ARTIFACT-FILE` - имя файла артефакта  
+| Поле               | Тип    | Обязательность | По умолчанию | Описание                          |
+|--------------------|--------|----------------|--------------|-----------------------------------|
+| `OWNER`            | string | да             | None         | Владелец репозитория              |
+| `REPO`             | string | да             | None         | Название репозитория              |
+| `TAG`              | string | да             | None         | Тег релиза                        |
+| `ARTIFACT-FILE`    | string | да             | None         | Имя файла артефакта               |
 
 ### Artifact Reference -> PURL
 
