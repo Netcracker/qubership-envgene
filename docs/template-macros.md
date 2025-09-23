@@ -1009,7 +1009,7 @@ These macros are rendered at the stage of environment building for [Namespace Re
 
 **Basic usage:**
 
-`NS_BUILD_FILTER: "${controller}"`
+`NS_BUILD_FILTER: "@controller"`
 
 **Usage in sample:** TBD
 
@@ -1024,7 +1024,7 @@ These macros are rendered at the stage of environment building for [Namespace Re
 
 **Basic usage:**
 
-`NS_BUILD_FILTER: "${origin}"`
+`NS_BUILD_FILTER: "@origin"`
 
 **Usage in sample:** TBD
 
@@ -1039,7 +1039,7 @@ These macros are rendered at the stage of environment building for [Namespace Re
 
 **Basic usage:**
 
-`NS_BUILD_FILTER: "${peer}"`
+`NS_BUILD_FILTER: "@peer"`
 
 **Usage in sample:** TBD
 

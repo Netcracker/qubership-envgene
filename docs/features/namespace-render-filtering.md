@@ -40,7 +40,7 @@ The following operators are available:
 ### Update all except the peer NS
 
 ```yaml
-NS_BUILD_FILTER: "! ${peer}"
+NS_BUILD_FILTER: "! @peer"
 # or
 NS_BUILD_FILTER: "! env-name-peer"
 ```
@@ -48,7 +48,7 @@ NS_BUILD_FILTER: "! env-name-peer"
 ### Update only the peer NS
 
 ```yaml
-NS_BUILD_FILTER: "${peer}"
+NS_BUILD_FILTER: "@peer"
 # or
 NS_BUILD_FILTER: "env-name-peer"
 ```
@@ -65,10 +65,10 @@ NS_BUILD_FILTER is not provided
 
 ```yaml
 # Update controller and origin
-NS_BUILD_FILTER: "${peer},${origin}"
+NS_BUILD_FILTER: "@peer,@origin"
 
 # Update all except peer and controller
-NS_BUILD_FILTER: "! ${peer},${controller}"
+NS_BUILD_FILTER: "! @peer,@controller"
 
 # Update specific namespaces by name
 NS_BUILD_FILTER: "env-name-api,env-name-frontend"
