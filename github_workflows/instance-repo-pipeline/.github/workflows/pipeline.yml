@@ -230,6 +230,7 @@ jobs:
         with:
           name: generate_inventory_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
+          include-hidden-files: true
       ##########################
 
 
@@ -257,6 +258,7 @@ jobs:
         with:
           name: credential_rotation_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
+          include-hidden-files: true
       ##########################
 
 
@@ -310,6 +312,7 @@ jobs:
         with:
           name: build_env_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
+          include-hidden-files: true
       ##########################
 
 
@@ -350,6 +353,7 @@ jobs:
         with:
           name: generate_effective_set_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
+          include-hidden-files: true
       ##########################
 
 
@@ -396,3 +400,5 @@ jobs:
         with:
           name: git_commit_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
+          include-hidden-files: true
+      ##########################
