@@ -296,7 +296,7 @@ jobs:
                 env_name=$(echo "$ENV_NAME" | awk -F "/" '{print $NF}')
                 export env_name
               fi
-    
+
               env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
               for path in $env_path; do
                 if [ -d "$path/Credentials" ]; then
