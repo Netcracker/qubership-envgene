@@ -9,33 +9,37 @@ from envgenehelper import dump_as_yaml_format, get_all_files_in_dir
 class TestHelpers:
     @staticmethod
     def assert_dirs_content(source_dir, target_dir):
-        files_to_compare = get_all_files_in_dir(source_dir, source_dir + "/")
-        logger.info(dump_as_yaml_format(files_to_compare))
-        match, mismatch, errors = filecmp.cmpfiles(source_dir, target_dir, files_to_compare, shallow=False)
+        source_files = set(get_all_files_in_dir(source_dir, source_dir + "/"))
+        target_files = set(get_all_files_in_dir(target_dir, target_dir + "/"))
+
+        extra_files = target_files - source_files
+        missing_files = source_files - target_files
+
+        if extra_files:
+            logger.error(f"Extra files in target: {dump_as_yaml_format(list(extra_files))}")
+        if missing_files:
+            logger.error(f"Missing files in target: {dump_as_yaml_format(list(missing_files))}")
+
+        common_files = list(source_files & target_files)
+        match, mismatch, errors = filecmp.cmpfiles(source_dir, target_dir, common_files, shallow=False)
+
         logger.info(f"Match: {dump_as_yaml_format(match)}")
-        if len(mismatch) > 0:
-            logger.error(f"Mismatch: {dump_as_yaml_format(mismatch)}")
+
+        if mismatch:
             for file in mismatch:
                 file1 = os.path.join(source_dir, file)
                 file2 = os.path.join(target_dir, file)
-                try:
-                    with open(file1, 'r') as f1, open(file2, 'r') as f2:
-                        diff = difflib.unified_diff(
-                            f1.readlines(),
-                            f2.readlines(),
-                            fromfile=file1,
-                            tofile=file2,
-                            lineterm=''
-                        )
-                        diff_text = '\n'.join(diff)
-                        logger.error(f"Diff for {file}:\n{diff_text}")
-                except Exception as e:
-                    logger.error(f"Could not read files for diff: {file1}, {file2}. Error: {e}")
-        else:
-            logger.info(f"Mismatch: {dump_as_yaml_format(mismatch)}")
-        if len(errors) > 0:
-            logger.fatal(f"Errors: {dump_as_yaml_format(errors)}")
-        else:
-            logger.info(f"Errors: {dump_as_yaml_format(errors)}")
-        assert len(mismatch) == 0, f"Files from source and rendering result mismatch: {dump_as_yaml_format(mismatch)}"
-        assert len(errors) == 0, f"Error during comparing source and rendering result: {dump_as_yaml_format(errors)}"
+                with open(file1, 'r') as f1, open(file2, 'r') as f2:
+                    diff = difflib.unified_diff(
+                        f1.readlines(),
+                        f2.readlines(),
+                        fromfile=file1,
+                        tofile=file2,
+                        lineterm=''
+                    )
+                    logger.error(f"Diff for {file}:\n{''.join(diff)}")
+
+        assert not mismatch, f"Mismatched files: {dump_as_yaml_format(mismatch)}"
+        assert not errors, f"Errors: {dump_as_yaml_format(errors)}"
+        assert not extra_files, f"Extra files in target: {dump_as_yaml_format(list(extra_files))}"
+        assert not missing_files, f"Missing files in target: {dump_as_yaml_format(list(missing_files))}"
