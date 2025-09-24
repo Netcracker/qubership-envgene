@@ -5,18 +5,18 @@
   # The configuration file should be placed in the .github folder and named auto-labeler-config.yaml.
   # Example file can be found there:
   # https://github.com/Netcracker/.github/blob/main/config/examples/auto-labeler-config.yaml
-  
+
   name: Automatic PR Labeler
-  
+
   on:
     pull_request:
       branches: [main]
       types:
         [opened, reopened, synchronize]
-  
+
   permissions:
     contents: read
-  
+
   jobs:
     assign-labels:
       if: (github.event.pull_request.merged == false) && (github.event.pull_request.user.login != 'dependabot[bot]') && (github.event.pull_request.user.login != 'github-actions[bot]')
@@ -29,7 +29,7 @@
         - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
           with:
             persist-credentials: false
-  
+
         - name: "Execute assign labels"
           id: action-assign-labels
           uses: mauroalderete/action-assign-labels@671a4ca2da0f900464c58b8b5540a1e07133e915 # v1.5.1
@@ -39,7 +39,7 @@
             conventional-commits: "./.github/auto-labeler-config.yaml"
             maintain-labels-not-matched: true
             apply-changes: ${{ github.event.pull_request.base.repo.id == github.event.pull_request.head.repo.id }}
-  
+
         - name: Set labels-next safely
           if: ${{ github.event.pull_request.base.repo.id != github.event.pull_request.head.repo.id }}
           run: |
