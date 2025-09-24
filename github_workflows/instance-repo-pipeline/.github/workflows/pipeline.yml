@@ -74,9 +74,9 @@ env:
   DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator"
 
   #DOCKER_IMAGE_TAGS
-  DOCKER_IMAGE_TAG_PIPEGENE: "main_20250921-203813"
-  DOCKER_IMAGE_TAG_ENVGENE: "feature_add_token_render_ansible"
-  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "main_20250921-203914"
+  DOCKER_IMAGE_TAG_PIPEGENE: "feature_instance_pipeline_v2_20250924-061238"
+  DOCKER_IMAGE_TAG_ENVGENE: "feature_instance_pipeline_v2_20250924-061239"
+  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "feature_instance_pipeline_v2_20250924-061346"
 
 jobs:
   set_docker_images:
