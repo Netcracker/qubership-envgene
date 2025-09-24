@@ -188,7 +188,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        environment: ${{ fromJson(needs.process_environment_variables.outputs.env_matrix) }}  
+        environment: ${{ fromJson(needs.process_environment_variables.outputs.env_matrix) }}
     env:
       FULL_ENV: ${{ matrix.environment }}
     steps:
@@ -201,8 +201,8 @@ jobs:
         run: |
           PACKAGE_NAME="$(echo '${{ matrix.environment }}' | sed 's|/|_|g')"
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
-        shell: bash    
-      
+        shell: bash
+
       ### GENERATE INVENTORY ###
       - name: Generate Inventory
         uses: addnab/docker-run-action@v3
@@ -224,7 +224,7 @@ jobs:
               exit 1
             fi
 
-      - name: Upload Generate Inventory Package       
+      - name: Upload Generate Inventory Package
         uses: actions/upload-artifact@v4
         if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         with:
@@ -243,7 +243,7 @@ jobs:
           run: |
             # Export all variables using unified exporter
             eval "$(/work/.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
-  
+
             # All variables are now available from the unified exporter
             echo "Executing credential rotation..."
             if ! python3 /module/creds_rotation_scripts/creds_rotation_handler.py; then
@@ -251,7 +251,7 @@ jobs:
               exit 1
             fi
 
-      - name: Upload Credential Rotation Artifact       
+      - name: Upload Credential Rotation Artifact
         uses: actions/upload-artifact@v4
         if: needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         with:
@@ -270,11 +270,11 @@ jobs:
           run: |
               # Export all variables using unified exporter
               eval "$(/work/.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
-    
+
               if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
               env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs");
               for path in $env_path; do bash /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/$path; done; fi
-    
+
               echo "Executing build environment operations..."
               if [ "$ENV_TEMPLATE_VERSION" != "" ] && [ "$ENV_TEMPLATE_TEST" != "true" ]; then
                 if ! /module/scripts/prepare.sh "set_template_version.yaml"; then
@@ -288,7 +288,7 @@ jobs:
                   exit 1
                 fi
               fi
-    
+
               if [ "$ENV_TEMPLATE_TEST" == "true" ]; then
                 env_name=$(cat set_variable.txt)
                 sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "${CI_PROJECT_DIR}/environments/$env_name/Credentials/credentials.yml"
@@ -304,7 +304,7 @@ jobs:
                 fi
               done
 
-      - name: Upload Build Env Package       
+      - name: Upload Build Env Package
         uses: actions/upload-artifact@v4
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         with:
@@ -323,20 +323,20 @@ jobs:
           run: |
             # Export all variables using unified exporter
             eval "$(/work/.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
-            
+
             if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
               env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs")
               for path in $env_path; do
                 bash /module/scripts/update_ca_cert.sh "${CI_PROJECT_DIR}/configuration/certs/$path"
               done
             fi
-  
+
             echo "Executing effective set generation..."
             if ! /module/scripts/prepare.sh "generate_effective_set.yaml"; then
               echo "Effective set generation failed with exit code $?"
               exit 1
             fi
-  
+
             env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
             for path in $env_path; do
               if [ -d "$path/Credentials" ]; then
@@ -344,7 +344,7 @@ jobs:
               fi
             done
 
-      - name: Upload Generate Effective Set Package       
+      - name: Upload Generate Effective Set Package
         uses: actions/upload-artifact@v4
         if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         with:
@@ -362,18 +362,18 @@ jobs:
           run: |
             # Export all variables using unified exporter
             eval "$(/work/.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
-            
+
             echo "Prepare git_commit job for ${ENVIRONMENT_NAME}..."
-  
+
             if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
               env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs")
               for path in $env_path; do
                 bash /module/scripts/update_ca_cert.sh "${CI_PROJECT_DIR}/configuration/certs/$path"
               done
             fi
-  
+
             git config --global --add safe.directory "${CI_PROJECT_DIR}"
-  
+
             # Execute git commit with proper error handling
             echo "Executing git commit operations..."
             if ! /module/scripts/prepare.sh "git_commit.yaml"; then
@@ -381,18 +381,18 @@ jobs:
               echo "This could be due to authentication issues or other git errors"
               exit 1
             fi
-  
+
             env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
             for path in $env_path; do
               if [ -d "$path/Credentials" ]; then
                 chmod ugo+rw "$path/Credentials/"*
               fi
             done
-  
+
             cp -rf ${CI_PROJECT_DIR}/environments ${CI_PROJECT_DIR}/git_envs
 
       - name: Upload Git Commit Package
         uses: actions/upload-artifact@v4
         with:
           name: git_commit_${{ env.PACKAGE_NAME }}
-          path: environments/${{ matrix.environment }}   
+          path: environments/${{ matrix.environment }}
