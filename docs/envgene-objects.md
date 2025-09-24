@@ -1006,8 +1006,7 @@ version: "2.0"
 # Name of the registry
 name: string
 # Optional
-# Authentication config
-# Cannot be set in if anonymous access is used
+# Authentication configs
 authConfig:
   <auth-config-name>:
     # Mandatory
@@ -1200,6 +1199,21 @@ goConfig:
   # Go proxy repository URL
   goProxyRepository: string
 # Optional
+npmConfig:
+  # Optional
+  # Pointer to authentication config described in `authConfig` section
+  # Cannot be set in if anonymous access is used
+  authConfig: string
+  # Mandatory
+  # Domain name of the registry
+  repositoryDomainName: string
+  # Mandatory
+  # NPM snapshot repository name
+  npmTargetSnapshot: string
+  # Mandatory
+  # NPM release repository name
+  npmTargetRelease: string
+# Optional
 rawConfig:
   # Optional
   # Pointer to authentication config described in `authConfig` section
@@ -1221,21 +1235,6 @@ rawConfig:
   # Mandatory
   # Raw proxy repository name
   rawTargetProxy: string
-# Optional
-npmConfig:
-  # Optional
-  # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
-  authConfig: string
-  # Mandatory
-  # Domain name of the registry
-  repositoryDomainName: string
-  # Mandatory
-  # NPM snapshot repository name
-  npmTargetSnapshot: string
-  # Mandatory
-  # NPM release repository name
-  npmTargetRelease: string
 ```
 
 **Examples of different auth sections**:
@@ -1301,7 +1300,7 @@ authConfig:
 
 ```yaml
 version: "2.0"
-name: "registry"
+name: registry
 authConfig:
   aws:
     authType: shortLived
@@ -1316,48 +1315,50 @@ authConfig:
     authMethod: user_pass
     credentialsId: cred-nexus
 mavenConfig:
-  repositoryDomainName: "https://codeartifact.eu-west-1.amazonaws.com/maven/app"
-  targetSnapshot: "snapshots"
-  targetStaging: "staging"
-  targetRelease: "releases"
-  snapshotGroup: "com.mycompany.app"
-  releaseGroup: "com.mycompany.app"
   authConfig: aws
+  repositoryDomainName: https://codeartifact.eu-west-1.amazonaws.com/maven/app
+  targetSnapshot: snapshots
+  targetStaging: staging
+  targetRelease: releases
+  snapshotGroup: snapshot-group
+  releaseGroup: staging-group
 dockerConfig:
-  repositoryDomainName: "https://123456789.dkr.ecr.eu-west-1.amazonaws.com"
-  snapshotUri: "docker/snapshots"
-  stagingUri: "docker/staging"
-  releaseUri: "docker/releases"
-  groupUri: "docker"
-  snapshotRepoName: "docker-snapshots"
-  stagingRepoName: "docker-staging"
-  releaseRepoName: "docker-releases"
-  groupName: "docker"
   authConfig: aws
+  snapshotUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18080
+  stagingUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18081
+  releaseUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18082
+  groupUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18083
+  snapshotRepoName: docker-snapshots
+  stagingRepoName: docker-staging
+  releaseRepoName: docker-releases
+  groupName: docker
 helmConfig:
-  repositoryDomainName: "https://nexus.mycompany.internal/repository/helm-charts"
-  helmTargetStaging: "helm-staging"
-  helmTargetRelease: "helm-releases"
   authConfig: helm
+  repositoryDomainName: https://nexus.mycompany.internal/repository/helm-charts
+  helmTargetStaging: helm-staging
+  helmTargetRelease: helm-releases
 helmAppConfig:
-  repositoryDomainName: "https://nexus.mycompany.internal/repository/helm-charts"
-  helmStagingRepoName: "helm-staging"
-  helmReleaseRepoName: "helm-releases"
-  helmGroupRepoName: "helm-group"
-  helmDevRepoName: "helm-dev"
   authConfig: helm
+  repositoryDomainName: https://nexus.mycompany.internal/repository/helm-charts
+  helmDevRepoName: helm-dev
+  helmStagingRepoName: helm-staging
+  helmReleaseRepoName: helm-releases
+  helmGroupRepoName: helm-group
 goConfig:
-  goTargetSnapshot: "go-snapshots"
-  goTargetRelease: "go-releases"
-  goProxyRepository: "https://goproxy.internal/go/"
-rawConfig:
-  rawTargetSnapshot: "raw/snapshots"
-  rawTargetRelease: "raw/releases"
-  rawTargetStaging: "raw/staging"
-  rawTargetProxy: "https://proxy.raw.local/"
+  repositoryDomainName: https://nexus.mycompany.internal/repository/go
+  goTargetSnapshot: go-snapshots
+  goTargetRelease: go-releases
+  goProxyRepository: https://goproxy.internal/go/
 npmConfig:
-  npmTargetSnapshot: "npm-snapshots"
-  npmTargetRelease: "npm-releases"
+  repositoryDomainName: https://mycompany.internal
+  npmTargetSnapshot: npm-snapshots
+  npmTargetRelease: npm-releases
+rawConfig:
+  repositoryDomainName: https://proxy.raw.local/raw
+  rawTargetSnapshot: raw/snapshots
+  rawTargetRelease: raw/releases
+  rawTargetStaging: raw/staging
+  rawTargetProxy: https://proxy.raw.local/
 ```
 
 [Registry Definition v2.0 JSON schema](/schemas/regdef-v2.schema.json)
