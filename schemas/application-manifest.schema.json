@@ -65,7 +65,7 @@
       "items": {
         "oneOf": [
           {
-            "$ref": "#/definitions/standalone-runnable"
+            "$ref": "#/definitions/application-component"
           },
           {
             "$ref": "#/definitions/helm-chart"
@@ -78,9 +78,6 @@
           },
           {
             "$ref": "#/definitions/zip-artifact"
-          },
-          {
-            "$ref": "#/definitions/spar-library"
           },
           {
             "$ref": "#/definitions/helm-values-schema"
@@ -929,7 +926,8 @@
         "mime-type",
         "bom-ref",
         "name",
-        "properties"
+        "properties",
+        "components"
       ],
       "properties": {
         "type": {
@@ -997,6 +995,13 @@
               }
             }
           }
+        },
+        "components": {
+          "type": "array",
+          "title": "Components",
+          "description": "A list of service components",
+          "uniqueItems": true,
+          "maxItems": 0
         }
       }
     }

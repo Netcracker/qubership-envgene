@@ -402,13 +402,14 @@ Describes BOM metadata.
 
 An abstract component necessary to link artifacts of different types together
 
-| Attribute                  | Type   | Mandatory | Default                                        | Description                                |
-|----------------------------|--------|-----------|------------------------------------------------|--------------------------------------------|
-| `bom-ref`                  | string | yes       | None                                           | Unique component identifier within the AM  |
-| `type`                     | string | yes       | `application`                                  | Component type                             |
-| `mime-type`                | string | yes       | `application/vnd.qubership.standalone-runnable`| Component MIME type                        |
-| `name`                     | string | yes       | None                                           | Component name                             |
-| `components`               | array  | yes       | `[]`                                           | List of child components. See bellow       |
+| Attribute       | Type   | Mandatory | Default                                        | Description                                |
+|-----------------|--------|-----------|------------------------------------------------|--------------------------------------------|
+| `bom-ref`       | string | yes       | None                                           | Unique component identifier within the AM  |
+| `type`          | string | yes       | `application`                                  | Component type                             |
+| `mime-type`     | string | yes       | `application/vnd.qubership.standalone-runnable`| Component MIME type                        |
+| `name`          | string | yes       | None                                           | Component name                             |
+| `properties`    | array  | no        | `[]`                                           | Always `[]`                                |
+| `components`    | array  | yes       | `[]`                                           | Always `[]`                                |
 
 #### [Components] `application/vnd.docker.image`
 
@@ -468,8 +469,6 @@ The schema is optional for the chart; if no schema exists at this path, the AM b
 | `type`                     | string | yes       | `data`                                         | Component type                                                 |
 | `mime-type`                | string | yes       | `application/vnd.qubership.helm.values.schema` | Component MIME type                                            |
 | `name`                     | string | yes       | `values.schema.json`                           | Logical name                                                   |
-| `properties`               | array  | no        | `[]`                                           | Always `[]`                                                    |
-| `components`               | array  | no        | `[]`                                           | Always `[]`                                                    |
 | `data`                     | array  | yes       | `[]`                                           | List of configuration entries                                  |
 | `data[n].type`             | string | yes       | `configuration`                                | Entry type                                                     |
 | `data[n].name`             | string | yes       | `values.schema.json`                           | Filename of the schema                                         |
@@ -494,8 +493,6 @@ The resource profile baselines are optional; if no baselines exist at this path,
 | `type`                             | string | yes       | `data`                                                | Component type                                                 |
 | `mime-type`                        | string | yes       | `application/vnd.qubership.resource-profile-baseline` | Component MIME type                                            |
 | `name`                             | string | yes       | `resource-profile-baselines`                          | Logical name of the bundle                                     |
-| `properties`                       | array  | yes       | `[]`                                                  | Always `[]`                                                    |
-| `components`                       | array  | yes       | `[]`                                                  | Always `[]`                                                    |
 | `data`                             | array  | yes       | None                                                  | List of configuration entries (see below)                      |
 | `data[n].type`                     | string | yes       | `configuration`                                       | Entry type                                                     |
 | `data[n].name`                     | string | yes       | None                                                  | Filename of the baseline, e.g. `small.yaml`, `dev.yaml`        |
