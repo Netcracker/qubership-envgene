@@ -17,7 +17,9 @@
 package org.qubership.cloud.devops.cli;
 
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.qubership.cloud.devops.cli.parser.CliParameterParser;
+import org.qubership.cloud.devops.cli.pojo.dto.shared.EffectiveSetVersion;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.repository.implementation.FileDataRepositoryImpl;
 import jakarta.inject.Inject;
@@ -29,6 +31,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.EFFECTIVE_SET_FAILED;
@@ -60,42 +63,65 @@ public class CmdbCli implements Callable<Integer> {
             logSuccess("Successfully generated the effective set");
             Instant end = Instant.now();
             Duration timeElapsed = Duration.between(start, end);
-            logInfo("Total Time taken : "+ timeElapsed.toMillis() +" milliseconds");
+            logInfo("Total Time taken : " + timeElapsed.toMillis() + " milliseconds");
             return 0;
         } catch (Exception e) {
             logError(String.format(EFFECTIVE_SET_FAILED, e.getMessage()));
-            log.debug("stack trace="+e);
+            log.debug("stack trace {}", ExceptionUtils.getStackTrace(e));
             return 1;
         }
     }
 
     private void initializeParams() {
-        if (envParams.solsbomPath == null || envParams.solsbomPath.isEmpty()) {
-            envParams.solsbomPath = String.format("%s/%s/%s/", envParams.envsPath, envParams.envId, "Inventory/solution-descriptor/solution.sbom.json");
-        }
         if (envParams.outputDir == null || envParams.outputDir.isEmpty()) {
             envParams.outputDir = String.format("%s/%s/%s/", envParams.envsPath, envParams.envId, "effective-set");
         }
         setSharedData();
     }
 
+    private void validateVersionDependentParams(EffectiveSetVersion version) {
+        if (version == EffectiveSetVersion.V1_0) {
+            List<String> missingParams = new ArrayList<>();
+
+            if (envParams.solsbomPath == null || envParams.solsbomPath.isEmpty()) {
+                missingParams.add("--solution-sbom-path");
+            }
+            if (envParams.sbomsPath == null || envParams.sbomsPath.isEmpty()) {
+                missingParams.add("--sboms-path");
+            }
+            if (envParams.registryPath == null || envParams.registryPath.isEmpty()) {
+                missingParams.add("--registries");
+            }
+
+            if (!missingParams.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "For version v1.0 the following parameters are mandatory but missing: "
+                                + String.join(", ", missingParams)
+                );
+            }
+        }
+    }
+
     private void setSharedData() {
+        EffectiveSetVersion effectiveVersion = EffectiveSetVersion.fromString(envParams.version);
+        sharedData.setEffectiveSetVersion(effectiveVersion);
+        validateVersionDependentParams(effectiveVersion);
         sharedData.setEnvId(envParams.envId);
         sharedData.setEnvsPath(envParams.envsPath);
-        sharedData.setSbomsPath(envParams.sbomsPath);
-        sharedData.setSolsbomPath(envParams.solsbomPath);
-        sharedData.setRegistryPath(envParams.registryPath);
+        sharedData.setSbomsPath(Optional.ofNullable(envParams.sbomsPath));
+        sharedData.setSolsbomPath(Optional.ofNullable(envParams.solsbomPath));
+        sharedData.setRegistryPath(Optional.ofNullable(envParams.registryPath));
         sharedData.setOutputDir(envParams.outputDir);
-        sharedData.setEffectiveSetVersion(envParams.version);
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
         sharedData.setAppChartValidation(envParams.appChartValidation);
         populateDeploymentSessionId(envParams.extraParams);
     }
 
+
     private void populateDeploymentSessionId(String[] extraParams) {
-        if(extraParams != null){
+        if (extraParams != null) {
             Arrays.stream(extraParams).forEach(key -> {
-                if(key.contains("DEPLOYMENT_SESSION_ID")){
+                if (key.contains("DEPLOYMENT_SESSION_ID")) {
                     String[] deployString = key.split("=");
                     sharedData.setDeploymentSessionId(deployString[1]);
                 }
@@ -104,22 +130,23 @@ public class CmdbCli implements Callable<Integer> {
     }
 
     static class EnvCommandSpace {
+
         @CommandLine.Option(names = {"-e", "--env-id"}, description = "cluster-name/environment-name", required = true)
         String envId;
 
         @CommandLine.Option(names = {"-ep", "--envs-path"}, description = "Path to environments folder", defaultValue = "./", required = true)
         String envsPath;
 
-        @CommandLine.Option(names = {"-sp", "--sboms-path"}, description = "Path to the folder with Application and Environment Template SBOMs", required = true)
+        @CommandLine.Option(names = {"-sp", "--sboms-path"}, description = "Path to the folder with Application and Environment Template SBOMs")
         String sbomsPath;
 
-        @CommandLine.Option(names = {"-ssp", "--solution-sbom-path"}, description = "Path to the Solution SBOM", required = true)
+        @CommandLine.Option(names = {"-ssp", "--solution-sbom-path"}, description = "Path to Solution SBOM")
         String solsbomPath;
 
-        @CommandLine.Option(names = {"-r", "--registries"}, description = "Path to the registry configuration", required = true)
+        @CommandLine.Option(names = {"-r", "--registries"}, description = "Path to the registry configuration")
         String registryPath;
 
-        @CommandLine.Option(names = {"-o", "--output"}, description = "Output directory", required = true)
+        @CommandLine.Option(names = {"-o", "--outpute"}, description = "Output directory", required = true)
         String outputDir;
 
         @CommandLine.Option(names = {"-esv", "--effective-set-version"}, description = "Effective Set Version", defaultValue = "v2.0")
@@ -135,4 +162,5 @@ public class CmdbCli implements Callable<Integer> {
         boolean appChartValidation = true;
 
     }
+
 }

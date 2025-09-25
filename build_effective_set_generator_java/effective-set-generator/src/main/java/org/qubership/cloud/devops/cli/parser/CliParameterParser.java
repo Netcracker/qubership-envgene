@@ -22,10 +22,12 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.qubership.cloud.devops.cli.exceptions.DirectoryCreateException;
 import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SBApplicationDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
+import org.qubership.cloud.devops.cli.pojo.dto.shared.EffectiveSetVersion;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
 import org.qubership.cloud.devops.commons.exceptions.ConsumerFileProcessingException;
@@ -52,7 +54,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.APP_PARSE_ERROR;
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.APP_PROCESS_FAILED;
 import static org.qubership.cloud.devops.commons.exceptions.constant.ExceptionAdditionalInfoMessages.ENTITY_NOT_FOUND;
-import static org.qubership.cloud.devops.commons.exceptions.constant.ExceptionAdditionalInfoMessages.ENTITY_NOT_FOUND_PARAMS;
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 
 @Dependent
@@ -84,9 +85,9 @@ public class CliParameterParser {
 
     public void generateEffectiveSet() throws IOException, IllegalArgumentException, DirectoryCreateException {
         checkIfEntitiesExist();
-        SolutionBomDTO solutionDescriptor = inputData.getSolutionBomDTO();
-
-        List<SBApplicationDTO> applicationDTOList = solutionDescriptor.getApplications();
+        Optional<SolutionBomDTO> solutionDescriptor = inputData.getSolutionBomDTO();
+        List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
+                        .orElseGet(Collections::emptyList);
         String tenantName = inputData.getTenantDTO().getName();
         String cloudName = inputData.getCloudDTO().getName();
 
@@ -105,7 +106,7 @@ public class CliParameterParser {
                     try {
                         logInfo("Started processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                         generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), k8TokenMap);
-                        String deployPostFixDir = "v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion()) ? String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/') :
+                        String deployPostFixDir = EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion() ? String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/') :
                                 String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set", namespaceName).replace('\\', '/');
                         String runtimePostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/runtime", namespaceName).replace('\\', '/');
                         String cleanupPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/cleanup", namespaceName).replace('\\', '/');
@@ -127,11 +128,11 @@ public class CliParameterParser {
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                     } catch (Exception e) {
                         log.debug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
-                        log.debug("stack trace for further details: ", e);
+                        log.debug("stack trace for further details: {}", ExceptionUtils.getStackTrace(e));
                         errorList.computeIfAbsent(app.getAppName() + ":" + namespaceName, k -> e.getMessage());
                     }
                 });
-        if ("v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion())) {
+        if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap);
             fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "deployment", "mapping.yaml");
             fileDataConverter.writeToFile(runtimeMappingFileData, sharedData.getOutputDir(), "runtime", "mapping.yaml");
@@ -160,7 +161,7 @@ public class CliParameterParser {
         processBgDomainParameters();
         createTopologyFiles(k8TokenMap);
         createE2EFiles(parameterBundle);
-        createConsumerFiles(parameterBundle);
+        createPipelineFiles(parameterBundle);
     }
 
     private void generateCleanupOutput(String tenantName, String cloudName, String namespace, String originalNamespace, Map<String, String> k8TokenMap) throws IOException {
@@ -225,7 +226,7 @@ public class CliParameterParser {
         return clusterParameterMap;
     }
 
-    private void createConsumerFiles(ParameterBundle parameterBundle) {
+    private void createPipelineFiles(ParameterBundle parameterBundle) {
         String pipelineDir = String.format("%s/%s", sharedData.getOutputDir(), "pipeline");
         Map<String, ConsumerDTO> consumerDTOMap = inputData.getConsumerDTOMap();
         consumerDTOMap.forEach((key, value) -> {
@@ -278,7 +279,7 @@ public class CliParameterParser {
             }
         }
         ParameterBundle parameterBundle = null;
-        if ("v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion())) {
+        if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             parameterBundle = parametersServiceV2.getCliParameter(tenantName,
                     cloudName,
                     namespaceName,
@@ -306,7 +307,7 @@ public class CliParameterParser {
     }
 
     private void createFiles(String namespaceName, String appName, ParameterBundle parameterBundle, String originalNamespace) throws IOException {
-        if ("v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion())) {
+        if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             Path appChartPath = null;
             if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
                 String normalizedName = HelmNameNormalizer.normalize(parameterBundle.getAppChartName(), originalNamespace);
@@ -350,19 +351,12 @@ public class CliParameterParser {
     }
 
     private void checkIfEntitiesExist() {
-        if (inputData.getSolutionBomDTO() == null) {
-            throw new NotFoundException(String.format(ENTITY_NOT_FOUND, "Solution BOM"));
-        }
         if (inputData.getTenantDTO() == null) {
             throw new NotFoundException(String.format(ENTITY_NOT_FOUND, "Tenant"));
         }
         if (inputData.getCloudDTO() == null) {
             throw new NotFoundException(String.format(ENTITY_NOT_FOUND, "Cloud"));
         }
-        if (inputData.getRegistryDTOMap() == null) {
-            logWarning(String.format(ENTITY_NOT_FOUND_PARAMS, "Registry"));
-        }
     }
-
 
 }
