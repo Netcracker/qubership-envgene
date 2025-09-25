@@ -909,6 +909,9 @@
               },
               {
                 "$ref": "#/definitions/helm-values-schema"
+              },
+              {
+                "$ref": "#/definitions/resource-profile-baseline"
               }
             ]
           },
@@ -921,6 +924,13 @@
       "title": "Application Component",
       "description": "Typed part of the application",
       "additionalProperties": false,
+      "required": [
+        "type",
+        "mime-type",
+        "bom-ref",
+        "name",
+        "properties"
+      ],
       "properties": {
         "type": {
           "type": "string",
@@ -987,19 +997,6 @@
               }
             }
           }
-        },
-        "components": {
-          "type": "array",
-          "title": "Components",
-          "description": "A list of service components",
-          "items": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/resource-profile-baseline"
-              }
-            ]
-          },
-          "uniqueItems": true
         }
       }
     }
