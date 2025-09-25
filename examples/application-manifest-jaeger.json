@@ -125,7 +125,7 @@
           }
         }
       ],
-      "purl": "pkg:helm/example-repo/qubership-jaeger@1.2.3?registryName=sandbox",
+      "purl": "pkg:helm/example-repo/qubership-jaeger@1.2.3?registry_name=sandbox",
       "components": [
         {
           "bom-ref": "qubership-jaeger-values-schema:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
@@ -155,7 +155,7 @@
       "name": "jaeger-cassandra-schema",
       "group": "core",
       "version": "build22",
-      "purl": "pkg:docker/core/jaeger-cassandra-schema@build22?registryName=sandbox"
+      "purl": "pkg:docker/core/jaeger-cassandra-schema@build22?registry_name=sandbox"
     },
     {
       "bom-ref": "jaeger:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -164,7 +164,7 @@
       "name": "jaeger",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/jaeger@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/jaeger@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "jaeger-readiness-probe:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -173,7 +173,7 @@
       "name": "jaeger-readiness-probe",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/jaeger-readiness-probe@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/jaeger-readiness-probe@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "example-hotrod:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -182,7 +182,7 @@
       "name": "example-hotrod",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/example-hotrod@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/example-hotrod@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "jaeger-integration-tests:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -191,7 +191,7 @@
       "name": "jaeger-integration-tests",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/jaeger-integration-tests@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/jaeger-integration-tests@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "jaeger-es-index-cleaner:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -200,7 +200,7 @@
       "name": "jaeger-es-index-cleaner",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/jaeger-es-index-cleaner@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/jaeger-es-index-cleaner@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "jaeger-es-rollover:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -209,7 +209,7 @@
       "name": "jaeger-es-rollover",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/jaeger-es-rollover@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/jaeger-es-rollover@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "envoy:80f031da-024c-1148-a1b9-d548a3dd030f",
@@ -218,7 +218,7 @@
       "name": "envoy",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/envoy@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/envoy@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "openjdk:80f031da-024c-1248-a1b9-d548a3dd030f",
@@ -227,7 +227,7 @@
       "name": "openjdk",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/openjdk@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/openjdk@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "spark-dependencies-image:80f031da-024c-1348-a1b9-d548a3dd030f",
@@ -236,7 +236,7 @@
       "name": "spark-dependencies-image",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/spark-dependencies-image@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/spark-dependencies-image@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "qubership-deployment-status-provisioner:80f031da-024c-1448-a1b9-d548a3dd030f",
@@ -245,7 +245,7 @@
       "name": "qubership-deployment-status-provisioner",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/qubership-deployment-status-provisioner@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/qubership-deployment-status-provisioner@build3?registry_name=sandbox"
     }
   ],
   "dependencies": [

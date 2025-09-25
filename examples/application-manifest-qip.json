@@ -75,7 +75,7 @@
           "value": false
         }
       ],
-      "purl": "pkg:helm/example-repo/qubership-integration-platform@1.2.3?registryName=sandbox",
+      "purl": "pkg:helm/example-repo/qubership-integration-platform@1.2.3?registry_name=sandbox",
       "components": [
         {
           "bom-ref": "qubership-integration-platform:7f17a6dc-b973-438f-abb7-e0c57a32afc12",
@@ -238,7 +238,7 @@
       "name": "qubership-integration-engine",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/qubership-integration-engine@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-engine@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "qubership-integration-runtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -247,7 +247,7 @@
       "name": "qubership-integration-runtime-catalog",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/qubership-integration-runtime-catalog@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-runtime-catalog@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "qubership-integration-designtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -256,7 +256,7 @@
       "name": "qubership-integration-designtime-catalog",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/qubership-integration-designtime-catalog@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-designtime-catalog@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "qubership-integration-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -265,7 +265,7 @@
       "name": "qubership-integration-variables-management",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/qubership-integration-variables-management@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-variables-management@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "qubership-integration-sessions-management:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -274,7 +274,7 @@
       "name": "qubership-integration-sessions-management",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/qubership-integration-sessions-management@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-sessions-management@build3?registry_name=sandbox"
     },
     {
       "bom-ref": "qubership-integration-ui:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
@@ -283,7 +283,7 @@
       "name": "qubership-integration-ui",
       "group": "core",
       "version": "build22",
-      "purl": "pkg:docker/core/qubership-integration-ui@build22?registryName=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-ui@build22?registry_name=sandbox"
     },
     {
       "bom-ref": "cr-synchonizer:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -292,7 +292,7 @@
       "name": "cr-synchonizer",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/cr-synchonizer@build3?registryName=sandbox"
+      "purl": "pkg:docker/core/cr-synchonizer@build3?registry_name=sandbox"
     }
   ],
   "dependencies": [

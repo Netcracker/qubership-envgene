@@ -5,6 +5,7 @@ dockerConfig:
   groupName: netcracker
 githubReleaseConfig:
   repositoryDomainName: https://github.com/
+  groupName: Netcracker/qubership-jaeger
   owner: Netcracker
   repository: qubership-jaeger
 helmAppConfig:
