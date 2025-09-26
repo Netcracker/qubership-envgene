@@ -92,16 +92,10 @@ def is_pipeline_variable(key):
     Determine if a variable should be passed to subsequent jobs.
     """
     # System variables to exclude
-    system_vars = {
-        'GITHUB_ENV', 'GITHUB_OUTPUT', 'GITHUB_WORKSPACE', 'GITHUB_REPOSITORY', 
-        'GITHUB_SHA', 'GITHUB_REF', 'GITHUB_ACTIONS', 'GITHUB_REF_NAME',
-        'GITHUB_EVENT_NAME', 'GITHUB_EVENT_PATH', 'GITHUB_HEAD_REF', 'GITHUB_BASE_REF',
-        'GITHUB_SERVER_URL', 'GITHUB_API_URL', 'GITHUB_GRAPHQL_URL',
-        'RUNNER_OS', 'RUNNER_ARCH', 'RUNNER_NAME', 'RUNNER_ENVIRONMENT', 'RUNNER_TOOL_CACHE',
+    system_vars = {'RUNNER_OS', 'RUNNER_ARCH', 'RUNNER_NAME', 'RUNNER_ENVIRONMENT', 'RUNNER_TOOL_CACHE',
         'RUNNER_TEMP', 'RUNNER_WORKSPACE', 'RUNNER_PERFLOG', 'RUNNER_TRACKING_ID',
         'HOME', 'PATH', 'SHELL', 'USER', 'LANG', 'PWD', 'OLDPWD',
         'TERM', 'HOSTNAME', 'HOSTTYPE', 'MACHTYPE', 'OSTYPE',
-        'CI_COMMIT_REF_NAME', 'CI_PROJECT_DIR',
         # Python system variables
         'PYTHONDONTWRITEBYTECODE', 'PYTHONUNBUFFERED', 'PYTHON_SHA256',
         # GPG and other technical variables
@@ -114,13 +108,10 @@ def is_pipeline_variable(key):
         return False
     
     # System prefixes to exclude
-    if key.startswith(('RUNNER_', 'GITHUB_', 'ACTIONS_', 'INPUT_', 'ImageOS', 'ImageVersion', 
+    if key.startswith(('RUNNER_', 'ACTIONS_', 'INPUT_', 'ImageOS', 'ImageVersion', 
                       'AGENT_', 'ANDROID_', 'JAVA_HOME_', 'GOROOT_', 'HOMEBREW_', 'XDG_',
                       'DOTNET_', 'PIPX_', 'GHCUP_')):
-        # Allow specific exceptions
-        pipeline_exceptions = {'GITHUB_TOKEN', 'GITHUB_USER_EMAIL', 'GITHUB_USER_NAME'}
-        if key not in pipeline_exceptions:
-            return False
+        return False
     
     return True
 

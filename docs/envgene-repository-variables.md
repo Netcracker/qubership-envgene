@@ -9,6 +9,7 @@
     - [`PUBLIC_AGE_KEYS`](#public_age_keys)
     - [`IS_OFFSITE`](#is_offsite)
     - [`GITLAB_RUNNER_TAG_NAME`](#gitlab_runner_tag_name)
+    - [`GH_RUNNER_TAG_NAME`](#gh_runner_tag_name)
     - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
   - [Template EnvGene Repository](#template-envgene-repository)
@@ -79,11 +80,23 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 ### `GITLAB_RUNNER_TAG_NAME`
 
-**Description**: The tag that identifies the GitLab runner used for executing CI jobs. This tag helps specify which runner will pick up and execute the job in the CI pipeline.
+**Description**: The tag that identifies the GitLab runner used for executing CI jobs. This tag is used to specify which runner will pick up and execute the job in the CI pipeline.
 
 **Default Value**: None
 
 **Mandatory**: No
+
+**Example**: `ubuntu-latest`
+
+### `GH_RUNNER_TAG_NAME`
+
+**Description**: The tag that identifies the GitHub runner used for executing CI jobs. This tag is used to specify which runner will pick up and execute the job in the CI pipeline.
+
+**Default Value**: `ubuntu-22.04`
+
+**Mandatory**: No
+
+**Example**: `ubuntu-latest`
 
 ### `RUNNER_SCRIPT_TIMEOUT`
 
