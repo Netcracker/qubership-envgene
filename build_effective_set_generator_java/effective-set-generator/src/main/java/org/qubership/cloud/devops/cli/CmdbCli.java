@@ -146,7 +146,7 @@ public class CmdbCli implements Callable<Integer> {
         @CommandLine.Option(names = {"-r", "--registries"}, description = "Path to the registry configuration")
         String registryPath;
 
-        @CommandLine.Option(names = {"-o", "--outpute"}, description = "Output directory", required = true)
+        @CommandLine.Option(names = {"-o", "--output"}, description = "Output directory", required = true)
         String outputDir;
 
         @CommandLine.Option(names = {"-esv", "--effective-set-version"}, description = "Effective Set Version", defaultValue = "v2.0")
