@@ -335,6 +335,9 @@ components:
           description: "List of Solution Descriptors installed in the namespace"
           items:
             $ref: "#/components/schemas/SolutionDescriptorRef"
+        deployPostfix:
+          type: string
+          description: "Deploy postfix, namespace role in solution"
     SolutionDescriptorRef:
       type: string
       description: "Solution Descriptor coordinate in name:version format"
