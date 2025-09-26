@@ -16,8 +16,9 @@
 *.sum text
 *.tpl text
 *.txt text
-*.yaml text
-*.yml text
+*.yaml text text eol=lf
+*.yml text text eol=lf
+*.j2 text eol=lf
 
 LICENSE text
 Dockerfile text
