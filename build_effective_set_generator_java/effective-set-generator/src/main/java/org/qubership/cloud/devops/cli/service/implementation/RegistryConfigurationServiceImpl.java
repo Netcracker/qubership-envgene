@@ -26,6 +26,8 @@ import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistrySummaryDTO;
 import org.qubership.cloud.devops.commons.service.interfaces.RegistryConfigurationService;
 
+import java.util.Optional;
+
 
 @ApplicationScoped
 @Unremovable
@@ -38,11 +40,8 @@ public class RegistryConfigurationServiceImpl implements RegistryConfigurationSe
         this.inputData = inputData;
     }
     @Override
-    public RegistryDTO getRegistry(String registryName) {
-        if (inputData.getRegistryDTOMap() == null) {
-            return null;
-        }
-        return inputData.getRegistryDTOMap().get(registryName);
+    public Optional<RegistryDTO> getRegistry(String registryName) {
+        return Optional.ofNullable(inputData.getRegistryDTOMap().get(registryName));
     }
 
     @Override
@@ -51,9 +50,9 @@ public class RegistryConfigurationServiceImpl implements RegistryConfigurationSe
             String registryName = registry.getName();
             String appMavenRepo = registry.getRepoId();
             if (registryName != null && !registryName.isEmpty()) {
-                RegistryDTO registryDTO = getRegistry(registryName);
-                if (registryDTO!= null && registryDTO.getMavenConfig() != null) {
-                    MavenDTO mavenDTO = registryDTO.getMavenConfig();
+                Optional<RegistryDTO> registryDTO = getRegistry(registryName);
+                if (registryDTO.isPresent() && registryDTO.get().getMavenConfig() != null) {
+                    MavenDTO mavenDTO = registryDTO.get().getMavenConfig();
                     return String.format("%s/%s", mavenDTO.getFullRepositoryUrl(), mapAndGetMavenRepo(mavenDTO, appMavenRepo));
                 }
             }
@@ -67,9 +66,9 @@ public class RegistryConfigurationServiceImpl implements RegistryConfigurationSe
             String registryName = registry.getName();
             String appDockerRepo = registry.getRepoId();
             if (registryName != null && !registryName.isEmpty()) {
-                RegistryDTO registryDTO = getRegistry(registryName);
-                if (registryDTO!= null && registryDTO.getDockerConfig() != null) {
-                    return mapAndGetDockerRepo(registryDTO.getDockerConfig(), appDockerRepo);
+                Optional<RegistryDTO> registryDTO = getRegistry(registryName);
+                if (registryDTO.isPresent() && registryDTO.get().getDockerConfig() != null) {
+                    return mapAndGetDockerRepo(registryDTO.get().getDockerConfig(), appDockerRepo);
                 }
             }
         }

@@ -24,13 +24,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.qubership.cloud.devops.cli.exceptions.DirectoryCreateException;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SBApplicationDTO;
+import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
+import org.qubership.cloud.devops.cli.pojo.dto.shared.EffectiveSetVersion;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
+import org.qubership.cloud.devops.commons.exceptions.CreateWorkDirException;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 @ApplicationScoped
 @Slf4j
@@ -49,15 +53,20 @@ public class FileSystemUtils {
         return new File(String.join("/", args));
     }
 
-    public void createEffectiveSetFolder(List<SBApplicationDTO> applicationDTOList) throws IOException {
-        if ("v2.0".equalsIgnoreCase(data.getEffectiveSetVersion())) {
-            createEffectiveSetTwo(applicationDTOList);
+    public void createEffectiveSetFolder(Optional<SolutionBomDTO> solutionDescriptor) throws IOException {
+        EffectiveSetVersion version = data.getEffectiveSetVersion();
+        if (EffectiveSetVersion.V2_0 == version) {
+            createEffectiveSetTwo(solutionDescriptor);
+            return;
+        }
+        if (solutionDescriptor.isPresent()) {
+            createEffectiveSetOne(solutionDescriptor.get().getApplications());
         } else {
-            createEffectiveSetOne(applicationDTOList);
+            throw new DirectoryCreateException("The absence of solution descriptor in v1.0 effective set is not acceptable");
         }
     }
 
-    private void createEffectiveSetTwo(List<SBApplicationDTO> applicationDTOList) throws IOException {
+    private void createEffectiveSetTwo(Optional<SolutionBomDTO> solutionDescriptor) throws IOException {
         File file = getFileFromGivenPath(data.getOutputDir());
         if (file.exists()) {
             FileUtils.forceDelete(file);
@@ -67,8 +76,8 @@ public class FileSystemUtils {
         Files.createDirectories(pipelinePath);
         Path topologyPath = getFileFromGivenPath(data.getOutputDir(), "topology").toPath();
         Files.createDirectories(topologyPath);
-        applicationDTOList
-                .forEach(app->{
+        solutionDescriptor.ifPresent(solutionBomDTO -> solutionBomDTO.getApplications()
+                .forEach(app -> {
                     try {
                         Path deploymentPath = getFileFromGivenPath(data.getOutputDir(), "deployment", app.getNamespace(), app.getAppName(), "values", "per-service-parameters").toPath();
                         Files.createDirectories(deploymentPath);
@@ -77,10 +86,10 @@ public class FileSystemUtils {
                         Path cleanupPath = getFileFromGivenPath(data.getOutputDir(), "cleanup", app.getNamespace()).toPath();
                         Files.createDirectories(cleanupPath);
                     } catch (IOException e) {
-                        throw new DirectoryCreateException("Error creating directory for application "+app.getAppName()+" due to "+e.getMessage());
+                        throw new DirectoryCreateException("Error creating directory for application " + app.getAppName() + " due to " + e.getMessage());
                     }
 
-                });
+                }));
     }
 
     private void createEffectiveSetOne(List<SBApplicationDTO> applicationDTOList) throws IOException {
@@ -91,12 +100,12 @@ public class FileSystemUtils {
         file.mkdir();
 
         applicationDTOList
-                .forEach(app->{
+                .forEach(app -> {
                     Path appPath = getFileFromGivenPath(data.getOutputDir(), app.getNamespace(), app.getAppName()).toPath();
                     try {
                         Files.createDirectories(appPath);
                     } catch (IOException e) {
-                        throw new DirectoryCreateException("Error creating directory for application "+app.getAppName()+" due to "+e.getMessage());
+                        throw new DirectoryCreateException("Error creating directory for application " + app.getAppName() + " due to " + e.getMessage());
                     }
 
                 });
