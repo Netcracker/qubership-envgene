@@ -39,11 +39,11 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 **Description**: Access token used to authenticate with GitLab for accessing repository.
 
-Used by EnvGene at runtime or CI/CD pipelines to enable automated and secure GitLab repository access.
+Used by EnvGene to commit changes to the GitLab repository where the EnvGene pipeline is executed during the execution of the [git_commit](/docs/envgene-pipelines.md) job in GitLab
 
 **Default Value**: None
 
-**Mandatory**: Yes
+**Mandatory**: No. Required for GitLab EnvGene pipeline, not used in GitHub EnvGene pipeline
 
 **Example**: `glpat-*****************`
 
