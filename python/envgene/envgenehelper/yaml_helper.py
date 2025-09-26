@@ -191,25 +191,26 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
         target_yaml = yaml_content[last_key]
     else:
         target_yaml = yaml_content
-
+    
     for k, v in source_yaml.items():
-        if k not in target_yaml:
-            target_yaml[k] = v
-            target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
+        clean_key = str(k)
+        if clean_key not in target_yaml:
+            target_yaml[clean_key] = v
+            target_yaml.ca.items[clean_key] = source_yaml.ca.items.get(k, None)
             continue
 
         if overwrite_existing_comments:
-            target_yaml.ca.items[k] = source_yaml.ca.items.get(k, None)
+            target_yaml.ca.items[clean_key] = source_yaml.ca.items.get(k, None)
 
-        if isinstance(target_yaml[k], dict) and isinstance(v, dict):
-            merge_yaml_into_target(target_yaml[k], "", v, overwrite_existing_values, overwrite_existing_comments)
-        elif isinstance(target_yaml[k], list) and isinstance(v, list):
-            target_yaml[k].extend(v_el for v_el in v if v_el not in target_yaml[k] and (isinstance(v_el, primitiveTypes) or isinstance(v_el, list)))
+        if isinstance(target_yaml[clean_key], dict) and isinstance(v, dict):
+            merge_yaml_into_target(target_yaml[clean_key], "", v, overwrite_existing_values, overwrite_existing_comments)
+        elif isinstance(target_yaml[clean_key], list) and isinstance(v, list):
+            target_yaml[clean_key].extend(v_el for v_el in v if v_el not in target_yaml[clean_key] and (isinstance(v_el, primitiveTypes) or isinstance(v_el, list)))
             src_dicts = {}
             for v_k, v_el in enumerate(v):
                 if isinstance(v_el, dict):
                     src_dicts.update({v_k:v_el})
-            for t_k, t_el in enumerate(target_yaml[k]):
+            for t_k, t_el in enumerate(target_yaml[clean_key]):
                 if not isinstance(t_el, dict):
                     continue
                 if not t_k in src_dicts:
@@ -220,12 +221,12 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
                         merge = True
                         break
                 if merge:
-                    target_yaml[k][t_k] = merge_yaml_into_target(t_el, '', src_dicts[t_k], overwrite_existing_values, overwrite_existing_comments)
-                    del src_dicts[k]
+                    target_yaml[clean_key][t_k] = merge_yaml_into_target(t_el, '', src_dicts[t_k], overwrite_existing_values, overwrite_existing_comments)
+                    del src_dicts[clean_key]
             for _, src_dicts_el in src_dicts.items():
-                target_yaml[k].append(src_dicts_el)
+                target_yaml[clean_key].append(src_dicts_el)
         elif overwrite_existing_values:
-            target_yaml[k] = v
+            target_yaml[clean_key] = v
 
 def store_value_to_yaml(yamlContent, key, value, comment=""):
     logger.debug(f"Updating key {key} with value {value} in yaml")
