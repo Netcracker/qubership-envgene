@@ -2,9 +2,9 @@
 openapi: 3.1.0
 info:
   title: inventory-service API
-  version: 1.0.0
+  version: 2.0.0
 paths:
-  /colly/inventory-service/v1/auth-status:
+  /colly/inventory-service/v2/auth-status:
     get:
       responses:
         "200":
@@ -16,7 +16,7 @@ paths:
       summary: Get Auth Status
       tags:
       - Cluster Resources Rest
-  /colly/inventory-service/v1/clusters:
+  /colly/inventory-service/v2/clusters:
     get:
       responses:
         "200":
@@ -34,7 +34,7 @@ paths:
       summary: Get Clusters
       tags:
       - Cluster Resources Rest
-  /colly/inventory-service/v1/clusters/{clusterName}:
+  /colly/inventory-service/v2/clusters/{clusterName}:
     post:
       parameters:
       - name: clusterName
@@ -76,7 +76,7 @@ paths:
       security:
       - SecurityScheme:
         - admin
-  /colly/inventory-service/v1/environments:
+  /colly/inventory-service/v2/environments:
     get:
       responses:
         "200":
@@ -94,7 +94,7 @@ paths:
       summary: Get Environments
       tags:
       - Cluster Resources Rest
-  /colly/inventory-service/v1/environments/{envId}:
+  /colly/inventory-service/v2/environments/{envId}:
     post:
       parameters:
       - name: envId
@@ -188,7 +188,7 @@ paths:
       security:
       - SecurityScheme:
         - admin
-  /colly/inventory-service/v1/metadata:
+  /colly/inventory-service/v2/metadata:
     get:
       responses:
         "200":
@@ -204,7 +204,7 @@ paths:
       summary: Get Metadata
       tags:
       - Cluster Resources Rest
-  /colly/inventory-service/v1/tick:
+  /colly/inventory-service/v2/tick:
     post:
       responses:
         "201":
