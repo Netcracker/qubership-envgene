@@ -282,6 +282,7 @@ components:
           $ref: "#/components/schemas/DeploymentStatus"
         ticketLinks:
           type: string
+    # Users cannot add statuses on their own. Users can create labels and assign them to environments
     EnvironmentStatus:
       type: string
       enum:
@@ -289,15 +290,17 @@ components:
       - RESERVED
       - FREE
       - MIGRATING
+      - TO_BE_DEPRECATED
+    # Users can add types on their own via UI.
     EnvironmentType:
       type: string
       enum:
-      - ENVIRONMENT
-      - CSE_TOOLSET
-      - DESIGN_TIME
-      - APP_DEPLOYER
-      - INFRASTRUCTURE
-      - UNDEFINED
+      - DEV
+      - QA
+      - PROJECT_CI
+      - SAAS
+      - JOINT_CI
+      - OTHER
     Instant:
       type: string
       format: date-time
