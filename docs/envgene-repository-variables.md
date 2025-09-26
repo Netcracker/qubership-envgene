@@ -4,6 +4,7 @@
 - [EnvGene Repository Variables](#envgene-repository-variables)
   - [Instance EnvGene Repository](#instance-envgene-repository)
     - [`SECRET_KEY`](#secret_key)
+    - [`GITLAB_TOKEN`](#gitlab_token)
     - [`ENVGENE_AGE_PRIVATE_KEY`](#envgene_age_private_key)
     - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
     - [`PUBLIC_AGE_KEYS`](#public_age_keys)
@@ -33,6 +34,18 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 **Mandatory**: Yes, if repository encryption is enabled with `Fernet` crypt backend
 
 **Example**: `PjYtYZ4WnZsH2F4AxjDf_-QOSaL1kVHIkPOH7bpTFMI=`
+
+### `GITLAB_TOKEN`
+
+**Description**: Access token used to authenticate with GitLab for accessing repository.
+
+Used by EnvGene to commit changes to the GitLab repository where the EnvGene pipeline is executed during the execution of the [git_commit](/docs/envgene-pipelines.md) job in GitLab
+
+**Default Value**: None
+
+**Mandatory**: No. Required for GitLab EnvGene pipeline, not used in GitHub EnvGene pipeline
+
+**Example**: `glpat-*****************`
 
 ### `ENVGENE_AGE_PRIVATE_KEY`
 
