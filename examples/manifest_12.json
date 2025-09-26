@@ -1,185 +1,199 @@
 {
-    "serialNumber": "urn:uuid:df415201-5fc3-4d67-88b7-dec179c345f2",
-    "$schema": "../schemas/application-manifest.schema.json",
-    "bomFormat": "CycloneDX",
-    "specVersion": "1.6",
-    "version": 1,
-    "metadata": {
-      "timestamp": "2025-09-25T12:53:23Z",
-      "component": {
-        "bom-ref": "qubership-integration-platform:2e9d1632-a28f-4411-a7ff-6fc8d82aa0a4",
-        "type": "application",
-        "mime-type": "application/vnd.qubership.application",
-        "name": "qubership-integration-platform",
-        "version": "1.0.0"
-      },
-      "tools": {
-        "components": [
-          {
-            "type": "application",
-            "name": "sbom_generator",
-            "version": "0.0.0"
-          }
-        ]
-      }
+  "serialNumber": "urn:uuid:cf613ad9-79e0-4042-8c55-105269cc045e",
+  "$schema": "../schemas/application-manifest.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-09-26T07:17:35Z",
+    "component": {
+      "bom-ref": "qubership-integration-platform:d0191d92-7a4f-4c1b-8ddb-ad4ef63336c9",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "name": "qubership-integration-platform",
+      "version": "1.0.0"
     },
-    "components": [
-      {
-        "name": "qubership-logging-ui",
-        "mime-type": "application/vnd.docker.image",
-        "version": "1.0.0",
-        "properties": [],
-        "purl": "pkg:docker/nookyo/qubership-logging-ui@1.0.0?registry_name=qubership",
-        "reference": "ghcr.io/nookyo/qubership-logging-ui:1.0.0",
-        "bom-ref": "qubership-logging-ui:e12904b2-ca40-4611-abe3-5b25a2cf4d3a"
-      },
-      {
-        "name": "qubership-logging-integration-tests",
-        "mime-type": "application/vnd.docker.image",
-        "version": "main",
-        "properties": [],
-        "purl": "pkg:docker/core/ghcr.io/nookyo/qubership-logging-integration-tests@main?registryName=sandbox",
-        "reference": "ghcr.io/netcracker/qubership-logging-integration-tests:1.0.0",
-        "bom-ref": "ghcr.io/nookyo/qubership-logging-integration-tests:9a07ab2d-3184-4722-87e0-07ddf3def7a0",
-        "type": "container",
-        "group": "default",
-        "hashes": [
-          {
-            "alg": "sha256",
-            "content": "7d429a4d37e26f3be114315f0af643c2c768964ecb6f3f0b2c53f2c9e1bb4775"
-          }
-        ]
-      },
-      {
-        "name": "airflow",
-        "mime-type": "application/vnd.qubership.helm.chart",
-        "version": "",
-        "properties": [
-          {
-            "name": "qubership:helm.values.artifactMappings",
-            "value": {
-              "ghcr.io/nookyo/qubership-logging-integration-tests:9a07ab2d-3184-4722-87e0-07ddf3def7a0": {
-                "valuesPathPrefix": "integrationTests"
-              },
-              "qubership-logging-ui:e12904b2-ca40-4611-abe3-5b25a2cf4d3a": {
-                "valuesPathPrefix": "ui"
-              }
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "0.0.0"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "name": "qubership-logging-ui",
+      "mime-type": "application/vnd.docker.image",
+      "version": "1.0.0",
+      "purl": "pkg:docker/nookyo/qubership-logging-ui@1.0.0?registry_name=qubership",
+      "bom-ref": "qubership-logging-ui:ca1bdb2e-be06-47a5-b136-5386e5234c83",
+      "type": "container",
+      "group": "nookyo"
+    },
+    {
+      "name": "qubership-logging-integration-tests",
+      "mime-type": "application/vnd.docker.image",
+      "version": "main",
+      "purl": "pkg:docker/netcracker/qubership-logging-integration-tests@1.0.0?registry_name=qubership",
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "7d429a4d37e26f3be114315f0af643c2c768964ecb6f3f0b2c53f2c9e1bb4775"
+        }
+      ],
+      "bom-ref": "qubership-logging-integration-tests:1dea0336-d620-4e18-a254-bddaa5c168c8",
+      "type": "container",
+      "group": "netcracker"
+    },
+    {
+      "name": "airflow",
+      "mime-type": "application/vnd.qubership.helm.chart",
+      "version": "v0.0.0",
+      "properties": [
+        {
+          "name": "qubership:helm.values.artifactMappings",
+          "value": {
+            "qubership-logging-integration-tests:1dea0336-d620-4e18-a254-bddaa5c168c8": {
+              "valuesPathPrefix": "integrationTests"
+            },
+            "qubership-logging-ui:ca1bdb2e-be06-47a5-b136-5386e5234c83": {
+              "valuesPathPrefix": "ui"
             }
           }
-        ],
-        "purl": "pkg:github/borislavr/pgskipper-operator@v0.0.0?file_name=airflow-1.19.0-dev.tgz&registry_name=qubership",
-        "reference": "https://github.com/borislavr/pgskipper-operator/releases/download/v0.0.0/airflow-1.19.0-dev.tgz",
-        "bom-ref": "airflow:3af38e43-8468-4c1a-a3b7-b96f3aefab60",
-        "components": [
-          {
-            "bom-ref": "airflow-site-manager:e1aa513d-8c31-4465-b92d-9962a09cbb95",
-            "type": "application",
-            "mime-type": "application/vnd.qubership.helm.chart",
-            "name": "airflow-site-manager",
-            "version": "0.1.0",
-            "properties": [],
-            "components": []
-          },
-          {
-            "bom-ref": "integrationTests:e3c03dfd-58d1-47d7-8e64-fe50223e5240",
-            "type": "application",
-            "mime-type": "application/vnd.qubership.helm.chart",
-            "name": "integrationTests",
-            "version": "0.2.0",
-            "properties": [],
-            "components": []
-          },
-          {
-            "bom-ref": "airflow-values-schema:3c03f982-0be7-4718-8a27-656b41892eff",
-            "type": "data",
-            "mime-type": "application/vnd.qubership.helm.values.schema",
-            "name": "values.schema.json",
-            "data": [
-              {
-                "type": "configuration",
-                "name": "values.schema.json",
-                "contents": {
-                  "attachment": {
-                    "contentType": "application/json",
-                    "encoding": "base64",
-                    "content": "ew0KICAiJHNjaGVtYSI6ICJodHRwOi8vanNvbi1zY2hlbWEub3JnL2RyYWZ0LTA3L3NjaGVtYSMiLA0KICAidHlwZSI6ICJvYmplY3QiLA0KICAidGl0bGUiOiAiR2VuZXJpYyBDb25maWd1cmF0aW9uIiwNCiAgImRlc2NyaXB0aW9uIjogIkNvbmZpZ3VyYXRpb24gZm9yIHRoZSBmb3IgY3J5cHRvZ3JhcGhpYyBvcGVyYXRpb25zLCBhcnRpZmFjdCBkaXNjb3ZlcnksIGFuZCBjbG91ZCBwYXNzcG9ydCBkZWNyeXB0aW9uIiwNCiAgImFkZGl0aW9uYWxQcm9wZXJ0aWVzIjogdHJ1ZSwNCiAgInByb3BlcnRpZXMiOiB7DQogICAgImNyeXB0Ijogew0KICAgICAgInR5cGUiOiAiYm9vbGVhbiIsDQogICAgICAidGl0bGUiOiAiRW5hYmxlIENyeXB0b2dyYXBoaWMgT3BlcmF0aW9ucyIsDQogICAgICAiZGVzY3JpcHRpb24iOiAiU3BlY2lmaWVzIHdoZXRoZXIgY3J5cHRvZ3JhcGhpYyBvcGVyYXRpb25zIHNob3VsZCBiZSBlbmFibGVkIiwNCiAgICAgICJkZWZhdWx0IjogdHJ1ZSwNCiAgICAgICJleGFtcGxlcyI6IFsNCiAgICAgICAgdHJ1ZSwNCiAgICAgICAgZmFsc2UNCiAgICAgIF0NCiAgICB9LA0KICAgICJjcnlwdF9iYWNrZW5kIjogew0KICAgICAgInRpdGxlIjogIkNyeXB0b2dyYXBoaWMgQmFja2VuZCIsDQogICAgICAiZGVzY3JpcHRpb24iOiAiVGhlIGJhY2tlbmQgc3lzdGVtIHVzZWQgZm9yIGNyeXB0b2dyYXBoaWMgb3BlcmF0aW9ucyIsDQogICAgICAiZW51bSI6IFsNCiAgICAgICAgIkZlcm5ldCIsDQogICAgICAgICJTT1BTIg0KICAgICAgXSwNCiAgICAgICJkZWZhdWx0IjogIkZlcm5ldCIsDQogICAgICAiZXhhbXBsZXMiOiBbDQogICAgICAgICJGZXJuZXQiLA0KICAgICAgICAiU09QUyINCiAgICAgIF0NCiAgICB9LA0KICAgICJhcnRpZmFjdF9kZWZpbml0aW9uc19kaXNjb3ZlcnlfbW9kZSI6IHsNCiAgICAgICJ0aXRsZSI6ICJBcnRpZmFjdCBEZWZpbml0aW9ucyBEaXNjb3ZlcnkgTW9kZSIsDQogICAgICAiZGVzY3JpcHRpb24iOiAiQ29uZmlndXJlcyB0aGUgbW9kZSBvZiBkaXNjb3ZlcmluZyBBcnRpZmFjdCBEZWZpbml0aW9ucyIsDQogICAgICAiZW51bSI6IFsNCiAgICAgICAgInRydWUiLA0KICAgICAgICAiZmFsc2UiLA0KICAgICAgICAiYXV0byINCiAgICAgIF0sDQogICAgICAiZGVmYXVsdCI6ICJhdXRvIiwNCiAgICAgICJleGFtcGxlcyI6IFsNCiAgICAgICAgInRydWUiLA0KICAgICAgICAiZmFsc2UiLA0KICAgICAgICAiYXV0byINCiAgICAgIF0NCiAgICB9LA0KICAgICJjbG91ZF9wYXNzcG9ydF9kZWNyeXB0aW9uIjogew0KICAgICAgInR5cGUiOiAiYm9vbGVhbiIsDQogICAgICAidGl0bGUiOiAiRW5hYmxlIENsb3VkIFBhc3Nwb3J0IERlY3J5cHRpb24iLA0KICAgICAgImRlc2NyaXB0aW9uIjogIkRldGVybWluZXMgd2hldGhlciBjbG91ZCBwYXNzcG9ydCBkZWNyeXB0aW9uIGlzIGVuYWJsZWQgaW4gdGhlIGNvbmZpZ3VyYXRpb24iLA0KICAgICAgImRlZmF1bHQiOiBmYWxzZSwNCiAgICAgICJleGFtcGxlcyI6IFsNCiAgICAgICAgdHJ1ZSwNCiAgICAgICAgZmFsc2UNCiAgICAgIF0NCiAgICB9LA0KICAgICJhcHBfcmVnX2RlZl9tb2RlIjogew0KICAgICAgInRpdGxlIjogIkFwcGxpY2F0aW9uIGFuZCBSZWdpc3RyeSBEZWZpbml0aW9ucyBEaXNjb3ZlcnkgTW9kZSIsDQogICAgICAiZGVzY3JpcHRpb24iOiAiQ29uZmlndXJlcyB0aGUgbW9kZSBvZiBkaXNjb3ZlcmluZyBBcHBsaWNhdGlvbiBhbmQgUmVnaXN0cnkgRGVmaW5pdGlvbnMiLA0KICAgICAgImVudW0iOiBbDQogICAgICAgICJhdXRvIiwNCiAgICAgICAgImNtZGIiLA0KICAgICAgICAibG9jYWwiDQogICAgICBdLA0KICAgICAgImRlZmF1bHQiOiAiYXV0byIsDQogICAgICAiZXhhbXBsZXMiOiBbDQogICAgICAgICJhdXRvIiwNCiAgICAgICAgImNtZGIiLA0KICAgICAgICAibG9jYWwiDQogICAgICBdDQogICAgfQ0KICB9DQp9"
-                  }
+        }
+      ],
+      "purl": "pkg:github/borislavr/pgskipper-operator@v0.0.0?file_name=airflow-1.19.0-dev.tgz&registry_name=qubership",
+      "bom-ref": "airflow:79804d7e-587d-487a-8de3-eb5b432d7264",
+      "components": [
+        {
+          "bom-ref": "airflow-site-manager:43b804f3-abd1-454b-9982-b11335f19ca5",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "airflow-site-manager",
+          "version": "0.1.0",
+          "properties": [],
+          "components": []
+        },
+        {
+          "bom-ref": "integrationTests:07b81baf-1dce-49a5-b304-ba100c8451d9",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "integrationTests",
+          "version": "0.2.0",
+          "properties": [],
+          "components": []
+        },
+        {
+          "bom-ref": "airflow-values-schema:7e3dfeff-4158-4a5a-86e3-c556013f07b7",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.helm.values.schema",
+          "name": "values.schema.json",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "values.schema.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "ew0KICAiJHNjaGVtYSI6ICJodHRwOi8vanNvbi1zY2hlbWEub3JnL2RyYWZ0LTA3L3NjaGVtYSMiLA0KICAidHlwZSI6ICJvYmplY3QiLA0KICAidGl0bGUiOiAiR2VuZXJpYyBDb25maWd1cmF0aW9uIiwNCiAgImRlc2NyaXB0aW9uIjogIkNvbmZpZ3VyYXRpb24gZm9yIHRoZSBmb3IgY3J5cHRvZ3JhcGhpYyBvcGVyYXRpb25zLCBhcnRpZmFjdCBkaXNjb3ZlcnksIGFuZCBjbG91ZCBwYXNzcG9ydCBkZWNyeXB0aW9uIiwNCiAgImFkZGl0aW9uYWxQcm9wZXJ0aWVzIjogdHJ1ZSwNCiAgInByb3BlcnRpZXMiOiB7DQogICAgImNyeXB0Ijogew0KICAgICAgInR5cGUiOiAiYm9vbGVhbiIsDQogICAgICAidGl0bGUiOiAiRW5hYmxlIENyeXB0b2dyYXBoaWMgT3BlcmF0aW9ucyIsDQogICAgICAiZGVzY3JpcHRpb24iOiAiU3BlY2lmaWVzIHdoZXRoZXIgY3J5cHRvZ3JhcGhpYyBvcGVyYXRpb25zIHNob3VsZCBiZSBlbmFibGVkIiwNCiAgICAgICJkZWZhdWx0IjogdHJ1ZSwNCiAgICAgICJleGFtcGxlcyI6IFsNCiAgICAgICAgdHJ1ZSwNCiAgICAgICAgZmFsc2UNCiAgICAgIF0NCiAgICB9LA0KICAgICJjcnlwdF9iYWNrZW5kIjogew0KICAgICAgInRpdGxlIjogIkNyeXB0b2dyYXBoaWMgQmFja2VuZCIsDQogICAgICAiZGVzY3JpcHRpb24iOiAiVGhlIGJhY2tlbmQgc3lzdGVtIHVzZWQgZm9yIGNyeXB0b2dyYXBoaWMgb3BlcmF0aW9ucyIsDQogICAgICAiZW51bSI6IFsNCiAgICAgICAgIkZlcm5ldCIsDQogICAgICAgICJTT1BTIg0KICAgICAgXSwNCiAgICAgICJkZWZhdWx0IjogIkZlcm5ldCIsDQogICAgICAiZXhhbXBsZXMiOiBbDQogICAgICAgICJGZXJuZXQiLA0KICAgICAgICAiU09QUyINCiAgICAgIF0NCiAgICB9LA0KICAgICJhcnRpZmFjdF9kZWZpbml0aW9uc19kaXNjb3ZlcnlfbW9kZSI6IHsNCiAgICAgICJ0aXRsZSI6ICJBcnRpZmFjdCBEZWZpbml0aW9ucyBEaXNjb3ZlcnkgTW9kZSIsDQogICAgICAiZGVzY3JpcHRpb24iOiAiQ29uZmlndXJlcyB0aGUgbW9kZSBvZiBkaXNjb3ZlcmluZyBBcnRpZmFjdCBEZWZpbml0aW9ucyIsDQogICAgICAiZW51bSI6IFsNCiAgICAgICAgInRydWUiLA0KICAgICAgICAiZmFsc2UiLA0KICAgICAgICAiYXV0byINCiAgICAgIF0sDQogICAgICAiZGVmYXVsdCI6ICJhdXRvIiwNCiAgICAgICJleGFtcGxlcyI6IFsNCiAgICAgICAgInRydWUiLA0KICAgICAgICAiZmFsc2UiLA0KICAgICAgICAiYXV0byINCiAgICAgIF0NCiAgICB9LA0KICAgICJjbG91ZF9wYXNzcG9ydF9kZWNyeXB0aW9uIjogew0KICAgICAgInR5cGUiOiAiYm9vbGVhbiIsDQogICAgICAidGl0bGUiOiAiRW5hYmxlIENsb3VkIFBhc3Nwb3J0IERlY3J5cHRpb24iLA0KICAgICAgImRlc2NyaXB0aW9uIjogIkRldGVybWluZXMgd2hldGhlciBjbG91ZCBwYXNzcG9ydCBkZWNyeXB0aW9uIGlzIGVuYWJsZWQgaW4gdGhlIGNvbmZpZ3VyYXRpb24iLA0KICAgICAgImRlZmF1bHQiOiBmYWxzZSwNCiAgICAgICJleGFtcGxlcyI6IFsNCiAgICAgICAgdHJ1ZSwNCiAgICAgICAgZmFsc2UNCiAgICAgIF0NCiAgICB9LA0KICAgICJhcHBfcmVnX2RlZl9tb2RlIjogew0KICAgICAgInRpdGxlIjogIkFwcGxpY2F0aW9uIGFuZCBSZWdpc3RyeSBEZWZpbml0aW9ucyBEaXNjb3ZlcnkgTW9kZSIsDQogICAgICAiZGVzY3JpcHRpb24iOiAiQ29uZmlndXJlcyB0aGUgbW9kZSBvZiBkaXNjb3ZlcmluZyBBcHBsaWNhdGlvbiBhbmQgUmVnaXN0cnkgRGVmaW5pdGlvbnMiLA0KICAgICAgImVudW0iOiBbDQogICAgICAgICJhdXRvIiwNCiAgICAgICAgImNtZGIiLA0KICAgICAgICAibG9jYWwiDQogICAgICBdLA0KICAgICAgImRlZmF1bHQiOiAiYXV0byIsDQogICAgICAiZXhhbXBsZXMiOiBbDQogICAgICAgICJhdXRvIiwNCiAgICAgICAgImNtZGIiLA0KICAgICAgICAibG9jYWwiDQogICAgICBdDQogICAgfQ0KICB9DQp9"
                 }
               }
-            ]
-          },
-          {
-            "bom-ref": "resource-profile-baselines:94e2026b-cee6-49fe-abe5-c8c653e37c84",
-            "type": "data",
-            "mime-type": "application/vnd.qubership.resource-profile-baseline",
-            "name": "resource-profile-baselines",
-            "data": [
-              {
-                "type": "configuration",
-                "name": "dev.yaml",
-                "contents": {
-                  "attachment": {
-                    "contentType": "application/yaml",
-                    "encoding": "base64",
-                    "content": "IyBUZW1wbGF0ZSBmb3IgZW52IGdlbmVyYXRpb24NCi0tLQ0KdGVuYW50OiAie3sgdGVtcGxhdGVzX2RpciB9fS9lbnZfdGVtcGxhdGVzL2NvbXBvc2l0ZS90ZW5hbnQueW1sLmoyIg0KY2xvdWQ6ICJ7eyB0ZW1wbGF0ZXNfZGlyIH19L2Vudl90ZW1wbGF0ZXMvY29tcG9zaXRlL2Nsb3VkLnltbC5qMiINCm5hbWVzcGFjZXM6DQogIC0gdGVtcGxhdGVfcGF0aDogInt7IHRlbXBsYXRlc19kaXIgfX0vZW52X3RlbXBsYXRlcy9jb21wb3NpdGUvbmFtZXNwYWNlcy9jb3JlLnltbC5qMiINCiAgLSB0ZW1wbGF0ZV9wYXRoOiAie3sgdGVtcGxhdGVzX2RpciB9fS9lbnZfdGVtcGxhdGVzL2NvbXBvc2l0ZS9uYW1lc3BhY2VzL2Jzcy55bWwuajIiDQogIC0gdGVtcGxhdGVfcGF0aDogInt7IHRlbXBsYXRlc19kaXIgfX0vZW52X3RlbXBsYXRlcy9jb21wb3NpdGUvbmFtZXNwYWNlcy9vc3MueW1sLmoyIg0KICAtIHRlbXBsYXRlX3BhdGg6ICJ7eyB0ZW1wbGF0ZXNfZGlyIH19L2Vudl90ZW1wbGF0ZXMvY29tcG9zaXRlL25hbWVzcGFjZXMvYmlsbGluZy55YW1sLmoyIg0K"
-                  }
-                }
-              },
-              {
-                "type": "configuration",
-                "name": "prod.json",
-                "contents": {
-                  "attachment": {
-                    "contentType": "application/json",
-                    "encoding": "base64",
-                    "content": "ew0KICAiJHNjaGVtYSI6ICJodHRwOi8vanNvbi1zY2hlbWEub3JnL2RyYWZ0LTA0L3NjaGVtYSMiLA0KICAidHlwZSI6ICJvYmplY3QiLA0KICAicHJvcGVydGllcyI6IHsNCiAgICAibmFtZSI6IHsNCiAgICAgICJ0eXBlIjogInN0cmluZyINCiAgICB9LA0KICAgICJ2ZXJzaW9uIjogew0KICAgICAgInR5cGUiOiAiaW50ZWdlciINCiAgICB9LA0KICAgICJncm91cCI6IHsNCiAgICAgICJ0eXBlIjogInN0cmluZyIsDQogICAgICAiZGVmYXVsdCI6ICJncm91cCINCiAgICB9LA0KICAgICJhcnRpZmFjdCI6IHsNCiAgICAgICJ0eXBlIjogInN0cmluZyIsDQogICAgICAiZGVmYXVsdCI6ICJhcnRpZmFjdCINCiAgICB9LA0KICAgICJyZWdpc3RyeSI6IHsNCiAgICAgICJ0eXBlIjogInN0cmluZyINCiAgICB9DQogIH0sDQogICJyZXF1aXJlZCI6IFsNCiAgICAibmFtZSIsDQogICAgInZlcnNpb24iLA0KICAgICJncm91cCINCiAgXQ0KfQ=="
-                  }
-                }
-              },
-              {
-                "type": "configuration",
-                "name": "simple.yaml",
-                "contents": {
-                  "attachment": {
-                    "contentType": "application/yaml",
-                    "encoding": "base64",
-                    "content": "IyBUZW1wbGF0ZSBmb3IgZW52IGdlbmVyYXRpb24NCi0tLQ0KdGVuYW50OiAie3sgdGVtcGxhdGVzX2RpciB9fS9lbnZfdGVtcGxhdGVzL2NvbXBvc2l0ZS90ZW5hbnQueW1sLmoyIg0KY2xvdWQ6ICJ7eyB0ZW1wbGF0ZXNfZGlyIH19L2Vudl90ZW1wbGF0ZXMvY29tcG9zaXRlL2Nsb3VkLnltbC5qMiINCm5hbWVzcGFjZXM6DQogIC0gdGVtcGxhdGVfcGF0aDogInt7IHRlbXBsYXRlc19kaXIgfX0vZW52X3RlbXBsYXRlcy9jb21wb3NpdGUvbmFtZXNwYWNlcy9jb3JlLnltbC5qMiINCiAgLSB0ZW1wbGF0ZV9wYXRoOiAie3sgdGVtcGxhdGVzX2RpciB9fS9lbnZfdGVtcGxhdGVzL2NvbXBvc2l0ZS9uYW1lc3BhY2VzL2Jzcy55bWwuajIiDQogIC0gdGVtcGxhdGVfcGF0aDogInt7IHRlbXBsYXRlc19kaXIgfX0vZW52X3RlbXBsYXRlcy9jb21wb3NpdGUvbmFtZXNwYWNlcy9vc3MueW1sLmoyIg0KICAtIHRlbXBsYXRlX3BhdGg6ICJ7eyB0ZW1wbGF0ZXNfZGlyIH19L2Vudl90ZW1wbGF0ZXMvY29tcG9zaXRlL25hbWVzcGFjZXMvYmlsbGluZy55YW1sLmoyIg0K"
-                  }
+            }
+          ]
+        },
+        {
+          "bom-ref": "resource-profile-baselines:ca761bf6-0e6c-4322-8871-f97468592c11",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "IyBUZW1wbGF0ZSBmb3IgZW52IGdlbmVyYXRpb24NCi0tLQ0KdGVuYW50OiAie3sgdGVtcGxhdGVzX2RpciB9fS9lbnZfdGVtcGxhdGVzL2NvbXBvc2l0ZS90ZW5hbnQueW1sLmoyIg0KY2xvdWQ6ICJ7eyB0ZW1wbGF0ZXNfZGlyIH19L2Vudl90ZW1wbGF0ZXMvY29tcG9zaXRlL2Nsb3VkLnltbC5qMiINCm5hbWVzcGFjZXM6DQogIC0gdGVtcGxhdGVfcGF0aDogInt7IHRlbXBsYXRlc19kaXIgfX0vZW52X3RlbXBsYXRlcy9jb21wb3NpdGUvbmFtZXNwYWNlcy9jb3JlLnltbC5qMiINCiAgLSB0ZW1wbGF0ZV9wYXRoOiAie3sgdGVtcGxhdGVzX2RpciB9fS9lbnZfdGVtcGxhdGVzL2NvbXBvc2l0ZS9uYW1lc3BhY2VzL2Jzcy55bWwuajIiDQogIC0gdGVtcGxhdGVfcGF0aDogInt7IHRlbXBsYXRlc19kaXIgfX0vZW52X3RlbXBsYXRlcy9jb21wb3NpdGUvbmFtZXNwYWNlcy9vc3MueW1sLmoyIg0KICAtIHRlbXBsYXRlX3BhdGg6ICJ7eyB0ZW1wbGF0ZXNfZGlyIH19L2Vudl90ZW1wbGF0ZXMvY29tcG9zaXRlL25hbWVzcGFjZXMvYmlsbGluZy55YW1sLmoyIg0K"
                 }
               }
-            ]
-          }
-        ]
-      },
-      {
-        "name": "patroni",
-        "mime-type": "application/vnd.qubership.standalone-runnable",
-        "version": "",
-        "properties": [],
-        "purl": "",
-        "reference": "",
-        "bom-ref": "patroni:93e74e34-53e7-471b-b5e9-e60c4229a3c9"
-      }
-    ],
-    "dependencies": [
-      {
-        "ref": "qubership-logging-ui:e12904b2-ca40-4611-abe3-5b25a2cf4d3a",
-        "dependsOn": [
-          "ghcr.io/nookyo/qubership-logging-integration-tests:9a07ab2d-3184-4722-87e0-07ddf3def7a0"
-        ]
-      },
-      {
-        "ref": "airflow:3af38e43-8468-4c1a-a3b7-b96f3aefab60",
-        "dependsOn": [
-          "ghcr.io/nookyo/qubership-logging-integration-tests:9a07ab2d-3184-4722-87e0-07ddf3def7a0",
-          "qubership-logging-ui:e12904b2-ca40-4611-abe3-5b25a2cf4d3a"
-        ]
-      },
-      {
-        "ref": "patroni:93e74e34-53e7-471b-b5e9-e60c4229a3c9",
-        "dependsOn": [
-          "airflow:3af38e43-8468-4c1a-a3b7-b96f3aefab60"
-        ]
-      }
-    ]
-  }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "ew0KICAiJHNjaGVtYSI6ICJodHRwOi8vanNvbi1zY2hlbWEub3JnL2RyYWZ0LTA0L3NjaGVtYSMiLA0KICAidHlwZSI6ICJvYmplY3QiLA0KICAicHJvcGVydGllcyI6IHsNCiAgICAibmFtZSI6IHsNCiAgICAgICJ0eXBlIjogInN0cmluZyINCiAgICB9LA0KICAgICJ2ZXJzaW9uIjogew0KICAgICAgInR5cGUiOiAiaW50ZWdlciINCiAgICB9LA0KICAgICJncm91cCI6IHsNCiAgICAgICJ0eXBlIjogInN0cmluZyIsDQogICAgICAiZGVmYXVsdCI6ICJncm91cCINCiAgICB9LA0KICAgICJhcnRpZmFjdCI6IHsNCiAgICAgICJ0eXBlIjogInN0cmluZyIsDQogICAgICAiZGVmYXVsdCI6ICJhcnRpZmFjdCINCiAgICB9LA0KICAgICJyZWdpc3RyeSI6IHsNCiAgICAgICJ0eXBlIjogInN0cmluZyINCiAgICB9DQogIH0sDQogICJyZXF1aXJlZCI6IFsNCiAgICAibmFtZSIsDQogICAgInZlcnNpb24iLA0KICAgICJncm91cCINCiAgXQ0KfQ=="
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "simple.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "IyBUZW1wbGF0ZSBmb3IgZW52IGdlbmVyYXRpb24NCi0tLQ0KdGVuYW50OiAie3sgdGVtcGxhdGVzX2RpciB9fS9lbnZfdGVtcGxhdGVzL2NvbXBvc2l0ZS90ZW5hbnQueW1sLmoyIg0KY2xvdWQ6ICJ7eyB0ZW1wbGF0ZXNfZGlyIH19L2Vudl90ZW1wbGF0ZXMvY29tcG9zaXRlL2Nsb3VkLnltbC5qMiINCm5hbWVzcGFjZXM6DQogIC0gdGVtcGxhdGVfcGF0aDogInt7IHRlbXBsYXRlc19kaXIgfX0vZW52X3RlbXBsYXRlcy9jb21wb3NpdGUvbmFtZXNwYWNlcy9jb3JlLnltbC5qMiINCiAgLSB0ZW1wbGF0ZV9wYXRoOiAie3sgdGVtcGxhdGVzX2RpciB9fS9lbnZfdGVtcGxhdGVzL2NvbXBvc2l0ZS9uYW1lc3BhY2VzL2Jzcy55bWwuajIiDQogIC0gdGVtcGxhdGVfcGF0aDogInt7IHRlbXBsYXRlc19kaXIgfX0vZW52X3RlbXBsYXRlcy9jb21wb3NpdGUvbmFtZXNwYWNlcy9vc3MueW1sLmoyIg0KICAtIHRlbXBsYXRlX3BhdGg6ICJ7eyB0ZW1wbGF0ZXNfZGlyIH19L2Vudl90ZW1wbGF0ZXMvY29tcG9zaXRlL25hbWVzcGFjZXMvYmlsbGluZy55YW1sLmoyIg0K"
+                }
+              }
+            }
+          ]
+        }
+      ],
+      "type": "application"
+    },
+    {
+      "name": "patroni-services",
+      "mime-type": "application/vnd.qubership.helm.chart",
+      "version": "1.0.0-724bb8f9f4f5eadcaece7b525f5cdd7ab1aa8897",
+      "properties": [],
+      "purl": "pkg:helm/borislavr/pgskipper-operator/patroni-services?version=1.0.0-724bb8f9f4f5eadcaece7b525f5cdd7ab1aa8897&registry_name=qubership",
+      "bom-ref": "patroni-services:2f85538c-7fe5-4b69-8d24-988ad2c88c77",
+      "type": "application",
+      "components": []
+    },
+    {
+      "name": "patroni",
+      "mime-type": "application/vnd.qubership.standalone-runnable",
+      "version": "latest",
+      "properties": [],
+      "bom-ref": "patroni:9eb1cb8f-959d-4ea6-91e2-faf5179dc84b",
+      "type": "application",
+      "components": []
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "qubership-logging-ui:ca1bdb2e-be06-47a5-b136-5386e5234c83",
+      "dependsOn": [
+        "qubership-logging-integration-tests:1dea0336-d620-4e18-a254-bddaa5c168c8"
+      ]
+    },
+    {
+      "ref": "airflow:79804d7e-587d-487a-8de3-eb5b432d7264",
+      "dependsOn": [
+        "qubership-logging-integration-tests:1dea0336-d620-4e18-a254-bddaa5c168c8",
+        "qubership-logging-ui:ca1bdb2e-be06-47a5-b136-5386e5234c83"
+      ]
+    },
+    {
+      "ref": "patroni-services:2f85538c-7fe5-4b69-8d24-988ad2c88c77",
+      "dependsOn": [
+        "patroni:9eb1cb8f-959d-4ea6-91e2-faf5179dc84b"
+      ]
+    },
+    {
+      "ref": "patroni:9eb1cb8f-959d-4ea6-91e2-faf5179dc84b",
+      "dependsOn": [
+        "airflow:79804d7e-587d-487a-8de3-eb5b432d7264"
+      ]
+    }
+  ]
+}

@@ -108,7 +108,7 @@ flowchart TD
 ## Requirements
 
 1. The CLI must generate AM that validates against [JSON Schema](/schemas/application-manifest.schema.json)
-2. The CLI must generate registry config that validates against [JSON Schema](https://github.com/Netcracker/qubership-envgene/blob/feature/reg-def-v2/schemas/regdef-v2.schema.json)
+2. ~~The CLI must generate registry config that validates against [JSON Schema](https://github.com/Netcracker/qubership-envgene/blob/feature/reg-def-v2/schemas/regdef-v2.schema.json)~~
 3. AM must be published as OCI artifact
    1. Artifact ID must match the application name
    2. Registry parameters for publishing (URL, credentials, group) must be get from Registry Config
@@ -199,7 +199,7 @@ components:
 **Jaeger Example:**
 
 ```yaml
-version: 1.2.3
+с: 1.2.3
 components:
   # application/vnd.qubership.standalone-runnable
   - name: cassandra

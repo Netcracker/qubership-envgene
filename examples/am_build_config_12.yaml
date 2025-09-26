@@ -1,0 +1,44 @@
+bomFormat: CycloneDX
+specVersion: "1.6"
+metadata:
+  component:
+    type: application
+    mimeType: application/vnd.qubership.application
+    name: qubership-integration-platform
+    version: "1.0.0"
+  tools:
+    components:
+      - type: application
+        name: sbom-generator
+        version: "2.3.1"
+components:
+  - name: qubership-logging-ui
+    mimeType: application/vnd.docker.image
+    reference: ghcr.io/nookyo/qubership-logging-ui:1.0.0
+    dependsOn:
+      - name: qubership-logging-integration-tests
+        mimeType: application/vnd.docker.image
+  - name: qubership-logging-integration-tests
+    mimeType: application/vnd.docker.image
+    reference: ghcr.io/netcracker/qubership-logging-integration-tests:1.0.0
+  - name: airflow
+    mimeType: application/vnd.qubership.helm.chart
+    reference: https://github.com/borislavr/pgskipper-operator/releases/download/v0.0.0/airflow-1.19.0-dev.tgz
+    dependsOn:
+      - name: qubership-logging-integration-tests
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: integrationTests
+      - name: qubership-logging-ui
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: ui
+  - name: patroni-services
+    mimeType: application/vnd.qubership.helm.chart
+    reference: oci://ghcr.io/borislavr/pgskipper-operator/patroni-services:1.0.0-724bb8f9f4f5eadcaece7b525f5cdd7ab1aa8897
+    dependsOn:
+      - name: patroni
+        mimeType: application/vnd.qubership.standalone-runnable
+  - name: patroni
+    mimeType: application/vnd.qubership.standalone-runnable
+    dependsOn:
+      - name: airflow
+        mimeType: application/vnd.qubership.helm.chart
