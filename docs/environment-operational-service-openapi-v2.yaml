@@ -317,12 +317,21 @@ components:
           type: string
         existsInK8s:
           type: boolean
-        # should be sorted by `startedAt`
-        # how much does it cost to support ?limit=1&sort=-startedAt&result=SUCCESS&strategy=ROLLING_UPDATE
-        deploymentOperations:
+        # Supported query parameters for filtering deployment operations history:
+        # - limit: integer (default: 5, max: 5) - limits the number of returned operations
+        # - sort: string (default: "-startedAt") - sort order ("startedAt" for ascending, "-startedAt" for descending)
+        # - result: DeploymentOperationResult enum - filters by operation result
+        # - strategy: DeploymentOperationStrategy enum - filters by deployment strategy
+        deploymentOperationsHistory:
           type: array
+          description: "Contains the last 5 deployment operations in the namespace. Operations with CLEAN_INSTALL strategy remove all previous ones"
           items:
-            $ref: "#/components/schemas/DeploymentOperationDTO"
+            $ref: "#/components/schemas/DeploymentOperationExecutionDTO"
+        installedSolutionDescriptors:
+          type: array
+          description: "List of Solution Descriptors installed in the namespace"
+          items:
+            $ref: "#/components/schemas/SolutionDescriptorRef"
     SolutionDescriptorRef:
       type: string
       description: "Solution Descriptor coordinate in name:version format"
@@ -330,29 +339,40 @@ components:
       pattern: "^[A-Za-z0-9][A-Za-z0-9._-]*:[A-Za-z0-9][A-Za-z0-9._-]*$"
     DeploymentOperationResult:
       type: string
+      description: "Deployment operation result"
       enum:
       - SUCCESS
       - FAIL
     DeploymentOperationStrategy:
       type: string
+      description: "Deployment operation strategy. ROLLING_UPDATE installs applications on top of existing ones. CLEAN_INSTALL removes all objects in the namespace before installation"
       enum:
       - ROLLING_UPDATE
       - CLEAN_INSTALL
-    DeploymentOperationDTO:
+    DeploymentOperationExecutionDTO:
       type: object
+      description: "Deployment operation execution"
       properties:
         id:
           type: string
         startedAt:
           $ref: "#/components/schemas/Instant"
+        deploymentOperations:
+          type: array
+          items:
+            $ref: "#/components/schemas/SolutionDescriptorDeploymentOperationDTO"
+    SolutionDescriptorDeploymentOperationDTO:
+      type: object
+      description: "Operation for deploying applications described in the Solution Descriptor"
+      properties:
+        id:
+          type: string
         result:
           $ref: "#/components/schemas/DeploymentOperationResult"
         strategy:
           $ref: "#/components/schemas/DeploymentOperationStrategy"
         solutionDescriptor:
-          type: array
-          items:
-            $ref: "#/components/schemas/SolutionDescriptorRef"   
+          $ref: "#/components/schemas/SolutionDescriptorRef"
   securitySchemes:
     SecurityScheme:
       type: openIdConnect
