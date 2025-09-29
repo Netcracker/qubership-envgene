@@ -9,6 +9,7 @@
 .prettierignore text
 
 *.env text eol=lf
+docs/samples/** text eol=lf
 *.json text
 *.md text
 *.mod text
