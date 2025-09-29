@@ -15,6 +15,10 @@
     - [QIP](#qip)
   - [Application Manifest Build Config](#application-manifest-build-config)
     - [`helm-values-artifact-mappings` Processing](#helm-values-artifact-mappings-processing)
+  - [Component Metadata](#component-metadata)
+    - [`application/vnd.docker.image`](#applicationvnddockerimage)
+    - [`application/vnd.qubership.helm.chart`](#applicationvndqubershiphelmchart)
+  - [AM Build CLI execution attributes](#am-build-cli-execution-attributes)
   - [Application Manifest Structure](#application-manifest-structure)
     - [Metadata](#metadata)
     - [Components](#components)
@@ -54,17 +58,17 @@ flowchart TD
     subgraph Application Build Workflow
       subgraph Component Build Job
         D1[[Component<br>Build<br>Action]]
-        D2[[Component<br>Metadata Transformer<br>Action]]
+        %% D2[[Component<br>Metadata Transformer<br>Action]]
         D3[Component Metadata]
-        D1 --> D2
-        D2 --> D3
+        D1 --> D3
       end
       E[[AM<br>Build Job]]
     end
     A --> E
     B --> E
     D3 --> E
-    H --> D2
+    D1 --> H 
+    H --> E
     C --> D1
     E --> F
 ```
@@ -150,8 +154,9 @@ The config is stored in the application repository.
 
 ```yaml
 # Mandatory
-# Application Manifest == Application version
-version: 1.2.3
+applicationVersion: <application-version>
+# Mandatory
+applicationName: <application-name>
 components:
   - # Mandatory
     # Component name
@@ -177,7 +182,8 @@ components:
 **Simple Example:**
 
 ```yaml
-version: 1.2.3
+applicationVersion: 1.2.3
+applicationName: application
 components:
   # application/vnd.qubership.standalone-runnable
   - name: a-standalone-runnable
@@ -199,7 +205,8 @@ components:
 **Jaeger Example:**
 
 ```yaml
-с: 1.2.3
+applicationVersion: 1.2.3
+applicationName: jaeger
 components:
   # application/vnd.qubership.standalone-runnable
   - name: cassandra
@@ -296,72 +303,44 @@ Notes:
 - The CLI will resolve `artifact` to the artifact component's identifier and emit AM attribute `qubership:helm.values.artifactMappings` accordingly
 - Ensure the Helm chart component declares `dependsOn` to each referenced artifact component
 
-<!-- ## Output Transformer
+## Component Metadata
 
-The output transformer must obtain information from the built artifact OR build job artifact.
+### `application/vnd.docker.image`
 
-The output transformer must produce the same output for a specific `mime-type` regardless of the action used to build the component.
-
-Below are the supported `mime-type` values: -->
-
-<!-- ### `application/vnd.docker.image`
-
-```yaml
-# Always `container`
-# Mandatory. No default
-type: container
-# Always `application/vnd.docker.image`
-# Mandatory. No default
-mime-type: application/vnd.docker.image
-# Mandatory. No default
-name: my-docker-image
-# Mandatory. No default
-group: core
-# Mandatory. No default
-version: build22
-purl: pkg:docker/<group>/<name>@<version>?registry_name=<pointer-to-registry-in-registry-config>
-# Always `[]`
-# Mandatory. No default
-properties: []
+```json
+{
+  "name": "<docker-image-name>",
+  "type": "container",
+  "mime-type": "application/vnd.docker.image",
+  "hashes":[
+    {
+      "alg": "<hash-algorithm>",
+      "content": "<hash-content>"
+    }],
+  "reference": "<reference-to-artifact>"
+}
 ```
 
 ### `application/vnd.qubership.helm.chart`
 
-```yaml
-# Always `application`
-# Mandatory. No default
-type: application
-# Always `application/vnd.qubership.helm.chart`
-# Mandatory. No default
-mime-type: application/vnd.qubership.helm.chart
-# `name` attribute of the Helm Chart artifact
-# Mandatory. No default
-name: my-chart
-# Mandatory. No default
-version: 1.2.3
-# Mandatory. No default
-purl: pkg:helm/<group>/<name>@<version>?registry_name=<pointer-to-registry-in-registry-config>
-# Mandatory. No default
-properties:
-  # Set if the chart has a child chart
-  - name: isUmbrella
-    value: true
-# In case of umbrella chart for each child chart nested component should be created 
-# Mandatory. Default - []
-components:
-  - # Always `application`
-    # Mandatory. No default
-    type: application
-    # Always `application/vnd.qubership.helm.chart`
-    # Mandatory. No default
-    mime-type: application/vnd.qubership.helm.chart
-    # Name of the child Helm Chart
-    # Mandatory. No default
-    name: my-nested-chart
-    # Always `[]`
-    # Mandatory. No default
-    properties: []
-``` -->
+```json
+{
+  "name": "<helm-chart-name>",
+  "type": "application",
+  "mime-type": "application/vnd.qubership.helm.chart",
+  "reference": "oci://ghcr.io/repository_owner/chart_name:chart_version"
+}
+```
+
+## AM Build CLI execution attributes
+
+| Attribute                    | Type   | Mandatory | Description                                                                 | Example                                                              |
+|------------------------------|--------|-----------|-----------------------------------------------------------------------------|----------------------------------------------------------------------|
+| `--config`/`-c`              | string | yes       | Path to the Application Manifest Build configuration file                   | `/path/to/am-build-config.yml`                                       |
+| `--version`/`-v`             | string | yes       | Application version                                                         | `1.2.3`                                                              |
+| `--name`/`-n`                | string | yes       | Application name                                                            | `my-application`                                                     |
+| `--out`/`-o`                 | string | yes       | Path where to save the generated Application Manifest                       | `/path/to/output/application-manifest.json`                          |
+| positional parameters        | string | yes       | Paths to component metadata files as positional parameters                  | `/path/to/component1-metadata.json /path/to/component2-metadata.json` |
 
 ## Application Manifest Structure
 
