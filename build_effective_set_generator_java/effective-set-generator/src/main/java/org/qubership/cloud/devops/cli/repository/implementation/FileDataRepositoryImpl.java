@@ -380,7 +380,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
 
     private SBApplicationDTO getSbApplicationDTO(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, Component component) {
         String namespace = bomReaderUtils.getPropertyValue(component, "deployPostfix");
-        String appFileRef = String.format("%s/%s", sharedData.getSbomsPath(),
+        String appFileRef = String.format("%s/%s", sharedData.getSbomsPath().get(),
                 bomReaderUtils.getExternalRefValue(component, "bom").replace("file://", ""));
         SBApplicationDTO dto = SBApplicationDTO.builder()
                 .appName(component.getName())
