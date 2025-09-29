@@ -9,4 +9,4 @@ peerNamespace:
 controllerNamespace:
   name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}
   type: namespace
-  credentials: ${creds.get("bgd-controller-token").secret}
+  credentials: bgd-controller-token
