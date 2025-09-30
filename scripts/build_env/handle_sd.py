@@ -133,7 +133,6 @@ def merge_sd(sd_path: Path, sd_data, merge_func):
     full_sd_yaml = helper.openYaml(sd_path)
     logger.info(f"full_sd.yaml before merge: {full_sd_yaml}")
     helper.check_dir_exist_and_create(sd_path.parent)
-    helper.pre_validate(full_sd_yaml, sd_data)
     result = merge_func(full_sd_yaml, sd_data)
     helper.writeYamlToFile(sd_path, result)
     logger.info(f"Merged data into Target Path! - {result}")

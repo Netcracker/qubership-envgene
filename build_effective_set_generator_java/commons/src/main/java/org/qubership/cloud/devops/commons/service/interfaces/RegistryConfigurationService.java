@@ -19,8 +19,10 @@ package org.qubership.cloud.devops.commons.service.interfaces;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO;
 import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistrySummaryDTO;
 
+import java.util.Optional;
+
 public interface RegistryConfigurationService {
-    RegistryDTO getRegistry(String registryName);
+    Optional<RegistryDTO> getRegistry(String registryName);
 
     String getMavenRepoForApp(RegistrySummaryDTO registrySummaryDTO);
 

@@ -95,13 +95,15 @@ public class FileDataConverterImpl implements FileDataConverter {
 
     @Override
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
+        if (params == null || params.isEmpty()) {
+            return;
+        }
         File file = fileSystemUtils.getFileFromGivenPath(args);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            if (params != null && !params.isEmpty()) {
-                getYamlObject().dump(params, writer);
-            }
+            getYamlObject().dump(params, writer);
         }
     }
+
 
     @Override
     public <T> Map<String, Object> getObjectMap(T inputObject) {
