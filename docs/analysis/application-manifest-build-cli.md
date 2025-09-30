@@ -316,7 +316,8 @@ Notes:
     {
       "alg": "<hash-algorithm>",
       "content": "<hash-content>"
-    }],
+    }
+  ],
   "reference": "<reference-to-artifact>"
 }
 ```
@@ -510,9 +511,9 @@ Registry configuration where in particular in the sections:
 - `dockerConfig` describes the registry configuration where Docker artifacts are stored
 - `helmAppConfig` describes the registry configuration where Helm artifacts are stored
 
-Каждый отдельный реджестри описывается отдельным `yaml` файлом в `/configurations/RegDefs/` фолдере в сорс код репозитории
+Each individual registry is described by a separate `yaml` file in the `/configurations/RegDefs/` folder in the source code repository.
 
-Аттрибут `name` должен совпадать с именем файла без расширения
+The `name` attribute must match the filename without the extension.
 
 [Registry Definition v2.0](/schemas/regdef-v2.schema.json)
 
@@ -621,7 +622,7 @@ REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
 
     The value of the `name` attribute of such registry will be the target value for `?QUALIFIERS` (`registry_name`)
 
-4. **Сборка PURL**
+4. **Build PURL**
 
     | PURL Parameter | Value Source                                                                                       |
     |----------------|----------------------------------------------------------------------------------------------------|
