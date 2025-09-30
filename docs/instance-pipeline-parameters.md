@@ -25,6 +25,7 @@
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
+    - [`GITHUB_PIPELINE_API_INPUT`](#github_pipeline_api_input)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
@@ -199,6 +200,12 @@ Registered component JSON schemas are stored in the EnvGene Docker image as JSON
 Consumer-specific pipeline context components registered in EnvGene:
 
 1. None
+
+**Example**:
+
+```yaml
+"{\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
+```
 
 ### `APP_REG_DEFS_JOB`
 
@@ -422,6 +429,51 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 **Mandatory**: No
 
 **Example**: `true`
+
+### `GITHUB_PIPELINE_API_INPUT`
+
+**Description**: A JSON string parameter for GitHub pipelines that contains all pipeline parameters except these core ones that must be set separately:
+
+- `ENV_NAMES`
+- `DEPLOYMENT_TICKET_ID`
+- `ENV_TEMPLATE_VERSION`
+- `ENV_BUILDER`
+- `GENERATE_EFFECTIVE_SET`
+- `GET_PASSPORT`
+- `CMDB_IMPORT`
+
+This enables automated pipeline execution without UI input. The JSON must follow the parameter schema defined in this document.
+
+This parameter is only available in the [GitHub version](/github_workflows/instance-repo-pipeline/) of the pipeline.
+
+> [!NOTE]
+> GitHub's UI limits manual inputs to 10 parameters. To handle this while keeping the same features as GitLab,
+> we put the most important parameters in the UI and group the rest in this JSON field.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `{\"ENV_BUILDER\": \"true\", \"DEPLOYMENT_TICKET_ID\": \"TICKET-123\", \"ENV_TEMPLATE_VERSION\": \"qubership_envgene_templates:0.0.2\"}`
+
+Example of calling EnvGene pipeline via GitHub API:
+
+```bash
+curl -X POST \
+  -H "Authorization: token ghp_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789" \
+  -H "Accept: application/vnd.github.v3+json" \
+  https://api.github.com/repos/qubership/instance-repo/actions/workflows/pipeline.yml/dispatches \
+  -d '{
+        "ref": "main",
+        "inputs": {
+            "ENV_NAMES": "test-cluster/e01",
+            "ENV_BUILDER": "true",
+            `GENERATE_EFFECTIVE_SET`: "true"
+            "DEPLOYMENT_TICKET_ID": "QBSHP-0001",
+            "GITHUB_PIPELINE_API_INPUT": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
+        }
+      }'
+```
 
 ## Deprecated Parameters
 
