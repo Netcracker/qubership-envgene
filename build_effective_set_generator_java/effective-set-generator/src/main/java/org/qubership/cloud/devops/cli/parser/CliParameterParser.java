@@ -89,21 +89,20 @@ public class CliParameterParser {
 
     public void generateEffectiveSet() throws IOException, IllegalArgumentException, DirectoryCreateException {
         checkIfEntitiesExist();
-        Optional<SolutionBomDTO> solutionDescriptor = inputData.getSolutionBomDTO();
-        List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
-                        .orElseGet(Collections::emptyList);
         String tenantName = inputData.getTenantDTO().getName();
         String cloudName = inputData.getCloudDTO().getName();
 
-        processAndSaveParameters(applicationDTOList, tenantName, cloudName);
+        processAndSaveParameters(inputData.getSolutionBomDTO(), tenantName, cloudName);
     }
 
-    private void processAndSaveParameters(List<SBApplicationDTO> applicationDTOList, String tenantName, String cloudName) throws IOException {
+    private void processAndSaveParameters(Optional<SolutionBomDTO> solutionDescriptor, String tenantName, String cloudName) throws IOException {
         Map<String, Object> deployMappingFileData = new ConcurrentHashMap<>();
         Map<String, Object> runtimeMappingFileData = new ConcurrentHashMap<>();
         Map<String, Object> cleanupMappingFileData = new ConcurrentHashMap<>();
         Map<String, String> errorList = new ConcurrentHashMap<>();
         Map<String, String> k8TokenMap = new ConcurrentHashMap<>();
+        List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
+                .orElseGet(Collections::emptyList);
         applicationDTOList.parallelStream()
                 .forEach(app -> {
                     String namespaceName = app.getNamespace();
@@ -138,9 +137,11 @@ public class CliParameterParser {
                 });
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap);
-            fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "deployment", "mapping.yaml");
-            fileDataConverter.writeToFile(runtimeMappingFileData, sharedData.getOutputDir(), "runtime", "mapping.yaml");
-            fileDataConverter.writeToFile(cleanupMappingFileData, sharedData.getOutputDir(), "cleanup", "mapping.yaml");
+            if (solutionDescriptor.isPresent()) {
+                fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "deployment", "mapping.yaml");
+                fileDataConverter.writeToFile(runtimeMappingFileData, sharedData.getOutputDir(), "runtime", "mapping.yaml");
+                fileDataConverter.writeToFile(cleanupMappingFileData, sharedData.getOutputDir(), "cleanup", "mapping.yaml");
+            }
         } else {
             fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "mapping.yaml");
         }
