@@ -95,12 +95,11 @@ public class FileDataConverterImpl implements FileDataConverter {
 
     @Override
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
-        if (params == null || params.isEmpty()) {
-            return;
-        }
         File file = fileSystemUtils.getFileFromGivenPath(args);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            getYamlObject().dump(params, writer);
+            if (params != null && !params.isEmpty()) {
+                getYamlObject().dump(params, writer);
+            }
         }
     }
 
@@ -108,7 +107,8 @@ public class FileDataConverterImpl implements FileDataConverter {
     @Override
     public <T> Map<String, Object> getObjectMap(T inputObject) {
         ObjectMapper objectMapper = new ObjectMapper();
-        return objectMapper.convertValue(inputObject, new TypeReference<Map<String, Object>>() {});
+        return objectMapper.convertValue(inputObject, new TypeReference<Map<String, Object>>() {
+        });
     }
 
 
