@@ -89,7 +89,7 @@ jobs:
 
   build-qubership-pipegene:
     needs: [linters, tests, link-check]
-    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push'))
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push')
     runs-on: ubuntu-latest
     permissions:
       contents: read
