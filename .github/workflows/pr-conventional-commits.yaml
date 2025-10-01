@@ -1,7 +1,6 @@
-# This workflow is hidden from the GitHub Actions UI
 ---
 
-name: Conventional Commits PR Check
+name: "Conventional Commits"
 
 on:
   pull_request:
@@ -9,10 +8,10 @@ on:
       - opened
       - edited
       - synchronize
-  workflow_call:
+  workflow_dispatch: null
 
 permissions:
-  pull-requests: read
+  contents: read
 jobs:
   build:
     name: Conventional Commits
@@ -20,4 +19,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: webiny/action-conventional-commits@v1.3.0
+      - uses: ./.github/actions/conventional-commits

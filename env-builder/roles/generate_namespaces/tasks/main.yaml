@@ -1,4 +1,15 @@
 ---
+
+- name: Set namespace template name from deploy_postfix if it exists
+  set_fact:
+    _namespace_template_name: "{{ namespace.deploy_postfix }}"
+  when: namespace.deploy_postfix is defined and namespace.deploy_postfix
+
+- name: Set namespace template name from template_path if deploy_postfix not set
+  set_fact:
+    _namespace_template_name: "{{ namespace.template_path.split('/') | last | replace('.yml.j2','') | replace('.yaml.j2','') }}"
+  when: namespace.deploy_postfix is not defined or not namespace.deploy_postfix
+
 - name: Generate Envs Namespace dir {{ _namespace_template_name }}
   ansible.builtin.file:
     path: "{{ _current_env_dir }}/Namespaces/{{ _namespace_template_name }}"

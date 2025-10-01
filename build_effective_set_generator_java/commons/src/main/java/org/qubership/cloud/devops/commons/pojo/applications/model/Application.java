@@ -42,8 +42,8 @@ public class Application implements Serializable {
     private String artifactId;
     private String groupId;
     @Builder.Default
-    private Map<String, String> params = new HashMap<>();
-    private Map<String, String> technicalParams;
+    private Map<String, Object> params = new HashMap<>();
+    private Map<String, Object> technicalParams;
     private Registry registry;
     private Tenant tenant;
     private boolean supportParallelDeploy;

@@ -1,6 +1,7 @@
 import pathlib
 import re
 from os import getenv
+
 from .collections_helper import merge_lists
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, validate_yaml_by_scheme_or_fail
 from .json_helper import findJsons
@@ -18,6 +19,7 @@ BUILD_ENV_TAG = "BUILD_ENV"
 CMDB_IMPORT_TAG = "CMDB_IMPORT"
 DEFAULT_PASSPORT_NAME = "passport"
 DEFAULT_PASSPORT_DIR_NAME = "cloud-passport"
+INV_GEN_CREDS_PATH = "Inventory/credentials/inventory_generation_creds.yml"
 
 
 def find_env_instances_dir(env_name, instances_dir) :
@@ -163,7 +165,7 @@ def getTemplateLatestSnapshotVersion(env_definition_yaml):
 def update_generated_versions(env_dir, stage_tag, template_version=""):
     comment = "This value is automatically generated during job run."
     env_definition_yaml = getEnvDefinition(env_dir)
-    if not "generatedVersions" in env_definition_yaml:
+    if "generatedVersions" not in env_definition_yaml:
         versionsYaml = yaml.load("{}")
         env_definition_yaml["generatedVersions"] = versionsYaml
     else:

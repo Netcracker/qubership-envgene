@@ -2,6 +2,10 @@ name: "Release: EnvGene"
 
 run-name: "Release EnvGene: ${{ inputs.version }}"
 
+env:
+  REGISTRY: ghcr.io
+  CI_PROJECT_DIR: ${{ github.workspace }}
+
 on:
   workflow_dispatch:
     inputs:
@@ -10,33 +14,24 @@ on:
         default: '1.0.0'
         type: string
         description: 'Release version (e.g., 1.0.0)'
-      dry-run:
+      publish:
         required: false
+        default: true
         type: boolean
-        default: false
-        description: 'Dry run'
-      component:
-        default: '[
-                  {"name": "qubership-envgene", "file": "./build_envgene/build/Dockerfile", "context": "."},
-                  {"name": "qubership-gcip", "file": "./build_gcip/build/Dockerfile", "context": "."},
-                  {"name": "qubership-effective-set-generator", "file": "./build_effective_set_generator/build/Dockerfile", "context": "."},
-                  {"name": "qubership-instance-repo-pipeline", "file": "./github_workflows/instance-repo-pipeline/Dockerfile", "context": "."}
-                ]'
-        description: 'component'
-        required: true
+        description: 'Publish the release'
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     container:
-      image: python:3.10-slim-bookworm
+      image: python:3.12-slim-bookworm
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-      
+
       - name: Run Tests
         uses: ./.github/actions/run-tests
-  
+
   check-tag:
     needs: [tests]
     runs-on: ubuntu-latest
@@ -50,7 +45,7 @@ jobs:
 
       - name: Check if tag exists
         id: check_tag
-        uses: netcracker/qubership-workflow-hub/actions/tag-checker@main
+        uses: netcracker/qubership-workflow-hub/actions/tag-checker@v1.0.3
         with:
           tag: 'v${{ github.event.inputs.version }}'
         env:
@@ -68,24 +63,174 @@ jobs:
           echo "Tag already exists: v${{ github.event.inputs.version }}"
           exit 1
 
-  tag:
+  update_image_tags:
     needs: [check-tag]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+        - name: "Prepare app token"
+          if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
+          uses: actions/create-github-app-token@v2
+          id: app-token
+          with:
+            app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
+            private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+
+        - name: Checkout repository
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+            token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+        - name: Update Docker Image Tags in Pipeline
+          run: |
+            TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml"
+            NEW_TAG="${{ github.event.inputs.version }}"
+            sed -i "/DOCKER_IMAGE_TAG_PIPEGENE:/c\\  DOCKER_IMAGE_TAG_PIPEGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
+            sed -i "/DOCKER_IMAGE_TAG_ENVGENE:/c\\  DOCKER_IMAGE_TAG_ENVGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
+            sed -i "/DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR:/c\\  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: \"${NEW_TAG}\"" "$TARGET_FILE"
+
+            if git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml; then
+              echo "No changes to commit - no images were built or tags were already up to date"
+            else
+              echo "Updated pipeline.yml with docker tags from job outputs"
+            fi
+
+            git diff github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml || true
+
+            if ! git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml; then
+              git config --global user.name "qubership-actions[bot]"
+              git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
+              git add github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
+              git commit -m "chore: Update docker image tags from job outputs for branch ${{ github.ref_name }} [skip ci]"
+
+              git push origin HEAD:${{ github.ref_name }} || echo "Failed to push changes"
+            else
+              echo "No changes to commit - skipping git operations"
+            fi
+  tag:
+    needs: [update_image_tags]
+    uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@v1.0.3
     with:
       tag-name: v${{ github.event.inputs.version }}
 
-  docker-build-publish:
+  build-qubership-pipegene:
     needs: [tag]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/docker-publish.yml@main
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    outputs:
+      custom_tag: ${{ steps.build-pipegene.outputs.custom_tag }}
+      branch_tag: ${{ steps.build-pipegene.outputs.branch_tag }}
+      timestamp: ${{ steps.build-pipegene.outputs.timestamp }}
+      branch_latest_tag: ${{ steps.build-pipegene.outputs.branch_latest_tag }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build Qubership PipeGene Docker Image
+      uses: ./.github/actions/build-pipegene
+      id: build-pipegene
+      with:
+        registry: ${{ env.REGISTRY }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        version: ${{ inputs.version }}
+
+  build-qubership-envgene:
+    needs: [tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    outputs:
+      custom_tag: ${{ steps.build-envgene.outputs.custom_tag }}
+      branch_tag: ${{ steps.build-envgene.outputs.branch_tag }}
+      timestamp: ${{ steps.build-envgene.outputs.timestamp }}
+      branch_latest_tag: ${{ steps.build-envgene.outputs.branch_latest_tag }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build Qubership Envgene Docker Image
+      uses: ./.github/actions/build-envgene
+      id: build-envgene
+      with:
+        registry: ${{ env.REGISTRY }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        version: ${{ inputs.version }}
+
+  build-effective-set-jar:
+    needs: [tag]
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
     with:
-      ref: v${{ inputs.version }}
-      download-artifact: false
-      dry-run: ${{ inputs.dry-run }}
-      component: ${{ inputs.component }}
+      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
+      java-version: 17
+      upload-artifact: true
+      artifact-id: effective_set_jar
+      ref: ${{ github.ref }}
+    secrets:
+      maven-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-effective-set-generator:
+    needs: [build-effective-set-jar]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    outputs:
+      custom_tag: ${{ steps.build-effective-set-generator.outputs.custom_tag }}
+      branch_tag: ${{ steps.build-effective-set-generator.outputs.branch_tag }}
+      timestamp: ${{ steps.build-effective-set-generator.outputs.timestamp }}
+      branch_latest_tag: ${{ steps.build-effective-set-generator.outputs.branch_latest_tag }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build Effective Set Generator Docker Image
+      uses: ./.github/actions/build-effective-set
+      id: build-effective-set-generator
+      with:
+        registry: ${{ env.REGISTRY }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        version: ${{ inputs.version }}
+
+  build-instance-repo-pipeline:
+    needs: [tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build Instance Repo Pipeline Docker Image
+      uses: ./.github/actions/build-pipeline
+      with:
+        registry: ${{ env.REGISTRY }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        version: ${{ inputs.version }}
 
   github-release:
-    needs: [tag]
-    uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@main
+    needs:
+      - build-qubership-pipegene
+      - build-qubership-envgene
+      - build-effective-set-generator
+      - build-instance-repo-pipeline
+    uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v1.0.3
     with:
       version: ${{ github.event.inputs.version }}
-      publish: false
+      publish: ${{ github.event.inputs.publish }}

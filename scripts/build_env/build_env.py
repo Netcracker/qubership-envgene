@@ -320,7 +320,7 @@ def updateEnvSpecificParamsets(env_instances_dir, templateName, templateContent,
                 else:
                     logger.warning(f"Paramset '{pset}' referenced in envSpecificTechnicalParamsets for template '{templateName}' was not found. It may have been skipped due to missing variables.")
     return result
-    
+
 def processTemplate(templatePath, templateName, env_instances_dir, schema_path, paramset_map, env_specific_params_map, resource_profiles_map=None, header_text="", process_env_specific=True):
     logger.info(f"Processing template: {templateName} in {templatePath}")
     templateContent = openYaml(templatePath)
@@ -356,7 +356,7 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
                 addedVars = openYaml(yamlPath)
                 result.update(addedVars)
                 logger.info(f"Shared template variables added from: {yamlPath}: \n{dump_as_yaml_format(addedVars)}")
-            elif len(sharedVarYamls) > 1: 
+            elif len(sharedVarYamls) > 1:
                 logger.error(f"Duplicate shared template variables with key {sharedVarFileName} found in {all_instances_dir}: \n\t" + ",\n\t".join(str(x) for x in sharedVarYamls))
                 raise ReferenceError(f"Duplicate shared template variables with key {sharedVarFileName} found. See logs above.")
             else:
@@ -370,14 +370,14 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
             logger.debug(f"Additional template variables from inventory: \n{dump_as_yaml_format(inventoryVars)}")
             result.update(inventoryVars)
 
-        # storing to yaml    
+        # storing to yaml
         logger.info(f"Resulting additional template variables are: \n{dump_as_yaml_format(result)}")
         inventoryYaml["envTemplate"]["additionalTemplateVariables"] = result;
         writeYamlToFile(envDefinitionPath, inventoryYaml)
     else:
         logger.info(f"No shared templates variables are defined in: {envDefinitionPath}")
 
-def getTemplateNameFromNamespacePath(namespacePath) : 
+def getTemplateNameFromNamespacePath(namespacePath) :
     path = pathlib.Path(namespacePath)
     return path.parent.name
 
@@ -392,7 +392,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     cloud_schema="schemas/cloud.schema.json"
     namespace_schema="schemas/namespace.schema.json"
     profiles_schema="schemas/resource-profile.schema.json"
-    
+
 
     #removingAnsibleTrash
     yamlFiles = findAllYamlsInDir(env_dir)
@@ -411,7 +411,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     # env specific parameters map - will be filled with env specific parameters during template processing
     env_specific_parameters_map = {}
     env_specific_parameters_map["namespaces"] = {}
-    
+
     #process tenant
     logger.info(f"Processing tenant: {tenantTemplatePath}")
     beautifyYaml(tenantTemplatePath, tenant_schema, generated_header_text)
@@ -422,26 +422,26 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     initParametersStructure(env_specific_parameters_map, "cloud")
     logger.info("Processing cloud without env specific parameters.")
     processTemplate(
-        cloudTemlatePath, 
-        "cloud", 
-        env_instances_dir, 
-        cloud_schema, 
-        paramset_map, 
-        env_specific_parameters_map["cloud"], 
-        resource_profiles_map=needed_resource_profiles_map, 
+        cloudTemlatePath,
+        "cloud",
+        env_instances_dir,
+        cloud_schema,
+        paramset_map,
+        env_specific_parameters_map["cloud"],
+        resource_profiles_map=needed_resource_profiles_map,
         header_text=generated_header_text,
         process_env_specific=False)
     # process cloud passport
     process_cloud_passport(env_dir, env_instances_dir, all_instances_dir)
     logger.info("Processing cloud with env specific parameters.")
     processTemplate(
-        cloudTemlatePath, 
-        "cloud", 
-        env_instances_dir, 
-        cloud_schema, 
-        paramset_map, 
-        env_specific_parameters_map["cloud"], 
-        resource_profiles_map=needed_resource_profiles_map, 
+        cloudTemlatePath,
+        "cloud",
+        env_instances_dir,
+        cloud_schema,
+        paramset_map,
+        env_specific_parameters_map["cloud"],
+        resource_profiles_map=needed_resource_profiles_map,
         header_text=generated_header_text,
         process_env_specific=True)
 
@@ -454,13 +454,13 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
         template_namespace_names.append(templateName)
         initParametersStructure(env_specific_parameters_map["namespaces"], templateName)
         processTemplate(
-            templatePath, 
-            templateName, 
-            env_instances_dir, 
-            namespace_schema, 
-            paramset_map, 
+            templatePath,
+            templateName,
+            env_instances_dir,
+            namespace_schema,
+            paramset_map,
             env_specific_parameters_map["namespaces"][templateName],
-            resource_profiles_map=needed_resource_profiles_map, 
+            resource_profiles_map=needed_resource_profiles_map,
             header_text=generated_header_text)
 
     logger.info(f"EnvSpecific parameters are: \n{dump_as_yaml_format(env_specific_parameters_map)}")
@@ -468,4 +468,4 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
 
     # process resource profiles
     processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, needed_resource_profiles_map, env_specific_resource_profile_map, header_text=generated_header_text)
-    
+

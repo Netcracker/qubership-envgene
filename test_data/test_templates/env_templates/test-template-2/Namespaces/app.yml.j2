@@ -8,7 +8,7 @@ cleanInstallApprovalRequired: false
 mergeDeployParametersAndE2EParameters: false
 deployParameters:
   APP_NAMESPACE: "{{current_env.name}}-app"
-{% if current_env.inventory.envTemplate.additionalTemplateVariables.Variable_1 is defined %} 
+{% if current_env.inventory.envTemplate.additionalTemplateVariables.Variable_1 is defined %}
   Variable_1: "{{current_env.inventory.envTemplate.additionalTemplateVariables.Variable_1}}"
 {% endif %}
 {% if current_env.cloudPassport.cloud.CLOUD_PUBLIC_HOST is defined %}
@@ -16,7 +16,7 @@ deployParameters:
 {% endif %}
 e2eParameters:
   APP_NAMESPACE: "{{current_env.name}}-app"
-{% if current_env.inventory.envTemplate.additionalTemplateVariables.Variable_2 is defined %} 
+{% if current_env.inventory.envTemplate.additionalTemplateVariables.Variable_2 is defined %}
   Variable_2: "{{current_env.inventory.envTemplate.additionalTemplateVariables.Variable_2}}"
 {% endif %}
 {% if current_env.cloudPassport.cloud.CLOUD_PUBLIC_HOST is defined %}
@@ -24,7 +24,7 @@ e2eParameters:
 {% endif %}
 technicalConfigurationParameters:
   APP_NAMESPACE: "{{current_env.name}}-app"
-{% if current_env.inventory.envTemplate.additionalTemplateVariables.Variable_3 is defined %} 
+{% if current_env.inventory.envTemplate.additionalTemplateVariables.Variable_3 is defined %}
   Variable_3: "{{current_env.inventory.envTemplate.additionalTemplateVariables.Variable_3}}"
 {% endif %}
 {% if current_env.cloudPassport.cloud.CLOUD_PUBLIC_HOST is defined %}

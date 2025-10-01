@@ -23,7 +23,7 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
             result[templateType] = yamlPath
             validate_yaml_by_scheme_or_fail(yamlPath, rp_schema)
             logger.info(f"Env specific resource profile file for '{profileFileName}' added from: '{yamlPath}'")
-        elif len(resourceProfileFiles) > 1: 
+        elif len(resourceProfileFiles) > 1:
             logger.error(f"Duplicate resource profile files with key '{profileFileName}' found in '{instances_dir}': \n\t" + ",\n\t".join(str(x) for x in resourceProfileFiles))
             raise ReferenceError(f"Duplicate resource profile files with key '{profileFileName}' found. See logs above.")
         else:
@@ -62,7 +62,7 @@ def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProf
     for app in overrideProfileYaml["applications"]:
         sourceApp = get_app_from_resource_profile(app["name"], sourceProfileYaml)
         # if app not in template profile, adding it and iterating to make comments
-        if not sourceApp:            
+        if not sourceApp:
             sourceApp = copy.deepcopy(app)
             sourceProfileYaml["applications"].append(sourceApp)
             merge_dict_key_with_comment("name", sourceApp, "name", app, commentText)
@@ -76,7 +76,7 @@ def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProf
                 merge_dict_key_with_comment("name", sourceService, "name", service, commentText)
             for param in service["parameters"]:
                 sourceParam = get_param_from_resource_profile_service(param["name"], sourceService)
-                if not sourceParam:            
+                if not sourceParam:
                     sourceParam = copy.deepcopy(param)
                     sourceService["parameters"].append(sourceParam)
                     merge_dict_key_with_comment("name", sourceParam, "name", param, commentText)
@@ -94,7 +94,7 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
     if not needed_resource_profiles:
         return profiles_map
     for template_name, needed_profile in needed_resource_profiles.items():
-        if needed_profile not in source_profiles: 
+        if needed_profile not in source_profiles:
             not_found += rp_data_template.format(needed_profile, template_name)
             continue
         profile_path = source_profiles[needed_profile]
@@ -104,7 +104,7 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
         except ValueError:
             not_valid += rp_data_template.format(needed_profile, template_name)
             continue
-        profiles_map[template_name] = profile_path 
+        profiles_map[template_name] = profile_path
 
     if len(not_valid) > 0:
         err_msg += "These resource profiles are invalid, look for details above:"
@@ -116,7 +116,7 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
         logger.error(err_msg)
         raise ReferenceError("Not all needed resource profiles found or valid. See logs above.")
     return profiles_map
-    
+
 def processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, needed_resource_profiles_map, env_specific_resource_profile_map, header_text="") :
     logger.info(f"Needed profiles map: \n{dump_as_yaml_format(needed_resource_profiles_map)}")
     # map for profiles from templates

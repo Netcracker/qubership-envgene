@@ -6,7 +6,7 @@ privateUrl: ""
 publicUrl: "{{current_env.cluster.cloud_public_url}}"
 dashboardUrl: "https://dashboard.{{current_env.cluster.cloud_public_url}}"
 labels: []
-defaultCredentialsId: "token" 
+defaultCredentialsId: "token"
 protocol: "{{current_env.cluster.cloud_api_protocol}}"
 deployParameters: {}
 e2eParameters: {}
@@ -27,12 +27,12 @@ vaultConfig:
   credentialsId: ""
   enable: false
 dbaasConfigs:
-  - credentialsId: "dbaas" 
+  - credentialsId: "dbaas"
     apiUrl: 'http://dbaas-aggregator.dbaas:8080'
     aggregatorUrl: 'https://aggregator-dbaas.{{current_env.cluster.cloud_public_url}}'
     enable: true
 consulConfig:
-  tokenSecret: "consul-token" 
+  tokenSecret: "consul-token"
   publicUrl: 'https://consul.{{current_env.cluster.cloud_public_url}}'
   enabled: true
   internalUrl: 'http://consul-server.consul:8500'

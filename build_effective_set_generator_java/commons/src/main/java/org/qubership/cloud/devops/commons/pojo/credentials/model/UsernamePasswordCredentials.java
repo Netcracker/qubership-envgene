@@ -24,5 +24,5 @@ import lombok.*;
 public class UsernamePasswordCredentials implements Credential {
     private String username;
     private String password;
-    
+
 }

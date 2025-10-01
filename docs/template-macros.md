@@ -19,6 +19,8 @@
     - [`current_env.cluster.cloud_api_url`](#current_envclustercloud_api_url)
     - [`current_env.cluster.cloud_api_port`](#current_envclustercloud_api_port)
     - [`current_env.cluster.cloud_public_url`](#current_envclustercloud_public_url)
+    - [`appdefs.overrides`](#appdefsoverrides)
+    - [`regdefs.overrides`](#regdefsoverrides)
   - [Calculator CLI macros](#calculator-cli-macros)
     - [`APPLICATION_NAME`](#application_name)
     - [`NAMESPACE`](#namespace)
@@ -104,7 +106,7 @@ tenant: "{{ templates_dir }}/env_templates/composite/tenant.yml.j2"
 **Basic usage:**
 
 ```yaml
-name: "{{current_env.name }}-oss" 
+name: "{{current_env.name }}-oss"
 ```
 
 **Usage in sample:** [Sample](/docs/samples/templates/env_templates/composite/namespaces/oss.yml.j2)
@@ -149,9 +151,9 @@ name: "{{ current_env.cloud }}"
 **Description:** Name of the Environment's Cloud incorporating cluster and environment names. Used to generate environment-specific Cloud names. Generated using these rules:
 
 1. Uses `inventory.cloudName` value from [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) if defined
-2. When `inventory.cloudPassport` in [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) if defined:  
-   `(<inventory.cloudPassport> + '_' + <current_env.name>).replace("-", "_")`  
-3. Otherwise combines:  
+2. When `inventory.cloudPassport` in [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) if defined:
+   `(<inventory.cloudPassport> + '_' + <current_env.name>).replace("-", "_")`
+3. Otherwise combines:
    `(<clusterName> + '_' + <current_env.name>).replace("-", "_")`
 
 Notes:
@@ -320,6 +322,8 @@ The variable is obtained by transforming the file defined in the path `/configur
 
 The value of the `namespace` attribute in this variable is obtained from the `name` attribute of the **already rendered** `Namespace` object. The definition of the object is located at `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/Namespaces/<deployPostfix>/namespace.yml`. If the corresponding `Namespace` object is not found, the `namespace` value is set to `Null`.
 
+The value of the `<application-name>`, `<deploy-postfix>` and `version` in this variable is obtained from the SD.
+
 **Type:** HashMap
 
 **Default Value:** `{}`
@@ -425,6 +429,47 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 **Usage in sample:**
 
 - [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+
+### `appdefs.overrides`
+
+---
+**Description:** Includes parameters for [Application Definition](/docs/envgene-objects.md#application-definition) template rendering defined in the [`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
+
+Used to customize Application Definitions during the solution delivery.
+
+**This macro is available only for rendering Application Definitions.**
+
+**Type:** HashMap
+
+**Basic usage:**
+
+```yaml
+registryName: "{{ appdefs.overrides.registryName }}"
+```
+
+**Usage in sample:** [Sample](/test_data/test_templates/appdefs/application-1.yaml.j2)
+
+### `regdefs.overrides`
+
+These macros are specifically used in AppDef and RegDef templates for rendering environment-specific configurations.
+
+---
+**Description:** Includes parameters for [Registry Definition](/docs/envgene-objects.md#registry-definition) template rendering defined in the [`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml).
+
+Used to customize Registry Definitions during the solution delivery.
+
+**This macro is available only for rendering Registry Definitions.**
+
+**Type:** HashMap
+
+**Basic usage:**
+
+```yaml
+mavenConfig:
+  repositoryDomainName: "{{ regdefs.overrides.maven.RepositoryDomainName }}"
+```
+
+**Usage in sample:** [Sample](/test_data/test_templates/regdefs/registry-1.yaml.j2)
 
 ## Calculator CLI macros
 

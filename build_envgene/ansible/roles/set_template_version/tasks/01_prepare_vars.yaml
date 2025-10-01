@@ -4,7 +4,7 @@
     - name: Split "{{ env_name }}" by folder name
       ansible.builtin.set_fact:
         env_paths: "{{ env_name.split('/') }}"
-    
+
     - name: Set env_directory for complex env_name {{ env_name }}
       ansible.builtin.set_fact:
         environments_dir: "{{ envs_directory_path + '/' + env_paths.0 }}"

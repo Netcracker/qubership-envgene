@@ -22,8 +22,8 @@
     path: "{{ _current_env_dir }}/cloud.yml_override"
     block: "{{ _template.template_override | to_nice_yaml }}"
     create: yes
-  when: 
-    - _template.template_override is defined 
+  when:
+    - _template.template_override is defined
     - _template.template_override != ''
     - not is_old_format
 

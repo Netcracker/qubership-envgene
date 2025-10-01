@@ -5,7 +5,7 @@
   - [`config.yml`](#configyml)
   - [`integration.yml`](#integrationyml)
   - [`deployer.yml`](#deployeryml)
-  - [Artifact Definition](#artifact-definition)
+  - [`appregdef_config.yaml`](#appregdef_configyaml)
 
 ## `env_definition.yml`
 
@@ -22,17 +22,18 @@ Environment Inventory. The inventory file of a specific Environment. Contains th
 
 Mandatory for every Environment. Created and updated manually.
 
-Located in the Instance repository at: `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`  
-Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
+Located in the Instance repository at: `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
+Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
 
 [`env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
 
 ```yaml
-# Mandatory 
+# Mandatory
 inventory:
   # Optional
   # Name of the Environment, e.g. dev01
-  # If not specified, it will be automatically derived from the parent folder name in the path: /environments/<clusterName>/<environmentName>/Inventory/
+  # If not specified, it will be automatically derived from the parent folder name in the path:
+  # /environments/<clusterName>/<environmentName>/Inventory/
   # This attribute's value is available for template rendering via the `current_env.name` variable
   environmentName: string
   # Optional
@@ -52,7 +53,7 @@ inventory:
   # Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
   # Should be listed in configuration/deployer.yml
   deployer: string
-  # Optional 
+  # Optional
   # Environment description
   # This attribute's value is available for template rendering via the `current_env.description` variable
   description: string
@@ -87,30 +88,35 @@ envTemplate:
   # File must NOT located in a `parameters` directory
   sharedTemplateVariables: array
   # Optional
-  # Environment specific deployment parameters set
-  # The key must contain an association point - either `cloud` or name of namespace template.
-  # The value must contain parameters set file name (w/o extension) located in a `parameters` directory
+  # Set of environment-specific deployment parameters
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` 
+  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificParamsets: hashmap
   # Optional
   # Environment specific pipeline (e2e) parameters set
-  # The key must contain an association point - either `cloud` or name of namespace template.
-  # The value must contain parameters set file name (w/o extension) located in a `parameters` directory
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
+  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificE2EParamsets: hashmap
   # Optional
   # Environment specific runtime (technical) parameters set
-  # The key must contain an association point - either `cloud` or name of namespace template.
-  # The value must contain parameters set file name (w/o extension) located in a `parameters` directory
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
+  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificTechnicalParamsets: hashmap
   # Optional
   # Environment specific resource profile overrides
-  # The key must contain an association point - either `cloud` or name of namespace template.
-  # The value must contain resource profile override file name (w/o extension) located in a `resource_profiles` directory
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
+  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # Values are the names of resource profile files without extension located in the `resource_profiles` directory
   envSpecificResourceProfiles: hashmap
   # Optional
   # Array of file names in a 'credentials' folder that will override generated and defined for instance credentials
   # File must contain a set of credential objects
   sharedMasterCredentialFiles: array
-  # Following parameters are automatically generated during job and display that application:version artifact of template was used for last Environment generation
+  # Following parameters are automatically generated during job and display that application:version artifact
+  # of template was used for last Environment generation
   generatedVersions: hashmap
 ```
 
@@ -166,8 +172,8 @@ envTemplate:
 
 ## `config.yml`
 
-The primary system configuration file  
-Located at `/configuration/config.yml`  
+The primary system configuration file
+Located at `/configuration/config.yml`
 
 [`config.yml` JSON Schema](/schemas/config.schema.json)
 
@@ -190,7 +196,7 @@ artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 # Defines whether cloud passport should be decrypted upon discovery
 cloud_passport_decryption: boolean
 # Optional. Default value - `auto`
-# Defines the auto-discovery mode for Application and Registry Definitions 
+# Defines the auto-discovery mode for Application and Registry Definitions
 # Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
 # `local` - Only repository-located Application and Registry Definitions are used for application:version resolution
 # `cmdb` - Application and Registry Definitions are discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository
@@ -245,7 +251,7 @@ Located at:
 - `/configuration/deployer.yml`
 - `/environments/<cluster-name>/<env-name>/app-deployer/deployer.yml`
 
-[`deployer.yml` JSON Schema](TBD)
+[`deployer.yml` JSON Schema](/schemas/deployer.schema.json)
 
 ```yaml
 # Unique name. Must be unique within a single repository
@@ -266,52 +272,50 @@ Located at:
   deployerUrl: string
 ```
 
-## Artifact Definition
+## `appregdef_config.yaml`
 
-The object used to resolve `application:version` identifiers of Env Templates into download-ready information including:
+This file is used to set parameters context for [Application Definition](/docs/envgene-objects.md#application-definition) and [Registry Definition](/docs/envgene-objects.md#registry-definition) templates rendering **only**.
 
-- Registry URL and access parameters  
-- GAV coordinates (Group/Artifact/Version) of artifacts  
+The parameters specified in this configuration file are used with macros:
 
-Each Env Template artifact requires a separate file in `/configuration/artifact_definitions/<application>.yaml`. The filename (without extension) must match the `application` from `application:version`
+- [`appdefs.overrides`](/docs/template-macros.md#appdefsoverrides)
+- [`regdefs.overrides`](/docs/template-macros.md#regdefsoverrides)
 
-The Artifact Definition can be created manually or discovered via external system. The Artifact Definition discovery mechanism is controlled by `config.yaml:artifact_definitions_discovery_mode`  
-The discovery is not part of EnvGene Core and can be implemented in EnvGene extensions
+For more info, see [Application and Registry Definition](/docs/features/app-reg-defs.md).
 
-[Artifact Definition JSON Schema](/schemas/artifact-definition.schema.json)
+Location:
+
+- `/configuration/appregdef_config.yaml` - config for all Environments in the Instance repository
+- `/environments/<cluster-name>/configuration/appregdef_config.yaml` - config for all Environments in a specific cluster
+
+If both repository-wide and cluster-wide configuration files are present, then when rendering an Environment for a cluster that has its own cluster-wide config, the cluster-wide config is used and the repository-wide config is ignored.
+
+[appregdef_config.yaml JSON Schema](/schemas/appregdef-config.schema.json)
 
 ```yaml
-# Mandatory
-# Name of the Artifact Definition (matches the `application` from `application:version`)
-name: string
-# Mandatory
-# Group ID of the artifact
-groupId: string
-# Mandatory
-# Artifact ID of the artifact
-artifactId: string
-# Mandatory
-registry:
+# Optional
+# Defines parameters for rendering Application Definition templates
+appdefs:
   # Mandatory
-  # Registry name
-  name: string
+  overrides:
+    <key-1>: <value-1>
+    <key-2>: <value-2>
+# Optional
+# Defines parameters for rendering Registry Definition templates
+regdefs:
   # Mandatory
-  # Credential ID for registry authentication
-  # References a credential object in /configuration/credentials/credentials.yml
-  credentialsId: string
-  mavenConfig:
-    # Mandatory
-    # Registry URL
-    repositoryDomainName: string
-    # Mandatory
-    # Snapshot repository
-    # Artifacts are initially published to one repository during the build, then can be promoted to others
-    # EnvGene searches for Env Template artifacts in this order: 1)Release 2)Staging 3)Snapshot
-    targetSnapshot: string
-    # Mandatory
-    # Staging repository
-    targetStaging: string
-    # Mandatory
-    # Release repository
-    targetRelease: string
+  overrides:
+    <key-1>: <value-1>
+    <key-2>: <value-2>
+```
+
+**Example**:
+
+```yaml
+appdefs:
+  overrides:
+    registryName: sandbox
+regdefs:
+  overrides:
+    hostName: "registry.qubership.org"
 ```

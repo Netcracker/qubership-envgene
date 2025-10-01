@@ -1,12 +1,14 @@
 # Credential Files Encryption Using Git Commit Hook — Test Cases
 
-- [ Credentials File Encryption Test Cases](#credentials-file-encryption-test-cases)
+- [Credential Files Encryption Using Git Commit Hook — Test Cases](#credential-files-encryption-using-git-commit-hook--test-cases)
+  - [Overview](#overview)
+    - [How it works](#how-it-works)
   - [TC-004-001: Encryption Enabled with Supported Fields](#tc-004-001-encryption-enabled-with-supported-fields)
   - [TC-004-002: Encryption Skipped When Disabled](#tc-004-002-encryption-skipped-when-disabled)
   - [TC-004-003: Secret Key Mandatory for Fernet](#tc-004-003-secret-key-mandatory-for-fernet)
   - [TC-004-004: Successful Encryption Using Fernet](#tc-004-004-successful-encryption-using-fernet)
   - [TC-004-005: Skip Encryption if File Already Encrypted Using Fernet](#tc-004-005-skip-encryption-if-file-already-encrypted-using-fernet)
-  - [TC-004-006: age_key Mandatory for SOPS](#tc-004-006-age_key-mandatory-for-sops)
+  - [TC-004-006: age\_key Mandatory for SOPS](#tc-004-006-age_key-mandatory-for-sops)
   - [TC-004-007: Successful Encryption Using SOPS](#tc-004-007-successful-encryption-using-sops)
   - [TC-004-008: Skip Encryption if File Already Encrypted Using SOPS](#tc-004-008-skip-encryption-if-file-already-encrypted-using-sops)
 
@@ -14,11 +16,12 @@
 
 This document defines test cases to validate credential file encryption behavior using `Fernet` and `SOPS` backends, enforced via Git pre-commit hooks.
 
-###  How it works
+### How it works
 
 Credential files are automatically encrypted during Git commits using a pre-commit script located in `.git/hooks`.
 
 Credential files are considered valid for encryption if they match **one of the following path patterns**:
+
 - `./*/credentials/*.y*ml`
 - `./*/app-deployer/*creds*.y*ml`
 - `./*/cloud-passport/*creds*.y*ml`
@@ -47,7 +50,7 @@ crypt_backend: Fernet  # or SOPS
 
 **Status:** Active
 
-**Description:** Verify that when `crypt: true` in the configuration, only supported credential attributes (`username`, `password`, `secret`) as per [Credential Object Specification](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#credential) are encrypted using the selected backend (`Fernet` or `SOPS`).
+**Description:** Verify that when `crypt: true` in the configuration, only supported credential attributes (`username`, `password`, `secret`) as per [Credential Object Specification](/docs/envgene-objects.md#credential) are encrypted using the selected backend (`Fernet` or `SOPS`).
 
 **Test Data:**
 
@@ -64,7 +67,7 @@ crypt_backend: Fernet  # or SOPS
 **Steps:**
 
 - Ensure `crypt_backend` is correctly configured
-- Modify the credential file  
+- Modify the credential file
 - Run `git commit`
 
 **Expected Results:**
@@ -95,7 +98,7 @@ crypt_backend: Fernet  # or SOPS
 **Steps:**
 
 - Set `crypt: false` in config.yaml
-- Modify the credential file  
+- Modify the credential file
 - Run `git commit`
 
 **Expected Results:**
@@ -110,28 +113,28 @@ crypt_backend: Fernet  # or SOPS
 
 **Status:** Active
 
-**Description:**  
+**Description:**
 Verify that encryption fails when `crypt_backend` is `Fernet` and `secret_key` is not provided.
 
 **Test Data:**
 
-- configuration/config.yaml  
+- configuration/config.yaml
 - configuration/credentials/credentials.yml
 
 **Pre-requisites:**
 
-1. `crypt_backend: Fernet`, `crypt: true`  
+1. `crypt_backend: Fernet`, `crypt: true`
 2. No `.git/secret_key.txt` file exists
 
 **Steps:**
 
-- Modify the credential file  
-- Ensure `.git/secret_key.txt` is missing  
+- Modify the credential file
+- Ensure `.git/secret_key.txt` is missing
 - Run `git commit`
 
 **Expected Results:**
 
-- Commit fails with message:  
+- Commit fails with message:
   `SECRET_KEY is required for Fernet encryption in ./configuration/credentials/credentials.yml`
 
 ---
@@ -140,30 +143,30 @@ Verify that encryption fails when `crypt_backend` is `Fernet` and `secret_key` i
 
 **Status:** Active
 
-**Description:**  
-Verify that encryption succeeds when a valid `.git/secret_key.txt` is provided.  
-Supported fields are encrypted per [Credential Object Specification](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#credential).
+**Description:**
+Verify that encryption succeeds when a valid `.git/secret_key.txt` is provided.
+Supported fields are encrypted per [Credential Object Specification](/docs/envgene-objects.md#credential).
 
 **Test Data:**
 
-- configuration/config.yaml  
-- configuration/credentials/credentials.yml  
+- configuration/config.yaml
+- configuration/credentials/credentials.yml
 - .git/secret_key.txt
 
 **Pre-requisites:**
 
-1. `crypt_backend: Fernet`, `crypt: true`  
+1. `crypt_backend: Fernet`, `crypt: true`
 2. Valid Fernet key in `.git/secret_key.txt`
 
 **Steps:**
 
-- Modify credential file  
+- Modify credential file
 - Stage and commit
 
 **Expected Results:**
 
-- `username`, `password`, `secret` fields are encrypted (e.g., `[encrypted:AES256_Fernet]...`)  
-- Other fields are unchanged  
+- `username`, `password`, `secret` fields are encrypted (e.g., `[encrypted:AES256_Fernet]...`)
+- Other fields are unchanged
 - YAML remains valid
 
 ---
@@ -172,7 +175,7 @@ Supported fields are encrypted per [Credential Object Specification](https://git
 
 **Status:** Active
 
-**Description:**  
+**Description:**
 Verify that if the credential file is already encrypted with Fernet, the encryption is skipped and warning is logged.
 
 **Test Data:**
@@ -181,8 +184,8 @@ Verify that if the credential file is already encrypted with Fernet, the encrypt
 
 **Pre-requisites:**
 
-1. Valid encrypted credentials file  
-2. `.git/secret_key.txt` available  
+1. Valid encrypted credentials file
+2. `.git/secret_key.txt` available
 3. `crypt: true`, `crypt_backend: Fernet`
 
 **Steps:**
@@ -191,8 +194,8 @@ Verify that if the credential file is already encrypted with Fernet, the encrypt
 
 **Expected Results:**
 
-- Warning logged:  
-  `File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key.`  
+- Warning logged:
+  `File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key.`
 - File remains unchanged
 
 ---
@@ -201,30 +204,31 @@ Verify that if the credential file is already encrypted with Fernet, the encrypt
 
 **Status:** Active
 
-**Description:**  
+**Description:**
 Verify that encryption fails when `crypt_backend: SOPS` is used but required age_public_key is missing.
 
 **Test Data:**
 
-- configuration/config.yaml  
+- configuration/config.yaml
 - configuration/credentials/credentials.yml
 
 **Pre-requisites:**
 
-1. `crypt: true`, `crypt_backend: SOPS`  
+1. `crypt: true`, `crypt_backend: SOPS`
 2. Missing `age_public_key.txt`
 
 **Steps:**
 
-- Modify credentials  
+- Modify credentials
 - Stage and commit
 
 **Expected Results:**
 
 - Commit fails with clear message on missing key
-   
+
+```text
     `ERROR: ENVGENE_AGE_PUBLIC_KEY is required for SOPS encryption in configuration/credentials/credentials.yml`
-   
+```
 
 ---
 
@@ -232,30 +236,30 @@ Verify that encryption fails when `crypt_backend: SOPS` is used but required age
 
 **Status:** Active
 
-**Description:**  
-Verify that credentials are encrypted using SOPS when valid age key is provided.  
-Only supported fields (`username`, `password`, `secret`) are encrypted.  
-See [Credential Object Specification](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#credential).
+**Description:**
+Verify that credentials are encrypted using SOPS when valid age key is provided.
+Only supported fields (`username`, `password`, `secret`) are encrypted.
+See [Credential Object Specification](/docs/envgene-objects.md#credential).
 
 **Test Data:**
 
-- configuration/config.yaml  
-- configuration/credentials/credentials.yml  
-- .git/ge_public_key.txt  
+- configuration/config.yaml
+- configuration/credentials/credentials.yml
+- .git/ge_public_key.txt
 
 **Pre-requisites:**
 
-1. SOPS encryption enabled in config  
+1. SOPS encryption enabled in config
 2. Valid `age_public_key` in `.git` directory
 
 **Steps:**
 
-- Modify credential file  
+- Modify credential file
 - Stage and commit
 
 **Expected Results:**
 
-- Supported fields are encrypted with `ENC[AES256_GCM,...]`  
+- Supported fields are encrypted with `ENC[AES256_GCM,...]`
 - YAML remains valid and other fields are untouched
 
 ---
@@ -264,8 +268,8 @@ See [Credential Object Specification](https://github.com/Netcracker/qubership-en
 
 **Status:** Active
 
-**Description:**  
-Ensure that encryption is skipped for files already encrypted with SOPS.  
+**Description:**
+Ensure that encryption is skipped for files already encrypted with SOPS.
 
 **Test Data:**
 
@@ -273,8 +277,8 @@ Ensure that encryption is skipped for files already encrypted with SOPS.
 
 **Pre-requisites:**
 
-1. `crypt: true`, `crypt_backend: SOPS`  
-2. Valid encrypted file  
+1. `crypt: true`, `crypt_backend: SOPS`
+2. Valid encrypted file
 3. Valid age_public_key.txt is present
 
 **Steps:**
@@ -283,6 +287,6 @@ Ensure that encryption is skipped for files already encrypted with SOPS.
 
 **Expected Results:**
 
-- Warning logged:  
-  `File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key.`  
+- Warning logged:
+  `File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key.`
 - File remains unchanged
