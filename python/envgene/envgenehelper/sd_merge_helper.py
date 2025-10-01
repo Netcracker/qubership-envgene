@@ -117,7 +117,7 @@ def extended_merge(data1, data2):
     logger.info(f"Inside extended_merge")
     logger.info(f"Full SD: {data1}")
     logger.info(f"Delta SD: {data2}")
-    if "deployGraph" in data2.keys() and "deployGraph" not in data1.keys():
+    if "deployGraph" not in data2.keys():
         error(NO_DEPLOY_GRAPH_ERROR)
     counter_ = 0
     apps_list = data1["applications"].copy()

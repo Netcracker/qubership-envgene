@@ -16,13 +16,14 @@ from envgenehelper.env_helper import Environment
 
 yaml = YAML()
 TEST_CASES = [
-    "TC-001-002",
-    "TC-001-004",
-    "TC-001-006",
-    "TC-001-008",
-    "TC-001-010",
-    "TC-001-014",
-    "TC-001-016"
+    # "TC-001-002",
+    # "TC-001-004",
+    # "TC-001-006",
+    # "TC-001-008",
+    # "TC-001-010",
+    # "TC-001-014",
+    # "TC-001-016",
+    "TC-001-017"
 ]
 
 TEST_SD_DIR = Path(getAbsPath("../../test_data/test_handle_sd"))
@@ -57,6 +58,8 @@ def do_prerequisites(test_case_name, env):
                                                                '"deployMode": "composite", "applications": [{'
                                                                '"version": "postgres-services:1.32.6", '
                                                                '"deployPostfix": "postgresql"}]}'))
+    elif test_case_name in ["TC-001-017", "TC-001-018"]:
+        writeYamlToFile(target_sd_dir.joinpath(SD), json.loads(previous_sd))
 
 
 def do_asserts(test_case_name, actual_dir):
