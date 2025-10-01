@@ -7,7 +7,17 @@ This guide explains the process of creating a new cluster in the Instance Reposi
 ## Prerequisites
 
 1. **Instance Repository**
-   - The Instance  repository must have already been created.
+   - Ensure that the Instance repository has been created with following folder structure:
+
+    ```text
+    ├── configuration
+    │   ├── credentials
+    │   │   ├── credentials.yml
+    │   ├── config.yml
+    │   ├── deployer.yml
+    │   ├── registry.yml
+    ├── environments
+    ```
 
 ## Flow
 

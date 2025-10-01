@@ -7,7 +7,17 @@ This guide describes the process of creating a new environment in the Instance r
 ## Prerequisites
 
 1. **Instance Repository**
-   - Ensure that the Instance repository has been created.
+   - Ensure that the Instance repository has been created with following folder structure:
+
+    ```plaintext
+    ├── configuration
+    │   ├── credentials
+    │   │   ├── credentials.yml
+    │   ├── config.yml
+    │   ├── deployer.yml
+    │   ├── registry.yml
+    ├── environments
+    ```
 
 ## Flow
 
@@ -60,75 +70,4 @@ This guide describes the process of creating a new environment in the Instance r
 
 The environment inventory is now available in the remote Instance repository.
 
-  **Note:** Pass the `<cluster-name>/<env-name>` to the ENV_NAMES input parameter when executing environment operations.
-
-## Additional flow: Configuring integration with CMDB
-
-### Prerequisites
-
-1. You must know the following parameters:
-
-- cmdb-url
-- cmdb-username
-- cmdb-token
-
-### Flow
-
-1. Clone (pull updates) remote Instance repository to the local machine  
-2. Create the `app-deployer` folder at:  
-    `/environments/<cluster_name>/app-deployer`  
-3. Create the CMDB configuration file at:  
-    `/environments/<cluster-name>/app-deployer/deployer.yml`
-
-    **deployer.yml**
-
-    ```yml
-    app-deployer:
-      username: envgen.creds.get('app-deployer-username').secret
-      token: envgen.creds.get('app-deployer-token').secret
-      deployerUrl: <cmdb-url>
-    ```
-
-4. Create cmdb credential configuration file at:  
-    `/environments/<cloud_name>/app-deployer/deployer-creds.yml`
-
-    **deployer-creds.yml**
-
-    ```yml
-    app-deployer-username:
-      type: secret
-      data:
-        secret: <cmdb-username>
-    app-deployer-token:
-      type: secret
-      data:
-        secret: <cmdb-token>
-    ```
-
-5. Commit and push the update to remote repository
-
-## Results
-
-- Integration with CMDB is configured successfully.
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Pipeline Fails with authentication error**
-   - Verify the access token has correct permissions.
-   - Ensure the token has not expired.
-
-2. **Missing template image**
-   - Ensure you are using a valid template image configured in `env_definition.yml`.
-
-3. **Missing deployer configuration**
-   - Check deployer configuration based on `deployer` name set in `env_definition.yml`.
-   - Ensure that valid CMDB credentials are being used.
-
-### Getting Help
-
-If you encounter issues not covered in this guide
-
-- Check pipeline logs for error details.
-- Contact the support team.
+  **Note:** Pass the `<cluster-name>/<env-name>` to the `ENV_NAMES` input parameter when executing environment operations.

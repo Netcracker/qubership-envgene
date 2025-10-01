@@ -7,16 +7,18 @@ This guide explains the process of setting up a simple template in the Template 
 ## Prerequisites
 
 1. **Template Repository**  
-   - The Template repository should already be created.
+   - Ensure that the Template repository has been created with following folder structure:
 
-2. **Folder Structure**  
-   - Ensure the following folder structure exists in the Template repository:
-
-   ```plaintext
-   ├── templates
-   │   ├── env_templates
-   ```
-
+    ```plaintext
+    ├── configuration
+    │   ├── credentials
+    │   │   ├── credentials.yml
+    │   ├── deployer.yml
+    │   ├── integration.yml
+    ├── templates
+    │   ├── env_templates
+    ```
+  
 ## Flow
 
 1. **Create `simple_template.yaml` (template descriptor)**
@@ -60,21 +62,8 @@ Template repository has the following environment template structure:
                      |_core.yml.j2
               |_cloud.yml.j2
               |_tenant.yml.j2
+
+
 ```
 
- The Simple Environment Template has been created and built. This means a zip archive containing the Environment Template is available in Artifactory, which can be used to create the Environment Inventory. [EnvGene][UC][EM] Creating Environment Inventory.
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Pipeline Fails with Authentication Error**
-   - Verify that your GitLab token has the correct permissions.
-   - Check that the token has not expired.
-
-2. **Build failed due to pati_cred configuration missing**
-   - Verify that the `PATI_USER` and `PATI_PASSWORD` are correctly configured in CI/CD variables.
-
-### Getting Help
-
-If you encounter issues not covered in this guide, check pipeline logs or contact the support team.
+ The Simple Environment Template has been created and built. This means a zip archive containing the Environment Template is available in Artifactory, which can be used to create the Environment Inventory.
