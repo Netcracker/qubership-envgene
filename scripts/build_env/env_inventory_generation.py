@@ -80,8 +80,8 @@ def handle_env_specific_params(env, env_specific_params):
     logger.info(f"ENV_SPECIFIC_PARAMS deployer is {deployer}")
 
     handle_cluster_params(env, clusterParams)
-    helper.merge_yaml_into_target(env.inventory, 'inventory.tenantName', tenantName)
-    helper.merge_yaml_into_target(env.inventory, 'inventory.deployer', deployer)
+    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
+    helper.set_nested_yaml_attribute(env.inventory, 'inventory.deployer', deployer)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.additionalTemplateVariables', additionalTemplateVariables)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.envSpecificParamsets', envSpecificParamsets)
     logger.info("ENV_SPECIFIC_PARAMS env details ",vars(env))
