@@ -5,8 +5,8 @@ NEW_CHUNK_ERROR = "SD merge error:\nDelta SD contains a new chunk\nSD Merge is i
 NO_DEPLOY_GRAPH_ERROR = "SD merge error:\nDelta SD contains deployGraph, but Full SD doesn't contain deployGraph.\nSD Merge is impossible."
 
 
-def get_app_name(str):
-    return str[0:str.find(":")]
+def get_app_name(name: str):
+    return name[0:name.find(":")]
 
 
 def get_app_name_sd(app):
@@ -36,15 +36,16 @@ def error(str):
     raise ValueError(str)
 
 
-def checkDeployGraph(str, data):
-    result = False
-    if "deployGraph" not in data.keys():
+def check_deploy_graph(app_name: str, data: dict) -> bool:
+    deploy_graph = data.get("deployGraph")
+    if not deploy_graph:
         return False
-    for entry in data["deployGraph"]:
-        for c in entry["apps"]:
-            if str.lower() in c.lower():
+
+    for entry in deploy_graph:
+        for app in entry.get("apps", []):
+            if app_name.lower() in app.lower():
                 return True
-    return result
+    return False
 
 
 # Returns False if target contains a criteria and its value is not matched with delta's value. Otherwise returns True
@@ -58,20 +59,26 @@ def check_criteria(target, delta, criteria):
     return result
 
 
-def add_app(entry, list) -> int:
-    touched = False
-    for i in range(len(list)):
-        if (isinstance(entry, ruyaml.CommentedMap) and get_app_name(list[i]["version"]) == get_app_name(
-                entry["version"]) and check_criteria(entry, list[i], ["deployPostfix", "alias"])) or (
-                not isinstance(entry, ruyaml.CommentedMap) and get_app_name(list[i]) == get_app_name(entry)):
-            logger.info(f"Replaced value: {entry}")
-            list[i] = entry
-            touched = True
-    if not touched:
-        logger.info(f"Appended value: {entry}")
-        list.append(entry)
-    return 1
+def add_app(entry, apps: list) -> int:
+    entry_name = get_app_name(entry["version"])
 
+    for i, app in enumerate(apps):
+        app_name = get_app_name(app["version"])
+
+        if isinstance(entry, ruyaml.CommentedMap):
+            if app_name == entry_name and check_criteria(entry, app, ["deployPostfix", "alias"]):
+                logger.info(f"Replaced value: {entry}")
+                apps[i] = entry
+                return 1
+
+        elif app_name == entry_name:
+            logger.info(f"Replaced value: {entry}")
+            apps[i] = entry
+            return 1
+
+    logger.info(f"Appended value: {entry}")
+    apps.append(entry)
+    return 1
 
 def merge(full_sd, delta_sd):
     """
@@ -113,46 +120,48 @@ def merge(full_sd, delta_sd):
     return {"applications": result_apps}
 
 
-def extended_merge(data1, data2):
+def extended_merge(full_sd, delta_sd):
     logger.info(f"Inside extended_merge")
-    logger.info(f"Full SD: {data1}")
-    logger.info(f"Delta SD: {data2}")
-    if "deployGraph" not in data2.keys():
+    logger.info(f"Full SD: {full_sd}")
+    logger.info(f"Delta SD: {delta_sd}")
+    if "deployGraph" not in delta_sd.keys():
         error(NO_DEPLOY_GRAPH_ERROR)
     counter_ = 0
-    apps_list = data1["applications"].copy()
-    length = len(data2["applications"])
+    apps_list = full_sd["applications"].copy()
+    length = len(delta_sd["applications"])
 
-    # stage 1: Stage delta_sd applications with suitable deployGraph
-    for j in data2["applications"]:
-        if (isinstance(j, ruyaml.CommentedMap) and checkDeployGraph(get_app_name(j["version"]), data2)) or (
-                not isinstance(j, ruyaml.CommentedMap) and checkDeployGraph(get_app_name(j["version"]), data2)):
+    # find applications with suitable deployGraph
+    for j in delta_sd["applications"]:
+        if check_deploy_graph(get_app_name(j["version"]), delta_sd):
             counter_ += add_app(j, apps_list)
 
-    # stage 2: Merge rest of applications
+    # merge rest of applications
     for i in range(len(apps_list)):
-        for j in range(len(data2["applications"])):
-            if "deployGraph" not in data2.keys() and ((isinstance(apps_list[i], ruyaml.CommentedMap) and get_app_name(
-                    apps_list[i]["version"]) == get_app_name(data2["applications"][j]["version"]) and check_criteria(
-                    apps_list[i], data2["applications"][j], ["deployPostfix", "alias"])) or (
-                                                              not isinstance(apps_list[i],
-                                                                             ruyaml.CommentedMap) and get_app_name(
-                                                              apps_list[i]) == get_app_name(data2["applications"][j]))):
-                apps_list[i] = data2["applications"][j]
-                counter_ += 1
+        for j in range(len(delta_sd["applications"])):
+            if "deployGraph" not in delta_sd:
+                if (
+                        isinstance(apps_list[i], ruyaml.CommentedMap)
+                        and get_app_name(apps_list[i]["version"]) == get_app_name(delta_sd["applications"][j]["version"])
+                        and check_criteria(apps_list[i], delta_sd["applications"][j], ["deployPostfix", "alias"])
+                ) or (
+                        not isinstance(apps_list[i], ruyaml.CommentedMap)
+                        and get_app_name(apps_list[i]["version"]) == get_app_name(delta_sd["applications"][j]["version"])
+                ):
+                    apps_list[i] = delta_sd["applications"][j]
+                    counter_ += 1
 
     logger.info(f"counter_: {counter_}")
     logger.info(f"length: {length}")
     if counter_ < length:
         error(MERGE_IMPOSSIBLE)
-    data1["applications"] = apps_list
+    full_sd["applications"] = apps_list
 
-    if "deployGraph" in data2.keys():
+    if "deployGraph" in delta_sd.keys():
         # merge DeployGraph
         counter = 0
-        length = len(data2["deployGraph"])
-        for i in data1["deployGraph"]:
-            for j in data2["deployGraph"]:
+        length = len(delta_sd["deployGraph"])
+        for i in full_sd["deployGraph"]:
+            for j in delta_sd["deployGraph"]:
                 if i["chunkName"] == j["chunkName"]:
                     in_first = set(i["apps"])
                     in_second = set(j["apps"])
@@ -162,7 +171,7 @@ def extended_merge(data1, data2):
         if counter < length:
             error(NEW_CHUNK_ERROR)
 
-    return data1
+    return full_sd
 
 
 def basic_merge(full_sd, delta_sd):

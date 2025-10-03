@@ -165,7 +165,9 @@ def calculate_sd_delta(sd_delta):
     return sd_delta
 
 
-def multiply_sds_to_single(sds_data):
+def multiply_sds_to_single(sds_data, effective_merge_mode):
+    if isinstance(sds_data, list) and effective_merge_mode.EXTENDED:
+        raise ValueError("Case with multiple SDs in merge mode extended is not supported")
     # Perform basic-merge for multiple SDs before applying SD_REPO_MERGE_MODE
     if isinstance(sds_data, list):
         merged_applications = {"applications": sds_data[0].get("applications", [])}
@@ -234,7 +236,7 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
             transformed_data.append(transformed_item)
     else:
         transformed_data = handle_deploy_postfix_namespace_transformation(sds_from_pipe, namespace_dict)
-    full_sd_from_pipe = multiply_sds_to_single(transformed_data)
+    full_sd_from_pipe = multiply_sds_to_single(transformed_data, effective_merge_mode)
 
     sd_path = base_sd_path.joinpath("sd.yaml")
     sd_delta_path = base_sd_path.joinpath("delta_sd.yaml")
