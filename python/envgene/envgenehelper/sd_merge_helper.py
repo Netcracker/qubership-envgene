@@ -152,7 +152,6 @@ def extended_merge(full_sd, delta_sd):
                     apps_list[i] = delta_item
                     counter_ += 1
 
-    logger.info(f"counter_: {counter_}")
     if counter_ < length:
         error(MERGE_IMPOSSIBLE)
     full_sd["applications"] = apps_list

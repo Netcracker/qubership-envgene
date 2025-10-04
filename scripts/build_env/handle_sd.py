@@ -166,7 +166,7 @@ def calculate_sd_delta(sd_delta):
 
 
 def multiply_sds_to_single(sds_data, effective_merge_mode):
-    if isinstance(sds_data, list) and effective_merge_mode.EXTENDED:
+    if isinstance(sds_data, list) and effective_merge_mode == MergeType.EXTENDED:
         raise ValueError("Case with multiple SDs in merge mode extended is not supported")
     # Perform basic-merge for multiple SDs before applying SD_REPO_MERGE_MODE
     if isinstance(sds_data, list):
