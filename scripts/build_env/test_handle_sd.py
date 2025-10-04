@@ -59,7 +59,17 @@ def do_prerequisites(test_case_name, env):
                                                                '"version": "postgres-services:1.32.6", '
                                                                '"deployPostfix": "postgresql"}]}'))
     elif test_case_name in ["TC-001-017", "TC-001-018"]:
-        writeYamlToFile(target_sd_dir.joinpath(SD), json.loads(previous_sd))
+        writeYamlToFile(target_sd_dir.joinpath(SD), json.loads('{"version":2.1,"type":"solutionDeploy",'
+                                                               '"deployMode":"composite","applications":[{'
+                                                               '"version":"postgres:1.32.5",'
+                                                               '"deployPostfix":"postgresql"},'
+                                                               '{"version":"mysql:8.0.34",'
+                                                               '"deployPostfix":"mysql-dbaas"},'
+                                                               '{"version":"redis:7.0.10",'
+                                                               '"deployPostfix":"redis-cache"}],"deployGraph":[{'
+                                                               '"chunkName":"wave1","apps":["postgres:postgresql",'
+                                                               '"mysql:mysql-dbaas"]},{"chunkName":"wave2",'
+                                                               '"apps":["redis:redis-cache"]}]}'))
 
 
 def do_asserts(test_case_name, actual_dir):
@@ -72,6 +82,9 @@ def do_asserts(test_case_name, actual_dir):
         TestHelpers.assert_dirs_content(expected_dir, actual_dir, True, True)
     elif test_case_name in ["TC-001-014", "TC-001-016"]:
         expected_dir = (er_dir.joinpath("exclude_merge"))
+        TestHelpers.assert_dirs_content(expected_dir, actual_dir, True, True)
+    elif test_case_name in ["TC-001-017"]:
+        expected_dir = (er_dir.joinpath("extended_merge"))
         TestHelpers.assert_dirs_content(expected_dir, actual_dir, True, True)
 
 

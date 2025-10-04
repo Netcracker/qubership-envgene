@@ -1,0 +1,21 @@
+version: 2.1
+type: solutionDeploy
+deployMode: composite
+applications:
+  - version: postgres:1.32.6
+    deployPostfix: postgresql
+  - version: mysql:8.0.34
+    deployPostfix: mysql-dbaas
+  - version: redis:7.0.10
+    deployPostfix: redis-cache
+  - version: mongodb:7.0.3
+    deployPostfix: mongo-db
+deployGraph:
+  - chunkName: wave1
+    apps:
+      - postgres:postgresql
+      - mysql:mysql-dbaas
+      - mongodb:mongo-db
+  - chunkName: wave2
+    apps:
+      - redis:redis-cache
