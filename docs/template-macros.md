@@ -51,7 +51,6 @@
     - [`CONSUL_PUBLIC_URL`](#consul_public_url)
     - [`CONSUL_ADMIN_TOKEN`](#consul_admin_token)
     - [`CONSUL_ENABLED`](#consul_enabled)
-  - [BG Related Macros](#bg-related-macros)
     - [`ORIGIN_NAMESPACE`](#origin_namespace)
     - [`PEER_NAMESPACE`](#peer_namespace)
     - [`CONTROLLER_NAMESPACE`](#controller_namespace)
@@ -63,7 +62,6 @@
     - [`BASELINE_ORIGIN`](#baseline_origin)
     - [`BASELINE_CONTROLLER`](#baseline_controller)
     - [`BASELINE_PEER`](#baseline_peer)
-    - [`BASELINE_PROJ`](#baseline_proj)
     - [`PUBLIC_IDENTITY_PROVIDER_URL`](#public_identity_provider_url)
     - [`PRIVATE_IDENTITY_PROVIDER_URL`](#private_identity_provider_url)
   - [Credential Macro](#credential-macro)
@@ -75,6 +73,8 @@
       - [`deployer`](#deployer)
     - [Deprecated Credential Macros](#deprecated-credential-macros)
       - [`${envgene.creds.get('<cred-id>').username|password|secret}`](#envgenecredsgetcred-idusernamepasswordsecret)
+    - [Deprecated Calculator CLI macros](#deprecated-calculator-cli-macros)
+      - [`BASELINE_PROJ`](#baseline_proj)
 
 This documentation provides a list of macros that can be used during template generation
 
@@ -1008,16 +1008,14 @@ Value is get from `vaultConfig.enable` of the Environment's [Cloud](/docs/envgen
 
 **Usage in sample:** TBD
 
-## BG Related Macros
-
-These macros are rendered at the stage of calculating the [Effective Set](/docs/calculator-cli.md#effective-set-structure) and are specifically used for Blue-Green Domain deployments.
-
 ### `ORIGIN_NAMESPACE`
 
 ---
-**Description:** Name of origin BG namespace.
+**Description:** Name of origin namespace of the BG Domain.
 
-Value is get from the origin namespace definition in the BG Domain configuration.
+The value is taken from the origin namespace definition in the [BG Domain](/docs/envgene-objects.md#bg-domain) object.
+
+If the BG Domain is absent, the value is the same as `${NAMESPACE}`.
 
 **Type:** String
 
@@ -1032,9 +1030,11 @@ Value is get from the origin namespace definition in the BG Domain configuration
 ### `PEER_NAMESPACE`
 
 ---
-**Description:** Name of peer BG namespace. If value is not provided, it means that namespace doesn't participate in BG deployment.
+**Description:** Name of peer namespace of the BG Domain.
 
-Value is get from the peer namespace definition in the BG Domain configuration.
+The value is taken from the peer namespace definition in the [BG Domain](/docs/envgene-objects.md#bg-domain) object.  
+
+If value is not provided, it means that namespace doesn't participate in BG Domain.
 
 **Type:** String
 
@@ -1049,9 +1049,11 @@ Value is get from the peer namespace definition in the BG Domain configuration.
 ### `CONTROLLER_NAMESPACE`
 
 ---
-**Description:** Name of controller namespace of current BG Domain.
+**Description:** Name of controller namespace of the BG Domain.
 
-Value is get from the controller namespace definition in the BG Domain configuration.
+The value is taken from the controller namespace definition in the [BG Domain](/docs/envgene-objects.md#bg-domain) object.  
+
+If value is not provided, it means that namespace doesn't participate in BG Domain.
 
 **Type:** String
 
@@ -1085,7 +1087,7 @@ The value is calculated as `${protocol.toLowerCase()}://bluegreen-controller-${N
 ---
 **Description:** Username from the bluegreen domain credential id.
 
-Value is get from the bluegreen domain credentials configuration.
+The value is taken from the controller credential in the [BG Domain](/docs/envgene-objects.md#bg-domain) object.
 
 **Type:** String
 
@@ -1102,7 +1104,7 @@ Value is get from the bluegreen domain credentials configuration.
 ---
 **Description:** Password from the bluegreen domain credential id.
 
-Value is get from the bluegreen domain credentials configuration.
+The value is taken from the controller credential in the [BG Domain](/docs/envgene-objects.md#bg-domain) object.
 
 **Type:** String
 
@@ -1155,7 +1157,7 @@ Value is get from the CMDB credentials configuration.
 
 Contains name of:
 
-- Origin namespace name if baseline is a Bluegreen domain
+- Origin namespace name if baseline is a BG domain
 - Baseline namespace name if baseline is a namespace, not a BG domain
 
 Value is used as a replacement of `BASELINE_PROJ` value that should be deprecated.
@@ -1175,7 +1177,7 @@ Value is used as a replacement of `BASELINE_PROJ` value that should be deprecate
 ---
 **Description:** Value is provided if current namespace is a satellite (regardless if it is a single namespace satellite or a BG domain satellite).
 
-Contains name of Controller namespace if baseline is a BG domain. Should not be provided if baseline is a namespace, not a BG domain.
+Contains name of Controller namespace if baseline is a BG domain. Will not be provided if baseline is a namespace, not a BG domain.
 
 **Type:** String
 
@@ -1192,7 +1194,7 @@ Contains name of Controller namespace if baseline is a BG domain. Should not be 
 ---
 **Description:** Value is provided if current namespace is a satellite (regardless if it is a single namespace satellite or a BG domain satellite).
 
-Contains name of Peer namespace if baseline is a BG domain. Should not be provided if baseline is a namespace, not a BG domain.
+Contains name of Peer namespace if baseline is a BG domain. Will not be provided if baseline is a namespace, not a BG domain.
 
 **Type:** String
 
@@ -1201,28 +1203,6 @@ Contains name of Peer namespace if baseline is a BG domain. Should not be provid
 **Basic usage:**
 
 `baseline_peer: "${BASELINE_PEER}"`
-
-**Usage in sample:** TBD
-
-### `BASELINE_PROJ`
-
----
-**Description:** Deprecated value, is kept for backward compatibility.
-
-Defines baseline namespace if current namespace is a satellite.
-
-Calculation rules:
-
-- If baseline is a Bluegreen Domain: `BASELINE_PROJ = BASELINE_CONTROLLER`
-- Otherwise (if baseline is a standalone namespace): `BASELINE_PROJ = BASELINE_ORIGIN`
-
-**Type:** String
-
-**Default Value:** Calculated based on baseline type
-
-**Basic usage:**
-
-`baseline_proj: "${BASELINE_PROJ}"`
 
 **Usage in sample:** TBD
 
@@ -1329,3 +1309,17 @@ k8s_token: ${creds.get('k8s-cred').secret}
 **Description:** This macro was used for processing system sensitive parameters—parameters that EnvGene uses to integrate itself with external systems, such as the login and password for a registry or a token for a GitLab instance.
 
 **Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro)
+
+### Deprecated Calculator CLI macros
+
+#### `BASELINE_PROJ`
+
+---
+**Description:** Defines baseline namespace if current namespace is a satellite.
+
+Calculation rules:
+
+- If baseline is a Bluegreen Domain: `BASELINE_PROJ = BASELINE_CONTROLLER`
+- Otherwise (if baseline is a standalone namespace): `BASELINE_PROJ = BASELINE_ORIGIN`
+
+**Replacement**: [`BASELINE_ORIGIN`](#baseline_origin)
