@@ -45,6 +45,10 @@ inventory:
   # This attribute's value is available for template rendering via the `current_env.cloud` variable
   cloudName: string
   # Optional
+  # URL of the Cluster as specified in kubeconfig
+  # Used for forming macros such as current_env.cluster.cloud_api_url
+  clusterUrl: string
+  # Optional
   # Reference to Cloud Passport
   # Cloud Passport should be located in `/environments/<cluster-name>/<env-name>/cloud-passport/` directory
   cloudPassport: string
