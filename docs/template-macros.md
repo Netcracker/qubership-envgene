@@ -1043,6 +1043,263 @@ These macros are rendered at the stage of environment building for [Namespace Re
 
 **Usage in sample:** TBD
 
+## BG Related Macros
+
+These macros are rendered at the stage of calculating the [Effective Set](/docs/calculator-cli.md#effective-set-structure) and are specifically used for Blue-Green Domain deployments.
+
+### `ORIGIN_NAMESPACE`
+
+---
+**Description:** Name of origin BG namespace.
+
+Value is get from the origin namespace definition in the BG Domain configuration.
+
+**Type:** String
+
+**Default Value:** `${NAMESPACE}`
+
+**Basic usage:**
+
+`origin_ns: "${ORIGIN_NAMESPACE}"`
+
+**Usage in sample:** TBD
+
+### `PEER_NAMESPACE`
+
+---
+**Description:** Name of peer BG namespace. If value is not provided, it means that namespace doesn't participate in BG deployment.
+
+Value is get from the peer namespace definition in the BG Domain configuration.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`peer_ns: "${PEER_NAMESPACE}"`
+
+**Usage in sample:** TBD
+
+### `CONTROLLER_NAMESPACE`
+
+---
+**Description:** Name of controller namespace of current BG Domain.
+
+Value is get from the controller namespace definition in the BG Domain configuration.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`controller_ns: "${CONTROLLER_NAMESPACE}"`
+
+**Usage in sample:** TBD
+
+### `BG_CONTROLLER_URL`
+
+---
+**Description:** URL of bluegreen-controller ingress.
+
+The value is calculated as `${protocol.toLowerCase()}://bluegreen-controller-${NAMESPACE}.$customHost` where customHost is Cloud Private URL, Cloud Public URL, or Cloud API URL.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`bg_controller: "${BG_CONTROLLER_URL}"`
+
+**Usage in sample:** TBD
+
+### `BG_CONTROLLER_LOGIN`
+
+---
+**Description:** Username from the bluegreen domain credential id.
+
+Value is get from the bluegreen domain credentials configuration.
+
+**Type:** String
+
+**Default Value:** `bgoperator`
+
+**Basic usage:**
+
+`bg_login: "${BG_CONTROLLER_LOGIN}"`
+
+**Usage in sample:** TBD
+
+### `BG_CONTROLLER_PASSWORD`
+
+---
+**Description:** Password from the bluegreen domain credential id.
+
+Value is get from the bluegreen domain credentials configuration.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`bg_password: "${BG_CONTROLLER_PASSWORD}"`
+
+**Usage in sample:** TBD
+
+### `CMDB_CALLBACK_URL`
+
+---
+**Description:** URL that will be called by bg-operator to trigger CMDB clone operation.
+
+The value is calculated as `<cmdburl>/cm/v1/tenants/<tenantname>/clouds/<cloudname>/bgdomains/clone`.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`cmdb_callback: "${CMDB_CALLBACK_URL}"`
+
+**Usage in sample:** TBD
+
+### `CMDB_CALLBACK_TOKEN`
+
+---
+**Description:** Token without expiration date. Token should have permissions to perform CMDB clone within current BG Domain.
+
+Value is get from the CMDB credentials configuration.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`cmdb_token: "${CMDB_CALLBACK_TOKEN}"`
+
+**Usage in sample:** TBD
+
+### `BASELINE_ORIGIN`
+
+---
+**Description:** Value is provided if current namespace is a satellite (regardless if it is a single namespace satellite or a BG domain satellite).
+
+Contains name of:
+
+- Origin namespace name if baseline is a Bluegreen domain
+- Baseline namespace name if baseline is a namespace, not a BG domain
+
+Value is used as a replacement of `BASELINE_PROJ` value that should be deprecated.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`baseline_origin: "${BASELINE_ORIGIN}"`
+
+**Usage in sample:** TBD
+
+### `BASELINE_CONTROLLER`
+
+---
+**Description:** Value is provided if current namespace is a satellite (regardless if it is a single namespace satellite or a BG domain satellite).
+
+Contains name of Controller namespace if baseline is a BG domain. Should not be provided if baseline is a namespace, not a BG domain.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`baseline_controller: "${BASELINE_CONTROLLER}"`
+
+**Usage in sample:** TBD
+
+### `BASELINE_PEER`
+
+---
+**Description:** Value is provided if current namespace is a satellite (regardless if it is a single namespace satellite or a BG domain satellite).
+
+Contains name of Peer namespace if baseline is a BG domain. Should not be provided if baseline is a namespace, not a BG domain.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`baseline_peer: "${BASELINE_PEER}"`
+
+**Usage in sample:** TBD
+
+### `BASELINE_PROJ`
+
+---
+**Description:** Deprecated value, is kept for backward compatibility.
+
+Defines baseline namespace if current namespace is a satellite.
+
+Calculation rules:
+
+- If baseline is a Bluegreen Domain: `BASELINE_PROJ = BASELINE_CONTROLLER`
+- Otherwise (if baseline is a standalone namespace): `BASELINE_PROJ = BASELINE_ORIGIN`
+
+**Type:** String
+
+**Default Value:** Calculated based on baseline type
+
+**Basic usage:**
+
+`baseline_proj: "${BASELINE_PROJ}"`
+
+**Usage in sample:** TBD
+
+### `PUBLIC_IDENTITY_PROVIDER_URL`
+
+---
+**Description:** Defines URL of public gateway where IDP is published. In case of composite deployment this URL should point to gateway in baseline even if current namespace is a satellite.
+
+Calculation rules:
+
+- `PUBLIC_IDENTITY_PROVIDER_URL` from `BASELINE_ORIGIN` namespace if `BASELINE_ORIGIN` is defined
+- `${PUBLIC_GATEWAY_URL}` in other cases
+
+**Type:** String
+
+**Default Value:** Calculated based on baseline configuration
+
+**Basic usage:**
+
+`public_idp: "${PUBLIC_IDENTITY_PROVIDER_URL}"`
+
+**Usage in sample:** TBD
+
+### `PRIVATE_IDENTITY_PROVIDER_URL`
+
+---
+**Description:** Defines URL of private gateway where IDP is published. In case of composite deployment this URL should point to gateway in baseline even if current namespace is a satellite.
+
+Calculation rules:
+
+- `PRIVATE_IDENTITY_PROVIDER_URL` from `BASELINE_ORIGIN` namespace if `BASELINE_ORIGIN` is defined
+- `${PRIVATE_GATEWAY_URL}` in other cases
+
+**Type:** String
+
+**Default Value:** Calculated based on baseline configuration
+
+**Basic usage:**
+
+`private_idp: "${PRIVATE_IDENTITY_PROVIDER_URL}"`
+
+**Usage in sample:** TBD
 
 ## Credential Macro
 
