@@ -21,6 +21,7 @@ TEST_CASES = [
     "TC-001-006",
     "TC-001-008",
     "TC-001-010",
+    "TC-001-012",
     "TC-001-014",
     "TC-001-016",
     "TC-001-017"
@@ -51,6 +52,7 @@ def load_test_pipeline_sd_data(test_case_name):
 
 
 def do_prerequisites(test_case_name, env):
+    TestHelpers.clean_test_dir(OUTPUT_DIR)
     pr_dir = TEST_SD_DIR.joinpath("prerequisites")
     target_sd_dir = Path(env.env_path, "Inventory", "solution-descriptor")
 
@@ -71,7 +73,6 @@ def do_asserts(test_case_name, actual_dir):
     expected_dir = er_dir.joinpath(expected_subdir)
     TestHelpers.assert_dirs_content(expected_dir, actual_dir, True, True)
     TestHelpers.clean_test_dir(OUTPUT_DIR)
-
 
 @pytest.mark.parametrize("test_case_name", TEST_CASES)
 def test_sd(test_case_name):

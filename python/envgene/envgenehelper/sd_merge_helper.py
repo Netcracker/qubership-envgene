@@ -173,6 +173,13 @@ def extended_merge(full_sd, delta_sd):
     return full_sd
 
 
+def basic_merge_multiple(sd_list: list):
+    result_sd = sd_list[0]
+    for next_sd in sd_list[1:]:
+        result_sd = basic_merge(result_sd, next_sd)
+    return result_sd
+
+
 def basic_merge(full_sd, delta_sd):
     """
     Merge Delta SD into Full SD using `basic-merge` rules:
@@ -184,6 +191,7 @@ def basic_merge(full_sd, delta_sd):
     logger.info(f"Inside basic_merge")
     logger.info(f"Full SD: {full_sd}")
     logger.info(f"Delta SD: {delta_sd}")
+
     full_apps = full_sd.get("applications", [])
     delta_apps = delta_sd.get("applications", [])
     result_apps = []

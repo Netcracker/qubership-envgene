@@ -15,6 +15,8 @@ from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
 
+from python.envgene.envgenehelper import basic_merge, basic_merge_multiple
+
 
 class MergeType(Enum):
     EXTENDED = "extended-merge"
@@ -166,27 +168,23 @@ def calculate_sd_delta(sd_delta):
 
 
 def multiply_sds_to_single(sds_data, effective_merge_mode):
-    if isinstance(sds_data, list) and effective_merge_mode == MergeType.EXTENDED:
-        raise ValueError("Case with multiple SDs in merge mode extended is not supported")
-    # Perform basic-merge for multiple SDs before applying SD_REPO_MERGE_MODE
-    if isinstance(sds_data, list):
-        merged_applications = {"applications": sds_data[0].get("applications", [])}
-        if not merged_applications["applications"]:
-            logger.error("No applications found in the first SD block.")
-            exit(1)
-        for i in range(1, len(sds_data)):
-            logger.info("Initiates basic-merge:")
-            current_item_sd = {"applications": sds_data[i].get("applications", [])}
-            merged_applications = helper.merge(merged_applications, current_item_sd)
-        full_sd_from_pipe = {
-            "version": sds_data[0].get("version"),
-            "type": sds_data[0].get("type"),
-            "deployMode": sds_data[0].get("deployMode"),
-            "applications": merged_applications["applications"]
-        }
-        logger.info(f"Level-1 SD data: {json.dumps(full_sd_from_pipe, indent=2)}")
-    else:
+    if effective_merge_mode == MergeType.EXTENDED:
+        if isinstance(sds_data, list):
+            raise ValueError("Multiple SDs not supported in extended merge mode")
         full_sd_from_pipe = sds_data
+    else:
+        sds_data = sds_data if isinstance(sds_data, list) else [sds_data]
+        cropped_sds = []
+        for sd in sds_data:
+            cropped_sds.append({
+                "version": sd.get("version"),
+                "type": sd.get("type"),
+                "deployMode": sd.get("deployMode"),
+                "applications": sd["applications"]
+            })
+
+        full_sd_from_pipe = basic_merge_multiple(cropped_sds)
+
     logger.info(f"Merged data after performing basic-merge for multiple SDs: {full_sd_from_pipe}")
     return full_sd_from_pipe
 
