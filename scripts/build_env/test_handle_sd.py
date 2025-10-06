@@ -74,6 +74,7 @@ def do_asserts(test_case_name, actual_dir):
     TestHelpers.assert_dirs_content(expected_dir, actual_dir, True, True)
     TestHelpers.clean_test_dir(OUTPUT_DIR)
 
+
 @pytest.mark.parametrize("test_case_name", TEST_CASES)
 def test_sd(test_case_name):
     env = Environment(str(Path(OUTPUT_DIR, test_case_name)), "cluster-01", "env-01")

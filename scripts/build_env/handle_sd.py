@@ -175,12 +175,7 @@ def multiply_sds_to_single(sds_data, effective_merge_mode):
         sds_data = sds_data if isinstance(sds_data, list) else [sds_data]
         cropped_sds = []
         for sd in sds_data:
-            cropped_sds.append({
-                "version": sd.get("version"),
-                "type": sd.get("type"),
-                "deployMode": sd.get("deployMode"),
-                "applications": sd["applications"]
-            })
+            cropped_sds.append({"applications": sd["applications"]})
 
         full_sd_from_pipe = basic_merge_multiple(cropped_sds)
 
