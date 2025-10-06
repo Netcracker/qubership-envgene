@@ -14,8 +14,7 @@ from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
-
-from python.envgene.envgenehelper import basic_merge, basic_merge_multiple
+from envgenehelper.sd_merge_helper import basic_merge_multiple
 
 
 class MergeType(Enum):
