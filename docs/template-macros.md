@@ -51,10 +51,6 @@
     - [`CONSUL_PUBLIC_URL`](#consul_public_url)
     - [`CONSUL_ADMIN_TOKEN`](#consul_admin_token)
     - [`CONSUL_ENABLED`](#consul_enabled)
-  - [Namespace Filter Macros](#namespace-filter-macros)
-    - [`controller`](#controller) 
-    - [`origin`](#origin)
-    - [`peer`](#peer)
   - [BG Related Macros](#bg-related-macros)
     - [`ORIGIN_NAMESPACE`](#origin_namespace)
     - [`PEER_NAMESPACE`](#peer_namespace)
@@ -1009,55 +1005,6 @@ Value is get from `vaultConfig.enable` of the Environment's [Cloud](/docs/envgen
 **Basic usage:**
 
 `consul_is_used: "${CONSUL_ENABLED}"`
-
-**Usage in sample:** TBD
-
-## Namespace Filter Macros
-
-These macros are rendered at the stage of environment building for [Namespace Render Filtering](/docs/namespace-render-filtering).
-
-### `controller`
-
----
-**Description:** This macro resolves to the controller namespace using the [BG Domain](/docs/envgene-objects.md#bg-domain) object. To use aliases, the BG Domain object must exist in the Environment.
-
-**Type**: String
-
-**Default Value:** `None`
-
-**Basic usage:**
-
-`NS_BUILD_FILTER: "@controller"`
-
-**Usage in sample:** TBD
-
-### `origin`
-
----
-**Description:** This macro resolves to the origin namespace using the [BG Domain](/docs/envgene-objects.md#bg-domain) object. To use aliases, the BG Domain object must exist in the Environment.
-
-**Type**: String
-
-**Default Value:** `None`
-
-**Basic usage:**
-
-`NS_BUILD_FILTER: "@origin"`
-
-**Usage in sample:** TBD
-
-### `peer`
-
----
-**Description:** This macro resolves to the peer namespace using the [BG Domain](/docs/envgene-objects.md#bg-domain) object. To use aliases, the BG Domain object must exist in the Environment.
-
-**Type**: String
-
-**Default Value:** `None`
-
-**Basic usage:**
-
-`NS_BUILD_FILTER: "@peer"`
 
 **Usage in sample:** TBD
 
