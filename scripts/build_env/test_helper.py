@@ -34,7 +34,6 @@ class TestHelpers:
             assert not missing_files, f"Missing files in target: {dump_as_yaml_format([source_map[name] for name in missing_files])}"
 
         files_to_compare = get_all_files_in_dir(source_dir, str(source_dir) + "/")
-        files_to_compare = [os.path.basename(f) for f in files_to_compare]
         match, mismatch, errors = filecmp.cmpfiles(source_dir, target_dir, files_to_compare, shallow=False)
         logger.info(f"Match: {dump_as_yaml_format(match)}")
 
