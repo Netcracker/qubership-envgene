@@ -723,9 +723,9 @@ bg_domain:
 
 **BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
 
-- `${controller}` → controller namespace
-- `${origin}` → origin namespaces
-- `${peer}` → peer namespaces
+- `@controller` → controller namespace
+- `@origin` → origin namespaces
+- `@peer` → peer namespaces
 
 ### Solution Descriptor
 

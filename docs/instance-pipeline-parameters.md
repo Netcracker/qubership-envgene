@@ -439,7 +439,7 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 
 **Mandatory**: No
 
-**Example**: `${controller}`
+**Example**: `@controller`
 
 ### `GITHUB_PIPELINE_API_INPUT`
 

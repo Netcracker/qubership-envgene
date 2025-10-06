@@ -16,9 +16,9 @@ You can set the value of `NS_BUILD_FILTER` in two ways:
 
 You can use BG Domain role aliases as namespace selectors:
 
-- `${controller}` - controller namespace
-- `${origin}` - origin namespace  
-- `${peer}` - peer namespace
+- `@controller` - controller namespace
+- `@origin` - origin namespace  
+- `@peer` - peer namespace
 
 EnvGene resolves these aliases using the [BG Domain](/docs/envgene-objects.md#bg-domain) object. To use aliases, the BG Domain object must exist in the Environment.
 
