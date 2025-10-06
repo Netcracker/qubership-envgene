@@ -1,5 +1,5 @@
 applications:
   - version: postgres-services:1.32.6
     deployPostfix: postgresql
-  - version: postgres:1.32.6
+  - version: postgres:1.32.7
     deployPostfix: postgresql-dbaas
