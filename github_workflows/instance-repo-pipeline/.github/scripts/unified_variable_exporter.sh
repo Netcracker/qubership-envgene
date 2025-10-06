@@ -61,29 +61,20 @@ export_pipeline_vars_from_yaml() {
         return 0
     fi
     
-    while IFS= read -r line || [ -n "$line" ]; do
-        # Skip empty lines and comments
-        if [ -z "$line" ] || echo "$line" | grep -q "^[[:space:]]*#"; then
-            continue
-        fi
-        
-        # Check if it's a variable assignment
-        if echo "$line" | grep -q "^[^:]*:"; then
-            local key=$(echo "$line" | cut -d':' -f1 | xargs)
-            local value=$(echo "$line" | cut -d':' -f2- | xargs)
-            
-            # Remove quotes if present
-            if echo "$value" | grep -q '^".*"$' || echo "$value" | grep -q "^'.*'$"; then
-                value=$(echo "$value" | sed 's/^.\(.*\).$/\1/')
-            fi
-            
-            if [ -n "$key" ] && [ -n "$value" ]; then
+    # Use yq to properly parse YAML and only export simple values
+    while IFS= read -r key && IFS= read -r value; do
+        # Skip empty keys or null values
+        if [ -n "$key" ] && [ -n "$value" ] && [ "$value" != "null" ]; then
+            # Validate key name (must be valid bash variable name)
+            if echo "$key" | grep -q '^[a-zA-Z_][a-zA-Z0-9_]*'; then
                 echo "export \"$key\"=\"$value\""
                 log "  $key = $value"
                 exported_count=$((exported_count + 1))
+            else
+                log "  Skipping invalid variable name: $key"
             fi
         fi
-    done < "$pipeline_vars_file"
+    done < <(yq eval -o json "$pipeline_vars_file" | jq -r 'to_entries[] | select(.value | type == "string" or type == "number" or type == "boolean") | .key, (.value | tostring)')
 }
 
 # 2. Export GitHub workflow input variables (Manual Inputs)
@@ -104,7 +95,7 @@ export_github_inputs() {
     done
 }
 
-# 3. Export API input variables (API Inputs)
+# 3. Export API input variables (API Inputs) - FIXED
 export_api_input_variables() {
     local api_input="${GITHUB_PIPELINE_API_INPUT:-}"
     
@@ -116,17 +107,14 @@ export_api_input_variables() {
     
     # Try to parse as JSON first
     if command -v jq >/dev/null 2>&1 && echo "$api_input" | jq . >/dev/null 2>&1; then
-        # Use process substitution to avoid subshell issues
-        while IFS= read -r line; do
-            local key=$(echo "$line" | cut -d':' -f1 | xargs)
-            local value=$(echo "$line" | cut -d':' -f2- | xargs)
-            
+        # Use jq to properly extract key-value pairs
+        while IFS= read -r key && IFS= read -r value; do
             if [ -n "$key" ] && [ -n "$value" ] && [ "$value" != "null" ]; then
                 echo "export \"$key\"=\"$value\""
                 log "  $key = $value"
                 exported_count=$((exported_count + 1))
             fi
-        done < <(echo "$api_input" | jq -r 'to_entries[] | "\(.key): \(.value)"')
+        done < <(echo "$api_input" | jq -r 'to_entries[] | .key, .value')
     else
         # Fall back to key=value format
         while IFS= read -r line; do
@@ -144,26 +132,23 @@ export_api_input_variables() {
     fi
 }
 
-# 6. Load variables from JSON into memory (without exporting)
+# 6. Load variables from JSON into memory (without exporting) - FIXED
 load_variables_from_json() {
     if [ -z "$VARIABLES_JSON" ] || [ "$VARIABLES_JSON" = "{}" ] || [ "$VARIABLES_JSON" = "null" ]; then
         return 0
     fi
     
     if command -v jq >/dev/null 2>&1 && echo "$VARIABLES_JSON" | jq . >/dev/null 2>&1; then
-        # Load variables into current shell environment
-        while IFS= read -r line; do
-            local key=$(echo "$line" | cut -d':' -f1 | xargs)
-            local value=$(echo "$line" | cut -d':' -f2- | xargs)
-            
+        # Load variables into current shell environment using proper jq parsing
+        while IFS= read -r key && IFS= read -r value; do
             if [ -n "$key" ] && [ -n "$value" ] && [ "$value" != "null" ]; then
                 export "$key"="$value"
             fi
-        done < <(echo "$VARIABLES_JSON" | jq -r 'to_entries[] | "\(.key): \(.value)"')
+        done < <(echo "$VARIABLES_JSON" | jq -r 'to_entries[] | .key, .value')
     fi
 }
 
-# 7. Export variables from JSON (overrides all previous variables)
+# 7. Export variables from JSON (overrides all previous variables) - FIXED
 export_variables_from_json() {
     if [ -z "$VARIABLES_JSON" ] || [ "$VARIABLES_JSON" = "{}" ] || [ "$VARIABLES_JSON" = "null" ]; then
         return 0
@@ -175,26 +160,21 @@ export_variables_from_json() {
         api_mode=true
     fi
     
-    
     local exported_count=0
     
     if command -v jq >/dev/null 2>&1 && echo "$VARIABLES_JSON" | jq . >/dev/null 2>&1; then
-        # Use process substitution to avoid subshell issues
-        while IFS= read -r line; do
-            local key=$(echo "$line" | cut -d':' -f1 | xargs)
-            local value=$(echo "$line" | cut -d':' -f2- | xargs)
-            
+        # Use proper jq parsing to avoid colon splitting issues
+        while IFS= read -r key && IFS= read -r value; do
             if [ -n "$key" ] && [ -n "$value" ] && [ "$value" != "null" ]; then
                 echo "export \"$key\"=\"$value\""
                 log "  $key = $value"
                 exported_count=$((exported_count + 1))
             fi
-        done < <(echo "$VARIABLES_JSON" | jq -r 'to_entries[] | "\(.key): \(.value)"')
+        done < <(echo "$VARIABLES_JSON" | jq -r 'to_entries[] | .key, .value')
     else
         return 0
     fi
 }
-
 
 # 5. Export system variables
 export_system_variables() {
@@ -221,13 +201,23 @@ export_environment_variables() {
     local environment_name=$(echo "$MATRIX_ENVIRONMENT" | cut -d'/' -f2 | xargs)
     
     # Export environment variables
+    echo "export \"CI_PROJECT_DIR\"=\"${CI_PROJECT_DIR:-/work}\""
+    echo "export \"GITHUB_TOKEN\"=\"${GITHUB_TOKEN:-}\""
+    echo "export \"GITHUB_ACTIONS\"=\"${GITHUB_ACTIONS:-true}\""
+    echo "export \"GITHUB_REPOSITORY\"=\"${GITHUB_REPOSITORY:-}\""
+    echo "export \"GITHUB_REF_NAME\"=\"${GITHUB_REF_NAME:-}\""
+    echo "export \"GITHUB_USER_EMAIL\"=\"${GITHUB_USER_EMAIL:-}\""
+    echo "export \"GITHUB_USER_NAME\"=\"${GITHUB_USER_NAME:-}\""
+    echo "export \"GITHUB_REF\"=\"${GITHUB_REF:-}\""
+    echo "export \"GITHUB_SHA\"=\"${GITHUB_SHA:-}\""
+    echo "export \"GITHUB_EVENT_NAME\"=\"${GITHUB_EVENT_NAME:-}\""
     echo "export \"FULL_ENV\"=\"$MATRIX_ENVIRONMENT\""
     echo "export \"ENV_NAMES\"=\"$MATRIX_ENVIRONMENT\""
     echo "export \"CLUSTER_NAME\"=\"$cluster_name\""
     echo "export \"ENVIRONMENT_NAME\"=\"$environment_name\""
     echo "export \"ENV_NAME\"=\"$environment_name\""
     echo "export \"ENV_NAME_SHORT\"=\"$(echo "$environment_name" | awk -F "/" '{print $NF}')\""
-    echo "export \"PROJECT_DIR\"=\"${CI_PROJECT_DIR:-$(pwd)}\""
+    echo "export \"PROJECT_DIR\"=\"${CI_PROJECT_DIR:-/work}\""
     
     log "  FULL_ENV = $MATRIX_ENVIRONMENT"
     log "  ENV_NAMES = $MATRIX_ENVIRONMENT"
@@ -244,9 +234,8 @@ export_environment_variables() {
 # 7. Export common pipeline variables
 export_common_pipeline_variables() {
     # Common variables for all pipeline steps
-    echo "export \"INSTANCES_DIR\"=\"${PROJECT_DIR}/environments\""
     echo "export \"module_ansible_dir\"=\"/module/ansible\""
-    echo "export \"module_inventory\"=\"${PROJECT_DIR}/configuration/inventory.yaml\""
+    echo "export \"module_inventory\"=\"${CI_PROJECT_DIR:-/work}/configuration/inventory.yaml\""
     echo "export \"module_ansible_cfg\"=\"/module/ansible/ansible.cfg\""
     echo "export \"module_config_default\"=\"/module/templates/defaults.yaml\""
     echo "export \"envgen_args\"=\" -vvv\""
@@ -254,9 +243,8 @@ export_common_pipeline_variables() {
     echo "export \"GIT_STRATEGY\"=\"none\""
     echo "export \"COMMIT_ENV\"=\"true\""
     
-    log "  INSTANCES_DIR = ${PROJECT_DIR}/environments"
     log "  module_ansible_dir = /module/ansible"
-    log "  module_inventory = ${PROJECT_DIR}/configuration/inventory.yaml"
+    log "  module_inventory = ${CI_PROJECT_DIR:-/work}/configuration/inventory.yaml"
     log "  module_ansible_cfg = /module/ansible/ansible.cfg"
     log "  module_config_default = /module/templates/defaults.yaml"
     log "  envgen_args =  -vvv"
