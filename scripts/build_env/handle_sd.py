@@ -206,6 +206,15 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
         exit(1)
 
 
+def validate_applications(sd, effective_merge_mode: MergeType):
+    applications = sd.get("applications")
+    for app in applications:
+        if effective_merge_mode != MergeType.EXTENDED and (not isinstance(app, dict) or not app.get("deployPostfix")):
+            raise ValueError(
+                f"Application {app} doesn't have deployPostfix. <name>:<version> notation is supported only for "
+                f"extended merge. Current merge mode: {effective_merge_mode.value}")
+
+
 def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode: MergeType):
     if not sd_data:
         logger.error("SD_SOURCE_TYPE is set to 'json', but SD_DATA was not given in pipeline variables")
@@ -229,6 +238,7 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
     else:
         transformed_data = handle_deploy_postfix_namespace_transformation(sds_from_pipe, namespace_dict)
     full_sd_from_pipe = multiply_sds_to_single(transformed_data, effective_merge_mode)
+    validate_applications(full_sd_from_pipe, effective_merge_mode)
 
     sd_path = base_sd_path.joinpath("sd.yaml")
     sd_delta_path = base_sd_path.joinpath("delta_sd.yaml")

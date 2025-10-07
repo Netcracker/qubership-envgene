@@ -1,5 +1,4 @@
 import pytest
-
 from main import perform_generation
 from envgenehelper import getAbsPath, openYaml, dump_as_yaml_format
 import os

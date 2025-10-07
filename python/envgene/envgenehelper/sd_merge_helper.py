@@ -80,7 +80,7 @@ def add_app(entry, apps: list) -> int:
     apps.append(entry)
     return 1
 
-
+#TODO <name>:<version> notation is supported only for extended merge for now, but later have to be removed
 def extended_merge(full_sd, delta_sd):
     # Merges delta SD into full SD by updating or adding matching apps, ensuring deployGraph consistency
     logger.info("Inside extended_merge")
