@@ -648,9 +648,10 @@ satellites:
 The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `NS_BUILD_FILTER` parameter and BGD lifecycle management.
 
 The BG Domain object is generated during Environment Instance generation based on:
+
 - [BG Domain Template](#bg-domain-template)
 
-**Location:** `/environments/<cluster-name>/<env-name>/bg-domain.yml`
+**Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
 
 ```yaml
 # Mandatory
