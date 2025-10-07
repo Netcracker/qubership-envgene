@@ -377,7 +377,7 @@ peerNamespace:
 controllerNamespace:
   name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}
   type: namespace
-  credentialsId: controller-cred
+  credentials: controller-cred
   url: https://controller-{{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}.{{ current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST}}
 ```
 
@@ -690,14 +690,14 @@ controllerNamespace:
   # Mandatory
   # Credentials for accessing the BGD controller
   # Used for authentication with BG-Operator
-  credentialsId: <bgd-controller-credentials>
+  credentials: <bgd-controller-credentials>
   # Mandatory
   # URL of the BG-Operator service
   # Used for BGD lifecycle operations
   url: <bg-operator-url>
 ```
 
-When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentialsId`.  
+When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.  
 The [`inventory.config.updateCredIdsWithEnvName`](/docs/envgene-configs.md#env_definitionyml) mechanism works for this Credential as well as for all other Credentials.
 
 **Location:** `/environments/<cluster-name>/<env-name>/bg-domain.yml`
@@ -716,7 +716,7 @@ bg_domain:
     type: namespace
   controllerNamespace:
     name: env-1-controller
-    credentialsId: controller-cred
+    credentials: controller-cred
     type: namespace
     url: https://controller-env-1-controller.qubership.org
 ```
