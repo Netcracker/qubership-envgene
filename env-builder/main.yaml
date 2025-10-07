@@ -117,18 +117,6 @@
         _template: "{{current_env_template.bg_domain}}"
       when: current_env_template.bg_domain is defined
 
-    - name: Read filter from env
-      set_fact:
-        _ns_build_filter: "{{ lookup('env', 'NS_BUILD_FILTER') | default('', true) }}"
-
-    - name: Read bg_domain_object from file
-      set_fact:
-        bg_domain_object: "{{ lookup('file', current_env_dir ~ '/bg_domain.yml', errors='ignore') | default('') | from_yaml | default({}) }}"
-
-    - name: Filter namespaces and save into var
-      set_fact:
-        filtered_namespaces: "{{ current_env_template.namespaces | filter_namespaces(_ns_build_filter, bg_domain_object)}}"
-
     - name: Gen namespaces
       ansible.builtin.include_role:
         name: generate_namespaces
@@ -138,7 +126,7 @@
         _cloud: "{{ current_env.cloud }}"
         _current_env_dir: "{{ current_env_dir }}"
         _namespace_template_name: "{{ namespace.template_path.split('/')|last|replace('.yml.j2', '')|replace('.yaml.j2', '') }}"
-      loop: "{{ filtered_namespaces }}"
+      loop: "{{ current_env_template.namespaces }}"
       loop_control:
         loop_var: namespace
 
