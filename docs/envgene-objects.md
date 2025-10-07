@@ -588,7 +588,7 @@ satellites:
     type: namespace
 ```
 
-**Location:** `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/composite-structure.yml`
+**Location:** `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/composite_structure.yml`
 
 [Composite Structure JSON schema](/schemas/composite-structure.schema.json)
 
