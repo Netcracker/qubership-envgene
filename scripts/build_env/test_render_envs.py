@@ -31,7 +31,7 @@ def change_test_dir(request, monkeypatch):
     monkeypatch.chdir(request.fspath.dirname + "/../..")
 
 
-# TODO use func from test_helper during impl PDPLDEVOPS-22468
+# TODO use func from test_helper during impl replacement ansible
 @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
 def test_render_envs(cluster_name, env_name, version):
     environ['CI_PROJECT_DIR'] = g_base_dir
@@ -83,7 +83,6 @@ def setup_test_dir(tmp_path):
     return tmp_path
 
 
-# TODO delete during PDPLDEVOPS-22825
 def test_cleanup_target_dir_removes_expected_items():
     target_dir = Path(g_output_dir) / "dump-cluster"
     setup_test_dir(target_dir)
