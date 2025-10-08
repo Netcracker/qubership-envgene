@@ -27,3 +27,6 @@
       do not exist in Namespaces.
       BG object: {{ rendered_bg }}
       Namespaces: {{ existing_namespaces }}
+      controller: {{ rendered_bg.controllerNamespace}}
+      peer: {{ rendered_bg.peerNamespace}}
+      origin: {{ rendered_bg.originNamespace}}
