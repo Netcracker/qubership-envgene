@@ -1,12 +1,12 @@
 name: {{ current_env.environmentName ~ '-bg-domain' }}
 type: bgdomain
 originNamespace:
-  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('origin-ns', current_env.environmentName ~ '-origin') }}
+  name: app-core
   type: namespace
 peerNamespace:
-  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('peer-ns', current_env.environmentName ~ '-peer') }}
+  name: app
   type: namespace
 controllerNamespace:
-  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}
+  name: app
   type: namespace
   credentials: bgd-controller-token
