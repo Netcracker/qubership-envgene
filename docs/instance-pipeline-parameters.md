@@ -26,7 +26,7 @@
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
     - [`NS_BUILD_FILTER`](#ns_build_filter)
-    - [`GITHUB_PIPELINE_API_INPUT`](#github_pipeline_api_input)
+    - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
@@ -441,7 +441,7 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 
 **Example**: `@controller`
 
-### `GITHUB_PIPELINE_API_INPUT`
+### `GH_ADDITIONAL_PARAMS`
 
 **Description**: A JSON string parameter for GitHub pipelines that contains all pipeline parameters except these core ones that must be set separately:
 
@@ -481,7 +481,7 @@ curl -X POST \
             "ENV_BUILDER": "true",
             `GENERATE_EFFECTIVE_SET`: "true"
             "DEPLOYMENT_TICKET_ID": "QBSHP-0001",
-            "GITHUB_PIPELINE_API_INPUT": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
+            "GH_ADDITIONAL_PARAMS": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
         }
       }'
 ```
