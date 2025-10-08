@@ -3,10 +3,10 @@
 - [Colly User Stories](#colly-user-stories)
   - [Glossary](#glossary)
   - [Stories](#stories)
-    - [US-1 As a TM I want to know about the last deployment operation performed on Environment](#us-1-as-a-tm-i-want-to-know-about-the-last-deployment-operation-performed-on-environment)
-    - [US-2 As a TM I want to know about the last clean deployment operation performed on Environment](#us-2-as-a-tm-i-want-to-know-about-the-last-clean-deployment-operation-performed-on-environment)
-    - [US-3 As a TM I want to know about the current state of installed SDs on Environment at the moment](#us-3-as-a-tm-i-want-to-know-about-the-current-state-of-installed-sds-on-environment-at-the-moment)
-    - [US-4 As a DEV I want to know the list of applications in `app:ver` notation that are installed on Environment at the moment](#us-4-as-a-dev-i-want-to-know-the-list-of-applications-in-appver-notation-that-are-installed-on-environment-at-the-moment)
+    - [US-1 As a TM I want to know about the last deployment operation performed on the Environment](#us-1-as-a-tm-i-want-to-know-about-the-last-deployment-operation-performed-on-the-environment)
+    - [US-2 As a TM I want to know about the last clean deployment operation performed on the Environment](#us-2-as-a-tm-i-want-to-know-about-the-last-clean-deployment-operation-performed-on-the-environment)
+    - [US-3 As a TM I want to know about the current state of installed SDs on the Environment at the moment](#us-3-as-a-tm-i-want-to-know-about-the-current-state-of-installed-sds-on-the-environment-at-the-moment)
+    - [US-4 As a DEV I want to know the list of applications in `app:ver` notation that are installed on the Environment at the moment](#us-4-as-a-dev-i-want-to-know-the-list-of-applications-in-appver-notation-that-are-installed-on-the-environment-at-the-moment)
 
 ## Glossary
 
@@ -21,7 +21,7 @@
 
 ## Stories
 
-### US-1 As a TM I want to know about the last deployment operation performed on Environment
+### US-1 As a TM I want to know about the last deployment operation performed on the Environment
 
 **Required information:**
 
@@ -34,7 +34,7 @@
 
 1. ConfigMap `sd_versions` from cluster Namespace
 
-### US-2 As a TM I want to know about the last clean deployment operation performed on Environment
+### US-2 As a TM I want to know about the last clean deployment operation performed on the Environment
 
 **Required information:**
 
@@ -45,7 +45,7 @@
 
 1. ConfigMap `sd_versions` from cluster Namespace
 
-### US-3 As a TM I want to know about the current state of installed SDs on Environment at the moment
+### US-3 As a TM I want to know about the current state of installed SDs on the Environment at the moment
 
 **Required information:**
 
@@ -56,6 +56,6 @@
 
 1. ConfigMap `sd_versions` from cluster Namespace
 
-### US-4 As a DEV I want to know the list of applications in `app:ver` notation that are installed on Environment at the moment
+### US-4 As a DEV I want to know the list of applications in `app:ver` notation that are installed on the Environment at the moment
 
 **Information source:** configuration map `versions` from cluster Namespace
