@@ -1,10 +1,10 @@
 ---
 openapi: 3.1.0
 info:
-  title: inventory-service API
+  title: operational-service API
   version: 2.0.0
 paths:
-  /colly/inventory-service/v2/auth-status:
+  /colly/operational-service/v2/auth-status:
     get:
       responses:
         "200":
@@ -16,7 +16,7 @@ paths:
       summary: Get Auth Status
       tags:
       - Cluster Resources Rest
-  /colly/inventory-service/v2/clusters:
+  /colly/operational-service/v2/clusters:
     get:
       responses:
         "200":
@@ -34,7 +34,7 @@ paths:
       summary: Get Clusters
       tags:
       - Cluster Resources Rest
-  /colly/inventory-service/v2/clusters/{clusterName}:
+  /colly/operational-service/v2/clusters/{clusterName}:
     post:
       parameters:
       - name: clusterName
@@ -76,7 +76,7 @@ paths:
       security:
       - SecurityScheme:
         - admin
-  /colly/inventory-service/v2/environments:
+  /colly/operational-service/v2/environments:
     get:
       responses:
         "200":
@@ -94,7 +94,7 @@ paths:
       summary: Get Environments
       tags:
       - Cluster Resources Rest
-  /colly/inventory-service/v2/environments/{envId}:
+  /colly/operational-service/v2/environments/{envId}:
     post:
       parameters:
       - name: envId
@@ -188,7 +188,7 @@ paths:
       security:
       - SecurityScheme:
         - admin
-  /colly/inventory-service/v2/metadata:
+  /colly/operational-service/v2/metadata:
     get:
       responses:
         "200":
@@ -204,7 +204,7 @@ paths:
       summary: Get Metadata
       tags:
       - Cluster Resources Rest
-  /colly/inventory-service/v2/tick:
+  /colly/operational-service/v2/tick:
     post:
       responses:
         "201":
@@ -225,6 +225,10 @@ components:
           type: array
           items:
             type: string
+        syncInterval:
+          description: "synchronization period with cluster in human-readable duration notation"
+          # чекнуть дататип
+          type: string
     ClusterDTO:
       type: object
       properties:
@@ -232,8 +236,15 @@ components:
           type: string
         description:
           type: string
-        synced:
+        syncStatus:
           type: boolean
+          properties:
+            lastSyncResult: 
+              type: boolean
+            lastSyncCompletedAt:
+              $ref: "#/components/schemas/Instant"
+            lastSyncAttemptAt: # чекнуть
+              $ref: "#/components/schemas/Instant"
     DeploymentStatus:
       type: string
       enum:
@@ -270,8 +281,6 @@ components:
             type: string
         description:
           type: string
-        deploymentVersion:
-          type: string
         cleanInstallationDate:
           $ref: "#/components/schemas/Instant"
         monitoringData:
@@ -282,6 +291,23 @@ components:
           $ref: "#/components/schemas/DeploymentStatus"
         ticketLinks:
           type: string
+        # Supported query parameters for filtering deployment operations history:
+        # - sort: string (default: "-startedAt") - sort order ("startedAt" for ascending, "-startedAt" for descending)
+        # - result: DeploymentOperationResult enum - filters by operation result
+        # - mode: DeploymentOperationMode enum - filters by deployment mode
+        # дорого
+        # это таргет когда сделаем не знаем, возможно будт шорт терм аля cleanInstallationDate
+        deploymentOperationsHistory:
+          type: array
+          description: "Contains deployment operations from all namespaces (5 most recent for each deployment) that are part of the environment. Operations with CLEAN_INSTALL mode remove all previous ones"
+          items:
+            $ref: "#/components/schemas/DeploymentOperationExecutionDTO"
+        # ex-deploymentVersion
+        installedSolutionDescriptors:
+          type: array
+          description: "List of Solution Descriptors installed in the environment's namespaces"
+          items:
+            $ref: "#/components/schemas/SolutionDescriptorRef"
     # Users cannot add statuses on their own. Users can create labels and assign them to environments
     EnvironmentStatus:
       type: string
@@ -320,38 +346,19 @@ components:
           type: string
         existsInK8s:
           type: boolean
-        # Supported query parameters for filtering deployment operations history:
-        # - limit: integer (default: 5, max: 5) - limits the number of returned operations
-        # - sort: string (default: "-startedAt") - sort order ("startedAt" for ascending, "-startedAt" for descending)
-        # - result: DeploymentOperationResult enum - filters by operation result
-        # - strategy: DeploymentOperationStrategy enum - filters by deployment strategy
-        deploymentOperationsHistory:
-          type: array
-          description: "Contains the last 5 deployment operations in the namespace. Operations with CLEAN_INSTALL strategy remove all previous ones"
-          items:
-            $ref: "#/components/schemas/DeploymentOperationExecutionDTO"
-        installedSolutionDescriptors:
-          type: array
-          description: "List of Solution Descriptors installed in the namespace"
-          items:
-            $ref: "#/components/schemas/SolutionDescriptorRef"
         deployPostfix:
           type: string
           description: "Deploy postfix, namespace role in solution"
-    SolutionDescriptorRef:
-      type: string
-      description: "Solution Descriptor coordinate in name:version format"
-      example: "Product-SD:ph1-cd2-20250529.140352-256"
-      pattern: "^[A-Za-z0-9][A-Za-z0-9._-]*:[A-Za-z0-9][A-Za-z0-9._-]*$"
+    # TODO find out what other statuses exist, if there are only two, it might be possible to refactor to boolean
     DeploymentOperationResult:
       type: string
       description: "Deployment operation result"
       enum:
       - SUCCESS
       - FAIL
-    DeploymentOperationStrategy:
+    DeploymentOperationMode:
       type: string
-      description: "Deployment operation strategy. ROLLING_UPDATE installs applications on top of existing ones. CLEAN_INSTALL removes all objects in the namespace before installation"
+      description: "Deployment operation mode. ROLLING_UPDATE installs applications on top of existing ones. CLEAN_INSTALL removes all objects in the namespace before installation"
       enum:
       - ROLLING_UPDATE
       - CLEAN_INSTALL
@@ -363,7 +370,7 @@ components:
           type: string
         startedAt:
           $ref: "#/components/schemas/Instant"
-        deploymentOperations:
+        operations:
           type: array
           items:
             $ref: "#/components/schemas/SolutionDescriptorDeploymentOperationDTO"
@@ -375,10 +382,10 @@ components:
           type: string
         result:
           $ref: "#/components/schemas/DeploymentOperationResult"
-        strategy:
-          $ref: "#/components/schemas/DeploymentOperationStrategy"
+        mode:
+          $ref: "#/components/schemas/DeploymentOperationMode"
         solutionDescriptor:
-          $ref: "#/components/schemas/SolutionDescriptorRef"
+          type: string
   securitySchemes:
     SecurityScheme:
       type: openIdConnect
