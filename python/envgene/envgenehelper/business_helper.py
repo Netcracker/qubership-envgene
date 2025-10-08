@@ -45,6 +45,7 @@ def getenv_with_error(var_name):
     var = getenv(var_name)
     if not var:
         raise ValueError(f'Required value was not given and is not set in environment as {var_name}')
+    logger.debug(f"{var_name}: {var}")
     return var
 
 def get_env_instances_dir(environment_name, cluster_name, instances_dir):
