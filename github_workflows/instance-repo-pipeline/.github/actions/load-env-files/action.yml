@@ -15,15 +15,15 @@ runs:
         PATHS_INPUT: ${{ inputs.paths }}
       run: |
         echo "Loading environment files..."
-        
+
         # Create a temporary file with the paths
         echo "$PATHS_INPUT" > /tmp/paths.txt
-        
+
         # Read paths from the temporary file
         while IFS= read -r file_path; do
           # Remove any whitespace
           clean_path=$(echo "$file_path" | xargs)
-          
+
           if [ -n "$clean_path" ]; then
             if [ -f "$clean_path" ]; then
               echo "Loading variables from: $clean_path"
@@ -36,8 +36,8 @@ runs:
             fi
           fi
         done < /tmp/paths.txt
-        
+
         # Clean up
         rm -f /tmp/paths.txt
-        
+
         echo "Finished loading environment files"

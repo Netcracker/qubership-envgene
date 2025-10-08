@@ -113,7 +113,7 @@ jobs:
       - name: Process additional variables
         run: |
           .github/scripts/process_additional_variables.sh
-          
+
       - name: Create env_generation_params
         run: |
           .github/scripts/create_env_generation_params.sh
@@ -152,12 +152,12 @@ jobs:
         uses: actions/checkout@v4.1.0
         with:
           fetch-depth: 0
-        
+
       - name: Download environment-file
         uses: actions/download-artifact@v4
         with:
           name: environment-file
-      
+
       - name: Prepare environment
         run: |
           while IFS= read -r line; do
@@ -165,27 +165,27 @@ jobs:
               echo "$line" >> "$GITHUB_ENV"
             fi
           done < ./.env
-          
+
           PACKAGE_NAME="$(echo '${{ matrix.environment }}' | sed 's|/|_|g')"
           echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
-          
+
           .github/scripts/process_matrix_iteration.sh ${{ matrix.environment }}
 
         shell: bash
 
       - name: Create name for dynamic secret
-        run: | 
-          SECRET_NAME=$(echo "${{ matrix.environment }}" | awk -F "/" '{print $1}')_${{ env.SECRET_POSTFIX }} 
+        run: |
+          SECRET_NAME=$(echo "${{ matrix.environment }}" | awk -F "/" '{print $1}')_${{ env.SECRET_POSTFIX }}
           echo "SECRET_NAME=$SECRET_NAME" >> $GITHUB_ENV
 
       - name: Create dynamic secret
         run: |
-          DYNAMIC_SECRET=${{ secrets[env.SECRET_NAME] }} 
+          DYNAMIC_SECRET=${{ secrets[env.SECRET_NAME] }}
           echo "DYNAMIC_SECRET=$DYNAMIC_SECRET" >> $GITHUB_ENV
 
       - name: Create env file for container
-        run: env > .env.container    
-      
+        run: env > .env.container
+
       ### GENERATE INVENTORY ###
       - name: Generate Inventory
         uses: addnab/docker-run-action@v3
@@ -210,7 +210,7 @@ jobs:
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
       ##########################
-      
+
       ### CREDENTIAL ROTATION ###
       - name: Credential Rotation
         uses: addnab/docker-run-action@v3
@@ -336,9 +336,9 @@ jobs:
           options: -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root
           run: |
             source /module/venv/bin/activate
-            
+
             echo 'Prepare git_commit job for ${ENVIRONMENT_NAME}...'
-            
+
             if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
               env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs")
               for path in $env_path; do
@@ -372,4 +372,3 @@ jobs:
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
       ##########################
- 
