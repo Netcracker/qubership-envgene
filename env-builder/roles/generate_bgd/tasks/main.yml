@@ -25,3 +25,5 @@
     fail_msg: >
       One or more BG namespaces (controller, origin, peer)
       do not exist in Namespaces.
+      BG object: {{ rendered_bg }}
+      Namespaces: {{ existing_namespaces }}
