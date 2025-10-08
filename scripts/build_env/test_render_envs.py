@@ -1,12 +1,12 @@
+import difflib
 import filecmp
 from os import environ
 from pathlib import Path
 
 import pytest
-import difflib
+from envgenehelper import *
 
 from main import render_environment, cleanup_resulting_dir
-from envgenehelper import *
 
 test_data = [
     # (cluster_name, environment_name, template)
@@ -31,6 +31,7 @@ def change_test_dir(request, monkeypatch):
     monkeypatch.chdir(request.fspath.dirname + "/../..")
 
 
+# TODO use func from test_helper during impl replacement ansible
 @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
 def test_render_envs(cluster_name, env_name, version):
     environ['CI_PROJECT_DIR'] = g_base_dir
