@@ -283,11 +283,6 @@ def generate_paramset_templates(context):
                 target_path.unlink()
 
 
-def process_external_defs(context):
-    logger.info("APP_REG_DEFS_JOB variable is set, "
-                "Application and Registry definitions from corresponding job will be used for the Environment")
-
-
 def find_templates(templates_dir: str, def_type: str) -> list[Path]:
     search_path = Path(templates_dir) / def_type
     if not search_path.exists():
@@ -373,45 +368,40 @@ def ensure_valid_fields(context, fields: list[str]):
 
 def process_app_reg_defs(context):
     current_env_dir = context["current_env_dir"]
-    use_external_defs = bool(context.get("APP_REG_DEFS_JOB"))
-    context["use_external_defs"] = use_external_defs
-    if use_external_defs:
-        process_external_defs(context)
-    else:
-        templates_dir = context["templates_dir"]
-        appdef_templates = find_templates(templates_dir, "appdefs")
-        regdef_templates = find_templates(templates_dir, "regdefs")
-        context["appdef_templates"] = appdef_templates
-        context["regdef_templates"] = regdef_templates
+    templates_dir = context["templates_dir"]
+    appdef_templates = find_templates(templates_dir, "appdefs")
+    regdef_templates = find_templates(templates_dir, "regdefs")
+    context["appdef_templates"] = appdef_templates
+    context["regdef_templates"] = regdef_templates
 
-        ensure_directory(Path(current_env_dir).joinpath("AppDefs"))
-        ensure_directory(Path(current_env_dir).joinpath("RegDefs"))
+    ensure_directory(Path(current_env_dir).joinpath("AppDefs"))
+    ensure_directory(Path(current_env_dir).joinpath("RegDefs"))
 
-        output_dir = Path(context["output_dir"])
-        cluster_name = context["cluster_name"]
-        config_file_name_yaml = Path("configuration") / "appregdef_config.yaml"
-        config_file_name_yml = Path("configuration") / "appregdef_config.yml"
+    output_dir = Path(context["output_dir"])
+    cluster_name = context["cluster_name"]
+    config_file_name_yaml = Path("configuration") / "appregdef_config.yaml"
+    config_file_name_yml = Path("configuration") / "appregdef_config.yml"
 
-        potential_config_files = [
-            output_dir / cluster_name / config_file_name_yaml,
-            output_dir / cluster_name / config_file_name_yml,
-            output_dir.parent / config_file_name_yaml,
-            output_dir.parent / config_file_name_yml,
-        ]
-        appregdef_config_paths = [f for f in potential_config_files if f.exists()]
-        if appregdef_config_paths:
-            appregdef_config = {}
-            appregdef_config_path = appregdef_config_paths[0]
-            try:
-                appregdef_config = openYaml(appregdef_config_path)
-                logger.info(f"Overrides applications registries definitions config found at: {appregdef_config_path}")
-            except Exception as e:
-                logger.warning(f"Failed to load config at: {appregdef_config_path}. Error: {e}")
+    potential_config_files = [
+        output_dir / cluster_name / config_file_name_yaml,
+        output_dir / cluster_name / config_file_name_yml,
+        output_dir.parent / config_file_name_yaml,
+        output_dir.parent / config_file_name_yml,
+    ]
+    appregdef_config_paths = [f for f in potential_config_files if f.exists()]
+    if appregdef_config_paths:
+        appregdef_config = {}
+        appregdef_config_path = appregdef_config_paths[0]
+        try:
+            appregdef_config = openYaml(appregdef_config_path)
+            logger.info(f"Overrides applications registries definitions config found at: {appregdef_config_path}")
+        except Exception as e:
+            logger.warning(f"Failed to load config at: {appregdef_config_path}. Error: {e}")
 
-            context["appdefs"]["overrides"] = appregdef_config.get("appdefs", {}).get("overrides", {})
-            context["regdefs"]["overrides"] = appregdef_config.get("regdefs", {}).get("overrides", {})
-            render_app_defs(context)
-            render_reg_defs(context)
+        context["appdefs"]["overrides"] = appregdef_config.get("appdefs", {}).get("overrides", {})
+        context["regdefs"]["overrides"] = appregdef_config.get("regdefs", {}).get("overrides", {})
+        render_app_defs(context)
+        render_reg_defs(context)
 
 
 def generate_config_env(envvars: dict):

@@ -1,4 +1,6 @@
 import filecmp
+from pathlib import Path
+
 import pytest
 import difflib
 
