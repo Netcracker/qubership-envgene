@@ -17,9 +17,9 @@ def filter_namespaces(namespaces: list[str], filter: str, bgd_object: dict) -> l
         if not sel.startswith("@"):
             resolved_filter.append(sel)
             continue
-        alias = sel[1:]
+        alias = sel[1:] + 'Namespace'
         if alias not in bgd_object:
-            raise ValueError(f"Unknown alias in NS_BUILD_FILTER: {sel}")
+            raise ValueError(f"Unknown alias in NS_BUILD_FILTER: {sel}, can't find {alias} in BGD object")
         name = bgd_object[alias]["name"]
 
         resolved_filter.append(name)

@@ -33,7 +33,7 @@ def test_inclusion_filter_with_alias(sample_namespaces, sample_bgd):
     assert {ns for ns in result} == {"ns1", "ns3"}
 
 def test_exclusion_filter_with_alias(sample_namespaces, sample_bgd):
-    result = filter_namespaces(sample_namespaces, "!@alias1", sample_bgd)
+    result = filter_namespaces(sample_namespaces, "!@peer", sample_bgd)
     assert len(result) == 2
     assert {ns for ns in result} == {"ns2", "ns3"}
 
