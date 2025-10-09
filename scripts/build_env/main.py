@@ -16,6 +16,15 @@ PARAMSET_SCHEMA = "schemas/paramset.schema.json"
 CLOUD_SCHEMA = "schemas/cloud.schema.json"
 NAMESPACE_SCHEMA = "schemas/namespace.schema.json"
 ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
+cleanup_targets = [
+    "Applications",
+    "Namespaces",
+    "Profiles",
+    "cloud.yml",
+    "tenant.yml",
+    "bg_domain.yml",
+    "composite_structure.yml",
+]
 
 
 def clear_output_folder(dir):
@@ -33,7 +42,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     render_env_dir = f"{render_dir}/{env_name}"
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}', f"{render_env_dir}/{INVENTORY_DIR_NAME}")
     # clearing instances dir
-    clear_output_folder(f'{output_dir}/{cluster_name}/{env_name}')
+    cleanup_resulting_dir(pathlib.Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
     check_dir_exist_and_create(f'{render_parameters_dir}/from_template')
     copy_path(f'{templates_dir}/parameters', f'{render_parameters_dir}/from_template')
@@ -56,25 +65,17 @@ def pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instanc
 
 def cleanup_resulting_dir(resulting_dir: pathlib.Path):
     logger.info(f"Cleaning resulting directory: {str(resulting_dir)}")
-    dirs_to_remove = ["Applications", "Namespaces", "Profiles"]
-    files_to_remove = [
-        "cloud.yml",
-        "tenant.yml",
-        "bg-domain.yml",
-        "composite-structure.yml",
-    ]
-
-    for directory in dirs_to_remove:
-        dir_path = resulting_dir.joinpath(directory)
-        if check_dir_exists(dir_path):
-            logger.info(f"Removing directory: {dir_path}")
-            delete_dir(dir_path)
-
-    for file in files_to_remove:
-        file_path = resulting_dir.joinpath(file)
-        if check_file_exists(file_path):
-            logger.info(f"Removing file: {file_path}")
-            deleteFile(file_path)
+        # Ensure resulting_dir is a Path object
+    if isinstance(resulting_dir, str):
+        resulting_dir = pathlib.Path(resulting_dir)
+    for target in cleanup_targets:
+        path = resulting_dir.joinpath(target)
+        if path.is_dir():
+            logger.info(f"Removing directory: {path}")
+            delete_dir(path)
+        elif path.is_file():
+            logger.info(f"Removing file: {path}")
+            deleteFile(path)
 
 
 def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir):
