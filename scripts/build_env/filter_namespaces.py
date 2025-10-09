@@ -1,8 +1,6 @@
-from pathlib import Path
 import subprocess
 
-from envgenehelper.business_helper import get_current_env_dir_with_env_vars, getenv_with_error
-from envgenehelper.yaml_helper import openYaml
+from envgenehelper.business_helper import get_bgd_object, get_namespaces, getenv_with_error, getenv_and_log
 from envgenehelper import logger
 
 def filter_namespaces(namespaces: list[str], filter: str, bgd_object: dict) -> list[str]:
@@ -30,25 +28,21 @@ def filter_namespaces(namespaces: list[str], filter: str, bgd_object: dict) -> l
     return filtered_namespaces
 
 def main():
-    env_dir = Path(get_current_env_dir_with_env_vars())
-
-    filter = getenv_with_error('NS_BUILD_FILTER')
+    filter = getenv_and_log('NS_BUILD_FILTER')
     logger.info(f"Filtering namespaces with NS_BUILD_FILTER: {filter}")
 
-    namespaces_path = env_dir.joinpath('Namespaces')
-    logger.info(f'Namespaces path: {namespaces_path}')
-
-    namespaces = [p.name for p in namespaces_path.iterdir() if p.is_dir()]
+    namespaces = get_namespaces()
+    namespace_names = [ns.name for ns in namespaces]
     logger.info(f'Namespaces found: {namespaces}')
 
-    bgd = openYaml(env_dir.joinpath('bg_domain.yml'))
+    bgd = get_bgd_object()
     logger.info(f'BGD object: {bgd}')
 
-    filtered_namespaces = filter_namespaces(namespaces, filter, bgd)
-    namespaces_to_restore = [ns for ns in namespaces if ns not in filtered_namespaces]
+    filtered_namespaces = filter_namespaces(namespace_names, filter, bgd)
+    namespaces_to_restore = [ns for ns in namespaces if ns.name not in filtered_namespaces]
     logger.info(f"Namespaces that didn't pass filter will be restored: {namespaces_to_restore}")
 
-    namespace_paths_to_restore = [namespaces_path.joinpath(ns) for ns in namespaces_to_restore]
+    namespace_paths_to_restore = [ns.path for ns in namespaces_to_restore]
     if namespace_paths_to_restore:
         subprocess.run(['git','restore','--'] + namespace_paths_to_restore, check=True)
         logger.info(f"Restoration was successful")
