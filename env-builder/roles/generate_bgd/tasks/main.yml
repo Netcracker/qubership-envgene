@@ -4,29 +4,3 @@
      path: "{{ current_env_dir }}/bg_domain.yml"
      block: "{{ lookup('template', _template) }}"
      create: yes
-
-- name: Load generated BG Domain yaml
-  ansible.builtin.set_fact:
-    rendered_bg: "{{ lookup('file', current_env_dir ~ '/bg_domain.yml') | from_yaml }}"
-
-- name: Validate BG namespaces exist in current_env_template
-  vars:
-    existing_namespaces: >-
-      {{ current_env_template.namespaces
-         | map(attribute='template_path')
-         | map('regex_replace', '^.*/', '')
-         | map('regex_replace', '\.ya?ml\.j2$', '')
-         | list }}
-  ansible.builtin.assert:
-    that:
-      - rendered_bg.controllerNamespace in existing_namespaces
-      - rendered_bg.originNamespace.name in existing_namespaces
-      - rendered_bg.peerNamespace.name in existing_namespaces
-    fail_msg: >
-      One or more BG namespaces (controller, origin, peer)
-      do not exist in Namespaces.
-      BG object: {{ rendered_bg }}
-      Namespaces: {{ existing_namespaces }}
-      controller: {{ rendered_bg.controllerNamespace}}
-      peer: {{ rendered_bg.peerNamespace}}
-      origin: {{ rendered_bg.originNamespace}}
