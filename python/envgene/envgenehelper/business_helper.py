@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import pathlib
 import re
 from os import getenv
@@ -308,8 +308,13 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
 
 @dataclass
 class Namespace:
-    name: str
     path: Path
+    name: str = field(init=False)
+    definition_path: Path = field(init=False)
+
+    def __post_init__(self):
+        self.definition_path = self.path.joinpath('namespace.yml')
+        self.name = openYaml(self.definition_path)['name']
 
 def get_namespaces_path() -> Path:
     env_dir = get_current_env_dir_with_env_vars()
@@ -319,8 +324,8 @@ def get_namespaces_path() -> Path:
 
 def get_namespaces() -> list[Namespace]:
     namespaces_path = get_namespaces_path()
-    namespace_paths = [p.joinpath('namespace.yml') for p in namespaces_path.iterdir() if p.is_dir()]
-    namespaces = [Namespace(name=openYaml(p)['name'],path=p) for p in namespace_paths]
+    namespace_paths = [p for p in namespaces_path.iterdir() if p.is_dir()]
+    namespaces = [Namespace(path=p) for p in namespace_paths]
     logger.debug(namespaces)
     return namespaces
 
@@ -332,6 +337,6 @@ def get_bgd_path() -> Path:
 
 def get_bgd_object() -> CommentedMap:
     bgd_path = get_bgd_path()
-    bgd_object = openYaml(bgd_path)
-    logger.debug(bgd_path)
+    bgd_object = openYaml(bgd_path, allow_default=True)
+    logger.debug(bgd_object)
     return bgd_object

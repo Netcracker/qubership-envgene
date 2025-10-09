@@ -1,6 +1,6 @@
 import subprocess
 
-from envgenehelper.business_helper import get_bgd_object, get_namespaces, getenv_with_error, getenv_and_log
+from envgenehelper.business_helper import get_bgd_object, get_namespaces, getenv_and_log
 from envgenehelper import logger
 
 def filter_namespaces(namespaces: list[str], filter: str, bgd_object: dict) -> list[str]:
@@ -28,7 +28,8 @@ def filter_namespaces(namespaces: list[str], filter: str, bgd_object: dict) -> l
     return filtered_namespaces
 
 def main():
-    filter = getenv_and_log('NS_BUILD_FILTER')
+    filter = getenv_and_log('NS_BUILD_FILTER', default='')
+    assert filter
     logger.info(f"Filtering namespaces with NS_BUILD_FILTER: {filter}")
 
     namespaces = get_namespaces()
