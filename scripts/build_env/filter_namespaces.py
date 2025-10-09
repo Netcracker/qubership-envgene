@@ -29,7 +29,6 @@ def filter_namespaces(namespaces: list[str], filter: str, bgd_object: dict) -> l
 
 def main():
     filter = getenv_and_log('NS_BUILD_FILTER', default='')
-    assert filter
     logger.info(f"Filtering namespaces with NS_BUILD_FILTER: {filter}")
 
     namespaces = get_namespaces()

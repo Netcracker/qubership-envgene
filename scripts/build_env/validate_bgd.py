@@ -5,7 +5,7 @@ def main():
     logger.info(f"Validating that all namespaces mentioned in BG domain object are available in namespaces")
     namespace_names = [ns.name for ns in get_namespaces()]
     bgd = get_bgd_object()
-    for k,v in bgd:
+    for k,v in bgd.items():
         if not 'Namespace' in k:
             continue
         if v['name'] not in namespace_names:
