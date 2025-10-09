@@ -114,7 +114,6 @@
         _tenant: "{{ tenant }}"
         _cloud: "{{ current_env.cloud }}"
         _current_env_dir: "{{ current_env_dir }}"
-        _namespace_template_name: "{{ namespace.template_path.split('/')|last|replace('.yml.j2', '')|replace('.yaml.j2', '') }}"
       loop: "{{ current_env_template.namespaces }}"
       loop_control:
         loop_var: namespace
