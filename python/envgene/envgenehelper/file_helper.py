@@ -73,24 +73,40 @@ def is_source_path_valid(source_path: Path, target_path: Path) -> bool:
     return True
 
 
-def copy_path(source_path: str, target_path: str):
-    target_path = Path(target_path).resolve()
-    if is_glob(source_path):
-        matches = glob.glob(source_path)
+def _is_glob(path: str) -> bool:
+    return any(ch in str(path) for ch in ["*", "?", "["])
+
+
+def copy_path(source_path: str, target_dir: str):
+    target_dir = Path(target_dir)
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    if _is_glob(source_path):
+        matches = sorted(glob.glob(source_path))
         if not matches:
-            logger.info(f"No files matched the pattern '{source_path}'. Nothing to copy. Skipping...")
             return
-        for src in matches:
-            src_path = Path(src).resolve()
-            if is_source_path_valid(src_path, target_path):
-                final_target = target_path / src_path.name if src_path.is_dir() else target_path
-                final_target.mkdir(parents=True, exist_ok=True)
-                cp.cp(str(src_path), str(final_target), force=True)
+        for match in matches:
+            _copy_single(Path(match), target_dir, is_from_glob=True)
     else:
-        src_path = Path(source_path).resolve()
-        if is_source_path_valid(src_path, target_path):
-            target_path.mkdir(parents=True, exist_ok=True)
-            cp.cp(str(src_path), str(target_path), force=True)
+        _copy_single(Path(source_path), target_dir, is_from_glob=False)
+
+
+def _copy_single(src: Path, target_dir: Path, is_from_glob: bool):
+    is_source_path_valid(src, target_dir)
+
+    if src.is_dir():
+        for item in src.rglob("*"):
+            rel = item.relative_to(src.parent if is_from_glob else src)
+            dst = target_dir / rel
+            if item.is_dir():
+                dst.mkdir(parents=True, exist_ok=True)
+            else:
+                dst.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(item, dst)
+    elif src.is_file():
+        dst = target_dir / src.name
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dst)
 
 
 def move_path(source_path, target_path):
