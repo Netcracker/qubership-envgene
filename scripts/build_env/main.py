@@ -91,9 +91,9 @@ def handle_template_override(render_dir):
 def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all_instances_dir, output_dir,
                       g_template_version, work_dir):
     # defining folders that will be used during generation
-    render_dir = getAbsPath('tmp/render')
-    render_parameters_dir = getAbsPath('tmp/parameters_templates')
-    render_profiles_dir = getAbsPath('tmp/resource_profiles')
+    render_dir = getAbsPath(f'tmp/{env_name}_{cluster_name}/render')
+    render_parameters_dir = getAbsPath(f'tmp/{env_name}_{cluster_name}/parameters_templates')
+    render_profiles_dir = getAbsPath(f'tmp/{env_name}_{cluster_name}/resource_profiles')
     # preparing folders for generation
     render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
                                                    render_parameters_dir, render_profiles_dir, output_dir)
