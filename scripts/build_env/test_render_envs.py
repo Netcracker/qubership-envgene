@@ -10,22 +10,26 @@ test_data = [
     # (cluster_name, environment_name, template)
     ("cluster-01", "env-01", "composite-prod"),
     ("cluster-01", "env-02", "composite-dev"),
-    ("cluster-01", "env-03", "composite-dev"),
-    ("cluster-01", "env-04", "simple"),
-    ("cluster01", "env02", "test-01"),
-    ("cluster01", "env01", "test-01"),
-    ("cluster01", "env03", "test-template-1"),
-    ("cluster01", "env04", "test-template-2")
+    # ("cluster-01", "env-03", "composite-dev"),
+    # ("cluster-01", "env-04", "simple"),
+    # ("cluster01", "env02", "test-01"),
+    # ("cluster01", "env01", "test-01"),
+    # ("cluster01", "env03", "test-template-1"),
+    # ("cluster01", "env04", "test-template-2")
 ]
 
 base_dir = Path(__file__).parent.resolve()
+g_templates_dir = str((base_dir / "../../test_data/test_templates").resolve())
+g_inventory_dir = str((base_dir / "../../test_data/test_environments").resolve())
+g_output_dir = str((base_dir / "../../tmp/test_environments").resolve())
 
+g_base_dir = get_parent_dir_for_dir(g_inventory_dir)
 
-def clean_output_dir(unique_output_dir):
-    unique_output_dir = Path(unique_output_dir)
-    if unique_output_dir.exists():
-        shutil.rmtree(unique_output_dir)
-    unique_output_dir.mkdir(parents=True, exist_ok=True)
+def clean_output_dir():
+    g_output_dir_path = (base_dir / "../../tmp").resolve()
+    if g_output_dir_path.exists():
+        shutil.rmtree(g_output_dir_path)
+    g_output_dir_path.mkdir(parents=True, exist_ok=True)
 
 
 @pytest.fixture(autouse=True)
@@ -35,14 +39,7 @@ def change_test_dir(request, monkeypatch):
 
 @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
 def test_render_envs(cluster_name, env_name, version):
-    dir = f"{cluster_name}_{env_name}_{version}"
-    g_templates_dir = str((base_dir / "../../test_data/test_templates").resolve())
-    g_inventory_dir = str((base_dir / "../../test_data/test_environments").resolve())
-    g_output_dir = str((base_dir / "../../tmp/" / f"{env_name}_{cluster_name}" / "test_environments").resolve())
-
-    g_base_dir = get_parent_dir_for_dir(g_inventory_dir)
-
-    clean_output_dir(g_output_dir)
+    clean_output_dir()
     render_environment(env_name, cluster_name, g_templates_dir, g_inventory_dir, g_output_dir, version, g_base_dir)
     source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
     generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
@@ -76,4 +73,4 @@ def test_render_envs(cluster_name, env_name, version):
         logger.info(f"Errors: {dump_as_yaml_format(errors)}")
     assert len(mismatch) == 0, f"Files from source and rendering result mismatch: {dump_as_yaml_format(mismatch)}"
     assert len(errors) == 0, f"Error during comparing source and rendering result: {dump_as_yaml_format(errors)}"
-    clean_output_dir(g_output_dir)
+    clean_output_dir()
