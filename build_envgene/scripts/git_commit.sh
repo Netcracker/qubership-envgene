@@ -105,10 +105,10 @@ if [ -f "$CREDS_FILE" ]; then
   mkdir -p /tmp/updated_creds
 
   while IFS= read -r file_path; do
-
+    echo "Credential update for $file_path"
     [[ -z "$file_path" || "$file_path" == \#* ]] && continue
 
-    if echo "$file_path" | grep -q "${CLUSTER_NAME}/${ENVIRONMENT_NAME}"; then
+    if echo "$file_path" | grep -q "${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"; then
       continue
     fi
 
@@ -195,24 +195,12 @@ if [ -d /tmp/updated_creds ]; then
     find /tmp/updated_creds -type f | while read tmp_file; do
       rel_path="${tmp_file#/tmp/updated_creds/}"  # Remove the /tmp path prefix
       if [ -f "$rel_path" ]; then
-        echo "Overwriting $tmp_file with existing file: $rel_path"
+        echo "Copying file from $tmp_file to $rel_path"
         cp "$tmp_file" "$rel_path"
       else
         echo "Skipping: $rel_path does not exist in repo after pull"
       fi
     done
-fi
-
-if [ -d /tmp/updated_creds ]; then
-  find /tmp/updated_creds -type f | while read tmp_file; do
-    rel_path="${tmp_file#/tmp/updated_creds/}"  # Remove the /tmp path prefix
-    if [ -f "$rel_path" ]; then
-      echo "Overwriting $tmp_file with existing file: $rel_path"
-      cp "$tmp_file" "$rel_path"
-    else
-      echo "Skipping: $rel_path does not exist in repo after pull"
-    fi
-  done
 fi
 
 echo "Checking changes..."
