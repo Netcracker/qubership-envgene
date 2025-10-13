@@ -1,0 +1,29 @@
+{
+    "project_name": "my-envgene-project",
+    "project_description": "A project with EnvGene GitHub Actions workflows",
+    "author_name": "Developer",
+    "author_email": "developer@example.com",
+    "python_version": "3.11",
+    "use_docker": "true",
+    "use_tests": "true",
+    "use_linting": "true",
+    "docker_registry": "ghcr.io/netcracker",
+    "docker_username": "{{cookiecutter.author_name|lower}}",
+    "github_org": "netcracker",
+    "env_template_version": "latest",
+    "env_builder": "true",
+    "generate_effective_set": "false",
+    "get_passport": "false",
+    "cmdb_import": "false",
+    "_is_init": "false",
+    "_copy_without_render": [
+        "*.pyc",
+        "__pycache__",
+        ".git",
+        "node_modules",
+        ".github/**/*.yml",
+        ".github/**/*.yaml",
+        ".github/**/*.sh",
+        ".github/**/*.env"
+    ]
+}

@@ -1,0 +1,43 @@
+name: 'Load Environment Files'
+description: 'Load environment variables from multiple .env files'
+
+inputs:
+  paths:
+    description: 'List of file paths to load (one per line)'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Load environment files
+      shell: bash
+      env:
+        PATHS_INPUT: ${{ inputs.paths }}
+      run: |
+        echo "Loading environment files..."
+
+        # Create a temporary file with the paths
+        echo "$PATHS_INPUT" > /tmp/paths.txt
+
+        # Read paths from the temporary file
+        while IFS= read -r file_path; do
+          # Remove any whitespace
+          clean_path=$(echo "$file_path" | xargs)
+
+          if [ -n "$clean_path" ]; then
+            if [ -f "$clean_path" ]; then
+              echo "Loading variables from: $clean_path"
+              # Ensure newline before appending file content
+              echo "" >> "$GITHUB_ENV"
+              cat "$clean_path" >> "$GITHUB_ENV"
+              echo "✅ Successfully loaded $clean_path"
+            else
+              echo "⚠️  File not found: $clean_path"
+            fi
+          fi
+        done < /tmp/paths.txt
+
+        # Clean up
+        rm -f /tmp/paths.txt
+
+        echo "Finished loading environment files"
