@@ -7,16 +7,17 @@
     - [Via GitHub Actions UI](#via-github-actions-ui)
     - [Via GitHub API Call](#via-github-api-call)
   - [Parameter Priority](#parameter-priority)
+  - [`pipeline_vars.env`](#pipeline_varsenv)
   - [Pipeline Customization](#pipeline-customization)
   - [How to Get the Pipeline](#how-to-get-the-pipeline)
 
 ## Overview
 
-The EnvGene pipeline (`pipeline.yml`) is a GitHub Actions workflow that supports both manual UI triggers and API calls. It provides the same full EnvGene functionality as the GitLab pipeline.
+The EnvGene pipeline (`Envgene.yaml`) is a GitHub Actions workflow that supports both manual UI triggers and API calls. It provides the same full EnvGene functionality as the GitLab pipeline.
 
 ## Available Parameters
 
-GitHub's UI limits manual inputs to 10 parameters. To handle this limitation while maintaining full functionality, we expose the most frequently used parameters directly in the UI and group the remaining parameters within the [GITHUB_PIPELINE_API_INPUT](/docs/instance-pipeline-parameters.md#github_pipeline_api_input) parameter.
+GitHub's UI limits manual inputs to 10 parameters. To handle this limitation while maintaining full functionality, we expose the most frequently used parameters directly in the UI and group the remaining parameters within the [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#gh_additional_params) parameter.
 
 Only a limited number of core parameters are available in the GitHub version of the pipeline:
 
@@ -27,9 +28,9 @@ Only a limited number of core parameters are available in the GitHub version of 
 - [GENERATE_EFFECTIVE_SET](/docs/instance-pipeline-parameters.md#generate_effective_set)
 - [GET_PASSPORT](/docs/instance-pipeline-parameters.md#get_passport)
 - [CMDB_IMPORT](/docs/instance-pipeline-parameters.md#cmdb_import)
-- [GITHUB_PIPELINE_API_INPUT](/docs/instance-pipeline-parameters.md#github_pipeline_api_input)
+- [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#gh_additional_params)
 
-The [GITHUB_PIPELINE_API_INPUT](/docs/instance-pipeline-parameters.md#github_pipeline_api_input) parameter serves as a wrapper for all parameters except those listed above. This approach enables the transmission of all [Instance Pipeline parameters](/docs/instance-pipeline-parameters.md).
+The [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#github_pipeline_api_input) parameter serves as a wrapper for all parameters except those listed above. This approach enables the transmission of all [Instance Pipeline parameters](/docs/instance-pipeline-parameters.md).
 
 ## How to Trigger the Pipeline
 
@@ -38,8 +39,8 @@ The pipeline can be triggered in two ways:
 ### Via GitHub Actions UI
 
 1. Go to your GitHub repository
-2. Navigate to **Actions** tab
-3. Select **EnvGene Execution** workflow
+2. Navigate to the **Actions** tab
+3. Select the **EnvGene Execution** workflow
 4. Click **Run workflow**
 5. Fill in the required parameters
 6. Click **Run workflow**
@@ -52,12 +53,12 @@ Use the GitHub API to trigger the workflow:
 curl -X POST \
   -H "Authorization: token <github-token>" \
   -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/<repository-owner>/<repository-name>/actions/workflows/pipeline.yml/dispatches \
+  https://api.github.com/repos/<repository-owner>/<repository-name>/actions/workflows/Envgene.yaml/dispatches \
   -d '{
     "ref": "<branch-name>",
     "inputs": {
       "<instance-pipeline-parameter-key>": "<instance-pipeline-parameter-value>"
-      "GITHUB_PIPELINE_API_INPUT": "<json-in-string>"
+      "GH_ADDITIONAL_PARAMS": "<json-in-string>"
     }
   }'
 ```
@@ -68,7 +69,7 @@ curl -X POST \
 curl -X POST \
   -H "Authorization: token ghp_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789" \
   -H "Accept: application/vnd.github.v3+json" \
-  https://api.github.com/repos/qubership/instance-repo/actions/workflows/pipeline.yml/dispatches \
+  https://api.github.com/repos/qubership/instance-repo/actions/workflows/Envgene.yaml/dispatches \
   -d '{
         "ref": "main",
         "inputs": {
@@ -76,7 +77,7 @@ curl -X POST \
             "ENV_BUILDER": "true",
             `GENERATE_EFFECTIVE_SET`: "true"
             "DEPLOYMENT_TICKET_ID": "QBSHP-0001",
-            "GITHUB_PIPELINE_API_INPUT": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
+            "GH_ADDITIONAL_PARAMS": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
         }
       }'
 ```
@@ -86,7 +87,7 @@ curl -X POST \
 The pipeline allows parameters to be defined in multiple locations, listed in descending order of priority:
 
 1. Pipeline execution input parameters
-2. `pipeline_vars.yaml` file
+2. `pipeline_vars.env` file
 3. Repository or repository group CI/CD variables
 
 Together, these form the complete context used by EnvGene.
@@ -96,6 +97,20 @@ Best practices for setting variables are:
 
 - Define in CI/CD variables [EnvGene repository variables](/docs/envgene-repository-variables.md)
 - Pass through GitHub Actions UI or GitHub API Call [Instance Pipeline parameters](/docs/instance-pipeline-parameters.md)
+- Use `pipeline_vars.env` for debug purposes
+
+## `pipeline_vars.env`
+
+Variables in this file must be described in Dotenv format and follow POSIX shell variable syntax.
+
+For example:
+
+```text
+ENV_SPECIFIC_PARAMS={"clusterParams":{"clusterEndpoint":"<value>","clusterToken":"<value>"},"additionalTemplateVariables":{"<key>":"<value>"},"cloudName":"<value>","envSpecificParamsets":{"<ns-template-name>":["paramsetA"],"cloud":["paramsetB"]},"paramsets":{"paramsetA":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[{"appName":"<app-name>","parameters":{"<key>":"<value>"}}]},"paramsetB":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[]}},"credentials":{"credX":{"type":"<credential-type>","data":{"username":"<value>","password":"<value>"}},"credY":{"type":"<credential-type>","data":{"secret":"<value>"}}}}
+EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}
+```
+
+Variables set in this file must NOT be wrapped with [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#gh_additional_params)
 
 ## Pipeline Customization
 
@@ -105,7 +120,7 @@ Pipeline customization is only possible in a limited number of cases:
 - Changing default values of input parameters in the UI
 - Changing the mandatory status of input parameters in the UI
 
-All these changes are made and described in the `pipeline.yml` section:
+All these changes are made and described in the `Envgene.yaml` section:
 
 ```yaml
 on:
