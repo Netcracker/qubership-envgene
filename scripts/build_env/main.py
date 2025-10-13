@@ -1,4 +1,6 @@
 import argparse
+import os
+import pathlib
 
 import ansible_runner
 from envgenehelper import *
@@ -382,9 +384,9 @@ def validate_appregdefs(render_dir, env_name):
             regdef_content = openYaml(file)
             version = str(regdef_content.get('version', '1.0'))
             
-            if version == '2.0':
+            if version != '1.0':
                 schema_path = "schemas/regdef-v2.schema.json"
-                print(f"  Using RegDef V2 schema for {os.path.basename(file)}")
+                print(f"  Using RegDef V2 schema for {os.path.basename(file)} (version: {version})")
                 # Validate authConfig references for V2
                 validate_regdef_v2_authconfig(regdef_content, file)
             else:
