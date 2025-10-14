@@ -7,8 +7,8 @@
       - [Tenant Template](#tenant-template)
       - [Cloud Template](#cloud-template)
       - [Namespace Template](#namespace-template)
-      - [ParameterSet (in Template repository)](#parameterset-in-template-repository)
-      - [Resource Profile Override (in Template)](#resource-profile-override-in-template)
+      - [Template's ParameterSet](#templates-parameterset)
+      - [Template's Resource Profile Override](#templates-resource-profile-override)
       - [Composite Structure Template](#composite-structure-template)
       - [Registry Definition Template](#registry-definition-template)
       - [Application Definition Template](#application-definition-template)
@@ -28,7 +28,7 @@
     - [Environment Credentials File](#environment-credentials-file)
     - [Shared Credentials File](#shared-credentials-file)
     - [System Credentials File (in Instance repository)](#system-credentials-file-in-instance-repository)
-      - [ParameterSet (in Instance repository)](#parameterset-in-instance-repository)
+    - [Environment Specific ParameterSet](#environment-specific-parameterset)
     - [Cloud Passport](#cloud-passport)
       - [Main File](#main-file)
       - [Credential File](#credential-file)
@@ -207,7 +207,7 @@ technicalConfigurationParameterSets:
   - core-runtime
 ```
 
-#### ParameterSet (in Template repository)
+#### Template's ParameterSet
 
 A ParameterSet is a container for a set of parameters that can be reused across multiple templates. This helps to avoid duplication and simplifies parameter management. ParameterSets are processed during the generation of an Environment Instance.
 
@@ -280,7 +280,7 @@ applications:
 
 The file name of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the template repository. This is validated during processing; if the validation fails, the operation will stop with an error.
 
-The Parameter Set schema in the template repository is identical to the Parameter Sets in the [Instance repository](#parameterset-in-instance-repository).
+The Parameter Set schema in the template repository is identical to the [Environment Specific ParameterSet](#environment-specific-parameterset).
 
 [ParameterSet JSON schema](/schemas/paramset.schema.json)
 
@@ -415,8 +415,8 @@ The Namespace object is used to generate Effective Set
 The Namespace object is generated during Environment Instance generation based on:
 
 - [Namespace Template](#namespace-template)
-- [Template ParamSet](#parameterset-in-template-repository)
-- [Instance ParamSet](#parameterset-in-instance-repository)
+- [Template ParamSet](#templates-parameterset)
+- [Instance ParamSet](#environment-specific-parameterset)
 
 For each parameter in the Namespace, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
 
@@ -523,7 +523,7 @@ technicalConfigurationParameterSets: []
 
 The Application object defines parameters that are specific to a particular application. These parameters are isolated to the application and do not affect other applications.
 
-The Application object is generated during the Environment Instance generation process, based on ParameterSets that contain an `applications` section. Generation occurs from both [ParameterSets in the template repository](#parameterset-in-template-repository) and [ParameterSets in the instance repository](#parameterset-in-instance-repository).
+The Application object is generated during the Environment Instance generation process, based on ParameterSets that contain an `applications` section. Generation occurs from both [ParameterSets in the template repository](#templates-parameterset) and [ParameterSets in the instance repository](#environment-specific-parameterset).
 
 For each parameter in the Application, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
 
@@ -755,7 +755,10 @@ gitlab-token-cred:
     secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
 ```
 
-#### ParameterSet (in Instance repository)
+### Environment Specific ParameterSet
+
+TBD
+
 
 TBD
 
