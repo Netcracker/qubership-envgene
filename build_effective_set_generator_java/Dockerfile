@@ -1,8 +1,9 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1 as builder
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1 AS builder
 
 ARG JAVA_PACKAGE=java-17-openjdk-headless
 ARG RUN_JAVA_VERSION=1.3.8
 
+# hadolint ignore=DL3041
 RUN microdnf install -y curl ca-certificates ${JAVA_PACKAGE} && \
     microdnf clean all && \
     mkdir -p /deployments && \
@@ -10,9 +11,9 @@ RUN microdnf install -y curl ca-certificates ${JAVA_PACKAGE} && \
     chmod 540 /deployments/run-java.sh && \
     echo "securerandom.source=file:/dev/urandom" >> /etc/alternatives/jre/lib/security/java.security
 
-COPY downloaded_artifact/build_effective_set_generator_java/effective-set-generator/target/*.jar /deployments/app.jar
+COPY build_effective_set_generator_java/effective-set-generator/target/*.jar /deployments/app.jar
 
-FROM registry.access.redhat.com/ubi8/ubi-micro
+FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1
 
 ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 
@@ -20,6 +21,10 @@ COPY --from=builder --chown=1001:root /deployments /deployments
 COPY --from=builder /etc/alternatives/jre/lib/security/java.security /etc/alternatives/jre/lib/security/java.security
 
 RUN chmod g+rwX /deployments
+
+# Ensure sane permissions on copied tree without findutils
+RUN chmod -R u=rwX,go=rX /deployments && \
+    chmod 540 /deployments/run-java.sh
 
 USER 1001
 

@@ -1,0 +1,18 @@
+appdefs:
+  overrides:
+    registryName: registry-2
+regdefs:
+  overrides:
+    maven:
+      RepositoryDomainName: maven-2.qubership.org
+      fullRepositoryUrl: https://maven-2.qubership.org/repository
+    docker:
+      snapshotUri: docker-2.qubership.org/snapshot
+      stagingUri: docker-2.qubership.org/staging
+      releaseUri: docker-2.qubership.org/release
+      groupUri: docker-2.qubership.org/group
+
+
+
+
+

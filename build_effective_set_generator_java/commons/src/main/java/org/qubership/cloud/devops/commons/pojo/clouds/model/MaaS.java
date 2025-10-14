@@ -30,7 +30,7 @@ import java.io.Serializable;
 @NoArgsConstructor
 @AllArgsConstructor
 public class MaaS implements Serializable {
-    
+
     private static final long serialVersionUID = -7182368242449745551L;
 
     private String Password;

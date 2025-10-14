@@ -7,7 +7,7 @@ applications:
   - name: "Cloud-Core"
     version: ""
     sd: ""
-    services:     
+    services:
       - name: "control-plane"
         parameters:
           - name: "CPU_REQUEST"

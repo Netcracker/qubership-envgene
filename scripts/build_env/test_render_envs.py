@@ -1,10 +1,10 @@
 import difflib
 import filecmp
-
 import pytest
+from os import environ
+from pathlib import Path
 from envgenehelper import *
-
-from main import render_environment
+from main import render_environment, cleanup_resulting_dir
 
 test_data = [
     # (cluster_name, environment_name, template)
@@ -64,3 +64,34 @@ def test_render_envs(cluster_name, env_name, version):
         logger.info(f"Errors: {dump_as_yaml_format(errors)}")
     assert len(mismatch) == 0, f"Files from source and rendering result mismatch: {dump_as_yaml_format(mismatch)}"
     assert len(errors) == 0, f"Error during comparing source and rendering result: {dump_as_yaml_format(errors)}"
+
+
+def setup_test_dir(tmp_path):
+    tmp_path.mkdir(exist_ok=True)
+    dirs = ["Applications", "Namespaces", "Profiles"]
+    for d in dirs:
+        (tmp_path / d).mkdir(exist_ok=True)
+    files = ["cloud.yml", "tenant.yml", "bg-domain.yml", "composite-structure.yml"]
+    for f in files:
+        (tmp_path / f).write_text("text")
+    (tmp_path / "keep.yml").write_text("text")
+    (tmp_path / "keep").mkdir(exist_ok=True)
+    return tmp_path
+
+
+def test_cleanup_target_dir_removes_expected_items():
+    target_dir = Path(g_output_dir) / "dump-cluster"
+    setup_test_dir(target_dir)
+    cleanup_resulting_dir(Path(target_dir))
+    assert not (target_dir / "Applications").exists()
+    assert not (target_dir / "Namespaces").exists()
+    assert not (target_dir / "Profiles").exists()
+    assert not (target_dir / "cloud.yml").exists()
+    assert not (target_dir / "tenant.yml").exists()
+    assert not (target_dir / "bg-domain.yml").exists()
+    assert not (target_dir / "composite-structure.yml").exists()
+
+    assert (target_dir / "keep.yml").exists()
+    assert (target_dir / "keep").exists()
+
+    delete_dir(target_dir)

@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer"
+    },
+    "group": {
+      "type": "string",
+      "default": "group"
+    },
+    "artifact": {
+      "type": "string",
+      "default": "artifact"
+    },
+    "registry": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "version",
+    "group"
+  ]
+}

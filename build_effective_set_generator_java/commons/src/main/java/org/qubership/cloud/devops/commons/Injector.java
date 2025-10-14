@@ -102,6 +102,14 @@ public class Injector {
         di.add(registryConfigurationService);
     }
 
+    public void setInputDataService(InputDataService inputDataService) {
+        di.add(inputDataService);
+    }
+
+    public InputDataService getInputDataService() {
+        return di.get(InputDataService.class);
+    }
+
     public <T> T get(Class<T> clazz) {
         return di.get(clazz);
     }

@@ -29,5 +29,5 @@ public interface ProfileService {
 
     ProfileFullDto getProfileDtoByTenant(String tenantName, String profileName) throws NotFoundException;
 
-    void setOverrideProfiles(String appName, String serviceName, Profile overrideProfile, Map<String, String> profileValues);
+    void setOverrideProfiles(String appName, String serviceName, Profile overrideProfile, Map<String, Object> profileValues);
 }

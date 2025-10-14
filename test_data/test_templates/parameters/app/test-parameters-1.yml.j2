@@ -2,13 +2,13 @@
 name: "test-parameters-1"
 parameters:
   APP_NAMESPACE: "{{ current_env.name }}-app"
-{% if env_definition.envTemplate.additionalTemplateVariables.Variable_1 is defined %} 
+{% if env_definition.envTemplate.additionalTemplateVariables.Variable_1 is defined %}
   PARAMETERS_Variable_1: "{{ env_definition.envTemplate.additionalTemplateVariables.Variable_1 }}"
 {% endif %}
-{% if env_definition.envTemplate.additionalTemplateVariables.Variable_2 is defined %} 
+{% if env_definition.envTemplate.additionalTemplateVariables.Variable_2 is defined %}
   PARAMETERS_Variable_2: "{{ env_definition.envTemplate.additionalTemplateVariables.Variable_2 }}"
 {% endif %}
-{% if env_definition.envTemplate.additionalTemplateVariables.Variable_3 is defined %} 
+{% if env_definition.envTemplate.additionalTemplateVariables.Variable_3 is defined %}
   PARAMETERS_Variable_3: "{{ env_definition.envTemplate.additionalTemplateVariables.Variable_3 }}"
 {% endif %}
 {% if current_env.cloudPassport.cloud.CLOUD_PUBLIC_HOST is defined %}

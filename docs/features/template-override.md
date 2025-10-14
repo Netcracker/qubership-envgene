@@ -38,17 +38,17 @@ If `template_override` contains Jinja expressions, it must be declared as a mult
 
 ```yaml
 tenant: "<path-to-the-tenant-template-file>"
-# Cloud configuration can be specified either as direct template path (string) 
+# Cloud configuration can be specified either as direct template path (string)
 # or as an object with template_path and optional overrides
 cloud: "<path-to-the-cloud-template-file>"
 # or
 cloud:
   template_path: "<path-to-the-cloud-template-file>"
-  template_override:     
+  template_override:
     <yaml or jinja expression> # entirety or a portion of the Cloud object or a Jinja expression that should render into entirety or a portion of the Cloud object
 namespaces:
   - template_path: <path-to-ns-template>
-    template_override:     
+    template_override:
       <yaml or jinja expression> # entirety or a portion of the Namespace object or a Jinja expression that should render into entirety or a portion of the Namespace object
 ```
 
@@ -83,7 +83,7 @@ This will override any values defined in the original `bss.yml.j2` template.
 tenant: "{{ templates_dir }}/env_templates/dev/tenant.yml.j2"
 cloud:
   template_path: "{{ templates_dir }}/env_templates/dev/cloud.yml.j2"
-  template_override:     
+  template_override:
     <yaml or jinja expression> # entirety or a portion of the Cloud object or a Jinja expression that should render into entirety or a portion of the Cloud object
 namespaces:
   - template_path: "{{ templates_dir }}/env_templates/dev/Namespaces/bss.yml.j2"

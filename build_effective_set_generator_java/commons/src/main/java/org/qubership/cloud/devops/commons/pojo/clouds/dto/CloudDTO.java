@@ -50,11 +50,11 @@ public class CloudDTO {
     private final String defaultCredentialsId;
     private final String protocol;
     @JsonDeserialize(using = CustomDeserializer.class)
-    private final Map<String, String> deployParameters;
+    private final Map<String, Object> deployParameters;
     @JsonDeserialize(using = CustomDeserializer.class)
-    private final Map<String, String> e2eParameters;
+    private final Map<String, Object> e2eParameters;
     @JsonDeserialize(using = CustomDeserializer.class)
-    private final Map<String, String> technicalConfigurationParameters;
+    private final Map<String, Object> technicalConfigurationParameters;
     private final List<String> deployParameterSets;
     private final List<String> e2eParameterSets;
     private final List<String> technicalConfigurationParameterSets;

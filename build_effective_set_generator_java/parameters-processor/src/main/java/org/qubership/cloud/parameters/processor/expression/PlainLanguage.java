@@ -114,6 +114,7 @@ public class PlainLanguage extends AbstractLanguage {
         return result;
     }
 
+
     @Override
     public Map<String, Parameter> processE2E() {
         Map<String, Parameter> result = new HashMap<>();
@@ -139,6 +140,15 @@ public class PlainLanguage extends AbstractLanguage {
     }
 
     @Override
+    public Map<String, Parameter> processNamespace() {
+        Map<String, Parameter> result = new MergeMap();
+
+        processNamespace(result);
+
+        return processMap(result);
+    }
+
+    @Override
     public Map<String, Parameter> processConfigServerApp() {
         return processNamespaceAppConfigServer();
     }
@@ -149,6 +159,10 @@ public class PlainLanguage extends AbstractLanguage {
 
         processNamespaceAppConfigServer(result);
         return processMap(result);
+    }
+    @Override
+    public Map<String, Parameter> processParameters(Map<String, String> parameters) {
+        return new HashMap<>();
     }
 
 }

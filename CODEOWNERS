@@ -9,4 +9,10 @@
 #  https://help.github.com/en/articles/about-code-owners
 #
 
-* @andyroode @popoveugene @GlimmerCape
+* @chethana-shastry-p @GlimmerCape @miyamuraga
+
+/.github/ @andyroode
+
+/github_workflows/ @andyroode
+
+/docs/ @popoveugene

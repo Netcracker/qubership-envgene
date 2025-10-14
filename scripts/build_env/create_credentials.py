@@ -63,7 +63,7 @@ def getCloudCreds(cloudContent, tenantName, cloudName):
     checkCredAndAppend(cloudContent["consulConfig"]["tokenSecret"], creds, CRED_TYPE_SECRET, cloudComment)
     for i in cloudContent["dbaasConfigs"]:
         checkCredAndAppend(i["credentialsId"], creds, CRED_TYPE_USERPASS, cloudComment)
-    
+
     #process deployParameters
     processParametersAndAppend("deployParameters", cloudContent, creds, tenantName, cloudName, comment=cloudComment)
     #process e2eParameters
@@ -91,7 +91,7 @@ def getApplicationCreds(appPath, tenantName, cloudName, namespaceName=""):
     appName = appContent["name"]
     if namespaceName :
         comment = f"namespace {namespaceName} application {appName}"
-    else: 
+    else:
         comment = f"cloud {cloudName} application {appName}"
     #process deployParameters
     processParametersAndAppend("deployParameters", appContent, creds, tenantName, cloudName, namespaceName, comment=comment)
@@ -118,8 +118,8 @@ def writeCredToYaml(credItem, credsYaml) :
     cred = credItem["cred"]
     comment = credItem["comment"]
     newCred = yaml.load("{}")
-    #newCred.insert(1, "credentialsId", cred["credentialsId"]) 
-    newCred.insert(1, "type", cred["type"])     
+    #newCred.insert(1, "credentialsId", cred["credentialsId"])
+    newCred.insert(1, "type", cred["type"])
     if (cred["type"] == CRED_TYPE_USERPASS) :
         data = yaml.load("{}")
         data.insert(1, "username", "envgeneNullValue", "FillMe")
@@ -160,7 +160,7 @@ def findSharedCredentials(cred_name, env_dir, instances_dir):
         yamlPath = credFiles[0]
         logger.info(f"Shared credentials for {cred_name} found in: {yamlPath}")
         return yamlPath
-    elif len(credFiles) > 1: 
+    elif len(credFiles) > 1:
         logger.error(f"Duplicate shared credentials with key {cred_name} found in {instances_dir}: \n\t" + ",\n\t".join(str(x) for x in credFiles))
         raise ReferenceError(f"Duplicate shared credentials with key {cred_name} found. See logs above.")
     else:

@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright 2024-2025 NetCracker Technology Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.util.List;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -32,15 +33,20 @@ public class SharedData {
 
     private String envsPath;
 
-    private String sbomsPath;
+    private Optional<String> sbomsPath;
 
-    private String solsbomPath;
+    private Optional<String> solsbomPath;
 
-    private String registryPath;
+    private Optional<String> registryPath;
 
     private String outputDir;
 
-    private String effectiveSetVersion;
+    private EffectiveSetVersion effectiveSetVersion;
 
     private List<String> pcsspPaths;
+
+    private String deploymentSessionId;
+
+    private boolean appChartValidation;
+
 }

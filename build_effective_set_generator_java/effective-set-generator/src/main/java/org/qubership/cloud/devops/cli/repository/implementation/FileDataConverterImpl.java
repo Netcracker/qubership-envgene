@@ -46,6 +46,7 @@ import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
 @ApplicationScoped
 @Slf4j
 public class FileDataConverterImpl implements FileDataConverter {
+    public static final String CLEANUPER = "cleanuper";
     private final ObjectMapper objectMapper;
     private final FileSystemUtils fileSystemUtils;
 
@@ -72,6 +73,11 @@ public class FileDataConverterImpl implements FileDataConverter {
             bomMapper.addMixIn(Bom.class, BomMixin.class);
             return bomMapper.readValue(file, Bom.class);
         } catch (IOException | IllegalArgumentException e) {
+            if (file.getName().startsWith(CLEANUPER) &&
+                    e instanceof FileNotFoundException) {
+                log.error("Issue while reading the file " + e.getMessage());
+                return null;
+            }
             throw new FileParseException(String.format(ExceptionMessage.FILE_READ_ERROR, file.getAbsolutePath(), e.getMessage()));
         }
     }
@@ -91,8 +97,18 @@ public class FileDataConverterImpl implements FileDataConverter {
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
         File file = fileSystemUtils.getFileFromGivenPath(args);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            getYamlObject().dump(params, writer);
+            if (params != null && !params.isEmpty()) {
+                getYamlObject().dump(params, writer);
+            }
         }
+    }
+
+
+    @Override
+    public <T> Map<String, Object> getObjectMap(T inputObject) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.convertValue(inputObject, new TypeReference<Map<String, Object>>() {
+        });
     }
 
 
@@ -100,7 +116,7 @@ public class FileDataConverterImpl implements FileDataConverter {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
-        options.setPrettyFlow(true);
+        options.setPrettyFlow(false);
         Representer representer = new Representer(options) {
             @Override
             protected Node representScalar(Tag tag, String value, DumperOptions.ScalarStyle style) {
@@ -120,7 +136,7 @@ public class FileDataConverterImpl implements FileDataConverter {
         return new Yaml(representer, options);
     }
 
-    public  <T> T decodeAndParse(String encodedText, TypeReference<T> typeReference) {
+    public <T> T decodeAndParse(String encodedText, TypeReference<T> typeReference) {
         try {
             byte[] decoded = Base64.getDecoder().decode(encodedText);
             return objectMapper.readValue(decoded, typeReference);
@@ -129,7 +145,7 @@ public class FileDataConverterImpl implements FileDataConverter {
         }
     }
 
-    public  <T> T decodeAndParse(String encodedText, Class<T> clazz) {
+    public <T> T decodeAndParse(String encodedText, Class<T> clazz) {
         try {
             byte[] decoded = Base64.getDecoder().decode(encodedText);
             return objectMapper.readValue(decoded, clazz);

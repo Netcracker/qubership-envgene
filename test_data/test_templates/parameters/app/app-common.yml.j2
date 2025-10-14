@@ -1,6 +1,6 @@
 ---
 name: "app-common"
 parameters:
-{% if "Test-App-DB-Name" in current_env.solution_structure %}  
+{% if "Test-App-DB-Name" in current_env.solution_structure %}
   TEST_PARAM_1: "{{ current_env.solution_structure["Test-App-DB-Name"]["app-core"].namespace }}"
-{% endif%}  
+{% endif%}

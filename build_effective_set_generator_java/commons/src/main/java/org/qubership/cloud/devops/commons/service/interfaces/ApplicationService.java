@@ -21,8 +21,5 @@ import org.qubership.cloud.devops.commons.pojo.applications.dto.ApplicationLinkD
 import org.qubership.cloud.devops.commons.pojo.applications.model.Application;
 
 public interface ApplicationService {
-    Application getByName(String applicationName);
-
-    ApplicationLinkDTO getApplicationFromYaml(String applicationName);
-
+    Application getByName(String applicationName,  String namespace);
 }

@@ -20,93 +20,130 @@ package org.qubership.cloud.devops.cli.parser;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.qubership.cloud.devops.cli.exceptions.DirectoryCreateException;
 import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SBApplicationDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
+import org.qubership.cloud.devops.cli.pojo.dto.shared.EffectiveSetVersion;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
+import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
+import org.qubership.cloud.devops.commons.Injector;
 import org.qubership.cloud.devops.commons.exceptions.ConsumerFileProcessingException;
 import org.qubership.cloud.devops.commons.exceptions.CreateWorkDirException;
 import org.qubership.cloud.devops.commons.exceptions.NotFoundException;
+import org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO;
 import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.SecretCredentialsDTO;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
+import org.qubership.cloud.devops.commons.utils.CredentialUtils;
+import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
+import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
-import org.qubership.cloud.parameters.processor.service.ParametersCalculationService;
+import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1;
+import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV2;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.APP_PARSE_ERROR;
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.APP_PROCESS_FAILED;
 import static org.qubership.cloud.devops.commons.exceptions.constant.ExceptionAdditionalInfoMessages.ENTITY_NOT_FOUND;
-import static org.qubership.cloud.devops.commons.exceptions.constant.ExceptionAdditionalInfoMessages.ENTITY_NOT_FOUND_PARAMS;
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 
 @Dependent
 @Slf4j
 public class CliParameterParser {
-    private final ParametersCalculationService parametersService;
+    private final ParametersCalculationServiceV1 parametersServiceV1;
+    private final ParametersCalculationServiceV2 parametersServiceV2;
     private final InputData inputData;
     private final FileDataConverter fileDataConverter;
     private final SharedData sharedData;
+    private final FileSystemUtils fileSystemUtils;
 
 
     @Inject
-    public CliParameterParser(ParametersCalculationService parametersService,
+    public CliParameterParser(ParametersCalculationServiceV1 parametersServiceV1,
+                              ParametersCalculationServiceV2 parametersServiceV2,
                               InputData inputData,
                               FileDataConverter fileDataConverter,
-                              SharedData sharedData) {
-        this.parametersService = parametersService;
+                              SharedData sharedData,
+                              FileSystemUtils fileSystemUtils) {
+        this.parametersServiceV1 = parametersServiceV1;
+        this.parametersServiceV2 = parametersServiceV2;
         this.inputData = inputData;
         this.fileDataConverter = fileDataConverter;
         this.sharedData = sharedData;
+        this.fileSystemUtils = fileSystemUtils;
 
     }
 
     public void generateEffectiveSet() throws IOException, IllegalArgumentException, DirectoryCreateException {
         checkIfEntitiesExist();
-        SolutionBomDTO solutionDescriptor = inputData.getSolutionBomDTO();
-
-        List<SBApplicationDTO> applicationDTOList = solutionDescriptor.getApplications();
         String tenantName = inputData.getTenantDTO().getName();
         String cloudName = inputData.getCloudDTO().getName();
 
-        processAndSaveParameters(applicationDTOList, tenantName, cloudName);
+        processAndSaveParameters(inputData.getSolutionBomDTO(), tenantName, cloudName);
     }
 
-    private void processAndSaveParameters(List<SBApplicationDTO> applicationDTOList, String tenantName, String cloudName) throws IOException {
-        Map<String, Object> mappingFileData = new ConcurrentHashMap<>();
+    private void processAndSaveParameters(Optional<SolutionBomDTO> solutionDescriptor, String tenantName, String cloudName) throws IOException {
+        Map<String, Object> deployMappingFileData = new ConcurrentHashMap<>();
+        Map<String, Object> runtimeMappingFileData = new ConcurrentHashMap<>();
+        Map<String, Object> cleanupMappingFileData = new ConcurrentHashMap<>();
         Map<String, String> errorList = new ConcurrentHashMap<>();
         Map<String, String> k8TokenMap = new ConcurrentHashMap<>();
+        List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
+                .orElseGet(Collections::emptyList);
         applicationDTOList.parallelStream()
                 .forEach(app -> {
                     String namespaceName = app.getNamespace();
                     try {
                         logInfo("Started processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                         generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), k8TokenMap);
-                        String deployPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "Namespaces", namespaceName);
-                        mappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
+                        String deployPostFixDir = EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion() ? String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/') :
+                                String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set", namespaceName).replace('\\', '/');
+                        String runtimePostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/runtime", namespaceName).replace('\\', '/');
+                        String cleanupPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/cleanup", namespaceName).replace('\\', '/');
+                        int index = deployPostFixDir.indexOf("/environments/");
+                        if (index != 1) {
+                            deployPostFixDir = deployPostFixDir.substring(index);
+                        }
+                        index = runtimePostFixDir.indexOf("/environments/");
+                        if (index != 1) {
+                            runtimePostFixDir = runtimePostFixDir.substring(index);
+                        }
+                        index = cleanupPostFixDir.indexOf("/environments/");
+                        if (index != 1) {
+                            cleanupPostFixDir = cleanupPostFixDir.substring(index);
+                        }
+                        deployMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
+                        runtimeMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), runtimePostFixDir);
+                        cleanupMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), cleanupPostFixDir);
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                     } catch (Exception e) {
                         log.debug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
-                        log.debug("stack trace for further details: ", e);
+                        log.debug("stack trace for further details: {}", ExceptionUtils.getStackTrace(e));
                         errorList.computeIfAbsent(app.getAppName() + ":" + namespaceName, k -> e.getMessage());
                     }
                 });
-        if ("v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion())) {
+        if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap);
-            fileDataConverter.writeToFile(mappingFileData, sharedData.getOutputDir(), "deployment", "mapping.yaml");
-            fileDataConverter.writeToFile(mappingFileData, sharedData.getOutputDir(), "runtime", "mapping.yaml");
+            if (solutionDescriptor.isPresent()) {
+                fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "deployment", "mapping.yaml");
+                fileDataConverter.writeToFile(runtimeMappingFileData, sharedData.getOutputDir(), "runtime", "mapping.yaml");
+                fileDataConverter.writeToFile(cleanupMappingFileData, sharedData.getOutputDir(), "cleanup", "mapping.yaml");
+            }
         } else {
-            fileDataConverter.writeToFile(mappingFileData, sharedData.getOutputDir(), "mapping.yaml");
+            fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "mapping.yaml");
         }
         if (!errorList.isEmpty()) {
             errorList.forEach((key, value) -> {
@@ -118,15 +155,84 @@ public class CliParameterParser {
 
     }
 
-    public void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
-        ParameterBundle parameterBundle = parametersService.getCliE2EParameter(tenantName, cloudName);
-        parameterBundle.getE2eParams().put("composite_structure", inputData.getCompositeStructureMap());
-        parameterBundle.getSecuredE2eParams().put("k8s_tokens", k8TokenMap);
+    private void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
+        ParameterBundle parameterBundle = parametersServiceV2.getCliE2EParameter(tenantName, cloudName);
+        if (parameterBundle.getE2eParams() == null) {
+            parameterBundle.setE2eParams(new HashMap<>());
+        }
+        if (parameterBundle.getSecuredE2eParams() == null) {
+            parameterBundle.setSecuredE2eParams(new HashMap<>());
+        }
+        processBgDomainParameters();
+        createTopologyFiles(k8TokenMap);
         createE2EFiles(parameterBundle);
-        createConsumerFiles(parameterBundle);
+        createPipelineFiles(parameterBundle);
     }
 
-    private void createConsumerFiles(ParameterBundle parameterBundle) {
+    private void generateCleanupOutput(String tenantName, String cloudName, String namespace, String originalNamespace, Map<String, String> k8TokenMap) throws IOException {
+        ParameterBundle parameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespace, null, originalNamespace, k8TokenMap);
+        if (parameterBundle.getCleanupParameters() == null) {
+            parameterBundle.setCleanupParameters(new HashMap<>());
+        }
+        if (parameterBundle.getCleanupSecureParameters() == null) {
+            parameterBundle.setCleanupSecureParameters(new HashMap<>());
+        }
+        createCleanupFiles(parameterBundle, namespace);
+    }
+
+    private void processBgDomainParameters() {
+        BgDomainEntityDTO bgDomainEntityDTO = inputData.getBgDomainEntityDTO();
+        if (bgDomainEntityDTO != null && bgDomainEntityDTO.getControllerNamespace().getCredentialsId() != null) {
+            CredentialUtils credentialUtils = Injector.getInstance().getDi().get(CredentialUtils.class);
+            Credential credentialPojo = credentialUtils.getCredentialsById(bgDomainEntityDTO.getControllerNamespace().getCredentialsId());
+            if (credentialPojo instanceof UsernamePasswordCredentials) {
+                UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentialPojo;
+                bgDomainEntityDTO.getControllerNamespace().setUserName(usernamePasswordCredentials.getUsername());
+                bgDomainEntityDTO.getControllerNamespace().setPassword(usernamePasswordCredentials.getPassword());
+            }
+        }
+    }
+
+    private void createCleanupFiles(ParameterBundle parameterBundle, String namespace) throws IOException {
+        String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespace);
+        fileDataConverter.writeToFile(parameterBundle.getCleanupParameters(), cleanupDir, "parameters.yaml");
+        fileDataConverter.writeToFile(parameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
+    }
+
+    private void createTopologyFiles(Map<String, String> k8TokenMap) throws IOException {
+        Map<String, Object> topologyParams = new TreeMap<>();
+        Map<String, Object> topologySecuredParams = new TreeMap<>();
+        Map<String, Object> clusterParameterMap = getClusterMap();
+        topologyParams.put("composite_structure", getObjectMap(inputData.getCompositeStructureDTO()));
+        topologyParams.put("environments", inputData.getClusterMap());
+        topologyParams.put("cluster", clusterParameterMap);
+        topologySecuredParams.put("k8s_tokens", k8TokenMap);
+        Map<String, Object> bgDomainMap = getObjectMap(inputData.getBgDomainEntityDTO());
+        Map<String, Object> bgDomainSecureMap = new LinkedHashMap<>();
+        Map<String, Object> bgDomainParamsMap = new LinkedHashMap<>();
+        ParameterUtils.splitBgDomainParams(bgDomainMap, bgDomainSecureMap, bgDomainParamsMap);
+        topologySecuredParams.put("bg_domain", bgDomainSecureMap);
+        topologyParams.put("bg_domain", bgDomainParamsMap);
+        String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
+        fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
+        fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
+
+    }
+
+    private <T> Map<String, Object> getObjectMap(T input) {
+        return fileDataConverter.getObjectMap(input != null ? input : new HashMap<>());
+    }
+
+    private Map<String, Object> getClusterMap() {
+        Map<String, Object> clusterParameterMap = new TreeMap<>();
+        clusterParameterMap.put("api_url", inputData.getCloudDTO().getApiUrl());
+        clusterParameterMap.put("api_port", inputData.getCloudDTO().getApiPort());
+        clusterParameterMap.put("public_url", inputData.getCloudDTO().getPublicUrl());
+        clusterParameterMap.put("protocol", inputData.getCloudDTO().getProtocol());
+        return clusterParameterMap;
+    }
+
+    private void createPipelineFiles(ParameterBundle parameterBundle) {
         String pipelineDir = String.format("%s/%s", sharedData.getOutputDir(), "pipeline");
         Map<String, ConsumerDTO> consumerDTOMap = inputData.getConsumerDTOMap();
         consumerDTOMap.forEach((key, value) -> {
@@ -169,20 +275,36 @@ public class CliParameterParser {
     public void generateOutput(String tenantName, String cloudName, String namespaceName, String appName,
                                String appVersion, String appFileRef, Map<String, String> k8TokenMap) throws IOException {
         DeployerInputs deployerInputs = DeployerInputs.builder().appVersion(appVersion).appFileRef(appFileRef).build();
-        ParameterBundle parameterBundle = parametersService.getCliParameter(tenantName,
-                cloudName,
-                namespaceName,
-                appName,
-                deployerInputs);
+        String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
         String credentialsId = findDefaultCredentialsId(namespaceName);
         if (StringUtils.isNotEmpty(credentialsId)) {
             CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
             if (credentialDTO != null) {
                 SecretCredentialsDTO secCred = (SecretCredentialsDTO) credentialDTO.getData();
-                k8TokenMap.put(namespaceName, secCred.getSecret());
+                k8TokenMap.put(originalNamespace, secCred.getSecret());
             }
         }
-        createFiles(namespaceName, appName, parameterBundle);
+        ParameterBundle parameterBundle = null;
+        if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
+            parameterBundle = parametersServiceV2.getCliParameter(tenantName,
+                    cloudName,
+                    namespaceName,
+                    appName,
+                    deployerInputs,
+                    originalNamespace,
+                    k8TokenMap);
+            generateCleanupOutput(tenantName, cloudName, namespaceName, originalNamespace, k8TokenMap);
+        } else {
+            parameterBundle = parametersServiceV1.getCliParameter(tenantName,
+                    cloudName,
+                    namespaceName,
+                    appName,
+                    deployerInputs,
+                    originalNamespace,
+                    k8TokenMap);
+
+        }
+        createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
 
     private String findDefaultCredentialsId(String namespace) {
@@ -190,15 +312,38 @@ public class CliParameterParser {
                 inputData.getNamespaceDTOMap().get(namespace).getCredentialsId() : inputData.getCloudDTO().getDefaultCredentialsId();
     }
 
-    private void createFiles(String namespaceName, String appName, ParameterBundle parameterBundle) throws IOException {
-        if ("v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion())) {
+    private void createFiles(String namespaceName, String appName, ParameterBundle parameterBundle, String originalNamespace) throws IOException {
+        if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
+            Path appChartPath = null;
+            if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
+                String normalizedName = HelmNameNormalizer.normalize(parameterBundle.getAppChartName(), originalNamespace);
+                appChartPath = fileSystemUtils.getFileFromGivenPath(sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters", normalizedName).toPath();
+                Files.createDirectories(appChartPath);
+            }
+
             String deploymentDir = String.format("%s/%s/%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName, appName, "values");
             String runtimeDir = String.format("%s/%s/%s/%s", sharedData.getOutputDir(), "runtime", namespaceName, appName);
 
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
+            if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
+                fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
+            }
+            fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), deploymentDir, "collision-deployment-parameters.yaml");
+            if (StringUtils.isBlank(parameterBundle.getAppChartName()) && MapUtils.isNotEmpty(parameterBundle.getPerServiceParams())) {
+                parameterBundle.getPerServiceParams().entrySet().stream().forEach(entry -> {
+                    try {
+                        Path servicePath = fileSystemUtils.getFileFromGivenPath(sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters", entry.getKey()).toPath();
+                        Files.createDirectories(servicePath);
+                        fileDataConverter.writeToFile((Map<String, Object>) entry.getValue(), servicePath.toString(), "deployment-parameters.yaml");
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to write per service parameters of service " + entry.getKey());
+                    }
+                });
+            }
             fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), deploymentDir, "credentials.yaml");
-            fileDataConverter.writeToFile(new HashMap<>(), deploymentDir, "deploy-descriptor.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getDeployDescParams(), deploymentDir, "deploy-descriptor.yaml");
 
             //runtime parameters
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), runtimeDir, "parameters.yaml");
@@ -212,19 +357,12 @@ public class CliParameterParser {
     }
 
     private void checkIfEntitiesExist() {
-        if (inputData.getSolutionBomDTO() == null) {
-            throw new NotFoundException(String.format(ENTITY_NOT_FOUND, "Solution BOM"));
-        }
         if (inputData.getTenantDTO() == null) {
             throw new NotFoundException(String.format(ENTITY_NOT_FOUND, "Tenant"));
         }
         if (inputData.getCloudDTO() == null) {
             throw new NotFoundException(String.format(ENTITY_NOT_FOUND, "Cloud"));
         }
-        if (inputData.getRegistryDTOMap() == null) {
-            logWarning(String.format(ENTITY_NOT_FOUND_PARAMS, "Registry"));
-        }
     }
-
 
 }

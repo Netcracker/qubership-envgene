@@ -17,22 +17,24 @@
 package org.qubership.cloud.devops.cli.pojo.dto.input;
 
 
-import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
-import org.qubership.cloud.devops.commons.pojo.applications.dto.ApplicationLinkDTO;
-import org.qubership.cloud.devops.commons.pojo.clouds.dto.CloudDTO;
-import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
-import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
-import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
-import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO;
-import org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO;
-import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
+import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
+import org.qubership.cloud.devops.commons.pojo.bg.BgDomainEntityDTO;
+import org.qubership.cloud.devops.commons.pojo.clouds.dto.CloudDTO;
+import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
+import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
+import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
+import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
+import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
+import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistryDTO;
+import org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -41,8 +43,8 @@ public class InputData {
 
     private TenantDTO tenantDTO;
     private CloudDTO cloudDTO;
-    @Builder.Default
-    private Map<String, Object> compositeStructureMap = Collections.emptyMap();
+    private CompositeStructureDTO compositeStructureDTO;
+    private BgDomainEntityDTO bgDomainEntityDTO;
     @Builder.Default
     private Map<String, ConsumerDTO> consumerDTOMap = Collections.emptyMap();
     @Builder.Default
@@ -52,8 +54,8 @@ public class InputData {
     @Builder.Default
     private Map<String, ProfileFullDto> profileFullDtoMap = Collections.emptyMap();
     @Builder.Default
-    private Map<String, ApplicationLinkDTO> applicationLinkDTOMap = Collections.emptyMap();
-    @Builder.Default
     private Map<String, RegistryDTO> registryDTOMap = Collections.emptyMap();
-    private SolutionBomDTO solutionBomDTO;
+    private Optional<SolutionBomDTO> solutionBomDTO = Optional.empty();
+    @Builder.Default
+    private Map<String, Object> clusterMap = Collections.emptyMap();
 }

@@ -51,7 +51,7 @@
   - Test cases implemented in the failed data file.
   - Exact discrepancies detected (diff-style reporting)
 
-**Note:**  
+**Note:**
 Test case listing in failure logs indicates data mapping, not necessarily all cases failed
 
 ## Test Cases
@@ -103,9 +103,9 @@ Follows pattern TC-[Feature-ID]-[SEQ]
 
 **Status**:
 
-New: Case created but not automated  
-Active: In suite  
-Archived: Historical reference only  
+New: Case created but not automated
+Active: In suite
+Archived: Historical reference only
 
 **Description:**
 

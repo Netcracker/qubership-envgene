@@ -54,6 +54,29 @@ def pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instanc
     copy_path(f"{source_env_dir}/Credentials", f"{render_env_dir}/Credentials")
 
 
+def cleanup_resulting_dir(resulting_dir: pathlib.Path):
+    logger.info(f"Cleaning resulting directory: {str(resulting_dir)}")
+    dirs_to_remove = ["Applications", "Namespaces", "Profiles"]
+    files_to_remove = [
+        "cloud.yml",
+        "tenant.yml",
+        "bg-domain.yml",
+        "composite-structure.yml",
+    ]
+
+    for directory in dirs_to_remove:
+        dir_path = resulting_dir.joinpath(directory)
+        if check_dir_exists(dir_path):
+            logger.info(f"Removing directory: {dir_path}")
+            delete_dir(dir_path)
+
+    for file in files_to_remove:
+        file_path = resulting_dir.joinpath(file)
+        if check_file_exists(file_path):
+            logger.info(f"Removing file: {file_path}")
+            deleteFile(file_path)
+
+
 def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir):
     check_dir_exist_and_create(output_dir)
     # copying results to output_dir
@@ -65,6 +88,7 @@ def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, a
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/{ENV_DEFINITION_FILE_NAME}',
               f"{render_env_dir}/{INVENTORY_DIR_NAME}")
     # pushing all to output dir
+    cleanup_resulting_dir(pathlib.Path(resulting_dir))
     copy_path(f'{render_env_dir}/*', resulting_dir)
     return resulting_dir
 

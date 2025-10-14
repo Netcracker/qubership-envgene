@@ -169,6 +169,8 @@ def get_or_create_nested_yaml_attribute(yaml_content, attribute_str, default_val
     return yaml_content[key]
 
 def set_nested_yaml_attribute(yaml_content, attribute_str, value, comment="", is_overwriting=True):
+    if value is None:
+        return
     yaml_content, attribute = ensure_nested_attr_parents_exist(yaml_content, attribute_str)
     if attribute not in yaml_content:
         store_value_to_yaml(yaml_content, attribute, value, comment)
@@ -183,7 +185,7 @@ def set_nested_yaml_attribute(yaml_content, attribute_str, value, comment="", is
 primitiveTypes = (int, str, bool, float)
 
 def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, overwrite_existing_values=True,  overwrite_existing_comments=True):
-    if source_yaml == None:
+    if source_yaml is None:
         return
     source_yaml = convert_dict_to_yaml(source_yaml)
 

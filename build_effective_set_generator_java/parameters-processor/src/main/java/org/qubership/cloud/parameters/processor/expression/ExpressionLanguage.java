@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 public class ExpressionLanguage extends AbstractLanguage {
 
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("(?<!\\\\)(\\\\\\\\)*(\\$)");
-    private static final Pattern SECURED_PATTERN = Pattern.compile("(?:\\u0096)(?s)(.+)(?:\\u0097)");
+    private static final Pattern SECURED_PATTERN = Pattern.compile("(?:\\u0096)(?s)(.*)(?:\\u0097)");
     private final ObjectMapper mapper = new ObjectMapper();
     private boolean insecure;
 
@@ -336,6 +336,9 @@ public class ExpressionLanguage extends AbstractLanguage {
                         if (insecure) {
                             return failedParameter(entry);
                         } else {
+                            if(entry.getValue() != null && entry.getValue().toString().contains("cmdb.creds[")){
+                                throw new ExpressionLanguageException(String.format("Expressions started with \"cmdb\" is not supported (parameter %s, value: %s)", entry.getKey(), entry.getValue()), e);
+                            }
                             throw new ExpressionLanguageException(String.format("Could not process expression for parameter %s with value: %s", entry.getKey(), entry.getValue()), e);
                         }
                     }
@@ -381,6 +384,15 @@ public class ExpressionLanguage extends AbstractLanguage {
         Map<String, Parameter> result = new MergeMap();
 
         processNamespaceApp(result);
+
+        return processMap(result, result, true);
+    }
+
+    @Override
+    public Map<String, Parameter> processNamespace() {
+        Map<String, Parameter> result = new MergeMap();
+
+        processNamespace(result);
 
         return processMap(result, result, true);
     }
@@ -444,5 +456,18 @@ public class ExpressionLanguage extends AbstractLanguage {
     /* This method are used from reflection*/
     private Parameter processValue(Object value) throws IOException {
         return processValue(value, this.binding, true);
+    }
+
+    @Override
+    public Map<String, Parameter> processParameters(Map<String, String> parameters) {
+        Map<String, Parameter> processedParams = new HashMap<>();
+        parameters.forEach((key, value) -> {
+            try {
+                processedParams.put(key, processValue(value, this.binding, true));
+            } catch (IOException e) {
+                log.error(String.format("Error in processing the parameter key %s and value %s", key, value));
+            }
+        });
+        return processedParams;
     }
 }

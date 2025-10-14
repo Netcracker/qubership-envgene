@@ -6,9 +6,9 @@ solution descriptor.
 
 ## **Features**
 
-1. The CLI tool resolves the macros in parameters using either jinjava or groovy templates. 
-2. It merges the parameters from different layers to get the final list of effective parameters. 
-3. Parameter values from previous layer can be overridden with new value on current and next layers using same parameter name with different value. 
+1. The CLI tool resolves the macros in parameters using either jinjava or groovy templates.
+2. It merges the parameters from different layers to get the final list of effective parameters.
+3. Parameter values from previous layer can be overridden with new value on current and next layers using same parameter name with different value.
 4. It segregates the secured parameters.
 
 ## **Prerequisites:**
@@ -26,7 +26,7 @@ solution descriptor.
 2. To run the application, create quarkus maven run configuration with working directory as
     effective-set-generator and VM Options as below.
 
-    `-Dquarkus.args="--env-id xxxxx --envs-path xxxx--local-sd-path xxxxx/sd.yml --output xxx/effective-set 
+    `-Dquarkus.args="--env-id xxxxx --envs-path xxxx--local-sd-path xxxxx/sd.yml --output xxx/effective-set
     --cmdb-url=<url> --cmdb-username=<username> --cmdb-token=<API Token>"`
 
 ## **Running in a Docker Container**
@@ -35,7 +35,7 @@ The simplest way to get the effective-set-generator docker image is to pull from
 
     `docker pull xxx`
 
-Alternately, you can build it from source yourself: 
+Alternately, you can build it from source yourself:
 
 First run mvn clean install and run below command
 
@@ -62,7 +62,7 @@ Usages:
 
 
 
- 
+
 
 
 
