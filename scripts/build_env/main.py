@@ -8,6 +8,7 @@ from build_env import build_env, process_additional_template_parameters
 from cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
 from resource_profiles import get_env_specific_resource_profiles
+from pathlib import Path
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -42,7 +43,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     render_env_dir = f"{render_dir}/{env_name}"
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}', f"{render_env_dir}/{INVENTORY_DIR_NAME}")
     # clearing instances dir 
-    cleanup_resulting_dir(pathlib.Path(output_dir) / cluster_name / env_name)
+    cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
     check_dir_exist_and_create(f'{render_parameters_dir}/from_template')
     copy_path(f'{templates_dir}/parameters', f'{render_parameters_dir}/from_template')
@@ -63,12 +64,12 @@ def pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instanc
     copy_path(f"{source_env_dir}/Credentials", f"{render_env_dir}")
 
 
-def cleanup_resulting_dir(resulting_dir: pathlib.Path):
+def cleanup_resulting_dir(resulting_dir: Path):
     logger.info(f"Cleaning resulting directory: {str(resulting_dir)}")
     # Ensure resulting_dir is a Path object
     if isinstance(resulting_dir, str):
-        resulting_dir = pathlib.Path(resulting_dir)
-    elif not isinstance(resulting_dir, pathlib.Path):
+        resulting_dir = Path(resulting_dir)
+    elif not isinstance(resulting_dir, Path):
         raise TypeError(f"Expected str or Path, got {type(resulting_dir).__name__}")
     for target in cleanup_targets:
         path = resulting_dir.joinpath(target)
@@ -83,7 +84,7 @@ def cleanup_resulting_dir(resulting_dir: pathlib.Path):
 def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir):
     check_dir_exist_and_create(output_dir)
     # copying results to output_dir
-    env_instances_relative_dir = str(pathlib.Path(source_env_dir).relative_to(pathlib.Path(all_instances_dir)))
+    env_instances_relative_dir = str(Path(source_env_dir).relative_to(Path(all_instances_dir)))
     logger.info(f"Relative path of {env_name} in instances dir is: {env_instances_relative_dir}")
     resulting_dir = f'{output_dir}/{env_instances_relative_dir}'
     check_dir_exist_and_create(resulting_dir)
@@ -91,7 +92,7 @@ def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, a
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/{ENV_DEFINITION_FILE_NAME}',
               f"{render_env_dir}/{INVENTORY_DIR_NAME}")
     # pushing all to output dir
-    cleanup_resulting_dir(pathlib.Path(resulting_dir))
+    cleanup_resulting_dir(Path(resulting_dir))
     copy_path(f'{render_env_dir}/*', resulting_dir)
     return resulting_dir
 
@@ -105,7 +106,7 @@ def handle_template_override(render_dir):
         src = openYaml(file)
         merge_yaml_into_target(yaml_to_override, '', src)
         writeYamlToFile(template_path, yaml_to_override)
-        template_path_stem = pathlib.Path(template_path).stem
+        template_path_stem = Path(template_path).stem
         schema_path = ""
         if template_path_stem == 'cloud':
             schema_path = CLOUD_SCHEMA
