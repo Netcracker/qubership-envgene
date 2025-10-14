@@ -6,7 +6,7 @@ from envgenehelper.deployer import *
 from build_env import build_env, process_additional_template_parameters
 from cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
-from generate_config_env import generate_config_env
+from generate_config_env import EnvGenerator
 from resource_profiles import get_env_specific_resource_profiles
 
 # const
@@ -180,8 +180,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     envvars["cmdb_url"] = cmdb_url
     envvars["output_dir"] = output_dir
     logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(envvars)}")
-    generate_config_env(envvars)
-
+    EnvGenerator().generate_config_env(envvars)
     handle_template_override(render_dir)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
                                                                            ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
@@ -284,17 +283,17 @@ def validate_appregdefs(render_dir, env_name):
     if os.path.exists(appdef_dir):
         appdef_files = findAllYamlsInDir(appdef_dir)
         if not appdef_files:
-            print(f"[INFO] No AppDef YAMLs found in {appdef_dir}")
+            logger.info(f"No AppDef YAMLs found in {appdef_dir}")
         for file in appdef_files:
-            print(f"[VALIDATING] AppDef file: {file}")
+            logger.info(f"AppDef file: {file}")
             validate_yaml_by_scheme_or_fail(file, "schemas/appdef.schema.json")
 
     if os.path.exists(regdef_dir):
         regdef_files = findAllYamlsInDir(regdef_dir)
         if not regdef_files:
-            print(f"[INFO] No RegDef YAMLs found in {regdef_dir}")
+            logger.info(f"No RegDef YAMLs found in {regdef_dir}")
         for file in regdef_files:
-            print(f"[VALIDATING] RegDef file: {file}")
+            logger.info(f"RegDef file: {file}")
             validate_yaml_by_scheme_or_fail(file, "schemas/regdef.schema.json")
 
 

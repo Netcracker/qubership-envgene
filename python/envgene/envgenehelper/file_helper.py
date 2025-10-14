@@ -4,7 +4,6 @@ import re
 import shutil
 from typing import Callable
 from pathlib import Path
-import cp
 
 from .logger import logger
 
@@ -214,3 +213,13 @@ def get_all_files_in_dir(dir):
         if item.is_file():
             result.append(str(item.relative_to(dir_path)))
     return result
+
+
+def ensure_directory(path: Path, mode: int):
+    if not path.exists():
+        path.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Created directory: {path}")
+    else:
+        logger.info(f"Directory already exists: {path}")
+    path.chmod(mode)
+

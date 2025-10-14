@@ -1,10 +1,10 @@
-import difflib
-import filecmp
-import pytest
 from os import environ
-from pathlib import Path
+
+import pytest
 from envgenehelper import *
+
 from main import render_environment, cleanup_resulting_dir
+from test_helper import TestHelpers
 
 test_data = [
     # (cluster_name, environment_name, template)
@@ -22,6 +22,7 @@ g_templates_dir = str((base_dir / "../../test_data/test_templates").resolve())
 g_inventory_dir = str((base_dir / "../../test_data/test_environments").resolve())
 g_output_dir = str((base_dir / "../../tmp/test_environments").resolve())
 g_base_dir = get_parent_dir_for_dir(g_inventory_dir)
+environ['CI_PROJECT_DIR'] = g_base_dir
 
 
 @pytest.fixture(autouse=True)
@@ -36,34 +37,7 @@ def test_render_envs(cluster_name, env_name, version):
     generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
     files_to_compare = get_all_files_in_dir(source_dir)
     logger.info(dump_as_yaml_format(files_to_compare))
-    match, mismatch, errors = filecmp.cmpfiles(source_dir, generated_dir, files_to_compare, shallow=False)
-    logger.info(f"Match: {dump_as_yaml_format(match)}")
-    if len(mismatch) > 0:
-        logger.error(f"Mismatch: {dump_as_yaml_format(mismatch)}")
-        for file in mismatch:
-            file1 = os.path.join(source_dir, file)
-            file2 = os.path.join(generated_dir, file)
-            try:
-                with open(file1, 'r') as f1, open(file2, 'r') as f2:
-                    diff = difflib.unified_diff(
-                        f1.readlines(),
-                        f2.readlines(),
-                        fromfile=file1,
-                        tofile=file2,
-                        lineterm=''
-                    )
-                    diff_text = '\n'.join(diff)
-                    logger.error(f"Diff for {file}:\n{diff_text}")
-            except Exception as e:
-                logger.error(f"Could not read files for diff: {file1}, {file2}. Error: {e}")
-    else:
-        logger.info(f"Mismatch: {dump_as_yaml_format(mismatch)}")
-    if len(errors) > 0:
-        logger.fatal(f"Errors: {dump_as_yaml_format(errors)}")
-    else:
-        logger.info(f"Errors: {dump_as_yaml_format(errors)}")
-    assert len(mismatch) == 0, f"Files from source and rendering result mismatch: {dump_as_yaml_format(mismatch)}"
-    assert len(errors) == 0, f"Error during comparing source and rendering result: {dump_as_yaml_format(errors)}"
+    TestHelpers.assert_dirs_content(source_dir, generated_dir, True, False)
 
 
 def setup_test_dir(tmp_path):
