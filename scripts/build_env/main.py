@@ -4,7 +4,7 @@ import ansible_runner
 from envgenehelper import *
 from envgenehelper.deployer import *
 
-from build_env import build_env, process_additional_template_parameters
+from build_env import build_env, process_additional_template_parameters, cleanup_targets
 from cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
 from resource_profiles import get_env_specific_resource_profiles
@@ -17,21 +17,6 @@ PARAMSET_SCHEMA = "schemas/paramset.schema.json"
 CLOUD_SCHEMA = "schemas/cloud.schema.json"
 NAMESPACE_SCHEMA = "schemas/namespace.schema.json"
 ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
-cleanup_targets = [
-    "Applications",
-    "Namespaces",
-    "Profiles",
-    "cloud.yml",
-    "tenant.yml",
-    "bg_domain.yml",
-    "composite_structure.yml",
-]
-
-
-def clear_output_folder(dir):
-    delete_dir(f"{dir}/Namespaces")
-    delete_dir(f"{dir}/Applications")
-    delete_dir(f"{dir}/Profiles")
 
 
 def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,

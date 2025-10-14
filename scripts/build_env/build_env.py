@@ -13,6 +13,16 @@ from cloud_passport import process_cloud_passport
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
 
+cleanup_targets = [
+    "Applications",
+    "Namespaces",
+    "Profiles",
+    "cloud.yml",
+    "tenant.yml",
+    "bg_domain.yml",
+    "composite_structure.yml",
+]
+
 def findNamespaces(dir) :
     result = []
     fileList = findAllYamlsInDir(dir)
