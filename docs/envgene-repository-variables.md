@@ -33,7 +33,7 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 **Mandatory**: Yes, if repository encryption is enabled with `Fernet` crypt backend
 
-**Example**: `PjYtYZ4WnZsH2F4AxjDf_-QOSaL1kVHIkPOH7bpTFMI=`
+**Example**: `key-placeholder-123`
 
 ### `GITLAB_TOKEN`
 
@@ -45,7 +45,7 @@ Used by EnvGene to commit changes to the GitLab repository where the EnvGene pip
 
 **Mandatory**: No. Required for GitLab EnvGene pipeline, not used in GitHub EnvGene pipeline
 
-**Example**: `glpat-*****************`
+**Example**: `token-placeholder-123`
 
 ### `ENVGENE_AGE_PRIVATE_KEY`
 
@@ -57,13 +57,13 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 **Mandatory**: Yes, if repository encryption is enabled with `SOPS` crypt backend
 
-**Example**: `AGE-SECRET-KEY-1N9APQZ3PZJQY5QZ3PZJQY5QZ3PZJQY5QZ3PZJQY5QZ3PZJQY5QZ3PZJQY6`
+**Example**: `key-placeholder-123`
 
 ### `ENVGENE_AGE_PUBLIC_KEY`
 
 **Description**: Public key from EnvGene's AGE key pair. Added for logical completeness (not currently used in operations). **For encryption, `PUBLIC_AGE_KEYS` is used instead.**
 
-**Example**: `age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p`
+**Example**: `key-placeholder-123`
 
 ### `PUBLIC_AGE_KEYS`
 
@@ -77,7 +77,7 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 **Mandatory**: Yes, if repository encryption is enabled with `SOPS` crypt backend
 
-**Example**: `age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p,age113z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmca32p`
+**Example**: `key-placeholder-123,key-placeholder-124`
 
 ### `IS_OFFSITE`
 

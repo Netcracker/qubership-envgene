@@ -1,3 +1,5 @@
+# README
+
 Provides JSON tools:
 
 - `jschon-sort` sorts a JSON or YAML document according to its JSON Schema:
