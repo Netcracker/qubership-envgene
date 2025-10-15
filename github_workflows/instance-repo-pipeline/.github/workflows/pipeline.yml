@@ -28,22 +28,26 @@ on:
       ENV_BUILDER:
         required: false
         default: "true"
-        type: string
+        type: choice
+        options: ["false", "true"]
         description: ""
       GENERATE_EFFECTIVE_SET:
         required: false
         default: "false"
-        type: string
+        type: choice
+        options: ["false", "true"]
         description: ""
       GET_PASSPORT:
         required: false
         default: "false"
-        type: string
+        type: choice
+        options: ["false", "true"]
         description: ""
       CMDB_IMPORT:
         required: false
         default: "false"
-        type: string
+        type: choice
+        options: ["false", "true"]
         description: ""
       GITHUB_PIPELINE_API_INPUT:
         required: false
@@ -53,7 +57,7 @@ on:
 
 env:
   CI_COMMIT_REF_NAME: ${{ github.ref_name }}
-  CI_PROJECT_DIR: ${{ github.workspace }}
+  CI_PROJECT_DIR: /work
 
   SECRET_KEY: ${{ secrets.SECRET_KEY }}
   ENVGENE_AGE_PUBLIC_KEY: ${{ secrets.ENVGENE_AGE_PUBLIC_KEY }}
@@ -63,16 +67,15 @@ env:
   GITHUB_USER_NAME: 'envgene'
   GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
 
-
   #DOCKER_IMAGE_NAMES
   DOCKER_IMAGE_NAME_PIPEGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene"
   DOCKER_IMAGE_NAME_ENVGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene"
   DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator"
 
   #DOCKER_IMAGE_TAGS
-  DOCKER_IMAGE_TAG_PIPEGENE: "1.5.5"
-  DOCKER_IMAGE_TAG_ENVGENE: "1.5.5"
-  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.5.5"
+  DOCKER_IMAGE_TAG_PIPEGENE: "main_20251015-122833"
+  DOCKER_IMAGE_TAG_ENVGENE: "main_20251015-122818"
+  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "main_20251015-122922"
 
 jobs:
   set_docker_images:
@@ -151,14 +154,14 @@ jobs:
         run: |
           # Determine execution mode
           if [ -n "${{ github.event.inputs.GITHUB_PIPELINE_API_INPUT }}" ]; then
-            echo "🚀 === Pipeline Execution Information (API Mode) ==="
+            echo "=== Pipeline Execution Information (API Mode) ==="
             echo "Event Type: ${{ github.event_name }}"
             echo "Branch: ${{ github.ref_name }}"
             echo "Commit: ${{ github.sha }}"
             echo "Trigger: API workflow dispatch"
             echo "Parameters source: GITHUB_PIPELINE_API_INPUT only (no pipeline_vars.yaml)"
           else
-            echo "🚀 === Pipeline Execution Information (UI Mode) ==="
+            echo "=== Pipeline Execution Information (UI Mode) ==="
             echo "Event Type: ${{ github.event_name }}"
             echo "Branch: ${{ github.ref_name }}"
             echo "Commit: ${{ github.sha }}"
@@ -175,16 +178,12 @@ jobs:
         run: |
           python .github/scripts/generate_env_matrix.py
 
-  generate_inventory:
-    name: "${{ matrix.environment }} - Generate Inventory"
+  envgene_execution:
+    name: "EnvGene - ${{ matrix.environment }}"
     runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
-    if: always() && needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
     needs:
       - set_docker_images
       - process_environment_variables
-    container:
-      image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
-      options: --user root
     strategy:
       fail-fast: false
       matrix:
@@ -194,323 +193,211 @@ jobs:
     steps:
       - name: Repository Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Prepare Variables to Work With Packages
+      - name: Create Package Name
         run: |
-          echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
+          PACKAGE_NAME="$(echo '${{ matrix.environment }}' | sed 's|/|_|g')"
+          echo "PACKAGE_NAME=$PACKAGE_NAME" >> $GITHUB_ENV
+        shell: bash
 
+      ### GENERATE INVENTORY ###
       - name: Generate Inventory
-        run: |
-          # Export all variables using unified exporter
-          eval "$(.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
-
-          # All variables are now available from the unified exporter
-          python3 /build_env/scripts/build_env/env_inventory_generation.py
-
-      - name: Upload Package
-        uses: actions/upload-artifact@v4
-        with:
-          name: generate_inventory_${{ env.SANITIZED_NAME }}
-          path: ${{ github.workspace }}/environments/${{ env.FULL_ENV }}
-# --- JOBS:BEFORE_ALL ---
-  credential_rotation:
-    name: "${{ matrix.environment }} - Credential Rotation"
-    runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
-    if: always() && needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
-    needs:
-      - set_docker_images
-      - process_environment_variables
-      - generate_inventory
-    container:
-      image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
-      options: --user root
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: ${{ fromJson(needs.process_environment_variables.outputs.env_matrix) }}
-    env:
-      FULL_ENV: ${{ matrix.environment }}
-    steps:
-      - name: Repository Checkout
-        uses: actions/checkout@v4
-
-      - name: Prepare Variables to Download the Previous Step Package
-        run: |
-          echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
-
-      - name: Create the Naming for Package
-        run: |
-          if [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST }}" == "false" ] && ([ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
-            echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
-          fi
-
-      - name: Download Package
+        uses: addnab/docker-run-action@v3
         if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
-        uses: ./.github/actions/download_artifact
+        env:
+          CI_PROJECT_DIR: /work
+          GITHUB_WORKSPACE: /work
         with:
-          sanitized_name: ${{ env.artifact_name }}
-          full_env: ${{ env.FULL_ENV }}
-          project_dir: ${{ env.PROJECT_DIR }}
+          image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
+          options: -v ${{ github.workspace }}:/work -w /work -e GITHUB_TOKEN --user root
+          run: |
+            # Export all variables using unified exporter
+            eval "$(/work/.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
 
+            # All variables are now available from the unified exporter
+            echo "Executing inventory generation..."
+            if ! python3 /build_env/scripts/build_env/env_inventory_generation.py; then
+              echo "Inventory generation failed with exit code $?"
+              exit 1
+            fi
+
+      - name: Upload Generate Inventory Package
+        uses: actions/upload-artifact@v4
+        if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
+        with:
+          name: generate_inventory_${{ env.PACKAGE_NAME }}
+          path: environments/${{ matrix.environment }}
+          include-hidden-files: true
+      ##########################
+
+
+      ### CREDENTIAL ROTATION ###
       - name: Credential Rotation
-        run: |
-          # Export all variables using unified exporter
-          eval "$(.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
+        uses: addnab/docker-run-action@v3
+        if: needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
+        with:
+          image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
+          options: -v ${{ github.workspace }}:/work -w /work -e GITHUB_TOKEN --user root
+          run: |
+            # Export all variables using unified exporter
+            eval "$(/work/.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
 
-          # All variables are now available from the unified exporter
-          python3 /module/creds_rotation_scripts/creds_rotation_handler.py
+            # All variables are now available from the unified exporter
+            echo "Executing credential rotation..."
+            if ! python3 /module/creds_rotation_scripts/creds_rotation_handler.py; then
+              echo "Credential rotation failed with exit code $?"
+              exit 1
+            fi
 
-      - name: Upload Package
+      - name: Upload Credential Rotation Artifact
         uses: actions/upload-artifact@v4
+        if: needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         with:
-          name: credential_rotation_${{ env.SANITIZED_NAME }}
-          path: |
-            ${{ github.workspace }}/environments/${{ env.FULL_ENV }}
-            ${{ github.workspace }}/affected-sensitive-parameters.yaml
+          name: credential_rotation_${{ env.PACKAGE_NAME }}
+          path: environments/${{ matrix.environment }}
+          include-hidden-files: true
+      ##########################
 
-  env_build:
-    name: "${{ matrix.environment }} - Env Build"
-    if: always() && needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
-    runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
-    needs:
-      - set_docker_images
-      - process_environment_variables
-      - generate_inventory
-      - credential_rotation
-    container:
-      image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: ${{ fromJson(needs.process_environment_variables.outputs.env_matrix) }}
-    env:
-      FULL_ENV: ${{ matrix.environment }}
-    steps:
-      - name: Repository Checkout
-        uses: actions/checkout@v4
 
-      - name: Prepare Variables to Download the Previous Step Package
-        run: |
-          echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
-
-      - name: Create the Naming for Package
-        run: |
-          if [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST }}" == "false" ] && ([ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
-            echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
-          fi
-          if [ "${{ needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD }}" != "" ]; then
-            echo "artifact_name=credential_rotation_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
-          fi
-
-      - name: Download Package
-        if: (needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' && needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')) || needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
-        uses: ./.github/actions/download_artifact
-        with:
-          sanitized_name: ${{ env.artifact_name }}
-          full_env: ${{ env.FULL_ENV }}
-          project_dir: ${{ env.PROJECT_DIR }}
-
+      ### BUILD ENV ###
       - name: Build Env
-        run: |
-          # Export all variables using unified exporter
-          eval "$(.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
+        uses: addnab/docker-run-action@v3
+        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
+        with:
+          image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
+          options: -v ${{ github.workspace }}:/work -w /work -e GITHUB_TOKEN --user root
+          run: |
+              # Export all variables using unified exporter
+              eval "$(/work/.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
 
-          if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
-          env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs");
-          for path in $env_path; do bash /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/$path; done; fi
+              if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
+              env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs");
+              for path in $env_path; do bash /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/$path; done; fi
 
-          if [ "$ENV_TEMPLATE_VERSION" != "" ] && [ "$ENV_TEMPLATE_TEST" != "true" ]; then
-            /module/scripts/prepare.sh "set_template_version.yaml"
-            /module/scripts/prepare.sh "build_env.yaml"
-          else
-            /module/scripts/prepare.sh "build_env.yaml"
-          fi
+              echo "Executing build environment operations..."
+              if [ "$ENV_TEMPLATE_VERSION" != "" ] && [ "$ENV_TEMPLATE_TEST" != "true" ]; then
+                if ! /module/scripts/prepare.sh "set_template_version.yaml"; then
+                  exit 1
+                fi
+                if ! /module/scripts/prepare.sh "build_env.yaml"; then
+                  exit 1
+                fi
+              else
+                if ! /module/scripts/prepare.sh "build_env.yaml"; then
+                  exit 1
+                fi
+              fi
 
-          if [ "$ENV_TEMPLATE_TEST" == "true" ]; then
-            env_name=$(cat set_variable.txt)
-            sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "${CI_PROJECT_DIR}/environments/$env_name/Credentials/credentials.yml"
-          else
-            env_name=$(echo "$ENV_NAME" | awk -F "/" '{print $NF}')
-            export env_name
-          fi
+              if [ "$ENV_TEMPLATE_TEST" == "true" ]; then
+                env_name=$(cat set_variable.txt)
+                sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "${CI_PROJECT_DIR}/environments/$env_name/Credentials/credentials.yml"
+              else
+                env_name=$(echo "$ENV_NAME" | awk -F "/" '{print $NF}')
+                export env_name
+              fi
 
-          env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
-          for path in $env_path; do
-            if [ -d "$path/Credentials" ]; then
-              chmod ugo+rw "$path/Credentials/"*
-            fi
-          done
+              env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
+              for path in $env_path; do
+                if [ -d "$path/Credentials" ]; then
+                  chmod ugo+rw "$path/Credentials/"*
+                fi
+              done
 
-      - name: Upload Package
+      - name: Upload Build Env Package
         uses: actions/upload-artifact@v4
+        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         with:
-          name: env_build_${{ env.SANITIZED_NAME }}
-          path: ${{ github.workspace }}/environments/${{ env.FULL_ENV }}
+          name: build_env_${{ env.PACKAGE_NAME }}
+          path: environments/${{ matrix.environment }}
+          include-hidden-files: true
+      ##########################
 
-  generate_effective_set:
-    name: "${{ matrix.environment }} - Generate Effective Set"
-    if: always() && needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
-    runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
-    needs:
-      - set_docker_images
-      - process_environment_variables
-      - generate_inventory
-      - credential_rotation
-      - env_build
-    container:
-      image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}
-      options: --user root
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: ${{ fromJson(needs.process_environment_variables.outputs.env_matrix) }}
-    env:
-      FULL_ENV: ${{ matrix.environment }}
-    steps:
-      - name: Repository Checkout
-        uses: actions/checkout@v4
 
-      - name: Prepare Variables to Download the Previous Step Package
-        run: |
-          echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
-
-      - name: Create the Naming for Package
-        run: |
-          if [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST }}" == "false" ] && ([ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
-            echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
-          fi
-          if [ "${{ needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD }}" != "" ]; then
-            echo "artifact_name=credential_rotation_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
-          fi
-          if [ "${{ needs.process_environment_variables.outputs.ENV_BUILDER }}" == "true" ]; then
-            echo "artifact_name=env_build_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
-          fi
-
-      - name: Download Package
-        if: (needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')) || needs.process_environment_variables.outputs.ENV_BUILDER == 'true' || needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
-        uses: ./.github/actions/download_artifact
-        with:
-          sanitized_name: ${{ env.artifact_name }}
-          full_env: ${{ env.FULL_ENV }}
-          project_dir: ${{ env.PROJECT_DIR }}
-
+      ### GENERATE EFFECTIVE SET ###
       - name: Generate Effective Set
-        run: |
-          # Export all variables using unified exporter
-          eval "$(.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
+        uses: addnab/docker-run-action@v3
+        if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
+        with:
+          image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_EFFECTIVE_SET_GENERATOR }}
+          options: -v ${{ github.workspace }}:/work -w /work -e GITHUB_TOKEN --user root
+          run: |
+            # Export all variables using unified exporter
+            eval "$(/work/.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
 
-          # All variables are now available from the unified exporter
-          echo "ENV_TEMPLATE_VERSION value: $ENV_TEMPLATE_VERSION"
-
-          if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
-            env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs")
-            for path in $env_path; do
-              bash /module/scripts/update_ca_cert.sh "${CI_PROJECT_DIR}/configuration/certs/$path"
-            done
-          fi
-
-          /module/scripts/prepare.sh "generate_effective_set.yaml"
-
-          env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
-          for path in $env_path; do
-            if [ -d "$path/Credentials" ]; then
-              chmod ugo+rw "$path/Credentials/"*
+            if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
+              env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs")
+              for path in $env_path; do
+                bash /module/scripts/update_ca_cert.sh "${CI_PROJECT_DIR}/configuration/certs/$path"
+              done
             fi
-          done
 
-      - name: Upload Package
+            echo "Executing effective set generation..."
+            if ! /module/scripts/prepare.sh "generate_effective_set.yaml"; then
+              echo "Effective set generation failed with exit code $?"
+              exit 1
+            fi
+
+            env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
+            for path in $env_path; do
+              if [ -d "$path/Credentials" ]; then
+                chmod ugo+rw "$path/Credentials/"*
+              fi
+            done
+
+      - name: Upload Generate Effective Set Package
         uses: actions/upload-artifact@v4
+        if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         with:
-          name: generate_effective_set_${{ env.SANITIZED_NAME }}
-          path: ${{ github.workspace }}/environments/${{ env.FULL_ENV }}
+          name: generate_effective_set_${{ env.PACKAGE_NAME }}
+          path: environments/${{ matrix.environment }}
+          include-hidden-files: true
+      ##########################
 
-  git_commit:
-    name: "${{ matrix.environment }} - Git Commit"
-    runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
-    needs:
-      - set_docker_images
-      - process_environment_variables
-      - generate_inventory
-      - credential_rotation
-      - env_build
-      - generate_effective_set
-    if: always() && needs.process_environment_variables.outputs.env_matrix != '[]' && (needs.process_environment_variables.outputs.ENV_INVENTORY_INIT == 'true' || needs.process_environment_variables.outputs.ENV_BUILDER == 'true' || needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true' || needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != '')
-    container:
-      image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
-      options: --user root
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: ${{ fromJson(needs.process_environment_variables.outputs.env_matrix) }}
-    env:
-      FULL_ENV: ${{ matrix.environment }}
-    steps:
-      - name: Repository Checkout
-        uses: actions/checkout@v4
 
-      - name: Prepare Variables to Download the Previous Step Package
-        run: |
-          echo "SANITIZED_NAME=$(echo "${{ matrix.environment }}" | sed 's|/|_|g')" >> $GITHUB_ENV
-          echo "PROJECT_DIR=$(pwd)" >> $GITHUB_ENV
-
-      - name: Create the Naming for Package
-        run: |
-          if [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST }}" == "false" ] && ([ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "{}" ] && [ "${{ needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS }}" != "" ] || [ "${{ needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME }}" != "" ]); then
-            echo "artifact_name=generate_inventory_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
-          fi
-          if [ "${{ needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD }}" != "" ]; then
-            echo "artifact_name=credential_rotation_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
-          fi
-          if [ "${{ needs.process_environment_variables.outputs.ENV_BUILDER }}" == "true" ]; then
-            echo "artifact_name=env_build_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
-          fi
-          if [ "${{ needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET }}" == "true" ]; then
-            echo "artifact_name=generate_effective_set_${{ env.SANITIZED_NAME }}" >> $GITHUB_ENV
-          fi
-
-      - name: Download Package
-        if: (needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')) || needs.process_environment_variables.outputs.ENV_BUILDER == 'true' || needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true' || needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
-        uses: ./.github/actions/download_artifact
-        with:
-          sanitized_name: ${{ env.artifact_name }}
-          full_env: ${{ env.FULL_ENV }}
-          project_dir: ${{ env.PROJECT_DIR }}
-
+      ### GIT COMMIT ###
       - name: Git Commit
-        run: |
-          # Export all variables using unified exporter
-          eval "$(.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ needs.set_docker_images.outputs.DOCKER_IMAGE_ENVGENE }}
+          options: -v ${{ github.workspace }}:/work -w /work -e GITHUB_TOKEN --user root
+          run: |
+            # Export all variables using unified exporter
+            eval "$(/work/.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
 
-          # All variables are now available from the unified exporter
-          echo "Prepare git_commit job for ${ENVIRONMENT_NAME}..."
+            echo "Prepare git_commit job for ${ENVIRONMENT_NAME}..."
 
-          if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
-            env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs")
-            for path in $env_path; do
-              bash /module/scripts/update_ca_cert.sh "${CI_PROJECT_DIR}/configuration/certs/$path"
-            done
-          fi
-
-          git config --global --add safe.directory "${CI_PROJECT_DIR}"
-
-          /module/scripts/prepare.sh "git_commit.yaml"
-
-          env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
-          for path in $env_path; do
-            if [ -d "$path/Credentials" ]; then
-              chmod ugo+rw "$path/Credentials/"*
+            if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
+              env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs")
+              for path in $env_path; do
+                bash /module/scripts/update_ca_cert.sh "${CI_PROJECT_DIR}/configuration/certs/$path"
+              done
             fi
-          done
 
-          cp -rf ${CI_PROJECT_DIR}/environments ${CI_PROJECT_DIR}/git_envs
+            git config --global --add safe.directory "${CI_PROJECT_DIR}"
 
-      - name: Upload Artifact
+            # Execute git commit with proper error handling
+            echo "Executing git commit operations..."
+            if ! /module/scripts/prepare.sh "git_commit.yaml"; then
+              echo "Git commit operations failed with exit code $?"
+              echo "This could be due to authentication issues or other git errors"
+              exit 1
+            fi
+
+            env_path=$(find "${CI_PROJECT_DIR}/environments" -type d -name "$env_name")
+            for path in $env_path; do
+              if [ -d "$path/Credentials" ]; then
+                chmod ugo+rw "$path/Credentials/"*
+              fi
+            done
+
+            cp -rf ${CI_PROJECT_DIR}/environments ${CI_PROJECT_DIR}/git_envs
+
+      - name: Upload Git Commit Package
         uses: actions/upload-artifact@v4
         with:
-          name: git_commit_${{ env.SANITIZED_NAME }}
-          path: ${{ github.workspace }}/git_envs
-# --- JOBS:AFTER_ALL ---
+          name: git_commit_${{ env.PACKAGE_NAME }}
+          path: environments/${{ matrix.environment }}
+          include-hidden-files: true
+      ##########################

@@ -1,4 +1,4 @@
-name: "Dev: Build Qubership EnvGene docker images"
+name: "Dev: Build or Test Qubership EnvGene docker images"
 
 run-name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.tests-only == 'true') && format('Test EnvGene for commit {0}', github.sha) || ((github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build-pipegene == 'true' || github.event.inputs.build-envgene == 'true' || github.event.inputs.build-pipeline == 'true' || github.event.inputs.build-effective-set == 'true' || github.event.inputs.build-effective-set-python == 'true') && github.event.inputs.tests-only == 'false')) && format('Build EnvGene for commit {0}', github.sha) || format('Test EnvGene for commit {0}', github.sha) }}
 
@@ -138,9 +138,9 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-effective-set-jar:
-    needs: [tests, link-check]
-    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push')
-    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@main
+    needs: [linters, tests, link-check]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
     with:
       maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
       java-version: 17
