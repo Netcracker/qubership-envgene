@@ -3,6 +3,7 @@ import pathlib
 import re
 from os import getenv
 from pathlib import Path
+from typing import overload
 
 from ruyaml import CommentedMap
 
@@ -39,6 +40,11 @@ def find_env_instances_dir(env_name, instances_dir) :
             return str(dir.parent)
     logger.error(f"Directory for {env_name} is not found in {instances_dir}")
     raise ReferenceError(f"Can't find directory for {env_name}")
+
+@overload
+def getenv_and_log(name: str) -> None | str: ...
+@overload
+def getenv_and_log(name: str, default: str) -> str: ...
 
 def getenv_and_log(name, *args, **kwargs):
     var = getenv(name, *args, **kwargs)
@@ -316,14 +322,14 @@ class Namespace:
         self.definition_path = self.path.joinpath('namespace.yml')
         self.name = openYaml(self.definition_path)['name']
 
-def get_namespaces_path() -> Path:
-    env_dir = get_current_env_dir_with_env_vars()
+def get_namespaces_path(env_dir: Path | None = None) -> Path:
+    env_dir = env_dir or get_current_env_dir_with_env_vars()
     namespaces_path = env_dir.joinpath('Namespaces')
     logger.debug(namespaces_path)
     return namespaces_path
 
-def get_namespaces() -> list[Namespace]:
-    namespaces_path = get_namespaces_path()
+def get_namespaces(env_dir: Path | None = None) -> list[Namespace]:
+    namespaces_path = get_namespaces_path(env_dir)
     namespace_paths = [p for p in namespaces_path.iterdir() if p.is_dir()]
     namespaces = [Namespace(path=p) for p in namespace_paths]
     logger.debug(namespaces)
@@ -340,3 +346,17 @@ def get_bgd_object() -> CommentedMap:
     bgd_object = openYaml(bgd_path, allow_default=True)
     logger.debug(bgd_object)
     return bgd_object
+
+def make_relative_to_base_path(base: Path, target: Path) -> Path:
+    base = base.resolve()
+    target = target.resolve()
+    return target.relative_to(base)
+
+def make_relative_to_ci_project_dir(path: Path) -> Path:
+    ci_project_dir = Path(getenv_with_error("CI_PROJECT_DIR"))
+    return make_relative_to_base_path(ci_project_dir, path)
+
+def make_relative_to_env_dir(path: Path) -> Path:
+    env_dir = get_current_env_dir_with_env_vars()
+    return make_relative_to_base_path(env_dir, path)
+

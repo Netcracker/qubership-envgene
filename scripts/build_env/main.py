@@ -9,6 +9,8 @@ from cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
 from resource_profiles import get_env_specific_resource_profiles
 
+from filter_namespaces import apply_ns_build_filter
+
 # const
 INVENTORY_DIR_NAME = "Inventory"
 ENV_DEFINITION_FILE_NAME = "env_definition.yml"
@@ -118,6 +120,9 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     render_dir = getAbsPath('tmp/render')
     render_parameters_dir = getAbsPath('tmp/parameters_templates')
     render_profiles_dir = getAbsPath('tmp/resource_profiles')
+
+    shutil.copytree(get_namespaces_path(), os.path.join(work_dir,'build_env','tmp','initial_namespaces_content','Namespaces'), dirs_exist_ok=True)
+
     # preparing folders for generation
     render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
                                                    render_parameters_dir, render_profiles_dir, output_dir)
@@ -418,6 +423,7 @@ def render_environment(env_name, cluster_name, templates_dir, all_instances_dir,
     create_credentials(resulting_env_dir, env_dir, all_instances_dir)
     # update versions
     update_generated_versions(resulting_env_dir, BUILD_ENV_TAG, g_template_version)
+    apply_ns_build_filter()
 
 
 if __name__ == "__main__":
