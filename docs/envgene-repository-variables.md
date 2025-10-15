@@ -49,9 +49,9 @@ Used by EnvGene to commit changes to the GitLab repository where the EnvGene pip
 
 ### `ENVGENE_AGE_PRIVATE_KEY`
 
-**Description**: Private key from EnvGene's AGE key pair. Used to encrypt credentials when [`crypt_backend`](/docs/envgene-configs.md#configyml) is set to `SOPS`
+**Description**: Private key from EnvGene's AGE key pair. Used to decrypt credentials when [`crypt_backend`](/docs/envgene-configs.md#configyml) is set to `SOPS`
 
-Used by EnvGene at runtime, when using pre-commit hooks, the same value must be specified in `.git/private-age-key.txt`.
+Used by EnvGene at runtime. When using pre-commit hooks, the same value must be specified in `.git/private-age-key.txt`.
 
 **Default Value**: None
 
@@ -61,7 +61,7 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 ### `ENVGENE_AGE_PUBLIC_KEY`
 
-**Description**: Public key from EnvGene's AGE key pair. Added for logical completeness (not currently used in operations). For decryption, `PUBLIC_AGE_KEYS` is used instead.
+**Description**: Public key from EnvGene's AGE key pair. Added for logical completeness (not currently used in operations). **For encryption, `PUBLIC_AGE_KEYS` is used instead.**
 
 **Example**: `age1ql3z7hjy54pw3hyww5ayyfg7zqgvc7w3j2elw8zmrj2kg5sfn9aqmcac8p`
 
@@ -71,7 +71,7 @@ Used by EnvGene at runtime, when using pre-commit hooks, the same value must be 
 
 Must include at least one key: EnvGene's own AGE public key.
 If an external system provides encrypted parameters, its public AGE key must also be included.
-Used by EnvGene at runtime, when using pre-commit hooks, the same value must be specified in `.git/public-age-key.txt`.
+Used by EnvGene at runtime. When using pre-commit hooks, the same value must be specified in `.git/public-age-key.txt`.
 
 **Default Value**: None
 
