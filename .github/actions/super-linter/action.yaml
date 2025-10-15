@@ -28,19 +28,15 @@ runs:
           grep "\S" ./.github/super-linter.env | grep -v "^#" >> $GITHUB_ENV
         fi
 
-    - name: Predefine GITHUB_BEFORE_SHA for workflow_dispatch
+    - name: Disable DEFAULT_BRANCH for workflow_dispatch
       if: ${{ github.event_name == 'workflow_dispatch' }}
       shell: bash
       run: |
-        # Ensure remote refs are up-to-date and main exists locally
-        git fetch origin +refs/heads/*:refs/remotes/origin/*
-        git show-ref --verify --quiet refs/heads/main || git branch main origin/main || true
-        # Use the configured DEFAULT_BRANCH if provided via env, otherwise fall back to origin/main
-        BEFORE_REF="${DEFAULT_BRANCH:-origin/main}"
-        echo "GITHUB_BEFORE_SHA=$(git rev-parse --verify ${BEFORE_REF})" >> "$GITHUB_ENV"
+        echo "DEFAULT_BRANCH=" >> "$GITHUB_ENV"
 
     - name: Lint Code Base
       uses: super-linter/super-linter@v8.2.0
       env:
         VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan == 'true' || github.event_name == 'workflow_dispatch' }}
+        USE_FIND_ALGORITHM: ${{ github.event_name == 'workflow_dispatch' }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
