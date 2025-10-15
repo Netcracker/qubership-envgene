@@ -28,11 +28,10 @@ runs:
           grep "\S" ./.github/super-linter.env | grep -v "^#" >> $GITHUB_ENV
         fi
 
-    - name: Predefine GIT_BEFORE_SHA_HEAD for workflow_dispatch
+    - name: WA. Predefine GIT_BEFORE_SHA_HEAD for workflow_dispatch
       if: ${{ github.event_name == 'workflow_dispatch' }}
       shell: bash
       run: |
-        # Align with Super-Linter's expected rev-parse input
         BEFORE_REF="${DEFAULT_BRANCH:-origin/main}"
         echo "GIT_BEFORE_SHA_HEAD=${BEFORE_REF}" >> "$GITHUB_ENV"
 
