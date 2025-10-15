@@ -137,43 +137,43 @@ jobs:
         registry: ${{ env.REGISTRY }}
         github-token: ${{ secrets.GITHUB_TOKEN }}
 
-  # build-effective-set-jar:
-  #   needs: [tests, link-check]
-  #   if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push')
-  #   uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@main
-  #   with:
-  #     maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
-  #     java-version: 17
-  #     upload-artifact: true
-  #     artifact-id: effective_set_jar
-  #     ref: ${{ github.ref }}
-  #   secrets:
-  #     maven-token: ${{ secrets.GITHUB_TOKEN }}
-  #
-  # build-effective-set-generator:
-  #   needs: [build-effective-set-jar]
-  #   if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push')
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #     attestations: write
-  #     id-token: write
-  #   outputs:
-  #     custom_tag: ${{ steps.build-effective-set-generator.outputs.custom_tag }}
-  #     branch_tag: ${{ steps.build-effective-set-generator.outputs.branch_tag }}
-  #     timestamp: ${{ steps.build-effective-set-generator.outputs.timestamp }}
-  #     branch_latest_tag: ${{ steps.build-effective-set-generator.outputs.branch_latest_tag }}
-  #   steps:
-  #   - name: Checkout repository
-  #     uses: actions/checkout@v4
-  #
-  #   - name: Build Effective Set Generator Docker Image
-  #     uses: ./.github/actions/build-effective-set
-  #     id: build-effective-set-generator
-  #     with:
-  #       registry: ${{ env.REGISTRY }}
-  #       github-token: ${{ secrets.GITHUB_TOKEN }}
+  build-effective-set-jar:
+    needs: [tests, link-check]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push')
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@main
+    with:
+      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
+      java-version: 17
+      upload-artifact: true
+      artifact-id: effective_set_jar
+      ref: ${{ github.ref }}
+    secrets:
+      maven-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-effective-set-generator:
+    needs: [build-effective-set-jar]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    outputs:
+      custom_tag: ${{ steps.build-effective-set-generator.outputs.custom_tag }}
+      branch_tag: ${{ steps.build-effective-set-generator.outputs.branch_tag }}
+      timestamp: ${{ steps.build-effective-set-generator.outputs.timestamp }}
+      branch_latest_tag: ${{ steps.build-effective-set-generator.outputs.branch_latest_tag }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build Effective Set Generator Docker Image
+      uses: ./.github/actions/build-effective-set
+      id: build-effective-set-generator
+      with:
+        registry: ${{ env.REGISTRY }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
 
   build-instance-repo-pipeline:
     needs:
@@ -182,7 +182,7 @@ jobs:
       - link-check
       - build-qubership-pipegene
       - build-qubership-envgene
-      # - build-effective-set-generator
+      - build-effective-set-generator
     if: |
       (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipeline == 'true') ||
       (github.event_name == 'push')
