@@ -26,8 +26,31 @@ runs:
           grep "\S" ./.github/super-linter.env | grep -v "^#" >> $GITHUB_ENV
         fi
 
+    - name: Compute before SHA for diff
+      if: inputs.full_scan != 'true'
+      shell: bash
+      run: |
+        # minimal, safe diff-base discovery
+        set -e
+        # Choose diff base (defaults to origin/main, can override with env)
+        DIFF_REF="${LINTER_DIFF_REF:-origin/main}"
+        # Make sure remote refs are present
+        git fetch --quiet origin +refs/heads/*:refs/remotes/origin/*
+        # Try to find base SHA (fork-point is better for rebases; fallback to normal merge-base)
+        BASE_SHA="$(git merge-base --fork-point "$DIFF_REF" HEAD 2>/dev/null || true)"
+        [ -z "$BASE_SHA" ] && BASE_SHA="$(git merge-base HEAD "$DIFF_REF" 2>/dev/null || true)"
+        # Export result for super-linter or enable full scan if not found
+        if [ -n "$BASE_SHA" ]; then
+          echo "GITHUB_BEFORE_SHA=$BASE_SHA" >> "$GITHUB_ENV"
+          echo "Computed GITHUB_BEFORE_SHA=$BASE_SHA against $DIFF_REF"
+        else
+          echo "No merge-base found with $DIFF_REF. Falling back to full scan."
+          echo "VALIDATE_ALL_CODEBASE=true" >> "$GITHUB_ENV"
+        fi
+
     - name: Lint Code Base
       uses: super-linter/super-linter@v8.2.0
       env:
         VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan == 'true' }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
+        GITHUB_BEFORE_SHA: ${{ env.GITHUB_BEFORE_SHA }}
