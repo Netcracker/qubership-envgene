@@ -46,7 +46,7 @@ When the inventory already exists, update rules vary depending on parameters. Se
 | Parameter | Type | Mandatory | Description | Example |
 |-----------|-------------|------|---------|----------|
 | `ENV_INVENTORY_INIT` | string | no | If `true`, the new Env Inventory will be generated in the path `/environments/<CLUSTER-NAME>/<ENV-NAME>/Inventory/env_definition.yml`. If `false` can be updated only | `true` OR `false` |
-| `ENV_SPECIFIC_PARAMS` | json in string | no | If specified, Env Inventory is updated. See details in [ENV_SPECIFIC_PARAMS](#env_specific_params) | See [example below](#env_specific_params-example) |
+| `ENV_SPECIFIC_PARAMS` | JSON in string | no | If specified, Env Inventory is updated. See details in [ENV_SPECIFIC_PARAMS](#env_specific_params) | See [example below](#env_specific_params-example) |
 
 #### ENV_SPECIFIC_PARAMS
 
