@@ -21,7 +21,7 @@ on:
     inputs:
       full_scan:
         type: boolean
-        default: false
+        default: true
         required: false
         description: "Lint all codebase"
 
@@ -39,8 +39,15 @@ jobs:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
 
+      - name: Ensure local main exists for diff base
+        shell: bash
+        run: |
+          git remote -v
+          git fetch origin +refs/heads/*:refs/remotes/origin/*
+          git show-ref --verify --quiet refs/heads/main || git branch main origin/main || true
+
       - name: Lint Code Base
         uses: ./.github/actions/super-linter
         with:
-          full_scan: ${{ inputs.full_scan || false }}
+          full_scan: ${{ github.event_name == 'workflow_dispatch' && inputs.full_scan || false }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
