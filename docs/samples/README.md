@@ -2,7 +2,7 @@
 
 ## Structure
 
-Instance GIT should have following structure
+Instance Git should have following structure
 
 ```yaml
 ├── configuration
