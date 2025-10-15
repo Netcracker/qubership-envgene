@@ -278,7 +278,7 @@ applications:
               - ALL
 ```
 
-The file name of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the template repository. This is validated during processing; if the validation fails, the operation will stop with an error.
+The filename of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the template repository. This is validated during processing; if the validation fails, the operation will stop with an error.
 
 The Parameter Set schema in the template repository is identical to the Parameter Sets in the [Instance repository](#parameterset-in-instance-repository).
 
@@ -783,7 +783,7 @@ This object describes where the **environment template artifact** is stored in t
 
 **Location:** `/configuration/artifact_definitions/<artifact-definition-name>.yaml`
 
-The file name must match the value of the `name` attribute.
+The filename must match the value of the `name` attribute.
 
 ```yaml
 # Mandatory
@@ -802,7 +802,7 @@ registry:
   name: string
   # Mandatory
   # Pointer to the EnvGene Credential object.
-  # Credential with this id must be located in /configuration/credentials/credentials.yml
+  # Credential with this ID must be located in /configuration/credentials/credentials.yml
   credentialsId: string
   # Mandatory
   mavenConfig:
@@ -848,7 +848,7 @@ It is used by **external systems** to convert the `application:version` format o
 
 A separate definition file is used for each individual registry. Each Environment uses its own set of Registry Definitions.
 
-The file name must match the value of the `name` attribute.
+The filename must match the value of the `name` attribute.
 
 **Location:** `/environments/<cluster-name>/<env-name>/AppDefs/<registry-name>.yml`
 
@@ -862,7 +862,7 @@ Two versions of this object are supported
 name: string
 # Mandatory
 # Pointer to the EnvGene Credential object.
-# Credential with this id must be located in /environments/<cluster-name>/<env-name>/Credentials/credentials.yml
+# Credential with this ID must be located in /environments/<cluster-name>/<env-name>/Credentials/credentials.yml
 credentialsId: string
 # Mandatory
 mavenConfig:
@@ -963,10 +963,10 @@ rawConfig:
 # Optional
 npmConfig:
   # Mandatory
-  # NPM snapshot repository name
+  # npm snapshot repository name
   npmTargetSnapshot: string
   # Mandatory
-  # NPM release repository name
+  # npm release repository name
   npmTargetRelease: string
 ```
 
@@ -1212,10 +1212,10 @@ npmConfig:
   # Domain name of the registry
   repositoryDomainName: string
   # Mandatory
-  # NPM snapshot repository name
+  # npm snapshot repository name
   npmTargetSnapshot: string
   # Mandatory
-  # NPM release repository name
+  # npm release repository name
   npmTargetRelease: string
 # Optional
 rawConfig:
@@ -1369,13 +1369,13 @@ rawConfig:
 
 ### Application Definition
 
-This object describes application artifact parameters - artifact id, group id and pointer to [Registry Definition](#registry-definition)
+This object describes application artifact parameters - artifact ID, group ID and pointer to [Registry Definition](#registry-definition)
 
 It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
 
 A separate definition file is used for each individual application. Each Environment uses its own set of Application Definitions.
 
-The file name must match the value of the `name` attribute.
+The filename must match the value of the `name` attribute.
 
 **Location:** `/environments/<cluster-name>/<env-name>/AppDefs/<application-name>.yml`
 

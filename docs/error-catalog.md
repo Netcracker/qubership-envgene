@@ -161,7 +161,7 @@ This indicates that context value given in payload is not present in target file
 [ENVGENE-4004] Error: Termination condition encountered
 No affected parameters found for the given CRED_ROTATION_PAYLOAD in the current environment instance. Hence Terminating the job.
 
-The error denotes that there are parameters that had the same cred id as target parameter. Please check if parameter key and other details are correct in payload.
+The error denotes that there are parameters that had the same cred ID as target parameter. Please check if parameter key and other details are correct in payload.
 
 [ENVGENE-4004] Invalid state for job completion: Affected parameters have been identified. You can find the list of affected parameters in the artifact of this job, in the file <artifcat location>. Credentials updates are skipped because CRED_ROTATION_FORCE is not enabled. Terminating the job.
 

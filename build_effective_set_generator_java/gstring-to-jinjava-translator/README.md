@@ -41,7 +41,7 @@ If you need to improve the library when there are not enough cases, then first y
 
 If this coverage is sufficient, then it is necessary to make the changes to the listener `src/main/java/org/qubership/cloud/devops/gstringtojinjavatranslator/ParameterTranslator.java`.
 
-All information on the work of the ANTLR grammar and listener is on the [website](https://www.antlr.org) and in the book `The Definitive ANTLR 4 Reference`.
+All information on the work of the ANTLR grammar and listener is on the [site](https://www.antlr.org) and in the book `The Definitive ANTLR 4 Reference`.
 
 ### Additional tools
 

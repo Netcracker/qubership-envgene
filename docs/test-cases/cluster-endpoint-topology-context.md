@@ -24,7 +24,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 
 - Environment with Cloud Passport configured
 - Cloud Passport contains cluster endpoint information
-- Calculator CLI available
+- Calculator command-line tool available
 
 **Steps:**
 
@@ -51,7 +51,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 
 - Environment without Cloud Passport configured
 - Environment has `inventory.clusterUrl` set to `https://API.cl-03.managed.qubership.cloud:6443`
-- Calculator CLI available
+- Calculator command-line tool available
 
 **Steps:**
 
@@ -78,7 +78,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 
 - Environment without Cloud Passport configured
 - Environment has `inventory.clusterUrl` set to `https://API.cl-03.managed.qubership.cloud:8443`
-- Calculator CLI available
+- Calculator command-line tool available
 
 **Steps:**
 
@@ -105,7 +105,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 
 - Environment without Cloud Passport configured
 - Environment has `inventory.clusterUrl` set to `http://API.cl-03.managed.qubership.cloud:6443`
-- Calculator CLI available
+- Calculator command-line tool available
 
 **Steps:**
 
@@ -132,7 +132,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 
 - Environment without Cloud Passport configured
 - Environment has `inventory.clusterUrl` set to `https://cluster.cl-03.managed.qubership.cloud:6443`
-- Calculator CLI available
+- Calculator command-line tool available
 
 **Steps:**
 
@@ -161,7 +161,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 - Environment with both Cloud Passport and `inventory.clusterUrl` configured
 - Cloud Passport contains cluster endpoint information
 - Environment has `inventory.clusterUrl` set to `https://API.cl-03.managed.qubership.cloud:6443`
-- Calculator CLI available
+- Calculator command-line tool available
 
 **Steps:**
 
@@ -184,7 +184,7 @@ Test Cases for Cluster Endpoint Information in Topology Context feature
 
 - Environment without Cloud Passport configured
 - Environment does not have `inventory.clusterUrl` specified
-- Calculator CLI available
+- Calculator command-line tool available
 
 **Steps:**
 

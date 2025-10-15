@@ -517,7 +517,7 @@ Test Cases for [Template Macros](/docs/template-macros.md)
   - `e2eParameterSets`
   - `technicalConfigurationParameterSets`
 - Environment Inventory has `inventory.cloudPassport` attribute set
-- Instance repo contains valid Cloud Passport
+- Instance repository contains valid Cloud Passport
 
 **Steps:**
 
@@ -580,7 +580,7 @@ Test Cases for [Template Macros](/docs/template-macros.md)
   - `deployParameterSets`
   - `e2eParameterSets`
   - `technicalConfigurationParameterSets`
-- Instance repo contains valid SD for this environment
+- Instance repository contains valid SD for this environment
 
 **Steps:**
 
@@ -612,7 +612,7 @@ Test Cases for [Template Macros](/docs/template-macros.md)
   - `deployParameterSets`
   - `e2eParameterSets`
   - `technicalConfigurationParameterSets`
-- Instance repo doesn't contain SD for this environment
+- Instance repository doesn't contain SD for this environment
 
 **Steps:**
 

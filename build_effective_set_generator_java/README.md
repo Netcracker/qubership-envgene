@@ -1,11 +1,11 @@
-# *Parameter Calculator CLI*
+# *Parameter Calculator command-line tool*
 
-The Calculator CLI tool will determine the effective parameter set based on the provided environment instance and
+The Calculator command-line tool tool will determine the effective parameter set based on the provided environment instance and
 solution descriptor.
 
 ## **Features**
 
-1. The CLI tool resolves the macros in parameters using either jinjava or groovy templates.
+1. The command-line tool tool resolves the macros in parameters using either jinjava or groovy templates.
 2. It merges the parameters from different layers to get the final list of effective parameters.
 3. Parameter values from previous layer can be overridden with new value on current and next layers using same parameter name with different value.
 4. It segregates the secured parameters.
@@ -47,7 +47,7 @@ Finally, to run it, mount the directory you want to scan to /configs and pass th
     `
 Usages:
 
-    `--env-id/-e            environment id in <cluster-name>/<environment-name> notation.
+    `--env-id/-e            environment ID in <cluster-name>/<environment-name> notation.
 
     --envs-path/-ep         path to '/environments' folder
 

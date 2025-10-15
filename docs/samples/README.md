@@ -88,28 +88,28 @@ envTemplate:
     additionalTemplateVariables: hashmap
     # optional
     # envronment specific resource profiles override,
-    # array items should contain file name (w/o extension)
+    # array items should contain filename (w/o extension)
     # to the file located in "resource_profiles" dir
     envSpecificResourceProfiles: hashmap
         cloud: [ "env-specific-cloud-RP-override" ]
         bss: [ "env-specific-bss-RP-overrde" ]
     # optional
     # envronment specific deployment parameters set,
-    # array items should contain file name (w/o extension)
+    # array items should contain filename (w/o extension)
     # to the file located in "parameters" dir
     envSpecificParamsets: hashmap
         cloud: [ "env-specific-cloud" ]
         bss: [ "env-specific-bss" ]
     # optional
     # envronment specific e2e parameters set,
-    # array items should contain file name (w/o extension)
+    # array items should contain filename (w/o extension)
     # to the file located in "parameters" dir
     envSpecificE2EParamsets: hashmap
         cloud: [ "env-specific-tech-cloud" ]
         bss: [ "env-specific-e2e-bss" ]
     # optional
     # envronment specific technical parameters set,
-    # array items should contain file name (w/o extension)
+    # array items should contain filename (w/o extension)
     # to the file located in "parameters" dir
     envSpecificTechnicalParamsets: hashmap
         cloud: [ "env-specific-tech-cloud" ]
