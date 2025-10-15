@@ -54,7 +54,7 @@ A JSON file compliant with the CycloneDX specification, describing the following
 A JSON file compliant with the CycloneDX specification, describing the following aspects of an application:
 
 1. The composition of the application's microservices
-2. Coordinates of the microservice's artifacts such as docker image
+2. Coordinates of the microservice's artifacts such as Docker image
 3. Application's components attributes
 
 [Example](/examples/application.sbom.json)

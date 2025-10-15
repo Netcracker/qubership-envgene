@@ -29,7 +29,7 @@ solution descriptor.
 
 ## **Running in a Docker Container**
 
-The simplest way to get the effective-set-generator docker image is to pull from GitHub Container Registry:
+The simplest way to get the effective-set-generator Docker image is to pull from GitHub Container Registry:
 
     `docker pull xxx`
 
