@@ -9,7 +9,6 @@ from envgenehelper import *
 from resource_profiles import processResourceProfiles
 from schema_validation import checkEnvSpecificParametersBySchema
 from cloud_passport import process_cloud_passport
-from envgenehelper.constants import cleanup_targets
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."

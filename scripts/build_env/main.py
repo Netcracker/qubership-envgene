@@ -4,7 +4,7 @@ import ansible_runner
 from envgenehelper import *
 from envgenehelper.deployer import *
 
-from build_env import build_env, process_additional_template_parameters, cleanup_targets
+from build_env import build_env, process_additional_template_parameters
 from cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
 from resource_profiles import get_env_specific_resource_profiles
