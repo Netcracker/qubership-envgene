@@ -72,7 +72,7 @@ def test_render_envs(cluster_name, env_name, version):
 
 
 def setup_test_dir(tmp_path):
-    tmp_path.mkdir(exist_ok=True)
+    tmp_path.mkdir(exist_ok=True, parent=True)
     dirs = ["Applications", "Namespaces", "Profiles"]
     for d in dirs:
         (tmp_path / d).mkdir(exist_ok=True)
