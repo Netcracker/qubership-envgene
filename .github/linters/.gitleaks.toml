@@ -1,45 +1,16 @@
-# Gitleaks configuration file
-# Exclude test data directory from secret scanning
+# Gitleaks configuration file (v8 schema)
 
-[extend]
-# Enable all default rules
-rules = []
-
-[[rules]]
-description = "Exclude test_data directory"
-id = "test_data_exclusion"
-regex = '''.*'''
-path = '''test_data/.*'''
-allowlist = true
-
-[[allowlist]]
-description = "Ignore all secrets in test_data directory"
+[allowlist]
+description = "Ignore docs with fake examples, test data, and test files"
 paths = [
-    '''test_data/.*'''
+  '''^docs/''',
+  '''^test_data/''',
+  '''^python/.*/test_.*\.py$''',
+  '''^python/.*/.*test.*\.py$'''
 ]
-
-[[allowlist]]
-description = "Ignore all documentation files - contain examples with fake secrets"
-paths = [
-    '''docs/.*'''
-]
-
-[[allowlist]]
-description = "Ignore test files in Python modules"
-paths = [
-    '''python/.*/test_.*\.py''',
-    '''python/.*/*test.*\.py'''
-]
-
-# Additional allowlist for specific rule IDs that commonly trigger false positives
-[[allowlist]]
-description = "Allow fake secrets in documentation and examples"
 regexes = [
-    '''.*Example.*:.*REDACTED''',
-    '''secret:.*REDACTED''',
-    '''password:.*REDACTED''',
-    '''.*secret_key.*:.*REDACTED''',
-    '''\*\*Example\*\*:.*REDACTED'''
+  '''(?i).*Example.*REDACTED.*''',
+  '''(?i)secret:\s*REDACTED''',
+  '''(?i)password:\s*REDACTED''',
+  '''(?i)secret_key\s*:\s*REDACTED'''
 ]
-
-# Note: All docs files are now excluded via docs/.* pattern above
