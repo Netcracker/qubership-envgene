@@ -121,7 +121,9 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     render_parameters_dir = getAbsPath('tmp/parameters_templates')
     render_profiles_dir = getAbsPath('tmp/resource_profiles')
 
-    shutil.copytree(get_namespaces_path(), os.path.join(work_dir,'build_env','tmp','initial_namespaces_content','Namespaces'), dirs_exist_ok=True)
+    namespaces_path = get_namespaces_path()
+    if check_file_exists(str(namespaces_path.absolute)):
+        shutil.copytree(get_namespaces_path(), os.path.join(work_dir,'build_env','tmp','initial_namespaces_content','Namespaces'), dirs_exist_ok=True)
 
     # preparing folders for generation
     render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
