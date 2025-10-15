@@ -3,7 +3,6 @@
 The Calculator CLI tool will determine the effective parameter set based on the provided environment instance and
 solution descriptor.
 
-
 ## **Features**
 
 1. The CLI tool resolves the macros in parameters using either jinjava or groovy templates.
@@ -16,12 +15,11 @@ solution descriptor.
 1. Java 17
 2. Maven > 3.8.1
 
-
 ## **Build and run in Intellij:**
 
 1. To build the project within Idea, you can run configuration with
 
-   ` mvn clean install`
+    `mvn clean install`
 
 2. To run the application, create quarkus maven run configuration with working directory as
     effective-set-generator and VM Options as below.
@@ -56,13 +54,3 @@ Usages:
     --local-sd-path/-lsdp   path to Full SD file.
 
     --output/-o             Destination folder to write final effective set parameter files.`
-
-
-
-
-
-
-
-
-
-

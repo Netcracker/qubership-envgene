@@ -65,9 +65,21 @@ Given **schema**:
 the following **document**:
 
 ```json
-{"range": {"end": 20, "start": 10}}
+{
+    "range": {
+        "end": 20,
+        "start": 10
+    }
+}
 ```
+
 would be reordered as:
+
 ```json
-{"range": {"start": 20, "end": 10}}
+{
+    "range": {
+        "start": 20,
+        "end": 10
+    }
+}
 ```
