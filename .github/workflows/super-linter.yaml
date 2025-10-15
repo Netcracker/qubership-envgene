@@ -38,6 +38,7 @@ jobs:
         with:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Ensure local main exists for diff base
         shell: bash
