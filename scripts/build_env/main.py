@@ -51,11 +51,7 @@ def pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instanc
 
 def cleanup_resulting_dir(resulting_dir: Path):
     logger.info(f"Cleaning resulting directory: {str(resulting_dir)}")
-    # Ensure resulting_dir is a Path object
-    if isinstance(resulting_dir, str):
-        resulting_dir = Path(resulting_dir)
-    elif not isinstance(resulting_dir, Path):
-        raise TypeError(f"Expected str or Path, got {type(resulting_dir).__name__}")
+    resulting_dir = Path(resulting_dir)
     for target in cleanup_targets:
         path = resulting_dir.joinpath(target)
         if path.is_dir():
