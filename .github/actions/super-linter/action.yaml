@@ -27,7 +27,7 @@ runs:
         fi
 
     - name: Lint Code Base
-      uses: super-linter/super-linter@v7.4.0
+      uses: super-linter/super-linter@v8.2.0
       env:
         VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan == 'true' }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
