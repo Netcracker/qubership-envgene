@@ -1,4 +1,4 @@
-# New approach for testing changes in instance repo
+# New approach for testing changes in instance repository
 
 ## Intro
 
@@ -9,7 +9,7 @@ Iteration time: 11-17 minutes 😭
 
 New approach:
 
-Make changes -> commit -> test changes in instance repo(1-2 minutes)
+Make changes -> commit -> test changes in instance repository(1-2 minutes)
 Iteration time: 1-2 minutes 😄
 
 ## General idea
@@ -19,7 +19,7 @@ debugging.
 
 ## Setup
 
-1. Create `devtest/wdebug_plugin` folder in instance repo.
+1. Create `devtest/wdebug_plugin` folder in instance repository.
 1. Create `devtest/wdebug_plugin/main.py` file with this content
 
     ```Python
@@ -81,8 +81,8 @@ By using hardlinks changes you make will be reflected in both envgene and instan
 
 ## Workflow
 
-1. Make changes in envgene repo
-1. Commit changes in instance repo
+1. Make changes in envgene repository
+1. Commit changes in instance repository
 1. Run pipeline and test changes
 1. Once necessary changes are made and pipeline works as expected:
     1. Commit in envgene repository and wait for images
