@@ -1,4 +1,5 @@
 name: Lint Code Base
+description: 'Run Code Base Linters'
 
 inputs:
   full_scan:
@@ -16,6 +17,7 @@ runs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        persist-credentials: false
 
     - name: "Load super-linter environment file"
       shell: bash
@@ -51,6 +53,6 @@ runs:
     - name: Lint Code Base
       uses: super-linter/super-linter@v8.2.0
       env:
-        VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan == 'true' }}
+        VALIDATE_ALL_CODEBASE: ${{ env.VALIDATE_ALL_CODEBASE || (inputs.full_scan == 'true') }}
         GITHUB_TOKEN: ${{ inputs.github-token }}
         GITHUB_BEFORE_SHA: ${{ env.GITHUB_BEFORE_SHA }}
