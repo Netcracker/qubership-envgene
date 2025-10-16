@@ -35,6 +35,7 @@ def change_test_dir(request, monkeypatch):
 @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
 def test_render_envs(cluster_name, env_name, version):
     environ['CI_PROJECT_DIR'] = g_base_dir
+    environ['FULL_ENV_NAME'] = cluster_name + '/' + env_name
     render_environment(env_name, cluster_name, g_templates_dir, g_inventory_dir, g_output_dir, version, g_base_dir)
     source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
     generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
@@ -71,7 +72,7 @@ def test_render_envs(cluster_name, env_name, version):
 
 
 def setup_test_dir(tmp_path):
-    tmp_path.mkdir(exist_ok=True)
+    tmp_path.mkdir(exist_ok=True, parents=True)
     dirs = ["Applications", "Namespaces", "Profiles"]
     for d in dirs:
         (tmp_path / d).mkdir(exist_ok=True)
