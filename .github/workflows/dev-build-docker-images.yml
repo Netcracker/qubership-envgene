@@ -64,6 +64,10 @@ jobs:
 
   linters:
     needs: [conventional-commits]
+    permissions:
+      contents: read
+      packages: write
+      statuses: write
     uses: ./.github/workflows/super-linter.yaml
     with:
       full_scan: false
