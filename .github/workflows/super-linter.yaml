@@ -8,9 +8,9 @@
   # Configuration file for super-linter example:
   # .github/super-linter.env
   # Configuration files for individual linters should be placed in .github/linters
-  
+
   name: Lint Code Base
-  
+
   on:
     pull_request:
       branches:
@@ -31,7 +31,7 @@
           description: "Lint all codebase"
   permissions:
     contents: read
-  
+
   jobs:
     prepare-configs:
       runs-on: ubuntu-latest
@@ -76,7 +76,7 @@
         run: |
           mkdir -p ./.github/linters
           cp --update=none -vRT /tmp/linter-config/linters ./.github/linters
-  
+
       - name: "Load super-linter environment file"
         shell: bash
         run: |
@@ -91,7 +91,7 @@
             grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#"
             grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#" >> $GITHUB_ENV
           fi
-  
+
       - name: Lint Code Base
         uses: super-linter/super-linter/slim@7bba2eeb89d01dc9bfd93c497477a57e72c83240 # v8.2.0
         env:
