@@ -122,7 +122,8 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     render_profiles_dir = getAbsPath('tmp/resource_profiles')
 
     namespaces_path = get_namespaces_path()
-    if check_file_exists(str(namespaces_path.absolute)):
+    if check_dir_exists(str(namespaces_path.absolute())):
+        logger.info("Namespaces found, saving them into tmp location")
         shutil.copytree(get_namespaces_path(), os.path.join(work_dir,'build_env','tmp','initial_namespaces_content','Namespaces'), dirs_exist_ok=True)
 
     # preparing folders for generation

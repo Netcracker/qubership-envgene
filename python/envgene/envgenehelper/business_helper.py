@@ -330,7 +330,7 @@ def get_namespaces_path(env_dir: Path | None = None) -> Path:
 
 def get_namespaces(env_dir: Path | None = None) -> list[Namespace]:
     namespaces_path = get_namespaces_path(env_dir)
-    if not check_file_exists(namespaces_path):
+    if not check_dir_exists(str(namespaces_path)):
         return []
     namespace_paths = [p for p in namespaces_path.iterdir() if p.is_dir()]
     namespaces = [Namespace(path=p) for p in namespace_paths]
