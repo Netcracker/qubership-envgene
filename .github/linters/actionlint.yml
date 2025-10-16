@@ -3,11 +3,19 @@ paths:
     ignore:
       - 'shellcheck reported issue in this script: SC2086:info.+'
       - 'shellcheck reported issue in this script: SC2002:style.+'
+      - 'shellcheck reported issue in this script: SC2129:style.+'
   workflows-templates/**/*.{yml,yaml}:
     ignore:
       - 'shellcheck reported issue in this script: SC2086:info.+'
       - 'shellcheck reported issue in this script: SC2002:style.+'
+      - 'shellcheck reported issue in this script: SC2129:style.+'
   actions/**/*.{yml,yaml}:
     ignore:
       - 'shellcheck reported issue in this script: SC2086:info.+'
       - 'shellcheck reported issue in this script: SC2002:style.+'
+      - 'shellcheck reported issue in this script: SC2129:style.+'
+  github_workflows/**/*.{yml,yaml}:
+    ignore:
+      - 'shellcheck reported issue in this script: SC2086:info.+'
+      - 'shellcheck reported issue in this script: SC2002:style.+'
+      - 'shellcheck reported issue in this script: SC2129:style.+'

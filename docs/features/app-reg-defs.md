@@ -23,7 +23,7 @@ Using this kind of identifier means need to:
 
 Also need to support:
 
-1. Identifying artifacts of different types (Maven, Docker, NPM, etc.)
+1. Identifying artifacts of different types (Maven, Docker, npm, etc.)
 2. Identifying artifacts stored in different registries (Artifactory, Nexus, GCR, etc.)
 
 ## Proposed Approach
@@ -31,7 +31,7 @@ Also need to support:
 Use two types of objects:
 
 1. [Application Definition](/docs/envgene-objects.md#application-definition)
-   This object contains the main info about an application artifact: artifact id, group id, and a link to the Registry Definition.
+   This object contains the main info about an application artifact: artifact ID, group ID, and a link to the Registry Definition.
    Each Environment has its own set of Application Definitions, stored in the Instance repository at `/environments/<cluster-name>/<env-name>/AppDefs/<application-name>.yml`.
 
 2. [Registry Definition](/docs/envgene-objects.md#registry-definition)

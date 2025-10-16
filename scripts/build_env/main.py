@@ -8,6 +8,7 @@ from build_env import build_env, process_additional_template_parameters
 from cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
 from resource_profiles import get_env_specific_resource_profiles
+from pathlib import Path
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -18,12 +19,6 @@ NAMESPACE_SCHEMA = "schemas/namespace.schema.json"
 ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
 
 
-def clear_output_folder(dir):
-    delete_dir(f"{dir}/Namespaces")
-    delete_dir(f"{dir}/Applications")
-    delete_dir(f"{dir}/Profiles")
-
-
 def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
                                   render_parameters_dir, render_profiles_dir, output_dir):
     # clearing folders
@@ -32,8 +27,8 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     delete_dir(render_profiles_dir)
     render_env_dir = f"{render_dir}/{env_name}"
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}', f"{render_env_dir}/{INVENTORY_DIR_NAME}")
-    # clearing instances dir
-    clear_output_folder(f'{output_dir}/{cluster_name}/{env_name}')
+    # clearing instances dir 
+    cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
     check_dir_exist_and_create(f'{render_parameters_dir}/from_template')
     copy_path(f'{templates_dir}/parameters', f'{render_parameters_dir}/from_template')
@@ -54,33 +49,23 @@ def pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instanc
     copy_path(f"{source_env_dir}/Credentials", f"{render_env_dir}")
 
 
-def cleanup_resulting_dir(resulting_dir: pathlib.Path):
+def cleanup_resulting_dir(resulting_dir: Path):
     logger.info(f"Cleaning resulting directory: {str(resulting_dir)}")
-    dirs_to_remove = ["Applications", "Namespaces", "Profiles"]
-    files_to_remove = [
-        "cloud.yml",
-        "tenant.yml",
-        "bg-domain.yml",
-        "composite-structure.yml",
-    ]
-
-    for directory in dirs_to_remove:
-        dir_path = resulting_dir.joinpath(directory)
-        if check_dir_exists(dir_path):
-            logger.info(f"Removing directory: {dir_path}")
-            delete_dir(dir_path)
-
-    for file in files_to_remove:
-        file_path = resulting_dir.joinpath(file)
-        if check_file_exists(file_path):
-            logger.info(f"Removing file: {file_path}")
-            deleteFile(file_path)
+    resulting_dir = Path(resulting_dir)
+    for target in cleanup_targets:
+        path = resulting_dir.joinpath(target)
+        if path.is_dir():
+            logger.info(f"Removing directory: {path}")
+            delete_dir(path)
+        elif path.is_file():
+            logger.info(f"Removing file: {path}")
+            deleteFile(path)
 
 
 def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir):
     check_dir_exist_and_create(output_dir)
     # copying results to output_dir
-    env_instances_relative_dir = str(pathlib.Path(source_env_dir).relative_to(pathlib.Path(all_instances_dir)))
+    env_instances_relative_dir = str(Path(source_env_dir).relative_to(Path(all_instances_dir)))
     logger.info(f"Relative path of {env_name} in instances dir is: {env_instances_relative_dir}")
     resulting_dir = f'{output_dir}/{env_instances_relative_dir}'
     check_dir_exist_and_create(resulting_dir)
@@ -88,7 +73,7 @@ def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, a
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/{ENV_DEFINITION_FILE_NAME}',
               f"{render_env_dir}/{INVENTORY_DIR_NAME}")
     # pushing all to output dir
-    cleanup_resulting_dir(pathlib.Path(resulting_dir))
+    cleanup_resulting_dir(Path(resulting_dir))
     copy_path(f'{render_env_dir}/*', resulting_dir)
     return resulting_dir
 
@@ -102,7 +87,7 @@ def handle_template_override(render_dir):
         src = openYaml(file)
         merge_yaml_into_target(yaml_to_override, '', src)
         writeYamlToFile(template_path, yaml_to_override)
-        template_path_stem = pathlib.Path(template_path).stem
+        template_path_stem = Path(template_path).stem
         schema_path = ""
         if template_path_stem == 'cloud':
             schema_path = CLOUD_SCHEMA
