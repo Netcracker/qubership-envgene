@@ -8,9 +8,8 @@ def is_inventory_generation_needed(is_template_test, inv_gen_params):
         return False
     if inv_gen_params['ENV_INVENTORY_INIT'] == 'true':
         return True
-    params_processed_by_inv_gen = ['ENV_SPECIFIC_PARAMETERS', 'ENV_TEMPLATE_NAME', 'SD_DATA', 'SD_VERSION']
+    params_processed_by_inv_gen = ['ENV_SPECIFIC_PARAMETERS', 'ENV_TEMPLATE_NAME']
     for param in params_processed_by_inv_gen:
-        #if inv_gen_params[param] != '':
         if inv_gen_params[param] not in (None, ''):
             return True
     return False
