@@ -1010,7 +1010,11 @@ name: string
 authConfig:
   <auth-config-name>:
     # Mandatory
-    # Name of credential in credential storage
+    # Name of the credential in the credential storage
+    # The credential type can be either `usernamePassword` or `secret`
+    # Depending on `authType`, it can be:
+    # access key (username) + secret (password) for longLived
+    # or different authentication credential components for shortLived
     credentialsId: string 
     # Optional
     # Public cloud registry authentication strategy
