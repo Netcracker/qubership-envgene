@@ -1,4 +1,5 @@
 name: 'Conventional Commits Check'
+description: 'Validates commit messages follow Conventional Commits specification'
 
 runs:
   using: 'composite'

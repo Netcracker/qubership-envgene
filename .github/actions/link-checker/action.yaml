@@ -1,4 +1,5 @@
 name: 'Link Checker'
+description: 'Checks all markdown files for broken links'
 
 runs:
   using: 'composite'
