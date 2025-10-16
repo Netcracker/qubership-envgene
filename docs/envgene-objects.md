@@ -7,8 +7,8 @@
       - [Tenant Template](#tenant-template)
       - [Cloud Template](#cloud-template)
       - [Namespace Template](#namespace-template)
-      - [Template's ParameterSet](#templates-parameterset)
-      - [Template's Resource Profile Override](#templates-resource-profile-override)
+      - [Template ParameterSet](#template-parameterset)
+      - [Template Resource Profile Override](#template-resource-profile-override)
       - [Composite Structure Template](#composite-structure-template)
       - [Registry Definition Template](#registry-definition-template)
       - [Application Definition Template](#application-definition-template)
@@ -19,7 +19,7 @@
       - [Cloud](#cloud)
       - [Namespace](#namespace)
       - [Application](#application)
-      - [Resource Profile Override (in Instance)](#resource-profile-override-in-instance)
+      - [Resource Profile Override](#resource-profile-override)
       - [Composite Structure](#composite-structure)
     - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
@@ -29,6 +29,7 @@
     - [Shared Credentials File](#shared-credentials-file)
     - [System Credentials File (in Instance repository)](#system-credentials-file-in-instance-repository)
     - [Environment Specific ParameterSet](#environment-specific-parameterset)
+    - [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override)
     - [Cloud Passport](#cloud-passport)
       - [Main File](#main-file)
       - [Credential File](#credential-file)
@@ -207,7 +208,7 @@ technicalConfigurationParameterSets:
   - core-runtime
 ```
 
-#### Template's ParameterSet
+#### Template ParameterSet
 
 A ParameterSet is a container for a set of parameters that can be reused across multiple templates. This helps to avoid duplication and simplifies parameter management. ParameterSets are processed during the generation of an Environment Instance.
 
@@ -223,7 +224,7 @@ ParameterSets also allow to define application-level parameters, i.e., parameter
 
 ParameterSets can be parameterized using Jinja and [macros](/docs/template-macros.md). In this case, the file should be named `<paramset-name>.yaml.j2` or `<paramset-name>.yml.j2`.
 
-**Location:** `/templates/parameters/` folder and its subfolders, but with a nesting level of no more than three
+**Location:** `/templates/parameters/` folder and its subfolders, but with a nesting level of no more than two
 
 ```yaml
 # Optional
@@ -284,9 +285,106 @@ The Parameter Set schema in the template repository is identical to the [Environ
 
 [ParameterSet JSON schema](/schemas/paramset.schema.json)
 
-#### Resource Profile Override (in Template)
+#### Template Resource Profile Override
 
-TBD
+These are customizations for performance parameters, over a Baseline Resource Profile. Such overrides are created by the configurator in the Template repository, to further adjust performance parameters on top of the Baseline Resource Profile Override for all environments of the same type.
+
+Template Resource Profile Override are referenced in the `profile.name` attribute in the [Cloud](#cloud-template) or [Namespace](#namespace-template) templates.
+
+During the generation of an Environment Instance, resource profiles that are associated with the [Cloud](#cloud) and [Namespace](#namespace) are merged or replaced with the [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override) and become part of the [Resource Profile Override](#resource-profile-override) (part of the environment instance).
+
+Template Resource Profile Override can be parameterized using Jinja and [macros](/docs/template-macros.md). In this case, the file should be named `<resource-profile-override-name>.yaml.j2` or `<resource-profile-override-name>.yml.j2`.
+
+In Template Resource Profile Override, you can set nested parameter values using dots in the parameter name (dot notation). For example:
+
+```yaml
+...
+applications:
+  - name: "my-app"
+    services:
+      - name: "nginx"
+        parameters:
+          - name: "resources.limits.cpu"
+            value: "1000m"
+          - name: "resources.limits.memory"
+            value: "512Mi"
+```
+
+See details in [resource-profile](/docs/features/resource-profile.md)
+
+[Template Resource Profile Override JSON schema](/schemas/resource-profile.schema.json)
+
+**Location:** `/templates/resource_profiles/` folder and its subfolders, but with a nesting level of no more than two
+
+```yaml
+# Mandatory
+# Resource profile override name
+# Must match the filename without extension
+name: string
+# Optional
+# Deprecated
+# Not processed by Envgene 
+version: string
+# Optional
+# Name of the resource profile baseline that this override modifies
+# Not processed by EnvGene
+baseline: string
+# Optional
+# Override description
+description: string
+# Mandatory
+applications:
+- # Mandatory
+  # Application name to which the override applies
+  # Must exactly match the application name
+  name: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  version: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  sd: string
+  # Optional
+  services:
+  - # Mandatory
+    # Service name to which the override applies
+    # Must exactly match the service name
+    name: string
+    # Mandatory
+    parameters:
+    - # Mandatory
+      # Parameter key
+      name: string
+      # Mandatory
+      # Parameter value
+      value: string OR integer OR boolean
+```
+
+**Example:**
+
+```yaml
+name: "dev_core_override"
+baseline: "dev"
+applications:
+- name: "Cloud-Core"
+  services:
+  - name: "facade-operator"
+    parameters:
+    - name: "FACADE_GATEWAY_MEMORY_LIMIT"
+      value: "96Mi"
+    - name: "FACADE_GATEWAY_CPU_REQUEST"
+      value: "50m"
+  - name: "tenant-manager"
+    parameters:
+    - name: "MEMORY_LIMIT"
+      value: "512Mi"
+  - name: "identity-provider"
+    parameters:
+    - name: "PG_MAX_POOL_SIZE"
+      value: "30"
+```
 
 #### Composite Structure Template
 
@@ -568,9 +666,89 @@ technicalConfigurationParameters: {}
 
 [Application JSON schema](/schemas/application.schema.json)
 
-#### Resource Profile Override (in Instance)
+#### Resource Profile Override
 
-TBD
+These are customizations for performance parameters, over a Baseline Resource Profile.
+
+During the generation of an Environment Instance, resource profiles that are associated with the [Cloud](#cloud) and [Namespace](#namespace) are merged or replaced with the [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override) and become part of the [Resource Profile Override](#resource-profile-override) (part of the environment instance).
+
+See details in [resource-profile](/docs/features/resource-profile.md)
+
+[Resource Profile Override JSON schema](/schemas/resource-profile.schema.json)
+
+**Location:** `/environments/<cluster-name>/<environment-name>/Profiles`
+
+```yaml
+# Mandatory
+# Resource profile override name
+# Must match the filename without extension
+name: string
+# Optional
+# Deprecated
+# Not processed by Envgene 
+version: string
+# Optional
+# Name of the resource profile baseline that this override modifies
+# Not processed by EnvGene
+baseline: string
+# Optional
+# Override description
+description: string
+# Mandatory
+applications:
+- # Mandatory
+  # Application name to which the override applies
+  # Must exactly match the application name
+  name: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  version: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  sd: string
+  # Optional
+  services:
+  - # Mandatory
+    # Service name to which the override applies
+    # Must exactly match the service name
+    name: string
+    # Mandatory
+    parameters:
+    - # Mandatory
+      # Parameter key
+      # Точки в ключе параметры рассматриваются как маркер вложенной структуры
+      # See details in [resource-profile](/docs/features/resource-profile.md)
+      name: string
+      # Mandatory
+      # Parameter value
+      value: string OR integer OR boolean
+```
+
+**Example:**
+
+```yaml
+name: "dev_core_override"
+baseline: "dev"
+applications:
+- name: "Cloud-Core"
+  services:
+  - name: "facade-operator"
+    parameters:
+    - name: "FACADE_GATEWAY_MEMORY_LIMIT"
+      value: "96Mi"
+    - name: "FACADE_GATEWAY_CPU_REQUEST"
+      value: "50m"
+  - name: "tenant-manager"
+    parameters:
+    - name: "MEMORY_LIMIT"
+      value: "512Mi"
+  - name: "identity-provider"
+    parameters:
+    - name: "PG_MAX_POOL_SIZE"
+      value: "30"
+```
 
 #### Composite Structure
 
@@ -759,8 +937,117 @@ gitlab-token-cred:
 
 TBD
 
+### Environment Specific Resource Profile Override
 
-TBD
+These are customizations for performance parameters, over a Baseline Resource Profile and Template Resource Profile Override.
+Such overrides are created by the configurator in the Instance repository, to further adjust performance parameters on top of the Baseline Resource Profile and Template Resource Profile Override.
+
+The Environment-Specific Resource Profile Override is specified individually for each Namespace or Cloud via `envTemplate.envSpecificResourceProfiles` parameter of the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
+
+During the generation of an Environment Instance, resource profiles that are associated with the [Cloud](#cloud) and [Namespace](#namespace) are merged or replaced with the [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override) and become part of the [Resource Profile Override](#resource-profile-override) (part of the environment instance).
+
+Environment Specific Resource Profile Override can be parameterized using Jinja and [macros](/docs/template-macros.md). In this case, the file should be named `<resource-profile-override-name>.yaml.j2` or `<resource-profile-override-name>.yml.j2`.
+
+In Environment Specific Resource Profile Override, you can set nested parameter values using dots in the parameter name (dot notation). For example:
+
+```yaml
+...
+applications:
+  - name: "my-app"
+    services:
+      - name: "nginx"
+        parameters:
+          - name: "resources.limits.cpu"
+            value: "1000m"
+          - name: "resources.limits.memory"
+            value: "512Mi"
+```
+
+See details in [resource-profile](/docs/features/resource-profile.md)
+
+[Environment Specific Resource Profile Override JSON schema](/schemas/resource-profile.schema.json)
+
+**Location:**
+
+When an Environment Specific Resource Profile Override is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
+
+1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority  
+2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster  
+3. `/environments/resource_profiles` — Global, common for the entire repository  
+
+The first match found is used as the environment-specific override for the given Cloud or Namespace.
+
+```yaml
+# Mandatory
+# Resource profile override name
+# Must match the filename without extension
+name: string
+# Optional
+# Deprecated
+# Not processed by Envgene 
+version: string
+# Optional
+# Name of the resource profile baseline that this override modifies
+# Not processed by EnvGene
+baseline: string
+# Optional
+# Override description
+description: string
+# Mandatory
+applications:
+- # Mandatory
+  # Application name to which the override applies
+  # Must exactly match the application name
+  name: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  version: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  sd: string
+  # Optional
+  services:
+  - # Mandatory
+    # Service name to which the override applies
+    # Must exactly match the service name
+    name: string
+    # Mandatory
+    parameters:
+    - # Mandatory
+      # Parameter key
+      # Точки в ключе параметры рассматриваются как маркер вложенной структуры
+      # See details in [resource-profile](/docs/features/resource-profile.md)
+      name: string
+      # Mandatory
+      # Parameter value
+      value: string OR integer OR boolean
+```
+
+**Example:**
+
+```yaml
+name: "dev_core_override"
+baseline: "dev"
+applications:
+- name: "Cloud-Core"
+  services:
+  - name: "facade-operator"
+    parameters:
+    - name: "FACADE_GATEWAY_MEMORY_LIMIT"
+      value: "96Mi"
+    - name: "FACADE_GATEWAY_CPU_REQUEST"
+      value: "50m"
+  - name: "tenant-manager"
+    parameters:
+    - name: "MEMORY_LIMIT"
+      value: "512Mi"
+  - name: "identity-provider"
+    parameters:
+    - name: "PG_MAX_POOL_SIZE"
+      value: "30"
+```
 
 ### Cloud Passport
 
