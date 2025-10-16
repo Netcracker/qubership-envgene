@@ -91,7 +91,7 @@
             grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#"
             grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#" >> $GITHUB_ENV
           fi
-      
+
       - name: WA. Predefine GIT_BEFORE_SHA_HEAD for workflow_dispatch
         if: ${{ github.event_name == 'workflow_dispatch' }}
         shell: bash
