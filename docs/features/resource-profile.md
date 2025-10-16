@@ -170,8 +170,8 @@ During the calculation of the Effective Set, as performed by the `generate_effec
    2. The Resource Profile Override parameters are [resolved](#resolving-dot-notation) from dot notation into a YAML structure.
    3. The values from the Override are applied on top of the Baseline: matching keys are overwritten.
 
-   > [!NOTE]
-   > Values from the Resource Profile Override take precedence over matching keys in the Resource Profile Baseline.
+    > [!NOTE]
+    > Values from the Resource Profile Override take precedence over matching keys in the Resource Profile Baseline.
 
 3. Writing Result to the Effective Set
    1. The result (Resource Profile Baseline + Resource Profile Override) is included as [per-service parameters](/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-parameters) in the deployment context of [Effective Set v2.0](/docs/calculator-cli.md#effective-set-v20).

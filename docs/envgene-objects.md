@@ -513,7 +513,7 @@ The Namespace object is used to generate Effective Set
 The Namespace object is generated during Environment Instance generation based on:
 
 - [Namespace Template](#namespace-template)
-- [Template ParamSet](#templates-parameterset)
+- [Template ParamSet](#template-parameterset)
 - [Instance ParamSet](#environment-specific-parameterset)
 
 For each parameter in the Namespace, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
@@ -621,7 +621,7 @@ technicalConfigurationParameterSets: []
 
 The Application object defines parameters that are specific to a particular application. These parameters are isolated to the application and do not affect other applications.
 
-The Application object is generated during the Environment Instance generation process, based on ParameterSets that contain an `applications` section. Generation occurs from both [ParameterSets in the template repository](#templates-parameterset) and [ParameterSets in the instance repository](#environment-specific-parameterset).
+The Application object is generated during the Environment Instance generation process, based on ParameterSets that contain an `applications` section. Generation occurs from both [ParameterSets in the template repository](#template-parameterset) and [ParameterSets in the instance repository](#environment-specific-parameterset).
 
 For each parameter in the Application, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
 
