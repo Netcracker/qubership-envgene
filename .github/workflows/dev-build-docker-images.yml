@@ -64,16 +64,9 @@ jobs:
 
   linters:
     needs: [conventional-commits]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Lint Code Base
-        uses: ./.github/actions/super-linter
-        with:
-          full_scan: false
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+    uses: ./.github/workflows/super-linter.yaml
+    with:
+      full_scan: false
 
   tests:
     needs: [conventional-commits]
