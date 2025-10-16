@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bookworm
+FROM python:3.12-slim-bookworm
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
@@ -16,5 +16,5 @@ COPY dependencies/sources.list /etc/apt/sources.list
 
 # Copy dependencies and install them
 COPY dependencies/tests_requirements.txt /tmp/
-RUN pip install --no-cache-dir -r /tmp/tests_requirements.txt
+RUN pip install uv && uv pip install --system --no-cache-dir -r /tmp/tests_requirements.txt
 
