@@ -387,7 +387,10 @@ def validate_appregdefs(render_dir, env_name):
 
             if version != '1.0':
                 schema_path = "schemas/regdef-v2.schema.json"
-                print(f"  Using RegDef V2 schema for {os.path.basename(file)} (version: {version})")
+                print(
+                    f"  Using RegDef V2 schema for {os.path.basename(file)} "
+                    f"(version: {version})"
+                )
                 # Validate authConfig references for V2
                 validate_regdef_v2_authconfig(regdef_content, file)
             else:
