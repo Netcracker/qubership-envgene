@@ -21,3 +21,5 @@ updates:
       - "dependabot"
     ignore:
       # Ignore updates for specific actions if needed
+      # - dependency-name: "actions/checkout"
+      #   update-types: ["version-update:semver-major"]
