@@ -379,11 +379,11 @@ def validate_appregdefs(render_dir, env_name):
             print(f"[INFO] No RegDef YAMLs found in {regdef_dir}")
         for file in regdef_files:
             print(f"[VALIDATING] RegDef file: {file}")
-            
+
             # Detect version and use appropriate schema
             regdef_content = openYaml(file)
             version = str(regdef_content.get('version', '1.0'))
-            
+
             if version != '1.0':
                 schema_path = "schemas/regdef-v2.schema.json"
                 print(f"  Using RegDef V2 schema for {os.path.basename(file)} (version: {version})")
@@ -392,17 +392,25 @@ def validate_appregdefs(render_dir, env_name):
             else:
                 schema_path = "schemas/regdef.schema.json"
                 print(f"  Using RegDef V1 schema for {os.path.basename(file)}")
-            
+
             validate_yaml_by_scheme_or_fail(file, schema_path)
+
 
 def validate_regdef_v2_authconfig(regdef_content, file_path):
     """Validate authConfig references in V2 RegDefs"""
     auth_configs = regdef_content.get('authConfig', {})
-    
+
     # Config sections that may reference authConfig
-    config_sections = ['mavenConfig', 'dockerConfig', 'goConfig', 'rawConfig', 
-                      'npmConfig', 'helmConfig', 'helmAppConfig']
-    
+    config_sections = [
+        'mavenConfig',
+        'dockerConfig',
+        'goConfig',
+        'rawConfig',
+        'npmConfig',
+        'helmConfig',
+        'helmAppConfig',
+    ]
+
     for config_type in config_sections:
         if config_type in regdef_content:
             config = regdef_content[config_type]
