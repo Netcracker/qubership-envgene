@@ -92,17 +92,10 @@
             grep "\S" /tmp/linter-config/linters/super-linter.env | grep -v "^#" >> $GITHUB_ENV
           fi
 
-      - name: WA. Predefine GIT_BEFORE_SHA_HEAD for workflow_dispatch
-        if: ${{ github.event_name == 'workflow_dispatch' }}
-        shell: bash
-        run: |
-          BEFORE_REF="${DEFAULT_BRANCH:-origin/main}"
-          echo "GIT_BEFORE_SHA_HEAD=${BEFORE_REF}" >> "$GITHUB_ENV"
-
       - name: Lint Code Base
-        uses: super-linter/super-linter/slim@7bba2eeb89d01dc9bfd93c497477a57e72c83240 # v8.2.0
+        uses: super-linter/super-linter/slim@2bdd90ed3262e023ac84bf8fe35dc480721fc1f2 # v8.2.1
         env:
           VALIDATE_ALL_CODEBASE: ${{ inputs.full_scan || false }}
           # To report GitHub Actions status checks
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          DEFAULT_BRANCH: ${{ github.event.pull_request.base.ref || github.event.push.ref || 'main' }}
+          DEFAULT_BRANCH: ${{ github.event.pull_request.base.ref || github.event.push.ref }}
