@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 public class ExpressionLanguage extends AbstractLanguage {
 
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("(?<!\\\\)(\\\\\\\\)*(\\$)");
-    private static final Pattern SECURED_PATTERN = Pattern.compile("(?:\\u0096)(?s)(.+)(?:\\u0097)");
+    private static final Pattern SECURED_PATTERN = Pattern.compile("(?:\\u0096)(?s)(.*)(?:\\u0097)");
     private final ObjectMapper mapper = new ObjectMapper();
     private boolean insecure;
 

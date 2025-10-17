@@ -136,7 +136,7 @@ Pre-requisites:
 **Expected Results**:
 
 - The RegDef template is rendered with the global overrides applied
-- The rendered file contains the overridden values (url: `https://custom-docker-registry.example.com`)
+- The rendered file contains the overridden values (`url: https://custom-docker-registry.example.com`)
 
 **Notes**:
 
