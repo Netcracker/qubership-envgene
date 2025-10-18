@@ -1,9 +1,12 @@
 name: PR Auto-Assignment
 run-name: "Assigning reviewers for PR #${{ github.event.pull_request.number }}"
+
 on:
-  workflow_call:
-    inputs: {}
-    secrets: {}
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+    branches:
+      - main
+
 permissions:
   pull-requests: write
   contents: read
