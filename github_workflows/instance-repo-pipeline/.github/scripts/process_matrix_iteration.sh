@@ -23,10 +23,10 @@ echo "export ENV_NAME=\"$environment_name\""
 
 # For GitHub Actions, also add to GITHUB_ENV
 if [ -n "$GITHUB_ENV" ]; then
-    echo "FULL_ENV=$ITERATION" >> "$GITHUB_ENV"
-    echo "ENV_NAMES=$ITERATION" >> "$GITHUB_ENV"
-    echo "CLUSTER_NAME=$cluster_name" >> "$GITHUB_ENV"
-    echo "ENVIRONMENT_NAME=$environment_name" >> "$GITHUB_ENV"
-    echo "ENV_NAME=$environment_name" >> "$GITHUB_ENV"
+    echo "FULL_ENV=$ITERATION" >>"$GITHUB_ENV"
+    echo "ENV_NAMES=$ITERATION" >>"$GITHUB_ENV"
+    echo "CLUSTER_NAME=$cluster_name" >>"$GITHUB_ENV"
+    echo "ENVIRONMENT_NAME=$environment_name" >>"$GITHUB_ENV"
+    echo "ENV_NAME=$environment_name" >>"$GITHUB_ENV"
     echo "✅ Matrix variables written to GITHUB_ENV"
 fi

@@ -79,7 +79,6 @@ jobs:
     runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04'  }}
     outputs:
       env_matrix: ${{ steps.matrix-generator.outputs.env_matrix }}
-      variables_json: ${{ steps.collect-vars.outputs.variables_json }}
       ENV_TEMPLATE_TEST: ${{ env.ENV_TEMPLATE_TEST }}
       ENV_SPECIFIC_PARAMETERS: ${{ env.ENV_SPECIFIC_PARAMETERS }}
       ENV_TEMPLATE_NAME: ${{ env.ENV_TEMPLATE_NAME }}
@@ -296,8 +295,6 @@ jobs:
           options: -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} -e GITHUB_TOKEN --user root
           run: |
             # Export all variables using unified exporter
-            eval "$(/work/.github/scripts/unified_variable_exporter.sh ${{ matrix.environment }} '${{ needs.process_environment_variables.outputs.variables_json }}')"
-
             if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then
               env_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs")
               for path in $env_path; do

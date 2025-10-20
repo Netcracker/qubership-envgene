@@ -34,3 +34,6 @@ profile = black
 
 [*.sh]
 indent_size = 4
+
+[*.env]
+dotenv_linter.LowercaseKey = off
