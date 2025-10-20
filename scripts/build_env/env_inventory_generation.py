@@ -1,14 +1,12 @@
-from os import path, getenv
+from os import path
 
-import json
-import jsonschema
-
-from create_credentials import CRED_TYPE_SECRET
 import envgenehelper as helper
-from envgenehelper import *
 import envgenehelper.logger as logger
+from envgenehelper import *
 from envgenehelper.business_helper import INV_GEN_CREDS_PATH
 from envgenehelper.env_helper import Environment
+
+from create_credentials import CRED_TYPE_SECRET
 
 # const
 PARAMSETS_DIR_PATH = "Inventory/parameters/"
@@ -40,7 +38,7 @@ def generate_env():
 
     handle_env_inventory_init(env, env_inventory_init, env_template_version)
     handle_env_specific_params(env, env_specific_params)
-    handle_env_template_name(env, env_template_name)
+    helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.name', env_template_name)
 
     helper.writeYamlToFile(env.inventory_path, env.inventory)
     helper.writeYamlToFile(env.creds_path, env.creds)
@@ -49,11 +47,13 @@ def generate_env():
         helper.writeYamlToFile(env.inv_gen_creds_path, env.inv_gen_creds)
         helper.encrypt_file(env.inv_gen_creds_path)
 
+
 def handle_env_inventory_init(env, env_inventory_init, env_template_version):
     if env_inventory_init != "true":
-        logger.info(f"ENV_INVENTORY_INIT is not set to 'true'. Skipping env inventory initialization")
+        logger.info("ENV_INVENTORY_INIT is not set to 'true'. Skipping env inventory initialization")
         return
-    logger.info(f"ENV_INVENTORY_INIT is set to 'true'. Generating new inventory in {helper.getRelPath(env.inventory_path)}")
+    logger.info(
+        f"ENV_INVENTORY_INIT is set to 'true'. Generating new inventory in {helper.getRelPath(env.inventory_path)}")
     helper.check_dir_exist_and_create(env.env_path)
     env.inventory = helper.get_empty_yaml()
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.environmentName', env.name)
@@ -61,12 +61,13 @@ def handle_env_inventory_init(env, env_inventory_init, env_template_version):
     helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.additionalTemplateVariables', helper.get_empty_yaml())
     helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.envSpecificParamsets', helper.get_empty_yaml())
 
+
 def handle_env_specific_params(env, env_specific_params):
     if not env_specific_params or env_specific_params == "":
-        logger.info(f"ENV_SPECIFIC_PARAMS are not set. Skipping env inventory update")
+        logger.info("ENV_SPECIFIC_PARAMS are not set. Skipping env inventory update")
         return
-    logger.info(f"Updating env inventory with ENV_SPECIFIC_PARAMS")
-    logger.info(f"Updating >>> env inventory with ENV_SPECIFIC_PARAMS")
+    logger.info("Updating env inventory with ENV_SPECIFIC_PARAMS")
+    logger.info("Updating >>> env inventory with ENV_SPECIFIC_PARAMS")
     params = json.loads(env_specific_params)
 
     clusterParams = params.get("clusterParams")
@@ -84,29 +85,15 @@ def handle_env_specific_params(env, env_specific_params):
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.deployer', deployer)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.additionalTemplateVariables', additionalTemplateVariables)
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.envSpecificParamsets', envSpecificParamsets)
-    logger.info("ENV_SPECIFIC_PARAMS env details ",vars(env))
+    logger.info("ENV_SPECIFIC_PARAMS env details ", vars(env))
     handle_credentials(env, creds)
     create_paramset_files(env, paramsets)
 
-    handle_tenant_name(env,tenantName)
-    handle_deployer(env,deployer)
+    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
+    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
 
     logger.info(f"ENV_SPECIFIC_PARAMS env details : {vars(env)}")
 
-def handle_tenant_name(env, tenantName):
-    if not tenantName:
-        return
-    helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
-
-def handle_deployer(env, deployer):
-    if not deployer:
-        return
-    helper.set_nested_yaml_attribute(env.inventory, 'inventory.deployer', deployer)
-
-def handle_env_template_name(env, env_template_name):
-    if not env_template_name:
-        return
-    helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.name', env_template_name)
 
 def create_paramset_files(env, paramsets):
     if not paramsets:
@@ -118,18 +105,23 @@ def create_paramset_files(env, paramsets):
         jsonschema.validate(v, PARAMSET_SCHEMA)
         filename = k + ".yml"
         ps_path = path.join(ps_dir_path, filename)
-        helper.writeYamlToFile(ps_path, v) # overwrites file
+        helper.writeYamlToFile(ps_path, v)  # overwrites file
         logger.info(f"Created paramset {filename}")
+
 
 def handle_credentials(env, creds):
     if not creds:
         return
     helper.merge_yaml_into_target(env.inv_gen_creds, '', creds)
 
-    sharedMasterCredentialFiles = helper.get_or_create_nested_yaml_attribute(env.inventory, 'envTemplate.sharedMasterCredentialFiles', default_value=[])
+    sharedMasterCredentialFiles = helper.get_or_create_nested_yaml_attribute(env.inventory,
+                                                                             'envTemplate.sharedMasterCredentialFiles',
+                                                                             default_value=[])
     sharedMasterCredentialFiles.append(path.basename(INV_GEN_CREDS_PATH))
     sharedMasterCredentialFiles = list(set(sharedMasterCredentialFiles))
-    helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.sharedMasterCredentialFiles', sharedMasterCredentialFiles)
+    helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.sharedMasterCredentialFiles',
+                                     sharedMasterCredentialFiles)
+
 
 def handle_cluster_params(env, cluster_params):
     if not cluster_params:
@@ -137,10 +129,9 @@ def handle_cluster_params(env, cluster_params):
     if 'clusterEndpoint' in cluster_params:
         helper.set_nested_yaml_attribute(env.inventory, 'inventory.clusterUrl', cluster_params['clusterEndpoint'])
     if 'clusterToken' in cluster_params and 'cloud-deploy-sa-token' not in env.creds:
-        cred = {}
-        cred['type'] = CRED_TYPE_SECRET
-        cred['data'] = {'secret': cluster_params['clusterToken']}
+        cred = {'type': CRED_TYPE_SECRET, 'data': {'secret': cluster_params['clusterToken']}}
         helper.set_nested_yaml_attribute(env.creds, 'cloud-deploy-sa-token', cred, is_overwriting=False)
+
 
 if __name__ == "__main__":
     generate_env()
