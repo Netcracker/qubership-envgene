@@ -28,9 +28,9 @@ Only a limited number of core parameters are available in the GitHub version of 
 - [GENERATE_EFFECTIVE_SET](/docs/instance-pipeline-parameters.md#generate_effective_set)
 - [GET_PASSPORT](/docs/instance-pipeline-parameters.md#get_passport)
 - [CMDB_IMPORT](/docs/instance-pipeline-parameters.md#cmdb_import)
-- [GITHUB_PIPELINE_API_INPUT](/docs/instance-pipeline-parameters.md#github_pipeline_api_input)
+- [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#GH_ADDITIONAL_PARAMS)
 
-The [GITHUB_PIPELINE_API_INPUT](/docs/instance-pipeline-parameters.md#github_pipeline_api_input) parameter serves as a wrapper for all parameters except those listed above. This approach enables the transmission of all [Instance Pipeline parameters](/docs/instance-pipeline-parameters.md).
+The [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#GH_ADDITIONAL_PARAMS) parameter serves as a wrapper for all parameters except those listed above. This approach enables the transmission of all [Instance Pipeline parameters](/docs/instance-pipeline-parameters.md).
 
 ## How to Trigger the Pipeline
 
