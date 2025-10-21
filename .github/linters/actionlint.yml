@@ -7,6 +7,7 @@ paths:
       - 'shellcheck reported issue in this script: SC1083:warning.+'
       - 'shellcheck reported issue in this script: SC1078:warning.+'
       - 'shellcheck reported issue in this script: SC1079:warning.+'
+      - 'shellcheck reported issue in this script: SC1079:info.+'
       - 'shellcheck reported issue in this script: SC2140:warning.+'
   workflows-templates/**/*.{yml,yaml}:
     ignore:
