@@ -59,7 +59,6 @@ curl -X POST \
     "inputs": {
       "<instance-pipeline-parameter-key>": "<instance-pipeline-parameter-value>"
       "GH_ADDITIONAL_PARAMS": "<json-in-string>"
-      "GH_ADDITIONAL_PARAMS": "<json-in-string>"
     }
   }'
 ```
@@ -78,7 +77,6 @@ curl -X POST \
             "ENV_BUILDER": "true",
             `GENERATE_EFFECTIVE_SET`: "true"
             "DEPLOYMENT_TICKET_ID": "QBSHP-0001",
-            "GH_ADDITIONAL_PARAMS": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
             "GH_ADDITIONAL_PARAMS": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
         }
       }'
