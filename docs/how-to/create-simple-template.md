@@ -12,17 +12,7 @@ This guide outlines the steps to create and register a simple environment templa
 
 ## Prerequisites
 
-- The Template repository already exists and follows the expected folder structure:
-
-    ```plaintext
-    ├── configuration
-    │   ├── credentials
-    │   │   ├── credentials.yml
-    │   ├── deployer.yml
-    │   ├── integration.yml
-    ├── templates
-    │   ├── env_templates
-    ```
+- The Template repository has already been initialized and follows the standard structure.
 
 ## Flow
 
@@ -37,7 +27,7 @@ This guide outlines the steps to create and register a simple environment templa
   
 2. **Create a `Namespaces` folder inside `/templates/env_templates/<template_dir>`**
 
-3. **Inside the `Namespaces` folder, create your namespace template file with `.yml.j2` extenstion:**
+3. **Inside the `Namespaces` folder, create your namespace template file with `.yml.j2` extension:**
 
     - e.g. [`core.yml.j2`](/docs/samples/templates/env_templates/composite/namespaces/core.yml.j2)
   
@@ -67,36 +57,62 @@ This guide outlines the steps to create and register a simple environment templa
     │   │   │   ├── tenant.yml.j2
     ```
 
-6. **Commit and Push the Changes**
+6. **Push changes and trigger the build pipeline**
 
-    After you’ve added the template descriptor and template files, run:
+   - After pushing your changes to a feature branch, the template build pipeline is triggered automatically.
+   - On successful execution, the pipeline generates the template ZIP archive and publishes it to the configured registry.
+   - During the build, verify the `report_artifacts` job in the logs to locate the Environment Template artifact GAV coordinates. The output will be in the following format:
+  
+       ```plaintext
+         
+      To use the built artifact in GAV notation, set the following in the Environment Inventory:
+       SNAPSHOT version
+       ======================================================================
+       
+       envTemplate:
+         artifact:
+           group_id: <env-template-group-id>
+           artifact_id: <env-template-artifact-id>
+           version: <env-template-version-SNAPSHOT>
+       ======================================================================
+       
+       Concrete version
+       ======================================================================
+       
+       envTemplate:
+         artifact:
+           group_id: <env-template-group-id>
+           artifact_id: <env-template-artifact-id>
+           version: <env-template-version>
+       ======================================================================
+       
+       To use the built artifact in application:version notation, set the following in the Environment Inventory:
+       
+       SNAPSHOT version
+       ======================================================================
+       
+       envTemplate:
+         artifact: <env-template-artifact-id>:<env-template-version-SNAPSHOT>
+       ======================================================================
+       
+       Concrete version
+       ======================================================================
+       
+       envTemplate:
+         artifact: <env-template-artifact-id>:<env-template-version>
+       ======================================================================
+       
+       NOTE: The applicationDefinition with the name <env-template-artifact-id> must be created in the cloud CMDB (cloud-deployer) for using app:ver notation
+       
+       Link to download zip part of the artifact template
+       ======================================================================
+       
+       <link-to-zip-part-of-artifact>
+       ======================================================================
+       ```  
 
-    ```bash
-    git checkout -b feature/<your-feature-branch>
-    git add .
-    git commit -m "Add new environment template: <your-template-name>"
-    git push origin feature/<your-feature-branch>
-    ```
-
-    *Replace `<your-feature-branch>` and `<your-template-name>` as appropriate.*
-
-7. **Template Build (Automatically Triggered)**
-
-    Once the changes are pushed to the remote repository (e.g., to the `feature/<your-feature-branch>` branch), the template build pipeline is automatically triggered.
-
-    - Monitor the build pipeline to ensure it completes successfully.
-    - Verify that the template ZIP archive is generated as expected.
-    - Verify that the template builds successfully without errors during the pipeline run.
-    - Verify logs from `report_artifacts` job where EnvGene displays Environment Template artifact GAV coordinates in logs like below:
-
-      ![template_report_artifacts_logs.png](/docs/images/template_report_artifacts_logs.png)
-
-8. **Template Publishing**
-
-    Once the build completes successfully, the template ZIP archive is published automatically to the configured repository/registry.
-
-    - Confirm that the template artifact is available in the correct registry location.
+      > **Note:** SNAPSHOT version means that Environment Instance will always use the latest template version, and it will not be necessary to change it during Environment Instance generation each time after new version of Environment Template is published.
 
 ## Results
 
-- The template artifact is built and published to the registry.
+- The environment template artifact is built and published to the registry for use in environment provisioning.
