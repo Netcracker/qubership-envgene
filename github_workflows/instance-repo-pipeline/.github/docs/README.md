@@ -28,9 +28,9 @@ Only a limited number of core parameters are available in the GitHub version of 
 - [GENERATE_EFFECTIVE_SET](/docs/instance-pipeline-parameters.md#generate_effective_set)
 - [GET_PASSPORT](/docs/instance-pipeline-parameters.md#get_passport)
 - [CMDB_IMPORT](/docs/instance-pipeline-parameters.md#cmdb_import)
-- [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#gh_additional_params)
+- [GITHUB_PIPELINE_API_INPUT](/docs/instance-pipeline-parameters.md#github_pipeline_api_input)
 
-The [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#github_pipeline_api_input) parameter serves as a wrapper for all parameters except those listed above. This approach enables the transmission of all [Instance Pipeline parameters](/docs/instance-pipeline-parameters.md).
+The [GITHUB_PIPELINE_API_INPUT](/docs/instance-pipeline-parameters.md#github_pipeline_api_input) parameter serves as a wrapper for all parameters except those listed above. This approach enables the transmission of all [Instance Pipeline parameters](/docs/instance-pipeline-parameters.md).
 
 ## How to Trigger the Pipeline
 
@@ -59,6 +59,7 @@ curl -X POST \
     "inputs": {
       "<instance-pipeline-parameter-key>": "<instance-pipeline-parameter-value>"
       "GH_ADDITIONAL_PARAMS": "<json-in-string>"
+      "GH_ADDITIONAL_PARAMS": "<json-in-string>"
     }
   }'
 ```
@@ -77,6 +78,7 @@ curl -X POST \
             "ENV_BUILDER": "true",
             `GENERATE_EFFECTIVE_SET`: "true"
             "DEPLOYMENT_TICKET_ID": "QBSHP-0001",
+            "GH_ADDITIONAL_PARAMS": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
             "GH_ADDITIONAL_PARAMS": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
         }
       }'

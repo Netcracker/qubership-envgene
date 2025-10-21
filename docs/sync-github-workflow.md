@@ -47,28 +47,33 @@ When running the workflow manually, you can specify:
 ## Key Features
 
 ### Check Mode
+
 - **Purpose**: Analyze differences between branches without making any changes
 - **Usage**: Set `check_only: true` to enable
 - **Output**: Detailed report showing missing files, extra files, and content differences
 - **Benefits**: Safe way to preview what would be synchronized
 
 ### Selective File Synchronization
+
 - **Granular control**: Sync specific files or folders instead of entire `.github` directory
 - **File patterns**: Use comma-separated paths like `"actions,workflows/perform_tests.yml"`
 - **ALL mode**: Use `"ALL"` to sync all `.github` files
 - **Flexible**: Different file sets can be synced to different branches
 
 ### Branch Exclusion
+
 - **Selective processing**: Exclude specific branches from synchronization
 - **Pattern matching**: Use comma-separated branch names
 - **Use cases**: Skip experimental branches, feature branches, or branches with custom configurations
 
 ### Smart Timestamp Protection
+
 - **Automatic detection**: Compares file modification timestamps between branches
 - **Overwrite protection**: Never overwrites newer changes in target branches
 - **Safety first**: Ensures no work is lost during synchronization
 
 ### Comprehensive Reporting
+
 - **Detailed logs**: Step-by-step progress for each branch
 - **Summary statistics**: Count of branches processed, updated, skipped
 - **File listings**: Complete list of files added, updated, or removed
@@ -138,6 +143,7 @@ include_files: workflows,actions
 The workflow provides comprehensive monitoring and reporting:
 
 ### Real-time Logs
+
 - **Branch discovery**: Lists all available branches and filtering results
 - **Per-branch progress**: Detailed status for each branch being processed
 - **Timestamp analysis**: Shows file modification dates and comparison results
@@ -145,12 +151,14 @@ The workflow provides comprehensive monitoring and reporting:
 - **Error handling**: Clear error messages with suggested solutions
 
 ### GitHub Actions Summary
+
 - **Check mode**: Statistics on branches analyzed, differences found, files affected
 - **Sync mode**: Summary of branches updated, files synchronized, operations completed
 - **Branch details**: Per-branch breakdown of changes made
 - **Statistics**: Count of branches processed, up-to-date, with differences, without .github folder
 
 ### Error Reporting
+
 - **Validation errors**: Clear messages when required parameters are missing
 - **Branch errors**: Notifications when target branches don't exist
 - **Permission errors**: Warnings when write access is insufficient

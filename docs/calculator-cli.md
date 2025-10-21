@@ -3,8 +3,10 @@
 
 - [Calculator CLI](#calculator-cli)
   - [Requirements](#requirements)
+    - [\[Requirements\] Calculator CLI](#requirements-calculator-cli)
+    - [\[Requirements\] EnvGene](#requirements-envgene)
   - [Proposed Approach](#proposed-approach)
-    - [Calculator CLI execution attributes](#calculator-cli-execution-attributes)
+    - [Calculator command-line tool execution attributes](#calculator-command-line-tool-execution-attributes)
     - [Registry Configuration](#registry-configuration)
     - [Effective Set v1.0](#effective-set-v10)
       - [\[Version 1.0\] Effective Set Structure](#version-10-effective-set-structure)
@@ -12,6 +14,7 @@
       - [\[Version 1.0\] credentials.yaml](#version-10-credentialsyaml)
       - [\[Version 1.0\] technical-configuration-parameters.yaml](#version-10-technical-configuration-parametersyaml)
       - [\[Version 1.0\] mapping.yml](#version-10-mappingyml)
+      - [\[Version 1.0\] No SBOMs Mode](#version-10-no-sboms-mode)
     - [Effective Set v2.0](#effective-set-v20)
       - [\[Version 2.0\] Effective Set Structure](#version-20-effective-set-structure)
       - [\[Version 2.0\] Parameter type conversion](#version-20-parameter-type-conversion)
@@ -19,6 +22,7 @@
       - [\[Version 2.0\] Handling Missing Attributes in SBOM](#version-20-handling-missing-attributes-in-sbom)
       - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
       - [\[Version 2.0\] Sensitive parameters processing](#version-20-sensitive-parameters-processing)
+      - [\[Version 2.0\] No SBOMs Mode](#version-20-no-sboms-mode)
       - [\[Version 2.0\] Deployment Parameter Context](#version-20-deployment-parameter-context)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml)
           - [\[Version 2.0\] Predefined `deployment-parameters.yaml` parameters](#version-20-predefined-deployment-parametersyaml-parameters)
@@ -52,35 +56,42 @@
         - [\[Version 2.0\]\[Cleanup Context\] `parameters.yaml`](#version-20cleanup-context-parametersyaml)
         - [\[Version 2.0\]\[Cleanup Context\] `credentials.yaml`](#version-20cleanup-context-credentialsyaml)
         - [\[Version 2.0\]\[Cleanup Context\] `mapping.yml`](#version-20cleanup-context-mappingyml)
-    - [Macros](#macros)
-  - [Use Cases](#use-cases)
-    - [Effective Set Calculation](#effective-set-calculation)
+      - [\[Version 2.0\] Macros](#version-20-macros)
 
 ## Requirements
 
-1. Calculator CLI must support [Effective Set version 1.0](#effective-set-v10) generation
-2. Calculator CLI must support [Effective Set version 2.0](#effective-set-v20) generation
-3. Calculator CLI must process [execution attributes](#calculator-cli-execution-attributes)
-4. Calculator CLI must not encrypt or decrypt sensitive parameters (credentials.yaml)
-5. Calculator CLI must resolve [macros](#macros)
-6. Calculator CLI should not process Parameter Sets
-7. Calculator CLI must not cast parameters type
-8. Calculator CLI must display reason of error
-9. Calculator CLI must must not lookup, download and process any artifacts from a registry
-10. The Calculator CLI must support loading and parsing SBOM files, extracting parameters for calculating the Effective Set
+### [Requirements] Calculator CLI
+
+1. Calculator command-line tool must support [Effective Set version 1.0](#effective-set-v10) generation
+2. Calculator command-line tool must support [Effective Set version 2.0](#effective-set-v20) generation
+3. Calculator command-line tool must process [execution attributes](#calculator-command-line-tool-execution-attributes)
+4. Calculator command-line tool must not encrypt or decrypt sensitive parameters (credentials.yaml)
+5. Calculator command-line tool must resolve [macros](#version-20-macros)
+6. Calculator command-line tool should not process Parameter Sets
+7. Calculator command-line tool must not cast parameters type
+8. Calculator command-line tool must display reason of error
+9. Calculator command-line tool must must not lookup, download and process any artifacts from a registry
+10. The Calculator command-line tool must support loading and parsing SBOM files, extracting parameters for calculating the Effective Set
     1. [Solution SBOM](/schemas/solution.sbom.schema.json)
     2. [Application SBOM](/schemas/application.sbom.schema.json)
     3. [Env Template SBOM](/schemas/env-template.sbom.schema.json)
-11. Calculator CLI should generate Effective Set for one environment no more than 1 minute
-12. The Calculator CLI must adhere to the [Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention) when compiling the application's service list.
+11. Calculator command-line tool should generate Effective Set for one environment no more than 1 minute
+12. The Calculator command-line tool must adhere to the [Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention) when compiling the application's service list.
 13. Parameters in all files of Effective Set must be sorted alphabetically
 14. The value of `DEPLOYMENT_SESSION_ID` value must have the same value in all files in the Effective Set generated by a given operation
+
+### [Requirements] EnvGene
+
+1. If a Solution SBOM is not present for the Environment for which Effective Set generation is launched, the Calculator must be launched WITHOUT the following attributes:
+   1. `--sboms-path`/`-sp`
+   2. `--solution-sbom-path`/`-ssp`
+   3. `--registries`/`-r`
 
 ## Proposed Approach
 
 ![sbom-generation.png](/docs/images/effective-set-calculation.png)
 
-### Calculator CLI execution attributes
+### Calculator command-line tool execution attributes
 
 Below is a **complete** list of attributes
 
@@ -88,10 +99,10 @@ Below is a **complete** list of attributes
 |---|---|---|---|---|--|
 | `--env-id`/`-e` | string | yes | Environment ID in `<cluster-name>/<environment-name>` notation | N/A | `cluster/platform-00` |
 | `--envs-path`/`-ep` | string | yes | Path to `/environments` folder | N/A |  `/environments` |
-| `--sboms-path`/`-sp`| string | yes | Path to the folder with Application and Environment Template SBOMs. In Solution SBOM, the path to Application SBOM and Environment Template SBOM is specified relative to this folder. | N/A |`/sboms` |
-| `--solution-sbom-path`/`-ssp`| string | yes | Path to the Solution SBOM. | N/A | `/environments/cluster/platform-00/Inventory/solution-descriptor/solution.sbom.json` |
-| `--registries`/`-r`| string | yes | Path to the [registry configuration](#registry-configuration) | N/A | `/configuration/registry.yml` |
-| `--output`/`-o` | string | yes | Folder where the result will be put by Calculator CLI | N/A | `/environments/cluster/platform-00/effective-set` |
+| `--sboms-path`/`-sp`| string | no | Path to the folder with Application SBOMs. In Solution SBOM, the path to Application SBOM is specified relative to this folder. If the attribute is not provided, generation occurs in [No SBOMs Mode](#version-20-no-sboms-mode) | N/A |`/sboms` |
+| `--solution-sbom-path`/`-ssp`| string | no | Path to the Solution SBOM. If the attribute is not provided, generation occurs in [No SBOMs Mode](#version-20-no-sboms-mode) | N/A | `/environments/cluster/platform-00/Inventory/solution-descriptor/solution.sbom.json` |
+| `--registries`/`-r`| string | no | Required when `--solution-sbom-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)   | N/A | `/configuration/registry.yml` |
+| `--output`/`-o` | string | yes | Folder where the result will be put by Calculator command-line tool | N/A | `/environments/cluster/platform-00/effective-set` |
 | `--effective-set-version`/`-esv` | string | no | The version of the effective set to be generated. Available options are `v1.0` and `v2.0` | `v2.0` | `v1.0` |
 | `--pipeline-consumer-specific-schema-path`/`-pcssp` | string | no | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided  | N/A |  |
 | `--extra_params`/`-ex` | string | no | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided | N/A | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000` |
@@ -203,6 +214,10 @@ env-01-platform-monitoring: /environments/cluster-01/env-01/effective-set/deploy
 env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zookeeper
 ```
 
+#### [Version 1.0] No SBOMs Mode
+
+Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#version-20-no-sboms-mode) and requires SBOMs to be present.
+
 ### Effective Set v2.0
 
 #### [Version 2.0] Effective Set Structure
@@ -311,7 +326,7 @@ env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zooke
 
 #### [Version 2.0] Parameter type conversion
 
-The Calculator CLI maintains strict type fidelity for all parameters during Effective Set generation
+The Calculator command-line tool maintains strict type fidelity for all parameters during Effective Set generation
 All parameters must retain their original types (string, boolean, integer) exactly as defined in:
 
 - Environment Instance
@@ -349,7 +364,7 @@ The service name is derived from the `name` attribute of the Application SBOM co
 
 #### [Version 2.0] App chart validation
 
-The Calculator CLI performs validation to check for the presence of an `application/vnd.qubership.app.chart` component. The validation follows these rules:
+The Calculator command-line tool performs validation to check for the presence of an `application/vnd.qubership.app.chart` component. The validation follows these rules:
 
 1. If any of the Application SBOMs passed to the calculator does not contain a component with `application/vnd.qubership.app.chart` mime-type:
 
@@ -413,6 +428,21 @@ complex_key:
     username: username
     password: password
 ```
+
+#### [Version 2.0] No SBOMs Mode
+
+SBOMs for Effective Set calculation are optional. When the Calculator command-line tool is launched without the following attributes:
+
+- `--solution-sbom-path`/`-ssp`
+- `--sboms-path`/`-sp`
+- `--registries`/`-r`
+
+The Calculator generates only the following contexts:
+
+1. [Pipeline](#version-20-pipeline-parameter-context)
+2. [Topology](#version-20-topology-context)
+
+These contexts are used as a source exclusively from the environment instance.
 
 #### [Version 2.0] Deployment Parameter Context
 
@@ -1117,12 +1147,6 @@ The structure of this file is as follows:
 
 The contents of this file are identical to [mapping.yml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyml).
 
-### Macros
+#### [Version 2.0] Macros
 
-TBD
-
-## Use Cases
-
-### Effective Set Calculation
-
-TBD
+Calculator command-line tool resolves [macros](/docs/template-macros.md#calculator-cli-macros)
