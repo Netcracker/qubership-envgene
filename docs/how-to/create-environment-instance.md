@@ -58,7 +58,7 @@ This guide describes the process of creating a new environment in the Instance r
     │   │   │   │   ├── env_definition.yml
     ```
 
-    **Note:** File name must be `env_definition.yml`.
+    **Note:** filename must be `env_definition.yml`.
 
 5. **Commit and push the changes to the remote repository**
 

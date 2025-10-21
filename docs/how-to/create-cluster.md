@@ -117,7 +117,7 @@ In this approach, the **Cloud** object is generated using the Cloud Template and
 ### Prerequisites — Discovery Method
 
 - Ensure both the Instance and Discovery repositories exist.
-- Cloud Passport repository integration is configured in the Instance repo:
+- Cloud Passport repository integration is configured in the Instance repository:
   
   In `/configuration/integration.yml`:
 
@@ -139,16 +139,13 @@ In this approach, the **Cloud** object is generated using the Cloud Template and
    ```
 
 - Infra Namespaces in the target cluster have correct labels/annotations.
+- Ensure that the required cluster and environment structure exists in the Discovery repository along with:
+  - kubeconfig file for the cluster
+  - cloud_template.yml under `/environments/<cluster-name>/<env-name>/`
 
 ### Flow — Discovery Method
 
-1. **Create a Cluster in the Discovery Inventory**
-
-   Ensure that the required cluster and environment structure exists in the Discovery repository along with:
-   - kubeconfig file for the cluster
-   - cloud_template.yml under `/environments/<cluster-name>/<env-name>/`
-
-2. **Trigger the Pipeline in the Instance repository**
+1. **Trigger the Pipeline in the Instance repository**
    Run the Instance repository pipeline with:
 
    ```bash
