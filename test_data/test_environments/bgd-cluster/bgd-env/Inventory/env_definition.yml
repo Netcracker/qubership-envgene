@@ -14,4 +14,4 @@ envTemplate:
   sharedMasterCredentialFiles: []
   artifact: "bgd"
 generatedVersions:
-  generateEnvironmentLatestVersion: "test-01"  # This value is automatically generated during job run.
+  generateEnvironmentLatestVersion: "bgd:bgd"  # This value is automatically generated during job run.
