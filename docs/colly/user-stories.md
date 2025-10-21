@@ -12,7 +12,8 @@
     - [US-7 As a TM I want to create the Environment](#us-7-as-a-tm-i-want-to-create-the-environment)
     - [US-9 As a TM I want to know how up-to-date the information discovered from the cluster is](#us-9-as-a-tm-i-want-to-know-how-up-to-date-the-information-discovered-from-the-cluster-is)
     - [US-10 As a TM, I want to know if the Environment is being used](#us-10-as-a-tm-i-want-to-know-if-the-environment-is-being-used)
-    - [хочу знать про деплой параметры , энвген темплейт деплой операции](#хочу-знать-про-деплой-параметры--энвген-темплейт-деплой-операции)
+    - [US-11 As a TM, I want to know how up-to-date the information discovered from the cluster is](#us-11-as-a-tm-i-want-to-know-how-up-to-date-the-information-discovered-from-the-cluster-is)
+    - [хочу знать про деплой параметры , энвген темплейт, деплой операции](#хочу-знать-про-деплой-параметры--энвген-темплейт-деплой-операции)
 
 ## Glossary
 
@@ -106,4 +107,12 @@
 
 1. The time of the last authorization in the applications that are part of the solution, performed via the IDP
 
-### хочу знать про деплой параметры , энвген темплейт деплой операции
+### US-11 As a TM, I want to know how up-to-date the information discovered from the cluster is
+
+**Required information:**
+
+1. Whether the last sync attempt was successful
+2. Time of the successful last sync
+3. Sync interval
+
+### хочу знать про деплой параметры , энвген темплейт, деплой операции

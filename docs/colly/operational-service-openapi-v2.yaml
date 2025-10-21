@@ -226,9 +226,8 @@ components:
           items:
             type: string
         syncInterval:
-          description: "synchronization period with cluster in human-readable duration notation"
-          # чекнуть дататип
-          type: string
+          description: "Period of synchronization with the cluster"
+          $ref: "#/components/schemas/Duration"
     ClusterDTO:
       type: object
       properties:
@@ -241,9 +240,9 @@ components:
           properties:
             lastSyncResult: 
               type: boolean
+              description: "Determines the sync status for Cluster: if at least one object from the cluster was successfully read, the sync is considered successful"
             lastSyncCompletedAt:
-              $ref: "#/components/schemas/Instant"
-            lastSyncAttemptAt: # чекнуть
+              description: "Time of the last successful sync"
               $ref: "#/components/schemas/Instant"
     DeploymentStatus:
       type: string
@@ -257,10 +256,13 @@ components:
       properties:
         id:
           type: string
+          description: "Unique identifier of the Environment in the service instance. Generated automatically upon creation."
         name:
           type: string
+          description: "Human-readable environment name in `<cluster-name>/<environment-name>` notation"
         namespaces:
           type: array
+          description: "List of namespace objects included in the Environment"
           items:
             $ref: "#/components/schemas/NamespaceDTO"
         cluster:
@@ -275,6 +277,8 @@ components:
           $ref: "#/components/schemas/LocalDate"
         type:
           $ref: "#/components/schemas/EnvironmentType"
+        role:
+          $ref: "#/components/schemas/EnvironmentRole"
         labels:
           type: array
           items:
@@ -291,24 +295,6 @@ components:
           $ref: "#/components/schemas/DeploymentStatus"
         ticketLinks:
           type: string
-        # Supported query parameters for filtering deployment operations history:
-        # - sort: string (default: "-startedAt") - sort order ("startedAt" for ascending, "-startedAt" for descending)
-        # - result: DeploymentOperationResult enum - filters by operation result
-        # - mode: DeploymentOperationMode enum - filters by deployment mode
-        # дорого
-        # это таргет когда сделаем не знаем, возможно будт шорт терм аля cleanInstallationDate
-        deploymentOperationsHistory:
-          type: array
-          description: "Contains deployment operations from all namespaces (5 most recent for each deployment) that are part of the environment. Operations with CLEAN_INSTALL mode remove all previous ones"
-          items:
-            $ref: "#/components/schemas/DeploymentOperationExecutionDTO"
-        # ex-deploymentVersion
-        installedSolutionDescriptors:
-          type: array
-          description: "List of Solution Descriptors installed in the environment's namespaces"
-          items:
-            $ref: "#/components/schemas/SolutionDescriptorRef"
-    # Users cannot add statuses on their own. Users can create labels and assign them to environments
     EnvironmentStatus:
       type: string
       enum:
@@ -316,9 +302,16 @@ components:
       - RESERVED
       - FREE
       - MIGRATING
-      - TO_BE_DEPRECATED
-    # Users can add types on their own via UI.
     EnvironmentType:
+      type: string
+      enum:
+      - ENVIRONMENT
+      - CSE_TOOLSET
+      - DESIGN_TIME
+      - APP_DEPLOYER
+      - INFRASTRUCTURE
+      - UNDEFINED
+    EnvironmentRole:
       type: string
       enum:
       - DEV
@@ -349,43 +342,15 @@ components:
         deployPostfix:
           type: string
           description: "Deploy postfix, namespace role in solution"
-    # TODO find out what other statuses exist, if there are only two, it might be possible to refactor to boolean
-    DeploymentOperationResult:
+    Duration:
       type: string
-      description: "Deployment operation result"
-      enum:
-      - SUCCESS
-      - FAIL
-    DeploymentOperationMode:
-      type: string
-      description: "Deployment operation mode. ROLLING_UPDATE installs applications on top of existing ones. CLEAN_INSTALL removes all objects in the namespace before installation"
-      enum:
-      - ROLLING_UPDATE
-      - CLEAN_INSTALL
-    DeploymentOperationExecutionDTO:
-      type: object
-      description: "Deployment operation execution"
-      properties:
-        id:
-          type: string
-        startedAt:
-          $ref: "#/components/schemas/Instant"
-        operations:
-          type: array
-          items:
-            $ref: "#/components/schemas/SolutionDescriptorDeploymentOperationDTO"
-    SolutionDescriptorDeploymentOperationDTO:
-      type: object
-      description: "Operation for deploying applications described in the Solution Descriptor"
-      properties:
-        id:
-          type: string
-        result:
-          $ref: "#/components/schemas/DeploymentOperationResult"
-        mode:
-          $ref: "#/components/schemas/DeploymentOperationMode"
-        solutionDescriptor:
-          type: string
+      format: duration
+      description: "Duration in ISO 8601 format (e.g., 'PT30M' for 30 minutes, 'PT2H' for 2 hours, 'P1D' for 1 day)"
+      examples:
+        - "PT30M"
+        - "PT2H"
+        - "P1D"
+        - "PT1H30M"
   securitySchemes:
     SecurityScheme:
       type: openIdConnect
