@@ -17,7 +17,8 @@ test_data = [
     ("cluster01", "env01", "test-01"),
     ("cluster01", "env01", "test-01"),
     ("cluster01", "env03", "test-template-1"),
-    ("cluster01", "env04", "test-template-2")
+    ("cluster01", "env04", "test-template-2"),
+    ("bgd-cluster","bgd-env","bgd"),
 ]
 
 g_templates_dir = getAbsPath("../../test_data/test_templates")
