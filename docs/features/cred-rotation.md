@@ -46,7 +46,7 @@ Supports working with SOPS encryption.
 ### Assumptions & Limitation
 
 1. Only sensitive parameters defined at the Namespace level or its child Applications can be rotated. It is assumed that:
-   1. Defining sensitive parameters at the Tenant level is considered an anti-pattern
+   1. Defining sensitive parameters at the Tenant level is considered an antipattern
    2. Cloud level sensitive parameters must be rotated via Credential rotation in the underlying environment, and subsequent Cloud or Infra Passport discovery
 2. Only existing credentials can be rotated; creating new ones through `CRED_ROTATION_PAYLOAD` is not possible
 3. Only `SOPS` `crypt_backend` is supported
@@ -269,7 +269,7 @@ The `affected-sensitive-parameters.yaml` is created using the reverse logic desc
     cred_field: enum[`username`,`password`,`secret`]
   affected_parameters:
     - # Mandatory
-      # Environment id (in cluster-name/env-name notation) where affected parameter is located
+      # Environment ID (in cluster-name/env-name notation) where affected parameter is located
       environment: string
       # Mandatory
       # Namespace where affected parameter is located

@@ -179,9 +179,11 @@ description: "Cloud for {{ current_env.name }} environment"
 - The environment is successfully created
 - The environment name is derived from the folder name "env04"
 - The template is correctly rendered with the derived environment name:
+
   ```yaml
   # Rendered cloud.yml
   name: "env04-cloud"
   description: "Cloud for env04 environment"
   ```
+
 - All template variables referencing `current_env.name` are correctly substituted with the derived name

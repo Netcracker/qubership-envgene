@@ -1,5 +1,6 @@
 from os import getenv
 from pprint import pformat
+import uuid
 
 from envgenehelper.plugin_engine import PluginEngine
 
@@ -20,6 +21,7 @@ def get_pipeline_parameters() -> dict:
             "SD_VERSION": getenv("SD_VERSION"),
             "SD_DATA": getenv("SD_DATA"),
             "SD_DELTA": getenv("SD_DELTA"),
+            "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE"),
             "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT"),
             "ENV_SPECIFIC_PARAMETERS": getenv("ENV_SPECIFIC_PARAMS"),
             "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
@@ -27,8 +29,10 @@ def get_pipeline_parameters() -> dict:
         },
         'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
         'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", ""),
+        'NS_BUILD_FILTER': getenv("NS_BUILD_FILTER", ""),
         'GITLAB_RUNNER_TAG_NAME' : getenv("GITLAB_RUNNER_TAG_NAME", ""),
-        'RUNNER_SCRIPT_TIMEOUT' : getenv("RUNNER_SCRIPT_TIMEOUT") or "10m"
+        'RUNNER_SCRIPT_TIMEOUT' : getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
+        "DEPLOYMENT_SESSION_ID": getenv("DEPLOYMENT_SESSION_ID") or str(uuid.uuid4()),
     }
 
 class PipelineParametersHandler:

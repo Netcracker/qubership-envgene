@@ -25,7 +25,7 @@ This catalog provides an overview of common use cases for EnvGene. Each use case
 
 To add a new use case:
 
-1. Create a markdown file in the `use-cases` directory with a descriptive name
+1. Create a Markdown file in the `use-cases` directory with a descriptive name
 2. Follow the simple format:
    - Name: Short, descriptive title
    - Description: User-focused description following "As a [role], I want to [action], so that [benefit]" format

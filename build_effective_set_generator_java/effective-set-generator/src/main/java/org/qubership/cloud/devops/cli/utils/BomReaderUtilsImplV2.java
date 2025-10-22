@@ -20,6 +20,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import jakarta.enterprise.context.ApplicationScoped;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.cyclonedx.model.Bom;
 import org.cyclonedx.model.Component;
@@ -138,41 +139,43 @@ public class BomReaderUtilsImplV2 {
         Map<String, Object> primaryArtifactMap = new TreeMap<>();
         List<Map<String, Object>> artifacts = new ArrayList<>();
         Map<String, Object> tArtifactMap = new TreeMap<>();
-        for (Component subComponent : component.getComponents()) {
-            entity = "sub component '" + subComponent.getName() + "' of service:" + component.getName();
-            if (subComponent.getMimeType().equalsIgnoreCase(serviceArtifactType.getArtifactMimeType())) {
-                populateOptionalParam(primaryArtifactMap, "artifactId", subComponent.getName());
-                populateOptionalParam(primaryArtifactMap, "groupId", subComponent.getGroup());
-                populateOptionalParam(primaryArtifactMap, "version", subComponent.getVersion());
-            }
-            if (SUB_SERVICE_ARTIFACT_MIME_TYPES.contains(subComponent.getMimeType())) {
-                String name = checkIfMandatory(subComponent.getName(), "name", entity);
-                String version = checkIfMandatory(subComponent.getVersion(), "version", entity);
-                Map<String, Object> artifactMap = new TreeMap<>();
-                artifactMap.put("artifact_id", "");
-                artifactMap.put("artifact_path", "");
-                artifactMap.put("artifact_type", "");
-                artifactMap.put("classifier", getPropertyValue(subComponent, "classifier", null, true, entity));
-                artifactMap.put("deploy_params", "");
-                artifactMap.put("gav", "");
-                artifactMap.put("group_id", "");
-                artifactMap.put("id", checkIfMandatory(subComponent.getGroup(), "group", entity) + ":" + name + ":" + version);
-                artifactMap.put("name", name + "-" + version + "." +
-                        getPropertyValue(subComponent, "type", null, true, entity));
-                artifactMap.put("repository", "");
-                artifactMap.put("type", getPropertyValue(subComponent, "type", null, true, entity));
-                artifactMap.put("url", "");
-                artifactMap.put("version", "");
-                artifacts.add(artifactMap);
-            }
-            if (APPLICATION_ZIP.equalsIgnoreCase(subComponent.getMimeType())) {
-                String classifier = getPropertyValue(subComponent, "classifier", null, true, entity);
-                String name = subComponent.getName();
-                String version = subComponent.getVersion();
-                if (StringUtils.isNotBlank(classifier)) {
-                    tArtifactMap.put(classifier, name + "-" + version + "-" + classifier + ".zip");
-                } else {
-                    tArtifactMap.put("ecl", name + "-" + version + ".zip");
+        if(CollectionUtils.isNotEmpty(component.getComponents())) {
+            for (Component subComponent : component.getComponents()) {
+                entity = "sub component '" + subComponent.getName() + "' of service:" + component.getName();
+                if (subComponent.getMimeType().equalsIgnoreCase(serviceArtifactType.getArtifactMimeType())) {
+                    populateOptionalParam(primaryArtifactMap, "artifactId", subComponent.getName());
+                    populateOptionalParam(primaryArtifactMap, "groupId", subComponent.getGroup());
+                    populateOptionalParam(primaryArtifactMap, "version", subComponent.getVersion());
+                }
+                if (SUB_SERVICE_ARTIFACT_MIME_TYPES.contains(subComponent.getMimeType())) {
+                    String name = checkIfMandatory(subComponent.getName(), "name", entity);
+                    String version = checkIfMandatory(subComponent.getVersion(), "version", entity);
+                    Map<String, Object> artifactMap = new TreeMap<>();
+                    artifactMap.put("artifact_id", "");
+                    artifactMap.put("artifact_path", "");
+                    artifactMap.put("artifact_type", "");
+                    artifactMap.put("classifier", getPropertyValue(subComponent, "classifier", null, true, entity));
+                    artifactMap.put("deploy_params", "");
+                    artifactMap.put("gav", "");
+                    artifactMap.put("group_id", "");
+                    artifactMap.put("id", checkIfMandatory(subComponent.getGroup(), "group", entity) + ":" + name + ":" + version);
+                    artifactMap.put("name", name + "-" + version + "." +
+                            getPropertyValue(subComponent, "type", null, true, entity));
+                    artifactMap.put("repository", "");
+                    artifactMap.put("type", getPropertyValue(subComponent, "type", null, true, entity));
+                    artifactMap.put("url", "");
+                    artifactMap.put("version", "");
+                    artifacts.add(artifactMap);
+                }
+                if (APPLICATION_ZIP.equalsIgnoreCase(subComponent.getMimeType())) {
+                    String classifier = getPropertyValue(subComponent, "classifier", null, true, entity);
+                    String name = subComponent.getName();
+                    String version = subComponent.getVersion();
+                    if (StringUtils.isNotBlank(classifier)) {
+                        tArtifactMap.put(classifier, name + "-" + version + "-" + classifier + ".zip");
+                    } else {
+                        tArtifactMap.put("ecl", name + "-" + version + ".zip");
+                    }
                 }
             }
         }
@@ -202,13 +205,15 @@ public class BomReaderUtilsImplV2 {
     private void processImageServiceComponentDeployDescParams(Map<String, Map<String, Object>> deployParamsMap, Component component) {
         Map<String, Object> deployDescParams = new TreeMap<>();
         String entity = "service:" + component.getName();
-        for (Component subComponent : component.getComponents()) {
-            entity = "sub component '" + subComponent.getName() + "' of service:" + component.getName();
-            if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
-                deployDescParams.put("docker_digest", checkIfMandatory(CollectionUtils.isNotEmpty(subComponent.getHashes()) ? subComponent.getHashes().get(0).getValue() : "", "hashes", entity));
-                deployDescParams.put("docker_repository_name", checkIfMandatory(subComponent.getGroup(), "group", entity));
-                deployDescParams.put("docker_tag", checkIfMandatory(subComponent.getVersion(), "version", entity));
-                deployDescParams.put("image_name", checkIfMandatory(subComponent.getName(), "name", entity));
+        if(CollectionUtils.isNotEmpty(component.getComponents())){
+            for (Component subComponent : component.getComponents()) {
+                entity = "sub component '" + subComponent.getName() + "' of service:" + component.getName();
+                if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
+                    deployDescParams.put("docker_digest", checkIfMandatory(CollectionUtils.isNotEmpty(subComponent.getHashes()) ? subComponent.getHashes().get(0).getValue() : "", "hashes", entity));
+                    deployDescParams.put("docker_repository_name", checkIfMandatory(subComponent.getGroup(), "group", entity));
+                    deployDescParams.put("docker_tag", checkIfMandatory(subComponent.getVersion(), "version", entity));
+                    deployDescParams.put("image_name", checkIfMandatory(subComponent.getName(), "name", entity));
+                }
             }
         }
         deployDescParams.put("deploy_param", getPropertyValue(component, "deploy_param", "", true, entity));
@@ -278,13 +283,15 @@ public class BomReaderUtilsImplV2 {
         serviceParams.put("SERVICE_NAME", checkIfMandatory(component.getName(), "name", entity));
 
 
-        for (Component subComponent : component.getComponents()) {
-            if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.qubership.resource-profile-baseline")) {
-                profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
+        if (CollectionUtils.isNotEmpty(component.getComponents())) {
+            for (Component subComponent : component.getComponents()) {
+                if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.qubership.resource-profile-baseline")) {
+                    profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
+                }
             }
         }
 
-        if (profileValues != null && !profileValues.isEmpty()) {
+        if (MapUtils.isNotEmpty(profileValues)) {
             serviceParams.putAll(profileValues);
         }
         serviceMap.put(component.getName(), serviceParams);
@@ -303,22 +310,24 @@ public class BomReaderUtilsImplV2 {
         serviceParams.put("DOCKER_TAG", dockerTag);
         serviceParams.put("IMAGE_REPOSITORY", getImageRepository(dockerTag));
 
-        for (Component subComponent : component.getComponents()) {
-            if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
-                tag = subComponent.getVersion();
-            } else if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.qubership.resource-profile-baseline")) {
-                profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
+        if(CollectionUtils.isNotEmpty(component.getComponents())){
+            for (Component subComponent : component.getComponents()) {
+                if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
+                    tag = subComponent.getVersion();
+                } else if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.qubership.resource-profile-baseline")) {
+                    profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
+                }
             }
+            serviceParams.put("TAG", checkIfMandatory(tag, "TAG", entity));
         }
-        serviceParams.put("TAG", checkIfMandatory(tag, "TAG", entity));
-        if (profileValues != null && !profileValues.isEmpty()) {
+        if (MapUtils.isNotEmpty(profileValues)) {
             serviceParams.putAll(profileValues);
         }
         serviceMap.put(component.getName(), serviceParams);
     }
 
     private String getImageRepository(String dockerTag) {
-        if(StringUtils.isNotEmpty(dockerTag)){
+        if (StringUtils.isNotEmpty(dockerTag)) {
             return dockerTag.substring(0, dockerTag.lastIndexOf(":"));
         }
         return null;

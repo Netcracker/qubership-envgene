@@ -34,6 +34,7 @@ import org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -54,7 +55,7 @@ public class InputData {
     private Map<String, ProfileFullDto> profileFullDtoMap = Collections.emptyMap();
     @Builder.Default
     private Map<String, RegistryDTO> registryDTOMap = Collections.emptyMap();
-    private SolutionBomDTO solutionBomDTO;
+    private Optional<SolutionBomDTO> solutionBomDTO = Optional.empty();
     @Builder.Default
     private Map<String, Object> clusterMap = Collections.emptyMap();
 }

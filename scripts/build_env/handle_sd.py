@@ -14,6 +14,7 @@ from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
+from envgenehelper.sd_merge_helper import basic_merge_multiple
 
 
 class MergeType(Enum):
@@ -21,6 +22,19 @@ class MergeType(Enum):
     REPLACE = "replace"
     BASIC = "basic-merge"
     BASIC_EXCLUSION = "basic-exclusion-merge"
+
+    @classmethod
+    def from_value(cls, value: str):
+        if not isinstance(value, str):
+            raise ValueError(f"SD_REPO_MERGE_MODE value: '{value}' cannot be non-string")
+        value_lower = value.strip().lower()
+        for member in cls:
+            if member.value == value_lower:
+                return member
+        valid_values = [member.value for member in cls]
+        raise ValueError(
+            f"Invalid SD_REPO_MERGE_MODE: '{value}'. Valid values are: {valid_values}"
+        )
 
 
 MERGE_METHODS = {
@@ -82,9 +96,6 @@ def prepare_vars_and_run_sd_handling():
     sd_data = getenv_and_log('SD_DATA')
     sd_delta = getenv_and_log('SD_DELTA')
     sd_merge_mode = getenv_and_log("SD_REPO_MERGE_MODE")
-    logger.info(f"sd_data: {sd_data}")
-    logger.info(f"sd_merge_mode: {sd_merge_mode}")
-
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
 
 
@@ -123,24 +134,25 @@ def merge_sd(sd_path: Path, sd_data, merge_func):
     full_sd_yaml = helper.openYaml(sd_path)
     logger.info(f"full_sd.yaml before merge: {full_sd_yaml}")
     helper.check_dir_exist_and_create(sd_path.parent)
-    helper.pre_validate(full_sd_yaml, sd_data)
     result = merge_func(full_sd_yaml, sd_data)
     helper.writeYamlToFile(sd_path, result)
     logger.info(f"Merged data into Target Path! - {result}")
 
 
 def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
-    sd_merge_mode = str(sd_merge_mode).strip().lower() if sd_merge_mode else None
-    if sd_merge_mode:
-        effective_merge_mode = MergeType(sd_merge_mode)
+    if sd_merge_mode is not None:
+        effective_merge_mode = MergeType.from_value(sd_merge_mode)
     elif sd_delta == "true":
         effective_merge_mode = MergeType.EXTENDED
+        logger.info(
+            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
     elif sd_delta == "false":
         effective_merge_mode = MergeType.REPLACE
+        logger.info(
+            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
     else:
         effective_merge_mode = MergeType.BASIC
-
-    logger.info(f"Effective merge mode: {effective_merge_mode}")
+        logger.info(f"SD_REPO_MERGE_MODE not passed. Default value: {effective_merge_mode.value}")
     return effective_merge_mode
 
 
@@ -154,26 +166,19 @@ def calculate_sd_delta(sd_delta):
     return sd_delta
 
 
-def multiply_sds_to_single(sds_data):
-    # Perform basic-merge for multiple SDs before applying SD_REPO_MERGE_MODE
-    if isinstance(sds_data, list):
-        merged_applications = {"applications": sds_data[0].get("applications", [])}
-        if not merged_applications["applications"]:
-            logger.error("No applications found in the first SD block.")
-            exit(1)
-        for i in range(1, len(sds_data)):
-            logger.info("Initiates basic-merge:")
-            current_item_sd = {"applications": sds_data[i].get("applications", [])}
-            merged_applications = helper.merge(merged_applications, current_item_sd)
-        full_sd_from_pipe = {
-            "version": sds_data[0].get("version"),
-            "type": sds_data[0].get("type"),
-            "deployMode": sds_data[0].get("deployMode"),
-            "applications": merged_applications["applications"]
-        }
-        logger.info(f"Level-1 SD data: {json.dumps(full_sd_from_pipe, indent=2)}")
-    else:
+def multiply_sds_to_single(sds_data, effective_merge_mode):
+    if effective_merge_mode == MergeType.EXTENDED:
+        if isinstance(sds_data, list):
+            raise ValueError("Multiple SDs not supported in extended merge mode")
         full_sd_from_pipe = sds_data
+    else:
+        sds_data = sds_data if isinstance(sds_data, list) else [sds_data]
+        cropped_sds = []
+        for sd in sds_data:
+            cropped_sds.append({"applications": sd["applications"]})
+
+        full_sd_from_pipe = basic_merge_multiple(cropped_sds)
+
     logger.info(f"Merged data after performing basic-merge for multiple SDs: {full_sd_from_pipe}")
     return full_sd_from_pipe
 
@@ -201,6 +206,15 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
         exit(1)
 
 
+def validate_applications(sd, effective_merge_mode: MergeType):
+    applications = sd.get("applications")
+    for app in applications:
+        if effective_merge_mode != MergeType.EXTENDED and (not isinstance(app, dict) or not app.get("deployPostfix")):
+            raise ValueError(
+                f"Application {app} doesn't have deployPostfix. <name>:<version> notation is supported only for "
+                f"extended merge. Current merge mode: {effective_merge_mode.value}")
+
+
 def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode: MergeType):
     if not sd_data:
         logger.error("SD_SOURCE_TYPE is set to 'json', but SD_DATA was not given in pipeline variables")
@@ -223,9 +237,11 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
             transformed_data.append(transformed_item)
     else:
         transformed_data = handle_deploy_postfix_namespace_transformation(sds_from_pipe, namespace_dict)
-    full_sd_from_pipe = multiply_sds_to_single(transformed_data)
+    full_sd_from_pipe = multiply_sds_to_single(transformed_data, effective_merge_mode)
+    validate_applications(full_sd_from_pipe, effective_merge_mode)
 
     sd_path = base_sd_path.joinpath("sd.yaml")
+    sd_delta_path = base_sd_path.joinpath("delta_sd.yaml")
     if effective_merge_mode == MergeType.REPLACE:
         logger.info("Inside replace")
         if helper.check_file_exists(sd_path):
@@ -235,13 +251,14 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(sd_path))
         helper.writeYamlToFile(sd_path, full_sd_from_pipe)
+        if helper.check_file_exists(sd_delta_path):
+            helper.deleteFile(sd_delta_path)
         logger.info(f"Replaced existing SD with new data at: {sd_path}")
     else:
-        sd_delta_path = base_sd_path.joinpath("delta_sd.yaml")
-        helper.writeYamlToFile(sd_delta_path, full_sd_from_pipe)
         if not helper.check_file_exists(sd_path):
             helper.writeYamlToFile(sd_path, full_sd_from_pipe)
         else:
+            helper.writeYamlToFile(sd_delta_path, full_sd_from_pipe)
             # Call merge_sd with correct merge function
             selected_merge_function = MERGE_METHODS.get(effective_merge_mode)
             if not selected_merge_function:
