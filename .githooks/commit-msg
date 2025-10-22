@@ -1,0 +1,12 @@
+#!/bin/sh
+msg_file="$1"
+first_line=$(head -n 1 "$msg_file")
+
+# Allowed prefixes (extend if needed)
+case "$first_line" in
+  fix:*|feat:*|chore:*|docs:*|refactor:*|test:*|ci:*)
+    exit 0 ;; # ok
+esac
+
+# Prepend "fix:" if no prefix
+sed -i "1s|^|fix: |" "$msg_file"
