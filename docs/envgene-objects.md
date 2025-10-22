@@ -314,6 +314,7 @@ This is a Jinja template file used to render the [BG Domain](#bg-domain) object 
 **Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
 
 [Macros](/docs/template-macros.md) are available for use when developing the template.
+
 #### Registry Definition Template
 
 This is a Jinja template file used to render the [Registry Definition](#registry-definition) object.
@@ -692,10 +693,10 @@ controller:
 ```
 
 **BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
+
 - `${controller}` → controller namespace
 - `${origin}` → origin namespaces
 - `${peer}` → peer namespaces
-
 
 ### Solution Descriptor
 
