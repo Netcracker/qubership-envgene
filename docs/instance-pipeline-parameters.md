@@ -21,13 +21,11 @@
     - [`SD_VERSION`](#sd_version)
     - [`SD_DATA`](#sd_data)
     - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
+    - [`NS_BUILD_FILTER`](#ns_build_filter)
     - [`DEPLOYMENT_SESSION_ID`](#deployment_session_id)
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
-    - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
-    - [`NS_BUILD_FILTER`](#ns_build_filter)
-    - [`GITHUB_PIPELINE_API_INPUT`](#github_pipeline_api_input)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
@@ -331,6 +329,7 @@ See details in [SD processing](/docs/sd-processing.md)
 **Example**: `extended-merge`
 
 ### `NS_BUILD_FILTER`
+
 **Description**: It allows to generate or update only specific Namespaces without touching the others.
 
 See details in [Namespace Render Filtering](/docs/features/namespace-render-filtering.md)
@@ -341,7 +340,6 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 
 **Example**: `${controller}`
 
-## Deprecated Parameters
 ### `DEPLOYMENT_SESSION_ID`
 
 **Description**: This parameter is used in two scenarios:
