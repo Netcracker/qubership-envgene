@@ -11,12 +11,11 @@
 
 | Colly Attribute  | Attribute Type                                                | Description                                                                                                                                    |
 |------------------|---------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
-| `id`             | string                                                        | Unique environment identifier in a Project, in `<cluster-name>/<environment-name>` format, cannot be changed after creation                    |
 | `name`           | string                                                        | Environment name, cannot be changed after creation                                                                                             |
 | `status`         | enum [`PLANNED`, `FREE`, `IN_USE`, `RESERVED`, `DEPRECATED`]  | Current status of the Environment                                                                                                              |
 | `role`           | enum [`Dev`, `QA`, `Project CI`, `SaaS`, `Joint CI`, `Other`] | Defines usage role of the Environment                                                                                                          |
-| `team`           | string                                                        | Team assigned to the Environment                                                                                                               |
-| `owner`          | string                                                        | User responsible for the Environment                                                                                                           |
+| `teams`          | string                                                        | Teams assigned to the Environment. If there are several teams, their names are separated by commas.                                            |
+| `owners`         | string                                                        | People responsible for the Environment. If there are several, their names are separated by commas.                                             |
 | `productSDs`     | list of strings                                               | List of Solution Descriptors with type `product` in `<name>:<version>` notation, which are currently successfully deployed in this environment |
 | `projectSDs`     | list of strings                                               | List of Solution Descriptors with type `project` in `<name>:<version>` notation, which are currently successfully deployed in this environment |
 | `infraSDs`       | list of strings                                               | List of Solution Descriptors with type `infra` in `<name>:<version>` notation, which are currently successfully deployed in this environment   |
@@ -58,31 +57,43 @@
     3. `IN_USE` The environment is successfully deployed in the cloud and is being used by a specific team for specific purposes.
     4. `RESERVED` The environment is successfully deployed in the cloud and reserved for use by a specific team, but is not currently in use.
     5. `DEPRECATED` The environment is not used by anyone, and a decision has been made to delete it.
+  - Should it be extendable?
 
 - [ ] `role`
 
-   1. There is already `type`, which is based on labels set by the Cloud Passport Discovery CLI.
-   2. Discuss with Pankratov to clarify whether this attribute should be computed by Colly (and if so, based on what criteria), or if it should be user-defined.
+  - There is already `type`, which is based on labels set by the Cloud Passport Discovery CLI.
+  - Discuss with Pankratov to clarify whether this attribute should be computed by Colly (and if so, based on what criteria), or if it should be user-defined.
+  - Should it be extendable?
 
 - [ ] `syncInterval`, `syncStatus.lastSyncResult`, `syncStatus.lastSyncCompletedAt`
+  - поправить термин cluster info update
+  - принудительный синк?
 
 - [ ] `team` or `teams`? `owner` or `owners`?
+  - `owners`, `teams` are strings
 
-- [ ] Each POST in the API will result in a separate commit
+- [+] Each POST in the API will result in a separate commit
 
 - [ ] Product/Project SDs
-      we propose to use the approach of storing all the metadata in the Project Git:
+  - Mapping of SD type to SD name is specified in the configuration:
+
+    ```yaml
+    solutionDescriptors:
+      <sd-type>:
+        - <sd-name-regexp>
+    ```
+
+  - The configuration is a deployment parameter of the Colly application
+  - Default value:
 
       ```yaml
       solutionDescriptors:
         product:
-          - product-sd
-          - dm-sd
-          - dt-sd
+          - .*product.*
         project:
-          - project-sd
+          - .*project.*
         infra:
-          - platform-sd
+          - .*infra.*
       ```
 
-- [ ] `id` is `<cluster-name>/<environment-name>`; `name` is `<environment-name>`
+- [+] `id` is `uuid`; `name` is `<environment-name>`

@@ -31,12 +31,6 @@ repositories:
     token: credential
     branches: list of strings
 # Optional
-solutionDescriptors:
-  # Mandatory
-  # The key is the type of Solution Descriptor, determined by the types of applications included in it. Valid values are `project`, `product`, `infra`
-  # The value is a list of Solution Descriptor artifact names (application from the application:version notation)
-  <solution-descriptor-type>: list of strings
-# Optional
 envgeneTemplates:
   # Mandatory
   # The key is EnvGene environment template artifact name (application from the application:version notation)
@@ -84,15 +78,6 @@ repositories:
     branches:
       - r25.3
       - r25.4
-solutionDescriptors:
-  product:
-    - product-sd
-    - dm-sd
-    - dt-sd
-  project:
-    - project-sd
-  infra:
-    - platform-sd
 envgeneTemplates:
   envgene-acme:
     - main
