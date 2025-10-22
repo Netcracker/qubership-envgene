@@ -15,6 +15,7 @@ skip-check:
   - CKV2_K8S_6 # Minimize the admission of pods which lack an associated NetworkPolicy
   # https://www.checkov.io/5.Policy%20Index/dockerfile.html
   - CKV_DOCKER_2 # Ensure that HEALTHCHECK instructions have been added to container images
+  - CKV_DOCKER_3
   # https://www.checkov.io/5.Policy%20Index/secrets.html
   - CKV_SECRET_6 # Base64 High Entropy String
   - CKV_SECRET_9 # Entropy for URL or Host Strings

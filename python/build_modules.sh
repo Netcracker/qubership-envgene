@@ -9,10 +9,15 @@ install_and_clean() {
     local base_path="${3:-$SCRIPTPATH}"  # optional third argument to function
 
     echo "Installing $base_path/$path"
-    if [ "$IS_LOCAL_DEV_TEST_ENVGENE" = "true" ]; then
-      uv pip install --editable "$base_path/$path"
+    if [ "$USE_UV" = "true" ]; then
+        echo "USE_UV is true, using uv"
+        if ! command -v uv &>/dev/null; then
+            echo "uv not found, installing..."
+            pip install uv
+        fi
+        uv pip install --editable "$base_path/$path"
     else
-      pip install "$base_path/$path"
+        pip install "$base_path/$path"
     fi
 
     echo "Removing build trash..."

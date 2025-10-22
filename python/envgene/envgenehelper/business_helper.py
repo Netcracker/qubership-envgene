@@ -1,6 +1,11 @@
+from dataclasses import dataclass, field
 import pathlib
 import re
 from os import getenv
+from pathlib import Path
+from typing import overload
+
+from ruyaml import CommentedMap
 
 from .collections_helper import merge_lists
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, validate_yaml_by_scheme_or_fail
@@ -36,6 +41,11 @@ def find_env_instances_dir(env_name, instances_dir) :
     logger.error(f"Directory for {env_name} is not found in {instances_dir}")
     raise ReferenceError(f"Can't find directory for {env_name}")
 
+@overload
+def getenv_and_log(name: str) -> None | str: ...
+@overload
+def getenv_and_log(name: str, default: str) -> str: ...
+
 def getenv_and_log(name, *args, **kwargs):
     var = getenv(name, *args, **kwargs)
     logger.info(f"{name}: {var}")
@@ -45,10 +55,18 @@ def getenv_with_error(var_name):
     var = getenv(var_name)
     if not var:
         raise ValueError(f'Required value was not given and is not set in environment as {var_name}')
+    logger.debug(f"{var_name}: {var}")
     return var
 
 def get_env_instances_dir(environment_name, cluster_name, instances_dir):
     return f"{instances_dir}/{cluster_name}/{environment_name}"
+
+def get_current_env_dir_with_env_vars() -> Path:
+    instances_dir = getenv_with_error('CI_PROJECT_DIR')
+    env_name = getenv_with_error('FULL_ENV_NAME')
+    env_dir_path = Path(f"{instances_dir}/environments/{env_name}")
+    logger.debug(env_dir_path)
+    return env_dir_path
 
 def check_environment_is_valid_or_fail(environment_name, cluster_name, instances_dir, skip_env_definition_check=False, validate_env_definition_by_schema=False, schemas_dir=""):
     env_dir = get_env_instances_dir(environment_name, cluster_name, instances_dir)
@@ -293,4 +311,54 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
             return cloudPassportFileName
     else:
         return ""
+
+@dataclass
+class Namespace:
+    path: Path
+    name: str = field(init=False)
+    definition_path: Path = field(init=False)
+
+    def __post_init__(self):
+        self.definition_path = self.path.joinpath('namespace.yml')
+        self.name = openYaml(self.definition_path)['name']
+
+def get_namespaces_path(env_dir: Path | None = None) -> Path:
+    env_dir = env_dir or get_current_env_dir_with_env_vars()
+    namespaces_path = env_dir.joinpath('Namespaces')
+    logger.debug(namespaces_path)
+    return namespaces_path
+
+def get_namespaces(env_dir: Path | None = None) -> list[Namespace]:
+    namespaces_path = get_namespaces_path(env_dir)
+    if not check_dir_exists(str(namespaces_path)):
+        return []
+    namespace_paths = [p for p in namespaces_path.iterdir() if p.is_dir()]
+    namespaces = [Namespace(path=p) for p in namespace_paths]
+    logger.debug(namespaces)
+    return namespaces
+
+def get_bgd_path() -> Path:
+    env_dir = get_current_env_dir_with_env_vars()
+    bgd_path = env_dir.joinpath('bg_domain.yml')
+    logger.debug(bgd_path)
+    return bgd_path
+
+def get_bgd_object() -> CommentedMap:
+    bgd_path = get_bgd_path()
+    bgd_object = openYaml(bgd_path, allow_default=True)
+    logger.debug(bgd_object)
+    return bgd_object
+
+def make_relative_to_base_path(base: Path, target: Path) -> Path:
+    base = base.resolve()
+    target = target.resolve()
+    return target.relative_to(base)
+
+def make_relative_to_ci_project_dir(path: Path) -> Path:
+    ci_project_dir = Path(getenv_with_error("CI_PROJECT_DIR"))
+    return make_relative_to_base_path(ci_project_dir, path)
+
+def make_relative_to_env_dir(path: Path) -> Path:
+    env_dir = get_current_env_dir_with_env_vars()
+    return make_relative_to_base_path(env_dir, path)
 
