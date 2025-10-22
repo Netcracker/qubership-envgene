@@ -73,6 +73,12 @@ def getCloudCreds(cloudContent, tenantName, cloudName):
 
     return creds
 
+def get_bg_domain_creds(content, name):
+    creds = []
+    bg_domain_comment = f"bg domain {name}"
+    checkCredAndAppend(content["controllerNamespace"]["credentials"], creds, CRED_TYPE_SECRET, bg_domain_comment)
+    return creds
+
 def getNamespaceCreds(namespaceContent, tenantName, cloudName, namespaceName):
     creds = []
     namespaceComment = f"namespace {namespaceName}"
@@ -203,6 +209,17 @@ def create_credentials(envDir, envInstancesDir, instancesDir) :
     mergeResult = mergeCreds(getCloudCreds(cloudYaml, tenantName, cloudName), resultingCreds)
     logger.info(f'{mergeResult["countAdded"]} creds added from cloud {cloudFileName}')
     resultingCreds = mergeResult["mergedCreds"]
+    #bgd object
+    bgdFileName = envDir+"/bg_domain.yml"
+    logger.info(f"Processing bg domain")
+    if check_file_exists(bgdFileName):
+        bgd_yaml = openYaml(bgdFileName)
+        bgd_name = bgd_yaml["name"]
+        mergeResult = mergeCreds(get_bg_domain_creds(bgd_yaml, bgd_name), resultingCreds)
+        logger.info(f'{mergeResult["countAdded"]} creds added from bg domain {bgdFileName}')
+        resultingCreds = mergeResult["mergedCreds"]
+    else:
+        logger.info("Bg domain doesn't exist")
     # iterate through cloud applications and create cred definitions
     applications = findAllYamlsInDir(f"{envDir}/Applications")
     for appPath in applications :
