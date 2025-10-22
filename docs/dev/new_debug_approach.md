@@ -1,25 +1,25 @@
-# New approach for testing changes in instance repo
+# New approach for testing changes in instance repository
 
 ## Intro
 
 Usual dev process in envgene looks like this:
 
-Make changes -> commit -> wait for images to build(10-15 minutes) -> test changes in instance repo (1-2 minutes)
+Make changes -> commit -> wait for images to build(10-15 minutes) -> test changes in instance repository (1-2 minutes)
 Iteration time: 11-17 minutes 😭
 
 New approach:
 
-Make changes -> commit -> test changes in instance repo(1-2 minutes)
+Make changes -> commit -> test changes in instance repository(1-2 minutes)
 Iteration time: 1-2 minutes 😄
 
 ## General idea
 
-Use pipegene extension mechanism for replacing the source code from images(python, yaml files, etc) with files from instance repo for
+Use pipegene extension mechanism for replacing the source code from images(python, YAML files, etc) with files from instance repository for
 debugging.
 
 ## Setup
 
-1. Create `devtest/wdebug_plugin` folder in instance repo.
+1. Create `devtest/wdebug_plugin` folder in instance repository.
 1. Create `devtest/wdebug_plugin/main.py` file with this content
 
     ```Python
@@ -56,8 +56,8 @@ debugging.
 
     ```
 
-1. Create copies of files from envgene repo in instance repo using hard links `ln -f <path_to_file_in_envene> <path_to_instance>/devtest/`
-By using hardlinks changes you make will be reflected in both envgene and instance repo files.
+1. Create copies of files from envgene repository in instance repository using hard links `ln -f <path_to_file_in_envene> <path_to_instance>/devtest/`
+By using hardlinks changes you make will be reflected in both envgene and instance repository files.
 1. Create debug.sh file in devtest/ with code that you need(use example below as base)
 
     ```bash
@@ -81,11 +81,11 @@ By using hardlinks changes you make will be reflected in both envgene and instan
 
 ## Workflow
 
-1. Make changes in envgene repo
-1. Commit changes in instance repo
+1. Make changes in envgene repository
+1. Commit changes in instance repository
 1. Run pipeline and test changes
 1. Once necessary changes are made and pipeline works as expected:
-    1. Commit in envgene repo and wait for images
+    1. Commit in envgene repository and wait for images
     1. Remove lines that add debug plugin in generate_pipeline job in .gitlab-ci.yml
     1. Re-run tests to ensure that everything works as expected
 
@@ -95,5 +95,5 @@ By using hardlinks changes you make will be reflected in both envgene and instan
 Some kind of sorting or setting load order for plugins is necessary, because some plugins(1 plugin at the moment) completely overwrite the
 script of a job and in that case changes made by debug plugin are lost. It doesn't have to be alphabetical sorting, it is used just as
 simplest solution at the moment(downside: have to name plugin `wdebug` to have it at last place in load order)
-1. Hard links get broken by `git pull`(make some kind git hook for recovering hard links?)
+1. Hard links get broken by `git pull`(make some kind Git hook for recovering hard links?)
 1. Pick better names for devtest folder and plugin

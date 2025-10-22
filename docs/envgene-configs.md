@@ -94,25 +94,25 @@ envTemplate:
   # Optional
   # Set of environment-specific deployment parameters
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` 
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificParamsets: hashmap
   # Optional
   # Environment specific pipeline (e2e) parameters set
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificE2EParamsets: hashmap
   # Optional
   # Environment specific runtime (technical) parameters set
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificTechnicalParamsets: hashmap
   # Optional
   # Environment specific resource profile overrides
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of resource profile files without extension located in the `resource_profiles` directory
   envSpecificResourceProfiles: hashmap
   # Optional

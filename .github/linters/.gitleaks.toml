@@ -1,0 +1,16 @@
+# Gitleaks configuration file (v8 schema)
+
+[allowlist]
+description = "Ignore docs with fake examples, test data, and test files"
+paths = [
+  '''^docs/''',
+  '''^test_data/''',
+  '''^python/.*/test_.*\.py$''',
+  '''^python/.*/.*test.*\.py$'''
+]
+regexes = [
+  '''(?i).*Example.*REDACTED.*''',
+  '''(?i)secret:\s*REDACTED''',
+  '''(?i)password:\s*REDACTED''',
+  '''(?i)secret_key\s*:\s*REDACTED'''
+]
