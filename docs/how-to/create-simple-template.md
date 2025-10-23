@@ -12,81 +12,106 @@ This guide outlines the steps to create and register a simple environment templa
 
 ## Prerequisites
 
-- The Template repository has already been initialized and follows the standard structure.
+1. The Template repository has already been initialized and follows the required structure.
 
 ## Flow
 
-1. **Create your folder inside `/templates/env_templates` to hold the template implementation (e.g., `simple-template`)**
+1. **Clone the Template repository to your local machine**
 
-    > **Note:** This folder name should match the one referenced in the template descriptor YAML file.
-
-    - Create the following `.yml.j2` files within it:
-
-      - [`tenant.yml.j2`](/docs/samples/templates/env_templates/composite/tenant.yml.j2)
-      - [`cloud.yml.j2`](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
-  
-2. **Create a `Namespaces` folder inside `/templates/env_templates/<template_dir>`**
-
-3. **Inside the `Namespaces` folder, create your namespace template file with `.yml.j2` extension:**
-
-    - e.g. [`core.yml.j2`](/docs/samples/templates/env_templates/composite/namespaces/core.yml.j2)
-  
-4. **Create a template descriptor YAML file (e.g., `<my-template>.yaml`)**
-
-    - Place this file inside the `/templates/env_templates` directory in the template repository with the following content:
-
-      ```yaml
-      tenant: "{{ templates_dir }}/env_templates/<template_dir>/tenant.yml.j2"
-      cloud: "{{ templates_dir }}/env_templates/<template_dir>/cloud.yml.j2"
-      namespaces:
-        - template_path: "{{ templates_dir }}/env_templates/<template_dir>/Namespaces/core.yml.j2"
-      ```
-
-    - This file describes the overall template structure: Tenant, Cloud, Namespaces, etc.
-
-5. **The final template repository should have the following structure:**
+2. **Create folder inside `/templates/env_templates` to hold the template implementation**
 
     ```plaintext
-    ├── templates
-    │   ├── env_templates
-    │   │   ├── <my-template>.yaml
-    │   │   ├── <template_dir>
-    │   │   │   ├── Namespaces
-    │   │   │   │   ├── core.yml.j2
-    │   │   │   ├── cloud.yml.j2
-    │   │   │   ├── tenant.yml.j2
+    └── templates
+        └── env_templates
+          └── <template_dir>
     ```
 
-6. **Push changes and trigger the build pipeline**
+    Example:
 
-   - After pushing your changes to a feature branch, the template build pipeline is triggered automatically.
-   - On successful execution, the pipeline generates the template ZIP archive and publishes it to the configured registry.
-   - During the build, verify the `report_artifacts` job in the logs to locate the Environment Template artifact GAV coordinates. The output will be in the following format:
+    ```plaintext
+    └── templates
+        └── env_templates
+          └── simple
+    ```
+
+    > [!NOTE] You can choose any folder structure you like, but keep in mind two simple rules:
+    >
+    > 1. Every YAML file in `/templates/env_templates` is treated as a [Template Descriptor](/docs/envgene-objects.md#template-descriptor) and must match its JSON schema.
+    > 2. The folder depth under `env_templates` cannot be more than 2 levels. For example:
+    >
+    > ```text
+    > /templates/env_templates/a-folder/ - OK
+    > /templates/env_templates/a-folder/b-folder - OK
+    > /templates/env_templates/a-folder/b-folder/c-folder - NOT OK
+    > ```
+
+3. **Create [Tenant template](/docs/envgene-objects.md#tenant-template)**
+
+    Example:
+
+    [`tenant.yml.j2`](/docs/samples/templates/env_templates/simple/tenant.yml.j2)
+
+    ```plaintext
+    └── templates
+        └── env_templates
+            └── simple
+                └── tenant.yml.j2
+    ```
+
+4. **Create [Cloud template](/docs/envgene-objects.md#cloud-template)**
+
+    Example:
+
+    [`cloud.yml.j2`](/docs/samples/templates/env_templates/simple/cloud.yml.j2)
+
+    ```plaintext
+    └── templates
+        └── env_templates
+            └── simple
+                ├── tenant.yml.j2
+                └── cloud.yml.j2
+    ```
+
+5. **Create [Namespace template](/docs/envgene-objects.md#namespace-template)**
+
+    Example:
+
+    [`billing.yml.j2`](/docs/samples/templates/env_templates/simple/billing.yml.j2)
+
+    ```plaintext
+    └── templates
+        └── env_templates
+            └── simple
+                ├── tenant.yml.j2
+                ├── cloud.yml.j2
+                └── billing.yml.j2
+    ```
+
+6. **Create the [Template Descriptor](/docs/envgene-objects.md#template-descriptor)**
+
+    Example:
+
+    [`simple.yaml`](/docs/samples/templates/env_templates/simple.yaml)
+
+    ```plaintext
+    └── templates
+        └── env_templates
+            ├── simple
+            |   ├── tenant.yml.j2
+            |   ├── cloud.yml.j2
+            |   └── billing.yml.j2
+            └────── simple.yaml 
+    ```
+
+7. **Push changes and trigger the build pipeline**
+
+8. **Find out the name and version of the Environment Template**
+
+   - After pushing your changes the template build pipeline is triggered automatically.
+   - On successful execution, the pipeline build and publish Environment Template as Maven artifact.
+   - To find out the name and version of the artifact, check the `report_artifacts` job logs:
   
        ```plaintext
-         
-      To use the built artifact in GAV notation, set the following in the Environment Inventory:
-       SNAPSHOT version
-       ======================================================================
-       
-       envTemplate:
-         artifact:
-           group_id: <env-template-group-id>
-           artifact_id: <env-template-artifact-id>
-           version: <env-template-version-SNAPSHOT>
-       ======================================================================
-       
-       Concrete version
-       ======================================================================
-       
-       envTemplate:
-         artifact:
-           group_id: <env-template-group-id>
-           artifact_id: <env-template-artifact-id>
-           version: <env-template-version>
-       ======================================================================
-       
-       To use the built artifact in application:version notation, set the following in the Environment Inventory:
        
        SNAPSHOT version
        ======================================================================
@@ -102,8 +127,6 @@ This guide outlines the steps to create and register a simple environment templa
          artifact: <env-template-artifact-id>:<env-template-version>
        ======================================================================
        
-       NOTE: The applicationDefinition with the name <env-template-artifact-id> must be created in the cloud CMDB (cloud-deployer) for using app:ver notation
-       
        Link to download zip part of the artifact template
        ======================================================================
        
@@ -111,8 +134,8 @@ This guide outlines the steps to create and register a simple environment templa
        ======================================================================
        ```  
 
-      > **Note:** SNAPSHOT version means that Environment Instance will always use the latest template version, and it will not be necessary to change it during Environment Instance generation each time after new version of Environment Template is published.
+      > [!NOTE] SNAPSHOT version means that Environment Instance will always use the latest template version, and it will not be necessary to change it during Environment Instance generation each time after new version of Environment Template is published.
 
 ## Results
 
-- The environment template artifact is built and published to the registry for use in environment provisioning.
+1. The Environment template artifact is built and published to the registry for use in Environment Instance generation.

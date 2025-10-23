@@ -2,181 +2,213 @@
 
 - [Cluster Creation Guide](#cluster-creation-guide)
   - [Description](#description)
-  - [Creating a Cluster Without a Cloud Passport](#creating-a-cluster-without-a-cloud-passport)
-    - [Prerequisites — No Cloud Passport](#prerequisites--no-cloud-passport)
-    - [Flow — No Cloud Passport](#flow--no-cloud-passport)
-  - [Creating a Cluster With a Manually Created Cloud Passport](#creating-a-cluster-with-a-manually-created-cloud-passport)
-    - [Prerequisites — Manual Cloud Passport](#prerequisites--manual-cloud-passport)
-    - [Flow — Manual Cloud Passport](#flow--manual-cloud-passport)
-  - [Creating a Cluster Using Cloud Passport Discovery](#creating-a-cluster-using-cloud-passport-discovery)
-    - [Prerequisites — Discovery Method](#prerequisites--discovery-method)
-    - [Flow — Discovery Method](#flow--discovery-method)
+  - [1. Creating a Cluster Without a Cloud Passport](#1-creating-a-cluster-without-a-cloud-passport)
+    - [\[No Cloud Passport\] Prerequisites](#no-cloud-passport-prerequisites)
+    - [\[No Cloud Passport\] Flow](#no-cloud-passport-flow)
+    - [\[No Cloud Passport\] Notes](#no-cloud-passport-notes)
+  - [2. Creating a Cluster With a Manually Assembled Cloud Passport](#2-creating-a-cluster-with-a-manually-assembled-cloud-passport)
+    - [\[Manual Cloud Passport\] Prerequisites](#manual-cloud-passport-prerequisites)
+    - [\[Manual Cloud Passport\] Flow](#manual-cloud-passport-flow)
+    - [\[Manual Cloud Passport\] Notes](#manual-cloud-passport-notes)
+  - [3. Creating a Cluster Using Cloud Passport Discovery](#3-creating-a-cluster-using-cloud-passport-discovery)
+    - [\[Cloud Passport Discovery\] Prerequisites](#cloud-passport-discovery-prerequisites)
+    - [\[Cloud Passport Discovery\] Flow](#cloud-passport-discovery-flow)
+    - [\[Cloud Passport Discovery\] Notes](#cloud-passport-discovery-notes)
   - [Results](#results)
 
 ## Description
 
-This guide provides instructions for creating a cluster in the Instance repository using three different approaches depending on how the cloud passport is handled:
+This guide provides instructions for creating a cluster in the Instance repository using three different approaches:
 
-1. Creating a cluster without a **Cloud Passport**
-2. Creating a cluster with a manually created **Cloud Passport**
-3. Creating a cluster using **Cloud Passport Discovery**
+1. Creating a cluster without a [Cloud Passport](/docs/envgene-objects.md#cloud-passport)
+2. Creating a cluster with a manually created [Cloud Passport](/docs/envgene-objects.md#cloud-passport)
+3. Creating a cluster with a automatically discovered [Cloud Passport](/docs/envgene-objects.md#cloud-passport)
 
-## Creating a Cluster Without a Cloud Passport
+## 1. Creating a Cluster Without a Cloud Passport
 
-In this approach, the **Cloud** object is generated **only from the Cloud Template**.
+In this approach, the [Cloud](/docs/envgene-objects.md#cloud) is generated only from the [Cloud Template](/docs/envgene-objects.md#cloud-template).
 
-### Prerequisites — No Cloud Passport
+### [No Cloud Passport] Prerequisites
 
-- The Instance repository exists and follows the expected structure.
+1. The Instance repository has already been initialized and follows the required structure.
 
-### Flow — No Cloud Passport
+### [No Cloud Passport] Flow
 
 1. **Clone the Instance repository to your local machine**
 
 2. **Create the cluster folder inside `/environments`:**
 
-   ```plaintext
-   ├── environments
-   │   ├── <cluster-name>
-   ```
+    ```plaintext
+    └── environments
+        └── <cluster-name>
+    ```
 
-   e.g.
+    Example:
 
-     ```plaintext
-     ├── environments
-     │   ├── example-cloud
-     ```
+    ```plaintext
+    └── environments
+        └── cluster-01
+    ```
 
 3. **Commit and push your changes**
 
-> **Note:** In this approach, you must manually set the `inventory.clusterUrl` attribute in the `env_definition.yml` file under the `Inventory` directory. This value is required because the cluster URL, protocol, and port are derived from it.
+### [No Cloud Passport] Notes
 
-Example `env_definition.yml`:
+In this approach, you must manually set the `inventory.clusterUrl` attribute in the `env_definition.yml` file under the `Inventory` directory. This value is required because the cluster URL, protocol, and port are derived from it.
+
+Example of `env_definition.yml`:
 
   ```yaml
   inventory:
     clusterUrl: https://example-cloud.example.com:443
   ```
 
-## Creating a Cluster With a Manually Created Cloud Passport
+## 2. Creating a Cluster With a Manually Assembled Cloud Passport
 
-In this approach, the **Cloud** object is generated from the Cloud Template and a manually assembled **Cloud Passport**.
+In this approach, the [Cloud](/docs/envgene-objects.md) is generated from the [Cloud Template](/docs/envgene-objects.md#cloud-template) and a manually assembled [Cloud Passport](/docs/envgene-objects.md#cloud-passport).
 
-### Prerequisites — Manual Cloud Passport
+### [Manual Cloud Passport] Prerequisites
 
-- The Instance repository exists and follows the expected structure.
+1. The Instance repository has already been initialized and follows the required structure.
 
-### Flow — Manual Cloud Passport
+### [Manual Cloud Passport] Flow
 
 1. **Clone the Instance repository to your local machine**
 
 2. **Create the cluster folder inside `/environments`:**
 
-   ```plaintext
-   ├── environments
-   │   ├── <cluster-name>
-   ```
+    ```plaintext
+    └── environments
+        └── <cluster-name>
+    ```
 
 3. **Create the Cloud Passport file manually:**
 
-   - Collect all required metadata and credentials necessary to define the Cloud environment.
-   - Assemble the Cloud Passport using the expected format.
-     > Refer to the sample Cloud Passport files:
-
+   - Collect all required parameters necessary to define the [Cloud](/docs/envgene-objects.md).
+   - Assemble the [Cloud Passport](/docs/envgene-objects.md#cloud-passport) using the expected format. Refer to the sample:
      - [cluster-01.yml](/docs/samples/environments/cluster-01/cloud-passport/cluster-01.yml)
-
      - [cluster-01-creds.yml](/docs/samples/environments/cluster-01/cloud-passport/cluster-01-creds.yml)
-   - Name the files after the cluster (e.g., `example-cloud.yml` and `example-cloud-creds.yml`).
    - Place it under the right location: `/environments/<cluster-name>/cloud-passport/`
 
-   Example structure:
+   Example:
 
    ```plaintext
-   ├── environments
-   │   ├── <cluster-name>
-   │   │   ├── cloud-passport
-   │   │   │   ├── <cluster-name>.yml
-   │   │   │   ├── <cluster-name>-creds.yml
+   └── environments
+       └── cluster-01
+           └── cloud-passport
+               ├── cluster-01.yml
+               └── cluster-01-creds.yml
    ```
 
 4. **Commit and push your changes**
 
-> **Note:** In this approach, you must manually set the `inventory.cloudPassport` attribute in the `env_definition.yml` file under the `Inventory` directory.
+### [Manual Cloud Passport] Notes
 
-`env_definition.yml`:
+In this approach, you must manually set the `inventory.cloudPassport` attribute in the `env_definition.yml` file under the `Inventory` directory.
+
+Example of `env_definition.yml`:
 
 ```yaml
   inventory:
-    cloudPassport: <cluster-name>
+    cloudPassport: cluster-01
 ```
 
-## Creating a Cluster Using Cloud Passport Discovery
+## 3. Creating a Cluster Using Cloud Passport Discovery
 
-In this approach, the **Cloud** object is generated using the Cloud Template and a Cloud Passport assembled automatically via the Discovery Pipeline. This process connects the Instance repository, Discovery repository, and the target cluster.
+In this approach, the [Cloud](/docs/envgene-objects.md#cloud) is generated using the [Cloud Template](/docs/envgene-objects.md#cloud-template) and a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) generated automatically via discovery procedure.
 
-### Prerequisites — Discovery Method
+### [Cloud Passport Discovery] Prerequisites
 
-- Ensure both the Instance and Discovery repositories exist.
-- Cloud Passport repository integration is configured in the Instance repository:
+1. The Instance and Discovery repositories has already been initialized and follows the required structure.
+2. Integration with Discovery repository is configured in the Instance repository:
   
-  In `/configuration/integration.yml`:
+    `/configuration/integration.yml`:
+
+    ```yaml
+    cp_discovery:
+      gitlab:
+        project: <discovery-repository>
+        branch: <discovery-repository-branch>
+        token: envgen.creds.get(<discovery-repository-cred-id>).secret
+    ```
+
+    `/configuration/credentials/credentials.yml`:
+
+    ```yaml
+    <discovery-repository-cred-id>:
+      type: secret
+      data:
+        secret: <discovery-repository-token>
+    ```
+
+3. Infra namespaces in the target cluster are marked by proper labels/annotations.
+4. You have [kubeconfig](https://kubernetes.io/docs/reference/config-api/kubeconfig.v1/) file for the target cluster
+5. You have [Cloud Passport template](/docs/envgene-objects.md#cloud-passport-template)
+
+### [Cloud Passport Discovery] Flow
+
+1. **Clone the Discovery repository to your local machine**
+
+2. **Create the cluster and environment folders inside `/environments`:**
+
+    ```plaintext
+    └── environments
+        └── <cluster-name>
+            └── <environment-name>
+    ```
+
+3. **Place the kubeconfig inside the cluster folder**
+
+    ```plaintext
+    └── environments
+        └── <cluster-name>
+            └── <environment-name>
+            └── kubeconfig
+    ```
+
+    The kubeconfig file name is fixed by convention: `kubeconfig`
+
+4. **Place the Cloud Passport template inside the environment folder**
+
+    ```plaintext
+    └── environments
+        └── <cluster-name>
+            ├── <environment-name>
+            |   └── cloud_template.yml
+            └── kubeconfig
+    ```
+
+    The Cloud Passport template file name is fixed by convention: `cloud_template.yml`
+
+5. **Commit and push your changes**
+
+6. **Trigger Instance repository pipeline with parameters**
+
+    ```yaml
+    ENV_NAMES: "<cluster-name>/<env-name>"
+    GET_PASSPORT: "true"
+    ```
+
+    See details about pipeline parameter options in the [documentation](/docs/instance-pipeline-parameters.md)
+
+    When this pipeline runs, Instance pipeline triggers the Discovery pipeline, which automatically generates the [Cloud Passport](/docs/envgene-objects.md#cloud-passport).
+
+### [Cloud Passport Discovery] Notes
+
+In this approach, you must manually set the `inventory.cloudPassport` attribute in the `env_definition.yml` file under the `Inventory` directory.
+
+Example of `env_definition.yml`:
 
    ```yaml
-   cp_discovery:
-     gitlab:
-       project: <discovery-repository>
-       branch: <discovery-repository-branch>
-       token: envgen.creds.get(<discovery-repository-cred-id>).secret
+   inventory:
+     cloudPassport: cluster-01
    ```
 
-   In `/configuration/credentials/credentials.yml`:
+## Results
 
-   ```yaml
-   discovery-repository-cred-id:
-     type: "secret"
-     data:
-       secret: <discovery-repository-token>
-   ```
-
-- Infra Namespaces in the target cluster have correct labels/annotations.
-- Ensure that the required cluster and environment structure exists in the Discovery repository along with:
-  - kubeconfig file for the cluster
-  - cloud_template.yml under `/environments/<cluster-name>/<env-name>/`
-
-### Flow — Discovery Method
-
-1. **Trigger the Pipeline in the Instance repository**
-   Run the Instance repository pipeline with:
-
-   ```bash
-   ENV_NAMES=<cluster-name>/<env-name>
-   ENV_BUILDER=false
-   GET_PASSPORT=true
-   CMDB_IMPORT=false
-   ```
-
-   **Note:** Other flag combinations may also be supported depending on your use case
-  
-   When this pipeline runs, `EnvGene` triggers the `Discovery Pipeline`, which automatically generates the `Cloud Passport`.
-   As a result, a commit is created in the Instance repository containing the following files:
+1. The Cloud Passport is located in the cluster folder of the Instance repository:
 
     ```yaml
       /environments/<cluster-name>/cloud-passport/<cluster-name>.yml
       /environments/<cluster-name>/cloud-passport/<cluster-name>-creds.yml
     ```
-
-> **Note:** In this approach, you must manually set the `inventory.cloudPassport` attribute in the `env_definition.yml` file under the `Inventory` directory.
-
- `env_definition.yml`:
-
-   ```yaml
-   inventory:
-     cloudPassport: <cluster-name>
-   ```
-
-## Results
-
-- The new cluster folder and Inventory configuration are created under the Instance repository.
-- You can now use the cluster during environment provisioning.
-
-**Note:** Make sure to use `<cluster-name>/<env-name>` when specifying the `ENV_NAMES` parameter during environment operations.

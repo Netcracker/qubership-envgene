@@ -37,6 +37,8 @@
       - [Registry Definition v1.0](#registry-definition-v10)
       - [Registry Definition v2.0](#registry-definition-v20)
     - [Application Definition](#application-definition)
+  - [Discovery Repository Objects](#discovery-repository-objects)
+    - [Cloud Passport Template](#cloud-passport-template)
 
 ## Template Repository Objects
 
@@ -1399,3 +1401,9 @@ groupId: org.qubership
 ```
 
 [Application Definition JSON schema](/schemas/appdef.schema.json)
+
+## Discovery Repository Objects
+
+### Cloud Passport Template
+
+TBD
