@@ -1,6 +1,6 @@
 ---
   name: Link Checker
-  
+
   on:
     push: null
     repository_dispatch: null
@@ -17,7 +17,7 @@
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v4
-  
+
         - name: Restore lychee cache
           uses: actions/cache@v4
           id: restore-cache
@@ -25,7 +25,7 @@
             path: .lycheecache
             key: cache-lychee-${{ github.sha }}
             restore-keys: cache-lychee-
-  
+
         - name: Link Checker
           id: lychee
           uses: lycheeverse/lychee-action@v2
