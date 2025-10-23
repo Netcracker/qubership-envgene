@@ -233,7 +233,7 @@ version: string
 # Mandatory
 # The name of the Parameter Set
 # Used to reference the Parameter Set in templates
-# Must match the Parameter Set file name
+# Must match the Parameter Set filename
 name: string
 # Mandatory
 # Key-value pairs of parameters

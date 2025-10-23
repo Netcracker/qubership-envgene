@@ -77,10 +77,10 @@ envTemplate:
     # the name of namespace in your template artifact
     name: "multidb"
     # optional
-    # array of file names in 'credentials' folders that will override generated and defined for instance credentials
+    # array of filenames in 'credentials' folders that will override generated and defined for instance credentials
     sharedMasterCredentialFiles: array
     # optional
-    # array of file names in 'shared-template-variables' folders that will be merged with additionalTemplateVariables
+    # array of filenames in 'shared-template-variables' folders that will be merged with additionalTemplateVariables
     sharedTemplateVariables: array
     # optional
     # additional variables that will be available

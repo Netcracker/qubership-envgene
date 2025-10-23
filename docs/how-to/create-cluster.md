@@ -166,7 +166,7 @@ In this approach, the [Cloud](/docs/envgene-objects.md#cloud) is generated using
             └── kubeconfig
     ```
 
-    The kubeconfig file name is fixed by convention: `kubeconfig`
+    The kubeconfig filename is fixed by convention: `kubeconfig`
 
 4. **Place the Cloud Passport template inside the environment folder**
 
@@ -178,7 +178,7 @@ In this approach, the [Cloud](/docs/envgene-objects.md#cloud) is generated using
             └── kubeconfig
     ```
 
-    The Cloud Passport template file name is fixed by convention: `cloud_template.yml`
+    The Cloud Passport template filename is fixed by convention: `cloud_template.yml`
 
 5. **Commit and push your changes**
 
