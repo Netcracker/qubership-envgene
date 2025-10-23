@@ -54,7 +54,7 @@ In this approach, the [Cloud](/docs/envgene-objects.md#cloud) is generated only 
 
 ### [No Cloud Passport] Notes
 
-In this approach, you must manually set the `inventory.clusterUrl` attribute in the `env_definition.yml` file under the `Inventory` directory. This value is required because the cluster URL, protocol, and port are derived from it.
+In this approach, you must manually set the `inventory.clusterUrl` attribute in the [`env_definition.yml`](/docs/env_definition.md). This value is required because the cluster URL, protocol, and port are derived from it.
 
 Example of `env_definition.yml`:
 
@@ -104,7 +104,7 @@ In this approach, the [Cloud](/docs/envgene-objects.md) is generated from the [C
 
 ### [Manual Cloud Passport] Notes
 
-In this approach, you must manually set the `inventory.cloudPassport` attribute in the `env_definition.yml` file under the `Inventory` directory.
+In this approach, you must manually set the `inventory.cloudPassport` attribute in the [`env_definition.yml`](/docs/env_definition.md).
 
 Example of `env_definition.yml`:
 
@@ -195,7 +195,7 @@ In this approach, the [Cloud](/docs/envgene-objects.md#cloud) is generated using
 
 ### [Cloud Passport Discovery] Notes
 
-In this approach, you must manually set the `inventory.cloudPassport` attribute in the `env_definition.yml` file under the `Inventory` directory.
+In this approach, you must manually set the `inventory.cloudPassport` attribute in the [`env_definition.yml`](/docs/env_definition.md).
 
 Example of `env_definition.yml`:
 
