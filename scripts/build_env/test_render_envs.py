@@ -1,12 +1,12 @@
+import difflib
 import filecmp
 from os import environ
 from pathlib import Path
 
 import pytest
-import difflib
+from envgenehelper import *
 
 from main import render_environment, cleanup_resulting_dir
-from envgenehelper import *
 
 test_data = [
     # (cluster_name, environment_name, template)
@@ -17,7 +17,8 @@ test_data = [
     ("cluster01", "env01", "test-01"),
     ("cluster01", "env01", "test-01"),
     ("cluster01", "env03", "test-template-1"),
-    ("cluster01", "env04", "test-template-2")
+    ("cluster01", "env04", "test-template-2"),
+    ("bgd-cluster","bgd-env","bgd"),
 ]
 
 g_templates_dir = getAbsPath("../../test_data/test_templates")
@@ -31,9 +32,11 @@ def change_test_dir(request, monkeypatch):
     monkeypatch.chdir(request.fspath.dirname + "/../..")
 
 
+# TODO use func from test_helper during impl replacement ansible
 @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
 def test_render_envs(cluster_name, env_name, version):
     environ['CI_PROJECT_DIR'] = g_base_dir
+    environ['FULL_ENV_NAME'] = cluster_name + '/' + env_name
     render_environment(env_name, cluster_name, g_templates_dir, g_inventory_dir, g_output_dir, version, g_base_dir)
     source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
     generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
@@ -70,11 +73,11 @@ def test_render_envs(cluster_name, env_name, version):
 
 
 def setup_test_dir(tmp_path):
-    tmp_path.mkdir(exist_ok=True)
+    tmp_path.mkdir(exist_ok=True, parents=True)
     dirs = ["Applications", "Namespaces", "Profiles"]
     for d in dirs:
         (tmp_path / d).mkdir(exist_ok=True)
-    files = ["cloud.yml", "tenant.yml", "bg-domain.yml", "composite-structure.yml"]
+    files = ["cloud.yml", "tenant.yml", "bg_domain.yml", "composite_structure.yml"]
     for f in files:
         (tmp_path / f).write_text("text")
     (tmp_path / "keep.yml").write_text("text")
@@ -91,8 +94,8 @@ def test_cleanup_target_dir_removes_expected_items():
     assert not (target_dir / "Profiles").exists()
     assert not (target_dir / "cloud.yml").exists()
     assert not (target_dir / "tenant.yml").exists()
-    assert not (target_dir / "bg-domain.yml").exists()
-    assert not (target_dir / "composite-structure.yml").exists()
+    assert not (target_dir / "bg_domain.yml").exists()
+    assert not (target_dir / "composite_structure.yml").exists()
 
     assert (target_dir / "keep.yml").exists()
     assert (target_dir / "keep").exists()

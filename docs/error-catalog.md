@@ -81,7 +81,7 @@ Error code ranges:
 - **ID**: ENVGENE-4002
 - **Component**: Envgene
 - **When**:During validation of input payload, environment files, or context resolution in cred rotation job
-- **What**: Raised due to json/yaml parsing errors, incorrect input values, unsupported encryption types or encryption/decryption failure
+- **What**: Raised due to JSON/YAML parsing errors, incorrect input values, unsupported encryption types or encryption/decryption failure
 - **Error**:
 
 ```text
@@ -89,12 +89,12 @@ Error code ranges:
 Failed to parse JSON content in CRED_ROTATION_PAYLOAD. Error:
 Extra data: line 2 column 18 (char 18)
 
-This indicates invalid json content in payload. Please check the payload.
+This indicates invalid JSON content in payload. Please check the payload.
 
 [ENVGENE-4002] Invalid configuration format: Failed to parse JSON content in CRED_ROTATION_PAYLOAD. Error:
  Extra data: line 2 column 18.
 
- This indicates input payload provided is in wrong format.It should be given as json string Please check the payload.
+ This indicates input payload provided is in wrong format.It should be given as JSON string Please check the payload.
 
  [ENVGENE-4002] Invalid configuration format: Current encryption type is Fernet. Only SOPS is supported for CRED_ROTATION_PAYLOAD and for encrypting/decrypting credential files.Please refer to the configuration at CI_PROJECT_DIR/configurations/config.yaml.
 
@@ -161,7 +161,7 @@ This indicates that context value given in payload is not present in target file
 [ENVGENE-4004] Error: Termination condition encountered
 No affected parameters found for the given CRED_ROTATION_PAYLOAD in the current environment instance. Hence Terminating the job.
 
-The error denotes that there are parameters that had the same cred id as target parameter. Please check if parameter key and other details are correct in payload.
+The error denotes that there are parameters that had the same cred ID as target parameter. Please check if parameter key and other details are correct in payload.
 
 [ENVGENE-4004] Invalid state for job completion: Affected parameters have been identified. You can find the list of affected parameters in the artifact of this job, in the file <artifcat location>. Credentials updates are skipped because CRED_ROTATION_FORCE is not enabled. Terminating the job.
 

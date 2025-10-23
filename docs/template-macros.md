@@ -21,7 +21,7 @@
     - [`current_env.cluster.cloud_public_url`](#current_envclustercloud_public_url)
     - [`appdefs.overrides`](#appdefsoverrides)
     - [`regdefs.overrides`](#regdefsoverrides)
-  - [Calculator CLI macros](#calculator-cli-macros)
+  - [Calculator command-line tool macros](#calculator-command-line-tool-macros)
     - [`APPLICATION_NAME`](#application_name)
     - [`NAMESPACE`](#namespace)
     - [`CLOUDNAME`](#cloudname)
@@ -61,7 +61,7 @@
     - [Deprecated Credential Macros](#deprecated-credential-macros)
       - [`${envgene.creds.get('<cred-id>').username|password|secret}`](#envgenecredsgetcred-idusernamepasswordsecret)
 
-This documentation provides a list of macros that can be used during template generation
+This documentation provides a list of macros that can be used in environment templates and environment-specific parameter sets.
 
 ## Jinja Macros
 
@@ -471,7 +471,7 @@ mavenConfig:
 
 **Usage in sample:** [Sample](/test_data/test_templates/regdefs/registry-1.yaml.j2)
 
-## Calculator CLI macros
+## Calculator command-line tool macros
 
 These macros are rendered at the stage of calculating the [Effective Set](/docs/calculator-cli.md#effective-set-structure) and are present in it as rendered values.
 

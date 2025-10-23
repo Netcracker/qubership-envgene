@@ -1,0 +1,6 @@
+---
+- name: Generate BG Domain yaml {{ _bg_domain }}
+  ansible.builtin.blockinfile:
+     path: "{{ current_env_dir }}/bg_domain.yml"
+     block: "{{ lookup('template', _template) }}"
+     create: yes

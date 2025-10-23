@@ -44,7 +44,7 @@ To support the deployment of individual applications, the use of Delta SDs is su
 
 ### Requirements
 
-1. SD processing should take place in the `generate_effective_set_job`
+1. SD processing should take place in the [`process_sd`](/docs/envgene-pipelines.md#instance-pipeline)
 2. The Full and Delta SDs files should be stored in repository and job artifacts
 3. SD merge must occur according to [SD Merge](#sd-merge)
 
@@ -278,13 +278,13 @@ Example of such an SD:
 version: 2.1
 applications:
   - version: core:1.2.3
-    deplloyPostfix: env-1-core
+    deployPostfix: env-1-core
   - version: core-ext:1.2.3
-    deplloyPostfix: env-1-core
+    deployPostfix: env-1-core
   - version: bss-app:1.2.3
-    deplloyPostfix: env-1-bss
+    deployPostfix: env-1-bss
   - version: oss-app:1.2.3
-    deplloyPostfix: env-1-oss
+    deployPostfix: env-1-oss
 userData:
   useDeployPostfixAsNamespace: true
 ```
@@ -295,13 +295,13 @@ Example of transformed an SD:
 version: 2.1
 applications:
   - version: core:1.2.3
-    deplloyPostfix: core
+    deployPostfix: core
   - version: core-ext:1.2.3
-    deplloyPostfix: core
+    deployPostfix: core
   - version: bss-app:1.2.3
-    deplloyPostfix: bss
+    deployPostfix: bss
   - version: oss-app:1.2.3
-    deplloyPostfix: oss
+    deployPostfix: oss
 userData:
   useDeployPostfixAsNamespace: true
 ```

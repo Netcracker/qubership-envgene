@@ -10,6 +10,7 @@
       - [ParameterSet (in Template repository)](#parameterset-in-template-repository)
       - [Resource Profile Override (in Template)](#resource-profile-override-in-template)
       - [Composite Structure Template](#composite-structure-template)
+      - [BG Domain Template](#bg-domain-template)
       - [Registry Definition Template](#registry-definition-template)
       - [Application Definition Template](#application-definition-template)
     - [System Credentials File (in Template repository)](#system-credentials-file-in-template-repository)
@@ -21,6 +22,7 @@
       - [Application](#application)
       - [Resource Profile Override (in Instance)](#resource-profile-override-in-instance)
       - [Composite Structure](#composite-structure)
+      - [BG Domain](#bg-domain)
     - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
@@ -88,6 +90,7 @@ cloud:
   # Optional
   # Template Override configuration
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
+  template_override:     
   template_override:
     <yaml or jinja expression>
   # Optional
@@ -149,10 +152,6 @@ namespaces:
 ```
 
 [Template Descriptor JSON schema](/schemas/template-descriptor.schema.json)
-
-Any YAML file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
-
-The name of this file serves as the name of the Environment Template. In the Environment Inventory, this name is used to specify which Environment Template from the artifact should be used.
 
 #### Tenant Template
 
@@ -280,7 +279,7 @@ applications:
               - ALL
 ```
 
-The file name of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the template repository. This is validated during processing; if the validation fails, the operation will stop with an error.
+The filename of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the template repository. This is validated during processing; if the validation fails, the operation will stop with an error.
 
 The Parameter Set schema in the template repository is identical to the Parameter Sets in the [Instance repository](#parameterset-in-instance-repository).
 
@@ -304,11 +303,19 @@ baseline:
   name: "{{ current_env.name }}-core"
   type: "namespace"
 satellites:
-  - name: "{{ current_env.name }}-bss"
+  - name: "{{ current_env.name }}-api"
     type: "namespace"
-  - name: "{{ current_env.name }}-oss"
+  - name: "{{ current_env.name }}-ui"
     type: "namespace"
 ```
+
+#### BG Domain Template
+
+This is a Jinja template file used to render the [BG Domain](#bg-domain) object for environments that use Blue-Green Domain (BGD) support.
+
+**Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
+
+[Macros](/docs/template-macros.md) are available for use when developing the template.
 
 #### Registry Definition Template
 
@@ -319,6 +326,20 @@ This is a Jinja template file used to render the [Registry Definition](#registry
 **Example:**
 
 ```yaml
+# BG Domain template with Jinja2 templating
+name: {{ current_env.environmentName ~ '-bg-domain' }}
+type: bgdomain
+origin:
+  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('origin-ns', current_env.environmentName ~ '-origin') }}
+  type: namespace
+peer:
+  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('peer-ns', current_env.environmentName ~ '-peer') }}
+  type: namespace
+controller:
+  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}
+  type: namespace
+  credentialsIs: ${creds.get("bgd-controller-token").secret}
+  url: {{ current_env.cloud_passport.bg_operator_url }}
 name: "registry-1"
 credentialsId: "registry-cred"
 mavenConfig:
@@ -370,7 +391,7 @@ artifactory-cred:
 gitlab-token-cred:
   type: secret
   data:
-    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
+    secret: "token-placeholder-123"
 ```
 
 ## Instance Repository Objects
@@ -590,7 +611,7 @@ satellites:
     type: namespace
 ```
 
-**Location:** `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/composite-structure.yml`
+**Location:** `/configuration/environments/<CLUSTER-NAME>/<ENV-NAME>/composite_structure.yml`
 
 [Composite Structure JSON schema](/schemas/composite-structure.schema.json)
 
@@ -602,11 +623,82 @@ baseline:
   name: "env-1-core"
   type: "namespace"
 satellites:
-  - name: "env-1-bss"
+  - name: "env-1-api"
     type: "namespace"
-  - name: "env-1-oss"
+  - name: "env-1-ui"
     type: "namespace"
 ```
+
+#### BG Domain
+
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `NS_BUILD_FILTER` parameter and BGD lifecycle management.
+
+The BG Domain object is generated during Environment Instance generation based on:
+
+- [BG Domain Template](#bg-domain-template)
+
+**Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
+
+```yaml
+# Mandatory
+# The name of the BG Domain object
+# Used to identify the BGD configuration
+name: <environment-name>-bg-domain
+# Mandatory
+# The type of the object
+# Always set to 'bgdomain' for BG Domain objects
+type: bgdomain
+# Mandatory
+# Origin namespace definition
+# Used to define the currently active BGD namespace
+origin:
+  # Mandatory
+  # The name of the origin namespace
+  # Used for BGD alias resolution and lifecycle operations
+  name: <origin-namespace-name>
+  # Mandatory
+  # The type of the namespace object
+  # Always set to 'namespace'
+  type: namespace
+# Mandatory
+# Peer namespace definition
+# Used to define the standby BGD namespace
+peer:
+  # Mandatory
+  # The name of the peer namespace
+  # Used for BGD alias resolution and lifecycle operations
+  name: <peer-namespace-name>
+  # Mandatory
+  # The type of the namespace object
+  # Always set to 'namespace'
+  type: namespace
+# Mandatory
+# Controller namespace definition
+# Used for BGD lifecycle management and coordination
+controller:
+  # Mandatory
+  # The name of the controller namespace
+  # Used by BGD operations for lifecycle coordination
+  name: <controller-namespace-name>
+  # Mandatory
+  # The type of the namespace object
+  # Always set to 'namespace'
+  type: namespace
+  # Mandatory
+  # Credentials for accessing the BGD controller
+  # Used for authentication with BG-Operator
+  credentialsIs: <bgd-controller-credentials>
+  # Mandatory
+  # URL of the BG-Operator service
+  # Used for BGD lifecycle operations
+  url: <bg-operator-url>
+```
+
+**BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
+
+- `${controller}` → controller namespace
+- `${origin}` → origin namespaces
+- `${peer}` → peer namespaces
 
 ### Solution Descriptor
 
@@ -695,7 +787,7 @@ db_cred:
 token:
   type: secret
   data:
-    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
+    secret: "token-placeholder-123"
 ```
 
 ### Shared Credentials File
@@ -731,7 +823,7 @@ db_cred:
 token:
   type: secret
   data:
-    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
+    secret: "token-placeholder-123"
 ```
 
 ### System Credentials File (in Instance repository)
@@ -754,7 +846,7 @@ registry-cred:
 gitlab-token-cred:
   type: secret
   data:
-    secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_ba"
+    secret: "token-placeholder-123"
 ```
 
 #### ParameterSet (in Instance repository)
@@ -785,7 +877,7 @@ This object describes where the **environment template artifact** is stored in t
 
 **Location:** `/configuration/artifact_definitions/<artifact-definition-name>.yaml`
 
-The file name must match the value of the `name` attribute.
+The filename must match the value of the `name` attribute.
 
 ```yaml
 # Mandatory
@@ -804,7 +896,7 @@ registry:
   name: string
   # Mandatory
   # Pointer to the EnvGene Credential object.
-  # Credential with this id must be located in /configuration/credentials/credentials.yml
+  # Credential with this ID must be located in /configuration/credentials/credentials.yml
   credentialsId: string
   # Mandatory
   mavenConfig:
@@ -850,7 +942,7 @@ It is used by **external systems** to convert the `application:version` format o
 
 A separate definition file is used for each individual registry. Each Environment uses its own set of Registry Definitions.
 
-The file name must match the value of the `name` attribute.
+The filename must match the value of the `name` attribute.
 
 **Location:** `/environments/<cluster-name>/<env-name>/AppDefs/<registry-name>.yml`
 
@@ -864,7 +956,7 @@ Two versions of this object are supported
 name: string
 # Mandatory
 # Pointer to the EnvGene Credential object.
-# Credential with this id must be located in /environments/<cluster-name>/<env-name>/Credentials/credentials.yml
+# Credential with this ID must be located in /environments/<cluster-name>/<env-name>/Credentials/credentials.yml
 credentialsId: string
 # Mandatory
 mavenConfig:
@@ -965,10 +1057,10 @@ rawConfig:
 # Optional
 npmConfig:
   # Mandatory
-  # NPM snapshot repository name
+  # npm snapshot repository name
   npmTargetSnapshot: string
   # Mandatory
-  # NPM release repository name
+  # npm release repository name
   npmTargetRelease: string
 ```
 
@@ -1008,12 +1100,15 @@ version: "2.0"
 # Name of the registry
 name: string
 # Optional
-# Authentication config
-# Cannot be set in if anonymous access is used
+# Authentication configs
 authConfig:
   <auth-config-name>:
     # Mandatory
-    # Name of credential in credential storage
+    # Name of the credential in the credential storage
+    # The credential type can be either `usernamePassword` or `secret`
+    # Depending on `authType`, it can be:
+    # access key (username) + secret (password) for longLived
+    # or different authentication credential components for shortLived
     credentialsId: string 
     # Optional
     # Public cloud registry authentication strategy
@@ -1202,6 +1297,21 @@ goConfig:
   # Go proxy repository URL
   goProxyRepository: string
 # Optional
+npmConfig:
+  # Optional
+  # Pointer to authentication config described in `authConfig` section
+  # Cannot be set in if anonymous access is used
+  authConfig: string
+  # Mandatory
+  # Domain name of the registry
+  repositoryDomainName: string
+  # Mandatory
+  # npm snapshot repository name
+  npmTargetSnapshot: string
+  # Mandatory
+  # npm release repository name
+  npmTargetRelease: string
+# Optional
 rawConfig:
   # Optional
   # Pointer to authentication config described in `authConfig` section
@@ -1223,21 +1333,6 @@ rawConfig:
   # Mandatory
   # Raw proxy repository name
   rawTargetProxy: string
-# Optional
-npmConfig:
-  # Optional
-  # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
-  authConfig: string
-  # Mandatory
-  # Domain name of the registry
-  repositoryDomainName: string
-  # Mandatory
-  # NPM snapshot repository name
-  npmTargetSnapshot: string
-  # Mandatory
-  # NPM release repository name
-  npmTargetRelease: string
 ```
 
 **Examples of different auth sections**:
@@ -1303,7 +1398,7 @@ authConfig:
 
 ```yaml
 version: "2.0"
-name: "registry"
+name: registry
 authConfig:
   aws:
     authType: shortLived
@@ -1318,61 +1413,63 @@ authConfig:
     authMethod: user_pass
     credentialsId: cred-nexus
 mavenConfig:
-  repositoryDomainName: "https://codeartifact.eu-west-1.amazonaws.com/maven/app"
-  targetSnapshot: "snapshots"
-  targetStaging: "staging"
-  targetRelease: "releases"
-  snapshotGroup: "com.mycompany.app"
-  releaseGroup: "com.mycompany.app"
   authConfig: aws
+  repositoryDomainName: https://codeartifact.eu-west-1.amazonaws.com/maven/app
+  targetSnapshot: snapshots
+  targetStaging: staging
+  targetRelease: releases
+  snapshotGroup: snapshot-group
+  releaseGroup: staging-group
 dockerConfig:
-  repositoryDomainName: "https://123456789.dkr.ecr.eu-west-1.amazonaws.com"
-  snapshotUri: "docker/snapshots"
-  stagingUri: "docker/staging"
-  releaseUri: "docker/releases"
-  groupUri: "docker"
-  snapshotRepoName: "docker-snapshots"
-  stagingRepoName: "docker-staging"
-  releaseRepoName: "docker-releases"
-  groupName: "docker"
   authConfig: aws
+  snapshotUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18080
+  stagingUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18081
+  releaseUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18082
+  groupUri: 123456789.dkr.ecr.eu-west-1.amazonaws.com:18083
+  snapshotRepoName: docker-snapshots
+  stagingRepoName: docker-staging
+  releaseRepoName: docker-releases
+  groupName: docker
 helmConfig:
-  repositoryDomainName: "https://nexus.mycompany.internal/repository/helm-charts"
-  helmTargetStaging: "helm-staging"
-  helmTargetRelease: "helm-releases"
   authConfig: helm
+  repositoryDomainName: https://nexus.mycompany.internal/repository/helm-charts
+  helmTargetStaging: helm-staging
+  helmTargetRelease: helm-releases
 helmAppConfig:
-  repositoryDomainName: "https://nexus.mycompany.internal/repository/helm-charts"
-  helmStagingRepoName: "helm-staging"
-  helmReleaseRepoName: "helm-releases"
-  helmGroupRepoName: "helm-group"
-  helmDevRepoName: "helm-dev"
   authConfig: helm
+  repositoryDomainName: https://nexus.mycompany.internal/repository/helm-charts
+  helmDevRepoName: helm-dev
+  helmStagingRepoName: helm-staging
+  helmReleaseRepoName: helm-releases
+  helmGroupRepoName: helm-group
 goConfig:
-  goTargetSnapshot: "go-snapshots"
-  goTargetRelease: "go-releases"
-  goProxyRepository: "https://goproxy.internal/go/"
-rawConfig:
-  rawTargetSnapshot: "raw/snapshots"
-  rawTargetRelease: "raw/releases"
-  rawTargetStaging: "raw/staging"
-  rawTargetProxy: "https://proxy.raw.local/"
+  repositoryDomainName: https://nexus.mycompany.internal/repository/go
+  goTargetSnapshot: go-snapshots
+  goTargetRelease: go-releases
+  goProxyRepository: https://goproxy.internal/go/
 npmConfig:
-  npmTargetSnapshot: "npm-snapshots"
-  npmTargetRelease: "npm-releases"
+  repositoryDomainName: https://mycompany.internal
+  npmTargetSnapshot: npm-snapshots
+  npmTargetRelease: npm-releases
+rawConfig:
+  repositoryDomainName: https://proxy.raw.local/raw
+  rawTargetSnapshot: raw/snapshots
+  rawTargetRelease: raw/releases
+  rawTargetStaging: raw/staging
+  rawTargetProxy: https://proxy.raw.local/
 ```
 
 [Registry Definition v2.0 JSON schema](/schemas/regdef-v2.schema.json)
 
 ### Application Definition
 
-This object describes application artifact parameters - artifact id, group id and pointer to [Registry Definition](#registry-definition)
+This object describes application artifact parameters - artifact ID, group ID and pointer to [Registry Definition](#registry-definition)
 
 It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
 
 A separate definition file is used for each individual application. Each Environment uses its own set of Application Definitions.
 
-The file name must match the value of the `name` attribute.
+The filename must match the value of the `name` attribute.
 
 **Location:** `/environments/<cluster-name>/<env-name>/AppDefs/<application-name>.yml`
 

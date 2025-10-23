@@ -3,17 +3,18 @@ from envgenehelper import logger
 from pipeline_helper import job_instance
 import json
 
+
 def is_inventory_generation_needed(is_template_test, inv_gen_params):
     if is_template_test:
         return False
     if inv_gen_params['ENV_INVENTORY_INIT'] == 'true':
         return True
-    params_processed_by_inv_gen = ['ENV_SPECIFIC_PARAMETERS', 'ENV_TEMPLATE_NAME', 'SD_DATA', 'SD_VERSION']
+    params_processed_by_inv_gen = ['ENV_SPECIFIC_PARAMETERS', 'ENV_TEMPLATE_NAME']
     for param in params_processed_by_inv_gen:
-        #if inv_gen_params[param] != '':
         if inv_gen_params[param] not in (None, ''):
             return True
     return False
+
 
 def prepare_inventory_generation_job(pipeline, full_env, environment_name, cluster_name, env_generation_params, tags):
     logger.info(f"prepare env_generation job for {full_env}")
@@ -36,7 +37,7 @@ def prepare_inventory_generation_job(pipeline, full_env, environment_name, clust
         "module_ansible_cfg": "/module/ansible/ansible.cfg",
         "module_config_default": "/module/templates/defaults.yaml",
         "ENV_GENERATION_PARAMS": json.dumps(env_generation_params, ensure_ascii=False, indent=2),
-        "GITLAB_RUNNER_TAG_NAME" : tags
+        "GITLAB_RUNNER_TAG_NAME": tags
     }
     job = job_instance(params=params, vars=vars)
     job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env)
