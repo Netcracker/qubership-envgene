@@ -48,6 +48,7 @@ jobs:
       contents: read
       packages: write
       statuses: write
+      pull-requests: read
     uses: ./.github/workflows/pr-conventional-commits.yaml
 
   link-check:
