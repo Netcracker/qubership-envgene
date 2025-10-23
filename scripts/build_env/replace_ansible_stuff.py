@@ -38,9 +38,11 @@ REPLACEMENTS = [
 
 
 def replace_ansible_stuff(template_str: str, template_path: str = "") -> str:
-    result = template_str
+    template_str = template_str.lstrip()
+    if template_str.startswith('---'):
+        template_str = template_str.split('\n', 1)[1]
     for pattern, replacement, name, message in REPLACEMENTS:
-        for match in pattern.finditer(result):
+        for match in pattern.finditer(template_str):
             if template_path:
                 logger.warning(
                     "Replaced %s in template '%s'. %s",
@@ -55,6 +57,6 @@ def replace_ansible_stuff(template_str: str, template_path: str = "") -> str:
                     match.string,
                     message,
                 )
-        result = pattern.sub(replacement, result)
+        template_str = pattern.sub(replacement, template_str)
 
-    return result
+    return template_str

@@ -1,4 +1,6 @@
 ---
+{%- if current_env.additionalTemplateVariables.use_env_prefix is defined %}
+{%- endif %}
 name: "{{current_env.name}}-bss"
 credentialsId: ""
 isServerSideMerge: false
