@@ -225,8 +225,8 @@ components:
           type: array
           items:
             type: string
-        syncInterval:
-          description: "Period of synchronization with the cluster"
+        clusterInfoUpdateInterval:
+          description: "Period of updating information from the cluster"
           $ref: "#/components/schemas/Duration"
     ClusterDTO:
       type: object
@@ -235,14 +235,14 @@ components:
           type: string
         description:
           type: string
-        syncStatus:
+        clusterInfoUpdateStatus:
           type: boolean
           properties:
-            lastSyncResult: 
+            lastResult: 
               type: boolean
-              description: "Determines the sync status for Cluster: if at least one object from the cluster was successfully read, the sync is considered successful"
-            lastSyncCompletedAt:
-              description: "Time of the last successful sync"
+              description: "Determines the information update status for cluster: if at least one object from the cluster was successfully read, the information update is considered successful"
+            lastCompletedAt:
+              description: "Time of the last successful update information from the cluster"
               $ref: "#/components/schemas/Instant"
     DeploymentStatus:
       type: string

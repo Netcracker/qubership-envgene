@@ -9,28 +9,49 @@
 
 ```text
 └── projects
-    └── <project-name>
+    ├── <customer-name>
+    |   └── <project-name>
+    |       ├── parameters.yaml
+    |       └── credentials.yaml
+    └── <other-project-name>
         ├── parameters.yaml
         └── credentials.yaml
 ```
+
+The `<customer-name>` folder is optional.
+
+Colly does not use `<customer-name>` or `<project-name>` from the folder names; instead, it reads `customerName` and `projectName` from inside the `parameters.yaml` file. For Colly, the projects are just a flat list. Folders are used only for better structure and readability for people.
+
+Only two levels of folders are allowed (max depth: 2).
+
+Any folder (within this folder depth limit) that contains a `parameters.yaml` file is considered a project folder.
 
 ### `parameters.yaml`
 
 ```yaml
 # Mandatory
-# Name of the project
-# Must be the same as parent folder name
-name: string
+# Name of the customer
+customerName: string
 # Mandatory
-# Project repositories
+# Name of the project
+projectName: string
+# To discuss. for different phases, there are different template versions from different branches
+projectPhase: <???>
 repositories:
-  <repository-name>:
+  - # Mandatory
+    # In MS1 only envgeneInstance is supported
     type: enum[ envgeneInstance, envgeneTemplate, envgeneDiscovery ]
+    # Mandatory
     url: string
     # Pointer to Credential in credentials.yaml
-    token: credential
-    branches: list of strings
+    # In MS1, Colly will get access to the repository using a technical user, parameters for the user will be passed as a deployment parameter
+    token: creds.get('<credential-id>').secret
+    # Optional
+    # If not set, the "default" branch is used (as in GitLab/GitHub)
+    branches: list of strings # To discuss. Do we need mapping by phase? For discovery, to get template names from different branches
 # Optional
+# This is for MS1, we will do discovery later somehow
+# Needs further thought because the same <artifact-template-name> can contain different templates in different versions
 envgeneTemplates:
   # Mandatory
   # The key is EnvGene environment template artifact name (application from the application:version notation)
@@ -38,10 +59,10 @@ envgeneTemplates:
   <artifact-template-name>: list of strings
 # Optional
 # Extends the list of possible values for the `role` attribute of the Environment in this project
-environmentRoleExtensions: list of strings
+environmentRoleExtensions: list of strings # To discuss. Maybe this is an attribute of the whole repo? or a deployment parameter?
 # Optional
 # Extends the list of possible values for the `status` attribute of the Environment in this project
-environmentStatusExtensions: list of strings
+environmentStatusExtensions: list of strings # To discuss. Maybe this is an attribute of the whole repo? or a deployment parameter?
 ```
 
 ### `credentials.yaml`
@@ -63,14 +84,13 @@ Contains [Credential](https://github.com/Netcracker/qubership-envgene/blob/main/
 Example:
 
 ```yaml
-name: ACME
+customerName: ACME
+projectName: ACME-bss
 repositories:
   instance:
     type: envgeneInstance
     url: https://git.acme.com/instance
     token: instance-cred
-    branches:
-      - master
   template:
     type: envgeneTemplate
     url: https://git.acme.com/template

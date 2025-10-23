@@ -14,11 +14,11 @@
 | `name`           | string                                                        | Environment name, cannot be changed after creation                                                                                             |
 | `status`         | enum [`PLANNED`, `FREE`, `IN_USE`, `RESERVED`, `DEPRECATED`]  | Current status of the Environment                                                                                                              |
 | `role`           | enum [`Dev`, `QA`, `Project CI`, `SaaS`, `Joint CI`, `Other`] | Defines usage role of the Environment                                                                                                          |
-| `teams`          | string                                                        | Teams assigned to the Environment. If there are several teams, their names are separated by commas.                                            |
-| `owners`         | string                                                        | People responsible for the Environment. If there are several, their names are separated by commas.                                             |
-| `productSDs`     | list of strings                                               | List of Solution Descriptors with type `product` in `<name>:<version>` notation, which are currently successfully deployed in this environment |
-| `projectSDs`     | list of strings                                               | List of Solution Descriptors with type `project` in `<name>:<version>` notation, which are currently successfully deployed in this environment |
-| `infraSDs`       | list of strings                                               | List of Solution Descriptors with type `infra` in `<name>:<version>` notation, which are currently successfully deployed in this environment   |
+| `teams`          | list of strings                                               | Teams assigned to the Environment. If there are several teams, their names are separated by commas.                                            |
+| `owners`         | list of strings                                               | People responsible for the Environment. If there are several, their names are separated by commas.                                             |
+| `productSDs`     | list of strings                                               | List of Solution Descriptors with type `product` in `<name>:<version>` notation, which are currently successfully deployed in this Environment |
+| `projectSDs`     | list of strings                                               | List of Solution Descriptors with type `project` in `<name>:<version>` notation, which are currently successfully deployed in this Environment |
+| `infraSDs`       | list of strings                                               | List of Solution Descriptors with type `infra` in `<name>:<version>` notation, which are currently successfully deployed in this Environment   |
 | Last Deploy Date | string, date-time                                             | TBD                                                                                                                                            |
 | `description`    | string                                                        | Free-form Environment description                                                                                                              |
 | `namespaces`     | list of [Namespace](#namespace) objects                       | List of associated namespaces                                                                                                                  |
@@ -33,17 +33,17 @@
 
 ## Cluster
 
-| Colly Attribute                  | Attribute Type | Description                                                                                                                      |
-|----------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------------|
-| `name`                           | string         | Cluster name, cannot be changed after creation                                                                                   |
-| `syncStatus.lastSyncResult`      | string         | Determines the sync status for Cluster: if at least one object from the cluster was successfully read, the sync is considered successful |
-| `syncStatus.lastSyncCompletedAt` | string         | Time of the last successful sync                                                                                                 |
+| Colly Attribute                           | Attribute Type | Description                                                                                                                                                                                                    |
+|-------------------------------------------|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `name`                                    | string         | Cluster name, cannot be changed after creation                                                                                                                          |
+| `clusterInfoUpdateStatus.lastResult`      | string         | Determines the information update status for cluster: if at least one object from the cluster was successfully read, the information update is considered successful                                            |
+| `clusterInfoUpdateStatus.lastCompletedAt` | string         | Time of the last successful update information from the cluster                                                                                                          |
 
 ## Colly instance
 
-| Colly Attribute | Attribute Type   | Description                                                   |
-|-----------------|----------------- |---------------------------------------------------------------|
-| `syncInterval`  | string, duration | Period of synchronization with the cluster in ISO 8601 format |
+| Colly Attribute                    | Attribute Type   | Description                                                   |
+|------------------------------------|----------------- |---------------------------------------------------------------|
+| `clusterInfoUpdateStatusInterval`  | string, duration | Period of synchronization with the cluster in ISO 8601 format |
 
 ## To discuss
 
@@ -53,10 +53,10 @@
   - Do we need `MIGRATING` (meaning the upgrade is in progress)?
   - Propose ![env-state-machine.drawio.png](/docs/images/env-state-machine.drawio.png)
     1. `PLANNED` Planned for deployment, but not yet deployed. It exists only as a record in Colly for planning purposes.
-    2. `FREE` The environment is successfully deployed in the cloud but is not used by anyone; it is ready for use and not scheduled for usage.
-    3. `IN_USE` The environment is successfully deployed in the cloud and is being used by a specific team for specific purposes.
-    4. `RESERVED` The environment is successfully deployed in the cloud and reserved for use by a specific team, but is not currently in use.
-    5. `DEPRECATED` The environment is not used by anyone, and a decision has been made to delete it.
+    2. `FREE` The Environment is successfully deployed in the cloud but is not used by anyone; it is ready for use and not scheduled for usage.
+    3. `IN_USE` The Environment is successfully deployed in the cloud and is being used by a specific team for specific purposes.
+    4. `RESERVED` The Environment is successfully deployed in the cloud and reserved for use by a specific team, but is not currently in use.
+    5. `DEPRECATED` The Environment is not used by anyone, and a decision has been made to delete it.
   - Should it be extendable?
 
 - [ ] `role`
@@ -65,12 +65,11 @@
   - Discuss with Pankratov to clarify whether this attribute should be computed by Colly (and if so, based on what criteria), or if it should be user-defined.
   - Should it be extendable?
 
-- [ ] `syncInterval`, `syncStatus.lastSyncResult`, `syncStatus.lastSyncCompletedAt`
-  - поправить термин cluster info update
+- [ ] `clusterInfoUpdateInterval`, `clusterInfoUpdateStatus.result`, `clusterInfoUpdateStatus.completedAt`
   - принудительный синк?
 
-- [ ] `team` or `teams`? `owner` or `owners`?
-  - `owners`, `teams` are strings
+- [+] `team` or `teams`? `owner` or `owners`?
+  - `owners`, `teams` are lists
 
 - [+] Each POST in the API will result in a separate commit
 
@@ -95,5 +94,7 @@
         infra:
           - .*infra.*
       ```
+
+  - Wait updates of default value from the customer
 
 - [+] `id` is `uuid`; `name` is `<environment-name>`
