@@ -19,5 +19,5 @@ COPY dependencies/sources.list /etc/apt/sources.list
 
 # Copy dependencies and install them
 COPY dependencies/tests_requirements.txt /tmp/
-RUN pip install uv && uv pip install --system --no-cache-dir -r /tmp/tests_requirements.txt
+RUN pip install "uv>=0.9.5" && uv pip install --system --no-cache-dir -r /tmp/tests_requirements.txt
 
