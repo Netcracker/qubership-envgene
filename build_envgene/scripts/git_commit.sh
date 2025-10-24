@@ -156,14 +156,12 @@ git pull origin "${REF_NAME}"
 echo "Restoring environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
 if [ "${COMMIT_ENV}" = "true" ]; then
     rm -rf "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
-    mkdir -p "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
-    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/. "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"
+    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME} "environments/${CLUSTER_NAME}/"
 fi
 
 if [ -e /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport ]; then
     rm -rf environments/${CLUSTER_NAME}/cloud-passport
-    mkdir -p environments/${CLUSTER_NAME}/cloud-passport
-    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport/. "environments/${CLUSTER_NAME}/cloud-passport/"
+    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport "environments/${CLUSTER_NAME}/"
 fi
 
 if [ -e /tmp/configuration ]; then
@@ -226,6 +224,11 @@ if [ $diff_status -ne 0 ]; then
     echo "Changes detected. Committing..."
     git commit -am "${message}"
 
+    # Add small random delay before first push to reduce conflicts in parallel jobs
+    initial_jitter=$((RANDOM % 5 + 1))
+    echo "Waiting ${initial_jitter} seconds before push to avoid conflicts with parallel jobs..."
+    sleep $initial_jitter
+
     echo "Pushing to origin HEAD:${REF_NAME}"
     git push origin HEAD:"${REF_NAME}" || exit_code=$?
 else
@@ -240,12 +243,28 @@ if [ "$exit_code" -ne 0 ]; then
           exit_code=0
           retries=$((retries+1))
 
-          echo "Try to pull changes"
-          git pull origin "${REF_NAME}"
+          # Add random delay (jitter) between 1-10 seconds to avoid synchronization of parallel jobs
+          jitter=$((RANDOM % 10 + 1))
+          echo "Waiting ${jitter} seconds before retry to avoid conflicts with parallel jobs..."
+          sleep $jitter
 
-          echo "Try to push, attempt: $retries"
-          git push origin HEAD:"${REF_NAME}"
-          sleep 5
+          echo "Try to pull changes"
+          git pull origin "${REF_NAME}" || exit_code=$?
+          
+          if [ "$exit_code" -eq 0 ]; then
+              echo "Try to push, attempt: $retries"
+              git push origin HEAD:"${REF_NAME}" || exit_code=$?
+              
+              # Exponential backoff: wait longer after each failed attempt
+              if [ "$exit_code" -ne 0 ]; then
+                  backoff=$((retries * 2))
+                  echo "Push failed, waiting ${backoff} seconds before next attempt..."
+                  sleep $backoff
+              fi
+          else
+              echo "Pull failed, will retry..."
+              sleep 3
+          fi
       done
 fi
 
