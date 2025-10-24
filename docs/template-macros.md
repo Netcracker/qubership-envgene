@@ -57,8 +57,6 @@
     - [`BG_CONTROLLER_URL`](#bg_controller_url)
     - [`BG_CONTROLLER_LOGIN`](#bg_controller_login)
     - [`BG_CONTROLLER_PASSWORD`](#bg_controller_password)
-    - [`CMDB_CALLBACK_URL`](#cmdb_callback_url)
-    - [`CMDB_CALLBACK_TOKEN`](#cmdb_callback_token)
     - [`BASELINE_ORIGIN`](#baseline_origin)
     - [`BASELINE_CONTROLLER`](#baseline_controller)
     - [`BASELINE_PEER`](#baseline_peer)
@@ -1113,40 +1111,6 @@ The value is taken from the controller credential in the [BG Domain](/docs/envge
 **Basic usage:**
 
 `bg_password: "${BG_CONTROLLER_PASSWORD}"`
-
-**Usage in sample:** TBD
-
-### `CMDB_CALLBACK_URL`
-
----
-**Description:** URL that will be called by bg-operator to trigger CMDB clone operation.
-
-The value is calculated as `<cmdburl>/cm/v1/tenants/<tenantname>/clouds/<cloudname>/bgdomains/clone`.
-
-**Type:** String
-
-**Default Value:** None
-
-**Basic usage:**
-
-`cmdb_callback: "${CMDB_CALLBACK_URL}"`
-
-**Usage in sample:** TBD
-
-### `CMDB_CALLBACK_TOKEN`
-
----
-**Description:** Token without expiration date. Token should have permissions to perform CMDB clone within current BG Domain.
-
-Value is get from the CMDB credentials configuration.
-
-**Type:** String
-
-**Default Value:** None
-
-**Basic usage:**
-
-`cmdb_token: "${CMDB_CALLBACK_TOKEN}"`
 
 **Usage in sample:** TBD
 
