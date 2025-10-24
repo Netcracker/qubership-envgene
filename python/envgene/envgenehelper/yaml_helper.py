@@ -40,7 +40,7 @@ def openYaml(filePath, safe_load=False, default_yaml: Callable=get_empty_yaml, a
         resultYaml = readYaml(f.read(), safe_load, context=f"File: {filePath}")
     return resultYaml
 
-def readYaml(text, safe_load=False, context=None) -> CommentedMap:
+def readYaml(text, safe_load=False, context=None):
     if text is None:
         resultYaml = None
     elif safe_load:

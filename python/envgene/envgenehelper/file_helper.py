@@ -95,10 +95,6 @@ def openFileAsString(filePath):
 def deleteFile(filePath):
     os.remove(filePath)
 
-def deleteFileIfExists(filePath):
-    if check_file_exists(filePath):
-        os.remove(filePath)
-
 def writeToFile(filePath, contents):
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
     with open(filePath, 'w+') as f:
