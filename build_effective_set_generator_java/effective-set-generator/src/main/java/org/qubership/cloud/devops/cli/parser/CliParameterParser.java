@@ -182,9 +182,9 @@ public class CliParameterParser {
 
     private void processBgDomainParameters() {
         BgDomainEntityDTO bgDomainEntityDTO = inputData.getBgDomainEntityDTO();
-        if (bgDomainEntityDTO != null && bgDomainEntityDTO.getControllerNamespace().getCredentialsId() != null) {
+        if (bgDomainEntityDTO != null && bgDomainEntityDTO.getControllerNamespace().getCredentials() != null) {
             CredentialUtils credentialUtils = Injector.getInstance().getDi().get(CredentialUtils.class);
-            Credential credentialPojo = credentialUtils.getCredentialsById(bgDomainEntityDTO.getControllerNamespace().getCredentialsId());
+            Credential credentialPojo = credentialUtils.getCredentialsById(bgDomainEntityDTO.getControllerNamespace().getCredentials());
             if (credentialPojo instanceof UsernamePasswordCredentials) {
                 UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentialPojo;
                 bgDomainEntityDTO.getControllerNamespace().setUserName(usernamePasswordCredentials.getUsername());
