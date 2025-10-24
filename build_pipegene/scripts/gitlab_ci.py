@@ -22,7 +22,7 @@ logger.info(f"Detected environment - GitLab: {is_gitlab}, GitHub: {is_github}")
 def build_pipeline(params: dict):
     # if we are in template testing during template build
     tags=params['GITLAB_RUNNER_TAG_NAME']
-    
+
     if params['IS_TEMPLATE_TEST']:
         logger.info("We are generating jobs in template test mode.")
         templates_dir = f"{project_dir}/templates/env_templates"
@@ -117,20 +117,22 @@ def build_pipeline(params: dict):
         else:
             logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
 
-        ## git_commit job
-        jobs_requiring_git_commit = ("env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job")
-        if any(job in jobs_map for job in jobs_requiring_git_commit) and not params['IS_TEMPLATE_TEST']:
-            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, params['DEPLOYMENT_SESSION_ID'], tags, credential_rotation_job)
-        else:
-            logger.info(f'Preparing of git commit job for {env} is skipped.')
+        jobs_requiring_git_commit = ["env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job"]
 
         plugin_params = params
         plugin_params['jobs_map'] = jobs_map
         plugin_params['job_sequence'] = job_sequence
+        plugin_params['jobs_requiring_git_commit'] = jobs_requiring_git_commit
         plugin_params['env_name'] = environment_name
         plugin_params['cluster_name'] = cluster_name
         plugin_params['full_env'] = env
         per_env_plugin_engine.run(params=plugin_params, pipeline=pipeline, pipeline_helper=pipeline_helper)
+
+        ## git_commit job
+        if any(job in jobs_map for job in plugin_params['jobs_requiring_git_commit']) and not params['IS_TEMPLATE_TEST']:
+            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, params['DEPLOYMENT_SESSION_ID'], tags, credential_rotation_job)
+        else:
+            logger.info(f'Preparing of git commit job for {env} is skipped.')
 
         for job in job_sequence:
             if job not in jobs_map.keys():

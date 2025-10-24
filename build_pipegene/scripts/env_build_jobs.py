@@ -141,6 +141,7 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
   git_commit_job = job_instance(params=git_commit_params, vars=git_commit_vars)
   git_commit_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
   git_commit_job.artifacts.add_paths("${CI_PROJECT_DIR}/git_envs")
+  git_commit_job.artifacts.add_paths('${CI_PROJECT_DIR}/sboms')
   git_commit_job.artifacts.when = WhenStatement.ALWAYS
   if (credential_rotation_job is not None):
     git_commit_job.add_needs(credential_rotation_job)
