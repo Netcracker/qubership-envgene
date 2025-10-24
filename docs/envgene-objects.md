@@ -706,7 +706,7 @@ Other systems can use it for other reasons, for example as a deployment blueprin
 
 Only SD versions 2.1 and 2.2 can be used by EnvGene for the purposes described above, as their `application` list elements contain the `deployPostfix` and `version` attributes.
 
-For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/sd-processing.md).
+For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/features/sd-processing.md).
 
 SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [pipeline](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
 

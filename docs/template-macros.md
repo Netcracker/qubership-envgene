@@ -473,7 +473,7 @@ mavenConfig:
 
 ## Calculator command-line tool macros
 
-These macros are rendered at the stage of calculating the [Effective Set](/docs/calculator-cli.md#effective-set-structure) and are present in it as rendered values.
+These macros are rendered at the stage of calculating the [Effective Set](/docs/features/calculator-cli.md#effective-set-structure) and are present in it as rendered values.
 
 ### `APPLICATION_NAME`
 
