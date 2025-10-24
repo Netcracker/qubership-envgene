@@ -360,4 +360,4 @@ For each SD, check the `userData.useDeployPostfixAsNamespace` attribute (other `
 
 ## Test Cases
 
-1. [SD processing](/docs/test-cases/sd-processing.md)
+1. [SD processing](/docs/test-cases/features/sd-processing.md)

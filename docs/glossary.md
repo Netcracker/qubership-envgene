@@ -25,7 +25,7 @@ The configuration file describing a specific Environment, including template ref
 
 ## Effective Set
 
-The complete set of parameters generated for a specific Environment, used by consumers (e.g., ArgoCD). See [Effective Set Structure](/docs/calculator-cli.md#version-20-effective-set-structure).
+The complete set of parameters generated for a specific Environment, used by consumers (e.g., ArgoCD). See [Effective Set Structure](/docs/features/calculator-cli.md#version-20-effective-set-structure).
 
 ## Instance Repository
 

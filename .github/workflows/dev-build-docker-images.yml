@@ -44,23 +44,20 @@ permissions:
 
 jobs:
   conventional-commits:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Validate Conventional Commits
-        uses: ./.github/actions/conventional-commits
+    permissions:
+      contents: read
+      packages: write
+      statuses: write
+      pull-requests: read
+    uses: ./.github/workflows/pr-conventional-commits.yaml
 
   link-check:
     needs: [conventional-commits]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Link Checker
-        uses: ./.github/actions/link-checker
+    permissions:
+      contents: read
+      packages: write
+      statuses: write
+    uses: ./.github/workflows/link-checker.yaml
 
   linters:
     needs: [conventional-commits]
