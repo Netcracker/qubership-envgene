@@ -179,8 +179,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     envvars["cloud_passport_file_path"] = find_cloud_passport_definition(source_env_dir, all_instances_dir)
     envvars["cmdb_url"] = cmdb_url
     envvars["output_dir"] = output_dir
-    logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(envvars)}")
-    EnvGenerator().generate_config_env(envvars)
+    EnvGenerator().generate_config_env(env_name, envvars)
     handle_template_override(render_dir)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
                                                                            ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)

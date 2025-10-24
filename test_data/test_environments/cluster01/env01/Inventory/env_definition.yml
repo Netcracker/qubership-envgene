@@ -5,6 +5,8 @@ inventory:
   deployer: "test-deployer"
   cloudName: "test-solution-structure"
   cloudPassport: "test-cloud-passport"
+  description: ""
+  owners: ""
 envTemplate:
   name: "test-solution-structure-template"
   additionalTemplateVariables:

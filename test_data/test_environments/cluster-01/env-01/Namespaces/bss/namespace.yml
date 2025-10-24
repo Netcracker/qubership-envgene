@@ -20,6 +20,7 @@ deployParameters:
   PARAM_2: "value-2" # paramset: bss version: 25.1 source: template
   PARAM_6: "value-6" # paramset: bss version: 25.1 source: template
   SITE_LEVEL_PARAM_1: "site-level-value-1" # paramset: prod-shared version: 25.1 source: instance
+  STORAGE_USERNAME: "${creds.get(\"minio-cred\").username}"
   TEST_CREDS_GET_PASSWORD_PASSWORD: "${envgen.creds.get('creds-get-password-cred').password}" # paramset: test-deploy-creds version: 1 source: template
   TEST_CREDS_GET_PASSWORD_USERNAME: "${envgen.creds.get('creds-get-username-cred').username}" # paramset: test-deploy-creds version: 1 source: template
   TEST_CREDS_GET_SECRET_PARAM: "${envgen.creds.get('creds-get-secret').secret}" # paramset: test-deploy-creds version: 1 source: template
