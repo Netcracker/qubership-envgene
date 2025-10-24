@@ -12,6 +12,10 @@ maas-cred:
   data:
     username: maas-username
     password: maas-password
+consul-cred:
+  type: secret
+  data:
+    secret: b2c4d6e8-f1a3-5b7d-9e0f-1a2b3c4d5e6f
 minio-cred:
   type: usernamePassword
   data:

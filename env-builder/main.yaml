@@ -263,3 +263,4 @@
         not use_external_defs and
         ((appdef_templates.files is defined and appdef_templates.files | length > 0) or
         (regdef_templates.files is defined and regdef_templates.files | length > 0))
+

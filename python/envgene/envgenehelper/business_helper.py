@@ -294,4 +294,3 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
     else:
         return ""
 
-
