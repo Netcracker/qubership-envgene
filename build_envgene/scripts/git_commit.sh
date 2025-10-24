@@ -156,12 +156,14 @@ git pull origin "${REF_NAME}"
 echo "Restoring environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
 if [ "${COMMIT_ENV}" = "true" ]; then
     rm -rf "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
-    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME} "environments/${CLUSTER_NAME}/"
+    mkdir -p "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
+    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/. "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"
 fi
 
 if [ -e /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport ]; then
     rm -rf environments/${CLUSTER_NAME}/cloud-passport
-    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport "environments/${CLUSTER_NAME}/"
+    mkdir -p environments/${CLUSTER_NAME}/cloud-passport
+    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport/. "environments/${CLUSTER_NAME}/cloud-passport/"
 fi
 
 if [ -e /tmp/configuration ]; then
