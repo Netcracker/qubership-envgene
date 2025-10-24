@@ -1,5 +1,8 @@
 FROM python:3.12-slim-bookworm
 
+RUN useradd -m appuser
+USER appuser
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
