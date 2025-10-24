@@ -107,12 +107,11 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             Map<String, List<String>> nsWithAppsFromSD = new HashMap<>();
             Set<String> appsToProcess = new HashSet<>();
             loadSDData(nsWithAppsFromSD, appsToProcess);
-            SolutionBomDTO solutionDescriptor = inputData.getSolutionBomDTO();
             loadRegistryData();
             loadConsumerData();
             traverseSourceDirectory(nsWithAppsFromSD, appsToProcess);
             populateEnvironments();
-            fileSystemUtils.createEffectiveSetFolder(solutionDescriptor.getApplications());
+            fileSystemUtils.createEffectiveSetFolder(inputData.getSolutionBomDTO());
         } catch (Exception e) {
             throw new FileParseException("Error preparing data due to " + e.getMessage());
         }
@@ -255,9 +254,6 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                             return namespaceDTO.toBuilder().applications(applications == null ? Collections.emptyList() : applications).build();
                         });
                         inputData.setNamespaceDTOMap(namespaceMap);
-
-                    } else if (currentFolder.equals(basePath.getFileName().toString())) {
-                        inputData.setCloudDTO(inputData.getCloudDTO().toBuilder().applications(cloudApps).build());
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -265,6 +261,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         } catch (Exception e) {
             throw new FileParseException("Failure in reading input Directory", e);
         }
+        inputData.setCloudDTO(inputData.getCloudDTO().toBuilder().applications(cloudApps).build());
     }
 
     private void handleNamespaceYamlFile(Path file, Map<String, List<NamespacePrefixDTO>> clusterMap) {
@@ -369,19 +366,21 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void loadSDData(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
-        Bom bomContent = fileDataConverter.parseInputFile(Bom.class, new File(sharedData.getSolsbomPath()));
-        List<SBApplicationDTO> applications = bomContent.getComponents().stream()
-                .filter(component -> "application".equals(component.getType().getTypeName()))
-                .map(component -> {
-                    return getSbApplicationDTO(nsWithAppsFromSD, appsToProcess, component);
-                }).collect(Collectors.toList());
+        Optional<String> solsbomPath = sharedData.getSolsbomPath();
+        if (solsbomPath.isPresent()) {
+            Bom bomContent = fileDataConverter.parseInputFile(Bom.class, new File(solsbomPath.get()));
+            List<SBApplicationDTO> applications = bomContent.getComponents().stream()
+                    .filter(component -> "application".equals(component.getType().getTypeName()))
+                    .map(component -> getSbApplicationDTO(nsWithAppsFromSD, appsToProcess, component))
+                    .collect(Collectors.toList());
 
-        inputData.setSolutionBomDTO(SolutionBomDTO.builder().applications(applications).build());
+            inputData.setSolutionBomDTO(Optional.ofNullable(SolutionBomDTO.builder().applications(applications).build()));
+        }
     }
 
     private SBApplicationDTO getSbApplicationDTO(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, Component component) {
         String namespace = bomReaderUtils.getPropertyValue(component, "deployPostfix");
-        String appFileRef = String.format("%s/%s", sharedData.getSbomsPath(),
+        String appFileRef = String.format("%s/%s", sharedData.getSbomsPath().get(),
                 bomReaderUtils.getExternalRefValue(component, "bom").replace("file://", ""));
         SBApplicationDTO dto = SBApplicationDTO.builder()
                 .appName(component.getName())
@@ -395,15 +394,18 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void loadRegistryData() {
-        Map<String, RegistryDTO> registries = fileDataConverter.parseInputFile(new TypeReference<HashMap<String, RegistryDTO>>() {
-        }, new File(sharedData.getRegistryPath()));
-        Map<String, RegistryDTO> registryMap = new HashMap<>();
+        Optional<String> registryPath = sharedData.getRegistryPath();
+        if (registryPath.isPresent()) {
+            Map<String, RegistryDTO> registries = fileDataConverter.parseInputFile(new TypeReference<HashMap<String, RegistryDTO>>() {
+            }, new File(registryPath.get()));
+            Map<String, RegistryDTO> registryMap = new HashMap<>();
 
-        for (Map.Entry<String, RegistryDTO> entry : registries.entrySet()) {
-            String cleanKey = entry.getKey().replace("%20", " ");
-            registryMap.put(cleanKey, entry.getValue());
+            for (Map.Entry<String, RegistryDTO> entry : registries.entrySet()) {
+                String cleanKey = entry.getKey().replace("%20", " ");
+                registryMap.put(cleanKey, entry.getValue());
+            }
+            inputData.setRegistryDTOMap(registryMap);
         }
-        inputData.setRegistryDTOMap(registryMap);
     }
 
 }

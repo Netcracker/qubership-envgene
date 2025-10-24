@@ -1,8 +1,12 @@
 from os import path
+
+from .creds_helper import mask_sensitive
 from .crypt import decrypt_file
 from dataclasses import dataclass, field
 from .business_helper import getEnvDefinitionPath, getEnvCredentialsPath, INV_GEN_CREDS_PATH
 from .yaml_helper import openYaml
+from .logger import logger
+
 
 @dataclass
 class Environment:
@@ -17,22 +21,22 @@ class Environment:
 
     def __post_init__(self):
         self.env_path = path.join(self.base_dir, "environments", self.cluster, self.name)
-        print(f"env_path: {self.env_path}")
+        logger.info(f"env_path: {self.env_path}")
 
         self.inventory_path = getEnvDefinitionPath(self.env_path)
-        print(f"inventory_path: {self.inventory_path}")
+        logger.info(f"inventory_path: {self.inventory_path}")
 
         self.creds_path = getEnvCredentialsPath(self.env_path)
-        print(f"creds_path: {self.creds_path}")
+        logger.info(f"creds_path: {self.creds_path}")
 
         self.inv_gen_creds_path = path.join(self.env_path, INV_GEN_CREDS_PATH)
-        print(f"inv_gen_creds_path: {self.inv_gen_creds_path}")
+        logger.info(f"inv_gen_creds_path: {self.inv_gen_creds_path}")
 
         self.inventory = openYaml(self.inventory_path, allow_default=True)
-        print(f"inventory: {self.inventory}")
+        logger.info(f"inventory: {self.inventory}")
 
         self.creds = decrypt_file(self.creds_path, in_place=False, allow_default=True)
-        print(f"creds: {self.creds}")
+        logger.info(f"creds: {mask_sensitive(self.creds)}")
 
         self.inv_gen_creds = decrypt_file(self.inv_gen_creds_path, in_place=False, allow_default=True)
-        print(f"inv_gen_creds: {self.inv_gen_creds}")
+        logger.info(f"inv_gen_creds: {mask_sensitive(self.inv_gen_creds)}")

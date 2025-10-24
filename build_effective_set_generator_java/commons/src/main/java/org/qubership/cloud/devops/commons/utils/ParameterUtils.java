@@ -17,13 +17,17 @@
 package org.qubership.cloud.devops.commons.utils;
 
 import lombok.experimental.UtilityClass;
+import org.apache.commons.collections4.MapUtils;
 
 import java.util.*;
 
 @UtilityClass
 public class ParameterUtils {
 
-    @SuppressWarnings("unchecked")
+    public static final String CONTROLLER_NAMESPACE = "controllerNamespace";
+    public static final String USERNAME = "username";
+    public static final String PASSWORD = "password";
+
     public static void splitBySecure(
             Map<String, Parameter> input,
             Map<String, Parameter> secureOut,
@@ -33,24 +37,19 @@ public class ParameterUtils {
             String key = entry.getKey();
             Parameter param = entry.getValue();
             Object value = param.getValue();
-
             if (value instanceof Map<?, ?>) {
                 Map<String, Parameter> secureChild = new LinkedHashMap<>();
                 Map<String, Parameter> insecureChild = new LinkedHashMap<>();
-
                 splitBySecure((Map<String, Parameter>) value, secureChild, insecureChild);
-
                 if (!secureChild.isEmpty()) {
                     secureOut.put(key, copyOldValues(param, secureChild));
                 }
                 if (!insecureChild.isEmpty()) {
                     insecureOut.put(key, copyOldValues(param, insecureChild));
                 }
-
             } else if (value instanceof List<?>) {
                 List<Object> secureList = new ArrayList<>();
                 List<Object> insecureList = new ArrayList<>();
-
                 for (Object item : (List<?>) value) {
                     if (item instanceof Parameter) {
                         Parameter itemParam = (Parameter) item;
@@ -58,16 +57,13 @@ public class ParameterUtils {
                         if (itemVal instanceof Map<?, ?>) {
                             Map<String, Parameter> secureNested = new LinkedHashMap<>();
                             Map<String, Parameter> insecureNested = new LinkedHashMap<>();
-
                             splitBySecure((Map<String, Parameter>) itemVal, secureNested, insecureNested);
-
                             if (!secureNested.isEmpty()) {
                                 secureList.add(copyOldValues(itemParam, secureNested));
                             }
                             if (!insecureNested.isEmpty()) {
                                 insecureList.add(copyOldValues(itemParam, insecureNested));
                             }
-
                         } else {
                             if (itemParam.isSecured()) {
                                 secureList.add(itemParam);
@@ -76,11 +72,9 @@ public class ParameterUtils {
                             }
                         }
                     } else {
-                        // If list item is not a Parameter, can't determine security → treat as insecure
                         insecureList.add(item);
                     }
                 }
-
                 if (!secureList.isEmpty()) {
                     secureOut.put(key, copyOldValues(param, secureList));
                 }
@@ -89,7 +83,6 @@ public class ParameterUtils {
                 }
 
             } else {
-                // primitive value
                 if (param.isSecured()) {
                     secureOut.put(key, param);
                 } else {
@@ -111,6 +104,19 @@ public class ParameterUtils {
                 .build();
     }
 
+    public static void splitBgDomainParams(Map<String, Object> bgDomainMap,
+                                           Map<String, Object> bgDomainSecureMap,
+                                           Map<String, Object> bgDomainParamsMap) {
+        if (MapUtils.isEmpty(bgDomainMap)) {
+            return;
+        }
+        bgDomainParamsMap.putAll(bgDomainMap);
+        Map<String, Object> controller = (Map<String, Object>) bgDomainParamsMap.get(CONTROLLER_NAMESPACE);
+        Object userName = controller.remove(USERNAME);
+        Object password = controller.remove(PASSWORD);
+        bgDomainParamsMap.put(CONTROLLER_NAMESPACE, controller);
+        bgDomainSecureMap.put(CONTROLLER_NAMESPACE, Map.of(USERNAME, userName, PASSWORD, password));
+    }
 }
 
 

@@ -26,6 +26,7 @@ import org.qubership.cloud.parameters.processor.expression.PlainLanguage;
 import org.qubership.cloud.parameters.processor.expression.binding.Binding;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import org.qubership.cloud.parameters.processor.expression.binding.CredentialsMap;
 
 import java.io.Serializable;
 import java.util.*;
@@ -52,7 +53,7 @@ public class ParametersProcessor implements Serializable {
                 lang = new PlainLanguage(binding);
             }
 
-            Map<String, Parameter>  deploy = lang.processDeployment();
+            Map<String, Parameter> deploy = lang.processDeployment();
             Map<String, Parameter> tech = lang.processConfigServerApp();
             binding.additionalParameters(deploy);
             return Params.builder().deployParams(deploy).techParams(tech).build();
@@ -84,9 +85,24 @@ public class ParametersProcessor implements Serializable {
                 lang = new PlainLanguage(binding);
             }
 
-            Map<String, Parameter>  namespaceParams = lang.processNamespace();
+            Map<String, Parameter> namespaceParams = lang.processNamespace();
             binding.additionalParameters(namespaceParams);
             return Params.builder().cleanupParams(namespaceParams).build();
+        });
+    }
+
+    public Map<String, Parameter> processParameters(Map<String, String> parameters) {
+        return openTelemetryProvider.withSpan("process", () -> {
+            Binding binding = new Binding("true");
+            binding.put("creds", new Parameter(new CredentialsMap(binding).init()));
+            Language lang;
+            if (binding.getProcessorType().equals("true")) {
+                lang = new ExpressionLanguage(binding);
+            } else {
+                lang = new PlainLanguage(binding);
+            }
+
+            return lang.processParameters(parameters);
         });
     }
 

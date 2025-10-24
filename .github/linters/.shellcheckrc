@@ -3,7 +3,7 @@
 severity=error
 
 # Disable specific error codes that are commonly problematic
-disable=SC2154,SC2086,SC1091,SC2155,SC2164,SC2006,SC2046,SC2034,SC2005,SC2162,SC2124,SC2236,SC1083,SC1078,SC1079,SC2140
+disable=SC2154,SC2086,SC1091,SC2155,SC2164,SC2006,SC2046,SC2034,SC2005,SC2162,SC2124,SC2236,SC1083,SC1078,SC1079,SC2140,SC2129
 
 # Additional comprehensive disables for common issues
 # SC1083 - Literal braces in expressions

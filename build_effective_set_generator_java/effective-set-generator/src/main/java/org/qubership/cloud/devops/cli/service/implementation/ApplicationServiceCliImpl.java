@@ -51,8 +51,8 @@ public class ApplicationServiceCliImpl implements ApplicationService {
 
         if (application == null) {
             CloudDTO cloudDTO = inputData.getCloudDTO();
-            ApplicationLinkDTO cloudapp = getApplicationLinkDTO(applicationName, cloudDTO.getApplications());
-            if (cloudapp == null) {
+            application = getApplicationLinkDTO(applicationName, cloudDTO.getApplications());
+            if (application == null) {
                 log.warn(String.format(ENTITY_NOT_FOUND, "Application"));
                 return null;
             }
@@ -62,12 +62,11 @@ public class ApplicationServiceCliImpl implements ApplicationService {
     }
 
     private static ApplicationLinkDTO getApplicationLinkDTO(String applicationName, List<ApplicationLinkDTO> applications) {
-        ApplicationLinkDTO appDTO = applications
+        return applications
                 .stream()
                 .filter(app -> app.getName().equals(applicationName))
                 .findFirst()
                 .orElse(null);
-        return appDTO;
     }
 
 }
