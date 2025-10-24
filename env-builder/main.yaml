@@ -118,6 +118,17 @@
       loop_control:
         loop_var: namespace
 
+    - name: Gen BG Domain
+      ansible.builtin.include_role:
+        name: generate_bgd
+      vars:
+        _env: "{{ env }}"
+        _tenant: "{{ tenant }}"
+        _cloud: "{{ current_env.cloud }}"
+        _current_env_dir: "{{ current_env_dir }}"
+        _template: "{{current_env_template.bg_domain}}"
+      when: current_env_template.bg_domain is defined
+
     - name: Gen resource profiles
       ansible.builtin.include_role:
         name: generate_profiles
@@ -263,4 +274,3 @@
         not use_external_defs and
         ((appdef_templates.files is defined and appdef_templates.files | length > 0) or
         (regdef_templates.files is defined and regdef_templates.files | length > 0))
-

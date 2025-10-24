@@ -61,7 +61,7 @@
     - [Deprecated Credential Macros](#deprecated-credential-macros)
       - [`${envgene.creds.get('<cred-id>').username|password|secret}`](#envgenecredsgetcred-idusernamepasswordsecret)
 
-This documentation provides a list of macros that can be used during template generation
+This documentation provides a list of macros that can be used in environment templates and environment-specific parameter sets.
 
 ## Jinja Macros
 
