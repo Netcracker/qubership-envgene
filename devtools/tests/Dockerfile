@@ -4,8 +4,8 @@ RUN useradd -m appuser
 USER appuser
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    curl \
+    build-essential=12.9 \
+    curl=7.88.1-10+deb12u8 \
  && rm -rf /var/lib/apt/lists/*
 
 # sops
@@ -19,5 +19,5 @@ COPY dependencies/sources.list /etc/apt/sources.list
 
 # Copy dependencies and install them
 COPY dependencies/tests_requirements.txt /tmp/
-RUN pip install "uv>=0.9.5" && uv pip install --system --no-cache-dir -r /tmp/tests_requirements.txt
+RUN pip install --no-cache-dir "uv>=0.9.5" && uv pip install --system --no-cache-dir -r /tmp/tests_requirements.txt
 
