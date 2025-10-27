@@ -449,7 +449,7 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 
 ### `GH_ADDITIONAL_PARAMS`
 
-**Description**: A JSON string parameter for GitHub pipelines that contains all pipeline parameters except these core ones that must be set separately:
+**Description**: A JSON in string parameter for GitHub pipeline. Use it to pass all pipeline parameters except these main ones, which must be set directly:
 
 - `ENV_NAMES`
 - `DEPLOYMENT_TICKET_ID`
@@ -459,13 +459,12 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 - `GET_PASSPORT`
 - `CMDB_IMPORT`
 
-This enables automated pipeline execution without UI input. The JSON must follow the parameter schema defined in this document.
+The parameters must follow the parameter schema defined in this document.
 
 This parameter is only available in the [GitHub version](/github_workflows/instance-repo-pipeline/) of the pipeline.
 
 > [!NOTE]
-> GitHub's UI limits manual inputs to 10 parameters. To handle this while keeping the same features as GitLab,
-> we put the most important parameters in the UI and group the rest in this JSON field.
+> GitHub only allows 10 input parameters for the pipeline. To work around this but keep full functionality, the main parameters are provided at the top level, and all additional ones are sent as JSON in this field.
 
 **Default Value**: None
 
