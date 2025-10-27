@@ -22,6 +22,11 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
 
 ### [Instance pipeline] Job sequence
 
+```mermaid
+flowchart LR
+    A[trigger_passport] --> B[get_passport] --> C[process_decryption_mode] --> D[env_inventory_generation] --> E[credential_rotation] --> F[app_reg_def_process] --> G[process_sd] --> H[env_build] --> I[generate_effective_set] --> J[git_commit]
+```
+
 1. **trigger_passport**:
    - **Condition**: Runs if [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport)
    - **Docker image**: None. The Discovery repository is triggered from the pipeline
@@ -42,18 +47,28 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
    - **Condition**: Runs if [`CRED_ROTATION_PAYLOAD`](/docs/instance-pipeline-parameters.md#cred_rotation_payload) is provided
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-6. **process_sd**:
+6. **app_reg_def_process**:
+   - **What happens in this job**:
+       1. Downloads the Environment Template artifact.
+       2. Renders [Application Definitions](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition) from:
+          1. Templates, as described in [User Defined by Template](/docs/features/app-reg-defs.md#user-defined-by-template)
+          2. External Job, as described in [External Job](/docs/features/app-reg-defs.md#external-job)
+       3. Runs [Application and Registry Definitions Transformation](/docs/features/app-reg-defs.md#application-and-registry-definitions-transformation)
+   - **Condition**: Runs if ( [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder) ) OR ( [`SOURCE_TYPE: json`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data) is provided ) OR ( [`SOURCE_TYPE: artifact`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_VERSIONS`](/docs/instance-pipeline-parameters.md#sd_version) is provided )
+   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+
+7. **process_sd**:
    - **Condition**: Runs if ( [`SOURCE_TYPE: json`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data) is provided ) OR ( [`SOURCE_TYPE: artifact`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_VERSIONS`](/docs/instance-pipeline-parameters.md#sd_version) is provided )
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-7. **env_build**:
+8. **env_build**:
    - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-8. **generate_effective_set**:
+9. **generate_effective_set**:
    - **Condition**: Runs if [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set)
    - **Docker image**: [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
 
-9. **git_commit**:
-   - **Condition**: Runs if there are jobs requiring changes to the repository AND [`ENV_TEMPLATE_TEST: false`](/docs/instance-pipeline-parameters.md#env_template_test)
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+10. **git_commit**:
+    - **Condition**: Runs if there are jobs requiring changes to the repository AND [`ENV_TEMPLATE_TEST: false`](/docs/instance-pipeline-parameters.md#env_template_test)
+    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
