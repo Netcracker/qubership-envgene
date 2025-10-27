@@ -124,8 +124,8 @@ public class NamespaceMap extends DynamicMap {
                                 map.put(BG_CONTROLLER_URL, bg_url);
                             }
 
-                            if (controller.getCredentialsId() != null && !controller.getCredentialsId().isEmpty()) {
-                                Credential credentialPojo = credentialUtils.getCredentialsById(controller.getCredentialsId());
+                            if (controller.getCredentials() != null && !controller.getCredentials().isEmpty()) {
+                                Credential credentialPojo = credentialUtils.getCredentialsById(controller.getCredentials());
                                 if (credentialPojo instanceof UsernamePasswordCredentials) {
                                     UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentialPojo;
                                     map.put(BG_CONTROLLER_LOGIN, usernamePasswordCredentials.getUsername());

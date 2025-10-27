@@ -10,6 +10,7 @@
       - [Template ParameterSet](#template-parameterset)
       - [Template Resource Profile Override](#template-resource-profile-override)
       - [Composite Structure Template](#composite-structure-template)
+      - [BG Domain Template](#bg-domain-template)
       - [Registry Definition Template](#registry-definition-template)
       - [Application Definition Template](#application-definition-template)
     - [System Credentials File (in Template repository)](#system-credentials-file-in-template-repository)
@@ -21,6 +22,7 @@
       - [Application](#application)
       - [Resource Profile Override](#resource-profile-override)
       - [Composite Structure](#composite-structure)
+      - [BG Domain](#bg-domain)
     - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
@@ -38,6 +40,8 @@
       - [Registry Definition v1.0](#registry-definition-v10)
       - [Registry Definition v2.0](#registry-definition-v20)
     - [Application Definition](#application-definition)
+  - [Discovery Repository Objects](#discovery-repository-objects)
+    - [Cloud Passport Template](#cloud-passport-template)
 
 ## Template Repository Objects
 
@@ -87,6 +91,7 @@ cloud:
   # Optional
   # Template Override configuration
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
+  template_override:     
   template_override:
     <yaml or jinja expression>
   # Optional
@@ -148,10 +153,6 @@ namespaces:
 ```
 
 [Template Descriptor JSON schema](/schemas/template-descriptor.schema.json)
-
-Any YAML file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
-
-The name of this file serves as the name of the Environment Template. In the Environment Inventory, this name is used to specify which Environment Template from the artifact should be used.
 
 #### Tenant Template
 
@@ -233,7 +234,7 @@ version: string
 # Mandatory
 # The name of the Parameter Set
 # Used to reference the Parameter Set in templates
-# Must match the Parameter Set file name
+# Must match the Parameter Set filename
 name: string
 # Mandatory
 # Key-value pairs of parameters
@@ -400,11 +401,19 @@ baseline:
   name: "{{ current_env.name }}-core"
   type: "namespace"
 satellites:
-  - name: "{{ current_env.name }}-bss"
+  - name: "{{ current_env.name }}-api"
     type: "namespace"
-  - name: "{{ current_env.name }}-oss"
+  - name: "{{ current_env.name }}-ui"
     type: "namespace"
 ```
+
+#### BG Domain Template
+
+This is a Jinja template file used to render the [BG Domain](#bg-domain) object for environments that use Blue-Green Domain (BGD) support.
+
+**Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
+
+[Macros](/docs/template-macros.md) are available for use when developing the template.
 
 #### Registry Definition Template
 
@@ -415,6 +424,20 @@ This is a Jinja template file used to render the [Registry Definition](#registry
 **Example:**
 
 ```yaml
+# BG Domain template with Jinja2 templating
+name: {{ current_env.environmentName ~ '-bg-domain' }}
+type: bgdomain
+origin:
+  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('origin-ns', current_env.environmentName ~ '-origin') }}
+  type: namespace
+peer:
+  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('peer-ns', current_env.environmentName ~ '-peer') }}
+  type: namespace
+controller:
+  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}
+  type: namespace
+  credentialsIs: ${creds.get("bgd-controller-token").secret}
+  url: {{ current_env.cloud_passport.bg_operator_url }}
 name: "registry-1"
 credentialsId: "registry-cred"
 mavenConfig:
@@ -778,11 +801,82 @@ baseline:
   name: "env-1-core"
   type: "namespace"
 satellites:
-  - name: "env-1-bss"
+  - name: "env-1-api"
     type: "namespace"
-  - name: "env-1-oss"
+  - name: "env-1-ui"
     type: "namespace"
 ```
+
+#### BG Domain
+
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `NS_BUILD_FILTER` parameter and BGD lifecycle management.
+
+The BG Domain object is generated during Environment Instance generation based on:
+
+- [BG Domain Template](#bg-domain-template)
+
+**Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
+
+```yaml
+# Mandatory
+# The name of the BG Domain object
+# Used to identify the BGD configuration
+name: <environment-name>-bg-domain
+# Mandatory
+# The type of the object
+# Always set to 'bgdomain' for BG Domain objects
+type: bgdomain
+# Mandatory
+# Origin namespace definition
+# Used to define the currently active BGD namespace
+origin:
+  # Mandatory
+  # The name of the origin namespace
+  # Used for BGD alias resolution and lifecycle operations
+  name: <origin-namespace-name>
+  # Mandatory
+  # The type of the namespace object
+  # Always set to 'namespace'
+  type: namespace
+# Mandatory
+# Peer namespace definition
+# Used to define the standby BGD namespace
+peer:
+  # Mandatory
+  # The name of the peer namespace
+  # Used for BGD alias resolution and lifecycle operations
+  name: <peer-namespace-name>
+  # Mandatory
+  # The type of the namespace object
+  # Always set to 'namespace'
+  type: namespace
+# Mandatory
+# Controller namespace definition
+# Used for BGD lifecycle management and coordination
+controller:
+  # Mandatory
+  # The name of the controller namespace
+  # Used by BGD operations for lifecycle coordination
+  name: <controller-namespace-name>
+  # Mandatory
+  # The type of the namespace object
+  # Always set to 'namespace'
+  type: namespace
+  # Mandatory
+  # Credentials for accessing the BGD controller
+  # Used for authentication with BG-Operator
+  credentialsIs: <bgd-controller-credentials>
+  # Mandatory
+  # URL of the BG-Operator service
+  # Used for BGD lifecycle operations
+  url: <bg-operator-url>
+```
+
+**BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
+
+- `${controller}` → controller namespace
+- `${origin}` → origin namespaces
+- `${peer}` → peer namespaces
 
 ### Solution Descriptor
 
@@ -792,7 +886,7 @@ Other systems can use it for other reasons, for example as a deployment blueprin
 
 Only SD versions 2.1 and 2.2 can be used by EnvGene for the purposes described above, as their `application` list elements contain the `deployPostfix` and `version` attributes.
 
-For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/sd-processing.md).
+For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/features/sd-processing.md).
 
 SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [pipeline](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
 
@@ -1694,3 +1788,9 @@ groupId: org.qubership
 ```
 
 [Application Definition JSON schema](/schemas/appdef.schema.json)
+
+## Discovery Repository Objects
+
+### Cloud Passport Template
+
+TBD

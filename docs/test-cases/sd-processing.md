@@ -20,7 +20,7 @@
   - [TC-001-017: Adding new application and update application version in `extended-merge` mode to SD for an Environment via SD content](#tc-001-017-adding-new-application-and-update-application-version-in-extended-merge-mode-to-sd-for-an-environment-via-sd-content)
   - [TC-001-018: Adding new application and update application version to SD for an Environment via SD content. SD version migration](#tc-001-018-adding-new-application-and-update-application-version-to-sd-for-an-environment-via-sd-content-sd-version-migration)
 
-This describes test cases for the [SD Processing](/docs/sd-processing.md) feature
+This describes test cases for the [SD Processing](/docs/features/sd-processing.md) feature
 
 ## TC-001-001: Adding SD for the first time for an Environment via SD artifact
 
