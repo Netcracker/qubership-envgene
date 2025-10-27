@@ -22,12 +22,39 @@ class MavenConfig(BaseSchema):
     repository_domain_name: str = Field(json_schema_extra={"error_message": "Application registry does not define URL"})
     snapshot_group: Optional[str] = ""
     release_group: Optional[str] = ""
+    auth_config: Optional[str] = None  # V2: Reference to authConfig key in Registry.auth_config
 
     @field_validator('full_repository_url')
     def check_full_repository_url(cls, full_repository_url):
         if full_repository_url:
             raise ValueError(f"Full URL {full_repository_url} is not supported, please use domain URL")
         return full_repository_url
+
+
+class AuthConfig(BaseSchema):
+    """RegDef V2 authentication configuration"""
+    credentials_id: str
+    auth_type: Optional[str] = None  # shortLived, longLived
+    provider: Optional[str] = None  # aws, gcp, azure
+    auth_method: Optional[str] = None  # secret, assume_role, service_account, federation, user_pass
+    
+    # AWS-specific fields
+    aws_region: Optional[str] = None
+    aws_domain: Optional[str] = None
+    aws_role_arn: Optional[str] = None
+    aws_role_session_prefix: Optional[str] = "nc-devops-m2m-session"
+    
+    # GCP-specific fields
+    gcp_reg_project: Optional[str] = None
+    gcp_reg_pool_id: Optional[str] = None
+    gcp_reg_provider_id: Optional[str] = None
+    gcp_reg_sa_email: Optional[str] = None
+    
+    # Azure-specific fields (future support)
+    azure_tenant_id: Optional[str] = None
+    azure_acr_resource: Optional[str] = None
+    azure_acr_name: Optional[str] = None
+    azure_artifacts_resource: Optional[str] = None
 
 
 class DockerConfig(BaseSchema):
@@ -82,7 +109,7 @@ class ArtifactInfo(BaseSchema):
 
 
 class Registry(BaseSchema):
-    credentials_id: Optional[str] = ""
+    credentials_id: Optional[str] = ""  # V1 backward compatibility
     name: str
     maven_config: MavenConfig
     docker_config: DockerConfig
@@ -91,6 +118,10 @@ class Registry(BaseSchema):
     npm_config: Optional[NpmConfig] = None
     helm_config: Optional[HelmConfig] = None
     helm_app_config: Optional[HelmAppConfig] = None
+    
+    # V2 fields
+    version: Optional[str] = "1.0"  # Default "1.0" for backward compatibility
+    auth_config: Optional[dict[str, AuthConfig]] = None  # V2: Dictionary of named auth configurations
 
 
 class Application(BaseSchema):

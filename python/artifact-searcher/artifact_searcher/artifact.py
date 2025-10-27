@@ -5,6 +5,7 @@ import shutil
 import tempfile
 from pathlib import Path
 from typing import Any, Optional
+from functools import partial
 from urllib.parse import urljoin
 from zipfile import ZipFile
 
@@ -140,20 +141,90 @@ def get_repo_pointer(repo_value: str, registry: Registry):
     return repos_dict.get(repo_value)
 
 
-async def check_artifact_async(app: Application, artifact_extension: FileExtension, version: str) -> Optional[
-                                                                                                         tuple[
-                                                                                                             str, tuple[
-                                                                                                                 str, str]]] | None:
+async def check_artifact_async(app: Application, artifact_extension: FileExtension, version: str,
+                               env_creds: Optional[dict] = None) -> Optional[tuple[str, tuple[str, str]]]:
     """
-    Resolves the full artifact URL and the first repository where it was found
-
-    Returns:
-        Optional[tuple[str, tuple[str, str]]]: A tuple containing:
-            - str: Full URL to the artifact.
-            - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
-            Returns None if the artifact could not be resolved
+    Checks if artifact exists in registry and returns its URL.
+    Routes to V2 (cloud-aware) or V1 (URL-based) search based on Registry version.
     """
+    registry_version = getattr(app.registry, 'version', "1.0")
+    
+    if registry_version == "2.0":
+        logger.info(f"Detected RegDef V2 for {app.name}, attempting cloud-aware search")
+        try:
+            return await _check_artifact_v2_async(app, artifact_extension, version, env_creds)
+        except Exception as e:
+            logger.warning(
+                f"V2 artifact search failed for {app.name}: {e}. "
+                f"Falling back to V1 URL-based search."
+            )
+            return await _check_artifact_v1_async(app, artifact_extension, version)
+    else:
+        logger.debug(f"Using V1 artifact search for {app.name} (version={registry_version})")
+        return await _check_artifact_v1_async(app, artifact_extension, version)
 
+
+async def _check_artifact_v2_async(app: Application, artifact_extension: FileExtension, version: str,
+                                   env_creds: Optional[dict]) -> Optional[tuple[str, tuple[str, str]]]:
+    """
+    V2 artifact search using Maven Client with cloud authentication.
+    Falls back to V1 if credentials or authConfig are missing.
+    """
+    if not env_creds:
+        logger.warning(f"V2 registry but no env_creds provided for {app.name}, falling back to V1")
+        return await _check_artifact_v1_async(app, artifact_extension, version)
+    
+    auth_config_ref = getattr(app.registry.maven_config, 'auth_config', None)
+    if not auth_config_ref:
+        logger.warning(f"V2 registry but no maven authConfig reference for {app.name}, falling back to V1")
+        return await _check_artifact_v1_async(app, artifact_extension, version)
+    
+    try:
+        from artifact_searcher.cloud_auth_helper import CloudAuthHelper
+        
+        auth_config = CloudAuthHelper.resolve_auth_config(app.registry, "maven")
+        
+        if not auth_config or not auth_config.provider:
+            logger.warning(f"V2 registry but no cloud provider for {app.name}, falling back to V1")
+            return await _check_artifact_v1_async(app, artifact_extension, version)
+        
+        if auth_config.provider not in ["aws", "gcp"]:
+            logger.warning(f"V2 registry with unsupported provider '{auth_config.provider}' for {app.name}, falling back to V1")
+            return await _check_artifact_v1_async(app, artifact_extension, version)
+        
+        logger.info(f"Creating Maven Client searcher for {app.name} with provider={auth_config.provider}")
+        loop = asyncio.get_event_loop()
+        
+        searcher = await loop.run_in_executor(None, CloudAuthHelper.create_maven_searcher, app.registry, env_creds)
+        
+        try:
+            from qubership_pipelines_common_library.v1.maven_client import Artifact as MavenArtifact
+        except ImportError:
+            logger.error("Maven Client library not available, falling back to V1")
+            return await _check_artifact_v1_async(app, artifact_extension, version)
+        
+        maven_artifact = MavenArtifact(artifact_id=app.artifact_id, version=version, extension=artifact_extension.value)
+        logger.info(f"Searching for artifact {app.artifact_id}:{version} using Maven Client")
+        urls = await loop.run_in_executor(None, partial(searcher.find_artifact_urls, artifact=maven_artifact))
+        
+        if not urls:
+            logger.warning(f"No artifacts found for {app.artifact_id}:{version} via Maven Client")
+            return None
+        
+        artifact_url = urls[0]
+        logger.info(f"Found artifact via Maven Client at: {artifact_url}")
+        return artifact_url, (auth_config.provider, "cloudProvider")
+        
+    except Exception as e:
+        logger.error(f"Error in V2 search: {e}", exc_info=True)
+        raise
+
+
+async def _check_artifact_v1_async(app: Application, artifact_extension: FileExtension,
+                                   version: str) -> Optional[tuple[str, tuple[str, str]]]:
+    """
+    V1 artifact search using URL-based approach.
+    """
     folder = version_to_folder_name(version)
     stop_event = asyncio.Event()
 
