@@ -21,11 +21,11 @@
     - [`SD_VERSION`](#sd_version)
     - [`SD_DATA`](#sd_data)
     - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
+    - [`NS_BUILD_FILTER`](#ns_build_filter)
     - [`DEPLOYMENT_SESSION_ID`](#deployment_session_id)
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
-    - [`NS_BUILD_FILTER`](#ns_build_filter)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
@@ -189,12 +189,12 @@ contexts:
 | Attribute | Mandatory | Description | Default | Example |
 |---|---|---|---|---|
 | **version** | Optional | The version of the effective set to be generated. Available options are `v1.0` and `v2.0`. EnvGene uses `--effective-set-version` to pass this attribute to the Calculator CLI. | `v1.0` | `v2.0` |
-| **app_chart_validation** | Optional | [App chart validation](/docs/calculator-cli.md#version-20-app-chart-validation) feature flag. This validation checks whether all applications in the solution for which the effective set is being calculated are built using the app chart model. If at least one is not, the calculation fails. If `true`: validation is performed, if `false`: validation is skipped  | `true` | `false` |
+| **app_chart_validation** | Optional | [App chart validation](/docs/features/calculator-cli.md#version-20-app-chart-validation) feature flag. This validation checks whether all applications in the solution for which the effective set is being calculated are built using the app chart model. If at least one is not, the calculation fails. If `true`: validation is performed, if `false`: validation is skipped  | `true` | `false` |
 | **effective_set_expiry** | Optional | The duration for which the effective set (stored as a job artifact) will remain available for download. Envgene passes this value unchanged to: 1) The `retention-days` job attribute in case of GitHub pipeline. 2) The `expire_in` job attribute in case of GitLab pipeline. The exact syntax and constraints differ between platforms. Refer to the GitHub and GitLab documentation for details. | GitLab: `1 hours`, GitHub: `1` (day) | GitLab: `2 hours`, GitHub: `2` |
-| **contexts.pipeline.consumers** | Optional | Each entry in this list adds a [consumer-specific pipeline context component](/docs/calculator-cli.md#version-20-pipeline-parameter-context) to the Effective Set. EnvGene passes the path to the corresponding JSON schema file to the Calculator CLI using the `--pipeline-consumer-specific-schema-path` argument. Each list element is passed as a separate argument. | None | None |
-| **contexts.pipeline.consumers[].name** | Mandatory | The name of the [consumer-specific pipeline context component](/docs/calculator-cli.md#version-20-pipeline-parameter-context). If used without `contexts.pipeline.consumers[].schema`, the component must be pre-registered in EnvGene | None | `dcl` |
-| **contexts.pipeline.consumers[].version** | Mandatory | The version of the [consumer-specific pipeline context component](/docs/calculator-cli.md#version-20-pipeline-parameter-context). If used without `contexts.pipeline.consumers[].schema`, the component must be pre-registered in EnvGene. | None | `v1.0`|
-| **contexts.pipeline.consumers[].schema** | Optional | The content of the consumer-specific pipeline context component JSON schema transformed into a string. It is used to generate a consumer-specific pipeline context for a consumer not registered in EnvGene. EnvGene saves the value as a JSON file with the name `<contexts.pipeline[].name>-<contexts.pipeline[].version>.schema.json` and passes the path to it to the Calculator CLI via `--pipeline-consumer-specific-schema-path` attribute. The schema obtained in this way is not saved between pipeline runs and must be passed for each run. | None | [consumer-v1.0.json](/examples/consumer-v1.0.json) |
+| **contexts.pipeline.consumers** | Optional | Each entry in this list adds a [consumer-specific pipeline context component](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context) to the Effective Set. EnvGene passes the path to the corresponding JSON schema file to the Calculator command-line tool using the `--pipeline-consumer-specific-schema-path` argument. Each list element is passed as a separate argument. | None | None |
+| **contexts.pipeline.consumers[].name** | Mandatory | The name of the [consumer-specific pipeline context component](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context). If used without `contexts.pipeline.consumers[].schema`, the component must be pre-registered in EnvGene | None | `dcl` |
+| **contexts.pipeline.consumers[].version** | Mandatory | The version of the [consumer-specific pipeline context component](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context). If used without `contexts.pipeline.consumers[].schema`, the component must be pre-registered in EnvGene. | None | `v1.0`|
+| **contexts.pipeline.consumers[].schema** | Optional | The content of the consumer-specific pipeline context component JSON schema transformed into a string. It is used to generate a consumer-specific pipeline context for a consumer not registered in EnvGene. EnvGene saves the value as a JSON file with the name `<contexts.pipeline[].name>-<contexts.pipeline[].version>.schema.json` and passes the path to it to the Calculator command-line tool via `--pipeline-consumer-specific-schema-path` attribute. The schema obtained in this way is not saved between pipeline runs and must be passed for each run. | None | [consumer-v1.0.json](/examples/consumer-v1.0.json) |
 
 Registered component JSON schemas are stored in the EnvGene Docker image as JSON files named: `<consumers-name>-<consumer-version>.schema.json`
 
@@ -258,7 +258,7 @@ If `artifact`:
 If `json`:
   SD content is expected in `SD_DATA`. The system should transform it into YAML format, and save it to the repository.
 
-See details in [SD processing](/docs/sd-processing.md)
+See details in [SD processing](/docs/features/sd-processing.md)
 
 **Default Value**: `artifact`
 
@@ -270,9 +270,9 @@ See details in [SD processing](/docs/sd-processing.md)
 
 **Description**: Specifies one or more SD artifacts in `application:version` notation passed via a `\n` separator.
 
-EnvGene downloads and sequentially merges them in the `basic-merge` mode, where subsequent `application:version` takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/sd-processing.md#delta-sd), then merges with [Full SD](/docs/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
+EnvGene downloads and sequentially merges them in the `basic-merge` mode, where subsequent `application:version` takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
-See details in [SD processing](/docs/sd-processing.md)
+See details in [SD processing](/docs/features/sd-processing.md)
 
 **Default Value**: None
 
@@ -287,9 +287,9 @@ See details in [SD processing](/docs/sd-processing.md)
 
 **Description**: Specifies the **list** of contents of one or more SD in JSON-in-string format.
 
-EnvGene sequentially merges them in the `basic-merge` mode, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/sd-processing.md#delta-sd), then merges with [Full SD](/docs/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
+EnvGene sequentially merges them in the `basic-merge` mode, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
-See details in [SD processing](/docs/sd-processing.md)
+See details in [SD processing](/docs/features/sd-processing.md)
 
 **Default Value**: None
 
@@ -311,7 +311,7 @@ See details in [SD processing](/docs/sd-processing.md)
 
 ### `SD_REPO_MERGE_MODE`
 
-**Description**: Defines SD merge mode between incoming SD and already existed in repository SD. See details in [SD Merge](/docs/sd-processing.md#sd-merge)
+**Description**: Defines SD merge mode between incoming SD and already existed in repository SD. See details in [SD Merge](/docs/features/sd-processing.md#sd-merge)
 
 Available values:
 
@@ -320,7 +320,7 @@ Available values:
 - `extended-merge`
 - `replace`
 
-See details in [SD processing](/docs/sd-processing.md)
+See details in [SD processing](/docs/features/sd-processing.md)
 
 **Default Value**: `basic-merge`
 
@@ -328,12 +328,28 @@ See details in [SD processing](/docs/sd-processing.md)
 
 **Example**: `extended-merge`
 
+### `NS_BUILD_FILTER`
+
+**Description**: It allows to generate or update only specific Namespaces without touching the others.
+
+See details in [Namespace Render Filtering](/docs/features/namespace-render-filtering.md)
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `${controller}`
+
 ### `DEPLOYMENT_SESSION_ID`
 
-**Description**: This parameter is used in two scenarios:
+**Description**: Operation identifier in Envgene. Must be a valid [UUID v4](https://www.rfc-editor.org/rfc/rfc4122). This parameter is used in two scenarios:
 
 1. If this parameter is provided, the resulting pipeline commit will include a [Git trailer](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt-code--trailerlttokengtltvaluegtcode) in the format: `DEPLOYMENT_SESSION_ID: <value of DEPLOYMENT_SESSION_ID>`.
-2. It will also be part of the deployment context of the Effective Set. The EnvGene passes it to the Calculator CLI using the `--extra_params` attribute. In this case it is used together with `GENERATE_EFFECTIVE_SET`.
+2. It will also be part of the deployment context of the Effective Set. The EnvGene passes it to the Calculator command-line tool using the `--extra_params` attribute. In this case it is used together with `GENERATE_EFFECTIVE_SET`.
+
+**Default Value**: None
+
+**Mandatory**: No
 
 **Example**: "123e4567-e89b-12d3-a456-426614174000"
 
@@ -431,19 +447,9 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 
 **Example**: `true`
 
-### `NS_BUILD_FILTER`
-
-**Description**: It allows to generate or update only specific Namespaces without touching the others.
-
-See details in [Namespace Render Filtering](/docs/features/namespace-render-filtering.md)
-
-**Mandatory**: No
-
-**Example**: `@controller`
-
 ### `GH_ADDITIONAL_PARAMS`
 
-**Description**: A JSON string parameter for GitHub pipelines that contains all pipeline parameters except these core ones that must be set separately:
+**Description**: A JSON in string parameter for GitHub pipeline. Use it to pass all pipeline parameters except these main ones, which must be set directly:
 
 - `ENV_NAMES`
 - `DEPLOYMENT_TICKET_ID`
@@ -453,13 +459,12 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 - `GET_PASSPORT`
 - `CMDB_IMPORT`
 
-This enables automated pipeline execution without UI input. The JSON must follow the parameter schema defined in this document.
+The parameters must follow the parameter schema defined in this document.
 
 This parameter is only available in the [GitHub version](/github_workflows/instance-repo-pipeline/) of the pipeline.
 
 > [!NOTE]
-> GitHub's UI limits manual inputs to 10 parameters. To handle this while keeping the same features as GitLab,
-> we put the most important parameters in the UI and group the rest in this JSON field.
+> GitHub only allows 10 input parameters for the pipeline. To work around this but keep full functionality, the main parameters are provided at the top level, and all additional ones are sent as JSON in this field.
 
 **Default Value**: None
 
@@ -498,7 +503,7 @@ If `true`: behaves identically to `SD_REPO_MERGE_MODE: extended-merge`
 
 If `false`: behaves identically to `SD_REPO_MERGE_MODE: replace`
 
-See details in [SD processing](/docs/sd-processing.md)
+See details in [SD processing](/docs/features/sd-processing.md)
 
 **Default Value**: None
 

@@ -21,7 +21,7 @@
     - [`current_env.cluster.cloud_public_url`](#current_envclustercloud_public_url)
     - [`appdefs.overrides`](#appdefsoverrides)
     - [`regdefs.overrides`](#regdefsoverrides)
-  - [Calculator CLI macros](#calculator-cli-macros)
+  - [Calculator command-line tool macros](#calculator-command-line-tool-macros)
     - [`APPLICATION_NAME`](#application_name)
     - [`NAMESPACE`](#namespace)
     - [`CLOUDNAME`](#cloudname)
@@ -74,7 +74,7 @@
     - [Deprecated Calculator CLI macros](#deprecated-calculator-cli-macros)
       - [`BASELINE_PROJ`](#baseline_proj)
 
-This documentation provides a list of macros that can be used during template generation
+This documentation provides a list of macros that can be used in environment templates and environment-specific parameter sets.
 
 ## Jinja Macros
 
@@ -105,7 +105,7 @@ using the respective platform's CI variables. This macro is used in [Template De
 tenant: "{{ templates_dir }}/env_templates/composite/tenant.yml.j2"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/simple.yaml)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple.yaml)
 
 ### `current_env.name`
 
@@ -122,7 +122,7 @@ tenant: "{{ templates_dir }}/env_templates/composite/tenant.yml.j2"
 name: "{{current_env.name }}-oss"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/composite/namespaces/oss.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/namespaces/oss.yml.j2)
 
 ### `current_env.tenant`
 
@@ -139,7 +139,7 @@ name: "{{current_env.name }}-oss"
 name: "{{ current_env.tenant }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/composite/tenant.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/tenant.yml.j2)
 
 ### `current_env.cloud`
 
@@ -156,7 +156,7 @@ name: "{{ current_env.tenant }}"
 name: "{{ current_env.cloud }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/simple/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `current_env.cloudNameWithCluster`
 
@@ -184,7 +184,7 @@ Notes:
 name: "{{ current_env.cloudNameWithCluster }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/cloud.yml.j2)
 
 ### `current_env.cmdb_name`
 
@@ -235,7 +235,7 @@ CMDB-URL: "{{ current_env.current_env.cmdb_url }}"
 description: "{{ current_env.description }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/simple/tenant.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/tenant.yml.j2)
 
 ### `current_env.owners`
 
@@ -252,7 +252,7 @@ description: "{{ current_env.description }}"
 owners: "{{ current_env.owners }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/simple/tenant.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/tenant.yml.j2)
 
 ### `current_env.env_template`
 
@@ -288,7 +288,7 @@ deployParameters:
   INSTANCES_LEVEL_VAR_CLOUD: "{{ current_env.additionalTemplateVariables.CLOUD_LEVEL_PARAM1 }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/composite/namespaces/billing.yaml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/namespaces/billing.yaml.j2)
 
 ### `current_env.cloud_passport`
 
@@ -359,7 +359,7 @@ The value of the `<application-name>`, `<deploy-postfix>` and `version` in this 
 
 **Usage in sample:**
 
-- [Sample template](/docs/samples/templates/env_templates/composite/namespaces/bss.yml.j2)
+- [Sample template](/docs/samples/template-repository/templates/env_templates/composite/namespaces/bss.yml.j2)
 
 ### `current_env.cluster.cloud_api_protocol`
 
@@ -380,7 +380,7 @@ protocol: "{{current_env.cluster.cloud_api_protocol}}"
 
 **Usage in sample:**
 
-- [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+- [Sample](/docs/samples/template-repository/templates/env_templates/composite/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_api_url`
 
@@ -401,7 +401,7 @@ apiUrl: "{{current_env.cluster.cloud_api_url}}"
 
 **Usage in sample:**
 
-- [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+- [Sample](/docs/samples/template-repository/templates/env_templates/composite/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_api_port`
 
@@ -422,7 +422,7 @@ apiPort: "{{current_env.cluster.cloud_api_port}}"
 
 **Usage in sample:**
 
-- [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+- [Sample](/docs/samples/template-repository/templates/env_templates/composite/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_public_url`
 
@@ -441,7 +441,7 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 
 **Usage in sample:**
 
-- [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+- [Sample](/docs/samples/template-repository/templates/env_templates/composite/cloud.yml.j2)
 
 ### `appdefs.overrides`
 
@@ -484,9 +484,9 @@ mavenConfig:
 
 **Usage in sample:** [Sample](/test_data/test_templates/regdefs/registry-1.yaml.j2)
 
-## Calculator CLI macros
+## Calculator command-line tool macros
 
-These macros are rendered at the stage of calculating the [Effective Set](/docs/calculator-cli.md#effective-set-structure) and are present in it as rendered values.
+These macros are rendered at the stage of calculating the [Effective Set](/docs/features/calculator-cli.md#effective-set-structure) and are present in it as rendered values.
 
 ### `APPLICATION_NAME`
 

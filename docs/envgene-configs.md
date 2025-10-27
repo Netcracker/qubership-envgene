@@ -45,6 +45,10 @@ inventory:
   # This attribute's value is available for template rendering via the `current_env.cloud` variable
   cloudName: string
   # Optional
+  # URL of the Cluster as specified in kubeconfig
+  # Used for forming macros such as current_env.cluster.cloud_api_url
+  clusterUrl: string
+  # Optional
   # Reference to Cloud Passport
   # Cloud Passport should be located in `/environments/<cluster-name>/<env-name>/cloud-passport/` directory
   cloudPassport: string
@@ -83,36 +87,36 @@ envTemplate:
   # Additional variables that will be available during template rendering
   additionalTemplateVariables: hashmap
   # Optional
-  # Array of file names containing parameters that will be merged with `additionalTemplateVariables`
+  # Array of filenames containing parameters that will be merged with `additionalTemplateVariables`
   # File must contain key-value hashmap
   # File must NOT located in a `parameters` directory
   sharedTemplateVariables: array
   # Optional
   # Set of environment-specific deployment parameters
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` 
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificParamsets: hashmap
   # Optional
   # Environment specific pipeline (e2e) parameters set
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificE2EParamsets: hashmap
   # Optional
   # Environment specific runtime (technical) parameters set
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificTechnicalParamsets: hashmap
   # Optional
   # Environment specific resource profile overrides
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of resource profile files without extension located in the `resource_profiles` directory
   envSpecificResourceProfiles: hashmap
   # Optional
-  # Array of file names in a 'credentials' folder that will override generated and defined for instance credentials
+  # Array of filenames in a 'credentials' folder that will override generated and defined for instance credentials
   # File must contain a set of credential objects
   sharedMasterCredentialFiles: array
   # Following parameters are automatically generated during job and display that application:version artifact
