@@ -39,6 +39,8 @@
       - [Registry Definition v1.0](#registry-definition-v10)
       - [Registry Definition v2.0](#registry-definition-v20)
     - [Application Definition](#application-definition)
+  - [Discovery Repository Objects](#discovery-repository-objects)
+    - [Cloud Passport Template](#cloud-passport-template)
 
 ## Template Repository Objects
 
@@ -231,7 +233,7 @@ version: string
 # Mandatory
 # The name of the Parameter Set
 # Used to reference the Parameter Set in templates
-# Must match the Parameter Set file name
+# Must match the Parameter Set filename
 name: string
 # Mandatory
 # Key-value pairs of parameters
@@ -1496,3 +1498,9 @@ groupId: org.qubership
 ```
 
 [Application Definition JSON schema](/schemas/appdef.schema.json)
+
+## Discovery Repository Objects
+
+### Cloud Passport Template
+
+TBD

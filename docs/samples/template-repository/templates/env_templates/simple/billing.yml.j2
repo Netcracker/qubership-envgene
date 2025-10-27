@@ -1,9 +1,8 @@
 ---
-name: "{{current_env.name}}-billing"
+name: "{{ current_env.name }}-billing"
 credentialsId: ""
 labels:
-- "solutionInstance-{{current_env.name}}"
-- "solution-{{current_env.tenant}}"
+  - "solutionInstance-{{ current_env.name }}"
 isServerSideMerge: false
 cleanInstallApprovalRequired: true
 mergeDeployParametersAndE2EParameters: false

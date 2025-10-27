@@ -87,7 +87,7 @@ envTemplate:
   # Additional variables that will be available during template rendering
   additionalTemplateVariables: hashmap
   # Optional
-  # Array of file names containing parameters that will be merged with `additionalTemplateVariables`
+  # Array of filenames containing parameters that will be merged with `additionalTemplateVariables`
   # File must contain key-value hashmap
   # File must NOT located in a `parameters` directory
   sharedTemplateVariables: array
@@ -116,7 +116,7 @@ envTemplate:
   # Values are the names of resource profile files without extension located in the `resource_profiles` directory
   envSpecificResourceProfiles: hashmap
   # Optional
-  # Array of file names in a 'credentials' folder that will override generated and defined for instance credentials
+  # Array of filenames in a 'credentials' folder that will override generated and defined for instance credentials
   # File must contain a set of credential objects
   sharedMasterCredentialFiles: array
   # Following parameters are automatically generated during job and display that application:version artifact
