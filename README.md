@@ -137,7 +137,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 
 - [**Sample Configurations**](/docs/samples/README.md)
 - [**Environment Template Examples**](/docs/samples/template-repository/)
-- [**Environment Inventory Examples**](/docs/samples/instance-repository/) 
+- [**Environment Inventory Examples**](/docs/samples/instance-repository/)
 
 ### Development
 
