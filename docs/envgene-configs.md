@@ -6,6 +6,8 @@
   - [`integration.yml`](#integrationyml)
   - [`deployer.yml`](#deployeryml)
   - [`appregdef_config.yaml`](#appregdef_configyaml)
+  - [Deprecated](#deprecated)
+    - [`registry.yml`](#registryyml)
 
 ## `env_definition.yml`
 
@@ -322,4 +324,50 @@ appdefs:
 regdefs:
   overrides:
     hostName: "registry.qubership.org"
+```
+
+## Deprecated
+
+### `registry.yml`
+
+This config file contains the definition of one or more Maven registries used for downloading Environment Template artifacts.
+
+Replacement: [Artifact Definitions](/docs/envgene-objects.md#artifact-definition)
+
+Location: `/configuration/registry.yml`
+
+[`registry.yml` JSON Schema](/schemas/registry.schema.json)
+
+```yaml
+<registry-name>:
+  # Username for authenticating to the registry.
+  # It's recommended to use the envgen.creds.get() macro.
+  # For anonymous registries, use an empty string: ""
+  username: string
+  # Password for authenticating to the registry.
+  # It's recommended to use the envgen.creds.get() macro.
+  # For anonymous registries, use an empty string: ""
+  password: string
+  releaseRepository: string
+  snapshotRepository: string
+  stagingRepository: string
+  proxyRepository: string
+  releaseTemplateRepository: string
+  snapshotTemplateRepository: string
+  stagingTemplateRepository: string
+```
+
+Example:
+
+```yaml
+artifactory:
+  username: envgen.creds.get('artifactory-cred').username
+  password: envgen.creds.get('artifactory-cred').password
+  releaseRepository: "https://artifactory.qubership.org/mvn.release"
+  snapshotRepository: "https://artifactory.qubership.org/mvn.staging"
+  stagingRepository: "https://artifactory.qubership.org/mvn.staging"
+  proxyRepository: "https://artifactory.qubership.org/mvn.proxy"
+  releaseTemplateRepository: "https://artifactory.qubership.org/mvn.template-release"
+  snapshotTemplateRepository: "https://artifactory.qubership.org/mvn.template-snapshot"
+  stagingTemplateRepository: "https://artifactory.qubership.org/mvn.template-staging"
 ```
