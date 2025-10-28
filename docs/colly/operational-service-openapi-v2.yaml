@@ -111,7 +111,9 @@ paths:
                 name:
                   type: string
                 owners:
-                  type: string
+                  type: array
+                  items:
+                    type: string
                 description:
                   type: string
                 status:
@@ -123,7 +125,9 @@ paths:
                 type:
                   type: string
                 teams:
-                  type: string
+                  type: array
+                  items:
+                    type: string
                 deploymentStatus:
                   type: string
                 ticketLinks:
@@ -259,7 +263,7 @@ components:
           description: "Unique identifier of the Environment in the service instance. Generated automatically upon creation."
         name:
           type: string
-          description: "Human-readable environment name in `<cluster-name>/<environment-name>` notation"
+          description: "Human-readable environment name. For example, env-1"
         namespaces:
           type: array
           description: "List of namespace objects included in the Environment"

@@ -6,6 +6,7 @@
   - [Cluster](#cluster)
   - [Colly instance](#colly-instance)
   - [To discuss](#to-discuss)
+  - [To implement](#to-implement)
 
 ## Environment
 
@@ -47,34 +48,8 @@
 
 ## To discuss
 
-- [ ] `status`
-
-  - What is `to be deprecated`? Why do we not have `deprecated`, `deleted`, or `not used` states?
-  - Do we need `MIGRATING` (meaning the upgrade is in progress)?
-  - Propose ![env-state-machine.drawio.png](/docs/images/env-state-machine.drawio.png)
-    1. `PLANNED` Planned for deployment, but not yet deployed. It exists only as a record in Colly for planning purposes.
-    2. `FREE` The Environment is successfully deployed in the cloud but is not used by anyone; it is ready for use and not scheduled for usage.
-    3. `IN_USE` The Environment is successfully deployed in the cloud and is being used by a specific team for specific purposes.
-    4. `RESERVED` The Environment is successfully deployed in the cloud and reserved for use by a specific team, but is not currently in use.
-    5. `DEPRECATED` The Environment is not used by anyone, and a decision has been made to delete it.
-  - Should it be extendable?
-
-- [ ] `role`
-
-  - There is already `type`, which is based on labels set by the Cloud Passport Discovery CLI.
-  - Discuss with Pankratov to clarify whether this attribute should be computed by Colly (and if so, based on what criteria), or if it should be user-defined.
-  - Should it be extendable?
-
-- [ ] `clusterInfoUpdateInterval`, `clusterInfoUpdateStatus.result`, `clusterInfoUpdateStatus.completedAt`
-  - принудительный синк?
-
-- [+] `team` or `teams`? `owner` or `owners`?
-  - `owners`, `teams` are lists
-
-- [+] Each POST in the API will result in a separate commit
-
 - [ ] Product/Project SDs
-  - Mapping of SD type to SD name is specified in the configuration:
+  - Mapping of SD type to SD name is specified in the Colly deployment parameters:
 
     ```yaml
     solutionDescriptors:
@@ -82,19 +57,86 @@
         - <sd-name-regexp>
     ```
 
-  - The configuration is a deployment parameter of the Colly application
   - Default value:
 
       ```yaml
       solutionDescriptors:
         product:
-          - .*product.*
+          - (?i)product
         project:
-          - .*project.*
+          - (?i)project
         infra:
-          - .*infra.*
+          - (?i)infra
+          - (?i)platform
       ```
 
-  - Wait updates of default value from the customer
+- [ ] `status`
+
+  - Propose ![env-state-machine.drawio.png](/docs/images/env-state-machine.drawio.png)
+    1. `PLANNED` Planned for deployment, but not yet deployed. It exists only as a record in Colly for planning purposes.
+    2. `FREE` The Environment is successfully deployed in the cloud but is not used by anyone; it is ready for use and not scheduled for usage.
+    3. `IN_USE` The Environment is successfully deployed in the cloud and is being used by a specific team for specific purposes.
+    4. `RESERVED` The Environment is successfully deployed in the cloud and reserved for use by a specific team, but is not currently in use.
+    5. `DEPRECATED` The Environment is not used by anyone, and a decision has been made to delete it.
+  - OQ:
+    1. What are the cases?
+    2. Should it be extendable?
+    3. What is `to be deprecated`? Why do we not have `deprecated`, `deleted`, or `not used` states?
+    4. Do we need `MIGRATING` (meaning the upgrade is in progress)?
+
+- [ ] `clusterInfoUpdateInterval`, `clusterInfoUpdateStatus.result`, `clusterInfoUpdateStatus.lastSuccessDate`
+
+  - OQ:
+    1. What are the cases?
+    2. Should Colly support a forced clusterInfoUpdate — not on a schedule, but triggered by a user request?
+
+- [ ] `type`
+
+  - `type`  is based on labels set by the Cloud Passport Discovery CLI.
+  - OQ:
+    1. This attribute should be computed by Colly (and if so, based on what criteria), or if it should be user-defined (Discuss with Pankratov)
+
+- [ ] Lock
+  - The lock must answer the following questions:
+    - Status: locked or not locked
+    - Who locked it: free-form string
+    - Reason for locking: free-form string
+    - When it was locked: timestamp
+    - When it will be unlocked: date
+  - Required interfaces:
+    - Set/remove lock on the environment
+    - Force sync lock status from Git (can be implemented later)
+  - Only a Colly admin can lock through the UI; users cannot
+  - OQ:
+    1. Should locks be defined by inventory backend?
+    2. Who, when and why lock/unlock
+    3. What are the cases from SSP?
+
+- [ ] Last Deploy Date
+  - Last Deploy Date is the time of completion of the most recent deployment operation on the environment, regardless of the result or type (SD, DD).
+
+- [ ] Last login date
+  - OQ:
+    1. Do we keep this parameter as is?
+
+- [+] `role`
+
+  - Should it be extendable?
+    - Currently, `role` are extended via deployment parameters
+  - A separate interface to provide the list of roles is needed
+
+- [+] `team` or `teams`? `owner` or `owners`?
+  - `owners`, `teams` are lists
+
+- [+] Each POST in the API will result in a separate commit
 
 - [+] `id` is `uuid`; `name` is `<environment-name>`
+
+## To implement
+
+1. Change environment attributes
+   1. `team`(string) -> `teams`(list of strings)
+   2. `owner`(string) -> `owners`(list of strings)
+2. Add deployment parameter to extend `role` valid values
+3. Implement an interface that returns the list of `role` valid values (Low priority)
+4. Return the Colly API version in the X-API-Version header of all responses

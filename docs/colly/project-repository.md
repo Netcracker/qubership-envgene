@@ -4,6 +4,7 @@
   - [Repository Structure](#repository-structure)
     - [`parameters.yaml`](#parametersyaml)
     - [`credentials.yaml`](#credentialsyaml)
+  - [To discuss](#to-discuss)
 
 ## Repository Structure
 
@@ -57,12 +58,6 @@ envgeneTemplates:
   # The key is EnvGene environment template artifact name (application from the application:version notation)
   # The value is a list of template names inside the artifact
   <artifact-template-name>: list of strings
-# Optional
-# Extends the list of possible values for the `role` attribute of the Environment in this project
-environmentRoleExtensions: list of strings # To discuss. Maybe this is an attribute of the whole repo? or a deployment parameter?
-# Optional
-# Extends the list of possible values for the `status` attribute of the Environment in this project
-environmentStatusExtensions: list of strings # To discuss. Maybe this is an attribute of the whole repo? or a deployment parameter?
 ```
 
 ### `credentials.yaml`
@@ -87,12 +82,10 @@ Example:
 customerName: ACME
 projectName: ACME-bss
 repositories:
-  instance:
-    type: envgeneInstance
+  - type: envgeneInstance
     url: https://git.acme.com/instance
     token: instance-cred
-  template:
-    type: envgeneTemplate
+  - type: envgeneTemplate
     url: https://git.acme.com/template
     token: template-cred
     branches:
@@ -103,11 +96,6 @@ envgeneTemplates:
     - main
     - dt
     - dm
-environmentRoleExtensions:
-  - SIT
-  - UAT
-environmentStatusExtensions:
-  - MIGRATING
 ```
 
 ```yaml
@@ -120,3 +108,10 @@ template-cred:
   data:
     secret: "MGE3MjYwNTQtZGE4My00MTlkLWIzN2MtZjU5YTg3NDA2Yzk0MzlmZmViZGUtYWY4_PF84_bb"
 ```
+
+## To discuss
+
+- [ ] Should the Project repository be used as the Maintenance inventory?
+
+- [+] Use case for Colly using its own project repository:
+  1. Read all projects and extract the url, token, and branches from the `envgeneInstance` repositories in order to display the environments from these projects.
