@@ -28,9 +28,9 @@ Only a limited number of core parameters are available in the GitHub version of 
 - [GENERATE_EFFECTIVE_SET](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#generate_effective_set)
 - [GET_PASSPORT](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#get_passport)
 - [CMDB_IMPORT](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#cmdb_import)
-- [GH_ADDITIONAL_PARAMS]([/docs/instance-pipeline-parameters.md#GH_ADDITIONAL_PARAMS](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#gh_additional_params))
+- [GH_ADDITIONAL_PARAMS](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#gh_additional_params)
 
-The [GH_ADDITIONAL_PARAMS]([/docs/instance-pipeline-parameters.md#GH_ADDITIONAL_PARAMS](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#gh_additional_params)) parameter serves as a wrapper for all parameters except those listed above. This approach enables the transmission of all [Instance Pipeline parameters](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md).
+The [GH_ADDITIONAL_PARAMS](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#gh_additional_params) parameter serves as a wrapper for all parameters except those listed above. This approach enables the transmission of all [Instance Pipeline parameters](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md).
 
 ## How to Trigger the Pipeline
 
