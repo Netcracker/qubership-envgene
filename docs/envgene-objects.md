@@ -39,6 +39,8 @@
       - [Registry Definition v1.0](#registry-definition-v10)
       - [Registry Definition v2.0](#registry-definition-v20)
     - [Application Definition](#application-definition)
+  - [Discovery Repository Objects](#discovery-repository-objects)
+    - [Cloud Passport Template](#cloud-passport-template)
 
 ## Template Repository Objects
 
@@ -231,7 +233,7 @@ version: string
 # Mandatory
 # The name of the Parameter Set
 # Used to reference the Parameter Set in templates
-# Must match the Parameter Set file name
+# Must match the Parameter Set filename
 name: string
 # Mandatory
 # Key-value pairs of parameters
@@ -314,6 +316,7 @@ This is a Jinja template file used to render the [BG Domain](#bg-domain) object 
 **Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
 
 [Macros](/docs/template-macros.md) are available for use when developing the template.
+
 #### Registry Definition Template
 
 This is a Jinja template file used to render the [Registry Definition](#registry-definition) object.
@@ -692,10 +695,10 @@ controller:
 ```
 
 **BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
+
 - `${controller}` → controller namespace
 - `${origin}` → origin namespaces
 - `${peer}` → peer namespaces
-
 
 ### Solution Descriptor
 
@@ -705,7 +708,7 @@ Other systems can use it for other reasons, for example as a deployment blueprin
 
 Only SD versions 2.1 and 2.2 can be used by EnvGene for the purposes described above, as their `application` list elements contain the `deployPostfix` and `version` attributes.
 
-For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/sd-processing.md).
+For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/features/sd-processing.md).
 
 SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [pipeline](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
 
@@ -1495,3 +1498,9 @@ groupId: org.qubership
 ```
 
 [Application Definition JSON schema](/schemas/appdef.schema.json)
+
+## Discovery Repository Objects
+
+### Cloud Passport Template
+
+TBD

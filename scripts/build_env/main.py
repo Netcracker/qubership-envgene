@@ -29,7 +29,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     delete_dir(render_profiles_dir)
     render_env_dir = f"{render_dir}/{env_name}"
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}', f"{render_env_dir}/{INVENTORY_DIR_NAME}")
-    # clearing instances dir 
+    # clearing instances dir
     cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
     check_dir_exist_and_create(f'{render_parameters_dir}/from_template')
