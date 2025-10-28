@@ -47,7 +47,7 @@ metadata:
 
 - [ ] Where to store the `description` of a Cluster
 - [ ] is `ticketLinks` required?
-- [ ] Chekov linter errors - https://github.com/Netcracker/qubership-envgene/actions/runs/18886399036/job/53902750553
+- [ ] Checkov [linting errors](https://github.com/Netcracker/qubership-envgene/actions/runs/18886399036/job/53902750553)
 
 ## To Implement
 
