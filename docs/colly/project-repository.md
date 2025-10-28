@@ -114,4 +114,4 @@ template-cred:
 - [ ] Should the Project repository be used as the Maintenance inventory?
 
 - [+] Use case for Colly using its own project repository:
-  1. Read all projects and extract the url, token, and branches from the `envgeneInstance` repositories in order to display the environments from these projects.
+  1. Read all projects and extract the URL, token, and branches from the `envgeneInstance` repositories in order to display the environments from these projects.

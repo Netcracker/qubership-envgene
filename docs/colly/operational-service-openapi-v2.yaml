@@ -15,7 +15,7 @@ paths:
                 type: string
       summary: Get Auth Status
       tags:
-      - Cluster Resources Rest
+        - Cluster Resources Rest
   /colly/operational-service/v2/clusters:
     get:
       responses:
@@ -33,15 +33,15 @@ paths:
                   $ref: "#/components/schemas/ClusterDTO"
       summary: Get Clusters
       tags:
-      - Cluster Resources Rest
+        - Cluster Resources Rest
   /colly/operational-service/v2/clusters/{clusterName}:
     post:
       parameters:
-      - name: clusterName
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: clusterName
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -72,10 +72,10 @@ paths:
                 type: string
       summary: Save Cluster
       tags:
-      - Cluster Resources Rest
+        - Cluster Resources Rest
       security:
-      - SecurityScheme:
-        - admin
+        - SecurityScheme:
+            - admin
   /colly/operational-service/v2/environments:
     get:
       responses:
@@ -93,15 +93,15 @@ paths:
                   $ref: "#/components/schemas/EnvironmentDTO"
       summary: Get Environments
       tags:
-      - Cluster Resources Rest
+        - Cluster Resources Rest
   /colly/operational-service/v2/environments/{envId}:
     post:
       parameters:
-      - name: envId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: envId
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         content:
           application/x-www-form-urlencoded:
@@ -156,17 +156,17 @@ paths:
                 type: string
       summary: Save Environment
       tags:
-      - Cluster Resources Rest
+        - Cluster Resources Rest
       security:
-      - SecurityScheme:
-        - admin
+        - SecurityScheme:
+            - admin
     delete:
       parameters:
-      - name: envId
-        in: path
-        required: true
-        schema:
-          type: string
+        - name: envId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         "204":
           description: No Content
@@ -188,10 +188,10 @@ paths:
                 type: string
       summary: Delete Environment
       tags:
-      - Cluster Resources Rest
+        - Cluster Resources Rest
       security:
-      - SecurityScheme:
-        - admin
+        - SecurityScheme:
+            - admin
   /colly/operational-service/v2/metadata:
     get:
       responses:
@@ -207,7 +207,7 @@ paths:
                 $ref: "#/components/schemas/ApplicationMetadata"
       summary: Get Metadata
       tags:
-      - Cluster Resources Rest
+        - Cluster Resources Rest
   /colly/operational-service/v2/tick:
     post:
       responses:
@@ -219,7 +219,7 @@ paths:
                 type: string
       summary: Load Environments Manually
       tags:
-      - Cluster Resources Rest
+        - Cluster Resources Rest
 components:
   schemas:
     ApplicationMetadata:
@@ -242,31 +242,39 @@ components:
         clusterInfoUpdateStatus:
           type: boolean
           properties:
-            lastResult: 
+            lastResult:
               type: boolean
-              description: "Determines the information update status for cluster: if at least one object from the cluster was successfully read, the information update is considered successful"
+              description: >-
+                Determines the information update status for cluster: if at
+                least one object from the cluster was successfully read,
+                the update is considered successful
             lastCompletedAt:
-              description: "Time of the last successful update information from the cluster"
+              description: >-
+                Time of the last successful update information from the cluster
               $ref: "#/components/schemas/Instant"
     DeploymentStatus:
       type: string
       enum:
-      - DEPLOYED
-      - FAILED
-      - IN_PROGRESS
-      - NOT_STARTED
+        - DEPLOYED
+        - FAILED
+        - IN_PROGRESS
+        - NOT_STARTED
     EnvironmentDTO:
       type: object
       properties:
         id:
           type: string
-          description: "Unique identifier of the Environment in the service instance. Generated automatically upon creation."
+          description: >-
+            Unique identifier of the Environment in the service instance.
+            Generated automatically upon creation.
         name:
           type: string
-          description: "Human-readable environment name. For example, env-1"
+          description: >-
+            Human-readable environment name. For example, env-1
         namespaces:
           type: array
-          description: "List of namespace objects included in the Environment"
+          description: >-
+            List of namespace objects included in the Environment
           items:
             $ref: "#/components/schemas/NamespaceDTO"
         cluster:
@@ -302,38 +310,38 @@ components:
     EnvironmentStatus:
       type: string
       enum:
-      - IN_USE
-      - RESERVED
-      - FREE
-      - MIGRATING
+        - IN_USE
+        - RESERVED
+        - FREE
+        - MIGRATING
     EnvironmentType:
       type: string
       enum:
-      - ENVIRONMENT
-      - CSE_TOOLSET
-      - DESIGN_TIME
-      - APP_DEPLOYER
-      - INFRASTRUCTURE
-      - UNDEFINED
+        - ENVIRONMENT
+        - CSE_TOOLSET
+        - DESIGN_TIME
+        - APP_DEPLOYER
+        - INFRASTRUCTURE
+        - UNDEFINED
     EnvironmentRole:
       type: string
       enum:
-      - DEV
-      - QA
-      - PROJECT_CI
-      - SAAS
-      - JOINT_CI
-      - OTHER
+        - DEV
+        - QA
+        - PROJECT_CI
+        - SAAS
+        - JOINT_CI
+        - OTHER
     Instant:
       type: string
       format: date-time
       examples:
-      - 2022-03-10T16:15:50Z
+        - 2022-03-10T16:15:50Z
     LocalDate:
       type: string
       format: date
       examples:
-      - 2022-03-10
+        - 2022-03-10
     NamespaceDTO:
       type: object
       properties:
@@ -345,11 +353,14 @@ components:
           type: boolean
         deployPostfix:
           type: string
-          description: "Deploy postfix, namespace role in solution"
+          description: >-
+            Deploy postfix, namespace role in solution
     Duration:
       type: string
       format: duration
-      description: "Duration in ISO 8601 format (e.g., 'PT30M' for 30 minutes, 'PT2H' for 2 hours, 'P1D' for 1 day)"
+      description: >-
+        Duration in ISO 8601 format (e.g., 'PT30M' for 30 minutes, 'PT2H' for 2
+        hours, 'P1D' for 1 day)
       examples:
         - "PT30M"
         - "PT2H"
@@ -359,4 +370,5 @@ components:
     SecurityScheme:
       type: openIdConnect
       description: Authentication
-      openIdConnectUrl: http://host.docker.internal:8180/realms/quarkus/.well-known/openid-configuration
+      openIdConnectUrl: >-
+        http://host.docker.internal:8180/realms/quarkus/.well-known/openid-configuration
