@@ -63,7 +63,7 @@ runs:
     - name: BUILD CRED ROTATION test
       shell: bash
       run: |
-        cd cred_rotation/scripts
+        cd creds_rotation/scripts
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
         cd ../..
         mv junit.xml junit_build_cred.xml
