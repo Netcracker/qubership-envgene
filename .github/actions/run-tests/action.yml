@@ -60,6 +60,14 @@ runs:
         cd ../..
         mv junit.xml junit_build_env.xml
 
+    - name: BUILD CRED ROTATION test
+      shell: bash
+      run: |
+        cd cred_rotation/scripts
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
+        cd ../..
+        mv junit.xml junit_build_cred.xml
+
     - name: Merge test results
       shell: bash
       run: |
