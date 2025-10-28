@@ -10,9 +10,9 @@
       - [ParameterSet (in Template repository)](#parameterset-in-template-repository)
       - [Resource Profile Override (in Template)](#resource-profile-override-in-template)
       - [Composite Structure Template](#composite-structure-template)
-      - [BG Domain Template](#bg-domain-template)
       - [Registry Definition Template](#registry-definition-template)
       - [Application Definition Template](#application-definition-template)
+      - [BG Domain Template](#bg-domain-template)
     - [System Credentials File (in Template repository)](#system-credentials-file-in-template-repository)
   - [Instance Repository Objects](#instance-repository-objects)
     - [Environment Instance Objects](#environment-instance-objects)
@@ -102,17 +102,21 @@ cloud:
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
   overrides-parent:
     profile:
-      override-profile-name: string
-      parent-profile-name: string
-      baseline-profile-name: string
-      merge-with-parent: string
-    deployParameters: hashmap
-    e2eParameters: hashmap
-    technicalConfigurationParameters: hashmap
-    deployParameterSets: list
-    e2eParameterSets: list
-    technicalConfigurationParameterSets: list
-composite_structure: string
+      override-profile-name: <resource-profile-override-name>
+      parent-profile-name: <resource-profile-override-name>
+      baseline-profile-name: <resource-profile-baseline-name>
+      merge-with-parent: <boolean>
+    deployParameters: <hashmap-with-parameters>
+    e2eParameters: <hashmap-with-parameters>
+    technicalConfigurationParameters: <hashmap-with-parameters>
+    deployParameterSets: <list-with-parameter-sets>
+    e2eParameterSets: <list-with-parameter-sets>
+    technicalConfigurationParameterSets: <list-with-parameter-sets>
+# Optional
+composite_structure: <path-to-the-composite-structure-template-file>
+# Optional
+bg_domain: <path-to-the-bg-domain-template-file>
+# Optional
 namespaces:
   - # Optional
     # Path to the namespace template file
@@ -309,14 +313,6 @@ satellites:
     type: "namespace"
 ```
 
-#### BG Domain Template
-
-This is a Jinja template file used to render the [BG Domain](#bg-domain) object for environments that use Blue-Green Domain (BGD) support.
-
-**Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
-
-[Macros](/docs/template-macros.md) are available for use when developing the template.
-
 #### Registry Definition Template
 
 This is a Jinja template file used to render the [Registry Definition](#registry-definition) object.
@@ -372,6 +368,30 @@ name: "application-1"
 registryName: "{{ appdefs.overrides.registryName | default('registry-1') }}"
 artifactId: "application-1"
 groupId: "org.qubership"
+```
+
+#### BG Domain Template
+
+This is a Jinja template file used to render the [BG Domain](#bg-domain) object for environments that use Blue-Green Domain (BGD) support.
+
+**Location:** `/templates/env_templates/*/bg-domain.yml.j2`
+
+**Example:**
+
+```yaml
+name: {{ current_env.environmentName ~ '-bg-domain' }}
+type: bgdomain
+originNamespace:
+  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('origin-ns', current_env.environmentName ~ '-origin') }}
+  type: namespace
+peerNamespace:
+  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('peer-ns', current_env.environmentName ~ '-peer') }}
+  type: namespace
+controllerNamespace:
+  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}
+  type: namespace
+  credentials: controller-cred
+  url: https://controller-{{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}.{{ current_env.cloud_passport.cloud.CLOUD_PUBLIC_HOST}}
 ```
 
 ### System Credentials File (in Template repository)
@@ -631,7 +651,7 @@ satellites:
 
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `NS_BUILD_FILTER` parameter and BGD lifecycle management.
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter) parameter and BGD lifecycle management.
 
 The BG Domain object is generated during Environment Instance generation based on:
 
@@ -651,7 +671,7 @@ type: bgdomain
 # Mandatory
 # Origin namespace definition
 # Used to define the currently active BGD namespace
-origin:
+originNamespace:
   # Mandatory
   # The name of the origin namespace
   # Used for BGD alias resolution and lifecycle operations
@@ -663,7 +683,7 @@ origin:
 # Mandatory
 # Peer namespace definition
 # Used to define the standby BGD namespace
-peer:
+peerNamespace:
   # Mandatory
   # The name of the peer namespace
   # Used for BGD alias resolution and lifecycle operations
@@ -675,7 +695,7 @@ peer:
 # Mandatory
 # Controller namespace definition
 # Used for BGD lifecycle management and coordination
-controller:
+controllerNamespace:
   # Mandatory
   # The name of the controller namespace
   # Used by BGD operations for lifecycle coordination
@@ -687,18 +707,42 @@ controller:
   # Mandatory
   # Credentials for accessing the BGD controller
   # Used for authentication with BG-Operator
-  credentialsIs: <bgd-controller-credentials>
+  credentials: <bgd-controller-credentials>
   # Mandatory
   # URL of the BG-Operator service
   # Used for BGD lifecycle operations
   url: <bg-operator-url>
 ```
 
+When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.  
+The [`inventory.config.updateCredIdsWithEnvName`](/docs/envgene-configs.md#env_definitionyml) mechanism works for this Credential as well as for all other Credentials.
+
+**Location:** `/environments/<cluster-name>/<env-name>/bg-domain.yml`
+
+**Example:**
+
+```yaml
+bg_domain:
+  name: env-1-bg-domain
+  type: bgdomain
+  originNamespace:
+    name: env-1-bss-origin
+    type: namespace
+  peerNamespace:
+    name: env-1-bss-peer
+    type: namespace
+  controllerNamespace:
+    name: env-1-controller
+    credentials: controller-cred
+    type: namespace
+    url: https://controller-env-1-controller.qubership.org
+```
+
 **BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
 
-- `${controller}` → controller namespace
-- `${origin}` → origin namespaces
-- `${peer}` → peer namespaces
+- `@controller` → controller namespace
+- `@origin` → origin namespaces
+- `@peer` → peer namespaces
 
 ### Solution Descriptor
 
