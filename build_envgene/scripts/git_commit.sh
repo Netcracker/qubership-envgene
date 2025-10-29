@@ -230,8 +230,11 @@ if [ $diff_status -ne 0 ]; then
     echo "Current commit: $(git rev-parse HEAD)"
     echo "Remote commit: $(git rev-parse origin/${REF_NAME} 2>/dev/null || echo 'unknown')"
     
+    # Temporarily disable exit on error for git push (we want to handle it ourselves)
+    set +e
     git push origin HEAD:"${REF_NAME}"
     exit_code=$?
+    set -e
 else
     echo "No changes to commit. Skipping..."
 fi
@@ -239,6 +242,9 @@ fi
 # Retry logic with exponential backoff and proper exit code handling
 if [ "$exit_code" -ne 0 ]; then
       echo "⚠ Initial push failed with exit code: $exit_code"
+      
+      # Disable exit on error for retry loop (we want to handle errors ourselves)
+      set +e
       
       while [ "$retries" -lt 10 ]; do
           retries=$((retries+1))
@@ -273,6 +279,9 @@ if [ "$exit_code" -ne 0 ]; then
               echo "⚠ Push attempt $retries failed with exit code: $exit_code"
           fi
       done
+      
+      # Re-enable exit on error
+      set -e
       
       if [ "$exit_code" -ne 0 ]; then
           echo "❌ Failed to push after $retries retry attempts"
