@@ -26,6 +26,7 @@
       - [\[Version 2.0\] Deployment Parameter Context](#version-20-deployment-parameter-context)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml)
           - [\[Version 2.0\] Predefined `deployment-parameters.yaml` parameters](#version-20-predefined-deployment-parametersyaml-parameters)
+          - [\[Version 2.0\] Image parameters derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `credentials.yaml`](#version-20deployment-parameter-context-credentialsyaml)
           - [\[Version 2.0\] Predefined `credentials.yaml` parameters](#version-20-predefined-credentialsyaml-parameters)
         - [\[Version 2.0\]\[Deployment Parameter Context\] Collision Parameters](#version-20deployment-parameter-context-collision-parameters)
@@ -465,11 +466,15 @@ The structure of this file is as follows:
 <key-N>: <value-N>
 <application-predefined-key-1>: <application-predefined-value-1>
 <application-predefined-key-N>: <application-predefined-value-N>
+<image-params-key-1>: <image-params-value-1>
+<image-params-key-N>: <image-params-value-N>
 global: &id001
   <key-1>: <value-1>
   <key-N>: <value-N>
   <application-predefined-key-1>: <application-predefined-value-1>
   <application-predefined-key-N>: <application-predefined-value-N>
+  <image-params-key-1>: <image-params-value-1>
+  <image-params-key-N>: <image-params-value-N>
 <service-name-1>: *id001
 <service-name-2>: *id001
 ```
@@ -533,6 +538,15 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 > [!IMPORTANT]
 > Parameters whose keys match the name of one of the services must be excluded from this file
 > and placed in [`collision-deployParameters.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
+
+###### [Version 2.0] Image parameters derived from `deploy_param`
+
+For each component with the MIME type `application/octet-stream`, if its `.components[].properties[?name=deploy_param].value` attribute is not an empty string, calculate a parameter as follows:
+
+- The key is the value of `.components[].properties[?name=deploy_param].value`.
+- The value is the value of `.components[].properties[?name=full_image_name].value`.
+
+All such parameters are added to `deployment-parameters.yaml` as `<image-params-key>: <image-params-value>`, as described in the structure [above](#version-20deployment-parameter-context-deployment-parametersyaml).
 
 ##### \[Version 2.0][Deployment Parameter Context] `credentials.yaml`
 
