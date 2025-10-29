@@ -156,12 +156,14 @@ git pull origin "${REF_NAME}"
 echo "Restoring environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
 if [ "${COMMIT_ENV}" = "true" ]; then
     rm -rf "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
-    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME} "environments/${CLUSTER_NAME}/"
+    mkdir -p "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
+    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/. "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"
 fi
 
 if [ -e /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport ]; then
     rm -rf environments/${CLUSTER_NAME}/cloud-passport
-    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport "environments/${CLUSTER_NAME}/"
+    mkdir -p environments/${CLUSTER_NAME}/cloud-passport
+    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport/. "environments/${CLUSTER_NAME}/cloud-passport/"
 fi
 
 if [ -e /tmp/configuration ]; then
@@ -224,48 +226,58 @@ if [ $diff_status -ne 0 ]; then
     echo "Changes detected. Committing..."
     git commit -am "${message}"
 
-    # Add small random delay before first push to reduce conflicts in parallel jobs
-    initial_jitter=$((RANDOM % 5 + 1))
-    echo "Waiting ${initial_jitter} seconds before push to avoid conflicts with parallel jobs..."
-    sleep $initial_jitter
-
     echo "Pushing to origin HEAD:${REF_NAME}"
-    git push origin HEAD:"${REF_NAME}" || exit_code=$?
+    echo "Current commit: $(git rev-parse HEAD)"
+    echo "Remote commit: $(git rev-parse origin/${REF_NAME} 2>/dev/null || echo 'unknown')"
+    
+    git push origin HEAD:"${REF_NAME}"
+    exit_code=$?
 else
     echo "No changes to commit. Skipping..."
 fi
 
-# echo "exit CODE: ${exit_code}"
-
+# Retry logic with exponential backoff and proper exit code handling
 if [ "$exit_code" -ne 0 ]; then
-      while [ "$exit_code" -ne 0 ] && [ "$retries" -lt 10 ]; do
-          echo "⚠Push failed, retry: $retries"
-          exit_code=0
+      echo "⚠ Initial push failed with exit code: $exit_code"
+      
+      while [ "$retries" -lt 10 ]; do
           retries=$((retries+1))
+          
+          # Exponential backoff with randomization to reduce collision probability
+          # Formula: base_delay * retry_count + random(0-10)
+          sleep_time=$((5 * retries + RANDOM % 10))
+          echo "⚠ Push failed, retry attempt: $retries of 10"
+          echo "Waiting ${sleep_time} seconds before retry..."
+          sleep $sleep_time
 
-          # Add random delay (jitter) between 1-10 seconds to avoid synchronization of parallel jobs
-          jitter=$((RANDOM % 10 + 1))
-          echo "Waiting ${jitter} seconds before retry to avoid conflicts with parallel jobs..."
-          sleep $jitter
-
-          echo "Try to pull changes"
-          git pull origin "${REF_NAME}" || exit_code=$?
+          echo "Pulling latest changes from origin/${REF_NAME}..."
+          git pull origin "${REF_NAME}"
+          pull_exit_code=$?
+          
+          if [ "$pull_exit_code" -ne 0 ]; then
+              echo "⚠ Pull failed with exit code: $pull_exit_code, continuing to next retry..."
+              continue
+          fi
+          
+          echo "Successfully pulled changes. Remote is now at: $(git rev-parse origin/${REF_NAME})"
+          echo "Local HEAD is at: $(git rev-parse HEAD)"
+          
+          echo "Attempting push (retry $retries)..."
+          git push origin HEAD:"${REF_NAME}"
+          exit_code=$?
           
           if [ "$exit_code" -eq 0 ]; then
-              echo "Try to push, attempt: $retries"
-              git push origin HEAD:"${REF_NAME}" || exit_code=$?
-              
-              # Exponential backoff: wait longer after each failed attempt
-              if [ "$exit_code" -ne 0 ]; then
-                  backoff=$((retries * 2))
-                  echo "Push failed, waiting ${backoff} seconds before next attempt..."
-                  sleep $backoff
-              fi
+              echo "✅ Push succeeded on retry attempt $retries"
+              break
           else
-              echo "Pull failed, will retry..."
-              sleep 3
+              echo "⚠ Push attempt $retries failed with exit code: $exit_code"
           fi
       done
+      
+      if [ "$exit_code" -ne 0 ]; then
+          echo "❌ Failed to push after $retries retry attempts"
+          echo "Final exit code: $exit_code"
+      fi
 fi
 
 exit $exit_code
