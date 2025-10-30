@@ -1,8 +1,8 @@
 ---
 tenant: "{{ templates_dir }}/env_templates/bgd/tenant.yml.j2"
-cloud: 
+cloud:
   template_path: "{{ templates_dir }}/env_templates/bgd/cloud.yml.j2"
-  template_override: 
+  template_override:
     profile:
       name: "dev_bss_override"
       baseline: dev
@@ -22,5 +22,3 @@ namespaces:
   - template_path: "{{ templates_dir }}/env_templates/bgd/Namespaces/data-management.yml.j2"
 bg_domain: "{{ templates_dir }}/env_templates/bgd/bg_domain.yml.j2"
 parametersets: []
-
-  
