@@ -1,0 +1,35 @@
+---
+name: "{{current_env.name}}-bss"
+credentialsId: ""
+labels:
+- "solutionInstance-{{env}}"
+- "solution-{{tenant}}"
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+profile:
+  name: dev_bss_override
+  baseline: dev
+deployParameters:
+  COMPOSITE_PLATFORM: "true"
+  CONSUL_ENABLED: "true"
+  LINK_SCRIPT_MANAGER_INTEGRATION_ENABLE: "false"
+  BSS_NAMESPACE: "{{current_env.name}}-bss"
+  CORE_NAMESPACE: "{{current_env.name}}-core"
+  DATA_MANAGEMENT_NAMESPACE: "{{current_env.name}}-data-management"
+  OSS_NAMESPACE: "{{current_env.name}}-oss"
+  # DEVOPSBP-1777
+  DBAAS_LODB_PER_NAMESPACE_AUTOBALANCE_RULES: "postgresql=>postgresql:postgres"
+  SECOND_NEW_PARAMETER: "1200"
+  THIRD_NEW_PARAMETER: "true"
+  FOURTH_NEW_PARAMETER: "true"
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets:
+- "bss-wa"
+- "bss-common"
+- "bss-internal-integrations"
+e2eParameterSets: []
+technicalConfigurationParameterSets:
+- "bss-internal-integrations-tech"
+- "bss-wa-tech"

@@ -1,0 +1,13 @@
+name: "{{current_env.name}}-bg-domain"
+type: bgdomain
+originNamespace:
+  name: "{{current_env.name}}-origin-bss" 
+  type: namespace
+peerNamespace:
+  name: "{{current_env.name}}-peer-bss" 
+  type: namespace
+controllerNamespace:
+  name: "{{current_env.name}}-bg-controller"
+  type: namespace
+  credentials: bgdomaincred
+  url: https://controller-env-1-controller.qubership.org

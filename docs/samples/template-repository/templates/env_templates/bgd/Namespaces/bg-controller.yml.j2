@@ -1,0 +1,17 @@
+---
+name: "{{current_env.name}}-bg-controller"
+credentialsId: ""
+labels:
+- "solutionInstance-{{env}}"
+- "solution-{{_tenant}}"
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  CONSUL_ENABLED: "true"
+  DBAAS_LODB_PER_NAMESPACE_AUTOBALANCE_RULES: "postgresql=>postgresql:postgres"
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

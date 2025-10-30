@@ -1,0 +1,26 @@
+---
+tenant: "{{ templates_dir }}/env_templates/bgd/tenant.yml.j2"
+cloud: 
+  template_path: "{{ templates_dir }}/env_templates/bgd/cloud.yml.j2"
+  template_override: 
+    profile:
+      name: "dev_bss_override"
+      baseline: dev
+    e2eParameterSets:
+      - "test_paramsetA"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/bgd/Namespaces/bss.yml.j2"
+    deploy_postfix: "peer-bss"
+    template_override:
+      name: "{{current_env.name}}-peer-bss"
+  - template_path: "{{ templates_dir }}/env_templates/bgd/Namespaces/bss.yml.j2"
+    deploy_postfix: "origin-bss"
+    template_override:
+      name: "{{current_env.name}}-origin-bss"
+  - template_path: "{{ templates_dir }}/env_templates/bgd/Namespaces/bg-plugin.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/bgd/Namespaces/bg-controller.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/bgd/Namespaces/data-management.yml.j2"
+bg_domain: "{{ templates_dir }}/env_templates/bgd/bg_domain.yml.j2"
+parametersets: []
+
+  
