@@ -103,6 +103,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     render_dir = getAbsPath('tmp/render')
     render_parameters_dir = getAbsPath('tmp/parameters_templates')
     render_profiles_dir = getAbsPath('tmp/resource_profiles')
+
     # preparing folders for generation
     render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
                                                    render_parameters_dir, render_profiles_dir, output_dir)

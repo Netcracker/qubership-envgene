@@ -61,7 +61,7 @@
     - [Deprecated Credential Macros](#deprecated-credential-macros)
       - [`${envgene.creds.get('<cred-id>').username|password|secret}`](#envgenecredsgetcred-idusernamepasswordsecret)
 
-This documentation provides a list of macros that can be used during template generation
+This documentation provides a list of macros that can be used in environment templates and environment-specific parameter sets.
 
 ## Jinja Macros
 
@@ -92,7 +92,7 @@ using the respective platform's CI variables. This macro is used in [Template De
 tenant: "{{ templates_dir }}/env_templates/composite/tenant.yml.j2"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/simple.yaml)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple.yaml)
 
 ### `current_env.name`
 
@@ -109,7 +109,7 @@ tenant: "{{ templates_dir }}/env_templates/composite/tenant.yml.j2"
 name: "{{current_env.name }}-oss"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/composite/namespaces/oss.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/namespaces/oss.yml.j2)
 
 ### `current_env.tenant`
 
@@ -126,7 +126,7 @@ name: "{{current_env.name }}-oss"
 name: "{{ current_env.tenant }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/composite/tenant.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/tenant.yml.j2)
 
 ### `current_env.cloud`
 
@@ -143,7 +143,7 @@ name: "{{ current_env.tenant }}"
 name: "{{ current_env.cloud }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/simple/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
 ### `current_env.cloudNameWithCluster`
 
@@ -171,7 +171,7 @@ Notes:
 name: "{{ current_env.cloudNameWithCluster }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/cloud.yml.j2)
 
 ### `current_env.cmdb_name`
 
@@ -222,7 +222,7 @@ CMDB-URL: "{{ current_env.current_env.cmdb_url }}"
 description: "{{ current_env.description }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/simple/tenant.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/tenant.yml.j2)
 
 ### `current_env.owners`
 
@@ -239,7 +239,7 @@ description: "{{ current_env.description }}"
 owners: "{{ current_env.owners }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/simple/tenant.yml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/simple/tenant.yml.j2)
 
 ### `current_env.env_template`
 
@@ -275,7 +275,7 @@ deployParameters:
   INSTANCES_LEVEL_VAR_CLOUD: "{{ current_env.additionalTemplateVariables.CLOUD_LEVEL_PARAM1 }}"
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/env_templates/composite/namespaces/billing.yaml.j2)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/env_templates/composite/namespaces/billing.yaml.j2)
 
 ### `current_env.cloud_passport`
 
@@ -346,7 +346,7 @@ The value of the `<application-name>`, `<deploy-postfix>` and `version` in this 
 
 **Usage in sample:**
 
-- [Sample template](/docs/samples/templates/env_templates/composite/namespaces/bss.yml.j2)
+- [Sample template](/docs/samples/template-repository/templates/env_templates/composite/namespaces/bss.yml.j2)
 
 ### `current_env.cluster.cloud_api_protocol`
 
@@ -367,7 +367,7 @@ protocol: "{{current_env.cluster.cloud_api_protocol}}"
 
 **Usage in sample:**
 
-- [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+- [Sample](/docs/samples/template-repository/templates/env_templates/composite/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_api_url`
 
@@ -388,7 +388,7 @@ apiUrl: "{{current_env.cluster.cloud_api_url}}"
 
 **Usage in sample:**
 
-- [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+- [Sample](/docs/samples/template-repository/templates/env_templates/composite/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_api_port`
 
@@ -409,7 +409,7 @@ apiPort: "{{current_env.cluster.cloud_api_port}}"
 
 **Usage in sample:**
 
-- [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+- [Sample](/docs/samples/template-repository/templates/env_templates/composite/cloud.yml.j2)
 
 ### `current_env.cluster.cloud_public_url`
 
@@ -428,7 +428,7 @@ Value is parsed from `env_definition.inventory.clusterUrl` in the [Environment I
 
 **Usage in sample:**
 
-- [Sample](/docs/samples/templates/env_templates/composite/cloud.yml.j2)
+- [Sample](/docs/samples/template-repository/templates/env_templates/composite/cloud.yml.j2)
 
 ### `appdefs.overrides`
 
@@ -635,7 +635,7 @@ Value is get from `dbaasConfigs[0].apiPort` of the Environment's [Cloud](/docs/e
 ### `PRIVATE_GATEWAY_URL`
 
 ---
-**Description:** Defines URL of private gateway in the namespace.
+**Description:** Defines URL of private gateway in the namespace. This value is calculated using `${ORIGIN_NAMESPACE}` to have the same value for Origin, Peer and Controller namespaces in case when namespace belongs to BG domain.
 
 The value is calculated as `${CLOUD_PROTOCOL}://${PRIVATE_GATEWAY_ROUTE_HOST}` if `${PRIVATE_GATEWAY_ROUTE_HOST}` is set, otherwise as `${CLOUD_PROTOCOL}://private-gateway-${ORIGIN_NAMESPACE}.${CLOUD_PUBLIC_HOST}`.
 
@@ -654,26 +654,9 @@ Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tena
 ### `PUBLIC_GATEWAY_URL`
 
 ---
-**Description:** Defines URL of public gateway in the namespace.
+**Description:** Defines URL of public gateway in the namespace. This value is calculated using `${ORIGIN_NAMESPACE}` to have the same value for Origin, Peer and Controller namespaces in case when namespace belongs to BG domain.
 
-The value is calculated as `${CLOUD_PROTOCOL}://${PUBLIC_GATEWAY_ROUTE_HOST}` if `${PUBLIC_GATEWAY_ROUTE_HOST}` is set, otherwise as `${CLOUD_PROTOCOL}://public-gateway-${NAMESPACE}.${CLOUD_PUBLIC_HOST}`.
-
-Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tenant) or [Cloud](/docs/envgene-objects.md#cloud) objects
-
-**Type:** String
-
-**Default Value:** `None`
-
-**Basic usage:**
-
-`public_gw: "${PRIVATE_GATEWAY_URL}"`
-
-**Usage in sample:** TBD
-
----
-**Description:** Defines URL of private gateway in the namespace.
-
-The value is calculated as `${CLOUD_PROTOCOL}://${PRIVATE_GATEWAY_ROUTE_HOST}` if `${PRIVATE_GATEWAY_ROUTE_HOST}` is set, otherwise as `${CLOUD_PROTOCOL}://private-gateway-${NAMESPACE}.${CLOUD_PUBLIC_HOST}`.
+The value is calculated as `${CLOUD_PROTOCOL}://${PUBLIC_GATEWAY_ROUTE_HOST}` if `${PUBLIC_GATEWAY_ROUTE_HOST}` is set, otherwise as `${CLOUD_PROTOCOL}://public-gateway-${ORIGIN_NAMESPACE}.${CLOUD_PUBLIC_HOST}`.
 
 Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tenant) or [Cloud](/docs/envgene-objects.md#cloud) objects
 
@@ -683,7 +666,7 @@ Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tena
 
 **Basic usage:**
 
-`private_gw: "${PRIVATE_GATEWAY_URL}"`
+`public_gw: "${PUBLIC_GATEWAY_URL}"`
 
 **Usage in sample:** TBD
 
