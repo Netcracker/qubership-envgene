@@ -38,10 +38,8 @@ def scandir_recursive_optimized(
     definition_files: List[str],
     env_creds_files: List[str]
 ) -> None:
-    # Pre-compile path parts for faster lookups
+   
     yaml_extensions = ('.yml', '.yaml')
-    target_filenames = {'env-definition.yml', 'credentials.yml'}
-
     try:
         with os.scandir(path) as entries:
             dirs_to_process = []
@@ -52,15 +50,12 @@ def scandir_recursive_optimized(
                 elif entry.is_file(follow_symlinks=False):
                     name = entry.name
 
-                    # Quick filename check before path processing
                     if name.endswith(yaml_extensions):
                         entry_path = entry.path
 
-                        # Use pathlib for more efficient path operations
                         path_obj = Path(entry_path)
                         path_parts = path_obj.parts
 
-                        # More efficient categorization
                         if "Namespaces" in path_parts:
                             ns_files.append(entry_path)
                         elif name == "env-definition.yml" and "Inventory" in path_parts:
@@ -68,12 +63,10 @@ def scandir_recursive_optimized(
                         elif name == "credentials.yml" and "Credentials" in path_parts:
                             env_creds_files.append(entry_path)
 
-            # Recursively process directories
             for dir_path in dirs_to_process:
                 scandir_recursive_optimized(dir_path, ns_files, definition_files, env_creds_files)
 
     except (OSError, PermissionError):
-        # Skip directories we can't access instead of crashing
         pass
 
 def scandir_recursive(
