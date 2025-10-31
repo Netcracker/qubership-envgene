@@ -635,7 +635,7 @@ Value is get from `dbaasConfigs[0].apiPort` of the Environment's [Cloud](/docs/e
 ### `PRIVATE_GATEWAY_URL`
 
 ---
-**Description:** Defines URL of private gateway in the namespace.
+**Description:** Defines URL of private gateway in the namespace. This value is calculated using `${ORIGIN_NAMESPACE}` to have the same value for Origin, Peer and Controller namespaces in case when namespace belongs to BG domain.
 
 The value is calculated as `${CLOUD_PROTOCOL}://${PRIVATE_GATEWAY_ROUTE_HOST}` if `${PRIVATE_GATEWAY_ROUTE_HOST}` is set, otherwise as `${CLOUD_PROTOCOL}://private-gateway-${ORIGIN_NAMESPACE}.${CLOUD_PUBLIC_HOST}`.
 
@@ -654,26 +654,9 @@ Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tena
 ### `PUBLIC_GATEWAY_URL`
 
 ---
-**Description:** Defines URL of public gateway in the namespace.
+**Description:** Defines URL of public gateway in the namespace. This value is calculated using `${ORIGIN_NAMESPACE}` to have the same value for Origin, Peer and Controller namespaces in case when namespace belongs to BG domain.
 
-The value is calculated as `${CLOUD_PROTOCOL}://${PUBLIC_GATEWAY_ROUTE_HOST}` if `${PUBLIC_GATEWAY_ROUTE_HOST}` is set, otherwise as `${CLOUD_PROTOCOL}://public-gateway-${NAMESPACE}.${CLOUD_PUBLIC_HOST}`.
-
-Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tenant) or [Cloud](/docs/envgene-objects.md#cloud) objects
-
-**Type:** String
-
-**Default Value:** `None`
-
-**Basic usage:**
-
-`public_gw: "${PRIVATE_GATEWAY_URL}"`
-
-**Usage in sample:** TBD
-
----
-**Description:** Defines URL of private gateway in the namespace.
-
-The value is calculated as `${CLOUD_PROTOCOL}://${PRIVATE_GATEWAY_ROUTE_HOST}` if `${PRIVATE_GATEWAY_ROUTE_HOST}` is set, otherwise as `${CLOUD_PROTOCOL}://private-gateway-${NAMESPACE}.${CLOUD_PUBLIC_HOST}`.
+The value is calculated as `${CLOUD_PROTOCOL}://${PUBLIC_GATEWAY_ROUTE_HOST}` if `${PUBLIC_GATEWAY_ROUTE_HOST}` is set, otherwise as `${CLOUD_PROTOCOL}://public-gateway-${ORIGIN_NAMESPACE}.${CLOUD_PUBLIC_HOST}`.
 
 Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tenant) or [Cloud](/docs/envgene-objects.md#cloud) objects
 
@@ -683,7 +666,7 @@ Namespace-level macro, can not be used on [Tenant](/docs/envgene-objects.md#tena
 
 **Basic usage:**
 
-`private_gw: "${PRIVATE_GATEWAY_URL}"`
+`public_gw: "${PUBLIC_GATEWAY_URL}"`
 
 **Usage in sample:** TBD
 

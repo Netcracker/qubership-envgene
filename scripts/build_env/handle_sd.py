@@ -273,7 +273,7 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
     if not sd_version:
         logger.error("SD_SOURCE_TYPE is set to 'artifact', but SD_VERSION was not given in pipeline variables")
         exit(1)
-
+    sd_version = sd_version.replace("\\n", "\n")
     sd_entries = [line.strip() for line in sd_version.strip().splitlines() if line.strip()]
     if not sd_entries:
         logger.error("No valid SD versions found in SD_VERSION")
