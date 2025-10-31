@@ -1,0 +1,9 @@
+---
+
+variables:
+  ENV_NAMES: "test-cluster/e01"
+  ENV_BUILDER: "true"
+  ENV_TEMPLATE_VERSION: "qubership_envgene_templates:0.0.1"
+  DEPLOYMENT_TICKET_ID: "TEST-1111"
+  DEPLOYMENT_SESSION_ID: ""
+  GITLAB_RUNNER_TAG_NAME: "local"
