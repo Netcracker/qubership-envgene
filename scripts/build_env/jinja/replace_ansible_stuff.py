@@ -89,8 +89,14 @@ def escaping_quotation(yaml_text: str) -> str:
         key, value = line.split(':', 1)
         val = value.strip()
 
-        if val.startswith('"${') and val.endswith('}"') and '"' in val[1:-1]:
-            return f"{key}: '{val.strip('\"')}'"
+        if val.startswith('"${') and val.endswith('}"'):
+            inner = val[1:-1]
+            if '\\"' in inner:
+                return line
+
+            escaped_inner = inner.replace('"', '\\"')
+            return f'{key}: "{escaped_inner}"'
+
         return line
 
     lines = yaml_text.splitlines()

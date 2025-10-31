@@ -441,4 +441,4 @@ class EnvGenerator:
             ensure_required_keys(self.ctx.as_dict(),
                                  required=["templates_dir", "env_instances_dir", "cluster_name", "current_env_dir"])
             self.process_app_reg_defs()
-            logger.info("Rendering of templates for environment generation was successful")
+            logger.info(f"Rendering of templates for environment {env_name} generation was successful")
