@@ -79,3 +79,20 @@ def replace_ansible_stuff(template_str: str, template_path: str = "") -> str:
         template_str = pattern.sub(replacement, template_str)
 
     return template_str
+
+
+def escaping_quotation(yaml_text: str) -> str:
+    def replace_line(line: str) -> str:
+        if ':' not in line:
+            return line
+
+        key, value = line.split(':', 1)
+        val = value.strip()
+
+        if val.startswith('"${') and val.endswith('}"') and '"' in val[1:-1]:
+            return f"{key}: '{val.strip('\"')}'"
+        return line
+
+    lines = yaml_text.splitlines()
+    fixed_lines = [replace_line(line) for line in lines]
+    return "\n".join(fixed_lines)

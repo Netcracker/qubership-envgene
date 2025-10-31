@@ -13,7 +13,7 @@ from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
 
 from jinja.jinja import create_jinja_env
-from jinja.replace_ansible_stuff import replace_ansible_stuff
+from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 
 yml = create_yaml_processor()
 
@@ -182,18 +182,18 @@ class EnvGenerator:
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
         logger.info(f"Rendered {rendered}")
-        writeYamlToFile(target_file_path, readYaml(rendered))
+        writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
 
     def render_from_file_to_obj(self, src_template_path) -> dict:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
-        return readYaml(rendered)
+        return readYaml(escaping_quotation(rendered))
 
     def render_from_obj_to_file(self, template, target_file_path):
         template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
-        writeYamlToFile(target_file_path, readYaml(rendered))
+        writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
 
     def generate_tenant_file(self):
         logger.info(f"Generate Tenant yaml for {self.ctx.tenant}")
