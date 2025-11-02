@@ -139,7 +139,7 @@ public class BomReaderUtilsImplV2 {
         Map<String, Object> primaryArtifactMap = new TreeMap<>();
         List<Map<String, Object>> artifacts = new ArrayList<>();
         Map<String, Object> tArtifactMap = new TreeMap<>();
-        if(CollectionUtils.isNotEmpty(component.getComponents())) {
+        if (CollectionUtils.isNotEmpty(component.getComponents())) {
             for (Component subComponent : component.getComponents()) {
                 entity = "sub component '" + subComponent.getName() + "' of service:" + component.getName();
                 if (subComponent.getMimeType().equalsIgnoreCase(serviceArtifactType.getArtifactMimeType())) {
@@ -205,7 +205,7 @@ public class BomReaderUtilsImplV2 {
     private void processImageServiceComponentDeployDescParams(Map<String, Map<String, Object>> deployParamsMap, Component component) {
         Map<String, Object> deployDescParams = new TreeMap<>();
         String entity = "service:" + component.getName();
-        if(CollectionUtils.isNotEmpty(component.getComponents())){
+        if (CollectionUtils.isNotEmpty(component.getComponents())) {
             for (Component subComponent : component.getComponents()) {
                 entity = "sub component '" + subComponent.getName() + "' of service:" + component.getName();
                 if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
@@ -309,8 +309,9 @@ public class BomReaderUtilsImplV2 {
         String dockerTag = getPropertyValue(component, "full_image_name", null, true, entity);
         serviceParams.put("DOCKER_TAG", dockerTag);
         serviceParams.put("IMAGE_REPOSITORY", getImageRepository(dockerTag));
+        addImageParameters(component, serviceParams);
 
-        if(CollectionUtils.isNotEmpty(component.getComponents())){
+        if (CollectionUtils.isNotEmpty(component.getComponents())) {
             for (Component subComponent : component.getComponents()) {
                 if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
                     tag = subComponent.getVersion();
@@ -324,6 +325,16 @@ public class BomReaderUtilsImplV2 {
             serviceParams.putAll(profileValues);
         }
         serviceMap.put(component.getName(), serviceParams);
+    }
+
+    private void addImageParameters(Component component, Map<String, Object> serviceParams) {
+        if (component.getMimeType().equalsIgnoreCase(APPLICATION_OCTET_STREAM)) {
+            String key = getPropertyValue(component, "deploy_param", null, false, component.getName());
+            if (StringUtils.isNotEmpty(key)) {
+                String value = getPropertyValue(component, "full_image_name", null, false, component.getName());
+                serviceParams.put(key, value);
+            }
+        }
     }
 
     private String getImageRepository(String dockerTag) {
