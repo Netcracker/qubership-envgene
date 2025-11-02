@@ -45,7 +45,7 @@ def setup_test_dir(tmp_path):
     dirs = ["Applications", "Namespaces", "Profiles"]
     for d in dirs:
         (tmp_path / d).mkdir(exist_ok=True)
-    files = ["cloud.yml", "tenant.yml", "bg-domain.yml", "composite-structure.yml"]
+    files = ["cloud.yml", "tenant.yml", "bg_domain.yml", "composite_structure.yml"]
     for f in files:
         (tmp_path / f).write_text("text")
     (tmp_path / "keep.yml").write_text("text")
@@ -62,8 +62,8 @@ def test_cleanup_target_dir_removes_expected_items():
     assert not (target_dir / "Profiles").exists()
     assert not (target_dir / "cloud.yml").exists()
     assert not (target_dir / "tenant.yml").exists()
-    assert not (target_dir / "bg-domain.yml").exists()
-    assert not (target_dir / "composite-structure.yml").exists()
+    assert not (target_dir / "bg_domain.yml").exists()
+    assert not (target_dir / "composite_structure.yml").exists()
 
     assert (target_dir / "keep.yml").exists()
     assert (target_dir / "keep").exists()

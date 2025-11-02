@@ -6,7 +6,7 @@ I as DevOps want to define the set of parameters that should be specified by cus
 
 ## Steps
 
-1. In my template (e.g. [composite-prod-template](/docs/samples/templates/env_templates/composite-prod.yaml)) I am adding section for environment specific parameters schema
+1. In my template (e.g. [composite-prod-template](/docs/samples/template-repository/templates/env_templates/composite-prod.yaml)) I am adding section for environment specific parameters schema
 
     ```yaml
     ...
@@ -14,7 +14,7 @@ I as DevOps want to define the set of parameters that should be specified by cus
     ...
     ```
 
-2. I'm creating schema for the path (e.g. [env-specific-schema](/docs/samples/templates/env_templates/composite/env-specific-schema.yml))
+2. I'm creating schema for the path (e.g. [env-specific-schema](/docs/samples/template-repository/templates/env_templates/composite/env-specific-schema.yml))
 
 3. I'm building template
 

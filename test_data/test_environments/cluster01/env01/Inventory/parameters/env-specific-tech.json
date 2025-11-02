@@ -1,8 +1,8 @@
 {
-	"name": "env-specific-tech",
-	"version": 1.0,
-	"parameters": {
-		"TECHNICAL_PARAM_1" : "VALUE_TP_1"
-	},
-	"applications": []
+  "name": "env-specific-tech",
+  "version": 1,
+  "parameters": {
+    "TECHNICAL_PARAM_1": "VALUE_TP_1"
+  },
+  "applications": []
 }

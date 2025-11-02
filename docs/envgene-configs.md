@@ -6,6 +6,8 @@
   - [`integration.yml`](#integrationyml)
   - [`deployer.yml`](#deployeryml)
   - [`appregdef_config.yaml`](#appregdef_configyaml)
+  - [Deprecated](#deprecated)
+    - [`registry.yml`](#registryyml)
 
 ## `env_definition.yml`
 
@@ -87,36 +89,36 @@ envTemplate:
   # Additional variables that will be available during template rendering
   additionalTemplateVariables: hashmap
   # Optional
-  # Array of file names containing parameters that will be merged with `additionalTemplateVariables`
+  # Array of filenames containing parameters that will be merged with `additionalTemplateVariables`
   # File must contain key-value hashmap
   # File must NOT located in a `parameters` directory
   sharedTemplateVariables: array
   # Optional
   # Set of environment-specific deployment parameters
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` 
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificParamsets: hashmap
   # Optional
   # Environment specific pipeline (e2e) parameters set
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificE2EParamsets: hashmap
   # Optional
   # Environment specific runtime (technical) parameters set
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificTechnicalParamsets: hashmap
   # Optional
   # Environment specific resource profile overrides
   # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
-  # in the Template Descriptor, or by the Namespace template file name without extension)
+  # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of resource profile files without extension located in the `resource_profiles` directory
   envSpecificResourceProfiles: hashmap
   # Optional
-  # Array of file names in a 'credentials' folder that will override generated and defined for instance credentials
+  # Array of filenames in a 'credentials' folder that will override generated and defined for instance credentials
   # File must contain a set of credential objects
   sharedMasterCredentialFiles: array
   # Following parameters are automatically generated during job and display that application:version artifact
@@ -322,4 +324,50 @@ appdefs:
 regdefs:
   overrides:
     hostName: "registry.qubership.org"
+```
+
+## Deprecated
+
+### `registry.yml`
+
+This config file contains the definition of one or more Maven registries used for downloading Environment Template artifacts.
+
+Replacement: [Artifact Definitions](/docs/envgene-objects.md#artifact-definition)
+
+Location: `/configuration/registry.yml`
+
+[`registry.yml` JSON Schema](/schemas/registry.schema.json)
+
+```yaml
+<registry-name>:
+  # Username for authenticating to the registry.
+  # It's recommended to use the envgen.creds.get() macro.
+  # For anonymous registries, use an empty string: ""
+  username: string
+  # Password for authenticating to the registry.
+  # It's recommended to use the envgen.creds.get() macro.
+  # For anonymous registries, use an empty string: ""
+  password: string
+  releaseRepository: string
+  snapshotRepository: string
+  stagingRepository: string
+  proxyRepository: string
+  releaseTemplateRepository: string
+  snapshotTemplateRepository: string
+  stagingTemplateRepository: string
+```
+
+Example:
+
+```yaml
+artifactory:
+  username: envgen.creds.get('artifactory-cred').username
+  password: envgen.creds.get('artifactory-cred').password
+  releaseRepository: "https://artifactory.qubership.org/mvn.release"
+  snapshotRepository: "https://artifactory.qubership.org/mvn.staging"
+  stagingRepository: "https://artifactory.qubership.org/mvn.staging"
+  proxyRepository: "https://artifactory.qubership.org/mvn.proxy"
+  releaseTemplateRepository: "https://artifactory.qubership.org/mvn.template-release"
+  snapshotTemplateRepository: "https://artifactory.qubership.org/mvn.template-snapshot"
+  stagingTemplateRepository: "https://artifactory.qubership.org/mvn.template-staging"
 ```
