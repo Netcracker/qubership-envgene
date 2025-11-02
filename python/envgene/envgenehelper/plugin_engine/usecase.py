@@ -7,10 +7,8 @@ from envgenehelper import logger
 
 from .engine_contract import IPluginRegistry
 
-
 def filter_unwanted_directories(name: str) -> bool:
     return not ['__pycache__'].__contains__(name)
-
 
 def filter_plugins_paths(plugins_package) -> list[str]:
     """
@@ -24,7 +22,6 @@ def filter_plugins_paths(plugins_package) -> list[str]:
             os.listdir(plugins_package)
         )
     )
-
 
 class PluginUseCase:
     modules: list[type]
@@ -54,20 +51,8 @@ class PluginUseCase:
         plugins_paths.sort()
         for directory in plugins_paths:
             try:
-                logger.info(f"Checking plugin dir: {directory}")
-                main_py_path = os.path.join(self.plugins_dir, directory, 'main.py')
-                logger.info(f"Expected main.py path: {main_py_path}")
-                logger.info(f"Exists: {os.path.exists(main_py_path)}")
-                plugin_dir_parent = os.path.dirname(self.plugins_dir)
-                logger.info(f"plugin_dir_parent: {plugin_dir_parent}")
-                logger.info(f"plugins_dir: {self.plugins_dir}")
-                logger.info(f"Current sys.path (first 3): {sys.path[:3]} ... total={len(sys.path)}")
-
-                plugins_dir_name = os.path.basename(self.plugins_dir)
-                module_name = f"{plugins_dir_name}.{directory}.main"
-                logger.info(f"Computed module name: {module_name}")
-
                 # Construct the full path to the main.py file
+                main_py_path = os.path.join(self.plugins_dir, directory, 'main.py')
                 if not os.path.exists(main_py_path):
                     logger.warning(f"main.py not found in {directory}, skipping")
                     continue
