@@ -38,6 +38,7 @@ public class ApplicationBomDTO {
     private Map<String, Map<String, Object>> smartplugs;
     private Map<String, Map<String, Object>> cdn;
     private Map<String, Map<String, Object>> sampleRepo;
+    private Map<String, String> deployParams;
 
     //deployment-descriptor params
     private Map<String, Map<String, Object>> deployDescriptors;
