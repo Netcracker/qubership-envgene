@@ -183,8 +183,8 @@ def set_nested_yaml_attribute(yaml_content, attribute_str, value, comment="", is
 
 primitiveTypes = (int, str, bool, float)
 
-def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, overwrite_existing_values=True,  overwrite_existing_comments=True):
-    if source_yaml == None:
+def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, overwrite_existing_values=True, overwrite_existing_comments=True):
+    if source_yaml is None:
         return
     source_yaml = convert_dict_to_yaml(source_yaml)
 
@@ -193,42 +193,47 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
         target_yaml = yaml_content[last_key]
     else:
         target_yaml = yaml_content
-    
+
     for k, v in source_yaml.items():
-        clean_key = str(k)
+        clean_key = str(k)  # Convert key to plain string
+
         if clean_key not in target_yaml:
             target_yaml[clean_key] = v
-            target_yaml.ca.items[clean_key] = source_yaml.ca.items.get(k, None)
+            # Preserve comments if present, but also normalize comment keys:
+            if source_yaml.ca.items.get(k) is not None:
+                target_yaml.ca.items[clean_key] = source_yaml.ca.items.get(k)
             continue
 
         if overwrite_existing_comments:
-            target_yaml.ca.items[clean_key] = source_yaml.ca.items.get(k, None)
+            if source_yaml.ca.items.get(k) is not None:
+                target_yaml.ca.items[clean_key] = source_yaml.ca.items.get(k)
 
-        if isinstance(target_yaml[clean_key], dict) and isinstance(v, dict):
+        if isinstance(target_yaml.get(clean_key), dict) and isinstance(v, dict):
             merge_yaml_into_target(target_yaml[clean_key], "", v, overwrite_existing_values, overwrite_existing_comments)
-        elif isinstance(target_yaml[clean_key], list) and isinstance(v, list):
-            target_yaml[clean_key].extend(v_el for v_el in v if v_el not in target_yaml[clean_key] and (isinstance(v_el, primitiveTypes) or isinstance(v_el, list)))
-            src_dicts = {}
-            for v_k, v_el in enumerate(v):
-                if isinstance(v_el, dict):
-                    src_dicts.update({v_k:v_el})
-            for t_k, t_el in enumerate(target_yaml[clean_key]):
+        elif isinstance(target_yaml.get(clean_key), list) and isinstance(v, list):
+            # Merge lists with deduplication and recursive merge for dict elements
+            target_list = target_yaml[clean_key]
+            # Extend with primitives or lists
+            target_list.extend(v_el for v_el in v if v_el not in target_list and (isinstance(v_el, primitiveTypes) or isinstance(v_el, list)))
+
+            # For dict elements, merge individually by index
+            src_dicts = {idx: el for idx, el in enumerate(v) if isinstance(el, dict)}
+            for idx, t_el in enumerate(target_list):
                 if not isinstance(t_el, dict):
                     continue
-                if not t_k in src_dicts:
+                if idx not in src_dicts:
                     continue
-                merge = False
-                for t_el_k in t_el.keys():
-                    if t_el_k in src_dicts[t_k].keys():
-                        merge = True
-                        break
-                if merge:
-                    target_yaml[clean_key][t_k] = merge_yaml_into_target(t_el, '', src_dicts[t_k], overwrite_existing_values, overwrite_existing_comments)
-                    del src_dicts[clean_key]
-            for _, src_dicts_el in src_dicts.items():
-                target_yaml[clean_key].append(src_dicts_el)
+                # Merge dict elements
+                merged = merge_yaml_into_target(t_el, '', src_dicts[idx], overwrite_existing_values, overwrite_existing_comments)
+                target_list[idx] = merged
+                del src_dicts[idx]
+            # Append any remaining dicts not merged
+            for remaining_el in src_dicts.values():
+                target_list.append(remaining_el)
         elif overwrite_existing_values:
             target_yaml[clean_key] = v
+
+    return target_yaml
 
 def store_value_to_yaml(yamlContent, key, value, comment=""):
     logger.debug(f"Updating key {key} with value {value} in yaml")
