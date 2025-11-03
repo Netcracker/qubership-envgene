@@ -193,7 +193,7 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
         target_yaml = yaml_content[last_key]
     else:
         target_yaml = yaml_content
-
+    
     for k, v in source_yaml.items():
         clean_key = str(k)  # Convert key to plain string
 
