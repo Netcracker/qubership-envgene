@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urljoin
 from zipfile import ZipFile
+import xml.etree.ElementTree as ET
 
 import aiohttp
 import requests
@@ -25,6 +26,52 @@ def create_full_url(app: Application, version: str, repo: str, artifact_extensio
     path = f"{folder}/{artifact_id}-{version}.{artifact_extension.value}"
     return urljoin(registry_url, "/".join([repo, group_id, artifact_id, path]))
 
+async def resolve_snapshot_version(session, app: Application, version: str, repo_value: str) -> str | None:
+    if not version.endswith('-SNAPSHOT'):
+        return version
+
+    group_id = app.group_id.replace(".", "/")
+    artifact_id = app.artifact_id
+    registry_url = app.registry.maven_config.repository_domain_name
+
+    metadata_path = f"{repo_value}/{group_id}/{artifact_id}/{version}/maven-metadata.xml"
+    metadata_url = urljoin(registry_url, metadata_path)
+
+    try:
+        async with session.get(metadata_url, timeout=os.getenv("REQUEST_TIMEOUT", DEFAULT_REQUEST_TIMEOUT)) as response:
+            if response.status != 200:
+                logger.warning(f"Failed to fetch maven-metadata.xml: {metadata_url}, status: {response.status}")
+                return None
+
+            content = await response.text()
+            root = ET.fromstring(content)
+
+            versioning = root.find('versioning')
+            if versioning is None:
+                logger.warning(f"No versioning element in metadata: {metadata_url}")
+                return None
+
+            snapshot = versioning.find('snapshot')
+            if snapshot is None:
+                logger.warning(f"No snapshot element in metadata: {metadata_url}")
+                return None
+
+            timestamp = snapshot.find('timestamp')
+            build_number = snapshot.find('buildNumber')
+
+            if timestamp is None or build_number is None:
+                logger.warning(f"Missing timestamp or buildNumber in metadata: {metadata_url}")
+                return None
+
+            # Convert '1.0.0-SNAPSHOT' to '1.0.0-20240702.123456-1'
+            base_version = version.replace('-SNAPSHOT', '')
+            resolved = f"{base_version}-{timestamp.text}-{build_number.text}"
+            logger.info(f"Resolved snapshot version {version} to {resolved}")
+            return resolved
+
+    except Exception as e:
+        logger.warning(f"Error resolving snapshot version from {metadata_url}: {e}")
+        return None
 
 def version_to_folder_name(version: str):
     """
@@ -124,7 +171,7 @@ async def check_artifact_by_full_url_async(app: Application, version: str, repo,
         except Exception as e:
             logger.warning(f"Failed while checking if artifact is present with URL {full_url}, {e}")
     else:
-        logger.warning(f"Repository {repo_pointer} is not configured for registry {app.registry.registry_name}")
+        logger.warning(f"Repository {repo_pointer} is not configured for registry {app.registry.name}")
 
 
 def get_repo_value_pointer_dict(registry: Registry):
@@ -145,7 +192,8 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
                                                                                                              str, tuple[
                                                                                                                  str, str]]] | None:
     """
-    Resolves the full artifact URL and the first repository where it was found
+    Resolves the full artifact URL and the first repository where it was found.
+    Supports both release and snapshot versions.
 
     Returns:
         Optional[tuple[str, tuple[str, str]]]: A tuple containing:
@@ -160,9 +208,23 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
     repos_dict = get_repo_value_pointer_dict(app.registry)
 
     async with aiohttp.ClientSession() as session:
+        resolved_version = version
+
+        if version.endswith('-SNAPSHOT'):
+            for repo_value, _ in repos_dict.items():
+                if not repo_value:
+                    continue
+
+                resolved = await resolve_snapshot_version(session, app, version, repo_value)
+                if resolved:
+                    resolved_version = resolved
+                    folder = version_to_folder_name(resolved_version)
+                    logger.info(f"Using resolved snapshot version: {resolved_version}")
+                    break
+
         async with asyncio.TaskGroup() as tg:
             tasks = [tg.create_task(
-                check_artifact_by_full_url_async(app, version, repo, artifact_extension, folder,
+                check_artifact_by_full_url_async(app, resolved_version, repo, artifact_extension, folder,
                                                  stop_event, session)) for repo in repos_dict.items()]
         for task in tasks:
             result = task.result()
