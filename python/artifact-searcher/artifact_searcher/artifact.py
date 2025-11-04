@@ -26,11 +26,12 @@ def create_full_url(app: Application, version: str, repo: str, artifact_extensio
     path = f"{folder}/{artifact_id}-{version}.{artifact_extension.value}"
     return urljoin(registry_url, "/".join([repo, group_id, artifact_id, path]))
 
-async def resolve_snapshot_version(session, app: Application, version: str, repo_value: str) -> str | None:
+
+async def resolve_snapshot_version(session, app: Application, version: str, repo_value: str, classifier: str="", extension: FileExtension=FileExtension.JSON) -> str | None:
     if not version.endswith('-SNAPSHOT'):
         return version
 
-    group_id = app.group_id.replace(".", "/")
+    group_id = app.group_id.replace('.', '/')
     artifact_id = app.artifact_id
     registry_url = app.registry.maven_config.repository_domain_name
 
@@ -45,33 +46,30 @@ async def resolve_snapshot_version(session, app: Application, version: str, repo
 
             content = await response.text()
             root = ET.fromstring(content)
-
-            versioning = root.find('versioning')
-            if versioning is None:
-                logger.warning(f"No versioning element in metadata: {metadata_url}")
+            snapshot_versions = root.findall(".//snapshotVersions/snapshotVersion")
+            if not snapshot_versions:
+                logger.warning(f"No <snapshotVersions> found in {metadata_url}")
                 return None
 
-            snapshot = versioning.find('snapshot')
-            if snapshot is None:
-                logger.warning(f"No snapshot element in metadata: {metadata_url}")
-                return None
+            for node in snapshot_versions:
+                node_classifier = node.findtext("classifier", default="")
+                node_extension = node.findtext("extension", default="")
+                value = node.findtext("value")
 
-            timestamp = snapshot.find('timestamp')
-            build_number = snapshot.find('buildNumber')
+                if (
+                    node_classifier == classifier and
+                    node_extension == extension
+                ):
+                    logger.info(f"Resolved snapshot version {version} to {value}")
+                    return value
 
-            if timestamp is None or build_number is None:
-                logger.warning(f"Missing timestamp or buildNumber in metadata: {metadata_url}")
-                return None
-
-            # Convert '1.0.0-SNAPSHOT' to '1.0.0-20240702.123456-1'
-            base_version = version.replace('-SNAPSHOT', '')
-            resolved = f"{base_version}-{timestamp.text}-{build_number.text}"
-            logger.info(f"Resolved snapshot version {version} to {resolved}")
-            return resolved
+            logger.warning(f"No matching snapshotVersion found for {app.artifact_id} in {metadata_url}")
+            return None
 
     except Exception as e:
         logger.warning(f"Error resolving snapshot version from {metadata_url}: {e}")
         return None
+
 
 def version_to_folder_name(version: str):
     """
@@ -215,7 +213,7 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
                 if not repo_value:
                     continue
 
-                resolved = await resolve_snapshot_version(session, app, version, repo_value)
+                resolved = await resolve_snapshot_version(session, app, version, repo_value, extension=artifact_extension)
                 if resolved:
                     resolved_version = resolved
                     folder = version_to_folder_name(resolved_version)
