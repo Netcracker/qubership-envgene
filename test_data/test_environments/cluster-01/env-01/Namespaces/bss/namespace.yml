@@ -13,7 +13,7 @@ profile:
   name: "prod_bss_override"
   baseline: "prod"
 deployParameters:
-  ENVGENE_CONFIG_REF_NAME: "No Ref Name"
+  ENVGENE_CONFIG_REF_NAME: "branch_name"
   ENVGENE_CONFIG_TAG: "No Ref tag"
   KMS_CERT_IN_BASE64: "${envgen.creds.get( \"kms-cert\" ).secret}" # paramset: test-deploy-creds version: 1 source: template
   OVERRIDE_PARAMETER: "template-value"
@@ -38,6 +38,14 @@ deployParameters:
   TEST_SHARED_CREDS: "${envgen.creds.get('integration-cred').username}" # paramset: test-deploy-creds version: 1 source: template
   TEST_SHARED_CREDS_ACTIVATOR: "${envgen.creds.get('service-integration-cred').password}" # paramset: test-deploy-creds version: 1 source: template
   bss-app-exist: true
+  core: # paramset: paramset-B version: 23.4 source: instance
+    apps:
+      volumes:
+        outputs:
+          capacity: "20Gi"
+  kafka: # paramset: paramset-B version: 23.4 source: template
+    password: "${creds.get(\"kafka-cred\").password}"
+    username: "${creds.get(\"kafka-cred\").username}"
   oss_ns: "env-01-oss"
 e2eParameters:
   E2E_PARAM_1: "e2e-param-val-1"

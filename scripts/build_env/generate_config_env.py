@@ -11,6 +11,7 @@ from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileA
 from envgenehelper.validation import ensure_valid_fields, ensure_required_keys
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
+from collections import OrderedDict
 
 from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
@@ -21,27 +22,29 @@ yml = create_yaml_processor()
 class Context(BaseModel):
     env: Optional[str] = ''
     render_dir: Optional[str] = ''
-    cloud_passport: Optional[dict] = Field(default_factory=dict)
+    cloud_passport: OrderedDict = Field(default_factory=OrderedDict)
     templates_dir: Optional[Path] = None
     output_dir: Optional[str] = ''
     cluster_name: Optional[str] = ''
-    env_definition: Optional[dict] = Field(default_factory=dict)
-    current_env: Optional[dict] = Field(default_factory=dict)
+    env_definition: OrderedDict = Field(default_factory=OrderedDict)
+    current_env: OrderedDict = Field(default_factory=OrderedDict)
     current_env_dir: Optional[str] = ''
-    current_env_template: Optional[dict] = Field(default_factory=dict)
+    current_env_template: OrderedDict = Field(default_factory=OrderedDict)
     tenant: Optional[str] = ''
-    env_template: Optional[dict] = Field(default_factory=dict)
+    env_template: OrderedDict = Field(default_factory=OrderedDict)
     env_instances_dir: Optional[str] = ''
     cloud_passport_file_path: Optional[str] = ''
-    sd_config: Optional[dict] = Field(default_factory=dict)
+    sd_config: OrderedDict = Field(default_factory=OrderedDict)
     sd_file_path: Optional[str] = ''
-    regdefs: Optional[dict] = Field(default_factory=dict)
-    appdefs: Optional[dict] = Field(default_factory=dict)
-    regdef_templates: Optional[list] = Field(default_factory=list)
-    appdef_templates: Optional[list] = Field(default_factory=list)
+    regdefs: OrderedDict = Field(default_factory=OrderedDict)
+    appdefs: OrderedDict = Field(default_factory=OrderedDict)
+    regdef_templates: list = Field(default_factory=list)
+    appdef_templates: list = Field(default_factory=list)
     cloud: Optional[str] = ''
     deployer: Optional[str] = ''
     render_parameters_dir: Optional[str] = ''
+    env_vars: OrderedDict = Field(default_factory=OrderedDict)
+    render_profiles_dir: Optional[str] = ''
 
     start_time: datetime | None = Field(default=None, exclude=True)
 
@@ -64,8 +67,6 @@ class Context(BaseModel):
         try:
             yield self
         finally:
-            duration = (datetime.now() - self.start_time).total_seconds()
-            logger.debug(f"Exit context (duration {duration:.2f}s)")
             logger.debug(f"Final state: {self.dict(exclude_none=True)}")
 
     def as_dict(self, include_none: bool = False) -> dict:
@@ -131,7 +132,7 @@ class EnvGenerator:
             ns_template_name = deploy_postfix
         else:
             # get base name(deploy postfix) without extensions
-            ns_template_name = Path(ns_template_path).name.replace(".yml.j2", "").replace(".yaml.j2", "")
+            ns_template_name = self.get_template_name(ns_template_path)
         return ns_template_name
 
     def generate_solution_structure(self):
@@ -181,18 +182,20 @@ class EnvGenerator:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
-        logger.info(f"Rendered {rendered}")
+        logger.info(f"Rendered entity: \n {rendered}")
         writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
 
     def render_from_file_to_obj(self, src_template_path) -> dict:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
+        logger.info(f"Rendered entity: \n {rendered}")
         return readYaml(escaping_quotation(rendered))
 
     def render_from_obj_to_file(self, template, target_file_path):
         template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
+        logger.info(f"Rendered entity: \n {rendered}")
         writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
 
     def generate_tenant_file(self):
@@ -253,7 +256,8 @@ class EnvGenerator:
 
         return next((c for c in candidates if c), "")
 
-    def get_template_name(self, template_path: Path) -> str:
+    def get_template_name(self, template_path: str) -> str:
+        template_path = Path(template_path)
         return (
             template_path.name
             .replace(".yml.j2", "")
@@ -269,19 +273,17 @@ class EnvGenerator:
             cs_file.parent.mkdir(parents=True, exist_ok=True)
             self.render_from_file_to_file(Template(composite_structure).render(self.ctx.as_dict()), str(cs_file))
 
+    def get_rendered_target_path(self, template_path: Path) -> Path:
+        path_str = str(template_path)
+        path_str = path_str.replace(".yml.j2", ".yml").replace(".yaml.j2", ".yml")
+        return Path(path_str)
+
     def generate_paramset_templates(self):
         render_dir = Path(self.ctx.render_parameters_dir).resolve()
-        patterns = ["*.yml.j2", "*.yaml.j2"]
-
-        paramset_templates = []
-        for pattern in patterns:
-            paramset_templates.extend(render_dir.rglob(pattern))
-        logger.info(f"Total parameter set templates list found: {paramset_templates}")
-
+        paramset_templates = self.find_templates(render_dir, ["*.yml.j2", "*.yaml.j2"])
         for template_path in paramset_templates:
             template_name = self.get_template_name(template_path)
-            target_path = Path(str(template_path).replace(".yml.j2", ".yml").replace(".yaml.j2", ".yml"))
-
+            target_path = self.get_rendered_target_path(template_path)
             try:
                 logger.info(f"Try to render paramset {template_name}")
                 self.render_from_file_to_file(Template(str(template_path)).render(self.ctx.as_dict()), target_path)
@@ -293,21 +295,18 @@ class EnvGenerator:
                 if target_path.exists():
                     target_path.unlink()
 
-    def find_templates(self, templates_dir: Path, def_type: str) -> list[Path]:
-        search_path = templates_dir / def_type
-        if not search_path.exists():
-            logger.info(f"Directory with templates for {def_type} not found: {search_path}")
+    def find_templates(self, path: str, patterns) -> list[Path]:
+        path = Path(path)
+        if not path.exists():
+            logger.info(f"Templates directory not found: {path}")
             return []
-
-        patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
         templates = []
-
         for pattern in patterns:
-            for f in search_path.rglob(pattern):
+            for f in path.rglob(pattern):
                 if f.is_file():
                     templates.append(f)
 
-        logger.info(f"{def_type.capitalize()} Found: {len(templates)}")
+        logger.info(f"Found templates: {templates}")
         return templates
 
     def render_app_defs(self):
@@ -374,8 +373,9 @@ class EnvGenerator:
     def process_app_reg_defs(self):
         current_env_dir = self.ctx.current_env_dir
         templates_dir = self.ctx.templates_dir
-        appdef_templates = self.find_templates(templates_dir, "appdefs")
-        regdef_templates = self.find_templates(templates_dir, "regdefs")
+        patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
+        appdef_templates = self.find_templates(f"{templates_dir}/appdefs", patterns)
+        regdef_templates = self.find_templates(f"{templates_dir}/regdefs", patterns)
         self.ctx.appdef_templates = appdef_templates
         self.ctx.regdef_templates = regdef_templates
 
@@ -385,16 +385,25 @@ class EnvGenerator:
         self.render_app_defs()
         self.render_reg_defs()
 
+    def generate_profiles(self, profile_names: list[str]):
+        logger.info(f"Start rendering profiles from list: {profile_names}")
+        render_profiles_dir = self.ctx.render_profiles_dir
+        profile_templates = self.find_templates(render_profiles_dir, ["*.yaml.j2", "*.yml.j2"])
+        for template_path in profile_templates:
+            template_name = self.get_template_name(template_path)
+            if template_name in profile_names:
+                self.render_from_file_to_file(template_path, self.get_rendered_target_path(template_path))
+
     def generate_config_env(self, env_name: str, extra_env: dict):
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
             all_vars = dict(os.environ)
-            ci_vars = {
-                "CI_COMMIT_TAG": all_vars.get("CI_COMMIT_TAG"),
-                "CI_COMMIT_REF_NAME": all_vars.get("CI_COMMIT_REF_NAME"),
-            }
+            ci_vars = {}
+            if "CI_COMMIT_TAG" in all_vars:
+                ci_vars["CI_COMMIT_TAG"] = all_vars["CI_COMMIT_TAG"]
+            ci_vars["CI_COMMIT_REF_NAME"] = all_vars.get("CI_COMMIT_REF_NAME")
             self.ctx.update(extra_env)
-            self.ctx.update(ci_vars)
+            self.ctx.env_vars.update(ci_vars)
             self.set_inventory()
             self.set_cloud_passport()
             self.generate_config()

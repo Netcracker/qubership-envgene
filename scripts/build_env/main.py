@@ -27,7 +27,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     delete_dir(render_profiles_dir)
     render_env_dir = f"{render_dir}/{env_name}"
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}', f"{render_env_dir}/{INVENTORY_DIR_NAME}")
-    # clearing instances dir 
+    # clearing instances dir
     cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
     check_dir_exist_and_create(f'{render_parameters_dir}/from_template')
@@ -165,13 +165,15 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     envvars["cloud_passport_file_path"] = find_cloud_passport_definition(source_env_dir, all_instances_dir)
     envvars["cmdb_url"] = cmdb_url
     envvars["output_dir"] = output_dir
-    EnvGenerator().generate_config_env(env_name, envvars)
+    envvars["render_profiles_dir"] = render_profiles_dir
+    render_context = EnvGenerator()
+    render_context.generate_config_env(env_name, envvars)
     handle_template_override(render_dir)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
                                                                            ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
     # building env
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir)
+              env_specific_resource_profile_map, all_instances_dir, render_context)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
                                                      output_dir)
     validate_appregdefs(render_dir, env_name)

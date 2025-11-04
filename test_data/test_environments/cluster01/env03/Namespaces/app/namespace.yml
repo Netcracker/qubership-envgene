@@ -10,7 +10,7 @@ cleanInstallApprovalRequired: false
 mergeDeployParametersAndE2EParameters: false
 deployParameters:
   APP_NAMESPACE: "test-environment-app" # paramset: test-parameters-1 version: n/a source: template
-  ENVGENE_CONFIG_REF_NAME: "No Ref Name"
+  ENVGENE_CONFIG_REF_NAME: "branch_name"
   ENVGENE_CONFIG_TAG: "No Ref tag"
   PARAMETERS_SD_VALUE: "PARAMETERS_SD_VALUE" # paramset: test-parameters-1 version: n/a source: template
   PARAMETERS_Variable_1: "Value 1" # paramset: test-parameters-1 version: n/a source: template

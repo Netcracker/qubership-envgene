@@ -23,6 +23,7 @@ g_inventory_dir = str((base_dir / "../../test_data/test_environments").resolve()
 g_output_dir = str((base_dir / "../../tmp/test_environments").resolve())
 g_base_dir = get_parent_dir_for_dir(g_inventory_dir)
 environ['CI_PROJECT_DIR'] = g_base_dir
+os.environ['CI_COMMIT_REF_NAME'] = "branch_name"
 
 
 @pytest.fixture(autouse=True)

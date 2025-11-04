@@ -14,6 +14,7 @@ from pathlib import Path
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
 
+
 def find_namespaces(dir):
     result = []
     fileList = findAllYamlsInDir(dir)
@@ -178,6 +179,19 @@ def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
     raise ReferenceError(f"Environment definition not found for template {templatePath}")
 
 
+def sort_paramsets_with_same_name(entries: list[dict]) -> list[dict]:
+    # strict order processing paramsets template -> instance
+    def sort_key(e):
+        path = e["filePath"]
+        if "from_template" in path:
+            return 1, path
+        elif "from_instance" in path:
+            return 2, path
+        return 0, path
+
+    return sorted(entries, key=sort_key)
+
+
 def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag, parametersTag, paramset_map,
                                      env_specific_params_map, header_text="", env_instances_dir=None):
     params = copy.deepcopy(paramsTemplate[parametersTag])
@@ -188,7 +202,7 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
                 f"Paramset '{pset}' referenced in {paramsetsTag} for template '{templatePath}' was not found. It may have been skipped due to missing variables.")
             continue
 
-        paramSetDefinition = paramset_map[pset]
+        paramSetDefinition = sort_paramsets_with_same_name(paramset_map[pset])
         for entry in paramSetDefinition:
             paramSetFile = entry["filePath"]
             logger.info(f"Processing paramset {pset} in file {paramSetFile}")
@@ -448,7 +462,7 @@ def getTemplateNameFromNamespacePath(namespacePath):
 
 
 def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, resource_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir):
+              env_specific_resource_profile_map, all_instances_dir, render_context):
     paramset_map = createParamsetsMap(parameters_dir)
     env_dir = env_template_dir + "/" + env_name
     logger.info(f"Env name: {env_name}")
@@ -529,4 +543,4 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
 
     # process resource profiles
     processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, needed_resource_profiles_map,
-                            env_specific_resource_profile_map, header_text=generated_header_text)
+                            env_specific_resource_profile_map, render_context, header_text=generated_header_text)

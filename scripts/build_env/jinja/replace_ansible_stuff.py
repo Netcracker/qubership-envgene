@@ -8,9 +8,6 @@ general_warn_message = (
     f"List of Jinja2 custom filters: {list(JINJA_FILTERS.keys())}"
 )
 
-incorrect_template_warn_message = (
-    "Invalid template: Template was automatically fixed."
-)
 
 underscore_var_warn_message = (
     "Local variables with leading underscores (like {{ _tenant }}) are no longer supported. "
@@ -31,13 +28,6 @@ REPLACEMENTS = [
         r"env_vars.\1",
         "ansible.builtin.env lookup",
         general_warn_message
-    ),
-    # | default('x') -> | default('x', true)
-    (
-        re.compile(r"\|\s*default\((['\"])(.+?)\1\s*\)"),
-        r"| default(\1\2\1, true)",
-        "jinja2 default without true",
-        incorrect_template_warn_message
     ),
     # {{ _tenant }} -> {{ tenant }}
     (
@@ -89,16 +79,14 @@ def escaping_quotation(yaml_text: str) -> str:
         key, value = line.split(':', 1)
         val = value.strip()
 
-        if val.startswith('"${') and val.endswith('}"'):
+        if val.startswith('"') and val.endswith('"') and '${' in val and '}' in val:
             inner = val[1:-1]
             if '\\"' in inner:
                 return line
-
             escaped_inner = inner.replace('"', '\\"')
             return f'{key}: "{escaped_inner}"'
 
         return line
-
     lines = yaml_text.splitlines()
     fixed_lines = [replace_line(line) for line in lines]
     return "\n".join(fixed_lines)
