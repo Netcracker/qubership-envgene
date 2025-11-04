@@ -52,6 +52,14 @@ runs:
         cd ../../..
         mv junit.xml junit_envgenehelper.xml
 
+    - name: ARTIFACT SEARCHER test
+      shell: bash
+      run: |
+        cd python/artifact-searcher/artifact_searcher
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit.xml
+        cd ../../..
+        mv junit.xml junit_artifact_searcher.xml
+
     - name: BUILD ENV test
       shell: bash
       run: |
