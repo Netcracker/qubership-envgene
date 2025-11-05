@@ -2,16 +2,12 @@
 name: "{{current_env.name}}-bg-plugin"
 credentialsId: ""
 labels:
-- "solutionInstance-{{env}}"
-- "solution-{{_tenant}}"
+- "solutionInstance-{{current_env.name}}"
+- "solution-{{current_env.tenant}}"
 isServerSideMerge: false
 cleanInstallApprovalRequired: false
 mergeDeployParametersAndE2EParameters: false
-deployParameters:
-  COMPOSITE_PLATFORM: "true"
-  CONSUL_ENABLED: "true"
-  # DEVOPSBP-1777
-  DBAAS_LODB_PER_NAMESPACE_AUTOBALANCE_RULES: "postgresql=>postgresql:postgres"
+deployParameters: {}
 e2eParameters: {}
 technicalConfigurationParameters: {}
 deployParameterSets: []
