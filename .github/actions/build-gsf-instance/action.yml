@@ -67,7 +67,7 @@ runs:
         password: ${{ inputs.github-token }}
 
     - name: Generate Docker tags
-      id: tagsrep
+      id: tags
       uses: ./.github/actions/generate-docker-tags
 
     - name: Extract metadata (tags, labels) for Docker
