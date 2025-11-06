@@ -14,7 +14,7 @@ inputs:
   image-name:
     description: 'Docker image name'
     required: false
-    default: 'qubership-gsf-instance-test'
+    default: 'qubership-gsf-instance'
   dockerfile-path:
     description: 'Path to Dockerfile'
     required: false
