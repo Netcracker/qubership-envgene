@@ -37,7 +37,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Build Qubership PipeGene Docker Image
+    - name: Build Qubership GSF Instance Docker Image
       uses: ./.github/actions/build-gsf-instance
       id: build-gsf-instance
       with:
