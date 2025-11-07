@@ -19,6 +19,20 @@ DEFAULT_REQUEST_TIMEOUT = 30
 WORKSPACE = limit = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
 
 
+def convert_nexus_repo_url_to_index_view(url: str) -> str:
+    has_trailing_slash = url.endswith("/")
+    segments = url.rstrip("/").split("/")
+
+    *head, last = segments
+    if last != 'repository':
+        return url
+    new_segments = head + ['service', 'rest'] + [last, 'browse']
+    new_url = "/".join(new_segments)
+
+    if has_trailing_slash:
+        new_url += "/"
+    return new_url
+
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension, folder: str) -> str:
     artifact_id = app.artifact_id
     registry_url = app.registry.maven_config.repository_domain_name
@@ -198,36 +212,60 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
             - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
             Returns None if the artifact could not be resolved
     """
+    async def attempt_check(registry_url: str) -> Optional[tuple[str, tuple[str, str]]]:
+        """Helper function to attempt artifact check with a given registry URL"""
+        original_url = app.registry.maven_config.repository_domain_name
+        app.registry.maven_config.repository_domain_name = registry_url
 
-    folder = version_to_folder_name(version)
-    stop_event = asyncio.Event()
+        folder = version_to_folder_name(version)
+        stop_event = asyncio.Event()
 
-    repos_dict = get_repo_value_pointer_dict(app.registry)
+        repos_dict = get_repo_value_pointer_dict(app.registry)
 
-    async with aiohttp.ClientSession() as session:
-        resolved_version = version
+        try:
+            async with aiohttp.ClientSession() as session:
+                resolved_version = version
+                if version.endswith('-SNAPSHOT'):
+                    for repo_value, _ in repos_dict.items():
+                        if not repo_value:
+                            continue
+                        resolved = await resolve_snapshot_version(session, app, version, repo_value, extension=artifact_extension)
+                        if resolved:
+                            resolved_version = resolved
+                            folder = version_to_folder_name(resolved_version)
+                            logger.info(f"Using resolved snapshot version: {resolved_version}")
+                            break
 
-        if version.endswith('-SNAPSHOT'):
-            for repo_value, _ in repos_dict.items():
-                if not repo_value:
-                    continue
+                async with asyncio.TaskGroup() as tg:
+                    tasks = [
+                        tg.create_task(
+                            check_artifact_by_full_url_async(app, resolved_version, repo, artifact_extension, folder, stop_event, session)
+                        )
+                        for repo in repos_dict.items()
+                    ]
 
-                resolved = await resolve_snapshot_version(session, app, version, repo_value, extension=artifact_extension)
-                if resolved:
-                    resolved_version = resolved
-                    folder = version_to_folder_name(resolved_version)
-                    logger.info(f"Using resolved snapshot version: {resolved_version}")
-                    break
+                for task in tasks:
+                    result = task.result()
+                    if result is not None:
+                        return result
+        finally:
+            app.registry.maven_config.repository_domain_name = original_url
 
-        async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(
-                check_artifact_by_full_url_async(app, resolved_version, repo, artifact_extension, folder,
-                                                 stop_event, session)) for repo in repos_dict.items()]
-        for task in tasks:
-            result = task.result()
-            if result is not None:
-                return result
+    original_domain = app.registry.maven_config.repository_domain_name
+    result = await attempt_check(original_domain)
+    if result is not None:
+        return result
 
+    fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
+    if fixed_domain != original_domain:
+        logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
+        result = await attempt_check(fixed_domain)
+        if result is not None:
+            return result
+    else:
+        logger.debug("Domain is same after editing, skipping retry")
+
+    logger.warning(f"Artifact not found")
 
 def unzip_file(artifact_id: str, app_name: str, app_version: str, zip_url: str):
     extracted = False

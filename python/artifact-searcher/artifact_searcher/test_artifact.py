@@ -1,9 +1,20 @@
+import pytest
 import aiohttp
 from aiohttp import web
 from artifact_searcher.utils import models
-from artifact_searcher.artifact import resolve_snapshot_version
+from artifact_searcher.artifact import resolve_snapshot_version, check_artifact_async
 
-async def test_resolve_snapshot_version(aiohttp_server):
+
+@pytest.mark.parametrize(
+    "index_path",
+    [
+        # ("/repository/repo/com/example/app/1.0.0-SNAPSHOT/maven-metadata.xml"),
+        # ("/service/rest/repository/browse/repo/com/example/app/1.0.0-SNAPSHOT/maven-metadata.xml"),
+        ("/repository/"),
+        ("/service/rest/repository/browse/"),
+    ],
+)
+async def test_resolve_snapshot_version(aiohttp_server, index_path):
     async def handler(request):
         return web.Response(
             text="""
@@ -29,17 +40,21 @@ async def test_resolve_snapshot_version(aiohttp_server):
               </versioning>
             </metadata>
             """,
-            content_type="application/xml"
+            content_type="application/xml",
         )
+
     app_web = web.Application()
-    app_web.router.add_get('/repo/com/example/app/1.0.0-SNAPSHOT/maven-metadata.xml', handler)
+    app_web.router.add_get(f"{index_path}repo/com/example/app/1.0.0-SNAPSHOT/maven-metadata.xml", handler)
+    app_web.router.add_get(f"{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json", handler)
     server = await aiohttp_server(app_web)
+    base_url = str(server.make_url("/repository/"))
+
 
     mvn_cfg = models.MavenConfig(
         target_snapshot="repo",
         target_staging="repo",
         target_release="repo",
-        repository_domain_name=str(server.make_url('/')),
+        repository_domain_name=base_url,
     )
     dcr_cfg = models.DockerConfig()
     reg = models.Registry(
@@ -55,6 +70,13 @@ async def test_resolve_snapshot_version(aiohttp_server):
         solution_descriptor=False,
     )
 
-    async with aiohttp.ClientSession() as session:
-        resolved = await resolve_snapshot_version(session, app, "1.0.0-SNAPSHOT", "repo")
-        assert resolved == "1.0.0-20240702.123456-1"
+    result = await check_artifact_async(app, models.FileExtension.JSON, "1.0.0-SNAPSHOT")
+    assert result is not None
+    full_url, _ = result
+
+    sample_url = f"{base_url.rstrip("/repository/")}{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json"
+    assert full_url == sample_url, f"expected: {sample_url}, received: {full_url}"
+
+    # async with aiohttp.ClientSession() as session:
+    #     resolved = await resolve_snapshot_version(session, app, "1.0.0-SNAPSHOT", "repo")
+    #     assert resolved == "1.0.0-20240702.123456-1", f"Failed to resolve for this maven metadata url: {maven_metadata_url}"
