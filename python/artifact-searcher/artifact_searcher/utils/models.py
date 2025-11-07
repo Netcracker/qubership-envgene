@@ -29,6 +29,9 @@ class MavenConfig(BaseSchema):
             raise ValueError(f"Full URL {full_repository_url} is not supported, please use domain URL")
         return full_repository_url
 
+    @field_validator('repository_domain_name')
+    def ensure_trailing_slash(cls, value):
+        return value.rstrip("/") + "/"
 
 class DockerConfig(BaseSchema):
     snapshot_uri: Optional[str] = ""
