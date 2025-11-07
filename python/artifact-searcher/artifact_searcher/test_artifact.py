@@ -8,8 +8,6 @@ from artifact_searcher.artifact import resolve_snapshot_version, check_artifact_
 @pytest.mark.parametrize(
     "index_path",
     [
-        # ("/repository/repo/com/example/app/1.0.0-SNAPSHOT/maven-metadata.xml"),
-        # ("/service/rest/repository/browse/repo/com/example/app/1.0.0-SNAPSHOT/maven-metadata.xml"),
         ("/repository/"),
         ("/service/rest/repository/browse/"),
     ],
@@ -74,9 +72,6 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path):
     assert result is not None
     full_url, _ = result
 
-    sample_url = f"{base_url.rstrip("/repository/")}{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json"
+    sample_url = f"{base_url.rstrip('/repository/')}{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json"
     assert full_url == sample_url, f"expected: {sample_url}, received: {full_url}"
 
-    # async with aiohttp.ClientSession() as session:
-    #     resolved = await resolve_snapshot_version(session, app, "1.0.0-SNAPSHOT", "repo")
-    #     assert resolved == "1.0.0-20240702.123456-1", f"Failed to resolve for this maven metadata url: {maven_metadata_url}"
