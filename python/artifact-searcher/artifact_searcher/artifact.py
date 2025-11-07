@@ -151,8 +151,7 @@ async def download(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
 
 
 async def check_artifact_by_full_url_async(app: Application, version: str, repo, artifact_extension: FileExtension,
-                                           folder: str,
-                                           stop_event, session) -> tuple[str, tuple[str, str]] | None:
+                                           folder: str, stop_event, session) -> tuple[str, tuple[str, str]] | None:
     if stop_event.is_set():
         return None
     repo_value, repo_pointer = repo
