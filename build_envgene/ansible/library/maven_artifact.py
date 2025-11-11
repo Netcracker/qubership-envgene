@@ -231,7 +231,7 @@ class MavenDownloader:
 
         req_timeout = self.module.params.get('timeout')
 
-        # Hack to add parameters in the way that fetch_url expects
+        # trick to add parameters in the way that fetch_url expects
         self.module.params['url_username'] = self.module.params.get('username', '')
         self.module.params['url_password'] = self.module.params.get('password', '')
         self.module.params['http_agent'] = self.user_agent
