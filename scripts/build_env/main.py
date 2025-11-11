@@ -330,7 +330,6 @@ def validate_regdef_v2_authconfig(regdef_content, file_path):
                         f"not found in authConfig section. "
                         f"Available authConfigs: {list(auth_configs.keys())}"
                     )
-            logger.info(f"RegDef file: {file}")
 
 def render_environment(env_name, cluster_name, templates_dir, all_instances_dir, output_dir, g_template_version,
                        work_dir):
