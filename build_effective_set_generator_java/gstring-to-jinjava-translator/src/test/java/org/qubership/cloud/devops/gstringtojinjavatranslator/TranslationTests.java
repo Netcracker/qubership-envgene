@@ -75,7 +75,7 @@ class TranslationTests {
         context.put("CDC_KAFKA_SECURITY_PROTOCOL", "SASL_SSL");
         context.put("CLOUD_PUBLIC_HOST", "cloudbss-svt21.k8s.sdntest.example.com");
         context.put("CLOUDNAME", "AZUREAKS-test_apps");
-        context.put("NAMESPACE", "st5-bss-pim-st5");
+        context.put("NAMESPACE", "st5-bss-st5");
         context.put("OM_WIRELESS_BILLING_ENDPOINT", "resource/merlinPOToBillingBridge/v1/productOrderToBilling");
         context.put("tenant", prepareTenantMapObject());
         context.put("record", Map.of("log", "first\tsecond"));
@@ -91,10 +91,10 @@ class TranslationTests {
         entity.put("service_name", "entity-service-name");
         application.put("ocs-rejected-events-backend", entity);
         namespace.put("cicd-dev-1-apps", Map.of("application", application));
-        cloud.put("nrm.db.url", "first@second@third");
+        cloud.put("app.db.url", "first@second@third");
         cloud.put("Single_site_ocs", Map.of("namespace", namespace));
         tenant.put("cloud", Map.of(
-                "nrm.db.url", "first@second@third",
+                "app.db.url", "first@second@third",
                 "CLOUD_HELM_RESOURCE_TIMEOUT", "15"));
         tenant.put("CLOUD-OCS-PRODUCT", Map.of("cloud", cloud));
         return tenant;
@@ -129,8 +129,8 @@ class TranslationTests {
                         "false"
                 ),
                 Arguments.of(
-                        "${tenant.cloud.get(\"nrm.db.url\").split(\"@\")[1]}",
-                        "<<tenant.cloud[\"nrm.db.url\"].split(\"@\")[1]>>",
+                        "${tenant.cloud.get(\"app.db.url\").split(\"@\")[1]}",
+                        "<<tenant.cloud[\"app.db.url\"].split(\"@\")[1]>>",
                         "second"),
                 Arguments.of(
                         "${tenant.cloud.CLOUD_HELM_RESOURCE_TIMEOUT}",
@@ -149,7 +149,7 @@ class TranslationTests {
                         "${tenant['CLOUD-OCS-PRODUCT'].cloud['Single_site_ocs'].namespace['cicd-dev-1-apps'].application['ocs-rejected-events-backend'].service_name}",
                         "<<tenant['CLOUD-OCS-PRODUCT'].cloud['Single_site_ocs'].namespace['cicd-dev-1-apps'].application['ocs-rejected-events-backend'].service_name>>",
                         "entity-service-name"),
-                Arguments.of("${ NAMESPACE }", "<<NAMESPACE>>", "st5-bss-pim-st5"),
+                Arguments.of("${ NAMESPACE }", "<<NAMESPACE>>", "st5-bss-st5"),
                 Arguments.of(
                         "${record['log'].gsub(/\\t+/,' ')}",
                         "<<record['log'].replaceAll(\"\\t+\",' ')>>",
@@ -161,7 +161,7 @@ class TranslationTests {
                 Arguments.of(
                         "${\"uim-edss-email-high.\" + NAMESPACE + \".svc.cluster.local\"}",
                         "<<\"uim-edss-email-high.\" + NAMESPACE + \".svc.cluster.local\">>",
-                        "uim-edss-email-high.st5-bss-pim-st5.svc.cluster.local"),
+                        "uim-edss-email-high.st5-bss-st5.svc.cluster.local"),
                 Arguments.of(
                         "${ CDC_KAFKA_SECURITY_PROTOCOL.contains(\"SSL\") }",
                         "<<CDC_KAFKA_SECURITY_PROTOCOL.contains(\"SSL\")>>",
@@ -175,12 +175,12 @@ class TranslationTests {
                         "<<creds[\"userpass_cred\"].username>>",
                         "test1"),
                 Arguments.of(
-                        "${['bss-pim', 'bss', 'nrm', 'ops-dpt'].findResult{ if (NAMESPACE.contains(it)) NAMESPACE.substring(0, NAMESPACE.indexOf(it)) } ?: ''}",
-                        "<<['bss-pim','bss','nrm','ops-dpt'] | envPrefix('')>>",
+                        "${['bss'].findResult{ if (NAMESPACE.contains(it)) NAMESPACE.substring(0, NAMESPACE.indexOf(it)) } ?: ''}",
+                        "<<['bss'] | envPrefix('')>>",
                         "st5-"),
                 Arguments.of(
-                        "${['bss-pim', 'bss', 'nrm', 'ops-dpt', 'ops-dpc', 'opt-ssm'].findResult{ if (NAMESPACE.contains(it)) NAMESPACE.substring(NAMESPACE.indexOf(it) + it.length()) } ?: ''}",
-                        "<<['bss-pim','bss','nrm','ops-dpt','ops-dpc','opt-ssm'] | envSuffix('')>>",
+                        "${['oss','bss'].findResult{ if (NAMESPACE.contains(it)) NAMESPACE.substring(NAMESPACE.indexOf(it) + it.length()) } ?: ''}",
+                        "<<['oss','bss'] | envSuffix('')>>",
                         "-st5"),
                 Arguments.of(
                         "${CLOUDNAME.replace(\"_apps\",\"\").replace(\"_\", \"-\").toLowerCase()}",

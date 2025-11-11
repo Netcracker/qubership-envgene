@@ -49,7 +49,7 @@ This guide outlines the steps to create and register a simple environment templa
 
     Example:
 
-    [`tenant.yml.j2`](/docs/samples/templates/env_templates/simple/tenant.yml.j2)
+    [`tenant.yml.j2`](/docs/samples/template-repository/templates/env_templates/simple/tenant.yml.j2)
 
     ```plaintext
     └── templates
@@ -62,7 +62,7 @@ This guide outlines the steps to create and register a simple environment templa
 
     Example:
 
-    [`cloud.yml.j2`](/docs/samples/templates/env_templates/simple/cloud.yml.j2)
+    [`cloud.yml.j2`](/docs/samples/template-repository/templates/env_templates/simple/cloud.yml.j2)
 
     ```plaintext
     └── templates
@@ -76,7 +76,7 @@ This guide outlines the steps to create and register a simple environment templa
 
     Example:
 
-    [`billing.yml.j2`](/docs/samples/templates/env_templates/simple/billing.yml.j2)
+    [`billing.yml.j2`](/docs/samples/template-repository/templates/env_templates/simple/billing.yml.j2)
 
     ```plaintext
     └── templates
@@ -91,7 +91,7 @@ This guide outlines the steps to create and register a simple environment templa
 
     Example:
 
-    [`simple.yaml`](/docs/samples/templates/env_templates/simple.yaml)
+    [`simple.yaml`](/docs/samples/template-repository/templates/env_templates/simple.yaml)
 
     ```plaintext
     └── templates
