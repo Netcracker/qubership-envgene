@@ -522,7 +522,7 @@ The CLI flag [`--enable-traceability`](#calculator-command-line-tool-execution-a
         port: 9090
     ```
 
-10. Comments are added to YAML anchors/aliases (`&id001`, `*id001`, `<<: *id001`). But for regular keys/values filled in via anchors/aliases, still show their source as a comment:
+10. Comments are not added to YAML anchors/aliases (`&id001`, `*id001`, `<<: *id001`). But for regular keys/values filled in via anchors/aliases, still show their source as a comment:
 
     ```yaml
     global: &id001
