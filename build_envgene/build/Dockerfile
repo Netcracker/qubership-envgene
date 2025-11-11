@@ -38,7 +38,6 @@ COPY build_envgene/scripts /module/scripts
 COPY creds_rotation/scripts /module/creds_rotation_scripts
 COPY build_* create_* produce_* sort* /build_env/
 COPY scripts /build_env/scripts
-COPY env-builder /build_env/env-builder
 COPY schemas /build_env/schemas
 
 ENV ANSIBLE_LIBRARY=/module/ansible/library
