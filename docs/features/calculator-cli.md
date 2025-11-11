@@ -495,7 +495,7 @@ The CLI flag [`--enable-traceability`](#calculator-command-line-tool-execution-a
 
 6. A parameter is considered calculated by the calculator if its value has been changed by the calculator (transformed, generated, obtained via concatenation, etc.)
 
-7. For complex parameters calculated by the calculator, the comment is added only to the root key.
+7. For complex parameters calculated by the calculator, the comment is added only to the root parameter.
 
 8. Complex parameters (objects, lists) are processed recursively, with each item receiving a comment based on its own source.
 
