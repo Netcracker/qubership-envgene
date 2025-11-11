@@ -46,10 +46,10 @@ def process_entry_in_payload(
 
 
     shared_match_files = [k for k, v in shared_cred_content.items() if cred_id in v]
-    env_cred_file = next((k for k, v in env_cred_content.items() if cred_id in v), "")
+    env_cred_files = [k for k, v in env_cred_content.items() if cred_id in v]
 
     #Constructing map for file updation
-    all_cred_files = shared_match_files + ([env_cred_file] if env_cred_file else [])
+    all_cred_files = shared_match_files + env_cred_files
     for cred_file in all_cred_files:
         shared_content = shared_cred_content.get(cred_file) or env_cred_content.get(cred_file)
         cred_map = CredMap(
@@ -67,7 +67,7 @@ def process_entry_in_payload(
         cred_id,
         cluster_name,
         shared_match_files,
-        env_cred_file,
+        env_cred_files,
         entry.parameter_key,
         param_type,
         target_file

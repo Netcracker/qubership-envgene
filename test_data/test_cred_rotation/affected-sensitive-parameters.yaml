@@ -1,0 +1,51 @@
+- target_parameter:
+    environment: env-01
+    namespace: env-01-bss
+    application: ''
+    context: pipeline
+    parameter_key: TEST_E2E_PASSWORD
+    cred_field: password
+  affected_parameters:
+  - environment: env-01
+    namespace: env-01-bss
+    application: ''
+    context: runtime
+    parameter_key: AFFECTED_E2E_PASSWORD
+    environment_cred_filepath: []
+    shared_cred_filepath:
+    - environments/cluster-02/credentials/sample-cloud-name-creds.yml
+    cred_id: integration-cred
+- target_parameter:
+    environment: env-01
+    namespace: env-01-bss
+    application: ''
+    context: runtime
+    parameter_key: TEST_TECH_USER
+    cred_field: username
+  affected_parameters:
+  - environment: env-01
+    namespace: env-01-oss
+    application: ''
+    context: deployment
+    parameter_key: AFFECTED_TECH_USER
+    environment_cred_filepath: []
+    shared_cred_filepath:
+    - environments/cluster-02/credentials/sample-cloud-name-creds.yml
+    cred_id: creds-get-password-cred
+- target_parameter:
+    environment: env-01
+    namespace: env-01-oss
+    application: cloud
+    context: deployment
+    parameter_key: TEST_DEPLOY_SECRET
+    cred_field: secret
+  affected_parameters:
+  - environment: env-01
+    namespace: env-01-bss
+    application: crm
+    context: runtime
+    parameter_key: AFFECTED_DEPLOY_SECRET
+    environment_cred_filepath: []
+    shared_cred_filepath:
+    - environments/cluster-02/credentials/sample-cloud-name-creds.yml
+    cred_id: creds-get-secret
