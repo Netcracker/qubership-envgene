@@ -1,0 +1,8 @@
+{
+  "include": ["."],
+  "extraPaths": [
+    "./python/envgene",
+    "./python/artifact-searcher"
+  ],
+  "pythonVersion": "3.12"
+}
