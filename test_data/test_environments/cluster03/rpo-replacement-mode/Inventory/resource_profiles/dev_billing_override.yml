@@ -1,4 +1,3 @@
-
 name: "dev_billing_override"
 baseline: "dev"
 description: "Override for dev-profile"
