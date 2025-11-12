@@ -1,6 +1,6 @@
 {
   "gsf_repository_name": "",
   "project_name": "my-project",
-  "docker_registry": "ghcr.io/netcracker"
+  "envgene_version": "feature_updating_gsf_2"
 }
 

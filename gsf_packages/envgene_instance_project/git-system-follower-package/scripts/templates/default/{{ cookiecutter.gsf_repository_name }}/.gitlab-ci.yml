@@ -9,7 +9,7 @@ default:
   tags: [ $GITLAB_RUNNER_TAG_NAME ]
 
 variables:
-  ENVGENE_VERSION: "1.2.3"
+  ENVGENE_VERSION: "{{cookiecutter.envgene_version}}"
 
 include:
   - local: 'gitlab-ci/pipeline_vars.yaml'
@@ -27,9 +27,9 @@ include:
 
 .images.variables:
   variables:
-    envgen_image: "{{cookiecutter.docker_registry}}/qubership-envgene:${ENVGENE_VERSION}"
-    pipegene_image: "{{cookiecutter.docker_registry}}/qubership-pipegene:${ENVGENE_VERSION}"
-    effective_set_generator_image: "{{cookiecutter.docker_registry}}/qubership-effective-set-generator:${ENVGENE_VERSION}"
+    envgen_image: "${DOCKER_REGISTRY || 'ghcr.io/netcracker'}/qubership-envgene:${ENVGENE_VERSION}"
+    pipegene_image: "${DOCKER_REGISTRY || 'ghcr.io/netcracker'}/qubership-pipegene:${ENVGENE_VERSION}"
+    effective_set_generator_image: "${DOCKER_REGISTRY || 'ghcr.io/netcracker'}/qubership-effective-set-generator:${ENVGENE_VERSION}"
 
 ####################################
 # Jobs
