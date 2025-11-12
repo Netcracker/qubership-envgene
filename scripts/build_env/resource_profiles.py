@@ -1,5 +1,6 @@
 import copy
 from envgenehelper import *
+from generate_config_env import EnvGenerator
 
 
 # TODO unit tests
@@ -131,7 +132,7 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
 
 
 def processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, needed_resource_profiles_map,
-                            env_specific_resource_profile_map, render_context, header_text=""):
+                            env_specific_resource_profile_map, render_context: EnvGenerator, header_text=""):
     logger.info(f"Needed profiles map: \n{dump_as_yaml_format(needed_resource_profiles_map)}")
     render_context.generate_profiles(set(needed_resource_profiles_map.values()))
     render_context.generate_profiles(set(env_specific_resource_profile_map.values()))
@@ -146,20 +147,20 @@ def processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, nee
     profilesMap = validate_resource_profiles(needed_resource_profiles_map, sourceProfilesMap, profiles_schema)
     # iterate through env specific resource profiles and perform override
     for templateName, envSpecificProfileFile in env_specific_resource_profile_map.items():
-        if templateName in profilesMap:
-            logger.info(
-                f"Joining template override profile for namespace '{templateName}' with environment specific profile {envSpecificProfileFile}")
-            templateProfileFilePath = profilesMap[templateName]
-            templateProfileYaml = openYaml(templateProfileFilePath)
-            envSpecificProfileYaml = openYaml(envSpecificProfileFile)
-            merge_resource_profiles(templateProfileYaml, envSpecificProfileYaml,
-                                    extractNameFromFile(envSpecificProfileFile))
-            writeYamlToFile(templateProfileFilePath, templateProfileYaml)
-        else:
+        if templateName not in profilesMap:
             logger.error(
                 f"No override profile for {templateName} found. Can't apply environment specific resource profile {envSpecificProfileFile}")
             raise ReferenceError(
                 f"Can't apply environment specific resource profile for namespace {templateName}. Please set override profile in templates first.")
+        logger.info(
+            f"Joining template override profile for namespace '{templateName}' with environment specific profile {envSpecificProfileFile}")
+        templateProfileFilePath = profilesMap[templateName]
+        templateProfileYaml = openYaml(templateProfileFilePath)
+        envSpecificProfileYaml = openYaml(envSpecificProfileFile)
+        # decide here whether to merge or replace
+        merge_resource_profiles(templateProfileYaml, envSpecificProfileYaml,
+                                extractNameFromFile(envSpecificProfileFile))
+        writeYamlToFile(templateProfileFilePath, templateProfileYaml)
     # copying source and overriden profiles to resulting dir
     for profileKey, profileFilePath in profilesMap.items():
         logger.debug(f"Copying '{profileKey}' to resulting directory '{envRpDir}'")
