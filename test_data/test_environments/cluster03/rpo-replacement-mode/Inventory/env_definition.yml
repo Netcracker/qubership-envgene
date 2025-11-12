@@ -1,0 +1,12 @@
+inventory:
+  environmentName: "minimal-env"
+  tenantName: "Applications"
+  config:
+    mergeEnvSpecificResourceProfiles: false
+envTemplate:
+  name: "simple"
+  artifact: "deployment-configuration-env-templates:1.2.3"
+  envSpecificResourceProfiles:
+    billing: medium_billing_override
+generatedVersions:
+  generateEnvironmentLatestVersion: "deployment-configuration-env-templates:simple"  # This value is automatically generated during job run.
