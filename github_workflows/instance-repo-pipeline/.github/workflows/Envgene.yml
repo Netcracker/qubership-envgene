@@ -189,12 +189,7 @@ jobs:
       - name: Generate Inventory
         if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
-            -w ${{ env.CI_PROJECT_DIR }} \
-            --env-file .env.container \
-            --user root \
-            -e HOME=/root \
+          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               source /module/venv/bin/activate
@@ -219,12 +214,7 @@ jobs:
       - name: Credential Rotation
         if: needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
-            -w ${{ env.CI_PROJECT_DIR }} \
-            --env-file .env.container \
-            --user root \
-            -e HOME=/root \
+          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               source /module/venv/bin/activate
@@ -249,12 +239,7 @@ jobs:
       - name: Build Env
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
-            -w ${{ env.CI_PROJECT_DIR }} \
-            --env-file .env.container \
-            --user root \
-            -e HOME=/root \
+          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               source /module/venv/bin/activate
@@ -306,11 +291,7 @@ jobs:
       - name: Generate Effective Set
         if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
-            -w ${{ env.CI_PROJECT_DIR }} \
-            -e GITHUB_TOKEN=${{ env.GITHUB_TOKEN }} \
-            --user root \
+          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR }}:${{ env.DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR }} \
             bash -c "
               # Export all variables using unified exporter
@@ -348,12 +329,7 @@ jobs:
       ### GIT COMMIT ###
       - name: Git Commit
         run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
-            -w ${{ env.CI_PROJECT_DIR }} \
-            --env-file .env.container \
-            --user root \
-            -e HOME=/root \
+          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               source /module/venv/bin/activate
