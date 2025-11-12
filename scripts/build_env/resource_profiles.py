@@ -149,18 +149,26 @@ def processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, nee
     for templateName, envSpecificProfileFile in env_specific_resource_profile_map.items():
         if templateName not in profilesMap:
             logger.error(
-                f"No override profile for {templateName} found. Can't apply environment specific resource profile {envSpecificProfileFile}")
+                f"No override profile for {templateName} found. Can't apply environment specific resource profile {envSpecificProfileFile}"
+            )
             raise ReferenceError(
-                f"Can't apply environment specific resource profile for namespace {templateName}. Please set override profile in templates first.")
-        logger.info(
-            f"Joining template override profile for namespace '{templateName}' with environment specific profile {envSpecificProfileFile}")
+                f"Can't apply environment specific resource profile for namespace {templateName}. Please set override profile in templates first."
+            )
+        logger.info(f"Found template override profile for namespace '{templateName}' with environment specific profile {envSpecificProfileFile}")
         templateProfileFilePath = profilesMap[templateName]
         templateProfileYaml = openYaml(templateProfileFilePath)
         envSpecificProfileYaml = openYaml(envSpecificProfileFile)
+        combination_mode_key = "mergeEnvSpecificResourceProfiles"
+        combination_mode = render_context.ctx.env_definition.get(combination_mode_key, 'true')
+        common_msg = (f"profile overrides, because {combination_mode_key} is set to {combination_mode}")
         # decide here whether to merge or replace
-        merge_resource_profiles(templateProfileYaml, envSpecificProfileYaml,
-                                extractNameFromFile(envSpecificProfileFile))
-        writeYamlToFile(templateProfileFilePath, templateProfileYaml)
+        if combination_mode == 'true':
+            logger.info(f"Joining {common_msg}")
+            merge_resource_profiles(templateProfileYaml, envSpecificProfileYaml, extractNameFromFile(envSpecificProfileFile))
+            writeYamlToFile(templateProfileFilePath, templateProfileYaml)
+        else:
+            logger.info(f"Replacing {common_msg}")
+            writeYamlToFile(templateProfileFilePath, envSpecificProfileYaml)
     # copying source and overriden profiles to resulting dir
     for profileKey, profileFilePath in profilesMap.items():
         logger.debug(f"Copying '{profileKey}' to resulting directory '{envRpDir}'")
