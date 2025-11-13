@@ -1,0 +1,40 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "minimal_env"
+apiUrl: ""
+apiPort: ""
+privateUrl: ""
+publicUrl: ""
+dashboardUrl: ""
+labels: []
+defaultCredentialsId: ""
+protocol: ""
+dbMode: "db"
+databases: []
+mergeDeployParametersAndE2EParameters: false
+maasConfig:
+  credentialsId: ""
+  enable: true
+  maasUrl: ""
+  maasInternalAddress: ""
+vaultConfig:
+  credentialsId: ""
+  enable: false
+  url: ""
+dbaasConfigs:
+  - credentialsId: ""
+    enable: false
+    apiUrl: ""
+    aggregatorUrl: ""
+consulConfig:
+  tokenSecret: ""
+  enabled: false
+  publicUrl: ""
+  internalUrl: ""
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

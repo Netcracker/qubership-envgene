@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from collections.abc import Iterable
 
 from deepmerge import always_merger
 from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileAsString, copy_path, dumpYamlToStr, \
@@ -385,7 +386,7 @@ class EnvGenerator:
         self.render_app_defs()
         self.render_reg_defs()
 
-    def generate_profiles(self, profile_names: list[str]):
+    def generate_profiles(self, profile_names: Iterable[str]):
         logger.info(f"Start rendering profiles from list: {profile_names}")
         render_profiles_dir = self.ctx.render_profiles_dir
         profile_templates = self.find_templates(render_profiles_dir, ["*.yaml.j2", "*.yml.j2"])
