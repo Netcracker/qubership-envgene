@@ -159,7 +159,11 @@ def processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, nee
         templateProfileYaml = openYaml(templateProfileFilePath)
         envSpecificProfileYaml = openYaml(envSpecificProfileFile)
         combination_mode_key = "mergeEnvSpecificResourceProfiles"
-        combination_mode = render_context.ctx.env_definition.get(combination_mode_key, 'true')
+        try:
+            combination_mode = render_context.ctx.env_definition['inventory']['config'][combination_mode_key]
+        except KeyError:
+            logger.info(f"{combination_mode_key} key not found in env_definition, default value is 'true'")
+            combination_mode = 'true'
         common_msg = (f"profile overrides, because {combination_mode_key} is set to {combination_mode}")
         # decide here whether to merge or replace
         if combination_mode == 'true':
@@ -171,7 +175,7 @@ def processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, nee
             writeYamlToFile(templateProfileFilePath, envSpecificProfileYaml)
     # copying source and overriden profiles to resulting dir
     for profileKey, profileFilePath in profilesMap.items():
-        logger.debug(f"Copying '{profileKey}' to resulting directory '{envRpDir}'")
+        logger.info(f"Copying '{profileKey}' to resulting directory '{envRpDir}'")
         copy_path(profileFilePath, f"{envRpDir}/")
         resultingProfilePath = f"{envRpDir}/{extractNameFromFile(profileFilePath)}.yml"
         resultingProfilePath = identify_yaml_extension(resultingProfilePath)
