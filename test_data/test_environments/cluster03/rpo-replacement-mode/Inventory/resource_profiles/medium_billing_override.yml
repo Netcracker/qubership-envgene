@@ -1,4 +1,4 @@
-name: "dev_billing_override"
+name: "medium_billing_override"
 baseline: "dev"
 description: "Override for dev-profile"
 applications:
@@ -12,8 +12,4 @@ applications:
       value: "4"
     - name: "REPLICAS"
       value: "4"
-    - name: "CPU_REQUEST"
-      value: "150m"
-    - name: "MEMORY_LIMIT"
-      value: "336Mi"
 version: 0
