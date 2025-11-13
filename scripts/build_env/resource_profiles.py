@@ -30,8 +30,7 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
             logger.error(
                 f"Duplicate resource profile files with key '{profileFileName}' found in '{instances_dir}': \n\t" + ",\n\t".join(
                     str(x) for x in resourceProfileFiles))
-            raise ReferenceError(
-                f"Duplicate resource profile files with key '{profileFileName}' found. See logs above.")
+            raise ReferenceError( f"Duplicate resource profile files with key '{profileFileName}' found. See logs above.")
         else:
             raise ReferenceError(f"Resource profile file with key '{profileFileName}' not found in '{instances_dir}'")
     logger.info(f"Env specific resource profiles are: \n{dump_as_yaml_format(result)}")
