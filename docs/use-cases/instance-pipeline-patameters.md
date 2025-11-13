@@ -115,6 +115,7 @@ The supported separators for multiple values are:
 
 ### Diagram
 
+```mermaid
 sequenceDiagram
     actor U as User
     participant CI as CI/CD System
@@ -130,3 +131,4 @@ sequenceDiagram
     EG-->>IP: Completed for all values
     IP-->>CI: Report success
     CI-->>U: Done
+```
