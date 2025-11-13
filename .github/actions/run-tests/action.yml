@@ -19,6 +19,7 @@ runs:
         apt-get update && apt-get install -y --no-install-recommends \
             build-essential \
             curl \
+            git \
             && rm -rf /var/lib/apt/lists/*
 
         if [ -f dependencies/pip.conf ]; then
