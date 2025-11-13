@@ -157,6 +157,7 @@ def processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, nee
         templateProfileFilePath = profilesMap[templateName]
         templateProfileYaml = openYaml(templateProfileFilePath)
         envSpecificProfileYaml = openYaml(envSpecificProfileFile)
+
         combination_mode_key = "mergeEnvSpecificResourceProfiles"
         try:
             combination_mode = render_context.ctx.env_definition['inventory']['config'][combination_mode_key]
@@ -171,8 +172,8 @@ def processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, nee
             writeYamlToFile(templateProfileFilePath, templateProfileYaml)
         else:
             logger.info(f"Replacing {common_msg}")
-            writeYamlToFile(templateProfileFilePath, envSpecificProfileYaml)
-    # copying source and overriden profiles to resulting dir
+            profilesMap[templateName] = envSpecificProfileFile
+
     for profileKey, profileFilePath in profilesMap.items():
         logger.info(f"Copying '{profileKey}' to resulting directory '{envRpDir}'")
         copy_path(profileFilePath, f"{envRpDir}/")
