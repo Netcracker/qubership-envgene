@@ -20,7 +20,7 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
         logger.debug(f"Searching for env specific resource profiles for template '{templateType}'")
         profileFileName = envSepcificResourceProfileNames[templateType]
         logger.debug(f"Searching for {profileFileName} for template type {templateType}")
-        resourceProfileFiles = findResourcesBottomTop(env_dir, instances_dir, f"/{profileFileName}.")
+        resourceProfileFiles = findResourcesBottomTop(env_dir, instances_dir, f"/{profileFileName}.", f"{env_dir}/Profiles/")
         if len(resourceProfileFiles) == 1:
             yamlPath = resourceProfileFiles[0]
             result[templateType] = yamlPath
