@@ -297,13 +297,52 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
     extract_sds_from_json(env, base_sd_path, sd_data_json, effective_merge_mode)
 
 
+def _get_environment_credentials() -> dict:
+    """
+    Get credentials from environment for V2 cloud registry support.
+    Returns dictionary with credential sets for AWS and GCP.
+    """
+    env_creds = {}
+    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
+    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
+    if aws_access_key and aws_secret_key:
+        env_creds["aws-keys"] = {
+            "username": aws_access_key,
+            "password": aws_secret_key
+        }
+        logger.debug("Loaded AWS credentials from environment")
+    
+    # GCP service account credentials from environment
+    gcp_sa_json_path = os.getenv("GCP_SA_JSON_PATH")
+    if gcp_sa_json_path and path.exists(gcp_sa_json_path):
+        try:
+            with open(gcp_sa_json_path) as f:
+                env_creds["gcp-sa"] = {"secret": f.read()}
+            logger.debug("Loaded GCP service account from file")
+        except Exception as e:
+            logger.warning(f"Failed to load GCP credentials from {gcp_sa_json_path}: {e}")
+    gcp_sa_json = os.getenv("GCP_SA_JSON")
+    if gcp_sa_json:
+        env_creds["gcp-sa"] = {"secret": gcp_sa_json}
+        logger.debug("Loaded GCP service account from environment variable")
+    
+    if env_creds:
+        logger.info(f"Loaded {len(env_creds)} credential set(s) for V2 cloud registry support")
+    else:
+        logger.debug("No V2 cloud credentials found in environment (V1 will still work)")
+    
+    return env_creds
+
+
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
     if 'SNAPSHOT' in version:
         raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
-    # TODO: check if job would fail without plugins
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
-    artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version))
+    env_creds = _get_environment_credentials()
+    artifact_info = asyncio.run(
+        artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version, env_creds)
+    )
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')
