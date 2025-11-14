@@ -196,7 +196,7 @@ def get_repo_pointer(repo_value: str, registry: Registry):
     return repos_dict.get(repo_value)
 
 
-async def attempt_check(app: Application, version: str, registry_url: str) -> Optional[tuple[str, tuple[str, str]]]:
+async def _attempt_check(app: Application, version: str, registry_url: str) -> Optional[tuple[str, tuple[str, str]]]:
     """Helper function to attempt artifact check with a given registry URL"""
     original_url = app.registry.maven_config.repository_domain_name
     app.registry.maven_config.repository_domain_name = registry_url
@@ -251,14 +251,14 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
     """
 
     original_domain = app.registry.maven_config.repository_domain_name
-    result = await attempt_check(app, version, original_domain)
+    result = await _attempt_check(app, version, original_domain)
     if result is not None:
         return result
 
     fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
     if fixed_domain != original_domain:
         logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
-        result = await attempt_check(app, version, fixed_domain)
+        result = await _attempt_check(app, version, fixed_domain)
         if result is not None:
             return result
     else:
