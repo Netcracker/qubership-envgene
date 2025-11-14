@@ -69,9 +69,9 @@ env:
   DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator"
 
   #DOCKER_IMAGE_TAGS
-  DOCKER_IMAGE_TAG_PIPEGENE: "registry-v2-artifact-searcher_20251113-132723"
-  DOCKER_IMAGE_TAG_ENVGENE: "registry-v2-artifact-searcher_20251113-132727"
-  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "registry-v2-artifact-searcher_20251113-132829"
+  DOCKER_IMAGE_TAG_PIPEGENE: "registry-v2-artifact-searcher_20251114-083754"
+  DOCKER_IMAGE_TAG_ENVGENE: "registry-v2-artifact-searcher_20251114-083752"
+  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "registry-v2-artifact-searcher_20251114-083907"
 
 jobs:
   process_environment_variables:
