@@ -21,8 +21,8 @@ dependencies = [
     # V2 cloud registry support dependencies
     "boto3>=1.39.4,<2.0.0",
     "google-auth~=2.34.0",
-    # Maven Client library for V2 cloud registry support
-    "qubership-pipelines-common-library @ git+https://github.com/Netcracker/qubership-pipelines-common-python-library.git@main"
+    # Maven Client library for V2 cloud registry support (from PyPI)
+    "qubership-pipelines-common-library>=0.2.5,<1.0.0"
 ]
 
 [project.optional-dependencies]
