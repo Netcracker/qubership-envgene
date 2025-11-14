@@ -78,11 +78,9 @@ async def resolve_snapshot_version(session, app: Application, version: str, repo
                     return value
 
             logger.warning(f"No matching snapshotVersion found for {app.artifact_id} in {metadata_url}")
-            return None
 
     except Exception as e:
         logger.warning(f"Error resolving snapshot version from {metadata_url}: {e}")
-        return None
 
 
 def version_to_folder_name(version: str):
