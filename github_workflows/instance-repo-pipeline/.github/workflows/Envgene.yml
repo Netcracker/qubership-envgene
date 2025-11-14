@@ -177,11 +177,6 @@ jobs:
           SECRET_NAME=$(echo "${{ matrix.environment }}" | awk -F "/" '{print $1}')_${{ env.SECRET_POSTFIX }}
           echo "SECRET_NAME=$SECRET_NAME" >> $GITHUB_ENV
 
-      - name: Create dynamic secret
-        run: |
-          DYNAMIC_SECRET=${{ secrets[env.SECRET_NAME] }}
-          echo "DYNAMIC_SECRET=$DYNAMIC_SECRET" >> $GITHUB_ENV
-
       - name: Create env file for container
         run: env > .env.container
 
