@@ -181,6 +181,7 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
     
     try:
         from artifact_searcher.cloud_auth_helper import CloudAuthHelper
+        from qubership_pipelines_common_library.v1.maven_client import Artifact as MavenArtifact
         
         auth_config = CloudAuthHelper.resolve_auth_config(app.registry, "maven")
         
@@ -196,12 +197,6 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         loop = asyncio.get_event_loop()
         
         searcher = await loop.run_in_executor(None, CloudAuthHelper.create_maven_searcher, app.registry, env_creds)
-        
-        try:
-            from qubership_pipelines_common_library.v1.maven_client import Artifact as MavenArtifact
-        except ImportError:
-            logger.error("Maven Client library not available, falling back to V1")
-            return await _check_artifact_v1_async(app, artifact_extension, version)
         
         maven_artifact = MavenArtifact(artifact_id=app.artifact_id, version=version, extension=artifact_extension.value)
         logger.info(f"Searching for artifact {app.artifact_id}:{version} using Maven Client")
