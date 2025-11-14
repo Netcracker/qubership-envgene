@@ -61,8 +61,14 @@ class CloudAuthHelper:
             available = list(env_creds.keys())
             raise KeyError(f"Credential '{cred_id}' not found in env_creds. Available: {available}")
         
-        creds = env_creds[cred_id]
+        cred_entry = env_creds[cred_id]
         logger.info(f"Resolved credentials for '{cred_id}'")
+        
+        # Extract data field if credentials are in YAML structure {type: ..., data: {...}}
+        if isinstance(cred_entry, dict) and "data" in cred_entry:
+            creds = cred_entry["data"]
+        else:
+            creds = cred_entry
         
         if auth_config.provider == "aws":
             if "username" not in creds or "password" not in creds:
