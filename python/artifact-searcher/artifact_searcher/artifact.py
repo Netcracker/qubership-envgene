@@ -263,7 +263,7 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
     else:
         logger.debug("Domain is same after editing, skipping retry")
 
-    logger.warning(f"Artifact not found")
+    logger.warning("Artifact not found")
 
 def unzip_file(artifact_id: str, app_name: str, app_version: str, zip_url: str):
     extracted = False
