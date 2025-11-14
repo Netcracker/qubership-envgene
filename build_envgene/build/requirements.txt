@@ -17,6 +17,7 @@ ansible-core==2.17.12
 cffi==1.16.0
 click==8.1.3
 deepmerge~=2.0
+pydantic==2.10.6
 
 # Additional required packages
 platformdirs>=3.0.0
