@@ -234,11 +234,11 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         # Determine base URL from registry config for compatibility
         folder = version_to_folder_name(version)
         if folder == "releases":
-            base_url = app.registry.maven.target_release
+            base_url = app.registry.maven_config.target_release
         elif folder == "staging":
-            base_url = app.registry.maven.target_staging
+            base_url = app.registry.maven_config.target_staging
         else:
-            base_url = app.registry.maven.target_snapshot
+            base_url = app.registry.maven_config.target_snapshot
         
         # Return full URL for logging/tracking (artifact already downloaded)
         full_url = f"{base_url.rstrip('/')}/{maven_relative_path}"
