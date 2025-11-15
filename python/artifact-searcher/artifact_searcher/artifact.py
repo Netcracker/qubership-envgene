@@ -173,6 +173,7 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
                                    env_creds: Optional[dict]) -> Optional[tuple[str, tuple[str, str]]]:
     """
     V2 artifact search using Maven Client with cloud authentication.
+    Downloads BOTH JSON and ZIP artifacts to ensure auth is used for all downloads.
     Falls back to V1 if credentials or authConfig are missing.
     """
     if not env_creds:
@@ -203,20 +204,21 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         
         searcher = await loop.run_in_executor(None, CloudAuthHelper.create_maven_searcher, app.registry, env_creds)
         
+        # Search and download the requested artifact (JSON or ZIP)
         maven_artifact = MavenArtifact(artifact_id=app.artifact_id, version=version, extension=artifact_extension.value)
-        logger.info(f"Searching for artifact {app.artifact_id}:{version} using Maven Client")
+        logger.info(f"Searching for {artifact_extension.value} artifact {app.artifact_id}:{version} using Maven Client")
         urls = await loop.run_in_executor(None, partial(searcher.find_artifact_urls, artifact=maven_artifact))
         
         if not urls:
-            logger.warning(f"No artifacts found for {app.artifact_id}:{version} via Maven Client")
+            logger.warning(f"No {artifact_extension.value} artifacts found for {app.artifact_id}:{version} via Maven Client")
             return None
         
         # Maven Client returns relative path, construct full URL from registry base URL
         maven_relative_path = urls[0]
-        logger.info(f"Found artifact via Maven Client at: {maven_relative_path}")
+        logger.info(f"Found {artifact_extension.value} artifact via Maven Client at: {maven_relative_path}")
         
         # Download artifact directly using Maven Client (handles auth internally)
-        logger.info(f"Downloading artifact {app.artifact_id}:{version} using Maven Client")
+        logger.info(f"Downloading {artifact_extension.value} artifact {app.artifact_id}:{version} using Maven Client")
         app_local_path = create_app_artifacts_local_path(app.name, version)
         artifact_filename = os.path.basename(maven_relative_path)
         local_path = os.path.join(app_local_path, artifact_filename)
@@ -229,19 +231,20 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
             return local_path
         
         downloaded_path = await loop.run_in_executor(None, download_with_searcher)
-        logger.info(f"Downloaded artifact to: {downloaded_path}")
+        logger.info(f"Downloaded {artifact_extension.value} artifact to: {downloaded_path}")
         
-        # Determine base URL from registry config for compatibility
+        # Construct full URL from registry domain and relative path
+        registry_domain = app.registry.maven_config.repository_domain_name
         folder = version_to_folder_name(version)
         if folder == "releases":
-            base_url = app.registry.maven_config.target_release
+            repo_path = app.registry.maven_config.target_release
         elif folder == "staging":
-            base_url = app.registry.maven_config.target_staging
+            repo_path = app.registry.maven_config.target_staging
         else:
-            base_url = app.registry.maven_config.target_snapshot
+            repo_path = app.registry.maven_config.target_snapshot
         
         # Return full URL for logging/tracking (artifact already downloaded)
-        full_url = f"{base_url.rstrip('/')}/{maven_relative_path}"
+        full_url = f"{registry_domain.rstrip('/')}/{repo_path.rstrip('/')}/{maven_relative_path}"
         return full_url, ("v2_downloaded", local_path)
         
     except Exception as e:
