@@ -223,8 +223,9 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         os.makedirs(os.path.dirname(local_path), exist_ok=True)
         
         # Use Maven Client to download (it handles authentication)
+        # Note: download_artifact expects (resolved_url_string, destination_path_string)
         def download_with_searcher():
-            searcher.download_artifact(maven_artifact, local_path)
+            searcher.download_artifact(maven_relative_path, str(local_path))
             return local_path
         
         downloaded_path = await loop.run_in_executor(None, download_with_searcher)
