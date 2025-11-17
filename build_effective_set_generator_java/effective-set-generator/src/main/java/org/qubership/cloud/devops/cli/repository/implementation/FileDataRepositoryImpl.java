@@ -216,14 +216,24 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         Map<String, List<ApplicationLinkDTO>> appsOnNamespace = new HashMap<>();
         Path basePath = Paths.get(sourceDir);
         Set<String> foldersToVisit = Set.of(NS_FOLDER, APPS_FOLDER, CREDS_FOLDER, PROFILES_FOLDER, basePath.getFileName().toString());
+        if (inputData.getNamespaceDTOMap() == null || inputData.getNamespaceDTOMap().isEmpty()) {
+            inputData.setNamespaceDTOMap(new HashMap<>());
+        }
         try {
             Files.walkFileTree(basePath, new SimpleFileVisitor<>() {
 
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                    if (dir.getParent().getFileName().toString().equals(GenericConstants.NS_FOLDER) &&
-                            !nsWithAppsFromSD.containsKey(dir.getFileName().toString())) {
-                        return FileVisitResult.SKIP_SUBTREE;
+                    if (dir.getParent().getFileName().toString().equals(GenericConstants.NS_FOLDER)) {
+                        String namespace = dir.getFileName().toString();
+                        if (!nsWithAppsFromSD.containsKey(namespace)) {
+                            Path namespaceYaml = dir.resolve("namespace.yml");
+                            if (Files.exists(namespaceYaml)) {
+                                NamespaceDTO namespaceDTO = fileDataConverter.parseInputFile(NamespaceDTO.class, namespaceYaml.toFile());
+                                inputData.getNamespaceDTOMap().put(namespace, namespaceDTO);
+                            }
+                            return FileVisitResult.SKIP_SUBTREE;
+                        }
                     }
 
                     if (!dir.getParent().getFileName().toString().equals(GenericConstants.NS_FOLDER)
@@ -253,7 +263,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                             List<ApplicationLinkDTO> applications = appsOnNamespace.get(name);
                             return namespaceDTO.toBuilder().applications(applications == null ? Collections.emptyList() : applications).build();
                         });
-                        inputData.setNamespaceDTOMap(namespaceMap);
+                        inputData.getNamespaceDTOMap().putAll(namespaceMap);
                     }
                     return FileVisitResult.CONTINUE;
                 }
