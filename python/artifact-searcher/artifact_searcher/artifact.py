@@ -196,44 +196,41 @@ def get_repo_pointer(repo_value: str, registry: Registry):
     return repos_dict.get(repo_value)
 
 
-async def _attempt_check(app: Application, version: str, registry_url: str) -> Optional[tuple[str, tuple[str, str]]]:
+async def _attempt_check(app: Application, version: str, registry_url: str | None) -> Optional[tuple[str, tuple[str, str]]]:
     """Helper function to attempt artifact check with a given registry URL"""
-    original_url = app.registry.maven_config.repository_domain_name
-    app.registry.maven_config.repository_domain_name = registry_url
-
     folder = version_to_folder_name(version)
     stop_event = asyncio.Event()
 
     repos_dict = get_repo_value_pointer_dict(app.registry)
+    if registry_url:
+        app.registry.maven_config.repository_domain_name = registry_url
 
-    try:
-        async with aiohttp.ClientSession() as session:
-            resolved_version = version
-            if version.endswith('-SNAPSHOT'):
-                for repo_value, _ in repos_dict.items():
-                    if not repo_value:
-                        continue
-                    resolved = await resolve_snapshot_version(session, app, version, repo_value, extension=artifact_extension)
-                    if resolved:
-                        resolved_version = resolved
-                        folder = version_to_folder_name(resolved_version)
-                        logger.info(f"Using resolved snapshot version: {resolved_version}")
-                        break
+    async with aiohttp.ClientSession() as session:
+        resolved_version = version
+        if version.endswith('-SNAPSHOT'):
+            for repo_value, _ in repos_dict.items():
+                if not repo_value:
+                    continue
+                # reg url is used
+                resolved = await resolve_snapshot_version(session, app, version, repo_value, extension=artifact_extension)
+                if resolved:
+                    resolved_version = resolved
+                    folder = version_to_folder_name(resolved_version)
+                    logger.info(f"Using resolved snapshot version: {resolved_version}")
+                    break
 
-            async with asyncio.TaskGroup() as tg:
-                tasks = [
-                    tg.create_task(
-                        check_artifact_by_full_url_async(app, resolved_version, repo, artifact_extension, folder, stop_event, session)
-                    )
-                    for repo in repos_dict.items()
-                ]
+        async with asyncio.TaskGroup() as tg:
+            tasks = [
+                tg.create_task(
+                    check_artifact_by_full_url_async(app, resolved_version, repo, artifact_extension, folder, stop_event, session)
+                )
+                for repo in repos_dict.items()
+            ]
 
-            for task in tasks:
-                result = task.result()
-                if result is not None:
-                    return result
-    finally:
-        app.registry.maven_config.repository_domain_name = original_url
+        for task in tasks:
+            result = task.result()
+            if result is not None:
+                return result
 
 async def check_artifact_async(app: Application, artifact_extension: FileExtension, version: str) -> Optional[
                                                                                                          tuple[
@@ -250,11 +247,11 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
             Returns None if the artifact could not be resolved
     """
 
-    original_domain = app.registry.maven_config.repository_domain_name
-    result = await _attempt_check(app, version, original_domain)
+    result = await _attempt_check(app, version)
     if result is not None:
         return result
 
+    original_domain = app.registry.maven_config.repository_domain_name
     fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
     if fixed_domain != original_domain:
         logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
