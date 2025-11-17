@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class Binding extends HashMap<String, Parameter> implements Cloneable {
 
-    String escapeSequence;
     @Getter
     private DeployerInputs deployerInputs;
     private Map<String, Parameter> defaultMap;
@@ -48,28 +47,19 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
     private ParametersParser escapeParser;
     private ParametersParser oldParser;
 
-    public Binding(String defaultEscapeSequence) {
-        this.escapeSequence = defaultEscapeSequence;
+    public Binding() {
         this.tenant = "";
     }
 
-    public Binding(String defaultEscapeSequence, DeployerInputs deployerInputs) {
-        this.escapeSequence = defaultEscapeSequence;
+    public Binding(DeployerInputs deployerInputs) {
         this.tenant = "";
         this.deployerInputs = deployerInputs;
     }
 
-    public String getProcessorType() {
-        return escapeSequence;
-    }
-
     public ParametersParser getParser() {
         ParametersParser parser;
-        if (escapeSequence.equals("true")) {
-            return (parser = escapeParser) == null ? (escapeParser = new EscapeParametersParser()) : parser;
-        } else {
-            return (parser = oldParser) == null ? (oldParser = new OldParametersParser()) : parser;
-        }
+        return (parser = escapeParser) == null ? (escapeParser = new EscapeParametersParser()) : parser;
+
     }
 
     private void processSet(String tenant, String setName, String application, EscapeMap parameterSet, EscapeMap applicationMap) {
@@ -92,7 +82,7 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
         super.put("application", new Parameter(new ApplicationMap(application, this, namespace).init()));
         super.put("creds", new Parameter(new CredentialsMap(this).init()));
 
-        Map<String, Parameter> processed = calculateCredentialsAndPrepareStructuredParams(this, Boolean.parseBoolean(getProcessorType()));
+        Map<String, Parameter> processed = calculateCredentialsAndPrepareStructuredParams(this);
 
         this.putAll(processed);
         return this;
@@ -103,7 +93,7 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
         return this;
     }
 
-    private Map<String, Parameter> calculateCredentialsAndPrepareParams(String keyCloudParameter, Parameter valueCloudParameter, boolean escapeSequence) {
+    private Map<String, Parameter> calculateCredentialsAndPrepareParams(String keyCloudParameter, Parameter valueCloudParameter) {
         Object value = valueCloudParameter.getValue();
         if (value instanceof String) {
             value = ((String) value).trim();
@@ -146,17 +136,17 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
         }
     }
 
-    private Map<String, Parameter> calculateCredentialsAndPrepareStructuredParams(Map<String, Parameter> params, Boolean escape) {
+    private Map<String, Parameter> calculateCredentialsAndPrepareStructuredParams(Map<String, Parameter> params) {
         Map<String, Parameter> result = params.entrySet().stream().map(entry -> {
                     Parameter param = new Parameter(entry.getValue());
                     if (param.getValue() instanceof Map) {
                         return new HashMap<String, Parameter>() {
                             {
-                                put(entry.getKey(), new Parameter(calculateCredentialsAndPrepareStructuredParams((Map<String, Parameter>) param.getValue(), escape)));
+                                put(entry.getKey(), new Parameter(calculateCredentialsAndPrepareStructuredParams((Map<String, Parameter>) param.getValue())));
                             }
                         };
                     }
-                    return calculateCredentialsAndPrepareParams(entry.getKey(), param, escape);
+                    return calculateCredentialsAndPrepareParams(entry.getKey(), param);
                 }).flatMap(c -> c.entrySet().stream())
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2));
         params.clear();
