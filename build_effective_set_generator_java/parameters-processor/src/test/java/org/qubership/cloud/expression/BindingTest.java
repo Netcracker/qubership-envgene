@@ -56,19 +56,8 @@ public class BindingTest extends BindingBaseTest implements Serializable {
         };
 
         Binding binding = setupBinding(params);
-        assertEquals("true", binding.getProcessorType());
         assertTrue(binding.get("tenant").get("cloud").get("yaml").getValue() instanceof Map);
     }
-
-    @Test
-    public void init_ESCAPE_SEQUENCE_default() throws NoSuchMethodException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, SecurityException {
-        Map<String, Object> params = new HashMap();
-
-        Binding binding = setupBinding(params);
-
-        assertEquals("false", binding.getProcessorType());
-    }
-
 
     @Test
     public void init_UsernamePassword() throws NoSuchMethodException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, SecurityException {
