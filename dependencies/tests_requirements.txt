@@ -29,5 +29,6 @@ pytest==7.4.3
 junitparser==3.1.2
 hiyapyco==0.6.0
 click==8.1.7
+deepmerge==2.0
 cffi>=1.15
 aiofiles

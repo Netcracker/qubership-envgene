@@ -23,7 +23,7 @@ namespaces:
       profile:
         name: prod_oss_override
         baseline: prod
-  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/billing.yaml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/billing_not_deploy_postfix.yaml.j2"
     deploy_postfix: "billing"
     template_override:
       profile:

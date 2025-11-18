@@ -1,6 +1,15 @@
----
 name: "dev_billing_override"
+{% if current_env.cloud_passport.custom.BASELINE == 'dev' %}
 baseline: "dev"
+{% elif current_env.cloud_passport.custom.BASELINE == 'prod' %}
+baseline: "prod"
+{% elif current_env.cloud_passport.custom.BASELINE == 'prod-nonha' %}
+baseline: "prod-nonha"
+{% elif current_env.cloud_passport.custom.BASELINE == 'dev-ha' %}
+baseline: "dev-ha"
+{% else %}
+baseline: "dev"
+{% endif %}
 description: "Override for dev-profile"
 applications:
 - name: "billing-app"
