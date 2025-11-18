@@ -64,9 +64,6 @@ public class NamespaceApplicationMap extends DynamicMap {
 
 
         map.put("APPLICATION_NAME", appName);
-
-        checkEscape(map);
-        checkEscape(configServerMap);
         map.put("config-server", configServerMap);
         try {
             if (binding.getDeployerInputs() != null && binding.getDeployerInputs().getAppVersion() != null) {
