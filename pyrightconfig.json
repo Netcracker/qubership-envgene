@@ -2,7 +2,9 @@
   "include": ["."],
   "extraPaths": [
     "./python/envgene",
-    "./python/artifact-searcher"
+    "./python/artifact-searcher",
+    "./python/integration",
+    "./python/jschon-sort"
   ],
   "pythonVersion": "3.12"
 }
