@@ -13,6 +13,6 @@ applications:
       - name: "billing-service"
         parameters:
           - name: "CPU_LIMIT"
-            value: "4"  # from medium_billing_override
+            value: "4"
           - name: "REPLICAS"
-            value: "4"  # from medium_billing_override
+            value: "4"
