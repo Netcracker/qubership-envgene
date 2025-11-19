@@ -162,7 +162,7 @@ def processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, nee
         try:
             combination_mode = render_context.ctx.env_definition['inventory']['config'][combination_mode_key]
         except KeyError:
-            logger.info(f"{combination_mode_key} key not found in env_definition, default value is 'true'")
+            logger.info(f"inventory.config.{combination_mode_key} key not found in env_definition, default value is 'true'")
             combination_mode = 'true'
         common_msg = (f"profile overrides, because {combination_mode_key} is set to {combination_mode}")
         # decide here whether to merge or replace
