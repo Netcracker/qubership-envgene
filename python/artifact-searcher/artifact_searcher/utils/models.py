@@ -1,8 +1,11 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator, Field
+from pydantic import BaseModel, ConfigDict, field_validator, Field, model_validator
 from pydantic.alias_generators import to_camel
+import requests
+
+from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT
 
 
 class BaseSchema(BaseModel):
@@ -23,6 +26,8 @@ class MavenConfig(BaseSchema):
     snapshot_group: Optional[str] = ""
     release_group: Optional[str] = ""
 
+    is_nexus: bool = False
+
     @field_validator('full_repository_url')
     def check_full_repository_url(cls, full_repository_url):
         if full_repository_url:
@@ -33,6 +38,19 @@ class MavenConfig(BaseSchema):
     def ensure_trailing_slash(cls, value):
         return value.rstrip("/") + "/"
 
+    @model_validator(mode="after")
+    def detect_nexus(self):
+        if not self.repository_domain_name.endswith("/repository/"):
+            return self
+        base = self.repository_domain_name[: -len("repository/")]
+        status_url = f"{base}service/rest/v1/status"
+        try:
+            resp = requests.get(status_url, timeout=DEFAULT_REQUEST_TIMEOUT)
+            self.is_nexus = resp.status_code == 200
+        except Exception:
+            self.is_nexus = False
+
+        return self
 class DockerConfig(BaseSchema):
     snapshot_uri: Optional[str] = ""
     staging_uri: Optional[str] = ""

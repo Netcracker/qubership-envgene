@@ -16,7 +16,6 @@ from requests.auth import HTTPBasicAuth
 from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT
 
-DEFAULT_REQUEST_TIMEOUT = 30
 WORKSPACE = limit = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
 
 
@@ -42,7 +41,9 @@ def create_full_url(app: Application, version: str, repo: str, artifact_extensio
     return urljoin(registry_url, "/".join([repo, group_id, artifact_id, path]))
 
 
-async def resolve_snapshot_version(session, app: Application, version: str, repo_value: str, classifier: str="", extension: FileExtension=FileExtension.JSON) -> str | None:
+async def resolve_snapshot_version_async(session, app: Application, version: str, repo_value: str, stop_event: asyncio.Event, classifier: str="", extension: FileExtension=FileExtension.JSON) -> str | None:
+    if stop_event.is_set():
+        return None
     if not version.endswith('-SNAPSHOT'):
         return version
 
@@ -75,6 +76,7 @@ async def resolve_snapshot_version(session, app: Application, version: str, repo
                     node_classifier == classifier and
                     node_extension == extension
                 ):
+                    stop_event.set()
                     logger.info(f"Resolved snapshot version {version} to {value}")
                     return value
 
@@ -197,10 +199,11 @@ def get_repo_pointer(repo_value: str, registry: Registry):
     return repos_dict.get(repo_value)
 
 
-async def _attempt_check(app: Application, version: str, registry_url: str | None) -> Optional[tuple[str, tuple[str, str]]]:
+async def _attempt_check(app: Application, version: str, artifact_extension: FileExtension, registry_url: str | None=None) -> Optional[tuple[str, tuple[str, str]]]:
     """Helper function to attempt artifact check with a given registry URL"""
     folder = version_to_folder_name(version)
-    stop_event = asyncio.Event()
+    check_artifact_stop_event = asyncio.Event()
+    resolve_snapshot_stop_event = asyncio.Event()
 
     repos_dict = get_repo_value_pointer_dict(app.registry)
     if registry_url:
@@ -208,27 +211,27 @@ async def _attempt_check(app: Application, version: str, registry_url: str | Non
 
     async with aiohttp.ClientSession() as session:
         resolved_version = version
+        resolve_snapshot_coros = [(resolve_snapshot_version_async(session, app, version, repo[0], resolve_snapshot_stop_event, extension=artifact_extension)) for repo in repos_dict.items()]
         if version.endswith('-SNAPSHOT'):
-            for repo_value, _ in repos_dict.items():
-                if not repo_value:
+            async with asyncio.TaskGroup() as resolve_snapshot_tg:
+                resolve_snapshot_tasks = [resolve_snapshot_tg.create_task(coro) for coro in resolve_snapshot_coros]
+            for task in resolve_snapshot_tasks:
+                result = task.result()
+                if result is None:
                     continue
-                # reg url is used
-                resolved = await resolve_snapshot_version(session, app, version, repo_value, extension=artifact_extension)
-                if resolved:
-                    resolved_version = resolved
-                    folder = version_to_folder_name(resolved_version)
-                    logger.info(f"Using resolved snapshot version: {resolved_version}")
-                    break
-
-        async with asyncio.TaskGroup() as tg:
-            tasks = [
-                tg.create_task(
-                    check_artifact_by_full_url_async(app, resolved_version, repo, artifact_extension, folder, stop_event, session)
+                resolved_version = result
+                folder = version_to_folder_name(resolved_version)
+                logger.info(f"Using resolved snapshot version: {resolved_version}")
+                break
+        async with asyncio.TaskGroup() as check_artifact_tg:
+            check_artifact_tasks = [
+                check_artifact_tg.create_task(
+                    check_artifact_by_full_url_async(app, resolved_version, repo, artifact_extension, folder, check_artifact_stop_event, session)
                 )
                 for repo in repos_dict.items()
             ]
 
-        for task in tasks:
+        for task in check_artifact_tasks:
             result = task.result()
             if result is not None:
                 return result
@@ -248,15 +251,18 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
             Returns None if the artifact could not be resolved
     """
 
-    result = await _attempt_check(app, version)
+    result = await _attempt_check(app, version, artifact_extension)
     if result is not None:
+        return result
+
+    if not app.registry.maven_config.is_nexus:
         return result
 
     original_domain = app.registry.maven_config.repository_domain_name
     fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
     if fixed_domain != original_domain:
         logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
-        result = await _attempt_check(app, version, fixed_domain)
+        result = await _attempt_check(app, version, artifact_extension, fixed_domain)
         if result is not None:
             return result
     else:
