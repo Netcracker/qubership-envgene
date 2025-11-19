@@ -2,7 +2,7 @@ import pytest
 import aiohttp
 from aiohttp import web
 from artifact_searcher.utils import models
-from artifact_searcher.artifact import resolve_snapshot_version_async, check_artifact_async
+from artifact_searcher.artifact import check_artifact_async
 
 class MockResponse:
     def __init__(self, status_code):
