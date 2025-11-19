@@ -14,7 +14,8 @@ test_data = [
     ("cluster-01", "env-04", "simple"),
     ("cluster01", "env01", "test-01"),
     ("cluster01", "env03", "test-template-1"),
-    ("cluster01", "env04", "test-template-2")
+    ("cluster01", "env04", "test-template-2"),
+    ("cluster03", "rpo-replacement-mode", "simple"),
 ]
 
 base_dir = Path(__file__).parent.resolve()
