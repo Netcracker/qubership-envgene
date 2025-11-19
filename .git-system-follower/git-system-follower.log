@@ -1,0 +1,73 @@
+[2025-11-19 15:15:55.766] DEBUG    | manager.py:load_plugins:62 - Loaded plugins for input package processing (gsf.plugins.cli.packages) (3): ImagePlugin  TarGzPlugin  SourcePlugin
+[2025-11-19 15:15:56.076] DEBUG    | cli.py:resolve_credentials:76 - Username and/or password have not been passed by either method
+[2025-11-19 15:15:56.076] INFO     | output.py:banner:55 - 
+    .-,
+ .^.: :.^.   ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
+,-' .-. '-,  ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
+'-. '-' .-'  ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
+ '.`; ;`.'   git-system-follower v0.6.5
+    `-`
+[2025-11-19 15:15:56.076] INFO     | output.py:display_params:65 - ╭═1. Common parameters═════════════════════════════════════════════════════════════════════════════╮
+  gears  = /Users/andyroode/Desktop/qubership_folder/qubership-envgene/gsf_packages/envgene_instance_project
+  extras = DOCKER_REGISTRY=reg2
+  force  = False
+  debug  = False
+╰═════════════════════════════════════════════════════════════════════════════════════════total: 4═╯
+[2025-11-19 15:15:56.076] INFO     | output.py:display_params:65 - ╭═2. Registry parameters═══════════════════════════════════════════════════════════════════════════╮
+  registry-type     = Autodetect
+  registry-username = 
+  registry-password = 
+  insecure-registry = False
+╰═════════════════════════════════════════════════════════════════════════════════════════total: 4═╯
+[2025-11-19 15:15:56.076] INFO     | output.py:display_params:65 - ╭═3. Git parameters════════════════════════════════════════════════════════════════════════════════╮
+  repo         = https://gitlab.com/andy-roode/My-Own-Project.git
+  branches     = main
+  token        = *****
+  message      = Installed gear(s)
+  git-username = andyroode
+  git-email    = andrei.rudchenko.qubership@gmail.com
+╰═════════════════════════════════════════════════════════════════════════════════════════total: 6═╯
+[2025-11-19 15:15:58.654] INFO     | download.py:download:333 - :: Downloading packages
+[2025-11-19 15:15:58.654] INFO     | download.py:download:337 - -> Downloading /Users/andyroode/Desktop/qubership_folder/qubership-envgene/gsf_packages/envgene_instance_project
+[2025-11-19 15:15:58.655] INFO     | download.py:get_source:384 - envgene_instance_project@1.0.2 package is provided as source code (Path: /Users/andyroode/Desktop/qubership_folder/qubership-envgene/gsf_packages/envgene_instance_project)
+[2025-11-19 15:15:58.655] INFO     | download.py:download:360 - envgene_instance_project@1.0.2 package is of simple structure type
+[2025-11-19 15:15:58.655] SUCCESS  | logger.py:success:99 - Download complete
+[2025-11-19 15:15:58.655] INFO     | install.py:install:64 - Packages (1): envgene_instance_project@1.0.2
+[2025-11-19 15:15:58.655] INFO     | install.py:install:68 - Additional rollback packages (0)
+[2025-11-19 15:15:58.655] INFO     | install.py:install:72 - Processing branches
+[2025-11-19 15:15:58.655] INFO     | install.py:install:74 - [1/1] Processing main branch
+[2025-11-19 15:15:58.655] DEBUG    | install.py:install:75 - Current state in main branch:
+[{'cicd_variables': {'hash': '9d1cf64165e9df7ab3b2c1fd3606e8c7ee372c9570d5621632cd9063a256e58b',
+                     'names': ['DOCKER_REGISTRY',
+                               'SECRET_KEY',
+                               'GITLAB_TOKEN',
+                               'ENVGENE_AGE_PRIVATE_KEY',
+                               'ENVGENE_AGE_PUBLIC_KEY',
+                               'PUBLIC_AGE_KEYS',
+                               'IS_OFFSITE',
+                               'GITLAB_RUNNER_TAG_NAME',
+                               'RUNNER_SCRIPT_TIMEOUT']},
+  'dependencies': [],
+  'last_update': '2025-11-19 15:06:26.950710',
+  'name': 'envgene_instance_project',
+  'structure_type': 'simple',
+  'template_variables': {},
+  'used_template': 'default',
+  'version': '1.0.1'}]
+[2025-11-19 15:15:58.656] DEBUG    | utils.py:get_git_repo:51 - Local repository /Users/andyroode/Desktop/qubership_folder/qubership-envgene/.git-system-follower/repositories/My-Own-Project is used
+[2025-11-19 15:16:01.379] DEBUG    | git_api.py:checkout_to_new_branch:48 - Local branch main.temp-manage-packages deleted
+[2025-11-19 15:16:01.390] SUCCESS  | logger.py:success:99 - Created new main.temp-manage-packages local branch (local repo: /Users/andyroode/Desktop/qubership_folder/qubership-envgene/.git-system-follower/repositories/My-Own-Project)
+[2025-11-19 15:16:01.391] INFO     | install.py:managing_branch:164 - :: Installing packages
+[2025-11-19 15:16:01.391] INFO     | install.py:install_packages:208 - (1/1) Installing envgene_instance_project@1.0.2 package
+[2025-11-19 15:16:01.391] DEBUG    | install.py:install_package:256 - Installation version is higher the version installed in the repository (1.0.2 > 1.0.1). Update version
+[2025-11-19 15:16:01.391] INFO     | initer.py:init:37 - ==> Package initialization
+[2025-11-19 15:16:02.418] INFO     | initer.py:run_init_script:59 - 	Running init package api
+[2025-11-19 15:16:02.427] DEBUG    | tmpdir.py:wrapper:47 - Temporary directory was created at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-8tu3z361
+[2025-11-19 15:16:02.427] DEBUG    | tmpdir.py:wrapper:47 - Temporary directory was created at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-ecagwu0_
+[2025-11-19 15:16:02.427] INFO     | templates.py:create_template:46 - 	-> Creating project using default template
+[2025-11-19 15:16:02.479] INFO     | templates.py:_copy_files:93 - 		Content of .gitlab-ci.yml file is same. Skip operations
+[2025-11-19 15:16:02.479] INFO     | templates.py:_copy_files:93 - 		Content of gitlab-ci/pipeline_vars.yaml file is same. Skip operations
+[2025-11-19 15:16:02.479] INFO     | templates.py:create_template:71 - 		Successful use template (/Users/andyroode/Desktop/qubership_folder/qubership-envgene/gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default)
+[2025-11-19 15:16:02.480] DEBUG    | tmpdir.py:wrapper:54 - Temporary directory was removed at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-8tu3z361
+[2025-11-19 15:16:02.480] DEBUG    | tmpdir.py:wrapper:54 - Temporary directory was removed at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-ecagwu0_
+[2025-11-19 15:16:02.480] CRITICAL | install.py:install_packages:223 - An error came out at one stage of installation. Installation envgene_instance_project@1.0.2 aborted.

@@ -23,6 +23,20 @@ def main(parameters: Parameters):
     else:
         create_template(parameters, template, variables)
 
+# Set variables
+    print(parameters.extras)
+    print(parameters._Parameters__system_params)
+    create_variable(
+        parameters,
+        CICDVariable(
+            name='DOCKER_REGISTRY',
+            value='reg2',
+            env='*',
+            masked=False
+        ),
+        is_force=True
+    )
+
     create_variable(
         parameters,
         CICDVariable(
