@@ -95,10 +95,10 @@ def test_sd(mock_download_sd, test_case_name):
         sd_data = openJson(file_path)
         mock_download_sd.return_value = sd_data
     
-        if test_case_name in ["TC-001-099"]:
-            with pytest.raises(ValueError):
-                handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
-            return
+    if test_case_name in ["TC-001-099"]:
+        with pytest.raises(ValueError):
+            handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
+        return
         
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
     actual_dir = os.path.join(env.env_path, "Inventory", "solution-descriptor")
