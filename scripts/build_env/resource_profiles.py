@@ -166,7 +166,7 @@ def processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, nee
             combination_mode = 'true'
         common_msg = (f"profile overrides, because {combination_mode_key} is set to {combination_mode}")
         # decide here whether to merge or replace
-        if combination_mode == 'true':
+        if str(combination_mode).lower() == 'true':
             logger.info(f"Joining {common_msg}")
             merge_resource_profiles(templateProfileYaml, envSpecificProfileYaml, extractNameFromFile(envSpecificProfileFile))
             writeYamlToFile(templateProfileFilePath, templateProfileYaml)
