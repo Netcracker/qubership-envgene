@@ -58,8 +58,8 @@
     - [`BG_CONTROLLER_LOGIN`](#bg_controller_login)
     - [`BG_CONTROLLER_PASSWORD`](#bg_controller_password)
     - [`BASELINE_ORIGIN`](#baseline_origin)
-    - [`BASELINE_CONTROLLER`](#baseline_controller)
     - [`BASELINE_PEER`](#baseline_peer)
+    - [`BASELINE_CONTROLLER`](#baseline_controller)
     - [`PUBLIC_IDENTITY_PROVIDER_URL`](#public_identity_provider_url)
     - [`PRIVATE_IDENTITY_PROVIDER_URL`](#private_identity_provider_url)
   - [Credential Macro](#credential-macro)
@@ -1011,9 +1011,9 @@ Value is get from `vaultConfig.enable` of the Environment's [Cloud](/docs/envgen
 ---
 **Description:** Name of origin namespace of the BG Domain.
 
-The value is taken from the origin namespace definition in the [BG Domain](/docs/envgene-objects.md#bg-domain) object.
+If the current namespace is part of the [BG Domain](/docs/envgene-objects.md#bg-domain), the value is `originNamespace.name` from that BG Domain.
 
-If the BG Domain is absent, the value is the same as `${NAMESPACE}`.
+Otherwise, value is the same as for `${NAMESPACE}`.
 
 **Type:** String
 
@@ -1030,9 +1030,9 @@ If the BG Domain is absent, the value is the same as `${NAMESPACE}`.
 ---
 **Description:** Name of peer namespace of the BG Domain.
 
-The value is taken from the peer namespace definition in the [BG Domain](/docs/envgene-objects.md#bg-domain) object.  
+If current namespace is part of [BG Domain](/docs/envgene-objects.md#bg-domain), value is `peerNamespace.name` from that BG Domain.
 
-If value is not provided, it means that namespace doesn't participate in BG Domain.
+Otherwise, the value is undefined.
 
 **Type:** String
 
@@ -1049,9 +1049,9 @@ If value is not provided, it means that namespace doesn't participate in BG Doma
 ---
 **Description:** Name of controller namespace of the BG Domain.
 
-The value is taken from the controller namespace definition in the [BG Domain](/docs/envgene-objects.md#bg-domain) object.  
+If current namespace is part of [BG Domain](/docs/envgene-objects.md#bg-domain), value is `controllerNamespace.name` from that BG Domain.
 
-If value is not provided, it means that namespace doesn't participate in BG Domain.
+Otherwise, the value is undefined.
 
 **Type:** String
 
@@ -1066,9 +1066,11 @@ If value is not provided, it means that namespace doesn't participate in BG Doma
 ### `BG_CONTROLLER_URL`
 
 ---
-**Description:** URL of bluegreen-controller ingress.
+**Description:** URL of BG controller ingress.
 
-The value is calculated as `${protocol.toLowerCase()}://bluegreen-controller-${NAMESPACE}.$customHost` where customHost is Cloud Private URL, Cloud Public URL, or Cloud API URL.
+If current namespace is part of [BG Domain](/docs/envgene-objects.md#bg-domain), value is `controllerNamespace.url` from that BG Domain.
+
+Otherwise, the value is undefined.
 
 **Type:** String
 
@@ -1083,9 +1085,11 @@ The value is calculated as `${protocol.toLowerCase()}://bluegreen-controller-${N
 ### `BG_CONTROLLER_LOGIN`
 
 ---
-**Description:** Username from the bluegreen domain credential id.
+**Description:** Username of the BG controller
 
-The value is taken from the controller credential in the [BG Domain](/docs/envgene-objects.md#bg-domain) object.
+If the current namespace is part of a [BG Domain](/docs/envgene-objects.md#bg-domain), the value is the `data.username` from the Credential defined in `controllerNamespace.credentials` from that BG Domain.
+
+Otherwise, the value is undefined.
 
 **Type:** String
 
@@ -1100,9 +1104,11 @@ The value is taken from the controller credential in the [BG Domain](/docs/envge
 ### `BG_CONTROLLER_PASSWORD`
 
 ---
-**Description:** Password from the bluegreen domain credential id.
+**Description:** Password of the BG controller
 
-The value is taken from the controller credential in the [BG Domain](/docs/envgene-objects.md#bg-domain) object.
+If the current namespace is part of a [BG Domain](/docs/envgene-objects.md#bg-domain), the value is the `data.password` from the Credential defined in `controllerNamespace.credentials` from that BG Domain.
+
+Otherwise, the value is undefined.
 
 **Type:** String
 
@@ -1117,14 +1123,13 @@ The value is taken from the controller credential in the [BG Domain](/docs/envge
 ### `BASELINE_ORIGIN`
 
 ---
-**Description:** Value is provided if current namespace is a satellite (regardless if it is a single namespace satellite or a BG domain satellite).
+**Description:** For satellite namespaces, determines the name of the BG origin namespace.
 
-Contains name of:
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the origin namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
 
-- Origin namespace name if baseline is a BG domain
-- Baseline namespace name if baseline is a namespace, not a BG domain
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
 
-Value is used as a replacement of `BASELINE_PROJ` value that should be deprecated.
+Otherwise, the value is undefined.
 
 **Type:** String
 
@@ -1136,29 +1141,16 @@ Value is used as a replacement of `BASELINE_PROJ` value that should be deprecate
 
 **Usage in sample:** TBD
 
-### `BASELINE_CONTROLLER`
-
----
-**Description:** Value is provided if current namespace is a satellite (regardless if it is a single namespace satellite or a BG domain satellite).
-
-Contains name of Controller namespace if baseline is a BG domain. Will not be provided if baseline is a namespace, not a BG domain.
-
-**Type:** String
-
-**Default Value:** None
-
-**Basic usage:**
-
-`baseline_controller: "${BASELINE_CONTROLLER}"`
-
-**Usage in sample:** TBD
-
 ### `BASELINE_PEER`
 
 ---
-**Description:** Value is provided if current namespace is a satellite (regardless if it is a single namespace satellite or a BG domain satellite).
+**Description:** For satellite namespaces, determines the name of the BG peer namespace.
 
-Contains name of Peer namespace if baseline is a BG domain. Will not be provided if baseline is a namespace, not a BG domain.
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the peer namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
+
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
+
+Otherwise, the value is undefined.
 
 **Type:** String
 
@@ -1167,6 +1159,27 @@ Contains name of Peer namespace if baseline is a BG domain. Will not be provided
 **Basic usage:**
 
 `baseline_peer: "${BASELINE_PEER}"`
+
+**Usage in sample:** TBD
+
+### `BASELINE_CONTROLLER`
+
+---
+**Description:** For satellite namespaces, determines the name of the BG controller namespace.
+
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the controller namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
+
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
+
+Otherwise, the value is undefined.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`baseline_controller: "${BASELINE_CONTROLLER}"`
 
 **Usage in sample:** TBD
 
