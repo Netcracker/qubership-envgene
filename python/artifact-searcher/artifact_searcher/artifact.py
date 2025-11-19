@@ -14,6 +14,7 @@ import requests
 from loguru import logger
 from requests.auth import HTTPBasicAuth
 from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
+from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT
 
 DEFAULT_REQUEST_TIMEOUT = 30
 WORKSPACE = limit = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
@@ -53,7 +54,7 @@ async def resolve_snapshot_version(session, app: Application, version: str, repo
     metadata_url = urljoin(registry_url, metadata_path)
 
     try:
-        async with session.get(metadata_url, timeout=os.getenv("REQUEST_TIMEOUT", DEFAULT_REQUEST_TIMEOUT)) as response:
+        async with session.get(metadata_url, timeout=DEFAULT_REQUEST_TIMEOUT) as response:
             if response.status != 200:
                 logger.warning(f"Failed to fetch maven-metadata.xml: {metadata_url}, status: {response.status}")
                 return None
@@ -99,7 +100,7 @@ def version_to_folder_name(version: str):
 
 
 def download_json_content(url: str) -> dict[str, Any]:
-    response = requests.get(url, timeout=os.getenv("REQUEST_TIMEOUT", DEFAULT_REQUEST_TIMEOUT))
+    response = requests.get(url, timeout=DEFAULT_REQUEST_TIMEOUT)
     response.raise_for_status()
     json_data = response.json()
     logger.debug(f'Got the json data by url {url}')
@@ -171,7 +172,7 @@ async def check_artifact_by_full_url_async(app: Application, version: str, repo,
         full_url = create_full_url(app, version, repo_value, artifact_extension, folder)
         try:
             async with session.head(full_url,
-                                    timeout=os.getenv("REQUEST_TIMEOUT", DEFAULT_REQUEST_TIMEOUT)) as response:
+                                    timeout=DEFAULT_REQUEST_TIMEOUT) as response:
                 if response.status == 200:
                     stop_event.set()
                     logger.info(f"Successful while checking if artifact is present with URL {full_url}")
