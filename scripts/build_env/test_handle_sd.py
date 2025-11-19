@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from unittest.mock import patch
 from ruamel.yaml import YAML
 
 from test_helper import TestHelpers
@@ -23,14 +24,17 @@ TEST_CASES = [
     "TC-001-012",
     "TC-001-014",
     "TC-001-016",
-    "TC-001-017"
+    "TC-001-017",
+    
+    "TC-001-098", 
+    "TC-001-099",
 ]
 
 test_suits_map = {
     "basic_not_first": ["TC-001-010", "TC-001-012"],
     "basic_first": ["TC-001-002", "TC-001-004"],
     "exclude": ["TC-001-014", "TC-001-016"],
-    "extended": ["TC-001-017"],
+    "extended": ["TC-001-017", "TC-001-098", "TC-001-099"],
     "replace": ["TC-001-008", "TC-001-006"]
 }
 
@@ -61,7 +65,7 @@ def do_prerequisites(test_case_name, env):
         writeYamlToFile(target_sd_dir.joinpath(SD), openYaml(pr_dir.joinpath("basic").joinpath(SD)))
     elif test_case_name in ["TC-001-014", "TC-001-016"]:
         writeYamlToFile(target_sd_dir.joinpath(SD), openYaml(pr_dir.joinpath("exclude").joinpath(SD)))
-    elif test_case_name in ["TC-001-017"]:
+    elif test_case_name in ["TC-001-017", "TC-001-098", "TC-001-099"]:
         writeYamlToFile(target_sd_dir.joinpath(SD), openYaml(pr_dir.joinpath("extended").joinpath(SD)))
 
 
@@ -75,7 +79,8 @@ def do_asserts(test_case_name, actual_dir):
 
 
 @pytest.mark.parametrize("test_case_name", TEST_CASES)
-def test_sd(test_case_name):
+@patch("handle_sd.download_sd_by_appver")
+def test_sd(mock_download_sd, test_case_name):
     env = Environment(str(Path(OUTPUT_DIR, test_case_name)), "cluster-01", "env-01")
     do_prerequisites(test_case_name, env)
     logger.info(f"======TEST HANDLE_SD: {test_case_name}======")
@@ -84,6 +89,17 @@ def test_sd(test_case_name):
 
     sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = load_test_pipeline_sd_data(test_case_name)
 
+
+    if sd_source_type == 'artifact':
+        file_path = Path(TEST_SD_DIR, test_case_name, f"mock_sd.json")
+        sd_data = openJson(file_path)
+        mock_download_sd.return_value = sd_data
+    
+        if test_case_name in ["TC-001-099"]:
+            with pytest.raises(ValueError):
+                handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
+            return
+        
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
     actual_dir = os.path.join(env.env_path, "Inventory", "solution-descriptor")
 
