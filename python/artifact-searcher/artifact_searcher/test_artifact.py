@@ -1,6 +1,9 @@
+import os
 import pytest
 import aiohttp
 from aiohttp import web
+
+os.environ["DEFAULT_REQUEST_TIMEOUT"] = "0.2" # for test cases to run quicker
 from artifact_searcher.utils import models
 from artifact_searcher.artifact import check_artifact_async
 

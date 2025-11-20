@@ -5,7 +5,7 @@ import shutil
 import tempfile
 from pathlib import Path
 from typing import Any, Optional
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, urlunparse
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
 
@@ -20,18 +20,18 @@ WORKSPACE = limit = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
 
 
 def convert_nexus_repo_url_to_index_view(url: str) -> str:
-    has_trailing_slash = url.endswith("/")
-    segments = url.rstrip("/").split("/")
+    parsed = urlparse(url)
 
-    *head, last = segments
-    if last != 'repository':
+    parts = parsed.path.rstrip("/").split("/")
+
+    if not parts or parts[-1] != "repository":
         return url
-    new_segments = head + ['service', 'rest'] + [last, 'browse']
-    new_url = "/".join(new_segments)
 
-    if has_trailing_slash:
-        new_url += "/"
-    return new_url
+    # Build new path
+    new_parts = parts[:-1] + ["service", "rest", "repository", "browse"]
+    new_path = "/".join(new_parts) + "/"
+
+    return urlunparse(parsed._replace(path=new_path))
 
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension, folder: str) -> str:
     artifact_id = app.artifact_id
