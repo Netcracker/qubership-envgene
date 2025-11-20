@@ -4,7 +4,7 @@ import pytest
 from envgenehelper import *
 
 from main import render_environment, cleanup_resulting_dir
-from test_helper import TestHelpers
+from tests.test_helpers import TestHelpers
 
 test_data = [
     # (cluster_name, environment_name, template)
@@ -17,7 +17,7 @@ test_data = [
     ("cluster01", "env04", "test-template-2")
 ]
 
-base_dir = Path(__file__).resolve().parents[3]
+base_dir = Path(__file__).resolve().parents[4]
 g_templates_dir = str((base_dir / "test_data/test_templates").resolve())
 g_inventory_dir = str((base_dir / "test_data/test_environments").resolve())
 g_output_dir = str((base_dir / "/tmp/test_environments").resolve())
