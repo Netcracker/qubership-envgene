@@ -4,8 +4,7 @@ import os
 import shutil
 from pathlib import Path
 
-from envgenehelper import dump_as_yaml_format, get_all_files_in_dir
-from envgenehelper import logger
+from envgenehelper import dump_as_yaml_format, get_all_files_in_dir, logger
 
 
 class TestHelpers:

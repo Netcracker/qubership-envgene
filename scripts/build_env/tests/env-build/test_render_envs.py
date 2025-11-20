@@ -4,7 +4,7 @@ import pytest
 from envgenehelper import *
 
 from main import render_environment, cleanup_resulting_dir
-from test_helper import TestHelpers
+from tests.test_helpers import TestHelpers
 
 test_data = [
     # (cluster_name, environment_name, template)
@@ -14,21 +14,22 @@ test_data = [
     ("cluster-01", "env-04", "simple"),
     ("cluster01", "env01", "test-01"),
     ("cluster01", "env03", "test-template-1"),
-    ("cluster01", "env04", "test-template-2")
+    ("cluster01", "env04", "test-template-2"),
+    ("cluster03", "rpo-replacement-mode", "simple"),
 ]
 
-base_dir = Path(__file__).parent.resolve()
-g_templates_dir = str((base_dir / "../../test_data/test_templates").resolve())
-g_inventory_dir = str((base_dir / "../../test_data/test_environments").resolve())
-g_output_dir = str((base_dir / "../../tmp/test_environments").resolve())
+base_dir = Path(__file__).resolve().parents[4]
+g_templates_dir = str((base_dir / "test_data/test_templates").resolve())
+g_inventory_dir = str((base_dir / "test_data/test_environments").resolve())
+g_output_dir = str((base_dir / "/tmp/test_environments").resolve())
 g_base_dir = get_parent_dir_for_dir(g_inventory_dir)
 environ['CI_PROJECT_DIR'] = g_base_dir
 os.environ['CI_COMMIT_REF_NAME'] = "branch_name"
 
 
 @pytest.fixture(autouse=True)
-def change_test_dir(request, monkeypatch):
-    monkeypatch.chdir(request.fspath.dirname + "/../..")
+def change_test_dir(monkeypatch):
+    monkeypatch.chdir(base_dir)
 
 
 @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
