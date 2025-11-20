@@ -1,119 +1,192 @@
 # Instance Pipeline Use Cases
 
-## Multiple Values Support for Instance Pipeline Parameters
+- [Instance Pipeline Use Cases](#instance-pipeline-use-cases)
+  - [Multi-Value Support for Instance Pipeline Parameters](#multi-value-support-for-instance-pipeline-parameters)
+  - [Overview](#overview)
+    - [Supported Separators](#supported-separators)
+  - [Pre-requisites](#pre-requisites)
+  - [Operations \& Use Cases](#operations--use-cases)
+    - [1. Multiple Environments (ENV\_NAMES)](#1-multiple-environments-env_names)
+      - [Trigger pipeline with multiple environments](#trigger-pipeline-with-multiple-environments)
+      - [Steps for multiple Environments](#steps-for-multiple-environments)
+      - [Results for multiple Environments](#results-for-multiple-environments)
+    - [2. Multiple SD Versions (SD\_VERSION)](#2-multiple-sd-versions-sd_version)
+      - [Trigger pipeline with multiple SD Versions](#trigger-pipeline-with-multiple-sd-versions)
+      - [Steps for multiple SD Versions](#steps-for-multiple-sd-versions)
+      - [Results for multiple SD Versions](#results-for-multiple-sd-versions)
+    - [3. Combined Multi-Parameter Usage](#3-combined-multi-parameter-usage)
+      - [Trigger pipeline with multiple Environments and SD Versions](#trigger-pipeline-with-multiple-environments-and-sd-versions)
+      - [Steps](#steps)
+      - [Results](#results)
+  - [Final Results Summary](#final-results-summary)
+  - [Diagram](#diagram)
 
-### Description
+## Multi-Value Support for Instance Pipeline Parameters
 
-This use case demonstrates how instance pipeline parameters can accept **multiple values** using various delimiters.
-It unifies behavior across parameters such as `ENV_NAMES` and `SD_VERSION`, making automation pipelines more flexible and readable.
+This section describes how instance pipeline parameters can accept **multiple values**, such as [ENV_NAMES](/docs/instance-pipeline-parameters.md#env_names) and [SD_VERSION](/docs/instance-pipeline-parameters.md#sd_version).
+The behavior is consistent across pipelines, with GitLab and GitHub pipelines included in each use case.
 
-The supported separators for multiple values are:
+## Overview
 
-| Separator | Example |
-|------------|----------|
-| `\n` (newline) | `value1\nvalue2` |
-| `;` (semicolon) | `value1;value2` |
-| `,` (comma) | `value1,value2` |
-| (space) | `value1 value2` |
+Instance pipeline parameters that support multi-value input can accept values separated by **newline**, **semicolon**, **comma**, or **space**.
+The pipeline automatically normalizes these values, so all separators are treated equivalently.
+
+### Supported Separators
+
+| Separator      | Example          |
+|----------------|-----------------|
+| Newline (\n)   | value1\nvalue2  |
+| Semicolon ( ; )  | value1;value2   |
+| Comma (,)      | value1,value2   |
+| Space ( )      | value1 value2   |
 
 > [!Note]
 > The pipeline automatically normalizes values using these separators — there is no functional difference between them.
 
----
-
-### Pre-requisites
+## Pre-requisites
 
 1. Instance pipeline parameters that support multiple values:
-   - `ENV_NAMES`
-   - `SD_VERSION`
-   - `SD_DATA`
-2. The instance pipeline must have multi-value support enabled (as per the current contract update).
 
----
+   - [ENV_NAMES](/docs/instance-pipeline-parameters.md#env_names)
+   - [SD_VERSION](/docs/instance-pipeline-parameters.md#sd_version)
+2. Instance pipeline must have multi-value support enabled (per contract update).
 
-### Steps
+## Operations & Use Cases
 
-#### **Example 1 — Multiple Environments**
+### 1. Multiple Environments ([ENV_NAMES](/docs/instance-pipeline-parameters.md#env_names))
 
-1. User sets multiple environments for deployment:
+- [ENV_NAMES](/docs/instance-pipeline-parameters.md#env_names) defined with one or more values:
 
-   ```yaml
-   ENV_NAMES: |
-     k8s-01/dev
-     k8s-01/staging
-     k8s-01/prod
+```yaml
+ENV_NAMES: |
+  k8s-01/dev
+  k8s-01/staging
+  k8s-01/prod
+```
 
-   ```
+#### Trigger pipeline with multiple environments
 
-2. Pipeline interprets all listed environments and executes jobs sequentially for each.
-   **Equivalent single-line inputs:**
+- **GitLab:**
 
-   ```yaml
+```yaml
+# Using newline (\n)
+ENV_NAMES: "k8s-01/dev\nk8s-01/staging\nk8s-01/prod"
+```
 
-    # Using newline (\n) explicitly
-    ENV_NAMES: "k8s-01/dev\nk8s-01/staging\nk8s-01/prod"
+- **GitHub:**
 
-    # Using semicolon
-    ENV_NAMES: "k8s-01/dev; k8s-01/staging; k8s-01/prod"
+```yaml
 
-    # Using comma
-    ENV_NAMES: "k8s-01/dev, k8s-01/staging, k8s-01/prod"
+# Using comma
+ENV_NAMES: "k8s-01/dev, k8s-01/staging, k8s-01/prod"
+GH_ADDITIONAL_PARAMS: {}
+```
 
-    # Using space
-    ENV_NAMES: "k8s-01/dev k8s-01/staging k8s-01/prod"
+#### Steps for multiple Environments
 
-   ```
+1. Pipeline normalizes multi-value [ENV_NAMES](/docs/instance-pipeline-parameters.md#env_names) into a list.
+2. Executes jobs sequentially per environment.
 
-#### **Example 2 — Multiple SD Versions**
+#### Results for multiple Environments
 
-1. User specifies multiple SD versions to merge:
+1. Each environment triggers an isolated pipeline execution.
+2. Behavior is consistent across delimiters.
 
-   ```yaml
+### 2. Multiple SD Versions ([SD_VERSION](/docs/instance-pipeline-parameters.md#sd_version))
 
-   SD_VERSION: |
-     MONITORING:0.64.2
-     DATABASE:1.1.5
-     LOGGING:2.0.0
+- [SD_VERSION](/docs/instance-pipeline-parameters.md#sd_version) defined with one or more values.
+- [SD_REPO_MERGE_MODE](/docs/instance-pipeline-parameters.md#sd_repo_merge_mode) specified.
+- [SD_SOURCE_TYPE](/docs/instance-pipeline-parameters.md#sd_source_type): set to `artifact`
 
-    ```
+```yaml
+SD_VERSION: |
+  MONITORING:0.64.2
+  DATABASE:1.1.5
+  LOGGING:2.0.0
+```
 
-2. EnvGene merges the listed SD versions using the configured merge mode (SD_REPO_MERGE_MODE).
+#### Trigger pipeline with multiple SD Versions
 
-   **Equivalent single-line inputs:**
+- **GitLab:**
 
-    ```yaml
-    # Using newline (\n) explicitly
-    SD_VERSION: "MONITORING:0.64.2\nDATABASE:1.1.5\nLOGGING:2.0.0"
+```yaml
 
-    # Using semicolon
-    SD_VERSION: "MONITORING:0.64.2; DATABASE:1.1.5; LOGGING:2.0.0"
+ENV_NAMES : "ocp-01/dev"
+# Using semicolon
+SD_VERSION: "MONITORING:0.64.2; DATABASE:1.1.5; LOGGING:2.0.0"
+SD_REPO_MERGE_MODE: "basic-merge"
+SD_SOURCE_TYPE: "artifact"
+```
 
-    # Using comma
-    SD_VERSION: "MONITORING:0.64.2, DATABASE:1.1.5, LOGGING:2.0.0"
+- **GitHub:**
 
-    # Using space
-    SD_VERSION: "MONITORING:0.64.2 DATABASE:1.1.5 LOGGING:2.0.0"
+```yaml
+ENV_NAMES : "ocp-01/dev"
+GH_ADDITIONAL_PARAMS: {
+  "SD_VERSION": "MONITORING:0.64.2,DATABASE:1.1.5,LOGGING:2.0.0",
+  "SD_REPO_MERGE_MODE": "basic-merge",
+  "SD_SOURCE_TYPE": "artifact"
+}
+```
 
-    ```
+#### Steps for multiple SD Versions
 
-#### **Example 3 — Combined Multi-Parameter Usage**
+1. Pipeline parses multiple SD version entries.
+2. EnvGene merges the listed SD versions using the configured merge mode ([SD_REPO_MERGE_MODE](/docs/instance-pipeline-parameters.md#sd_repo_merge_mode)).
+3. Merge applies per environment if multiple environments exist.
 
-1. User defines environments and SDs together:
+#### Results for multiple SD Versions
 
-   ```yaml
-   ENV_NAMES: "ocp-01/dev ocp-01/test"
-   SD_VERSION: "APP_A:1.0.0, APP_B:1.2.0"
-   ```
+1. All SD versions are merged correctly.
+2. Merge strategy is consistent.
 
-2. Pipeline runs sequentially for each environment, applying the specified SD versions per run.
+### 3. Combined Multi-Parameter Usage
 
-### Results
+- Multiple environments and SD versions defined.
 
-1. Instance pipeline correctly interprets and expands all parameters that support multiple values.
-2. Behavior is consistent across YAML configuration and CI/CD pipeline triggers.
-3. Use cases become reusable and standardized across environments.
+#### Trigger pipeline with multiple Environments and SD Versions
 
-### Diagram
+- **GitLab:**
+
+```bash
+ENV_NAMES="ocp-01/dev,ocp-01/test"
+SD_VERSION="APP_A:1.0.0,APP_B:1.2.0"
+SD_REPO_MERGE_MODE="basic-merge"
+SD_SOURCE_TYPE: "artifact"
+```
+
+- **GitHub:**
+
+```yaml
+ENV_NAMES: "ocp-01/dev ocp-01/test"
+GH_ADDITIONAL_PARAMS: {
+  "SD_VERSION": "APP_A:1.0.0,APP_B:1.2.0",
+  "SD_REPO_MERGE_MODE": "basic-merge",
+  "SD_SOURCE_TYPE": "artifact"
+}
+```
+
+> [!Note]
+> Similar separators (`\n`, `;`, `,`, space) can be used here for [ENV_NAMES](/docs/instance-pipeline-parameters.md#env_names) and [SD_VERSION](/docs/instance-pipeline-parameters.md#sd_version) as demonstrated in the previous examples.
+
+#### Steps
+
+1. Normalize [ENV_NAMES](/docs/instance-pipeline-parameters.md#env_names) → list of environments.
+2. Normalize [SD_VERSION](/docs/instance-pipeline-parameters.md#sd_version) → list of SD versions.
+3. Execute pipeline sequentially per environment, applying all SD versions.
+
+#### Results
+
+1. Each environment processed in order.
+2. SD versions applied consistently per run.
+
+## Final Results Summary
+
+1. Instance pipeline correctly interprets multi-value parameters.
+2. Supported delimiters are equivalent in effect.
+3. Pipelines are reusable, flexible, and automation-friendly.
+
+## Diagram
 
 ```mermaid
 sequenceDiagram
@@ -124,11 +197,11 @@ sequenceDiagram
 
     U->>CI: Configure multi-value parameters (ENV_NAMES, SD_VERSION)
     CI->>IP: Trigger instance pipeline
-    IP->>EG: Parse and normalize multi-value parameters
+    IP->>EG: Normalize multi-value inputs
     loop For each ENV_NAME
-        EG->>EG: Execute job with SD_VERSION combinations
+        EG->>EG: Apply SD_VERSION list & execute workflow
     end
-    EG-->>IP: Completed for all values
-    IP-->>CI: Report success
-    CI-->>U: Done
+    EG-->>IP: All executions completed
+    IP-->>CI: Pipeline output
+    CI-->>U: Success
 ```
