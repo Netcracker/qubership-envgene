@@ -26,7 +26,7 @@ TEST_CASES_POSITIVE = [
     "TC-001-017",
 ]
 
-TEST_CASES_NEGATIVE = []
+TEST_CASES_NEGATIVE = {}
 
 test_suits_map = {
     "basic_not_first": ["TC-001-010", "TC-001-012"],
@@ -45,7 +45,7 @@ SD = "sd.yaml"
 def test_sd_positive(test_case_name):
     env = Environment(str(Path(OUTPUT_DIR, test_case_name)), "cluster-01", "env-01")
     TestHelpers.do_prerequisites(SD, TEST_SD_DIR, OUTPUT_DIR, test_case_name, env, test_suits_map)
-    logger.info(f"======TEST HANDLE_SD_POSITIVE: {test_case_name}======")
+    logger.info(f"======TEST HANDLE_SD_LOCAL_POSITIVE: {test_case_name}======")
     logger.info(f"Starting SD test:"
                 f"\n\tTest case: {test_case_name}")
 
@@ -60,4 +60,19 @@ def test_sd_positive(test_case_name):
 
 @pytest.mark.parametrize("test_case_name", TEST_CASES_NEGATIVE)
 def test_sd_negative(test_case_name):
-    pass
+    env = Environment(str(Path(OUTPUT_DIR, test_case_name)), "cluster-01", "env-01")
+    TestHelpers.do_prerequisites(SD, TEST_SD_DIR, OUTPUT_DIR, test_case_name, env, test_suits_map)
+    logger.info(f"======TEST HANDLE_SD_LOCAL_NEGATIVE: {test_case_name}======")
+    logger.info(f"Starting SD test:"
+                f"\n\tTest case: {test_case_name}")
+
+    sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = TestHelpers.load_test_pipeline_sd_data(TEST_SD_DIR, test_case_name)
+
+    file_path = Path(TEST_SD_DIR, test_case_name, f"mock_sd.json")
+    sd_data = openJson(file_path)
+    mock_download_sd.return_value = sd_data
+    
+    with pytest.raises(expected_exception):
+        handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
+
+    logger.info(f"=====SUCCESS - {test_case_name}======")
