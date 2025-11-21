@@ -315,31 +315,35 @@ This is a Jinja template file used to render the [BG Domain](#bg-domain) object 
 
 **Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
 
-[Macros](/docs/template-macros.md) are available for use when developing the template.
+**Example:**
+
+```yaml
+name: "{{ current_env.name }}-bg-domain"
+type: bgdomain
+originNamespace:
+  name: "{{ current_env.name }}-origin-bss" 
+  type: namespace
+peerNamespace:
+  name: "{{ current_env.name }}-peer-bss" 
+  type: namespace
+controllerNamespace:
+  name: "{{ current_env.name }}-bg-controller"
+  type: namespace
+  credentials: bgdomain-cred
+  url: https://controller-env-1-controller.qubership.org
+```
 
 #### Registry Definition Template
 
 This is a Jinja template file used to render the [Registry Definition](#registry-definition) object.
+
+In addition to other macros, [`regdefs.overrides`](/docs/template-macros.md#regdefsoverrides) is available when rendering the Application Definition Template.
 
 **Location:** `/templates/regdefs/<registry-name>.yaml|yml|yml.j2|yaml.j2`
 
 **Example:**
 
 ```yaml
-# BG Domain template with Jinja2 templating
-name: {{ current_env.environmentName ~ '-bg-domain' }}
-type: bgdomain
-origin:
-  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('origin-ns', current_env.environmentName ~ '-origin') }}
-  type: namespace
-peer:
-  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('peer-ns', current_env.environmentName ~ '-peer') }}
-  type: namespace
-controller:
-  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}
-  type: namespace
-  credentialsIs: ${creds.get("bgd-controller-token").secret}
-  url: {{ current_env.cloud_passport.bg_operator_url }}
 name: "registry-1"
 credentialsId: "registry-cred"
 mavenConfig:
@@ -362,6 +366,8 @@ dockerConfig:
 #### Application Definition Template
 
 This is a Jinja template file used to render the [Application Definition](#application-definition) object.
+
+In addition to other macros, [`appdefs.overrides`](/docs/template-macros.md#appdefsoverrides) is available when rendering the Application Definition Template.
 
 **Location:** `/templates/appdefs/<application-name>.yaml|yml|yml.j2|yaml.j2`
 
@@ -443,7 +449,7 @@ The Namespace object is generated during Environment Instance generation based o
 
 For each parameter in the Namespace, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
 
-**Location:** `/environments/<cluster-name>/<env-name>/Namespaces/<deploy-postfix>/namespace.yml`.
+**Location:** `/environments/<cluster-name>/<environment-name>/Namespaces/<deploy-postfix>/namespace.yml`.
 
 ```yaml
 # Mandatory
@@ -554,8 +560,8 @@ The Application object is used to generate Effective Set by providing applicatio
 
 **Location:** Depends on which object the ParameterSet was associated with:
 
-- Cloud: `/environments/<cluster-name>/<env-name>/Applications/<application-name>.yml`
-- Namespace: `/environments/<cluster-name>/<env-name>/Namespaces/<deploy-postfix>/Applications/<application-name>.yml`
+- Cloud: `/environments/<cluster-name>/<environment-name>/Applications/<application-name>.yml`
+- Namespace: `/environments/<cluster-name>/<environment-name>/Namespaces/<deploy-postfix>/Applications/<application-name>.yml`
 
 ```yaml
 # Mandatory
@@ -637,7 +643,7 @@ The BG Domain object is generated during Environment Instance generation based o
 
 - [BG Domain Template](#bg-domain-template)
 
-**Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
+**Location:** `/environments/<cluster-name>/<environment-name>/bg_domain.yml`
 
 ```yaml
 # Mandatory
@@ -714,9 +720,9 @@ SD in EnvGene can be introduced either through a manual commit to the repository
 
 In EnvGene, there are:
 
-**Full SD**: Defines the complete application composition of a solution. There can be only one Full SD per environment, located at the path `/environments/<cluster-name>/<env-name>/Inventory/solution-descriptor/sd.yml`
+**Full SD**: Defines the complete application composition of a solution. There can be only one Full SD per environment, located at the path `/environments/<cluster-name>/<environment-name>/Inventory/solution-descriptor/sd.yml`
 
-**Delta SD**: A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. There can be only one Delta SD per environment, located at the path `/environments/<cluster-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yml`
+**Delta SD**: A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. There can be only one Delta SD per environment, located at the path `/environments/<cluster-name>/<environment-name>/Inventory/solution-descriptor/delta_sd.yml`
 
 Only Full SD is used for Effective Set calculation. The Delta SD is only needed for troubleshooting purposes.
 
@@ -774,7 +780,7 @@ After generation, `<value>` is set to `envgeneNullValue`. The user must manually
 
 This file stores all [Credential](#credential) objects of the Environment upon generation
 
-**Location:** `/environments/<cloud-name>/<env-name>/Credentials/credentials.yml`
+**Location:** `/environments/<cloud-name>/<environment-name>/Credentials/credentials.yml`
 
 **Example:**
 
@@ -802,7 +808,7 @@ The relationship between Shared Credentials and Environment is established throu
 Credentials can be defined at three scopes with different precedence:
 
 1. **Environment-level**
-   **Location:** `/environments/<cluster-name>/<env-name>/Inventory/credentials/`
+   **Location:** `/environments/<cluster-name>/<environment-name>/Inventory/credentials/`
 2. **Cluster-level**
    **Location:** `/environments/<cluster-name>/credentials/`
 3. **Site-level**
@@ -944,7 +950,7 @@ A separate definition file is used for each individual registry. Each Environmen
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/environments/<cluster-name>/<env-name>/AppDefs/<registry-name>.yml`
+**Location:** `/environments/<cluster-name>/<environment-name>/RegDefs/<registry-name>.yml`
 
 Two versions of this object are supported
 
@@ -956,7 +962,7 @@ Two versions of this object are supported
 name: string
 # Mandatory
 # Pointer to the EnvGene Credential object.
-# Credential with this ID must be located in /environments/<cluster-name>/<env-name>/Credentials/credentials.yml
+# Credential with this ID must be located in /environments/<cluster-name>/<environment-name>/Credentials/credentials.yml
 credentialsId: string
 # Mandatory
 mavenConfig:
@@ -1471,7 +1477,7 @@ A separate definition file is used for each individual application. Each Environ
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/environments/<cluster-name>/<env-name>/AppDefs/<application-name>.yml`
+**Location:** `/environments/<cluster-name>/<environment-name>/AppDefs/<application-name>.yml`
 
 ```yaml
 # Mandatory

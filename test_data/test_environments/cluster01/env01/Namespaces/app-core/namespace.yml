@@ -15,8 +15,8 @@ profile:
 deployParameters:
   APP_CORE_NAMESPACE: "test-solution-structure-case-01-app-core"
   APP_NAMESPACE: "test-solution-structure-case-01-app"
-  ENVGENE_CONFIG_REF_NAME: ""
-  ENVGENE_CONFIG_TAG: ""
+  ENVGENE_CONFIG_REF_NAME: "branch_name"
+  ENVGENE_CONFIG_TAG: "No Ref tag"
   TEST_PARAM_1: "test-solution-structure-case-01-app-core" # paramset: app-common version: n/a source: template
   TEST_PARAM_IF_ENDIF_2: "TEST_PARAM_IF_ENDIF_2_value"
   param-A: "apple" # paramset: paramset-A version: n/a source: template

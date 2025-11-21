@@ -1,0 +1,11 @@
+version: 23.4
+name: paramset-B
+parameters:
+  core:
+    apps:
+      volumes:
+        outputs:
+          capacity: 10Gi
+  kafka:
+      username: ${creds.get("kafka-cred").username}
+      password: ${creds.get("kafka-cred").password}
