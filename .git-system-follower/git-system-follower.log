@@ -1,25 +1,25 @@
-[2025-11-19 15:15:55.766] DEBUG    | manager.py:load_plugins:62 - Loaded plugins for input package processing (gsf.plugins.cli.packages) (3): ImagePlugin  TarGzPlugin  SourcePlugin
-[2025-11-19 15:15:56.076] DEBUG    | cli.py:resolve_credentials:76 - Username and/or password have not been passed by either method
-[2025-11-19 15:15:56.076] INFO     | output.py:banner:55 - 
+[2025-11-21 10:01:22.427] DEBUG    | manager.py:load_plugins:62 - Loaded plugins for input package processing (gsf.plugins.cli.packages) (3): ImagePlugin  TarGzPlugin  SourcePlugin
+[2025-11-21 10:01:22.725] DEBUG    | cli.py:resolve_credentials:76 - Username and/or password have not been passed by either method
+[2025-11-21 10:01:22.725] INFO     | output.py:banner:55 - 
     .-,
  .^.: :.^.   ┏┓╻┳ ┏┓╻╻┏┓┳┏┓┏┳┓ ┏┓┏┓╻ ╻ ┏┓┏ ┓┏┓┳┓
 ,-' .-. '-,  ┃┓┃┃ ┗┓┗┃┗┓┃┣ ┃┃┃ ┣ ┃┃┃ ┃ ┃┃┃┃┃┣ ┣┛
 '-. '-' .-'  ┗┛╹╹ ┗┛┗┛┗┛╹┗┛╹ ╹ ╹ ┗┛┗┛┗┛┗┛┗┻┛┗┛┛┗
  '.`; ;`.'   git-system-follower v0.6.5
     `-`
-[2025-11-19 15:15:56.076] INFO     | output.py:display_params:65 - ╭═1. Common parameters═════════════════════════════════════════════════════════════════════════════╮
+[2025-11-21 10:01:22.725] INFO     | output.py:display_params:65 - ╭═1. Common parameters═════════════════════════════════════════════════════════════════════════════╮
   gears  = /Users/andyroode/Desktop/qubership_folder/qubership-envgene/gsf_packages/envgene_instance_project
-  extras = DOCKER_REGISTRY=reg2
+  extras = 
   force  = False
   debug  = False
 ╰═════════════════════════════════════════════════════════════════════════════════════════total: 4═╯
-[2025-11-19 15:15:56.076] INFO     | output.py:display_params:65 - ╭═2. Registry parameters═══════════════════════════════════════════════════════════════════════════╮
+[2025-11-21 10:01:22.725] INFO     | output.py:display_params:65 - ╭═2. Registry parameters═══════════════════════════════════════════════════════════════════════════╮
   registry-type     = Autodetect
   registry-username = 
   registry-password = 
   insecure-registry = False
 ╰═════════════════════════════════════════════════════════════════════════════════════════total: 4═╯
-[2025-11-19 15:15:56.076] INFO     | output.py:display_params:65 - ╭═3. Git parameters════════════════════════════════════════════════════════════════════════════════╮
+[2025-11-21 10:01:22.725] INFO     | output.py:display_params:65 - ╭═3. Git parameters════════════════════════════════════════════════════════════════════════════════╮
   repo         = https://gitlab.com/andy-roode/My-Own-Project.git
   branches     = main
   token        = *****
@@ -27,17 +27,152 @@
   git-username = andyroode
   git-email    = andrei.rudchenko.qubership@gmail.com
 ╰═════════════════════════════════════════════════════════════════════════════════════════total: 6═╯
-[2025-11-19 15:15:58.654] INFO     | download.py:download:333 - :: Downloading packages
-[2025-11-19 15:15:58.654] INFO     | download.py:download:337 - -> Downloading /Users/andyroode/Desktop/qubership_folder/qubership-envgene/gsf_packages/envgene_instance_project
-[2025-11-19 15:15:58.655] INFO     | download.py:get_source:384 - envgene_instance_project@1.0.2 package is provided as source code (Path: /Users/andyroode/Desktop/qubership_folder/qubership-envgene/gsf_packages/envgene_instance_project)
-[2025-11-19 15:15:58.655] INFO     | download.py:download:360 - envgene_instance_project@1.0.2 package is of simple structure type
-[2025-11-19 15:15:58.655] SUCCESS  | logger.py:success:99 - Download complete
-[2025-11-19 15:15:58.655] INFO     | install.py:install:64 - Packages (1): envgene_instance_project@1.0.2
-[2025-11-19 15:15:58.655] INFO     | install.py:install:68 - Additional rollback packages (0)
-[2025-11-19 15:15:58.655] INFO     | install.py:install:72 - Processing branches
-[2025-11-19 15:15:58.655] INFO     | install.py:install:74 - [1/1] Processing main branch
-[2025-11-19 15:15:58.655] DEBUG    | install.py:install:75 - Current state in main branch:
-[{'cicd_variables': {'hash': '9d1cf64165e9df7ab3b2c1fd3606e8c7ee372c9570d5621632cd9063a256e58b',
+[2025-11-21 10:01:25.061] INFO     | download.py:download:333 - :: Downloading packages
+[2025-11-21 10:01:25.062] INFO     | download.py:download:337 - -> Downloading /Users/andyroode/Desktop/qubership_folder/qubership-envgene/gsf_packages/envgene_instance_project
+[2025-11-21 10:01:25.065] INFO     | download.py:get_source:384 - envgene_instance_project@1.0.0 package is provided as source code (Path: /Users/andyroode/Desktop/qubership_folder/qubership-envgene/gsf_packages/envgene_instance_project)
+[2025-11-21 10:01:25.068] INFO     | download.py:download:360 - envgene_instance_project@1.0.0 package is of simple structure type
+[2025-11-21 10:01:25.069] SUCCESS  | logger.py:success:99 - Download complete
+[2025-11-21 10:01:25.069] INFO     | install.py:install:64 - Packages (1): envgene_instance_project@1.0.0
+[2025-11-21 10:01:25.069] INFO     | install.py:install:68 - Additional rollback packages (0)
+[2025-11-21 10:01:25.069] INFO     | install.py:install:72 - Processing branches
+[2025-11-21 10:01:25.069] INFO     | install.py:install:74 - [1/1] Processing main branch
+[2025-11-21 10:01:25.069] DEBUG    | install.py:install:75 - Current state in main branch:
+[]
+[2025-11-21 10:01:25.069] DEBUG    | utils.py:get_git_repo:51 - Local repository /Users/andyroode/Desktop/qubership_folder/qubership-envgene/.git-system-follower/repositories/My-Own-Project is used
+[2025-11-21 10:01:29.112] DEBUG    | git_api.py:checkout_to_new_branch:48 - Local branch main.temp-manage-packages deleted
+[2025-11-21 10:01:29.121] SUCCESS  | logger.py:success:99 - Created new main.temp-manage-packages local branch (local repo: /Users/andyroode/Desktop/qubership_folder/qubership-envgene/.git-system-follower/repositories/My-Own-Project)
+[2025-11-21 10:01:29.122] INFO     | install.py:managing_branch:164 - :: Installing packages
+[2025-11-21 10:01:29.122] INFO     | install.py:install_packages:208 - (1/1) Installing envgene_instance_project@1.0.0 package
+[2025-11-21 10:01:29.122] INFO     | initer.py:init:37 - ==> Package initialization
+[2025-11-21 10:01:29.845] INFO     | initer.py:run_init_script:59 - 	Running init package api
+[2025-11-21 10:01:29.852] DEBUG    | tmpdir.py:wrapper:47 - Temporary directory was created at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-d4fub3ou
+[2025-11-21 10:01:29.853] DEBUG    | tmpdir.py:wrapper:47 - Temporary directory was created at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-0owukd_v
+[2025-11-21 10:01:29.853] INFO     | templates.py:create_template:46 - 	-> Creating project using default template
+[2025-11-21 10:01:29.909] INFO     | templates.py:_copy_files:85 - 		File .gitlab-ci.yml does not exist. Copied it from template
+[2025-11-21 10:01:29.909] INFO     | templates.py:_copy_files:85 - 		File gitlab-ci/pipeline_vars.yaml does not exist. Copied it from template
+[2025-11-21 10:01:29.910] INFO     | templates.py:create_template:71 - 		Successful use template (/Users/andyroode/Desktop/qubership_folder/qubership-envgene/gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default)
+[2025-11-21 10:01:29.910] DEBUG    | tmpdir.py:wrapper:54 - Temporary directory was removed at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-d4fub3ou
+[2025-11-21 10:01:29.910] DEBUG    | tmpdir.py:wrapper:54 - Temporary directory was removed at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-0owukd_v
+[2025-11-21 10:01:29.910] INFO     | cicd_variables.py:create_variable:70 - 	-> Creating CI/CD variables
+[2025-11-21 10:01:30.950] INFO     | cicd_variables.py:create_variable:111 - 		Variable with name DOCKER_REGISTRY with value reg2 has been created in * environment
+[2025-11-21 10:01:30.951] DEBUG    | cicd_variables.py:create_variable:113 - 		Response:
+<class 'gitlab.v4.objects.variables.ProjectVariable'> => 
+{'description': None,
+ 'environment_scope': '*',
+ 'hidden': False,
+ 'key': 'DOCKER_REGISTRY',
+ 'masked': False,
+ 'protected': False,
+ 'raw': False,
+ 'value': 'reg2',
+ 'variable_type': 'env_var'}
+[2025-11-21 10:01:30.953] INFO     | cicd_variables.py:create_variable:70 - 	-> Creating CI/CD variables
+[2025-11-21 10:01:31.936] INFO     | cicd_variables.py:create_variable:111 - 		Variable with name SECRET_KEY with value ***** has been created in * environment
+[2025-11-21 10:01:31.937] DEBUG    | cicd_variables.py:create_variable:113 - 		Response:
+<class 'gitlab.v4.objects.variables.ProjectVariable'> => 
+{'description': None,
+ 'environment_scope': '*',
+ 'hidden': False,
+ 'key': 'SECRET_KEY',
+ 'masked': True,
+ 'protected': False,
+ 'raw': False,
+ 'value': 'initial_value',
+ 'variable_type': 'env_var'}
+[2025-11-21 10:01:31.938] INFO     | cicd_variables.py:create_variable:70 - 	-> Creating CI/CD variables
+[2025-11-21 10:01:32.715] INFO     | cicd_variables.py:create_variable:111 - 		Variable with name GITLAB_TOKEN with value ***** has been created in * environment
+[2025-11-21 10:01:32.715] DEBUG    | cicd_variables.py:create_variable:113 - 		Response:
+<class 'gitlab.v4.objects.variables.ProjectVariable'> => 
+{'description': None,
+ 'environment_scope': '*',
+ 'hidden': False,
+ 'key': 'GITLAB_TOKEN',
+ 'masked': True,
+ 'protected': False,
+ 'raw': False,
+ 'value': 'initial_value',
+ 'variable_type': 'env_var'}
+[2025-11-21 10:01:32.717] INFO     | cicd_variables.py:create_variable:70 - 	-> Creating CI/CD variables
+[2025-11-21 10:01:33.703] INFO     | cicd_variables.py:create_variable:111 - 		Variable with name ENVGENE_AGE_PRIVATE_KEY with value ***** has been created in * environment
+[2025-11-21 10:01:33.703] DEBUG    | cicd_variables.py:create_variable:113 - 		Response:
+<class 'gitlab.v4.objects.variables.ProjectVariable'> => 
+{'description': None,
+ 'environment_scope': '*',
+ 'hidden': False,
+ 'key': 'ENVGENE_AGE_PRIVATE_KEY',
+ 'masked': True,
+ 'protected': False,
+ 'raw': False,
+ 'value': 'initial_value',
+ 'variable_type': 'env_var'}
+[2025-11-21 10:01:33.705] INFO     | cicd_variables.py:create_variable:70 - 	-> Creating CI/CD variables
+[2025-11-21 10:01:34.448] INFO     | cicd_variables.py:create_variable:111 - 		Variable with name ENVGENE_AGE_PUBLIC_KEY with value ***** has been created in * environment
+[2025-11-21 10:01:34.449] DEBUG    | cicd_variables.py:create_variable:113 - 		Response:
+<class 'gitlab.v4.objects.variables.ProjectVariable'> => 
+{'description': None,
+ 'environment_scope': '*',
+ 'hidden': False,
+ 'key': 'ENVGENE_AGE_PUBLIC_KEY',
+ 'masked': True,
+ 'protected': False,
+ 'raw': False,
+ 'value': 'initial_value',
+ 'variable_type': 'env_var'}
+[2025-11-21 10:01:34.451] INFO     | cicd_variables.py:create_variable:70 - 	-> Creating CI/CD variables
+[2025-11-21 10:01:35.223] INFO     | cicd_variables.py:create_variable:111 - 		Variable with name PUBLIC_AGE_KEYS with value ***** has been created in * environment
+[2025-11-21 10:01:35.224] DEBUG    | cicd_variables.py:create_variable:113 - 		Response:
+<class 'gitlab.v4.objects.variables.ProjectVariable'> => 
+{'description': None,
+ 'environment_scope': '*',
+ 'hidden': False,
+ 'key': 'PUBLIC_AGE_KEYS',
+ 'masked': True,
+ 'protected': False,
+ 'raw': False,
+ 'value': 'initial_value',
+ 'variable_type': 'env_var'}
+[2025-11-21 10:01:35.226] INFO     | cicd_variables.py:create_variable:70 - 	-> Creating CI/CD variables
+[2025-11-21 10:01:36.428] INFO     | cicd_variables.py:create_variable:111 - 		Variable with name IS_OFFSITE with value true has been created in * environment
+[2025-11-21 10:01:36.430] DEBUG    | cicd_variables.py:create_variable:113 - 		Response:
+<class 'gitlab.v4.objects.variables.ProjectVariable'> => 
+{'description': None,
+ 'environment_scope': '*',
+ 'hidden': False,
+ 'key': 'IS_OFFSITE',
+ 'masked': False,
+ 'protected': False,
+ 'raw': False,
+ 'value': 'true',
+ 'variable_type': 'env_var'}
+[2025-11-21 10:01:36.431] INFO     | cicd_variables.py:create_variable:70 - 	-> Creating CI/CD variables
+[2025-11-21 10:01:37.410] INFO     | cicd_variables.py:create_variable:111 - 		Variable with name GITLAB_RUNNER_TAG_NAME with value initial_value has been created in * environment
+[2025-11-21 10:01:37.410] DEBUG    | cicd_variables.py:create_variable:113 - 		Response:
+<class 'gitlab.v4.objects.variables.ProjectVariable'> => 
+{'description': None,
+ 'environment_scope': '*',
+ 'hidden': False,
+ 'key': 'GITLAB_RUNNER_TAG_NAME',
+ 'masked': False,
+ 'protected': False,
+ 'raw': False,
+ 'value': 'initial_value',
+ 'variable_type': 'env_var'}
+[2025-11-21 10:01:37.411] INFO     | cicd_variables.py:create_variable:70 - 	-> Creating CI/CD variables
+[2025-11-21 10:01:38.634] INFO     | cicd_variables.py:create_variable:111 - 		Variable with name RUNNER_SCRIPT_TIMEOUT with value initial_value has been created in * environment
+[2025-11-21 10:01:38.635] DEBUG    | cicd_variables.py:create_variable:113 - 		Response:
+<class 'gitlab.v4.objects.variables.ProjectVariable'> => 
+{'description': None,
+ 'environment_scope': '*',
+ 'hidden': False,
+ 'key': 'RUNNER_SCRIPT_TIMEOUT',
+ 'masked': False,
+ 'protected': False,
+ 'raw': False,
+ 'value': 'initial_value',
+ 'variable_type': 'env_var'}
+[2025-11-21 10:01:38.637] SUCCESS  | logger.py:success:99 - Installed envgene_instance_project@1.0.0 package
+[2025-11-21 10:01:38.639] DEBUG    | install.py:processing_branch:190 - Updated state in main.temp-manage-packages branch:
+[{'cicd_variables': {'hash': 'd636ed05cb572a9b8e6e7f9d2a1a3b3ccc20471956a2aa27826b3e3acf8646ee',
                      'names': ['DOCKER_REGISTRY',
                                'SECRET_KEY',
                                'GITLAB_TOKEN',
@@ -48,26 +183,218 @@
                                'GITLAB_RUNNER_TAG_NAME',
                                'RUNNER_SCRIPT_TIMEOUT']},
   'dependencies': [],
-  'last_update': '2025-11-19 15:06:26.950710',
+  'last_update': '2025-11-21 10:01:38.638355',
   'name': 'envgene_instance_project',
   'structure_type': 'simple',
   'template_variables': {},
   'used_template': 'default',
-  'version': '1.0.1'}]
-[2025-11-19 15:15:58.656] DEBUG    | utils.py:get_git_repo:51 - Local repository /Users/andyroode/Desktop/qubership_folder/qubership-envgene/.git-system-follower/repositories/My-Own-Project is used
-[2025-11-19 15:16:01.379] DEBUG    | git_api.py:checkout_to_new_branch:48 - Local branch main.temp-manage-packages deleted
-[2025-11-19 15:16:01.390] SUCCESS  | logger.py:success:99 - Created new main.temp-manage-packages local branch (local repo: /Users/andyroode/Desktop/qubership_folder/qubership-envgene/.git-system-follower/repositories/My-Own-Project)
-[2025-11-19 15:16:01.391] INFO     | install.py:managing_branch:164 - :: Installing packages
-[2025-11-19 15:16:01.391] INFO     | install.py:install_packages:208 - (1/1) Installing envgene_instance_project@1.0.2 package
-[2025-11-19 15:16:01.391] DEBUG    | install.py:install_package:256 - Installation version is higher the version installed in the repository (1.0.2 > 1.0.1). Update version
-[2025-11-19 15:16:01.391] INFO     | initer.py:init:37 - ==> Package initialization
-[2025-11-19 15:16:02.418] INFO     | initer.py:run_init_script:59 - 	Running init package api
-[2025-11-19 15:16:02.427] DEBUG    | tmpdir.py:wrapper:47 - Temporary directory was created at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-8tu3z361
-[2025-11-19 15:16:02.427] DEBUG    | tmpdir.py:wrapper:47 - Temporary directory was created at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-ecagwu0_
-[2025-11-19 15:16:02.427] INFO     | templates.py:create_template:46 - 	-> Creating project using default template
-[2025-11-19 15:16:02.479] INFO     | templates.py:_copy_files:93 - 		Content of .gitlab-ci.yml file is same. Skip operations
-[2025-11-19 15:16:02.479] INFO     | templates.py:_copy_files:93 - 		Content of gitlab-ci/pipeline_vars.yaml file is same. Skip operations
-[2025-11-19 15:16:02.479] INFO     | templates.py:create_template:71 - 		Successful use template (/Users/andyroode/Desktop/qubership_folder/qubership-envgene/gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default)
-[2025-11-19 15:16:02.480] DEBUG    | tmpdir.py:wrapper:54 - Temporary directory was removed at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-8tu3z361
-[2025-11-19 15:16:02.480] DEBUG    | tmpdir.py:wrapper:54 - Temporary directory was removed at /var/folders/r5/plr4pxw55td6bnr8fjpds0qh0000gn/T/gsf-package-manager-ecagwu0_
-[2025-11-19 15:16:02.480] CRITICAL | install.py:install_packages:223 - An error came out at one stage of installation. Installation envgene_instance_project@1.0.2 aborted.
+  'version': '1.0.0'}]
+[2025-11-21 10:01:38.640] DEBUG    | states.py:save:238 - New hash generated: 4a1c1fde149ded45cbb7e747952ac3b6bdf87baa7d6579e9565c04366f848c24
+[2025-11-21 10:01:42.039] SUCCESS  | logger.py:success:99 - Changes have been pushed to main.temp-manage-packages branch (url: https://gitlab.com/andy-roode/My-Own-Project/-/tree/main.temp-manage-packages)
+[2025-11-21 10:01:42.039] INFO     | install.py:managing_branch:172 - :: Creating merge request
+[2025-11-21 10:01:44.049] SUCCESS  | logger.py:success:99 - Created merge requests main.temp-manage-packages -> main (url: https://gitlab.com/andy-roode/My-Own-Project/-/merge_requests/23)
+[2025-11-21 10:01:44.051] DEBUG    | gitlab_api.py:create_mr:109 - Response:
+<class 'gitlab.v4.objects.merge_requests.ProjectMergeRequest'> => 
+{'approvals_before_merge': None,
+ 'assignee': None,
+ 'assignees': [],
+ 'author': {'avatar_url': 'https://secure.gravatar.com/avatar/fd5b8588a436af15347dc35eca9e6750e4d6c3c9351434706fc825f21be717c8?s=80&d=identicon',
+            'id': 27135474,
+            'locked': False,
+            'name': 'Andrei Rudchenko',
+            'public_email': None,
+            'state': 'active',
+            'username': 'andyroode',
+            'web_url': 'https://gitlab.com/andyroode'},
+ 'blocking_discussions_resolved': True,
+ 'changes_count': None,
+ 'closed_at': None,
+ 'closed_by': None,
+ 'created_at': '2025-11-21T07:01:42.569Z',
+ 'description': 'Installed package(s): envgene_instance_project@1.0.0',
+ 'detailed_merge_status': 'preparing',
+ 'diff_refs': None,
+ 'discussion_locked': None,
+ 'downvotes': 0,
+ 'draft': False,
+ 'first_deployed_to_production_at': None,
+ 'force_remove_source_branch': True,
+ 'has_conflicts': False,
+ 'head_pipeline': None,
+ 'id': 434624910,
+ 'iid': 23,
+ 'imported': False,
+ 'imported_from': 'none',
+ 'labels': [],
+ 'latest_build_finished_at': None,
+ 'latest_build_started_at': None,
+ 'merge_after': None,
+ 'merge_commit_sha': None,
+ 'merge_error': None,
+ 'merge_status': 'checking',
+ 'merge_user': None,
+ 'merge_when_pipeline_succeeds': False,
+ 'merged_at': None,
+ 'merged_by': None,
+ 'milestone': None,
+ 'pipeline': None,
+ 'prepared_at': None,
+ 'project_id': 68891268,
+ 'reference': '!23',
+ 'references': {'full': 'andy-roode/My-Own-Project!23',
+                'relative': '!23',
+                'short': '!23'},
+ 'reviewers': [],
+ 'sha': '957e1cecf9fc9f99b6aa1b09e5119672dd1f8a3e',
+ 'should_remove_source_branch': None,
+ 'source_branch': 'main.temp-manage-packages',
+ 'source_project_id': 68891268,
+ 'squash': True,
+ 'squash_commit_sha': None,
+ 'squash_on_merge': True,
+ 'state': 'opened',
+ 'subscribed': True,
+ 'target_branch': 'main',
+ 'target_project_id': 68891268,
+ 'task_completion_status': {'completed_count': 0, 'count': 0},
+ 'time_stats': {'human_time_estimate': None,
+                'human_total_time_spent': None,
+                'time_estimate': 0,
+                'total_time_spent': 0},
+ 'title': 'Installed gear(s)',
+ 'updated_at': '2025-11-21T07:01:42.569Z',
+ 'upvotes': 0,
+ 'user': {'can_merge': True},
+ 'user_notes_count': 0,
+ 'web_url': 'https://gitlab.com/andy-roode/My-Own-Project/-/merge_requests/23',
+ 'work_in_progress': False}
+[2025-11-21 10:01:44.538] INFO     | install.py:managing_branch:177 - :: Merging merge request
+[2025-11-21 10:01:44.539] DEBUG    | gitlab_api.py:merge_mr:117 - Waiting to be able to merge (4 sec)
+[2025-11-21 10:01:52.331] SUCCESS  | logger.py:success:99 - Merged main.temp-manage-packages -> main (url: https://gitlab.com/andy-roode/My-Own-Project/-/merge_requests/23)
+[2025-11-21 10:01:52.334] DEBUG    | gitlab_api.py:merge_mr:128 - Response:
+{'approvals_before_merge': None,
+ 'assignee': None,
+ 'assignees': [],
+ 'author': {'avatar_url': 'https://secure.gravatar.com/avatar/fd5b8588a436af15347dc35eca9e6750e4d6c3c9351434706fc825f21be717c8?s=80&d=identicon',
+            'id': 27135474,
+            'locked': False,
+            'name': 'Andrei Rudchenko',
+            'public_email': None,
+            'state': 'active',
+            'username': 'andyroode',
+            'web_url': 'https://gitlab.com/andyroode'},
+ 'blocking_discussions_resolved': True,
+ 'changes_count': '3',
+ 'closed_at': None,
+ 'closed_by': None,
+ 'created_at': '2025-11-21T07:01:42.569Z',
+ 'description': 'Installed package(s): envgene_instance_project@1.0.0',
+ 'detailed_merge_status': 'not_open',
+ 'diff_refs': {'base_sha': 'ac11ad041350a09291a58fedf6f5b0bc9adf00c6',
+               'head_sha': '957e1cecf9fc9f99b6aa1b09e5119672dd1f8a3e',
+               'start_sha': 'ac11ad041350a09291a58fedf6f5b0bc9adf00c6'},
+ 'discussion_locked': None,
+ 'downvotes': 0,
+ 'draft': False,
+ 'first_deployed_to_production_at': None,
+ 'force_remove_source_branch': True,
+ 'has_conflicts': False,
+ 'head_pipeline': {'archived': False,
+                   'before_sha': '0000000000000000000000000000000000000000',
+                   'committed_at': None,
+                   'coverage': None,
+                   'created_at': '2025-11-21T07:01:44.195Z',
+                   'detailed_status': {'details_path': '/andy-roode/My-Own-Project/-/pipelines/2171434596',
+                                       'favicon': '/assets/ci_favicons/favicon_status_failed-41304d7f7e3828808b0c26771f0309e55296819a9beea3ea9fbf6689d9857c12.png',
+                                       'group': 'failed',
+                                       'has_details': True,
+                                       'icon': 'status_failed',
+                                       'illustration': None,
+                                       'label': 'failed',
+                                       'text': 'Failed',
+                                       'tooltip': 'failed'},
+                   'duration': None,
+                   'finished_at': '2025-11-21T07:01:44.194Z',
+                   'id': 2171434596,
+                   'iid': 60,
+                   'project_id': 68891268,
+                   'queued_duration': None,
+                   'ref': 'refs/merge-requests/23/head',
+                   'sha': '957e1cecf9fc9f99b6aa1b09e5119672dd1f8a3e',
+                   'source': 'merge_request_event',
+                   'started_at': None,
+                   'status': 'failed',
+                   'tag': False,
+                   'updated_at': '2025-11-21T07:01:44.195Z',
+                   'user': {'avatar_url': 'https://secure.gravatar.com/avatar/fd5b8588a436af15347dc35eca9e6750e4d6c3c9351434706fc825f21be717c8?s=80&d=identicon',
+                            'id': 27135474,
+                            'locked': False,
+                            'name': 'Andrei Rudchenko',
+                            'public_email': None,
+                            'state': 'active',
+                            'username': 'andyroode',
+                            'web_url': 'https://gitlab.com/andyroode'},
+                   'web_url': 'https://gitlab.com/andy-roode/My-Own-Project/-/pipelines/2171434596',
+                   'yaml_errors': None},
+ 'id': 434624910,
+ 'iid': 23,
+ 'imported': False,
+ 'imported_from': 'none',
+ 'labels': [],
+ 'latest_build_finished_at': None,
+ 'latest_build_started_at': None,
+ 'merge_after': None,
+ 'merge_commit_sha': '7b77373a26c9a2bc0373c82718ed10145fa8cd94',
+ 'merge_error': None,
+ 'merge_status': 'can_be_merged',
+ 'merge_user': {'avatar_url': 'https://secure.gravatar.com/avatar/fd5b8588a436af15347dc35eca9e6750e4d6c3c9351434706fc825f21be717c8?s=80&d=identicon',
+                'id': 27135474,
+                'locked': False,
+                'name': 'Andrei Rudchenko',
+                'public_email': None,
+                'state': 'active',
+                'username': 'andyroode',
+                'web_url': 'https://gitlab.com/andyroode'},
+ 'merge_when_pipeline_succeeds': False,
+ 'merged_at': '2025-11-21T07:01:51.195Z',
+ 'merged_by': {'avatar_url': 'https://secure.gravatar.com/avatar/fd5b8588a436af15347dc35eca9e6750e4d6c3c9351434706fc825f21be717c8?s=80&d=identicon',
+               'id': 27135474,
+               'locked': False,
+               'name': 'Andrei Rudchenko',
+               'public_email': None,
+               'state': 'active',
+               'username': 'andyroode',
+               'web_url': 'https://gitlab.com/andyroode'},
+ 'milestone': None,
+ 'pipeline': None,
+ 'prepared_at': '2025-11-21T07:01:44.861Z',
+ 'project_id': 68891268,
+ 'reference': '!23',
+ 'references': {'full': 'andy-roode/My-Own-Project!23',
+                'relative': '!23',
+                'short': '!23'},
+ 'reviewers': [],
+ 'sha': '957e1cecf9fc9f99b6aa1b09e5119672dd1f8a3e',
+ 'should_remove_source_branch': None,
+ 'source_branch': 'main.temp-manage-packages',
+ 'source_project_id': 68891268,
+ 'squash': True,
+ 'squash_commit_sha': '957e1cecf9fc9f99b6aa1b09e5119672dd1f8a3e',
+ 'squash_on_merge': True,
+ 'state': 'merged',
+ 'subscribed': True,
+ 'target_branch': 'main',
+ 'target_project_id': 68891268,
+ 'task_completion_status': {'completed_count': 0, 'count': 0},
+ 'time_stats': {'human_time_estimate': None,
+                'human_total_time_spent': None,
+                'time_estimate': 0,
+                'total_time_spent': 0},
+ 'title': 'Installed gear(s)',
+ 'updated_at': '2025-11-21T07:01:51.079Z',
+ 'upvotes': 0,
+ 'user': {'can_merge': True},
+ 'user_notes_count': 0,
+ 'web_url': 'https://gitlab.com/andy-roode/My-Own-Project/-/merge_requests/23',
+ 'work_in_progress': False}
+[2025-11-21 10:01:52.335] SUCCESS  | logger.py:success:99 - Installation complete
