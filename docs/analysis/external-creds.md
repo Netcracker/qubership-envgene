@@ -94,8 +94,10 @@
 
 ## Proposed Approach
 
-![external-cred](/docs/images/external-cred.png)
 ![external-cred-transformation](/docs/images/external-cred-transformation.png)
+
+---
+![external-cred](/docs/images/external-cred.png)
 
 ### Option 1. String macro, no Credential Template
 
@@ -560,27 +562,38 @@ app-cred:
 global.secrets.streamingPlatform.username:
   $type: extCredRef
   credId: cdc-streaming-cred
+  secretStore: default-store
+  remoteRefKey: ocp-05/env-1/env-1-data-management/cdc
+  create: true
   jsonPath: username
 
 global.secrets.streamingPlatform.password:
   $type: extCredRef
   credId: cdc-streaming-cred
+  secretStore: default-store
+  remoteRefKey: ocp-05/env-1/env-1-data-management/cdc
+  create: true
   jsonPath: password
 
 TOKEN:
   $type: extCredRef
   credId: app-cred
+  secretStore: custom-store
   credHandler: eso
-  jsonPath: password
 
 DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME:
   $type: extCredRef
   credId: dbaas-creds
+  secretStore: default-store
+  remoteRefKey: ocp-05/platform-01/platform-01-dbaas/dbaas
+  create: true
   jsonPath: username
 
 DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD:
   $type: extCredRef
   credId: dbaas-creds
+  secretStore: default-store
+  remoteRefKey: ocp-05/platform-01/platform-01-dbaas/dbaas
   jsonPath: password
 ```
 
