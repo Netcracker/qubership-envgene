@@ -31,6 +31,7 @@ import org.qubership.cloud.devops.commons.service.interfaces.ProfileService;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -83,12 +84,22 @@ public class ProfileServiceCliImpl implements ProfileService {
                         .filter(serviceProfileEntity -> serviceName.equals(serviceProfileEntity.getName()))
                         .findFirst().orElse(null);
                 if (serviceOverride != null) {
-                    Map<String, Object> overrideMap = serviceOverride.getParameters().stream()
-                            .collect(Collectors.toMap(ParameterProfile::getName, ParameterProfile::getValue));
-                    profileValues.putAll(overrideMap);
+                    for (ParameterProfile param : serviceOverride.getParameters()) {
+                        putNestedValue(profileValues, param.getName(), param.getValue());
+                    }
                 }
             }
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private void putNestedValue(Map<String, Object> profileValues, String key, Object value) {
+        String[] parts = key.split("\\.");
+        Map<String, Object> current = profileValues;
+
+        for (int i = 0; i < parts.length - 1; i++) {
+            current = (Map<String, Object>) current.computeIfAbsent(parts[i], k -> new LinkedHashMap<String, Object>());
+        }
+        current.put(parts[parts.length - 1], value);
+    }
 }
