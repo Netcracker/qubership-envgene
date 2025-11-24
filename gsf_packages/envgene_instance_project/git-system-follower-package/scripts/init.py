@@ -1,4 +1,5 @@
 import os
+import shutil
 import yaml
 from pathlib import Path
 from git_system_follower.develop.api.types import Parameters
@@ -102,6 +103,57 @@ def _create_structure_yaml(parameters: Parameters):
     if repo_root is None or not repo_root.exists():
         raise FileNotFoundError(f'Could not find remote repository. Checked parameters.repository_path and .git-system-follower/repositories')
     
+    # Read existing .structure.yaml if it exists to compare versions
+    structure_yaml_path = repo_root / '.structure.yaml'
+    old_structure_data = None
+    
+    if structure_yaml_path.exists():
+        try:
+            with open(structure_yaml_path, 'r') as f:
+                old_structure_data = yaml.safe_load(f)
+        except Exception:
+            # If we can't read the old file, continue without it
+            pass
+    
+    # If version changed, remove files and directories from old version that are not in new version
+    if old_structure_data and old_structure_data.get('version') != version:
+        old_files = set(old_structure_data.get('files', []))
+        old_directories = set(old_structure_data.get('directories', []))
+        new_files = set(files)
+        new_directories = set(directories)
+        
+        # Find files to delete (in old but not in new)
+        files_to_delete = old_files - new_files
+        
+        # Find directories to delete (in old but not in new)
+        directories_to_delete = old_directories - new_directories
+        
+        # Delete files first
+        for file_path in files_to_delete:
+            file_full_path = repo_root / file_path
+            if file_full_path.exists() and file_full_path.is_file():
+                try:
+                    file_full_path.unlink()
+                except Exception as e:
+                    # Log error but continue
+                    print(f'Warning: Could not delete file {file_path}: {e}')
+        
+        # Delete directories (in reverse order to delete nested directories first)
+        # Sort directories by depth (longest paths first)
+        directories_to_delete_sorted = sorted(directories_to_delete, key=lambda x: x.count('/'), reverse=True)
+        
+        for dir_path in directories_to_delete_sorted:
+            dir_full_path = repo_root / dir_path
+            if dir_full_path.exists() and dir_full_path.is_dir():
+                try:
+                    # Only delete directory if it's empty (after files were deleted)
+                    # This ensures we don't delete directories with user-created files
+                    if not any(dir_full_path.iterdir()):
+                        dir_full_path.rmdir()
+                except Exception as e:
+                    # Log error but continue
+                    print(f'Warning: Could not delete directory {dir_path}: {e}')
+    
     # Create structure data
     structure_data = {
         'version': version,
@@ -110,7 +162,6 @@ def _create_structure_yaml(parameters: Parameters):
     }
     
     # Write .structure.yaml to remote repository root
-    structure_yaml_path = repo_root / '.structure.yaml'
     with open(structure_yaml_path, 'w') as f:
         yaml.dump(structure_data, f, default_flow_style=False, sort_keys=False)
 
