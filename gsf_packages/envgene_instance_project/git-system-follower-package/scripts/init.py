@@ -114,13 +114,20 @@ def _create_structure_yaml(parameters: Parameters):
             with open(structure_yaml_path, 'r') as f:
                 existing_data = yaml.safe_load(f)
                 
+                # Helper function to extract clean version (remove (current) marker)
+                def clean_version(version_str):
+                    if isinstance(version_str, str):
+                        return version_str.replace(' (current)', '')
+                    return version_str
+                
                 # Check if it's old format (single version) or new format (list of versions)
                 if existing_data and 'version' in existing_data:
                     # Old format - convert to new format
                     # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
                     content_list = existing_data.get('package_content', existing_data.get('content', existing_data.get('files', [])))
+                    version_str = existing_data['version']
                     old_version_entry = {
-                        'version': existing_data['version'],
+                        'version': clean_version(version_str),
                         'package_content': content_list
                     }
                     versions_list = [old_version_entry]
@@ -133,8 +140,9 @@ def _create_structure_yaml(parameters: Parameters):
                     for entry in existing_data:
                         # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
                         content_list = entry.get('package_content', entry.get('content', entry.get('files', [])))
+                        version_str = entry.get('version')
                         version_entry = {
-                            'version': entry.get('version'),
+                            'version': clean_version(version_str),
                             'package_content': content_list
                         }
                         versions_list.append(version_entry)
@@ -149,8 +157,9 @@ def _create_structure_yaml(parameters: Parameters):
                     for entry in existing_data['versions']:
                         # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
                         content_list = entry.get('package_content', entry.get('content', entry.get('files', [])))
+                        version_str = entry.get('version')
                         version_entry = {
-                            'version': entry.get('version'),
+                            'version': clean_version(version_str),
                             'package_content': content_list
                         }
                         versions_list.append(version_entry)
@@ -241,6 +250,17 @@ def _create_structure_yaml(parameters: Parameters):
     else:
         # Add new version to the list
         versions_list.append(new_version_data)
+    
+    # Remove 'current' marker from all versions, then add it to the last one
+    for v in versions_list:
+        v.pop('current', None)
+        # Also clean up version string if it has (current) marker
+        if isinstance(v.get('version'), str) and ' (current)' in v['version']:
+            v['version'] = v['version'].replace(' (current)', '')
+    
+    # Mark the last version as current
+    if versions_list:
+        versions_list[-1]['version'] = f"{versions_list[-1]['version']} (current)"
     
     # Write .structure.yaml to remote repository root (without directories)
     with open(structure_yaml_path, 'w') as f:
