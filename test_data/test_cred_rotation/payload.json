@@ -1,0 +1,23 @@
+{
+	"rotation_items": [
+		{
+			"namespace": "env-01-bss",
+			"context": "pipeline",
+			"parameter_key": "TEST_E2E_PASSWORD",
+			"parameter_value": "passwordChanged"
+		},
+        {
+			"namespace": "env-01-bss",
+			"context": "runtime",
+			"parameter_key": "TEST_TECH_USER",
+			"parameter_value": "userChanged"
+		},
+		{
+			"namespace": "env-01-oss",
+			"application": "cloud",
+			"context": "deployment",
+			"parameter_key": "TEST_DEPLOY_SECRET",
+			"parameter_value": "secretChanged"
+		}
+	]
+}

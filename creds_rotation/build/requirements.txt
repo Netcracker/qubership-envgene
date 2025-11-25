@@ -7,4 +7,4 @@ rpds-py==0.17.1
 jsonschema-specifications==2023.12.1
 cryptography==41.0.3
 cffi>=1.15
-aiofiles
+aiofiles==23.2.0

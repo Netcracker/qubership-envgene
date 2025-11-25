@@ -14,9 +14,11 @@ from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
 from ruyaml import CommentedMap, CommentedSeq
 from typing import Callable, OrderedDict
 
+
 def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
     def _null_representer(self: ruyaml.representer.BaseRepresenter, data: None) -> ruyaml.Any:
         return self.represent_scalar('tag:yaml.org,2002:null', 'null')
+
     if is_safe:
         yaml = ruyaml.main.YAML(typ='safe')
     else:
@@ -27,10 +29,12 @@ def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
     yaml.Representer.add_representer(type(None), _null_representer)
     return yaml
 
+
 def get_empty_yaml():
     return ruyaml.CommentedMap()
 
-def openYaml(filePath, safe_load=False, default_yaml: Callable=get_empty_yaml, allow_default=False):
+
+def openYaml(filePath, safe_load=False, default_yaml: Callable = get_empty_yaml, allow_default=False):
     if allow_default and not check_file_exists(filePath):
         logger.info(f'{filePath} not found. Returning default value')
         return default_yaml()
@@ -53,10 +57,12 @@ def readYaml(text, safe_load=False, context=None) -> CommentedMap:
         return get_empty_yaml()
     return resultYaml
 
+
 def convert_dict_to_yaml(d):
     if isinstance(d, ruyaml.CommentedMap):
         return d
     return ruyaml.CommentedMap(d)
+
 
 def remove_empty_list_comments(data):
     # There are cases when list has values and those values have comments related
@@ -77,20 +83,24 @@ def remove_empty_list_comments(data):
             if isinstance(item, (CommentedMap, CommentedSeq)):
                 remove_empty_list_comments(item)
 
+
 def writeYamlToFile(filePath, contents):
-    logger.debug(f"Writing yaml to file: {filePath}")
+    filePath = Path(filePath)
+    logger.info(f"Writing yaml to file: {filePath}")
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
     remove_empty_list_comments(contents)
     with open(filePath, 'w+') as f:
         yaml.dump(contents, f)
     return
 
+
 def dumpYamlToStr(content):
     buffer = StringIO()
     yaml.dump(content, buffer)
     return buffer.getvalue()
 
-def addHeaderToYaml(file_path: str, header_text: str) :
+
+def addHeaderToYaml(file_path: str, header_text: str):
     if (header_text):
         logger.debug(f'Adding header {header_text} to yaml: {file_path}')
         file_contents = openFileAsString(file_path)
@@ -98,15 +108,18 @@ def addHeaderToYaml(file_path: str, header_text: str) :
             comment_text = "# " + header_text.replace("\n", "\n# ")
             writeToFile(file_path, comment_text + "\n" + file_contents)
 
-def alignYamlFileComments(file_path) :
+
+def alignYamlFileComments(file_path):
     logger.debug(f'Alligning comments yaml: {file_path}')
     yamlData = openYaml(file_path)
     alignYamlComments(yamlData, 0)
     writeYamlToFile(file_path, yamlData)
 
+
 def deleteCommentByKey(yamlContent, key):
     if yamlContent.ca:
         yamlContent.ca.items.pop(key, None)
+
 
 def alignYamlComments(yamlContent, extra_indent=0):
     is_dict = isinstance(yamlContent, dict)
@@ -117,11 +130,12 @@ def alignYamlComments(yamlContent, extra_indent=0):
     if comments:
         max_col = max(map(lambda x: x[2].column if x[2] else 0, comments), default=0)
         for comment in comments:
-            if (comment[2]) :
+            if (comment[2]):
                 comment[2].column = max_col + extra_indent
     for element in (yamlContent.values() if is_dict else yamlContent):
         alignYamlComments(element, extra_indent=extra_indent)
     return None
+
 
 def sortYaml(yaml_data, schema_path, remove_additional_props):
     with open(schema_path, 'r') as f:
@@ -136,6 +150,7 @@ def sortYaml(yaml_data, schema_path, remove_additional_props):
     )
     return sort_data
 
+
 def get_nested_yaml_attribute_or_fail(yaml_content, attribute_str):
     keys = attribute_str.split('.')
     sub_content = yaml_content
@@ -147,6 +162,7 @@ def get_nested_yaml_attribute_or_fail(yaml_content, attribute_str):
         sub_content = sub_content[key]
     return sub_content
 
+
 def ensure_nested_attr_parents_exist(yaml_content, attribute_str):
     keys = attribute_str.split('.')
     sub_content = yaml_content
@@ -157,15 +173,18 @@ def ensure_nested_attr_parents_exist(yaml_content, attribute_str):
     last_key = keys[-1]
     return sub_content, last_key
 
+
 def ensure_nested_attr_exists(yaml_content, attribute_str, default_value=None):
     sub_content, last_key = ensure_nested_attr_parents_exist(yaml_content, attribute_str)
     if not last_key in sub_content:
         sub_content[last_key] = default_value
     return sub_content, last_key
 
+
 def get_or_create_nested_yaml_attribute(yaml_content, attribute_str, default_value=None):
     yaml_content, key = ensure_nested_attr_exists(yaml_content, attribute_str, default_value)
     return yaml_content[key]
+
 
 def set_nested_yaml_attribute(yaml_content, attribute_str, value, comment="", is_overwriting=True):
     if value is None:
@@ -181,9 +200,12 @@ def set_nested_yaml_attribute(yaml_content, attribute_str, value, comment="", is
     else:
         logger.debug(f'Setting {attribute_str} is skipped. Attribute already exists and is_overwriting is set to False')
 
+
 primitiveTypes = (int, str, bool, float)
 
-def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, overwrite_existing_values=True,  overwrite_existing_comments=True):
+
+def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, overwrite_existing_values=True,
+                           overwrite_existing_comments=True):
     if source_yaml is None:
         return
     source_yaml = convert_dict_to_yaml(source_yaml)
@@ -206,11 +228,12 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
         if isinstance(target_yaml[k], dict) and isinstance(v, dict):
             merge_yaml_into_target(target_yaml[k], "", v, overwrite_existing_values, overwrite_existing_comments)
         elif isinstance(target_yaml[k], list) and isinstance(v, list):
-            target_yaml[k].extend(v_el for v_el in v if v_el not in target_yaml[k] and (isinstance(v_el, primitiveTypes) or isinstance(v_el, list)))
+            target_yaml[k].extend(v_el for v_el in v if v_el not in target_yaml[k] and (
+                        isinstance(v_el, primitiveTypes) or isinstance(v_el, list)))
             src_dicts = {}
             for v_k, v_el in enumerate(v):
                 if isinstance(v_el, dict):
-                    src_dicts.update({v_k:v_el})
+                    src_dicts.update({v_k: v_el})
             for t_k, t_el in enumerate(target_yaml[k]):
                 if not isinstance(t_el, dict):
                     continue
@@ -222,12 +245,14 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
                         merge = True
                         break
                 if merge:
-                    target_yaml[k][t_k] = merge_yaml_into_target(t_el, '', src_dicts[t_k], overwrite_existing_values, overwrite_existing_comments)
+                    target_yaml[k][t_k] = merge_yaml_into_target(t_el, '', src_dicts[t_k], overwrite_existing_values,
+                                                                 overwrite_existing_comments)
                     del src_dicts[k]
             for _, src_dicts_el in src_dicts.items():
                 target_yaml[k].append(src_dicts_el)
         elif overwrite_existing_values:
             target_yaml[k] = v
+
 
 def store_value_to_yaml(yamlContent, key, value, comment=""):
     logger.debug(f"Updating key {key} with value {value} in yaml")
@@ -240,14 +265,16 @@ def store_value_to_yaml(yamlContent, key, value, comment=""):
     else:
         yamlContent.insert(1, key, value)
 
+
 def merge_dict_key_with_comment(targetKey, targetYaml, sourceKey, sourceYaml, comment=""):
     if sourceKey in sourceYaml:
-       deleteCommentByKey(targetYaml, targetKey)
-       deleteCommentByKey(sourceYaml, sourceKey)
-       store_value_to_yaml(targetYaml, targetKey, sourceYaml[sourceKey], comment)
+        deleteCommentByKey(targetYaml, targetKey)
+        deleteCommentByKey(sourceYaml, sourceKey)
+        store_value_to_yaml(targetYaml, targetKey, sourceYaml[sourceKey], comment)
 
 
-def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=False, wrap_all_strings=False, remove_additional_props = False):
+def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=False, wrap_all_strings=False,
+                 remove_additional_props=False):
     logger.info(f'Beautifying yaml: {file_path} with schema: {schema_path}')
     yamlData = openYaml(file_path)
     if schema_path:
@@ -263,28 +290,32 @@ def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=Fals
     if allign_comments:
         alignYamlFileComments(file_path)
 
-def findYamls(dir, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern="") :
+
+def findYamls(dir, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern=""):
     fileList = findAllYamlsInDir(dir)
     return findFiles(fileList, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
 
-def findAllYamlsInDir(dir) :
+
+def findAllYamlsInDir(dir):
     result = []
     dirPointer = pathlib.Path(dir)
     fileList = list(dirPointer.rglob("*.yml"))
     fileListYaml = list(dirPointer.rglob("*.yaml"))
-    if len(fileListYaml) > 0 :
+    if len(fileListYaml) > 0:
         fileList = fileList + fileListYaml
-    for f in fileList :
+    for f in fileList:
         result.append(str(f))
     return result
 
-def mergeYamlInDir(dir_path) :
+
+def mergeYamlInDir(dir_path):
     result = {}
     if check_dir_exists(dir_path):
         yamlList = findAllYamlsInDir(dir_path)
-        for yamlPath in yamlList :
+        for yamlPath in yamlList:
             result.update(openYaml(yamlPath))
     return result
+
 
 def make_quotes_for_all_strings(yaml_data):
     if isinstance(yaml_data, (dict, list, set)):
@@ -292,6 +323,7 @@ def make_quotes_for_all_strings(yaml_data):
             if isinstance(v, str) and not isinstance(v, DoubleQuotedScalarString):
                 yaml_data[k] = DoubleQuotedScalarString(v)
             make_quotes_for_all_strings(v)
+
 
 def make_quotes_for_strings(yaml_data):
     if isinstance(yaml_data, (dict, list, set)):
@@ -302,6 +334,7 @@ def make_quotes_for_strings(yaml_data):
                 yaml_data[k] = LiteralScalarString(v)
             else:
                 make_quotes_for_strings(v)
+
 
 def align_spaces_before_comments(filePath):
     result = ""
@@ -317,6 +350,7 @@ def align_spaces_before_comments(filePath):
 
     writeToFile(filePath, result)
 
+
 def copy_yaml_and_remove_empty_dicts(source_yaml):
     # copying yaml dict
     result = copy.deepcopy(source_yaml)
@@ -326,18 +360,21 @@ def copy_yaml_and_remove_empty_dicts(source_yaml):
         if isinstance(value, dict):
             result[key] = copy_yaml_and_remove_empty_dicts(value)
     # removing all empty keys
-    empty_keys = [k for k,v in result.items() if v == {}]
+    empty_keys = [k for k, v in result.items() if v == {}]
     for k in empty_keys:
         del result[k]
     return result
+
 
 def empty_yaml():
     result = yaml.load("{}")
     return result
 
+
 def yaml_from_string(yaml_str):
     result = yaml.load(yaml_str)
     return result
+
 
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str, schema_file_path: str) -> None:
     yaml_content = openYaml(yaml_file_path)
@@ -350,6 +387,7 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str, schema_file_path: str) 
             log_jsonschema_validation_error(err)
         raise ValueError(f"Validation failed") from None
 
+
 def validate_yaml_data_by_scheme(data, schema, cls=None, *args, **kwargs):
     if cls is None:
         cls = jsonschema.validators.validator_for(schema)
@@ -357,6 +395,7 @@ def validate_yaml_data_by_scheme(data, schema, cls=None, *args, **kwargs):
     validator = cls(schema, *args, **kwargs)
     errors = sorted(validator.iter_errors(data), key=lambda e: e.path)
     return errors
+
 
 def log_jsonschema_validation_error(err):
     key_path = '.'.join(str(index) for index in err.absolute_path)
@@ -372,6 +411,7 @@ def log_jsonschema_validation_error(err):
         logger.error(err.message)
     logger.error(f"\n")
 
+
 def convert_ordereddict_to_dict(obj):
     if isinstance(obj, OrderedDict):
         return {k: convert_ordereddict_to_dict(v) for k, v in obj.items()}
@@ -379,6 +419,16 @@ def convert_ordereddict_to_dict(obj):
         return [convert_ordereddict_to_dict(i) for i in obj]
     else:
         return obj
+
+
+def find_all_yaml_files_by_stem(path: str):
+    file_paths = []
+    for ext in ["yaml", "yml"]:
+        file_path = Path(f"{path}.{ext}")
+        if file_path.exists():
+            file_paths.append(file_path)
+    return file_paths
+
 
 jschon.create_catalog('2020-12')
 yaml = create_yaml_processor()
