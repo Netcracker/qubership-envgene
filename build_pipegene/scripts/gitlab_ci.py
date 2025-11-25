@@ -7,7 +7,7 @@ from gcip import Pipeline
 import pipeline_helper
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 
-from passport_jobs import prepare_trigger_passport_job, prepare_passport_job, prepare_decryption_mode_job
+from build_pipegene.scripts.cloud_passport.passport_jobs import prepare_trigger_passport_job, prepare_passport_job, prepare_decryption_mode_job
 from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from credential_rotation_job import prepare_credential_rotation_job
@@ -22,7 +22,7 @@ logger.info(f"Detected environment - GitLab: {is_gitlab}, GitHub: {is_github}")
 def build_pipeline(params: dict):
     # if we are in template testing during template build
     tags=params['GITLAB_RUNNER_TAG_NAME']
-    
+
     if params['IS_TEMPLATE_TEST']:
         logger.info("We are generating jobs in template test mode.")
         templates_dir = f"{project_dir}/templates/env_templates"
