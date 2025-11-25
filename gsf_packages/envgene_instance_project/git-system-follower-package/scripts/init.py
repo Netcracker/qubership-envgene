@@ -105,22 +105,45 @@ def _create_structure_yaml(parameters: Parameters):
     
     # Read existing .structure.yaml if it exists to compare versions
     structure_yaml_path = repo_root / '.structure.yaml'
-    old_structure_data = None
+    versions_list = []
+    last_version_data = None
     
     if structure_yaml_path.exists():
         try:
             with open(structure_yaml_path, 'r') as f:
-                old_structure_data = yaml.safe_load(f)
+                existing_data = yaml.safe_load(f)
+                
+                # Check if it's old format (single version) or new format (list of versions)
+                if existing_data and 'version' in existing_data and 'directories' in existing_data:
+                    # Old format - convert to new format
+                    versions_list = [{
+                        'version': existing_data['version'],
+                        'directories': existing_data.get('directories', []),
+                        'files': existing_data.get('files', [])
+                    }]
+                elif isinstance(existing_data, list):
+                    # New format - list of versions
+                    versions_list = existing_data
+                elif isinstance(existing_data, dict) and 'versions' in existing_data:
+                    # Alternative format with 'versions' key
+                    versions_list = existing_data['versions']
+                
+                # Get last version data for comparison
+                if versions_list:
+                    last_version_data = versions_list[-1]
         except Exception:
             # If we can't read the old file, continue without it
             pass
     
     # If version changed, remove files and directories from old version that are not in new version
-    if old_structure_data and old_structure_data.get('version') != version:
-        old_files = set(old_structure_data.get('files', []))
-        old_directories = set(old_structure_data.get('directories', []))
+    if last_version_data and last_version_data.get('version') != version:
+        old_files = set(last_version_data.get('files', []))
+        old_directories = set(last_version_data.get('directories', []))
         new_files = set(files)
         new_directories = set(directories)
+        
+        # Exclude .structure.yaml from deletion
+        old_files.discard('.structure.yaml')
         
         # Find files to delete (in old but not in new)
         files_to_delete = old_files - new_files
@@ -154,16 +177,29 @@ def _create_structure_yaml(parameters: Parameters):
                     # Log error but continue
                     print(f'Warning: Could not delete directory {dir_path}: {e}')
     
-    # Create structure data
-    structure_data = {
+    # Add new version to the list (or create new list if first time)
+    new_version_data = {
         'version': version,
         'directories': directories,
         'files': files
     }
     
+    # Check if this version already exists in the list
+    version_exists = any(v.get('version') == version for v in versions_list)
+    
+    if version_exists:
+        # Update existing version entry
+        for i, v in enumerate(versions_list):
+            if v.get('version') == version:
+                versions_list[i] = new_version_data
+                break
+    else:
+        # Add new version to the list
+        versions_list.append(new_version_data)
+    
     # Write .structure.yaml to remote repository root
     with open(structure_yaml_path, 'w') as f:
-        yaml.dump(structure_data, f, default_flow_style=False, sort_keys=False)
+        yaml.dump(versions_list, f, default_flow_style=False, sort_keys=False)
 
 def main(parameters: Parameters):
     templates = get_template_names(parameters)
