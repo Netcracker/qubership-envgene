@@ -107,6 +107,7 @@ def _create_structure_yaml(parameters: Parameters):
     structure_yaml_path = repo_root / '.structure.yaml'
     versions_list = []
     last_version_data = None
+    last_version_directories = None
     
     if structure_yaml_path.exists():
         try:
@@ -114,31 +115,75 @@ def _create_structure_yaml(parameters: Parameters):
                 existing_data = yaml.safe_load(f)
                 
                 # Check if it's old format (single version) or new format (list of versions)
-                if existing_data and 'version' in existing_data and 'directories' in existing_data:
+                if existing_data and 'version' in existing_data:
                     # Old format - convert to new format
-                    versions_list = [{
+                    # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
+                    content_list = existing_data.get('package_content', existing_data.get('content', existing_data.get('files', [])))
+                    old_version_entry = {
                         'version': existing_data['version'],
-                        'directories': existing_data.get('directories', []),
-                        'files': existing_data.get('files', [])
-                    }]
+                        'package_content': content_list
+                    }
+                    versions_list = [old_version_entry]
+                    # Extract directories if they exist in old format for deletion logic
+                    if 'directories' in existing_data:
+                        last_version_directories = existing_data.get('directories', [])
                 elif isinstance(existing_data, list):
-                    # New format - list of versions
-                    versions_list = existing_data
+                    # New format - list of versions, remove directories from each entry
+                    versions_list = []
+                    for entry in existing_data:
+                        # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
+                        content_list = entry.get('package_content', entry.get('content', entry.get('files', [])))
+                        version_entry = {
+                            'version': entry.get('version'),
+                            'package_content': content_list
+                        }
+                        versions_list.append(version_entry)
+                    # Extract directories from last version if they exist (for backward compatibility)
+                    if existing_data and len(existing_data) > 0:
+                        last_entry = existing_data[-1]
+                        if 'directories' in last_entry:
+                            last_version_directories = last_entry.get('directories', [])
                 elif isinstance(existing_data, dict) and 'versions' in existing_data:
                     # Alternative format with 'versions' key
-                    versions_list = existing_data['versions']
+                    versions_list = []
+                    for entry in existing_data['versions']:
+                        # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
+                        content_list = entry.get('package_content', entry.get('content', entry.get('files', [])))
+                        version_entry = {
+                            'version': entry.get('version'),
+                            'package_content': content_list
+                        }
+                        versions_list.append(version_entry)
                 
                 # Get last version data for comparison
                 if versions_list:
                     last_version_data = versions_list[-1]
+                    # Add directories to last_version_data if we extracted them
+                    if last_version_directories is not None:
+                        last_version_data['directories'] = last_version_directories
         except Exception:
             # If we can't read the old file, continue without it
             pass
     
     # If version changed, remove files and directories from old version that are not in new version
     if last_version_data and last_version_data.get('version') != version:
-        old_files = set(last_version_data.get('files', []))
-        old_directories = set(last_version_data.get('directories', []))
+        # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
+        old_files = set(last_version_data.get('package_content', last_version_data.get('content', last_version_data.get('files', []))))
+        # Get directories from old version if available, otherwise compute from file paths
+        old_directories = set()
+        if 'directories' in last_version_data:
+            old_directories = set(last_version_data.get('directories', []))
+        else:
+            # Compute directories from file paths
+            for file_path in old_files:
+                file_path_obj = Path(file_path)
+                if file_path_obj.parent != Path('.'):
+                    # Add all parent directories
+                    parts = file_path_obj.parent.parts
+                    for i in range(1, len(parts) + 1):
+                        dir_path = '/'.join(parts[:i])
+                        old_directories.add(dir_path)
+        
         new_files = set(files)
         new_directories = set(directories)
         
@@ -178,10 +223,10 @@ def _create_structure_yaml(parameters: Parameters):
                     print(f'Warning: Could not delete directory {dir_path}: {e}')
     
     # Add new version to the list (or create new list if first time)
+    # Save only version and package_content, NOT directories
     new_version_data = {
         'version': version,
-        'directories': directories,
-        'files': files
+        'package_content': files
     }
     
     # Check if this version already exists in the list
@@ -197,7 +242,7 @@ def _create_structure_yaml(parameters: Parameters):
         # Add new version to the list
         versions_list.append(new_version_data)
     
-    # Write .structure.yaml to remote repository root
+    # Write .structure.yaml to remote repository root (without directories)
     with open(structure_yaml_path, 'w') as f:
         yaml.dump(versions_list, f, default_flow_style=False, sort_keys=False)
 
