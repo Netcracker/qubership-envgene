@@ -38,6 +38,6 @@ def test_exclusion_filter_with_alias(sample_namespaces, sample_bgd):
     assert {ns for ns in result} == {"ns2", "ns3"}
 
 def test_invalid_alias_raises_error(sample_namespaces, sample_bgd):
-    with pytest.raises(ValueError) as exc:
+    with pytest.raises(ValueError) as e:
         filter_namespaces(sample_namespaces, "@unknown", sample_bgd)
-    assert "Unknown alias" in str(exc.value)
+    assert "Unknown alias" in str(e.value)
