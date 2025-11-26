@@ -1,0 +1,17 @@
+inventory:
+  environmentName: "bgd-env"
+  clusterUrl: "test-val.com"
+  tenantName: "test-tenant"
+  deployer: "test-deployer"
+  cloudName: "test-solution-structure"
+  cloudPassport: "test-cloud-passport"
+envTemplate:
+  name: "bgd"
+  additionalTemplateVariables: {}
+  sharedTemplateVariables: []
+  envSpecificParamsets: {}
+  envSpecificTechnicalParamsets: {}
+  sharedMasterCredentialFiles: []
+  artifact: "bgd"
+generatedVersions:
+  generateEnvironmentLatestVersion: "bgd:bgd"  # This value is automatically generated during job run.

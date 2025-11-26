@@ -1,0 +1,17 @@
+# The contents of this file is generated from template artifact: bgd.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "bgd-env-bg-plugin"
+credentialsId: ""
+isServerSideMerge: false
+labels:
+  - "Instance-bgd-env"
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+
