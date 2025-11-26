@@ -4,6 +4,7 @@ FROM python:3.12-slim-bookworm
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
+    vim \
  && rm -rf /var/lib/apt/lists/*
 
 # sops
