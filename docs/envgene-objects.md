@@ -392,8 +392,8 @@ This file contains [Credential](#credential) objects used by EnvGene to integrat
 artifactory-cred:
   type: usernamePassword
   data:
-    username: "s3cr3tN3wLogin"
-    password: "s3cr3tN3wP@ss"
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
 gitlab-token-cred:
   type: secret
   data:
@@ -788,8 +788,8 @@ This file stores all [Credential](#credential) objects of the Environment upon g
 db_cred:
   type: usernamePassword
   data:
-    username: "s3cr3tN3wLogin"
-    password: "s3cr3tN3wP@ss"
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
 token:
   type: secret
   data:
@@ -824,8 +824,8 @@ Any YAML file located in these folders is treated as a Shared Credentials File.
 db_cred:
   type: usernamePassword
   data:
-    username: "s3cr3tN3wLogin"
-    password: "s3cr3tN3wP@ss"
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
 token:
   type: secret
   data:
@@ -847,8 +847,8 @@ Location:
 registry-cred:
   type: usernamePassword
   data:
-    username: "s3cr3tN3wLogin"
-    password: "s3cr3tN3wP@ss"
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
 gitlab-token-cred:
   type: secret
   data:
