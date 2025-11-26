@@ -411,37 +411,32 @@ DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: "${creds.create('dbaas-creds', secretSto
   credId: string
   # Optional
   # Path to the specific value inside the secret
-  jsonPath: string
-  # Optional
-  # Credential macro handler - Argo Vault Plugin or External Secrets Operator
-  credHandler: enum[argo, eso]
+  property: enum[username, password]
 
 # Example
 global.secrets.streamingPlatform.username:
   $type: credRef
   credId: cdc-streaming-cred
-  jsonPath: username
+  property: username
 
 global.secrets.streamingPlatform.password:
   $type: credRef
   credId: cdc-streaming-cred
-  jsonPath: password
+  property: password
 
 TOKEN:
   $type: credRef
   credId: app-cred
-  credHandler: eso
-  jsonPath: password
 
 DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME:
   $type: credRef
   credId: dbaas-creds
-  jsonPath: username
+  property: username
 
 DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD:
   $type: credRef
   credId: dbaas-creds
-  jsonPath: password
+  property: password
 ```
 
 #### [Option 3] Credential Template
@@ -463,7 +458,6 @@ app-cred:
   type: external
   secretStore: custom-store
   remoteRefKey: very/special/path
-  credHandler: argo
 
 dbaas-creds:
   type: external
@@ -523,7 +517,6 @@ app-cred:
   type: external
   secretStore: custom-store
   remoteRefKey: very/special/path
-  credHandler: argo
 ```
 
 #### [Option 3] Parameter in Effective Set
@@ -537,6 +530,16 @@ app-cred:
 3. Используется:
    1. The Some Script для создания Credential
    2. Argo Vault Plugin для резолва Credential
+4. В деплоймент контексте в зависимости от значения `SECRET_MACRO_HANDLER: enum[argo, eso]` в DD, параметры описанные через cred macro задаются в:
+   1. Опция 1
+      1. credentials.yaml (макрос обрабатывается argo) ИЛИ
+      2. parameters.yaml (макрос обрабатывается eso)
+   2. Опция 2
+      1. parameters.yaml
+      2. EnvGene инжектит деплоймент параметр `SECRET_MACRO_HANDLER: enum[eso, argo]` для каждого приложения. Дефолтное значение `eso`
+      3. Пользователь может переопределить этот параметр
+5. Пайплайн контекст содержит:
+   1. EnvGene Credentials with `type: external` and `create: true`
 
 ```yaml
 # TO BE Credential macro.
@@ -550,15 +553,9 @@ app-cred:
   secretStore: string
   # Mandatory
   remoteRefKey: string
-  # Mandatory
-  # Instruction for credHandler whether to create the Credential in the External Credential storage
-  create: boolean
   # Optional
   # Path to the specific value inside the secret
-  jsonPath: string
-  # Optional
-  # Credential macro handler - Argo Vault Plugin or External Secrets Operator
-  credHandler: enum[argo, eso]
+  property: string
 
 # Example
 global.secrets.streamingPlatform.username:
@@ -566,37 +563,33 @@ global.secrets.streamingPlatform.username:
   credId: cdc-streaming-cred
   secretStore: default-store
   remoteRefKey: ocp-05/env-1/env-1-data-management/cdc
-  create: true
-  jsonPath: username
+  property: username
 
 global.secrets.streamingPlatform.password:
   $type: extCredRef
   credId: cdc-streaming-cred
   secretStore: default-store
   remoteRefKey: ocp-05/env-1/env-1-data-management/cdc
-  create: true
-  jsonPath: password
+  property: password
 
 TOKEN:
   $type: extCredRef
   credId: app-cred
   secretStore: custom-store
-  credHandler: eso
 
 DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME:
   $type: extCredRef
   credId: dbaas-creds
   secretStore: default-store
   remoteRefKey: ocp-05/platform-01/platform-01-dbaas/dbaas
-  create: true
-  jsonPath: username
+  property: username
 
 DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD:
   $type: extCredRef
   credId: dbaas-creds
   secretStore: default-store
   remoteRefKey: ocp-05/platform-01/platform-01-dbaas/dbaas
-  jsonPath: password
+  property: password
 ```
 
 ### `ExternalSecret` CR
