@@ -52,6 +52,9 @@ runs:
   steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        token: ${{ inputs.github-token }}
+        fetch-depth: 0
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
@@ -82,6 +85,34 @@ runs:
           "$COOKIECUTTER_DIR" \
           "$PACKAGE_YAML" \
           "$HISTORY_FILE"
+
+    - name: Commit and push history.yaml
+      shell: bash
+      run: |
+        HISTORY_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.yaml"
+        
+        # Configure git
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Configure git remote URL with token for authentication
+        git remote set-url origin https://x-access-token:${{ inputs.github-token }}@github.com/${GITHUB_REPOSITORY}.git
+        
+        # Get branch name from GITHUB_REF (format: refs/heads/branch-name or refs/tags/tag-name)
+        BRANCH_NAME=${GITHUB_REF#refs/heads/}
+        BRANCH_NAME=${BRANCH_NAME#refs/tags/}
+        
+        # Check if there are changes to commit
+        if git diff --quiet "$HISTORY_FILE"; then
+          echo "No changes to history.yaml, skipping commit"
+        else
+          echo "Changes detected in history.yaml, committing..."
+          git add "$HISTORY_FILE"
+          git commit -m "chore: Update history.yaml with version from package.yaml [skip ci]"
+          
+          # Push changes back to repository
+          git push origin HEAD:"${BRANCH_NAME}" || echo "Failed to push changes"
+        fi
 
     - name: Extract metadata (tags, labels) for Docker
       id: meta

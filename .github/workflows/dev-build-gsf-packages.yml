@@ -15,7 +15,7 @@ env:
   CI_PROJECT_DIR: ${{ github.workspace }}
 
 permissions:
-  contents: read
+  contents: write
   packages: write
   attestations: write
   id-token: write
@@ -25,7 +25,7 @@ jobs:
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gsf-instance == 'true')
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
       attestations: write
       id-token: write
@@ -37,6 +37,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GH_ACCESS_TOKEN }}
+        fetch-depth: 0
 
     - name: Build Qubership GSF Instance Docker Image
       uses: ./.github/actions/build-gsf-instance
