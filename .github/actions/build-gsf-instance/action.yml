@@ -70,6 +70,24 @@ runs:
       id: tags
       uses: ./.github/actions/generate-docker-tags
 
+    - name: Update history.yaml
+      shell: bash
+      run: |
+        PACKAGE_DIR="gsf_packages/envgene_instance_project/git-system-follower-package"
+        HISTORY_FILE="gsf_packages/envgene_instance_project/history.yaml"
+        VERSION="${{ inputs.version }}"
+        
+        # Use custom tag as version if version input is empty
+        if [ -z "$VERSION" ]; then
+          VERSION="${{ steps.tags.outputs.custom_tag }}"
+        fi
+        
+        # Run Python script to update history
+        python3 ./.github/actions/build-gsf-instance/update_history.py \
+          "$PACKAGE_DIR" \
+          "$VERSION" \
+          "$HISTORY_FILE"
+
     - name: Extract metadata (tags, labels) for Docker
       id: meta
       uses: docker/metadata-action@v5

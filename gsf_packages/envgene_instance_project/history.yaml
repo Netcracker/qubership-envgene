@@ -1,0 +1,18 @@
+- version: 1.0.0
+  package_content:
+  - package.yaml
+  - scripts/delete.py
+  - scripts/init.py
+  - scripts/templates/default/cookiecutter.json
+  - scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/.gitlab-ci.yml
+  - scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/gitlab-ci/pipeline_vars.yaml
+  - scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/new_folder/some_file.md
+- version: 1.0.1 (current)
+  package_content:
+  - package.yaml
+  - scripts/delete.py
+  - scripts/init.py
+  - scripts/templates/default/cookiecutter.json
+  - scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/.gitlab-ci.yml
+  - scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/gitlab-ci/pipeline_vars.yaml
+  - scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/new_folder/some_file.md
