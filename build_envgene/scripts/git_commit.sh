@@ -208,6 +208,8 @@ fi
 echo "Checking changes..."
 git add ./*
 diff_status=0
+
+git diff --cached --name-only
 git diff --cached --quiet || diff_status=$?
 
 if [ $diff_status -ne 0 ]; then
