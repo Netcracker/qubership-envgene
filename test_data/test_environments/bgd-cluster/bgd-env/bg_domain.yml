@@ -1,0 +1,15 @@
+
+name: "bgd-env-bg-domain"
+type: bgdomain
+originNamespace:
+  name: "bgd-env-origin-bss" 
+  type: namespace
+peerNamespace:
+  name: "bgd-env-peer-bss" 
+  type: namespace
+controllerNamespace:
+  name: "bgd-env-bg-controller"
+  type: namespace
+  credentials: bgdomaincred
+ 
+
