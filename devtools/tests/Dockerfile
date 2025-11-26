@@ -1,11 +1,9 @@
 FROM python:3.12-slim-bookworm
 
-RUN useradd -m appuser
-USER appuser
-
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential=12.9 \
-    curl=7.88.1-10+deb12u8 \
+    build-essential \
+    curl \
  && rm -rf /var/lib/apt/lists/*
 
 # sops
