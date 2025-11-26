@@ -15,11 +15,8 @@ test_data = [
     ("cluster01", "env01", "test-01"),
     ("cluster01", "env03", "test-template-1"),
     ("cluster01", "env04", "test-template-2"),
-<<<<<<< HEAD:scripts/build_env/test_render_envs.py
     ("bgd-cluster","bgd-env","bgd"),
-=======
     ("cluster03", "rpo-replacement-mode", "simple"),
->>>>>>> 034f9a51d8004e34fe5f852bba3a0a1fc7955015:scripts/build_env/tests/env-build/test_render_envs.py
 ]
 
 base_dir = Path(__file__).resolve().parents[4]
