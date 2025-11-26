@@ -21,6 +21,9 @@ def get_package_files(package_dir):
         dirs[:] = [d for d in dirs if not d.startswith('.')]
         
         for filename in filenames:
+            # Skip history.yaml itself
+            if filename == 'history.yaml':
+                continue
             # Include all files, including hidden ones like .gitlab-ci.yml
             file_path = Path(root) / filename
             # Get relative path from package directory
@@ -67,18 +70,38 @@ def update_history(history_path, version, package_files):
     print(f"Added {len(package_files)} files to package_content")
 
 
+def get_version_from_package_yaml(package_yaml_path):
+    """Read version from package.yaml file."""
+    package_yaml = Path(package_yaml_path)
+    if not package_yaml.exists():
+        raise FileNotFoundError(f"package.yaml not found at {package_yaml_path}")
+    
+    try:
+        with open(package_yaml, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+            version = data.get('version')
+            if not version:
+                raise ValueError("Version field not found in package.yaml")
+            return str(version)
+    except Exception as e:
+        raise ValueError(f"Could not read version from package.yaml: {e}")
+
+
 def main():
     if len(sys.argv) < 4:
-        print("Usage: update_history.py <package_dir> <version> <history_path>")
+        print("Usage: update_history.py <package_dir> <package_yaml_path> <history_path>")
         sys.exit(1)
     
     package_dir = sys.argv[1]
-    version = sys.argv[2]
+    package_yaml_path = sys.argv[2]
     history_path = Path(sys.argv[3])
     
-    if not version:
-        print("Warning: Version is empty, skipping history update")
-        sys.exit(0)
+    # Get version from package.yaml
+    try:
+        version = get_version_from_package_yaml(package_yaml_path)
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)
     
     # Get package files
     package_files = get_package_files(package_dir)
