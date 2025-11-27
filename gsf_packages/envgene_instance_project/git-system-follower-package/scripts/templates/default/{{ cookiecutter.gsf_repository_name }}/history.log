@@ -1,0 +1,6 @@
+# --- Version 1.0.0 ---
+- version: 1.0.0 (current)
+  package_content:
+  - .cookiecutterignore
+  - .gitlab-ci.yml
+  - gitlab-ci/pipeline_vars.yaml
