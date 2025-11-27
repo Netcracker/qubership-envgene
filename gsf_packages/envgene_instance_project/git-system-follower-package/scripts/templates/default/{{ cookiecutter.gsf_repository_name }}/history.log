@@ -1,6 +1,9 @@
-- version: 1.0.0 (current)
+- version: 1.0.0
   package_content:
   - .gitlab-ci.yml
   - gitlab-ci/pipeline_vars.yaml
   - new_folder/some_file.md
-
+- version: 1.0.1 (current)
+  package_content:
+  - .gitlab-ci.yml
+  - gitlab-ci/pipeline_vars.yaml
