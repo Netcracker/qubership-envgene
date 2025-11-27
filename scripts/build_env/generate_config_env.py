@@ -43,6 +43,7 @@ class Context(BaseModel):
     appdef_templates: list = Field(default_factory=list)
     cloud: Optional[str] = ''
     deployer: Optional[str] = ''
+    bgd: Optional[str] = ''
     render_parameters_dir: Optional[str] = ''
     env_vars: OrderedDict = Field(default_factory=OrderedDict)
     render_profiles_dir: Optional[str] = ''
@@ -227,6 +228,15 @@ class EnvGenerator:
         else:
             logger.info(f"Generate Cloud yaml for cloud {cloud}")
             self.render_from_file_to_file(Template(cloud_template).render(context), cloud_file)
+
+    def generate_bgd_file(self):
+        logger.info(f"Generate bg domain yaml for {self.ctx.bgd}")
+        target_path = f'{self.ctx.current_env_dir}/bg_domain.yml'
+        template = self.ctx.current_env_template.get("bg_domain", None)
+        if not template:
+            logger.info(f"'bg_domain' key not found in template descriptor, skipping bg domain rendering")
+            return
+        self.render_from_file_to_file(Template(template).render(self.ctx.as_dict()), target_path)
 
     def generate_namespace_file(self):
         context = self.ctx.as_dict()
@@ -415,6 +425,7 @@ class EnvGenerator:
             self.ctx.cloud = self.calculate_cloud_name()
             self.ctx.tenant = current_env.get("tenant", '')
             self.ctx.deployer = current_env.get('deployer', '')
+            self.ctx.bgd = current_env.get('bg_domain','')
             logger.info(f"current_env = {current_env}")
 
             self.ctx.update({
@@ -442,6 +453,7 @@ class EnvGenerator:
             self.generate_cloud_file()
             self.generate_namespace_file()
             self.generate_composite_structure()
+            self.generate_bgd_file()
 
             env_specific_schema = self.ctx.current_env_template.get("envSpecificSchema")
             if env_specific_schema:
