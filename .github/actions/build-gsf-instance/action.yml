@@ -102,8 +102,17 @@ runs:
         BRANCH_NAME=${GITHUB_REF#refs/heads/}
         BRANCH_NAME=${BRANCH_NAME#refs/tags/}
         
-        # Check if there are changes to commit
-        if git diff --quiet "$HISTORY_FILE"; then
+        # Check if file exists and if there are changes to commit
+        # Check if file is new (not tracked) or modified
+        if [ ! -f "$HISTORY_FILE" ]; then
+          echo "Warning: history.log file does not exist at $HISTORY_FILE"
+        elif ! git ls-files --error-unmatch "$HISTORY_FILE" >/dev/null 2>&1; then
+          # File exists but is not tracked by git - add it
+          echo "New history.log file detected, adding to git..."
+          git add "$HISTORY_FILE"
+          git commit -m "chore: Add history.log with version from package.yaml [skip ci]"
+          git push origin HEAD:"${BRANCH_NAME}" || echo "Failed to push changes"
+        elif git diff --quiet "$HISTORY_FILE" && git diff --cached --quiet "$HISTORY_FILE"; then
           echo "No changes to history.log, skipping commit"
         else
           echo "Changes detected in history.log, committing..."
