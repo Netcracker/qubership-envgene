@@ -174,3 +174,9 @@ def mask_sensitive(data: dict, keys_to_mask=(CRED_VALUE_TYPE_SECRET, CRED_VALUE_
         else:
             masked[k] = v
     return masked
+
+
+# Load credentials from environment Credentials directory for V2 cloud registry support
+def get_credentials_dict(base_env_path):
+    from .yaml_helper import mergeYamlInDir
+    return mergeYamlInDir(f"{base_env_path}/Credentials")
