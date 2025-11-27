@@ -6,9 +6,14 @@ from git_system_follower.develop.api.types import Parameters
 from git_system_follower.develop.api.cicd_variables import CICDVariable, create_variable
 from git_system_follower.develop.api.templates import create_template, update_template, get_template_names
 
+# Protected files that should never be deleted during package updates
+PROTECTED_FILES = {'history.yaml'}
 
-def _create_structure_yaml(parameters: Parameters):
-    """Create .structure.yaml file with package version and list of files/directories created by the cookiecutter template."""
+
+def _cleanup_old_package_files(parameters: Parameters, old_version_data: dict):
+    """Remove files and directories from old package version that are not in new version.
+    Uses old_version_data from history.yaml (read before template update) 
+    instead of .structure.yaml to avoid storing it in the repository."""
     # Get package directory (parent of scripts directory)
     script_dir = Path(__file__).parent
     package_dir = script_dir.parent
@@ -44,6 +49,12 @@ def _create_structure_yaml(parameters: Parameters):
         if '.git' in rel_root.parts:
             continue
         
+        # Skip protected files (they're part of the template but should never be deleted)
+        if any(protected_file in rel_root.parts for protected_file in PROTECTED_FILES):
+            continue
+        if rel_root == Path('.') and any(filename in PROTECTED_FILES for filename in filenames):
+            continue
+        
         # Add directories (including intermediate directories)
         if rel_root != Path('.'):
             # Add all parent directories
@@ -54,6 +65,9 @@ def _create_structure_yaml(parameters: Parameters):
         
         # Add all files (including hidden files like .gitlab-ci.yml)
         for filename in filenames:
+            # Skip protected files
+            if filename in PROTECTED_FILES:
+                continue
             file_path = rel_root / filename if rel_root != Path('.') else Path(filename)
             files.append(str(file_path))
     
@@ -61,7 +75,91 @@ def _create_structure_yaml(parameters: Parameters):
     directories = sorted(list(directories))
     files.sort()
     
-    # Find the remote repository path to write .structure.yaml
+    # Find the remote repository path
+    repo_root = _get_repository_root(parameters)
+    
+    # Helper function to extract clean version (remove (current) marker)
+    def clean_version(version_str):
+        if isinstance(version_str, str):
+            return version_str.replace(' (current)', '')
+        return version_str
+    
+    # If version changed, remove files and directories from old version that are not in new version
+    if old_version_data and clean_version(old_version_data.get('version')) != version:
+        # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
+        old_files = set(old_version_data.get('package_content', old_version_data.get('content', old_version_data.get('files', []))))
+        # Get directories from old version if available, otherwise compute from file paths
+        old_directories = set()
+        if 'directories' in old_version_data:
+            old_directories = set(old_version_data.get('directories', []))
+        else:
+            # Compute directories from file paths
+            for file_path in old_files:
+                file_path_obj = Path(file_path)
+                if file_path_obj.parent != Path('.'):
+                    # Add all parent directories
+                    parts = file_path_obj.parent.parts
+                    for i in range(1, len(parts) + 1):
+                        dir_path = '/'.join(parts[:i])
+                        old_directories.add(dir_path)
+        
+        new_files = set(files)
+        new_directories = set(directories)
+        
+        # CRITICAL: Always exclude protected files from deletion - they're essential for package management
+        # Remove them from both old and new file sets to ensure they're never deleted
+        for protected_file in PROTECTED_FILES:
+            old_files.discard(protected_file)
+            new_files.discard(protected_file)
+        
+        # Find files to delete (in old but not in new)
+        files_to_delete = old_files - new_files
+        
+        # Find directories to delete (in old but not in new)
+        directories_to_delete = old_directories - new_directories
+        
+        # Delete files first
+        for file_path in files_to_delete:
+            # Double-check: Never delete protected files, even if they somehow got into the deletion list
+            if file_path in PROTECTED_FILES:
+                print(f'Warning: Skipping deletion of {file_path} (protected file)')
+                continue
+                
+            file_full_path = repo_root / file_path
+            if file_full_path.exists() and file_full_path.is_file():
+                try:
+                    file_full_path.unlink()
+                except Exception as e:
+                    # Log error but continue
+                    print(f'Warning: Could not delete file {file_path}: {e}')
+        
+        # Delete directories (in reverse order to delete nested directories first)
+        # Sort directories by depth (longest paths first)
+        directories_to_delete_sorted = sorted(directories_to_delete, key=lambda x: x.count('/'), reverse=True)
+        
+        for dir_path in directories_to_delete_sorted:
+            dir_full_path = repo_root / dir_path
+            if dir_full_path.exists() and dir_full_path.is_dir():
+                try:
+                    # Only delete directory if it's empty (after files were deleted)
+                    # This ensures we don't delete directories with user-created files
+                    # Also check that directory doesn't contain protected files
+                    dir_contents = list(dir_full_path.iterdir())
+                    if not dir_contents:
+                        dir_full_path.rmdir()
+                    else:
+                        # Check if directory contains only protected files (shouldn't happen, but be safe)
+                        non_protected = [item for item in dir_contents 
+                                        if not (item.is_file() and item.name in PROTECTED_FILES)]
+                        if not non_protected:
+                            # Directory contains only protected files, don't delete
+                            print(f'Info: Skipping deletion of directory {dir_path} (contains protected files)')
+                except Exception as e:
+                    # Log error but continue
+                    print(f'Warning: Could not delete directory {dir_path}: {e}')
+
+def _get_repository_root(parameters: Parameters):
+    """Find the repository root directory."""
     repo_root = None
     
     # Try to get repository name from parameters.extras (from cookiecutter variables)
@@ -103,168 +201,7 @@ def _create_structure_yaml(parameters: Parameters):
     if repo_root is None or not repo_root.exists():
         raise FileNotFoundError(f'Could not find remote repository. Checked parameters.repository_path and .git-system-follower/repositories')
     
-    # Read existing .structure.yaml if it exists to compare versions
-    structure_yaml_path = repo_root / '.structure.yaml'
-    versions_list = []
-    last_version_data = None
-    last_version_directories = None
-    
-    if structure_yaml_path.exists():
-        try:
-            with open(structure_yaml_path, 'r') as f:
-                existing_data = yaml.safe_load(f)
-                
-                # Helper function to extract clean version (remove (current) marker)
-                def clean_version(version_str):
-                    if isinstance(version_str, str):
-                        return version_str.replace(' (current)', '')
-                    return version_str
-                
-                # Check if it's old format (single version) or new format (list of versions)
-                if existing_data and 'version' in existing_data:
-                    # Old format - convert to new format
-                    # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
-                    content_list = existing_data.get('package_content', existing_data.get('content', existing_data.get('files', [])))
-                    version_str = existing_data['version']
-                    old_version_entry = {
-                        'version': clean_version(version_str),
-                        'package_content': content_list
-                    }
-                    versions_list = [old_version_entry]
-                    # Extract directories if they exist in old format for deletion logic
-                    if 'directories' in existing_data:
-                        last_version_directories = existing_data.get('directories', [])
-                elif isinstance(existing_data, list):
-                    # New format - list of versions, remove directories from each entry
-                    versions_list = []
-                    for entry in existing_data:
-                        # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
-                        content_list = entry.get('package_content', entry.get('content', entry.get('files', [])))
-                        version_str = entry.get('version')
-                        version_entry = {
-                            'version': clean_version(version_str),
-                            'package_content': content_list
-                        }
-                        versions_list.append(version_entry)
-                    # Extract directories from last version if they exist (for backward compatibility)
-                    if existing_data and len(existing_data) > 0:
-                        last_entry = existing_data[-1]
-                        if 'directories' in last_entry:
-                            last_version_directories = last_entry.get('directories', [])
-                elif isinstance(existing_data, dict) and 'versions' in existing_data:
-                    # Alternative format with 'versions' key
-                    versions_list = []
-                    for entry in existing_data['versions']:
-                        # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
-                        content_list = entry.get('package_content', entry.get('content', entry.get('files', [])))
-                        version_str = entry.get('version')
-                        version_entry = {
-                            'version': clean_version(version_str),
-                            'package_content': content_list
-                        }
-                        versions_list.append(version_entry)
-                
-                # Get last version data for comparison
-                if versions_list:
-                    last_version_data = versions_list[-1]
-                    # Add directories to last_version_data if we extracted them
-                    if last_version_directories is not None:
-                        last_version_data['directories'] = last_version_directories
-        except Exception:
-            # If we can't read the old file, continue without it
-            pass
-    
-    # If version changed, remove files and directories from old version that are not in new version
-    if last_version_data and last_version_data.get('version') != version:
-        # Support 'files', 'content' (old) and 'package_content' (new) for backward compatibility
-        old_files = set(last_version_data.get('package_content', last_version_data.get('content', last_version_data.get('files', []))))
-        # Get directories from old version if available, otherwise compute from file paths
-        old_directories = set()
-        if 'directories' in last_version_data:
-            old_directories = set(last_version_data.get('directories', []))
-        else:
-            # Compute directories from file paths
-            for file_path in old_files:
-                file_path_obj = Path(file_path)
-                if file_path_obj.parent != Path('.'):
-                    # Add all parent directories
-                    parts = file_path_obj.parent.parts
-                    for i in range(1, len(parts) + 1):
-                        dir_path = '/'.join(parts[:i])
-                        old_directories.add(dir_path)
-        
-        new_files = set(files)
-        new_directories = set(directories)
-        
-        # Exclude .structure.yaml from deletion
-        old_files.discard('.structure.yaml')
-        
-        # Find files to delete (in old but not in new)
-        files_to_delete = old_files - new_files
-        
-        # Find directories to delete (in old but not in new)
-        directories_to_delete = old_directories - new_directories
-        
-        # Delete files first
-        for file_path in files_to_delete:
-            file_full_path = repo_root / file_path
-            if file_full_path.exists() and file_full_path.is_file():
-                try:
-                    file_full_path.unlink()
-                except Exception as e:
-                    # Log error but continue
-                    print(f'Warning: Could not delete file {file_path}: {e}')
-        
-        # Delete directories (in reverse order to delete nested directories first)
-        # Sort directories by depth (longest paths first)
-        directories_to_delete_sorted = sorted(directories_to_delete, key=lambda x: x.count('/'), reverse=True)
-        
-        for dir_path in directories_to_delete_sorted:
-            dir_full_path = repo_root / dir_path
-            if dir_full_path.exists() and dir_full_path.is_dir():
-                try:
-                    # Only delete directory if it's empty (after files were deleted)
-                    # This ensures we don't delete directories with user-created files
-                    if not any(dir_full_path.iterdir()):
-                        dir_full_path.rmdir()
-                except Exception as e:
-                    # Log error but continue
-                    print(f'Warning: Could not delete directory {dir_path}: {e}')
-    
-    # Add new version to the list (or create new list if first time)
-    # Save only version and package_content, NOT directories
-    new_version_data = {
-        'version': version,
-        'package_content': files
-    }
-    
-    # Check if this version already exists in the list
-    version_exists = any(v.get('version') == version for v in versions_list)
-    
-    if version_exists:
-        # Update existing version entry
-        for i, v in enumerate(versions_list):
-            if v.get('version') == version:
-                versions_list[i] = new_version_data
-                break
-    else:
-        # Add new version to the list
-        versions_list.append(new_version_data)
-    
-    # Remove 'current' marker from all versions, then add it to the last one
-    for v in versions_list:
-        v.pop('current', None)
-        # Also clean up version string if it has (current) marker
-        if isinstance(v.get('version'), str) and ' (current)' in v['version']:
-            v['version'] = v['version'].replace(' (current)', '')
-    
-    # Mark the last version as current
-    if versions_list:
-        versions_list[-1]['version'] = f"{versions_list[-1]['version']} (current)"
-    
-    # Write .structure.yaml to remote repository root (without directories)
-    with open(structure_yaml_path, 'w') as f:
-        yaml.dump(versions_list, f, default_flow_style=False, sort_keys=False)
+    return repo_root
 
 def main(parameters: Parameters):
     templates = get_template_names(parameters)
@@ -282,10 +219,49 @@ def main(parameters: Parameters):
     variables = parameters.extras.copy()
     variables.pop('TEMPLATE', None)
     
+    # Read old history.yaml BEFORE updating template (to know what to delete)
+    repo_root = _get_repository_root(parameters)
+    old_history_path = repo_root / 'history.yaml'
+    old_version_data = None
+    
+    if old_history_path.exists():
+        try:
+            with open(old_history_path, 'r') as f:
+                old_history_data = yaml.safe_load(f)
+                
+                # Helper function to extract clean version (remove (current) marker)
+                def clean_version(version_str):
+                    if isinstance(version_str, str):
+                        return version_str.replace(' (current)', '')
+                    return version_str
+                
+                # Get package version to compare
+                script_dir = Path(__file__).parent
+                package_dir = script_dir.parent
+                package_yaml_path = package_dir / 'package.yaml'
+                if package_yaml_path.exists():
+                    with open(package_yaml_path, 'r') as pf:
+                        package_data = yaml.safe_load(pf)
+                    current_version = package_data.get('version', 'unknown')
+                    
+                    # Find the last version entry that is not the current version
+                    if isinstance(old_history_data, list) and len(old_history_data) > 0:
+                        for entry in reversed(old_history_data):
+                            if isinstance(entry, dict) and 'version' in entry:
+                                entry_version = clean_version(entry.get('version'))
+                                if entry_version != current_version:
+                                    old_version_data = entry
+                                    break
+        except Exception as e:
+            # If we can't read the old file, continue without it
+            print(f'Warning: Could not read old history.yaml: {e}')
+    
+    # Now update the template (this will also update history.yaml)
     if parameters.used_template:
         update_template(parameters, variables, is_force=True)
     else:
         create_template(parameters, template, variables)
     
-    # Create .structure.yaml file
-    _create_structure_yaml(parameters)
+    # Clean up old package files using the old version data we read earlier
+    if old_version_data:
+        _cleanup_old_package_files(parameters, old_version_data)
