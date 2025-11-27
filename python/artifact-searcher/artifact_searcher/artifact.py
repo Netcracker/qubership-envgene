@@ -10,7 +10,7 @@ from zipfile import ZipFile
 
 import aiohttp
 import requests
-from loguru import logger
+from envgenehelper import logger
 from requests.auth import HTTPBasicAuth
 from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
 
