@@ -3,7 +3,7 @@ import argparse
 from envgenehelper import *
 from envgenehelper.deployer import *
 
-from build_env.build_env import build_env, process_additional_template_parameters
+from build_env import build_env, process_additional_template_parameters
 from cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
 from generate_config_env import EnvGenerator
