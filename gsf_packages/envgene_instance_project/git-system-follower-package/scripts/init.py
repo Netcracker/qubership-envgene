@@ -7,12 +7,12 @@ from git_system_follower.develop.api.cicd_variables import CICDVariable, create_
 from git_system_follower.develop.api.templates import create_template, update_template, get_template_names
 
 # Protected files that should never be deleted during package updates
-PROTECTED_FILES = {'history.yaml'}
+PROTECTED_FILES = {'history.log'}
 
 
 def _cleanup_old_package_files(parameters: Parameters, old_version_data: dict):
     """Remove files and directories from old package version that are not in new version.
-    Uses old_version_data from history.yaml (read before template update) 
+    Uses old_version_data from history.log (read before template update) 
     instead of .structure.yaml to avoid storing it in the repository."""
     # Get package directory (parent of scripts directory)
     script_dir = Path(__file__).parent
@@ -50,9 +50,11 @@ def _cleanup_old_package_files(parameters: Parameters, old_version_data: dict):
             continue
         
         # Skip protected files (they're part of the template but should never be deleted)
-        if any(protected_file in rel_root.parts for protected_file in PROTECTED_FILES):
-            continue
+        # Check if any protected file is in the path or if we're at root and filename matches
         if rel_root == Path('.') and any(filename in PROTECTED_FILES for filename in filenames):
+            continue
+        # Check if any protected file name appears in the path parts
+        if any(protected_file in str(rel_root) for protected_file in PROTECTED_FILES):
             continue
         
         # Add directories (including intermediate directories)
@@ -65,8 +67,8 @@ def _cleanup_old_package_files(parameters: Parameters, old_version_data: dict):
         
         # Add all files (including hidden files like .gitlab-ci.yml)
         for filename in filenames:
-            # Skip protected files
-            if filename in PROTECTED_FILES:
+            # Skip protected files and old history.yaml (for backward compatibility)
+            if filename in PROTECTED_FILES or filename == 'history.yaml':
                 continue
             file_path = rel_root / filename if rel_root != Path('.') else Path(filename)
             files.append(str(file_path))
@@ -112,6 +114,10 @@ def _cleanup_old_package_files(parameters: Parameters, old_version_data: dict):
             old_files.discard(protected_file)
             new_files.discard(protected_file)
         
+        # Also protect old history.yaml during migration (backward compatibility)
+        old_files.discard('history.yaml')
+        new_files.discard('history.yaml')
+        
         # Find files to delete (in old but not in new)
         files_to_delete = old_files - new_files
         
@@ -121,7 +127,7 @@ def _cleanup_old_package_files(parameters: Parameters, old_version_data: dict):
         # Delete files first
         for file_path in files_to_delete:
             # Double-check: Never delete protected files, even if they somehow got into the deletion list
-            if file_path in PROTECTED_FILES:
+            if file_path in PROTECTED_FILES or file_path == 'history.yaml':
                 print(f'Warning: Skipping deletion of {file_path} (protected file)')
                 continue
                 
@@ -219,9 +225,14 @@ def main(parameters: Parameters):
     variables = parameters.extras.copy()
     variables.pop('TEMPLATE', None)
     
-    # Read old history.yaml BEFORE updating template (to know what to delete)
+    # Read old history.log BEFORE updating template (to know what to delete)
+    # Also check for old history.yaml for backward compatibility
     repo_root = _get_repository_root(parameters)
-    old_history_path = repo_root / 'history.yaml'
+    old_history_path = repo_root / 'history.log'
+    # Fallback to old history.yaml if history.log doesn't exist
+    if not old_history_path.exists():
+        old_history_path = repo_root / 'history.yaml'
+    
     old_version_data = None
     
     if old_history_path.exists():
@@ -254,9 +265,9 @@ def main(parameters: Parameters):
                                     break
         except Exception as e:
             # If we can't read the old file, continue without it
-            print(f'Warning: Could not read old history.yaml: {e}')
+            print(f'Warning: Could not read old history.log: {e}')
     
-    # Now update the template (this will also update history.yaml)
+    # Now update the template (this will also update history.log)
     if parameters.used_template:
         update_template(parameters, variables, is_force=True)
     else:

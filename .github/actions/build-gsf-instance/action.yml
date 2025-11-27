@@ -73,12 +73,12 @@ runs:
       id: tags
       uses: ./.github/actions/generate-docker-tags
 
-    - name: Update history.yaml
+    - name: Update history.log
       shell: bash
       run: |
         COOKIECUTTER_DIR="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}"
         PACKAGE_YAML="gsf_packages/envgene_instance_project/git-system-follower-package/package.yaml"
-        HISTORY_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.yaml"
+        HISTORY_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.log"
         
         # Run Python script to update history (version is read from package.yaml)
         python3 ./.github/actions/build-gsf-instance/update_history.py \
@@ -86,10 +86,10 @@ runs:
           "$PACKAGE_YAML" \
           "$HISTORY_FILE"
 
-    - name: Commit and push history.yaml
+    - name: Commit and push history.log
       shell: bash
       run: |
-        HISTORY_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.yaml"
+        HISTORY_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.log"
         
         # Configure git
         git config --global user.name "github-actions[bot]"
@@ -104,11 +104,11 @@ runs:
         
         # Check if there are changes to commit
         if git diff --quiet "$HISTORY_FILE"; then
-          echo "No changes to history.yaml, skipping commit"
+          echo "No changes to history.log, skipping commit"
         else
-          echo "Changes detected in history.yaml, committing..."
+          echo "Changes detected in history.log, committing..."
           git add "$HISTORY_FILE"
-          git commit -m "chore: Update history.yaml with version from package.yaml [skip ci]"
+          git commit -m "chore: Update history.log with version from package.yaml [skip ci]"
           
           # Push changes back to repository
           git push origin HEAD:"${BRANCH_NAME}" || echo "Failed to push changes"

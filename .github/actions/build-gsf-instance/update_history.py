@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Script to update history.yaml with package content for the current version.
+Script to update history.log with package content for the current version.
 """
 import os
 import sys
@@ -21,8 +21,8 @@ def get_package_files(package_dir):
         dirs[:] = [d for d in dirs if not d.startswith('.')]
         
         for filename in filenames:
-            # Skip history.yaml itself
-            if filename == 'history.yaml':
+            # Skip history.log itself (and old history.yaml for backward compatibility)
+            if filename in ('history.log', 'history.yaml'):
                 continue
             # Include all files, including hidden ones like .gitlab-ci.yml
             file_path = Path(root) / filename
@@ -34,7 +34,7 @@ def get_package_files(package_dir):
 
 
 def update_history(history_path, version, package_files):
-    """Update history.yaml with new version entry."""
+    """Update history.log with new version entry only if file list changed."""
     history = []
     
     # Read existing history if it exists
@@ -43,31 +43,90 @@ def update_history(history_path, version, package_files):
             with open(history_path, 'r', encoding='utf-8') as f:
                 history = yaml.safe_load(f) or []
         except Exception as e:
-            print(f"Warning: Could not read existing history.yaml: {e}")
+            print(f"Warning: Could not read existing history.log: {e}")
             history = []
     
-    # Remove "(current)" marker from all previous entries
-    for entry in history:
-        if isinstance(entry, dict) and 'version' in entry:
-            version_str = str(entry['version'])
-            if version_str.endswith(' (current)'):
-                entry['version'] = version_str[:-10]  # Remove " (current)"
+    # Helper function to extract clean version (remove (current) marker)
+    def clean_version(version_str):
+        if isinstance(version_str, str):
+            return version_str.replace(' (current)', '')
+        return version_str
     
-    # Create new entry
-    new_entry = {
-        'version': f"{version} (current)",
-        'package_content': package_files
-    }
+    # Check if there's a delta (change in file list)
+    has_delta = True
+    last_entry = None
     
-    # Append new entry
-    history.append(new_entry)
+    if history:
+        # Find the last entry (current or most recent)
+        for entry in reversed(history):
+            if isinstance(entry, dict) and 'version' in entry:
+                last_entry = entry
+                break
+        
+        if last_entry:
+            # Get file list from last entry
+            last_files = set(last_entry.get('package_content', last_entry.get('content', last_entry.get('files', []))))
+            current_files = set(package_files)
+            
+            # Check if file lists are the same
+            if last_files == current_files:
+                has_delta = False
+                print(f"No changes in package content for version {version}, skipping history update")
+            else:
+                # Show what changed
+                added = current_files - last_files
+                removed = last_files - current_files
+                if added:
+                    print(f"Files added: {sorted(added)}")
+                if removed:
+                    print(f"Files removed: {sorted(removed)}")
     
-    # Write updated history
-    with open(history_path, 'w', encoding='utf-8') as f:
-        yaml.dump(history, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
-    
-    print(f"Updated history.yaml with version {version}")
-    print(f"Added {len(package_files)} files to package_content")
+    # Only update history if there's a delta or if this is the first entry
+    if has_delta:
+        # Remove "(current)" marker from all previous entries
+        for entry in history:
+            if isinstance(entry, dict) and 'version' in entry:
+                version_str = str(entry['version'])
+                if version_str.endswith(' (current)'):
+                    entry['version'] = version_str[:-10]  # Remove " (current)"
+        
+        # Create new entry
+        new_entry = {
+            'version': f"{version} (current)",
+            'package_content': package_files
+        }
+        
+        # Append new entry
+        history.append(new_entry)
+        
+        # Write updated history
+        with open(history_path, 'w', encoding='utf-8') as f:
+            yaml.dump(history, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        
+        print(f"Updated history.log with version {version}")
+        print(f"Added {len(package_files)} files to package_content")
+    else:
+        # No delta in files - check if version changed
+        if last_entry:
+            last_version = clean_version(last_entry.get('version'))
+            if last_version != version:
+                # Version changed but files didn't - update version marker in last entry
+                last_entry['version'] = f"{version} (current)"
+                # Remove "(current)" from other entries
+                for entry in history:
+                    if entry != last_entry and isinstance(entry, dict) and 'version' in entry:
+                        version_str = str(entry['version'])
+                        if version_str.endswith(' (current)'):
+                            entry['version'] = version_str[:-10]
+                
+                # Write updated history with new version marker
+                with open(history_path, 'w', encoding='utf-8') as f:
+                    yaml.dump(history, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+                
+                print(f"Updated version marker to {version} in history.log (no content changes)")
+            else:
+                # Neither version nor files changed - no update needed
+                print(f"Version {version} already in history.log with same content, no update needed")
 
 
 def get_version_from_package_yaml(package_yaml_path):
