@@ -77,6 +77,10 @@ def _cleanup_old_package_files(parameters: Parameters, old_version_data: dict):
     directories = sorted(list(directories))
     files.sort()
     
+    # Debug: Verify .gitlab-ci.yml is in the list
+    if '.gitlab-ci.yml' not in files:
+        print(f'Warning: .gitlab-ci.yml not found in template files list. Files found: {files[:10]}...')
+    
     # Find the remote repository path
     repo_root = _get_repository_root(parameters)
     
@@ -130,11 +134,17 @@ def _cleanup_old_package_files(parameters: Parameters, old_version_data: dict):
             if file_path in PROTECTED_FILES or file_path == 'history.yaml':
                 print(f'Warning: Skipping deletion of {file_path} (protected file)')
                 continue
+            
+            # Never delete .gitlab-ci.yml - it's a critical CI/CD file
+            if file_path == '.gitlab-ci.yml':
+                print(f'Warning: Skipping deletion of {file_path} (critical CI/CD file)')
+                continue
                 
             file_full_path = repo_root / file_path
             if file_full_path.exists() and file_full_path.is_file():
                 try:
                     file_full_path.unlink()
+                    print(f'Deleted old package file: {file_path}')
                 except Exception as e:
                     # Log error but continue
                     print(f'Warning: Could not delete file {file_path}: {e}')
