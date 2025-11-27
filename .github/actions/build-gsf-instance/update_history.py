@@ -34,8 +34,12 @@ def get_package_files(package_dir):
 
 
 def update_history(history_path, version, package_files):
-    """Update history.log with new version entry only if file list changed."""
+    """Update history.log with new version entry only if file list changed.
+    Creates history.log if it doesn't exist."""
     history = []
+    
+    # Ensure parent directory exists
+    history_path.parent.mkdir(parents=True, exist_ok=True)
     
     # Read existing history if it exists
     if history_path.exists():
@@ -45,6 +49,9 @@ def update_history(history_path, version, package_files):
         except Exception as e:
             print(f"Warning: Could not read existing history.log: {e}")
             history = []
+    else:
+        # File doesn't exist - will create it with first entry
+        print(f"history.log not found, will create new file with version {version}")
     
     # Helper function to extract clean version (remove (current) marker)
     def clean_version(version_str):

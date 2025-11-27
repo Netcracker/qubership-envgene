@@ -257,6 +257,54 @@ def main(parameters: Parameters):
     if not history_log_path.exists():
         history_log_path = cookiecutter_template_dir / 'history.yaml'
     
+    # If history.log doesn't exist, create it with current version
+    if not history_log_path.exists():
+        print(f'history.log not found in package template, creating new one with version {current_version}')
+        # Ensure directory exists
+        history_log_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Collect current package files for initial history entry
+        current_files = []
+        for root, dirs, filenames in os.walk(cookiecutter_template_dir):
+            # Skip hidden directories
+            dirs[:] = [d for d in dirs if d != '.git' and not d.startswith('.')]
+            
+            rel_root = Path(root).relative_to(cookiecutter_template_dir)
+            
+            # Skip .git directory itself
+            if '.git' in rel_root.parts:
+                continue
+            
+            # Skip internal package files
+            if rel_root == Path('.') and any(fn in PROTECTED_FILES or fn == '.cookiecutterignore' for fn in filenames):
+                continue
+            
+            for filename in filenames:
+                # Skip internal package files
+                if filename in PROTECTED_FILES or filename in ('history.yaml', '.cookiecutterignore'):
+                    continue
+                file_path = rel_root / filename if rel_root != Path('.') else Path(filename)
+                current_files.append(str(file_path))
+        
+        current_files.sort()
+        
+        # Create initial history.log entry
+        initial_entry = {
+            'version': f"{current_version} (current)",
+            'package_content': current_files
+        }
+        
+        # Write initial history.log
+        with open(history_log_path, 'w', encoding='utf-8') as f:
+            clean_ver = current_version
+            f.write(f"# --- Version {clean_ver} ---\n")
+            f.write(f"- version: {initial_entry['version']}\n")
+            f.write("  package_content:\n")
+            for file_path in initial_entry['package_content']:
+                f.write(f"  - {file_path}\n")
+        
+        print(f'Created history.log with {len(current_files)} files')
+    
     old_version_data = None
     
     if history_log_path.exists():
