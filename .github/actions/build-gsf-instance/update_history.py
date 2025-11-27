@@ -99,9 +99,21 @@ def update_history(history_path, version, package_files):
         # Append new entry
         history.append(new_entry)
         
-        # Write updated history
+        # Write updated history with separators between versions
         with open(history_path, 'w', encoding='utf-8') as f:
-            yaml.dump(history, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+            for i, entry in enumerate(history):
+                # Add separator before each version (except the first one)
+                if i > 0:
+                    f.write('\n')
+                
+                # Write version entry with separator
+                clean_ver = clean_version(entry.get('version', ''))
+                f.write(f"# --- Version {clean_ver} ---\n")
+                # Write entry in YAML format
+                f.write(f"- version: {entry.get('version')}\n")
+                f.write("  package_content:\n")
+                for file_path in entry.get('package_content', []):
+                    f.write(f"  - {file_path}\n")
         
         print(f"Updated history.log with version {version}")
         print(f"Added {len(package_files)} files to package_content")
@@ -119,9 +131,21 @@ def update_history(history_path, version, package_files):
                         if version_str.endswith(' (current)'):
                             entry['version'] = version_str[:-10]
                 
-                # Write updated history with new version marker
+                # Write updated history with new version marker and separators
                 with open(history_path, 'w', encoding='utf-8') as f:
-                    yaml.dump(history, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+                    for i, entry in enumerate(history):
+                        # Add separator before each version (except the first one)
+                        if i > 0:
+                            f.write('\n')
+                        
+                        # Write version entry with separator
+                        clean_ver = clean_version(entry.get('version', ''))
+                        f.write(f"# --- Version {clean_ver} ---\n")
+                        # Write entry without list brackets
+                        f.write(f"- version: {entry.get('version')}\n")
+                        f.write("  package_content:\n")
+                        for file_path in entry.get('package_content', []):
+                            f.write(f"  - {file_path}\n")
                 
                 print(f"Updated version marker to {version} in history.log (no content changes)")
             else:

@@ -225,20 +225,34 @@ def main(parameters: Parameters):
     variables = parameters.extras.copy()
     variables.pop('TEMPLATE', None)
     
-    # Read old history.log BEFORE updating template (to know what to delete)
-    # Also check for old history.yaml for backward compatibility
-    repo_root = _get_repository_root(parameters)
-    old_history_path = repo_root / 'history.log'
-    # Fallback to old history.yaml if history.log doesn't exist
-    if not old_history_path.exists():
-        old_history_path = repo_root / 'history.yaml'
+    # Read history.log from installed package (not from user repository)
+    # history.log is part of the package template but not copied to user repository
+    script_dir = Path(__file__).parent
+    package_dir = script_dir.parent
+    
+    # Read package.yaml to get current version
+    package_yaml_path = package_dir / 'package.yaml'
+    current_version = 'unknown'
+    if package_yaml_path.exists():
+        with open(package_yaml_path, 'r') as pf:
+            package_data = yaml.safe_load(pf)
+        current_version = package_data.get('version', 'unknown')
+    
+    # Read history.log from package template directory
+    templates_dir = script_dir / 'templates' / 'default'
+    cookiecutter_template_dir = templates_dir / '{{ cookiecutter.gsf_repository_name }}'
+    history_log_path = cookiecutter_template_dir / 'history.log'
+    
+    # Fallback to old history.yaml for backward compatibility
+    if not history_log_path.exists():
+        history_log_path = cookiecutter_template_dir / 'history.yaml'
     
     old_version_data = None
     
-    if old_history_path.exists():
+    if history_log_path.exists():
         try:
-            with open(old_history_path, 'r') as f:
-                old_history_data = yaml.safe_load(f)
+            with open(history_log_path, 'r') as f:
+                history_data = yaml.safe_load(f)
                 
                 # Helper function to extract clean version (remove (current) marker)
                 def clean_version(version_str):
@@ -246,26 +260,18 @@ def main(parameters: Parameters):
                         return version_str.replace(' (current)', '')
                     return version_str
                 
-                # Get package version to compare
-                script_dir = Path(__file__).parent
-                package_dir = script_dir.parent
-                package_yaml_path = package_dir / 'package.yaml'
-                if package_yaml_path.exists():
-                    with open(package_yaml_path, 'r') as pf:
-                        package_data = yaml.safe_load(pf)
-                    current_version = package_data.get('version', 'unknown')
-                    
-                    # Find the last version entry that is not the current version
-                    if isinstance(old_history_data, list) and len(old_history_data) > 0:
-                        for entry in reversed(old_history_data):
-                            if isinstance(entry, dict) and 'version' in entry:
-                                entry_version = clean_version(entry.get('version'))
-                                if entry_version != current_version:
-                                    old_version_data = entry
-                                    break
+                # Find the last version entry that is not the current version
+                # This will be the previous installed version
+                if isinstance(history_data, list) and len(history_data) > 0:
+                    for entry in reversed(history_data):
+                        if isinstance(entry, dict) and 'version' in entry:
+                            entry_version = clean_version(entry.get('version'))
+                            if entry_version != current_version:
+                                old_version_data = entry
+                                break
         except Exception as e:
-            # If we can't read the old file, continue without it
-            print(f'Warning: Could not read old history.log: {e}')
+            # If we can't read the file, continue without it
+            print(f'Warning: Could not read history.log from package: {e}')
     
     # Now update the template (this will also update history.log)
     if parameters.used_template:
