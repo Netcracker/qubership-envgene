@@ -67,8 +67,8 @@ def _cleanup_old_package_files(parameters: Parameters, old_version_data: dict):
         
         # Add all files (including hidden files like .gitlab-ci.yml)
         for filename in filenames:
-            # Skip protected files and old history.yaml (for backward compatibility)
-            if filename in PROTECTED_FILES or filename == 'history.yaml':
+            # Skip internal package files that shouldn't be in user repository
+            if filename in PROTECTED_FILES or filename in ('history.yaml', '.cookiecutterignore'):
                 continue
             file_path = rel_root / filename if rel_root != Path('.') else Path(filename)
             files.append(str(file_path))
@@ -278,6 +278,20 @@ def main(parameters: Parameters):
         update_template(parameters, variables, is_force=True)
     else:
         create_template(parameters, template, variables)
+    
+    # Remove internal package files that shouldn't be in user repository
+    # These files are part of the package but should not be copied to user repo
+    repo_root = _get_repository_root(parameters)
+    internal_files_to_remove = ['history.log', 'history.yaml', '.cookiecutterignore']
+    
+    for file_name in internal_files_to_remove:
+        file_path = repo_root / file_name
+        if file_path.exists():
+            try:
+                file_path.unlink()
+                print(f'Removed internal package file: {file_name}')
+            except Exception as e:
+                print(f'Warning: Could not remove {file_name}: {e}')
     
     # Clean up old package files using the old version data we read earlier
     if old_version_data:

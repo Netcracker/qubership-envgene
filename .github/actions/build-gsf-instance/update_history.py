@@ -21,8 +21,8 @@ def get_package_files(package_dir):
         dirs[:] = [d for d in dirs if not d.startswith('.')]
         
         for filename in filenames:
-            # Skip history.log itself (and old history.yaml for backward compatibility)
-            if filename in ('history.log', 'history.yaml'):
+            # Skip internal package files that shouldn't be in user repository
+            if filename in ('history.log', 'history.yaml', '.cookiecutterignore'):
                 continue
             # Include all files, including hidden ones like .gitlab-ci.yml
             file_path = Path(root) / filename
