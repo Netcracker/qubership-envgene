@@ -18,6 +18,8 @@ package org.qubership.cloud.devops.commons.utils;
 
 import lombok.experimental.UtilityClass;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
@@ -116,6 +118,27 @@ public class ParameterUtils {
         Object password = controller.remove(PASSWORD);
         bgDomainParamsMap.put(CONTROLLER_NAMESPACE, controller);
         bgDomainSecureMap.put(CONTROLLER_NAMESPACE, Map.of(USERNAME, userName, PASSWORD, password));
+    }
+
+    public static Object toTypedValue(Object input) {
+        if (ObjectUtils.isEmpty(input)) {
+            return StringUtils.EMPTY;
+        }
+        String trimmed = "";
+        if(input instanceof String){
+            trimmed = input.toString().trim();
+        }
+        if (trimmed.matches("(?i)^(true|false)$")) {
+            return Boolean.parseBoolean(trimmed);
+        }
+        if (trimmed.matches("^[+-]?\\d+$")) {
+            try {
+                return Integer.parseInt(trimmed);
+            } catch (NumberFormatException ignored) {
+                return Long.parseLong(trimmed);
+            }
+        }
+        return trimmed;
     }
 }
 
