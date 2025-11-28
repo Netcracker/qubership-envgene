@@ -57,10 +57,12 @@
   - Да
 - [x] `remoteRef.key` это про изоляцию?
    1. Да. Это иерархический способ хранения, на основе которого можно построить политики доступа
-- [ ] Какие ограничения на имя Credential? Такие же как и для `remoteRef.key`?
-- [ ] Поддерживает ли Azure `jsonPath`
-- [ ] Можем ли мы использовать [JSON path](https://support.smartbear.com/alertsite/docs/monitors/api/endpoint/jsonpath.html)
-  - если нет, то переименовать `jsonPath` -> `path/element`
+- [x] Какие ограничения на имя Credential? Такие же как и для `remoteRef.key`?
+  - Да
+- [x] Поддерживает ли Azure `jsonPath`
+  - Нет, только Vault
+- [x] Можем ли мы использовать [JSON path](https://support.smartbear.com/alertsite/docs/monitors/api/endpoint/jsonpath.html)
+  - не можем
 - [ ] Как реализовать автоматизированное создание Credential Store на основе Credentials, в которых он упоминается
 - [ ] Валидация части параметров EnvGene на основании расширяемых схем (например, проверять параметры dbaas по специализированной схеме dbaas)
   - Стоит ли?
@@ -391,7 +393,7 @@ DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: "${creds.create('dbaas-creds', secretSto
 
 `credRef` Credential macro (`$type: credRef`) используется для связи параметра на EnvGene объектах с Credential EnvGene объектом.
 
-Такой macro используется для всех видом Credentials (`usernamePassword`, `secret`, `external`).
+Такой macro используется для всех видов Credentials (`usernamePassword`, `secret`, `external`).
 
 Для обратной совместимости `creds.get()` по-прежнему полностью поддерживается для работы с локальными Credential.
 
@@ -411,7 +413,8 @@ DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: "${creds.create('dbaas-creds', secretSto
   credId: string
   # Optional
   # Path to the specific value inside the secret
-  property: enum[username, password]
+  # For Vault only
+  property: enum [username, password]
 
 # Example
 global.secrets.streamingPlatform.username:
@@ -437,11 +440,15 @@ DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD:
   $type: credRef
   credId: dbaas-creds
   property: password
+
+DCL_CONFIG_REGISTRY:
+  $type: credRef
+  credId: artfactoryqs-admin
 ```
 
 #### [Option 3] Credential Template
 
-1. Credential Template это отдельный Jinja шаблон, использующий EnvGene macros
+1. Credential Template - Jinja шаблон для рендеринга Credential
 2. Содержит описание только экстернал Credentials
 3. Создается вручную
 4. Должен содержать все Credential используемые в энве
@@ -452,7 +459,7 @@ cdc-streaming-cred:
   type: external
   create: true
   secretStore: default-store
-  remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc
+  remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc/cdc-streaming-cred
 
 app-cred:
   type: external
@@ -464,6 +471,11 @@ dbaas-creds:
   create: true
   secretStore: default-store
   remoteRefKey: {{ current_env.cloud }}
+
+artfactoryqs-admin:
+  type: external
+  secretStore: default-store
+  remoteRefKey: services
 ```
 
 #### [Option 3] Credential
@@ -471,7 +483,10 @@ dbaas-creds:
 В дополнение к существующим Credential которые генерируются для каждого уникального `creds.get(<cred-id>)` в тот же самый Credential файл энва дополнительно генерируются Credential из темплейта
 
 1. Генерируется EnvGene процессе генерации энв инстанса на основе Credential Template (просто рендерится Jinja) и сохраняются в инстансном репозитории
-2. Префикс уникальности Credential не используется при `creds`
+2. Префикс уникальности Credential не генерируется для `type: external`
+<!-- 4. remoteRefKey опционален, по дефолту все до имени аппа -->
+<!-- 5. При рендеринге Credential из темплейта, если `type: external` И `create: true` И `remoteRefKey` не задан; используется дефолтное значение:
+    `{{ current_env.cloud }}/{{ current_env.name }}/{{ current_namespace.name }}/{{ current_application.name }}` -->
 
 ```yaml
 # AS IS Credential
@@ -488,13 +503,21 @@ dbaas-creds:
 <cred-id>:
   # Mandatory
   type: usernamePassword|secret|external
-  # Mandatory for external
+  # Optional
+  # Used only for type: external
+  # Mandatory for type: external
   secretStore: string
-  # Mandatory for external
+  # Optional
+  # Used only for type: external
+  # Mandatory for type: external
   remoteRefKey: string
-  # Optional for external
+  # Optional
+  # Used only for type: external
+  # Optional for type: external
   create: boolean
-  # Not used for external
+  # Optional
+  # Used only for type: usernamePassword, secret
+  # Mandatory for type: usernamePassword, secret
   data:
     username: string
     password: string
@@ -517,6 +540,11 @@ app-cred:
   type: external
   secretStore: custom-store
   remoteRefKey: very/special/path
+
+artfactoryqs-admin:
+  type: external
+  secretStore: default-store
+  remoteRefKey: services
 ```
 
 #### [Option 3] Parameter in Effective Set
@@ -528,17 +556,17 @@ app-cred:
    2. `credRef` Credential macro
 2. Достаточен для генерации ExternalSecret CR
 3. Используется:
-   1. The Some Script для создания Credential
-   2. Argo Vault Plugin для резолва Credential
-4. В деплоймент контексте в зависимости от значения `SECRET_MACRO_HANDLER: enum[argo, eso]` в DD, параметры описанные через cred macro задаются в:
-   1. Опция 1
+   1. Argo Vault Plugin для резолва Credential
+   2. Helm chart приложения для создания ExternalSecret CR
+4. `remoteRefKey` формируется в в зависимости от типа External Store
+   1. Vault: `<remoteRefKey>/<credId>-<property>`
+   2. AWS: `<remoteRefKey>/<credId>` +512 char
+   3. GCP: `<remoteRefKey>/<credId>` 255 char
+   4. Azure: `<remoteRefKey>/<credId>` 127 char
+5. В деплоймент контексте в зависимости от значения `SECRET_MACRO_HANDLER: enum [argo, eso]` в DD, параметры описанные через cred macro задаются в:
       1. credentials.yaml (макрос обрабатывается argo) ИЛИ
       2. parameters.yaml (макрос обрабатывается eso)
-   2. Опция 2
-      1. parameters.yaml
-      2. EnvGene инжектит деплоймент параметр `SECRET_MACRO_HANDLER: enum[eso, argo]` для каждого приложения. Дефолтное значение `eso`
-      3. Пользователь может переопределить этот параметр
-5. Пайплайн контекст содержит:
+6. Пайплайн контекст содержит:
    1. EnvGene Credentials with `type: external` and `create: true`
 
 ```yaml
@@ -547,49 +575,40 @@ app-cred:
   # Mandatory
   $type: extCredRef
   # Mandatory
-  # Credential ID in External Credential storage
-  credId: string
-  # Mandatory
   secretStore: string
   # Mandatory
   remoteRefKey: string
-  # Optional
-  # Path to the specific value inside the secret
-  property: string
 
-# Example
+# Vault example
 global.secrets.streamingPlatform.username:
   $type: extCredRef
-  credId: cdc-streaming-cred
   secretStore: default-store
-  remoteRefKey: ocp-05/env-1/env-1-data-management/cdc
-  property: username
+  remoteRefKey: ocp-05/env-1/env-1-data-management/cdc/cdc-streaming-cred-username
 
 global.secrets.streamingPlatform.password:
   $type: extCredRef
-  credId: cdc-streaming-cred
   secretStore: default-store
-  remoteRefKey: ocp-05/env-1/env-1-data-management/cdc
-  property: password
+  remoteRefKey: ocp-05/env-1/env-1-data-management/cdc/cdc-streaming-cred-password
 
 TOKEN:
   $type: extCredRef
-  credId: app-cred
   secretStore: custom-store
+  remoteRefKey: very/special/path/app-cred
 
 DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME:
   $type: extCredRef
-  credId: dbaas-creds
   secretStore: default-store
-  remoteRefKey: ocp-05/platform-01/platform-01-dbaas/dbaas
-  property: username
+  remoteRefKey: ocp-05/platform-01/platform-01-dbaas/dbaas/dbaas-creds-username
 
 DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD:
   $type: extCredRef
-  credId: dbaas-creds
+  secretStore: default-store # не нужен в деплоймент контексте?
+  remoteRefKey: ocp-05/platform-01/platform-01-dbaas/dbaas/dbaas-creds-password
+
+DCL_CONFIG_REGISTRY:
+  $type: extCredRef
   secretStore: default-store
-  remoteRefKey: ocp-05/platform-01/platform-01-dbaas/dbaas
-  property: password
+  remoteRefKey: services/artfactoryqs-admin
 ```
 
 ### `ExternalSecret` CR
@@ -601,7 +620,7 @@ DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD:
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
-  name: <нормализованный credId>-<хэш от secretStore + remoteRefKey>
+  name: credId
 spec:
   secretStoreRef:
     name: <secret-store>
@@ -663,8 +682,8 @@ spec:
 Расположение Credential в структуре KV Store определяется на этапе создания Credential, т.е при деплое системы/приложения которую этот Credential описывает.
 
 ```text
-├── <non-cloud-system> # рефы на эти Credential не генерируются EnvGene
-└── <cloud-name>
+├── services
+└── <cluster-name>
     └── <environment-name>
           └── <namespace>
               └── <application>
@@ -673,7 +692,8 @@ spec:
 Example:
 
 ```text
-├── ???
+├── services
+|   └── artfactoryqs-admin
 └── ocp-05
     └── platform-01
           └── platform-01-dbaas
