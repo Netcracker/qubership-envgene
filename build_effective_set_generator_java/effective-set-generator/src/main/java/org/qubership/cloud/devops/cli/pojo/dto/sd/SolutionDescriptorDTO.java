@@ -1,4 +1,4 @@
-  /*
+/*
  * Copyright 2024-2025 NetCracker Technology Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,39 +14,23 @@
  * limitations under the License.
  */
 
-package org.qubership.cloud.devops.cli.pojo.dto.shared;
+package org.qubership.cloud.devops.cli.pojo.dto.sd;
 
-
-import jakarta.enterprise.context.ApplicationScoped;
-import lombok.Getter;
-import lombok.Setter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
 
 import java.util.List;
-import java.util.Optional;
 
-@Getter
-@Setter
-@ApplicationScoped
-public class SharedData {
+@Data
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class SolutionDescriptorDTO {
+    private List<ApplicationDTO> applications;
 
-    private String envId;
-
-    private String envsPath;
-
-    private Optional<String> sbomsPath;
-
-    private Optional<String> sdPath;
-
-    private Optional<String> registryPath;
-
-    private String outputDir;
-
-    private EffectiveSetVersion effectiveSetVersion;
-
-    private List<String> pcsspPaths;
-
-    private String deploymentSessionId;
-
-    private boolean appChartValidation;
-
+    @Data
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public static class ApplicationDTO {
+        private String alias;
+        private String deployPostfix;
+        private String version;
+    }
 }
