@@ -3,7 +3,7 @@ from os import listdir
 
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, getEnvDefinition, get_env_instances_dir
-from gcip import Pipeline
+from gcip import JobFilter, Pipeline
 import pipeline_helper
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 
@@ -145,5 +145,14 @@ def build_pipeline(params: dict):
             job_instance.add_needs(*find_predecessor_job(job, jobs_map, job_sequence))
 
         logger.info(f'----------------end processing for {env}---------------------')
+
+    # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
+    # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
+    for job in sorted_pipeline.find_jobs(JobFilter()): # gets all jobs in pipeline
+        job.artifacts.add_paths("${CI_PROJECT_DIR}")
+        if job.needs is None or len(job.needs) == 0:
+            job.add_variables(GIT_STRATEGY="fetch")
+        else:
+            job.add_variables(GIT_STRATEGY="empty")
 
     sorted_pipeline.write_yaml()
