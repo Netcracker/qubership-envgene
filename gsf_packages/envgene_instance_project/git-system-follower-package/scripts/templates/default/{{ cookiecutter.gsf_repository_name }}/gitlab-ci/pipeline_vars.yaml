@@ -4,4 +4,4 @@ variables:
   ENV_BUILDER: "true"
   ENV_TEMPLATE_VERSION: "qubership_envgene_templates:0.0.1"
   DEPLOYMENT_TICKET_ID: "TEST-TICKET-0001"
-  GITLAB_RUNNER_TAG_NAME: "local"
+  GITLAB_RUNNER_TAG_NAME: "gitlab-org-docker"

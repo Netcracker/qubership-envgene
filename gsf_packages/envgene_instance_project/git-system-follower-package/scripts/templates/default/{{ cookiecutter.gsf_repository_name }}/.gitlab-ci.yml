@@ -10,6 +10,7 @@ default:
 
 variables:
   ENVGENE_VERSION: "{{cookiecutter.envgene_version}}"
+  DOCKER_REGISTRY: "ghcr.io/netcracker"
 
 include:
   - local: 'gitlab-ci/pipeline_vars.yaml'
@@ -27,9 +28,9 @@ include:
 
 .images.variables:
   variables:
-    envgen_image: "${DOCKER_REGISTRY:-ghcr.io/netcracker}/qubership-envgene:${ENVGENE_VERSION}"
-    pipegene_image: "${DOCKER_REGISTRY:-ghcr.io/netcracker}/qubership-pipegene:${ENVGENE_VERSION}"
-    effective_set_generator_image: "${DOCKER_REGISTRY:-ghcr.io/netcracker}/qubership-effective-set-generator:${ENVGENE_VERSION}"
+    envgen_image: "${DOCKER_REGISTRY}/qubership-envgene:${ENVGENE_VERSION}"
+    pipegene_image: "${DOCKER_REGISTRY}/qubership-pipegene:${ENVGENE_VERSION}"
+    effective_set_generator_image: "${DOCKER_REGISTRY}/qubership-effective-set-generator:${ENVGENE_VERSION}"
 
 ####################################
 # Jobs
