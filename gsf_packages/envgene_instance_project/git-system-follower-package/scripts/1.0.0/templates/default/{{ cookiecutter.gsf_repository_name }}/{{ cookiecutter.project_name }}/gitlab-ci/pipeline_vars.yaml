@@ -1,0 +1,9 @@
+---
+variables:
+  ENV_NAMES: "{{ cookiecutter.ENV_NAMES | default('test-cluster/e01') }}"
+  ENV_BUILDER: "{{ cookiecutter.ENV_BUILDER | default('true') }}"
+  ENV_TEMPLATE_VERSION: "{{ cookiecutter.ENV_TEMPLATE_VERSION | default('qubership_envgene_templates:0.0.1') }}"
+  DEPLOYMENT_TICKET_ID: "{{ cookiecutter.DEPLOYMENT_TICKET_ID | default('TEST-1111') }}"
+  DEPLOYMENT_SESSION_ID: "{{ cookiecutter.DEPLOYMENT_SESSION_ID | default('') }}"
+  GITLAB_RUNNER_TAG_NAME: "{{ cookiecutter.GITLAB_RUNNER_TAG_NAME | default('local') }}"
+
