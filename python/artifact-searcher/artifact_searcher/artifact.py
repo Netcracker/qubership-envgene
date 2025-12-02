@@ -5,6 +5,7 @@ import shutil
 import tempfile
 from pathlib import Path
 from typing import Any, Optional
+from functools import partial
 from urllib.parse import urljoin, urlparse, urlunparse
 from zipfile import ZipFile
 import xml.etree.ElementTree as ET
@@ -147,12 +148,12 @@ def create_app_artifacts_local_path(app_name, app_version):
 
 
 async def download(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
-    """
-    Downloads an artifact to a local directory: <workspace_dir>/<app_name>/<app_version>/filename.extension
-    Sets full local path of artifact to artifact info
-    Returns:
-        ArtifactInfo: Object containing related information about the artifact
-    """
+    """Downloads an artifact to a local directory"""
+    # Skip download if already downloaded (V2 cloud artifacts)
+    if artifact_info.local_path:
+        logger.info(f"Artifact already downloaded (V2): {artifact_info.local_path}")
+        return artifact_info
+    
     url = artifact_info.url
     app_local_path = create_app_artifacts_local_path(artifact_info.app_name, artifact_info.app_version)
     artifact_local_path = os.path.join(app_local_path, os.path.basename(url))
@@ -255,19 +256,100 @@ async def _attempt_check(
 
 
 async def check_artifact_async(
-    app: Application, artifact_extension: FileExtension, version: str
+    app: Application, artifact_extension: FileExtension, version: str,
+    env_creds: Optional[dict] = None
 ) -> Optional[tuple[str, tuple[str, str]]] | None:
-    """
-    Resolves the full artifact URL and the first repository where it was found.
-    Supports both release and snapshot versions.
+    """Routes to V2 (cloud-aware) or V1 (URL-based) search based on Registry version"""
+    registry_version = getattr(app.registry, 'version', "1.0")
+    
+    if registry_version == "2.0":
+        logger.info(f"Detected RegDef V2 for {app.name}, attempting cloud-aware search")
+        try:
+            return await _check_artifact_v2_async(app, artifact_extension, version, env_creds)
+        except Exception as e:
+            logger.warning(f"V2 artifact search failed for {app.name}: {e}. Falling back to V1.")
+            return await _check_artifact_v1_async(app, artifact_extension, version)
+    else:
+        logger.debug(f"Using V1 artifact search for {app.name} (version={registry_version})")
+        return await _check_artifact_v1_async(app, artifact_extension, version)
 
-    Returns:
-        Optional[tuple[str, tuple[str, str]]]: A tuple containing:
-            - str: Full URL to the artifact.
-            - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
-            Returns None if the artifact could not be resolved
-    """
 
+async def _check_artifact_v2_async(app: Application, artifact_extension: FileExtension, version: str,
+                                   env_creds: Optional[dict]) -> Optional[tuple[str, tuple[str, str]]]:
+    """V2 artifact search using Maven Client with cloud authentication"""
+    if not env_creds:
+        logger.warning(f"V2 registry but no env_creds provided for {app.name}, falling back to V1")
+        return await _check_artifact_v1_async(app, artifact_extension, version)
+    
+    auth_config_ref = getattr(app.registry.maven_config, 'auth_config', None)
+    if not auth_config_ref:
+        logger.warning(f"V2 registry but no maven authConfig reference for {app.name}, falling back to V1")
+        return await _check_artifact_v1_async(app, artifact_extension, version)
+    
+    try:
+        from artifact_searcher.cloud_auth_helper import CloudAuthHelper
+        from qubership_pipelines_common_library.v1.maven_client import Artifact as MavenArtifact
+        
+        auth_config = CloudAuthHelper.resolve_auth_config(app.registry, "maven")
+        
+        if not auth_config or not auth_config.provider:
+            logger.warning(f"V2 registry but no cloud provider for {app.name}, falling back to V1")
+            return await _check_artifact_v1_async(app, artifact_extension, version)
+        
+        if auth_config.provider not in ["aws", "gcp"]:
+            logger.warning(f"V2 registry with unsupported provider '{auth_config.provider}' for {app.name}, falling back to V1")
+            return await _check_artifact_v1_async(app, artifact_extension, version)
+        
+        logger.info(f"Creating Maven Client searcher for {app.name} with provider={auth_config.provider}")
+        loop = asyncio.get_event_loop()
+        
+        searcher = await loop.run_in_executor(None, CloudAuthHelper.create_maven_searcher, app.registry, env_creds)
+        
+        maven_artifact = MavenArtifact(artifact_id=app.artifact_id, version=version, extension=artifact_extension.value)
+        logger.info(f"Searching for {artifact_extension.value} artifact {app.artifact_id}:{version} using Maven Client")
+        urls = await loop.run_in_executor(None, partial(searcher.find_artifact_urls, artifact=maven_artifact))
+        
+        if not urls:
+            logger.warning(f"No {artifact_extension.value} artifacts found for {app.artifact_id}:{version} via Maven Client")
+            return None
+        
+        maven_relative_path = urls[0]
+        logger.info(f"Found {artifact_extension.value} artifact via Maven Client at: {maven_relative_path}")
+        
+        # Download artifact using Maven Client
+        app_local_path = create_app_artifacts_local_path(app.name, version)
+        artifact_filename = os.path.basename(maven_relative_path)
+        local_path = os.path.join(app_local_path, artifact_filename)
+        os.makedirs(os.path.dirname(local_path), exist_ok=True)
+        
+        def download_with_searcher():
+            searcher.download_artifact(maven_relative_path, str(local_path))
+            return local_path
+        
+        downloaded_path = await loop.run_in_executor(None, download_with_searcher)
+        logger.info(f"Downloaded {artifact_extension.value} artifact to: {downloaded_path}")
+        
+        # Construct full URL for tracking
+        registry_domain = app.registry.maven_config.repository_domain_name
+        folder = version_to_folder_name(version)
+        if folder == "releases":
+            repo_path = app.registry.maven_config.target_release
+        elif folder == "staging":
+            repo_path = app.registry.maven_config.target_staging
+        else:
+            repo_path = app.registry.maven_config.target_snapshot
+        
+        full_url = f"{registry_domain.rstrip('/')}/{repo_path.rstrip('/')}/{maven_relative_path}"
+        return full_url, ("v2_downloaded", local_path)
+        
+    except Exception as e:
+        logger.error(f"Error in V2 search: {e}", exc_info=True)
+        raise
+
+
+async def _check_artifact_v1_async(app: Application, artifact_extension: FileExtension,
+                                   version: str) -> Optional[tuple[str, tuple[str, str]]]:
+    """V1 artifact search using URL-based approach"""
     result = await _attempt_check(app, version, artifact_extension)
     if result is not None:
         return result
