@@ -1,0 +1,7 @@
+version: 2.1
+type: deploy
+applications:
+  - version: MONITORING:0.91.0-delivery-20241115.141230-4-RELEASE
+    deployPostfix: monitoring
+  - version: postgres:pg16-2.10.5-20241215.141230-3-RELEASE
+    deployPostfix: pg
