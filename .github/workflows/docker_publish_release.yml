@@ -94,7 +94,7 @@ jobs:
             sed -i "/DOCKER_IMAGE_TAG_PIPEGENE:/c\\  DOCKER_IMAGE_TAG_PIPEGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
             sed -i "/DOCKER_IMAGE_TAG_ENVGENE:/c\\  DOCKER_IMAGE_TAG_ENVGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
             sed -i "/DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR:/c\\  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: \"${NEW_TAG}\"" "$TARGET_FILE"
-            
+
             # Update ENVGENE_VERSION in .gitlab-ci.yml
             sed -i "/ENVGENE_VERSION:/c\\  ENVGENE_VERSION: \"${NEW_TAG}\"" "$GITLAB_CI_FILE"
 
@@ -103,7 +103,7 @@ jobs:
               echo "Updated Envgene.yml with docker tags from job outputs"
               CHANGES_MADE=true
             fi
-            
+
             if ! git diff --quiet "$GITLAB_CI_FILE"; then
               echo "Updated .gitlab-ci.yml with ENVGENE_VERSION"
               CHANGES_MADE=true

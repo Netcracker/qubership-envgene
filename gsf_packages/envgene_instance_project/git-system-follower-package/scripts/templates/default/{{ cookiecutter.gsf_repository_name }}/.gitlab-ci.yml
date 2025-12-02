@@ -18,7 +18,7 @@ variables:
   GITLAB_RUNNER_TAG_NAME: "{{cookiecutter.gitlab_runner_tag_name}}"
 
 include:
-  - local: 'gitlab-ci/pipeline_vars.yaml'  
+  - local: 'gitlab-ci/pipeline_vars.yaml'
 
 #Runner
 default:

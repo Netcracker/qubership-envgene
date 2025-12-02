@@ -14,5 +14,5 @@ variables:
       - "false"
   ENV_TEMPLATE_VERSION:
     value: "qubership_envgene_templates:0.0.1"
-    description: "template version"    
+    description: "template version"
   DEPLOYMENT_TICKET_ID: "TEST-TICKET-0001"
