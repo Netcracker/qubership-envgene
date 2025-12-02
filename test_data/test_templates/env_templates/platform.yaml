@@ -1,0 +1,7 @@
+tenant: "{{ templates_dir }}/env_templates/platform/tenant.yml.j2"
+cloud: "{{ templates_dir }}/env_templates/platform/cloud.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/platform/namespaces/pg.yml.j2"
+    deploy_postfix: "pg"
+  - template_path: "{{ templates_dir }}/env_templates/platform/namespaces/monitoring.yml.j2"
+    deploy_postfix: "monitoring"
