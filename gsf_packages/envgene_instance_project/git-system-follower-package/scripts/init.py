@@ -235,6 +235,7 @@ def main(parameters: Parameters):
     variables = parameters.extras.copy()
     variables.pop('TEMPLATE', None)
     
+    
     # Read history.log from installed package (not from user repository)
     # history.log is part of the package template but not copied to user repository
     script_dir = Path(__file__).parent

@@ -1,5 +1,6 @@
 {
   "gsf_repository_name": "envgene_instance_project",
-  "envgene_version": "1.8.2"
+  "docker_registry": "ghcr.io/netcracker",
+  "gitlab_runner_tag_name": "gitlab-org-docker"
 }
 

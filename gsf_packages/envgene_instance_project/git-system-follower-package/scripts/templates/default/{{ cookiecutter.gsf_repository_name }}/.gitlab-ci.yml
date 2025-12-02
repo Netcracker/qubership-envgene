@@ -1,23 +1,29 @@
 ---
+#Rules
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push"'
+      when: never
+    - when: always
+
 #Stages
 stages:
   - generate
   - run_generated_pipe
 
+#Variables
+variables:
+  ENVGENE_VERSION: "1.8.5"
+  DOCKER_REGISTRY: "{{cookiecutter.docker_registry}}"
+  GITLAB_RUNNER_TAG_NAME: "{{cookiecutter.gitlab_runner_tag_name}}"
+
+include:
+  - local: 'gitlab-ci/pipeline_vars.yaml'  
+
 #Runner
 default:
   tags: [ $GITLAB_RUNNER_TAG_NAME ]
 
-variables:
-  ENVGENE_VERSION: "{{cookiecutter.envgene_version}}"
-  DOCKER_REGISTRY: "ghcr.io/netcracker"
-
-include:
-  - local: 'gitlab-ci/pipeline_vars.yaml'
-
-####################################
-# Templates
-####################################
 
 .common_module.variables:
   variables:
@@ -32,10 +38,8 @@ include:
     pipegene_image: "${DOCKER_REGISTRY}/qubership-pipegene:${ENVGENE_VERSION}"
     effective_set_generator_image: "${DOCKER_REGISTRY}/qubership-effective-set-generator:${ENVGENE_VERSION}"
 
-####################################
-# Jobs
-####################################
 
+# Jobs
 generate_pipeline:
   extends:
     - .common_module.variables

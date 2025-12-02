@@ -1,7 +1,18 @@
 ---
 variables:
-  ENV_NAMES: "test-cluster/e01"
-  ENV_BUILDER: "true"
-  ENV_TEMPLATE_VERSION: "qubership_envgene_templates:0.0.1"
+  ENV_NAMES:
+    value: "test-cluster/e01"
+    description: "Set ENV_NAMES"
+    options:
+        - "test-cluster/e01\"test-cluster/e02"
+        - "test-cluster/e01"
+  ENV_BUILDER:
+    value: "true"
+    description: "Whether to run env_builder, possible values - true/false"
+    options:
+      - "true"
+      - "false"
+  ENV_TEMPLATE_VERSION:
+    value: "qubership_envgene_templates:0.0.1"
+    description: "template version"    
   DEPLOYMENT_TICKET_ID: "TEST-TICKET-0001"
-  GITLAB_RUNNER_TAG_NAME: "gitlab-org-docker"
