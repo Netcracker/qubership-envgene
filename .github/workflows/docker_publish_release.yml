@@ -263,6 +263,7 @@ jobs:
       - build-qubership-envgene
       - build-effective-set-generator
       - build-instance-repo-pipeline
+      - build-gsf-envgene-instance
     uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v1.0.3
     with:
       version: ${{ github.event.inputs.version }}
