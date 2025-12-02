@@ -157,6 +157,11 @@ jobs:
       with:
         name: effective_set_jar
 
+    - name: Test Calculator CLI
+      shell: bash
+      run: |
+        python build_effective_set_generator_java/test.py build_effective_set_generator_java/effective-set-generator/target/*.jar
+
 
   build-effective-set-generator:
     needs: [build-effective-set-jar]
