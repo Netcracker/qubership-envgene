@@ -87,7 +87,7 @@ public class BomReaderUtilsImplV2 {
 
                 bomCommonUtils.getServiceEntities(entitiesMap, bomContent.getComponents());
 
-                validateAppChart(entitiesMap, bomContent.getComponents());
+                validateAppChart(entitiesMap, bomContent.getComponents(), appName, appFileRef);
 
                 getPerServiceEntities(entitiesMap, bomContent.getComponents(), appName, baseline, override, bomContent);
 
@@ -264,11 +264,11 @@ public class BomReaderUtilsImplV2 {
         }
     }
 
-    private void validateAppChart(EntitiesMap entitiesMap, List<Component> components) {
+    private void validateAppChart(EntitiesMap entitiesMap, List<Component> components, String appName, String appFileRef) {
         Optional<Component> optional = components.stream().filter(key -> "application/vnd.qubership.app.chart".equalsIgnoreCase(key.getMimeType())).findAny();
         if (sharedData.isAppChartValidation() && !optional.isPresent()) {
-            throw new AppChartValidationException("Failed to process effective set as appchart validation is mandatory " +
-                    "and the applicable mime type application/vnd.qubership.app.chart is not found");
+            throw new AppChartValidationException(String.format("App chart validation failed: application \"%s\" from SBOM \"%s\" " +
+                    "has no component with mime-type \"application/vnd.qubership.app.chart\"", appName, new File(appFileRef).getName()));
         } else if (optional.isPresent()) {
             entitiesMap.setAppChartName(optional.get().getName());
         }

@@ -9,5 +9,6 @@ namespaces:
     deploy_postfix: "bss"
   - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/oss.yml.j2"
     deploy_postfix: "oss"
-  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/billing.yaml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/composite/namespaces/billing_not_deploy_postfix.yaml.j2"
     deploy_postfix: "billing"
+composite_structure: "{{ templates_dir }}/env_templates/composite/composite_structure.yml.j2"

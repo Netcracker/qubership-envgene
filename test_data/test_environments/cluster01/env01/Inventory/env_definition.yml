@@ -1,10 +1,12 @@
 inventory:
   environmentName: "test-solution-structure-case-01"
-  clusterUrl: "test-val.com"
+  clusterUrl: "https://api.qubership.org:6443/"
   tenantName: "test-tenant"
   deployer: "test-deployer"
   cloudName: "test-solution-structure"
   cloudPassport: "test-cloud-passport"
+  description: ""
+  owners: ""
 envTemplate:
   name: "test-solution-structure-template"
   additionalTemplateVariables:

@@ -40,6 +40,7 @@ import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.SecretCredentialsDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
+import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
 import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
@@ -91,16 +92,26 @@ public class CliParameterParser {
         checkIfEntitiesExist();
         String tenantName = inputData.getTenantDTO().getName();
         String cloudName = inputData.getCloudDTO().getName();
-
-        processAndSaveParameters(inputData.getSolutionBomDTO(), tenantName, cloudName);
+        Map<String, NamespaceDTO> namespaceDTOMap = inputData.getNamespaceDTOMap();
+        processAndSaveParameters(inputData.getSolutionBomDTO(), tenantName, cloudName, namespaceDTOMap);
     }
 
-    private void processAndSaveParameters(Optional<SolutionBomDTO> solutionDescriptor, String tenantName, String cloudName) throws IOException {
+    private void processAndSaveParameters(Optional<SolutionBomDTO> solutionDescriptor, String tenantName, String cloudName, Map<String,NamespaceDTO> namespaceDTOMap) throws IOException {
         Map<String, Object> deployMappingFileData = new ConcurrentHashMap<>();
         Map<String, Object> runtimeMappingFileData = new ConcurrentHashMap<>();
         Map<String, Object> cleanupMappingFileData = new ConcurrentHashMap<>();
         Map<String, String> errorList = new ConcurrentHashMap<>();
         Map<String, String> k8TokenMap = new ConcurrentHashMap<>();
+        namespaceDTOMap.keySet().parallelStream().forEach(namespaceName -> {
+            String credentialsId = findDefaultCredentialsId(namespaceName);
+            if (StringUtils.isNotEmpty(credentialsId)) {
+                CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
+                if (credentialDTO != null) {
+                    SecretCredentialsDTO secCred = (SecretCredentialsDTO) credentialDTO.getData();
+                    k8TokenMap.put(namespaceName, secCred.getSecret());
+                }
+            }
+        });
         List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
                 .orElseGet(Collections::emptyList);
         applicationDTOList.parallelStream()
@@ -138,12 +149,12 @@ public class CliParameterParser {
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap);
             if (solutionDescriptor.isPresent()) {
-                fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "deployment", "mapping.yaml");
-                fileDataConverter.writeToFile(runtimeMappingFileData, sharedData.getOutputDir(), "runtime", "mapping.yaml");
-                fileDataConverter.writeToFile(cleanupMappingFileData, sharedData.getOutputDir(), "cleanup", "mapping.yaml");
+                fileDataConverter.writeToFile(new TreeMap<>(deployMappingFileData), sharedData.getOutputDir(), "deployment", "mapping.yaml");
+                fileDataConverter.writeToFile(new TreeMap<>(runtimeMappingFileData), sharedData.getOutputDir(), "runtime", "mapping.yaml");
+                fileDataConverter.writeToFile(new TreeMap<>(cleanupMappingFileData), sharedData.getOutputDir(), "cleanup", "mapping.yaml");
             }
         } else {
-            fileDataConverter.writeToFile(deployMappingFileData, sharedData.getOutputDir(), "mapping.yaml");
+            fileDataConverter.writeToFile(new TreeMap<>(deployMappingFileData), sharedData.getOutputDir(), "mapping.yaml");
         }
         if (!errorList.isEmpty()) {
             errorList.forEach((key, value) -> {

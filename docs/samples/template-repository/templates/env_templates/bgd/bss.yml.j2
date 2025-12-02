@@ -1,0 +1,18 @@
+---
+name: "{{current_env.name}}-bss"
+credentialsId: ""
+labels:
+- "solutionInstance-{{env}}"
+- "solution-{{tenant}}"
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+profile:
+  name: dev_bss_override
+  baseline: dev
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: {}
+e2eParameterSets: []
+technicalConfigurationParameterSets: {}

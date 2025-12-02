@@ -50,6 +50,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.qubership.cloud.devops.commons.utils.ParameterUtils.toTypedValue;
+
 
 @Slf4j
 public class ExpressionLanguage extends AbstractLanguage {
@@ -217,7 +219,7 @@ public class ExpressionLanguage extends AbstractLanguage {
             String strValue = (String) val;
 
 
-            String jinJavaRendered = "";
+            Object jinJavaRendered = "";
             try {
                 jinJavaRendered = renderStringByJinJava(strValue, binding, escapeDollar);
                 val = jinJavaRendered;
@@ -229,7 +231,7 @@ public class ExpressionLanguage extends AbstractLanguage {
 
             isProcessed = true;
 
-            Matcher secureMarkerMatcher = SECURED_PATTERN.matcher((String) val);
+            Matcher secureMarkerMatcher = SECURED_PATTERN.matcher(String.valueOf(val));
             if (secureMarkerMatcher.find()) {
                 isSecured = true;
                 val = ((String) Objects.requireNonNull(val)).replaceAll("([\\u0096\\u0097])", "");
@@ -264,7 +266,7 @@ public class ExpressionLanguage extends AbstractLanguage {
         return rendered;
     }
 
-    private String renderStringByJinJava(String value, Map<String, Parameter> binding, boolean escapeDollar) {
+    private Object renderStringByJinJava(String value, Map<String, Parameter> binding, boolean escapeDollar) {
         String rendered = gStringToJinJavaTranslator.translate(value);
         rendered = jinjava.render(rendered, binding);
 
@@ -272,8 +274,7 @@ public class ExpressionLanguage extends AbstractLanguage {
             rendered = rendered.replaceAll("\\\\\\$", "\\$"); // \$ -> $
             rendered = rendered.replaceAll("\\\\\\\\", "\\\\"); // \\ -> \
         }
-
-        return rendered;
+        return toTypedValue(rendered);
     }
 
     private Object removeEscaping(boolean escapeDollar, Object val) throws JsonProcessingException {
@@ -287,7 +288,7 @@ public class ExpressionLanguage extends AbstractLanguage {
             strValue = strValue.replaceAll("\\\\\\$", "\\$"); // \$ -> $
             val = strValue.replaceAll("\\\\\\\\", "\\\\"); // \\ -> \
         }
-        return val;
+        return toTypedValue(val);
     }
 
     private List<Parameter> processList(List<?> list, Map<String, Parameter> binding, boolean escapeDollar) {
@@ -336,7 +337,7 @@ public class ExpressionLanguage extends AbstractLanguage {
                         if (insecure) {
                             return failedParameter(entry);
                         } else {
-                            if(entry.getValue() != null && entry.getValue().toString().contains("cmdb.creds[")){
+                            if (entry.getValue() != null && entry.getValue().toString().contains("cmdb.creds[")) {
                                 throw new ExpressionLanguageException(String.format("Expressions started with \"cmdb\" is not supported (parameter %s, value: %s)", entry.getKey(), entry.getValue()), e);
                             }
                             throw new ExpressionLanguageException(String.format("Could not process expression for parameter %s with value: %s", entry.getKey(), entry.getValue()), e);
