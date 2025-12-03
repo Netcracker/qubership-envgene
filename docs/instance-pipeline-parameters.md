@@ -27,6 +27,8 @@
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
+    - [`BG_MANAGE`](#bg_manage)
+    - [`BG_STATE`](#bg_state)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
@@ -490,6 +492,28 @@ curl -X POST \
         }
       }'
 ```
+
+### `BG_MANAGE`
+
+**Description**: Enable Blue-Green operation. When set to `true`, the `bg_manage` pipeline job is executed to perform BG operations including state management and validation , Origin/Peer configuration copying for WarmUp operations.
+
+**Default Value**: `false`
+
+**Mandatory**: No
+
+**Example**: `true`
+
+### `BG_STATE`
+
+**Description**: Contains the description of the target state of the Blue-Green namespaces of the Environment. Used together with `BG_MANAGE`.
+
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md)
+
+**Default Value**: None
+
+**Mandatory**: No (Yes, when `BG_MANAGE` is `true`)
+
+**Example**: `{"peerNamespace":{"name":"prod-ns2","state":"IDLE","version":null},"controllerNamespace":"ns-controller","originNamespace":{"name":"prod-ns1","state":"ACTIVE","version":"v5"},"updateTime":"2023-07-07T10:00:54Z"}`
 
 ## Deprecated Parameters
 

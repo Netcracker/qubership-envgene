@@ -23,6 +23,7 @@
       - [Resource Profile Override (in Instance)](#resource-profile-override-in-instance)
       - [Composite Structure](#composite-structure)
       - [BG Domain](#bg-domain)
+    - [BG State Files](#bg-state-files)
     - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
@@ -717,7 +718,7 @@ controllerNamespace:
 When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.  
 The [`inventory.config.updateCredIdsWithEnvName`](/docs/envgene-configs.md#env_definitionyml) mechanism works for this Credential as well as for all other Credentials.
 
-**Location:** `/environments/<cluster-name>/<env-name>/bg-domain.yml`
+**Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
 
 **Example:**
 
@@ -743,6 +744,42 @@ bg_domain:
 - `@controller` → controller namespace
 - `@origin` → origin namespaces
 - `@peer` → peer namespaces
+
+### BG State Files
+
+This object, which is an empty file, is used to represent the current Blue-Green Domain state of the Origin and Peer namespaces via lightweight filesystem markers.
+
+The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
+
+See details in [Blue-Green Domain](/docs/features/blue-green-deployment.md)
+
+**File name patterns:**
+
+- `.origin-<state>`
+- `.peer-<state>`
+
+Where valid values for `<state>` are:
+
+- `active`
+- `idle`
+- `candidate`
+- `legacy`
+- `failedw` (warmup failure)
+- `failedc` (commit/promote failure)
+
+**Location:**
+
+State files are located in the environment root directory:
+
+- `/environments/<cluster-name>/<env-name>/`
+
+**Example:**
+
+```text
+/environments/<cluster-name>/<env-name>/
+├── .origin-active
+├── .peer-candidate
+```
 
 ### Solution Descriptor
 
