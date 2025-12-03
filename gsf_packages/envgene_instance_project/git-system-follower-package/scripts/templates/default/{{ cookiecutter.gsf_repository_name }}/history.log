@@ -6,7 +6,14 @@
   - test_folder/test_file.md
 
 # --- Version 1.0.0 ---
+- version: 1.0.0
+  package_content:
+  - .gitlab-ci.yml
+  - gitlab-ci/pipeline_vars.yaml
+
+# --- Version 1.0.0 ---
 - version: 1.0.0 (current)
   package_content:
   - .gitlab-ci.yml
   - gitlab-ci/pipeline_vars.yaml
+  - test-data/test-file.md
