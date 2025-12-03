@@ -56,6 +56,7 @@ public class ExpressionLanguage extends AbstractLanguage {
 
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("(?<!\\\\)(\\\\\\\\)*(\\$)");
     private static final Pattern SECURED_PATTERN = Pattern.compile("(?:\\u0096)(?s)(.*)(?:\\u0097)");
+    private static final Pattern PURE_VAR_REF_PATTERN = Pattern.compile("^\\$\\{([a-zA-Z_][a-zA-Z0-9_.]*)\\}$");
     private final ObjectMapper mapper = new ObjectMapper();
     private boolean insecure;
 
@@ -202,6 +203,31 @@ public class ExpressionLanguage extends AbstractLanguage {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private Parameter resolveVariablePath(String varPath, Map<String, Parameter> binding) {
+        if (!varPath.contains(".")) {
+            return binding.get(varPath);
+        }
+        String[] parts = varPath.split("\\.");
+        Parameter current = binding.get(parts[0]);
+        for (int i = 1; i < parts.length && current != null; i++) {
+            Object value = current.getValue();
+            if (value instanceof Map) {
+                Object next = ((Map<String, Object>) value).get(parts[i]);
+                if (next instanceof Parameter) {
+                    current = (Parameter) next;
+                } else if (next != null) {
+                    current = new Parameter(next);
+                } else {
+                    current = null;
+                }
+            } else {
+                current = null;
+            }
+        }
+        return current;
+    }
+
     private Parameter processValue(Object value, Map<String, Parameter> binding, boolean escapeDollar)
             throws IOException {
         if (value instanceof Parameter && ((Parameter) value).isProcessed()) {
@@ -216,6 +242,22 @@ public class ExpressionLanguage extends AbstractLanguage {
         if (val instanceof String) {
             String strValue = (String) val;
 
+            Matcher pureVarMatcher = PURE_VAR_REF_PATTERN.matcher(strValue.trim());
+            if (pureVarMatcher.matches()) {
+                String varPath = pureVarMatcher.group(1);
+                Parameter referencedParam = resolveVariablePath(varPath, binding);
+                if (referencedParam != null && referencedParam.getValue() != null) {
+                    Object refValue = referencedParam.getValue();
+                    if (!(refValue instanceof String) || !EXPRESSION_PATTERN.matcher((String) refValue).find()) {
+                        log.debug("Preserving type {} for variable reference: {}", refValue.getClass().getSimpleName(), strValue);
+                        Parameter ret = new Parameter(value);
+                        ret.setValue(refValue);
+                        ret.setProcessed(true);
+                        ret.setSecured(getIsSecured(value) || referencedParam.isSecured());
+                        return ret;
+                    }
+                }
+            }
 
             String jinJavaRendered = "";
             try {
