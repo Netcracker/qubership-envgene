@@ -1,0 +1,190 @@
+core-extensions-gateway-config:
+  ARTIFACT_DESCRIPTOR_VERSION: release-2025.3-9.16.0-20250617.073656-1-RELEASE
+  CPU_LIMIT: '1'
+  CPU_REQUEST: 100m
+  DEPLOYMENT_RESOURCE_NAME: core-extensions-gateway-config-v1
+  DEPLOYMENT_VERSION: v1
+  MEMORY_LIMIT: 64Mi
+  MEMORY_REQUEST: 64Mi
+  REPLICAS: 1
+  SERVICE_NAME: core-extensions-gateway-config
+cr-synchonizer:
+  ARTIFACT_DESCRIPTOR_VERSION: release-2025.3-9.16.0-20250617.073656-1-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: cr-synchonizer-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactorycn.netcracker.com:17004/cloud-core/cr-synchonizer-assembly-master:build44
+  IMAGE_REPOSITORY: artifactorycn.netcracker.com:17004/cloud-core/cr-synchonizer-assembly-master
+  SERVICE_NAME: cr-synchonizer
+  TAG: build44
+dictionaries-provider-backend:
+  ARTIFACT_DESCRIPTOR_VERSION: release-2025.3-9.16.0-20250617.073656-1-RELEASE
+  CPU_LIMIT: 500m
+  CPU_REQUEST: 50m
+  DEPLOYMENT_RESOURCE_NAME: dictionaries-provider-backend-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactorycn.netcracker.com:17004/cloud-core/dictionaries-provider-backend-assembly-release-2025.3-9.16.0:build2
+  HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
+  HPA_ENABLED: false
+  HPA_MAX_REPLICAS: 5
+  HPA_MIN_REPLICAS: 1
+  HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS: -1
+  HPA_SCALING_DOWN_PERCENT_VALUE: 100
+  HPA_SCALING_DOWN_PODS_PERIOD_SECONDS: 60
+  HPA_SCALING_DOWN_PODS_VALUE: 1
+  HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS: 300
+  HPA_SCALING_UP_PERCENT_PERIOD_SECONDS: -1
+  HPA_SCALING_UP_PERCENT_VALUE: 100
+  HPA_SCALING_UP_PODS_PERIOD_SECONDS: 60
+  HPA_SCALING_UP_PODS_VALUE: 1
+  HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS: 60
+  IMAGE_REPOSITORY: artifactorycn.netcracker.com:17004/cloud-core/dictionaries-provider-backend-assembly-release-2025.3-9.16.0
+  MEMORY_LIMIT: 192Mi
+  REPLICAS: 1
+  SERVICE_NAME: dictionaries-provider-backend
+  TAG: build2
+  TMF_CACHE_DURATION_SEC: '30'
+metamodel-provider-backend:
+  ARTIFACT_DESCRIPTOR_VERSION: release-2025.3-9.16.0-20250617.073656-1-RELEASE
+  CPU_LIMIT: 500m
+  CPU_REQUEST: 30m
+  DEPLOYMENT_RESOURCE_NAME: metamodel-provider-backend-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactorycn.netcracker.com:17004/cloud-core/metamodel-provider-backend-assembly-release-2025.3-9.16.0:build2
+  HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
+  HPA_ENABLED: false
+  HPA_MAX_REPLICAS: 5
+  HPA_MIN_REPLICAS: 1
+  HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS: -1
+  HPA_SCALING_DOWN_PERCENT_VALUE: 100
+  HPA_SCALING_DOWN_PODS_PERIOD_SECONDS: 60
+  HPA_SCALING_DOWN_PODS_VALUE: 1
+  HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS: 300
+  HPA_SCALING_UP_PERCENT_PERIOD_SECONDS: -1
+  HPA_SCALING_UP_PERCENT_VALUE: 100
+  HPA_SCALING_UP_PODS_PERIOD_SECONDS: 60
+  HPA_SCALING_UP_PODS_VALUE: 1
+  HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS: 60
+  IMAGE_REPOSITORY: artifactorycn.netcracker.com:17004/cloud-core/metamodel-provider-backend-assembly-release-2025.3-9.16.0
+  MEMORY_LIMIT: 128Mi
+  REPLICAS: 1
+  SERVICE_NAME: metamodel-provider-backend
+  TAG: build2
+platform-bootstrap-cli:
+  ARTIFACT_DESCRIPTOR_VERSION: release-2025.3-9.16.0-20250617.073656-1-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: platform-bootstrap-cli-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactorycn.netcracker.com:17004/cloud-core/platform-bootstrap-cli-assembly-master:build7
+  IMAGE_REPOSITORY: artifactorycn.netcracker.com:17004/cloud-core/platform-bootstrap-cli-assembly-master
+  SERVICE_NAME: platform-bootstrap-cli
+  TAG: build7
+platform-scripts-cli:
+  ARTIFACT_DESCRIPTOR_VERSION: release-2025.3-9.16.0-20250617.073656-1-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: platform-scripts-cli-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactorycn.netcracker.com:17004/cloud-core/platform-scripts-cli-assembly-release-2024.3-1.1.6:build2
+  IMAGE_REPOSITORY: artifactorycn.netcracker.com:17004/cloud-core/platform-scripts-cli-assembly-release-2024.3-1.1.6
+  SERVICE_NAME: platform-scripts-cli
+  TAG: build2
+samples-repository:
+  ARTIFACT_DESCRIPTOR_VERSION: release-2025.3-9.16.0-20250617.073656-1-RELEASE
+  CPU_LIMIT: '1'
+  CPU_REQUEST: 150m
+  DEPLOYMENT_RESOURCE_NAME: samples-repository-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactorycn.netcracker.com:17004/cloud-core/samples-repository-assembly-release-2025.3-9.16.0:build2
+  HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
+  HPA_ENABLED: false
+  HPA_MAX_REPLICAS: 5
+  HPA_MAX_REPLICAS_KK: 5
+  HPA_MIN_REPLICAS: 1
+  HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS: -1
+  HPA_SCALING_DOWN_PERCENT_VALUE: 100
+  HPA_SCALING_DOWN_PODS_PERIOD_SECONDS: 60
+  HPA_SCALING_DOWN_PODS_VALUE: 1
+  HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS: 300
+  HPA_SCALING_UP_PERCENT_PERIOD_SECONDS: -1
+  HPA_SCALING_UP_PERCENT_VALUE: 100
+  HPA_SCALING_UP_PODS_PERIOD_SECONDS: 60
+  HPA_SCALING_UP_PODS_VALUE: 1
+  HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS: 60
+  IMAGE_REPOSITORY: artifactorycn.netcracker.com:17004/cloud-core/samples-repository-assembly-release-2025.3-9.16.0
+  MEMORY_LIMIT: 555Mi
+  MEM_ARGS: -XX:+UseSerialGC -XX:+UnlockExperimentalVMOptions -XX:TieredStopAtLevel=1
+    -XX:CICompilerCount=2 -Xms64m -Xmx288m -Xss256k -XX:MetaspaceSize=86m -XX:MaxMetaspaceSize=180m
+    -XX:ReservedCodeCacheSize=20M -XX:CompressedClassSpaceSize=20M -XX:MinMetaspaceExpansion=1M
+    -XX:MaxMetaspaceExpansion=8M -XX:CodeCacheExpansionSize=256k -XX:+UseStringDeduplication
+    -XX:MaxDirectMemorySize=40M -Dserver.tomcat.max-threads=50
+  PG_IDLE_TIMEOUT: 300000
+  PG_MAX_POOL_SIZE: 10
+  PG_MIN_IDLE: 0
+  REPLICAS: '3'
+  SERVICE_NAME: samples-repository
+  TAG: build2
+  ___comment: (288 + 120 + 20 + 40) * 1.2 = 468 * 1.2 = 561.6 (-Xmx + -XX:MaxMetaspaceSize
+    + -XX:ReservedCodeCacheSize + -XX:MaxDirectMemorySize) * 1.2
+  resources:
+    requests:
+      cpu: 101m
+      memory: 111Mi
+      memory1: 121Mi
+security-scripts-cli:
+  ARTIFACT_DESCRIPTOR_VERSION: release-2025.3-9.16.0-20250617.073656-1-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: security-scripts-cli-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactorycn.netcracker.com:17004/cloud-core/security-scripts-cli-assembly-release-2024.3-5.5.12:build2
+  IMAGE_REPOSITORY: artifactorycn.netcracker.com:17004/cloud-core/security-scripts-cli-assembly-release-2024.3-5.5.12
+  SERVICE_NAME: security-scripts-cli
+  TAG: build2
+tenant-self-service-backend:
+  ARTIFACT_DESCRIPTOR_VERSION: release-2025.3-9.16.0-20250617.073656-1-RELEASE
+  CPU_LIMIT: 500m
+  CPU_REQUEST: 100m
+  DEPLOYMENT_RESOURCE_NAME: tenant-self-service-backend-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactorycn.netcracker.com:17004/cloud-core/tenant-self-service-backend-assembly-release-2025.3-9.16.0:build2
+  HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
+  HPA_ENABLED: false
+  HPA_MAX_REPLICAS: 5
+  HPA_MIN_REPLICAS: 1
+  HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS: -1
+  HPA_SCALING_DOWN_PERCENT_VALUE: 100
+  HPA_SCALING_DOWN_PODS_PERIOD_SECONDS: 60
+  HPA_SCALING_DOWN_PODS_VALUE: 1
+  HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS: 300
+  HPA_SCALING_UP_PERCENT_PERIOD_SECONDS: -1
+  HPA_SCALING_UP_PERCENT_VALUE: 100
+  HPA_SCALING_UP_PODS_PERIOD_SECONDS: 60
+  HPA_SCALING_UP_PODS_VALUE: 1
+  HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS: 60
+  IMAGE_REPOSITORY: artifactorycn.netcracker.com:17004/cloud-core/tenant-self-service-backend-assembly-release-2025.3-9.16.0
+  MEMORY_LIMIT: 150Mi
+  REPLICAS: 1
+  SERVICE_NAME: tenant-self-service-backend
+  TAG: build2
+tenant-self-service-frontend:
+  ARTIFACT_DESCRIPTOR_VERSION: release-2025.3-9.16.0-20250617.073656-1-RELEASE
+  CPU_LIMIT: 500m
+  CPU_REQUEST: 100m
+  DEPLOYMENT_RESOURCE_NAME: tenant-self-service-frontend-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactorycn.netcracker.com:17004/cloud-core/tenant-self-service-frontend-assembly-release-2025.3-9.16.0:build2
+  HPA_AVG_CPU_UTILIZATION_TARGET_PERCENT: 75
+  HPA_ENABLED: false
+  HPA_MAX_REPLICAS: 5
+  HPA_MIN_REPLICAS: 1
+  HPA_SCALING_DOWN_PERCENT_PERIOD_SECONDS: -1
+  HPA_SCALING_DOWN_PERCENT_VALUE: 100
+  HPA_SCALING_DOWN_PODS_PERIOD_SECONDS: 60
+  HPA_SCALING_DOWN_PODS_VALUE: 1
+  HPA_SCALING_DOWN_STABILIZATION_WINDOW_SECONDS: 300
+  HPA_SCALING_UP_PERCENT_PERIOD_SECONDS: -1
+  HPA_SCALING_UP_PERCENT_VALUE: 100
+  HPA_SCALING_UP_PODS_PERIOD_SECONDS: 60
+  HPA_SCALING_UP_PODS_VALUE: 1
+  HPA_SCALING_UP_STABILIZATION_WINDOW_SECONDS: 60
+  IMAGE_REPOSITORY: artifactorycn.netcracker.com:17004/cloud-core/tenant-self-service-frontend-assembly-release-2025.3-9.16.0
+  MEMORY_LIMIT: 64Mi
+  NGINX_WORKER_PROCESSES: 1
+  REPLICAS: 1
+  SERVICE_NAME: tenant-self-service-frontend
+  TAG: build2

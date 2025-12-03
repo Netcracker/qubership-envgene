@@ -1,0 +1,12 @@
+bg_domain: {}
+cluster:
+  api_port: None
+  api_url: None
+  protocol: ''
+  public_url: None
+composite_structure: {}
+environments:
+  example-cloud/env-1:
+    namespaces:
+      env-1-core:
+        deployPostfix: core
