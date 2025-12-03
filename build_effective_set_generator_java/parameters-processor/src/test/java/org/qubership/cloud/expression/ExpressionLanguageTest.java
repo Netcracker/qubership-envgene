@@ -566,4 +566,33 @@ public class ExpressionLanguageTest extends BindingBaseTest {
         processMap.setAccessible(true);
         assertEquals("{GLOBAL_RESOURCE_PROFILE={key1=value1, key2=value2}}", processMap.invoke(el, binding, binding, true).toString());
     }
+    @Test
+    void testTypePreservation_IntegerType() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Binding binding = new Binding("true");
+        binding.put("MONGO_DB_PORT", new Parameter(27017));
+        binding.put("DUMPS_MONGO_PORT", new Parameter("${MONGO_DB_PORT}"));
+
+        ExpressionLanguage el = new ExpressionLanguage(binding);
+        Method processValue = ExpressionLanguage.class.getDeclaredMethod("processValue", Object.class);
+        processValue.setAccessible(true);
+        Parameter result = (Parameter) processValue.invoke(el, binding.get("DUMPS_MONGO_PORT"));
+
+        assertThat(result.getValue(), instanceOf(Integer.class));
+        assertEquals(27017, result.getValue());
+    }
+
+    @Test
+    void testTypePreservation_ConcatenatedExpressionProducesString() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Binding binding = new Binding("true");
+        binding.put("PORT", new Parameter(8080));
+        binding.put("PORT_STRING", new Parameter("${PORT}_suffix"));
+
+        ExpressionLanguage el = new ExpressionLanguage(binding);
+        Method processValue = ExpressionLanguage.class.getDeclaredMethod("processValue", Object.class);
+        processValue.setAccessible(true);
+        Parameter result = (Parameter) processValue.invoke(el, binding.get("PORT_STRING"));
+
+        assertThat(result.getValue(), instanceOf(String.class));
+        assertEquals("8080_suffix", result.getValue());
+    }
 }
