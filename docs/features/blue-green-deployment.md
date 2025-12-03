@@ -202,8 +202,8 @@ The `bg_manage` job checks that Blue-Green Domain state transitions are correct,
 |---------------------- |------------------------------------------- |------------------------------------------|
 | `(ACTIVE, NONE)`      | `(ACTIVE, IDLE)`                           | Init domain                              |
 | `(ACTIVE, IDLE)`      | `(ACTIVE, CANDIDATE)`, `(ACTIVE, FAILEDW)` | Warmup, Warmup failure                   |
+| `(ACTIVE, IDLE)`      | `(ACTIVE, IDLE)`                           | TBD                                      |
 | `(ACTIVE, CANDIDATE)` | `(LEGACY, ACTIVE)`, `(ACTIVE, FAILEDC)`    | Promote, Promote failure                 |
-| `(ACTIVE, CANDIDATE)` | `(ACTIVE, CANDIDATE)`                      | TBD                                      |
 | `(LEGACY, ACTIVE)`    | `(IDLE, ACTIVE)`, `(FAILEDC, ACTIVE)`      | Commit, Rollback failure                 |
 | `(IDLE, ACTIVE)`      | `(CANDIDATE,ACTIVE)`, `(FAILEDW,ACTIVE)`   | Reverse warmup, Reverse Warmup failure   |
 | `(CANDIDATE, ACTIVE)` | `(ACTIVE, LEGACY)`, `(FAILEDC, ACTIVE)`    | Reverse Promote, Reverse Promote failure |
