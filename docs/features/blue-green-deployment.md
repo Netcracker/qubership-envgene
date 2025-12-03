@@ -269,7 +269,7 @@ bg_domain:
     password: pass-placeholder-123
 ```
 
-Please refer to the [Effective Set](https://github.com/Netcracker/qubership-envgene/blob/main/docs/calculator-cli.md#version-20topology-context-bg_domain-example) documentation for more details.
+Please refer to the [Effective Set](/docs/features/calculator-cli.md#version-20topology-context-bg_domain-example) documentation for more details.
 
 ### BG Related Macros
 
