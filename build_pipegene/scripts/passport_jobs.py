@@ -38,7 +38,7 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
         "name": f'get_passport.{full_env}',
         "image": '${envgen_image}',
         "stage": 'process_passport',
-        "script": ['python3 /scripts/cloud_passport/main.py --env_name "$ENV_NAME",',
+        "script": ['python3 /cloud_passport/scripts/main.py --env_name "$ENV_NAME",',
                    "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
                    'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
                    'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
@@ -56,7 +56,9 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
         "module_config_default": "/module/templates/defaults.yaml",
         "COMMIT_ENV": "false",
         "COMMIT_MESSAGE": f"[ci_skip] update cloud passport for {cluster_name}",
-        "GITLAB_RUNNER_TAG_NAME": tags
+        "GITLAB_RUNNER_TAG_NAME": tags,
+        "module_ansible_dir": "/module/ansible",
+        "module_ansible_cfg": "/module/ansible/ansible.cfg"
     }
     get_passport_job = job_instance(params=get_passport_params, vars=get_passport_vars)
     base = "${CI_PROJECT_DIR}/environments"

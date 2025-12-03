@@ -7,7 +7,7 @@ from gcip import Pipeline
 import pipeline_helper
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 
-from cloud_passport.passport_jobs import prepare_trigger_passport_job, prepare_passport_job
+from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from credential_rotation_job import prepare_credential_rotation_job

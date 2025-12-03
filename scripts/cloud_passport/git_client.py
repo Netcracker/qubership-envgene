@@ -1,10 +1,29 @@
+import os
+import shutil
 from pathlib import Path
-from git import Repo, GitCommandError
-from python.envgene.envgenehelper.http_helper import ApiClient, download_file
+
+from git import GitCommandError, Repo
+
+from envgenehelper.http_helper import ApiClient
 
 
 class GitRepoManager:
-    def __init__(self, repo_path, git_user_email, git_user_name, git_token, server_host, project_path, branch):
+    def __init__(
+            self,
+            repo_path,
+            git_token,
+            git_user_email=None,
+            git_user_name=None,
+            server_host=None,
+            project_path=None,
+            branch=None,
+    ):
+        git_user_email = git_user_email or os.getenv("GITLAB_USER_EMAIL")
+        git_user_name = git_user_name or os.getenv("GITLAB_USER_LOGIN")
+        server_host = server_host or os.getenv("CI_SERVER_HOST")
+        project_path = project_path or os.getenv("CI_PROJECT_PATH")
+        branch = branch or os.getenv("CI_COMMIT_REF_NAME")
+
         self.repo_path = Path(repo_path)
         self.git_user_email = git_user_email
         self.git_user_name = git_user_name
@@ -12,6 +31,7 @@ class GitRepoManager:
         self.server_host = server_host
         self.project_path = project_path
         self.branch = branch
+
         self.repo = Repo(self.repo_path)
 
     def prepare_repo(self):
@@ -23,7 +43,6 @@ class GitRepoManager:
 
         rebase_dir = self.repo_path / ".git/rebase-merge"
         if rebase_dir.exists():
-            import shutil
             shutil.rmtree(rebase_dir)
 
         push_url = f"https://project_32647_bot:{self.git_token}@{self.server_host}/{self.project_path}.git"
@@ -39,9 +58,9 @@ class GitRepoManager:
 
 
 class GitLabClient:
-    def __init__(self, token: str, api_url: str):
+    def __init__(self, token: str):
         self.token = token
-        self.api_url = api_url.rstrip("/")
+        self.api_url = os.getenv("CI_API_V4_URL").rstrip("/")
         self.http = ApiClient()
 
     @property

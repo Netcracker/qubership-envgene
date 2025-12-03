@@ -1,7 +1,7 @@
 import requests
 from pathlib import Path
 
-from python.envgene.envgenehelper.errors import IntegrationError
+from envgenehelper.errors import IntegrationError
 
 
 class ApiClient:
