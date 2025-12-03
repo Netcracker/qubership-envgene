@@ -1,5 +1,4 @@
 from os import getenv
-from pprint import pformat
 
 from envgenehelper.plugin_engine import PluginEngine
 
@@ -41,5 +40,5 @@ class PipelineParametersHandler:
     def get_params_str(self) -> str:
         result = ''
         for k, v in self.params.items():
-            result += f"\n{k.upper()}: {pformat(v)}"
+            result += f"\n{k.upper()}: {v}"
         return result

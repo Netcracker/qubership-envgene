@@ -1,5 +1,4 @@
 import click
-import re
 
 from envgenehelper import logger
 from validations import validate_pipeline
@@ -11,15 +10,25 @@ def cli():
 
 def prepare_input_params() -> dict:
     pipe_params = PipelineParametersHandler()
-    params_log = ("Input parameters are: ")
-    params_log += pipe_params.get_params_str()
-    params_log = re.sub(r'(CRED_ROTATION_PAYLOAD=)[^, ]+', r'\1***', params_log)
-    logger.info(params_log)
     return pipe_params.params
+
+def log_pipeline_params(params: dict):
+    logger.info("Input parameters are: ")
+    
+    params_cp = params.copy()
+    if params_cp.get("CRED_ROTATION_PAYLOAD"):
+        params_cp["CRED_ROTATION_PAYLOAD"] = "***"
+        
+    params_str = ""
+    for k, v in params_cp.items():
+        params_str += f"\n{k.upper()}: {v}"
+
+    logger.info(params_str)
 
 @cli.command("validate_pipeline")
 def validate_pipeline_command():
     params = prepare_input_params()
+    log_pipeline_params(params)
     validate_pipeline(params)
 
 if __name__ == "__main__":

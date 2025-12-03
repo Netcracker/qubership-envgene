@@ -1,5 +1,4 @@
 import click
-import re
 
 from envgenehelper import logger
 from gitlab_ci import build_pipeline
@@ -12,11 +11,20 @@ def gcip():
 
 def prepare_input_params() -> dict:
     pipe_params = PipelineParametersHandler()
-    params_log = ("Input parameters are: ")
-    params_log += pipe_params.get_params_str()
-    params_log = params_log = re.sub(r"(CRED_ROTATION_PAYLOAD:\s*)\(.*?\)", r"\1***", params_log, flags=re.DOTALL)
-    logger.info(params_log)
     return pipe_params.params
+
+def log_pipeline_params(params: dict):
+    logger.info("Input parameters are: ")
+    
+    params_cp = params.copy()
+    if params_cp.get("CRED_ROTATION_PAYLOAD"):
+        params_cp["CRED_ROTATION_PAYLOAD"] = "***"
+        
+    params_str = ""
+    for k, v in params_cp.items():
+        params_str += f"\n{k.upper()}: {v}"
+
+    logger.info(params_str)
 
 @gcip.command("generate_pipeline")
 def generate_pipeline():
@@ -24,6 +32,7 @@ def generate_pipeline():
 
 def perform_generation():
     params = prepare_input_params()
+    log_pipeline_params(params)
     validate_pipeline(params)
     build_pipeline(params)
 
