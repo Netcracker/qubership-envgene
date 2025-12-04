@@ -258,9 +258,8 @@ public class ExpressionLanguage extends AbstractLanguage {
         return ret;
     }
 
-    // Extracts variable name from parameter reference patterns: ${VAR}, $VAR, or <% VAR %>.
-    // Returns null if not a parameter reference.
-
+    // Extracts variable name from parameter reference patterns: ${VAR}, $VAR, or <% VAR %> or else returns null if not a parameter reference.
+  
     private String extractParameterReference(String value) {
         if (value == null) {
             return null;
@@ -291,8 +290,7 @@ public class ExpressionLanguage extends AbstractLanguage {
     }
 
     
-    // For references like ${VAR} or $VAR pointing to non-String values (Integer, Boolean and etc)
-    // returns a Parameter with the preserved type instead of converting to String.
+    // For references like ${VAR} or $VAR pointing to non-String values returns a Parameter with the preserved type instead of converting to String.
     // Returns null if type preservation is not applicable.
     private Parameter tryPreserveType(Object value, Map<String, Parameter> binding) {
         Object val = getValue(value);
@@ -361,7 +359,7 @@ public class ExpressionLanguage extends AbstractLanguage {
     }
 
     private Object removeEscaping(boolean escapeDollar, Object val) throws JsonProcessingException {
-        // Only process escaping for String values - non-String types (Integer, Boolean, etc.) don't need escape processing and should preserve their original type
+        // Only process escaping for String values - non-String types (like Integer and Boolean) don't need escape processing and should preserve their original type
         if (escapeDollar && val instanceof String) {
             String strValue = (String) val;
             strValue = strValue.replaceAll("\\\\\\$", "\\$"); // \$ -> $
