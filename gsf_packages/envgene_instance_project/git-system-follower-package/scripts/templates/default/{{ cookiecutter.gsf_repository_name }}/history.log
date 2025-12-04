@@ -4,3 +4,4 @@
   - .gitignore
   - .gitlab-ci.yml
   - gitlab-ci/pipeline_vars.yaml
+  - new_file.md
