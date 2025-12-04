@@ -3,4 +3,6 @@
   package_content:
   - .gitignore
   - .gitlab-ci.yml
+  - git_hooks/crypt.py
+  - git_hooks/pre-commit
   - gitlab-ci/pipeline_vars.yaml
