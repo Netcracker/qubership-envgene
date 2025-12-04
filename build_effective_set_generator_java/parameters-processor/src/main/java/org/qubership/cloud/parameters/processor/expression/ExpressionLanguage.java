@@ -77,17 +77,21 @@ public class ExpressionLanguage extends AbstractLanguage {
         this.insecure = true;
         this.gStringToJinJavaTranslator = new GStringToJinJavaTranslator();
 
-        // CRITICAL FIX: Only translate String values for JinJava
-        // Non-String types (Integer, Long, Boolean) should NOT be translated
-        // as this would cause them to be wrapped in GString and converted to String
+        // CRITICAL FIX: Collect translations first to avoid concurrent modification
+        // Only translate String values - preserve Integer, Long, Boolean, etc.
+        Map<String, Parameter> translatedParams = new HashMap<>();
         this.binding.forEach((key1, value) -> {
             Object actualValue = value.getValue();
             // Only translate if it's a String or complex type that might contain expressions
             if (actualValue instanceof String || actualValue instanceof Map || actualValue instanceof List) {
-                this.binding.put(key1, translateParameter(actualValue));
+                translatedParams.put(key1, translateParameter(value));
             }
-            // For primitive types (Integer, Long, Boolean, etc.), keep the original Parameter unchanged
+            // For primitive types (Integer, Long, Boolean, etc.), don't add to translatedParams
+            // so they stay unchanged in binding
         });
+        
+        // Apply all translations at once
+        translatedParams.forEach(this.binding::put);
     }
 
     private Parameter translateParameter(Object value) {
@@ -214,11 +218,11 @@ public class ExpressionLanguage extends AbstractLanguage {
 
     @SuppressWarnings("unchecked")
     private Parameter resolveVariablePath(String varPath, Map<String, Parameter> binding) {
+        // Handle simple variable names (e.g., "MONGO_DB_PORT")
         if (!varPath.contains(".")) {
             Parameter result = binding.get(varPath);
             // Ensure we return the parameter with its original type intact
             if (result != null && result.getValue() != null) {
-                // If the parameter was already processed and type-converted, preserve the original
                 Object val = result.getValue();
                 // Don't let GString conversion affect non-String types
                 if (!(val instanceof String) && result.isProcessed()) {
@@ -227,8 +231,12 @@ public class ExpressionLanguage extends AbstractLanguage {
             }
             return result;
         }
+        
+        // Handle nested paths (e.g., "config.database.port")
         String[] parts = varPath.split("\\.");
         Parameter current = binding.get(parts[0]);
+        
+        // Navigate through the nested path
         for (int i = 1; i < parts.length && current != null; i++) {
             Object value = current.getValue();
             if (value instanceof Map) {
