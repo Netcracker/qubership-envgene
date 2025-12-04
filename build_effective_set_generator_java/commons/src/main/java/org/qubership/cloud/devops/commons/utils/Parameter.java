@@ -115,6 +115,15 @@ public class Parameter extends GString {
     }
 
     @Override
+    public Object[] getValues() {
+        // CRITICAL: Return the actual value object to preserve its type
+        // DO NOT convert to String here - that would lose Integer/Long/Boolean types
+        if (value == null) return new Object[]{};
+        // Return the raw value to maintain type information
+        return new Object[]{value};
+    }
+
+    @Override
     public String toString() {
         if (translated != null && !translated.isEmpty()) {
             if (secured) {
