@@ -1,101 +1,113 @@
 package org.qubership.cloud.devops.cli;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.quarkus.picocli.runtime.annotations.TopCommand;
-import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-import org.qubership.cloud.devops.cli.parser.CliParameterParser;
-import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
-import org.qubership.cloud.devops.cli.repository.implementation.FileDataRepositoryImpl;
+import picocli.CommandLine;
 
+import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
-import java.util.Comparator;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
 
-import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @QuarkusTest
 public class CmdbCliTest {
 
-    @Inject @TopCommand
-    CmdbCli cmdbCli;
-
-    @Inject
-    SharedData sharedData;
-
-    @InjectMock
-    FileDataRepositoryImpl fileDataRepository;
-
-    CliParameterParser parser;
-
     private final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
 
+    @TopCommand
+    @Inject
+    CmdbCli cli;
+
     @Test
-    void testEffectiveSetFolderGeneration() throws Exception {
-        // Mock parser to copy folder
-        parser = Mockito.mock(CliParameterParser.class);
-        cmdbCli.parser = parser;
-        Mockito.doNothing().when(fileDataRepository).prepareProcessingEnv();
-        Mockito.doAnswer(invocation -> {
-            Path outputDir = Path.of(cmdbCli.envParams.outputDir);
-            Files.createDirectories(outputDir);
-            Path source = Paths.get(getClass().getClassLoader().getResource("expected-folder").toURI());
-            Files.walk(source).forEach(src -> {
-                try {
-                    Path dest = outputDir.resolve(source.relativize(src));
-                    if (Files.isDirectory(src)) Files.createDirectories(dest);
-                    else Files.copy(src, dest, REPLACE_EXISTING);
-                } catch (Exception e) { throw new RuntimeException(e); }
-            });
-            return null;
-        }).when(parser).generateEffectiveSet();
+    void testGenerateEffectiveSet() throws Exception {
+        ClassLoader classLoader = getClass().getClassLoader();
 
-        // CLI args
-        CmdbCli.EnvCommandSpace env = new CmdbCli.EnvCommandSpace();
-        env.envId = "example/env-1";
-        env.envsPath = "src/test/resources/";
-        env.outputDir = "target/effective-set-output";
-        env.version = "v2.0";
-        env.extraParams = new String[]{"DEPLOYMENT_SESSION_ID=ABC123"};
-        cmdbCli.envParams = env;
+        Path envsPath = Paths.get(classLoader.getResource("environments").toURI());
+        Path sbomsPath = Paths.get(classLoader.getResource("sboms").toURI());
+        Path solutionSbomPath = Paths.get(classLoader.getResource(
+                "environments/cluster-01/pl-01/Inventory/solution-descriptor/solution.sbom.json").toURI());
+        Path registriesPath = Paths.get(classLoader.getResource("configuration/registry.yml").toURI());
+        Path outputPath = Paths.get("target/test-output/cluster-01/pl-01/effective-set");
+        Files.createDirectories(outputPath);
 
-        // Act
-        int code = cmdbCli.call();
+        CommandLine cmd = new CommandLine(cli);
 
-        // Assert shared data
-        assertEquals(0, code);
-        assertEquals("example/env-1", sharedData.getEnvId());
-        assertEquals("ABC123", sharedData.getDeploymentSessionId());
-        Mockito.verify(fileDataRepository).prepareProcessingEnv();
-        Mockito.verify(parser).generateEffectiveSet();
+        int exitCode = cmd.execute(
+                "--env-id", "cluster-01/pl-01",
+                "--envs-path", envsPath.toString(),
+                "--sboms-path", sbomsPath.toString(),
+                "--solution-sbom-path", solutionSbomPath.toString(),
+                "--registries", registriesPath.toString(),
+                "--output", outputPath.toString(),
+                "--effective-set-version", "v2.0",
+                "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
+                "--app_chart_validation", "false"
+        );
+
+        assertEquals(0, exitCode);
 
         // Compare folders recursively
-        Path generated = Path.of(env.outputDir);
-        Path expected = Paths.get(getClass().getClassLoader().getResource("expected-folder").toURI());
-        Files.walk(expected).forEach(path -> {
-            try {
-                Path rel = expected.relativize(path);
-                Path act = generated.resolve(rel);
-                assertTrue(Files.exists(act), "Missing: " + act);
-                if (Files.isRegularFile(path)) {
-                    if (path.toString().endsWith(".yaml") || path.toString().endsWith(".yml")) {
-                        try (InputStream inExp = Files.newInputStream(path);
-                             InputStream inAct = Files.newInputStream(act)) {
-                            assertEquals(yamlMapper.readTree(inExp), yamlMapper.readTree(inAct),
-                                    "YAML mismatch: " + act);
-                        }
-                    } else {
-                        assertArrayEquals(Files.readAllBytes(path), Files.readAllBytes(act),
-                                "File mismatch: " + act);
+        Path generated = outputPath;
+        Path expected = Paths.get(classLoader.getResource(
+                "environments/cluster-01/pl-01/effective-set").toURI());
+
+        compareFolders(expected, generated);
+    }
+
+    private void compareFolders(Path expected, Path generated) throws IOException {
+        Set<Path> expectedFiles = new HashSet<>();
+        Set<Path> generatedFiles = new HashSet<>();
+
+        // Collect expected files
+        try (var stream = Files.walk(expected)) {
+            stream.forEach(p -> expectedFiles.add(expected.relativize(p)));
+        }
+
+        // Collect generated files
+        try (var stream = Files.walk(generated)) {
+            stream.forEach(p -> generatedFiles.add(generated.relativize(p)));
+        }
+
+        // Check for missing files
+        for (Path rel : expectedFiles) {
+            Path expectedPath = expected.resolve(rel);
+            Path generatedPath = generated.resolve(rel);
+            assertTrue(Files.exists(generatedPath), "Missing file/folder: " + generatedPath);
+
+            if (Files.isRegularFile(expectedPath)) {
+                if (expectedPath.toString().endsWith(".yaml") || expectedPath.toString().endsWith(".yml")) {
+                    try (InputStream inExp = Files.newInputStream(expectedPath);
+                         InputStream inGen = Files.newInputStream(generatedPath)) {
+                        assertEquals(
+                                yamlMapper.readTree(inExp),
+                                yamlMapper.readTree(inGen),
+                                "YAML content mismatch: " + generatedPath
+                        );
                     }
+                } else {
+                    assertArrayEquals(
+                            Files.readAllBytes(expectedPath),
+                            Files.readAllBytes(generatedPath),
+                            "File content mismatch: " + generatedPath
+                    );
                 }
-            } catch (Exception e) { throw new RuntimeException(e); }
-        });
+            }
+        }
+
+        // Check for unexpected extra files
+        for (Path rel : generatedFiles) {
+            assertTrue(expectedFiles.contains(rel), "Unexpected file/folder: " + generated.resolve(rel));
+        }
     }
 }

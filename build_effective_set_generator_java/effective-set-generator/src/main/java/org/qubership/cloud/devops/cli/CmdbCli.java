@@ -118,7 +118,7 @@ public class CmdbCli implements Callable<Integer> {
     }
 
 
-    void populateDeploymentSessionId(String[] extraParams) {
+    private void populateDeploymentSessionId(String[] extraParams) {
         if (extraParams != null) {
             Arrays.stream(extraParams).forEach(key -> {
                 if (key.contains("DEPLOYMENT_SESSION_ID")) {
