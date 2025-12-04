@@ -77,8 +77,17 @@ public class ExpressionLanguage extends AbstractLanguage {
         this.insecure = true;
         this.gStringToJinJavaTranslator = new GStringToJinJavaTranslator();
 
-        this.binding.forEach((key1, value) ->
-                this.binding.put(key1, translateParameter(value.getValue())));
+        // CRITICAL FIX: Only translate String values for JinJava
+        // Non-String types (Integer, Long, Boolean) should NOT be translated
+        // as this would cause them to be wrapped in GString and converted to String
+        this.binding.forEach((key1, value) -> {
+            Object actualValue = value.getValue();
+            // Only translate if it's a String or complex type that might contain expressions
+            if (actualValue instanceof String || actualValue instanceof Map || actualValue instanceof List) {
+                this.binding.put(key1, translateParameter(actualValue));
+            }
+            // For primitive types (Integer, Long, Boolean, etc.), keep the original Parameter unchanged
+        });
     }
 
     private Parameter translateParameter(Object value) {
