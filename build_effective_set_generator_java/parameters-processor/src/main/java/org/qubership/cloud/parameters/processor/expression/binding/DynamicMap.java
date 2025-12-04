@@ -160,14 +160,14 @@ public abstract class DynamicMap implements Map<String, Parameter>, Serializable
                     .filter(app -> app.getAppName().equals(application))
                     .findFirst()
                     .ifPresent(appSet ->
-                            applicationMap.putAllStringsIfAbsent(appSet.getParameters(), origin));
+                            applicationMap.putAllIfAbsent(appSet.getParameters(), origin));
         }
     }
 
     protected void processSet(String tenant, String setName, String origin, EscapeMap map) {
         ParameterSet set = Injector.getInstance().getParameterSetService().getParameterSet(tenant, setName);
         if (set != null) {
-            map.putAllStringsIfAbsent(set.getParameters(), origin);
+            map.putAllIfAbsent(set.getParameters(), origin);
         }
     }
 }

@@ -89,11 +89,28 @@ public class EscapeMap extends LinkedHashMap<String, Parameter> {
      * @param m the map containing parameters with their original types
      * @param origin the origin string for tracking parameter source
      */
-    public void putAllObjects(Map<String, Object> m, String origin) {
-        if (m == null) return;
+    public void putAll(Map<String, Object> m, String origin) {
+        if (m == null) {
+            return;
+        }
         super.putAll(m.entrySet().stream()
                 .map(entry -> new AbstractMap.SimpleEntry<String, Parameter>(entry.getKey(), new Parameter(entry.getValue(), origin, false)))
                 .collect(Collectors.toMap(AbstractMap.SimpleEntry<String, Parameter>::getKey, AbstractMap.SimpleEntry<String, Parameter>::getValue)));
+    }
+
+    /**
+     * Puts all entries from the map if absent while preserving their original types.
+     *
+     * @param m the map containing parameters with their original types
+     * @param origin the origin string for tracking parameter source
+     */
+    public void putAllIfAbsent(Map<String, Object> m, String origin) {
+        if (m == null) {
+            return;
+        }
+        m.entrySet().stream()
+                .map(entry -> new AbstractMap.SimpleEntry<String, Parameter>(entry.getKey(), new Parameter(entry.getValue(), origin, false)))
+                .forEach(entry -> super.putIfAbsent(entry.getKey(), entry.getValue()));
     }
 }
 
