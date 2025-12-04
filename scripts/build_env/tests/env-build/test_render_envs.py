@@ -5,6 +5,7 @@ from envgenehelper import *
 
 from main import render_environment, cleanup_resulting_dir
 from tests.test_helpers import TestHelpers
+import yaml
 
 test_data = [
     # (cluster_name, environment_name, template)
@@ -40,6 +41,57 @@ def test_render_envs(cluster_name, env_name, version):
     files_to_compare = get_all_files_in_dir(source_dir)
     logger.info(dump_as_yaml_format(files_to_compare))
     TestHelpers.assert_dirs_content(source_dir, generated_dir, True, False)
+
+
+def test_render_envs_smoke():
+    """
+    Smoke test: run environment rendering for one input and print
+    file names and contents in the console.
+    """
+    logger.info("test_render_envs_smoke started") 
+
+    cluster_name = "cluster-01"
+    env_name = "pl-01"
+    version = "platform"
+
+    base_dir = Path(__file__).resolve().parents[4]
+    g_templates_dir = str((base_dir / "test_data/test_templates").resolve())
+    g_inventory_dir = str((base_dir / "test_data/test_environments").resolve())
+    g_output_dir = str((base_dir / "/tmp/test_environments").resolve())
+    g_base_dir = get_parent_dir_for_dir(g_inventory_dir)
+
+    # Cleanup output before running
+    output_path = Path(g_output_dir) / cluster_name / env_name
+    if output_path.exists():
+        shutil.rmtree(output_path)
+
+    # ---- Execute ----
+    render_environment(
+        env_name,
+        cluster_name,
+        g_templates_dir,
+        g_inventory_dir,
+        g_output_dir,
+        version,
+        g_base_dir
+    )
+
+    # ---- Print file names and contents ----
+    generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
+
+    for root, dirs, files in os.walk(generated_dir):
+        for name in files:
+            full_path = Path(root) / name
+            print(f"\n=== File: {full_path} ===\n")
+            try:
+                with open(full_path, "r", encoding="utf-8") as f:
+                    content = f.read()
+            except Exception as e:
+                content = f"Could not read file: {e}"
+
+            print(content)
+
+    logger.info("Smoke test completed — file names and contents printed on console.")
 
 
 def setup_test_dir(tmp_path):
