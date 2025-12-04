@@ -90,21 +90,37 @@ def update_history(history_path, version, package_files):
     
     # Only update history if there's a delta or if this is the first entry
     if has_delta:
-        # Remove "(current)" marker from all previous entries
-        for entry in history:
-            if isinstance(entry, dict) and 'version' in entry:
-                version_str = str(entry['version'])
-                if version_str.endswith(' (current)'):
-                    entry['version'] = version_str[:-10]  # Remove " (current)"
+        # Check if the last entry has the same version
+        should_update_existing = False
+        if last_entry:
+            last_version = clean_version(last_entry.get('version'))
+            if last_version == version:
+                # Same version - update existing entry instead of adding new one
+                should_update_existing = True
         
-        # Create new entry
-        new_entry = {
-            'version': f"{version} (current)",
-            'package_content': package_files
-        }
-        
-        # Append new entry
-        history.append(new_entry)
+        if should_update_existing:
+            # Update existing entry with same version
+            last_entry['version'] = f"{version} (current)"
+            last_entry['package_content'] = package_files
+            print(f"Updated existing entry for version {version} with new content")
+        else:
+            # Different version or first entry - add new entry
+            # Remove "(current)" marker from all previous entries
+            for entry in history:
+                if isinstance(entry, dict) and 'version' in entry:
+                    version_str = str(entry['version'])
+                    if version_str.endswith(' (current)'):
+                        entry['version'] = version_str[:-10]  # Remove " (current)"
+            
+            # Create new entry
+            new_entry = {
+                'version': f"{version} (current)",
+                'package_content': package_files
+            }
+            
+            # Append new entry
+            history.append(new_entry)
+            print(f"Added new entry for version {version}")
         
         # Write updated history with separators between versions
         with open(history_path, 'w', encoding='utf-8') as f:
@@ -123,7 +139,7 @@ def update_history(history_path, version, package_files):
                     f.write(f"  - {file_path}\n")
         
         print(f"Updated history.log with version {version}")
-        print(f"Added {len(package_files)} files to package_content")
+        print(f"Package content contains {len(package_files)} files")
     else:
         # No delta in files - check if version changed
         if last_entry:
