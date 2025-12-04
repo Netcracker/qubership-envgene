@@ -35,4 +35,4 @@ variables:
     description: "Will EnvGene generate Effective set"
     options:
       - "true"
-      - "false"    
+      - "false"
