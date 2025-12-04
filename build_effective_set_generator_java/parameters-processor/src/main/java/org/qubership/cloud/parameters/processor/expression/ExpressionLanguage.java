@@ -206,7 +206,17 @@ public class ExpressionLanguage extends AbstractLanguage {
     @SuppressWarnings("unchecked")
     private Parameter resolveVariablePath(String varPath, Map<String, Parameter> binding) {
         if (!varPath.contains(".")) {
-            return binding.get(varPath);
+            Parameter result = binding.get(varPath);
+            // Ensure we return the parameter with its original type intact
+            if (result != null && result.getValue() != null) {
+                // If the parameter was already processed and type-converted, preserve the original
+                Object val = result.getValue();
+                // Don't let GString conversion affect non-String types
+                if (!(val instanceof String) && result.isProcessed()) {
+                    return result;
+                }
+            }
+            return result;
         }
         String[] parts = varPath.split("\\.");
         Parameter current = binding.get(parts[0]);
@@ -257,17 +267,17 @@ public class ExpressionLanguage extends AbstractLanguage {
                 }
                 if (referencedParam != null && referencedParam.getValue() != null) {
                     Object refValue = referencedParam.getValue();
+                    // CRITICAL: Preserve non-String types (Integer, Long, Boolean, etc.) directly
+                    // Don't allow template rendering to convert them to strings
                     if (!(refValue instanceof String) || !EXPRESSION_PATTERN.matcher((String) refValue).find()) {
                         log.debug("Preserving type {} for variable reference: {}", refValue.getClass().getSimpleName(), strValue);
-                        Parameter ret = new Parameter(value);
-                        ret.setValue(refValue);
-                        ret.setProcessed(true);
+                        // Create a new Parameter with the exact type-preserved value
+                        Parameter ret = new Parameter(refValue, 
+                                referencedParam.getOrigin() != null ? referencedParam.getOrigin() : (value instanceof Parameter ? ((Parameter) value).getOrigin() : ""),
+                                true);  // marked as parsed to prevent further processing
+                        ret.setProcessed(true);  // marked as processed to prevent template rendering
                         ret.setSecured(getIsSecured(value) || referencedParam.isSecured());
-                        if (value instanceof Parameter) {
-                            Parameter origParam = (Parameter) value;
-                            ret.setOrigin(origParam.getOrigin() != null ? origParam.getOrigin() : referencedParam.getOrigin());
-                            ret.setParsed(origParam.isParsed() || referencedParam.isParsed());
-                        }
+                        ret.setValid(true);
                         return ret;
                     }
                 }

@@ -106,6 +106,11 @@ public class Parameter extends GString {
     public String[] getStrings() {
         if (value == null) return new String[]{""};
         if (secured) return new String[]{"\u0096" + value + "\u0097"};
+        // Only convert to String if value is already a String or if no other option
+        if (value instanceof String) {
+            return new String[]{(String) value};
+        }
+        // For non-String types (Integer, Long, Boolean, etc.), convert but mark for type preservation
         return new String[]{value.toString()};
     }
 
@@ -120,7 +125,11 @@ public class Parameter extends GString {
         }
 
         if (value != null) {
-            return super.toString();
+            // Preserve type information in toString() - don't use GString's toString()
+            if (value instanceof String) {
+                return (String) value;
+            }
+            return value.toString();
         }
         return "";
     }
