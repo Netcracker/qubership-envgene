@@ -250,10 +250,10 @@ public class ExpressionLanguage extends AbstractLanguage {
             Matcher pureVarMatcher = PURE_VAR_REF_PATTERN.matcher(strValue.trim());
             if (pureVarMatcher.matches()) {
                 String varPath = pureVarMatcher.group(1);
-                // First try to resolve from binding, then from current map being processed
-                Parameter referencedParam = resolveVariablePath(varPath, binding);
+                // Prefer already-processed value from current map, then fall back to the global binding
+                Parameter referencedParam = resolveVariablePath(varPath, currentMap);
                 if (referencedParam == null) {
-                    referencedParam = resolveVariablePath(varPath, currentMap);
+                    referencedParam = resolveVariablePath(varPath, binding);
                 }
                 if (referencedParam != null && referencedParam.getValue() != null) {
                     Object refValue = referencedParam.getValue();
