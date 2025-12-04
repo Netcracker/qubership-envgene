@@ -50,10 +50,7 @@ def _cleanup_old_package_files(parameters: Parameters, old_version_data: dict):
             continue
         
         # Skip protected files (they're part of the template but should never be deleted)
-        # Check if any protected file is in the path or if we're at root and filename matches
-        if rel_root == Path('.') and any(filename in PROTECTED_FILES for filename in filenames):
-            continue
-        # Check if any protected file name appears in the path parts
+        # Check if any protected file name appears in the path parts (but don't skip the entire directory)
         if any(protected_file in str(rel_root) for protected_file in PROTECTED_FILES):
             continue
         
@@ -138,6 +135,11 @@ def _cleanup_old_package_files(parameters: Parameters, old_version_data: dict):
             # Never delete .gitlab-ci.yml - it's a critical CI/CD file
             if file_path == '.gitlab-ci.yml':
                 print(f'Warning: Skipping deletion of {file_path} (critical CI/CD file)')
+                continue
+            
+            # Never delete .gitignore - it's a critical Git configuration file
+            if file_path == '.gitignore':
+                print(f'Warning: Skipping deletion of {file_path} (critical Git configuration file)')
                 continue
                 
             file_full_path = repo_root / file_path
@@ -274,10 +276,6 @@ def main(parameters: Parameters):
             
             # Skip .git directory itself
             if '.git' in rel_root.parts:
-                continue
-            
-            # Skip internal package files
-            if rel_root == Path('.') and any(fn in PROTECTED_FILES or fn == '.cookiecutterignore' for fn in filenames):
                 continue
             
             for filename in filenames:
