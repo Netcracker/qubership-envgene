@@ -1,1 +1,8 @@
 .DS_Store
+.gradle
+venv
+.git_hook_venv
+.idea
+/.project
+/encryption_key
+secret_key.txt
