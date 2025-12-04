@@ -266,32 +266,53 @@ public class ExpressionLanguage extends AbstractLanguage {
         if (val instanceof String) {
             String strValue = (String) val;
 
+            // CRITICAL FIX: Check for pure variable reference FIRST before any processing
+            // This prevents JinJava/Groovy from converting Integer/Long/Boolean to String
             Matcher pureVarMatcher = PURE_VAR_REF_PATTERN.matcher(strValue.trim());
             if (pureVarMatcher.matches()) {
                 String varPath = pureVarMatcher.group(1);
-                // Prefer already-processed value from current map, then fall back to the global binding
+                
+                // Try to resolve from current map first, then global binding
                 Parameter referencedParam = resolveVariablePath(varPath, currentMap);
                 if (referencedParam == null) {
                     referencedParam = resolveVariablePath(varPath, binding);
                 }
+                
+                // If we found a reference, check if we should preserve its type
                 if (referencedParam != null && referencedParam.getValue() != null) {
                     Object refValue = referencedParam.getValue();
-                    // CRITICAL: Preserve non-String types (Integer, Long, Boolean, etc.) directly
-                    // Don't allow template rendering to convert them to strings
-                    if (!(refValue instanceof String) || !EXPRESSION_PATTERN.matcher((String) refValue).find()) {
-                        log.debug("Preserving type {} for variable reference: {}", refValue.getClass().getSimpleName(), strValue);
-                        // Create a new Parameter with the exact type-preserved value
-                        Parameter ret = new Parameter(refValue, 
-                                referencedParam.getOrigin() != null ? referencedParam.getOrigin() : (value instanceof Parameter ? ((Parameter) value).getOrigin() : ""),
-                                true);  // marked as parsed to prevent further processing
-                        ret.setProcessed(true);  // marked as processed to prevent template rendering
-                        ret.setSecured(getIsSecured(value) || referencedParam.isSecured());
-                        ret.setValid(true);
-                        return ret;
+                    
+                    // TYPE PRESERVATION: If the referenced value is NOT a String,
+                    // or if it IS a String but doesn't contain further expressions,
+                    // return it directly without any template rendering
+                    boolean isNonStringType = !(refValue instanceof String);
+                    boolean isStringWithoutExpressions = (refValue instanceof String) && 
+                                                          !EXPRESSION_PATTERN.matcher((String) refValue).find();
+                    
+                    if (isNonStringType || isStringWithoutExpressions) {
+                        log.debug("Type preservation: ${} resolves to {} ({})", 
+                                  strValue, refValue, refValue.getClass().getSimpleName());
+                        
+                        // Return a new Parameter with the EXACT type from the referenced value
+                        // Do NOT allow any template processing that would convert it to String
+                        Parameter preservedParam = new Parameter(
+                                refValue,  // Keep the EXACT type: Integer, Long, Boolean, etc.
+                                referencedParam.getOrigin() != null ? 
+                                        referencedParam.getOrigin() : 
+                                        (value instanceof Parameter ? ((Parameter) value).getOrigin() : ""),
+                                true,  // parsed=true: prevent further parsing
+                                referencedParam.isSecured() || getIsSecured(value),  // preserve security flag
+                                null  // translated=null: no template translation needed
+                        );
+                        preservedParam.setProcessed(true);  // Mark as fully processed
+                        preservedParam.setValid(true);
+                        return preservedParam;
                     }
                 }
             }
 
+            // If not a pure variable reference, or if it needs further processing,
+            // proceed with JinJava/Groovy template rendering
             String jinJavaRendered = "";
             try {
                 jinJavaRendered = renderStringByJinJava(strValue, binding, escapeDollar);
