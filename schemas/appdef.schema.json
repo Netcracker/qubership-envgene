@@ -26,6 +26,9 @@
     },
     "solutionDescriptor": {
       "type": "boolean"
+    },
+    "metadata" : {
+      "$ref": "#/definitions/metaString"
     }
   },
   "definitions": {
@@ -34,6 +37,16 @@
       "additionalProperties": {
         "type": "string"
       }
+    },
+    "metaString": {
+      "type": "object",
+      "properties": {
+        "helmReleaseNameStrategy": {
+          "type": "string",
+          "enum": ["perApplication", "perVersion", "perDeployment"]
+        }
+      },
+      "additionalProperties": false
     }
   },
   "required": [

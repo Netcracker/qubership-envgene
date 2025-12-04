@@ -268,6 +268,10 @@ def validate_appregdefs(render_dir, env_name):
     regdef_dir = f"{render_dir}/{env_name}/RegDefs"
 
     if os.path.exists(appdef_dir):
+        logger.info("This is taken new  for testing")
+        with open("schemas/appdef.schema.json", "r") as f:
+            data = json.load(f)
+        logger.info(json.dumps(data, indent=2))
         appdef_files = findAllYamlsInDir(appdef_dir)
         if not appdef_files:
             logger.info(f"No AppDef YAMLs found in {appdef_dir}")
