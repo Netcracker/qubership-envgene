@@ -595,4 +595,76 @@ public class ExpressionLanguageTest extends BindingBaseTest {
         assertThat(result.getValue(), instanceOf(String.class));
         assertEquals("8080_suffix", result.getValue());
     }
+
+    @Test
+    void testTypePreservation_IntegerReference() {
+        Map<String, Object> tenantParams = new HashMap<String, Object>() {{
+            put("MONGO_DB_PORT", 27017);
+            put("DUMPS_MONGO_PORT", "${MONGO_DB_PORT}");
+        }};
+
+        Binding binding = setupBinding(new HashMap() {{
+            put("tenantParams", tenantParams);
+            put("cloudParams", new HashMap<>());
+            put("defaultEscapeSequence", "true");
+        }});
+
+        Map<String, Object> result = ParametersProcessor.convertParameterMapToObject(
+                new ExpressionLanguage(binding).processDeployment());
+
+        assertThat(result.get("MONGO_DB_PORT"), instanceOf(Integer.class));
+        assertThat(result.get("DUMPS_MONGO_PORT"), instanceOf(Integer.class));
+        assertEquals(27017, result.get("DUMPS_MONGO_PORT"));
+    }
+
+    @Test
+    void testTypePreservation_LongReference() {
+        Map<String, Object> tenantParams = new HashMap<String, Object>() {{
+            put("CDC_TOPIC_STREAMING_RETENTION_MS", 604800000L);
+            put("CDC_TOPIC_REFILL_RETENTION_MS", "${CDC_TOPIC_STREAMING_RETENTION_MS}");
+        }};
+
+        Binding binding = setupBinding(new HashMap() {{
+            put("tenantParams", tenantParams);
+            put("cloudParams", new HashMap<>());
+            put("defaultEscapeSequence", "true");
+        }});
+
+        Map<String, Object> result = ParametersProcessor.convertParameterMapToObject(
+                new ExpressionLanguage(binding).processDeployment());
+
+        assertThat(result.get("CDC_TOPIC_STREAMING_RETENTION_MS"), instanceOf(Long.class));
+        assertThat(result.get("CDC_TOPIC_REFILL_RETENTION_MS"), instanceOf(Long.class));
+        assertEquals(604800000L, result.get("CDC_TOPIC_REFILL_RETENTION_MS"));
+    }
+
+    @Test
+    void testTypePreservation_MultipleTypes() {
+        Map<String, Object> tenantParams = new HashMap<String, Object>() {{
+            put("MONGO_DB_PORT", 27017);
+            put("DUMPS_MONGO_PORT", "${MONGO_DB_PORT}");
+            put("CDC_TOPIC_STREAMING_RETENTION_MS", 604800000L);
+            put("CDC_TOPIC_REFILL_RETENTION_MS", "${CDC_TOPIC_STREAMING_RETENTION_MS}");
+            put("CDC_TOPIC_STREAMING_RETENTION_BYTES", 1073741824L);
+            put("CDC_TOPIC_REFILL_RETENTION_BYTES", "${CDC_TOPIC_STREAMING_RETENTION_BYTES}");
+        }};
+
+        Binding binding = setupBinding(new HashMap() {{
+            put("tenantParams", tenantParams);
+            put("cloudParams", new HashMap<>());
+            put("defaultEscapeSequence", "true");
+        }});
+
+        Map<String, Object> result = ParametersProcessor.convertParameterMapToObject(
+                new ExpressionLanguage(binding).processDeployment());
+
+        assertThat(result.get("DUMPS_MONGO_PORT"), instanceOf(Integer.class));
+        assertEquals(27017, result.get("DUMPS_MONGO_PORT"));
+
+        assertThat(result.get("CDC_TOPIC_REFILL_RETENTION_MS"), instanceOf(Long.class));
+        assertEquals(604800000L, result.get("CDC_TOPIC_REFILL_RETENTION_MS"));
+
+        assertThat(result.get("CDC_TOPIC_REFILL_RETENTION_BYTES"), instanceOf(Long.class));
+        assertEquals(1073741824L, result.get("CDC_TOPIC_REFILL_RETENTION_BYTES"));
+    }
 }
