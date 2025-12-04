@@ -28,5 +28,5 @@ import java.util.Map;
 @Jacksonized
 public class ParameterSetApplication {
     private String appName;
-    private Map<String, String> parameters;
+    private Map<String, Object> parameters;
 }

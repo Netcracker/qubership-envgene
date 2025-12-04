@@ -80,5 +80,20 @@ public class EscapeMap extends LinkedHashMap<String, Parameter> {
                 .map(entry -> new AbstractMap.SimpleEntry<String, Parameter>(entry.getKey(), new Parameter(entry.getValue(), origin, false)))
                 .forEach(entry -> super.putIfAbsent(entry.getKey(), entry.getValue()));
     }
+
+    /**
+     * Puts all entries from the map while preserving their original types.
+     * This method supports Integer, Long, Boolean, and other Object types.
+     * Unlike putAllStrings(), this method does not force conversion to String.
+     *
+     * @param m the map containing parameters with their original types
+     * @param origin the origin string for tracking parameter source
+     */
+    public void putAllObjects(Map<String, Object> m, String origin) {
+        if (m == null) return;
+        super.putAll(m.entrySet().stream()
+                .map(entry -> new AbstractMap.SimpleEntry<String, Parameter>(entry.getKey(), new Parameter(entry.getValue(), origin, false)))
+                .collect(Collectors.toMap(AbstractMap.SimpleEntry<String, Parameter>::getKey, AbstractMap.SimpleEntry<String, Parameter>::getValue)));
+    }
 }
 

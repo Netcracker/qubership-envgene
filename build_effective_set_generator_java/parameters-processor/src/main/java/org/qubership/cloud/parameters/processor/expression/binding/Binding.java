@@ -75,13 +75,13 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
     private void processSet(String tenant, String setName, String application, EscapeMap parameterSet, EscapeMap applicationMap) {
         ParameterSet set = Injector.getInstance().getParameterSetService().getParameterSet(tenant, setName);
         if (set != null) {
-            parameterSet.putAllStrings(set.getParameters(), String.format(ParametersConstants.PARAMETER_SET_ORIGIN, setName));
+            parameterSet.putAllObjects(set.getParameters(), String.format(ParametersConstants.PARAMETER_SET_ORIGIN, setName));
             ParameterSetApplication parameterSetApplication = set.getApplications().stream()
                     .filter(app -> app.getAppName().equals(application))
                     .findFirst()
                     .orElse(null);
             if (parameterSetApplication != null) {
-                applicationMap.putAllStrings(parameterSetApplication.getParameters(), String.format(ParametersConstants.PARAMETER_SET_APP_ORIGIN, setName, application));
+                applicationMap.putAllObjects(parameterSetApplication.getParameters(), String.format(ParametersConstants.PARAMETER_SET_APP_ORIGIN, setName, application));
             }
         }
     }

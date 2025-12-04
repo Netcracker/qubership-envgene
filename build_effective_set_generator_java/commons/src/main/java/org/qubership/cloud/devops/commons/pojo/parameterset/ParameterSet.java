@@ -39,6 +39,6 @@ public class ParameterSet {
     @Pattern( regexp = "^[a-zA-Z0-9._-]*$", message = "Parameter name must match the regex: ^[a-zA-Z0-9._-]*$")
     @NotBlank(message = "Parameter Set name must not be blank.")
     private String name;
-    private Map<String, String> parameters;
+    private Map<String, Object> parameters;
     private List<ParameterSetApplication> applications;
 }
