@@ -88,39 +88,35 @@ def update_history(history_path, version, package_files):
                 if removed:
                     print(f"Files removed: {sorted(removed)}")
     
-    # Only update history if there's a delta or if this is the first entry
-    if has_delta:
-        # Check if the last entry has the same version
-        should_update_existing = False
-        if last_entry:
-            last_version = clean_version(last_entry.get('version'))
-            if last_version == version:
-                # Same version - update existing entry instead of adding new one
-                should_update_existing = True
+    # Check if version changed
+    version_changed = False
+    if last_entry:
+        last_version = clean_version(last_entry.get('version'))
+        version_changed = (last_version != version)
+    
+    # Determine what to do:
+    # 1. If version is the same AND files changed - update existing entry
+    # 2. If version changed - always add new entry (even if files didn't change)
+    # 3. If version is the same AND files didn't change - do nothing
+    
+    if version_changed:
+        # Version changed - always add new entry to preserve version history
+        # Remove "(current)" marker from all previous entries
+        for entry in history:
+            if isinstance(entry, dict) and 'version' in entry:
+                version_str = str(entry['version'])
+                if version_str.endswith(' (current)'):
+                    entry['version'] = version_str[:-10]  # Remove " (current)"
         
-        if should_update_existing:
-            # Update existing entry with same version
-            last_entry['version'] = f"{version} (current)"
-            last_entry['package_content'] = package_files
-            print(f"Updated existing entry for version {version} with new content")
-        else:
-            # Different version or first entry - add new entry
-            # Remove "(current)" marker from all previous entries
-            for entry in history:
-                if isinstance(entry, dict) and 'version' in entry:
-                    version_str = str(entry['version'])
-                    if version_str.endswith(' (current)'):
-                        entry['version'] = version_str[:-10]  # Remove " (current)"
-            
-            # Create new entry
-            new_entry = {
-                'version': f"{version} (current)",
-                'package_content': package_files
-            }
-            
-            # Append new entry
-            history.append(new_entry)
-            print(f"Added new entry for version {version}")
+        # Create new entry
+        new_entry = {
+            'version': f"{version} (current)",
+            'package_content': package_files
+        }
+        
+        # Append new entry
+        history.append(new_entry)
+        print(f"Version changed to {version}, added new entry to history")
         
         # Write updated history with separators between versions
         with open(history_path, 'w', encoding='utf-8') as f:
@@ -140,40 +136,60 @@ def update_history(history_path, version, package_files):
         
         print(f"Updated history.log with version {version}")
         print(f"Package content contains {len(package_files)} files")
-    else:
-        # No delta in files - check if version changed
+    elif has_delta:
+        # Same version but files changed - update existing entry
         if last_entry:
-            last_version = clean_version(last_entry.get('version'))
-            if last_version != version:
-                # Version changed but files didn't - update version marker in last entry
-                last_entry['version'] = f"{version} (current)"
-                # Remove "(current)" from other entries
-                for entry in history:
-                    if entry != last_entry and isinstance(entry, dict) and 'version' in entry:
-                        version_str = str(entry['version'])
-                        if version_str.endswith(' (current)'):
-                            entry['version'] = version_str[:-10]
-                
-                # Write updated history with new version marker and separators
-                with open(history_path, 'w', encoding='utf-8') as f:
-                    for i, entry in enumerate(history):
-                        # Add separator before each version (except the first one)
-                        if i > 0:
-                            f.write('\n')
-                        
-                        # Write version entry with separator
-                        clean_ver = clean_version(entry.get('version', ''))
-                        f.write(f"# --- Version {clean_ver} ---\n")
-                        # Write entry without list brackets
-                        f.write(f"- version: {entry.get('version')}\n")
-                        f.write("  package_content:\n")
-                        for file_path in entry.get('package_content', []):
-                            f.write(f"  - {file_path}\n")
-                
-                print(f"Updated version marker to {version} in history.log (no content changes)")
-            else:
-                # Neither version nor files changed - no update needed
-                print(f"Version {version} already in history.log with same content, no update needed")
+            last_entry['version'] = f"{version} (current)"
+            last_entry['package_content'] = package_files
+            print(f"Updated existing entry for version {version} with new content")
+            
+            # Write updated history with separators between versions
+            with open(history_path, 'w', encoding='utf-8') as f:
+                for i, entry in enumerate(history):
+                    # Add separator before each version (except the first one)
+                    if i > 0:
+                        f.write('\n')
+                    
+                    # Write version entry with separator
+                    clean_ver = clean_version(entry.get('version', ''))
+                    f.write(f"# --- Version {clean_ver} ---\n")
+                    # Write entry in YAML format
+                    f.write(f"- version: {entry.get('version')}\n")
+                    f.write("  package_content:\n")
+                    for file_path in entry.get('package_content', []):
+                        f.write(f"  - {file_path}\n")
+            
+            print(f"Updated history.log with version {version}")
+            print(f"Package content contains {len(package_files)} files")
+        else:
+            # First entry
+            new_entry = {
+                'version': f"{version} (current)",
+                'package_content': package_files
+            }
+            history.append(new_entry)
+            
+            # Write updated history with separators between versions
+            with open(history_path, 'w', encoding='utf-8') as f:
+                for i, entry in enumerate(history):
+                    # Add separator before each version (except the first one)
+                    if i > 0:
+                        f.write('\n')
+                    
+                    # Write version entry with separator
+                    clean_ver = clean_version(entry.get('version', ''))
+                    f.write(f"# --- Version {clean_ver} ---\n")
+                    # Write entry in YAML format
+                    f.write(f"- version: {entry.get('version')}\n")
+                    f.write("  package_content:\n")
+                    for file_path in entry.get('package_content', []):
+                        f.write(f"  - {file_path}\n")
+            
+            print(f"Created history.log with version {version}")
+            print(f"Package content contains {len(package_files)} files")
+    else:
+        # Neither version nor files changed - no update needed
+        print(f"Version {version} already in history.log with same content, no update needed")
 
 
 def get_version_from_package_yaml(package_yaml_path):
