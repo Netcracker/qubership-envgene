@@ -277,6 +277,10 @@ def validate_appregdefs(render_dir, env_name):
             logger.info(f"No AppDef YAMLs found in {appdef_dir}")
         for file in appdef_files:
             logger.info(f"AppDef file: {file}")
+            with open(file, "r") as f:
+                content = f.read()
+                logger.info(f"--- Contents of {file} ---\n{content}")
+
             validate_yaml_by_scheme_or_fail(file, "schemas/appdef.schema.json")
 
     if os.path.exists(regdef_dir):
