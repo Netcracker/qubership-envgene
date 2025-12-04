@@ -56,6 +56,7 @@ public class ExpressionLanguage extends AbstractLanguage {
 
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("(?<!\\\\)(\\\\\\\\)*(\\$)");
     private static final Pattern SECURED_PATTERN = Pattern.compile("(?:\\u0096)(?s)(.*)(?:\\u0097)");
+    private static final Pattern PURE_VAR_REF_PATTERN = Pattern.compile("^\\s*\\$\\{([a-zA-Z_][a-zA-Z0-9_.]*)\\}\\s*$");
     private final ObjectMapper mapper = new ObjectMapper();
     private boolean insecure;
 
@@ -202,7 +203,37 @@ public class ExpressionLanguage extends AbstractLanguage {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private Parameter resolveVariablePath(String varPath, Map<String, Parameter> binding) {
+        if (!varPath.contains(".")) {
+            return binding.get(varPath);
+        }
+        String[] parts = varPath.split("\\.");
+        Parameter current = binding.get(parts[0]);
+        for (int i = 1; i < parts.length && current != null; i++) {
+            Object value = current.getValue();
+            if (value instanceof Map) {
+                Object next = ((Map<String, Object>) value).get(parts[i]);
+                if (next instanceof Parameter) {
+                    current = (Parameter) next;
+                } else if (next != null) {
+                    current = new Parameter(next);
+                } else {
+                    current = null;
+                }
+            } else {
+                current = null;
+            }
+        }
+        return current;
+    }
+
     private Parameter processValue(Object value, Map<String, Parameter> binding, boolean escapeDollar)
+            throws IOException {
+        return processValue(value, binding, binding, escapeDollar);
+    }
+
+    private Parameter processValue(Object value, Map<String, Parameter> currentMap, Map<String, Parameter> binding, boolean escapeDollar)
             throws IOException {
         if (value instanceof Parameter && ((Parameter) value).isProcessed()) {
             Parameter parameter = (Parameter) value;
@@ -216,6 +247,31 @@ public class ExpressionLanguage extends AbstractLanguage {
         if (val instanceof String) {
             String strValue = (String) val;
 
+            Matcher pureVarMatcher = PURE_VAR_REF_PATTERN.matcher(strValue.trim());
+            if (pureVarMatcher.matches()) {
+                String varPath = pureVarMatcher.group(1);
+                // First try to resolve from binding, then from current map being processed
+                Parameter referencedParam = resolveVariablePath(varPath, binding);
+                if (referencedParam == null) {
+                    referencedParam = resolveVariablePath(varPath, currentMap);
+                }
+                if (referencedParam != null && referencedParam.getValue() != null) {
+                    Object refValue = referencedParam.getValue();
+                    if (!(refValue instanceof String) || !EXPRESSION_PATTERN.matcher((String) refValue).find()) {
+                        log.debug("Preserving type {} for variable reference: {}", refValue.getClass().getSimpleName(), strValue);
+                        Parameter ret = new Parameter(value);
+                        ret.setValue(refValue);
+                        ret.setProcessed(true);
+                        ret.setSecured(getIsSecured(value) || referencedParam.isSecured());
+                        if (value instanceof Parameter) {
+                            Parameter origParam = (Parameter) value;
+                            ret.setOrigin(origParam.getOrigin() != null ? origParam.getOrigin() : referencedParam.getOrigin());
+                            ret.setParsed(origParam.isParsed() || referencedParam.isParsed());
+                        }
+                        return ret;
+                    }
+                }
+            }
 
             String jinJavaRendered = "";
             try {
@@ -235,9 +291,9 @@ public class ExpressionLanguage extends AbstractLanguage {
                 val = ((String) Objects.requireNonNull(val)).replaceAll("([\\u0096\\u0097])", "");
             }
         } else if (val instanceof List) {
-            val = processList((List<Parameter>) val, binding, escapeDollar);
+            val = processList((List<Parameter>) val, currentMap, binding, escapeDollar);
         } else if (val instanceof Map) {
-            val = processMap((Map<String, Parameter>) val, binding, escapeDollar);
+            val = processMap((Map<String, Parameter>) val, currentMap, binding, escapeDollar);
         }
         Parameter ret = new Parameter(value);
         ret.setValue(val);
@@ -290,10 +346,10 @@ public class ExpressionLanguage extends AbstractLanguage {
         return val;
     }
 
-    private List<Parameter> processList(List<?> list, Map<String, Parameter> binding, boolean escapeDollar) {
+    private List<Parameter> processList(List<?> list, Map<String, Parameter> currentMap, Map<String, Parameter> binding, boolean escapeDollar) {
         return list.stream().map(entry -> {
             try {
-                return processValue(entry, binding, escapeDollar);
+                return processValue(entry, currentMap, binding, escapeDollar);
             } catch (IOException | GroovyRuntimeException | FatalTemplateErrorsException e) {
                 if (insecure) {
                     return new Parameter(entry);
@@ -305,7 +361,7 @@ public class ExpressionLanguage extends AbstractLanguage {
     }
 
     protected Map<String, Parameter> processMap(Map<String, Parameter> map) {
-        return processMap(map, this.binding, false);
+        return processMap(map, map, this.binding, false);
     }
 
     private AbstractMap.SimpleEntry<String, ?> failedParameter(Map.Entry<String, ?> entry) {
@@ -314,7 +370,7 @@ public class ExpressionLanguage extends AbstractLanguage {
         return new AbstractMap.SimpleEntry<>(entry.getKey(), parameter);
     }
 
-    private Map<String, Parameter> processMap(Map<String, ?> map, Map<String, Parameter> binding, boolean escapeDollar) {
+    private Map<String, Parameter> processMap(Map<String, ?> map, Map<String, Parameter> currentMap, Map<String, Parameter> binding, boolean escapeDollar) {
         if (map == null) {
             map = Collections.emptyMap();
         }
@@ -323,7 +379,7 @@ public class ExpressionLanguage extends AbstractLanguage {
                 .filter(x -> getValue(x.getValue()) instanceof String || !(getValue(x.getValue()) instanceof DynamicMap || getValue(x.getValue()) instanceof EscapeMap))
                 .map(entry -> {
                     try {
-                        Parameter processedValue = processValue(entry.getValue(), binding, escapeDollar);
+                        Parameter processedValue = processValue(entry.getValue(), currentMap, binding, escapeDollar);
                         if (entry.getKey().equals(ParametersConstants.GLOBAL_RESOURCE_PROFILE) && processedValue.getValue() instanceof String) {
                             processedValue.setValue(super.binding.getParser().processParam("'" + processedValue.getValue() + "'"));
                         }
@@ -358,7 +414,7 @@ public class ExpressionLanguage extends AbstractLanguage {
 
 
         insecure = false;
-        return processMap(result, result, true);
+        return processMap(result, result, result, true);
     }
 
     @Override
@@ -367,7 +423,7 @@ public class ExpressionLanguage extends AbstractLanguage {
 
         processE2E(result);
         insecure = false;
-        return processMap(result, result, true);
+        return processMap(result, result, result, true);
     }
 
     @Override
@@ -376,7 +432,7 @@ public class ExpressionLanguage extends AbstractLanguage {
 
         processCloudE2E(result);
         insecure = false;
-        return processMap(result, result, true);
+        return processMap(result, result, result, true);
     }
 
     @Override
@@ -385,7 +441,7 @@ public class ExpressionLanguage extends AbstractLanguage {
 
         processNamespaceApp(result);
 
-        return processMap(result, result, true);
+        return processMap(result, result, result, true);
     }
 
     @Override
@@ -394,7 +450,7 @@ public class ExpressionLanguage extends AbstractLanguage {
 
         processNamespace(result);
 
-        return processMap(result, result, true);
+        return processMap(result, result, result, true);
     }
 
     @Override
@@ -407,7 +463,7 @@ public class ExpressionLanguage extends AbstractLanguage {
 
         processNamespaceAppConfigServer(result);
         insecure = false;
-        return processMap(result, result, true);
+        return processMap(result, result, result, true);
     }
 
     @Override
@@ -415,7 +471,7 @@ public class ExpressionLanguage extends AbstractLanguage {
         Map<String, Parameter> result = new MergeMap();
 
         processNamespaceAppConfigServer(result);
-        return processMap(result, result, true);
+        return processMap(result, result, result, true);
     }
 
     private static class TemplateProvider {
