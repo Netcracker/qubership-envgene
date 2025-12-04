@@ -15,4 +15,24 @@ variables:
   ENV_TEMPLATE_VERSION:
     value: "qubership_envgene_templates:0.0.1"
     description: "template version"
-  DEPLOYMENT_TICKET_ID: "TEST-TICKET-0001"
+  DEPLOYMENT_TICKET_ID:
+    value: "TICKET-0001"
+    description: "Jira ticket"
+  GET_PASSPORT:
+    value: "false"
+    description: "Whether to get cloud passport, possible values - true/false"
+    options:
+      - "true"
+      - "false"
+  CMDB_IMPORT:
+    value: "false"
+    description: "Whether to import, possible values - true/false"
+    options:
+      - "true"
+      - "false"
+  GENERATE_EFFECTIVE_SET:
+    value: "true"
+    description: "Will EnvGene generate Effective set"
+    options:
+      - "true"
+      - "false"    
