@@ -295,7 +295,7 @@ public class ExpressionLanguageTest extends BindingBaseTest {
                         new LinkedList<String>(),
                         new LinkedList<ParameterSet>() {{
                             add(new ParameterSet(new Tenant("tenant"), "set1",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_PARAM", "value");
                                     }},
                                     Collections.emptyList()));
@@ -307,11 +307,11 @@ public class ExpressionLanguageTest extends BindingBaseTest {
                         new LinkedList<String>(),
                         new LinkedList<ParameterSet>() {{
                             add(new ParameterSet(new Tenant("tenant"), "set1",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_PARAM", "value1");
                                     }},
                                     new LinkedList<ParameterSetApplication>() {{
-                                        add(new ParameterSetApplication("application", new HashMap<String, String>() {
+                                        add(new ParameterSetApplication("application", new HashMap<String, Object>() {
                                             {
                                                 put("SET_PARAM", "value2");
                                             }
@@ -327,12 +327,12 @@ public class ExpressionLanguageTest extends BindingBaseTest {
                         new LinkedList<String>(),
                         new LinkedList<ParameterSet>() {{
                             add(new ParameterSet(new Tenant("tenant"), "set1",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_PARAM", "value");
                                     }},
                                     Collections.emptyList()));
                             add(new ParameterSet(new Tenant("tenant"), "set2",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_2_PARAM", "value2");
                                     }},
                                     Collections.emptyList()));
@@ -346,12 +346,12 @@ public class ExpressionLanguageTest extends BindingBaseTest {
                         }},
                         new LinkedList<ParameterSet>() {{
                             add(new ParameterSet(new Tenant("tenant"), "set1",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_PARAM", "value");
                                     }},
                                     Collections.emptyList()));
                             add(new ParameterSet(new Tenant("tenant"), "set2",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_2_PARAM", "value2");
                                     }},
                                     Collections.emptyList()));
@@ -367,17 +367,17 @@ public class ExpressionLanguageTest extends BindingBaseTest {
                         }},
                         new LinkedList<ParameterSet>() {{
                             add(new ParameterSet(new Tenant("tenant"), "set1",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_PARAM", "value");
                                     }},
                                     Collections.emptyList()));
                             add(new ParameterSet(new Tenant("tenant"), "set2",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_2_PARAM", "value2");
                                     }},
                                     Collections.emptyList()));
                             add(new ParameterSet(new Tenant("tenant"), "set3",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_3_PARAM", "value3");
                                     }},
                                     Collections.emptyList()));
@@ -393,12 +393,12 @@ public class ExpressionLanguageTest extends BindingBaseTest {
                         }},
                         new LinkedList<ParameterSet>() {{
                             add(new ParameterSet(new Tenant("tenant"), "set1",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_PARAM", "value");
                                     }},
                                     Collections.emptyList()));
                             add(new ParameterSet(new Tenant("tenant"), "set2",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_PARAM", "value2");
                                     }},
                                     Collections.emptyList()));
@@ -413,17 +413,17 @@ public class ExpressionLanguageTest extends BindingBaseTest {
                         }},
                         new LinkedList<ParameterSet>() {{
                             add(new ParameterSet(new Tenant("tenant"), "set1",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_PARAM", "value");
                                     }},
                                     Collections.emptyList()));
                             add(new ParameterSet(new Tenant("tenant"), "set2",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_2_PARAM", "value2");
                                     }},
                                     Collections.emptyList()));
                             add(new ParameterSet(new Tenant("tenant"), "set3",
-                                    new HashMap<String, String>() {{
+                                    new HashMap<String, Object>() {{
                                         put("SET_2_PARAM", "value3");
                                     }},
                                     Collections.emptyList()));
