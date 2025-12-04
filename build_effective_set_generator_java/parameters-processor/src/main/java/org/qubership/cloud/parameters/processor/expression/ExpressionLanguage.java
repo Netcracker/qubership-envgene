@@ -364,6 +364,12 @@ public class ExpressionLanguage extends AbstractLanguage {
         return processMap(map, map, this.binding, false);
     }
 
+    // Backward-compatible 3-arg overload for existing tests
+    @SuppressWarnings("unchecked")
+    private Map<String, Parameter> processMap(Map<String, ?> map, Map<String, Parameter> binding, boolean escapeDollar) {
+        return processMap(map, (Map<String, Parameter>) map, binding, escapeDollar);
+    }
+
     private AbstractMap.SimpleEntry<String, ?> failedParameter(Map.Entry<String, ?> entry) {
         Parameter parameter = new Parameter(entry.getValue());
         parameter.setValid(false);
