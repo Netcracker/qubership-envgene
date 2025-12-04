@@ -1,4 +1,4 @@
-FROM busybox:latest
+FROM busybox:1.36
 
 LABEL gsf.package="true"
 
