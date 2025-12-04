@@ -566,4 +566,125 @@ public class ExpressionLanguageTest extends BindingBaseTest {
         processMap.setAccessible(true);
         assertEquals("{GLOBAL_RESOURCE_PROFILE={key1=value1, key2=value2}}", processMap.invoke(el, binding, binding, true).toString());
     }
+
+    // Test that data types are preserved when one parameter references another.
+    // This addresses the issue where EXPVAR: ${ORGVAR} was being converted to a String instead of preserving the Integer type.
+
+    @Test
+    void testTypePreservationForIntegerReference() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Binding binding = new Binding("true");
+        
+        Parameter intParam = new Parameter(27017);
+        binding.put("MONGO_DB_PORT", intParam);
+        
+        Parameter refParam = new Parameter("${MONGO_DB_PORT}");
+        binding.put("DUMPS_MONGO_PORT", refParam);
+        
+        ExpressionLanguage el = new ExpressionLanguage(binding);
+        Method processValue = ExpressionLanguage.class.getDeclaredMethod("processValue", Object.class);
+        processValue.setAccessible(true);
+        
+        Parameter result = (Parameter) processValue.invoke(el, refParam);
+        
+        assertThat(result.getValue(), instanceOf(Integer.class));
+        assertEquals(27017, result.getValue());
+    }
+
+    @Test
+    void testTypePreservationForBooleanWithBraceSyntax() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Binding binding = new Binding("true");
+        
+        Parameter boolParam = new Parameter(true);
+        binding.put("ENABLE_SSL", boolParam);
+        
+        Parameter refParam = new Parameter("${ENABLE_SSL}");
+        
+        ExpressionLanguage el = new ExpressionLanguage(binding);
+        Method processValue = ExpressionLanguage.class.getDeclaredMethod("processValue", Object.class);
+        processValue.setAccessible(true);
+        
+        Parameter result = (Parameter) processValue.invoke(el, refParam);
+        
+        assertThat(result.getValue(), instanceOf(Boolean.class));
+        assertEquals(true, result.getValue());
+    }
+
+    @Test
+    void testTypePreservationForBooleanWithDollarSyntax() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Binding binding = new Binding("true");
+        
+        Parameter boolParam = new Parameter(true);
+        binding.put("ENABLE_SSL", boolParam);
+        
+        Parameter refParam = new Parameter("$ENABLE_SSL");
+        
+        ExpressionLanguage el = new ExpressionLanguage(binding);
+        Method processValue = ExpressionLanguage.class.getDeclaredMethod("processValue", Object.class);
+        processValue.setAccessible(true);
+        
+        Parameter result = (Parameter) processValue.invoke(el, refParam);
+        
+        assertThat(result.getValue(), instanceOf(Boolean.class));
+        assertEquals(true, result.getValue());
+    }
+
+    @Test
+    void testTypePreservationForGroovyStyleReference() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Binding binding = new Binding("true");
+        
+        Parameter intParam = new Parameter(8080);
+        binding.put("BASE_PORT", intParam);
+        
+        Parameter refParam = new Parameter("$BASE_PORT");
+        binding.put("SERVER_PORT", refParam);
+        
+        ExpressionLanguage el = new ExpressionLanguage(binding);
+        Method processValue = ExpressionLanguage.class.getDeclaredMethod("processValue", Object.class);
+        processValue.setAccessible(true);
+        
+        Parameter result = (Parameter) processValue.invoke(el, refParam);
+        
+        assertThat(result.getValue(), instanceOf(Integer.class));
+        assertEquals(8080, result.getValue());
+    }
+
+    @Test
+    void testTypePreservationForLongReference() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Binding binding = new Binding("true");
+        
+        Parameter longParam = new Parameter(604800000L); 
+        binding.put("CDC_TOPIC_STREAMING_RETENTION_MS", longParam);
+        
+        Parameter refParam = new Parameter("${CDC_TOPIC_STREAMING_RETENTION_MS}");
+        binding.put("RETENTION_COPY", refParam);
+        
+        ExpressionLanguage el = new ExpressionLanguage(binding);
+        Method processValue = ExpressionLanguage.class.getDeclaredMethod("processValue", Object.class);
+        processValue.setAccessible(true);
+        
+        Parameter result = (Parameter) processValue.invoke(el, refParam);
+        
+        assertThat(result.getValue(), instanceOf(Long.class));
+        assertEquals(604800000L, result.getValue());
+    }
+
+    @Test
+    void testStringReferenceShouldNotPreserveType() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
+        Binding binding = new Binding("true");
+        
+        Parameter strParam = new Parameter("myhost.local");
+        binding.put("TEST_HOST", strParam);
+        
+        Parameter refParam = new Parameter("${TEST_HOST}");
+        
+        ExpressionLanguage el = new ExpressionLanguage(binding);
+        Method processValue = ExpressionLanguage.class.getDeclaredMethod("processValue", Object.class);
+        processValue.setAccessible(true);
+        
+        Parameter result = (Parameter) processValue.invoke(el, refParam);
+        
+        assertThat(result.getValue(), instanceOf(String.class));
+        assertEquals("myhost.local", result.getValue());
+    }
+
 }

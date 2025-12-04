@@ -56,6 +56,12 @@ public class ExpressionLanguage extends AbstractLanguage {
 
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("(?<!\\\\)(\\\\\\\\)*(\\$)");
     private static final Pattern SECURED_PATTERN = Pattern.compile("(?:\\u0096)(?s)(.*)(?:\\u0097)");
+    // Patterns for detecting Parameter variable references (used for type preservation)
+    private static final Pattern[] PARAMETER_REFERENCE_PATTERNS = {
+            Pattern.compile("^\\$\\{([A-Za-z_][A-Za-z0-9_]*)\\}$"),  // ${VARIABLE}
+            Pattern.compile("^\\$([A-Za-z_][A-Za-z0-9_]*)$"),         // $VARIABLE
+            Pattern.compile("^<%\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*%>$") // <% VARIABLE %>
+    };
     private final ObjectMapper mapper = new ObjectMapper();
     private boolean insecure;
 
@@ -209,6 +215,12 @@ public class ExpressionLanguage extends AbstractLanguage {
             parameter.setValue(removeEscaping(escapeDollar, parameter.getValue()));
             return parameter;
         }
+
+        Parameter preserved = tryPreserveType(value, binding);
+        if (preserved != null) {
+            return preserved;
+        }
+        
         Object val = getValue(value);
         boolean isProcessed = false;
         boolean isSecured = getIsSecured(value);
@@ -246,6 +258,78 @@ public class ExpressionLanguage extends AbstractLanguage {
         return ret;
     }
 
+    // Extracts variable name from parameter reference patterns: ${VAR}, $VAR, or <% VAR %>.
+    // Returns null if not a parameter reference.
+
+    private String extractParameterReference(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        for (Pattern pattern : PARAMETER_REFERENCE_PATTERNS) {
+            Matcher matcher = pattern.matcher(trimmed);
+            if (matcher.matches()) {
+                return matcher.group(1);
+            }
+        }
+        return null;
+    }
+
+    private Parameter resolveParameter(String varName, Map<String, Parameter> binding) {
+        Parameter param = binding.get(varName);
+        if (param == null && this.binding != null && this.binding != binding) {
+            param = this.binding.get(varName);
+        }
+        return param;
+    }
+
+    private Object unwrapValue(Object value) {
+        while (value instanceof Parameter) {
+            value = ((Parameter) value).getValue();
+        }
+        return value;
+    }
+
+    
+    // For references like ${VAR} or $VAR pointing to non-String values (Integer, Boolean and etc)
+    // returns a Parameter with the preserved type instead of converting to String.
+    // Returns null if type preservation is not applicable.
+    private Parameter tryPreserveType(Object value, Map<String, Parameter> binding) {
+        Object val = getValue(value);
+        if (!(val instanceof String)) {
+            return null;
+        }
+
+        String referencedVar = extractParameterReference((String) val);
+        if (referencedVar == null) {
+            return null;
+        }
+
+        Parameter referencedParam = resolveParameter(referencedVar, binding);
+        if (referencedParam == null || referencedParam.getValue() == null) {
+            return null;
+        }
+
+        Object refValue = unwrapValue(referencedParam.getValue());
+        
+        // Only preserve type for non-String values
+        if (refValue == null || refValue instanceof String) {
+            return null;
+        }
+
+        Parameter result = new Parameter(refValue);
+        if (value instanceof Parameter) {
+            result.setOrigin(((Parameter) value).getOrigin());
+        }
+        result.setParsed(true);
+        result.setProcessed(true);
+        result.setSecured(referencedParam.isSecured());
+        result.setValid(true);
+
+        log.debug("Type preserved for {}: {} ({})", referencedVar, refValue, refValue.getClass().getSimpleName());
+        return result;
+    }
+
     private String renderStringByGroovy(String value, Map<String, Parameter> binding, boolean escapeDollar) {
         int i = 0;
         String rendered = value;
@@ -277,13 +361,9 @@ public class ExpressionLanguage extends AbstractLanguage {
     }
 
     private Object removeEscaping(boolean escapeDollar, Object val) throws JsonProcessingException {
-        if (escapeDollar && val != null) {
-            String strValue;
-            if (val instanceof String) {
-                strValue = val.toString();
-            } else {
-                strValue = mapper.writeValueAsString(val);
-            }
+        // Only process escaping for String values - non-String types (Integer, Boolean, etc.) don't need escape processing and should preserve their original type
+        if (escapeDollar && val instanceof String) {
+            String strValue = (String) val;
             strValue = strValue.replaceAll("\\\\\\$", "\\$"); // \$ -> $
             val = strValue.replaceAll("\\\\\\\\", "\\\\"); // \\ -> \
         }
