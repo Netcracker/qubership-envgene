@@ -10,7 +10,7 @@ from envgenehelper.errors import ValidationError
 
 from cmdb import update_creds_to_cmdb_format
 from git_client import GitRepoManager, GitLabClient
-from build_env.jinja.jinja import create_jinja_env
+from jinja.jinja import create_jinja_env
 
 SECRET_KEY = "SECRET_KEY"
 
