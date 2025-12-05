@@ -1,0 +1,866 @@
+global: &id002
+  deployDescriptor: &id001
+    alertmanager:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: prom
+      docker_tag: v0.28.1
+      full_image_name: artifactory.qubership.org:17215/prom/alertmanager:v0.28.1
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/prom/alertmanager:v0.28.1
+      image_name: alertmanager
+      image_type: image
+      name: alertmanager
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    blackbox-exporter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: prom
+      docker_tag: v0.26.0
+      full_image_name: artifactory.qubership.org:17215/prom/blackbox-exporter:v0.26.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/prom/blackbox-exporter:v0.26.0
+      image_name: blackbox-exporter
+      image_type: image
+      name: blackbox-exporter
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    cert-exporter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: joeelliott
+      docker_tag: v2.15.0
+      full_image_name: artifactory.qubership.org:17215/joeelliott/cert-exporter:v2.15.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/joeelliott/cert-exporter:v2.15.0
+      image_name: cert-exporter
+      image_type: image
+      name: cert-exporter
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    cloud-events-exporter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 0.91.0_20241115-141230
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+      git_branch: 0.91.0
+      git_revision: b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+      git_url: https://git.qubership.org/platform.system.monitoring/monitoring-operator/tree/b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+      image: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+      image_name: cloud-events-exporter
+      image_type: service
+      name: cloud-events-exporter
+      promote_artifacts: 'False'
+      qualifier: prod.platform.system.monitoring_monitoring
+      version: 0.91.0-SNAPSHOT
+    cloud-events-reader:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17125
+      docker_repository_name: product
+      docker_tag: 2.5.6_20241113-123045
+      full_image_name: artifactory.qubership.org:17125/product/prod.platform.logging_cloud-events-reader:2.5.6_20241113-123045
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17125/product/prod.platform.logging_cloud-events-reader:2.5.6_20241113-123045
+      image_name: prod.platform.logging_cloud-events-reader
+      image_type: image
+      name: cloud-events-reader
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    cloudwatch-exporter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: prom
+      docker_tag: v0.16.0
+      full_image_name: artifactory.qubership.org:17215/prom/cloudwatch-exporter:v0.16.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/prom/cloudwatch-exporter:v0.16.0
+      image_name: cloudwatch-exporter
+      image_type: image
+      name: cloudwatch-exporter
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    common-dashboards:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 0.91.0_20241115-141230
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+      git_branch: 0.91.0
+      git_revision: b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+      git_url: https://git.qubership.org/platform.system.monitoring/monitoring-operator/tree/b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+      image: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+      image_name: common-dashboards
+      image_type: service
+      name: common-dashboards
+      promote_artifacts: 'False'
+      qualifier: prod.platform.system.monitoring_monitoring
+      version: 0.91.0-SNAPSHOT
+    configmap-reload:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: jimmidyson
+      docker_tag: v0.15.0
+      full_image_name: artifactory.qubership.org:17215/jimmidyson/configmap-reload:v0.15.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/jimmidyson/configmap-reload:v0.15.0
+      image_name: configmap-reload
+      image_type: image
+      name: configmap-reload
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    configurations-streamer:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 0.13.3_20241113-134520
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_configurations-streamer:0.13.3_20241113-134520
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_configurations-streamer:0.13.3_20241113-134520
+      image_name: prod.platform.system.monitoring_configurations-streamer
+      image_type: image
+      name: configurations-streamer
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    grafana:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: grafana
+      docker_tag: 11.5.2
+      full_image_name: artifactory.qubership.org:17215/grafana/grafana:11.5.2
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/grafana/grafana:11.5.2
+      image_name: grafana
+      image_type: image
+      name: grafana
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    grafana-image-renderer:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: grafana
+      docker_tag: 3.12.6
+      full_image_name: artifactory.qubership.org:17215/grafana/grafana-image-renderer:3.12.6
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/grafana/grafana-image-renderer:3.12.6
+      image_name: grafana-image-renderer
+      image_type: image
+      name: grafana-image-renderer
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    grafana-operator:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: grafana-operator
+      docker_tag: v4.10.1
+      full_image_name: artifactory.qubership.org:17215/grafana-operator/grafana-operator:v4.10.1
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/grafana-operator/grafana-operator:v4.10.1
+      image_name: grafana-operator
+      image_type: image
+      name: grafana-operator
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    grafana-plugins-init:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 0.13.2_20241113-134320
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_grafana-plugins-init:0.13.2_20241113-134320
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_grafana-plugins-init:0.13.2_20241113-134320
+      image_name: prod.platform.system.monitoring_grafana-plugins-init
+      image_type: image
+      name: grafana-plugins-init
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    graphite-remote-adapter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 0.6.3_20241113-134430
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_graphite-remote-adapter:0.6.3_20241113-134430
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_graphite-remote-adapter:0.6.3_20241113-134430
+      image_name: prod.platform.system.monitoring_graphite-remote-adapter
+      image_type: image
+      name: graphite-remote-adapter
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    json-exporter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: prometheuscommunity
+      docker_tag: v0.7.0
+      full_image_name: artifactory.qubership.org:17215/prometheuscommunity/json-exporter:v0.7.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/prometheuscommunity/json-exporter:v0.7.0
+      image_name: json-exporter
+      image_type: image
+      name: json-exporter
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    kube-rbac-proxy:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: brancz
+      docker_tag: v0.19.1
+      full_image_name: artifactory.qubership.org:17215/brancz/kube-rbac-proxy:v0.19.1
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/brancz/kube-rbac-proxy:v0.19.1
+      image_name: kube-rbac-proxy
+      image_type: image
+      name: kube-rbac-proxy
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    kube-state-metrics:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: kube-state-metrics
+      docker_tag: v2.15.0
+      full_image_name: artifactory.qubership.org:17215/kube-state-metrics/kube-state-metrics:v2.15.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/kube-state-metrics/kube-state-metrics:v2.15.0
+      image_name: kube-state-metrics
+      image_type: image
+      name: kube-state-metrics
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    monitoring-operator:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 0.91.0_20241115-141230
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+      git_branch: 0.91.0
+      git_revision: b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+      git_url: https://git.qubership.org/platform.system.monitoring/monitoring-operator/tree/b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+      image: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+      image_name: monitoring-operator
+      image_type: service
+      name: monitoring-operator
+      promote_artifacts: 'False'
+      qualifier: prod.platform.system.monitoring_monitoring
+      version: 0.91.0-SNAPSHOT
+    network-latency-exporter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 2.6.3_20241113-134440
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_exporters_network-latency-exporter:2.6.3_20241113-134440
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_exporters_network-latency-exporter:2.6.3_20241113-134440
+      image_name: prod.platform.system.monitoring_exporters_network-latency-exporter
+      image_type: image
+      name: network-latency-exporter
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    node-exporter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: prom
+      docker_tag: v1.9.1
+      full_image_name: artifactory.qubership.org:17215/prom/node-exporter:v1.9.1
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/prom/node-exporter:v1.9.1
+      image_name: node-exporter
+      image_type: image
+      name: node-exporter
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    oauth2-proxy:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: oauth2-proxy
+      docker_tag: v7.9.0
+      full_image_name: artifactory.qubership.org:17215/oauth2-proxy/oauth2-proxy:v7.9.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/oauth2-proxy/oauth2-proxy:v7.9.0
+      image_name: oauth2-proxy
+      image_type: image
+      name: oauth2-proxy
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    platform_monitoring_tests:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17125
+      docker_repository_name: product
+      docker_tag: 0.8.1_20241010-130200
+      full_image_name: artifactory.qubership.org:17125/product/prod.platform.system.monitoring_tests_platform-monitoring-tests:0.8.1_20241010-130200
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17125/product/prod.platform.system.monitoring_tests_platform-monitoring-tests:0.8.1_20241010-130200
+      image_name: prod.platform.system.monitoring_tests_platform-monitoring-tests
+      image_type: image
+      name: platform_monitoring_tests
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    prometheus:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: prom
+      docker_tag: v3.4.1
+      full_image_name: artifactory.qubership.org:17215/prom/prometheus:v3.4.1
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/prom/prometheus:v3.4.1
+      image_name: prometheus
+      image_type: image
+      name: prometheus
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    prometheus-adapter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 0.7.2_20241113-134300
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter:0.7.2_20241113-134300
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter:0.7.2_20241113-134300
+      image_name: prod.platform.system.monitoring_k8s-scaling_prometheus-adapter
+      image_type: image
+      name: prometheus-adapter
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    prometheus-adapter-converter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 0.1.0_20241113-134325
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-converter:0.1.0_20241113-134325
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-converter:0.1.0_20241113-134325
+      image_name: prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-converter
+      image_type: image
+      name: prometheus-adapter-converter
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    prometheus-adapter-operator:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17125
+      docker_repository_name: product
+      docker_tag: 0.10.0_20241010-125000
+      full_image_name: artifactory.qubership.org:17125/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-operator:0.10.0_20241010-125000
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17125/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-operator:0.10.0_20241010-125000
+      image_name: prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-operator
+      image_type: image
+      name: prometheus-adapter-operator
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    prometheus-config-reloader:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: prometheus-operator
+      docker_tag: v0.82.2
+      full_image_name: artifactory.qubership.org:17215/prometheus-operator/prometheus-config-reloader:v0.82.2
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/prometheus-operator/prometheus-config-reloader:v0.82.2
+      image_name: prometheus-config-reloader
+      image_type: image
+      name: prometheus-config-reloader
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    prometheus-operator:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: prometheus-operator
+      docker_tag: v0.82.2
+      full_image_name: artifactory.qubership.org:17215/prometheus-operator/prometheus-operator:v0.82.2
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/prometheus-operator/prometheus-operator:v0.82.2
+      image_name: prometheus-operator
+      image_type: image
+      name: prometheus-operator
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    promitor-agent-resource-discovery:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: tomkerkhove
+      docker_tag: 0.14.0
+      full_image_name: artifactory.qubership.org:17215/tomkerkhove/promitor-agent-resource-discovery:0.14.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/tomkerkhove/promitor-agent-resource-discovery:0.14.0
+      image_name: promitor-agent-resource-discovery
+      image_type: image
+      name: promitor-agent-resource-discovery
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    promitor-agent-scraper:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: tomkerkhove
+      docker_tag: 2.14.0
+      full_image_name: artifactory.qubership.org:17215/tomkerkhove/promitor-agent-scraper:2.14.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/tomkerkhove/promitor-agent-scraper:2.14.0
+      image_name: promitor-agent-scraper
+      image_type: image
+      name: promitor-agent-scraper
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    promxy:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: jacksontj
+      docker_tag: v0.0.93
+      full_image_name: artifactory.qubership.org:17215/jacksontj/promxy:v0.0.93
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/jacksontj/promxy:v0.0.93
+      image_name: promxy
+      image_type: image
+      name: promxy
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    pushgateway:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: prom
+      docker_tag: v1.11.1
+      full_image_name: artifactory.qubership.org:17215/prom/pushgateway:v1.11.1
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/prom/pushgateway:v1.11.1
+      image_name: pushgateway
+      image_type: image
+      name: pushgateway
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    stackdriver-exporter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: prometheuscommunity
+      docker_tag: v0.18.0
+      full_image_name: artifactory.qubership.org:17215/prometheuscommunity/stackdriver-exporter:v0.18.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/prometheuscommunity/stackdriver-exporter:v0.18.0
+      image_name: stackdriver-exporter
+      image_type: image
+      name: stackdriver-exporter
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    version-exporter:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 0.2.3_20241113-134457
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_exporters_version-exporter:0.2.3_20241113-134457
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_exporters_version-exporter:0.2.3_20241113-134457
+      image_name: prod.platform.system.monitoring_exporters_version-exporter
+      image_type: image
+      name: version-exporter
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    victoriametrics-operator:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 0.91.0_20241115-141230
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+      git_branch: 0.91.0
+      git_revision: b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+      git_url: https://git.qubership.org/platform.system.monitoring/monitoring-operator/tree/b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8
+      image: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+      image_name: victoriametrics-operator
+      image_type: service
+      name: victoriametrics-operator
+      promote_artifacts: 'False'
+      qualifier: prod.platform.system.monitoring_monitoring
+      version: 0.91.0-SNAPSHOT
+    vmagent:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: victoriametrics
+      docker_tag: v1.118.0
+      full_image_name: artifactory.qubership.org:17215/victoriametrics/vmagent:v1.118.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/victoriametrics/vmagent:v1.118.0
+      image_name: vmagent
+      image_type: image
+      name: vmagent
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    vmalert:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: victoriametrics
+      docker_tag: v1.118.0
+      full_image_name: artifactory.qubership.org:17215/victoriametrics/vmalert:v1.118.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/victoriametrics/vmalert:v1.118.0
+      image_name: vmalert
+      image_type: image
+      name: vmalert
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    vmauth:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: victoriametrics
+      docker_tag: v1.118.0
+      full_image_name: artifactory.qubership.org:17215/victoriametrics/vmauth:v1.118.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/victoriametrics/vmauth:v1.118.0
+      image_name: vmauth
+      image_type: image
+      name: vmauth
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    vmcleanup:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: bitnami
+      docker_tag: 1.33.1
+      full_image_name: artifactory.qubership.org:17215/bitnami/kubectl:1.33.1
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/bitnami/kubectl:1.33.1
+      image_name: kubectl
+      image_type: image
+      name: vmcleanup
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    vminsert:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: victoriametrics
+      docker_tag: v1.118.0-cluster
+      full_image_name: artifactory.qubership.org:17215/victoriametrics/vminsert:v1.118.0-cluster
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/victoriametrics/vminsert:v1.118.0-cluster
+      image_name: vminsert
+      image_type: image
+      name: vminsert
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    vmoperator:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: victoriametrics
+      docker_tag: v0.59.2
+      full_image_name: artifactory.qubership.org:17215/victoriametrics/operator:v0.59.2
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/victoriametrics/operator:v0.59.2
+      image_name: operator
+      image_type: image
+      name: vmoperator
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    vmoperator_config_reloader:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: victoriametrics
+      docker_tag: config-reloader-v0.59.2
+      full_image_name: artifactory.qubership.org:17215/victoriametrics/operator:config-reloader-v0.59.2
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/victoriametrics/operator:config-reloader-v0.59.2
+      image_name: operator
+      image_type: image
+      name: vmoperator_config_reloader
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    vmselect:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: victoriametrics
+      docker_tag: v1.118.0-cluster
+      full_image_name: artifactory.qubership.org:17215/victoriametrics/vmselect:v1.118.0-cluster
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/victoriametrics/vmselect:v1.118.0-cluster
+      image_name: vmselect
+      image_type: image
+      name: vmselect
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    vmsingle:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: victoriametrics
+      docker_tag: v1.118.0
+      full_image_name: artifactory.qubership.org:17215/victoriametrics/victoria-metrics:v1.118.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/victoriametrics/victoria-metrics:v1.118.0
+      image_name: victoria-metrics
+      image_type: image
+      name: vmsingle
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    vmstorage:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17215
+      docker_repository_name: victoriametrics
+      docker_tag: v1.118.0-cluster
+      full_image_name: artifactory.qubership.org:17215/victoriametrics/vmstorage:v1.118.0-cluster
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17215/victoriametrics/vmstorage:v1.118.0-cluster
+      image_name: vmstorage
+      image_type: image
+      name: vmstorage
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+deployDescriptor: *id001
+alertmanager: &id003
+  APPLICATION_NAME: MONITORING
+  DEPLOYMENT_SESSION_ID: 6d5a6ce9-0b55-429d-8877-f7a88dae3d9c
+  MANAGED_BY: argocd
+  deployDescriptor: *id001
+  global: *id002
+blackbox-exporter: *id003
+cert-exporter: *id003
+cloud-events-exporter: *id003
+cloud-events-reader: *id003
+cloudwatch-exporter: *id003
+common-dashboards: *id003
+configmap-reload: *id003
+configurations-streamer: *id003
+grafana: *id003
+grafana-image-renderer: *id003
+grafana-operator: *id003
+grafana-plugins-init: *id003
+graphite-remote-adapter: *id003
+json-exporter: *id003
+kube-rbac-proxy: *id003
+kube-state-metrics: *id003
+monitoring-operator: *id003
+network-latency-exporter: *id003
+node-exporter: *id003
+oauth2-proxy: *id003
+platform_monitoring_tests: *id003
+prometheus: *id003
+prometheus-adapter: *id003
+prometheus-adapter-converter: *id003
+prometheus-adapter-operator: *id003
+prometheus-config-reloader: *id003
+prometheus-operator: *id003
+promitor-agent-resource-discovery: *id003
+promitor-agent-scraper: *id003
+promxy: *id003
+pushgateway: *id003
+stackdriver-exporter: *id003
+version-exporter: *id003
+victoriametrics-operator: *id003
+vmagent: *id003
+vmalert: *id003
+vmauth: *id003
+vmcleanup: *id003
+vminsert: *id003
+vmoperator: *id003
+vmoperator_config_reloader: *id003
+vmselect: *id003
+vmsingle: *id003
+vmstorage: *id003
+APPLICATION_NAME: MONITORING
+DEPLOYMENT_SESSION_ID: 6d5a6ce9-0b55-429d-8877-f7a88dae3d9c
+MANAGED_BY: argocd

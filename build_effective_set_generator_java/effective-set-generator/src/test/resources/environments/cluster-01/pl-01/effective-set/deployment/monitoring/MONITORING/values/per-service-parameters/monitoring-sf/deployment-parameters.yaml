@@ -1,0 +1,361 @@
+alertmanager:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: alertmanager-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/prom/alertmanager:v0.28.1
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/prom/alertmanager
+  SERVICE_NAME: alertmanager
+  TAG: v0.28.1
+blackbox-exporter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: blackbox-exporter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/prom/blackbox-exporter:v0.26.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/prom/blackbox-exporter
+  SERVICE_NAME: blackbox-exporter
+  TAG: v0.26.0
+cert-exporter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: cert-exporter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/joeelliott/cert-exporter:v2.15.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/joeelliott/cert-exporter
+  SERVICE_NAME: cert-exporter
+  TAG: v2.15.0
+cloud-events-exporter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: cloud-events-exporter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator
+  SERVICE_NAME: cloud-events-exporter
+  TAG: 0.91.0_20241115-141230
+cloud-events-reader:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: cloud-events-reader-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17125/product/prod.platform.logging_cloud-events-reader:2.5.6_20241113-123045
+  IMAGE_REPOSITORY: artifactory.qubership.org:17125/product/prod.platform.logging_cloud-events-reader
+  SERVICE_NAME: cloud-events-reader
+  TAG: 2.5.6_20241113-123045
+cloudwatch-exporter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: cloudwatch-exporter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/prom/cloudwatch-exporter:v0.16.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/prom/cloudwatch-exporter
+  SERVICE_NAME: cloudwatch-exporter
+  TAG: v0.16.0
+common-dashboards:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: common-dashboards-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator
+  SERVICE_NAME: common-dashboards
+  TAG: 0.91.0_20241115-141230
+configmap-reload:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: configmap-reload-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/jimmidyson/configmap-reload:v0.15.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/jimmidyson/configmap-reload
+  SERVICE_NAME: configmap-reload
+  TAG: v0.15.0
+configurations-streamer:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: configurations-streamer-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_configurations-streamer:0.13.3_20241113-134520
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_configurations-streamer
+  SERVICE_NAME: configurations-streamer
+  TAG: 0.13.3_20241113-134520
+grafana:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: grafana-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/grafana/grafana:11.5.2
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/grafana/grafana
+  SERVICE_NAME: grafana
+  TAG: 11.5.2
+grafana-image-renderer:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: grafana-image-renderer-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/grafana/grafana-image-renderer:3.12.6
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/grafana/grafana-image-renderer
+  SERVICE_NAME: grafana-image-renderer
+  TAG: 3.12.6
+grafana-operator:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: grafana-operator-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/grafana-operator/grafana-operator:v4.10.1
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/grafana-operator/grafana-operator
+  SERVICE_NAME: grafana-operator
+  TAG: v4.10.1
+grafana-plugins-init:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: grafana-plugins-init-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_grafana-plugins-init:0.13.2_20241113-134320
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_grafana-plugins-init
+  SERVICE_NAME: grafana-plugins-init
+  TAG: 0.13.2_20241113-134320
+graphite-remote-adapter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: graphite-remote-adapter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_graphite-remote-adapter:0.6.3_20241113-134430
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_graphite-remote-adapter
+  SERVICE_NAME: graphite-remote-adapter
+  TAG: 0.6.3_20241113-134430
+json-exporter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: json-exporter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/prometheuscommunity/json-exporter:v0.7.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/prometheuscommunity/json-exporter
+  SERVICE_NAME: json-exporter
+  TAG: v0.7.0
+kube-rbac-proxy:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: kube-rbac-proxy-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/brancz/kube-rbac-proxy:v0.19.1
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/brancz/kube-rbac-proxy
+  SERVICE_NAME: kube-rbac-proxy
+  TAG: v0.19.1
+kube-state-metrics:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: kube-state-metrics-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/kube-state-metrics/kube-state-metrics:v2.15.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/kube-state-metrics/kube-state-metrics
+  SERVICE_NAME: kube-state-metrics
+  TAG: v2.15.0
+monitoring-operator:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: monitoring-operator-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator
+  SERVICE_NAME: monitoring-operator
+  TAG: 0.91.0_20241115-141230
+  type: dev
+network-latency-exporter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: network-latency-exporter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_exporters_network-latency-exporter:2.6.3_20241113-134440
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_exporters_network-latency-exporter
+  SERVICE_NAME: network-latency-exporter
+  TAG: 2.6.3_20241113-134440
+node-exporter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: node-exporter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/prom/node-exporter:v1.9.1
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/prom/node-exporter
+  SERVICE_NAME: node-exporter
+  TAG: v1.9.1
+oauth2-proxy:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: oauth2-proxy-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/oauth2-proxy/oauth2-proxy:v7.9.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/oauth2-proxy/oauth2-proxy
+  SERVICE_NAME: oauth2-proxy
+  TAG: v7.9.0
+platform_monitoring_tests:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: platform_monitoring_tests-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17125/product/prod.platform.system.monitoring_tests_platform-monitoring-tests:0.8.1_20241010-130200
+  IMAGE_REPOSITORY: artifactory.qubership.org:17125/product/prod.platform.system.monitoring_tests_platform-monitoring-tests
+  SERVICE_NAME: platform_monitoring_tests
+  TAG: 0.8.1_20241010-130200
+prometheus:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: prometheus-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/prom/prometheus:v3.4.1
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/prom/prometheus
+  SERVICE_NAME: prometheus
+  TAG: v3.4.1
+prometheus-adapter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: prometheus-adapter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter:0.7.2_20241113-134300
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter
+  SERVICE_NAME: prometheus-adapter
+  TAG: 0.7.2_20241113-134300
+prometheus-adapter-converter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: prometheus-adapter-converter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-converter:0.1.0_20241113-134325
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-converter
+  SERVICE_NAME: prometheus-adapter-converter
+  TAG: 0.1.0_20241113-134325
+prometheus-adapter-operator:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: prometheus-adapter-operator-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17125/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-operator:0.10.0_20241010-125000
+  IMAGE_REPOSITORY: artifactory.qubership.org:17125/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-operator
+  SERVICE_NAME: prometheus-adapter-operator
+  TAG: 0.10.0_20241010-125000
+prometheus-config-reloader:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: prometheus-config-reloader-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/prometheus-operator/prometheus-config-reloader:v0.82.2
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/prometheus-operator/prometheus-config-reloader
+  SERVICE_NAME: prometheus-config-reloader
+  TAG: v0.82.2
+prometheus-operator:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: prometheus-operator-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/prometheus-operator/prometheus-operator:v0.82.2
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/prometheus-operator/prometheus-operator
+  SERVICE_NAME: prometheus-operator
+  TAG: v0.82.2
+promitor-agent-resource-discovery:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: promitor-agent-resource-discovery-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/tomkerkhove/promitor-agent-resource-discovery:0.14.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/tomkerkhove/promitor-agent-resource-discovery
+  SERVICE_NAME: promitor-agent-resource-discovery
+  TAG: 0.14.0
+promitor-agent-scraper:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: promitor-agent-scraper-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/tomkerkhove/promitor-agent-scraper:2.14.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/tomkerkhove/promitor-agent-scraper
+  SERVICE_NAME: promitor-agent-scraper
+  TAG: 2.14.0
+promxy:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: promxy-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/jacksontj/promxy:v0.0.93
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/jacksontj/promxy
+  SERVICE_NAME: promxy
+  TAG: v0.0.93
+pushgateway:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: pushgateway-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/prom/pushgateway:v1.11.1
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/prom/pushgateway
+  SERVICE_NAME: pushgateway
+  TAG: v1.11.1
+stackdriver-exporter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: stackdriver-exporter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/prometheuscommunity/stackdriver-exporter:v0.18.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/prometheuscommunity/stackdriver-exporter
+  SERVICE_NAME: stackdriver-exporter
+  TAG: v0.18.0
+version-exporter:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: version-exporter-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_exporters_version-exporter:0.2.3_20241113-134457
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_exporters_version-exporter
+  SERVICE_NAME: version-exporter
+  TAG: 0.2.3_20241113-134457
+victoriametrics-operator:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: victoriametrics-operator-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator
+  SERVICE_NAME: victoriametrics-operator
+  TAG: 0.91.0_20241115-141230
+vmagent:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: vmagent-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/victoriametrics/vmagent:v1.118.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/victoriametrics/vmagent
+  SERVICE_NAME: vmagent
+  TAG: v1.118.0
+vmalert:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: vmalert-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/victoriametrics/vmalert:v1.118.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/victoriametrics/vmalert
+  SERVICE_NAME: vmalert
+  TAG: v1.118.0
+vmauth:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: vmauth-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/victoriametrics/vmauth:v1.118.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/victoriametrics/vmauth
+  SERVICE_NAME: vmauth
+  TAG: v1.118.0
+vmcleanup:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: vmcleanup-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/bitnami/kubectl:1.33.1
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/bitnami/kubectl
+  SERVICE_NAME: vmcleanup
+  TAG: 1.33.1
+vminsert:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: vminsert-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/victoriametrics/vminsert:v1.118.0-cluster
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/victoriametrics/vminsert
+  SERVICE_NAME: vminsert
+  TAG: v1.118.0-cluster
+vmoperator:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: vmoperator-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/victoriametrics/operator:v0.59.2
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/victoriametrics/operator
+  SERVICE_NAME: vmoperator
+  TAG: v0.59.2
+vmoperator_config_reloader:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: vmoperator_config_reloader-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/victoriametrics/operator:config-reloader-v0.59.2
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/victoriametrics/operator
+  SERVICE_NAME: vmoperator_config_reloader
+  TAG: config-reloader-v0.59.2
+vmselect:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: vmselect-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/victoriametrics/vmselect:v1.118.0-cluster
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/victoriametrics/vmselect
+  SERVICE_NAME: vmselect
+  TAG: v1.118.0-cluster
+vmsingle:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: vmsingle-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/victoriametrics/victoria-metrics:v1.118.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/victoriametrics/victoria-metrics
+  SERVICE_NAME: vmsingle
+  TAG: v1.118.0
+vmstorage:
+  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: vmstorage-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17215/victoriametrics/vmstorage:v1.118.0-cluster
+  IMAGE_REPOSITORY: artifactory.qubership.org:17215/victoriametrics/vmstorage
+  SERVICE_NAME: vmstorage
+  TAG: v1.118.0-cluster

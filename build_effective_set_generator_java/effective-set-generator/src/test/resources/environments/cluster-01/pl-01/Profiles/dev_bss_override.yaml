@@ -1,0 +1,36 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "dev_bss_override"
+version: 0
+baseline: "dev"
+description: "Override for dev-profile"
+applications:
+  - name: "core-app"
+    version: "release-2023.3-11.17.0-20231107.113613-36-RELEASE"
+    sd: ""
+    services:
+      - name: "core-service"
+        parameters:
+          - name: "CPU_LIMIT"
+            value: "1"
+          - name: "MEMORY_LIMIT"
+            value: "562Mi"
+          - name: "REPLICAS"
+            value: "3"
+          - name: "CPU_REQUEST"
+            value: "150m"
+  - name: "bss-app"
+  #version: "release-2023.3-8.4.0-20231103.225817-60-RELEASE"
+  #sd: ""
+    services:
+      - name: "bss-service"
+        parameters:
+          - name: "CPU_LIMIT"
+            value: "2"
+          - name: "REPLICAS"
+            value: "3"
+          - name: "CPU_REQUEST"
+            value: "150m"
+          - name: "MEMORY_LIMIT"
+            value: "336Mi"

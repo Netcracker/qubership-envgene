@@ -1,0 +1,84 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:d71cd41c-69a9-4c76-9303-fe7e58e6ebc0",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-11-15T14:12:30.123456+00:00",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.solution",
+      "bom-ref": "BomRef.5856559740334527.5068272927624817",
+      "name": "Solution",
+      "version": "",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.solution-descriptor",
+          "bom-ref": "BomRef.17696960930774153.14601793003283103",
+          "group": "",
+          "name": "",
+          "version": ""
+        }
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "0.1.2"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "BomRef.945821913565864.22999945193437755",
+      "name": "postgres",
+      "version": "pg16-2.10.5",
+      "properties": [
+        {
+          "name": "deployPostfix",
+          "value": "pg"
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "file://postgres-pg16-2.10.5-20241215.141230-3-RELEASE.sbom.json"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "BomRef.1234567890123456.7890123456789012",
+      "name": "MONITORING",
+      "version": "0.91.0-delivery-20241115.141230-4-RELEASE",
+      "properties": [
+        {
+          "name": "deployPostfix",
+          "value": "monitoring"
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "file://MONITORING-0.91.0-delivery-20241115.141230-4-RELEASE.sbom.json"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "BomRef.945821913565864.22999945193437754"
+    },
+    {
+      "ref": "BomRef.1234567890123456.7890123456789012"
+    }
+  ]
+}

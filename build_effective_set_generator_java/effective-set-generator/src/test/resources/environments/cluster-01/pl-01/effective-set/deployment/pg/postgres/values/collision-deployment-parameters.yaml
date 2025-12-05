@@ -1,0 +1,6 @@
+pg_patroni: artifactory.qubership.org:17125/product/prod.platform.ha_pg-patroni:release-2024.2-2.10.0_20240715-123045_pg16
+pg_upgrade: artifactory.qubership.org:17125/product/prod.platform.ha_pg-service:release-2024.2-2.10.0_20240716-142315_pg-upgrade
+pgbackrest_sidecar: artifactory.qubership.org:17263/qubership/pgskipper-pgbackrest-sidecar:release-2024.2-2.10.0
+postgres_operator_init: artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator:2.10.5_20241215-141230_init
+postgres_operator_tests: artifactory.qubership.org:17263/qubership/pgskipper-operator-tests:release-2024.2-2.10.0
+vault_env: artifactory.qubership.org:17175/banzaicloud/vault-env:2.5.1

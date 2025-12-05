@@ -1,0 +1,57 @@
+patroni-core:
+  ARTIFACT_DESCRIPTOR_VERSION: pg16-2.10.5-20241215.141230-3-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: patroni-core-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator:2.10.5_20241215-141230_patroni-core-operator
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator
+  SERVICE_NAME: patroni-core
+  TAG: 2.10.5_20241215-141230_patroni-core-operator
+  type: dev
+pg_patroni:
+  ARTIFACT_DESCRIPTOR_VERSION: pg16-2.10.5-20241215.141230-3-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: pg_patroni-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17125/product/prod.platform.ha_pg-patroni:release-2024.2-2.10.0_20240715-123045_pg16
+  IMAGE_REPOSITORY: artifactory.qubership.org:17125/product/prod.platform.ha_pg-patroni
+  SERVICE_NAME: pg_patroni
+  TAG: release-2024.2-2.10.0_20240715-123045_pg16
+pg_upgrade:
+  ARTIFACT_DESCRIPTOR_VERSION: pg16-2.10.5-20241215.141230-3-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: pg_upgrade-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17125/product/prod.platform.ha_pg-service:release-2024.2-2.10.0_20240716-142315_pg-upgrade
+  IMAGE_REPOSITORY: artifactory.qubership.org:17125/product/prod.platform.ha_pg-service
+  SERVICE_NAME: pg_upgrade
+  TAG: release-2024.2-2.10.0_20240716-142315_pg-upgrade
+pgbackrest_sidecar:
+  ARTIFACT_DESCRIPTOR_VERSION: pg16-2.10.5-20241215.141230-3-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: pgbackrest_sidecar-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17263/qubership/pgskipper-pgbackrest-sidecar:release-2024.2-2.10.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17263/qubership/pgskipper-pgbackrest-sidecar
+  SERVICE_NAME: pgbackrest_sidecar
+  TAG: release-2024.2-2.10.0
+postgres_operator_init:
+  ARTIFACT_DESCRIPTOR_VERSION: pg16-2.10.5-20241215.141230-3-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: postgres_operator_init-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator:2.10.5_20241215-141230_init
+  IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator
+  SERVICE_NAME: postgres_operator_init
+  TAG: 2.10.5_20241215-141230_init
+postgres_operator_tests:
+  ARTIFACT_DESCRIPTOR_VERSION: pg16-2.10.5-20241215.141230-3-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: postgres_operator_tests-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17263/qubership/pgskipper-operator-tests:release-2024.2-2.10.0
+  IMAGE_REPOSITORY: artifactory.qubership.org:17263/qubership/pgskipper-operator-tests
+  SERVICE_NAME: postgres_operator_tests
+  TAG: release-2024.2-2.10.0
+vault_env:
+  ARTIFACT_DESCRIPTOR_VERSION: pg16-2.10.5-20241215.141230-3-RELEASE
+  DEPLOYMENT_RESOURCE_NAME: vault_env-v1
+  DEPLOYMENT_VERSION: v1
+  DOCKER_TAG: artifactory.qubership.org:17175/banzaicloud/vault-env:2.5.1
+  IMAGE_REPOSITORY: artifactory.qubership.org:17175/banzaicloud/vault-env
+  SERVICE_NAME: vault_env
+  TAG: 2.5.1

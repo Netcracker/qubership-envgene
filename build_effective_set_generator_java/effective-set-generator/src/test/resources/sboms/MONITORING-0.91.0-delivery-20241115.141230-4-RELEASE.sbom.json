@@ -1,0 +1,2788 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:776e042c-5940-4a1c-b6ca-c7a6f03ba14d",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-11-15T14:12:30.123456+00:00",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "BomRef.046371270286701516.6226838985304548",
+      "name": "MONITORING",
+      "version": "0.91.0-delivery-20241115.141230-4-RELEASE",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "bom-ref": "BomRef.5613682882548706.07189009888782105",
+          "group": "org.qubership.deploy.product",
+          "name": "prod.platform.system.monitoring_monitoring-operator",
+          "version": "0.91.0-delivery-20241115.141230-4-RELEASE",
+          "purl": "pkg:maven/org.qubership.deploy.product/prod.platform.system.monitoring_monitoring-operator@0.91.0-delivery-20241115.141230-4-RELEASE?registry_id=registry-2&repository_id=targetRelease"
+        }
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "0.1.2"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.app.chart",
+      "bom-ref": "BomRef.8633990799077095.13360722942904346",
+      "name": "MONITORING",
+      "version": "0.0.0-0.91.0-delivery-20241115.141230-4"
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.9326066192873279.6463074100259174",
+      "name": "alertmanager",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/prom/alertmanager:v0.28.1"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.10591160095356567.3087400544244663",
+          "group": "prom",
+          "name": "alertmanager",
+          "version": "v0.28.1",
+          "purl": "pkg:docker/prom/alertmanager@v0.28.1?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.2355479864460026.36613786831422435",
+      "name": "blackbox-exporter",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/prom/blackbox-exporter:v0.26.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.3740874960473214.8377710479242382",
+          "group": "prom",
+          "name": "blackbox-exporter",
+          "version": "v0.26.0",
+          "purl": "pkg:docker/prom/blackbox-exporter@v0.26.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.7571188237530508.5906334674563775",
+      "name": "cert-exporter",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/joeelliott/cert-exporter:v2.15.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.5263150939829434.3068700674087419",
+          "group": "joeelliott",
+          "name": "cert-exporter",
+          "version": "v2.15.0",
+          "purl": "pkg:docker/joeelliott/cert-exporter@v2.15.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "bom-ref": "BomRef.2508551698774344.44891638642662657",
+      "name": "cloud-events-exporter",
+      "version": "0.91.0-SNAPSHOT",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230"
+        },
+        {
+          "name": "git_branch",
+          "value": "0.91.0"
+        },
+        {
+          "name": "git_revision",
+          "value": "b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+        },
+        {
+          "name": "git_url",
+          "value": "https://git.qubership.org/platform.system.monitoring/monitoring-operator/tree/b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+        },
+        {
+          "name": "git_version",
+          "value": "0.91.0-SNAPSHOT"
+        },
+        {
+          "name": "image_type",
+          "value": "service"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": "False"
+        },
+        {
+          "name": "qualifier",
+          "value": "prod.platform.system.monitoring_monitoring"
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.01097302979150172.8499895069415295",
+          "group": "product",
+          "name": "cloud-events-exporter",
+          "version": "0.91.0_20241115-141230",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_monitoring-operator@0.91.0_20241115-141230?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.9765728501737599.9212862872118169",
+      "name": "cloud-events-reader",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17125"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17125/product/prod.platform.logging_cloud-events-reader:2.5.6_20241113-123045"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.5134405759425865.7484707434249848",
+          "group": "product",
+          "name": "prod.platform.logging_cloud-events-reader",
+          "version": "2.5.6_20241113-123045",
+          "purl": "pkg:docker/product/prod.platform.logging_cloud-events-reader@2.5.6_20241113-123045?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.4091879447796294.06770240555446838",
+      "name": "cloudwatch-exporter",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/prom/cloudwatch-exporter:v0.16.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.894469052894479.7201175873073511",
+          "group": "prom",
+          "name": "cloudwatch-exporter",
+          "version": "v0.16.0",
+          "purl": "pkg:docker/prom/cloudwatch-exporter@v0.16.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "bom-ref": "BomRef.4934159293047792.9162095298317794",
+      "name": "common-dashboards",
+      "version": "0.91.0-SNAPSHOT",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230"
+        },
+        {
+          "name": "git_branch",
+          "value": "0.91.0"
+        },
+        {
+          "name": "git_revision",
+          "value": "b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+        },
+        {
+          "name": "git_url",
+          "value": "https://git.qubership.org/platform.system.monitoring/monitoring-operator/tree/b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+        },
+        {
+          "name": "git_version",
+          "value": "0.91.0-SNAPSHOT"
+        },
+        {
+          "name": "image_type",
+          "value": "service"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": "False"
+        },
+        {
+          "name": "qualifier",
+          "value": "prod.platform.system.monitoring_monitoring"
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.22684130521183488.6027426977117356",
+          "group": "product",
+          "name": "common-dashboards",
+          "version": "0.91.0_20241115-141230",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_monitoring-operator@0.91.0_20241115-141230?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.974724477363297.838248019710267",
+      "name": "configmap-reload",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/jimmidyson/configmap-reload:v0.15.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.5001580647510588.5271033890161348",
+          "group": "jimmidyson",
+          "name": "configmap-reload",
+          "version": "v0.15.0",
+          "purl": "pkg:docker/jimmidyson/configmap-reload@v0.15.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.5984495403381065.6533089228345417",
+      "name": "configurations-streamer",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.system.monitoring_configurations-streamer:0.13.3_20241113-134520"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.0772735385294877.7418761140230744",
+          "group": "product",
+          "name": "prod.platform.system.monitoring_configurations-streamer",
+          "version": "0.13.3_20241113-134520",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_configurations-streamer@0.13.3_20241113-134520?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.08643962487981405.7012403776169035",
+      "name": "grafana",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/grafana/grafana:11.5.2"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.584524695773495.4255067973633835",
+          "group": "grafana",
+          "name": "grafana",
+          "version": "11.5.2",
+          "purl": "pkg:docker/grafana/grafana@11.5.2?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.2929187554250122.08715334556178234",
+      "name": "grafana-image-renderer",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/grafana/grafana-image-renderer:3.12.6"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.1995523037259378.26785133955114815",
+          "group": "grafana",
+          "name": "grafana-image-renderer",
+          "version": "3.12.6",
+          "purl": "pkg:docker/grafana/grafana-image-renderer@3.12.6?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.23237748494096178.820000406881319",
+      "name": "grafana-operator",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/grafana-operator/grafana-operator:v4.10.1"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.1490077115095345.8495666415629046",
+          "group": "grafana-operator",
+          "name": "grafana-operator",
+          "version": "v4.10.1",
+          "purl": "pkg:docker/grafana-operator/grafana-operator@v4.10.1?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.7135774889196317.3987081267366124",
+      "name": "grafana-plugins-init",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.system.monitoring_grafana-plugins-init:0.13.2_20241113-134320"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.17398565795014742.610907680741072",
+          "group": "product",
+          "name": "prod.platform.system.monitoring_grafana-plugins-init",
+          "version": "0.13.2_20241113-134320",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_grafana-plugins-init@0.13.2_20241113-134320?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.9492044378093941.5212935586821021",
+      "name": "graphite-remote-adapter",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.system.monitoring_graphite-remote-adapter:0.6.3_20241113-134430"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.5059827761801861.06317162615399152",
+          "group": "product",
+          "name": "prod.platform.system.monitoring_graphite-remote-adapter",
+          "version": "0.6.3_20241113-134430",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_graphite-remote-adapter@0.6.3_20241113-134430?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.7286155945288376.45242333383803945",
+      "name": "json-exporter",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/prometheuscommunity/json-exporter:v0.7.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.9960536106569967.9699223014595189",
+          "group": "prometheuscommunity",
+          "name": "json-exporter",
+          "version": "v0.7.0",
+          "purl": "pkg:docker/prometheuscommunity/json-exporter@v0.7.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.8426862175072266.9575462271756955",
+      "name": "kube-rbac-proxy",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/brancz/kube-rbac-proxy:v0.19.1"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.16649668386408734.4188931543762353",
+          "group": "brancz",
+          "name": "kube-rbac-proxy",
+          "version": "v0.19.1",
+          "purl": "pkg:docker/brancz/kube-rbac-proxy@v0.19.1?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.7772674915556362.48000899082238",
+      "name": "kube-state-metrics",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/kube-state-metrics/kube-state-metrics:v2.15.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.485763863812382.059525689646839575",
+          "group": "kube-state-metrics",
+          "name": "kube-state-metrics",
+          "version": "v2.15.0",
+          "purl": "pkg:docker/kube-state-metrics/kube-state-metrics@v2.15.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "bom-ref": "BomRef.08537515983772315.23910823895289157",
+      "name": "monitoring-operator",
+      "version": "0.91.0-SNAPSHOT",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230"
+        },
+        {
+          "name": "git_branch",
+          "value": "0.91.0"
+        },
+        {
+          "name": "git_revision",
+          "value": "b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+        },
+        {
+          "name": "git_url",
+          "value": "https://git.qubership.org/platform.system.monitoring/monitoring-operator/tree/b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+        },
+        {
+          "name": "git_version",
+          "value": "0.91.0-SNAPSHOT"
+        },
+        {
+          "name": "image_type",
+          "value": "service"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": "False"
+        },
+        {
+          "name": "qualifier",
+          "value": "prod.platform.system.monitoring_monitoring"
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.7491820475685493.9424972822812346",
+          "group": "product",
+          "name": "monitoring-operator",
+          "version": "0.91.0_20241115-141230",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_monitoring-operator@0.91.0_20241115-141230?registry_id=registry-2"
+        },
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "bom-ref": "BomRef.9169646617587098.44321987663234264",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "large.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "Z2xvYmFsOgogIHByb2ZpbGU6IGxhcmdlCg=="
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "IyBFbXB0eSBwcm9maWxlLCBqdXN0IGJlY2F1c2UgdGhlIERQLkJ1aWxkZXIgcmVxdWlyZSBkZXYueWFtbCBhbmQgcHJvZC55YW1sIGZpbGVzIGR1cmluZyB0aGUgYnVpbGQKdHlwZTogZGV2Cg=="
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "small.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "Z2xvYmFsOgogIHByb2ZpbGU6IHNtYWxsCg=="
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "medium.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "Z2xvYmFsOgogIHByb2ZpbGU6IG1lZGl1bQo="
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "IyBFbXB0eSBwcm9maWxlLCBqdXN0IGJlY2F1c2UgdGhlIERQLkJ1aWxkZXIgcmVxdWlyZSBkZXYueWFtbCBhbmQgcHJvZC55YW1sIGZpbGVzIGR1cmluZyB0aGUgYnVpbGQKdHlwZTogcHJvZAo="
+                }
+              }
+            }
+          ],
+          "name": "resource-profile-baselines"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.22959688745402784.34897139357491935",
+      "name": "network-latency-exporter",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.system.monitoring_exporters_network-latency-exporter:2.6.3_20241113-134440"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.4221846852665785.8189904082475449",
+          "group": "product",
+          "name": "prod.platform.system.monitoring_exporters_network-latency-exporter",
+          "version": "2.6.3_20241113-134440",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_exporters_network-latency-exporter@2.6.3_20241113-134440?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.17623847542451987.0009779803364398099",
+      "name": "node-exporter",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/prom/node-exporter:v1.9.1"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.701956862947817.4862660804734813",
+          "group": "prom",
+          "name": "node-exporter",
+          "version": "v1.9.1",
+          "purl": "pkg:docker/prom/node-exporter@v1.9.1?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.8725599175128415.8777059541177892",
+      "name": "oauth2-proxy",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/oauth2-proxy/oauth2-proxy:v7.9.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.6224146695057209.8838751189531766",
+          "group": "oauth2-proxy",
+          "name": "oauth2-proxy",
+          "version": "v7.9.0",
+          "purl": "pkg:docker/oauth2-proxy/oauth2-proxy@v7.9.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.3904301535399899.0346248807879721",
+      "name": "platform_monitoring_tests",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17125"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17125/product/prod.platform.system.monitoring_tests_platform-monitoring-tests:0.8.1_20241010-130200"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.09833083467952164.22477245245206712",
+          "group": "product",
+          "name": "prod.platform.system.monitoring_tests_platform-monitoring-tests",
+          "version": "0.8.1_20241010-130200",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_tests_platform-monitoring-tests@0.8.1_20241010-130200?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.30203943398925337.6647409417932435",
+      "name": "prometheus",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/prom/prometheus:v3.4.1"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.9042729061356819.3602322242649375",
+          "group": "prom",
+          "name": "prometheus",
+          "version": "v3.4.1",
+          "purl": "pkg:docker/prom/prometheus@v3.4.1?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.9380754718749297.5626515288362506",
+      "name": "prometheus-adapter",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter:0.7.2_20241113-134300"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.07983573453853055.39382006490545785",
+          "group": "product",
+          "name": "prod.platform.system.monitoring_k8s-scaling_prometheus-adapter",
+          "version": "0.7.2_20241113-134300",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter@0.7.2_20241113-134300?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.5696871250906596.7426338197330677",
+      "name": "prometheus-adapter-converter",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-converter:0.1.0_20241113-134325"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.3633322163212601.27953925024138926",
+          "group": "product",
+          "name": "prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-converter",
+          "version": "0.1.0_20241113-134325",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-converter@0.1.0_20241113-134325?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.44211471126273405.19164363897017567",
+      "name": "prometheus-adapter-operator",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17125"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17125/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-operator:0.10.0_20241010-125000"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.06481954450961125.5040643103421835",
+          "group": "product",
+          "name": "prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-operator",
+          "version": "0.10.0_20241010-125000",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_k8s-scaling_prometheus-adapter-operator@0.10.0_20241010-125000?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.003933648150868163.18929450979172668",
+      "name": "prometheus-config-reloader",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/prometheus-operator/prometheus-config-reloader:v0.82.2"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.3797188818133793.2279400826436786",
+          "group": "prometheus-operator",
+          "name": "prometheus-config-reloader",
+          "version": "v0.82.2",
+          "purl": "pkg:docker/prometheus-operator/prometheus-config-reloader@v0.82.2?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.5761953061905212.37445982364553465",
+      "name": "prometheus-operator",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/prometheus-operator/prometheus-operator:v0.82.2"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.09739753042854149.9226238294773353",
+          "group": "prometheus-operator",
+          "name": "prometheus-operator",
+          "version": "v0.82.2",
+          "purl": "pkg:docker/prometheus-operator/prometheus-operator@v0.82.2?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.1793488934678774.3899989050786642",
+      "name": "promitor-agent-resource-discovery",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/tomkerkhove/promitor-agent-resource-discovery:0.14.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.5605480405134075.1407866430847069",
+          "group": "tomkerkhove",
+          "name": "promitor-agent-resource-discovery",
+          "version": "0.14.0",
+          "purl": "pkg:docker/tomkerkhove/promitor-agent-resource-discovery@0.14.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.6882828022361577.361896547258708",
+      "name": "promitor-agent-scraper",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/tomkerkhove/promitor-agent-scraper:2.14.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.48941156524898666.9943911507323118",
+          "group": "tomkerkhove",
+          "name": "promitor-agent-scraper",
+          "version": "2.14.0",
+          "purl": "pkg:docker/tomkerkhove/promitor-agent-scraper@2.14.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.45186362560196647.6944678760524416",
+      "name": "promxy",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/jacksontj/promxy:v0.0.93"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.8858385580379147.5540880803402332",
+          "group": "jacksontj",
+          "name": "promxy",
+          "version": "v0.0.93",
+          "purl": "pkg:docker/jacksontj/promxy@v0.0.93?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.8088553883043771.1756473511634553",
+      "name": "pushgateway",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/prom/pushgateway:v1.11.1"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.6872857604125535.09079142591776979",
+          "group": "prom",
+          "name": "pushgateway",
+          "version": "v1.11.1",
+          "purl": "pkg:docker/prom/pushgateway@v1.11.1?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.7885647935871741.29817948531507243",
+      "name": "stackdriver-exporter",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/prometheuscommunity/stackdriver-exporter:v0.18.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.6347476543593557.33156572672930296",
+          "group": "prometheuscommunity",
+          "name": "stackdriver-exporter",
+          "version": "v0.18.0",
+          "purl": "pkg:docker/prometheuscommunity/stackdriver-exporter@v0.18.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.7172179821750607.7926516444530605",
+      "name": "version-exporter",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.system.monitoring_exporters_version-exporter:0.2.3_20241113-134457"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.7436599873891068.15332295232785775",
+          "group": "product",
+          "name": "prod.platform.system.monitoring_exporters_version-exporter",
+          "version": "0.2.3_20241113-134457",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_exporters_version-exporter@0.2.3_20241113-134457?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "bom-ref": "BomRef.325853807126791.4393153910159532",
+      "name": "victoriametrics-operator",
+      "version": "0.91.0-SNAPSHOT",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230"
+        },
+        {
+          "name": "git_branch",
+          "value": "0.91.0"
+        },
+        {
+          "name": "git_revision",
+          "value": "b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+        },
+        {
+          "name": "git_url",
+          "value": "https://git.qubership.org/platform.system.monitoring/monitoring-operator/tree/b8e4c7f9a2d3e5f6a7b8c9d0e1f2a3b4c5d6e7f8"
+        },
+        {
+          "name": "git_version",
+          "value": "0.91.0-SNAPSHOT"
+        },
+        {
+          "name": "image_type",
+          "value": "service"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": "False"
+        },
+        {
+          "name": "qualifier",
+          "value": "prod.platform.system.monitoring_monitoring"
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.7638328341339233.228626388547721",
+          "group": "product",
+          "name": "victoriametrics-operator",
+          "version": "0.91.0_20241115-141230",
+          "purl": "pkg:docker/product/prod.platform.system.monitoring_monitoring-operator@0.91.0_20241115-141230?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.4574211696696673.9992096345285617",
+      "name": "vmagent",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/victoriametrics/vmagent:v1.118.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.5377688388110652.7781604347921068",
+          "group": "victoriametrics",
+          "name": "vmagent",
+          "version": "v1.118.0",
+          "purl": "pkg:docker/victoriametrics/vmagent@v1.118.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.16665679444500203.6044867528346278",
+      "name": "vmalert",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/victoriametrics/vmalert:v1.118.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.44453578844215946.23855750893441174",
+          "group": "victoriametrics",
+          "name": "vmalert",
+          "version": "v1.118.0",
+          "purl": "pkg:docker/victoriametrics/vmalert@v1.118.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.2719063257960943.9959548857991495",
+      "name": "vmauth",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/victoriametrics/vmauth:v1.118.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.19615693897703534.26744349574708415",
+          "group": "victoriametrics",
+          "name": "vmauth",
+          "version": "v1.118.0",
+          "purl": "pkg:docker/victoriametrics/vmauth@v1.118.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.7294349473254036.12480489863909872",
+      "name": "vmcleanup",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/bitnami/kubectl:1.33.1"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.2998684831872166.3878688241352084",
+          "group": "bitnami",
+          "name": "kubectl",
+          "version": "1.33.1",
+          "purl": "pkg:docker/bitnami/kubectl@1.33.1?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.7261947481388558.9253056927700247",
+      "name": "vminsert",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/victoriametrics/vminsert:v1.118.0-cluster"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.07890907984056961.9166444949972553",
+          "group": "victoriametrics",
+          "name": "vminsert",
+          "version": "v1.118.0-cluster",
+          "purl": "pkg:docker/victoriametrics/vminsert@v1.118.0-cluster?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.5419157970047849.22776598657594138",
+      "name": "vmoperator",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/victoriametrics/operator:v0.59.2"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.9853794856989639.7137195377794864",
+          "group": "victoriametrics",
+          "name": "operator",
+          "version": "v0.59.2",
+          "purl": "pkg:docker/victoriametrics/operator@v0.59.2?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.3943116576422846.8628397847701357",
+      "name": "vmoperator_config_reloader",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/victoriametrics/operator:config-reloader-v0.59.2"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.011420097656154371.3922503061403996",
+          "group": "victoriametrics",
+          "name": "operator",
+          "version": "config-reloader-v0.59.2",
+          "purl": "pkg:docker/victoriametrics/operator@config-reloader-v0.59.2?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.8425624137536131.45469545057837535",
+      "name": "vmselect",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/victoriametrics/vmselect:v1.118.0-cluster"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.31200668741934323.8916692867662823",
+          "group": "victoriametrics",
+          "name": "vmselect",
+          "version": "v1.118.0-cluster",
+          "purl": "pkg:docker/victoriametrics/vmselect@v1.118.0-cluster?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.43356913927281404.028889767748424444",
+      "name": "vmsingle",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/victoriametrics/victoria-metrics:v1.118.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.18799755321870693.382845155714462",
+          "group": "victoriametrics",
+          "name": "victoria-metrics",
+          "version": "v1.118.0",
+          "purl": "pkg:docker/victoriametrics/victoria-metrics@v1.118.0?registry_id=registry-2"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.3829225303950907.6334316820756251",
+      "name": "vmstorage",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/victoriametrics/vmstorage:v1.118.0-cluster"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.2469017423856159.5836318935486516",
+          "group": "victoriametrics",
+          "name": "vmstorage",
+          "version": "v1.118.0-cluster",
+          "purl": "pkg:docker/victoriametrics/vmstorage@v1.118.0-cluster?registry_id=registry-2"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "BomRef.046371270286701516.6226838985304548"
+    },
+    {
+      "ref": "BomRef.8633990799077095.13360722942904346"
+    },
+    {
+      "ref": "BomRef.9326066192873279.6463074100259174"
+    },
+    {
+      "ref": "BomRef.2355479864460026.36613786831422435"
+    },
+    {
+      "ref": "BomRef.7571188237530508.5906334674563775"
+    },
+    {
+      "ref": "BomRef.2508551698774344.44891638642662657"
+    },
+    {
+      "ref": "BomRef.9765728501737599.9212862872118169"
+    },
+    {
+      "ref": "BomRef.4091879447796294.06770240555446838"
+    },
+    {
+      "ref": "BomRef.4934159293047792.9162095298317794"
+    },
+    {
+      "ref": "BomRef.974724477363297.838248019710267"
+    },
+    {
+      "ref": "BomRef.5984495403381065.6533089228345417"
+    },
+    {
+      "ref": "BomRef.08643962487981405.7012403776169035"
+    },
+    {
+      "ref": "BomRef.2929187554250122.08715334556178234"
+    },
+    {
+      "ref": "BomRef.23237748494096178.820000406881319"
+    },
+    {
+      "ref": "BomRef.7135774889196317.3987081267366124"
+    },
+    {
+      "ref": "BomRef.9492044378093941.5212935586821021"
+    },
+    {
+      "ref": "BomRef.7286155945288376.45242333383803945"
+    },
+    {
+      "ref": "BomRef.8426862175072266.9575462271756955"
+    },
+    {
+      "ref": "BomRef.7772674915556362.48000899082238"
+    },
+    {
+      "ref": "BomRef.08537515983772315.23910823895289157"
+    },
+    {
+      "ref": "BomRef.22959688745402784.34897139357491935"
+    },
+    {
+      "ref": "BomRef.17623847542451987.0009779803364398099"
+    },
+    {
+      "ref": "BomRef.8725599175128415.8777059541177892"
+    },
+    {
+      "ref": "BomRef.3904301535399899.0346248807879721"
+    },
+    {
+      "ref": "BomRef.30203943398925337.6647409417932435"
+    },
+    {
+      "ref": "BomRef.9380754718749297.5626515288362506"
+    },
+    {
+      "ref": "BomRef.5696871250906596.7426338197330677"
+    },
+    {
+      "ref": "BomRef.44211471126273405.19164363897017567"
+    },
+    {
+      "ref": "BomRef.003933648150868163.18929450979172668"
+    },
+    {
+      "ref": "BomRef.5761953061905212.37445982364553465"
+    },
+    {
+      "ref": "BomRef.1793488934678774.3899989050786642"
+    },
+    {
+      "ref": "BomRef.6882828022361577.361896547258708"
+    },
+    {
+      "ref": "BomRef.45186362560196647.6944678760524416"
+    },
+    {
+      "ref": "BomRef.8088553883043771.1756473511634553"
+    },
+    {
+      "ref": "BomRef.7885647935871741.29817948531507243"
+    },
+    {
+      "ref": "BomRef.7172179821750607.7926516444530605"
+    },
+    {
+      "ref": "BomRef.325853807126791.4393153910159532"
+    },
+    {
+      "ref": "BomRef.4574211696696673.9992096345285617"
+    },
+    {
+      "ref": "BomRef.16665679444500203.6044867528346278"
+    },
+    {
+      "ref": "BomRef.2719063257960943.9959548857991495"
+    },
+    {
+      "ref": "BomRef.7294349473254036.12480489863909872"
+    },
+    {
+      "ref": "BomRef.7261947481388558.9253056927700247"
+    },
+    {
+      "ref": "BomRef.5419157970047849.22776598657594138"
+    },
+    {
+      "ref": "BomRef.3943116576422846.8628397847701357"
+    },
+    {
+      "ref": "BomRef.8425624137536131.45469545057837535"
+    },
+    {
+      "ref": "BomRef.43356913927281404.028889767748424444"
+    },
+    {
+      "ref": "BomRef.3829225303950907.6334316820756251"
+    }
+  ]
+}
