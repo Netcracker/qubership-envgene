@@ -126,7 +126,7 @@ Below is a **complete** list of attributes
         └── <environment-name-01>
             └── effective-set
                 ├── mapping.yml
-                ├── <deployPostfix-01>
+                ├── <namespace-folder-01>
                 |   ├── <application-name-01>
                 |   |   ├── deployment-parameters.yaml
                 |   |   ├── technical-configuration-parameters.yaml
@@ -135,7 +135,7 @@ Below is a **complete** list of attributes
                 |       ├── deployment-parameters.yaml
                 |       ├── technical-configuration-parameters.yaml
                 |       └── credentials.yaml
-                └── <deployPostfix-02>
+                └── <namespace-folder-02>
                     ├── <application-name-01>
                     |   ├── deployment-parameters.yaml
                     |   ├── technical-configuration-parameters.yaml
@@ -241,7 +241,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   └── <consumer-name-02>-credentials.yaml
                 ├── deployment
                 |   ├── mapping.yml
-                |   ├── <deployPostfix-01>
+                |   ├── <namespace-folder-01>
                 |   |   ├── <application-name-01>
                 |   |   |   └── values
                 |   |   |       ├── per-service-parameters
@@ -270,7 +270,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   |           ├── credentials.yaml
                 |   |           ├── collision-credentials.yaml
                 |   |           └── deploy-descriptor.yaml
-                |   └── <deployPostfix-02>
+                |   └── <namespace-folder-02>
                 |       ├── <application-name-01>
                 |       |   └── values
                 |       |       ├── per-service-parameters
@@ -301,14 +301,14 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |               └── deploy-descriptor.yaml
                 ├── runtime
                 |   ├── mapping.yml
-                |   ├── <deployPostfix-01>
+                |   ├── <namespace-folder-01>
                 |   |   ├── <application-name-01>
                 |   |   |   ├── parameters.yaml
                 |   |   |   └── credentials.yaml
                 |   |   └── <application-name-02>
                 |   |       ├── parameters.yaml
                 |   |       └── credentials.yaml
-                |   └── <deployPostfix-02>
+                |   └── <namespace-folder-02>
                 |       ├── <application-name-01>
                 |       |   ├── parameters.yaml
                 |       |   └── credentials.yaml
@@ -317,10 +317,10 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |           └── credentials.yaml
                 └── cleanup
                     ├── mapping.yml
-                    ├── <deployPostfix-01>
+                    ├── <namespace-folder-01>
                     |   ├── parameters.yaml
                     |   └── credentials.yaml
-                    └── <deployPostfix-02>
+                    └── <namespace-folder-02>
                         ├── parameters.yaml
                         └── credentials.yaml
 ```
@@ -387,9 +387,9 @@ Sensitive parameters in the Effective Set are grouped into dedicated credentials
 1. `effective-set/topology/credentials.yaml`
 2. `effective-set/pipeline/credentials.yaml`
 3. `effective-set/pipeline/<consumer-name>-credentials.yaml`
-4. `effective-set/deployment/<deployPostfix>/<application-name>/credentials.yaml`
-5. `effective-set/deployment/<deployPostfix>/<application-name>/collision-credentials.yaml`
-6. `effective-set/runtime/<deployPostfix>/<application-name>/credentials.yaml`
+4. `effective-set/deployment/<namespace-folder>/<application-name>/credentials.yaml`
+5. `effective-set/deployment/<namespace-folder>/<application-name>/collision-credentials.yaml`
+6. `effective-set/runtime/<namespace-folder>/<application-name>/credentials.yaml`
 
 **Splitting principle:**
 
@@ -451,7 +451,7 @@ These parameters establish a dedicated rendering context exclusively applied dur
 
 This context is formed as a result of merging parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects. Parameters from the Application SBOM and `Resource Profile` objects of the Environment Instance also contribute to the formation of this context.
 
-For each namespace/deploy postfix, the context contains files:
+For each namespace (identified by its folder name), the context contains files:
 
 ##### \[Version 2.0][Deployment Parameter Context] `deployment-parameters.yaml`
 
@@ -889,12 +889,11 @@ This mapping is necessary because the Effective Set consumer requires knowledge 
 
 ```yaml
 ---
-<namespace-name-01>: <path-to-deployPostfix-01-folder-in-effective-set-file-structure>
-<namespace-name-02>: <path-to-deployPostfix-02-folder-in-effective-set-file-structure>
+<namespace-name-01>: <path-to-namespace-folder-01-in-effective-set-file-structure>
+<namespace-name-02>: <path-to-namespace-folder-02-in-effective-set-file-structure>
 ```
 
-Namespace name is taken from the `name` attribute of Namespace
-Deploy postfix is taken from the Environment Instance's namespace folder name (a child of `Namespace` and parent of namespace.yml)
+Namespace name is taken from the `name` attribute of Namespace.
 
 Path is relative to the Instance repository (i.e., it starts with `/environments`)
 
@@ -1041,7 +1040,7 @@ environments:
   <environment-id>: # In `cluster-name/env-name` notation
     namespaces:
       <namespace>: # Namespace `name` attribute
-        deployPostfix: <deploy-postfix> # Namespace `deployPostfix` attribute
+        deployPostfix: <deploy-postfix>
       ...
   ...
 ```
@@ -1111,7 +1110,7 @@ This file's parameters define a **distinct** context for managing application be
 
 This context is formed as a result of merging parameters defined in the `technicalConfigurationParameters` sections of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects.
 
-For each namespace/deploy postfix, the context contains two files:
+For each namespace (identified by its folder name), the context contains two files:
 
 ##### \[Version 2.0][Runtime Parameter Context] `parameters.yaml`
 
@@ -1148,7 +1147,7 @@ The contents of this file are identical to [mapping.yml in the Deployment Parame
 
 The cleanup context is used by systems that perform cleanup operations on cluster entities within a specific namespace. This context is formed by merging parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects.
 
-For each namespace/deploy postfix, the context contains the following files:
+For each namespace (identified by its folder name), the context contains the following files:
 
 ##### \[Version 2.0][Cleanup Context] `parameters.yaml`
 
