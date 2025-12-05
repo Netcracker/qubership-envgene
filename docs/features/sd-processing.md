@@ -339,4 +339,4 @@ For information on use cases, refer to the [documentation](/docs/use-cases/sd-pr
 
 ## Test Cases
 
-1. [SD processing](/docs/test-cases/features/sd-processing.md)
+1. [SD processing](/docs/test-cases/sd-processing.md)

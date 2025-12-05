@@ -355,7 +355,7 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 
 ### `CRED_ROTATION_PAYLOAD`
 
-**Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macros)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
+**Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macro)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
 
 ```json
 {
@@ -439,7 +439,7 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 
 ### `CRED_ROTATION_FORCE`
 
-**Description**: Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential. See details in [Credential Rotation](/docs/cred-rotation.md)
+**Description**: Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential. See details in [Credential Rotation](/docs/features/cred-rotation.md)
 
 **Default Value**: `false`
 

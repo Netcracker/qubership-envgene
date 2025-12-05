@@ -77,7 +77,7 @@ Supports working with SOPS encryption.
 
 | Attribute | Type | Mandatory | Description | Default | Example |
 |---|---|---|---|---|---|
-| `CRED_ROTATION_PAYLOAD` | string | no | A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macros)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format | None | [example](#cred_rotation_payload-example) |
+| `CRED_ROTATION_PAYLOAD` | string | no | A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macro)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format | None | [example](#cred_rotation_payload-example) |
 | `CRED_ROTATION_FORCE` | string | no | Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential | `false` | `true` |
 
 #### `CRED_ROTATION_PAYLOAD`
@@ -152,7 +152,7 @@ Per-Item Processing (for each item in `CRED_ROTATION_PAYLOAD`):
    1. It is `e2eParameters` if item's context is `pipeline`
    2. It is `deployParameters` if item's context is `deployment`
    3. It is `technicalConfigurationParameters` if item's context is `runtime`
-3. Find the cred-id linked (via the [cred macro](/docs/template-macros.md#credential-macros)) to the parameter matching the item's `parameter_key` on the object from step 1 in the context from step 2
+3. Find the cred-id linked (via the [cred macro](/docs/template-macros.md#credential-macro)) to the parameter matching the item's `parameter_key` on the object from step 1 in the context from step 2
 4. Find all [affected parameters](#affected-parameters) for this parameter
 5. Save affected parameters in job artifacts
 6. Perform [force mode](#force-mode) check

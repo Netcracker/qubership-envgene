@@ -113,7 +113,7 @@ Below is a **complete** list of attributes
 
 [Registry config JSON Schema](/schemas/registry.schema.json)
 
-[Registry config example](/schemas/registry.yml)
+[Registry config example](/examples/registry.yml)
 
 ### Effective Set v1.0
 

@@ -22,10 +22,10 @@
 ## Advanced Features
 
 - [**Solution Descriptor Processing**](/docs/features/sd-processing.md) - Manage [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) for your Environments
-- [**Effective Set Calculation**](/docs/features/effective-set-calculation.md) - Calculate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20)
-- [**Application and Registry Definition**](/docs/features/app-registry-definition.md) - Describe how applications and registries are defined and referenced
-- [**Environment Inventory Generation**](/docs/features/environment-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
-- [**Credential Rotation**](/docs/features/credential-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
+- [**Effective Set Calculation**](/docs/features/calculator-cli.md) - Calculate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20)
+- [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced
+- [**Environment Inventory Generation**](/docs/features/env-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
+- [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**Namespace Render Filter**](/docs/features/namespace-render-filtering.md) - Render only selected [Namespaces](/docs/envgene-objects.md#namespace)
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
 - [**Template Override**](/docs/features/template-override.md) - Use a base Environment template and override parts as needed
