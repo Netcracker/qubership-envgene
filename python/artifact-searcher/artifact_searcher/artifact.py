@@ -223,11 +223,11 @@ async def _attempt_check(
 
     async with aiohttp.ClientSession() as session:
         resolved_version = version
-        resolve_snapshot_coros = [
-            (resolve_snapshot_version_async(session, app, version, repo[0], resolve_snapshot_stop_event, extension=artifact_extension))
-            for repo in repos_dict.items()
-        ]
         if version.endswith("-SNAPSHOT"):
+            resolve_snapshot_coros = [
+                (resolve_snapshot_version_async(session, app, version, repo[0], resolve_snapshot_stop_event, extension=artifact_extension))
+                for repo in repos_dict.items()
+            ]
             async with asyncio.TaskGroup() as resolve_snapshot_tg:
                 resolve_snapshot_tasks = [resolve_snapshot_tg.create_task(coro) for coro in resolve_snapshot_coros]
             for task in resolve_snapshot_tasks:
