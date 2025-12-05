@@ -246,3 +246,4 @@ def cleanup_dir(path: str):
         shutil.rmtree(dir_path)
 
     dir_path.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Directory has been recreated: {path}")

@@ -3,14 +3,15 @@ import re
 import shutil
 from pathlib import Path
 
-from envgenehelper import logger
+from envgenehelper import logger, get_all_files_in_dir
 
 from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml, crypt
+from envgenehelper.crypt import get_configured_encryption_type
 from envgenehelper.errors import ValidationError
 from cmdb import update_creds_to_cmdb_format
 from git_client import GitRepoManager, GitLabClient
 
-secret_key_var_name = "SECRET_KEY"
+SECRET_KEY = "SECRET_KEY"
 
 
 def get_integration_config(integration_config_path) -> dict:
@@ -61,24 +62,11 @@ def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discove
             update_creds_to_cmdb_format(f)
             shutil.copyfile(f, creds_path)
     crypt.decrypt_file(creds_path, secret_key=discovery_secret_key, in_place=True, is_crypt=True)
-    logger.info(f"Decrypted credential-cp file: {creds_path}")
+    logger.info(f"Decrypted credential-cp file by discovery secret key: {creds_path}")
     crypt.encrypt_file(creds_path, in_place=True)
-
-
-def process_passport_files(discovery_files, cloud_passport_dir, cloud_name):
-    cloud_passport = cloud_passport_dir / f"{cloud_name}.yml"
-    pattern = re.compile(r"(.*)secrets(.*)(}})")
-    for f in discovery_files:
-        if "passport" in f.name:
-            content = f.read_text()
-            replaced = pattern.sub(r"\1\2 | secrets \3", content)
-            f.write_text(replaced)
-            shutil.copyfile(f, cloud_passport)
-            break
-    header_text = ("The contents of this file is generated from Cloud Passport discovery procedure.\nContents will be "
-                   "overwritten by next discovery.\nPlease do not modify this file.")
-    addHeaderToYaml(cloud_passport, header_text)
-    logger.info(f"Discovered cloud_passport: {cloud_passport}")
+    _, is_crypt = get_configured_encryption_type()
+    if is_crypt:
+        logger.info(f"Re-encrypted credential-cp file by instance secret key: {creds_path}")
 
 
 def process_discovery_files(env_name: str,
@@ -93,10 +81,16 @@ def process_discovery_files(env_name: str,
 
     cleanup_dir(cloud_passport_dir)
     process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key)
-    process_passport_files(discovery_files, cloud_passport_dir, cloud_name)
+
+    header_text = ("The contents of this file is generated from Cloud Passport discovery procedure.\nContents will be "
+                   "overwritten by next discovery.\nPlease do not modify this file.")
+    for cp_file in get_all_files_in_dir(cloud_passport_dir):
+        addHeaderToYaml(cp_file, header_text)
 
 
 def main():
+    env_name = os.getenv("ENV_NAME")
+    logger.info(f"Starting discovery of cloud passport for environment {env_name}")
     base_dir = os.getenv("CI_PROJECT_DIR")
 
     integration_config = get_integration_config(Path(f"{base_dir}/configuration/integration.yml"))
@@ -110,7 +104,6 @@ def main():
 
     project_id = os.getenv("CI_PROJECT_ID")
     pipeline_id = os.getenv("CI_PIPELINE_ID")
-    env_name = os.getenv("ENV_NAME")
 
     pipeline_jobs = downstream_gl_client.get_pipeline_bridges(project_id, pipeline_id)
     logger.info(f"Pipeline jobs fetched: {pipeline_jobs}")
@@ -136,11 +129,12 @@ def main():
     downstream_vars = downstream_gl_client.get_project_variables(downstream_project_id)
     discovery_secret_key = None
     for var_info in downstream_vars:
-        if var_info["key"] == secret_key_var_name:
+        if var_info["key"] == SECRET_KEY:
             discovery_secret_key = var_info["value"]
             break
     logger.info("Discovery secret key fetched")
     process_discovery_files(env_name, f"{base_dir}/environments", passport_discovery_files, discovery_secret_key)
+    logger.info(f"Discovery of cloud passport for environment {env_name} completed successfully")
 
 
 if __name__ == "__main__":
