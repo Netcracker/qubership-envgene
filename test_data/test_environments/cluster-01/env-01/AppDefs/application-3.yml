@@ -5,4 +5,5 @@ groupId: "org.qubership"
 supportParallelDeploy: true
 deployParameters: {}
 technicalConfigurationParameters: {}
-metadata: {}
+metadata:
+  helmReleaseNameStrategy: perApplication
