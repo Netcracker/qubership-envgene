@@ -6,6 +6,9 @@
     - [Folder Name Generation Rules](#folder-name-generation-rules)
       - [Namespace NOT in BG Domain](#namespace-not-in-bg-domain)
       - [Namespace in BG Domain (origin or peer)](#namespace-in-bg-domain-origin-or-peer)
+  - [Template Artifacts](#template-artifacts)
+    - [Common Artifact](#common-artifact)
+    - [Blue-Green Artifact](#blue-green-artifact)
   - [Related Features](#related-features)
 
 ## Description
@@ -18,7 +21,7 @@ This section explains the method used to determine the folder name for each [Nam
 
 The folder name generation logic depends on:
 
-- Whether the namespace is part of a [Blue-Green Domain](/docs/envgene-objects.md#bg-domain) (BG Domain)
+- Whether the namespace is part of a [Blue-Green Deployment](/docs/envgene-objects.md#bg-domain) (BG Domain)
 - Whether `deploy_postfix` is specified in the [Template Descriptor](/docs/envgene-objects.md#template-descriptor)
 - The BG role of the namespace (origin, peer, or controller)
 
@@ -49,6 +52,58 @@ If the namespace is part of a BG Domain as `origin` or `peer`:
    - And `<ns-bg-role>` is `origin` or `peer`
 
 **Note:** The `controller` namespace in BG Domain follows the same rules as namespaces not in BG Domain (no suffix is added).
+
+## Template Artifacts
+
+The Environment Inventory specifies which Environment Template artifact(s) to use for rendering the Environment Instance. The artifact selection depends on whether the environment uses Blue-Green Deployment (BGD) support.
+
+### Common Artifact
+
+For environments that do **not** use Blue-Green Deployment, or for standard rendering of most objects:
+
+`envTemplate.artifact`- Template artifact in `application:version` notation. Used for rendering **all** Environment Instance objects:
+
+- All Namespaces (including `controller` namespace in BG Domain, if present)
+- Tenant, Cloud, Applications, Resource Profiles, Credentials, and all other objects
+
+**Example:**
+
+```yaml
+envTemplate:
+  artifact: "project-env-template:v1.2.3"
+```
+
+### Blue-Green Artifact
+
+For environments that use Blue-Green Deployment support, the Environment Inventory must specify separate template artifacts for `origin` and `peer` namespaces using the `envTemplate.bgArtifacts` attribute.
+
+The `envTemplate.bgArtifacts` and `envTemplate.artifact` attributes are **not mutually exclusive**:
+
+- `envTemplate.bgArtifacts` is used **ONLY** for rendering `peer` and `origin` Namespaces in BG Domain:
+  - `envTemplate.bgArtifacts.origin` is used for rendering the `origin` Namespace
+  - `envTemplate.bgArtifacts.peer` is used for rendering the `peer` Namespace
+- `envTemplate.artifact` is used for rendering all other Environment Instance objects:
+  - All Namespaces that are not part of BG Domain (or are `controller` in BG Domain)
+  - All other Environment Instance objects (Tenant, Cloud, Applications, etc.)
+
+The role of a Namespace (origin, peer, or controller) is determined through the [BG Domain](/docs/envgene-objects.md#bg-domain) object in the Environment Instance.
+
+**Example:**
+
+```yaml
+envTemplate:
+  name: "composite-prod"
+  artifact: "project-env-template:v1.2.3"
+  bgArtifacts:
+    origin: "project-env-template:v1.2.3-origin"
+    peer: "project-env-template:v1.2.3-peer"
+```
+
+In this example:
+
+- The `origin` Namespace will be rendered using `project-env-template:v1.2.3-origin`
+- The `peer` Namespace will be rendered using `project-env-template:v1.2.3-peer`
+- All other objects (including `controller` Namespace) will be rendered using `project-env-template:v1.2.3`
 
 ## Related Features
 

@@ -9,6 +9,8 @@
     - [`CMDB_IMPORT`](#cmdb_import)
     - [`DEPLOYMENT_TICKET_ID`](#deployment_ticket_id)
     - [`ENV_TEMPLATE_VERSION`](#env_template_version)
+    - [`ENV_TEMPLATE_VERSION_ORIGIN`](#env_template_version_origin)
+    - [`ENV_TEMPLATE_VERSION_PEER`](#env_template_version_peer)
     - [`ENV_INVENTORY_INIT`](#env_inventory_init)
     - [`ENV_TEMPLATE_NAME`](#env_template_name)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
@@ -112,6 +114,30 @@ This parameter serves as a configuration for an extension point. Integration wit
 **Mandatory**: No
 
 **Example**: `env-template:v1.2.3`
+
+### `ENV_TEMPLATE_VERSION_ORIGIN`
+
+**Description**: If provided, system updates the Blue-Green origin template artifact version in the Environment Inventory. System overrides `envTemplate.bgArtifacts.origin` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
+
+This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `project-env-template:v1.2.3`
+
+### `ENV_TEMPLATE_VERSION_PEER`
+
+**Description**: If provided, system updates the Blue-Green peer template artifact version in the Environment Inventory. System overrides `envTemplate.bgArtifacts.peer` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
+
+This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `project-env-template:v1.2.3`
 
 ### `ENV_INVENTORY_INIT`
 

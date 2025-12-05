@@ -226,6 +226,13 @@ The `bg_manage` job syncs the namespace folders in the repo: it replaces the con
 
 As a result, the active and candidate namespace folders become identical (except for the `name` attribute).
 
+Additionally, during the warmup operation, the `bg_manage` job updates the Environment Inventory (`env_definition.yml`):
+
+- **Forward flow (warmup)**: Copies `envTemplate.bgArtifacts.origin` → `envTemplate.bgArtifacts.peer`
+- **Reverse flow (reverse warmup)**: Copies `envTemplate.bgArtifacts.peer` → `envTemplate.bgArtifacts.origin`
+
+This ensures that the candidate namespace will use the same template artifact version as the active namespace when it becomes active.
+
 ### CMDB Import
 
 The CMDB Import feature creates, among other entities such as Cloud or Namespace the [Blue Green Domain](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#bg-domain) in the CMDB.

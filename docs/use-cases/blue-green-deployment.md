@@ -70,7 +70,8 @@ The operations below describe the forward flow, where the peer namespace becomes
 1. EnvGene runs the pipeline with the `bg_manage` job:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Replaces the contents of the candidate namespace folder (peer) with the contents (including nested Applications) of the active namespace folder (origin), keeping only the candidate namespace `name` attribute
-   3. Updates state files: Creates `.origin-active` and `.peer-candidate` in the Environment folder
+   3. Updates the Environment Inventory: Copies `envTemplate.bgArtifacts.origin` → `envTemplate.bgArtifacts.peer`
+   4. Updates state files: Creates `.origin-active` and `.peer-candidate` in the Environment folder
 
 **Results:**
 
@@ -195,7 +196,8 @@ Reverse flow operations are the inverse of forward flow operations. In reverse f
 1. EnvGene runs the pipeline with the `bg_manage` job:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Replaces the contents of the candidate namespace folder (origin) with the contents (including nested Applications) of the active namespace folder (peer), keeping only the candidate namespace `name` attribute
-   3. Updates state files: Creates `.origin-candidate` and `.peer-active` in the Environment folder
+   3. Updates the Environment Inventory: Copies `envTemplate.bgArtifacts.peer` → `envTemplate.bgArtifacts.origin`
+   4. Updates state files: Creates `.origin-candidate` and `.peer-active` in the Environment folder
 
 **Results:**
 
