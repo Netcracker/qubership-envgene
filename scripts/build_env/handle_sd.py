@@ -292,7 +292,7 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
         source_name, version = entry.split(":", 1)
         logger.info(f"Starting download of SD: {source_name}-{version}")
 
-        sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins)
+        sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins, env.creds)
 
         sd_data_list.append(sd_data)
 
@@ -300,13 +300,11 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
     extract_sds_from_json(env, base_sd_path, sd_data_json, effective_merge_mode)
 
 
-def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
+def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, env_creds: dict = None) -> dict[str, object]:
     if 'SNAPSHOT' in version:
         raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
-    # TODO: check if job would fail without plugins
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
-
-    artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version))
+    artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version, env_creds))
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')

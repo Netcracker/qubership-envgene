@@ -88,3 +88,44 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
     sample_url = f"{base_url.rstrip('/repository/')}{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json"
     assert full_url == sample_url, f"expected: {sample_url}, received: {full_url}"
 
+
+async def test_v2_registry_routes_to_cloud_auth(monkeypatch):
+    auth_cfg = models.AuthConfig(
+        credentials_id="aws-creds",
+        provider="aws",
+        auth_method="secret",
+        aws_domain="test-domain",
+        aws_region="us-east-1",
+    )
+    mvn_cfg = models.MavenConfig(
+        target_snapshot="snapshots",
+        target_staging="staging",
+        target_release="releases",
+        repository_domain_name="https://test.codeartifact.us-east-1.amazonaws.com/maven/repo/",
+        auth_config="aws-maven",
+    )
+    dcr_cfg = models.DockerConfig()
+    reg = models.Registry(
+        name="aws-registry",
+        maven_config=mvn_cfg,
+        docker_config=dcr_cfg,
+        version="2.0",
+        auth_config={"aws-maven": auth_cfg},
+    )
+    app = models.Application(
+        name="test-app",
+        artifact_id="test-artifact",
+        group_id="com.test",
+        registry=reg,
+        solution_descriptor=False,
+    )
+    env_creds = {"aws-creds": {"username": "key", "password": "secret"}}
+
+    async def mock_v2_async(*args, **kwargs):
+        return ("http://url", ("v2_downloaded", "/tmp/artifact.json"))
+
+    monkeypatch.setattr("artifact_searcher.artifact._check_artifact_v2_async", mock_v2_async)
+
+    result = await check_artifact_async(app, models.FileExtension.JSON, "1.0.0", env_creds)
+    assert result is not None
+    assert result[1][0] == "v2_downloaded"

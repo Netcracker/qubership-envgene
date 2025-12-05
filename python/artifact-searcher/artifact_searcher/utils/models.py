@@ -25,6 +25,7 @@ class MavenConfig(BaseSchema):
     repository_domain_name: str = Field(json_schema_extra={"error_message": "Application registry does not define URL"})
     snapshot_group: Optional[str] = ""
     release_group: Optional[str] = ""
+    auth_config: Optional[str] = None
 
     is_nexus: bool = False
 
@@ -51,6 +52,23 @@ class MavenConfig(BaseSchema):
             self.is_nexus = False
 
         return self
+
+
+class AuthConfig(BaseSchema):
+    credentials_id: str
+    auth_type: Optional[str] = None
+    provider: Optional[str] = None
+    auth_method: Optional[str] = None
+    aws_region: Optional[str] = None
+    aws_domain: Optional[str] = None
+    aws_role_arn: Optional[str] = None
+    aws_role_session_prefix: Optional[str] = "nc-devops-m2m-session"
+    gcp_reg_project: Optional[str] = None
+    gcp_reg_pool_id: Optional[str] = None
+    gcp_reg_provider_id: Optional[str] = None
+    gcp_reg_sa_email: Optional[str] = None
+
+
 class DockerConfig(BaseSchema):
     snapshot_uri: Optional[str] = ""
     staging_uri: Optional[str] = ""
@@ -60,6 +78,7 @@ class DockerConfig(BaseSchema):
     staging_repo_name: Optional[str] = ""
     release_repo_name: Optional[str] = ""
     group_name: Optional[str] = ""
+    auth_config: Optional[str] = None
 
 
 class GoConfig(BaseSchema):
@@ -112,6 +131,8 @@ class Registry(BaseSchema):
     npm_config: Optional[NpmConfig] = None
     helm_config: Optional[HelmConfig] = None
     helm_app_config: Optional[HelmAppConfig] = None
+    version: Optional[str] = "1.0"
+    auth_config: Optional[dict[str, AuthConfig]] = None
 
 
 class Application(BaseSchema):
