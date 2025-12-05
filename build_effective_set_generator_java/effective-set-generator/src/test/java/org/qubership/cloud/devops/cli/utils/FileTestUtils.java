@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -79,4 +80,9 @@ public class FileTestUtils {
         }
         return paths;
     }
+
+    public Path resource(String resourcePath) throws Exception {
+        return Paths.get(FileTestUtils.class.getClassLoader().getResource(resourcePath).toURI());
+    }
+
 }

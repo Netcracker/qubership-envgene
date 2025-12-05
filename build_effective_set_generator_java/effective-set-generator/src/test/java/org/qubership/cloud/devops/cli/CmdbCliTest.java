@@ -9,7 +9,6 @@ import org.qubership.cloud.devops.cli.utils.FileTestUtils;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -22,13 +21,11 @@ public class CmdbCliTest {
 
     @Test
     void testGenerateEffectiveSet(@TempDir Path tempDir) throws Exception {
-        ClassLoader classLoader = getClass().getClassLoader();
-
-        Path envsPath = Paths.get(classLoader.getResource("environments").toURI());
-        Path sbomsPath = Paths.get(classLoader.getResource("sboms").toURI());
-        Path solutionSbomPath = Paths.get(classLoader.getResource(
-                "environments/cluster-01/pl-01/Inventory/solution-descriptor/solution.sbom.json").toURI());
-        Path registriesPath = Paths.get(classLoader.getResource("configuration/registry.yml").toURI());
+        Path envsPath = FileTestUtils.resource("environments");
+        Path sbomsPath = FileTestUtils.resource("sboms");
+        Path solutionSbomPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/solution-descriptor/solution.sbom.json");
+        Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
 
         Path outputPath = tempDir.resolve("effective-set");
 
@@ -48,8 +45,7 @@ public class CmdbCliTest {
 
         assertEquals(0, exitCode);
 
-        Path expected = Paths.get(classLoader.getResource(
-                "environments/cluster-01/pl-01/effective-set").toURI());
+        Path expected = FileTestUtils.resource("environments/cluster-01/pl-01/effective-set");
 
         FileTestUtils.compareFolders(expected, outputPath);
     }
