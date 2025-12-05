@@ -10,7 +10,7 @@ from envgenehelper.errors import ValidationError
 
 from cmdb import update_creds_to_cmdb_format
 from git_client import GitRepoManager, GitLabClient
-from jinja.jinja import create_jinja_env
+from jinja import create_jinja_env
 
 SECRET_KEY = "SECRET_KEY"
 
@@ -76,7 +76,7 @@ def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discove
         logger.info(f"Re-encrypted credential-cp file by instance secret key: {creds_path}")
 
 
-def process_passport_files(discovery_files, cloud_passport_dir, cloud_name, cred_config):
+def process_passport_files(discovery_files, cloud_passport_dir, cloud_name):
     cloud_passport = cloud_passport_dir / f"{cloud_name}.yml"
 
     for f in discovery_files:
@@ -88,7 +88,7 @@ def process_passport_files(discovery_files, cloud_passport_dir, cloud_name, cred
                 content
             )
             logger.info(replaced)
-            rendered = create_jinja_env().from_string(dumpYamlToStr(replaced)).render(cred_config)
+            rendered = create_jinja_env().from_string(dumpYamlToStr(replaced)).render("")
             writeYamlToFile(rendered, cloud_passport)
             addHeaderToYaml(cloud_passport, header_text)
             break
@@ -98,8 +98,7 @@ def process_passport_files(discovery_files, cloud_passport_dir, cloud_name, cred
 def process_discovery_files(env_name: str,
                             envs_dir_path: str,
                             discovery_files: list[Path],
-                            discovery_secret_key: str,
-                            cred_config: dict):
+                            discovery_secret_key: str):
     envs_dir_path = Path(envs_dir_path)
 
     cloud_name = env_name.split("/")[0]
@@ -107,10 +106,10 @@ def process_discovery_files(env_name: str,
     cloud_passport_dir = cloud_dir / "cloud-passport"
     cleanup_dir(cloud_passport_dir)
 
+    process_passport_files(discovery_files, cloud_passport_dir, cloud_name)
     process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key)
     for cp_file in findAllFilesInDir(cloud_passport_dir, ""):
         addHeaderToYaml(cp_file, header_text)
-    process_passport_files(discovery_files, cloud_passport_dir, cloud_name, cred_config)
 
 
 def main():
