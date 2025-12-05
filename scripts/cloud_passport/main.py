@@ -3,13 +3,14 @@ import re
 import shutil
 from pathlib import Path
 
-from envgenehelper import logger, findAllFilesInDir
+from envgenehelper import logger, findAllFilesInDir, writeYamlToFile, dumpYamlToStr
 from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml, crypt
 from envgenehelper.crypt import get_configured_encryption_type
 from envgenehelper.errors import ValidationError
 
 from cmdb import update_creds_to_cmdb_format
 from git_client import GitRepoManager, GitLabClient
+from build_env.jinja.jinja import create_jinja_env
 
 SECRET_KEY = "SECRET_KEY"
 
@@ -75,21 +76,30 @@ def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discove
         logger.info(f"Re-encrypted credential-cp file by instance secret key: {creds_path}")
 
 
-def process_passport_files(discovery_files, cloud_passport_dir, cloud_name):
+def process_passport_files(discovery_files, cloud_passport_dir, cloud_name, cred_config):
     cloud_passport = cloud_passport_dir / f"{cloud_name}.yml"
 
     for f in discovery_files:
         if "passport" in f.name:
-            shutil.copyfile(f, cloud_passport)
+            content = f.read_text()
+            replaced = re.sub(
+                r"\{\{\s*secrets\(['\"](.*?)['\"]\)\s*}}",
+                r"{{ \1 | secrets }}",
+                content
+            )
+            logger.info(replaced)
+            rendered = create_jinja_env().from_string(dumpYamlToStr(replaced)).render(cred_config)
+            writeYamlToFile(rendered, cloud_passport)
+            addHeaderToYaml(cloud_passport, header_text)
             break
-    addHeaderToYaml(cloud_passport, header_text)
     logger.info(f"Discovered cloud_passport: {cloud_passport}")
 
 
 def process_discovery_files(env_name: str,
                             envs_dir_path: str,
                             discovery_files: list[Path],
-                            discovery_secret_key: str):
+                            discovery_secret_key: str,
+                            cred_config: dict):
     envs_dir_path = Path(envs_dir_path)
 
     cloud_name = env_name.split("/")[0]
@@ -100,7 +110,7 @@ def process_discovery_files(env_name: str,
     process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key)
     for cp_file in findAllFilesInDir(cloud_passport_dir, ""):
         addHeaderToYaml(cp_file, header_text)
-    process_passport_files(discovery_files, cloud_passport_dir, cloud_name)
+    process_passport_files(discovery_files, cloud_passport_dir, cloud_name, cred_config)
 
 
 def main():
@@ -128,11 +138,15 @@ def main():
         raise ValidationError("Downstream pipeline not found")
 
     downstream_project_id = downstream.get("project_id")
-    downstream_jobs = downstream_gl_client.get_pipeline_jobs(downstream_project_id, downstream.get("pipeline_id"))
+    downstream_jobs = downstream_gl_client.get_pipeline_jobs(downstream_project_id,
+                                                             downstream.get("pipeline_id"))
     logger.info(f"Downstream pipeline jobs fetched: {downstream_jobs}")
     passport_archive_path = "/tmp/archive.zip"
-    downstream_gl_client.download_job_artifacts(downstream_project_id, downstream_jobs[0].get("id"),
-                                                passport_archive_path)
+    downstream_gl_client.download_job_artifacts(
+        downstream_project_id,
+        downstream_jobs[0].get("id"),
+        passport_archive_path
+    )
 
     passport_unpack_path = Path("/tmp/passport")
     unpack_archive(passport_archive_path, os.path.dirname(passport_unpack_path))
@@ -148,7 +162,14 @@ def main():
             discovery_secret_key = var_info["value"]
             break
     logger.info("Discovery secret key fetched")
-    process_discovery_files(env_name, f"{base_dir}/environments", passport_discovery_files, discovery_secret_key)
+
+    process_discovery_files(
+        env_name,
+        f"{base_dir}/environments",
+        passport_discovery_files,
+        discovery_secret_key,
+        cred_config
+    )
     logger.info(f"Discovery of cloud passport for environment {env_name} completed successfully")
 
 
