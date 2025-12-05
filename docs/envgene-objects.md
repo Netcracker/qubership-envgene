@@ -123,7 +123,8 @@ namespaces:
     # Path to the namespace template file
     template_path: string
     # Optional
-    # Used for determining the name of the parent folder for the Namespace when generating the Environment Instance
+    # Used for determining the name of the parent folder for the Namespace when generating the Environment Instance.
+    # See [Environment Instance Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation) for detailed rules.
     # If the value is not specified, the name of the namespace template file (without extension) is used
     deploy_postfix: <deploy-postfix>
     # Optional
