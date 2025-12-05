@@ -3,7 +3,7 @@ import re
 import shutil
 from pathlib import Path
 
-from envgenehelper import logger, get_all_files_in_dir
+from envgenehelper import logger, get_all_files_in_dir, findAllFilesInDir
 
 from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml, crypt
 from envgenehelper.crypt import get_configured_encryption_type
@@ -84,7 +84,7 @@ def process_discovery_files(env_name: str,
 
     header_text = ("The contents of this file is generated from Cloud Passport discovery procedure.\nContents will be "
                    "overwritten by next discovery.\nPlease do not modify this file.")
-    for cp_file in get_all_files_in_dir(cloud_passport_dir):
+    for cp_file in findAllFilesInDir(cloud_passport_dir, ""):
         addHeaderToYaml(cp_file, header_text)
 
 
