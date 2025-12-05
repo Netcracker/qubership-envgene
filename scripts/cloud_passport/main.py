@@ -3,15 +3,21 @@ import re
 import shutil
 from pathlib import Path
 
-from envgenehelper import logger, get_all_files_in_dir, findAllFilesInDir
-
+from envgenehelper import logger, findAllFilesInDir
 from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml, crypt
 from envgenehelper.crypt import get_configured_encryption_type
 from envgenehelper.errors import ValidationError
+
 from cmdb import update_creds_to_cmdb_format
 from git_client import GitRepoManager, GitLabClient
 
 SECRET_KEY = "SECRET_KEY"
+
+header_text = (
+    "The contents of this file is generated from Cloud Passport discovery procedure.\n"
+    "Contents will be overwritten by next discovery.\n"
+    "Please do not modify this file."
+)
 
 
 def get_integration_config(integration_config_path) -> dict:
@@ -69,6 +75,17 @@ def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discove
         logger.info(f"Re-encrypted credential-cp file by instance secret key: {creds_path}")
 
 
+def process_passport_files(discovery_files, cloud_passport_dir, cloud_name):
+    cloud_passport = cloud_passport_dir / f"{cloud_name}.yml"
+
+    for f in discovery_files:
+        if "passport" in f.name:
+            shutil.copyfile(f, cloud_passport)
+            break
+    addHeaderToYaml(cloud_passport, header_text)
+    logger.info(f"Discovered cloud_passport: {cloud_passport}")
+
+
 def process_discovery_files(env_name: str,
                             envs_dir_path: str,
                             discovery_files: list[Path],
@@ -78,14 +95,12 @@ def process_discovery_files(env_name: str,
     cloud_name = env_name.split("/")[0]
     cloud_dir = envs_dir_path / cloud_name
     cloud_passport_dir = cloud_dir / "cloud-passport"
-
     cleanup_dir(cloud_passport_dir)
-    process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key)
 
-    header_text = ("The contents of this file is generated from Cloud Passport discovery procedure.\nContents will be "
-                   "overwritten by next discovery.\nPlease do not modify this file.")
+    process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key)
     for cp_file in findAllFilesInDir(cloud_passport_dir, ""):
         addHeaderToYaml(cp_file, header_text)
+    process_passport_files(discovery_files, cloud_passport_dir, cloud_name)
 
 
 def main():
