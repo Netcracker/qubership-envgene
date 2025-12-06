@@ -93,7 +93,7 @@ def convert_secret(val: str) -> str:
 
 
 def process_passport_files(discovery_files, cloud_passport_dir, cloud_name):
-    cloud_passport = cloud_passport_dir / f"{cloud_name}.yml"
+    cloud_passport_path = cloud_passport_dir / f"{cloud_name}.yml"
 
     for f in discovery_files:
         if "passport" in f.name:
@@ -103,11 +103,11 @@ def process_passport_files(discovery_files, cloud_passport_dir, cloud_name):
                 lambda m: convert_secret(m.group(1)),
                 content,
             )
-            writeYamlToFile(replaced, cloud_passport)
-            addHeaderToYaml(cloud_passport, header_text)
+            writeYamlToFile(cloud_passport_path, replaced)
+            addHeaderToYaml(cloud_passport_path, header_text)
             break
 
-    logger.info(f"Discovered cloud_passport: {cloud_passport}")
+    logger.info(f"Discovered cloud_passport: {cloud_passport_path}")
 
 
 def process_discovery_files(env_name: str,
