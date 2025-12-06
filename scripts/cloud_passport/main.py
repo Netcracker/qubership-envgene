@@ -3,7 +3,7 @@ import re
 import shutil
 from pathlib import Path
 
-from envgenehelper import logger, findAllFilesInDir, writeYamlToFile
+from envgenehelper import logger, findAllFilesInDir, writeYamlToFile, readYaml
 from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml, crypt
 from envgenehelper.crypt import get_configured_encryption_type
 from envgenehelper.errors import ValidationError
@@ -103,7 +103,7 @@ def process_passport_files(discovery_files, cloud_passport_dir, cloud_name):
                 lambda m: convert_secret(m.group(1)),
                 content,
             )
-            writeYamlToFile(cloud_passport_path, replaced)
+            writeYamlToFile(cloud_passport_path, readYaml(replaced))
             addHeaderToYaml(cloud_passport_path, header_text)
             break
 
