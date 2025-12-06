@@ -181,8 +181,7 @@ def main():
         env_name,
         f"{base_dir}/environments",
         passport_discovery_files,
-        discovery_secret_key,
-        cred_config
+        discovery_secret_key
     )
     logger.info(f"Discovery of cloud passport for environment {env_name} completed successfully")
 
