@@ -3,14 +3,13 @@ import re
 import shutil
 from pathlib import Path
 
-from envgenehelper import logger, findAllFilesInDir, writeYamlToFile, dumpYamlToStr
+from envgenehelper import logger, findAllFilesInDir, writeYamlToFile
 from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml, crypt
 from envgenehelper.crypt import get_configured_encryption_type
 from envgenehelper.errors import ValidationError
 
 from cmdb import update_creds_to_cmdb_format
 from git_client import GitRepoManager, GitLabClient
-from jinja import create_jinja_env
 
 SECRET_KEY = "SECRET_KEY"
 
@@ -18,6 +17,10 @@ header_text = (
     "The contents of this file is generated from Cloud Passport discovery procedure.\n"
     "Contents will be overwritten by next discovery.\n"
     "Please do not modify this file."
+)
+
+SECRET_PATTERN = re.compile(
+    r"\{\{\s*secrets\(['\"](.*?)['\"]\)\s*}}"
 )
 
 
@@ -76,22 +79,34 @@ def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discove
         logger.info(f"Re-encrypted credential-cp file by instance secret key: {creds_path}")
 
 
+# {{ secrets('name.username') }} -> ${creds.get("name").password}
+def convert_secret(val: str) -> str:
+    if "." in val:
+        credential_id = val.rsplit(".", 1)[0] \
+            .replace("collector.", "") \
+            .replace(".", "-")
+        suffix = val.split(".")[-1]
+        return f'${{creds.get("{credential_id}").{suffix}}}'
+    else:
+        credential_id = val.replace(".", "-")
+        return f'${{creds.get("{credential_id}")}}'
+
+
 def process_passport_files(discovery_files, cloud_passport_dir, cloud_name):
     cloud_passport = cloud_passport_dir / f"{cloud_name}.yml"
 
     for f in discovery_files:
         if "passport" in f.name:
             content = f.read_text()
-            replaced = re.sub(
-                r"\{\{\s*secrets\(['\"](.*?)['\"]\)\s*}}",
-                r"{{ \1 | secrets }}",
-                content
+            # replace all secrets(...)
+            replaced = SECRET_PATTERN.sub(
+                lambda m: convert_secret(m.group(1)),
+                content,
             )
-            logger.info(replaced)
-            rendered = create_jinja_env().from_string(dumpYamlToStr(replaced)).render("")
-            writeYamlToFile(rendered, cloud_passport)
+            writeYamlToFile(replaced, cloud_passport)
             addHeaderToYaml(cloud_passport, header_text)
             break
+
     logger.info(f"Discovered cloud_passport: {cloud_passport}")
 
 
