@@ -16,25 +16,9 @@
     - [UC-EIG-TA-2: Environment Instance Generation with Blue-Green Artifacts](#uc-eig-ta-2-environment-instance-generation-with-blue-green-artifacts)
     - [UC-EIG-TA-3: Environment Instance Generation with Mixed Artifacts (BG and Non-BG Namespaces)](#uc-eig-ta-3-environment-instance-generation-with-mixed-artifacts-bg-and-non-bg-namespaces)
 
-> [!WARNING]
-> This documentation is incomplete. It currently covers only specific aspects of Environment Instance Generation.
-
-This document contains use cases for the [Environment Instance Generation](/docs/features/environment-instance-generation.md) feature.
-
 ## Overview
 
-This document covers use cases for specific aspects of [Environment Instance Generation](/docs/features/environment-instance-generation.md) - the process of creating Environment Instance objects from Environment Templates.
-
-The following diagram shows the execution order of the documented aspects during Environment Instance generation:
-
-```mermaid
-flowchart LR
-    Start([Environment Instance Generation Starts]) --> FolderGen[Namespace Folder Name Generation]
-    FolderGen --> ArtifactSel[Template Artifacts Selection]
-    ArtifactSel --> Render[Environment Instance Rendering]
-    Render --> End([Environment Instance Created])
-
-```
+This document covers use cases for [Environment Instance Generation](/docs/features/environment-instance-generation.md) - the process of creating Environment Instance objects from Environment Templates.
 
 ## Namespace Folder Name Generation
 
@@ -64,7 +48,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. EnvGene runs the pipeline with the `env_builder` job:
+1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is not part of BG Domain
    3. Finds `deploy_postfix: "core"` in Template Descriptor
@@ -100,7 +84,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. EnvGene runs the pipeline with the `env_builder` job:
+1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is not part of BG Domain
    3. Does not find `deploy_postfix` in Template Descriptor
@@ -138,7 +122,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. EnvGene runs the pipeline with the `env_builder` job:
+1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `controller`
    3. Applies rules for controller namespace (same as non-BG namespaces)
@@ -175,7 +159,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. EnvGene runs the pipeline with the `env_builder` job:
+1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `controller`
    3. Applies rules for controller namespace (same as non-BG namespaces)
@@ -214,7 +198,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. EnvGene runs the pipeline with the `env_builder` job:
+1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `origin`
    3. Finds `deploy_postfix: "bss"` in Template Descriptor
@@ -251,7 +235,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. EnvGene runs the pipeline with the `env_builder` job:
+1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `origin`
    3. Does not find `deploy_postfix` in Template Descriptor
@@ -290,7 +274,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. EnvGene runs the pipeline with the `env_builder` job:
+1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `peer`
    3. Finds `deploy_postfix: "bss"` in Template Descriptor
@@ -327,7 +311,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. EnvGene runs the pipeline with the `env_builder` job:
+1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Template and Template Descriptor
    2. Identifies that Namespace is part of BG Domain with role `peer`
    3. Does not find `deploy_postfix` in Template Descriptor
@@ -370,7 +354,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. EnvGene runs the pipeline with the `env_builder` job:
+1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Inventory
    2. Identifies that only `envTemplate.artifact` is specified
    3. Uses `envTemplate.artifact` for rendering all Environment Instance objects:
@@ -410,7 +394,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. EnvGene runs the pipeline with the `env_builder` job:
+1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Inventory
    2. Reads BG Domain object to determine namespace roles
    3. For `origin` Namespace: Uses `envTemplate.bgArtifacts.origin` artifact
@@ -454,7 +438,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. EnvGene runs the pipeline with the `env_builder` job:
+1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Inventory
    2. Reads BG Domain object to determine namespace roles
    3. For `origin` Namespace: Uses `envTemplate.bgArtifacts.origin` artifact

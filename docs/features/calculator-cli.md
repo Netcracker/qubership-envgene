@@ -326,6 +326,8 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                         └── credentials.yaml
 ```
 
+The namespace folder names in Effective Set v2.0 (e.g., `<namespace-folder-01>`, `<namespace-folder-02>`) must match exactly the namespace folder names from the Environment Instance (the folder name is a child of `Namespaces` and parent of `namespace.yml`). These folder names are used consistently across all Effective Set contexts (deployment, runtime, cleanup) and in `mapping.yml` files.
+
 #### [Version 2.0] Parameter type conversion
 
 The Calculator command-line tool maintains strict type fidelity for all parameters during Effective Set generation
@@ -357,11 +359,11 @@ When processing the Solution SBOM, the Calculator matches the `deployPostfix` va
 The matching logic is as follows:
 
 - First, attempts an exact match: finds a Namespace folder whose name exactly matches the `deployPostfix` value from the Solution SBOM.
-- If no exact match is found and the `deployPostfix` value does not end with `-origin` or `-peer`, attempts to find a Namespace folder that is part of a BG Domain:
-  - Checks for a match with `deployPostfix` + `-origin` suffix only for namespaces that are part of a BG Domain with role `origin`
-  - Checks for a match with `deployPostfix` + `-peer` suffix only for namespaces that are part of a BG Domain with role `peer`
+- If no exact match is found, attempts to find a Namespace folder that is part of a BG Domain:
+  - Checks for a match with `deployPostfix` + `-origin` suffix **only** for namespaces that are part of a BG Domain with role `origin`
+  - Checks for a match with `deployPostfix` + `-peer` suffix **only** for namespaces that are part of a BG Domain with role `peer`
 
-This allows matching `deployPostfix` values from Solution SBOM (which may not include BG role suffixes) with Namespace folder names that include these suffixes for BG Domain namespaces, as described in [Namespace Folder Name Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation).
+This allows matching `deployPostfix` values from Solution SBOM with Namespace folder names that include suffixes for BG Domain namespaces, as described in [Namespace Folder Name Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation).
 
 #### [Version 2.0] Handling Missing Attributes in SBOM
 
@@ -910,6 +912,8 @@ This mapping is necessary because the Effective Set consumer requires knowledge 
 Namespace name is taken from the `name` attribute of Namespace.
 
 Path is relative to the Instance repository (i.e., it starts with `/environments`)
+
+The namespace folder name in Effective Set v2.0 must match exactly the namespace folder name from the Environment Instance (the folder name is a child of `Namespaces` and parent of `namespace.yml`). This folder name is used both in `mapping.yml` paths and in the Effective Set file structure.
 
 For example:
 
