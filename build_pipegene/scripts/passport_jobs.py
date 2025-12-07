@@ -63,7 +63,6 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
     get_passport_job = job_instance(params=get_passport_params, vars=get_passport_vars)
     base = "${CI_PROJECT_DIR}/environments"
     get_passport_job.artifacts.add_paths(f"{base}/{full_env}")
-    get_passport_job.artifacts.add_paths(f"{base}/{cluster_name}")
     get_passport_job.artifacts.add_paths(f"{base}/{cluster_name}/cloud-passport")
     get_passport_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(get_passport_job)
