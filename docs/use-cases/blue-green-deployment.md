@@ -1,23 +1,24 @@
-# BG Operations
+# Blue-Green Deployment Use Cases
 
-- [BG Operations](#bg-operations)
-  - [BG Operation in `bg_manage` EnvGene Job. Forward Flow](#bg-operation-in-bg_manage-envgene-job-forward-flow)
-    - [init-domain](#init-domain)
-    - [warmup](#warmup)
-    - [promote](#promote)
-    - [commit](#commit)
-    - [rollback](#rollback)
-  - [BG Operation in `bg_manage` EnvGene Job. Reverse Flow](#bg-operation-in-bg_manage-envgene-job-reverse-flow)
-    - [reverse warmup](#reverse-warmup)
-    - [reverse promote](#reverse-promote)
-    - [reverse commit](#reverse-commit)
-    - [reverse rollback](#reverse-rollback)
+- [Blue-Green Deployment Use Cases](#blue-green-deployment-use-cases)
+  - [Overview](#overview)
+    - [UC-BG-1: Init Domain](#uc-bg-1-init-domain)
+    - [UC-BG-2: Warmup](#uc-bg-2-warmup)
+    - [UC-BG-3: Promote](#uc-bg-3-promote)
+    - [UC-BG-4: Commit](#uc-bg-4-commit)
+    - [UC-BG-5: Rollback](#uc-bg-5-rollback)
+    - [UC-BG-6: Reverse Warmup](#uc-bg-6-reverse-warmup)
+    - [UC-BG-7: Reverse Promote](#uc-bg-7-reverse-promote)
+    - [UC-BG-8: Reverse Commit](#uc-bg-8-reverse-commit)
+    - [UC-BG-9: Reverse Rollback](#uc-bg-9-reverse-rollback)
 
-## BG Operation in `bg_manage` EnvGene Job. Forward Flow
+This document contains use cases for the [Blue-Green Deployment](/docs/features/blue-green-deployment.md) feature.
 
-The operations below describe the forward flow, where the peer namespace becomes candidate and then active.
+## Overview
 
-### init-domain
+This document covers use cases for [Blue-Green Deployment](/docs/features/blue-green-deployment.md) operations performed by the `bg_manage` job in EnvGene pipeline. These operations manage state transitions between origin and peer namespaces in Blue-Green Domains.
+
+### UC-BG-1: Init Domain
 
 **Pre-requisites:**
 
@@ -34,7 +35,7 @@ The operations below describe the forward flow, where the peer namespace becomes
    3. `BG_MANAGE: true`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
-   2. `GH_ADDITIONAL_PARAMS: {\"BG_MANAGE\":true,\"BG_STATE\":{\"controllerNamespace\":\"<controller-ns>\",\"originNamespace\":{\"name\":\"<origin-ns>\",\"state\":\"active\",\"version\":\"<version>\"},\"peerNamespace\":{\"name\":\"<peer-ns>\",\"state\":\"idle\",\"version\":\"<version>\"},\"updateTime\":\"<timestamp>\"}}`
+   2. `GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"<controller-ns>\",\"originNamespace\":{\"name\":\"<origin-ns>\",\"state\":\"active\",\"version\":\"<version>\"},\"peerNamespace\":{\"name\":\"<peer-ns>\",\"state\":\"idle\",\"version\":\"<version>\"},\"updateTime\":\"<timestamp>\"}"`
 
 **Steps:**
 
@@ -46,7 +47,7 @@ The operations below describe the forward flow, where the peer namespace becomes
 
 1. State files `.origin-active` and `.peer-idle` are created
 
-### warmup
+### UC-BG-2: Warmup
 
 **Pre-requisites:**
 
@@ -63,7 +64,7 @@ The operations below describe the forward flow, where the peer namespace becomes
    3. `BG_MANAGE: true`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
-   2. `GH_ADDITIONAL_PARAMS: {"BG_MANAGE":true,"BG_STATE":{"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"active","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"candidate","version":"<version>"},"updateTime":"<timestamp>"}}`
+   2. `GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"<controller-ns>\",\"originNamespace\":{\"name\":\"<origin-ns>\",\"state\":\"active\",\"version\":\"<version>\"},\"peerNamespace\":{\"name\":\"<peer-ns>\",\"state\":\"candidate\",\"version\":\"<version>\"},\"updateTime\":\"<timestamp>\"}"`
 
 **Steps:**
 
@@ -78,7 +79,7 @@ The operations below describe the forward flow, where the peer namespace becomes
 1. Origin namespace folder (active) and peer namespace folder (candidate) have the same content
 2. State files `.origin-active` and `.peer-candidate` are set in the Environment folder
 
-### promote
+### UC-BG-3: Promote
 
 **Pre-requisites:**
 
@@ -95,7 +96,7 @@ The operations below describe the forward flow, where the peer namespace becomes
    3. `BG_MANAGE: true`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
-   2. `GH_ADDITIONAL_PARAMS: {"BG_MANAGE":true,"BG_STATE":{"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"legacy","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"active","version":"<version>"},"updateTime":"<timestamp>"}}`
+   2. `GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"<controller-ns>\",\"originNamespace\":{\"name\":\"<origin-ns>\",\"state\":\"legacy\",\"version\":\"<version>\"},\"peerNamespace\":{\"name\":\"<peer-ns>\",\"state\":\"active\",\"version\":\"<version>\"},\"updateTime\":\"<timestamp>\"}"`
 
 **Steps:**
 
@@ -107,7 +108,7 @@ The operations below describe the forward flow, where the peer namespace becomes
 
 1. State files `.origin-legacy` and `.peer-active` are set in the Environment folder
 
-### commit
+### UC-BG-4: Commit
 
 **Pre-requisites:**
 
@@ -124,7 +125,7 @@ The operations below describe the forward flow, where the peer namespace becomes
    3. `BG_MANAGE: true`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
-   2. `GH_ADDITIONAL_PARAMS: {"BG_MANAGE":true,"BG_STATE":{"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"idle","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"active","version":"<version>"},"updateTime":"<timestamp>"}}`
+   2. `GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"<controller-ns>\",\"originNamespace\":{\"name\":\"<origin-ns>\",\"state\":\"idle\",\"version\":\"<version>\"},\"peerNamespace\":{\"name\":\"<peer-ns>\",\"state\":\"active\",\"version\":\"<version>\"},\"updateTime\":\"<timestamp>\"}"`
 
 **Steps:**
 
@@ -136,7 +137,7 @@ The operations below describe the forward flow, where the peer namespace becomes
 
 1. State files `.origin-idle` and `.peer-active` are set in the Environment folder
 
-### rollback
+### UC-BG-5: Rollback
 
 > [!Note]
 > `rollback` operation has the same state transition as `commit` operation. The difference is semantic: `rollback` is used when reverting from a failed promotion, while `commit` is used after a successful promotion. Both operations result in the same final state: origin becomes idle and peer remains active.
@@ -156,7 +157,7 @@ The operations below describe the forward flow, where the peer namespace becomes
    3. `BG_MANAGE: true`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
-   2. `GH_ADDITIONAL_PARAMS: {"BG_MANAGE":true,"BG_STATE":{"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"idle","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"active","version":"<version>"},"updateTime":"<timestamp>"}}`
+   2. `GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"<controller-ns>\",\"originNamespace\":{\"name\":\"<origin-ns>\",\"state\":\"idle\",\"version\":\"<version>\"},\"peerNamespace\":{\"name\":\"<peer-ns>\",\"state\":\"active\",\"version\":\"<version>\"},\"updateTime\":\"<timestamp>\"}"`
 
 **Steps:**
 
@@ -168,11 +169,7 @@ The operations below describe the forward flow, where the peer namespace becomes
 
 1. State files `.origin-idle` and `.peer-active` are set in the Environment folder
 
-## BG Operation in `bg_manage` EnvGene Job. Reverse Flow
-
-Reverse flow operations are the inverse of forward flow operations. In reverse flow, the origin namespace becomes the candidate and then active.
-
-### reverse warmup
+### UC-BG-6: Reverse Warmup
 
 **Pre-requisites:**
 
@@ -189,7 +186,7 @@ Reverse flow operations are the inverse of forward flow operations. In reverse f
    3. `BG_MANAGE: true`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
-   2. `GH_ADDITIONAL_PARAMS: {"BG_MANAGE":true,"BG_STATE":{"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"candidate","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"active","version":"<version>"},"updateTime":"<timestamp>"}}`
+   2. `GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"<controller-ns>\",\"originNamespace\":{\"name\":\"<origin-ns>\",\"state\":\"candidate\",\"version\":\"<version>\"},\"peerNamespace\":{\"name\":\"<peer-ns>\",\"state\":\"active\",\"version\":\"<version>\"},\"updateTime\":\"<timestamp>\"}"`
 
 **Steps:**
 
@@ -204,7 +201,7 @@ Reverse flow operations are the inverse of forward flow operations. In reverse f
 1. Origin namespace folder (candidate) and peer namespace folder (active) have the same content
 2. State files `.origin-candidate` and `.peer-active` are set in the Environment folder
 
-### reverse promote
+### UC-BG-7: Reverse Promote
 
 **Pre-requisites:**
 
@@ -221,7 +218,7 @@ Reverse flow operations are the inverse of forward flow operations. In reverse f
    3. `BG_MANAGE: true`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
-   2. `GH_ADDITIONAL_PARAMS: {"BG_MANAGE":true,"BG_STATE":{"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"active","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"legacy","version":"<version>"},"updateTime":"<timestamp>"}}`
+   2. `GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"<controller-ns>\",\"originNamespace\":{\"name\":\"<origin-ns>\",\"state\":\"active\",\"version\":\"<version>\"},\"peerNamespace\":{\"name\":\"<peer-ns>\",\"state\":\"legacy\",\"version\":\"<version>\"},\"updateTime\":\"<timestamp>\"}"`
 
 **Steps:**
 
@@ -233,7 +230,7 @@ Reverse flow operations are the inverse of forward flow operations. In reverse f
 
 1. State files `.origin-active` and `.peer-legacy` are set in the Environment folder
 
-### reverse commit
+### UC-BG-8: Reverse Commit
 
 **Pre-requisites:**
 
@@ -250,7 +247,7 @@ Reverse flow operations are the inverse of forward flow operations. In reverse f
    3. `BG_MANAGE: true`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
-   2. `GH_ADDITIONAL_PARAMS: {"BG_MANAGE":true,"BG_STATE":{"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"active","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"idle","version":"<version>"},"updateTime":"<timestamp>"}}`
+   2. `GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"<controller-ns>\",\"originNamespace\":{\"name\":\"<origin-ns>\",\"state\":\"active\",\"version\":\"<version>\"},\"peerNamespace\":{\"name\":\"<peer-ns>\",\"state\":\"idle\",\"version\":\"<version>\"},\"updateTime\":\"<timestamp>\"}"`
 
 **Steps:**
 
@@ -262,7 +259,7 @@ Reverse flow operations are the inverse of forward flow operations. In reverse f
 
 1. State files `.origin-active` and `.peer-idle` are set in the Environment folder
 
-### reverse rollback
+### UC-BG-9: Reverse Rollback
 
 > [!Note]
 > `reverse rollback` operation has the same state transition as `reverse commit` operation. The difference is semantic: `reverse rollback` is used when reverting from a failed reverse promotion, while `reverse commit` is used after a successful reverse promotion. Both operations result in the same final state: origin remains active and peer becomes idle.
@@ -282,7 +279,7 @@ Reverse flow operations are the inverse of forward flow operations. In reverse f
    3. `BG_MANAGE: true`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
-   2. `GH_ADDITIONAL_PARAMS: {"BG_MANAGE":true,"BG_STATE":{"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"active","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"idle","version":"<version>"},"updateTime":"<timestamp>"}}`
+   2. `GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"<controller-ns>\",\"originNamespace\":{\"name\":\"<origin-ns>\",\"state\":\"active\",\"version\":\"<version>\"},\"peerNamespace\":{\"name\":\"<peer-ns>\",\"state\":\"idle\",\"version\":\"<version>\"},\"updateTime\":\"<timestamp>\"}"`
 
 **Steps:**
 
