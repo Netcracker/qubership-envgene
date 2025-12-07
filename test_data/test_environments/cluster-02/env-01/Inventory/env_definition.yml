@@ -1,0 +1,35 @@
+inventory:
+  environmentName: env-01
+  tenantName: tenant
+  cloudName: cluster_01_env_01
+  cloudPassport: cluster-01
+  description: Composite Full Sample
+  owners: Qubership team
+envTemplate:
+  name: composite-prod
+  artifact: deployment-configuration-env-templates:1.2.3
+  additionalTemplateVariables:
+    ci:
+      CI_PARAM_1: ci-param-val-1
+      CI_PARAM_2: ci-param-val-2
+    e2eParameters:
+      E2E_PARAM_1: e2e-param-val-1
+      E2E_PARAM_2: e2e-param-val-2
+    cleanInstallApprovalRequired: true
+  sharedTemplateVariables:
+    - prod-template-variables
+    - sample-cloud-template-variables
+  envSpecificParamsets:
+    bss:
+      - env-specific-bss
+      - prod-shared
+  envSpecificTechnicalParamsets:
+    bss:
+      - env-specific-tech
+  envSpecificE2EParamsets:
+    cloud:
+      - cloud-level-params
+  sharedMasterCredentialFiles:
+    - sample-cloud-name-creds
+generatedVersions:
+  generateEnvironmentLatestVersion: "deployment-configuration-env-templates:composite-prod"  # This value is automatically generated during job run.

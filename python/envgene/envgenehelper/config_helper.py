@@ -29,7 +29,6 @@ def get_schema(schema_name):
 
 def validate_config_file(config_yaml):
     secret_key = getenv(SECRET_KEY_ID,"")
-    envgene_age_public_key = getenv(ENVGENE_AGE_PUBLIC_KEY_ID,"")
     envgene_age_private_key = getenv(ENVGENE_AGE_PRIVATE_KEY_ID,"")
     public_age_keys = getenv(PUBLIC_AGE_KEYS_ID,"")
 
@@ -48,9 +47,7 @@ def validate_config_file(config_yaml):
     if (crypt_enabled):
         if crypt_backend == FERNET_ID and secret_key == "":
             raise Exception(f'Following CI/CD variables are not set: \n{SECRET_KEY_ID}.\nThis variable is mandatory for crypt_backend: {FERNET_ID}')
-        if crypt_backend == SOPS_ID and (envgene_age_public_key == "" or envgene_age_private_key == "" or public_age_keys == ""):
-            if envgene_age_public_key == "":
-                empty_parameters.append(ENVGENE_AGE_PUBLIC_KEY_ID)
+        if crypt_backend == SOPS_ID and (envgene_age_private_key == "" or public_age_keys == ""):
             if envgene_age_private_key == "":
                 empty_parameters.append(ENVGENE_AGE_PRIVATE_KEY_ID)
             if public_age_keys == "":

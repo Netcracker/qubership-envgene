@@ -1,0 +1,9 @@
+name: "{{ current_env.cloudNameWithCluster }}-composite-structure"
+baseline:
+  name: "{{ current_env.name }}-core"
+  type: "namespace"
+satellites:
+  - name: "{{ current_env.name }}-bss"
+    type: "namespace"
+  - name: "{{ current_env.name }}-oss"
+    type: "namespace"
