@@ -161,7 +161,7 @@ Use format: `UC-<PREFIX>-<GROUP>-<NUMBER>: <Descriptive Title>`
 - **Prefix**: Short abbreviation identifying the feature area
   - Examples: `EIG` (Environment Instance Generation), `BG` (Blue-Green), `ES` (Effective Set)
   - Should be 2-4 uppercase letters
-  - Should match the feature file name or its abbreviation
+  - Should match the feature filename or its abbreviation
 
 - **Group** (optional): Short abbreviation identifying the group within the feature
   - Examples: `NF` (Namespace Folder), `TA` (Template Artifacts)
