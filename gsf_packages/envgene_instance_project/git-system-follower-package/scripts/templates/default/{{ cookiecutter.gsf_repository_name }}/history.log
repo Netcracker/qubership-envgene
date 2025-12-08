@@ -1,5 +1,6 @@
 .gitignore
 .gitlab-ci.yml
+git_hooks/config.schema.json
 git_hooks/crypt.py
 git_hooks/pre-commit
 gitlab-ci/pipeline_vars.yaml
