@@ -4,4 +4,5 @@ git_hooks/config.schema.json
 git_hooks/crypt.py
 git_hooks/pre-commit
 gitlab-ci/pipeline_vars.yaml
+test-test.log
 test_file.log
