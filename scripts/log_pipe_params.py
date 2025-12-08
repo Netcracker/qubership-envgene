@@ -31,12 +31,11 @@ def get_pipeline_parameters() -> dict:
 
 
 def log_pipeline_params(params: dict):
-    logger.info("Input parameters are: ")
+    params_str = "Input parameters are: "
     
     if params.get("CRED_ROTATION_PAYLOAD"):
         params["CRED_ROTATION_PAYLOAD"] = "***"
         
-    params_str = ""
     for k, v in params.items():
         params_str += f"\n{k.upper()}: {v}"
 

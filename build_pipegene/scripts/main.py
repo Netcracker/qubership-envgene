@@ -14,13 +14,12 @@ def prepare_input_params() -> dict:
     return pipe_params.params
 
 def log_pipeline_params(params: dict):
-    logger.info("Input parameters are: ")
+    params_str = "Input parameters are: "
     
     params_cp = params.copy()
     if params_cp.get("CRED_ROTATION_PAYLOAD"):
         params_cp["CRED_ROTATION_PAYLOAD"] = "***"
         
-    params_str = ""
     for k, v in params_cp.items():
         params_str += f"\n{k.upper()}: {v}"
 
