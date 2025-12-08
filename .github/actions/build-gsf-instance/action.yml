@@ -92,11 +92,9 @@ runs:
           "$PACKAGE_YAML" \
           "$HISTORY_FILE"
 
-    - name: Commit and push history.log
+    - name: Commit and push changes
       shell: bash
       run: |
-        HISTORY_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.log"
-        
         # Configure git
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -108,24 +106,15 @@ runs:
         BRANCH_NAME=${GITHUB_REF#refs/heads/}
         BRANCH_NAME=${BRANCH_NAME#refs/tags/}
         
-        # Check if file exists and if there are changes to commit
-        # Check if file is new (not tracked) or modified
-        if [ ! -f "$HISTORY_FILE" ]; then
-          echo "Warning: history.log file does not exist at $HISTORY_FILE"
-        elif ! git ls-files --error-unmatch "$HISTORY_FILE" >/dev/null 2>&1; then
-          # File exists but is not tracked by git - add it
-          echo "New history.log file detected, adding to git..."
-          git add "$HISTORY_FILE"
-          git commit -m "chore: Add history.log with version from package.yaml [skip ci]"
-          git push origin HEAD:"${BRANCH_NAME}" || echo "Failed to push changes"
-        elif git diff --quiet "$HISTORY_FILE" && git diff --cached --quiet "$HISTORY_FILE"; then
-          echo "No changes to history.log, skipping commit"
+        # Check if there are any changes to commit
+        if git diff --quiet && git diff --cached --quiet; then
+          echo "No changes detected, skipping commit"
         else
-          echo "Changes detected in history.log, committing..."
-          git add "$HISTORY_FILE"
-          git commit -m "chore: Update history.log with version from package.yaml [skip ci]"
+          echo "Changes detected, committing..."
+          git add -A
+          git commit -m "chore: Update package files [skip ci]"
           
-          # Push changes back to repository
+          echo "Pushing changes to ${BRANCH_NAME}..."
           git push origin HEAD:"${BRANCH_NAME}" || echo "Failed to push changes"
         fi
 
