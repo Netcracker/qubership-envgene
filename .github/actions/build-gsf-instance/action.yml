@@ -73,6 +73,12 @@ runs:
       id: tags
       uses: ./.github/actions/generate-docker-tags
 
+    - name: Copy config.schema.json to git_hooks
+      shell: bash
+      run: |
+        cp schemas/config.schema.json \
+          "gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks/config.schema.json"
+
     - name: Update history.log
       shell: bash
       run: |
