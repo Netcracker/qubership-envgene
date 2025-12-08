@@ -1,8 +1,19 @@
 # --- Version 1.0.0 ---
-- version: 1.0.0 (current)
+- version: 1.0.0
   package_content:
   - .gitignore
   - .gitlab-ci.yml
   - git_hooks/crypt.py
   - git_hooks/pre-commit
   - gitlab-ci/pipeline_vars.yaml
+
+# --- Version 1.0.1 ---
+- version: 1.0.1 (current)
+  package_content:
+  - .gitignore
+  - .gitlab-ci.yml
+  - git_hooks/config.schema.json
+  - git_hooks/crypt.py
+  - git_hooks/pre-commit
+  - gitlab-ci/pipeline_vars.yaml
+  - test_file.log
