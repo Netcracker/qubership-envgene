@@ -8,7 +8,6 @@
     - [`ENVGENE_AGE_PRIVATE_KEY`](#envgene_age_private_key)
     - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
     - [`PUBLIC_AGE_KEYS`](#public_age_keys)
-    - [`IS_OFFSITE`](#is_offsite)
     - [`GITLAB_RUNNER_TAG_NAME`](#gitlab_runner_tag_name)
     - [`GH_RUNNER_TAG_NAME`](#gh_runner_tag_name)
     - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
@@ -78,18 +77,6 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 **Mandatory**: Yes, if repository encryption is enabled with `SOPS` crypt backend
 
 **Example**: `key-placeholder-123,key-placeholder-124`
-
-### `IS_OFFSITE`
-
-**Description**: Determines whether this repository is located "offsite". Based on this parameter:
-
-- The Cloud Passport is decrypted in the case of Cloud Passport discovery.
-
-**Default Value**: `true`
-
-**Mandatory**: No
-
-**Example**: `false`
 
 ### `GITLAB_RUNNER_TAG_NAME`
 
