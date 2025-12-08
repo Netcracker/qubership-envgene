@@ -54,6 +54,6 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
    - **Condition**: Runs if [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set)
    - **Docker image**: [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
 
-9.  **git_commit**:
+9. **git_commit**:
     - **Condition**: Runs if there are jobs requiring changes to the repository AND [`ENV_TEMPLATE_TEST: false`](/docs/instance-pipeline-parameters.md#env_template_test)
     - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
