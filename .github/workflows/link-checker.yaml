@@ -35,7 +35,7 @@
               --verbose
               --no-progress
               --include-fragments
-              --root-dir .
+              --root-dir ${{ github.workspace }}
               --user-agent 'Mozilla/5.0 (X11; Linux x86_64) Chrome/134.0.0.0'
               --retry-wait-time 60
               --max-retries 8
