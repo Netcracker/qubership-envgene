@@ -5,52 +5,6 @@ from git_system_follower.develop.api.types import Parameters
 PROTECTED_FILES = {'history.log', '.gitlab-ci.yml', '.gitignore'}
 
 
-def _get_repository_root(parameters: Parameters):
-    """Find the repository root directory."""
-    repo_root = None
-    
-    # Try to get repository name from parameters.extras (from cookiecutter variables)
-    repo_name = parameters.extras.get('gsf_repository_name')
-    
-    # Look for .git-system-follower/repositories directory
-    current = Path.cwd()
-    gsf_repos_dir = current / '.git-system-follower' / 'repositories'
-    
-    if gsf_repos_dir.exists() and gsf_repos_dir.is_dir():
-        if repo_name:
-            # Use the repository name from cookiecutter
-            repo_root = gsf_repos_dir / repo_name
-        else:
-            # Try to find any repository directory
-            repos = [d for d in gsf_repos_dir.iterdir() if d.is_dir()]
-            if repos:
-                # Use the first one found (most likely the one just created)
-                repo_root = repos[0]
-    
-    # If still not found, try to get from parameters attributes
-    if (repo_root is None or not repo_root.exists()) and hasattr(parameters, 'repository_path') and parameters.repository_path:
-        repo_root = Path(parameters.repository_path)
-    
-    # Last resort: try to find repository by looking for .git directory
-    if repo_root is None or not repo_root.exists():
-        # Check current directory first (might be the target repository)
-        if (Path.cwd() / '.git').exists():
-            repo_root = Path.cwd()
-        else:
-            # Walk up to find .git directory
-            current = Path.cwd()
-            while current != current.parent:
-                if (current / '.git').exists() and (current / '.git').is_dir():
-                    repo_root = current
-                    break
-                current = current.parent
-    
-    if repo_root is None or not repo_root.exists():
-        raise FileNotFoundError(f'Could not find remote repository. Checked parameters.repository_path and .git-system-follower/repositories')
-    
-    return repo_root
-
-
 def _delete_files_from_history(parameters: Parameters):
     """Delete files listed in history.log from the user repository."""
     script_dir = Path(__file__).parent
@@ -73,7 +27,8 @@ def _delete_files_from_history(parameters: Parameters):
     if not files_to_delete:
         return
     
-    repo_root = _get_repository_root(parameters)
+    # Use current working directory as repository root
+    repo_root = Path.cwd()
     directories_to_check = set()
     deleted_count = 0
     
