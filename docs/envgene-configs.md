@@ -77,6 +77,11 @@ inventory:
     # If `true`, during CMDB import resource profile override names will be updated using pattern:
     # <tenant-name>-<cloud-name>-<env-name>-<RPO-name>
     updateRPOverrideNameWithEnvName: boolean
+    # Optional. Default value - `true`
+    # If `true`, environment-specific Resource Profile Overrides defined in envTemplate.envSpecificParamsets
+    # are merged with Resource Profile Overrides from the Environment Template
+    # If `false`, they completely replace the Environment Template's Resource Profile Overrides
+    mergeEnvSpecificResourceProfiles: boolean
 envTemplate:
   # Mandatory
   # Name of the template

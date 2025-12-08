@@ -208,7 +208,9 @@ fi
 echo "Checking changes..."
 git add ./*
 diff_status=0
-git diff --cached --exit-code || diff_status=$?
+
+git diff --cached --name-only
+git diff --cached --quiet || diff_status=$?
 
 if [ $diff_status -ne 0 ]; then
     echo "Changes detected. Committing..."
@@ -217,7 +219,7 @@ if [ $diff_status -ne 0 ]; then
     echo "Pushing to origin HEAD:${REF_NAME}"
     echo "Current commit: $(git rev-parse HEAD)"
     echo "Remote commit: $(git rev-parse origin/${REF_NAME} 2>/dev/null || echo 'unknown')"
-    
+
     # Temporarily disable exit on error for git push (we want to handle it ourselves)
     set +e
     git push origin HEAD:"${REF_NAME}"
@@ -230,13 +232,13 @@ fi
 # Retry logic with exponential backoff and proper exit code handling
 if [ "$exit_code" -ne 0 ]; then
       echo "⚠ Initial push failed with exit code: $exit_code"
-      
+
       # Disable exit on error for retry loop (we want to handle errors ourselves)
       set +e
-      
+
       while [ "$retries" -lt 10 ]; do
           retries=$((retries+1))
-          
+
           # Exponential backoff with randomization to reduce collision probability
           # Formula: base_delay * retry_count + random(0-10)
           sleep_time=$((5 * retries + RANDOM % 10))
@@ -247,19 +249,19 @@ if [ "$exit_code" -ne 0 ]; then
           echo "Pulling latest changes from origin/${REF_NAME}..."
           git pull origin "${REF_NAME}"
           pull_exit_code=$?
-          
+
           if [ "$pull_exit_code" -ne 0 ]; then
               echo "⚠ Pull failed with exit code: $pull_exit_code, continuing to next retry..."
               continue
           fi
-          
+
           echo "Successfully pulled changes. Remote is now at: $(git rev-parse origin/${REF_NAME})"
           echo "Local HEAD is at: $(git rev-parse HEAD)"
-          
+
           echo "Attempting push (retry $retries)..."
           git push origin HEAD:"${REF_NAME}"
           exit_code=$?
-          
+
           if [ "$exit_code" -eq 0 ]; then
               echo "✅ Push succeeded on retry attempt $retries"
               break
@@ -267,10 +269,10 @@ if [ "$exit_code" -ne 0 ]; then
               echo "⚠ Push attempt $retries failed with exit code: $exit_code"
           fi
       done
-      
+
       # Re-enable exit on error
       set -e
-      
+
       if [ "$exit_code" -ne 0 ]; then
           echo "❌ Failed to push after $retries retry attempts"
           echo "Final exit code: $exit_code"
