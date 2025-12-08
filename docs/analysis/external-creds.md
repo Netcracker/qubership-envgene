@@ -1,401 +1,61 @@
-# External Credentials
+# External Credentials Management
 
-- [External Credentials](#external-credentials)
+- [External Credentials Management](#external-credentials-management)
   - [Problem Statement](#problem-statement)
-  - [Open Question](#open-question)
-  - [Limitation](#limitation)
   - [Assumption](#assumption)
   - [Proposed Approach](#proposed-approach)
-    - [Option 1. String macro, no Credential Template](#option-1-string-macro-no-credential-template)
-      - [\[Option 1\] Credential macro](#option-1-credential-macro)
-      - [\[Option 1\] Parameter in Effective Set](#option-1-parameter-in-effective-set)
-    - [Option 2. String macro + Credential Template](#option-2-string-macro--credential-template)
-      - [\[Option 2\] Credential macro](#option-2-credential-macro)
-      - [\[Option 2\] Credential Template](#option-2-credential-template)
-      - [\[Option 2\] Credential](#option-2-credential)
-      - [\[Option 2\] Parameter in Effective Set](#option-2-parameter-in-effective-set)
-    - [Option 3. Object macro + Credential Template](#option-3-object-macro--credential-template)
-      - [\[Option 3\] Credential macro](#option-3-credential-macro)
-      - [\[Option 3\] Credential Template](#option-3-credential-template)
-      - [\[Option 3\] Credential](#option-3-credential)
-      - [\[Option 3\] Parameter in Effective Set](#option-3-parameter-in-effective-set)
-    - [`ExternalSecret` CR](#externalsecret-cr)
-    - [KV Store Structure](#kv-store-structure)
-    - [Secret Store](#secret-store)
+    - [`credRef` Credential Macro in Environment Template](#credref-credential-macro-in-environment-template)
+    - [Credential Template](#credential-template)
+    - [Credential](#credential)
+    - [`extCredRef` Credential Macro in Effective Set](#extcredref-credential-macro-in-effective-set)
+      - [`remoteRefKey` Normalization](#remoterefkey-normalization)
+    - [Secret Macro Handler in DD](#secret-macro-handler-in-dd)
     - [EnvGene System Credentials](#envgene-system-credentials)
-    - [Validation](#validation)
-    - [Transformer](#transformer)
-    - [Migration](#migration)
+    - [Secret Store](#secret-store)
+    - [KV Store Structure](#kv-store-structure)
+    - [Credential in BG Deployment Cases](#credential-in-bg-deployment-cases)
+    - [Transformation](#transformation)
     - [Use Cases](#use-cases)
 
 ## Problem Statement
 
-На данный момент EnvGene управляет только Credentials, которые размещаются в файлах EnvGene репозитория. Интеграция с внешними Secret Store (например, Vault, AWS Secrets Manager, Azure Key Vault, GCP Secret Manager) отсутствует. В результате:
+In the current implementation, EnvGene only supports Credentials that are stored inside files within the repository itself. Integration with external secret stores is not available. Because of this:
 
-1. EnvGene не подходит для проектов, где запрещено хранить секретные параметры в GIT, даже в зашифрованном виде.
-2. Нет инструментов для централизованной ротации Credentials.
+1. EnvGene cannot be used in projects where policy prohibits storing secrets in GIT, even in encrypted form.
+2. There is no possibility for centralized credential rotation through external tools.
 
-Требуется доработать EnvGene, чтобы он мог описывать, валидировать и использовать Credentials, которые физически хранятся во внешних Secret Store, при этом сохраняя обратную совместимость с локальными Credential.
+It is necessary to extend EnvGene to support management of Credentials that reside in external secret stores.
 
-## Open Question
+Success criteria:
 
-- [x] Что делать с аттрибутами `defaultCredsId`, `maasConfig.credentialsId` Cloud и Namespace? Оставить как есть или задавать через Credential macro
-  - В рамках эпика мы должны иметь возможность описать такие параметры через credRef (сохранив обратную совместимость с текущим подходом)
-- [x] Допустим ли тот факт, что переход на Ext Store потребует изменений в темплейтах?
-  - Вариант без изменения темплейта не известен
-- [x] Должен быть отдельно `creds.link` и `creds.create`
-  - Нет
-- [x] Нужно ли копировать Credentials в Effective Set директорию? Следует ли указывать ссылку на файл с Credentials окружения в каком-либо параметре (например, ввести metadata-файл с указанием версии)?
-  - Credentials не копируются и ссылка не указывается. EnvGene генерирует Credential macro, достаточный для формирования ExternalSecret CR.
-- [x] Одинаковый ли Credential macro используется в шаблоне и Effective Set?
-  - используются макросы разных типов `extCredRef`, `credRef`
-- [x] Опция 1 или Опция 2 или Опция 3
-  - 3
-- [x] Должен ли быть аттрибут `create` свойством Credential
-  - Да
-- [x] Должен ли быть аттрибут `secret-store` свойством Credential
-  - Да
-- [x] `remoteRef.key` это про изоляцию?
-   1. Да. Это иерархический способ хранения, на основе которого можно построить политики доступа
-- [x] Какие ограничения на имя Credential? Такие же как и для `remoteRef.key`?
-  - Да
-- [x] Поддерживает ли Azure `jsonPath`
-  - Нет, только Vault
-- [x] Можем ли мы использовать [JSON path](https://support.smartbear.com/alertsite/docs/monitors/api/endpoint/jsonpath.html)
-  - не можем
-- [ ] Как реализовать автоматизированное создание Credential Store на основе Credentials, в которых он упоминается
-- [ ] Валидация части параметров EnvGene на основании расширяемых схем (например, проверять параметры dbaas по специализированной схеме dbaas)
-  - Стоит ли?
-  - Как?
-- [ ] Должны ли быть ссылки между параметрами разных приложений
-- [ ] Какие нужны валидации?
-
----
-
-- [ ] Должен ли Secret Store моделироваться в EnvGene?
-- [ ] Куда в Effective Set сохранять параметры описанные через Credential macro?
-  - отдельные файлы, как сейчас
-  - вместе с остальными
-- [ ] Какая структура хранения Credentials в Secret Store для non-cloud систем?
-- [ ] Имплементация Transformer
-  - Какой алгоритм нормализации?
-  - Должна ли нормализация `remoteRef.key` происходить в EnvGene?
-
-## Limitation
-
-1. Один секрет на путь KV store
+- EnvGene is able to use external secret stores for storing and retrieving its Credentials (for example, Credentials for accessing a registry when loading templates).
+- Integration with external Credentials is implemented in a way that does not break existing handling of local Credentials.
+- In the Effective Set, links to external Credentials are properly generated, sufficient for:
+  - automatic generation of ExternalSecret CR;
+  - enabling integration with the Argo Vault plugin.
+- Support for the following secret stores is implemented:
+  - Vault
+  - AWS Secrets Manager
+  - Azure Key Vault
 
 ## Assumption
 
-1. Трансформаторы нормализуют `remoteRef`, т.е.:
-   1. Приводит к виду `0-9`, `a-z`, `A-Z`, `-`
-   2. Обеспечивает 127 Char Limit
-2. Имя кластера и Cloud совпадают
-3. При переходе на External Credential Store необходимо изменение EnvGene template
-4. Уникальность Credential в `secretStore` определяется через `remoteRefKey`
-5. Уникальность Credential в EnvGene в пределах EnvGene репозитория определяется через `credId`
-6. Уникальность имени ExternalSecret в пределах k8s namespace определяется через нормализованный `credId` + hash от (`secretStore` + `remoteRefKey`)
+1. When migrating to an external secret store, it is necessary to update the EnvGene Environment template
+2. Credential uniqueness within a `secretStore` is determined by `remoteRefKey`
+3. Credential uniqueness within EnvGene repository is determined by `credId`
+4. Secret store type is a global configuration at the repository level in EnvGene
 
 ## Proposed Approach
 
-![external-cred-transformation](/docs/images/external-cred-transformation.png)
-
----
 ![external-cred](/docs/images/external-cred.png)
 
-### Option 1. String macro, no Credential Template
+### `credRef` Credential Macro in Environment Template
 
-#### [Option 1] Credential macro
+The `credRef` Credential macro (`$type: credRef`) links any parameter in an EnvGene object to a [Credential](#credential).
 
-В дополнение к уже существующему macro `creds.get()` для локальных Credential, для интеграции с External Credential Store вводятся два новых macro:
+This macro is used for all types of Credentials (`usernamePassword`, `secret`, `external`).
 
-- `creds.create()`: Для идемпотентного создания Credential в Ext Credential Store и связывания его с параметром
-- `creds.link()`: Для связывания параметра с созданным ранее (существующим) Credential в Ext Credential Store
-
-`creds.get()` по-прежнему полностью поддерживается для работы с локальными Credential.
-
-```yaml
-# AS IS Credential macro
-<parameter-key>: "${creds.get('<cred-id>').secret|username|password}"
-
-# TO BE Credential macro
-<parameter-key>: "${creds.get|link|create('<cred-id>', secretStore: '<secret-store>', remoteRefKey: '<remote-ref-key>', credHandler: argo|eso).<json-path>}"
-
-# Example
-global.secrets.streamingPlatform.password: "${creds.create('cdc-streaming-cred', remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-bss ).password}"
-global.secrets.streamingPlatform.username: "${creds.create('cdc-streaming-cred', remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-bss ).username}"
-TOKEN: "${creds.link('app-cred', secretStore: custom-store, remoteRefKey: very/special/path, credHandler: eso)}"
-```
-
-1. Credential macro задается в значение параметра в:
-   1. EnvGene template
-   2. Environment specific parameter set
-2. Credential macro содержит:
-   1. Обязательный аттрибут `<cred-id>`
-   2. Опциональный аттрибут `secretStore`
-      1. Значение по умолчанию - `default-store`
-   3. Опциональный аттрибут `remoteRefKey`
-      1. В качестве сепаратора уровней иерархической структуры хранения используется `/`
-      2. Лидирующий `/` не задается
-      3. Значение по умолчанию, зависит от EnvGene объекта на котором задан Credential через `creds.create()`:
-         1. Tenant, Cloud -> `<cloud-name>`
-         2. Namespace -> `<cloud-name>/<env-name>/<namespace-name>`
-         3. Application -> `<cloud-name>/<env-name>/<namespace-name>/<application-name>`
-      4. При использование `creds.link()` значение по умолчанию - `<cloud-name>`
-   4. Опциональный аттрибут `<json-path>`, который определяет JSON path в значение Credential
-   5. Опциональный аттрибут `credHandler: argo|eso`, который определяет, кто будет обрабатывать данный macro в effective set (создавать ExternalSecret CR): `argo` - Argo Vault Plugin, `eso` - External Secret Operator.
-3. Credential macro позволяет использовать EnvGene макросы для параметризации:
-
-    ```yaml
-    # Бизнес солюшен -> Платформа
-    ## Параметры платформенного солюшена
-    DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: ${creds.create('dbaas-creds', remoteRefKey: {{ current_env.cloud }}).username} # remoteRefKey: ocp-05
-    DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: ${creds.create('dbaas-creds', remoteRefKey: {{ current_env.cloud }}).password} # remoteRefKey: ocp-05
-    ## Параметры Cloud Passport для бизнес солюшена
-    DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: ${creds.link('dbaas-creds', remoteRefKey: ocp-05).username}
-    DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: ${creds.link('dbaas-creds', remoteRefKey: ocp-05).password}
-    ```
-
-    ```yaml
-    # Приложение А -> Non cloud service
-    ## Когда remoteRefKey задается через additionalTemplateVariables
-    QMS_AUTH_CLIENT_ID: "${creds.link('ID_AUTH_CLIENT_CREDS', remoteRefKey: {{ current_env.additionalTemplateVariables.qms-cred-ref }}).id}"
-    QMS_AUTH_CLIENT_SECRET: "${creds.link('ID_AUTH_CLIENT_CREDS', remoteRefKey: {{ current_env.additionalTemplateVariables.qms-cred-ref }}).secret}"
-    ## Когда remoteRefKey задается в Энвген креде
-    QMS_AUTH_CLIENT_ID: "${creds.link('ID_AUTH_CLIENT_CREDS', remoteRefKey: envgeneNullValue).id}"
-    QMS_AUTH_CLIENT_SECRET: "${creds.link('ID_AUTH_CLIENT_CREDS', remoteRefKey: envgeneNullValue).secret}"
-    ```
-
-    ```yaml
-    # Приложение А -> Приложение B в одном/разных нс, одного энва
-    ## Опция 1
-    ### Параметры приложения предоставляющее сервис
-    QIP_BILL_CREDIT_PASSWORD: "${creds.create('ID_QIP_BILL_CREDIT_CREDS', remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-bss).password}" # ocp-05/env-1/env-1-bss
-    QIP_BILL_CREDIT_USERNAME: "${creds.create('ID_QIP_BILL_CREDIT_CREDS', remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-bss).username}" # ocp-05/env-1/env-1-bss
-    ### Параметры приложения потребляющего сервис
-    APPLY_BILL_CREDIT_AUTH_PASSWORD: "${creds.link('ID_QIP_BILL_CREDIT_CREDS', remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-bss).password}" # ocp-05/env-1/env-1-bss
-    APPLY_BILL_CREDIT_AUTH_USERNAME: "${creds.link('ID_QIP_BILL_CREDIT_CREDS', remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-bss).username}" # ocp-05/env-1/env-1-bss
-    ## Опция 2 (Возможно только в отдельных кейсах(в каких?) )
-    ### Параметры приложения предоставляющее сервис
-    QIP_BILL_CREDIT_PASSWORD: "${creds.create('ID_QIP_BILL_CREDIT_CREDS', remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-bss).password}" # ocp-05/env-1/env-1-bss
-    QIP_BILL_CREDIT_USERNAME: "${creds.create('ID_QIP_BILL_CREDIT_CREDS', remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-bss).username}" # ocp-05/env-1/env-1-bss
-    ### Параметры приложения потребляющего сервис
-    APPLY_BILL_CREDIT_AUTH_PASSWORD: "${QIP_BILL_CREDIT_PASSWORD}"
-    APPLY_BILL_CREDIT_AUTH_USERNAME: "${QIP_BILL_CREDIT_USERNAME}"
-    ## Опция 3 (Возможно только в отдельных кейсах(в каких? )
-    ### Общие параметры для приложения предоставляющего и потребляющего сервис
-    QIP_BILL_CREDIT_PASSWORD: "${creds.create('ID_QIP_BILL_CREDIT_CREDS', remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-bss).password}" # ocp-05/env-1/env-1-bss
-    QIP_BILL_CREDIT_USERNAME: "${creds.create('ID_QIP_BILL_CREDIT_CREDS', remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-bss).username}" # ocp-05/env-1/env-1-bss
-    ```
-
-    ```yaml
-    # Приложение А -> Приложение B в разных энвах одного кластера
-    ## Параметры приложения предоставляющее сервис
-    ## Опция 1
-    PIM_TOKEN: "${creds.create('PIM_TOKEN').password}" # ocp-05/design-time/design-time/CloudBSS-PIM
-    ## Параметры приложения потребляющего сервис
-    DESIGN_TIME_PIM_TOKEN: "${creds.link('PIM_TOKEN', remoteRefKey: {{ current_env.cloud }}/design-time/design-time/CloudBSS-PIM).password}" # ocp-05/design-time/design-time/CloudBSS-PIM
-    ## Опция 2
-    PIM_TOKEN: "${creds.create('PIM_TOKEN', remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}).password}" # ocp-05/design-time
-    ## Параметры приложения потребляющего сервис
-    DESIGN_TIME_PIM_TOKEN: "${creds.link('PIM_TOKEN', remoteRefKey: {{ current_env.cloud }}/design-time).password}" # ocp-05/design-time
-    ```
-
-    ```yaml
-    # Приложение А -> Приложение B в разных кластерах
-    ## Параметры приложения предоставляющее сервис
-    QTP_TOKEN: "${creds.create('QTP_TOKEN').password}" # ocp-05/env-1
-    ## Параметры приложения потребляющего сервис
-    QTP_ACCESS_TOKEN: "${creds.link('QTP_TOKEN', remoteRefKey: {{ current_env.additionalTemplateVariables.qtp.cluster }}/{{ current_env.additionalTemplateVariables.qtp.env }}/{{ current_env.additionalTemplateVariables.qtp.env }}-qtp/QTP).password}" # ocp-10/qtp-env/qtp-ns/QTP
-    ```
-
-4. При использование макроса указателя (например, `${STORAGE_PASSWORD}`) на параметр, заданный через Credential macro при вычисление `<remoteRefKey>` EnvGene учитывает объект на котором определен параметр на который указывается.
-
-#### [Option 1] Parameter in Effective Set
-
-1. Значение параметра это Credential macro в котором:
-   1. Отрендерилась Jinja
-   2. Заданы дефолтные значения
-2. Достаточен для генерации ExternalSecret CR
-3. Используется:
-   1. The Some Script для создания Credential
-   2. Argo Vault Plugin для резолва Credential
-
-```yaml
-
-# AS IS
-<parameter-key>: <value>
-
-# TO BE
-<parameter-key>: "${creds.link('<cred-id>').<json-path>}"
-
-# Example
-QIP_BILL_CREDIT_PASSWORD: "${creds.create('ID_QIP_BILL_CREDIT_CREDS', secretStore: default-store, remoteRefKey: ocp-05/env-1/env-1-bss).password}"
-QIP_BILL_CREDIT_USERNAME: "${creds.create('ID_QIP_BILL_CREDIT_CREDS', secretStore: default-store, remoteRefKey: ocp-05/env-1/env-1-bss).username}"
-PIM_TOKEN: "${creds.create('PIM_TOKEN', secretStore: default-store, remoteRefKey: ocp-05/design-time/design-time/CloudBSS-PIM, credHandler: argo).password}"
-```
-
-### Option 2. String macro + Credential Template
-
-#### [Option 2] Credential macro
-
-В дополнение к уже существующему macro `creds.get()` для локальных Credential, для интеграции с External Credential Store вводятся два новых macro:
-
-- `creds.create()`: Для идемпотентного создания Credential в Ext Credential Store и связывания его с параметром
-- `creds.link()`: Для связывания параметра с созданным ранее (существующим) Credential в Ext Credential Store
-
-`creds.get()` по-прежнему полностью поддерживается для работы с локальными Credential.
-
-```yaml
-# AS IS Credential macro
-<parameter-key>: "${creds.get('<cred-id>').secret|username|password}"
-```
-
-```yaml
-# TO BE Credential macro. 
-<parameter-key>: "${creds.get|link|create('<cred-id>', credHandler: argo|eso).<json-path>}"
-
-# Example
-global.secrets.streamingPlatform.username: "${creds.create('cdc-streaming-cred').username}"
-global.secrets.streamingPlatform.password: "${creds.create('cdc-streaming-cred').password}"
-
-TOKEN: "${creds.link('app-cred', credHandler: eso)}"
-
-DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: ${creds.create('dbaas-creds', remoteRefKey: {{ current_env.cloud }}).username}
-DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: ${creds.create('dbaas-creds', remoteRefKey: {{ current_env.cloud }}).password}
-```
-
-1. Credential macro задается в значение параметра в:
-   1. EnvGene template
-   2. Environment specific parameter set
-2. Credential macro содержит:
-   1. Обязательный аттрибут `<cred-id>`, который указывает на Credential Template
-   2. Опциональный аттрибут `<json-path>`, который определяет JSON path в значение Credential
-   3. Опциональный аттрибут `credHandler: argo|eso`, который определяет, кто будет обрабатывать данный macro в effective set (создавать ExternalSecret CR): `argo` - Argo Vault Plugin, `eso` - External Secret Operator.
-
-#### [Option 2] Credential Template
-
-1. Credential Template это отдельный Jinja шаблон, использующий EnvGene macros
-2. Содержит описание только экстернал Credentials
-3. Создается вручную
-4. Должен содержать все Credential используемые в энве
-
-```yaml
-# Example
-cdc-streaming-cred:
-  type: external
-  create: true
-  secretStore: default-store
-  remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc
-
-app-cred:
-  type: external
-  secretStore: custom-store
-  remoteRefKey: very/special/path
-  credHandler: argo
-
-dbaas-creds:
-  type: external
-  create: true
-  secretStore: default-store
-  remoteRefKey: {{ current_env.cloud }}
-```
-
-#### [Option 2] Credential
-
-В дополнение к существующим Credential которые генерируются для каждого уникального `creds.get(<cred-id>)` в тот же самый Credential файл энва дополнительно генерируются Credential из темплейта
-
-1. Генерируется EnvGene процессе генерации энв инстанса на основе Credential Template (просто рендерится Jinja) и сохраняются в инстансном репозитории
-2. Префикс уникальности Credential не используется при `creds`
-
-```yaml
-# AS IS Credential
-<cred-id>:
-  type: usernamePassword|secret
-  data:
-    username: string
-    password: string
-    secret: string
-```
-
-```yaml
-# TO BE Credential
-<cred-id>:
-  # Mandatory
-  type: usernamePassword|secret|external
-  # Mandatory for external
-  secretStore: string
-  # Mandatory for external
-  remoteRefKey: string
-  # Optional for external
-  create: boolean
-  # Not used for external
-  data:
-    username: string
-    password: string
-    secret: string
-
-# Example
-dbaas-creds:
-  type: external
-  create: true
-  secretStore: default-store
-  remoteRefKey: ocp-05
-
-cdc-streaming-cred:
-  type: external
-  create: true
-  secretStore: default-store
-  remoteRefKey: ocp-05/env-1/env-1-data-management/cdc
-
-app-cred:
-  type: external
-  secretStore: custom-store
-  remoteRefKey: very/special/path
-  credHandler: argo
-```
-
-#### [Option 2] Parameter in Effective Set
-
-1. Значение параметра это Credential macro, который сгенерирован на основе:
-   1. Credential
-   2. Credential macro
-2. Достаточен для генерации ExternalSecret CR
-3. Используется:
-   1. The Some Script для создания Credential
-   2. Argo Vault Plugin для резолва Credential
-4. Credential macro содержит:
-   1. Обязательный аттрибут `<cred-id>`
-   2. Обязательный аттрибут `secretStore`
-   3. Обязательный аттрибут `remoteRefKey`
-      1. В качестве сепаратора уровней иерархической структуры хранения используется `/`
-      2. Лидирующий `/` не задается
-   4. Опциональный аттрибут `<json-path>`, который определяет JSON path в значение Credential
-   5. Опциональный аттрибут `credHandler: argo|eso`, который определяет, кто будет обрабатывать данный macro в effective set (создавать ExternalSecret CR): `argo` - Argo Vault Plugin, `eso` - External Secret Operator.
-
-```yaml
-# TO BE Credential macro. 
-<parameter-key>: "${creds.get|link|create('<cred-id>', secretStore: '<secret-store>', remoteRefKey: '<remote-ref-key>', credHandler: argo|eso).<json-path>}"
-
-# Example
-global.secrets.streamingPlatform.username: "${creds.create('cdc-streaming-cred', secretStore: default-store, remoteRefKey: ocp-05/env-1/env-1-data-management/cdc).username}"
-global.secrets.streamingPlatform.password: "${creds.create('cdc-streaming-cred', secretStore: default-store, remoteRefKey: ocp-05/env-1/env-1-data-management/cdc).password}"
-
-TOKEN: "${creds.link('app-cred', secretStore: custom-store, remoteRefKey: very/special/path, credHandler: eso).password}"
-
-DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: "${creds.create('dbaas-creds', secretStore: default-store, remoteRefKey: ocp-05).username}"
-DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: "${creds.create('dbaas-creds', secretStore: default-store, remoteRefKey: ocp-05).password}"
-```
-
-### Option 3. Object macro + Credential Template
-
-#### [Option 3] Credential macro
-
-`credRef` Credential macro (`$type: credRef`) используется для связи параметра на EnvGene объектах с Credential EnvGene объектом.
-
-Такой macro используется для всех видов Credentials (`usernamePassword`, `secret`, `external`).
-
-Для обратной совместимости `creds.get()` по-прежнему полностью поддерживается для работы с локальными Credential.
+For backward compatibility, `creds.get()` is still fully supported for working with local Credentials.
 
 ```yaml
 # AS IS Credential macro
@@ -446,12 +106,15 @@ DCL_CONFIG_REGISTRY:
   credId: artfactoryqs-admin
 ```
 
-#### [Option 3] Credential Template
+### Credential Template
 
-1. Credential Template - Jinja шаблон для рендеринга Credential
-2. Содержит описание только экстернал Credentials
-3. Создается вручную
-4. Должен содержать все Credential используемые в энве
+A Credential Template is part of the EnvGene template, a Jinja template used for rendering external [Credentials](#credential), which:
+
+1. It must produce a valid [Credential](#credential)
+2. It is created manually
+3. It is created only for external Credentials
+4. It is created for each external Credential
+5. Is associated with a template in the [Template Descriptor](/docs/envgene-objects.md#template-descriptor)
 
 ```yaml
 # Example
@@ -459,7 +122,12 @@ cdc-streaming-cred:
   type: external
   create: true
   secretStore: default-store
-  remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc/cdc-streaming-cred
+  remoteRefKey: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc
+  remoteRefKey:
+    cluster: {{ current_env.cloud }}
+    env: {{ current_env.name }}
+    namespace: {{ current_env.name }}-data-management
+    application: cdc
 
 app-cred:
   type: external
@@ -478,15 +146,22 @@ artfactoryqs-admin:
   remoteRefKey: services
 ```
 
-#### [Option 3] Credential
+### Credential
 
-В дополнение к существующим Credential которые генерируются для каждого уникального `creds.get(<cred-id>)` в тот же самый Credential файл энва дополнительно генерируются Credential из темплейта
+The existing [Credential](/docs/envgene-objects.md#credential) is extended by introducing a new type `external`, which:
 
-1. Генерируется EnvGene процессе генерации энв инстанса на основе Credential Template (просто рендерится Jinja) и сохраняются в инстансном репозитории
-2. Префикс уникальности Credential не генерируется для `type: external`
-<!-- 4. remoteRefKey опционален, по дефолту все до имени аппа -->
-<!-- 5. При рендеринге Credential из темплейта, если `type: external` И `create: true` И `remoteRefKey` не задан; используется дефолтное значение:
-    `{{ current_env.cloud }}/{{ current_env.name }}/{{ current_namespace.name }}/{{ current_application.name }}` -->
+1. Describes:
+   1. Which external secret store it is located in
+   2. Its location in the external secret stores
+   3. The creation flag – whether the credential should be idempotently created or not
+2. Is generated by EnvGene during Environment Instance generation based on the [Credential Template](#credential-template)
+3. Is stored in the Instance repository in the [Credential file](/docs/envgene-objects.md#credential-file) as part of the Environment Instance
+4. When generated, the Credential id does not get a uniqueness prefix - [`inventory.config.updateCredIdsWithEnvName`](/docs/envgene-configs.md#env_definitionyml) is not applied
+5. If the [Credential Template](#credential-template) does not include the `remoteRefKey` attribute, a default value is used for rendering as:
+
+    ```yaml
+    {{ current_env.cloud }}/{{ current_env.name }}/{{ current_namespace.name }}
+    ```
 
 ```yaml
 # AS IS Credential
@@ -547,27 +222,32 @@ artfactoryqs-admin:
   remoteRefKey: services
 ```
 
-#### [Option 3] Parameter in Effective Set
+### `extCredRef` Credential Macro in Effective Set
 
-`extCredRef` Credential macro (`$type: extCredRef`) используется для связи параметра в Effective Set с Credential в внешнем хранилище.
+The `extCredRef` Credential macro (`$type: extCredRef`) links any parameter in the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20) to a credential that is stored in an external secrets store.
 
-1. `extCredRef` Credential macro генерируется EnvGene на основе:
-   1. Credential
-   2. `credRef` Credential macro
-2. Достаточен для генерации ExternalSecret CR
-3. Используется:
-   1. Argo Vault Plugin для резолва Credential
-   2. Helm chart приложения для создания ExternalSecret CR
-4. `remoteRefKey` формируется в в зависимости от типа External Store
-   1. Vault: `<remoteRefKey>/<credId>-<property>`
-   2. AWS: `<remoteRefKey>/<credId>` +512 char
-   3. GCP: `<remoteRefKey>/<credId>` 255 char
-   4. Azure: `<remoteRefKey>/<credId>` 127 char
-5. В деплоймент контексте в зависимости от значения `SECRET_MACRO_HANDLER: enum [argo, eso]` в DD, параметры описанные через cred macro задаются в:
-      1. credentials.yaml (макрос обрабатывается argo) ИЛИ
-      2. parameters.yaml (макрос обрабатывается eso)
-6. Пайплайн контекст содержит:
-   1. EnvGene Credentials with `type: external` and `create: true`
+1. EnvGene generates the `extCredRef` macro based on:
+   1. An external [Credential](#credential)
+   2. The `credRef` Credential macro
+2. The `remoteRefKey` is generated according to the type of external secrets store, as described in [`remoteRefKey` Normalization](#remoterefkey-normalization).
+
+Parameters described using this Credential macro are included in:
+
+1. Deployment context
+   1. To be passed into the application's Helm chart
+   2. The Credential macro is resolved/handled into an actual value by either:
+      1. Argo Vault Plugin **OR**
+      2. External Secret Operator
+   3. The handler (ArgoCD or ESO) is specified in the DD, as described in [Secret Macro Handler in DD](#secret-macro-handler-in-dd)
+   4. When EnvGene processes the DD while generating the Effective Set, it places the parameter in different Effective Set files:
+      1. `credentials.yaml` – the macro will be handled by Argo Vault Plugin **OR**
+      2. `parameters.yaml` – the macro will be handled by External Secret Operator
+
+2. Pipeline context
+   1. To be used by the pipelines themselves
+   2. For creation
+      1. Such Credential macros are grouped under a parameter with a contract name
+      2. Only those formed from [Credentials](#credential) with `type: external` and `create: true` are included there
 
 ```yaml
 # TO BE Credential macro.
@@ -602,7 +282,7 @@ DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME:
 
 DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD:
   $type: extCredRef
-  secretStore: default-store # не нужен в деплоймент контексте?
+  secretStore: default-store
   remoteRefKey: ocp-05/platform-01/platform-01-dbaas/dbaas/dbaas-creds-password
 
 DCL_CONFIG_REGISTRY:
@@ -611,9 +291,18 @@ DCL_CONFIG_REGISTRY:
   remoteRefKey: services/artfactoryqs-admin
 ```
 
-### `ExternalSecret` CR
+#### `remoteRefKey` Normalization
 
-1.Генерируется by The Some Script на основе Credentials
+Different external secret stores have different requirements for the `remoteRefKey`:
+
+1. **Azure**: 127 character limit. Only `0-9, a-z, A-Z` allowed. [Documentation](https://learn.microsoft.com/en-us/azure/key-vault/general/about-keys-secrets-certificates)
+2. **GCP**: 255 character limit. Only `[a-zA-Z0-9-_]+` allowed. [Documentation](https://docs.cloud.google.com/secret-manager/docs/creating-and-accessing-secrets#create-secret-console)
+3. **AWS**: 512 character limit. Only `0-9, a-z, A-Z, /_+=.@-` allowed. [Documentation](https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_CreateSecret.html#API_CreateSecret_RequestSyntax)
+4. **Vault**: No name limits. [Documentation](https://developer.hashicorp.com/vault/api-docs/secret/kv/kv-v2)
+
+For each external secret store type, normalization of the `remoteRefKey` is performed during the Effective Set generation stage in EnvGene to meet the requirements of the specific external secret store.
+
+<!-- ### `ExternalSecret` CR
 
 ```yaml
 ---
@@ -628,13 +317,13 @@ spec:
   target:
     ...
   data:
-    - # When <json-path> is not present - secretKey: <cred-id>
-      secretKey: <cred-id>.<json-path>
+    - # When <property> is not present - secretKey: <cred-id>
+      secretKey: <cred-id>.<property>
       remoteRef:
         key: <remote-ref-key>
         # Optional
-        # Used only if <json-path> is specified
-        property: <json-path>
+        # Used only if <property> is specified
+        property: <property>
 
 # Example. Username + Password
 ---
@@ -659,7 +348,7 @@ spec:
         property: password
 
 ---
-# Example. No <json-path>
+# Example. No <property>
 apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
@@ -674,12 +363,40 @@ spec:
     - secretKey: consul-cred
       remoteRef:
         key: ocp-05
+``` -->
 
+### Secret Macro Handler in DD
+
+In DD, the `SECRET_MACRO_HANDLER` attribute is introduced. It is set during the application's build phase and describes whether the application can work with the External Secret Operator or if ArgoCD should resolve the value using the Argo Vault Plugin.
+
+```yaml
+SECRET_MACRO_HANDLER: enum [argo, eso]
 ```
+
+### EnvGene System Credentials
+
+EnvGene system credentials are credentials required for the operation of EnvGene itself, for example, credentials to access the registry or a GitLab token to perform commits.
+
+Short term – the values are stored in the CI/CD variables of the EnvGene repository.
+
+Long term – use of a library that leverages the [Secret Store](#secret-store) to retrieve the value from an external secret store.
+
+### Secret Store
+
+```yaml
+secretStore:
+  name: string
+  type: enum [azure, vault, aws, gcp]
+  url: URL
+  auth: map
+```
+
+> [!WARNING]
+> A detailed description of the Secret Store, its location, and the principles of interacting with it will be added later.
 
 ### KV Store Structure
 
-Расположение Credential в структуре KV Store определяется на этапе создания Credential, т.е при деплое системы/приложения которую этот Credential описывает.
+The location of a Credential within the KV Store structure is determined at the moment the Credential is created, i.e., during the deployment of the system/application that the Credential describes.
 
 ```text
 ├── services
@@ -700,35 +417,14 @@ Example:
               └── dbaas
 ```
 
-> [!NOTE] Инстансный репозиторий одного из проектов:
-> Средняя длинна - 73 chars
-> Максимальная - 92 chars
+### Credential in BG Deployment Cases
 
-### Secret Store
+> [!WARNING]
+> A description of handling external Credentials in BG Deployment Cases will be added later
 
-1. Отдельный объект в EnvGene не моделируется
-2. Secret Store CR создается через деплой специального приложения
-3. Деплоймент параметры этого приложения управляются в EnvGene
+### Transformation
 
-### EnvGene System Credentials
-
-EnvGene System Credentials — это Credentials, необходимые для работы самого EnvGene, например, Credentials для доступа к registry или токен GitLab для выполнения коммитов.
-
-Short term - значение храниться в CI/CD переменных EnvGene репозитория
-
-Long term - использование общей библиотеки для интеграции
-
-### Validation
-
-TBD
-
-### Transformer
-
-TBD
-
-### Migration
-
-TBD
+![external-cred-transformation](/docs/images/external-cred-transformation.png)
 
 ### Use Cases
 
