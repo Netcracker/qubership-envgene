@@ -2,6 +2,8 @@ import os
 import glob
 import re
 import shutil
+import tarfile
+import zipfile
 from typing import Callable
 from pathlib import Path
 
@@ -226,3 +228,25 @@ def ensure_directory(path: Path, mode: int):
         logger.info(f"Directory already exists: {path}")
     path.chmod(mode)
 
+
+def unpack_archive(src: str, dest: str):
+    os.makedirs(dest, exist_ok=True)
+
+    if src.endswith(".zip"):
+        with zipfile.ZipFile(src, "r") as z:
+            z.extractall(dest)
+    elif src.endswith((".tar.gz", ".tgz", ".tar")):
+        with tarfile.open(src, "r:*") as t:
+            t.extractall(dest)
+    else:
+        raise ValueError(f"Unsupported archive format: {src}")
+
+
+def cleanup_dir(path: str):
+    dir_path = Path(path)
+
+    if dir_path.exists() and dir_path.is_dir():
+        shutil.rmtree(dir_path)
+
+    dir_path.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Directory has been recreated: {path}")

@@ -9,6 +9,8 @@
     - [`CMDB_IMPORT`](#cmdb_import)
     - [`DEPLOYMENT_TICKET_ID`](#deployment_ticket_id)
     - [`ENV_TEMPLATE_VERSION`](#env_template_version)
+    - [`ENV_TEMPLATE_VERSION_ORIGIN`](#env_template_version_origin)
+    - [`ENV_TEMPLATE_VERSION_PEER`](#env_template_version_peer)
     - [`ENV_INVENTORY_INIT`](#env_inventory_init)
     - [`ENV_TEMPLATE_NAME`](#env_template_name)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
@@ -30,6 +32,8 @@
     - [`NS_BUILD_FILTER`](#ns_build_filter)
     - [`GITHUB_PIPELINE_API_INPUT`](#github_pipeline_api_input)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
+    - [`BG_MANAGE`](#bg_manage)
+    - [`BG_STATE`](#bg_state)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
@@ -113,6 +117,30 @@ This parameter serves as a configuration for an extension point. Integration wit
 **Mandatory**: No
 
 **Example**: `env-template:v1.2.3`
+
+### `ENV_TEMPLATE_VERSION_ORIGIN`
+
+**Description**: If provided, system updates the Blue-Green origin template artifact version in the Environment Inventory. System overrides `envTemplate.bgArtifacts.origin` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
+
+This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `project-env-template:v1.2.3`
+
+### `ENV_TEMPLATE_VERSION_PEER`
+
+**Description**: If provided, system updates the Blue-Green peer template artifact version in the Environment Inventory. System overrides `envTemplate.bgArtifacts.peer` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
+
+This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `project-env-template:v1.2.3`
 
 ### `ENV_INVENTORY_INIT`
 
@@ -358,7 +386,7 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 
 ### `CRED_ROTATION_PAYLOAD`
 
-**Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macros)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
+**Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macro)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
 
 ```json
 {
@@ -442,7 +470,7 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 
 ### `CRED_ROTATION_FORCE`
 
-**Description**: Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential. See details in [Credential Rotation](/docs/cred-rotation.md)
+**Description**: Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential. See details in [Credential Rotation](/docs/features/cred-rotation.md)
 
 **Default Value**: `false`
 
@@ -493,6 +521,28 @@ curl -X POST \
         }
       }'
 ```
+
+### `BG_MANAGE`
+
+**Description**: Enable Blue-Green operation. When set to `true`, the `bg_manage` pipeline job is executed to perform BG operations including state management and validation , Origin/Peer configuration copying for WarmUp operations.
+
+**Default Value**: `false`
+
+**Mandatory**: No
+
+**Example**: `true`
+
+### `BG_STATE`
+
+**Description**: Contains the description of the target state of the Blue-Green namespaces of the Environment. Used together with `BG_MANAGE`.
+
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md)
+
+**Default Value**: None
+
+**Mandatory**: No (Yes, when `BG_MANAGE` is `true`)
+
+**Example**: `{"peerNamespace":{"name":"prod-ns2","state":"IDLE","version":null},"controllerNamespace":"ns-controller","originNamespace":{"name":"prod-ns1","state":"ACTIVE","version":"v5"},"updateTime":"2023-07-07T10:00:54Z"}`
 
 ## Deprecated Parameters
 
