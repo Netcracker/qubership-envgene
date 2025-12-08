@@ -43,6 +43,10 @@ def job_instance(params, vars, needs=None, rules=None):
         variables=vars,
         timeout=timeout
     )
+    global_before = [
+        'python3 /module/utils/log_pipe_params.py'
+    ]
+    job.prepend_scripts(*global_before)
     if 'before_script' in params.keys():
         job.prepend_scripts(params['before_script'])
     if 'after_script' in params.keys():
