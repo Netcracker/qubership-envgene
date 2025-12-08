@@ -1,4 +1,3 @@
-from .__main__ import *
 from .yaml_helper import *
 from .file_helper import *
 from .business_helper import *
