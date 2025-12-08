@@ -76,8 +76,29 @@ runs:
     - name: Copy config.schema.json to git_hooks
       shell: bash
       run: |
-        cp schemas/config.schema.json \
-          "gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks/config.schema.json"
+        SOURCE_FILE="schemas/config.schema.json"
+        TARGET_DIR="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks"
+        TARGET_FILE="${TARGET_DIR}/config.schema.json"
+        
+        # Check if source file exists
+        if [ ! -f "$SOURCE_FILE" ]; then
+          echo "Error: Source file $SOURCE_FILE does not exist"
+          exit 1
+        fi
+        
+        # Create target directory if it doesn't exist
+        mkdir -p "$TARGET_DIR"
+        
+        # Copy file
+        cp -v "$SOURCE_FILE" "$TARGET_FILE"
+        
+        # Verify copy was successful
+        if [ ! -f "$TARGET_FILE" ]; then
+          echo "Error: Failed to copy $SOURCE_FILE to $TARGET_FILE"
+          exit 1
+        fi
+        
+        echo "Successfully copied $SOURCE_FILE to $TARGET_FILE"
 
     - name: Update history.log
       shell: bash
@@ -106,12 +127,22 @@ runs:
         BRANCH_NAME=${GITHUB_REF#refs/heads/}
         BRANCH_NAME=${BRANCH_NAME#refs/tags/}
         
+        # Show git status for debugging
+        echo "Git status before adding files:"
+        git status --short
+        
+        # Add all changes
+        git add -A
+        
+        # Show git status after adding files
+        echo "Git status after adding files:"
+        git status --short
+        
         # Check if there are any changes to commit
-        if git diff --quiet && git diff --cached --quiet; then
-          echo "No changes detected, skipping commit"
+        if git diff --quiet --cached; then
+          echo "No changes detected in staged files, skipping commit"
         else
           echo "Changes detected, committing..."
-          git add -A
           git commit -m "chore: Update package files [skip ci]"
           
           echo "Pushing changes to ${BRANCH_NAME}..."
