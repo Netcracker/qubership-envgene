@@ -222,7 +222,7 @@ If you try to make a transition that is not in the table, the job will fail.
 
 Unlike other BG operations, during `warmup` (forward flow) or `reverse warmup` (reverse flow) the contents of namespaces are copied.
 
-The `bg_manage` job syncs the namespace folders in the repo: it replaces the content of the candidate namespace folder with the content from the active namespace folder (including all nested `Application` objects and their files), **but keeps the `name` attribute from the candidate namespace.**
+The `bg_manage` job syncs the namespace folders in the repository: it replaces the content of the candidate namespace folder with the content from the active namespace folder (including all nested `Application` objects and their files), **but keeps the `name` attribute from the candidate namespace.**
 
 As a result, the active and candidate namespace folders become identical (except for the `name` attribute).
 

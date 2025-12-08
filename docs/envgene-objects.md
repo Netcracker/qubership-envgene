@@ -922,7 +922,7 @@ The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
 
 See details in [Blue-Green Domain](/docs/features/blue-green-deployment.md)
 
-**File name patterns:**
+**Filename patterns:**
 
 - `.origin-<state>`
 - `.peer-<state>`

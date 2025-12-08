@@ -27,7 +27,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 > [!Note]
 > One of the following conditions must be met:
 
-1. Gitlab Instance pipeline is started with parameters:
+1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `BG_STATE: {\"controllerNamespace\":\"<controller-ns>\",\"originNamespace\":{\"name\":\"<origin-ns>\",\"state\":\"active\",\"version\":\"<version>\"},\"peerNamespace\":{\"name\":\"<peer-ns>\",\"state\":\"idle\",\"version\":\"<version>\"},\"updateTime\":\"<timestamp>\"}`
    3. `BG_MANAGE: true`
@@ -56,7 +56,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 > [!Note]
 > One of the following conditions must be met:
 
-1. Gitlab Instance pipeline is started with parameters:
+1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `BG_STATE: {"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"active","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"candidate","version":"<version>"},"updateTime":"<timestamp>"}`
    3. `BG_MANAGE: true`
@@ -88,7 +88,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 > [!Note]
 > One of the following conditions must be met:
 
-1. Gitlab Instance pipeline is started with parameters:
+1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
    2. `BG_STATE: {"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"legacy","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"active","version":"<version>"},"updateTime":"<timestamp>"}`
    3. `BG_MANAGE: true`
@@ -117,7 +117,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 > [!Note]
 > One of the following conditions must be met:
 
-1. Gitlab Instance pipeline is started with parameters:
+1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
    2. `BG_STATE: {"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"idle","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"active","version":"<version>"},"updateTime":"<timestamp>"}`
    3. `BG_MANAGE: true`
@@ -149,7 +149,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 > [!Note]
 > One of the following conditions must be met:
 
-1. Gitlab Instance pipeline is started with parameters:
+1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
    2. `BG_STATE: {"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"idle","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"active","version":"<version>"},"updateTime":"<timestamp>"}`
    3. `BG_MANAGE: true`
@@ -178,7 +178,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 > [!Note]
 > One of the following conditions must be met:
 
-1. Gitlab Instance pipeline is started with parameters:
+1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `BG_STATE: {"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"candidate","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"active","version":"<version>"},"updateTime":"<timestamp>"}`
    3. `BG_MANAGE: true`
@@ -210,7 +210,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 > [!Note]
 > One of the following conditions must be met:
 
-1. Gitlab Instance pipeline is started with parameters:
+1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
    2. `BG_STATE: {"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"active","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"legacy","version":"<version>"},"updateTime":"<timestamp>"}`
    3. `BG_MANAGE: true`
@@ -239,7 +239,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 > [!Note]
 > One of the following conditions must be met:
 
-1. Gitlab Instance pipeline is started with parameters:
+1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
    2. `BG_STATE: {"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"active","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"idle","version":"<version>"},"updateTime":"<timestamp>"}`
    3. `BG_MANAGE: true`
@@ -271,7 +271,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 > [!Note]
 > One of the following conditions must be met:
 
-1. Gitlab Instance pipeline is started with parameters:
+1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_names_separated_by_commas>`
    2. `BG_STATE: {"controllerNamespace":"<controller-ns>","originNamespace":{"name":"<origin-ns>","state":"active","version":"<version>"},"peerNamespace":{"name":"<peer-ns>","state":"idle","version":"<version>"},"updateTime":"<timestamp>"}`
    3. `BG_MANAGE: true`
