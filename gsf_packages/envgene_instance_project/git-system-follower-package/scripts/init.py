@@ -260,72 +260,73 @@ def main(parameters: Parameters):
     if not history_log_path.exists():
         history_log_path = cookiecutter_template_dir / 'history.yaml'
     
-    # If history.log doesn't exist, create it with current version
-    if not history_log_path.exists():
-        print(f'history.log not found in package template, creating new one with version {current_version}')
-        # Ensure directory exists
-        history_log_path.parent.mkdir(parents=True, exist_ok=True)
+    # Ensure directory exists
+    history_log_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Read existing files from history.log if it exists
+    existing_files = set()
+    if history_log_path.exists():
+        try:
+            with open(history_log_path, 'r', encoding='utf-8') as f:
+                existing_files = {line.strip() for line in f if line.strip()}
+        except Exception as e:
+            print(f'Warning: Could not read existing history.log: {e}')
+    
+    # Collect all files in the cookiecutter template directory
+    current_files = []
+    for root, dirs, filenames in os.walk(cookiecutter_template_dir):
+        # Skip hidden directories
+        dirs[:] = [d for d in dirs if d != '.git' and not d.startswith('.')]
         
-        # Collect current package files for initial history entry
-        current_files = []
-        for root, dirs, filenames in os.walk(cookiecutter_template_dir):
-            # Skip hidden directories
-            dirs[:] = [d for d in dirs if d != '.git' and not d.startswith('.')]
-            
-            rel_root = Path(root).relative_to(cookiecutter_template_dir)
-            
-            # Skip .git directory itself
-            if '.git' in rel_root.parts:
+        rel_root = Path(root).relative_to(cookiecutter_template_dir)
+        
+        # Skip .git directory itself
+        if '.git' in rel_root.parts:
+            continue
+        
+        for filename in filenames:
+            # Skip internal package files
+            if filename in PROTECTED_FILES or filename in ('history.yaml', '.cookiecutterignore'):
                 continue
-            
-            for filename in filenames:
-                # Skip internal package files
-                if filename in PROTECTED_FILES or filename in ('history.yaml', '.cookiecutterignore'):
-                    continue
-                file_path = rel_root / filename if rel_root != Path('.') else Path(filename)
-                current_files.append(str(file_path))
-        
-        current_files.sort()
-        
-        # Create initial history.log entry
-        initial_entry = {
-            'version': f"{current_version} (current)",
-            'package_content': current_files
-        }
-        
-        # Write initial history.log
+            file_path = rel_root / filename if rel_root != Path('.') else Path(filename)
+            current_files.append(str(file_path))
+    
+    # Merge existing files with current files (add new ones, keep old ones)
+    all_files = existing_files | set(current_files)
+    new_files = set(current_files) - existing_files
+    
+    if new_files:
+        # Write merged list of files to history.log (preserving old entries)
+        sorted_files = sorted(all_files)
         with open(history_log_path, 'w', encoding='utf-8') as f:
-            clean_ver = current_version
-            f.write(f"# --- Version {clean_ver} ---\n")
-            f.write(f"- version: {initial_entry['version']}\n")
-            f.write("  package_content:\n")
-            for file_path in initial_entry['package_content']:
-                f.write(f"  - {file_path}\n")
+            for file_path in sorted_files:
+                f.write(f"{file_path}\n")
         
-        print(f'Created history.log with {len(current_files)} files')
+        print(f'Updated history.log: added {len(new_files)} new files, total {len(sorted_files)} files')
+    elif not history_log_path.exists():
+        # File doesn't exist and no new files - create it with current files
+        sorted_files = sorted(current_files)
+        with open(history_log_path, 'w', encoding='utf-8') as f:
+            for file_path in sorted_files:
+                f.write(f"{file_path}\n")
+        print(f'Created history.log with {len(sorted_files)} files')
+    else:
+        print(f'No new files to add to history.log (total {len(existing_files)} files)')
     
     old_version_data = None
     
     if history_log_path.exists():
         try:
-            with open(history_log_path, 'r') as f:
-                history_data = yaml.safe_load(f)
-                
-                # Helper function to extract clean version (remove (current) marker)
-                def clean_version(version_str):
-                    if isinstance(version_str, str):
-                        return version_str.replace(' (current)', '')
-                    return version_str
-                
-                # Find the last version entry that is not the current version
-                # This will be the previous installed version
-                if isinstance(history_data, list) and len(history_data) > 0:
-                    for entry in reversed(history_data):
-                        if isinstance(entry, dict) and 'version' in entry:
-                            entry_version = clean_version(entry.get('version'))
-                            if entry_version != current_version:
-                                old_version_data = entry
-                                break
+            # Read history.log as simple list of files (one per line)
+            with open(history_log_path, 'r', encoding='utf-8') as f:
+                old_files = [line.strip() for line in f if line.strip()]
+            
+            # Create structure compatible with _cleanup_old_package_files
+            if old_files:
+                old_version_data = {
+                    'version': current_version,  # Use current version as fallback
+                    'package_content': old_files
+                }
         except Exception as e:
             # If we can't read the file, continue without it
             print(f'Warning: Could not read history.log from package: {e}')

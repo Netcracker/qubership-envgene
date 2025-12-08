@@ -34,162 +34,46 @@ def get_package_files(package_dir):
 
 
 def update_history(history_path, version, package_files):
-    """Update history.log with new version entry only if file list changed.
+    """Update history.log by adding new files (preserving existing ones).
     Creates history.log if it doesn't exist."""
-    history = []
-    
     # Ensure parent directory exists
     history_path.parent.mkdir(parents=True, exist_ok=True)
     
-    # Read existing history if it exists
+    # Read existing files if history.log exists
+    existing_files = set()
     if history_path.exists():
         try:
             with open(history_path, 'r', encoding='utf-8') as f:
-                history = yaml.safe_load(f) or []
+                existing_files = {line.strip() for line in f if line.strip()}
         except Exception as e:
             print(f"Warning: Could not read existing history.log: {e}")
-            history = []
     else:
-        # File doesn't exist - will create it with first entry
-        print(f"history.log not found, will create new file with version {version}")
+        print(f"history.log not found, will create new file")
     
-    # Helper function to extract clean version (remove (current) marker)
-    def clean_version(version_str):
-        if isinstance(version_str, str):
-            return version_str.replace(' (current)', '')
-        return version_str
+    # Merge existing files with current files (add new ones, keep old ones)
+    current_files = set(package_files)
+    all_files = existing_files | current_files
+    new_files = current_files - existing_files
     
-    # Check if there's a delta (change in file list)
-    has_delta = True
-    last_entry = None
-    
-    if history:
-        # Find the last entry (current or most recent)
-        for entry in reversed(history):
-            if isinstance(entry, dict) and 'version' in entry:
-                last_entry = entry
-                break
-        
-        if last_entry:
-            # Get file list from last entry
-            last_files = set(last_entry.get('package_content', last_entry.get('content', last_entry.get('files', []))))
-            current_files = set(package_files)
-            
-            # Check if file lists are the same
-            if last_files == current_files:
-                has_delta = False
-                print(f"No changes in package content for version {version}, skipping history update")
-            else:
-                # Show what changed
-                added = current_files - last_files
-                removed = last_files - current_files
-                if added:
-                    print(f"Files added: {sorted(added)}")
-                if removed:
-                    print(f"Files removed: {sorted(removed)}")
-    
-    # Check if version changed
-    version_changed = False
-    if last_entry:
-        last_version = clean_version(last_entry.get('version'))
-        version_changed = (last_version != version)
-    
-    # Determine what to do:
-    # 1. If version is the same AND files changed - update existing entry
-    # 2. If version changed - always add new entry (even if files didn't change)
-    # 3. If version is the same AND files didn't change - do nothing
-    
-    if version_changed:
-        # Version changed - always add new entry to preserve version history
-        # Remove "(current)" marker from all previous entries
-        for entry in history:
-            if isinstance(entry, dict) and 'version' in entry:
-                version_str = str(entry['version'])
-                if version_str.endswith(' (current)'):
-                    entry['version'] = version_str[:-10]  # Remove " (current)"
-        
-        # Create new entry
-        new_entry = {
-            'version': f"{version} (current)",
-            'package_content': package_files
-        }
-        
-        # Append new entry
-        history.append(new_entry)
-        print(f"Version changed to {version}, added new entry to history")
-        
-        # Write updated history with separators between versions
+    if new_files:
+        # Write merged list of files to history.log (preserving old entries)
+        sorted_files = sorted(all_files)
         with open(history_path, 'w', encoding='utf-8') as f:
-            for i, entry in enumerate(history):
-                # Add separator before each version (except the first one)
-                if i > 0:
-                    f.write('\n')
-                
-                # Write version entry with separator
-                clean_ver = clean_version(entry.get('version', ''))
-                f.write(f"# --- Version {clean_ver} ---\n")
-                # Write entry in YAML format
-                f.write(f"- version: {entry.get('version')}\n")
-                f.write("  package_content:\n")
-                for file_path in entry.get('package_content', []):
-                    f.write(f"  - {file_path}\n")
+            for file_path in sorted_files:
+                f.write(f"{file_path}\n")
         
-        print(f"Updated history.log with version {version}")
-        print(f"Package content contains {len(package_files)} files")
-    elif has_delta:
-        # Same version but files changed - update existing entry
-        if last_entry:
-            last_entry['version'] = f"{version} (current)"
-            last_entry['package_content'] = package_files
-            print(f"Updated existing entry for version {version} with new content")
-            
-            # Write updated history with separators between versions
-            with open(history_path, 'w', encoding='utf-8') as f:
-                for i, entry in enumerate(history):
-                    # Add separator before each version (except the first one)
-                    if i > 0:
-                        f.write('\n')
-                    
-                    # Write version entry with separator
-                    clean_ver = clean_version(entry.get('version', ''))
-                    f.write(f"# --- Version {clean_ver} ---\n")
-                    # Write entry in YAML format
-                    f.write(f"- version: {entry.get('version')}\n")
-                    f.write("  package_content:\n")
-                    for file_path in entry.get('package_content', []):
-                        f.write(f"  - {file_path}\n")
-            
-            print(f"Updated history.log with version {version}")
-            print(f"Package content contains {len(package_files)} files")
-        else:
-            # First entry
-            new_entry = {
-                'version': f"{version} (current)",
-                'package_content': package_files
-            }
-            history.append(new_entry)
-            
-            # Write updated history with separators between versions
-            with open(history_path, 'w', encoding='utf-8') as f:
-                for i, entry in enumerate(history):
-                    # Add separator before each version (except the first one)
-                    if i > 0:
-                        f.write('\n')
-                    
-                    # Write version entry with separator
-                    clean_ver = clean_version(entry.get('version', ''))
-                    f.write(f"# --- Version {clean_ver} ---\n")
-                    # Write entry in YAML format
-                    f.write(f"- version: {entry.get('version')}\n")
-                    f.write("  package_content:\n")
-                    for file_path in entry.get('package_content', []):
-                        f.write(f"  - {file_path}\n")
-            
-            print(f"Created history.log with version {version}")
-            print(f"Package content contains {len(package_files)} files")
+        print(f"Updated history.log: added {len(new_files)} new files")
+        print(f"New files: {sorted(new_files)}")
+        print(f"Total files in history.log: {len(sorted_files)}")
+    elif not history_path.exists():
+        # File doesn't exist - create it with current files
+        sorted_files = sorted(package_files)
+        with open(history_path, 'w', encoding='utf-8') as f:
+            for file_path in sorted_files:
+                f.write(f"{file_path}\n")
+        print(f"Created history.log with {len(sorted_files)} files")
     else:
-        # Neither version nor files changed - no update needed
-        print(f"Version {version} already in history.log with same content, no update needed")
+        print(f"No new files to add to history.log (total {len(existing_files)} files)")
 
 
 def get_version_from_package_yaml(package_yaml_path):
