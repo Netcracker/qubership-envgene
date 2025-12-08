@@ -118,6 +118,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Pipeline Configuration**](/docs/envgene-pipelines.md) - How EnvGene pipelines work
 - [**Repository Variables**](/docs/envgene-repository-variables.md) - CI/CD variables used in EnvGene repositories
 - [**Template Macros**](/docs/template-macros.md) - How to use EnvGene macros in templates
+- [**Instance Pipeline Parameters**](/docs/instance-pipeline-parameters.md) - Reference for Instance pipeline inputs
 
 ### Advanced Features
 
@@ -125,6 +126,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Effective Set Calculation**](/docs/features/calculator-cli.md) - Calculate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20)
 - [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced
 - [**Environment Inventory Generation**](/docs/features/env-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
+- [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**Namespace Render Filter**](/docs/features/namespace-render-filtering.md) - Render only selected [Namespaces](/docs/envgene-objects.md#namespace)
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
@@ -132,6 +134,8 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Automatic Environment Name Derivation**](/docs/features/auto-env-name-derivation.md) - Auto-detect Environment name from folder structure
 - [**Template Inheritance**](/docs/features/template-inheritance.md) - Advanced Environment template patterns
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure [Credential](/docs/envgene-objects.md#credential) rotation
+- [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - BG domains, state management, and `bg_manage` pipeline job
+- [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
 
 ### Examples & Samples
 
