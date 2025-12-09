@@ -85,7 +85,7 @@ runs:
       run: |
         COOKIECUTTER_DIR="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}"
         HISTORY_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.log"
-        
+
         # Run Python script to update history.log
         python3 ./.github/actions/build-gsf-instance/update_history.py \
           "$COOKIECUTTER_DIR" \
@@ -97,10 +97,10 @@ runs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git remote set-url origin https://x-access-token:${{ inputs.github-token }}@github.com/${GITHUB_REPOSITORY}.git
-        
+
         BRANCH_NAME=${GITHUB_REF#refs/heads/}
         BRANCH_NAME=${BRANCH_NAME#refs/tags/}
-        
+
         git add -A
         if ! git diff --quiet --cached; then
           git commit -m "chore: Update package files [skip ci]"
