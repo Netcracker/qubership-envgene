@@ -19,7 +19,7 @@
       - [Tenant](#tenant)
       - [Cloud](#cloud)
       - [Namespace](#namespace)
-      - [Application](#application)
+      - [Application](#Application)
       - [Resource Profile Override](#resource-profile-override)
       - [Composite Structure](#composite-structure)
       - [BG Domain](#bg-domain)
@@ -652,7 +652,6 @@ technicalConfigurationParameterSets: []
 
 [Namespace JSON schema](/schemas/namespace.schema.json)
 
-<a id="application"></a>
 #### Application
 
 The Application object defines parameters that are specific to a particular application. These parameters are isolated to the application and do not affect other applications.
