@@ -13,7 +13,7 @@ stages:
 
 #Variables
 variables:
-  ENVGENE_VERSION: "10.1.1"
+  ENVGENE_VERSION: "10.0.0"
   DOCKER_REGISTRY: "{{cookiecutter.docker_registry}}"
   GITLAB_RUNNER_TAG_NAME: "{{cookiecutter.gitlab_runner_tag_name}}"
 
