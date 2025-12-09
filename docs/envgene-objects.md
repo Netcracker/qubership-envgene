@@ -19,7 +19,7 @@
       - [Tenant](#tenant)
       - [Cloud](#cloud)
       - [Namespace](#namespace)
-      - [Application](#Application)
+      - [Application](#application)
       - [Resource Profile Override](#resource-profile-override)
       - [Composite Structure](#composite-structure)
       - [BG Domain](#bg-domain)
