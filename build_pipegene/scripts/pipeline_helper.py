@@ -23,12 +23,10 @@ class JobExtended(Job):
         timeout: Optional[int] = None
     ) -> None:
         super().__init__(name=name, stage=stage, image=image, script=script, variables=variables, needs=needs, tags=tags)
-        self.script = script
         self.timeout = timeout
 
     def render(self) -> Dict[str, Any]:
         job_data = super().render()
-        job_data['script'] = self.script
         job_data['timeout'] = self.timeout
         return job_data
 
