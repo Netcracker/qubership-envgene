@@ -17,7 +17,7 @@
       "components": [
         {
           "type": "application",
-          "name": "sbom_generator",
+          "name": "am-build-cli",
           "version": "0.1.0"
         }
       ]
@@ -29,61 +29,9 @@
       "type": "application",
       "mime-type": "application/vnd.qubership.standalone-runnable",
       "name": "a-standalone-runnable",
-      "version": "master-20250210.074231-75",
-      "components": [
-        {
-          "bom-ref": "resource-profile-baselines:7875b590-4b19-4781-b6ef-9b0a1c337111",
-          "type": "data",
-          "mime-type": "application/vnd.qubership.resource-profile-baseline",
-          "name": "resource-profile-baselines",
-          "data": [
-            {
-              "type": "configuration",
-              "name": "dev.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "dev-ha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            },
-            {
-              "type": "configuration",
-              "name": "prod-nonha.json",
-              "contents": {
-                "attachment": {
-                  "contentType": "application/yaml",
-                  "encoding": "base64",
-                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
-                }
-              }
-            }
-          ]
-        }
-      ]
+      "version": "1.2.3",
+      "properties": [],
+      "components": []
     },
     {
       "bom-ref": "a-helm-chart:13dac210-3424-4799-9631-667d7b2b0ed8",
@@ -91,17 +39,17 @@
       "mime-type": "application/vnd.qubership.helm.chart",
       "name": "a-helm-chart",
       "version": "1.2.3",
-      "purl": "pkg:helm/example-repo/a-helm-chart@1.2.3?registry_id=sandbox",
+      "purl": "pkg:helm/example-repo/a-helm-chart@1.2.3?registry_name=sandbox",
       "properties": [
         {
           "name": "isLibrary",
           "value": false
         },
         {
-          "name": "qubership:helm.values.artifactMapping",
+          "name": "qubership:helm.values.artifactMappings",
           "value": {
             "a-docker-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f": {
-              "valuesPathPrefix": ""
+              "valuesPathPrefix": "."
             }
           }
         }
@@ -115,7 +63,8 @@
       "name": "a-docker-image",
       "group": "core",
       "version": "build22",
-      "purl": "pkg:docker/core/a-docker-image@build22?registry_id=sandbox"
+      "purl": "pkg:docker/core/a-docker-image@build22?registry_name=sandbox",
+      "hashes": []
     }
   ],
   "dependencies": [
@@ -130,11 +79,11 @@
     {
       "ref": "a-standalone-runnable:61439aff-c00d-43f5-9bae-fe6db05db2d5",
       "dependsOn": [
-        "a-helm-chart:30794643-0400-4cf4-88e9-24f7325e9a7f"
+        "a-helm-chart:13dac210-3424-4799-9631-667d7b2b0ed8"
       ]
     },
     {
-      "ref": "a-helm-chart:30794643-0400-4cf4-88e9-24f7325e9a7f",
+      "ref": "a-helm-chart:13dac210-3424-4799-9631-667d7b2b0ed8",
       "dependsOn": [
         "a-docker-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f"
       ]

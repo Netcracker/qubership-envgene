@@ -17,7 +17,7 @@
       "components": [
         {
           "type": "application",
-          "name": "sbom_generator",
+          "name": "am-build-cli",
           "version": "0.1.0"
         }
       ]

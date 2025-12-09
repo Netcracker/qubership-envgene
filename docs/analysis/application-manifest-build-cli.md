@@ -5,8 +5,6 @@
 - [Application Manifest Build CLI](#application-manifest-build-cli)
   - [Table of Contents](#table-of-contents)
   - [Proposed Approach](#proposed-approach)
-  - [Use Cases](#use-cases)
-  - [Open Question](#open-question)
   - [Limitation](#limitation)
   - [Requirements](#requirements)
   - [Application Manifest Examples](#application-manifest-examples)
@@ -14,7 +12,7 @@
     - [Jaeger](#jaeger)
     - [QIP](#qip)
   - [Application Manifest Build Config](#application-manifest-build-config)
-    - [`helm-values-artifact-mappings` Processing](#helm-values-artifact-mappings-processing)
+    - [`artifactMappings` Processing](#artifactmappings-processing)
   - [Component Metadata](#component-metadata)
     - [`application/vnd.docker.image`](#applicationvnddockerimage)
     - [`application/vnd.qubership.helm.chart`](#applicationvndqubershiphelmchart)
@@ -27,7 +25,7 @@
       - [\[Components\] `application/vnd.qubership.helm.chart`](#components-applicationvndqubershiphelmchart)
         - [\[Components\] `application/vnd.qubership.helm.values.schema`](#components-applicationvndqubershiphelmvaluesschema)
         - [\[Components\] `application/vnd.qubership.resource-profile-baseline`](#components-applicationvndqubershipresource-profile-baseline)
-  - [Registry Config](#registry-config)
+  - [Registry Definition](#registry-definition)
   - [Artifact Reference to PURL and Vice Versa](#artifact-reference-to-purl-and-vice-versa)
     - [PURL Format](#purl-format)
     - [Artifact Reference Formats](#artifact-reference-formats)
@@ -35,6 +33,8 @@
       - [GitHub Release](#github-release)
     - [Artifact Reference -\> PURL](#artifact-reference---purl)
     - [PURL -\> Artifact Reference](#purl---artifact-reference)
+  - [Use Cases](#use-cases)
+  - [References](#references)
 
 ## Proposed Approach
 
@@ -42,7 +42,8 @@ It is proposed to develop a CLI for generating the Application Manifest. The CLI
 
 - Identify application components from a configuration file
 - Collect component attributes from the outputs of the application component build jobs or built artifact
-- Generate the Application Manifest and registry configuration file and publish it as an artifact
+- Generate the Application Manifest and publish it as an artifact
+- Uses the Registry Definition to form the PURL of components
 
 ```mermaid
 flowchart TD
@@ -58,51 +59,21 @@ flowchart TD
     subgraph Application Build Workflow
       subgraph Component Build Job
         D1[[Component<br>Build<br>Action]]
-        %% D2[[Component<br>Metadata Transformer<br>Action]]
         D3[Component Metadata]
-        D1 --> D3
+        D1 ----> D3
       end
-      E[[AM<br>Build Job]]
+      subgraph AM Build Job
+        E[[AM<br>AM Build CLI]]
+      end
     end
     A --> E
     B --> E
-    D3 --> E
+    D3 --|optional|--> E
     D1 --> H 
-    H --> E
+    H --|optional|--> E
     C --> D1
     E --> F
 ```
-
-## Use Cases
-
-1. Building a multi-service application with:
-   1. Docker images
-      1. External (built as part of another build process)
-   2. Helm charts
-      1. One umbrella chart per application
-      2. One non-umbrella chart per application
-      3. Multiple non-umbrella charts
-      4. External (built as part of another build process) non-umbrella charts
-2. Publishing the Application Manifest
-3. Build only the Application Manifest when component artifacts already exist
-4. Build AM when only a single component has been updated
-
-## Open Question
-
-1. How does Build CLI determine the list of components to include in the Application Manifest (AM)?
-   1. Configuration file as input
-   2. Automatic discovery from the build workflow
-   3. Automatic discovery from the application repository
-2. In what format should the CLI receive component attributes from the outputs of component build jobs? Should there be a standard schema for these outputs?
-3. How should the CLI identify which build job output to use for generating each specific component in the manifest?
-   1. Is there a mapping mechanism or naming convention that should be followed?
-   2. How should conflicts or ambiguities be resolved if multiple jobs produce similar outputs?
-4. How should the CLI handle cases where the application includes a component that is a dependency, such as a Helm library?
-5. Is the registry configuration an input contract, an output contract, or both?
-    **A:** The registry configuration is primarily an input contract: it tells the CLI where to publish artifacts and how to authenticate. However, the CLI generate or update registry-related output files for downstream use.
-6. Which Docker image tag should be used for the Docker image component?
-7. How to ensure that changes to the job/action that builds components (since job outputs read by CLI are different and not contracted) don't require rewriting the build CLI?
-   1. By using a standard output schema for all build jobs and using the config file to map outputs to manifest components, the CLI can remain decoupled from specific job implementations. Any changes in job outputs should be reflected in the config file or in the output schema, not in the CLI code itself?
 
 ## Limitation
 
@@ -112,17 +83,13 @@ flowchart TD
 ## Requirements
 
 1. The CLI must generate AM that validates against [JSON Schema](/schemas/application-manifest.schema.json)
-2. ~~The CLI must generate registry config that validates against [JSON Schema](https://github.com/Netcracker/qubership-envgene/blob/feature/reg-def-v2/schemas/regdef-v2.schema.json)~~
-3. AM must be published as OCI artifact
-   1. Artifact ID must match the application name
-   2. Registry parameters for publishing (URL, credentials, group) must be get from Registry Config
-4. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
-    1. Service -> `application/vnd.qubership.standalone-runnable`
+2. The CLI must use as input [Registry Definition v2.0](/schemas/regdef-v2.schema.json)
+3. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
+    1. "Service" -> `application/vnd.qubership.standalone-runnable`
     2. Docker image -> `application/vnd.docker.image`
     3. Helm chart -> `application/vnd.qubership.helm.chart`
-    <!-- 4. ZIP archive -> `application/zip` -->
-5. The CLI must complete the AM build for an application with 50 components within 10 seconds
-6. The CLI must support execution in both GitLab CI and GitHub Actions environments
+4. The CLI must complete the AM build for an application with 50 components within 10 seconds
+5. The CLI must support execution in both GitLab CI and GitHub Actions environments
 
 ## Application Manifest Examples
 
@@ -153,9 +120,9 @@ This config file defines the set of components in the application manifest, thei
 The config is stored in the application repository.
 
 ```yaml
-# Mandatory
+# Optional
 applicationVersion: <application-version>
-# Mandatory
+# Optional
 applicationName: <application-name>
 components:
   - # Mandatory
@@ -168,12 +135,21 @@ components:
     # If specified, the component's attributes should be collected from an external artifact.
     # Used when the AM is generated for an already built artifact that is NOT built within the same pipeline as the AM.
     # Applicable for application/vnd.docker.image and application/vnd.qubership.helm.chart.
-    purl: pkg:<type>/<group>/<name>:<version>?registry_name=<registry-id>
+    reference: pkg:<type>/<group>/<name>:<version>?registry_name=<registry-id>
     # Optional
     # Used to organize relationships between components
     dependsOn:
-      - component: <component-name>
-        mimeType: <mime-type>
+      - # Mandatory
+        # Component name
+        name: <component-name>
+        # Mandatory
+        # Component mimeType
+        mimeType: enum [ application/vnd.qubership.standalone-runnable, application/vnd.docker.image, application/vnd.qubership.helm.chart ]
+        # Optional
+        # If specified, the component's attributes should be collected from an external artifact.
+        # Used when the AM is generated for an already built artifact that is NOT built within the same pipeline as the AM.
+        # Applicable for application/vnd.docker.image and application/vnd.qubership.helm.chart.
+        reference: pkg:<type>/<group>/<name>:<version>?registry_name=<registry-id>
         # Optional
         # See "Artifact mappings for Helm charts" for details
         valuesPathPrefix: <path-or-dot>       
@@ -290,7 +266,7 @@ components:
 ```yaml
 ```
 
-### `helm-values-artifact-mappings` Processing
+### `artifactMappings` Processing
 
 For components with `mime-type: application/vnd.qubership.helm.chart`, you can define how artifact-derived parameters should be placed into Helm values. The CLI will translate this into the `qubership:helm.values.artifactMappings` property in the Application Manifest.
 
@@ -298,12 +274,43 @@ For components with `mime-type: application/vnd.qubership.helm.chart`, you can d
 - `artifact` should reference another component in this Build Config (by `name`)
 - `valuesPathPrefix` is a dot-separated path relative to the chart values root; default is `.`
 
-Notes:
+`valuesPathPrefix` will be used by EnvGene to generate Helm values for the chart in the following format:
 
-- The CLI will resolve `artifact` to the artifact component's identifier and emit AM attribute `qubership:helm.values.artifactMappings` accordingly
-- Ensure the Helm chart component declares `dependsOn` to each referenced artifact component
+```yaml
+<valuesPathPrefix>:
+  <predefined-artifact-parameter-key>: <predefined-artifact-parameter-value>
+```
+
+```yaml
+statusProvisioner:
+  docker_digest: e305076df2205f1e3968bc566a5ee25f185cbc82ede6d20be8a35a98b8570147
+  docker_registry: registry.qubership.org:11000
+  docker_repository_name: docker-image-group
+  docker_tag: docker-image-version
+  image_name: docker-image-name
+  name: docker-image-name
+  full_image_name: registry.qubership.org:11000/docker-image-group/docker-image-name:docker-image-version
+  image: registry.qubership.org:11000/docker-image-group/docker-image-name:docker-image-version
+jaeger:
+  docker_image_digest: aa5b123cde4567890abcdef1234567890abcdef1234567890abcdef123456789
+  registry_url: containers.qubership.org:12000
+  repository: sample-image-group
+  tag: sample-image-version
+  docker_image_name: sample-docker-image
+  container_name: sample-docker-image
+  full_image_reference: containers.qubership.org:12000/sample-image-group/sample-docker-image:sample-image-version
+  container_image: containers.qubership.org:12000/sample-image-group/sample-docker-image:sample-image-version
+```
 
 ## Component Metadata
+
+Component metadata files are JSON files containing detailed information about individual components (Docker images, Helm charts).
+
+They are generated by component build jobs as output artifacts.
+
+The AM Build CLI reads these files as positional parameters and uses them to enrich component information from the configuration when generating the Application Manifest.
+
+This allows incorporating build-time attributes (hashes, versions, registry references) that are only available after the component is built.
 
 ### `application/vnd.docker.image`
 
@@ -318,7 +325,7 @@ Notes:
       "content": "<hash-content>"
     }
   ],
-  "reference": "<reference-to-artifact>"
+  "reference": "registry_host/namespace/image_name:image_tag"
 }
 ```
 
@@ -329,19 +336,19 @@ Notes:
   "name": "<helm-chart-name>",
   "type": "application",
   "mime-type": "application/vnd.qubership.helm.chart",
-  "reference": "oci://ghcr.io/repository_owner/chart_name:chart_version"
+  "reference": "oci://registry_host/namespace/chart_name:chart_version"
 }
 ```
 
 ## AM Build CLI execution attributes
 
-| Attribute                    | Type   | Mandatory | Description                                                                 | Example                                                              |
-|------------------------------|--------|-----------|-----------------------------------------------------------------------------|----------------------------------------------------------------------|
-| `--config`/`-c`              | string | yes       | Path to the Application Manifest Build configuration file                   | `/path/to/am-build-config.yml`                                       |
-| `--version`/`-v`             | string | yes       | Application version                                                         | `1.2.3`                                                              |
-| `--name`/`-n`                | string | yes       | Application name                                                            | `my-application`                                                     |
-| `--out`/`-o`                 | string | yes       | Path where to save the generated Application Manifest                       | `/path/to/output/application-manifest.json`                          |
-| positional parameters        | string | yes       | Paths to component metadata files as positional parameters                  | `/path/to/component1-metadata.json /path/to/component2-metadata.json` |
+| Attribute             | Type   | Mandatory | Description                                                 | Example                                                               |
+|-----------------------|--------|-----------|-------------------------------------------------------------|-----------------------------------------------------------------------|
+| `--config`/`-c`       | string | yes       | Path to the Application Manifest Build configuration file   | `/path/to/am-build-config.yml`                                        |
+| `--version`/`-v`      | string | no        | Application version                                         | `1.2.3`                                                               |
+| `--name`/`-n`         | string | mp        | Application name                                            | `my-application`                                                      |
+| `--out`/`-o`          | string | yes       | Path where to save the generated Application Manifest       | `/path/to/output/application-manifest.json`                           |
+| positional parameters | string | yes       | Paths to component metadata files as positional parameters  | `/path/to/component1-metadata.json /path/to/component2-metadata.json` |
 
 ## Application Manifest Structure
 
@@ -359,7 +366,7 @@ Notes:
 
 ### Metadata
 
-Describes BOM metadata.
+Describes Application Manifest metadata.
 
 | Attribute                     | Type   | Mandatory | Default                                 | Description                                       |
 |-------------------------------|--------|-----------|-----------------------------------------|---------------------------------------------------|
@@ -487,24 +494,7 @@ The resource profile baselines are optional; if no baselines exist at this path,
 > - `data` holds multiple size profiles (e.g., `small.yaml`, `medium.yaml`, `large.yaml`) or environment profiles (`dev.yaml`, `prod.yaml`).
 > - The payload is stored inline using base64 and should decode to a valid YAML or JSON document consistent with `contentType`.
 
-<!-- #### [Components] `application/zip`
-
-Describes ZIP archive as a Maven artifact
-
-| Attribute       | Type   | Mandatory | Default | Description                                                          | Source  |
-|-----------------|--------|-----------|---------|----------------------------------------------------------------------|---------|
-| `bom-ref`       | string | yes       | None    | Unique component identifier within the AM                             | `${component-name}:${generated-uuid-v4}` |
-| `type`          | string | yes       | `data`  | Component type                                                       | N/A |
-| `mime-type`     | string | yes       | `application/zip` | Component MIME type                                            | N/A |
-| `name`          | string | yes       | None    | ZIP archive name                                                     | **TBD** |
-| `group`         | string | yes       | `""`    | Group or namespace for the archive (empty string if none)              | **TBD** |
-| `version`       | string | yes       | None    | ZIP archive version                                                  | **TBD** |
-| `purl`          | string | yes       | None    | Package URL (PURL) for the archive                                   | **TBD** |
-| `hashes`        | array  | yes       | `[]`    | List of hashes for the archive (empty array if none)                 | **TBD** |
-| `hashes.alg`    | string | yes       | None    | Hash algorithm, e.g., "SHA-256" (required if hash present)           | **TBD** |
-| `hashes.content`| string | yes       | None    | Hash value as a hex string (required if hash present)                | **TBD** | -->
-
-## Registry Config
+## Registry Definition
 
 Registry configuration where in particular in the sections:
 
@@ -522,6 +512,14 @@ The `name` attribute must match the filename without the extension.
 [Qubership Example](/examples/qubership.yml)
 
 ## Artifact Reference to PURL and Vice Versa
+
+The CLI needs to convert between artifact references (standard URLs) and Package URLs (PURLs) for different purposes:
+
+- **Artifact Reference → PURL**: When generating the Application Manifest, the CLI converts artifact references (e.g., `docker.io/namespace/image:tag`) to PURLs (e.g., `pkg:docker/namespace/image@tag?registry_name=docker-hub`) to store them in the manifest. This conversion uses Registry Definition to determine the `registry_name` qualifier.
+
+- **PURL → Artifact Reference**: When processing external artifacts specified by PURL in the configuration file, or when downloading artifacts (e.g., Helm charts), the CLI converts PURLs back to artifact references to interact with registries and tools that require standard URLs.
+
+The conversion process relies on Registry Definitions to map between registry identifiers (`registry_name` in PURL) and actual registry URLs and parameters.
 
 ### PURL Format
 
@@ -679,3 +677,30 @@ REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
 - `pkg:docker/envoyproxy/envoy:v1.32.6?registry_name=qubership`-> `<qubership-host>/envoyproxy/envoy:v1.32.6`
 - `pkg:github/Netcracker/qubership-airflow@2.0.1?registry_name=qubership&file_name=airflow-1.19.0-dev.tgz`-> `https://github.com/Netcracker/qubership-airflow/releases/download/2.0.1/airflow-1.19.0-dev.tgz`
 - `pkg:helm/netcracker/qubership-core@2.1.0?registry_name=qubership`-> `oci://<qubership-host>/netcracker/qubership-core:2.1.0`
+
+## Use Cases
+
+1. Building a multi-component application with:
+   1. `application/vnd.qubership.standalone-runnable`
+   2. Docker images
+      1. By source:
+         1. Local (built as part of current build process)
+         2. External (built as part of another build process)
+         3. Mixed (combination of local and external images)
+   3. Helm charts
+      1. By source:
+         1. Local (built as part of current build process)
+         2. External (built as part of another build process)
+         3. Mixed (combination of local and external charts)
+      2. By structure:
+         1. One umbrella chart per application
+         2. One non-umbrella chart per application
+         3. Multiple non-umbrella charts per application
+2. Publishing the Application Manifest
+   1. To OCI registry
+   2. As build artifact
+
+## References
+
+1. [Application Manifest Build CLI](https://github.com/borislavr/qubership-app-manifest-cli)
+2. [Application repository with configured Application Manifest build](https://github.com/borislavr/qubership-jaeger)
