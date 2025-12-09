@@ -22,20 +22,20 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
 
 ### [Instance pipeline] Job sequence
 
-1. **trigger_passport**:
+1. **bg_manage**
+   - **Condition**: Runs if [`BG_MANAGE: true`](/docs/instance-pipeline-parameters.md#bg_manage).
+   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+
+2. **trigger_passport**:
    - **Condition**: Runs if [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport)
    - **Docker image**: None. The Discovery repository is triggered from the pipeline
 
-2. **get_passport**:
+3. **get_passport**:
    - **Condition**: Runs if [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-3. **process_decryption_mode**:
-   - **Condition**: Runs if [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport) AND [`IS_OFFSITE: true`](/docs/envgene-repository-variables.md#is_offsite)
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
-
 4. **env_inventory_generation**:
-   - **Condition**: Runs if [`ENV_TEMPLATE_TEST: false`](/docs/envgene-repository-variables.md#env_template_test) AND ([`ENV_SPECIFIC_PARAMETERS`](/docs/instance-pipeline-parameters.md#env_specific_params) OR [`ENV_TEMPLATE_NAME`](/docs/instance-pipeline-parameters.md#env_template_name))
+   - **Condition**: Runs if [`ENV_TEMPLATE_TEST: false`](/docs/instance-pipeline-parameters.md#env_template_test) AND ([`ENV_SPECIFIC_PARAMETERS`](/docs/instance-pipeline-parameters.md#env_specific_params) OR [`ENV_TEMPLATE_NAME`](/docs/instance-pipeline-parameters.md#env_template_name))
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 5. **credential_rotation**:
@@ -55,5 +55,5 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
    - **Docker image**: [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
 
 9. **git_commit**:
-   - **Condition**: Runs if there are jobs requiring changes to the repository AND [`ENV_TEMPLATE_TEST: false`](/docs/instance-pipeline-parameters.md#env_template_test)
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+    - **Condition**: Runs if there are jobs requiring changes to the repository AND [`ENV_TEMPLATE_TEST: false`](/docs/instance-pipeline-parameters.md#env_template_test)
+    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)

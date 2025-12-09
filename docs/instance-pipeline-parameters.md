@@ -9,6 +9,8 @@
     - [`CMDB_IMPORT`](#cmdb_import)
     - [`DEPLOYMENT_TICKET_ID`](#deployment_ticket_id)
     - [`ENV_TEMPLATE_VERSION`](#env_template_version)
+    - [`ENV_TEMPLATE_VERSION_ORIGIN`](#env_template_version_origin)
+    - [`ENV_TEMPLATE_VERSION_PEER`](#env_template_version_peer)
     - [`ENV_INVENTORY_INIT`](#env_inventory_init)
     - [`ENV_TEMPLATE_NAME`](#env_template_name)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
@@ -27,6 +29,8 @@
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
+    - [`BG_MANAGE`](#bg_manage)
+    - [`BG_STATE`](#bg_state)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
@@ -110,6 +114,30 @@ This parameter serves as a configuration for an extension point. Integration wit
 **Mandatory**: No
 
 **Example**: `env-template:v1.2.3`
+
+### `ENV_TEMPLATE_VERSION_ORIGIN`
+
+**Description**: If provided, system updates the Blue-Green origin template artifact version in the Environment Inventory. System overrides `envTemplate.bgNsArtifacts.origin` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
+
+This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `project-env-template:v1.2.3`
+
+### `ENV_TEMPLATE_VERSION_PEER`
+
+**Description**: If provided, system updates the Blue-Green peer template artifact version in the Environment Inventory. System overrides `envTemplate.bgNsArtifacts.peer` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
+
+This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `project-env-template:v1.2.3`
 
 ### `ENV_INVENTORY_INIT`
 
@@ -490,6 +518,28 @@ curl -X POST \
         }
       }'
 ```
+
+### `BG_MANAGE`
+
+**Description**: Enable Blue-Green operation. When set to `true`, the `bg_manage` pipeline job is executed to perform BG operations including state management and validation , Origin/Peer configuration copying for WarmUp operations.
+
+**Default Value**: `false`
+
+**Mandatory**: No
+
+**Example**: `true`
+
+### `BG_STATE`
+
+**Description**: Contains the description of the target state of the Blue-Green namespaces of the Environment. Used together with `BG_MANAGE`.
+
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md)
+
+**Default Value**: None
+
+**Mandatory**: No (Yes, when `BG_MANAGE` is `true`)
+
+**Example**: `{"peerNamespace":{"name":"prod-ns2","state":"IDLE","version":null},"controllerNamespace":"ns-controller","originNamespace":{"name":"prod-ns1","state":"ACTIVE","version":"v5"},"updateTime":"2023-07-07T10:00:54Z"}`
 
 ## Deprecated Parameters
 
