@@ -29,7 +29,7 @@ on:
         description: 'Build Instance Repo Pipeline image'
         required: false
         default: true
-        type: boolean  
+        type: boolean
       build-gsf-instance:
         description: 'Build GSF Instance image'
         required: false
