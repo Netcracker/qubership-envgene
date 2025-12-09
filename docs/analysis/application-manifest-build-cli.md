@@ -584,7 +584,7 @@ REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
 | `OWNER`           | string | yes       | None    | Repository owner                |
 | `REPO`            | string | yes       | None    | Repository name                 |
 | `TAG`             | string | yes       | None    | Release tag                     |
-| `ARTIFACT-FILE`   | string | yes       | None    | Artifact file name              |
+| `ARTIFACT-FILE`   | string | yes       | None    | Artifact filename              |
 
 ### Artifact Reference -> PURL
 
