@@ -268,14 +268,30 @@ jobs:
         version: ${{ inputs.version }}
 
   github-release:
+    runs-on: ubuntu-latest
     needs:
       - build-qubership-pipegene
       - build-qubership-envgene
       - build-effective-set-generator
       - build-instance-repo-pipeline
       - build-gsf-envgene-instance
-    uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v2.0.5
-    with:
-      version: ${{ github.event.inputs.version }}
-      publish: ${{ github.event.inputs.publish }}
-      ref: ${{ github.ref }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Run Release Drafter
+        uses: release-drafter/release-drafter@v6.1.0
+        with:
+          config-name: "release-drafter-config.yml"
+          publish: ${{ inputs.publish }}
+          name: ${{ env.RELEASE_VERSION }}
+          tag: ${{ inputs.tag || format('v{0}', inputs.version) }}
+          version: v${{ inputs.version }}
+          latest: 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ inputs.version }}  
