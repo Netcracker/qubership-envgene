@@ -71,9 +71,9 @@ flowchart TD
     end
     A --> E
     B --> E
-    D3 --|optional|--> E
+    D3 --optional--> E
     D1 --> H 
-    H --|optional|--> E
+    H --optional--> E
     C --> D1
     E --> F
 ```
@@ -262,11 +262,6 @@ components:
     mimeType: application/vnd.docker.image
   - name: qubership-deployment-status-provisioner
     mimeType: application/vnd.docker.image
-```
-
-**QIP Example:**
-
-```yaml
 ```
 
 ### `artifactMappings` Processing
