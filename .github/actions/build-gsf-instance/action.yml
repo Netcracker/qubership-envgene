@@ -84,13 +84,11 @@ runs:
       shell: bash
       run: |
         COOKIECUTTER_DIR="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}"
-        PACKAGE_YAML="gsf_packages/envgene_instance_project/git-system-follower-package/package.yaml"
         HISTORY_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.log"
         
-        # Run Python script to update history (version is read from package.yaml)
+        # Run Python script to update history.log
         python3 ./.github/actions/build-gsf-instance/update_history.py \
           "$COOKIECUTTER_DIR" \
-          "$PACKAGE_YAML" \
           "$HISTORY_FILE"
 
     - name: Commit and push changes
