@@ -413,7 +413,6 @@ satellites:
     type: "namespace"
 ```
 
-<a id="bg-domain-template"></a>
 #### BG Domain Template
 
 This is a Jinja template file used to render the [BG Domain](#bg-domain) object for environments that use Blue-Green Domain (BGD) support.
@@ -540,7 +539,6 @@ TBD
 
 TBD
 
-<a id="namespace"></a>
 #### Namespace
 
 The Namespace object contains namespace-level parameters — parameters that are specific to all applications within this namespace.
@@ -654,7 +652,6 @@ technicalConfigurationParameterSets: []
 
 [Namespace JSON schema](/schemas/namespace.schema.json)
 
-<a id="application"></a>
 #### Application
 
 The Application object defines parameters that are specific to a particular application. These parameters are isolated to the application and do not affect other applications.
@@ -822,7 +819,6 @@ satellites:
     type: "namespace"
 ```
 
-<a id="bg-domain"></a>
 #### BG Domain
 
 The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter) parameter and BGD lifecycle management.
