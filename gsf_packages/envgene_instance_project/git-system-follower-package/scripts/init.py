@@ -1,5 +1,6 @@
 from pathlib import Path
 from git_system_follower.develop.api.types import Parameters
+from git_system_follower.develop.api.templates import create_template, get_template_names
 
 # Protected files that should never be deleted
 PROTECTED_FILES = {'history.log', '.gitlab-ci.yml', '.gitignore'}
@@ -68,3 +69,32 @@ def _delete_files_from_history(parameters: Parameters):
 def main(parameters: Parameters):
     """Main function: delete files listed in history.log from user repository."""
     _delete_files_from_history(parameters)
+
+    templates = get_template_names(parameters)
+    if not templates:
+        raise ValueError('There are no templates in the package')
+
+    if len(templates) > 1:
+        template = parameters.extras.get('TEMPLATE')
+        if template is None:
+            raise ValueError('There are more than 1 template in the package, '
+                             'specify which one you want to use with the TEMPLATE variable')
+    else:
+        template = templates[0]
+
+    variables = parameters.extras.copy()
+    variables.pop('TEMPLATE', None)
+    create_template(parameters, template, variables)
+
+    # Use current working directory as repository root
+    repo_root = Path.cwd()
+    internal_files_to_remove = ['history.log', '.cookiecutterignore']
+    
+    for file_name in internal_files_to_remove:
+        file_path = repo_root / file_name
+        if file_path.exists():
+            try:
+                file_path.unlink()
+                print(f'Removed internal package file: {file_name}')
+            except Exception as e:
+                print(f'Warning: Could not remove {file_name}: {e}')
