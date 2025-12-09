@@ -278,4 +278,4 @@ jobs:
     with:
       version: ${{ github.event.inputs.version }}
       publish: ${{ github.event.inputs.publish }}
-      config-name: "release-drafter-config.yml"
+      ref: ${{ github.ref }}
