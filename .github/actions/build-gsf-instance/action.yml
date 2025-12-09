@@ -1,0 +1,95 @@
+# This action is hidden from the GitHub Actions UI
+name: 'Build Qubership GSF Instance'
+description: 'Build and push Qubership GSF Instance docker image to container registry'
+
+inputs:
+  registry:
+    description: 'Container registry URL'
+    required: false
+    default: 'ghcr.io'
+  repository-owner:
+    description: 'Repository owner for Docker images'
+    required: false
+    default: 'netcracker'
+  image-name:
+    description: 'Docker image name'
+    required: false
+    default: 'qubership-gsf-instance'
+  dockerfile-path:
+    description: 'Path to Dockerfile'
+    required: false
+    default: './gsf_packages/envgene_instance_project/Dockerfile'
+  git-user:
+    description: 'Git username for build args'
+    required: false
+  git-token:
+    description: 'Git token for build args'
+    required: false
+  github-token:
+    description: 'GitHub token for registry login'
+    required: true
+  version:
+    description: 'Version for Docker tag'
+    required: false
+    default: ''
+
+outputs:
+  custom_tag:
+    description: 'Custom tag with timestamp'
+    value: ${{ steps.tags.outputs.custom_tag }}
+  branch_tag:
+    description: 'Branch-based tag'
+    value: ${{ steps.tags.outputs.branch_tag }}
+  timestamp:
+    description: 'Generated timestamp'
+    value: ${{ steps.tags.outputs.timestamp }}
+  branch_latest_tag:
+    description: 'Branch latest tag'
+    value: ${{ steps.tags.outputs.branch_latest_tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.github-token }}
+
+    - name: Generate Docker tags
+      id: tags
+      uses: ./.github/actions/generate-docker-tags
+
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+
+    - name: Build and push Docker image
+      id: push
+      uses: docker/build-push-action@v6
+      with:
+        provenance: false
+        context: .
+        file: ${{ inputs.dockerfile-path }}
+        push: true
+        tags: |
+          ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.custom_tag }}
+          ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.branch_latest_tag }}
+          ${{ inputs.version != '' && format('{0}/{1}/{2}:{3}', inputs.registry, inputs.repository-owner, inputs.image-name, inputs.version) || '' }}
+          ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}

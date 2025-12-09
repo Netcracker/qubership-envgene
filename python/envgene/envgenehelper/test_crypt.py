@@ -15,12 +15,12 @@ TEST_CONTENT = """\
 first_cred:
     type: secret
     data:
-        secret: glpat-vxxDsEVkaQyoHasXGCY9
+        secret: token-placeholder-123
 second_cred:
     type: usernamePassword
     data:
-        username: username
-        password: qwerty123456
+        username: user-placeholder-123
+        password: pass-placeholder-123
 """
 TEST_FILE = 'test_data/test_crypt.yaml'
 TEST_FILE_OLD = 'test_data/old_test_crypt.yaml'

@@ -1,0 +1,22 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "minimal-env-billing"
+credentialsId: ""
+isServerSideMerge: false
+labels:
+  - "solutionInstance-minimal-env"
+  - "solution-Applications"
+cleanInstallApprovalRequired: true
+mergeDeployParametersAndE2EParameters: false
+profile:
+  name: "dev_billing_override"
+  baseline: "dev"
+deployParameters:
+  ENVGENE_CONFIG_REF_NAME: "branch_name"
+  ENVGENE_CONFIG_TAG: "No Ref tag"
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

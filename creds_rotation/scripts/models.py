@@ -68,3 +68,12 @@ class CredMap:
     param_value: str
     cred_field: str
     shared_content: Dict[str, Any]
+
+
+@dataclass
+class EnvConfig:
+    env_name: str
+    creds_rotation_enabled: bool = False
+    payload_data: Dict[str, Any] = None
+    cluster_name: str = ""
+    work_dir: str = ""

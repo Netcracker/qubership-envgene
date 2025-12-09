@@ -1,0 +1,69 @@
+---
+#Stages
+stages:
+  - generate
+  - run_generated_pipe
+
+#Runner
+default:
+  tags: [ $GITLAB_RUNNER_TAG_NAME ]
+
+variables:
+  ENVGENE_VERSION: "1.2.3"
+
+include:
+  - local: 'gitlab-ci/pipeline_vars.yaml'
+
+####################################
+# Templates
+####################################
+
+.common_module.variables:
+  variables:
+    module_ansible_dir: /module/ansible
+    module_inventory: "${CI_PROJECT_DIR}/configuration/inventory.yaml"
+    module_ansible_cfg: /module/ansible/ansible.cfg
+    module_config_default: /module/templates/defaults.yaml
+
+.images.variables:
+  variables:
+    envgen_image: "{{cookiecutter.docker_registry}}/qubership-envgene:${ENVGENE_VERSION}"
+    pipegene_image: "{{cookiecutter.docker_registry}}/qubership-pipegene:${ENVGENE_VERSION}"
+    effective_set_generator_image: "{{cookiecutter.docker_registry}}/qubership-effective-set-generator:${ENVGENE_VERSION}"
+
+####################################
+# Jobs
+####################################
+
+generate_pipeline:
+  extends:
+    - .common_module.variables
+    - .images.variables
+  stage: generate
+  image:
+    name: ${pipegene_image}
+  script:
+    - python /module/scripts/main.py generate_pipeline
+  rules:
+    - if: $ENV_NAMES && $ENV_NAMES != ""
+  artifacts:
+    when: always
+    paths:
+      - ${CI_PROJECT_DIR}/generated-config.yml
+
+run_generated_pipeline:
+  extends:
+    - .common_module.variables
+    - .images.variables
+  stage: run_generated_pipe
+  needs:
+    - generate_pipeline
+  trigger:
+    include:
+      - artifact: generated-config.yml
+        job: generate_pipeline
+    strategy: depend
+    forward:
+      pipeline_variables: true
+  rules:
+    - if: $ENV_NAMES && $ENV_NAMES != ""

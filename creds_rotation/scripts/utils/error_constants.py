@@ -2,7 +2,7 @@ class ErrorMessages:
     """Error message constants"""
     INVALID_JSON = "Error: Invalid configuration format.\n Failed to parse JSON content in CRED_ROTATION_PAYLOAD. Error:\n {e}"
     INCORRECT_TYPE = "Error: Invalid configuration format.\n Please provide CRED_ROTATION_PAYLOAD in json string format."
-    MISSING_ENV = "Error: Missing required configuration field.\n {e} .Please set it your pipeline_vars.yml."
+    MISSING_ENV = "Error: Missing mandatory parameter(s) {params}.\n .Please set it your pipeline_vars.yml."
     INVALID_ENCRYPT_TYPE = "Error: Invalid configuration format.\n Current encryption type is Fernet. Only SOPS is supported for CRED_ROTATION_PAYLOAD and credential files encryption/decryption in cred rotation. Please find configuration at CI_PROJECT_DIR/configurations/config.yaml."
     INVALID_CRED_FIELD = "Error: Invalid configuration format.\n Credential field {cred_field} is not supported. Supported credential types for cred rotation are UsernamePassword and Secret."
     PAYLOAD_DECRYPT_ERROR = "Error: Invalid configuration format.\n Failed to decrypt content of CRED_ROTATION_PAYLOAD: {e}. May be it is not encrypted correctly. Please verify the value."

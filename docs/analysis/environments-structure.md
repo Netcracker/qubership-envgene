@@ -42,7 +42,7 @@ Getting this information should not require specifying a particular Environment 
 
 `find . -type f -name 'env_definition.yml' | sed 's|.*/environments/\(.*\)/Inventory/env_definition\.yml|\1|'`
 
-**The mapping of namespace name to deploy postfix** is stored in the Effective Set of a specific Environment, in the [`environments`](/docs/calculator-cli.md#version-20topology-context-environments-example) variable of the [topology](/docs/calculator-cli.md#version-20-topology-context) context.
+**The mapping of namespace name to deploy postfix** is stored in the Effective Set of a specific Environment, in the [`environments`](/docs/features/calculator-cli.md#version-20topology-context-environments-example) variable of the [topology](/docs/features/calculator-cli.md#version-20-topology-context) context.
 
 #### [Option A] Use Cases
 
@@ -57,12 +57,12 @@ Getting this information should not require specifying a particular Environment 
    5. The user specifies:
       1. Namespace
       2. `app:ver` of Application
-   6. The orchestrating deploy pipeline generates [useDeployPostfixAsNamespace SD](/docs/sd-processing.md#usedeploypostfixasnamespace-handling)
+   6. The orchestrating deploy pipeline generates [useDeployPostfixAsNamespace SD](/docs/features/sd-processing.md#usedeploypostfixasnamespace-handling)
    7. The orchestrating deploy pipeline triggers EnvGene to calculate the Effective Set
       1. Passing useDeployPostfixAsNamespace SD
    8. EnvGene generates the Environment Instance
-   9. EnvGene [transforms](/docs/sd-processing.md#usedeploypostfixasnamespace-handling) useDeployPostfixAsNamespace SD into a SD with deployPostfix
-   10. EnvGene generates the Effective Set (including the [`environments`](/docs/calculator-cli.md#version-20topology-context-environments-example) variable as part of the pipeline context)
+   9. EnvGene [transforms](/docs/features/sd-processing.md#usedeploypostfixasnamespace-handling) useDeployPostfixAsNamespace SD into a SD with deployPostfix
+   10. EnvGene generates the Effective Set (including the [`environments`](/docs/features/calculator-cli.md#version-20topology-context-environments-example) variable as part of the pipeline context)
    11. The orchestrating deploy pipeline retrieves the Effective Set
    12. The orchestrating deploy pipeline generates the deploy SD (deploy-sd calculates deployment waves for deploy-app)
 
@@ -79,7 +79,7 @@ Getting this information should not require specifying a particular Environment 
    6. The orchestrating deploy pipeline triggers EnvGene to calculate the effective set,
       1. Passing SD with deployPostfix
    7. EnvGene generates the Environment Instance
-   8. EnvGene generates the Effective Set (including the [`environments`](/docs/calculator-cli.md#version-20topology-context-environments-example) variable as part of the pipeline context)
+   8. EnvGene generates the Effective Set (including the [`environments`](/docs/features/calculator-cli.md#version-20topology-context-environments-example) variable as part of the pipeline context)
    9. The orchestrating deploy pipeline retrieves the Effective Set
    10. The orchestrating deploy pipeline generates the deploy SD (deploy-sd calculates deployment waves for deploy-app)
 
@@ -244,12 +244,12 @@ During this pipeline, the generated object is saved by committing it to the Inst
    5. User specifies:
       1. Namespace
       2. `app:ver` of Application
-   6. The orchestrating deploy pipeline generates [useDeployPostfixAsNamespace SD](/docs/sd-processing.md#usedeploypostfixasnamespace-handling)
+   6. The orchestrating deploy pipeline generates [useDeployPostfixAsNamespace SD](/docs/features/sd-processing.md#usedeploypostfixasnamespace-handling)
    7. The orchestrating deploy pipeline triggers EnvGene to calculate the Effective Set
       1. Passing useDeployPostfixAsNamespace SD
    8. EnvGene generates the Environment Instance
-   9. EnvGene [transforms](/docs/sd-processing.md#usedeploypostfixasnamespace-handling) useDeployPostfixAsNamespace SD into a SD with deployPostfix
-   10. EnvGene generates the Effective Set (including the [`environments`](/docs/calculator-cli.md#version-20topology-context-environments-example) variable as part of the pipeline context)
+   9. EnvGene [transforms](/docs/features/sd-processing.md#usedeploypostfixasnamespace-handling) useDeployPostfixAsNamespace SD into a SD with deployPostfix
+   10. EnvGene generates the Effective Set (including the [`environments`](/docs/features/calculator-cli.md#version-20topology-context-environments-example) variable as part of the pipeline context)
    11. The orchestrating deploy pipeline retrieves the Effective Set
    12. The orchestrating deploy pipeline generates the deploy SD (deploy-sd calculates deployment waves for deploy-app)
 
@@ -265,7 +265,7 @@ During this pipeline, the generated object is saved by committing it to the Inst
    6. The orchestrating deploy pipeline triggers EnvGene to calculate the effective set,
       1. Passing SD with deployPostfix
    7. EnvGene generates the Environment Instance
-   8. EnvGene generates the Effective Set (including the [`environments`](/docs/calculator-cli.md#version-20topology-context-environments-example) variable as part of the pipeline context)
+   8. EnvGene generates the Effective Set (including the [`environments`](/docs/features/calculator-cli.md#version-20topology-context-environments-example) variable as part of the pipeline context)
    9. The orchestrating deploy pipeline retrieves the Effective Set
    10. The orchestrating deploy pipeline generates the deploy SD (deploy-sd calculates deployment waves for deploy-app)
 

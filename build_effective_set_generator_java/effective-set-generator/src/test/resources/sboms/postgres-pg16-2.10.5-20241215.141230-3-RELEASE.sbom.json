@@ -1,0 +1,534 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:be363db2-9fd3-4dd7-a4e7-5bac5175b180",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-11-15T14:12:30.123456+00:00",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "BomRef.674662497265164.006411566029134841",
+      "name": "postgres",
+      "version": "pg16-2.10.5-20241215.141230-3-RELEASE",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "bom-ref": "BomRef.8782807694762136.7985592711250248",
+          "group": "org.qubership.deploy.product",
+          "name": "prod.platform.ha.postgres",
+          "version": "pg16-2.10.5-20241215.141230-3-RELEASE",
+          "purl": "pkg:maven/org.qubership.deploy.product/prod.platform.ha.postgres@pg16-2.10.5-20241215.141230-3-RELEASE?registry_id=registry-1&repository_id=targetRelease"
+        }
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "0.1.2"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "bom-ref": "BomRef.9075979924294193.9199264565220782",
+      "name": "patroni-core",
+      "version": "2.10.5-patroni-core-operator-SNAPSHOT",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator:2.10.5_20241215-141230_patroni-core-operator"
+        },
+        {
+          "name": "git_branch",
+          "value": "2.10.5"
+        },
+        {
+          "name": "git_revision",
+          "value": "a7f2b8c9d1e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7"
+        },
+        {
+          "name": "git_url",
+          "value": "https://git.qubership.org/platform.ha/postgres-operator/tree/a7f2b8c9d1e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7"
+        },
+        {
+          "name": "git_version",
+          "value": "2.10.5-patroni-core-operator-SNAPSHOT"
+        },
+        {
+          "name": "image_type",
+          "value": "service"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": "False"
+        },
+        {
+          "name": "qualifier",
+          "value": "prod.platform.ha_postgres"
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.3602297109093431.2192649365324313",
+          "group": "product",
+          "name": "patroni-core",
+          "version": "2.10.5_20241215-141230_patroni-core-operator",
+          "purl": "pkg:docker/product/prod.platform.ha_postgres-operator@2.10.5_20241215-141230_patroni-core-operator?registry_id=registry-1"
+        },
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "bom-ref": "BomRef.47965874894574756.2741218332672474",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "large.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "dHlwZTogbGFyZ2U="
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "dHlwZTogZGV2"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "small.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "dHlwZTogc21hbGw="
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "medium.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "dHlwZTogbWVkaXVt"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "dHlwZTogcHJvZA=="
+                }
+              }
+            }
+          ],
+          "name": "resource-profile-baselines"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.5704135980085013.9096597478957662",
+      "name": "pg_patroni",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": "pg_patroni"
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17125"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17125/product/prod.platform.ha_pg-patroni:release-2024.2-2.10.0_20240715-123045_pg16"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.17464031813019898.7308362360089624",
+          "group": "product",
+          "name": "prod.platform.ha_pg-patroni",
+          "version": "release-2024.2-2.10.0_20240715-123045_pg16",
+          "purl": "pkg:docker/product/prod.platform.ha_pg-patroni@release-2024.2-2.10.0_20240715-123045_pg16?registry_id=registry-1"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.8551743663513955.08125851845049947",
+      "name": "pg_upgrade",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": "pg_upgrade"
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17125"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17125/product/prod.platform.ha_pg-service:release-2024.2-2.10.0_20240716-142315_pg-upgrade"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.8857544211051954.8339997257137908",
+          "group": "product",
+          "name": "prod.platform.ha_pg-service",
+          "version": "release-2024.2-2.10.0_20240716-142315_pg-upgrade",
+          "purl": "pkg:docker/product/prod.platform.ha_pg-service@release-2024.2-2.10.0_20240716-142315_pg-upgrade?registry_id=registry-1"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.21292853539899725.8744183128286144",
+      "name": "pgbackrest_sidecar",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": "pgbackrest_sidecar"
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17263"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17263/qubership/pgskipper-pgbackrest-sidecar:release-2024.2-2.10.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.7145260628162152.4728193595594893",
+          "group": "qubership",
+          "name": "pgskipper-pgbackrest-sidecar",
+          "version": "release-2024.2-2.10.0",
+          "purl": "pkg:docker/qubership/pgskipper-pgbackrest-sidecar@release-2024.2-2.10.0?registry_id=registry-1"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.app.chart",
+      "bom-ref": "BomRef.5846001929640025.1945099396389388",
+      "name": "postgres",
+      "version": "0.0.0-pg16-2.10.5-20241215.141230-3"
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.9031487570675426.4845801503918662",
+      "name": "postgres_operator_init",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": "postgres_operator_init"
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17208"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator:2.10.5_20241215-141230_init"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.04719843567705495.27708200910768366",
+          "group": "product",
+          "name": "prod.platform.ha_postgres-operator",
+          "version": "2.10.5_20241215-141230_init",
+          "purl": "pkg:docker/product/prod.platform.ha_postgres-operator@2.10.5_20241215-141230_init?registry_id=registry-1"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.7874274480422637.1275022058760351",
+      "name": "postgres_operator_tests",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": "postgres_operator_tests"
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17263"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17263/qubership/pgskipper-operator-tests:release-2024.2-2.10.0"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.012002817374222707.985557803520411",
+          "group": "qubership",
+          "name": "pgskipper-operator-tests",
+          "version": "release-2024.2-2.10.0",
+          "purl": "pkg:docker/qubership/pgskipper-operator-tests@release-2024.2-2.10.0?registry_id=registry-1"
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.18512605064343912.04937902546255557",
+      "name": "vault_env",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": "vault_env"
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17175"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17175/banzaicloud/vault-env:2.5.1"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.9951115840681105.022584564344837355",
+          "group": "banzaicloud",
+          "name": "vault-env",
+          "version": "2.5.1",
+          "purl": "pkg:docker/banzaicloud/vault-env@2.5.1?registry_id=registry-1"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "BomRef.674662497265164.006411566029134841"
+    },
+    {
+      "ref": "BomRef.9075979924294193.9199264565220782"
+    },
+    {
+      "ref": "BomRef.5704135980085013.9096597478957662"
+    },
+    {
+      "ref": "BomRef.8551743663513955.08125851845049947"
+    },
+    {
+      "ref": "BomRef.21292853539899725.8744183128286144"
+    },
+    {
+      "ref": "BomRef.5846001929640025.1945099396389388"
+    },
+    {
+      "ref": "BomRef.9031487570675426.4845801503918662"
+    },
+    {
+      "ref": "BomRef.7874274480422637.1275022058760351"
+    },
+    {
+      "ref": "BomRef.18512605064343912.04937902546255557"
+    }
+  ]
+}

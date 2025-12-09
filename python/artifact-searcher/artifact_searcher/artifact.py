@@ -5,17 +5,33 @@ import shutil
 import tempfile
 from pathlib import Path
 from typing import Any, Optional
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse, urlunparse
 from zipfile import ZipFile
+import xml.etree.ElementTree as ET
 
 import aiohttp
 import requests
 from loguru import logger
 from requests.auth import HTTPBasicAuth
 from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
+from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT
 
-DEFAULT_REQUEST_TIMEOUT = 30
 WORKSPACE = limit = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
+
+
+def convert_nexus_repo_url_to_index_view(url: str) -> str:
+    parsed = urlparse(url)
+
+    parts = parsed.path.rstrip("/").split("/")
+
+    if not parts or parts[-1] != "repository":
+        return url
+
+    # Build new path
+    new_parts = parts[:-1] + ["service", "rest", "repository", "browse"]
+    new_path = "/".join(new_parts) + "/"
+
+    return urlunparse(parsed._replace(path=new_path))
 
 
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension, folder: str) -> str:
@@ -24,6 +40,56 @@ def create_full_url(app: Application, version: str, repo: str, artifact_extensio
     group_id = app.group_id.replace(".", "/")
     path = f"{folder}/{artifact_id}-{version}.{artifact_extension.value}"
     return urljoin(registry_url, "/".join([repo, group_id, artifact_id, path]))
+
+
+async def resolve_snapshot_version_async(
+    session,
+    app: Application,
+    version: str,
+    repo_value: str,
+    stop_event: asyncio.Event,
+    classifier: str = "",
+    extension: FileExtension = FileExtension.JSON,
+) -> str | None:
+    if stop_event.is_set():
+        return None
+    if not version.endswith("-SNAPSHOT"):
+        return version
+
+    group_id = app.group_id.replace(".", "/")
+    artifact_id = app.artifact_id
+    registry_url = app.registry.maven_config.repository_domain_name
+
+    metadata_path = f"{repo_value}/{group_id}/{artifact_id}/{version}/maven-metadata.xml"
+    metadata_url = urljoin(registry_url, metadata_path)
+
+    try:
+        async with session.get(metadata_url, timeout=DEFAULT_REQUEST_TIMEOUT) as response:
+            if response.status != 200:
+                logger.warning(f"Failed to fetch maven-metadata.xml: {metadata_url}, status: {response.status}")
+                return None
+
+            content = await response.text()
+            root = ET.fromstring(content)
+            snapshot_versions = root.findall(".//snapshotVersions/snapshotVersion")
+            if not snapshot_versions:
+                logger.warning(f"No <snapshotVersions> found in {metadata_url}")
+                return None
+
+            for node in snapshot_versions:
+                node_classifier = node.findtext("classifier", default="")
+                node_extension = node.findtext("extension", default="")
+                value = node.findtext("value")
+
+                if node_classifier == classifier and node_extension == extension:
+                    stop_event.set()
+                    logger.info(f"Resolved snapshot version {version} to {value}")
+                    return value
+
+            logger.warning(f"No matching snapshotVersion found for {app.artifact_id} in {metadata_url}")
+
+    except Exception as e:
+        logger.warning(f"Error resolving snapshot version from {metadata_url}: {e}")
 
 
 def version_to_folder_name(version: str):
@@ -35,17 +101,17 @@ def version_to_folder_name(version: str):
     """
     snapshot_pattern = re.compile(r"-\d{8}\.\d{6}-\d+$")
     if snapshot_pattern.search(version):
-        folder = snapshot_pattern.sub('-SNAPSHOT', version)
+        folder = snapshot_pattern.sub("-SNAPSHOT", version)
     else:
         folder = version
     return folder
 
 
 def download_json_content(url: str) -> dict[str, Any]:
-    response = requests.get(url, timeout=os.getenv("REQUEST_TIMEOUT", DEFAULT_REQUEST_TIMEOUT))
+    response = requests.get(url, timeout=DEFAULT_REQUEST_TIMEOUT)
     response.raise_for_status()
     json_data = response.json()
-    logger.debug(f'Got the json data by url {url}')
+    logger.debug(f"Got the json data by url {url}")
     return json_data
 
 
@@ -77,7 +143,7 @@ async def download_all_async(artifacts_info: list[ArtifactInfo]):
 
 
 def create_app_artifacts_local_path(app_name, app_version):
-    return f'{WORKSPACE}/{app_name}/{app_version}'
+    return f"{WORKSPACE}/{app_name}/{app_version}"
 
 
 async def download(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
@@ -105,17 +171,16 @@ async def download(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
         logger.error(f"Download process with exception {url}: {e}")
 
 
-async def check_artifact_by_full_url_async(app: Application, version: str, repo, artifact_extension: FileExtension,
-                                           folder: str,
-                                           stop_event, session) -> tuple[str, tuple[str, str]] | None:
+async def check_artifact_by_full_url_async(
+    app: Application, version: str, repo, artifact_extension: FileExtension, folder: str, stop_event, session
+) -> tuple[str, tuple[str, str]] | None:
     if stop_event.is_set():
         return None
     repo_value, repo_pointer = repo
     if repo_value:
         full_url = create_full_url(app, version, repo_value, artifact_extension, folder)
         try:
-            async with session.head(full_url,
-                                    timeout=os.getenv("REQUEST_TIMEOUT", DEFAULT_REQUEST_TIMEOUT)) as response:
+            async with session.head(full_url, timeout=DEFAULT_REQUEST_TIMEOUT) as response:
                 if response.status == 200:
                     stop_event.set()
                     logger.info(f"Successful while checking if artifact is present with URL {full_url}")
@@ -124,14 +189,18 @@ async def check_artifact_by_full_url_async(app: Application, version: str, repo,
         except Exception as e:
             logger.warning(f"Failed while checking if artifact is present with URL {full_url}, {e}")
     else:
-        logger.warning(f"Repository {repo_pointer} is not configured for registry {app.registry.registry_name}")
+        logger.warning(f"Repository {repo_pointer} is not configured for registry {app.registry.name}")
 
 
 def get_repo_value_pointer_dict(registry: Registry):
     """Permanent set of repositories for searching of artifacts"""
     maven = registry.maven_config
-    repos = {maven.target_snapshot: "targetSnapshot", maven.target_staging: "targetStaging",
-             maven.target_release: "targetRelease", maven.snapshot_group: "snapshotGroup"}
+    repos = {
+        maven.target_snapshot: "targetSnapshot",
+        maven.target_staging: "targetStaging",
+        maven.target_release: "targetRelease",
+        maven.snapshot_group: "snapshotGroup",
+    }
     return repos
 
 
@@ -140,12 +209,57 @@ def get_repo_pointer(repo_value: str, registry: Registry):
     return repos_dict.get(repo_value)
 
 
-async def check_artifact_async(app: Application, artifact_extension: FileExtension, version: str) -> Optional[
-                                                                                                         tuple[
-                                                                                                             str, tuple[
-                                                                                                                 str, str]]] | None:
+async def _attempt_check(
+    app: Application, version: str, artifact_extension: FileExtension, registry_url: str | None = None
+) -> Optional[tuple[str, tuple[str, str]]]:
+    """Helper function to attempt artifact check with a given registry URL"""
+    folder = version_to_folder_name(version)
+    check_artifact_stop_event = asyncio.Event()
+    resolve_snapshot_stop_event = asyncio.Event()
+
+    repos_dict = get_repo_value_pointer_dict(app.registry)
+    if registry_url:
+        app.registry.maven_config.repository_domain_name = registry_url
+
+    async with aiohttp.ClientSession() as session:
+        resolved_version = version
+        if version.endswith("-SNAPSHOT"):
+            resolve_snapshot_coros = [
+                (resolve_snapshot_version_async(session, app, version, repo[0], resolve_snapshot_stop_event, extension=artifact_extension))
+                for repo in repos_dict.items()
+            ]
+            async with asyncio.TaskGroup() as resolve_snapshot_tg:
+                resolve_snapshot_tasks = [resolve_snapshot_tg.create_task(coro) for coro in resolve_snapshot_coros]
+            for task in resolve_snapshot_tasks:
+                result = task.result()
+                if result is None:
+                    continue
+                resolved_version = result
+                folder = version_to_folder_name(resolved_version)
+                logger.info(f"Using resolved snapshot version: {resolved_version}")
+                break
+        async with asyncio.TaskGroup() as check_artifact_tg:
+            check_artifact_tasks = [
+                check_artifact_tg.create_task(
+                    check_artifact_by_full_url_async(
+                        app, resolved_version, repo, artifact_extension, folder, check_artifact_stop_event, session
+                    )
+                )
+                for repo in repos_dict.items()
+            ]
+
+        for task in check_artifact_tasks:
+            result = task.result()
+            if result is not None:
+                return result
+
+
+async def check_artifact_async(
+    app: Application, artifact_extension: FileExtension, version: str
+) -> Optional[tuple[str, tuple[str, str]]] | None:
     """
-    Resolves the full artifact URL and the first repository where it was found
+    Resolves the full artifact URL and the first repository where it was found.
+    Supports both release and snapshot versions.
 
     Returns:
         Optional[tuple[str, tuple[str, str]]]: A tuple containing:
@@ -154,25 +268,29 @@ async def check_artifact_async(app: Application, artifact_extension: FileExtensi
             Returns None if the artifact could not be resolved
     """
 
-    folder = version_to_folder_name(version)
-    stop_event = asyncio.Event()
+    result = await _attempt_check(app, version, artifact_extension)
+    if result is not None:
+        return result
 
-    repos_dict = get_repo_value_pointer_dict(app.registry)
+    if not app.registry.maven_config.is_nexus:
+        return result
 
-    async with aiohttp.ClientSession() as session:
-        async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(
-                check_artifact_by_full_url_async(app, version, repo, artifact_extension, folder,
-                                                 stop_event, session)) for repo in repos_dict.items()]
-        for task in tasks:
-            result = task.result()
-            if result is not None:
-                return result
+    original_domain = app.registry.maven_config.repository_domain_name
+    fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
+    if fixed_domain != original_domain:
+        logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
+        result = await _attempt_check(app, version, artifact_extension, fixed_domain)
+        if result is not None:
+            return result
+    else:
+        logger.debug("Domain is same after editing, skipping retry")
+
+    logger.warning("Artifact not found")
 
 
 def unzip_file(artifact_id: str, app_name: str, app_version: str, zip_url: str):
     extracted = False
-    app_artifacts_dir = f'{artifact_id}/'
+    app_artifacts_dir = f"{artifact_id}/"
     try:
         with ZipFile(zip_url, "r") as zip_file:
             for file in zip_file.namelist():

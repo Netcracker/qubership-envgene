@@ -1,0 +1,14 @@
+bg_domain: {}
+cluster:
+  api_port: '6443'
+  api_url: api.cluster-01.qubership.org
+  protocol: https
+  public_url: cluster-01.qubership.org
+composite_structure: {}
+environments:
+  cluster-01/pl-01:
+    namespaces:
+      pl-01-monitoring:
+        deployPostfix: monitoring
+      pl-01-pg:
+        deployPostfix: pg

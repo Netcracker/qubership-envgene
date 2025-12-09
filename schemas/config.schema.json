@@ -43,16 +43,6 @@
         "auto"
       ]
     },
-    "cloud_passport_decryption": {
-      "type": "boolean",
-      "title": "Enable Cloud Passport Decryption",
-      "description": "Determines whether cloud passport decryption is enabled in the configuration",
-      "default": false,
-      "examples": [
-        true,
-        false
-      ]
-    },
     "app_reg_def_mode": {
       "title": "Application and Registry Definitions Discovery Mode",
       "description": "Configures the mode of discovering Application and Registry Definitions",

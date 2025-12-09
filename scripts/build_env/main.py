@@ -1,13 +1,14 @@
 import argparse
 
-import ansible_runner
 from envgenehelper import *
 from envgenehelper.deployer import *
 
 from build_env import build_env, process_additional_template_parameters
 from cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
+from generate_config_env import EnvGenerator
 from resource_profiles import get_env_specific_resource_profiles
+from pathlib import Path
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -16,12 +17,6 @@ PARAMSET_SCHEMA = "schemas/paramset.schema.json"
 CLOUD_SCHEMA = "schemas/cloud.schema.json"
 NAMESPACE_SCHEMA = "schemas/namespace.schema.json"
 ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
-
-
-def clear_output_folder(dir):
-    delete_dir(f"{dir}/Namespaces")
-    delete_dir(f"{dir}/Applications")
-    delete_dir(f"{dir}/Profiles")
 
 
 def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
@@ -33,7 +28,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     render_env_dir = f"{render_dir}/{env_name}"
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}', f"{render_env_dir}/{INVENTORY_DIR_NAME}")
     # clearing instances dir
-    clear_output_folder(f'{output_dir}/{cluster_name}/{env_name}')
+    cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
     check_dir_exist_and_create(f'{render_parameters_dir}/from_template')
     copy_path(f'{templates_dir}/parameters', f'{render_parameters_dir}/from_template')
@@ -51,36 +46,26 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
 def pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instances_dir):
     process_additional_template_parameters(render_env_dir, source_env_dir, all_instances_dir)
     update_env_definition_with_cloud_name(render_env_dir, source_env_dir, all_instances_dir)
-    copy_path(f"{source_env_dir}/Credentials", f"{render_env_dir}")
+    copy_path(f"{source_env_dir}/Credentials", f"{render_env_dir}/Credentials")
 
 
-def cleanup_resulting_dir(resulting_dir: pathlib.Path):
+def cleanup_resulting_dir(resulting_dir: Path):
     logger.info(f"Cleaning resulting directory: {str(resulting_dir)}")
-    dirs_to_remove = ["Applications", "Namespaces", "Profiles"]
-    files_to_remove = [
-        "cloud.yml",
-        "tenant.yml",
-        "bg-domain.yml",
-        "composite-structure.yml",
-    ]
-
-    for directory in dirs_to_remove:
-        dir_path = resulting_dir.joinpath(directory)
-        if check_dir_exists(dir_path):
-            logger.info(f"Removing directory: {dir_path}")
-            delete_dir(dir_path)
-
-    for file in files_to_remove:
-        file_path = resulting_dir.joinpath(file)
-        if check_file_exists(file_path):
-            logger.info(f"Removing file: {file_path}")
-            deleteFile(file_path)
+    resulting_dir = Path(resulting_dir)
+    for target in cleanup_targets:
+        path = resulting_dir.joinpath(target)
+        if path.is_dir():
+            logger.info(f"Removing directory: {path}")
+            delete_dir(path)
+        elif path.is_file():
+            logger.info(f"Removing file: {path}")
+            deleteFile(path)
 
 
 def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir, output_dir):
     check_dir_exist_and_create(output_dir)
     # copying results to output_dir
-    env_instances_relative_dir = str(pathlib.Path(source_env_dir).relative_to(pathlib.Path(all_instances_dir)))
+    env_instances_relative_dir = str(Path(source_env_dir).relative_to(Path(all_instances_dir)))
     logger.info(f"Relative path of {env_name} in instances dir is: {env_instances_relative_dir}")
     resulting_dir = f'{output_dir}/{env_instances_relative_dir}'
     check_dir_exist_and_create(resulting_dir)
@@ -88,7 +73,7 @@ def post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, a
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/{ENV_DEFINITION_FILE_NAME}',
               f"{render_env_dir}/{INVENTORY_DIR_NAME}")
     # pushing all to output dir
-    cleanup_resulting_dir(pathlib.Path(resulting_dir))
+    cleanup_resulting_dir(Path(resulting_dir))
     copy_path(f'{render_env_dir}/*', resulting_dir)
     return resulting_dir
 
@@ -102,7 +87,7 @@ def handle_template_override(render_dir):
         src = openYaml(file)
         merge_yaml_into_target(yaml_to_override, '', src)
         writeYamlToFile(template_path, yaml_to_override)
-        template_path_stem = pathlib.Path(template_path).stem
+        template_path_stem = Path(template_path).stem
         schema_path = ""
         if template_path_stem == 'cloud':
             schema_path = CLOUD_SCHEMA
@@ -118,6 +103,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     render_dir = getAbsPath('tmp/render')
     render_parameters_dir = getAbsPath('tmp/parameters_templates')
     render_profiles_dir = getAbsPath('tmp/resource_profiles')
+
     # preparing folders for generation
     render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
                                                    render_parameters_dir, render_profiles_dir, output_dir)
@@ -167,35 +153,27 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     logger.debug(
         f"Created environment context: name='{current_env['name']}', environmentName='{current_env['environmentName']}'")
 
-    ansible_vars = {}
-    ansible_vars["env"] = env_name  # Keep as string for file paths
-    ansible_vars["current_env"] = current_env  # Object for Jinja2 templates that need current_env.environmentName
-    ansible_vars["cluster_name"] = cluster_name
-    ansible_vars["templates_dir"] = templates_dir
-    ansible_vars["env_instances_dir"] = getAbsPath(render_env_dir)
-    ansible_vars["render_dir"] = getAbsPath(render_dir)
-    ansible_vars["render_parameters_dir"] = getAbsPath(render_parameters_dir)
-    ansible_vars["template_version"] = g_template_version
-    ansible_vars["cloud_passport_file_path"] = find_cloud_passport_definition(source_env_dir, all_instances_dir)
-    ansible_vars["cmdb_url"] = cmdb_url
-    ansible_vars["output_dir"] = output_dir
-    logger.info(
-        f"Starting rendering environment {env_name} with ansible. Input params are:\n{dump_as_yaml_format(ansible_vars)}")
-    r = ansible_runner.run(playbook=getAbsPath('env-builder/main.yaml'), envvars=ansible_vars, verbosity=2)
-    if (r.rc != 0):
-        logger.error(f"Error during ansible execution. Result code is: {r.rc}. Status is: {r.status}")
-        raise ReferenceError(f"Error during ansible execution. See logs above.")
-    else:
-        logger.info(f"Ansible execution status is: {r.status}. Stats is: {r.stats}")
-
+    envvars = {}
+    envvars["env"] = env_name  # Keep as string for file paths
+    envvars["current_env"] = current_env  # Object for Jinja2 templates that need current_env.environmentName
+    envvars["cluster_name"] = cluster_name
+    envvars["templates_dir"] = templates_dir
+    envvars["env_instances_dir"] = getAbsPath(render_env_dir)
+    envvars["render_dir"] = getAbsPath(render_dir)
+    envvars["render_parameters_dir"] = getAbsPath(render_parameters_dir)
+    envvars["template_version"] = g_template_version
+    envvars["cloud_passport_file_path"] = find_cloud_passport_definition(source_env_dir, all_instances_dir)
+    envvars["cmdb_url"] = cmdb_url
+    envvars["output_dir"] = output_dir
+    envvars["render_profiles_dir"] = render_profiles_dir
+    render_context = EnvGenerator()
+    render_context.generate_config_env(env_name, envvars)
     handle_template_override(render_dir)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
                                                                            ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
     # building env
-    handle_parameter_container(env_name, cluster_name, templates_dir, all_instances_dir, getAbsPath(render_dir))
-
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir)
+              env_specific_resource_profile_map, all_instances_dir, render_context)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
                                                      output_dir)
     validate_appregdefs(render_dir, env_name)
@@ -285,95 +263,6 @@ def validate_parameter_files(param_files):
     return errors
 
 
-def handle_parameter_container(env_name, cluster_name, templates_dir, all_instances_dir, render_dir):
-    logger.info(f'start handle_parameter_container')
-    env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
-    env_definition_yaml = getEnvDefinition(env_dir)
-    template_name = env_definition_yaml["envTemplate"]["name"]
-    logger.info(f'handle "{template_name}" template')
-    template_file = findYamls(f'{templates_dir}/env_templates', f'{template_name}.y')
-
-    for file in template_file:
-        template_yml = openYaml(file)
-        merge_template_parameters(template_yml, templates_dir, True)
-        namespaces = template_yml["namespaces"]
-        for namespace in namespaces:
-            if "parameterContainer" in namespace:
-                namespace_path_name = namespace["template_path"].split("/")[-1]
-                namespace_path_name = namespace_path_name.split(".")[0]
-                namespace_path = f'{render_dir}/{env_name}/Namespaces/{namespace_path_name}/namespace.yml'
-                namespaces_yml = openYaml(namespace_path)
-                deployment_parameters = namespaces_yml["deployParameters"]
-
-                for parameterContainer in namespace["parameterContainer"]:
-                    if parameterContainer["source"]["name"] == "":
-                        source_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',
-                                                           f'source/{parameterContainer["override"]["name"]}.y')
-                        source_file_name = extractNameFromFile(source_parameters_path[0])
-                    else:
-                        source_file_name = parameterContainer["source"]["name"].split(":")[0]
-                        source_file_version = parameterContainer["source"]["name"].split(":")[1]
-                        source_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',
-                                                           f'source/{source_file_name}-{source_file_version}.y')
-                    source_parameters_yaml = openYaml(source_parameters_path[0])
-
-                    if "base" in source_parameters_yaml:
-                        for key in source_parameters_yaml["base"]["parameters"]:
-                            merge_dict_key_with_comment(key, deployment_parameters, "value",
-                                                        source_parameters_yaml["base"]["parameters"][key],
-                                                        f'# parameterContainer "{source_file_name}", base')
-
-                    if "features" in parameterContainer:
-                        for features in parameterContainer["features"]:
-                            for key in source_parameters_yaml["features"][features]["parameters"]:
-                                merge_dict_key_with_comment(key, deployment_parameters, "value",
-                                                            source_parameters_yaml["features"][features]["parameters"][
-                                                                key],
-                                                            f'# parameterContainer "{source_file_name}", feature "{features}"')
-
-                writeYamlToFile(namespace_path, namespaces_yml)
-
-
-def merge_template_parameters(template_yml, templates_dir, override_source=False):
-    namespaces = template_yml["namespaces"]
-    for namespace in namespaces:
-        if "parameterContainer" in namespace:
-            for parameterContainer in namespace["parameterContainer"]:
-                logger.info(f'handle {parameterContainer["source"]["name"]}')
-                if not ":" in parameterContainer["source"]["name"]:
-                    override_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',
-                                                         f'override/{parameterContainer["override"]["name"]}.y')
-                    if override_source:
-                        copy_path(override_parameters_path[0],
-                                  f'{templates_dir}/parameters_containers/source/{extractNameWithExtensionFromFile(override_parameters_path[0])}')
-                    else:
-                        copy_path(override_parameters_path[0],
-                                  f'{templates_dir}/parameters_containers/merge/{extractNameWithExtensionFromFile(override_parameters_path[0])}')
-                else:
-                    source_file_name = parameterContainer["source"]["name"].split(":")[0]
-                    source_file_version = parameterContainer["source"]["name"].split(":")[1]
-                    source_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',
-                                                       f'source/{source_file_name}-{source_file_version}.y')
-                    if "override" in parameterContainer:
-                        override_parameters_path = findYamls(f'{templates_dir}/parameters_containers/',
-                                                             f'override/{parameterContainer["override"]["name"]}.y')
-                        logger.info(f'merge parameters from {override_parameters_path} to {source_parameters_path}')
-
-                        yaml_to_override = openYaml(source_parameters_path)
-                        src = openYaml(override_parameters_path)
-                        merge_yaml_into_target(yaml_to_override, '', src)
-
-                        source_parameters_path = source_parameters_path[0]
-                        if not override_source:
-                            merged_yaml['name'] = parameterContainer["override"]["artifact_name"]
-                            source_parameters_path = source_parameters_path.replace("/source/", "/merge/")
-                            source_parameters_path = source_parameters_path.replace(
-                                f'/{source_file_name}-{source_file_version}.',
-                                f'/{parameterContainer["override"]["artifact_name"]}.')
-
-                        writeYamlToFile(source_parameters_path, yaml_to_override)
-
-
 def validate_appregdefs(render_dir, env_name):
     appdef_dir = f"{render_dir}/{env_name}/AppDefs"
     regdef_dir = f"{render_dir}/{env_name}/RegDefs"
@@ -381,17 +270,17 @@ def validate_appregdefs(render_dir, env_name):
     if os.path.exists(appdef_dir):
         appdef_files = findAllYamlsInDir(appdef_dir)
         if not appdef_files:
-            print(f"[INFO] No AppDef YAMLs found in {appdef_dir}")
+            logger.info(f"No AppDef YAMLs found in {appdef_dir}")
         for file in appdef_files:
-            print(f"[VALIDATING] AppDef file: {file}")
+            logger.info(f"AppDef file: {file}")
             validate_yaml_by_scheme_or_fail(file, "schemas/appdef.schema.json")
 
     if os.path.exists(regdef_dir):
         regdef_files = findAllYamlsInDir(regdef_dir)
         if not regdef_files:
-            print(f"[INFO] No RegDef YAMLs found in {regdef_dir}")
+            logger.info(f"No RegDef YAMLs found in {regdef_dir}")
         for file in regdef_files:
-            print(f"[VALIDATING] RegDef file: {file}")
+            logger.info(f"RegDef file: {file}")
             validate_yaml_by_scheme_or_fail(file, "schemas/regdef.schema.json")
 
 

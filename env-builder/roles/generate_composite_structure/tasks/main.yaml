@@ -1,6 +1,0 @@
----
-- name: Generate Compsite Structure yaml {{ _composite_structure }}
-  ansible.builtin.blockinfile:
-     path: "{{ current_env_dir }}/composite_structure.yml"
-     block: "{{ lookup('template', _template) }}"
-     create: yes

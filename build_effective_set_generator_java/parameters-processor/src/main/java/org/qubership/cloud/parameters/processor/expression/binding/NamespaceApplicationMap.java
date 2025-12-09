@@ -17,6 +17,7 @@
 package org.qubership.cloud.parameters.processor.expression.binding;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang.StringUtils;
 import org.qubership.cloud.devops.commons.Injector;
 import org.qubership.cloud.devops.commons.pojo.applications.model.ApplicationParams;
@@ -71,20 +72,20 @@ public class NamespaceApplicationMap extends DynamicMap {
             if (binding.getDeployerInputs() != null && binding.getDeployerInputs().getAppVersion() != null) {
                 populateAdditionalParams(appName, binding.getDeployerInputs().getAppFileRef(), map);
             }
-        } catch ( Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(String.format("Failed to get Service data for %s because of %s", appName, e.getMessage()));
         }
         maps.put(appName, map);
         return map;
     }
 
-    private void populateAdditionalParams(String appName, String appFileRef, EscapeMap map)  {
+    private void populateAdditionalParams(String appName, String appFileRef, EscapeMap map) {
         ApplicationBomDTO applicationBomDto = getApplicationBomDto(appName, appFileRef);
         if (applicationBomDto != null) {
             map.put("ARTIFACT_DESCRIPTOR_ARTIFACT_ID", applicationBomDto.getArtifactId());
             map.put("ARTIFACT_DESCRIPTOR_GROUP_ID", applicationBomDto.getGroupId());
             map.put("ARTIFACT_DESCRIPTOR_VERSION", applicationBomDto.getVersion());
-            map.put("ARTIFACT_DESCRIPTOR_MAVEN_REPO",applicationBomDto.getMavenRepo());
+            map.put("ARTIFACT_DESCRIPTOR_MAVEN_REPO", applicationBomDto.getMavenRepo());
             map.put("DEPLOYMENT_SESSION_ID", applicationBomDto.getDeployerSessionId());
             map.put(APPR_CHART_NAME, applicationBomDto.getAppChartName());
             map.put(SERVICES, applicationBomDto.getServices());
@@ -96,6 +97,11 @@ public class NamespaceApplicationMap extends DynamicMap {
             map.put(DEPLOY_DESC, applicationBomDto.getDeployDescriptors());
             map.put(COMMON_DEPLOY_DESC, applicationBomDto.getCommonDeployDescriptors());
             map.put(PER_SERVICE_DEPLOY_PARAMS, applicationBomDto.getPerServiceParams());
+            if (MapUtils.isNotEmpty(applicationBomDto.getDeployParams())) {
+                applicationBomDto.getDeployParams().forEach((key, value) -> {
+                    map.put(key, value);
+                });
+            }
         }
     }
 
@@ -113,6 +119,6 @@ public class NamespaceApplicationMap extends DynamicMap {
         } else if (StringUtils.isNotEmpty(baselineProfile)) {
             baseline = baselineProfile;
         }
-        return bomReaderUtils.getAppServicesWithProfiles(appName, appFileRef,  baseline, overrideProfile);
+        return bomReaderUtils.getAppServicesWithProfiles(appName, appFileRef, baseline, overrideProfile);
     }
 }

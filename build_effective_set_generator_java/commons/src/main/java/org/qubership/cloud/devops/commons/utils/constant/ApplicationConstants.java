@@ -45,6 +45,10 @@ public class ApplicationConstants {
     public static final String APPLICATION_VND_QUBERSHIP_SERVICE = "application/vnd.qubership.service";
     public static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
     public static final String K8S_TOKEN = "K8S_TOKEN";
+    public static final String DEFAULT_SSL_CERTIFICATES_BUNDLE = "DEFAULT_SSL_CERTIFICATES_BUNDLE";
+    public static final String SSL_SECRET_VALUE = "SSL_SECRET_VALUE";
+    public static final String CA_BUNDLE_CERTIFICATE = "CA_BUNDLE_CERTIFICATE";
+    public static final String CERTIFICATE_BUNDLE_MD_5_SUM = "CERTIFICATE_BUNDLE_MD5SUM";
     public static final List<String> SECURED_KEYS = Arrays.asList("DBAAS_AGGREGATOR_USERNAME", "DBAAS_AGGREGATOR_PASSWORD",
             "DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", "DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", "MAAS_CREDENTIALS_USERNAME",
             "MAAS_CREDENTIALS_PASSWORD", "VAULT_TOKEN", "CONSUL_ADMIN_TOKEN", "SSL_SECRET_VALUE");

@@ -1,6 +1,0 @@
----
-- name: Generate Tenant yaml {{ _tenant }}
-  ansible.builtin.blockinfile:
-     path: "{{ current_env_dir }}/tenant.yml"
-     block: "{{ lookup('template', _template) }}"
-     create: yes

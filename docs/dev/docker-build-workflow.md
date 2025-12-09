@@ -125,7 +125,7 @@ git commit -m "BREAKING CHANGE: major refactor of build system"
 ### How to Run Manually
 
 1. Go to the **Actions** tab in your GitHub repository
-2. Select **"Dev: Build Qubership EnvGene docker images"** workflow
+2. Select **"Dev: Build Qubership EnvGene Docker images"** workflow
 3. Click **"Run workflow"** button
 4. Configure the build options (see below)
 5. Click **"Run workflow"** to start

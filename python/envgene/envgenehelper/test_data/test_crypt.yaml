@@ -1,9 +1,9 @@
 first_cred:
     type: secret
     data:
-        secret: glpat-vxxDsEVkaQyoHasXGCY9
+        secret: token-placeholder-123
 second_cred:
     type: usernamePassword
     data:
-        username: username
-        password: qwerty123456
+        username: user-placeholder-123
+        password: pass-placeholder-123

@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.cyclonedx.model.Component;
 import org.cyclonedx.model.ExternalReference;
 import org.cyclonedx.model.Property;
+import org.qubership.cloud.devops.cli.pojo.dto.shared.EffectiveSetVersion;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.commons.pojo.bom.ApplicationBomDTO;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
@@ -40,7 +41,7 @@ public class BomReaderUtilsImpl implements BomReaderUtils {
     }
 
     public ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override) {
-        if ("v2.0".equalsIgnoreCase(sharedData.getEffectiveSetVersion())) {
+        if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             return bomReaderUtilsImplV2.getAppServicesWithProfiles(appName, appFileRef, baseline, override);
         }
         return bomReaderUtilsImplV1.getAppServicesWithProfiles(appName, appFileRef, baseline, override);

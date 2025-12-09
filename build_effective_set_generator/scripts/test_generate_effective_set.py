@@ -34,7 +34,7 @@ def test_render_envs(cluster_name, env_name, sd_version):
     generated_dir = f"{g_test_dir}/{cluster_name}/{env_name}"
     fill_creds(generated_dir)
     generate_effective_set_for_env(cluster_name, env_name, g_test_dir)
-    files_to_compare = get_all_files_in_dir(source_dir, source_dir+"/")
+    files_to_compare = get_all_files_in_dir(source_dir)
     logger.info(dump_as_yaml_format(files_to_compare))
     match, mismatch, errors = filecmp.cmpfiles(source_dir , generated_dir, files_to_compare, shallow=False)
     logger.info(f"Match: {dump_as_yaml_format(match)}")

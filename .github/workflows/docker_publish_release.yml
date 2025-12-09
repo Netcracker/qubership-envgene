@@ -88,24 +88,24 @@ jobs:
 
         - name: Update Docker Image Tags in Pipeline
           run: |
-            TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml"
+            TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml"
             NEW_TAG="${{ github.event.inputs.version }}"
             sed -i "/DOCKER_IMAGE_TAG_PIPEGENE:/c\\  DOCKER_IMAGE_TAG_PIPEGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
             sed -i "/DOCKER_IMAGE_TAG_ENVGENE:/c\\  DOCKER_IMAGE_TAG_ENVGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
             sed -i "/DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR:/c\\  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: \"${NEW_TAG}\"" "$TARGET_FILE"
 
-            if git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml; then
+            if git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml; then
               echo "No changes to commit - no images were built or tags were already up to date"
             else
-              echo "Updated pipeline.yml with docker tags from job outputs"
+              echo "Updated Envgene.yml with docker tags from job outputs"
             fi
 
-            git diff github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml || true
+            git diff github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml || true
 
-            if ! git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml; then
+            if ! git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml; then
               git config --global user.name "qubership-actions[bot]"
               git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
-              git add github_workflows/instance-repo-pipeline/.github/workflows/pipeline.yml
+              git add github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml
               git commit -m "chore: Update docker image tags from job outputs for branch ${{ github.ref_name }} [skip ci]"
 
               git push origin HEAD:${{ github.ref_name }} || echo "Failed to push changes"

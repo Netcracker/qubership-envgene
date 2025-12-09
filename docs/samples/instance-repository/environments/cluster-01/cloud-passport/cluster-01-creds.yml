@@ -1,0 +1,23 @@
+cloud-deploy-sa-token:
+  type: "secret"
+  data:
+    secret: token-placeholder-123
+dbaas-cred:
+  type: usernamePassword
+  data:
+    username: dbaas-username
+    password: dbaas-password
+maas-cred:
+  type: usernamePassword
+  data:
+    username: maas-username
+    password: maas-password
+consul-cred:
+  type: secret
+  data:
+    secret: token-placeholder-123
+minio-cred:
+  type: usernamePassword
+  data:
+    username: minio-username
+    password: minio-password

@@ -85,95 +85,11 @@
           "https://artifactory.qubership.org/mvn.staging"
         ],
         "format": "uri"
-      },
-      "mavenConfig": {
-        "$ref": "#/definitions/MavenConfig"
-      },
-      "dockerConfig": {
-        "$ref": "#/definitions/DockerConfig"
       }
     },
     "required": [
       "username",
       "password"
-    ],
-    "definitions": {
-      "DockerConfig": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "snapshotUri": {
-            "type": "string"
-          },
-          "stagingUri": {
-            "type": "string"
-          },
-          "releaseUri": {
-            "type": "string"
-          },
-          "groupUri": {
-            "type": "string"
-          },
-          "snapshotRepoName": {
-            "type": "string"
-          },
-          "stagingRepoName": {
-            "type": "string"
-          },
-          "releaseRepoName": {
-            "type": "string"
-          },
-          "groupName": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "groupName",
-          "groupUri",
-          "releaseRepoName",
-          "releaseUri",
-          "snapshotRepoName",
-          "snapshotUri",
-          "stagingRepoName",
-          "stagingUri"
-        ]
-      },
-      "MavenConfig": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "repositoryDomainName": {
-            "type": "string"
-          },
-          "fullRepositoryUrl": {
-            "type": "string"
-          },
-          "targetSnapshot": {
-            "type": "string"
-          },
-          "targetStaging": {
-            "type": "string"
-          },
-          "targetRelease": {
-            "type": "string"
-          },
-          "snapshotGroup": {
-            "type": "string"
-          },
-          "releaseGroup": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "fullRepositoryUrl",
-          "releaseGroup",
-          "repositoryDomainName",
-          "snapshotGroup",
-          "targetRelease",
-          "targetSnapshot",
-          "targetStaging"
-        ]
-      }
-    }
+    ]
   }
 }

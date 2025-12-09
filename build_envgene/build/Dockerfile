@@ -37,8 +37,9 @@ COPY build_envgene/ansible /module/ansible
 COPY build_envgene/scripts /module/scripts
 COPY creds_rotation/scripts /module/creds_rotation_scripts
 COPY build_* create_* produce_* sort* /build_env/
-COPY scripts /build_env/scripts
-COPY env-builder /build_env/env-builder
+COPY scripts/build_env /build_env/scripts/build_env/
+COPY scripts/build_template /build_env/scripts/build_template/
+COPY scripts/cloud_passport/ /cloud_passport/scripts/
 COPY schemas /build_env/schemas
 
 ENV ANSIBLE_LIBRARY=/module/ansible/library
@@ -116,6 +117,7 @@ RUN apk add --no-cache \
 COPY --from=build /module /module
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=build /build_env /build_env
+COPY --from=build /cloud_passport /cloud_passport
 COPY --from=build /python /python
 COPY --from=build /etc/pip.conf /etc/pip.conf
 

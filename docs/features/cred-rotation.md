@@ -46,7 +46,7 @@ Supports working with SOPS encryption.
 ### Assumptions & Limitation
 
 1. Only sensitive parameters defined at the Namespace level or its child Applications can be rotated. It is assumed that:
-   1. Defining sensitive parameters at the Tenant level is considered an anti-pattern
+   1. Defining sensitive parameters at the Tenant level is considered an antipattern
    2. Cloud level sensitive parameters must be rotated via Credential rotation in the underlying environment, and subsequent Cloud or Infra Passport discovery
 2. Only existing credentials can be rotated; creating new ones through `CRED_ROTATION_PAYLOAD` is not possible
 3. Only `SOPS` `crypt_backend` is supported
@@ -77,7 +77,7 @@ Supports working with SOPS encryption.
 
 | Attribute | Type | Mandatory | Description | Default | Example |
 |---|---|---|---|---|---|
-| `CRED_ROTATION_PAYLOAD` | string | no | A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macros)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format | None | [example](#cred_rotation_payload-example) |
+| `CRED_ROTATION_PAYLOAD` | string | no | A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macro)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format | None | [example](#cred_rotation_payload-example) |
 | `CRED_ROTATION_FORCE` | string | no | Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential | `false` | `true` |
 
 #### `CRED_ROTATION_PAYLOAD`
@@ -152,7 +152,7 @@ Per-Item Processing (for each item in `CRED_ROTATION_PAYLOAD`):
    1. It is `e2eParameters` if item's context is `pipeline`
    2. It is `deployParameters` if item's context is `deployment`
    3. It is `technicalConfigurationParameters` if item's context is `runtime`
-3. Find the cred-id linked (via the [cred macro](/docs/template-macros.md#credential-macros)) to the parameter matching the item's `parameter_key` on the object from step 1 in the context from step 2
+3. Find the cred-id linked (via the [cred macro](/docs/template-macros.md#credential-macro)) to the parameter matching the item's `parameter_key` on the object from step 1 in the context from step 2
 4. Find all [affected parameters](#affected-parameters) for this parameter
 5. Save affected parameters in job artifacts
 6. Perform [force mode](#force-mode) check
@@ -269,7 +269,7 @@ The `affected-sensitive-parameters.yaml` is created using the reverse logic desc
     cred_field: enum[`username`,`password`,`secret`]
   affected_parameters:
     - # Mandatory
-      # Environment id (in cluster-name/env-name notation) where affected parameter is located
+      # Environment ID (in cluster-name/env-name notation) where affected parameter is located
       environment: string
       # Mandatory
       # Namespace where affected parameter is located

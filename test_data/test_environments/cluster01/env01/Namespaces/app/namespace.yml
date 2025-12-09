@@ -15,8 +15,8 @@ profile:
 deployParameters:
   APP_CORE_NAMESPACE: "test-solution-structure-case-01-app-core"
   APP_NAMESPACE: "test-solution-structure-case-01-app"
-  ENVGENE_CONFIG_REF_NAME: ""
-  ENVGENE_CONFIG_TAG: ""
+  ENVGENE_CONFIG_REF_NAME: "branch_name"
+  ENVGENE_CONFIG_TAG: "No Ref tag"
   TEST_SS_1: "test-solution-structure-case-01-app-core"
 e2eParameters: {}
 technicalConfigurationParameters:
@@ -26,4 +26,3 @@ deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []
 tenantName: "test-solution-structure-template"
-

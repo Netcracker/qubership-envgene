@@ -64,7 +64,7 @@ Use this guide when you need to enable [Credential](/docs/envgene-objects.md#cre
    You'll see output like:
 
    ```text
-   Public key: age1dgtrrrz4jhgzqxqex38myjgawuyaw0vrwla5l7s0mpnnyjlwhpwqmfsf5c
+   Public key: key-placeholder-123
    ```
 
 2. **Extract the public key**:

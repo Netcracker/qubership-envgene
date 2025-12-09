@@ -43,7 +43,7 @@ import java.util.Optional;
         },
         snippets = {
                 @JinjavaSnippet(
-                        code = "<<['bss-pim','bss','nrm','ops-dpt','ops-dpc','opt-ssm'] | envSuffix('')>>"
+                        code = "<<['oss','bss'] | envSuffix('')>>"
                 )
         }
 )

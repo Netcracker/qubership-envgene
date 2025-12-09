@@ -34,7 +34,7 @@
 
 - **Execution Time**: Complete suite must run in ≤10 minutes
 - **Triggers**:
-  - Every git commit/merge
+  - Every Git commit/merge
   - Build/release workflows
 - **Failure Handling**:
   - Doesn't block commits

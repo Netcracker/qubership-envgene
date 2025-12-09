@@ -12,7 +12,6 @@ class PipelineVars:
     env_builder: str = "true"
     generate_effective_set: str = "true"
     cmdb_import: str = "true"
-    is_offsite: str = "true"
     env_template_test: str = "false"
     env_inventory_init: str = "false"
     sd_source_type: str = ""

@@ -21,11 +21,11 @@ public class BgDomainEntityDTO {
     private String type;
 
     @JsonProperty("originNamespace")
-    @JsonIgnoreProperties({"credentialsId", "url"})
+    @JsonIgnoreProperties({"credentialsId", "url", "username", "password"})
     private NamespaceDTO originNamespace;
 
     @JsonProperty("peerNamespace")
-    @JsonIgnoreProperties({"credentialsId", "url"})
+    @JsonIgnoreProperties({"credentialsId", "url", "username", "password"})
     private NamespaceDTO peerNamespace;
 
     @JsonProperty("controllerNamespace")
@@ -36,7 +36,10 @@ public class BgDomainEntityDTO {
     public static class NamespaceDTO {
         private String name;
         private String type;
-        private String credentialsId;
+        private String credentials;
+        @JsonProperty("username")
+        private String userName;
+        private String password;
         private String url;;
     }
 

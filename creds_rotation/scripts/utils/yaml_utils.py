@@ -13,7 +13,7 @@ def write_yaml_to_file(file_path: str, contents: Any) -> None:
         yaml.safe_dump(contents, f, sort_keys=False)
 
 def convert_json_to_yaml(file_path: str, json_data: Any):
-    # Convert and write to a YAML file
+
     with open(file_path, "w") as yaml_file:
         yaml.dump(json_data, yaml_file, sort_keys=False)
 

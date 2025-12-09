@@ -18,7 +18,9 @@ package org.qubership.cloud.parameters.processor.service;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.parameters.processor.ParametersProcessor;
@@ -29,9 +31,11 @@ import org.qubership.cloud.parameters.processor.dto.Params;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
+import static org.qubership.cloud.devops.commons.utils.constant.NamespaceConstants.SSL_SECRET;
 
 @ApplicationScoped
 public class ParametersCalculationServiceV2 {
@@ -184,6 +188,7 @@ public class ParametersCalculationServiceV2 {
             parameterBundle.setCollisionDeployParameters(getCollisionParams(inSecuredParamsAsObject));
             parameterBundle.setCollisionSecureParameters(getCollisionParams(finalSecuredParams));
             copyParams(finalSecuredParams, inSecuredParamsAsObject, k8TokenMap, originalNamespace);
+            prepareBundleParameters(finalSecuredParams, inSecuredParamsAsObject);
             Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject, parameterBundle.isProcessPerServiceParams());
             Map<String, Object> finalSecParams = prepareFinalParams(finalSecuredParams, true);
             parameterBundle.setSecuredDeployParams(finalSecParams);
@@ -195,6 +200,21 @@ public class ParametersCalculationServiceV2 {
             finalSecuredParams.put(K8S_TOKEN, k8TokenMap.get(originalNamespace));
             parameterBundle.setCleanupSecureParameters(finalSecuredParams);
             parameterBundle.setCleanupParameters(inSecuredParamsAsObject);
+        }
+    }
+
+    private void prepareBundleParameters(Map<String, Object> finalSecParams, Map<String, Object> finalInsecureParams) {
+        if (finalInsecureParams.containsKey(DEFAULT_SSL_CERTIFICATES_BUNDLE)) {
+            Object defaultSslCertificatesBundle = finalInsecureParams.get(DEFAULT_SSL_CERTIFICATES_BUNDLE);
+            finalSecParams.put(SSL_SECRET_VALUE, defaultSslCertificatesBundle);
+            finalSecParams.put(CA_BUNDLE_CERTIFICATE, defaultSslCertificatesBundle);
+            if (ObjectUtils.isNotEmpty(defaultSslCertificatesBundle)) {
+                finalInsecureParams.put(CERTIFICATE_BUNDLE_MD_5_SUM,
+                        DigestUtils.md5Hex(DigestUtils.getMd5Digest().digest(defaultSslCertificatesBundle.toString().getBytes(StandardCharsets.UTF_8))));
+            }
+        }
+        if (!finalInsecureParams.containsKey(SSL_SECRET)) {
+            finalInsecureParams.put(SSL_SECRET, "defaultsslcertificate");
         }
     }
 

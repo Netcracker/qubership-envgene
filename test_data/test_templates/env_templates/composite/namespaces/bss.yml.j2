@@ -1,4 +1,6 @@
 ---
+{%- if current_env.additionalTemplateVariables.use_env_prefix is defined %}
+{%- endif %}
 name: "{{current_env.name}}-bss"
 credentialsId: ""
 isServerSideMerge: false
@@ -14,6 +16,7 @@ deployParameters:
   ENVGENE_CONFIG_REF_NAME: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_REF_NAME')| default('No Ref Name') }}"
   ENVGENE_CONFIG_TAG: "{{ lookup('ansible.builtin.env', 'CI_COMMIT_TAG')| default('No Ref tag') }}"
   OVERRIDE_PARAMETER: "template-value"
+  STORAGE_USERNAME: "{{current_env.cloud_passport.storage.STORAGE_USERNAME}}"
 {% if 'bss-app' in current_env.solution_structure %}
   bss-app-exist: true
 {% else %}
@@ -29,6 +32,7 @@ technicalConfigurationParameters: {}
 deployParameterSets:
 - "bss"
 - "test-deploy-creds"
+- "paramset-B"
 e2eParameterSets: []
 technicalConfigurationParameterSets:
 - "bss-tech"
