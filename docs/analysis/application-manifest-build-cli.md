@@ -34,7 +34,10 @@
     - [Artifact Reference -\> PURL](#artifact-reference---purl)
     - [PURL -\> Artifact Reference](#purl---artifact-reference)
   - [Use Cases](#use-cases)
-  - [References](#references)
+  - [Appendix](#appendix)
+    - [References](#references)
+    - [Potential Application Manifest Cases](#potential-application-manifest-cases)
+    - [Potential Application Manifest Components](#potential-application-manifest-components)
 
 ## Proposed Approach
 
@@ -700,7 +703,17 @@ REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
    1. To OCI registry
    2. As build artifact
 
-## References
+## Appendix
+
+### References
 
 1. [Application Manifest Build CLI](https://github.com/borislavr/qubership-app-manifest-cli)
 2. [Application repository with configured Application Manifest build](https://github.com/borislavr/qubership-jaeger)
+
+### Potential Application Manifest Cases
+
+![application-manifest-potential-cases.png](/docs/images/application-manifest-potential-cases.png)
+
+### Potential Application Manifest Components
+
+![application-manifest-components.png](/docs/images/application-manifest-components.png)
