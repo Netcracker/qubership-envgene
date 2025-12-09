@@ -100,7 +100,7 @@ jobs:
             sed -i "/ENVGENE_VERSION:/c\\  ENVGENE_VERSION: \"${NEW_TAG}\"" "$GITLAB_CI_FILE"
 
             # Update version in package.yaml
-            sed -i "/version:/c\\ version: ${NEW_TAG}" "$GSF_PACKAGE_FILE"
+            sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_PACKAGE_FILE"
 
             CHANGES_MADE=false
             if ! git diff --quiet "$TARGET_FILE"; then
