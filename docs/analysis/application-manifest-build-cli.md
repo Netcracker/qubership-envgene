@@ -526,7 +526,7 @@ pkg:[TYPE]/[NAMESPACE]/[NAME]@[VERSION]?[QUALIFIERS]
 ```
 
 `pkg:` - prefix indicating this is a Package URL  
-`TYPE` - artifact type (docker, helm, github)  
+`TYPE` - artifact type (`docker`, `helm`, `github`)  
 `NAMESPACE` - group or organization  
 `NAME` - artifact name  
 `@VERSION` - version  
@@ -536,7 +536,7 @@ pkg:[TYPE]/[NAMESPACE]/[NAME]@[VERSION]?[QUALIFIERS]
 > We use for qualifiers:
 >
 > 1. `registry_name` - registry reference for each `TYPE`
-> 2. `file_name` - file name, only for `TYPE: github`
+> 2. `file_name` - filename, only for `TYPE: github`
 
 ### Artifact Reference Formats
 
