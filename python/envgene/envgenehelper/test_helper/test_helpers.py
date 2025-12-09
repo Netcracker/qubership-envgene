@@ -46,7 +46,7 @@ class TestHelpers:
         return extra_files, missing_files, mismatch, errors
 
     @staticmethod
-    def assert_dirs_content(source_dir, target_dir, check_for_missing_files=False, check_for_extra_files=False, expected_mismatch=dict[str, str] | None=None):
+    def assert_dirs_content(source_dir, target_dir, check_for_missing_files=False, check_for_extra_files=False, expected_mismatch:dict[str, str] | None=None):
         extra_files, missing_files, mismatch, errors = TestHelpers.compare_dirs_content(source_dir, target_dir)
 
         if check_for_extra_files:
