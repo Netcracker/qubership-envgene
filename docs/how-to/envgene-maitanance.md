@@ -25,7 +25,7 @@ Create a GitLab access token following [GitLab's documentation](https://docs.git
 - **Token name**: `access-token`
 - **Expiration date**: leave empty (never expires)
 - **Select a role**: Maintainer
-- **Select scopes**: api, read_api, read_repository, write_repository
+- **Select scopes**: API, read_api, read_repository, write_repository
 
 ### 3. Configure CI/CD Variables
 
