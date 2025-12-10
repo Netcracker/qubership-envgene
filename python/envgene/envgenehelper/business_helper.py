@@ -362,7 +362,7 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
         return ""
 
 @dataclass
-class Namespace:
+class NamespaceFile:
     path: Path
     name: str = field(init=False)
     definition_path: Path = field(init=False)
@@ -377,12 +377,12 @@ def get_namespaces_path(env_dir: Path | None = None) -> Path:
     logger.debug(namespaces_path)
     return namespaces_path
 
-def get_namespaces(env_dir: Path | None = None) -> list[Namespace]:
+def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     namespaces_path = get_namespaces_path(env_dir)
     if not check_dir_exists(str(namespaces_path)):
         return []
     namespace_paths = [p for p in namespaces_path.iterdir() if p.is_dir()]
-    namespaces = [Namespace(path=p) for p in namespace_paths]
+    namespaces = [NamespaceFile(path=p) for p in namespace_paths]
     logger.debug(namespaces)
     return namespaces
 

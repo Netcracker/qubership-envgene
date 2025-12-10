@@ -1,7 +1,7 @@
 from pathlib import Path
 import shutil
 
-from envgenehelper.business_helper import Namespace, get_bgd_object, get_namespaces, get_namespaces_path, getenv_and_log, getenv_with_error
+from envgenehelper.business_helper import NamespaceFile, get_bgd_object, get_namespaces, get_namespaces_path, getenv_and_log, getenv_with_error
 from envgenehelper import logger
 
 def filter_namespaces(namespaces: list[str], filter: str, bgd_object: dict) -> list[str]:
@@ -55,7 +55,7 @@ def apply_ns_build_filter():
     else:
         logger.info(f"No namespaces to restore")
 
-def restore_namespace(namespace: Namespace, source_namespaces: list[Namespace]):
+def restore_namespace(namespace: NamespaceFile, source_namespaces: list[NamespaceFile]):
     shutil.rmtree(namespace.path)
     source_namespace = next((sns for sns in source_namespaces if sns.name == namespace.name), None)
     if not source_namespace:
@@ -64,7 +64,7 @@ def restore_namespace(namespace: Namespace, source_namespaces: list[Namespace]):
     logger.debug(f'Restored {namespace.name}')
     shutil.copytree(source_namespace.path, namespace.path, dirs_exist_ok=True)
 
-def namespace_list_to_str(namespaces: list[Namespace]):
+def namespace_list_to_str(namespaces: list[NamespaceFile]):
     return "\n".join(f"  - {ns.name} {ns.path}" for ns in namespaces)
 
 
