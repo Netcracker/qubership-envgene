@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from envgenehelper import openYaml, writeYamlToFile
-from envgenehelper.test_helper import TestHelpers
+from envgenehelper.test_helpers import TestHelpers
 
 def load_test_pipeline_sd_data(test_sd_dir, test_case_name):
     file_path = Path(test_sd_dir, test_case_name, f"{test_case_name}.yaml")

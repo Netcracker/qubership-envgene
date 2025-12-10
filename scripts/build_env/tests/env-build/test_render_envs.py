@@ -4,7 +4,7 @@ import pytest
 from envgenehelper import *
 
 from main import render_environment, cleanup_resulting_dir
-from envgenehelper.test_helper import TestHelpers
+from envgenehelper.test_helpers import TestHelpers
 
 test_data = [
     # (cluster_name, environment_name, template)
