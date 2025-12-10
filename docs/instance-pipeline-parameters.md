@@ -45,13 +45,9 @@ All parameters are of the string data type
 ### `ENV_NAMES`
 
 **Description**: Specifies the environment(s) for which processing will be triggered. Uses the `<cluster-name>/<env-name>` notation.
-If multiple environments are provided, they must be separated by below delimiter :
 
-- Newline (`\n`)
-- Semicolon (`;`)
-- Comma (`,`)
-- Space (` `)
- In multi-environment case, each environment will trigger its own independent pipeline flow. All environments will use the same set of pipeline parameters (as documented in this spec)
+If specifying more than one environment, separate them as described in [Multiple Values Support](#multiple-values-support).
+For multiple environments, each environment will initiate its own independent pipeline flow, using the same set of pipeline parameters for all.
 
 **Default Value**: None
 
@@ -62,11 +58,9 @@ If multiple environments are provided, they must be separated by below delimiter
 - Single environment: `ocp-01/platform`
 - Multiple environments:
   - `k8s-01/env-1\nk8s-01/env2`
-  - `k8s-01/env-1; k8s-01/env2`
-  - `k8s-01/env-1, k8s-01/env2`
+  - `k8s-01/env-1;k8s-01/env2`
+  - `k8s-01/env-1,k8s-01/env2`
   - `k8s-01/env-1 k8s-01/env2`
-
-**See also:** [Multiple Values Support](#multiple-values-support).
 
 ### `ENV_BUILDER`
 
@@ -310,12 +304,9 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 ### `SD_VERSION`
 
-**Description**: Specifies one or more SD artifacts in `application:version` notation. If multiple SDs are provided, they can be separated using any of the following delimiters:
+**Description**: Specifies one or more SD artifacts in `application:version` notation.
 
-- Newline (`\n`)
-- Semicolon (`;`)
-- Comma (`,`)
-- Space (` `).
+If specifying more than one environment, separate them as described in [Multiple Values Support](#multiple-values-support).
 
 EnvGene downloads and sequentially merges them in the `basic-merge` mode, where subsequent `application:version` takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
@@ -330,11 +321,9 @@ See details in [SD processing](/docs/features/sd-processing.md)
 - Single SD: `MONITORING:0.64.1`
 - Multiple SDs:
   - `solution-part-1:0.64.2\nsolution-part-2:0.44.1`
-  - `solution-part-1:0.64.2; solution-part-2:0.44.1`
-  - `solution-part-1:0.64.2, solution-part-2:0.44.1`
+  - `solution-part-1:0.64.2;solution-part-2:0.44.1`
+  - `solution-part-1:0.64.2,solution-part-2:0.44.1`
   - `solution-part-1:0.64.2 solution-part-2:0.44.1`
-
-**See also:** [Multiple Values Support](#multiple-values-support)
 
 ### `SD_DATA`
 
@@ -603,14 +592,12 @@ These parameters are no longer in use and are maintained for historical referenc
 ## Multiple Values Support
 
 Some pipeline parameters support multiple values.
-By default, values can be separated using one of the following delimiters:
+Values can be separated using one of the following delimiters:
 
 - Newline (`\n`)
 - Semicolon (`;`)
 - Comma (`,`)
 - Space (` `)
-
-When multiple values are provided, the pipeline processes each value independently (e.g., triggering a separate job or merging multiple definitions).
 
 **Example:**
 
@@ -619,10 +606,10 @@ When multiple values are provided, the pipeline processes each value independent
 k8s-01/env-1\nk8s-01/env-2
 
 # Using comma
-k8s-01/env-1, k8s-01/env-2
+k8s-01/env-1,k8s-01/env-2
 
 # Using semicolon
-k8s-01/env-1; k8s-01/env-2
+k8s-01/env-1;k8s-01/env-2
 
 # Using space
 k8s-01/env-1 k8s-01/env-2
