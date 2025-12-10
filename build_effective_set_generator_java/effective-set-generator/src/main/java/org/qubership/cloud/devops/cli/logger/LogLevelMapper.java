@@ -11,21 +11,14 @@ public class LogLevelMapper {
     String level;
 
     public Level getMappedLevel() {
-        switch (level.toUpperCase()) {
-            case "CRITICAL":
-                return Level.FATAL;
-            case "ERROR":
-                return Level.ERROR;
-            case "WARNING":
-                return Level.WARN;
-            case "INFO":
-                return Level.INFO;
-            case "DEBUG":
-                return Level.DEBUG;
-            case "TRACE":
-                return Level.TRACE;
-            default:
-                return Level.INFO;
-        }
+        return switch (level.toUpperCase()) {
+            case "CRITICAL" -> Level.FATAL;
+            case "ERROR" -> Level.ERROR;
+            case "WARNING" -> Level.WARN;
+            case "INFO" -> Level.INFO;
+            case "DEBUG" -> Level.DEBUG;
+            case "TRACE" -> Level.TRACE;
+            default -> Level.INFO;
+        };
     }
 }
