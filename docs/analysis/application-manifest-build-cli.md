@@ -52,7 +52,7 @@ It is proposed to develop a CLI for generating the Application Manifest. The CLI
 flowchart TD
     subgraph Application Repo
       A[AM<br>Build Config]
-      B[Registry<br>Config]
+      B[Registry<br>Definition]
       C[Source<br>code]
     end
     subgraph Registry
@@ -71,16 +71,16 @@ flowchart TD
     end
     A --> E
     B --> E
-    D3 --optional--> E
+    D3 --|optional|--> E
     D1 --> H 
-    H --optional--> E
+    H --|optional|--> E
     C --> D1
     E --> F
 ```
 
 ## Limitation
 
-1. The component name within the application must be unique
+1. The component name and component MIME type within the application must be unique
 2. For each component's artifact type (Docker, Helm, Maven), application publication goes to one registry per type
 
 ## Requirements
@@ -138,7 +138,7 @@ components:
     # If specified, the component's attributes should be collected from an external artifact.
     # Used when the AM is generated for an already built artifact that is NOT built within the same pipeline as the AM.
     # Applicable for application/vnd.docker.image and application/vnd.qubership.helm.chart.
-    reference: pkg:<type>/<group>/<name>:<version>?registry_name=<registry-id>
+    reference: <reference>
     # Optional
     # Used to organize relationships between components
     dependsOn:
@@ -148,11 +148,6 @@ components:
         # Mandatory
         # Component mimeType
         mimeType: enum [ application/vnd.qubership.standalone-runnable, application/vnd.docker.image, application/vnd.qubership.helm.chart ]
-        # Optional
-        # If specified, the component's attributes should be collected from an external artifact.
-        # Used when the AM is generated for an already built artifact that is NOT built within the same pipeline as the AM.
-        # Applicable for application/vnd.docker.image and application/vnd.qubership.helm.chart.
-        reference: pkg:<type>/<group>/<name>:<version>?registry_name=<registry-id>
         # Optional
         # See "Artifact mappings for Helm charts" for details
         valuesPathPrefix: <path-or-dot>       
