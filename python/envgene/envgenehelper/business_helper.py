@@ -398,16 +398,3 @@ def get_bgd_object() -> CommentedMap:
     logger.debug(bgd_object)
     return bgd_object
 
-def make_relative_to_base_path(base: Path, target: Path) -> Path:
-    base = base.resolve()
-    target = target.resolve()
-    return target.relative_to(base)
-
-def make_relative_to_ci_project_dir(path: Path) -> Path:
-    ci_project_dir = Path(getenv_with_error("CI_PROJECT_DIR"))
-    return make_relative_to_base_path(ci_project_dir, path)
-
-def make_relative_to_env_dir(path: Path) -> Path:
-    env_dir = get_current_env_dir_from_env_vars()
-    return make_relative_to_base_path(env_dir, path)
-
