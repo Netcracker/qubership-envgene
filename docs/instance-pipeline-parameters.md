@@ -313,9 +313,9 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 ### `SD_DATA`
 
-**Description**: Specifies the **list** of contents of one or more SD in JSON-in-string format.
+**Description**: Specifies the contents of one or more SD in JSON-in-string format. Can be either a single SD object or a list of SD objects.
 
-EnvGene sequentially merges them in the `basic-merge` mode, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
+If a single SD object is provided, it is processed directly. If a list is provided, EnvGene sequentially merges them in the `basic-merge` mode, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
 See details in [SD processing](/docs/features/sd-processing.md)
 
@@ -325,16 +325,22 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 **Example**:
 
-- Single SD:
+- Single SD (as object):
 
 ```text
-'[{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"}]},{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"postgres-services:1.32.6","deployPostfix":"postgresql"},{"version":"postgres:1.32.3","deployPostfix":"postgresql-dbaas"}]}]'
+'{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"}]}'
+```
+
+- Single SD (as list with one element):
+
+```text
+'[{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"}]}]'
 ```
 
 - Multiple SD:
 
 ```text
-'[{[{"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "MONITORING:0.64.1", "deployPostfix": "platform-monitoring"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql"}]}, {"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "postgres-services:1.32.6", "deployPostfix": "postgresql"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql-dbaas"}]}]}]'
+'[{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"}]},{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"postgres-services:1.32.6","deployPostfix":"postgresql"},{"version":"postgres:1.32.3","deployPostfix":"postgresql-dbaas"}]}]'
 ```
 
 ### `SD_REPO_MERGE_MODE`
@@ -477,7 +483,7 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 
 ### `GH_ADDITIONAL_PARAMS`
 
-**Description**: A JSON in string parameter for GitHub pipeline. Use it to pass all pipeline parameters except these main ones, which must be set directly:
+**Description**: A comma-separated string of key-value pairs for GitHub pipeline. Use it to pass all pipeline parameters except these main ones, which must be set directly:
 
 - `ENV_NAMES`
 - `DEPLOYMENT_TICKET_ID`
@@ -492,13 +498,17 @@ The parameters must follow the parameter schema defined in this document.
 This parameter is only available in the [GitHub version](/github_workflows/instance-repo-pipeline/) of the pipeline.
 
 > [!NOTE]
-> GitHub only allows 10 input parameters for the pipeline. To work around this but keep full functionality, the main parameters are provided at the top level, and all additional ones are sent as JSON in this field.
+> GitHub only allows 10 input parameters for the pipeline. To work around this but keep full functionality, the main parameters are provided at the top level, and all additional ones are sent as comma-separated key-value pairs in this field.
+
+**Format**: `KEY1=VALUE1,KEY2=VALUE2,KEY3=VALUE3`
+
+If a value contains JSON (e.g., `SD_DATA`, `EFFECTIVE_SET_CONFIG`, `ENV_SPECIFIC_PARAMS`, `CRED_ROTATION_PAYLOAD`, `BG_STATE`), the JSON must be properly escaped within the value part. For example: `SD_DATA=[{\"version\":2.1,...}],EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\"}`
 
 **Default Value**: None
 
 **Mandatory**: No
 
-**Example**: `{\"ENV_BUILDER\": \"true\", \"DEPLOYMENT_TICKET_ID\": \"TICKET-123\", \"ENV_TEMPLATE_VERSION\": \"qubership_envgene_templates:0.0.2\"}`
+**Example**: `SD_SOURCE_TYPE=json,SD_DATA=[{\"version\":2.1,\"type\":\"solutionDeploy\"}],ENV_SPECIFIC_PARAMS={\"tenantName\":\"value\"}`
 
 Example of calling EnvGene pipeline via GitHub API:
 
@@ -512,9 +522,9 @@ curl -X POST \
         "inputs": {
             "ENV_NAMES": "test-cluster/e01",
             "ENV_BUILDER": "true",
-            `GENERATE_EFFECTIVE_SET`: "true"
+            "GENERATE_EFFECTIVE_SET": "true",
             "DEPLOYMENT_TICKET_ID": "QBSHP-0001",
-            "GH_ADDITIONAL_PARAMS": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
+            "GH_ADDITIONAL_PARAMS": "SD_SOURCE_TYPE=json,SD_DATA=[{\"version\":2.1,\"type\":\"solutionDeploy\"}],EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
         }
       }'
 ```
