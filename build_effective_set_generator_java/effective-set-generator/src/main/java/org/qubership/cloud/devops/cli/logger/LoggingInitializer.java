@@ -13,7 +13,7 @@ public class LoggingInitializer {
 
     @PostConstruct
     public void init() {
-        Level logLevel = logLevelMapper.getMappedLevel()
-        System.setProperty("quarkus.log.level", logLevel.name())
+        Level logLevel = logLevelMapper.getMappedLevel();
+        System.setProperty("quarkus.log.level", logLevel.name());
     }
 }
