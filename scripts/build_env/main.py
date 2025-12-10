@@ -11,6 +11,7 @@ from resource_profiles import get_env_specific_resource_profiles
 from pathlib import Path
 
 from filter_namespaces import apply_ns_build_filter
+from validate_bgd import validate_bgd
 
 # const
 INVENTORY_DIR_NAME = "Inventory"

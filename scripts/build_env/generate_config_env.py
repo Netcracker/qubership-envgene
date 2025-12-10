@@ -9,6 +9,7 @@ from collections.abc import Iterable
 from deepmerge import always_merger
 from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileAsString, copy_path, dumpYamlToStr, \
     create_yaml_processor, find_all_yaml_files_by_stem, ensure_directory, dump_as_yaml_format
+from envgenehelper.business_helper import get_bgd_object, get_namespaces
 from envgenehelper.validation import ensure_valid_fields, ensure_required_keys
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
@@ -127,6 +128,21 @@ class EnvGenerator:
                 raise ValueError(f"'deployPostfix' must be string in application: {app}")
 
             logger.info(f"Valid application: {app}")
+
+    def validate_bgd(self):
+        logger.info(f'Validating that all namespaces mentioned in BG domain object are available in namespaces')
+        namespace_names = [ns.name for ns in get_namespaces()]
+        bgd = get_bgd_object()
+        mismatch = ""
+        for k,v in bgd.items():
+            if not 'Namespace' in k:
+                continue
+            if v['name'] not in namespace_names:
+                mismatch += (f"\n{v['name']} from {k}")
+        if mismatch:
+            logger.info(f'Available namespaces: {namespace_names}')
+            raise ValueError(f'Next namespaces were not found in available namespaces: {mismatch}')
+        logger.info(f'Validation was successful')
 
     def generate_ns_postfix(self, ns, ns_template_path) -> str:
         deploy_postfix = ns.get("deploy_postfix")
@@ -464,3 +480,5 @@ class EnvGenerator:
                                  required=["templates_dir", "env_instances_dir", "cluster_name", "current_env_dir"])
             self.process_app_reg_defs()
             logger.info(f"Rendering of templates for environment {env_name} generation was successful")
+
+            self.validate_bgd()

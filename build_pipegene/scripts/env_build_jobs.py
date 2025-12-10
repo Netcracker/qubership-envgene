@@ -21,8 +21,6 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
   else:
      script.append("export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')")
 
-  script.append("python /build_env/scripts/build_env/validate_bgd.py")
-  script.append("python /build_env/scripts/build_env/filter_namespaces.py")
   script.extend([
       'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
       'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
