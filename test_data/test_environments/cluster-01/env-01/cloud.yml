@@ -10,7 +10,7 @@ dashboardUrl: "https://dashboard.cluster-01.qubership.org" # cloud passport: clu
 labels: []
 defaultCredentialsId: "cloud-deploy-sa-token" # cloud passport: cluster-01 version: 1.5
 protocol: "https" # cloud passport: cluster-01 version: 1.5
-dbMode: "dbb"
+dbMode: "db"
 databases: []
 mergeDeployParametersAndE2EParameters: false
 maasConfig:
