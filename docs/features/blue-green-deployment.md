@@ -131,7 +131,7 @@ variables:
 
 ```yaml
 ENV_NAMES: "sdp-dev/env-1"
-GH_ADDITIONAL_PARAMS: "{\"BG_MANAGE\":\"true\",\"BG_STATE\":{\"controllerNamespace\":\"bss-controller\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"active\",\"version\":\"v2.1.0\"},\"peerNamespace\":{\"name\":\"bss-peer\",\"state\":\"candidate\",\"version\":\"v2.2.0\"},\"updateTime\":\"2024-01-15T10:30:00Z\"}, \"CMDB_IMPORT\": \"true\", \"DEPLOYMENT_TICKET_ID\": \"FAKE-000\"}"
+GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"bss-controller\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"active\",\"version\":\"v2.1.0\"},\"peerNamespace\":{\"name\":\"bss-peer\",\"state\":\"candidate\",\"version\":\"v2.2.0\"},\"updateTime\":\"2024-01-15T10:30:00Z\"}"
 ```
 
 `INSTANCE_PIPELINE_PARAMETERS` deployment parameter should be passed along with BG_STATE and BG_MANAGE parameters while triggering Envgene pipeline.
