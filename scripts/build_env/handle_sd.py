@@ -169,8 +169,11 @@ def calculate_sd_delta(sd_delta):
 def multiply_sds_to_single(sds_data, effective_merge_mode):
     if effective_merge_mode == MergeType.EXTENDED:
         if isinstance(sds_data, list):
-            raise ValueError("Multiple SDs not supported in extended merge mode")
-        full_sd_from_pipe = sds_data
+            if len(sds_data) > 1:
+                raise ValueError("Multiple SDs not supported in extended merge mode")
+            full_sd_from_pipe = sds_data[0]
+        elif isinstance(sds_data, dict):
+            full_sd_from_pipe = sds_data
     else:
         sds_data = sds_data if isinstance(sds_data, list) else [sds_data]
         cropped_sds = []

@@ -1,0 +1,4 @@
+SD_DATA: ''
+SD_SOURCE_TYPE: 'artifact'
+SD_VERSION: 'Test-single-sd:v0'
+SD_REPO_MERGE_MODE: 'extended-merge'
