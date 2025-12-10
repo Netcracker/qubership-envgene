@@ -65,7 +65,7 @@ def getenv_with_error(var_name):
 def get_env_instances_dir(environment_name, cluster_name, instances_dir):
     return f"{instances_dir}/{cluster_name}/{environment_name}"
 
-def get_current_env_dir_with_env_vars() -> Path:
+def get_current_env_dir_from_env_vars() -> Path:
     instances_dir = getenv_with_error('CI_PROJECT_DIR')
     env_name = getenv_with_error('FULL_ENV_NAME')
     env_dir_path = Path(f"{instances_dir}/environments/{env_name}")
@@ -372,7 +372,7 @@ class Namespace:
         self.name = openYaml(self.definition_path)['name']
 
 def get_namespaces_path(env_dir: Path | None = None) -> Path:
-    env_dir = env_dir or get_current_env_dir_with_env_vars()
+    env_dir = env_dir or get_current_env_dir_from_env_vars()
     namespaces_path = env_dir.joinpath('Namespaces')
     logger.debug(namespaces_path)
     return namespaces_path
@@ -387,7 +387,7 @@ def get_namespaces(env_dir: Path | None = None) -> list[Namespace]:
     return namespaces
 
 def get_bgd_path() -> Path:
-    env_dir = get_current_env_dir_with_env_vars()
+    env_dir = get_current_env_dir_from_env_vars()
     bgd_path = env_dir.joinpath('bg_domain.yml')
     logger.debug(bgd_path)
     return bgd_path
@@ -408,6 +408,6 @@ def make_relative_to_ci_project_dir(path: Path) -> Path:
     return make_relative_to_base_path(ci_project_dir, path)
 
 def make_relative_to_env_dir(path: Path) -> Path:
-    env_dir = get_current_env_dir_with_env_vars()
+    env_dir = get_current_env_dir_from_env_vars()
     return make_relative_to_base_path(env_dir, path)
 
