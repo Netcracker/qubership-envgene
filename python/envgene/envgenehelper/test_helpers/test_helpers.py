@@ -33,15 +33,19 @@ class TestHelpers:
         logger.info(f"Match: {dump_as_yaml_format(match)}")
 
         if mismatch:
-            mistmach_dict = {}
+            mismach_dict = {}
             for file in mismatch:
                 file1 = os.path.join(source_dir, file)
                 file2 = os.path.join(target_dir, file)
                 with open(file1, 'r') as f1, open(file2, 'r') as f2:
-                    diff = ''.join(difflib.unified_diff(f1.readlines(), f2.readlines(), fromfile=file1, tofile=file2, lineterm=''))
-                    mistmach_dict[file] = diff
-                    logger.error(f"Diff for {file}:\n{diff}")
-            mismatch = mistmach_dict
+                    verbose_diff_list = difflib.unified_diff(f1.readlines(), f2.readlines(), fromfile=file1, tofile=file2, lineterm='')
+                    diff_list = []
+                    for line in verbose_diff_list:
+                        if (line.startswith('+') and not line.startswith('+++')) or (line.startswith('-') and not line.startswith('---')):
+                            diff_list.append(line)
+                    mismach_dict[file] = ''.join(diff_list)
+                    logger.error(f"Diff for {file}:\n{''.join(verbose_diff_list)}")
+            mismatch = mismach_dict
 
         return extra_files, missing_files, mismatch, errors
 
