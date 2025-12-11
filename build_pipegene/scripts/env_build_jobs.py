@@ -6,7 +6,7 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
   logger.info(f'prepare env_build job for {full_env}')
   # prepare script
   script = [
-     '/module/scripts/handle_certs.sh',
+     'bash /module/scripts/handle_certs.sh',
   ]
   # adding update template version
   if env_template_version and env_template_version != "" and not is_template_test:
