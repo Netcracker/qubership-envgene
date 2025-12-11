@@ -259,7 +259,7 @@ public class ExpressionLanguageTest extends BindingBaseTest {
                              }},
                         new HashMap<String, Object>(),
                         new HashMap<String, Object>() {{
-                            put("key1", 1);
+                            put("key1", "1");
                         }}),
                 Arguments.of(new HashMap<String, Object>() {{
                                  put("key1", "'[{\"test\": \"value\"}]");
@@ -524,7 +524,7 @@ public class ExpressionLanguageTest extends BindingBaseTest {
         map.remove("OPENSHIFT_SERVER");
         map.remove("CLOUD_API_PORT");
 
-        result.put("ESCAPE_SEQUENCE", true);
+        result.put("ESCAPE_SEQUENCE", "true");
         assertEquals(result, map);
     }
 

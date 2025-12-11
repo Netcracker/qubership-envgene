@@ -50,8 +50,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static org.qubership.cloud.devops.commons.utils.ParameterUtils.toTypedValue;
-
 
 @Slf4j
 public class ExpressionLanguage extends AbstractLanguage {
@@ -219,15 +217,17 @@ public class ExpressionLanguage extends AbstractLanguage {
             String strValue = (String) val;
 
 
-            Object jinJavaRendered = "";
+            String rendered = "";
+            this.binding.getTypeCollector().clear();
             try {
-                jinJavaRendered = renderStringByJinJava(strValue, binding, escapeDollar);
-                val = jinJavaRendered;
+                rendered = renderStringByJinJava(strValue, binding, escapeDollar);
             } catch (Exception e) {
                 log.debug(String.format("Parameter {} was not processed by JinJava, hence reverting to Groovy.", strValue));
-                String groovyRendered = renderStringByGroovy(strValue, binding, escapeDollar);
-                val = groovyRendered;
+                rendered = renderStringByGroovy(strValue, binding, escapeDollar);
             }
+            Object originalValue = this.binding.getTypeCollector().get(rendered);  // Object
+            Class<?> targetType = (originalValue != null) ? (Class<?>) originalValue : String.class;
+            val = convertToType(rendered, targetType);
 
             isProcessed = true;
 
@@ -266,7 +266,7 @@ public class ExpressionLanguage extends AbstractLanguage {
         return rendered;
     }
 
-    private Object renderStringByJinJava(String value, Map<String, Parameter> binding, boolean escapeDollar) {
+    private String renderStringByJinJava(String value, Map<String, Parameter> binding, boolean escapeDollar) {
         String rendered = gStringToJinJavaTranslator.translate(value);
         rendered = jinjava.render(rendered, binding);
 
@@ -274,21 +274,26 @@ public class ExpressionLanguage extends AbstractLanguage {
             rendered = rendered.replaceAll("\\\\\\$", "\\$"); // \$ -> $
             rendered = rendered.replaceAll("\\\\\\\\", "\\\\"); // \\ -> \
         }
-        return toTypedValue(rendered);
+
+        return rendered;
     }
 
     private Object removeEscaping(boolean escapeDollar, Object val) throws JsonProcessingException {
+
         if (escapeDollar && val != null) {
+            Class<?> originalType = val.getClass();
             String strValue;
             if (val instanceof String) {
                 strValue = val.toString();
             } else {
                 strValue = mapper.writeValueAsString(val);
             }
-            strValue = strValue.replaceAll("\\\\\\$", "\\$"); // \$ -> $
-            val = strValue.replaceAll("\\\\\\\\", "\\\\"); // \\ -> \
+                strValue = strValue.replaceAll("\\\\\\$", "\\$"); // \$ -> $
+                strValue = strValue.replaceAll("\\\\\\\\", "\\\\"); // \\ -> \
+                return convertToType(strValue, originalType);
         }
-        return toTypedValue(val);
+
+        return val;
     }
 
     private List<Parameter> processList(List<?> list, Map<String, Parameter> binding, boolean escapeDollar) {
@@ -337,7 +342,7 @@ public class ExpressionLanguage extends AbstractLanguage {
                         if (insecure) {
                             return failedParameter(entry);
                         } else {
-                            if (entry.getValue() != null && entry.getValue().toString().contains("cmdb.creds[")) {
+                            if(entry.getValue() != null && entry.getValue().toString().contains("cmdb.creds[")){
                                 throw new ExpressionLanguageException(String.format("Expressions started with \"cmdb\" is not supported (parameter %s, value: %s)", entry.getKey(), entry.getValue()), e);
                             }
                             throw new ExpressionLanguageException(String.format("Could not process expression for parameter %s with value: %s", entry.getKey(), entry.getValue()), e);
@@ -470,5 +475,20 @@ public class ExpressionLanguage extends AbstractLanguage {
             }
         });
         return processedParams;
+    }
+
+    private static Object convertToType(String value, Class<?> type) {
+        if (type == String.class) {
+            return value;
+        } else if (type == Integer.class || type == int.class) {
+            return Integer.parseInt(value);
+        } else if (type == Long.class || type == long.class) {
+            return Long.parseLong(value);
+        } else if (type == Boolean.class || type == boolean.class) {
+            return Boolean.parseBoolean(value);
+        } else if (type == Double.class || type == double.class) {
+            return Double.parseDouble(value);
+        }
+        return value;
     }
 }
