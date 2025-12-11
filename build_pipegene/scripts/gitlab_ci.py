@@ -107,7 +107,7 @@ def build_pipeline(params: dict):
                     pass
 
             # env_builder job
-            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, tags)
+            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['test']['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, tags)
         else:
             logger.info(f'Preparing of env_build job for {env} is skipped.')
 
