@@ -16,13 +16,13 @@
 
 package org.qubership.cloud.parameters.processor.expression;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.hubspot.jinjava.Jinjava;
 import com.hubspot.jinjava.JinjavaConfig;
+import com.hubspot.jinjava.interpret.Context;
 import com.hubspot.jinjava.interpret.FatalTemplateErrorsException;
+import com.hubspot.jinjava.interpret.JinjavaInterpreter;
 import groovy.lang.GroovyClassLoader;
 import groovy.lang.GroovyRuntimeException;
 import groovy.text.GStringTemplateEngine;
@@ -35,7 +35,6 @@ import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
 import org.qubership.cloud.devops.gstringtojinjavatranslator.jinjava.*;
 import org.qubership.cloud.devops.gstringtojinjavatranslator.translator.GStringToJinJavaTranslator;
 import org.qubership.cloud.parameters.processor.MergeMap;
-import org.qubership.cloud.parameters.processor.ParametersProcessor;
 import org.qubership.cloud.parameters.processor.exceptions.ExpressionLanguageException;
 import org.qubership.cloud.parameters.processor.expression.binding.Binding;
 import org.qubership.cloud.parameters.processor.expression.binding.DynamicMap;
@@ -56,11 +55,17 @@ public class ExpressionLanguage extends AbstractLanguage {
 
     private static final Pattern EXPRESSION_PATTERN = Pattern.compile("(?<!\\\\)(\\\\\\\\)*(\\$)");
     private static final Pattern SECURED_PATTERN = Pattern.compile("(?:\\u0096)(?s)(.*)(?:\\u0097)");
-    private final ObjectMapper mapper = new ObjectMapper();
+    // Patterns for detecting Parameter variable references (used for type preservation)
+    private static final Pattern[] PARAMETER_REFERENCE_PATTERNS = {
+            Pattern.compile("^\\$\\{([A-Za-z_][A-Za-z0-9_]*)\\}$"),  // ${VARIABLE}
+            Pattern.compile("^\\$([A-Za-z_][A-Za-z0-9_]*)$"),         // $VARIABLE
+            Pattern.compile("^<%\\s*([A-Za-z_][A-Za-z0-9_]*)\\s*%>$") // <% VARIABLE %>
+    };
     private boolean insecure;
 
     private final Jinjava jinjava;
     private final GStringToJinJavaTranslator gStringToJinJavaTranslator;
+    private final DynamicPropertyResolver dynamicResolver;
 
     public ExpressionLanguage(Binding binding) {
         super(binding);
@@ -78,6 +83,8 @@ public class ExpressionLanguage extends AbstractLanguage {
 
         this.binding.forEach((key1, value) ->
                 this.binding.put(key1, translateParameter(value.getValue())));
+
+        this.dynamicResolver = new DynamicPropertyResolver(this.binding);
     }
 
     private Parameter translateParameter(Object value) {
@@ -209,6 +216,12 @@ public class ExpressionLanguage extends AbstractLanguage {
             parameter.setValue(removeEscaping(escapeDollar, parameter.getValue()));
             return parameter;
         }
+
+        Parameter preserved = tryPreserveType(value, binding);
+        if (preserved != null) {
+            return preserved;
+        }
+
         Object val = getValue(value);
         boolean isProcessed = false;
         boolean isSecured = getIsSecured(value);
@@ -216,22 +229,19 @@ public class ExpressionLanguage extends AbstractLanguage {
         if (val instanceof String) {
             String strValue = (String) val;
 
-
-            String rendered = "";
-            this.binding.getTypeCollector().clear();
+            String jinJavaRendered = "";
             try {
-                rendered = renderStringByJinJava(strValue, binding, escapeDollar);
+                jinJavaRendered = renderStringByJinJava(strValue, binding, escapeDollar);
+                val = jinJavaRendered;
             } catch (Exception e) {
                 log.debug(String.format("Parameter {} was not processed by JinJava, hence reverting to Groovy.", strValue));
-                rendered = renderStringByGroovy(strValue, binding, escapeDollar);
+                String groovyRendered = renderStringByGroovy(strValue, binding, escapeDollar);
+                val = groovyRendered;
             }
-            Object originalValue = this.binding.getTypeCollector().get(rendered);  // Object
-            Class<?> targetType = (originalValue != null) ? (Class<?>) originalValue : String.class;
-            val = convertToType(rendered, targetType);
 
             isProcessed = true;
 
-            Matcher secureMarkerMatcher = SECURED_PATTERN.matcher(String.valueOf(val));
+            Matcher secureMarkerMatcher = SECURED_PATTERN.matcher((String) val);
             if (secureMarkerMatcher.find()) {
                 isSecured = true;
                 val = ((String) Objects.requireNonNull(val)).replaceAll("([\\u0096\\u0097])", "");
@@ -246,6 +256,88 @@ public class ExpressionLanguage extends AbstractLanguage {
         ret.setProcessed(isProcessed);
         ret.setSecured(isSecured);
         return ret;
+    }
+
+    // Extracts variable name from simple parameter reference patterns: ${VAR}, $VAR, or <% VAR %>.
+    private String extractParameterReference(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        for (Pattern pattern : PARAMETER_REFERENCE_PATTERNS) {
+            Matcher matcher = pattern.matcher(trimmed);
+            if (matcher.matches()) {
+                return matcher.group(1);
+            }
+        }
+        return null;
+    }
+
+    // Preserves data type for simple parameter references (${VAR}, $VAR) using Jinjava's expression resolver.
+    // Returns null if type preservation is not applicable (complex expressions or String values).
+    private Parameter tryPreserveType(Object value, Map<String, Parameter> binding) {
+        Object val = getValue(value);
+        if (!(val instanceof String)) {
+            return null;
+        }
+
+        String referencedVar = extractParameterReference((String) val);
+        if (referencedVar == null) {
+            return null;
+        }
+
+        // Use Jinjava's expression resolver - returns typed Object (Integer, Boolean, etc.)
+        Object resolvedValue = resolveWithJinjava(referencedVar, binding);
+
+        // Unwrap if still a Parameter
+        if (resolvedValue instanceof Parameter) {
+            resolvedValue = ((Parameter) resolvedValue).getValue();
+        }
+
+        if (resolvedValue == null || resolvedValue instanceof String) {
+            return null;
+        }
+
+        // Get secured flag from source parameter
+        Parameter srcParam = binding.get(referencedVar);
+        if (srcParam == null) {
+            srcParam = this.binding.get(referencedVar);
+        }
+        boolean isSecured = srcParam != null && srcParam.isSecured();
+
+        Parameter result = new Parameter(resolvedValue);
+        if (value instanceof Parameter) {
+            result.setOrigin(((Parameter) value).getOrigin());
+        }
+        result.setParsed(true);
+        result.setProcessed(true);
+        result.setSecured(isSecured);
+        result.setValid(true);
+
+        log.debug("Type preserved for {}: {} ({})", referencedVar, resolvedValue, resolvedValue.getClass().getSimpleName());
+        return result;
+    }
+
+    // Uses Jinjava's expression resolver which returns typed Object instead of String.
+    private Object resolveWithJinjava(String expression, Map<String, Parameter> binding) {
+        try {
+            Context context = new Context(jinjava.getGlobalContextCopy(), binding, jinjava.getGlobalConfig().getDisabled());
+            context.setDynamicVariableResolver(this.dynamicResolver);
+
+            JinjavaInterpreter interpreter = jinjava.getGlobalConfig()
+                    .getInterpreterFactory()
+                    .newInstance(jinjava, context, jinjava.getGlobalConfig());
+
+            JinjavaInterpreter.pushCurrent(interpreter);
+            try {
+                return interpreter.resolveELExpression(expression, -1);
+            } finally {
+                JinjavaInterpreter.popCurrent();
+            }
+        } catch (Exception e) {
+            log.debug("Failed to resolve '{}' with Jinjava: {}", expression, e.getMessage());
+            return null;
+        }
     }
 
     private String renderStringByGroovy(String value, Map<String, Parameter> binding, boolean escapeDollar) {
@@ -278,21 +370,14 @@ public class ExpressionLanguage extends AbstractLanguage {
         return rendered;
     }
 
-    private Object removeEscaping(boolean escapeDollar, Object val) throws JsonProcessingException {
-
-        if (escapeDollar && val != null) {
-            Class<?> originalType = val.getClass();
-            String strValue;
-            if (val instanceof String) {
-                strValue = val.toString();
-            } else {
-                strValue = mapper.writeValueAsString(val);
-            }
-                strValue = strValue.replaceAll("\\\\\\$", "\\$"); // \$ -> $
-                strValue = strValue.replaceAll("\\\\\\\\", "\\\\"); // \\ -> \
-                return convertToType(strValue, originalType);
+    private Object removeEscaping(boolean escapeDollar, Object val) {
+        // Only process escaping for String values - non-String types (Integer, Boolean, etc.)
+        // don't need escape processing and should preserve their original type
+        if (escapeDollar && val instanceof String) {
+            String strValue = (String) val;
+            strValue = strValue.replaceAll("\\\\\\$", "\\$"); // \$ -> $
+            val = strValue.replaceAll("\\\\\\\\", "\\\\"); // \\ -> \
         }
-
         return val;
     }
 
@@ -477,18 +562,4 @@ public class ExpressionLanguage extends AbstractLanguage {
         return processedParams;
     }
 
-    private static Object convertToType(String value, Class<?> type) {
-        if (type == String.class) {
-            return value;
-        } else if (type == Integer.class || type == int.class) {
-            return Integer.parseInt(value);
-        } else if (type == Long.class || type == long.class) {
-            return Long.parseLong(value);
-        } else if (type == Boolean.class || type == boolean.class) {
-            return Boolean.parseBoolean(value);
-        } else if (type == Double.class || type == double.class) {
-            return Double.parseDouble(value);
-        }
-        return value;
-    }
 }
