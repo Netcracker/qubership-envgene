@@ -39,7 +39,7 @@ The Resource Profiles system has a 3-level hierarchy:
 
 When generating an [Environment Instance](/docs/envgene-objects.md#environment-instance-objects), the Template and Environment-specific Resource Profile Overrides are either merged or replaced, resulting in the [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override). The Environment-specific Resource Profile Override has higher priority.
 
-When calculating the [Effective Set](/docs/calculator-cli.md#effective-set-v20), parameters from the Resource Profile Baselines and the [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) are also merged and used as [per-service deployment context parameters](/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-parameters). The Resource Profile Override has higher priority.
+When calculating the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20), parameters from the Resource Profile Baselines and the [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) are also merged and used as [per-service deployment context parameters](/docs/features/calculator-cli.md#version-20deployment-parameter-context-per-service-parameters). The Resource Profile Override has higher priority.
 
 ## Resource Profile Processing During Environment Generation
 
@@ -174,7 +174,7 @@ During the calculation of the Effective Set, as performed by the `generate_effec
     > Values from the Resource Profile Override take precedence over matching keys in the Resource Profile Baseline.
 
 3. Writing Result to the Effective Set
-   1. The result (Resource Profile Baseline + Resource Profile Override) is included as [per-service parameters](/docs/calculator-cli.md#version-20deployment-parameter-context-per-service-parameters) in the deployment context of [Effective Set v2.0](/docs/calculator-cli.md#effective-set-v20).
+   1. The result (Resource Profile Baseline + Resource Profile Override) is included as [per-service parameters](/docs/features/calculator-cli.md#version-20deployment-parameter-context-per-service-parameters) in the deployment context of [Effective Set v2.0](/docs/features/calculator-cli.md#effective-set-v20).
 
 - If a service does not have a Baseline, only the parameters from the Override are used.
 - If the Override is empty, only the Baseline is used.
