@@ -1,0 +1,5 @@
+{
+    "gsf_repository_name": "envgene_discovery_project",
+    "docker_registry": "ghcr.io/netcracker",
+    "gitlab_runner_tag_name": "gitlab-org-docker"
+}
