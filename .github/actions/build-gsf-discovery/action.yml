@@ -1,6 +1,6 @@
 # This action is hidden from the GitHub Actions UI
-name: 'Build Qubership GSF Instance'
-description: 'Build and push Qubership GSF Instance docker image to container registry'
+name: 'Build Qubership GSF Discovery'
+description: 'Build and push Qubership GSF Discovery docker image to container registry'
 
 inputs:
   registry:
@@ -14,11 +14,11 @@ inputs:
   image-name:
     description: 'Docker image name'
     required: false
-    default: 'qubership-gsf-instance'
+    default: 'qubership-gsf-discovery'
   dockerfile-path:
     description: 'Path to Dockerfile'
     required: false
-    default: './gsf_packages/envgene_instance_project/Dockerfile'
+    default: './gsf_packages/envgene_discovery_project/Dockerfile'
   git-user:
     description: 'Git username for build args'
     required: false
@@ -73,18 +73,11 @@ runs:
       id: tags
       uses: ./.github/actions/generate-docker-tags
 
-    - name: Copy config.schema.json to git_hooks
-      shell: bash
-      run: |
-        mkdir -p "gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks"
-        cp schemas/config.schema.json \
-          "gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks/config.schema.json"
-
     - name: Update history.log
       shell: bash
       run: |
-        COOKIECUTTER_DIR="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}"
-        HISTORY_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.log"
+        COOKIECUTTER_DIR="gsf_packages/envgene_discovery_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}"
+        HISTORY_FILE="gsf_packages/envgene_discovery_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.log"
 
         # Run Python script to update history.log
         python3 ./.github/scripts/update_history.py \
@@ -103,7 +96,7 @@ runs:
 
         git add -A
         if ! git diff --quiet --cached; then
-          git commit -m "chore: Update GSF EnvGene instance package files [skip ci]"
+          git commit -m "chore: Update GSF Discovery instance package files [skip ci]"
           git push origin HEAD:"${BRANCH_NAME}" || echo "Failed to push changes"
         fi
 

@@ -267,6 +267,25 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         version: ${{ inputs.version }}
 
+  build-gsf-envgene-discovery:
+    needs: [tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build GSF Envgene Instance
+      uses: ./.github/actions/build-gsf-discovery
+      with:
+        registry: ${{ env.REGISTRY }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        version: ${{ inputs.version }}
+
   github-release:
     needs:
       - build-qubership-pipegene

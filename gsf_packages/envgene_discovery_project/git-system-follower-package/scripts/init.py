@@ -88,7 +88,7 @@ def main(parameters: Parameters):
 
     # Use current working directory as repository root
     repo_root = Path.cwd()
-    internal_files_to_remove = ['history.log', '.cookiecutterignore']
+    internal_files_to_remove = ['history.log']
     
     for file_name in internal_files_to_remove:
         file_path = repo_root / file_name
