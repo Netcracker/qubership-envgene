@@ -13,18 +13,16 @@ stages:
 #Variables
 variables:
   DOCKER_REGISTRY: "{{cookiecutter.docker_registry}}"
-  DOCKER_IMAGE_NAME: {{cookiecutter.docker_image_name}}
-  DOCKER_IMAGE_TAG: {{cookiecutter.docker_image_tag}}
+  DOCKER_IMAGE_NAME: "{{cookiecutter.docker_image_name}}"
+  DOCKER_IMAGE_TAG: "{{cookiecutter.docker_image_tag}}"
   GITLAB_RUNNER_TAG_NAME: "{{cookiecutter.gitlab_runner_tag_name}}"
 
 #Runner
 default:
-  tags: [ $GITLAB_RUNNER_TAG_NAME ]  
+  tags: [ $GITLAB_RUNNER_TAG_NAME ]
 
 include:
   - local: gitlab-ci/*_vars.yaml
-
-variables: !reference [.pipeline_vars, variables]
 
 get_cloud_passport:
   stage: cloud-passport
