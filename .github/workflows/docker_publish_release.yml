@@ -88,16 +88,20 @@ jobs:
 
         - name: Update Docker Image Tags in Pipeline
           run: |
+            # Paths to files
             TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml"
-            GITLAB_CI_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/.gitlab-ci.yml"
+            ENVGENE_COOKIECUTTER_JSON_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/cookiecutter.json"
             GSF_PACKAGE_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/package.yaml"
+
+            # New tag
             NEW_TAG="${{ github.event.inputs.version }}"
+
             sed -i "/DOCKER_IMAGE_TAG_PIPEGENE:/c\\  DOCKER_IMAGE_TAG_PIPEGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
             sed -i "/DOCKER_IMAGE_TAG_ENVGENE:/c\\  DOCKER_IMAGE_TAG_ENVGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
             sed -i "/DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR:/c\\  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: \"${NEW_TAG}\"" "$TARGET_FILE"
 
-            # Update ENVGENE_VERSION in .gitlab-ci.yml
-            sed -i "/ENVGENE_VERSION:/c\\  ENVGENE_VERSION: \"${NEW_TAG}\"" "$GITLAB_CI_FILE"
+            # Update envgene_version in cookiecutter.json for GSF EnvGene instance
+            sed -i 's/"envgene_version": "[^"]*"/"envgene_version": "'"${NEW_TAG}"'"/' "$ENVGENE_COOKIECUTTER_JSON_FILE"
 
             # Update version in package.yaml
             sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_PACKAGE_FILE"

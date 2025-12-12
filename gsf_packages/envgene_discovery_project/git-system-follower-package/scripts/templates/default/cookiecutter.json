@@ -1,6 +1,7 @@
 {
     "gsf_repository_name": "envgene_discovery_project",
-    "docker_registry": "ghcr.io/netcracker",
+    "docker_registry": "ghcr.io",
+    "docker_namespace": "netcracker",
     "docker_image_name": "qubership-cloud-passport-cli",
     "docker_image_tag": "1.0.0",
     "gitlab_runner_tag_name": "gitlab-org-docker"

@@ -13,6 +13,7 @@ stages:
 #Variables
 variables:
   DOCKER_REGISTRY: "{{cookiecutter.docker_registry}}"
+  DOCKER_NAMESPACE: "{{cookiecutter.docker_namespace}}"
   DOCKER_IMAGE_NAME: "{{cookiecutter.docker_image_name}}"
   DOCKER_IMAGE_TAG: "{{cookiecutter.docker_image_tag}}"
   GITLAB_RUNNER_TAG_NAME: "{{cookiecutter.gitlab_runner_tag_name}}"
@@ -26,7 +27,7 @@ include:
 
 get_cloud_passport:
   stage: cloud-passport
-  image: "${DOCKER_REGISTRY}/product/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
+  image: "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
   extends:
     - .discovery-tool.variables
   script:
