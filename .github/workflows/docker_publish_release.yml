@@ -91,7 +91,8 @@ jobs:
             # Paths to files
             TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml"
             ENVGENE_COOKIECUTTER_JSON_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/cookiecutter.json"
-            GSF_PACKAGE_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/package.yaml"
+            GSF_INSTANCE_PACKAGE_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/package.yaml"
+            GSF_DISCOVERY_PACKAGE_FILE="gsf_packages/envgene_discovery_project/git-system-follower-package/package.yaml"
 
             # New tag
             NEW_TAG="${{ github.event.inputs.version }}"
@@ -103,8 +104,11 @@ jobs:
             # Update envgene_version in cookiecutter.json for GSF EnvGene instance
             sed -i 's/"envgene_version": "[^"]*"/"envgene_version": "'"${NEW_TAG}"'"/' "$ENVGENE_COOKIECUTTER_JSON_FILE"
 
-            # Update version in package.yaml
-            sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_PACKAGE_FILE"
+            # Update version in GSF Instance package.yaml
+            sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_INSTANCE_PACKAGE_FILE"
+
+            # Update version in GSF Discovery package.yaml
+            sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_DISCOVERY_PACKAGE_FILE"
 
             CHANGES_MADE=false
             if ! git diff --quiet "$TARGET_FILE"; then
@@ -117,7 +121,12 @@ jobs:
               CHANGES_MADE=true
             fi
 
-            if ! git diff --quiet "$GSF_PACKAGE_FILE"; then
+            if ! git diff --quiet "$GSF_INSTANCE_PACKAGE_FILE"; then
+              echo "Updated package.yaml with version"
+              CHANGES_MADE=true
+            fi
+
+            if ! git diff --quiet "$GSF_DISCOVERY_PACKAGE_FILE"; then
               echo "Updated package.yaml with version"
               CHANGES_MADE=true
             fi
@@ -128,12 +137,13 @@ jobs:
 
             git diff "$TARGET_FILE" || true
             git diff "$ENVGENE_COOKIECUTTER_JSON_FILE" || true
-            git diff "$GSF_PACKAGE_FILE" || true
+            git diff "$GSF_INSTANCE_PACKAGE_FILE" || true
+            git diff "$GSF_DISCOVERY_PACKAGE_FILE" || true
 
             if [ "$CHANGES_MADE" = true ]; then
               git config --global user.name "qubership-actions[bot]"
               git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
-              git add "$TARGET_FILE" "$ENVGENE_COOKIECUTTER_JSON_FILE" "$GSF_PACKAGE_FILE"
+              git add "$TARGET_FILE" "$ENVGENE_COOKIECUTTER_JSON_FILE" "$GSF_INSTANCE_PACKAGE_FILE" "$GSF_DISCOVERY_PACKAGE_FILE"
               git commit -m "chore: Update docker image tags and envgene_version for branch ${{ github.ref_name }} [skip ci]"
 
               git push origin HEAD:${{ github.ref_name }} || echo "Failed to push changes"
@@ -297,6 +307,7 @@ jobs:
       - build-effective-set-generator
       - build-instance-repo-pipeline
       - build-gsf-envgene-instance
+      - build-gsf-envgene-discovery
     uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v2.0.5
     with:
       version: ${{ github.event.inputs.version }}
