@@ -1,17 +1,39 @@
+import logging
 from os import getenv
-from loguru import logger
-import sys
+
+
+class CustomFormatter(logging.Formatter):
+    BLUE = "\x1b[34;20m"
+    WHITE = "\x1b[37;20m"
+    YELLOW = "\x1b[33;20m"
+    RED = "\x1b[31;20m"
+    BOLD_RED = "\x1b[31;1m"
+    RESET = "\x1b[0m"
+    BASE_FMT = "%(asctime)s [%(levelname)s] %(message)s [%(filename)s:%(lineno)d]"
+
+    def __init__(self):
+        super().__init__()
+        self.formatters = {
+            logging.DEBUG: logging.Formatter(self.BLUE + self.BASE_FMT + self.RESET),
+            logging.INFO: logging.Formatter(self.WHITE + self.BASE_FMT + self.RESET),
+            logging.WARNING: logging.Formatter(self.YELLOW + self.BASE_FMT + self.RESET),
+            logging.ERROR: logging.Formatter(self.RED + self.BASE_FMT + self.RESET),
+            logging.CRITICAL: logging.Formatter(self.BOLD_RED + self.BASE_FMT + self.RESET),
+        }
+
+    def format(self, record):
+        formatter = self.formatters.get(record.levelno, self.formatters[logging.INFO])
+        return formatter.format(record)
+
+logger = logging.getLogger("envgene")
+logger.propagate = False
 
 log_level_str = getenv("LOG_LEVEL", "INFO").upper()
-fmt = "<level>{time:YYYY-MM-DD HH:mm:ss,SSS} [{level: <8}] {message} [{name}:{line}]</level>"
+log_level = getattr(logging, log_level_str, logging.INFO)
+logger.setLevel(log_level)
 
-logger.remove()
-
-logger.add(
-    sys.stdout,
-    level=log_level_str,
-    colorize=True,
-    format=fmt
-)
-
-logger = logger.bind(name="envgene")
+if not logger.hasHandlers():
+    handler = logging.StreamHandler()
+    handler.setLevel(log_level)
+    handler.setFormatter(CustomFormatter())
+    logger.addHandler(handler)

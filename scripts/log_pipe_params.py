@@ -1,4 +1,5 @@
 from os import getenv
+import json
 from envgenehelper import logger
 
 
@@ -36,6 +37,9 @@ def log_pipeline_params(params: dict):
     
     if params.get("CRED_ROTATION_PAYLOAD"):
         params["CRED_ROTATION_PAYLOAD"] = "***"
+        
+    if params.get("SD_DATA"):
+        params["SD_DATA"] = json.dumps(json.loads(params["SD_DATA"]), separators=(",", ":"))
         
     for k, v in params.items():
         params_str += f"\n{k.upper()}: {v}"
