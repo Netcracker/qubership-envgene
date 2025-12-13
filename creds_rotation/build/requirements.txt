@@ -8,4 +8,3 @@ jsonschema-specifications==2023.12.1
 cryptography==41.0.3
 cffi>=1.15
 aiofiles==23.2.0
-loguru==0.7.3

@@ -4,7 +4,7 @@ from os import getenv
 
 class CustomFormatter(logging.Formatter):
     BLUE = "\x1b[34;20m"
-    WHITE = "\x1b[37;20m"
+    WHITE = "\x1b[97;20m"
     YELLOW = "\x1b[33;20m"
     RED = "\x1b[31;20m"
     BOLD_RED = "\x1b[31;1m"
