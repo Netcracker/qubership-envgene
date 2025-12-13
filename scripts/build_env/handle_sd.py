@@ -17,6 +17,40 @@ from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_merge_helper import basic_merge_multiple
 
 
+def fix_yaml_document_separators(input_dir):
+    """
+    Fix YAML parsing errors by adding document separators to all YAML files
+    This prevents iTool parsing errors
+    """
+    logger.info("Fixing YAML document separators in Helm charts")
+    fixed_count = 0
+    for root, dirs, files in os.walk(input_dir):
+        for file in files:
+            if file.endswith(('.yaml', '.yml')):
+                file_path = os.path.join(root, file)
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+                    
+                    # Check if file starts with --- and is not empty
+                    if content.strip() and not content.lstrip().startswith('---'):
+                        # Add document separator at the beginning
+                        fixed_content = '---\n' + content
+                        with open(file_path, 'w', encoding='utf-8') as f:
+                            f.write(fixed_content)
+                        fixed_count += 1
+                        logger.debug(f"Fixed YAML document separator in: {file_path}")
+                except Exception as e:
+                    logger.warning(f"Could not fix YAML file {file_path}: {e}")
+    
+    if fixed_count > 0:
+        logger.info(f"Fixed document separators in {fixed_count} YAML files")
+    else:
+        logger.info("No YAML files needed fixing")
+    
+    return fixed_count
+
+
 class MergeType(Enum):
     EXTENDED = "extended-merge"
     REPLACE = "replace"
@@ -59,8 +93,9 @@ def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict
         - If userData contains ONLY field useDeployPostfixAsNamespace, remove userData.
         - If other keys exist, remove only useDeployPostfixAsNamespace.
     """
-    logger.info(
-        f"[Pre handle_deploy_postfix_namespace_transformation] Original SD data: {json.dumps(sd_data, indent=2)}")
+    # Log summary instead of full SD to avoid huge logs
+    app_count = len(sd_data.get("applications", []))
+    logger.info(f"[handle_deploy_postfix_namespace_transformation] Processing SD with {app_count} applications")
     user_data = sd_data.get("userData", {})
 
     if isinstance(user_data, dict) and user_data.get("useDeployPostfixAsNamespace") is True:
@@ -166,7 +201,8 @@ def calculate_sd_delta(sd_delta):
     return sd_delta
 
 
-def multiply_sds_to_single(sds_data, effective_merge_mode):
+def multiply_sds_to_single(sds_data, effective_merge_mode: MergeType):
+    full_sd_from_pipe = None
     if effective_merge_mode == MergeType.EXTENDED:
         if isinstance(sds_data, list):
             if len(sds_data) > 1:
@@ -178,11 +214,39 @@ def multiply_sds_to_single(sds_data, effective_merge_mode):
         sds_data = sds_data if isinstance(sds_data, list) else [sds_data]
         cropped_sds = []
         for sd in sds_data:
+            # Handle V2 SD structure - extract applications from graph if needed
+            if "applications" not in sd:
+                if "graph" in sd and "vertexList" in sd["graph"]:
+                    # Extract applications from V2 graph structure
+                    applications = []
+                    for vertex in sd["graph"]["vertexList"]:
+                        if vertex.get("type") in ["ui backend", "backend", "frontend", "service"]:
+                            app = {
+                                "id": vertex.get("id"),
+                                "name": vertex.get("name"),
+                                "version": f"{vertex.get('name')}:unknown",
+                                "type": vertex.get("type"),
+                                "directoryPath": vertex.get("directoryPath", "/var/input"),
+                                "releaseBranch": vertex.get("releaseBranch", "master"),
+                                "repository": vertex.get("repository", ""),
+                                "details": vertex.get("details", {}),
+                                "deployPostfix": ""
+                            }
+                            applications.append(app)
+                    sd["applications"] = applications
+                    logger.info(f"Extracted {len(applications)} applications from V2 SD graph")
+                else:
+                    # If no graph structure, create empty applications list
+                    sd["applications"] = []
+                    logger.warning("V2 SD has no applications key and no graph structure, creating empty applications list")
+
             cropped_sds.append({"applications": sd["applications"]})
 
         full_sd_from_pipe = basic_merge_multiple(cropped_sds)
 
-    logger.info(f"Merged data after performing basic-merge for multiple SDs: {full_sd_from_pipe}")
+    # Log summary instead of full SD to avoid huge logs
+    app_count = len(full_sd_from_pipe.get("applications", [])) if full_sd_from_pipe else 0
+    logger.info(f"Merged SD with {app_count} applications")
     return full_sd_from_pipe
 
 
@@ -195,6 +259,11 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
         else:
             logger.warning(handle_sd_skip_msg)
         return
+
+    # Fix YAML document separators in /var/input to prevent iTool parsing errors
+    input_dir = "/var/input"
+    if os.path.exists(input_dir):
+        fix_yaml_document_separators(input_dir)
 
     sd_delta = calculate_sd_delta(sd_delta)
     effective_merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
@@ -211,6 +280,9 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
 
 def validate_applications(sd, effective_merge_mode: MergeType):
     applications = sd.get("applications")
+    if not applications:
+        logger.warning("SD has no applications or applications is empty")
+        return
     for app in applications:
         if effective_merge_mode != MergeType.EXTENDED and (not isinstance(app, dict) or not app.get("deployPostfix")):
             raise ValueError(
@@ -224,7 +296,9 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
         exit(1)
     sds_from_pipe = json.loads(sd_data)
 
-    logger.info(f"printing data inside extract_sd_from_json {sds_from_pipe}")
+    # Log summary instead of full SD content
+    sd_count = len(sds_from_pipe) if isinstance(sds_from_pipe, list) else 1
+    logger.info(f"Loaded {sd_count} SD(s) from SD_DATA")
     if not isinstance(sds_from_pipe, (list, dict)) or not sds_from_pipe:
         logger.error("SD_DATA must be a non-empty list of SD dictionaries or a single SD.")
         exit(1)
@@ -292,7 +366,7 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
         source_name, version = entry.split(":", 1)
         logger.info(f"Starting download of SD: {source_name}-{version}")
 
-        sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins)
+        sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins, env.creds)
 
         sd_data_list.append(sd_data)
 
@@ -300,17 +374,48 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
     extract_sds_from_json(env, base_sd_path, sd_data_json, effective_merge_mode)
 
 
-def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
+def download_sd_by_appver(
+    app_name: str,
+    version: str,
+    plugins: PluginEngine,
+    env_creds: dict = None,
+) -> dict[str, object]:
     if 'SNAPSHOT' in version:
         raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
-    # TODO: check if job would fail without plugins
+    
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
-
-    artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version))
+    
+    # Log registry version for debugging
+    registry_version = getattr(app_def.registry, 'version', '1.0')
+    logger.info(f"Downloading SD for {app_name}:{version} using registry '{app_def.registry.name}' (version: {registry_version})")
+    
+    # Log if env_creds are available (for V2)
+    if env_creds:
+        cred_keys = list(env_creds.keys()) if isinstance(env_creds, dict) else []
+        logger.debug(f"env_creds available with keys: {cred_keys}")
+    else:
+        logger.debug("No env_creds provided - V1 flow will be used")
+    
+    artifact_info = asyncio.run(
+        artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version, env_creds)
+    )
     if not artifact_info:
-        raise ValueError(
-            f'Solution descriptor content was not received for {app_name}:{version}')
-    sd_url, _ = artifact_info
+        raise ValueError(f'Solution descriptor content was not received for {app_name}:{version}')
+
+    sd_url, repo_info = artifact_info
+    repo_marker, extra_info = repo_info
+
+    # V2 artifacts are already downloaded locally - read from file
+    if repo_marker == "v2_downloaded":
+        local_path = extra_info
+        logger.info(f"Successfully retrieved V2 SD from local path: {local_path}")
+        with open(local_path, 'r', encoding='utf-8') as f:
+            sd_content = json.load(f)
+        logger.info(f"V2 SD loaded successfully for {app_name}:{version}")
+        return sd_content
+
+    # V1 artifacts - download from URL
+    logger.info(f"Downloading V1 SD from URL: {sd_url}")
     return artifact.download_json_content(sd_url)
 
 

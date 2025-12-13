@@ -111,6 +111,10 @@ class EnvGenerator:
 
     def validate_applications(self):
         applications = self.ctx.sd_config.get("applications", [])
+        
+        if not applications:
+            logger.info("No applications to validate")
+            return
 
         for app in applications:
             version = app.get("version")
@@ -144,9 +148,37 @@ class EnvGenerator:
             self.ctx.sd_file_path = str(sd_path)
             sd_config = openYaml(filePath=sd_path, safe_load=True)
             self.ctx.sd_config = sd_config
+            
+            # Handle V2 SD format - applications might be missing or in a different location
             if "applications" not in sd_config:
-                raise ValueError("Missing 'applications' key in root")
-            self.validate_applications()
+                # Check if this is a V2 SD with graph structure
+                if "graph" in sd_config and "nodes" in sd_config["graph"]:
+                    # Extract applications from V2 graph structure
+                    applications = []
+                    for node in sd_config["graph"]["nodes"]:
+                        if node.get("type") == "application" and "data" in node:
+                            app_data = node["data"]
+                            # Ensure required fields exist
+                            if "version" not in app_data:
+                                app_data["version"] = "latest"
+                            if "deployPostfix" not in app_data:
+                                app_data["deployPostfix"] = ""
+                            applications.append(app_data)
+                    
+                    # Update sd_config with extracted applications
+                    sd_config["applications"] = applications
+                    logger.info(f"Extracted {len(applications)} applications from V2 SD graph structure")
+                else:
+                    # No applications found and no V2 graph structure - create empty list
+                    sd_config["applications"] = []
+                    logger.warning("SD has no applications key and no V2 graph structure, creating empty applications list")
+            
+            # Re-validate after potential updates
+            self.ctx.sd_config = sd_config
+            if sd_config["applications"]:
+                self.validate_applications()
+            else:
+                logger.info("No applications to validate")
 
             namespaces = self.ctx.current_env_template.get("namespaces", [])
             postfix_template_map = {}
