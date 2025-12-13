@@ -15,7 +15,7 @@ def validate_pipeline(params: dict):
             params["ENV_NAMES"],
             params["GET_PASSPORT"],
             params["ENV_BUILD"],
-            params["ENV_INVENTORY_GENERATION_PARAMS"]["ENV_INVENTORY_INIT"],
+            params["ENV_INVENTORY_INIT"],
         )
 
 def basic_checks(env_names):

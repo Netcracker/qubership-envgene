@@ -34,6 +34,7 @@ COPY schemas /module/schemas
 COPY base_modules/scripts /module/scripts
 COPY build_pipegene/scripts /module/scripts
 COPY build_pipegene/pipegene_plugins /module/scripts/pipegene_plugins
+COPY scripts/log_pipe_params.py /module/utils/
 
 # Create virtual environment and install Python packages
 RUN python -m venv /module/venv && \

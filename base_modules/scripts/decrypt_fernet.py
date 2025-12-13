@@ -1,11 +1,9 @@
-import logging
-
+from envgenehelper import logger
 
 from yaml import safe_load, safe_dump
 import click
 from cryptography.fernet import Fernet
 
-logging.basicConfig(format = '%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s', level = logging.INFO)
 ENCRYPTED_CONST = 'encrypted:AES256_Fernet'
 
 @click.group(chain=True)
@@ -19,27 +17,27 @@ def cmdb_prepare():
                help="Set secret_key for encrypt cred files")
 def decrypt_file(secret_key, file_path):
     ''' {getenv('CI_PROJECT_DIR')}/ansible/inventory/group_vars/{getenv('env_name')}/appdeployer_cmdb/Tenants/{getenv('tenant_name')}/Credentials'''
-    logging.debug('Try to read %s file', file_path)
+    logger.debug('Try to read %s file', file_path)
     with open(file_path, mode="r", encoding="utf-8") as sensitive:
         sensitive_data = safe_load(sensitive)
 
     is_encrypted = check_if_file_is_encrypted(sensitive_data)
     if is_encrypted:
         if not secret_key:
-            logging.error(f'Variable "{secret_key}" is not specified')
+            logger.error(f'Variable "{secret_key}" is not specified')
             exit(1)
         cipher = Fernet(secret_key)
-        logging.debug('Try to decrypt data from %s file', file_path)
+        logger.debug('Try to decrypt data from %s file', file_path)
         if isinstance(sensitive_data, dict):
             decrypted_data = decode_sensitive(cipher, sensitive_data)
-            logging.debug('Try to write data to %s file', file_path)
+            logger.debug('Try to write data to %s file', file_path)
             with open(file_path, mode="w") as sensitive:
                 safe_dump(decrypted_data, sensitive, default_flow_style=False)
-                logging.info('The %s file has been decrypted', file_path)
+                logger.info('The %s file has been decrypted', file_path)
         else:
-            logging.info('The %s is empty or has no dict struct or not encrypted', file_path)
+            logger.info('The %s is empty or has no dict struct or not encrypted', file_path)
     else:
-        logging.info('File is not encrypted')
+        logger.info('File is not encrypted')
 
 def check_if_file_is_encrypted(sensitive_data) -> bool:
     for key, data in sensitive_data.items():
