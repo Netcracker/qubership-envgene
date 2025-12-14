@@ -49,11 +49,11 @@ class CloudAuthHelper:
         return auth_config
 
     @staticmethod
-    def resolve_credentials(auth_config: AuthConfig, env_creds: Dict[str, dict]) -> dict:
+    def resolve_credentials(auth_config: AuthConfig, env_creds: Optional[Dict[str, dict]]) -> dict:
         """Resolve credentials from env_creds based on auth_config.credentials_id."""
         cred_id = auth_config.credentials_id
         if not cred_id:
-            return {}  # Anonymous access
+            return {}  # Anonymous access (Artifactory/Nexus with empty credentialsId)
 
         if not env_creds or cred_id not in env_creds:
             raise KeyError(f"Credential '{cred_id}' not found in env_creds")
@@ -90,7 +90,7 @@ class CloudAuthHelper:
 
     @staticmethod
     def _extract_region(url: str, auth_config: AuthConfig) -> str:
-        """Extract region from URL or auth_config."""
+        """Extract region from URL or auth_config. Prefers explicit config over URL extraction."""
         if auth_config.provider == "aws" and auth_config.aws_region:
             return auth_config.aws_region
         aws_match = re.search(r'\.([a-z0-9-]+)\.amazonaws\.com', url)
@@ -99,10 +99,11 @@ class CloudAuthHelper:
         gcp_match = re.search(r'([a-z0-9-]+)-maven\.pkg\.dev', url)
         if gcp_match:
             return gcp_match.group(1)
+        logger.warning(f"Could not extract region from URL '{url}', using default 'us-east-1'")
         return "us-east-1"
 
     @staticmethod
-    def create_maven_searcher(registry: Registry, env_creds: Dict[str, dict]) -> 'MavenArtifactSearcher':
+    def create_maven_searcher(registry: Registry, env_creds: Optional[Dict[str, dict]]) -> 'MavenArtifactSearcher':
         """Create configured MavenArtifactSearcher for the registry provider."""
         if MavenArtifactSearcher is None:
             raise ImportError("qubership_pipelines_common_library not available")
@@ -194,7 +195,7 @@ class CloudAuthHelper:
             return None
 
     @staticmethod
-    def get_gcp_credentials_from_registry(registry: Registry, env_creds: Dict[str, dict]) -> Optional[str]:
+    def get_gcp_credentials_from_registry(registry: Registry, env_creds: Optional[Dict[str, dict]]) -> Optional[str]:
         """Extract GCP service account JSON from registry for token generation."""
         auth_config = CloudAuthHelper.resolve_auth_config(registry, "maven")
         if not auth_config or auth_config.provider != "gcp":

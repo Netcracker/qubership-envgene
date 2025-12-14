@@ -269,7 +269,7 @@ async def check_artifact_async(
 
 async def _check_artifact_v2_async(app: Application, artifact_extension: FileExtension, version: str,
                                    env_creds: Optional[dict]) -> Optional[tuple[str, tuple[str, str]]]:
-    if not env_creds or not getattr(app.registry.maven_config, 'auth_config', None):
+    if not getattr(app.registry.maven_config, 'auth_config', None):
         return await _check_artifact_v1_async(app, artifact_extension, version)
 
     try:
@@ -280,6 +280,14 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
 
     auth_config = CloudAuthHelper.resolve_auth_config(app.registry, "maven")
     if not auth_config or auth_config.provider not in ["aws", "gcp", "artifactory", "nexus"]:
+        return await _check_artifact_v1_async(app, artifact_extension, version)
+
+    # AWS and GCP require credentials; Artifactory/Nexus can work with anonymous access
+    if auth_config.provider in ["aws", "gcp"] and not env_creds:
+        logger.warning(f"V2 {auth_config.provider} requires credentials but env_creds is empty")
+        return await _check_artifact_v1_async(app, artifact_extension, version)
+    if auth_config.provider in ["aws", "gcp"] and auth_config.credentials_id and auth_config.credentials_id not in (env_creds or {}):
+        logger.warning(f"V2 {auth_config.provider} credentials '{auth_config.credentials_id}' not found in env_creds")
         return await _check_artifact_v1_async(app, artifact_extension, version)
 
     logger.info(f"V2 search for {app.name} with provider={auth_config.provider}")
@@ -362,7 +370,7 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
 
 
 async def _v2_download_with_fallback(searcher, url: str, local_path: str, auth_config,
-                                     registry: Registry, env_creds: dict) -> bool:
+                                     registry: Registry, env_creds: Optional[dict]) -> bool:
     loop = asyncio.get_running_loop()
 
     try:
