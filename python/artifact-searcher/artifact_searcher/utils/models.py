@@ -1,9 +1,9 @@
 from enum import Enum
 from typing import Optional
 
+import requests
 from pydantic import BaseModel, ConfigDict, field_validator, Field, model_validator
 from pydantic.alias_generators import to_camel
-import requests
 
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT
 

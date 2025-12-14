@@ -334,8 +334,6 @@ def _get_environment_credentials() -> dict:
 
 
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
-    if 'SNAPSHOT' in version:
-        raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
     env_creds = _get_environment_credentials()
@@ -343,7 +341,13 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')
-    sd_url, _ = artifact_info
+    sd_url, mvn_repo = artifact_info
+    mvn_repo_value, mvn_repo_extra = mvn_repo
+
+    if mvn_repo_value == "v2_downloaded":
+        logger.debug(f"Reading V2 solution descriptor from local file: {mvn_repo_extra}")
+        with open(mvn_repo_extra, 'r') as f:
+            return json.load(f)
     return artifact.download_json_content(sd_url)
 
 
