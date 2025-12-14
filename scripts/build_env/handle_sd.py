@@ -292,7 +292,7 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
         source_name, version = entry.split(":", 1)
         logger.info(f"Starting download of SD: {source_name}-{version}")
 
-        sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins)
+        sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins, env)
 
         sd_data_list.append(sd_data)
 
@@ -300,9 +300,11 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
     extract_sds_from_json(env, base_sd_path, sd_data_json, effective_merge_mode)
 
 
-def _get_environment_credentials() -> dict:
+def _get_environment_credentials(env: Environment = None) -> dict:
     """Get credentials from environment for V2 cloud registry support."""
     env_creds = {}
+    
+    # First try environment variables
     aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
     aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
     if aws_access_key and aws_secret_key:
@@ -311,6 +313,24 @@ def _get_environment_credentials() -> dict:
             "password": aws_secret_key
         }
         logger.debug("Loaded AWS credentials from environment")
+    
+    # If not in environment and env object is provided, try to get from credentials file
+    if not env_creds and env and hasattr(env, 'creds') and env.creds:
+        # Handle AWS credentials
+        if 'aws-keys' in env.creds:
+            # env.creds['aws-keys'] has structure: {'type': 'usernamePassword', 'data': {'username': '...', 'password': '...'}}
+            aws_creds = env.creds['aws-keys']['data']
+            env_creds["aws-keys"] = {
+                "username": aws_creds['username'],
+                "password": aws_creds['password']
+            }
+            logger.debug("Loaded AWS credentials from credentials.yml")
+        
+        # Handle GCP credentials
+        if 'gcp-keys' in env.creds:
+            gcp_creds = env.creds['gcp-keys']['data']['secret']
+            env_creds["gcp-keys"] = {"secret": gcp_creds}
+            logger.debug("Loaded GCP credentials from credentials.yml")
     
     gcp_sa_json_path = os.getenv("GCP_SA_JSON_PATH")
     if gcp_sa_json_path and path.exists(gcp_sa_json_path):
@@ -333,10 +353,10 @@ def _get_environment_credentials() -> dict:
     return env_creds
 
 
-def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
+def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, env: Environment = None) -> dict[str, object]:
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
-    env_creds = _get_environment_credentials()
+    env_creds = _get_environment_credentials(env)
     artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version, env_creds))
     if not artifact_info:
         raise ValueError(
