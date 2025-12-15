@@ -1836,6 +1836,16 @@ The filename must match the value of the `name` attribute.
 **Location:** `/environments/<cluster-name>/<environment-name>/AppDefs/<application-name>.yml`
 
 ```yaml
+# Optional
+metadata:
+  # Optional
+  # Describes the strategy for generating the Helm release name.
+  # Deployment automation relies on this attribute to form a unique Helm release name.
+  # Available options:
+  #   `perApplication` - Unique per application
+  #   `perVersion` - Unique per application version
+  #   `perDeployment` - Unique per deployment of this application
+  helmReleaseNameStrategy: enum[ perApplication, perVersion, perDeployment ]
 # Mandatory
 # Name of the artifact application. This corresponds to the `application` part in the `application:version` notation.
 name: string
