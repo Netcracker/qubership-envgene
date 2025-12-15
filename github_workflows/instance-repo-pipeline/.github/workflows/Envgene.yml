@@ -238,7 +238,7 @@ jobs:
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               source /module/venv/bin/activate
-              bash /module/scripts/handle_certs.sh
+              /module/scripts/handle_certs.sh
 
               echo \"Executing build environment operations...\"
               if [ \"\$ENV_TEMPLATE_VERSION\" != \"\" ] && [ \"\$ENV_TEMPLATE_TEST\" != \"true\" ]; then
@@ -287,7 +287,7 @@ jobs:
             ${{ env.DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR }}:${{ env.DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR }} \
             bash -c "
               # Export all variables using unified exporter
-              bash /module/scripts/handle_certs.sh
+              /module/scripts/handle_certs.sh
 
               echo \"Executing effective set generation...\"
               if ! /module/scripts/prepare.sh \"generate_effective_set.yaml\"; then
@@ -322,7 +322,7 @@ jobs:
               source /module/venv/bin/activate
 
               echo 'Prepare git_commit job for \${ENVIRONMENT_NAME}...'
-              bash /module/scripts/handle_certs.sh
+              /module/scripts/handle_certs.sh
 
               git config --global --add safe.directory \"\${CI_PROJECT_DIR}\"
 
