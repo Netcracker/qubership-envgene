@@ -33,6 +33,7 @@ COPY python /python
 COPY schemas /module/schemas
 COPY base_modules/scripts /module/scripts
 COPY build_pipegene/scripts /module/scripts
+COPY scripts/utils /module/scripts/
 COPY build_pipegene/pipegene_plugins /module/scripts/pipegene_plugins
 
 # Create virtual environment and install Python packages

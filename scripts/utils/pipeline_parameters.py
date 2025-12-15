@@ -1,8 +1,6 @@
 from os import getenv
-from envgenehelper import logger
-import json
-
 from envgenehelper.plugin_engine import PluginEngine
+
 
 def get_pipeline_parameters() -> dict:
     return {
@@ -13,6 +11,7 @@ def get_pipeline_parameters() -> dict:
         'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
         'ENV_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST") == "true",
         'IS_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST") == "true",
+        'IS_OFFSITE': getenv("IS_OFFSITE") == "true",
         'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
         'JSON_SCHEMAS_DIR': getenv("JSON_SCHEMAS_DIR", "/module/schemas"),
         "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE"),
@@ -27,7 +26,8 @@ def get_pipeline_parameters() -> dict:
         'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", ""),
         'GITLAB_RUNNER_TAG_NAME' : getenv("GITLAB_RUNNER_TAG_NAME", ""),
         'RUNNER_SCRIPT_TIMEOUT' : getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
-        'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", "")
+        'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", ""),
+        'LOG_LEVEL': getenv("LOG_LEVEL")
     }
 
 class PipelineParametersHandler:
@@ -37,20 +37,3 @@ class PipelineParametersHandler:
         pipe_param_plugin = PluginEngine(plugins_dir=plugins_dir)
         if pipe_param_plugin.modules:
            pipe_param_plugin.run(pipeline_params=self.params)
-    
-    def log_params(self):
-        params_str = "Input parameters are: "
-        params = self.params.copy()
-        
-        if params.get("CRED_ROTATION_PAYLOAD"):
-            params["CRED_ROTATION_PAYLOAD"] = "***"
-            
-        for k, v in params.items():
-            try:
-                parsed = json.loads(v)
-                params[k] = json.dumps(parsed, separators=(",", ":"))
-            except (TypeError, ValueError):
-                pass
-            params_str += f"\n{k.upper()}: {v}"
-
-        logger.info(params_str)
