@@ -6,7 +6,7 @@ This document provides an overview of the recommended structures for Template an
 
 ## Template Repository Layout
 
-For an example, refer to [this instance repository](/docs/samples/instance-repository/).
+For an example, refer to [this template repository](/docs/samples/template-repository/).
 
 ```yaml
 templates/
