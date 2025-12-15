@@ -41,7 +41,7 @@ COPY scripts/build_env /build_env/scripts/build_env/
 COPY scripts/build_template /build_env/scripts/build_template/
 COPY scripts/cloud_passport/ /cloud_passport/scripts/
 COPY schemas /build_env/schemas
-COPY scripts/utils/log_pipe_params.py /module/utils/
+COPY scripts/utils/ /module/utils/
 
 ENV ANSIBLE_LIBRARY=/module/ansible/library
 
