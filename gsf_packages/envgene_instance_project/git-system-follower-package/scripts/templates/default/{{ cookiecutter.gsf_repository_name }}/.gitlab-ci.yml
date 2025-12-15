@@ -13,8 +13,13 @@ stages:
 
 #Variables
 variables:
-  ENVGENE_VERSION: "1.10.0"
+  ENVGENE_VERSION: "{{cookiecutter.envgene_version}}"
   DOCKER_REGISTRY: "{{cookiecutter.docker_registry}}"
+  DOCKER_NAMESPACE: "{{cookiecutter.docker_namespace}}"
+  ENVGENE_IMAGE: "{{cookiecutter.envgen_image}}"
+  PIPEGENE_IMAGE: "{{cookiecutter.pipe_image}}"
+  CLOUD_DEPLOYTOOL_IMAGE: "{{cookiecutter.cloud_deploytool_image}}"
+  EFFECTIVE_SET_GENERATOR_IMAGE: "{{cookiecutter.effective_set_generator_image}}"
   GITLAB_RUNNER_TAG_NAME: "{{cookiecutter.gitlab_runner_tag_name}}"
 
 include:
@@ -34,9 +39,10 @@ default:
 
 .images.variables:
   variables:
-    envgen_image: "${DOCKER_REGISTRY}/qubership-envgene:${ENVGENE_VERSION}"
-    pipegene_image: "${DOCKER_REGISTRY}/qubership-pipegene:${ENVGENE_VERSION}"
-    effective_set_generator_image: "${DOCKER_REGISTRY}/qubership-effective-set-generator:${ENVGENE_VERSION}"
+    envgen_image: "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${ENVGENE_IMAGE}:${ENVGENE_VERSION}"
+    pipegene_image: "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${PIPEGENE_IMAGE}:${ENVGENE_VERSION}"
+    effective_set_generator_image: "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${EFFECTIVE_SET_GENERATOR_IMAGE}:${ENVGENE_VERSION}"
+    cloud_deploytool_image: "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${CLOUD_DEPLOYTOOL_IMAGE}:${ENVGENE_VERSION}"
 
 
 # Jobs

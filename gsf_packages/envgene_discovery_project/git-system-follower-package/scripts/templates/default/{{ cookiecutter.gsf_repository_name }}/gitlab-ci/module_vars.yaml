@@ -1,0 +1,20 @@
+.common.variables:
+  variables:
+    env_name: ${ENV_NAME}
+    k8s_host_name: K8S_HOST_${env_name}
+    k8s_token_name: K8S_TOKEN_${env_name}
+    secret_key_name: SECRET_KEY_${env_name}
+
+.discovery-tool.variables:
+  extends:
+    - .common.variables
+  variables:
+    discovery_instance: ${env_name}
+    discovery_host: ${k8s_host}
+    discovery_api_token: ${k8s_token}
+    discovery_secret_key: ${secret_key}
+    discovery_token_prefix: 'Bearer'
+    discovery_verify_ssl: 'false'
+    discovery_source_template: environments/${env_name}
+    discovery_dst_dir: passport
+    #discovery_kube_config_path: environments/${env_name}/kubeconfig.yaml

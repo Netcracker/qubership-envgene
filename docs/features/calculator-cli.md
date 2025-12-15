@@ -1061,6 +1061,26 @@ composite_structure:
       type: "namespace"
 ```
 
+```yaml
+composite_structure:
+  name: "clusterA-env-1-composite-structure"
+  baseline:
+    type: bgdomain
+    name: env-1-bg-domain
+    originNamespace:
+      type: namespace
+      name: env-1-bss-origin
+    peerNamespace:
+      type: namespace
+      name: env-1-bss-peer
+    controllerNamespace:
+      type: namespace
+      name: env-1-bss-controller
+  satellites:
+    - type: "namespace"
+      name: "env-1-data-management"
+```
+
 ##### \[Version 2.0][Topology Context] `k8s_tokens` Example
 
 ```yaml
@@ -1086,14 +1106,14 @@ environments:
 environments:
   cluster-1/env-1:
     namespaces:
-      env-1-core:
-        deployPostfix: core
+      env-1-data-management:
+        deployPostfix: data-management
       env-1-controller:
         deployPostfix: controller
       env-1-bss-origin:
-        deployPostfix: bss  # Suffix '-origin' removed for origin namespace
+        deployPostfix: bss
       env-1-baseline-peer:
-        deployPostfix: baseline  # Suffix '-peer' removed for peer namespace
+        deployPostfix: bss
   cluster-2/env-2:
     namespaces:
       env-2-core:
