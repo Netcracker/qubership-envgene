@@ -5,10 +5,15 @@
   - [Parameter Type Preservation in Macro Resolution](#parameter-type-preservation-in-macro-resolution)
     - [UC-CC-MR-1: Simple Type Resolution](#uc-cc-mr-1-simple-type-resolution)
     - [UC-CC-MR-2: Complex Structure Resolution](#uc-cc-mr-2-complex-structure-resolution)
+  - [deployPostfix Matching Logic](#deploypostfix-matching-logic)
+    - [UC-CC-DP-1: Exact Match](#uc-cc-dp-1-exact-match)
   - [Cross-Level Parameter References](#cross-level-parameter-references)
     - [UC-CC-HR-1: Namespace to Cloud Reference](#uc-cc-hr-1-namespace-to-cloud-reference)
+    - [UC-CC-DP-2: BG Domain Match](#uc-cc-dp-2-bg-domain-match)
     - [UC-CC-HR-2: Namespace to Tenant Reference](#uc-cc-hr-2-namespace-to-tenant-reference)
+    - [UC-CC-DP-3: No Exact Match Found](#uc-cc-dp-3-no-exact-match-found)
     - [UC-CC-HR-3: Cloud to Tenant Reference](#uc-cc-hr-3-cloud-to-tenant-reference)
+    - [UC-CC-DP-4: No BG Domain Match Found](#uc-cc-dp-4-no-bg-domain-match-found)
     - [UC-CC-HR-4: Cloud to Namespace Reference Error](#uc-cc-hr-4-cloud-to-namespace-reference-error)
     - [UC-CC-HR-5: Tenant to Cloud Reference Error](#uc-cc-hr-5-tenant-to-cloud-reference-error)
     - [UC-CC-HR-6: Tenant to Namespace Reference Error](#uc-cc-hr-6-tenant-to-namespace-reference-error)
@@ -79,6 +84,12 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 ### UC-CC-MR-2: Complex Structure Resolution
 
+## deployPostfix Matching Logic
+
+This section covers use cases for [deployPostfix Matching Logic](/docs/features/calculator-cli.md#version-20-deploypostfix-matching-logic). The matching logic matches `deployPostfix` values from Solution SBOM to Namespace folders in Environment Instance.
+
+### UC-CC-DP-1: Exact Match
+
 **Pre-requisites:**
 
 1. Environment Instance exists with:
@@ -116,6 +127,9 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 2. Solution SBOM exists with application elements
 3. Application SBOMs exist for applications referenced in Solution SBOM
+   1. Namespace objects
+   2. A Namespace folder whose name exactly matches the `deployPostfix` value from Solution SBOM
+4. Solution SBOM exists with `deployPostfix` values in application elements
 
 **Trigger:**
 
@@ -168,6 +182,19 @@ This section covers use cases for cross-level parameter references in Effective 
 
 ### UC-CC-HR-1: Namespace to Cloud Reference
 
+   1. Reads Solution SBOM and extracts `deployPostfix` values from application elements
+   2. For each `deployPostfix` value from Solution SBOM:
+      1. Attempts exact match: searches for a Namespace folder in Environment Instance whose name exactly matches the `deployPostfix` value
+      2. Finds exact match
+      3. Uses that Namespace folder
+
+**Results:**
+
+1. `deployPostfix` value from Solution SBOM is matched to the Namespace folder with exact name match
+2. Applications from Solution SBOM are associated with the matching Namespace folder in Effective Set
+
+### UC-CC-DP-2: BG Domain Match
+
 **Pre-requisites:**
 
 1. Environment Instance exists with:
@@ -181,6 +208,13 @@ This section covers use cases for cross-level parameter references in Effective 
       3. `technicalConfigurationParameters` containing: `config_endpoint: ${cloud_config_url}`
 2. Solution SBOM exists with application elements
 3. Application SBOMs exist for applications referenced in Solution SBOM
+   1. Namespace objects
+   2. BG Domain object exists with `origin` and `peer` namespaces with corresponding folders in Environment Instance that match `deployPostfix` values:
+      1. `origin` Namespace (from BG Domain object) folder name equals `deployPostfix` + `-origin` (e.g., `bss-origin`)
+      2. `peer` Namespace (from BG Domain object) folder name equals `deployPostfix` + `-peer` (e.g., `bss-peer`)
+4. Solution SBOM exists with `deployPostfix` values in application elements:
+   1. A `deployPostfix` value that matches `origin` Namespace folder (e.g., `deployPostfix: "bss"` matches `bss-origin`)
+   2. A `deployPostfix` value that matches `peer` Namespace folder (e.g., `deployPostfix: "bss"` matches `bss-peer`)
 
 **Trigger:**
 
@@ -207,6 +241,23 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 ### UC-CC-HR-2: Namespace to Tenant Reference
 
+   1. Reads Solution SBOM and extracts `deployPostfix` values from application elements
+   2. For each `deployPostfix` value from Solution SBOM:
+      1. Attempts exact match: searches for a Namespace folder in Environment Instance whose name exactly matches the `deployPostfix` value
+      2. No exact match is found
+      3. Searches for a Namespace folder in BG Domain:
+         1. Searches for a Namespace folder with role `origin` (from BG Domain object) whose name equals `deployPostfix` + `-origin`
+         2. Searches for a Namespace folder with role `peer` (from BG Domain object) whose name equals `deployPostfix` + `-peer`
+      4. Finds matching Namespace folder (either `origin` or `peer`)
+      5. Uses that Namespace folder
+
+**Results:**
+
+1. `deployPostfix` value from Solution SBOM is matched to either the `origin` or `peer` Namespace folder in BG Domain (with `-origin` or `-peer` suffix, depending on which match is found)
+2. Applications from Solution SBOM are associated with the matching Namespace folder (`origin` or `peer`) in Effective Set
+
+### UC-CC-DP-3: No Exact Match Found
+
 **Pre-requisites:**
 
 1. Environment Instance exists with:
@@ -220,6 +271,9 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
       3. `technicalConfigurationParameters` containing: `config_org: ${tenant_config_id}`
 2. Solution SBOM exists with application elements
 3. Application SBOMs exist for applications referenced in Solution SBOM
+   1. Namespace objects
+   2. No Namespace folder whose name exactly matches the `deployPostfix` value from Solution SBOM
+4. Solution SBOM exists with `deployPostfix` values in application elements
 
 **Trigger:**
 
@@ -246,6 +300,21 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 ### UC-CC-HR-3: Cloud to Tenant Reference
 
+   1. Reads Solution SBOM and extracts `deployPostfix` values from application elements
+   2. For each `deployPostfix` value from Solution SBOM:
+      1. Attempts exact match: searches for a Namespace folder whose name exactly matches the `deployPostfix` value
+      2. No exact match is found
+      3. No matching Namespace folder is found for the `deployPostfix` value
+   3. Effective Set generation fails with an error
+
+**Results:**
+
+1. No Namespace folder is matched to the `deployPostfix` value from Solution SBOM
+2. Applications from Solution SBOM with this `deployPostfix` value are not associated with any Namespace folder in Effective Set
+3. Effective Set generation fails with an error indicating that no matching Namespace folder was found in Environment Instance for the `deployPostfix` value from Solution SBOM (e.g., `Error: Cannot find Namespace folder in Environment Instance for deployPostfix: "<deployPostfix>"`)
+
+### UC-CC-DP-4: No BG Domain Match Found
+
 **Pre-requisites:**
 
 1. Environment Instance exists with:
@@ -259,6 +328,13 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
       3. `technicalConfigurationParameters` containing: `cloud_config_label: ${tenant_config_name}`
 2. Solution SBOM exists with application elements
 3. Application SBOMs exist for applications referenced in Solution SBOM
+   1. Namespace objects
+   2. No Namespace folder whose name exactly matches the `deployPostfix` value from Solution SBOM
+   3. BG Domain object exists with `origin` and `peer` namespaces and corresponding folders in Environment Instance, but no matching BG Domain namespace folder exists for the `deployPostfix` value from Solution SBOM:
+      - `deployPostfix` + `-origin` does not match the `origin` Namespace folder name, **OR**
+      - `deployPostfix` + `-peer` does not match the `peer` Namespace folder name, **OR**
+      - Both do not match
+4. Solution SBOM exists with `deployPostfix` values in application elements
 
 **Trigger:**
 
@@ -586,3 +662,19 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Results:**
 
 1. Effective Set generation fails with an error message indicating that references from `technicalConfigurationParameters` to `e2eParameters` are prohibited (e.g., `Invalid parameter reference '${e2e_endpoint}' in Namespace '<namespace-name>': Parameters in 'technicalConfigurationParameters' cannot reference parameters from 'e2eParameters'`)
+   1. Reads Solution SBOM and extracts `deployPostfix` values from application elements
+   2. For each `deployPostfix` value from Solution SBOM:
+      1. Attempts exact match: searches for a Namespace folder whose name exactly matches the `deployPostfix` value
+      2. No exact match is found
+      3. Searches for a Namespace folder in BG Domain:
+         1. Searches for a Namespace folder with role `origin` (from BG Domain object) whose name equals `deployPostfix` + `-origin`
+         2. Searches for a Namespace folder with role `peer` (from BG Domain object) whose name equals `deployPostfix` + `-peer`
+      4. No matching BG Domain namespace folder is found
+   3. No matching Namespace folder is found for the `deployPostfix` value
+   4. Effective Set generation fails with an error
+
+**Results:**
+
+1. No Namespace folder is matched to the `deployPostfix` value from Solution SBOM
+2. Applications from Solution SBOM with this `deployPostfix` value are not associated with any Namespace folder in Effective Set
+3. Effective Set generation fails with an error indicating that no matching Namespace folder was found in Environment Instance for the `deployPostfix` value(s) from Solution SBOM. The error message lists all `deployPostfix` values that could not be matched (e.g., `Cannot find Namespace folder in Environment Instance for deployPostfix: "<deployPostfix>", "<deployPostfix>"`)

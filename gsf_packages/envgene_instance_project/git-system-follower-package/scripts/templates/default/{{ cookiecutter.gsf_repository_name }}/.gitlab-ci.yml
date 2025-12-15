@@ -1,40 +1,45 @@
 ---
+#Rules
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: always
+
 #Stages
 stages:
   - generate
   - run_generated_pipe
 
-#Runner
-default:
-  tags: [ $GITLAB_RUNNER_TAG_NAME ]
-
+#Variables
 variables:
-  ENVGENE_VERSION: "1.2.3"
+  ENVGENE_VERSION: "1.10.0"
+  DOCKER_REGISTRY: "{{cookiecutter.docker_registry}}"
+  GITLAB_RUNNER_TAG_NAME: "{{cookiecutter.gitlab_runner_tag_name}}"
 
 include:
   - local: 'gitlab-ci/pipeline_vars.yaml'
 
-####################################
-# Templates
-####################################
+#Runner
+default:
+  tags: [ $GITLAB_RUNNER_TAG_NAME ]
+
 
 .common_module.variables:
   variables:
-    module_ansible_dir: /module/ansible
+    module_ansible_dir: "/module/ansible"
     module_inventory: "${CI_PROJECT_DIR}/configuration/inventory.yaml"
-    module_ansible_cfg: /module/ansible/ansible.cfg
-    module_config_default: /module/templates/defaults.yaml
+    module_ansible_cfg: "/module/ansible/ansible.cfg"
+    module_config_default: "/module/templates/defaults.yaml"
 
 .images.variables:
   variables:
-    envgen_image: "{{cookiecutter.docker_registry}}/qubership-envgene:${ENVGENE_VERSION}"
-    pipegene_image: "{{cookiecutter.docker_registry}}/qubership-pipegene:${ENVGENE_VERSION}"
-    effective_set_generator_image: "{{cookiecutter.docker_registry}}/qubership-effective-set-generator:${ENVGENE_VERSION}"
+    envgen_image: "${DOCKER_REGISTRY}/qubership-envgene:${ENVGENE_VERSION}"
+    pipegene_image: "${DOCKER_REGISTRY}/qubership-pipegene:${ENVGENE_VERSION}"
+    effective_set_generator_image: "${DOCKER_REGISTRY}/qubership-effective-set-generator:${ENVGENE_VERSION}"
 
-####################################
+
 # Jobs
-####################################
-
 generate_pipeline:
   extends:
     - .common_module.variables

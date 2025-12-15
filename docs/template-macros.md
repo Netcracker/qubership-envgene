@@ -51,6 +51,17 @@
     - [`CONSUL_PUBLIC_URL`](#consul_public_url)
     - [`CONSUL_ADMIN_TOKEN`](#consul_admin_token)
     - [`CONSUL_ENABLED`](#consul_enabled)
+    - [`ORIGIN_NAMESPACE`](#origin_namespace)
+    - [`PEER_NAMESPACE`](#peer_namespace)
+    - [`CONTROLLER_NAMESPACE`](#controller_namespace)
+    - [`BG_CONTROLLER_URL`](#bg_controller_url)
+    - [`BG_CONTROLLER_LOGIN`](#bg_controller_login)
+    - [`BG_CONTROLLER_PASSWORD`](#bg_controller_password)
+    - [`BASELINE_ORIGIN`](#baseline_origin)
+    - [`BASELINE_PEER`](#baseline_peer)
+    - [`BASELINE_CONTROLLER`](#baseline_controller)
+    - [`PUBLIC_IDENTITY_PROVIDER_URL`](#public_identity_provider_url)
+    - [`PRIVATE_IDENTITY_PROVIDER_URL`](#private_identity_provider_url)
   - [Credential Macro](#credential-macro)
   - [Deprecated Macros](#deprecated-macros)
     - [Deprecated Jinja Macros](#deprecated-jinja-macros)
@@ -60,6 +71,8 @@
       - [`deployer`](#deployer)
     - [Deprecated Credential Macros](#deprecated-credential-macros)
       - [`${envgene.creds.get('<cred-id>').username|password|secret}`](#envgenecredsgetcred-idusernamepasswordsecret)
+    - [Deprecated Calculator CLI macros](#deprecated-calculator-cli-macros)
+      - [`BASELINE_PROJ`](#baseline_proj)
 
 This documentation provides a list of macros that can be used in environment templates and environment-specific parameter sets.
 
@@ -968,6 +981,223 @@ Value is get from `vaultConfig.enable` of the Environment's [Cloud](/docs/envgen
 
 **Usage in sample:** TBD
 
+### `ORIGIN_NAMESPACE`
+
+---
+**Description:** Name of origin namespace of the BG Domain.
+
+If the current namespace is part of the [BG Domain](/docs/envgene-objects.md#bg-domain), the value is `originNamespace.name` from that BG Domain.
+
+Otherwise, value is the same as for `${NAMESPACE}`.
+
+**Type:** String
+
+**Default Value:** `${NAMESPACE}`
+
+**Basic usage:**
+
+`origin_ns: "${ORIGIN_NAMESPACE}"`
+
+**Usage in sample:** TBD
+
+### `PEER_NAMESPACE`
+
+---
+**Description:** Name of peer namespace of the BG Domain.
+
+If current namespace is part of [BG Domain](/docs/envgene-objects.md#bg-domain), value is `peerNamespace.name` from that BG Domain.
+
+Otherwise, the value is undefined.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`peer_ns: "${PEER_NAMESPACE}"`
+
+**Usage in sample:** TBD
+
+### `CONTROLLER_NAMESPACE`
+
+---
+**Description:** Name of controller namespace of the BG Domain.
+
+If current namespace is part of [BG Domain](/docs/envgene-objects.md#bg-domain), value is `controllerNamespace.name` from that BG Domain.
+
+Otherwise, the value is undefined.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`controller_ns: "${CONTROLLER_NAMESPACE}"`
+
+**Usage in sample:** TBD
+
+### `BG_CONTROLLER_URL`
+
+---
+**Description:** URL of BG controller ingress.
+
+If current namespace is part of [BG Domain](/docs/envgene-objects.md#bg-domain), value is `controllerNamespace.url` from that BG Domain.
+
+Otherwise, the value is undefined.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`bg_controller: "${BG_CONTROLLER_URL}"`
+
+**Usage in sample:** TBD
+
+### `BG_CONTROLLER_LOGIN`
+
+---
+**Description:** Username of the BG controller
+
+If the current namespace is part of a [BG Domain](/docs/envgene-objects.md#bg-domain), the value is the `data.username` from the Credential defined in `controllerNamespace.credentials` from that BG Domain.
+
+Otherwise, the value is undefined.
+
+**Type:** String
+
+**Default Value:** `bgoperator`
+
+**Basic usage:**
+
+`bg_login: "${BG_CONTROLLER_LOGIN}"`
+
+**Usage in sample:** TBD
+
+### `BG_CONTROLLER_PASSWORD`
+
+---
+**Description:** Password of the BG controller
+
+If the current namespace is part of a [BG Domain](/docs/envgene-objects.md#bg-domain), the value is the `data.password` from the Credential defined in `controllerNamespace.credentials` from that BG Domain.
+
+Otherwise, the value is undefined.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`bg_password: "${BG_CONTROLLER_PASSWORD}"`
+
+**Usage in sample:** TBD
+
+### `BASELINE_ORIGIN`
+
+---
+**Description:** For satellite namespaces, determines the name of the BG origin namespace.
+
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the origin namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
+
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
+
+Otherwise, the value is undefined.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`baseline_origin: "${BASELINE_ORIGIN}"`
+
+**Usage in sample:** TBD
+
+### `BASELINE_PEER`
+
+---
+**Description:** For satellite namespaces, determines the name of the BG peer namespace.
+
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the peer namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
+
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
+
+Otherwise, the value is undefined.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`baseline_peer: "${BASELINE_PEER}"`
+
+**Usage in sample:** TBD
+
+### `BASELINE_CONTROLLER`
+
+---
+**Description:** For satellite namespaces, determines the name of the BG controller namespace.
+
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type BG domain, then the value is the controller namespace of that [BG Domain](/docs/envgene-objects.md#bg-domain).
+
+If the current namespace is part of a [Composite Structure](/docs/envgene-objects.md#composite-structure) as a satellite, and the baseline of this Composite Structure is of type namespace, then the value is the baseline namespace of that Composite Structure.
+
+Otherwise, the value is undefined.
+
+**Type:** String
+
+**Default Value:** None
+
+**Basic usage:**
+
+`baseline_controller: "${BASELINE_CONTROLLER}"`
+
+**Usage in sample:** TBD
+
+### `PUBLIC_IDENTITY_PROVIDER_URL`
+
+---
+**Description:** Defines URL of public gateway where IDP is published. In case of composite deployment this URL should point to gateway in baseline even if current namespace is a satellite.
+
+Calculation rules:
+
+- `PUBLIC_IDENTITY_PROVIDER_URL` from `BASELINE_ORIGIN` namespace if `BASELINE_ORIGIN` is defined
+- `${PUBLIC_GATEWAY_URL}` in other cases
+
+**Type:** String
+
+**Default Value:** Calculated based on baseline configuration
+
+**Basic usage:**
+
+`public_idp: "${PUBLIC_IDENTITY_PROVIDER_URL}"`
+
+**Usage in sample:** TBD
+
+### `PRIVATE_IDENTITY_PROVIDER_URL`
+
+---
+**Description:** Defines URL of private gateway where IDP is published. In case of composite deployment this URL should point to gateway in baseline even if current namespace is a satellite.
+
+Calculation rules:
+
+- `PRIVATE_IDENTITY_PROVIDER_URL` from `BASELINE_ORIGIN` namespace if `BASELINE_ORIGIN` is defined
+- `${PRIVATE_GATEWAY_URL}` in other cases
+
+**Type:** String
+
+**Default Value:** Calculated based on baseline configuration
+
+**Basic usage:**
+
+`private_idp: "${PRIVATE_IDENTITY_PROVIDER_URL}"`
+
+**Usage in sample:** TBD
+
 ## Credential Macro
 
 ---
@@ -1031,3 +1261,17 @@ k8s_token: ${creds.get('k8s-cred').secret}
 **Description:** This macro was used for processing system sensitive parameters—parameters that EnvGene uses to integrate itself with external systems, such as the login and password for a registry or a token for a GitLab instance.
 
 **Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro)
+
+### Deprecated Calculator CLI macros
+
+#### `BASELINE_PROJ`
+
+---
+**Description:** Defines baseline namespace if current namespace is a satellite.
+
+Calculation rules:
+
+- If baseline is a Bluegreen Domain: `BASELINE_PROJ = BASELINE_CONTROLLER`
+- Otherwise (if baseline is a standalone namespace): `BASELINE_PROJ = BASELINE_ORIGIN`
+
+**Replacement**: [`BASELINE_ORIGIN`](#baseline_origin)
