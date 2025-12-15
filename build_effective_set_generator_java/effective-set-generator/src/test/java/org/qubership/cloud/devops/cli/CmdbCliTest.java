@@ -23,8 +23,8 @@ public class CmdbCliTest {
     void testGenerateEffectiveSet(@TempDir Path tempDir) throws Exception {
         Path envsPath = FileTestUtils.resource("environments");
         Path sbomsPath = FileTestUtils.resource("sboms");
-        Path solutionSbomPath = FileTestUtils.resource(
-                "environments/cluster-01/pl-01/Inventory/solution-descriptor/solution.sbom.json");
+        Path sdPath = FileTestUtils.resource(
+                "environments/cluster-01/pl-01/Inventory/solution-descriptor/sd.yml");
         Path registriesPath = FileTestUtils.resource("configuration/registry.yml");
 
         Path outputPath = tempDir.resolve("effective-set");
@@ -35,7 +35,7 @@ public class CmdbCliTest {
                 "--env-id", "cluster-01/pl-01",
                 "--envs-path", envsPath.toString(),
                 "--sboms-path", sbomsPath.toString(),
-                "--solution-sbom-path", solutionSbomPath.toString(),
+                "--sd-path", sdPath.toString(),
                 "--registries", registriesPath.toString(),
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
