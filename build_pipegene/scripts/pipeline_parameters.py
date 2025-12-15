@@ -45,10 +45,12 @@ class PipelineParametersHandler:
         if params.get("CRED_ROTATION_PAYLOAD"):
             params["CRED_ROTATION_PAYLOAD"] = "***"
             
-        if params.get("SD_DATA"):
-            params["SD_DATA"] = json.dumps(json.loads(params["SD_DATA"]), separators=(",", ":"))
-            
         for k, v in params.items():
+            try:
+                parsed = json.loads(v)
+                params[k] = json.dumps(parsed, separators=(",", ":"))
+            except (TypeError, ValueError):
+                pass
             params_str += f"\n{k.upper()}: {v}"
 
         logger.info(params_str)
