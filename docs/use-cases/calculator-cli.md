@@ -27,7 +27,7 @@
 
 ## Overview
 
-This document covers use cases for [Calculator CLI](/docs/features/calculator-cli.md) operations related to Effective Set v2.0 generation, including `deployPostfix` matching logic for Blue-Green Deployment support, parameter type preservation in macro resolution, and cross-level/cross-context parameter reference rules.
+This document covers use cases for [Calculator CLI](/docs/features/calculator-cli.md) operations related to Effective Set v2.0 generation.
 
 > [!NOTE]
 > These use cases apply only to Effective Set v2.0. Use cases for Effective Set v1.0 are not planned.
