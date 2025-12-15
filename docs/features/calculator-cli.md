@@ -82,9 +82,9 @@
 
 ### [Requirements] EnvGene
 
-1. If a Solution SBOM is not present for the Environment for which Effective Set generation is launched, the Calculator must be launched WITHOUT the following attributes:
+1. If a Solution Descriptor is not present for the Environment for which Effective Set generation is launched, the Calculator must be launched WITHOUT the following attributes:
    1. `--sboms-path`/`-sp`
-   2. `--solution-sbom-path`/`-ssp`
+   2. `--sd-path`/`-sdp`
    3. `--registries`/`-r`
 
 ## Proposed Approach
@@ -101,7 +101,7 @@ Below is a **complete** list of attributes
 | `--envs-path`/`-ep` | string | yes | Path to `/environments` folder | N/A |  `/environments` |
 | `--sboms-path`/`-sp`| string | no | Path to the folder with Application SBOMs. If the attribute is not provided, generation occurs in [No SBOMs Mode](#version-20-no-sboms-mode) | N/A |`/sboms` |
 | `--sd-path`/`-sdp`| string | yes | Path to the Solution Descriptor | N/A | `/environments/cluster/platform-00/Inventory/solution-descriptor/sd.yaml` |
-| `--registries`/`-r`| string | no | Required when `--solution-sbom-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)   | N/A | `/configuration/registry.yml` |
+| `--registries`/`-r`| string | no | Required when `--sd-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)   | N/A | `/configuration/registry.yml` |
 | `--output`/`-o` | string | yes | Folder where the result will be put by Calculator command-line tool | N/A | `/environments/cluster/platform-00/effective-set` |
 | `--effective-set-version`/`-esv` | string | no | The version of the effective set to be generated. Available options are `v1.0` and `v2.0` | `v2.0` | `v1.0` |
 | `--pipeline-consumer-specific-schema-path`/`-pcssp` | string | no | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided  | N/A |  |
@@ -372,16 +372,16 @@ The service name is derived from the `name` attribute of the Application SBOM co
 
 #### [Version 2.0] deployPostfix Matching Logic
 
-When processing the Solution SBOM, the Calculator matches the `deployPostfix` value from each `application` element in the Solution SBOM to the corresponding Namespace folder in the Environment Instance. This matching logic applies to all contexts that use Solution SBOM data (Deployment, Runtime, etc.).
+When processing the Solution Descriptor (SD), the Calculator matches the `deployPostfix` value from each `application` element in the SD to the corresponding Namespace folder in the Environment Instance. This matching logic applies to all contexts that use SD data (Deployment, Runtime, etc.).
 
 The matching logic is as follows:
 
-- First, attempts an exact match: finds a Namespace folder whose name exactly matches the `deployPostfix` value from the Solution SBOM.
+- First, attempts an exact match: finds a Namespace folder whose name exactly matches the `deployPostfix` value from the SD.
 - If no exact match is found, attempts to find a Namespace folder that is part of a BG Domain:
   - Checks for a match with `deployPostfix` + `-origin` suffix **only** for namespaces that are part of a BG Domain with role `origin`
   - Checks for a match with `deployPostfix` + `-peer` suffix **only** for namespaces that are part of a BG Domain with role `peer`
 
-This allows matching `deployPostfix` values from Solution SBOM with Namespace folder names that include suffixes for BG Domain namespaces, as described in [Namespace Folder Name Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation).
+This allows matching `deployPostfix` values from SD with Namespace folder names that include suffixes for BG Domain namespaces, as described in [Namespace Folder Name Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation).
 
 #### [Version 2.0] Handling Missing Attributes in SBOM
 
@@ -468,7 +468,7 @@ complex_key:
 
 SBOMs for Effective Set calculation are optional. When the Calculator command-line tool is launched without the following attributes:
 
-- `--solution-sbom-path`/`-ssp`
+- `--sd-path`/`-ssp`
 - `--sboms-path`/`-sp`
 - `--registries`/`-r`
 

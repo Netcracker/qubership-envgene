@@ -96,7 +96,7 @@ flowchart TD
 
 ## Application Manifest Examples
 
-[Application Manifest JSON schema](/schemas/application-manifest-with-plugins.schema.json)
+[Application Manifest JSON schema](/schemas/application-manifest.schema.json)
 
 ### Simple
 
