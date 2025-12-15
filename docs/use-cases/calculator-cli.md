@@ -12,11 +12,8 @@
     - [UC-CC-DP-4: No BG Domain Match Found](#uc-cc-dp-4-no-bg-domain-match-found)
   - [Cross-Level Parameter References](#cross-level-parameter-references)
     - [UC-CC-HR-1: Namespace to Cloud Reference](#uc-cc-hr-1-namespace-to-cloud-reference)
-    - [UC-CC-DP-2: BG Domain Match](#uc-cc-dp-2-bg-domain-match-1)
     - [UC-CC-HR-2: Namespace to Tenant Reference](#uc-cc-hr-2-namespace-to-tenant-reference)
-    - [UC-CC-DP-3: No Exact Match Found](#uc-cc-dp-3-no-exact-match-found-1)
     - [UC-CC-HR-3: Cloud to Tenant Reference](#uc-cc-hr-3-cloud-to-tenant-reference)
-    - [UC-CC-DP-4: No BG Domain Match Found](#uc-cc-dp-4-no-bg-domain-match-found-1)
     - [UC-CC-HR-4: Cloud to Namespace Reference Error](#uc-cc-hr-4-cloud-to-namespace-reference-error)
     - [UC-CC-HR-5: Tenant to Cloud Reference Error](#uc-cc-hr-5-tenant-to-cloud-reference-error)
     - [UC-CC-HR-6: Tenant to Namespace Reference Error](#uc-cc-hr-6-tenant-to-namespace-reference-error)
@@ -248,52 +245,6 @@ This section covers use cases for cross-level parameter references in Effective 
 1. `deployPostfix` value from Solution SBOM is matched to the Namespace folder with exact name match
 2. Applications from Solution SBOM are associated with the matching Namespace folder in Effective Set
 
-### UC-CC-DP-2: BG Domain Match
-
-**Pre-requisites:**
-
-1. Environment Instance exists with:
-   1. Cloud object with:
-      1. `deployParameters` containing: `cloud_api_url: "https://api.example.com"`
-      2. `e2eParameters` containing: `cloud_test_url: "https://test.example.com"`
-      3. `technicalConfigurationParameters` containing: `cloud_config_url: "https://config.example.com"`
-   2. Namespace object with:
-      1. `deployParameters` containing: `service_url: ${cloud_api_url}`
-      2. `e2eParameters` containing: `test_endpoint: ${cloud_test_url}`
-      3. `technicalConfigurationParameters` containing: `config_endpoint: ${cloud_config_url}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
-   1. Namespace objects
-   2. BG Domain object exists with `origin` and `peer` namespaces with corresponding folders in Environment Instance that match `deployPostfix` values:
-      1. `origin` Namespace (from BG Domain object) folder name equals `deployPostfix` + `-origin` (e.g., `bss-origin`)
-      2. `peer` Namespace (from BG Domain object) folder name equals `deployPostfix` + `-peer` (e.g., `bss-peer`)
-4. Solution SBOM exists with `deployPostfix` values in application elements:
-   1. A `deployPostfix` value that matches `origin` Namespace folder (e.g., `deployPostfix: "bss"` matches `bss-origin`)
-   2. A `deployPostfix` value that matches `peer` Namespace folder (e.g., `deployPostfix: "bss"` matches `bss-peer`)
-
-**Trigger:**
-
-Instance pipeline (GitLab or GitHub) is started with parameters:
-
-1. `ENV_NAMES: <env_name>`
-2. `GENERATE_EFFECTIVE_SET: true`
-
-**Steps:**
-
-1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Resolves parameter references:
-      1. Resolves `${cloud_api_url}` reference from Cloud `deployParameters`
-      2. Resolves `${cloud_test_url}` reference from Cloud `e2eParameters`
-      3. Resolves `${cloud_config_url}` reference from Cloud `technicalConfigurationParameters`
-
-**Results:**
-
-1. References from Namespace to Cloud level are successfully resolved for all parameter types:
-   1. Namespace parameter `service_url` is resolved to `"https://api.example.com"`
-   2. Namespace parameter `test_endpoint` is resolved to `"https://test.example.com"`
-   3. Namespace parameter `config_endpoint` is resolved to `"https://config.example.com"`
-
 ### UC-CC-HR-2: Namespace to Tenant Reference
 
    1. Reads Solution SBOM and extracts `deployPostfix` values from application elements
@@ -311,48 +262,6 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 1. `deployPostfix` value from Solution SBOM is matched to either the `origin` or `peer` Namespace folder in BG Domain (with `-origin` or `-peer` suffix, depending on which match is found)
 2. Applications from Solution SBOM are associated with the matching Namespace folder (`origin` or `peer`) in Effective Set
 
-### UC-CC-DP-3: No Exact Match Found
-
-**Pre-requisites:**
-
-1. Environment Instance exists with:
-   1. Tenant object with:
-      1. `deployParameters` containing: `tenant_id: "acme-corp"`
-      2. `e2eParameters` containing: `tenant_test_id: "acme-test"`
-      3. `technicalConfigurationParameters` containing: `tenant_config_id: "acme-config"`
-   2. Namespace object with:
-      1. `deployParameters` containing: `organization: ${tenant_id}`
-      2. `e2eParameters` containing: `test_org: ${tenant_test_id}`
-      3. `technicalConfigurationParameters` containing: `config_org: ${tenant_config_id}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
-   1. Namespace objects
-   2. No Namespace folder whose name exactly matches the `deployPostfix` value from Solution SBOM
-4. Solution SBOM exists with `deployPostfix` values in application elements
-
-**Trigger:**
-
-Instance pipeline (GitLab or GitHub) is started with parameters:
-
-1. `ENV_NAMES: <env_name>`
-2. `GENERATE_EFFECTIVE_SET: true`
-
-**Steps:**
-
-1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Resolves parameter references:
-      1. Resolves `${tenant_id}` reference from Tenant `deployParameters`
-      2. Resolves `${tenant_test_id}` reference from Tenant `e2eParameters`
-      3. Resolves `${tenant_config_id}` reference from Tenant `technicalConfigurationParameters`
-
-**Results:**
-
-1. References from Namespace to Tenant level are successfully resolved for all parameter types:
-   1. Namespace parameter `organization` is resolved to `"acme-corp"`
-   2. Namespace parameter `test_org` is resolved to `"acme-test"`
-   3. Namespace parameter `config_org` is resolved to `"acme-config"`
-
 ### UC-CC-HR-3: Cloud to Tenant Reference
 
    1. Reads Solution SBOM and extracts `deployPostfix` values from application elements
@@ -367,52 +276,6 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 1. No Namespace folder is matched to the `deployPostfix` value from Solution SBOM
 2. Applications from Solution SBOM with this `deployPostfix` value are not associated with any Namespace folder in Effective Set
 3. Effective Set generation fails with an error indicating that no matching Namespace folder was found in Environment Instance for the `deployPostfix` value from Solution SBOM (e.g., `Error: Cannot find Namespace folder in Environment Instance for deployPostfix: "<deployPostfix>"`)
-
-### UC-CC-DP-4: No BG Domain Match Found
-
-**Pre-requisites:**
-
-1. Environment Instance exists with:
-   1. Tenant object with:
-      1. `deployParameters` containing: `tenant_name: "acme-corp"`
-      2. `e2eParameters` containing: `tenant_test_name: "acme-test"`
-      3. `technicalConfigurationParameters` containing: `tenant_config_name: "acme-config"`
-   2. Cloud object with:
-      1. `deployParameters` containing: `cloud_label: ${tenant_name}`
-      2. `e2eParameters` containing: `cloud_test_label: ${tenant_test_name}`
-      3. `technicalConfigurationParameters` containing: `cloud_config_label: ${tenant_config_name}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
-   1. Namespace objects
-   2. No Namespace folder whose name exactly matches the `deployPostfix` value from Solution SBOM
-   3. BG Domain object exists with `origin` and `peer` namespaces and corresponding folders in Environment Instance, but no matching BG Domain namespace folder exists for the `deployPostfix` value from Solution SBOM:
-      - `deployPostfix` + `-origin` does not match the `origin` Namespace folder name, **OR**
-      - `deployPostfix` + `-peer` does not match the `peer` Namespace folder name, **OR**
-      - Both do not match
-4. Solution SBOM exists with `deployPostfix` values in application elements
-
-**Trigger:**
-
-Instance pipeline (GitLab or GitHub) is started with parameters:
-
-1. `ENV_NAMES: <env_name>`
-2. `GENERATE_EFFECTIVE_SET: true`
-
-**Steps:**
-
-1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Resolves parameter references:
-      1. Resolves `${tenant_name}` reference from Tenant `deployParameters`
-      2. Resolves `${tenant_test_name}` reference from Tenant `e2eParameters`
-      3. Resolves `${tenant_config_name}` reference from Tenant `technicalConfigurationParameters`
-
-**Results:**
-
-1. References from Cloud to Tenant level are successfully resolved for all parameter types:
-   1. Cloud parameter `cloud_label` is resolved to `"acme-corp"`
-   2. Cloud parameter `cloud_test_label` is resolved to `"acme-test"`
-   3. Cloud parameter `cloud_config_label` is resolved to `"acme-config"`
 
 ### UC-CC-HR-4: Cloud to Namespace Reference Error
 
