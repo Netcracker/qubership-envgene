@@ -7,13 +7,16 @@
     - [UC-CC-MR-2: Complex Structure Resolution](#uc-cc-mr-2-complex-structure-resolution)
   - [deployPostfix Matching Logic](#deploypostfix-matching-logic)
     - [UC-CC-DP-1: Exact Match](#uc-cc-dp-1-exact-match)
+    - [UC-CC-DP-2: BG Domain Match](#uc-cc-dp-2-bg-domain-match)
+    - [UC-CC-DP-3: No Exact Match Found](#uc-cc-dp-3-no-exact-match-found)
+    - [UC-CC-DP-4: No BG Domain Match Found](#uc-cc-dp-4-no-bg-domain-match-found)
   - [Cross-Level Parameter References](#cross-level-parameter-references)
     - [UC-CC-HR-1: Namespace to Cloud Reference](#uc-cc-hr-1-namespace-to-cloud-reference)
-    - [UC-CC-DP-2: BG Domain Match](#uc-cc-dp-2-bg-domain-match)
+    - [UC-CC-DP-2: BG Domain Match](#uc-cc-dp-2-bg-domain-match-1)
     - [UC-CC-HR-2: Namespace to Tenant Reference](#uc-cc-hr-2-namespace-to-tenant-reference)
-    - [UC-CC-DP-3: No Exact Match Found](#uc-cc-dp-3-no-exact-match-found)
+    - [UC-CC-DP-3: No Exact Match Found](#uc-cc-dp-3-no-exact-match-found-1)
     - [UC-CC-HR-3: Cloud to Tenant Reference](#uc-cc-hr-3-cloud-to-tenant-reference)
-    - [UC-CC-DP-4: No BG Domain Match Found](#uc-cc-dp-4-no-bg-domain-match-found)
+    - [UC-CC-DP-4: No BG Domain Match Found](#uc-cc-dp-4-no-bg-domain-match-found-1)
     - [UC-CC-HR-4: Cloud to Namespace Reference Error](#uc-cc-hr-4-cloud-to-namespace-reference-error)
     - [UC-CC-HR-5: Tenant to Cloud Reference Error](#uc-cc-hr-5-tenant-to-cloud-reference-error)
     - [UC-CC-HR-6: Tenant to Namespace Reference Error](#uc-cc-hr-6-tenant-to-namespace-reference-error)
@@ -86,50 +89,16 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 ## deployPostfix Matching Logic
 
-This section covers use cases for [deployPostfix Matching Logic](/docs/features/calculator-cli.md#version-20-deploypostfix-matching-logic). The matching logic matches `deployPostfix` values from Solution SBOM to Namespace folders in Environment Instance.
+This section covers use cases for [deployPostfix Matching Logic](/docs/features/calculator-cli.md#version-20-deploypostfix-matching-logic). The matching logic matches `deployPostfix` values from Solution Descriptor(SD) to Namespace folders in Environment Instance.
 
 ### UC-CC-DP-1: Exact Match
 
 **Pre-requisites:**
 
 1. Environment Instance exists with:
-   1. Complex nested parameter structure:
-
-      ```yaml
-      database_config:
-        connection:
-          host: db.example.com
-          port: 5432
-      ```
-
-   2. Parameter that references the complex structure:
-
-      ```yaml
-      api_config: ${database_config}
-      ```
-
-   3. Alternative complex structure with literal block scalar:
-
-      ```yaml
-      yaml_template: |
-        services:
-          api:
-            image: api:latest
-            ports:
-              - 8080:8080
-      ```
-
-   4. Parameter that references the literal block scalar:
-
-      ```yaml
-      rendered_template: ${yaml_template}
-      ```
-
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
    1. Namespace objects
-   2. A Namespace folder whose name exactly matches the `deployPostfix` value from Solution SBOM
-4. Solution SBOM exists with `deployPostfix` values in application elements
+   2. A Namespace folder whose name exactly matches the `deployPostfix` value from Solution Descriptor
+2. SD exists with `deployPostfix` values in application elements
 
 **Trigger:**
 
@@ -141,40 +110,126 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Resolves parameter references using `${...}` macro syntax
-   3. For complex structure references:
-      1. Locates the referenced parameter in Environment Instance
-      2. Extracts the complete nested structure
-      3. Preserves the original structure format (YAML mapping vs literal block scalar)
-      4. Replaces the macro reference with the complete structure, maintaining the original format
+   1. Reads SD and extracts `deployPostfix` values from application elements
+   2. For each `deployPostfix` value from SD:
+      1. Attempts exact match: searches for a Namespace folder in Environment Instance whose name exactly matches the `deployPostfix` value
+      2. Finds exact match
+      3. Uses that Namespace folder
 
 **Results:**
 
-1. Complex parameter references are resolved to their complete nested structures
-2. Structure formats are preserved exactly as defined in Environment Instance:
-   1. `api_config` contains the same nested mapping structure as `database_config`:
+1. `deployPostfix` value from SD is matched to the Namespace folder with exact name match
+2. Applications from SD are associated with the matching Namespace folder in Effective Set
 
-      ```yaml
-      api_config:
-        connection:
-          host: db.example.com
-          port: 5432
-      ```
+### UC-CC-DP-2: BG Domain Match
 
-   2. `rendered_template` contains the same literal block scalar format as `yaml_template`:
+**Pre-requisites:**
 
-      ```yaml
-      rendered_template: |
-        services:
-          api:
-            image: api:latest
-            ports:
-              - 8080:8080
-      ```
+1. Environment Instance exists with:
+   1. Namespace objects
+   2. BG Domain object exists with `origin` and `peer` namespaces with corresponding folders in Environment Instance that match `deployPostfix` values:
+      1. `origin` Namespace (from BG Domain object) folder name equals `deployPostfix` + `-origin` (e.g., `bss-origin`)
+      2. `peer` Namespace (from BG Domain object) folder name equals `deployPostfix` + `-peer` (e.g., `bss-peer`)
+2. SD exists with `deployPostfix` values in application elements:
+   1. A `deployPostfix` value that matches `origin` Namespace folder (e.g., `deployPostfix: "bss"` matches `bss-origin`)
+   2. A `deployPostfix` value that matches `peer` Namespace folder (e.g., `deployPostfix: "bss"` matches `bss-peer`)
 
-3. Effective Set files contain resolved complex parameters with original structure and format preserved
-4. No structure transformation or reformatting occurs during macro resolution
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `GENERATE_EFFECTIVE_SET: true`
+
+**Steps:**
+
+1. The `generate_effective_set` job runs in the pipeline:
+   1. Reads SD and extracts `deployPostfix` values from application elements
+   2. For each `deployPostfix` value from SD:
+      1. Attempts exact match: searches for a Namespace folder in Environment Instance whose name exactly matches the `deployPostfix` value
+      2. No exact match is found
+      3. Searches for a Namespace folder in BG Domain:
+         1. Searches for a Namespace folder with role `origin` (from BG Domain object) whose name equals `deployPostfix` + `-origin`
+         2. Searches for a Namespace folder with role `peer` (from BG Domain object) whose name equals `deployPostfix` + `-peer`
+      4. Finds matching Namespace folder (either `origin` or `peer`)
+      5. Uses that Namespace folder
+
+**Results:**
+
+1. `deployPostfix` value from SD is matched to either the `origin` or `peer` Namespace folder in BG Domain (with `-origin` or `-peer` suffix, depending on which match is found)
+2. Applications from SD are associated with the matching Namespace folder (`origin` or `peer`) in Effective Set
+
+### UC-CC-DP-3: No Exact Match Found
+
+**Pre-requisites:**
+
+1. Environment Instance exists with:
+   1. Namespace objects
+   2. No Namespace folder whose name exactly matches the `deployPostfix` value from SD
+2. SD exists with `deployPostfix` values in application elements
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `GENERATE_EFFECTIVE_SET: true`
+
+**Steps:**
+
+1. The `generate_effective_set` job runs in the pipeline:
+   1. Reads SD and extracts `deployPostfix` values from application elements
+   2. For each `deployPostfix` value from SD:
+      1. Attempts exact match: searches for a Namespace folder whose name exactly matches the `deployPostfix` value
+      2. No exact match is found
+      3. No matching Namespace folder is found for the `deployPostfix` value
+   3. Effective Set generation fails with an error
+
+**Results:**
+
+1. No Namespace folder is matched to the `deployPostfix` value from SD
+2. Applications from SD with this `deployPostfix` value are not associated with any Namespace folder in Effective Set
+3. Effective Set generation fails with an error indicating that no matching Namespace folder was found in Environment Instance for the `deployPostfix` value from SD (e.g., `Error: Cannot find Namespace folder in Environment Instance for deployPostfix: "<deployPostfix>"`)
+
+### UC-CC-DP-4: No BG Domain Match Found
+
+**Pre-requisites:**
+
+1. Environment Instance exists with:
+   1. Namespace objects
+   2. No Namespace folder whose name exactly matches the `deployPostfix` value from SD
+   3. BG Domain object exists with `origin` and `peer` namespaces and corresponding folders in Environment Instance, but no matching BG Domain namespace folder exists for the `deployPostfix` value from SD:
+      - `deployPostfix` + `-origin` does not match the `origin` Namespace folder name, **OR**
+      - `deployPostfix` + `-peer` does not match the `peer` Namespace folder name, **OR**
+      - Both do not match
+2. SD exists with `deployPostfix` values in application elements
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `GENERATE_EFFECTIVE_SET: true`
+
+**Steps:**
+
+1. The `generate_effective_set` job runs in the pipeline:
+   1. Reads SD and extracts `deployPostfix` values from application elements
+   2. For each `deployPostfix` value from SD:
+      1. Attempts exact match: searches for a Namespace folder whose name exactly matches the `deployPostfix` value
+      2. No exact match is found
+      3. Searches for a Namespace folder in BG Domain:
+         1. Searches for a Namespace folder with role `origin` (from BG Domain object) whose name equals `deployPostfix` + `-origin`
+         2. Searches for a Namespace folder with role `peer` (from BG Domain object) whose name equals `deployPostfix` + `-peer`
+      4. No matching BG Domain namespace folder is found
+   3. No matching Namespace folder is found for the `deployPostfix` value
+   4. Effective Set generation fails with an error
+
+**Results:**
+
+1. No Namespace folder is matched to the `deployPostfix` value from SD
+2. Applications from SD with this `deployPostfix` value are not associated with any Namespace folder in Effective Set
+3. Effective Set generation fails with an error indicating that no matching Namespace folder was found in Environment Instance for the `deployPostfix` value(s) from SD. The error message lists all `deployPostfix` values that could not be matched (e.g., `Cannot find Namespace folder in Environment Instance for deployPostfix: "<deployPostfix>", "<deployPostfix>"`)
 
 ## Cross-Level Parameter References
 
