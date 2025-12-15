@@ -33,6 +33,7 @@ import org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage;
 import org.qubership.cloud.devops.cli.pojo.dto.input.InputData;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SBApplicationDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionBomDTO;
+import org.qubership.cloud.devops.cli.pojo.dto.sd.SolutionDescriptorDTO;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
 import org.qubership.cloud.devops.commons.exceptions.FileParseException;
@@ -376,30 +377,30 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void loadSDData(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
-        Optional<String> solsbomPath = sharedData.getSolsbomPath();
-        if (solsbomPath.isPresent()) {
-            Bom bomContent = fileDataConverter.parseInputFile(Bom.class, new File(solsbomPath.get()));
-            List<SBApplicationDTO> applications = bomContent.getComponents().stream()
-                    .filter(component -> "application".equals(component.getType().getTypeName()))
-                    .map(component -> getSbApplicationDTO(nsWithAppsFromSD, appsToProcess, component))
+        Optional<String> sdPath = sharedData.getSdPath();
+        if (sdPath.isPresent()) {
+            SolutionDescriptorDTO solDescDTO = fileDataConverter.parseInputFile(SolutionDescriptorDTO.class, new File(sdPath.get()));
+            List<SBApplicationDTO> applications = solDescDTO.getApplications().stream()
+                    .map(applicationDTO -> getSbApplicationDTO(nsWithAppsFromSD, appsToProcess, applicationDTO))
                     .collect(Collectors.toList());
 
             inputData.setSolutionBomDTO(Optional.ofNullable(SolutionBomDTO.builder().applications(applications).build()));
         }
     }
 
-    private SBApplicationDTO getSbApplicationDTO(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, Component component) {
-        String namespace = bomReaderUtils.getPropertyValue(component, "deployPostfix");
-        String appFileRef = String.format("%s/%s", sharedData.getSbomsPath().get(),
-                bomReaderUtils.getExternalRefValue(component, "bom").replace("file://", ""));
+    private SBApplicationDTO getSbApplicationDTO(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess, SolutionDescriptorDTO.ApplicationDTO applicationDTO) {
+        String namespace = applicationDTO.getDeployPostfix();
+        String appName = applicationDTO.getVersion().split(":")[0];
+        String appVersion = applicationDTO.getVersion().replace(":", "-");
+        String appFileRef = String.format("%s/%s", sharedData.getSbomsPath().get(), appVersion +".sbom.json");
         SBApplicationDTO dto = SBApplicationDTO.builder()
-                .appName(component.getName())
-                .appVersion(component.getVersion())
+                .appName(appName)
+                .appVersion(appVersion)
                 .namespace(namespace)
                 .appFileRef(appFileRef)
                 .build();
-        appsToProcess.add(dto.getAppName());
-        nsWithAppsFromSD.computeIfAbsent(namespace, k -> new ArrayList<>()).add(dto.getAppName());
+        appsToProcess.add(appName);
+        nsWithAppsFromSD.computeIfAbsent(namespace, k -> new ArrayList<>()).add(appName);
         return dto;
     }
 

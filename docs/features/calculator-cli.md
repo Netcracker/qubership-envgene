@@ -19,6 +19,7 @@
       - [\[Version 2.0\] Effective Set Structure](#version-20-effective-set-structure)
       - [\[Version 2.0\] Parameter type conversion](#version-20-parameter-type-conversion)
       - [\[Version 2.0\] Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention)
+      - [\[Version 2.0\] deployPostfix Matching Logic](#version-20-deploypostfix-matching-logic)
       - [\[Version 2.0\] Handling Missing Attributes in SBOM](#version-20-handling-missing-attributes-in-sbom)
       - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
       - [\[Version 2.0\] Sensitive parameters processing](#version-20-sensitive-parameters-processing)
@@ -49,6 +50,7 @@
         - [\[Version 2.0\]\[Topology Context\] `k8s_tokens` Example](#version-20topology-context-k8s_tokens-example)
         - [\[Version 2.0\]\[Topology Context\] `environments` Example](#version-20topology-context-environments-example)
         - [\[Version 2.0\]\[Topology Context\] `cluster` Example](#version-20topology-context-cluster-example)
+        - [\[Version 2.0\]\[Topology Context\] `bg_domain` Example](#version-20topology-context-bg_domain-example)
       - [\[Version 2.0\] Runtime Parameter Context](#version-20-runtime-parameter-context)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `parameters.yaml`](#version-20runtime-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `credentials.yaml`](#version-20runtime-parameter-context-credentialsyaml)
@@ -113,7 +115,7 @@ Below is a **complete** list of attributes
 
 [Registry config JSON Schema](/schemas/registry.schema.json)
 
-[Registry config example](/schemas/registry.yml)
+[Registry config example](/examples/registry.yml)
 
 ### Effective Set v1.0
 
@@ -126,7 +128,7 @@ Below is a **complete** list of attributes
         └── <environment-name-01>
             └── effective-set
                 ├── mapping.yml
-                ├── <deployPostfix-01>
+                ├── <namespace-folder-01>
                 |   ├── <application-name-01>
                 |   |   ├── deployment-parameters.yaml
                 |   |   ├── technical-configuration-parameters.yaml
@@ -135,7 +137,7 @@ Below is a **complete** list of attributes
                 |       ├── deployment-parameters.yaml
                 |       ├── technical-configuration-parameters.yaml
                 |       └── credentials.yaml
-                └── <deployPostfix-02>
+                └── <namespace-folder-02>
                     ├── <application-name-01>
                     |   ├── deployment-parameters.yaml
                     |   ├── technical-configuration-parameters.yaml
@@ -241,7 +243,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   └── <consumer-name-02>-credentials.yaml
                 ├── deployment
                 |   ├── mapping.yml
-                |   ├── <deployPostfix-01>
+                |   ├── <namespace-folder-01>
                 |   |   ├── <application-name-01>
                 |   |   |   └── values
                 |   |   |       ├── per-service-parameters
@@ -270,7 +272,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   |           ├── credentials.yaml
                 |   |           ├── collision-credentials.yaml
                 |   |           └── deploy-descriptor.yaml
-                |   └── <deployPostfix-02>
+                |   └── <namespace-folder-02>
                 |       ├── <application-name-01>
                 |       |   └── values
                 |       |       ├── per-service-parameters
@@ -301,14 +303,14 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |               └── deploy-descriptor.yaml
                 ├── runtime
                 |   ├── mapping.yml
-                |   ├── <deployPostfix-01>
+                |   ├── <namespace-folder-01>
                 |   |   ├── <application-name-01>
                 |   |   |   ├── parameters.yaml
                 |   |   |   └── credentials.yaml
                 |   |   └── <application-name-02>
                 |   |       ├── parameters.yaml
                 |   |       └── credentials.yaml
-                |   └── <deployPostfix-02>
+                |   └── <namespace-folder-02>
                 |       ├── <application-name-01>
                 |       |   ├── parameters.yaml
                 |       |   └── credentials.yaml
@@ -317,13 +319,15 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |           └── credentials.yaml
                 └── cleanup
                     ├── mapping.yml
-                    ├── <deployPostfix-01>
+                    ├── <namespace-folder-01>
                     |   ├── parameters.yaml
                     |   └── credentials.yaml
-                    └── <deployPostfix-02>
+                    └── <namespace-folder-02>
                         ├── parameters.yaml
                         └── credentials.yaml
 ```
+
+The namespace folder names in Effective Set v2.0 (e.g., `<namespace-folder-01>`, `<namespace-folder-02>`) must match exactly the namespace folder names from the Environment Instance (the folder name is a child of `Namespaces` and parent of `namespace.yml`). These folder names are used consistently across all Effective Set contexts (deployment, runtime, cleanup) and in `mapping.yml` files.
 
 #### [Version 2.0] Parameter type conversion
 
@@ -348,6 +352,19 @@ It includes components from the Application SBOM with these `mime-type`:
 - `application/octet-stream`
 
 The service name is derived from the `name` attribute of the Application SBOM component.
+
+#### [Version 2.0] deployPostfix Matching Logic
+
+When processing the Solution SBOM, the Calculator matches the `deployPostfix` value from each `application` element in the Solution SBOM to the corresponding Namespace folder in the Environment Instance. This matching logic applies to all contexts that use Solution SBOM data (Deployment, Runtime, etc.).
+
+The matching logic is as follows:
+
+- First, attempts an exact match: finds a Namespace folder whose name exactly matches the `deployPostfix` value from the Solution SBOM.
+- If no exact match is found, attempts to find a Namespace folder that is part of a BG Domain:
+  - Checks for a match with `deployPostfix` + `-origin` suffix **only** for namespaces that are part of a BG Domain with role `origin`
+  - Checks for a match with `deployPostfix` + `-peer` suffix **only** for namespaces that are part of a BG Domain with role `peer`
+
+This allows matching `deployPostfix` values from Solution SBOM with Namespace folder names that include suffixes for BG Domain namespaces, as described in [Namespace Folder Name Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation).
 
 #### [Version 2.0] Handling Missing Attributes in SBOM
 
@@ -387,9 +404,9 @@ Sensitive parameters in the Effective Set are grouped into dedicated credentials
 1. `effective-set/topology/credentials.yaml`
 2. `effective-set/pipeline/credentials.yaml`
 3. `effective-set/pipeline/<consumer-name>-credentials.yaml`
-4. `effective-set/deployment/<deployPostfix>/<application-name>/credentials.yaml`
-5. `effective-set/deployment/<deployPostfix>/<application-name>/collision-credentials.yaml`
-6. `effective-set/runtime/<deployPostfix>/<application-name>/credentials.yaml`
+4. `effective-set/deployment/<namespace-folder>/<application-name>/credentials.yaml`
+5. `effective-set/deployment/<namespace-folder>/<application-name>/collision-credentials.yaml`
+6. `effective-set/runtime/<namespace-folder>/<application-name>/credentials.yaml`
 
 **Splitting principle:**
 
@@ -451,7 +468,7 @@ These parameters establish a dedicated rendering context exclusively applied dur
 
 This context is formed as a result of merging parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects. Parameters from the Application SBOM and `Resource Profile` objects of the Environment Instance also contribute to the formation of this context.
 
-For each namespace/deploy postfix, the context contains files:
+For each namespace (identified by its folder name), the context contains files:
 
 ##### \[Version 2.0][Deployment Parameter Context] `deployment-parameters.yaml`
 
@@ -907,14 +924,15 @@ This mapping is necessary because the Effective Set consumer requires knowledge 
 
 ```yaml
 ---
-<namespace-name-01>: <path-to-deployPostfix-01-folder-in-effective-set-file-structure>
-<namespace-name-02>: <path-to-deployPostfix-02-folder-in-effective-set-file-structure>
+<namespace-name-01>: <path-to-namespace-folder-01-in-effective-set-file-structure>
+<namespace-name-02>: <path-to-namespace-folder-02-in-effective-set-file-structure>
 ```
 
-Namespace name is taken from the `name` attribute of Namespace
-Deploy postfix is taken from the Environment Instance's namespace folder name (a child of `Namespace` and parent of namespace.yml)
+Namespace name is taken from the `name` attribute of Namespace.
 
 Path is relative to the Instance repository (i.e., it starts with `/environments`)
+
+The namespace folder name in Effective Set v2.0 must match exactly the namespace folder name from the Environment Instance (the folder name is a child of `Namespaces` and parent of `namespace.yml`). This folder name is used both in `mapping.yml` paths and in the Effective Set file structure.
 
 For example:
 
@@ -1024,8 +1042,9 @@ This context only contains parameters generated by EnvGene:
 |---|---|---|---|---|
 | **composite_structure** | Mandatory | Contains the unmodified [Composite Structure](/docs/envgene-objects.md#composite-structure) object of the Environment Instance for which the Effective Set is generated. This variable is located in `parameters.yaml` | `{}`| [example](#version-20topology-context-composite_structure-example) |
 | **k8s_tokens** | Mandatory | Contains deployment tokens for each namespace in the Environment Instance. The value is derived from the `data.secret` property of the Credential specified via `defaultCredentialsId` attribute in the corresponding `Namespace` or parent `Cloud`. If the attribute is not defined at the `Namespace` level, it is inherited from the parent `Cloud`. If defined at both levels, the `Namespace` value takes precedence. Either the `Cloud` or `Namespace` must define `defaultCredentialsId`. This variable is located in `credentials.yaml` | None | [example](#version-20topology-context-k8s_tokens-example) |
-| **environments** | Mandatory | Contains **all** repository Environments, not just the one for which the Effective Set calculation was run. For each Environment, it includes the names of its contained namespaces. For each namespace, it provides a deploy postfix. The `deployPostfix` is taken from the Environment Instance's namespace folder name (a child of `Namespace` and parent of namespace.yml), which also acts as the namespace template name. This variable is located in `parameters.yaml` | None | [example](#version-20topology-context-environments-example) |
+| **environments** | Mandatory | Contains **all** repository Environments, not just the one for which the Effective Set calculation was run. For each Environment, it includes the names of its contained namespaces. For each namespace, it provides a `deployPostfix` attribute. The `deployPostfix` value is derived from the namespace folder name (a child of `Namespaces` and parent of `namespace.yml`). For namespaces that are part of a BG Domain with roles `peer` or `origin`, the `deployPostfix` is obtained by removing the suffix `-peer` or `-origin` respectively from the namespace folder name. For all other namespaces (including `controller` namespace in BG Domain), the `deployPostfix` equals the namespace folder name. The namespace folder name is determined according to [Namespace Folder Name Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation) rules. This variable is located in `parameters.yaml` | None | [example](#version-20topology-context-environments-example) |
 | **cluster** | Mandatory | Contains information about the cluster where the Environment Instance is deployed. Includes cluster name, type, and other cluster-specific metadata taken from the [Cloud](/docs/envgene-objects.md#cloud) object. This variable is located in `parameters.yaml` | `{}` | [example](#version-20topology-context-cluster-example) |
+| **bg_domain** | Mandatory | Contains the [BG Domain](/docs/envgene-objects.md#bg-domain) object from the Environment Instance for which the Effective Set is generated. Additionally, two extra sensitive attributes are added: `bg_domain.controllerNamespace.username` and `bg_domain.controllerNamespace.password`, whose values are taken from the [Credential](/docs/envgene-objects.md#credential) with `usernamePassword` type and the ID from the `bg_domain.controllerNamespace.credentials` attribute. The `credentials` attribute is removed. Non-sensitive parts of this variable are stored in `parameters.yaml`, while sensitive parts are stored in `credentials.yaml`. | `{}` | [example](#version-20topology-context-bg_domain-example) |
 
 ##### \[Version 2.0][Topology Context] `composite_structure` Example
 
@@ -1040,6 +1059,26 @@ composite_structure:
       type: "namespace"
     - name: "env-1-oss"
       type: "namespace"
+```
+
+```yaml
+composite_structure:
+  name: "clusterA-env-1-composite-structure"
+  baseline:
+    type: bgdomain
+    name: env-1-bg-domain
+    originNamespace:
+      type: namespace
+      name: env-1-bss-origin
+    peerNamespace:
+      type: namespace
+      name: env-1-bss-peer
+    controllerNamespace:
+      type: namespace
+      name: env-1-bss-controller
+  satellites:
+    - type: "namespace"
+      name: "env-1-data-management"
 ```
 
 ##### \[Version 2.0][Topology Context] `k8s_tokens` Example
@@ -1058,7 +1097,7 @@ environments:
   <environment-id>: # In `cluster-name/env-name` notation
     namespaces:
       <namespace>: # Namespace `name` attribute
-        deployPostfix: <deploy-postfix> # Namespace `deployPostfix` attribute
+        deployPostfix: <namespace-folder-name> # For origin/peer namespaces, suffixes '-origin' or '-peer' are removed
       ...
   ...
 ```
@@ -1067,9 +1106,13 @@ environments:
 environments:
   cluster-1/env-1:
     namespaces:
-      env-1-core:
-        deployPostfix: core
-      env-1-bss:
+      env-1-data-management:
+        deployPostfix: data-management
+      env-1-controller:
+        deployPostfix: controller
+      env-1-bss-origin:
+        deployPostfix: bss
+      env-1-baseline-peer:
         deployPostfix: bss
   cluster-2/env-2:
     namespaces:
@@ -1084,13 +1127,42 @@ environments:
 ```yaml
 cluster:
   # Taken from the `apiUrl` attribute of the Cloud
-  api_url: "api.cl-03.managed.qubership.cloud"
+  api_url: "api.cl-03.managed.qubership.org"
   # Taken from the `apiPort` attribute of the Cloud
   api_port: "6443"
   # Taken from the `publicUrl` attribute of the Cloud
-  public_url: "apps.cl-03.managed.qubership.cloud"
+  public_url: "apps.cl-03.managed.qubership.org"
   # Taken from the `protocol` attribute of the Cloud
   protocol: "https"
+```
+
+##### \[Version 2.0][Topology Context] `bg_domain` Example
+
+**`parameters.yaml`**
+
+```yaml
+bg_domain:
+  name: env-1-bg-domain
+  type: bgdomain
+  originNamespace:
+    name: env-1-bss-origin
+    type: namespace
+  peerNamespace:
+    name: env-1-bss-peer
+    type: namespace
+  controllerNamespace:
+    name: env-1-controller
+    type: namespace
+    url: https://controller-env-1-controller.qubership.org
+```
+
+**`credentials.yaml`**
+
+```yaml
+bg_domain:
+  controllerNamespace:
+    username: user-placeholder-123
+    password: pass-placeholder-123
 ```
 
 #### [Version 2.0] Runtime Parameter Context
@@ -1099,7 +1171,7 @@ This file's parameters define a **distinct** context for managing application be
 
 This context is formed as a result of merging parameters defined in the `technicalConfigurationParameters` sections of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects.
 
-For each namespace/deploy postfix, the context contains two files:
+For each namespace (identified by its folder name), the context contains two files:
 
 ##### \[Version 2.0][Runtime Parameter Context] `parameters.yaml`
 
@@ -1136,7 +1208,7 @@ The contents of this file are identical to [mapping.yml in the Deployment Parame
 
 The cleanup context is used by systems that perform cleanup operations on cluster entities within a specific namespace. This context is formed by merging parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects.
 
-For each namespace/deploy postfix, the context contains the following files:
+For each namespace (identified by its folder name), the context contains the following files:
 
 ##### \[Version 2.0][Cleanup Context] `parameters.yaml`
 
