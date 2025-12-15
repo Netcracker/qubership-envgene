@@ -1,0 +1,8 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "cloud"
+deployParameters:
+  TEST_DEPLOY_SECRET: "${creds.get('creds-get-secret').secret}"
+  PARAM_4: "value-4" # paramset: oss version: 25.1 source: template
+technicalConfigurationParameters: {}

@@ -17,20 +17,20 @@ The EnvGene pipeline (`Envgene.yaml`) is a GitHub Actions workflow that supports
 
 ## Available Parameters
 
-GitHub's UI limits manual inputs to 10 parameters. To handle this limitation while maintaining full functionality, we expose the most frequently used parameters directly in the UI and group the remaining parameters within the [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#gh_additional_params) parameter.
+GitHub's UI limits manual inputs to 10 parameters. To handle this limitation while maintaining full functionality, we expose the most frequently used parameters directly in the UI and group the remaining parameters within the [GH_ADDITIONAL_PARAMS](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#gh_additional_params) parameter.
 
 Only a limited number of core parameters are available in the GitHub version of the pipeline:
 
-- [ENV_NAMES](/docs/instance-pipeline-parameters.md#env_names)
-- [DEPLOYMENT_TICKET_ID](/docs/instance-pipeline-parameters.md#deployment_ticket_id)
-- [ENV_TEMPLATE_VERSION](/docs/instance-pipeline-parameters.md#env_template_version)
-- [ENV_BUILDER](/docs/instance-pipeline-parameters.md#env_builder)
-- [GENERATE_EFFECTIVE_SET](/docs/instance-pipeline-parameters.md#generate_effective_set)
-- [GET_PASSPORT](/docs/instance-pipeline-parameters.md#get_passport)
-- [CMDB_IMPORT](/docs/instance-pipeline-parameters.md#cmdb_import)
-- [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#GH_ADDITIONAL_PARAMS)
+- [ENV_NAMES](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#env_names)
+- [DEPLOYMENT_TICKET_ID](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#deployment_ticket_id)
+- [ENV_TEMPLATE_VERSION](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#env_template_version)
+- [ENV_BUILDER](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#env_builder)
+- [GENERATE_EFFECTIVE_SET](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#generate_effective_set)
+- [GET_PASSPORT](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#get_passport)
+- [CMDB_IMPORT](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#cmdb_import)
+- [GH_ADDITIONAL_PARAMS](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#gh_additional_params)
 
-The [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#GH_ADDITIONAL_PARAMS) parameter serves as a wrapper for all parameters except those listed above. This approach enables the transmission of all [Instance Pipeline parameters](/docs/instance-pipeline-parameters.md).
+The [GH_ADDITIONAL_PARAMS](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#gh_additional_params) parameter serves as a wrapper for all parameters except those listed above. This approach enables the transmission of all [Instance Pipeline parameters](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md).
 
 ## How to Trigger the Pipeline
 
@@ -57,8 +57,8 @@ curl -X POST \
   -d '{
     "ref": "<branch-name>",
     "inputs": {
-      "<instance-pipeline-parameter-key>": "<instance-pipeline-parameter-value>"
-      "GH_ADDITIONAL_PARAMS": "<json-in-string>"
+      "<instance-pipeline-parameter-key>": "<instance-pipeline-parameter-value>",
+      "GH_ADDITIONAL_PARAMS": "KEY1=VALUE1,KEY2=VALUE2"
     }
   }'
 ```
@@ -75,7 +75,7 @@ curl -X POST \
         "inputs": {
             "ENV_NAMES": "test-cluster/e01",
             "ENV_BUILDER": "true",
-            `GENERATE_EFFECTIVE_SET`: "true"
+            "GENERATE_EFFECTIVE_SET": "true",
             "DEPLOYMENT_TICKET_ID": "QBSHP-0001",
             "GH_ADDITIONAL_PARAMS": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
         }
@@ -95,8 +95,8 @@ When parameter keys from different sources overlap, their values are replaced ac
 
 Best practices for setting variables are:
 
-- Define in CI/CD variables [EnvGene repository variables](/docs/envgene-repository-variables.md)
-- Pass through GitHub Actions UI or GitHub API Call [Instance Pipeline parameters](/docs/instance-pipeline-parameters.md)
+- Define in CI/CD variables [EnvGene repository variables](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-repository-variables.md)
+- Pass through GitHub Actions UI or GitHub API Call [Instance Pipeline parameters](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md)
 - Use `pipeline_vars.env` for debug purposes
 
 ## `pipeline_vars.env`
@@ -110,7 +110,7 @@ ENV_SPECIFIC_PARAMS={"clusterParams":{"clusterEndpoint":"<value>","clusterToken"
 EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}
 ```
 
-Variables set in this file must NOT be wrapped with [GH_ADDITIONAL_PARAMS](/docs/instance-pipeline-parameters.md#gh_additional_params)
+Variables set in this file must NOT be wrapped with [GH_ADDITIONAL_PARAMS](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#gh_additional_params)
 
 ## Pipeline Customization
 

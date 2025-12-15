@@ -191,7 +191,7 @@ public class NamespaceMap extends DynamicMap {
                 // Deployer parameters
                 addGatewayIdentityUrls(config.getCustomParameters(), map, false, protocol.toLowerCase(), customHost, gatewayNamespace, idpUrlNamespace);
                 addGatewayIdentityUrls(config.getCustomParameters(), map, true, protocol.toLowerCase(), cloudHostname, gatewayNamespace, idpUrlNamespace);
-                map.putIfAbsent(SSL_SECRET, "defaultsslcertificate");
+//                map.putIfAbsent(SSL_SECRET, "defaultsslcertificate"); setting this value after being validated finally
                 map.putIfAbsent(BUILD_TAG_NEW, "keycloak-database");
                 if (binding.getDeployerInputs() != null) {
                     map.put("CLIENT_PREFIX", originalNamespace);

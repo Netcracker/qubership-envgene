@@ -1,0 +1,144 @@
+global: &id002
+  deployDescriptor: &id001
+    patroni-core:
+      artifacts: []
+      deploy_param: ''
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 2.10.5_20241215-141230_patroni-core-operator
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator:2.10.5_20241215-141230_patroni-core-operator
+      git_branch: 2.10.5
+      git_revision: a7f2b8c9d1e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7
+      git_url: https://git.qubership.org/platform.ha/postgres-operator/tree/a7f2b8c9d1e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7
+      image: artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator:2.10.5_20241215-141230_patroni-core-operator
+      image_name: patroni-core
+      image_type: service
+      name: patroni-core
+      promote_artifacts: 'False'
+      qualifier: prod.platform.ha_postgres
+      version: 2.10.5-patroni-core-operator-SNAPSHOT
+    pg_patroni:
+      artifacts: []
+      deploy_param: pg_patroni
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17125
+      docker_repository_name: product
+      docker_tag: release-2024.2-2.10.0_20240715-123045_pg16
+      full_image_name: artifactory.qubership.org:17125/product/prod.platform.ha_pg-patroni:release-2024.2-2.10.0_20240715-123045_pg16
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17125/product/prod.platform.ha_pg-patroni:release-2024.2-2.10.0_20240715-123045_pg16
+      image_name: prod.platform.ha_pg-patroni
+      image_type: image
+      name: pg_patroni
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    pg_upgrade:
+      artifacts: []
+      deploy_param: pg_upgrade
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17125
+      docker_repository_name: product
+      docker_tag: release-2024.2-2.10.0_20240716-142315_pg-upgrade
+      full_image_name: artifactory.qubership.org:17125/product/prod.platform.ha_pg-service:release-2024.2-2.10.0_20240716-142315_pg-upgrade
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17125/product/prod.platform.ha_pg-service:release-2024.2-2.10.0_20240716-142315_pg-upgrade
+      image_name: prod.platform.ha_pg-service
+      image_type: image
+      name: pg_upgrade
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    pgbackrest_sidecar:
+      artifacts: []
+      deploy_param: pgbackrest_sidecar
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17263
+      docker_repository_name: qubership
+      docker_tag: release-2024.2-2.10.0
+      full_image_name: artifactory.qubership.org:17263/qubership/pgskipper-pgbackrest-sidecar:release-2024.2-2.10.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17263/qubership/pgskipper-pgbackrest-sidecar:release-2024.2-2.10.0
+      image_name: pgskipper-pgbackrest-sidecar
+      image_type: image
+      name: pgbackrest_sidecar
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    postgres_operator_init:
+      artifacts: []
+      deploy_param: postgres_operator_init
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17208
+      docker_repository_name: product
+      docker_tag: 2.10.5_20241215-141230_init
+      full_image_name: artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator:2.10.5_20241215-141230_init
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator:2.10.5_20241215-141230_init
+      image_name: prod.platform.ha_postgres-operator
+      image_type: image
+      name: postgres_operator_init
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    postgres_operator_tests:
+      artifacts: []
+      deploy_param: postgres_operator_tests
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17263
+      docker_repository_name: qubership
+      docker_tag: release-2024.2-2.10.0
+      full_image_name: artifactory.qubership.org:17263/qubership/pgskipper-operator-tests:release-2024.2-2.10.0
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17263/qubership/pgskipper-operator-tests:release-2024.2-2.10.0
+      image_name: pgskipper-operator-tests
+      image_type: image
+      name: postgres_operator_tests
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+    vault_env:
+      artifacts: []
+      deploy_param: vault_env
+      docker_digest: ''
+      docker_registry: artifactory.qubership.org:17175
+      docker_repository_name: banzaicloud
+      docker_tag: 2.5.1
+      full_image_name: artifactory.qubership.org:17175/banzaicloud/vault-env:2.5.1
+      git_branch: ''
+      git_revision: ''
+      git_url: ''
+      image: artifactory.qubership.org:17175/banzaicloud/vault-env:2.5.1
+      image_name: vault-env
+      image_type: image
+      name: vault_env
+      promote_artifacts: ''
+      qualifier: ''
+      version: ''
+deployDescriptor: *id001
+patroni-core: &id003
+  APPLICATION_NAME: postgres
+  DEPLOYMENT_SESSION_ID: 6d5a6ce9-0b55-429d-8877-f7a88dae3d9c
+  MANAGED_BY: argocd
+  deployDescriptor: *id001
+  global: *id002
+pg_patroni: *id003
+pg_upgrade: *id003
+pgbackrest_sidecar: *id003
+postgres_operator_init: *id003
+postgres_operator_tests: *id003
+vault_env: *id003
+APPLICATION_NAME: postgres
+DEPLOYMENT_SESSION_ID: 6d5a6ce9-0b55-429d-8877-f7a88dae3d9c
+MANAGED_BY: argocd

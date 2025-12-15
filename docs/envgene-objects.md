@@ -7,8 +7,8 @@
       - [Tenant Template](#tenant-template)
       - [Cloud Template](#cloud-template)
       - [Namespace Template](#namespace-template)
-      - [ParameterSet (in Template repository)](#parameterset-in-template-repository)
-      - [Resource Profile Override (in Template)](#resource-profile-override-in-template)
+      - [Template ParameterSet](#template-parameterset)
+      - [Template Resource Profile Override](#template-resource-profile-override)
       - [Composite Structure Template](#composite-structure-template)
       - [BG Domain Template](#bg-domain-template)
       - [Registry Definition Template](#registry-definition-template)
@@ -20,9 +20,10 @@
       - [Cloud](#cloud)
       - [Namespace](#namespace)
       - [Application](#application)
-      - [Resource Profile Override (in Instance)](#resource-profile-override-in-instance)
+      - [Resource Profile Override](#resource-profile-override)
       - [Composite Structure](#composite-structure)
       - [BG Domain](#bg-domain)
+    - [BG State Files](#bg-state-files)
     - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
@@ -30,7 +31,8 @@
     - [Environment Credentials File](#environment-credentials-file)
     - [Shared Credentials File](#shared-credentials-file)
     - [System Credentials File (in Instance repository)](#system-credentials-file-in-instance-repository)
-      - [ParameterSet (in Instance repository)](#parameterset-in-instance-repository)
+    - [Environment Specific ParameterSet](#environment-specific-parameterset)
+    - [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override)
     - [Cloud Passport](#cloud-passport)
       - [Main File](#main-file)
       - [Credential File](#credential-file)
@@ -102,23 +104,28 @@ cloud:
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
   overrides-parent:
     profile:
-      override-profile-name: string
-      parent-profile-name: string
-      baseline-profile-name: string
-      merge-with-parent: string
-    deployParameters: hashmap
-    e2eParameters: hashmap
-    technicalConfigurationParameters: hashmap
-    deployParameterSets: list
-    e2eParameterSets: list
-    technicalConfigurationParameterSets: list
-composite_structure: string
+      override-profile-name: <resource-profile-override-name>
+      parent-profile-name: <resource-profile-override-name>
+      baseline-profile-name: <resource-profile-baseline-name>
+      merge-with-parent: <boolean>
+    deployParameters: <hashmap-with-parameters>
+    e2eParameters: <hashmap-with-parameters>
+    technicalConfigurationParameters: <hashmap-with-parameters>
+    deployParameterSets: <list-with-parameter-sets>
+    e2eParameterSets: <list-with-parameter-sets>
+    technicalConfigurationParameterSets: <list-with-parameter-sets>
+# Optional
+composite_structure: <path-to-the-composite-structure-template-file>
+# Optional
+bg_domain: <path-to-the-bg-domain-template-file>
+# Optional
 namespaces:
   - # Optional
     # Path to the namespace template file
     template_path: string
     # Optional
-    # Used for determining the name of the parent folder for the Namespace when generating the Environment Instance
+    # Used for determining the name of the parent folder for the Namespace when generating the Environment Instance.
+    # See [Environment Instance Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation) for detailed rules.
     # If the value is not specified, the name of the namespace template file (without extension) is used
     deploy_postfix: <deploy-postfix>
     # Optional
@@ -208,7 +215,7 @@ technicalConfigurationParameterSets:
   - core-runtime
 ```
 
-#### ParameterSet (in Template repository)
+#### Template ParameterSet
 
 A ParameterSet is a container for a set of parameters that can be reused across multiple templates. This helps to avoid duplication and simplifies parameter management. ParameterSets are processed during the generation of an Environment Instance.
 
@@ -224,7 +231,7 @@ ParameterSets also allow to define application-level parameters, i.e., parameter
 
 ParameterSets can be parameterized using Jinja and [macros](/docs/template-macros.md). In this case, the file should be named `<paramset-name>.yaml.j2` or `<paramset-name>.yml.j2`.
 
-**Location:** `/templates/parameters/` folder and its subfolders, but with a nesting level of no more than three
+**Location:** `/templates/parameters/` folder and its subfolders, but with a nesting level of no more than two
 
 ```yaml
 # Optional
@@ -281,13 +288,110 @@ applications:
 
 The filename of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the template repository. This is validated during processing; if the validation fails, the operation will stop with an error.
 
-The Parameter Set schema in the template repository is identical to the Parameter Sets in the [Instance repository](#parameterset-in-instance-repository).
+The Parameter Set schema in the template repository is identical to the [Environment Specific ParameterSet](#environment-specific-parameterset).
 
 [ParameterSet JSON schema](/schemas/paramset.schema.json)
 
-#### Resource Profile Override (in Template)
+#### Template Resource Profile Override
 
-TBD
+These are customizations for performance parameters, over a Baseline Resource Profile. Such overrides are created by the configurator in the Template repository, to further adjust performance parameters on top of the Baseline Resource Profile Override for all environments of the same type.
+
+Template Resource Profile Override are referenced in the `profile.name` attribute in the [Cloud](#cloud-template) or [Namespace](#namespace-template) templates.
+
+During the generation of an Environment Instance, resource profiles that are associated with the [Cloud](#cloud) and [Namespace](#namespace) are merged or replaced with the [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override) and become part of the [Resource Profile Override](#resource-profile-override) (part of the environment instance).
+
+Template Resource Profile Override can be parameterized using Jinja and [macros](/docs/template-macros.md). In this case, the file should be named `<resource-profile-override-name>.yaml.j2` or `<resource-profile-override-name>.yml.j2`.
+
+In Template Resource Profile Override, you can set nested parameter values using dots in the parameter name (dot notation). For example:
+
+```yaml
+...
+applications:
+  - name: "my-app"
+    services:
+      - name: "nginx"
+        parameters:
+          - name: "resources.limits.cpu"
+            value: "1000m"
+          - name: "resources.limits.memory"
+            value: "512Mi"
+```
+
+See details in [resource-profile](/docs/features/resource-profile.md)
+
+[Template Resource Profile Override JSON schema](/schemas/resource-profile.schema.json)
+
+**Location:** `/templates/resource_profiles/` folder and its subfolders, but with a nesting level of no more than two
+
+```yaml
+# Mandatory
+# Resource profile override name
+# Must match the filename without extension
+name: string
+# Optional
+# Deprecated
+# Not processed by Envgene 
+version: string
+# Optional
+# Name of the resource profile baseline that this override modifies
+# Not processed by EnvGene
+baseline: string
+# Optional
+# Override description
+description: string
+# Mandatory
+applications:
+- # Mandatory
+  # Application name to which the override applies
+  # Must exactly match the application name
+  name: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  version: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  sd: string
+  # Optional
+  services:
+  - # Mandatory
+    # Service name to which the override applies
+    # Must exactly match the service name
+    name: string
+    # Mandatory
+    parameters:
+    - # Mandatory
+      # Parameter key
+      name: string
+      # Mandatory
+      # Parameter value
+      value: string OR integer OR boolean
+```
+
+**Example:**
+
+```yaml
+name: "dev_core_override"
+baseline: "dev"
+applications:
+- name: "Cloud-Core"
+  services:
+  - name: "facade-operator"
+    parameters:
+    - name: "FACADE_GATEWAY_MEMORY_LIMIT"
+      value: "96Mi"
+    - name: "FACADE_GATEWAY_CPU_REQUEST"
+      value: "50m"
+  - name: "tenant-manager"
+    parameters:
+    - name: "MEMORY_LIMIT"
+      value: "512Mi"
+  - name: "identity-provider"
+    parameters:
+    - name: "PG_MAX_POOL_SIZE"
+      value: "30"
+```
 
 #### Composite Structure Template
 
@@ -315,31 +419,35 @@ This is a Jinja template file used to render the [BG Domain](#bg-domain) object 
 
 **Location:** `/templates/env-templates/{Group name}/bg-domain.yml.j2`
 
-[Macros](/docs/template-macros.md) are available for use when developing the template.
+**Example:**
+
+```yaml
+name: "{{ current_env.name }}-bg-domain"
+type: bgdomain
+originNamespace:
+  name: "{{ current_env.name }}-origin-bss" 
+  type: namespace
+peerNamespace:
+  name: "{{ current_env.name }}-peer-bss" 
+  type: namespace
+controllerNamespace:
+  name: "{{ current_env.name }}-bg-controller"
+  type: namespace
+  credentials: bgdomain-cred
+  url: https://controller-env-1-controller.qubership.org
+```
 
 #### Registry Definition Template
 
 This is a Jinja template file used to render the [Registry Definition](#registry-definition) object.
+
+In addition to other macros, [`regdefs.overrides`](/docs/template-macros.md#regdefsoverrides) is available when rendering the Application Definition Template.
 
 **Location:** `/templates/regdefs/<registry-name>.yaml|yml|yml.j2|yaml.j2`
 
 **Example:**
 
 ```yaml
-# BG Domain template with Jinja2 templating
-name: {{ current_env.environmentName ~ '-bg-domain' }}
-type: bgdomain
-origin:
-  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('origin-ns', current_env.environmentName ~ '-origin') }}
-  type: namespace
-peer:
-  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('peer-ns', current_env.environmentName ~ '-peer') }}
-  type: namespace
-controller:
-  name: {{ current_env.get('additionalTemplateVariables', {}).get('ns_overrides', {}).get('controller-ns', current_env.environmentName ~ '-controller') }}
-  type: namespace
-  credentialsIs: ${creds.get("bgd-controller-token").secret}
-  url: {{ current_env.cloud_passport.bg_operator_url }}
 name: "registry-1"
 credentialsId: "registry-cred"
 mavenConfig:
@@ -362,6 +470,8 @@ dockerConfig:
 #### Application Definition Template
 
 This is a Jinja template file used to render the [Application Definition](#application-definition) object.
+
+In addition to other macros, [`appdefs.overrides`](/docs/template-macros.md#appdefsoverrides) is available when rendering the Application Definition Template.
 
 **Location:** `/templates/appdefs/<application-name>.yaml|yml|yml.j2|yaml.j2`
 
@@ -386,8 +496,8 @@ This file contains [Credential](#credential) objects used by EnvGene to integrat
 artifactory-cred:
   type: usernamePassword
   data:
-    username: "s3cr3tN3wLogin"
-    password: "s3cr3tN3wP@ss"
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
 gitlab-token-cred:
   type: secret
   data:
@@ -438,12 +548,12 @@ The Namespace object is used to generate Effective Set
 The Namespace object is generated during Environment Instance generation based on:
 
 - [Namespace Template](#namespace-template)
-- [Template ParamSet](#parameterset-in-template-repository)
-- [Instance ParamSet](#parameterset-in-instance-repository)
+- [Template ParamSet](#template-parameterset)
+- [Instance ParamSet](#environment-specific-parameterset)
 
 For each parameter in the Namespace, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
 
-**Location:** `/environments/<cluster-name>/<env-name>/Namespaces/<deploy-postfix>/namespace.yml`.
+**Location:** `/environments/<cluster-name>/<environment-name>/Namespaces/<deploy-postfix>/namespace.yml`.
 
 ```yaml
 # Mandatory
@@ -546,7 +656,7 @@ technicalConfigurationParameterSets: []
 
 The Application object defines parameters that are specific to a particular application. These parameters are isolated to the application and do not affect other applications.
 
-The Application object is generated during the Environment Instance generation process, based on ParameterSets that contain an `applications` section. Generation occurs from both [ParameterSets in the template repository](#parameterset-in-template-repository) and [ParameterSets in the instance repository](#parameterset-in-instance-repository).
+The Application object is generated during the Environment Instance generation process, based on ParameterSets that contain an `applications` section. Generation occurs from both [ParameterSets in the template repository](#template-parameterset) and [ParameterSets in the instance repository](#environment-specific-parameterset).
 
 For each parameter in the Application, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
 
@@ -554,8 +664,8 @@ The Application object is used to generate Effective Set by providing applicatio
 
 **Location:** Depends on which object the ParameterSet was associated with:
 
-- Cloud: `/environments/<cluster-name>/<env-name>/Applications/<application-name>.yml`
-- Namespace: `/environments/<cluster-name>/<env-name>/Namespaces/<deploy-postfix>/Applications/<application-name>.yml`
+- Cloud: `/environments/<cluster-name>/<environment-name>/Applications/<application-name>.yml`
+- Namespace: `/environments/<cluster-name>/<environment-name>/Namespaces/<deploy-postfix>/Applications/<application-name>.yml`
 
 ```yaml
 # Mandatory
@@ -591,13 +701,104 @@ technicalConfigurationParameters: {}
 
 [Application JSON schema](/schemas/application.schema.json)
 
-#### Resource Profile Override (in Instance)
+#### Resource Profile Override
 
-TBD
+These are customizations for performance parameters, over a Baseline Resource Profile.
+
+During the generation of an Environment Instance, resource profiles that are associated with the [Cloud](#cloud) and [Namespace](#namespace) are merged or replaced with the [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override) and become part of the [Resource Profile Override](#resource-profile-override) (part of the environment instance).
+
+See details in [resource-profile](/docs/features/resource-profile.md)
+
+[Resource Profile Override JSON schema](/schemas/resource-profile.schema.json)
+
+**Location:** `/environments/<cluster-name>/<environment-name>/Profiles`
+
+```yaml
+# Mandatory
+# Resource profile override name
+# Must match the filename without extension
+name: string
+# Optional
+# Deprecated
+# Not processed by Envgene 
+version: string
+# Optional
+# Name of the resource profile baseline that this override modifies
+# Not processed by EnvGene
+baseline: string
+# Optional
+# Override description
+description: string
+# Mandatory
+applications:
+- # Mandatory
+  # Application name to which the override applies
+  # Must exactly match the application name
+  name: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  version: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  sd: string
+  # Optional
+  services:
+  - # Mandatory
+    # Service name to which the override applies
+    # Must exactly match the service name
+    name: string
+    # Mandatory
+    parameters:
+    - # Mandatory
+      # Parameter key
+      # Точки в ключе параметры рассматриваются как маркер вложенной структуры
+      # See details in [resource-profile](/docs/features/resource-profile.md)
+      name: string
+      # Mandatory
+      # Parameter value
+      value: string OR integer OR boolean
+```
+
+**Example:**
+
+```yaml
+name: "dev_core_override"
+baseline: "dev"
+applications:
+- name: "Cloud-Core"
+  services:
+  - name: "facade-operator"
+    parameters:
+    - name: "FACADE_GATEWAY_MEMORY_LIMIT"
+      value: "96Mi"
+    - name: "FACADE_GATEWAY_CPU_REQUEST"
+      value: "50m"
+  - name: "tenant-manager"
+    parameters:
+    - name: "MEMORY_LIMIT"
+      value: "512Mi"
+  - name: "identity-provider"
+    parameters:
+    - name: "PG_MAX_POOL_SIZE"
+      value: "30"
+```
 
 #### Composite Structure
 
-This object describes the composite structure of a solution. It contains information about which namespace hosts the core applications that offer essential tools and services for business microservices (`baseline`), and which namespace contains the applications that consume these services (`satellites`). It has the following structure:
+This object describes the composite structure of a solution. It defines the relationship between the core infrastructure namespace (baseline) that provides essential services and tools, and the satellite namespaces that consume these services.
+
+The `baseline` can be either:
+
+- A namespace (`type: namespace`) that serves as the core infrastructure
+- A BG Domain (`type: bgdomain`) that includes `originNamespace`, `peerNamespace`, and `controllerNamespace` for Blue-Green deployment scenarios
+
+The `satellites` array defines one or more namespaces that depend on the baseline. The Composite Structure is used by template macros (`BASELINE_ORIGIN`, `BASELINE_PEER`, `BASELINE_CONTROLLER`) to automatically resolve baseline references for satellite namespaces.
+
+The Composite Structure object is generated during Environment Instance generation from the [Composite Structure Template](#composite-structure-template) specified in the Environment Template descriptor.
+
+It has the following structure:
 
 ```yaml
 name: <composite-structure-name>
@@ -629,15 +830,37 @@ satellites:
     type: "namespace"
 ```
 
+**BD Deployment Example:**
+
+```yaml
+composite_structure:
+  name: "clusterA-env-1-composite-structure"
+  baseline:
+    type: bgdomain
+    name: env-1-bg-domain
+    originNamespace:
+      type: namespace
+      name: env-1-bss-origin
+    peerNamespace:
+      type: namespace
+      name: env-1-bss-peer
+    controllerNamespace:
+      type: namespace
+      name: env-1-bss-controller
+  satellites:
+    - type: "namespace"
+      name: "env-1-data-management"
+```
+
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `NS_BUILD_FILTER` parameter and BGD lifecycle management.
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter) parameter and BGD lifecycle management.
 
 The BG Domain object is generated during Environment Instance generation based on:
 
 - [BG Domain Template](#bg-domain-template)
 
-**Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
+**Location:** `/environments/<cluster-name>/<environment-name>/bg_domain.yml`
 
 ```yaml
 # Mandatory
@@ -651,7 +874,7 @@ type: bgdomain
 # Mandatory
 # Origin namespace definition
 # Used to define the currently active BGD namespace
-origin:
+originNamespace:
   # Mandatory
   # The name of the origin namespace
   # Used for BGD alias resolution and lifecycle operations
@@ -663,7 +886,7 @@ origin:
 # Mandatory
 # Peer namespace definition
 # Used to define the standby BGD namespace
-peer:
+peerNamespace:
   # Mandatory
   # The name of the peer namespace
   # Used for BGD alias resolution and lifecycle operations
@@ -675,7 +898,7 @@ peer:
 # Mandatory
 # Controller namespace definition
 # Used for BGD lifecycle management and coordination
-controller:
+controllerNamespace:
   # Mandatory
   # The name of the controller namespace
   # Used by BGD operations for lifecycle coordination
@@ -687,18 +910,78 @@ controller:
   # Mandatory
   # Credentials for accessing the BGD controller
   # Used for authentication with BG-Operator
-  credentialsIs: <bgd-controller-credentials>
+  credentials: <bgd-controller-credentials>
   # Mandatory
   # URL of the BG-Operator service
   # Used for BGD lifecycle operations
   url: <bg-operator-url>
 ```
 
+When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.  
+The [`inventory.config.updateCredIdsWithEnvName`](/docs/envgene-configs.md#env_definitionyml) mechanism works for this Credential as well as for all other Credentials.
+
+**Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
+
+**Example:**
+
+```yaml
+bg_domain:
+  name: env-1-bg-domain
+  type: bgdomain
+  originNamespace:
+    name: env-1-bss-origin
+    type: namespace
+  peerNamespace:
+    name: env-1-bss-peer
+    type: namespace
+  controllerNamespace:
+    name: env-1-controller
+    credentials: controller-cred
+    type: namespace
+    url: https://controller-env-1-controller.qubership.org
+```
+
 **BGD Alias Resolution:** Used by `NS_BUILD_FILTER` parameter to resolve BGD aliases:
 
-- `${controller}` → controller namespace
-- `${origin}` → origin namespaces
-- `${peer}` → peer namespaces
+- `@controller` → controller namespace
+- `@origin` → origin namespaces
+- `@peer` → peer namespaces
+
+### BG State Files
+
+This object, which is an empty file, is used to represent the current Blue-Green Domain state of the Origin and Peer namespaces via lightweight filesystem markers.
+
+The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
+
+See details in [Blue-Green Domain](/docs/features/blue-green-deployment.md)
+
+**Filename patterns:**
+
+- `.origin-<state>`
+- `.peer-<state>`
+
+Where valid values for `<state>` are:
+
+- `active`
+- `idle`
+- `candidate`
+- `legacy`
+- `failedw` (warmup failure)
+- `failedc` (commit/promote failure)
+
+**Location:**
+
+State files are located in the environment root directory:
+
+- `/environments/<cluster-name>/<env-name>/`
+
+**Example:**
+
+```text
+/environments/<cluster-name>/<env-name>/
+├── .origin-active
+├── .peer-candidate
+```
 
 ### Solution Descriptor
 
@@ -714,9 +997,9 @@ SD in EnvGene can be introduced either through a manual commit to the repository
 
 In EnvGene, there are:
 
-**Full SD**: Defines the complete application composition of a solution. There can be only one Full SD per environment, located at the path `/environments/<cluster-name>/<env-name>/Inventory/solution-descriptor/sd.yml`
+**Full SD**: Defines the complete application composition of a solution. There can be only one Full SD per environment, located at the path `/environments/<cluster-name>/<environment-name>/Inventory/solution-descriptor/sd.yml`
 
-**Delta SD**: A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. There can be only one Delta SD per environment, located at the path `/environments/<cluster-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yml`
+**Delta SD**: A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. There can be only one Delta SD per environment, located at the path `/environments/<cluster-name>/<environment-name>/Inventory/solution-descriptor/delta_sd.yml`
 
 Only Full SD is used for Effective Set calculation. The Delta SD is only needed for troubleshooting purposes.
 
@@ -739,7 +1022,7 @@ applications:
 
 ### Credential
 
-This object is used by EnvGene to manage sensitive parameters. It is generated during environment instance creation for each `<cred-id>` specified in [Credential macros](/docs/template-macros.md#credential-macros)
+This object is used by EnvGene to manage sensitive parameters. It is generated during environment instance creation for each `<cred-id>` specified in [Credential macros](/docs/template-macros.md#credential-macro)
 
 There are two Credential types with different structures:
 
@@ -774,7 +1057,7 @@ After generation, `<value>` is set to `envgeneNullValue`. The user must manually
 
 This file stores all [Credential](#credential) objects of the Environment upon generation
 
-**Location:** `/environments/<cloud-name>/<env-name>/Credentials/credentials.yml`
+**Location:** `/environments/<cloud-name>/<environment-name>/Credentials/credentials.yml`
 
 **Example:**
 
@@ -782,8 +1065,8 @@ This file stores all [Credential](#credential) objects of the Environment upon g
 db_cred:
   type: usernamePassword
   data:
-    username: "s3cr3tN3wLogin"
-    password: "s3cr3tN3wP@ss"
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
 token:
   type: secret
   data:
@@ -802,7 +1085,7 @@ The relationship between Shared Credentials and Environment is established throu
 Credentials can be defined at three scopes with different precedence:
 
 1. **Environment-level**
-   **Location:** `/environments/<cluster-name>/<env-name>/Inventory/credentials/`
+   **Location:** `/environments/<cluster-name>/<environment-name>/Inventory/credentials/`
 2. **Cluster-level**
    **Location:** `/environments/<cluster-name>/credentials/`
 3. **Site-level**
@@ -818,8 +1101,8 @@ Any YAML file located in these folders is treated as a Shared Credentials File.
 db_cred:
   type: usernamePassword
   data:
-    username: "s3cr3tN3wLogin"
-    password: "s3cr3tN3wP@ss"
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
 token:
   type: secret
   data:
@@ -841,17 +1124,129 @@ Location:
 registry-cred:
   type: usernamePassword
   data:
-    username: "s3cr3tN3wLogin"
-    password: "s3cr3tN3wP@ss"
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
 gitlab-token-cred:
   type: secret
   data:
     secret: "token-placeholder-123"
 ```
 
-#### ParameterSet (in Instance repository)
+### Environment Specific ParameterSet
 
 TBD
+
+### Environment Specific Resource Profile Override
+
+These are customizations for performance parameters, over a Baseline Resource Profile and Template Resource Profile Override.
+Such overrides are created by the configurator in the Instance repository, to further adjust performance parameters on top of the Baseline Resource Profile and Template Resource Profile Override.
+
+The Environment-Specific Resource Profile Override is specified individually for each Namespace or Cloud via `envTemplate.envSpecificResourceProfiles` parameter of the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
+
+During the generation of an Environment Instance, resource profiles that are associated with the [Cloud](#cloud) and [Namespace](#namespace) are merged or replaced with the [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override) and become part of the [Resource Profile Override](#resource-profile-override) (part of the environment instance).
+
+Environment Specific Resource Profile Override can be parameterized using Jinja and [macros](/docs/template-macros.md). In this case, the file should be named `<resource-profile-override-name>.yaml.j2` or `<resource-profile-override-name>.yml.j2`.
+
+In Environment Specific Resource Profile Override, you can set nested parameter values using dots in the parameter name (dot notation). For example:
+
+```yaml
+...
+applications:
+  - name: "my-app"
+    services:
+      - name: "nginx"
+        parameters:
+          - name: "resources.limits.cpu"
+            value: "1000m"
+          - name: "resources.limits.memory"
+            value: "512Mi"
+```
+
+See details in [resource-profile](/docs/features/resource-profile.md)
+
+[Environment Specific Resource Profile Override JSON schema](/schemas/resource-profile.schema.json)
+
+**Location:**
+
+When an Environment Specific Resource Profile Override is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
+
+1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority  
+2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster  
+3. `/environments/resource_profiles` — Global, common for the entire repository  
+
+The first match found is used as the environment-specific override for the given Cloud or Namespace.
+
+```yaml
+# Mandatory
+# Resource profile override name
+# Must match the filename without extension
+name: string
+# Optional
+# Deprecated
+# Not processed by Envgene 
+version: string
+# Optional
+# Name of the resource profile baseline that this override modifies
+# Not processed by EnvGene
+baseline: string
+# Optional
+# Override description
+description: string
+# Mandatory
+applications:
+- # Mandatory
+  # Application name to which the override applies
+  # Must exactly match the application name
+  name: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  version: string
+  # Optional
+  # Deprecated
+  # Not processed by Envgene 
+  sd: string
+  # Optional
+  services:
+  - # Mandatory
+    # Service name to which the override applies
+    # Must exactly match the service name
+    name: string
+    # Mandatory
+    parameters:
+    - # Mandatory
+      # Parameter key
+      # Точки в ключе параметры рассматриваются как маркер вложенной структуры
+      # See details in [resource-profile](/docs/features/resource-profile.md)
+      name: string
+      # Mandatory
+      # Parameter value
+      value: string OR integer OR boolean
+```
+
+**Example:**
+
+```yaml
+name: "dev_core_override"
+baseline: "dev"
+applications:
+- name: "Cloud-Core"
+  services:
+  - name: "facade-operator"
+    parameters:
+    - name: "FACADE_GATEWAY_MEMORY_LIMIT"
+      value: "96Mi"
+    - name: "FACADE_GATEWAY_CPU_REQUEST"
+      value: "50m"
+  - name: "tenant-manager"
+    parameters:
+    - name: "MEMORY_LIMIT"
+      value: "512Mi"
+  - name: "identity-provider"
+    parameters:
+    - name: "PG_MAX_POOL_SIZE"
+      value: "30"
+```
 
 ### Cloud Passport
 
@@ -944,7 +1339,7 @@ A separate definition file is used for each individual registry. Each Environmen
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/environments/<cluster-name>/<env-name>/AppDefs/<registry-name>.yml`
+**Location:** `/environments/<cluster-name>/<environment-name>/RegDefs/<registry-name>.yml`
 
 Two versions of this object are supported
 
@@ -956,7 +1351,7 @@ Two versions of this object are supported
 name: string
 # Mandatory
 # Pointer to the EnvGene Credential object.
-# Credential with this ID must be located in /environments/<cluster-name>/<env-name>/Credentials/credentials.yml
+# Credential with this ID must be located in /environments/<cluster-name>/<environment-name>/Credentials/credentials.yml
 credentialsId: string
 # Mandatory
 mavenConfig:
@@ -1471,7 +1866,7 @@ A separate definition file is used for each individual application. Each Environ
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/environments/<cluster-name>/<env-name>/AppDefs/<application-name>.yml`
+**Location:** `/environments/<cluster-name>/<environment-name>/AppDefs/<application-name>.yml`
 
 ```yaml
 # Mandatory

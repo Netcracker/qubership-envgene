@@ -6,6 +6,8 @@
   - [`integration.yml`](#integrationyml)
   - [`deployer.yml`](#deployeryml)
   - [`appregdef_config.yaml`](#appregdef_configyaml)
+  - [Deprecated](#deprecated)
+    - [`registry.yml`](#registryyml)
 
 ## `env_definition.yml`
 
@@ -75,6 +77,11 @@ inventory:
     # If `true`, during CMDB import resource profile override names will be updated using pattern:
     # <tenant-name>-<cloud-name>-<env-name>-<RPO-name>
     updateRPOverrideNameWithEnvName: boolean
+    # Optional. Default value - `true`
+    # If `true`, environment-specific Resource Profile Overrides defined in envTemplate.envSpecificParamsets
+    # are merged with Resource Profile Overrides from the Environment Template
+    # If `false`, they completely replace the Environment Template's Resource Profile Overrides
+    mergeEnvSpecificResourceProfiles: boolean
 envTemplate:
   # Mandatory
   # Name of the template
@@ -82,7 +89,22 @@ envTemplate:
   name: string
   # Mandatory
   # Template artifact in application:version notation
+  # Used for rendering all Environment Instance objects except peer/origin Namespaces in BG Domain
   artifact: string
+  # Optional
+  # Blue-Green deployment artifacts for peer and origin namespaces
+  # Used ONLY for rendering peer and origin Namespaces in BG Domain
+  # If specified, bgNsArtifacts and artifact are NOT mutually exclusive:
+  # - bgNsArtifacts is used for rendering peer/origin Namespaces
+  # - artifact is used for rendering all other Environment Instance objects
+  # The role of a Namespace (origin, peer, or controller) is determined through the BG Domain object
+  bgNsArtifacts:
+    # Mandatory
+    # Template artifact in application:version notation for origin namespace
+    origin: string
+    # Mandatory
+    # Template artifact in application:version notation for peer namespace
+    peer: string
   # Optional
   # Additional variables that will be available during template rendering
   additionalTemplateVariables: hashmap
@@ -196,9 +218,6 @@ crypt_backend: enum [`Fernet`, `SOPS`]
 # `true` - Artifact Definition is discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository
 # `auto` - Artifact Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
 artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
-# Optional. Default value - `true`
-# Defines whether cloud passport should be decrypted upon discovery
-cloud_passport_decryption: boolean
 # Optional. Default value - `auto`
 # Defines the auto-discovery mode for Application and Registry Definitions
 # Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems
@@ -322,4 +341,50 @@ appdefs:
 regdefs:
   overrides:
     hostName: "registry.qubership.org"
+```
+
+## Deprecated
+
+### `registry.yml`
+
+This config file contains the definition of one or more Maven registries used for downloading Environment Template artifacts.
+
+Replacement: [Artifact Definitions](/docs/envgene-objects.md#artifact-definition)
+
+Location: `/configuration/registry.yml`
+
+[`registry.yml` JSON Schema](/schemas/registry.schema.json)
+
+```yaml
+<registry-name>:
+  # Username for authenticating to the registry.
+  # It's recommended to use the envgen.creds.get() macro.
+  # For anonymous registries, use an empty string: ""
+  username: string
+  # Password for authenticating to the registry.
+  # It's recommended to use the envgen.creds.get() macro.
+  # For anonymous registries, use an empty string: ""
+  password: string
+  releaseRepository: string
+  snapshotRepository: string
+  stagingRepository: string
+  proxyRepository: string
+  releaseTemplateRepository: string
+  snapshotTemplateRepository: string
+  stagingTemplateRepository: string
+```
+
+Example:
+
+```yaml
+artifactory:
+  username: envgen.creds.get('artifactory-cred').username
+  password: envgen.creds.get('artifactory-cred').password
+  releaseRepository: "https://artifactory.qubership.org/mvn.release"
+  snapshotRepository: "https://artifactory.qubership.org/mvn.staging"
+  stagingRepository: "https://artifactory.qubership.org/mvn.staging"
+  proxyRepository: "https://artifactory.qubership.org/mvn.proxy"
+  releaseTemplateRepository: "https://artifactory.qubership.org/mvn.template-release"
+  snapshotTemplateRepository: "https://artifactory.qubership.org/mvn.template-snapshot"
+  stagingTemplateRepository: "https://artifactory.qubership.org/mvn.template-staging"
 ```

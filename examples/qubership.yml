@@ -1,0 +1,13 @@
+version: "2.0"
+name: qubership
+dockerConfig:
+  groupUri: ghcr.io
+  groupName: netcracker
+githubReleaseConfig:
+  repositoryDomainName: https://github.com/
+  groupName: Netcracker/qubership-jaeger
+  owner: Netcracker
+  repository: qubership-jaeger
+helmAppConfig:
+  repositoryDomainName: oci://registry.qubership.org
+  helmGroupRepoName: helm-group
