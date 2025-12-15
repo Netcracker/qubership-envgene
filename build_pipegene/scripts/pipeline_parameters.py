@@ -1,4 +1,6 @@
 from os import getenv
+from envgenehelper import logger
+import json
 
 from envgenehelper.plugin_engine import PluginEngine
 
@@ -35,9 +37,18 @@ class PipelineParametersHandler:
         pipe_param_plugin = PluginEngine(plugins_dir=plugins_dir)
         if pipe_param_plugin.modules:
            pipe_param_plugin.run(pipeline_params=self.params)
+    
+    def log_params(self):
+        params_str = "Input parameters are: "
+        params = self.params.copy()
+        
+        if params.get("CRED_ROTATION_PAYLOAD"):
+            params["CRED_ROTATION_PAYLOAD"] = "***"
+            
+        if params.get("SD_DATA"):
+            params["SD_DATA"] = json.dumps(json.loads(params["SD_DATA"]), separators=(",", ":"))
+            
+        for k, v in params.items():
+            params_str += f"\n{k.upper()}: {v}"
 
-    def get_params_str(self) -> str:
-        result = ''
-        for k, v in self.params.items():
-            result += f"\n{k.upper()}: {v}"
-        return result
+        logger.info(params_str)
