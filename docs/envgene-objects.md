@@ -1489,7 +1489,7 @@ metadata:
   #   `perApplication` - Unique per application
   #   `perVersion` - Unique per application version
   #   `perDeployment` - Unique per deployment of this application
-  helmReleaseNameStrategy: enum[perApplication, perVersion, perDeployment]
+  helmReleaseNameStrategy: enum[ perApplication, perVersion, perDeployment ]
 # Mandatory
 # Name of the artifact application. This corresponds to the `application` part in the `application:version` notation.
 name: string
@@ -1513,7 +1513,7 @@ artifactId: qip
 groupId: org.qubership
 ```
 
-[Application Definition JSON schema](/schemas/artifact-definition.schema.json)
+[Application Definition JSON schema](/schemas/appdef.schema.json)
 
 ## Discovery Repository Objects
 
