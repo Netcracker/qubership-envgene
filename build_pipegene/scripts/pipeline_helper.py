@@ -45,7 +45,7 @@ def job_instance(params, vars, needs=None, rules=None):
         job.prepend_scripts(params['before_script'])
    
     global_before = [
-        'python3 /module/utils/log_pipe_params.py'
+        'python3 -m scripts.utils.log_pipe_params'
     ]
     job.prepend_scripts(*global_before)
 
