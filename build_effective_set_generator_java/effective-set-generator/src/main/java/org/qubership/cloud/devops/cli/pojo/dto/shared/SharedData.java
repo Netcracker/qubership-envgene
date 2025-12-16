@@ -35,7 +35,7 @@ public class SharedData {
 
     private Optional<String> sbomsPath;
 
-    private Optional<String> solsbomPath;
+    private Optional<String> sdPath;
 
     private Optional<String> registryPath;
 

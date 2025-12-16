@@ -12,7 +12,6 @@ def get_pipeline_parameters() -> dict:
         'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
         'ENV_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST") == "true",
         'IS_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST") == "true",
-        'IS_OFFSITE': getenv("IS_OFFSITE") == "true",
         'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
         'JSON_SCHEMAS_DIR': getenv("JSON_SCHEMAS_DIR", "/module/schemas"),
         'ENV_INVENTORY_GENERATION_PARAMS': {

@@ -1,6 +1,5 @@
 import argparse
 import os
-import pathlib
 
 from envgenehelper import *
 from envgenehelper.deployer import *
@@ -286,17 +285,9 @@ def validate_appregdefs(render_dir, env_name):
             logger.info(f"No RegDef YAMLs found in {regdef_dir}")
         for file in regdef_files:
             logger.info(f"Validating RegDef file: {file}")
-            
             regdef_content = openYaml(file)
             version = str(regdef_content.get('version', '1.0'))
-            
-            if version != '1.0':
-                schema_path = REGDEF_V2_SCHEMA
-                logger.debug(f"Using RegDef V2 schema for {os.path.basename(file)} (version: {version})")
-            else:
-                schema_path = REGDEF_V1_SCHEMA
-                logger.debug(f"Using RegDef V1 schema for {os.path.basename(file)}")
-            
+            schema_path = REGDEF_V2_SCHEMA if version != '1.0' else REGDEF_V1_SCHEMA
             validate_yaml_by_scheme_or_fail(file, schema_path)
 
 

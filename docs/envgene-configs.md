@@ -89,7 +89,22 @@ envTemplate:
   name: string
   # Mandatory
   # Template artifact in application:version notation
+  # Used for rendering all Environment Instance objects except peer/origin Namespaces in BG Domain
   artifact: string
+  # Optional
+  # Blue-Green deployment artifacts for peer and origin namespaces
+  # Used ONLY for rendering peer and origin Namespaces in BG Domain
+  # If specified, bgNsArtifacts and artifact are NOT mutually exclusive:
+  # - bgNsArtifacts is used for rendering peer/origin Namespaces
+  # - artifact is used for rendering all other Environment Instance objects
+  # The role of a Namespace (origin, peer, or controller) is determined through the BG Domain object
+  bgNsArtifacts:
+    # Mandatory
+    # Template artifact in application:version notation for origin namespace
+    origin: string
+    # Mandatory
+    # Template artifact in application:version notation for peer namespace
+    peer: string
   # Optional
   # Additional variables that will be available during template rendering
   additionalTemplateVariables: hashmap
@@ -203,9 +218,6 @@ crypt_backend: enum [`Fernet`, `SOPS`]
 # `true` - Artifact Definition is discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository
 # `auto` - Artifact Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
 artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
-# Optional. Default value - `true`
-# Defines whether cloud passport should be decrypted upon discovery
-cloud_passport_decryption: boolean
 # Optional. Default value - `auto`
 # Defines the auto-discovery mode for Application and Registry Definitions
 # Used by EnvGene extensions (not part of EnvGene Core) that implement integration with various CMDB systems

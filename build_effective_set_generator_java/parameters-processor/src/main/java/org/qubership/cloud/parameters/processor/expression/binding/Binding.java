@@ -47,6 +47,8 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
     private String tenant;
     private ParametersParser escapeParser;
     private ParametersParser oldParser;
+    @Getter
+    private Map<Object, Class<?>> typeCollector = new HashMap<>();
 
     public Binding(String defaultEscapeSequence) {
         this.escapeSequence = defaultEscapeSequence;
@@ -209,6 +211,9 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
         }
         if (result == null || result.getValue() == null) {
             return null;
+        }
+        if (result != null && result.getValue() != null) {
+            typeCollector.put(result.getValue().toString(), result.getValue().getClass());
         }
         return result;
     }

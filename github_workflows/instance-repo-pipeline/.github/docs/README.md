@@ -57,8 +57,8 @@ curl -X POST \
   -d '{
     "ref": "<branch-name>",
     "inputs": {
-      "<instance-pipeline-parameter-key>": "<instance-pipeline-parameter-value>"
-      "GH_ADDITIONAL_PARAMS": "<json-in-string>"
+      "<instance-pipeline-parameter-key>": "<instance-pipeline-parameter-value>",
+      "GH_ADDITIONAL_PARAMS": "KEY1=VALUE1,KEY2=VALUE2"
     }
   }'
 ```
@@ -75,7 +75,7 @@ curl -X POST \
         "inputs": {
             "ENV_NAMES": "test-cluster/e01",
             "ENV_BUILDER": "true",
-            `GENERATE_EFFECTIVE_SET`: "true"
+            "GENERATE_EFFECTIVE_SET": "true",
             "DEPLOYMENT_TICKET_ID": "QBSHP-0001",
             "GH_ADDITIONAL_PARAMS": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
         }
