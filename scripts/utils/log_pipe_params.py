@@ -1,6 +1,6 @@
 import json
 from envgenehelper import logger
-from scripts.utils.pipeline_parameters import PipelineParametersHandler
+from .pipeline_parameters import PipelineParametersHandler
 
 
 def log_pipeline_params(params: dict):

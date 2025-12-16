@@ -41,7 +41,7 @@ COPY scripts/build_env /build_env/scripts/build_env/
 COPY scripts/build_template /build_env/scripts/build_template/
 COPY scripts/cloud_passport/ /cloud_passport/scripts/
 COPY schemas /build_env/schemas
-COPY scripts /scripts
+COPY scripts /module/ansible/scripts/
 
 ENV ANSIBLE_LIBRARY=/module/ansible/library
 
@@ -115,7 +115,6 @@ RUN apk add --no-cache \
     tar
 
 # Copy everything from build stage
-COPY --from=build /scripts /scripts
 COPY --from=build /module /module
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=build /build_env /build_env
