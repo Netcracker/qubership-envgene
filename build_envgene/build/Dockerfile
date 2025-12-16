@@ -115,6 +115,7 @@ RUN apk add --no-cache \
     tar
 
 # Copy everything from build stage
+COPY --from=build /scripts /scripts
 COPY --from=build /module /module
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=build /build_env /build_env
