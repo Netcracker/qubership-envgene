@@ -155,7 +155,7 @@
 
 ## Proposed Approach
 
-[envgene-ui.md](/docs/images/envgene-ui.png)
+![envgene-ui.md](/docs/images/envgene-ui.png)
 
 ## UI
 
