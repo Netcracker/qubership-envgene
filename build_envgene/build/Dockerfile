@@ -41,7 +41,7 @@ COPY scripts/build_env /build_env/scripts/build_env/
 COPY scripts/build_template /build_env/scripts/build_template/
 COPY scripts/cloud_passport/ /cloud_passport/scripts/
 COPY schemas /build_env/schemas
-COPY scripts /module/ansible/scripts/
+COPY scripts/utils /module/scripts/scripts/utils
 
 ENV ANSIBLE_LIBRARY=/module/ansible/library
 
@@ -158,7 +158,7 @@ ENV PATH=/module/venv/bin:$PATH \
 
 # Simple root-based container for CI/CD environments
 # This container runs as root to avoid permission issues in CI/CD pipelines
-WORKDIR /module/ansible
+WORKDIR /module/scripts
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
