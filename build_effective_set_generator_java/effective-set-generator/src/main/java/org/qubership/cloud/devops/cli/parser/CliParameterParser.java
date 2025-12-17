@@ -141,8 +141,8 @@ public class CliParameterParser {
                         cleanupMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), cleanupPostFixDir);
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                     } catch (Exception e) {
-                        log.debug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
-                        log.debug("stack trace for further details: {}", ExceptionUtils.getStackTrace(e));
+                        logDebug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
+                        logDebug("stack trace for further details: {}", ExceptionUtils.getStackTrace(e));
                         errorList.computeIfAbsent(app.getAppName() + ":" + namespaceName, k -> e.getMessage());
                     }
                 });

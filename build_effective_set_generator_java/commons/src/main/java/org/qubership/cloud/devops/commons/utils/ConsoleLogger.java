@@ -21,10 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ConsoleLogger {
-    private static final String RED = "\u001B[31m"; // Red color for errors
-    private static final String YELLOW = "\u001B[33m"; // Yellow for warnings
-    private static final String GREEN = "\u001B[32m"; // Green for success
-    private static final String RESET = "\u001B[0m"; // Reset color
+    private static final String BLUE = "\u001B[34;20m";
+    private static final String WHITE = "\u001B[97;20m";
+    private static final String YELLOW = "\u001B[33;20m";
+    private static final String RED = "\u001B[31;20m";
+    private static final String RESET = "\u001B[0m";
 
     public static void logError(String message) {
         log.error(RED + "ERROR: " + message + RESET);
@@ -34,12 +35,12 @@ public class ConsoleLogger {
         log.warn(YELLOW + "WARNING: " + message + RESET);
     }
 
-    public static void logSuccess(String message) {
-        log.info(GREEN + "SUCCESS: " + message + RESET);
+    public static void logInfo(String message) {
+        log.info(WHITE + "INFO: " + message + RESET);
     }
 
-    public static void logInfo(String message) {
-        log.info(RESET + "INFO: " + message + RESET);
+    public static void logDebug(String message) {
+        log.debug(BLUE + "DEBUG: " + message + RESET);
     }
 }
 

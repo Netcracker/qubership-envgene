@@ -60,14 +60,14 @@ public class CmdbCli implements Callable<Integer> {
             logInfo("Starting effective set generation");
             fileDataRepository.prepareProcessingEnv();
             parser.generateEffectiveSet();
-            logSuccess("Successfully generated the effective set");
+            logInfo("Successfully generated the effective set");
             Instant end = Instant.now();
             Duration timeElapsed = Duration.between(start, end);
-            logInfo("Total Time taken : " + timeElapsed.toMillis() + " milliseconds");
+            logInfo("Total Time taken: " + timeElapsed.toMillis() + " milliseconds");
             return 0;
         } catch (Exception e) {
             logError(String.format(EFFECTIVE_SET_FAILED, e.getMessage()));
-            log.debug("stack trace {}", ExceptionUtils.getStackTrace(e));
+            logDebug("stack trace {}", ExceptionUtils.getStackTrace(e));
             return 1;
         }
     }
