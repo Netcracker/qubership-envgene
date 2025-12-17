@@ -109,12 +109,12 @@ public class CloudMap extends DynamicMap {
                 map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", DEFAULT_DBAAS_AGGREGATOR_LOGIN);
                 map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", DEFAULT_DBAAS_AGGREGATOR_PASSWORD);
             }
-            map.putIfAbsent("DBAAS_ENABLED", Boolean.toString(dbaas.isEnable()));
+            map.putIfAbsent("DBAAS_ENABLED", new Parameter(dbaas.isEnable()));
         }
 
         MaaS maas = config.getMaas();
         if (maas != null) {
-            map.putIfAbsent("MAAS_ENABLED", Boolean.toString(maas.isEnable()));
+            map.putIfAbsent("MAAS_ENABLED", new Parameter(maas.isEnable()));
             if (maas.isEnable()) {
                 //Deprecated. For backward compatibility. New name MAAS_EXTERNAL_ROUTE
                 map.put("MAAS_SERVICE_ADDRESS", maas.getMaasUrl());
@@ -131,7 +131,7 @@ public class CloudMap extends DynamicMap {
                 }
             }
         } else {
-            map.putIfAbsent("MAAS_ENABLED", "false");
+            map.putIfAbsent("MAAS_ENABLED", new Parameter(false));
         }
 
         Vault vaultConfig = config.getVault();
@@ -176,7 +176,7 @@ public class CloudMap extends DynamicMap {
             }
         }
 
-        map.put("PRODUCTION_MODE", Boolean.toString(config.isProductionMode()));
+        map.put("PRODUCTION_MODE", new Parameter(config.isProductionMode()));
         map.put("namespace", new Parameter(new NamespaceMap(tenant, cloudName, defaultNamespace, defaultApp, binding, originalNamespace).init()));
         map.put("CLOUDNAME", cloudName);
         map.put("e2e", new Parameter(e2e));
