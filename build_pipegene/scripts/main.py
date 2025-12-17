@@ -2,8 +2,7 @@ import click
 
 from gitlab_ci import build_pipeline
 from validations import validate_pipeline
-from scripts.utils.pipeline_parameters import PipelineParametersHandler
-from scripts.utils.log_pipe_params import log_pipeline_params
+from scripts.utils.pipeline_parameters import PipelineParametersHandler, log_pipeline_params
 
 @click.group(chain=True)
 def gcip():
