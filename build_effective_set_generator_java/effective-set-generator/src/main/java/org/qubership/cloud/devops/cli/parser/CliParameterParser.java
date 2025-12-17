@@ -142,7 +142,7 @@ public class CliParameterParser {
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                     } catch (Exception e) {
                         logDebug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
-                        logDebug("stack trace for further details: {}", ExceptionUtils.getStackTrace(e));
+                        logDebug(String.format("Stack trace for further details: %s", ExceptionUtils.getStackTrace(e)));
                         errorList.computeIfAbsent(app.getAppName() + ":" + namespaceName, k -> e.getMessage());
                     }
                 });
