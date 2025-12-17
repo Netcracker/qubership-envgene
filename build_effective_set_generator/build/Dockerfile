@@ -13,7 +13,7 @@ COPY build_effective_set_generator/ansible /module/ansible
 COPY python /python
 COPY schemas /module/schemas
 COPY python/integration /python/integration
-COPY scripts/utils /module/scripts/utils
+COPY scripts/utils /module/scripts/scripts/utils/
 ENV ANSIBLE_LIBRARY=/module/ansible/library:$ANSIBLE_LIBRARY
 
 RUN set -eux; \
