@@ -32,25 +32,6 @@ def get_pipeline_parameters() -> dict:
         'LOG_LEVEL': getenv("LOG_LEVEL")
     }
 
-
-def log_pipeline_params(params: dict):
-   params_str = "Input parameters are: "
-   
-   if params.get("CRED_ROTATION_PAYLOAD"): 
-       params["CRED_ROTATION_PAYLOAD"] = "***"
-
-   for k, v in params.items():
-        try:
-            parsed = json.loads(v)
-            params[k] = json.dumps(parsed, separators=(",", ":"))
-        except (TypeError, ValueError):
-            pass
-
-        params_str += f"\n{k.upper()}: {params[k]}"
-
-   logger.info(params_str)
-
-
 class PipelineParametersHandler:
     def __init__(self, **kwargs):
         plugins_dir='/module/scripts/pipegene_plugins/pipe_parameters'
@@ -58,3 +39,21 @@ class PipelineParametersHandler:
         pipe_param_plugin = PluginEngine(plugins_dir=plugins_dir)
         if pipe_param_plugin.modules:
            pipe_param_plugin.run(pipeline_params=self.params)
+           
+    def log_pipeline_params(self):
+        params_str = "Input parameters are: "
+        
+        params = self.params.copy()
+        if params.get("CRED_ROTATION_PAYLOAD"): 
+            params["CRED_ROTATION_PAYLOAD"] = "***"
+
+        for k, v in params.items():
+                try:
+                    parsed = json.loads(v)
+                    params[k] = json.dumps(parsed, separators=(",", ":"))
+                except (TypeError, ValueError):
+                    pass
+
+                params_str += f"\n{k.upper()}: {params[k]}"
+
+        logger.info(params_str)

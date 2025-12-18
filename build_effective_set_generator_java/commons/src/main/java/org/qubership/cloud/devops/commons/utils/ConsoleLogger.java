@@ -17,24 +17,44 @@
 package org.qubership.cloud.devops.commons.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import java.util.Date;
 
 
 @Slf4j
 public class ConsoleLogger {
+    private static final String BLUE = "\u001B[34;20m";
+    private static final String WHITE = "\u001B[97;20m";
+    private static final String YELLOW = "\u001B[33;20m";
+    private static final String RED = "\u001B[31;20m";
+    private static final String RESET = "\u001B[0m";
+
     public static void logError(String message) {
-        log.error(message);
+        log.error(formatMessage("ERROR", message, RED));
     }
 
     public static void logWarning(String message) {
-        log.warn(message);
+        log.warn(formatMessage("WARNING", message, YELLOW));
     }
 
     public static void logInfo(String message) {
-        log.info(message);
+        log.info(formatMessage("INFO", message, WHITE));
     }
 
     public static void logDebug(String message) {
-        log.debug(message);
+        log.debug(formatMessage("DEBUG", message, BLUE));
+    }
+
+    private static String formatMessage(String level, String message, String color) {
+        StackTraceElement ste = Thread.currentThread().getStackTrace()[3];
+        String timestamp = String.format("%tF %<tT,%<tL", new Date());
+        return String.format("%s%s [%s] %s [%s:%d]%s",
+                color,
+                timestamp,
+                level,
+                message,
+                ste.getFileName(),
+                ste.getLineNumber(),
+                RESET);
     }
 }
 
