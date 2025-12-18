@@ -145,16 +145,15 @@ def getTemplateArtifactName(env_definition_yaml):
         return gav["artifact_id"]
 
 
-def getEnvDefinition(env_dir):
-    envDefinitionPath = getEnvDefinitionPath(env_dir)
-    if not check_file_exists(envDefinitionPath):
-        raise ReferenceError(f"Environment definition for env {env_dir} is not found in {envDefinitionPath}")
-    inventoryYaml = openYaml(envDefinitionPath)
-    return inventoryYaml
+def get_env_definition(env_dir):
+    env_definition_path = get_env_definition_path(env_dir)
+    if not check_file_exists(env_definition_path):
+        raise ReferenceError(f"Environment definition for env {env_dir} is not found in {env_definition_path}")
+    return openYaml(env_definition_path)
 
 
-def getEnvDefinitionPath(env_dir):
-    return f"{env_dir}/{INVENTORY_DIR_NAME}/{ENV_DEFINITION_FILE_NAME}"
+def get_env_definition_path(env_dir) -> str:
+    return str(Path(env_dir) / INVENTORY_DIR_NAME / ENV_DEFINITION_FILE_NAME)
 
 
 def getEnvCredentials(env_dir):
@@ -190,7 +189,7 @@ def getTemplateLatestSnapshotVersion(env_definition_yaml):
 
 def update_generated_versions(env_dir, stage_tag, template_version=""):
     comment = "This value is automatically generated during job run."
-    env_definition_yaml = getEnvDefinition(env_dir)
+    env_definition_yaml = get_env_definition(env_dir)
     if "generatedVersions" not in env_definition_yaml:
         versionsYaml = yaml.load("{}")
         env_definition_yaml["generatedVersions"] = versionsYaml
@@ -213,7 +212,7 @@ def update_generated_versions(env_dir, stage_tag, template_version=""):
         store_value_to_yaml(versionsYaml, "cmdbImportLatestVersion", version, comment)
     else:
         version = "UNDEFINED"
-    env_definition_path = getEnvDefinitionPath(env_dir)
+    env_definition_path = get_env_definition_path(env_dir)
     writeYamlToFile(env_definition_path, env_definition_yaml)
     logger.info(f"Generated version {version} updated for stage tag {stage_tag} in environment {env_definition_path}")
 
@@ -269,7 +268,7 @@ def get_environment_name_from_full_name(env):
 
 def find_cloud_passport_definition(env_instances_dir, instances_dir):
     # trying to get explicit passport name from env_definition
-    inventoryYaml = getEnvDefinition(env_instances_dir)
+    inventoryYaml = get_env_definition(env_instances_dir)
     cloud_passport_file_name = ""
     if ("cloudPassport" in inventoryYaml["inventory"]):
         cloud_passport_file_name = inventoryYaml["inventory"]["cloudPassport"]
@@ -328,7 +327,7 @@ def findPassportInDefaultDirByName(env_instances_dir, passport_name):
 
 def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
     # checking if inventory is related to cloud passport
-    inventoryYaml = getEnvDefinition(source_env_dir)
+    inventoryYaml = get_env_definition(source_env_dir)
     cloudPassportFileName = ""
     # if passport name is defined in env_definition than using it
     if ("cloudPassport" in inventoryYaml["inventory"]):

@@ -1,14 +1,11 @@
-import argparse
-
 from envgenehelper import *
-from envgenehelper.deployer import *
 
 from build_env import build_env, process_additional_template_parameters
 from cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
-from generate_config_env import EnvGenerator
+from scripts.build_env.env_template.process_env_template import process_env_template
+from render_config_env import EnvGenerator
 from resource_profiles import get_env_specific_resource_profiles
-from pathlib import Path
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -167,7 +164,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     envvars["output_dir"] = output_dir
     envvars["render_profiles_dir"] = render_profiles_dir
     render_context = EnvGenerator()
-    render_context.generate_config_env(env_name, envvars)
+    render_context.render_config_env(env_name, envvars)
     handle_template_override(render_dir)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
                                                                            ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
@@ -310,27 +307,15 @@ def render_environment(env_name, cluster_name, templates_dir, all_instances_dir,
 
 
 if __name__ == "__main__":
-    # Initialize parser
-    parser = argparse.ArgumentParser()
-    # Adding optional argument
-    parser.add_argument("-e", "--env_name", help="Environment name is not set with -e argument")
-    parser.add_argument("-c", "--cluster", help="Cluster name is not set with -c argument")
-    parser.add_argument("-t", "--templates_dir", help="Templates directory is not set with -t argument",
-                        default="environment_templates")
-    parser.add_argument("-i", "--instances_dir", help="Environment instances directory is not set with -i argument")
-    parser.add_argument("-k", "--template_version", help="Artifact version is not set with -k argument")
-    parser.add_argument("-o", "--output_dir", help="Output directory is not set with -o argument")
-    # Read arguments from command line
-    args = parser.parse_args()
-    g_input_env_name = args.env_name
-    g_input_cluster_name = args.cluster
-    g_templates_dir = args.templates_dir
-    g_all_instances_dir = args.instances_dir
-    g_template_version = args.template_version
-    g_output_dir = args.output_dir
+    template_version = process_env_template()
+    g_input_env_name = get_environment_name()
+    g_input_cluster_name = get_cluster_name()
+    g_templates_dir = "/build_env/templates"
+    g_all_instances_dir = f"{base_dir}/environments"
+    g_output_dir = f"{base_dir}/environments"
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
 
     decrypt_all_cred_files_for_env()
     render_environment(g_input_env_name, g_input_cluster_name, g_templates_dir, g_all_instances_dir, g_output_dir,
-                       g_template_version, g_work_dir)
+                       template_version, g_work_dir)
     encrypt_all_cred_files_for_env()

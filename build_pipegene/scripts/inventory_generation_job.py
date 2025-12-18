@@ -32,9 +32,6 @@ def prepare_inventory_generation_job(pipeline, full_env, environment_name, clust
         "envgen_image": "$envgen_image",
         "envgen_args": " -vv",
         "envgen_debug": "true",
-        "module_ansible_dir": "/module/ansible",
-        "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
-        "module_ansible_cfg": "/module/ansible/ansible.cfg",
         "module_config_default": "/module/templates/defaults.yaml",
         "ENV_GENERATION_PARAMS": json.dumps(env_generation_params, ensure_ascii=False, indent=2),
         "GITLAB_RUNNER_TAG_NAME": tags
