@@ -37,5 +37,5 @@ logger.setLevel(log_level)
 if not logger.hasHandlers():
     handler = logging.StreamHandler()
     handler.setLevel(log_level)
-    handler.setFormatter(CustomFormatter())
+    handler.setFormatter(logging.Formatter(BASE_FMT))
     logger.addHandler(handler)
