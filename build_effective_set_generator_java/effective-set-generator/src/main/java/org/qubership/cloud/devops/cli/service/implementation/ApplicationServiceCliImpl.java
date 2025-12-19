@@ -27,6 +27,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import java.util.List;
 
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 import static org.qubership.cloud.devops.commons.exceptions.constant.ExceptionAdditionalInfoMessages.ENTITY_NOT_FOUND;
 
 
@@ -53,7 +54,7 @@ public class ApplicationServiceCliImpl implements ApplicationService {
             CloudDTO cloudDTO = inputData.getCloudDTO();
             application = getApplicationLinkDTO(applicationName, cloudDTO.getApplications());
             if (application == null) {
-                log.warn(String.format(ENTITY_NOT_FOUND, "Application"));
+                logWarning(String.format(ENTITY_NOT_FOUND, "Application"));
                 return null;
             }
         }
