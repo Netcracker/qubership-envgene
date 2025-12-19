@@ -571,7 +571,7 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 > [!IMPORTANT]
 > Parameters whose keys match the name of one of the services must be excluded from this file
-> and placed in [`collision-deployParameters.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
+> and placed in [`collision-deployment-parameters.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
 
 ###### [Version 2.0] Image parameters derived from `deploy_param`
 
@@ -628,10 +628,13 @@ global: &id001
 
 ##### \[Version 2.0][Deployment Parameter Context] Collision Parameters
 
-Parameters whose key matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention) are placed in the following files:
+Parameters at the **root level** of `deployment-parameters.yaml` or `credentials.yaml` whose keys match the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention) are placed in the following files:
 
 - `collision-deployment-parameters.yaml`: if the parameter is non-sensitive (i.e., not defined via a credential macro).
 - `collision-credentials.yaml`: if the parameter is sensitive (i.e., defined via a credential macro).
+
+> [!NOTE]
+> Only root-level parameters are processed by this collision logic. If a parameter with a service name as its key is nested under a service section, it is not moved to the collision files and remains in its original location.
 
 The structure of both files is following:
 
