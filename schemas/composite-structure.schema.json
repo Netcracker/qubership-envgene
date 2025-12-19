@@ -8,25 +8,123 @@
       "description": "Primary identifier for the Composite structure"
     },
     "baseline": {
-      "type": "object",
-      "properties": {
-        "name": {
-          "type": "string",
-          "description": "Name of the baseline component"
+      "oneOf": [
+        {
+          "type": "object",
+          "title": "Namespace Baseline",
+          "description": "Baseline defined as a simple namespace",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the baseline namespace"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of the baseline component",
+              "enum": [
+                "namespace"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "type"
+          ],
+          "additionalProperties": false
         },
-        "type": {
-          "type": "string",
-          "description": "Type of the baseline component",
-          "enum": [
-            "namespace"
-          ]
+        {
+          "type": "object",
+          "title": "BG Domain Baseline",
+          "description": "Baseline defined as a Blue-Green Domain",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name of the BG Domain"
+            },
+            "type": {
+              "type": "string",
+              "description": "Type of the baseline component",
+              "enum": [
+                "bgdomain"
+              ]
+            },
+            "originNamespace": {
+              "type": "object",
+              "description": "The currently active namespace in the BG Domain",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the origin namespace"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Type of the namespace reference",
+                  "enum": [
+                    "namespace"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            "peerNamespace": {
+              "type": "object",
+              "description": "The standby namespace in the BG Domain",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the peer namespace"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Type of the namespace reference",
+                  "enum": [
+                    "namespace"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "type"
+              ],
+              "additionalProperties": false
+            },
+            "controllerNamespace": {
+              "type": "object",
+              "description": "The namespace that manages BG Domain lifecycle operations",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name of the controller namespace"
+                },
+                "type": {
+                  "type": "string",
+                  "description": "Type of the namespace reference",
+                  "enum": [
+                    "namespace"
+                  ]
+                }
+              },
+              "required": [
+                "name",
+                "type"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "name",
+            "type",
+            "originNamespace",
+            "peerNamespace",
+            "controllerNamespace"
+          ],
+          "additionalProperties": false
         }
-      },
-      "required": [
-        "name",
-        "type"
-      ],
-      "additionalProperties": false
+      ]
     },
     "satellites": {
       "type": "array",

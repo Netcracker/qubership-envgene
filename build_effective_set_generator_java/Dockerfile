@@ -20,6 +20,9 @@ ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
 COPY --from=builder --chown=1001:root /deployments /deployments
 COPY --from=builder /etc/alternatives/jre/lib/security/java.security /etc/alternatives/jre/lib/security/java.security
 
+## NOTE: This script requires Python and will fail unless Python is added in the future.
+COPY scripts/utils /module/scripts/utils
+
 RUN chmod g+rwX /deployments
 
 # Ensure sane permissions on copied tree without findutils

@@ -174,8 +174,6 @@ public class ParametersCalculationServiceV2 {
 
         Map<String, Object> finalSecuredParams = ParametersProcessor.convertParameterMapToObject(securedParams);
         Map<String, Object> inSecuredParamsAsObject = ParametersProcessor.convertParameterMapToObject(inSecuredParams);
-        parseBooleanParams(finalSecuredParams);
-        parseBooleanParams(inSecuredParamsAsObject);
         if (parameterType == ParameterType.E2E) {
             parameterBundle.setSecuredE2eParams(finalSecuredParams);
             parameterBundle.setE2eParams(inSecuredParamsAsObject);
@@ -273,18 +271,6 @@ public class ParametersCalculationServiceV2 {
         }
         orderedMap.putAll(finalMap);
         return orderedMap;
-    }
-
-    private void parseBooleanParams(Map<String, Object> orderedMap) {
-        orderedMap.entrySet().stream().forEach(entry -> {
-            if (entry.getValue() instanceof String) {
-                String text = entry.getValue().toString();
-                boolean isBooleanString = text.equalsIgnoreCase("true") || text.equalsIgnoreCase("false");
-                if (isBooleanString) {
-                    entry.setValue(Boolean.parseBoolean(text));
-                }
-            }
-        });
     }
 
     private void filterSecuredParams(Map<String, Parameter> map, Map<String, Parameter> securedParams, Map<String, Parameter> inSecuredParams, ParameterType parameterType) {

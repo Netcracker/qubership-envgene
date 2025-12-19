@@ -7,7 +7,7 @@
   - [TC-003-004: Invalid folder structure for environment](#tc-003-004-invalid-folder-structure-for-environment)
   - [TC-003-005: Template rendering with derived environment name](#tc-003-005-template-rendering-with-derived-environment-name)
 
-This describes test cases for the [Automatic Environment Name Derivation](/docs/features/auto-environment-name.md) feature
+This describes test cases for the [Automatic Environment Name Derivation](/docs/features/auto-env-name-derivation.md) feature
 
 ## TC-003-001: Environment with no explicit environmentName defined
 

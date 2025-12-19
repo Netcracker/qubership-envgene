@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+from collections.abc import Iterable
 
 from deepmerge import always_merger
 from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileAsString, copy_path, dumpYamlToStr, \
@@ -182,20 +183,20 @@ class EnvGenerator:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
-        logger.info(f"Rendered entity: \n {rendered}")
+        logger.debug(f"Rendered entity: \n{rendered}")
         writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
 
     def render_from_file_to_obj(self, src_template_path) -> dict:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
-        logger.info(f"Rendered entity: \n {rendered}")
+        logger.debug(f"Rendered entity: \n{rendered}")
         return readYaml(escaping_quotation(rendered))
 
     def render_from_obj_to_file(self, template, target_file_path):
         template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
-        logger.info(f"Rendered entity: \n {rendered}")
+        logger.debug(f"Rendered entity: \n{rendered}")
         writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
 
     def generate_tenant_file(self):
@@ -385,7 +386,7 @@ class EnvGenerator:
         self.render_app_defs()
         self.render_reg_defs()
 
-    def generate_profiles(self, profile_names: list[str]):
+    def generate_profiles(self, profile_names: Iterable[str]):
         logger.info(f"Start rendering profiles from list: {profile_names}")
         render_profiles_dir = self.ctx.render_profiles_dir
         profile_templates = self.find_templates(render_profiles_dir, ["*.yaml.j2", "*.yml.j2"])

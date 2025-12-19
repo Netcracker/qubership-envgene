@@ -7,7 +7,7 @@ from gcip import Pipeline
 import pipeline_helper
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 
-from passport_jobs import prepare_trigger_passport_job, prepare_passport_job, prepare_decryption_mode_job
+from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from credential_rotation_job import prepare_credential_rotation_job
@@ -22,7 +22,7 @@ logger.info(f"Detected environment - GitLab: {is_gitlab}, GitHub: {is_github}")
 def build_pipeline(params: dict):
     # if we are in template testing during template build
     tags=params['GITLAB_RUNNER_TAG_NAME']
-    
+
     if params['IS_TEMPLATE_TEST']:
         logger.info("We are generating jobs in template test mode.")
         templates_dir = f"{project_dir}/templates/env_templates"
@@ -62,34 +62,30 @@ def build_pipeline(params: dict):
         else:
             cluster_name = get_cluster_name_from_full_name(env)
             environment_name = get_environment_name_from_full_name(env)
-            if params['ENV_INVENTORY_GENERATION_PARAMS']['ENV_INVENTORY_INIT']:
+            if params['ENV_INVENTORY_INIT']:
                 env_definition = None
             else:
                 env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{ci_project_dir}/environments"))
 
         # trigger_passport_job ->
-        # get_passport_job (commit if not is_offsite) ->
-        # process_decryption_mode_job (commit) ->
+        # get_passport_job ->
         # env_inventory_generation_job ->
         # env_build_job ->
         # generate_effective_set_job ->
         # git_commit_job (commit) ->
-        job_sequence = ["trigger_passport_job", "get_passport_job", "process_decryption_mode_job", "env_inventory_generation_job",
+        job_sequence = ["trigger_passport_job", "get_passport_job", "env_inventory_generation_job",
                     "credential_rotation_job", "env_build_job", "generate_effective_set_job", "git_commit_job"]
 
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
             jobs_map["trigger_passport_job"] = prepare_trigger_passport_job(pipeline, env)
-            jobs_map["get_passport_job"] = prepare_passport_job(pipeline, env, environment_name, cluster_name, tags, need_commit=not params['IS_OFFSITE'])
+            jobs_map["get_passport_job"] = prepare_passport_job(pipeline, env, environment_name, cluster_name, tags)
             get_passport_jobs[cluster_name] = True
-            ## process_decryption_mode job is for offsite only
-            if params['IS_OFFSITE']:
-                jobs_map["process_decryption_mode_job"] = prepare_decryption_mode_job(pipeline, env, cluster_name,tags)
         else:
             logger.info(f"Generation of cloud passport for environment '{env}' is skipped")
 
-        if is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params['ENV_INVENTORY_GENERATION_PARAMS']):
-            jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, env, environment_name, cluster_name, params['ENV_INVENTORY_GENERATION_PARAMS'], tags)
+        if is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params):
+            jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, env, environment_name, cluster_name, params, tags)
         else:
             logger.info(f'Preparing of env inventory generation job for {env} is skipped because we are in template test mode.')
 

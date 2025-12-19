@@ -10,3 +10,7 @@ You must sign the [Contributor License Agreement](https://pages.netcracker.com/c
 ## Code of Conduct
 
 Please make sure to read and follow the [Code of Conduct](CODE-OF-CONDUCT.md).
+
+## Type Checking
+
+This project uses **Pyright** for static type checking.
