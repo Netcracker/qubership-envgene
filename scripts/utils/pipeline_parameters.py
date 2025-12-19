@@ -28,7 +28,7 @@ def get_pipeline_parameters() -> dict:
         'GITLAB_RUNNER_TAG_NAME' : getenv("GITLAB_RUNNER_TAG_NAME", ""),
         'RUNNER_SCRIPT_TIMEOUT' : getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
         'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", ""),
-        'LOG_LEVEL': getenv("LOG_LEVEL")
+        'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL")
     }
 
 class PipelineParametersHandler:

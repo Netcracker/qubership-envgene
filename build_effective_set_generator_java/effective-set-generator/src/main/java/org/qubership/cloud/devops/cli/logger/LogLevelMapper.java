@@ -7,7 +7,7 @@ import org.jboss.logging.Logger.Level;
 @ApplicationScoped
 public class LogLevelMapper {
 
-    @ConfigProperty(name = "LOG_LEVEL", defaultValue = "INFO")
+    @ConfigProperty(name = "ENVGENE_LOG_LEVEL", defaultValue = "INFO")
     String level;
 
     public Level getMappedLevel() {

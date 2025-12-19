@@ -28,7 +28,7 @@ class CustomFormatter(logging.Formatter):
 logger = logging.getLogger("envgene")
 logger.propagate = False
 
-log_level_str = getenv("LOG_LEVEL", "INFO").upper()
+log_level_str = getenv("ENVGENE_LOG_LEVEL", "INFO").upper()
 log_level = getattr(logging, log_level_str, logging.INFO)
 logger.setLevel(log_level)
 
