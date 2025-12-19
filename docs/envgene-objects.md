@@ -1351,7 +1351,7 @@ Two versions of this object are supported
 name: string
 # Mandatory
 # Pointer to the EnvGene Credential object.
-# Credential with this ID must be located in /environments/<cluster-name>/<environment-name>/Credentials/credentials.yml
+# Credential with this ID must be located in /configuration/credentials/credentials.yml
 credentialsId: string
 # Mandatory
 mavenConfig:
@@ -1499,11 +1499,10 @@ name: string
 authConfig:
   <auth-config-name>:
     # Mandatory
-    # Name of the credential in the credential storage
-    # The credential type can be either `usernamePassword` or `secret`
+    # Pointer to the EnvGene Credential object.
     # Depending on `authType`, it can be:
     # access key (username) + secret (password) for longLived
-    # or different authentication credential components for shortLived
+    # Credential with this ID must be located in /configuration/credentials/credentials.yml
     credentialsId: string 
     # Optional
     # Public cloud registry authentication strategy
