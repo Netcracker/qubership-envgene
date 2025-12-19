@@ -50,6 +50,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
+
 
 @Slf4j
 public class ExpressionLanguage extends AbstractLanguage {
@@ -217,19 +219,21 @@ public class ExpressionLanguage extends AbstractLanguage {
             String strValue = (String) val;
 
 
-            String jinJavaRendered = "";
+            String rendered = "";
+            this.binding.getTypeCollector().clear();
             try {
-                jinJavaRendered = renderStringByJinJava(strValue, binding, escapeDollar);
-                val = jinJavaRendered;
+                rendered = renderStringByJinJava(strValue, binding, escapeDollar);
             } catch (Exception e) {
-                log.debug(String.format("Parameter {} was not processed by JinJava, hence reverting to Groovy.", strValue));
-                String groovyRendered = renderStringByGroovy(strValue, binding, escapeDollar);
-                val = groovyRendered;
+                logDebug(String.format("Parameter {} was not processed by JinJava, hence reverting to Groovy.", strValue));
+                rendered = renderStringByGroovy(strValue, binding, escapeDollar);
             }
+            Object originalValue = this.binding.getTypeCollector().get(rendered);  // Object
+            Class<?> targetType = (originalValue != null) ? (Class<?>) originalValue : String.class;
+            val = convertToType(rendered, targetType);
 
             isProcessed = true;
 
-            Matcher secureMarkerMatcher = SECURED_PATTERN.matcher((String) val);
+            Matcher secureMarkerMatcher = SECURED_PATTERN.matcher(String.valueOf(val));
             if (secureMarkerMatcher.find()) {
                 isSecured = true;
                 val = ((String) Objects.requireNonNull(val)).replaceAll("([\\u0096\\u0097])", "");
@@ -277,16 +281,20 @@ public class ExpressionLanguage extends AbstractLanguage {
     }
 
     private Object removeEscaping(boolean escapeDollar, Object val) throws JsonProcessingException {
+
         if (escapeDollar && val != null) {
+            Class<?> originalType = val.getClass();
             String strValue;
             if (val instanceof String) {
                 strValue = val.toString();
             } else {
                 strValue = mapper.writeValueAsString(val);
             }
-            strValue = strValue.replaceAll("\\\\\\$", "\\$"); // \$ -> $
-            val = strValue.replaceAll("\\\\\\\\", "\\\\"); // \\ -> \
+                strValue = strValue.replaceAll("\\\\\\$", "\\$"); // \$ -> $
+                strValue = strValue.replaceAll("\\\\\\\\", "\\\\"); // \\ -> \
+                return convertToType(strValue, originalType);
         }
+
         return val;
     }
 
@@ -465,9 +473,24 @@ public class ExpressionLanguage extends AbstractLanguage {
             try {
                 processedParams.put(key, processValue(value, this.binding, true));
             } catch (IOException e) {
-                log.error(String.format("Error in processing the parameter key %s and value %s", key, value));
+                logError(String.format("Error in processing the parameter key %s and value %s", key, value));
             }
         });
         return processedParams;
+    }
+
+    private static Object convertToType(String value, Class<?> type) {
+        if (type == String.class) {
+            return value;
+        } else if (type == Integer.class || type == int.class) {
+            return Integer.parseInt(value);
+        } else if (type == Long.class || type == long.class) {
+            return Long.parseLong(value);
+        } else if (type == Boolean.class || type == boolean.class) {
+            return Boolean.parseBoolean(value);
+        } else if (type == Double.class || type == double.class) {
+            return Double.parseDouble(value);
+        }
+        return value;
     }
 }

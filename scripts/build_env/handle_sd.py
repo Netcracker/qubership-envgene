@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 from enum import Enum
-from os import path
+from os import path, getenv
 from pathlib import Path
 
 import envgenehelper as helper
@@ -91,11 +91,11 @@ def prepare_vars_and_run_sd_handling():
 
     env = Environment(base_dir, cluster, env_name)
 
-    sd_source_type = getenv_and_log('SD_SOURCE_TYPE')
-    sd_version = getenv_and_log('SD_VERSION')
-    sd_data = getenv_and_log('SD_DATA')
-    sd_delta = getenv_and_log('SD_DELTA')
-    sd_merge_mode = getenv_and_log("SD_REPO_MERGE_MODE")
+    sd_source_type = getenv('SD_SOURCE_TYPE')
+    sd_version = getenv('SD_VERSION')
+    sd_data = getenv('SD_DATA')
+    sd_delta = getenv('SD_DELTA')
+    sd_merge_mode = getenv("SD_REPO_MERGE_MODE")
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
 
 
@@ -169,8 +169,11 @@ def calculate_sd_delta(sd_delta):
 def multiply_sds_to_single(sds_data, effective_merge_mode):
     if effective_merge_mode == MergeType.EXTENDED:
         if isinstance(sds_data, list):
-            raise ValueError("Multiple SDs not supported in extended merge mode")
-        full_sd_from_pipe = sds_data
+            if len(sds_data) > 1:
+                raise ValueError("Multiple SDs not supported in extended merge mode")
+            full_sd_from_pipe = sds_data[0]
+        elif isinstance(sds_data, dict):
+            full_sd_from_pipe = sds_data
     else:
         sds_data = sds_data if isinstance(sds_data, list) else [sds_data]
         cropped_sds = []
