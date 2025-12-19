@@ -8,8 +8,6 @@ from termcolor import colored
 from os import getenv
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-import logging
-logging.basicConfig(format = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s', level = logging.INFO)
 
 with open('archive.yaml', 'r') as file_save:
     archive=yaml.load(file_save, Loader=yaml.SafeLoader)
