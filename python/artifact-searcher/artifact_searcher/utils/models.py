@@ -122,7 +122,7 @@ class Application(BaseSchema):
     artifact_id: str
     group_id: str
     registry: Registry
-    solution_descriptor: bool
+    solution_descriptor: bool = False
 
 
 class FileExtension(str, Enum):
