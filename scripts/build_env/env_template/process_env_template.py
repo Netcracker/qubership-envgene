@@ -38,8 +38,7 @@ def fetch_reg_cred(artifact_def) -> Credentials:
     return Credentials(username=repository_username, password=repository_password)
 
 
-def fetch_dd_template(artifact_def, artifact_version):
-    cred = fetch_reg_cred(artifact_def)
+def fetch_dd_template(artifact_def, artifact_version, cred: Credentials):
     dd_template_url, _ = asyncio.run(artifact.check_artifact_async(artifact_def, FileExtension.JSON, artifact_version))
     if not dd_template_url:
         raise ValueError(
@@ -52,7 +51,7 @@ def fetch_dd_template(artifact_def, artifact_version):
     return dd_config
 
 
-def fetch_zip_artifact_info(dd_template, artifact_def: Application) -> ArtifactInfo:
+def fetch_zip_artifact_info(dd_template, artifact_def: Application, cred: Credentials) -> ArtifactInfo:
     artifact_tmp_str = dd_template['configurations'][0]['artifacts'][0].get('id')
     group_id, artifact_id, version = artifact_tmp_str.split(':')
     logger.info(f"Parsed maven artifact coordinates: group_id={group_id}, artifact_id={artifact_id}, version={version}")
@@ -60,7 +59,6 @@ def fetch_zip_artifact_info(dd_template, artifact_def: Application) -> ArtifactI
         raise ValueError(
             f"[Application {artifact_def.name}]: invalid maven coordinates: group_id={group_id},"
             f" artifact_id={artifact_id}, version={version} from deployment descriptor")
-    cred = fetch_reg_cred(artifact_def)
     template_url = asyncio.run(artifact.check_artifact_async(artifact_def, FileExtension.ZIP, version, cred))
     if not template_url:
         raise ValueError(
@@ -86,8 +84,8 @@ def process_env_template() -> str:
         artifact_is_zip = env_definition['envTemplate'].get('artifactIsZip', False)
         cred = fetch_reg_cred(artifact_def)
         if not artifact_is_zip:
-            dd_template = fetch_dd_template(artifact_def, artifact_version)
-            artifact_info = fetch_zip_artifact_info(dd_template, artifact_def)
+            dd_template = fetch_dd_template(artifact_def, artifact_version, cred)
+            artifact_info = fetch_zip_artifact_info(dd_template, artifact_def, cred)
             asyncio.run(download_all_async([artifact_info], cred))
         else:
             # when we don't have dd -> directly download zip without parse dd
