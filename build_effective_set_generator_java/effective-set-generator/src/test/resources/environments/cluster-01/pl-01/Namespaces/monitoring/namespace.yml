@@ -28,7 +28,7 @@ deployParameters:
   TEST_CREDS_GET_VAULT_ROLE: "${creds.get(\"creds-get-vault-cred-role\").roleId}" # paramset: test-deploy-creds version: 1 source: template
   TEST_CREDS_GET_VAULT_SECRET_ID: "${creds.get( \"creds-get-vault-cred-secret-id\").secretId}" # paramset: test-deploy-creds version: 1 source: template
   TEST_ENVGENE_CREDS_GET_PASSWORD_PASSWORD: "${creds.get('envgen-creds-get-password-cred').password}" # paramset: test-deploy-creds version: 1 source: template
-  TEST_ENVGENE_CREDS_GET_PASSWORD_USERNAME: "${creds.get('envgen-creds-get-username-cred').username}" # paramset: test-deploy-creds version: 1 source: template
+  graphite-remote-adapter: "${creds.get('envgen-creds-get-username-cred').username}" # paramset: test-deploy-creds version: 1 source: template
   TEST_ENVGENE_CREDS_GET_SECRET_PARAM: "${creds.get('envgen-creds-get-secret').secret}" # paramset: test-deploy-creds version: 1 source: template
   TEST_ENVGENE_CREDS_GET_VAULT_NAMESPACE: "${creds.get(   \"envgen-creds-get-vault-cred-namespace\"  ).namespace}" # paramset: test-deploy-creds version: 1 source: template
   TEST_ENVGENE_CREDS_GET_VAULT_PATH: "${creds.get( \"envgen-creds-get-vault-cred-path\" ).path}" # paramset: test-deploy-creds version: 1 source: template
