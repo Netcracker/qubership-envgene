@@ -11,10 +11,11 @@ import xml.etree.ElementTree as ET
 
 import aiohttp
 import requests
+from aiohttp import BasicAuth
 from loguru import logger
 from requests.auth import HTTPBasicAuth
 from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
-from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT
+from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT
 
 WORKSPACE = limit = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
 
@@ -107,11 +108,10 @@ def version_to_folder_name(version: str):
     return folder
 
 
-# only nexus/artifactory auth
-def download_json_content(url: str, auth=None) -> dict[str, Any]:
+def download_json_content(url: str, cred: Credentials | None = None) -> dict[str, Any]:
     response = requests.get(
         url,
-        auth=auth,
+        auth=HTTPBasicAuth(cred.username, cred.password),
         timeout=DEFAULT_REQUEST_TIMEOUT
     )
     response.raise_for_status()
@@ -126,9 +126,10 @@ def clean_temp_dir():
     os.makedirs(WORKSPACE, exist_ok=True)
 
 
-async def download_all_async(artifacts_info: list[ArtifactInfo]):
-    connector = aiohttp.TCPConnector(limit=os.getenv("TCP_CONNECTION_LIMIT", 100))
-    async with aiohttp.ClientSession(connector=connector) as session:
+async def download_all_async(artifacts_info: list[ArtifactInfo], cred: Credentials | None = None):
+    auth = BasicAuth(login=cred.username, password=cred.password)
+    connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
+    async with aiohttp.ClientSession(connector=connector, timeout=DEFAULT_REQUEST_TIMEOUT, auth=auth) as session:
         async with asyncio.TaskGroup() as tg:
             tasks = [tg.create_task(download(session, artifact_info)) for artifact_info in artifacts_info]
         results = []
@@ -215,7 +216,11 @@ def get_repo_pointer(repo_value: str, registry: Registry):
 
 
 async def _attempt_check(
-        app: Application, version: str, artifact_extension: FileExtension, registry_url: str | None = None
+        app: Application,
+        version: str,
+        artifact_extension: FileExtension,
+        registry_url: str | None = None,
+        cred: Credentials | None = None
 ) -> Optional[tuple[str, tuple[str, str]]]:
     """Helper function to attempt artifact check with a given registry URL"""
     folder = version_to_folder_name(version)
@@ -225,8 +230,8 @@ async def _attempt_check(
     repos_dict = get_repo_value_pointer_dict(app.registry)
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
-
-    async with aiohttp.ClientSession() as session:
+    auth = BasicAuth(login=cred.username, password=cred.password)
+    async with aiohttp.ClientSession(timeout=DEFAULT_REQUEST_TIMEOUT, auth=auth) as session:
         resolved_version = version
         if version.endswith("-SNAPSHOT"):
             resolve_snapshot_coros = [
@@ -261,8 +266,8 @@ async def _attempt_check(
 
 
 async def check_artifact_async(
-        app: Application, artifact_extension: FileExtension, version: str
-) -> Optional[tuple[str, tuple[str, str]]] | None:
+        app: Application, artifact_extension: FileExtension, version: str, cred: Credentials | None = None) \
+        -> Optional[tuple[str, tuple[str, str]]] | None:
     """
     Resolves the full artifact URL and the first repository where it was found.
     Supports both release and snapshot versions.
@@ -285,7 +290,7 @@ async def check_artifact_async(
     fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
     if fixed_domain != original_domain:
         logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
-        result = await _attempt_check(app, version, artifact_extension, fixed_domain)
+        result = await _attempt_check(app, version, artifact_extension, fixed_domain, cred)
         if result is not None:
             return result
     else:
