@@ -1,0 +1,1361 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnvGene UI - Solution 5: Hybrid Approach</title>
+    
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    
+    <!-- js-yaml -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/yaml/yaml.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .selector-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .selector-group {
+            position: relative;
+        }
+
+        .selector-group label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #666;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #999;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: help;
+            line-height: 1;
+            transition: background-color 0.2s ease;
+        }
+
+        .help-icon:hover {
+            background-color: #666;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1.4;
+            max-width: 250px;
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            border: 6px solid transparent;
+        }
+
+        .tooltip.top::after {
+            bottom: -12px;
+            left: 20px;
+            border-top-color: #333;
+        }
+
+        .tooltip.bottom::after {
+            top: -12px;
+            left: 20px;
+            border-bottom-color: #333;
+        }
+
+        .tooltip.left::after {
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-left-color: #333;
+        }
+
+        .tooltip.right::after {
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-right-color: #333;
+        }
+
+        .selector-group select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            background-color: #fff;
+            color: #999;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .selector-group select:hover {
+            border-color: #999;
+        }
+
+        .selector-group select:focus {
+            outline: none;
+            border-color: #666;
+            color: #000;
+        }
+
+        .selector-group select.has-value {
+            color: #000;
+        }
+
+        .selector-group select option {
+            color: #333;
+        }
+
+        .selector-group select option:disabled {
+            color: #999;
+        }
+
+        .selector-group select:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .commit-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .commit-message-input {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            min-width: 300px;
+            transition: border-color 0.3s ease;
+        }
+
+        .commit-message-input:focus {
+            outline: none;
+            border-color: #666;
+        }
+
+        .commit-message-input.invalid {
+            border-color: #f44336;
+            background-color: #ffebee;
+        }
+
+        .commit-message-input.valid {
+            border-color: #4CAF50;
+        }
+
+        .commit-message-error {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            padding: 4px 8px;
+            background-color: #f44336;
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 1000;
+            display: none;
+        }
+
+        .commit-message-error.show {
+            display: block;
+        }
+
+        .commit-button {
+            padding: 6px 16px;
+            background-color: #9e9e9e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+        }
+
+        .commit-button.has-changes {
+            background-color: #4CAF50;
+        }
+
+        .commit-button.has-changes:hover {
+            background-color: #45a049;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: translateY(-1px);
+        }
+
+        .commit-button:active {
+            transform: translateY(0);
+        }
+
+        .commit-button:disabled {
+            background-color: #9e9e9e;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.7;
+        }
+
+        .commit-button .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        .commit-button.loading .spinner {
+            display: block;
+        }
+
+        .commit-button.loading .button-text {
+            opacity: 0.7;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Scope Bar с селекторами */
+        .scope-bar {
+            background-color: #fff;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .scope-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .scope-bar-selectors {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .scope-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .scope-item {
+            padding: 4px 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            display: flex;
+            align-items: center;
+        }
+
+        .scope-separator {
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Основной контент */
+        .content-area {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #fafafa;
+        }
+
+        .overrides-section {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+
+        .section-header {
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .effective-set-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 15px 0 0 0;
+            padding: 8px 12px;
+            background-color: transparent;
+            color: #1976d2;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .effective-set-link:hover {
+            background-color: #f5f5f5;
+            color: #1565c0;
+            text-decoration: none;
+        }
+
+        .overrides-block {
+            margin-top: 15px;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            margin-bottom: 15px;
+        }
+
+        .tabs-header {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 0;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background-color: #f5f5f5;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            top: 2px;
+            display: flex;
+            align-items: center;
+        }
+
+        .tab-button .help-icon {
+            margin-left: 6px;
+        }
+
+        .tab-button:hover {
+            background-color: #e8e8e8;
+            color: #333;
+        }
+
+        .tab-button.active {
+            background-color: #fff;
+            color: #000;
+            border-bottom-color: #4CAF50;
+        }
+
+        .tab-content {
+            display: none;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            overflow: hidden;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .context-section {
+            margin: 0;
+            border: none;
+            border-radius: 0;
+        }
+
+        .context-header {
+            background-color: #f5f5f5;
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .context-content {
+            padding: 12px;
+        }
+
+        .yaml-editor-wrapper {
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            overflow: auto;
+            resize: vertical;
+            min-height: 200px;
+            max-height: 800px;
+        }
+
+        .yaml-editor-wrapper.valid {
+            border-color: #4CAF50;
+        }
+
+        .yaml-editor-wrapper.invalid {
+            border-color: #f44336;
+        }
+
+        .yaml-editor-wrapper .CodeMirror {
+            height: 400px;
+            font-size: 13px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+        }
+
+        .yaml-editor-wrapper .CodeMirror-scroll {
+            min-height: 200px;
+        }
+
+        /* Визуальный индикатор для изменения размера */
+        .yaml-editor-wrapper::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(-45deg, transparent 30%, #999 30%, #999 35%, transparent 35%, transparent 65%, #999 65%, #999 70%, transparent 70%);
+            cursor: ns-resize;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .yaml-editor-wrapper:hover::after {
+            opacity: 1;
+        }
+
+        .validation-status {
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        .validation-status.valid {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .validation-status.invalid {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .validation-status::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .validation-status.valid::before {
+            background-color: #4CAF50;
+        }
+
+        .validation-status.invalid::before {
+            background-color: #f44336;
+        }
+
+        .error-message {
+            color: #c62828;
+            font-size: 12px;
+            margin-top: 4px;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Scope Bar с селекторами -->
+        <div class="scope-bar" id="scope-bar">
+            <div class="scope-bar-left">
+                <div class="scope-bar-selectors">
+                    <div class="selector-group">
+                        <label>
+                            Environment
+                            <span class="help-icon" data-tooltip="Select the target environment where your application will run. This determines which cluster and environment configuration will be used.">?</span>
+                        </label>
+                        <select id="environment-select">
+                            <option value="cluster-1/env-1">cluster-1/env-1</option>
+                            <option value="cluster-2/env-2">cluster-2/env-2</option>
+                            <option value="cluster-3/env-3">cluster-3/env-3</option>
+                            <option value="cluster-3/env-4">cluster-3/env-4</option>
+                        </select>
+                    </div>
+                    <div class="selector-group" id="namespace-selector-group">
+                        <label>
+                            Namespace
+                            <span class="help-icon" data-tooltip="Choose the namespace that groups your applications. Parameters set here apply to all apps in this namespace.">?</span>
+                        </label>
+                        <select id="namespace-select">
+                            <option value="ns-1">ns-1</option>
+                            <option value="ns-2">ns-2</option>
+                            <option value="ns-3">ns-3</option>
+                        </select>
+                    </div>
+                    <div class="selector-group" id="application-selector-group">
+                        <label>
+                            Application
+                            <span class="help-icon" data-tooltip="Select the specific application you want to configure. These parameters will only affect this application.">?</span>
+                        </label>
+                        <select id="application-select">
+                            <option value="app-1">app-1</option>
+                            <option value="app-2">app-2</option>
+                            <option value="app-3">app-3</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="scope-bar-right">
+                <a href="https://github.com/Netcracker/qubership-envgene" target="_blank" style="color: #1976d2; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-right: 15px; padding: 6px 10px; border-radius: 4px; transition: background-color 0.2s ease; font-weight: 500;" onmouseover="this.style.backgroundColor='#f5f5f5'" onmouseout="this.style.backgroundColor='transparent'">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>Docs</span>
+                </a>
+                <div class="commit-section">
+                    <div style="position: relative;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <input 
+                                type="text" 
+                                class="commit-message-input" 
+                                id="commit-message" 
+                                placeholder="Commit message"
+                            />
+                            <span class="help-icon" data-tooltip="Enter a commit message with a ticket ID (e.g., ACME-123). This helps track changes and link them to your work items.">?</span>
+                        </div>
+                        <div class="commit-message-error" id="commit-message-error">
+                            Please add a ticket ID to your commit message (for example, ACME-123)
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <button class="commit-button" id="commit-btn">
+                            <span class="spinner"></span>
+                            <span class="button-text">Commit</span>
+                        </button>
+                        <span class="help-icon" data-tooltip="Save your parameter changes to the repository. Make sure your commit message includes a ticket ID (e.g., ACME-123).">?</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="content-area">
+                <div class="overrides-section">
+                    <div class="section-header">
+                    </div>
+
+                    <div class="overrides-block">
+                        <div class="tabs-container">
+                            <div class="tabs-header">
+                                <button class="tab-button active" data-tab="deployment">
+                                    deployment
+                                    <span class="help-icon" data-tooltip="Configure parameters used during application deployment. These settings control how your app is installed and started." style="margin-left: 6px;">?</span>
+                                </button>
+                                <button class="tab-button" data-tab="runtime">
+                                    runtime
+                                    <span class="help-icon" data-tooltip="Set parameters that your application uses while running. These values are available to your app at runtime." style="margin-left: 6px;">?</span>
+                                </button>
+                                <button class="tab-button" data-tab="pipeline">
+                                    pipeline
+                                    <span class="help-icon" data-tooltip="Configure CI/CD pipeline parameters. These apply to the entire environment, not individual applications." style="margin-left: 6px;">?</span>
+                                </button>
+                            </div>
+
+                            <!-- Deployment Tab -->
+                            <div class="tab-content active" id="deployment-tab">
+                                <div class="context-section">
+                                    <div class="context-header">
+                                        <div class="validation-status" id="deployment-validation">
+                                            <span>Valid YAML</span>
+                                        </div>
+                                    </div>
+                                    <div class="context-content">
+                                        <div class="yaml-editor-wrapper" id="deployment-editor-wrapper">
+                                            <textarea id="deployment-yaml"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Runtime Tab -->
+                            <div class="tab-content" id="runtime-tab">
+                                <div class="context-section">
+                                    <div class="context-header">
+                                        <div class="validation-status" id="runtime-validation">
+                                            <span>Valid YAML</span>
+                                        </div>
+                                    </div>
+                                    <div class="context-content">
+                                        <div class="yaml-editor-wrapper" id="runtime-editor-wrapper">
+                                            <textarea id="runtime-yaml"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pipeline Tab -->
+                            <div class="tab-content" id="pipeline-tab">
+                                <div class="context-section">
+                                    <div class="context-header">
+                                        <div class="validation-status" id="pipeline-validation">
+                                            <span>Valid YAML</span>
+                                        </div>
+                                    </div>
+                                    <div class="context-content">
+                                        <div class="yaml-editor-wrapper" id="pipeline-editor-wrapper">
+                                            <textarea id="pipeline-yaml"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <a href="#" class="effective-set-link" id="effective-set-link" target="_blank">
+                                View Environment in Git
+                            </a>
+                            <span class="help-icon" data-tooltip="Open the environment configuration in Git to see all files and settings for this environment.">?</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <script>
+        // Mock данные
+        const mockData = {
+            repositories: ['repo-1', 'repo-2', 'repo-3'],
+            environments: ['cluster-1/env-1', 'cluster-2/env-2', 'cluster-3/env-3', 'cluster-3/env-4'],
+            namespaces: ['ns-1', 'ns-2', 'ns-3'],
+            applications: ['app-1', 'app-2', 'app-3'],
+            effectiveSetOverrides: {
+                'app-1': {
+                    deployment: 'param-1: value\nparam-2:\nkey: value\nother-key: value',
+                    runtime: 'param-1: value\nparam-2:\nkey: value\nother-key: value'
+                },
+                'app-2': {
+                    deployment: 'param-1: value2\nparam-2: test',
+                    runtime: 'param-1: value2'
+                },
+                'app-3': {
+                    deployment: '',
+                    runtime: ''
+                },
+                'cluster-1/env-1': {
+                    pipeline: 'param-1: value\nparam-2:\nkey: value\nother-key: value'
+                },
+                'cluster-2/env-2': {
+                    pipeline: 'param-1: value2'
+                },
+                'cluster-3/env-3': {
+                    pipeline: ''
+                }
+            },
+            getEffectiveSetLink: function(env, ns, app) {
+                return `https://git.example.com/effective-set/deployment/${ns}/${app}`;
+            }
+        };
+
+        // Состояние приложения
+        let currentState = {
+            environment: 'cluster-1/env-1',
+            namespace: 'ns-1',
+            application: 'app-1',
+            currentContext: 'deployment'
+        };
+
+        // CodeMirror редакторы
+        const editors = {
+            deployment: null,
+            pipeline: null,
+            runtime: null
+        };
+
+        // Исходные значения для отслеживания изменений
+        let originalValues = {
+            deployment: '',
+            pipeline: '',
+            runtime: ''
+        };
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFromLocalStorage();
+            initializeSelectors();
+            initializeTabs();
+            initializeEditors();
+            updateScopeBar();
+            updateApplicationSelectorState();
+            updateEffectiveSetLink();
+            // Загружаем параметры после инициализации редакторов
+            setTimeout(() => {
+                loadParameters();
+            }, 100);
+        });
+
+        // Инициализация селекторов
+        function initializeSelectors() {
+            const selects = ['environment', 'namespace', 'application'];
+            selects.forEach(selectName => {
+                const select = document.getElementById(`${selectName}-select`);
+                
+                // Добавляем класс has-value если есть выбранное значение
+                if (select.value) {
+                    select.classList.add('has-value');
+                }
+                
+                select.addEventListener('change', function() {
+                    currentState[selectName] = this.value;
+                    // Добавляем класс при выборе значения
+                    if (this.value) {
+                        this.classList.add('has-value');
+                    } else {
+                        this.classList.remove('has-value');
+                    }
+                    updateScopeBar();
+                    updateEffectiveSetLink();
+                    loadParameters();
+                });
+            });
+
+            document.getElementById('commit-btn').addEventListener('click', handleCommit);
+            
+            // Инициализация подсказок
+            initializeTooltips();
+            
+            // Валидация commit message при вводе
+            const commitMessageInput = document.getElementById('commit-message');
+            const commitMessageError = document.getElementById('commit-message-error');
+            
+            commitMessageInput.addEventListener('input', function() {
+                const message = this.value.trim();
+                if (message === '') {
+                    this.classList.remove('invalid', 'valid');
+                    commitMessageError.classList.remove('show');
+                } else if (validateCommitMessage(message)) {
+                    this.classList.remove('invalid');
+                    this.classList.add('valid');
+                    commitMessageError.classList.remove('show');
+                } else {
+                    this.classList.remove('valid');
+                    this.classList.add('invalid');
+                    commitMessageError.classList.add('show');
+                }
+                // Обновляем состояние кнопки Commit
+                updateCommitButton();
+            });
+            
+            // Показываем подсказку при фокусе, если валидация не прошла
+            commitMessageInput.addEventListener('focus', function() {
+                const message = this.value.trim();
+                if (message !== '' && !validateCommitMessage(message)) {
+                    commitMessageError.classList.add('show');
+                }
+            });
+            
+            // Скрываем подсказку при потере фокуса, если поле валидно
+            commitMessageInput.addEventListener('blur', function() {
+                const message = this.value.trim();
+                if (message === '' || validateCommitMessage(message)) {
+                    commitMessageError.classList.remove('show');
+                }
+            });
+        }
+
+        // Инициализация подсказок
+        function initializeTooltips() {
+            const helpIcons = document.querySelectorAll('.help-icon');
+            let tooltipTimeout = null;
+            let currentTooltip = null;
+
+            helpIcons.forEach(icon => {
+                const tooltipText = icon.getAttribute('data-tooltip');
+                if (!tooltipText) return;
+
+                // Создаем элемент подсказки
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.textContent = tooltipText;
+                document.body.appendChild(tooltip);
+
+                icon.addEventListener('mouseenter', function(e) {
+                    // Отменяем предыдущий таймер
+                    if (tooltipTimeout) {
+                        clearTimeout(tooltipTimeout);
+                    }
+                    if (currentTooltip) {
+                        currentTooltip.classList.remove('show');
+                    }
+
+                    // Устанавливаем новый таймер на 1 секунду
+                    tooltipTimeout = setTimeout(() => {
+                        const rect = icon.getBoundingClientRect();
+                        const tooltipRect = tooltip.getBoundingClientRect();
+                        
+                        // Определяем позицию подсказки
+                        let top = rect.top - tooltipRect.height - 8;
+                        let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                        
+                        // Проверяем, не выходит ли за границы экрана
+                        if (top < 0) {
+                            top = rect.bottom + 8;
+                            tooltip.classList.remove('top');
+                            tooltip.classList.add('bottom');
+                        } else {
+                            tooltip.classList.remove('bottom');
+                            tooltip.classList.add('top');
+                        }
+                        
+                        if (left < 0) {
+                            left = 8;
+                        } else if (left + tooltipRect.width > window.innerWidth) {
+                            left = window.innerWidth - tooltipRect.width - 8;
+                        }
+                        
+                        tooltip.style.top = top + 'px';
+                        tooltip.style.left = left + 'px';
+                        tooltip.classList.add('show');
+                        currentTooltip = tooltip;
+                    }, 1000);
+                });
+
+                icon.addEventListener('mouseleave', function() {
+                    if (tooltipTimeout) {
+                        clearTimeout(tooltipTimeout);
+                        tooltipTimeout = null;
+                    }
+                    if (currentTooltip) {
+                        currentTooltip.classList.remove('show');
+                        currentTooltip = null;
+                    }
+                });
+            });
+        }
+
+        // Инициализация табов
+        function initializeTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            // Восстанавливаем сохраненную вкладку
+            const savedTab = currentState.currentContext || 'deployment';
+            const savedTabButton = document.querySelector(`.tab-button[data-tab="${savedTab}"]`);
+            const savedTabContent = document.getElementById(`${savedTab}-tab`);
+            
+            if (savedTabButton && savedTabContent) {
+                // Убираем активный класс у всех кнопок и контента
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Восстанавливаем сохраненную вкладку
+                savedTabButton.classList.add('active');
+                savedTabContent.classList.add('active');
+                currentState.currentContext = savedTab;
+            }
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    currentState.currentContext = targetTab;
+
+                    // Убираем активный класс у всех кнопок и контента
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+
+                    // Добавляем активный класс к выбранной кнопке и контенту
+                    this.classList.add('active');
+                    document.getElementById(`${targetTab}-tab`).classList.add('active');
+
+                    // Обновляем состояние Application селектора
+                    updateApplicationSelectorState();
+
+                    // Сохраняем выбранную вкладку
+                    localStorage.setItem('envgene-state', JSON.stringify(currentState));
+
+                    // Обновляем размер редактора при переключении таба
+                    const editor = editors[targetTab];
+                    if (editor) {
+                        setTimeout(() => {
+                            const wrapper = document.getElementById(`${targetTab}-editor-wrapper`);
+                            // Устанавливаем фиксированную высоту 400px (начальная высота редактора)
+                            // или используем высоту wrapper, если она больше
+                            const wrapperHeight = wrapper ? wrapper.offsetHeight : 400;
+                            const finalHeight = wrapperHeight > 100 ? wrapperHeight : 400;
+                            editor.setSize(null, finalHeight);
+                            editor.refresh();
+                        }, 100);
+                    }
+                });
+            });
+        }
+
+        // Обновление состояния Application и Namespace селекторов
+        function updateApplicationSelectorState() {
+            const appSelect = document.getElementById('application-select');
+            const nsSelect = document.getElementById('namespace-select');
+            
+            if (currentState.currentContext === 'pipeline') {
+                appSelect.disabled = true;
+                nsSelect.disabled = true;
+            } else {
+                appSelect.disabled = false;
+                nsSelect.disabled = false;
+            }
+            updateEffectiveSetLink();
+        }
+
+        // Инициализация YAML редакторов
+        function initializeEditors() {
+            const contexts = ['deployment', 'pipeline', 'runtime'];
+            
+            contexts.forEach(context => {
+                const textarea = document.getElementById(`${context}-yaml`);
+                const wrapper = document.getElementById(`${context}-editor-wrapper`);
+                const editor = CodeMirror.fromTextArea(textarea, {
+                    lineNumbers: true,
+                    mode: 'yaml',
+                    theme: 'monokai',
+                    indentUnit: 2,
+                    lineWrapping: true,
+                    autofocus: false
+                });
+
+                editors[context] = editor;
+
+                // Устанавливаем начальную высоту редактора
+                editor.setSize(null, 400);
+
+                // Валидация при изменении
+                editor.on('change', function() {
+                    validateYAML(context);
+                    checkForChanges();
+                    saveToLocalStorage();
+                });
+
+                // Обработчик изменения размера wrapper
+                let resizeObserver;
+                if (window.ResizeObserver) {
+                    resizeObserver = new ResizeObserver(entries => {
+                        for (let entry of entries) {
+                            const newHeight = entry.contentRect.height;
+                            // Обновляем размер только если wrapper видим и имеет реальную высоту
+                            if (newHeight > 100) {
+                                editor.setSize(null, newHeight);
+                            }
+                        }
+                    });
+                    resizeObserver.observe(wrapper);
+                } else {
+                    // Fallback для браузеров без ResizeObserver
+                    let resizeTimeout;
+                    wrapper.addEventListener('mouseup', function() {
+                        clearTimeout(resizeTimeout);
+                        resizeTimeout = setTimeout(() => {
+                            const newHeight = wrapper.offsetHeight;
+                            editor.setSize(null, newHeight);
+                        }, 10);
+                    });
+                }
+            });
+        }
+
+        // Валидация YAML
+        function validateYAML(context) {
+            const editor = editors[context];
+            const wrapper = document.getElementById(`${context}-editor-wrapper`);
+            const validationStatus = document.getElementById(`${context}-validation`);
+            
+            try {
+                const yamlContent = editor.getValue();
+                
+                // Пустой YAML считается валидным
+                if (yamlContent.trim() === '') {
+                    wrapper.classList.remove('invalid');
+                    wrapper.classList.add('valid');
+                    validationStatus.classList.remove('invalid');
+                    validationStatus.classList.add('valid');
+                    validationStatus.innerHTML = '<span>Valid YAML (empty)</span>';
+                    updateCommitButton();
+                    return true;
+                }
+
+                // Проверка на кириллические символы
+                const cyrillicPattern = /[\u0400-\u04FF]/;
+                if (cyrillicPattern.test(yamlContent)) {
+                    wrapper.classList.remove('valid');
+                    wrapper.classList.add('invalid');
+                    validationStatus.classList.remove('valid');
+                    validationStatus.classList.add('invalid');
+                    validationStatus.innerHTML = '<span>Invalid: Cyrillic characters are not allowed</span>';
+                    updateCommitButton();
+                    return false;
+                }
+
+                // Парсинг YAML для валидации
+                jsyaml.load(yamlContent);
+                
+                wrapper.classList.remove('invalid');
+                wrapper.classList.add('valid');
+                validationStatus.classList.remove('invalid');
+                validationStatus.classList.add('valid');
+                validationStatus.innerHTML = '<span>Valid YAML</span>';
+                updateCommitButton();
+                return true;
+            } catch (e) {
+                wrapper.classList.remove('valid');
+                wrapper.classList.add('invalid');
+                validationStatus.classList.remove('valid');
+                validationStatus.classList.add('invalid');
+                validationStatus.innerHTML = `<span>Invalid YAML: ${e.message}</span>`;
+                updateCommitButton();
+                return false;
+            }
+        }
+
+        // Проверка наличия изменений
+        function checkForChanges() {
+            const contexts = ['deployment', 'pipeline', 'runtime'];
+            let hasChanges = false;
+
+            contexts.forEach(context => {
+                const editor = editors[context];
+                if (editor) {
+                    const currentValue = editor.getValue();
+                    if (currentValue !== originalValues[context]) {
+                        hasChanges = true;
+                    }
+                }
+            });
+
+            updateCommitButton(hasChanges);
+        }
+
+        // Валидация commit message
+        function validateCommitMessage(message) {
+            if (!message || message.trim() === '') {
+                return false;
+            }
+            // Проверка наличия ticket ID: минимум 4 заглавные буквы, тире, минимум 1 цифра
+            const ticketIdPattern = /[A-Z]{4,}-[0-9]{1,}/;
+            return ticketIdPattern.test(message);
+        }
+
+        // Обновление состояния кнопки Commit
+        function updateCommitButton(hasChanges = null) {
+            const commitBtn = document.getElementById('commit-btn');
+            const commitMessageInput = document.getElementById('commit-message');
+            const contexts = ['deployment', 'pipeline', 'runtime'];
+            
+            // Проверка валидности YAML редакторов
+            const hasInvalid = contexts.some(context => {
+                const wrapper = document.getElementById(`${context}-editor-wrapper`);
+                return wrapper.classList.contains('invalid');
+            });
+            
+            // Проверка валидности commit message
+            const commitMessage = commitMessageInput.value.trim();
+            const isCommitMessageValid = commitMessage === '' || validateCommitMessage(commitMessage);
+            
+            // Если hasChanges не передан, проверяем сами
+            if (hasChanges === null) {
+                hasChanges = contexts.some(context => {
+                    const editor = editors[context];
+                    if (editor) {
+                        return editor.getValue() !== originalValues[context];
+                    }
+                    return false;
+                });
+            }
+
+            // Обновляем цвет кнопки
+            if (hasChanges && !hasInvalid && isCommitMessageValid) {
+                commitBtn.classList.add('has-changes');
+            } else {
+                commitBtn.classList.remove('has-changes');
+            }
+
+            // Блокируем кнопку, если есть невалидные данные или commit message не прошел валидацию
+            commitBtn.disabled = hasInvalid || !isCommitMessageValid || commitBtn.classList.contains('loading');
+        }
+
+        // Обновление Scope Bar (больше не нужно, путь убран)
+        function updateScopeBar() {
+            // Путь больше не отображается, информация видна в селекторах
+        }
+
+        // Обновление ссылки на окружение в энвгене
+        function updateEffectiveSetLink() {
+            const link = document.getElementById('effective-set-link');
+            // Формируем ссылку на окружение в энвгене: environments/<cluster>/<env>
+            // currentState.environment имеет формат "cluster-1/env-1"
+            link.href = `https://git.example.com/environments/${currentState.environment}`;
+            link.innerHTML = `View Environment in Git <span style="opacity: 0.6; font-weight: 400;">(${currentState.environment})</span>`;
+        }
+
+        // Загрузка параметров
+        function loadParameters() {
+            // Для pipeline - используем environment, для остальных - application
+            const deploymentKey = currentState.application;
+            const pipelineKey = currentState.environment;
+            
+            const deploymentOverrides = mockData.effectiveSetOverrides[deploymentKey] || {
+                deployment: '',
+                runtime: ''
+            };
+            
+            const pipelineOverrides = mockData.effectiveSetOverrides[pipelineKey] || {
+                pipeline: ''
+            };
+
+            // Deployment и Runtime
+            ['deployment', 'runtime'].forEach(context => {
+                const editor = editors[context];
+                const content = deploymentOverrides[context] || '';
+                editor.setValue(content);
+                originalValues[context] = content;
+                validateYAML(context);
+            });
+            
+            // Pipeline
+            const pipelineEditor = editors.pipeline;
+            const pipelineContent = pipelineOverrides.pipeline || '';
+            pipelineEditor.setValue(pipelineContent);
+            originalValues.pipeline = pipelineContent;
+            validateYAML('pipeline');
+            
+            // Проверяем изменения после загрузки
+            checkForChanges();
+            // Обновляем состояние кнопки Commit с учетом commit message
+            updateCommitButton();
+        }
+
+        // Commit изменений
+        function handleCommit() {
+            const commitBtn = document.getElementById('commit-btn');
+            const commitMessageInput = document.getElementById('commit-message');
+            const commitMessageError = document.getElementById('commit-message-error');
+            const contexts = ['deployment', 'pipeline', 'runtime'];
+            
+            // Проверка валидности всех редакторов
+            const allValid = contexts.every(context => {
+                return validateYAML(context);
+            });
+
+            if (!allValid) {
+                alert('Исправьте ошибки YAML перед коммитом');
+                return;
+            }
+
+            // Проверка наличия изменений
+            const hasChanges = contexts.some(context => {
+                const editor = editors[context];
+                return editor.getValue() !== originalValues[context];
+            });
+
+            if (!hasChanges) {
+                return; // Нет изменений, ничего не делаем
+            }
+
+            // Валидация commit message
+            const commitMessage = commitMessageInput.value.trim();
+            if (!validateCommitMessage(commitMessage)) {
+                commitMessageInput.classList.add('invalid');
+                commitMessageInput.classList.remove('valid');
+                commitMessageError.classList.add('show');
+                commitMessageInput.focus();
+                return;
+            }
+
+            // Убираем ошибку валидации
+            commitMessageInput.classList.remove('invalid');
+            commitMessageInput.classList.add('valid');
+            commitMessageError.classList.remove('show');
+
+            // Показываем спиннер
+            commitBtn.classList.add('loading');
+            commitBtn.disabled = true;
+
+            // Сохранение данных - для pipeline environment используется, namespace и application игнорируются
+            contexts.forEach(context => {
+                const editor = editors[context];
+                const newValue = editor.getValue();
+                
+                // Для pipeline - используем environment (namespace и application игнорируются)
+                // Для deployment/runtime - используем application
+                const key = context === 'pipeline' 
+                    ? currentState.environment 
+                    : currentState.application;
+                
+                if (!mockData.effectiveSetOverrides[key]) {
+                    mockData.effectiveSetOverrides[key] = {};
+                }
+                
+                mockData.effectiveSetOverrides[key][context] = newValue;
+                // Обновляем исходные значения
+                originalValues[context] = newValue;
+            });
+
+            saveToLocalStorage();
+
+            // Имитация коммита (10 секунд)
+            setTimeout(() => {
+                // Убираем спиннер
+                commitBtn.classList.remove('loading');
+                commitBtn.disabled = false;
+                
+                // Очищаем commit message
+                commitMessageInput.value = '';
+                commitMessageInput.classList.remove('valid');
+                
+                // Сбрасываем состояние изменений
+                checkForChanges();
+                
+                // В реальном приложении здесь был бы вызов API
+                console.log('Commit completed with message:', commitMessage, '- pipeline uses environment level, namespace and application disabled');
+            }, 10000);
+        }
+
+        // Сохранение в localStorage
+        function saveToLocalStorage() {
+            try {
+                ['deployment', 'pipeline', 'runtime'].forEach(context => {
+                    const editor = editors[context];
+                    const key = context === 'pipeline' 
+                        ? currentState.environment 
+                        : currentState.application;
+                    
+                    if (!mockData.effectiveSetOverrides[key]) {
+                        mockData.effectiveSetOverrides[key] = {};
+                    }
+                    
+                    mockData.effectiveSetOverrides[key][context] = editor.getValue();
+                });
+
+                localStorage.setItem('envgene-overrides', JSON.stringify(mockData.effectiveSetOverrides));
+                localStorage.setItem('envgene-state', JSON.stringify(currentState));
+            } catch (e) {
+                console.warn('Не удалось сохранить в localStorage:', e);
+            }
+        }
+
+        // Загрузка из localStorage
+        function loadFromLocalStorage() {
+            try {
+                const savedOverrides = localStorage.getItem('envgene-overrides');
+                const savedState = localStorage.getItem('envgene-state');
+                if (savedOverrides) {
+                    Object.assign(mockData.effectiveSetOverrides, JSON.parse(savedOverrides));
+                }
+                if (savedState) {
+                    Object.assign(currentState, JSON.parse(savedState));
+                    // Обновляем селекторы
+                    const selects = ['environment', 'namespace', 'application'];
+                    selects.forEach(selectName => {
+                        const select = document.getElementById(`${selectName}-select`);
+                        if (select && currentState[selectName]) {
+                            select.value = currentState[selectName];
+                            select.classList.add('has-value');
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Не удалось загрузить из localStorage:', e);
+            }
+        }
+
+    </script>
+</body>
+</html>
