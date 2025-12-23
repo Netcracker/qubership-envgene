@@ -3,19 +3,19 @@ import os
 import re
 import shutil
 import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urljoin, urlparse, urlunparse
 from zipfile import ZipFile
-import xml.etree.ElementTree as ET
 
 import aiohttp
 import requests
 from aiohttp import BasicAuth
+from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT
+from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
 from loguru import logger
 from requests.auth import HTTPBasicAuth
-from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
-from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT
 
 WORKSPACE = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
 
@@ -44,7 +44,7 @@ def create_artifact_path(app: Application, version: str, repo: str) -> str:
 
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension) -> str:
     base_path = create_artifact_path(app, version, repo)
-    filename = create_artifact_name(app, artifact_extension, version)
+    filename = create_artifact_name(app.artifact_id, artifact_extension, version)
     return urljoin(base_path, filename)
 
 
@@ -156,6 +156,18 @@ def download_json_content(url: str, cred: Credentials | None = None) -> dict[str
     return json_data
 
 
+def download(url: str, local_dir: str, cred: Credentials | None = None) -> str:
+    auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
+    os.makedirs(local_dir, exist_ok=True)
+    local_path = os.path.join(local_dir, os.path.basename(url))
+    response = requests.get(url, auth=auth, timeout=DEFAULT_REQUEST_TIMEOUT)
+    response.raise_for_status()
+    with open(local_path, "wb") as f:
+        f.write(response.content)
+    logger.info(f"Downloaded: {local_path}")
+    return local_path
+
+
 def clean_temp_dir():
     if WORKSPACE.exists():
         shutil.rmtree(WORKSPACE)
@@ -167,7 +179,7 @@ async def download_all_async(artifacts_info: list[ArtifactInfo], cred: Credentia
     connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
     async with aiohttp.ClientSession(connector=connector, timeout=DEFAULT_REQUEST_TIMEOUT, auth=auth) as session:
         async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(download(session, artifact_info)) for artifact_info in artifacts_info]
+            tasks = [tg.create_task(download_async(session, artifact_info)) for artifact_info in artifacts_info]
         results = []
         errors = []
 
@@ -188,7 +200,7 @@ def create_app_artifacts_local_path(app_name, app_version):
     return f"{WORKSPACE}/{app_name}/{app_version}"
 
 
-async def download(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
+async def download_async(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
     """
     Downloads an artifact to a local directory: <workspace_dir>/<app_name>/<app_version>/filename.extension
     Sets full local path of artifact to artifact info
@@ -356,15 +368,15 @@ def create_aql_artifacts(aqls: list[str]):
     return f'items.find({{"$or":  [{', '.join(aqls)}]}})'
 
 
-def create_artifact_name(app: Application, artifact_extension: FileExtension, version: str):
-    return f"{app.artifact_id}-{version}.{artifact_extension.value}"
+def create_artifact_name(artifact_id: str, artifact_extension: FileExtension, version: str):
+    return f"{artifact_id}-{version}.{artifact_extension.value}"
 
 
 def create_aql_artifact(app: Application, artifact_extension: FileExtension, version: str) -> str:
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
     path = f"{group_id}/{app.artifact_id}/{folder}"
-    name = create_artifact_name(app, artifact_extension, version)
+    name = create_artifact_name(app.artifact_id, artifact_extension, version)
     aql = f'{{"$and": [{{"name": "{name}"}},{{"path":"{path}"}}]}}'
     return aql
 
@@ -381,3 +393,11 @@ def check_artifacts_by_aql(aql: str, cred: Credentials, url: str) -> list[Artifa
         artifact = ArtifactInfo(repo=repo, path=path, name=name, url=url)
         artifacts.append(artifact)
     return artifacts
+
+
+def create_artifact_url_by_parts(repo_url: str, group_id: str, artifact_id: str, version: str,
+                                 artifact_extension: FileExtension) -> str:
+    group_id = group_id.replace(".", "/")
+    folder = version_to_folder_name(version)
+    filename = create_artifact_name(artifact_id, artifact_extension, version)
+    return urljoin(repo_url, "/".join([repo_url, group_id, artifact_id, folder, filename]))

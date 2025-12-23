@@ -4,7 +4,7 @@ from pathlib import Path
 import asyncio
 
 from artifact_searcher.artifact import download_all_async
-from artifact_searcher.utils.models import FileExtension, ArtifactInfo, Application, Credentials
+from artifact_searcher.utils.models import FileExtension, ArtifactInfo, Application, Credentials, Registry
 from envgenehelper import crypt, openYaml, find_all_yaml_files_by_stem, fetch_cred_value, get_env_definition_path, \
     getenv_with_error
 from envgenehelper import logger
@@ -12,8 +12,10 @@ from artifact_searcher import artifact
 from envgenehelper.config_helper import base_dir
 from envgenehelper import get_env_definition
 
+from python.envgene.envgenehelper import unpack_archive
 
-def split_artifact_appver(env_definition: dict):
+
+def split_artifact_appver(env_definition: dict) -> [str, str]:
     artifact_appver = env_definition['envTemplate'].get('artifact', '')
     logger.info(f"Environment template dd appver: {artifact_appver}")
     return artifact_appver.split(':')
@@ -75,13 +77,14 @@ def process_env_template() -> str:
     environment_name = getenv_with_error("ENVIRONMENT_NAME")
     env_instances_dir = Path(f"{base_dir}/environments/{cluster_name}/{environment_name}")
     env_definition = get_env_definition(env_instances_dir)
+    artifact_is_zip = env_definition['envTemplate'].get('artifactIsZip', False)
+    artifact_dest = "/tmp/artifact.zip"
+    build_env_path = "/build_env"
 
     if 'artifact' in env_definition.get('envTemplate', {}):
         logger.info("Use template downloading new logic")
         artifact_name, artifact_version = split_artifact_appver(env_definition)
         artifact_def = get_artifact_def(artifact_name)
-
-        artifact_is_zip = env_definition['envTemplate'].get('artifactIsZip', False)
         cred = fetch_reg_cred(artifact_def)
         if not artifact_is_zip:
             dd_template = fetch_dd_template(artifact_def, artifact_version, cred)
@@ -92,7 +95,6 @@ def process_env_template() -> str:
             template_url = asyncio.run(artifact.check_artifact_async(artifact_def, FileExtension.ZIP, artifact_version))
             artifact_info = ArtifactInfo(app_name=artifact_def.name, app_version=artifact_version, url=template_url)
             asyncio.run(download_all_async([artifact_info], cred))
-
     else:
         logger.info("Use template downloading old logic")
         registry_config_path = Path(f"{base_dir}/configuration/registry.yml")
@@ -106,11 +108,14 @@ def process_env_template() -> str:
         repository_template_type = artifact_info['templateRepository']
         registry_name = artifact_info['registry']
 
-        template_repository_url = registry_config[registry_name][repository_template_type]
-        repository_url = registry_config[registry_name][repository_type]
-
-        repository_username = fetch_cred_value(registry_config[registry_name]['username'], cred_config)
-        repository_password = fetch_cred_value(registry_config[registry_name]['password'], cred_config)
+        if not artifact_is_zip:
+            repository_url = registry_config[registry_name][repository_type]
+        else:
+            template_repo_url = registry_config[registry_name][repository_template_type]
+            template_url = artifact.create_artifact_url_by_parts(template_repo_url, group_id, artifact_id, version,
+                                                                 FileExtension.ZIP)
+            artifact.download(template_url, artifact_dest, cred)
+            unpack_archive(artifact_dest, build_env_path)
 
         # TODO download
     return artifact_latest_version
