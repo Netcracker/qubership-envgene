@@ -38,7 +38,8 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
         "name": f'get_passport.{full_env}',
         "image": '${envgen_image}',
         "stage": 'process_passport',
-        "script": ['python3 /cloud_passport/scripts/main.py --env_name "$ENV_NAME",',
+        "script": ['/module/scripts/handle_certs.sh',
+                   'python3 /cloud_passport/scripts/main.py --env_name "$ENV_NAME",',
                    "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
                    'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
                    'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
