@@ -38,12 +38,13 @@ def convert_nexus_repo_url_to_index_view(url: str) -> str:
 def create_artifact_path(app: Application, version: str, repo: str) -> str:
     registry_url = app.registry.maven_config.repository_domain_name
     group_id = app.group_id.replace(".", "/")
-    return urljoin(registry_url, "/".join([repo, group_id, app.artifact_id, version]))
+    folder = version_to_folder_name(version)
+    return urljoin(registry_url, "/".join([repo, group_id, app.artifact_id, folder]))
 
 
-def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension, folder: str) -> str:
-    base_path = create_artifact_path(app, folder, repo)
-    filename = f"{app.artifact_id}-{version}.{artifact_extension.value}"
+def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension) -> str:
+    base_path = create_artifact_path(app, version, repo)
+    filename = create_artifact_name(app, artifact_extension, version)
     return urljoin(base_path, filename)
 
 
@@ -99,7 +100,6 @@ def resolve_snapshot_version(
         return _parse_snapshot_version(response.text, app, classifier, extension)
     except Exception as e:
         logger.warning(f"Error resolving snapshot version from {metadata_url}: {e}")
-        return None
 
 
 def _parse_snapshot_version(
@@ -218,7 +218,6 @@ async def check_artifact_by_full_url_async(
         version: str,
         repo,
         artifact_extension: FileExtension,
-        folder: str,
         stop_event: asyncio.Event,
         session
 ) -> tuple[str, tuple[str, str]] | None:
@@ -238,9 +237,7 @@ async def check_artifact_by_full_url_async(
         )
         if snapshot_version:
             resolved_version = snapshot_version
-            folder = version_to_folder_name(resolved_version)
-
-    full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, folder)
+    full_url = create_full_url(app, resolved_version, repo_value, artifact_extension)
     try:
         async with session.head(full_url, timeout=DEFAULT_REQUEST_TIMEOUT) as response:
             if response.status == 200:
@@ -276,7 +273,6 @@ async def _attempt_check(
         registry_url: str | None = None,
         cred: Credentials | None = None
 ) -> Optional[tuple[str, tuple[str, str]]]:
-    folder = version_to_folder_name(version)
     check_artifact_stop_event = asyncio.Event()
 
     repos_dict = get_repo_value_pointer_dict(app.registry)
@@ -293,7 +289,6 @@ async def _attempt_check(
                         version,
                         repo,
                         artifact_extension,
-                        folder,
                         check_artifact_stop_event,
                         session
                     )
@@ -361,18 +356,14 @@ def create_aql_artifacts(aqls: list[str]):
     return f'items.find({{"$or":  [{', '.join(aqls)}]}})'
 
 
-def create_artifact_path(app: Application, version: str):
-    group_id = app.group_id.replace(".", "/")
-    folder = version_to_folder_name(version)
-    return f"{group_id}/{app.artifact_id}/{folder}"
-
-
 def create_artifact_name(app: Application, artifact_extension: FileExtension, version: str):
     return f"{app.artifact_id}-{version}.{artifact_extension.value}"
 
 
 def create_aql_artifact(app: Application, artifact_extension: FileExtension, version: str) -> str:
-    path = create_artifact_path(app, version)
+    group_id = app.group_id.replace(".", "/")
+    folder = version_to_folder_name(version)
+    path = f"{group_id}/{app.artifact_id}/{folder}"
     name = create_artifact_name(app, artifact_extension, version)
     aql = f'{{"$and": [{{"name": "{name}"}},{{"path":"{path}"}}]}}'
     return aql
