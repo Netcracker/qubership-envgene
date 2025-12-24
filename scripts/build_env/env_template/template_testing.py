@@ -103,7 +103,3 @@ def run_env_test_setup():
 
     set_variable_path = base_dir / "set_variable.txt"
     writeToFile(set_variable_path, env_name)
-
-
-if __name__ == "__main__":
-    run_env_test_setup()

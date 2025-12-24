@@ -9,6 +9,7 @@ from envgenehelper import get_env_definition
 from envgenehelper import openYaml, find_all_yaml_files_by_stem, getenv_with_error, logger
 from envgenehelper.config_helper import base_dir
 from envgenehelper import unpack_archive, get_cred_config
+from template_testing import run_env_test_setup
 
 
 def parse_artifact_appver(env_definition: dict) -> [str, str]:
@@ -121,6 +122,9 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
 
 
 def process_env_template() -> str:
+    env_template_test = getenv_with_error("ENV_TEMPLATE_TEST")
+    if env_template_test:
+        run_env_test_setup()
     project_dir = getenv_with_error("CI_PROJECT_DIR")
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
