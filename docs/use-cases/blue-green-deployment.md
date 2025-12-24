@@ -69,7 +69,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 1. The `bg_manage` job runs in the pipeline:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Replaces the contents of the candidate namespace folder (peer) with the contents (including nested Applications) of the active namespace folder (origin), keeping only the candidate namespace `name` attribute
-   3. Updates the Environment Inventory: Copies `envTemplate.bgArtifacts.origin` → `envTemplate.bgArtifacts.peer`
+   3. Updates the Environment Inventory: Copies `envTemplate.bgNsArtifacts.origin` → `envTemplate.bgNsArtifacts.peer`
    4. Updates state files: Creates `.origin-active` and `.peer-candidate` in the Environment folder
 
 **Results:**
@@ -191,7 +191,7 @@ This document covers use cases for [Blue-Green Deployment](/docs/features/blue-g
 1. The `bg_manage` job runs in the pipeline:
    1. Validates states in `BG_STATE` against state files in the repository
    2. Replaces the contents of the candidate namespace folder (origin) with the contents (including nested Applications) of the active namespace folder (peer), keeping only the candidate namespace `name` attribute
-   3. Updates the Environment Inventory: Copies `envTemplate.bgArtifacts.peer` → `envTemplate.bgArtifacts.origin`
+   3. Updates the Environment Inventory: Copies `envTemplate.bgNsArtifacts.peer` → `envTemplate.bgNsArtifacts.origin`
    4. Updates state files: Creates `.origin-candidate` and `.peer-active` in the Environment folder
 
 **Results:**

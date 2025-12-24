@@ -62,7 +62,7 @@ def build_pipeline(params: dict):
         else:
             cluster_name = get_cluster_name_from_full_name(env)
             environment_name = get_environment_name_from_full_name(env)
-            if params['ENV_INVENTORY_GENERATION_PARAMS']['ENV_INVENTORY_INIT']:
+            if params['ENV_INVENTORY_INIT']:
                 env_definition = None
             else:
                 env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{ci_project_dir}/environments"))
@@ -84,8 +84,8 @@ def build_pipeline(params: dict):
         else:
             logger.info(f"Generation of cloud passport for environment '{env}' is skipped")
 
-        if is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params['ENV_INVENTORY_GENERATION_PARAMS']):
-            jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, env, environment_name, cluster_name, params['ENV_INVENTORY_GENERATION_PARAMS'], tags)
+        if is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params):
+            jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, env, environment_name, cluster_name, params, tags)
         else:
             logger.info(f'Preparing of env inventory generation job for {env} is skipped because we are in template test mode.')
 

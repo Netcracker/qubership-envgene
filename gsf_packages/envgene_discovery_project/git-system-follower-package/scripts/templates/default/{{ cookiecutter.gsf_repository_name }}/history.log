@@ -1,0 +1,5 @@
+.gitignore
+.gitlab-ci.yml
+gitlab-ci/module_vars.yaml
+gitlab-ci/pipline_vars.yaml
+scripts/discovery_tool.sh

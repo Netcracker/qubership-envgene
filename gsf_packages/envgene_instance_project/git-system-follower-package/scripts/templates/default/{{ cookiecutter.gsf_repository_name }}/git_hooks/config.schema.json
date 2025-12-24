@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Generic Configuration",
+  "description": "Configuration for the for cryptographic operations, artifact discovery, and cloud passport decryption",
+  "additionalProperties": true,
+  "properties": {
+    "crypt": {
+      "type": "boolean",
+      "title": "Enable Cryptographic Operations",
+      "description": "Specifies whether cryptographic operations should be enabled",
+      "default": true,
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "crypt_backend": {
+      "title": "Cryptographic Backend",
+      "description": "The backend system used for cryptographic operations",
+      "enum": [
+        "Fernet",
+        "SOPS"
+      ],
+      "default": "Fernet",
+      "examples": [
+        "Fernet",
+        "SOPS"
+      ]
+    },
+    "artifact_definitions_discovery_mode": {
+      "title": "Artifact Definitions Discovery Mode",
+      "description": "Configures the mode of discovering Artifact Definitions",
+      "enum": [
+        "true",
+        "false",
+        "auto"
+      ],
+      "default": "auto",
+      "examples": [
+        "true",
+        "false",
+        "auto"
+      ]
+    },
+    "app_reg_def_mode": {
+      "title": "Application and Registry Definitions Discovery Mode",
+      "description": "Configures the mode of discovering Application and Registry Definitions",
+      "enum": [
+        "auto",
+        "cmdb",
+        "local"
+      ],
+      "default": "auto",
+      "examples": [
+        "auto",
+        "cmdb",
+        "local"
+      ]
+    }
+  }
+}

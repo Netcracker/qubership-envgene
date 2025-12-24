@@ -787,7 +787,18 @@ applications:
 
 #### Composite Structure
 
-This object describes the composite structure of a solution. It contains information about which namespace hosts the core applications that offer essential tools and services for business microservices (`baseline`), and which namespace contains the applications that consume these services (`satellites`). It has the following structure:
+This object describes the composite structure of a solution. It defines the relationship between the core infrastructure namespace (baseline) that provides essential services and tools, and the satellite namespaces that consume these services.
+
+The `baseline` can be either:
+
+- A namespace (`type: namespace`) that serves as the core infrastructure
+- A BG Domain (`type: bgdomain`) that includes `originNamespace`, `peerNamespace`, and `controllerNamespace` for Blue-Green deployment scenarios
+
+The `satellites` array defines one or more namespaces that depend on the baseline. The Composite Structure is used by template macros (`BASELINE_ORIGIN`, `BASELINE_PEER`, `BASELINE_CONTROLLER`) to automatically resolve baseline references for satellite namespaces.
+
+The Composite Structure object is generated during Environment Instance generation from the [Composite Structure Template](#composite-structure-template) specified in the Environment Template descriptor.
+
+It has the following structure:
 
 ```yaml
 name: <composite-structure-name>
@@ -817,6 +828,28 @@ satellites:
     type: "namespace"
   - name: "env-1-ui"
     type: "namespace"
+```
+
+**BD Deployment Example:**
+
+```yaml
+composite_structure:
+  name: "clusterA-env-1-composite-structure"
+  baseline:
+    type: bgdomain
+    name: env-1-bg-domain
+    originNamespace:
+      type: namespace
+      name: env-1-bss-origin
+    peerNamespace:
+      type: namespace
+      name: env-1-bss-peer
+    controllerNamespace:
+      type: namespace
+      name: env-1-bss-controller
+  satellites:
+    - type: "namespace"
+      name: "env-1-data-management"
 ```
 
 #### BG Domain
@@ -1318,7 +1351,7 @@ Two versions of this object are supported
 name: string
 # Mandatory
 # Pointer to the EnvGene Credential object.
-# Credential with this ID must be located in /environments/<cluster-name>/<environment-name>/Credentials/credentials.yml
+# Credential with this ID must be located in /configuration/credentials/credentials.yml
 credentialsId: string
 # Mandatory
 mavenConfig:
@@ -1466,11 +1499,10 @@ name: string
 authConfig:
   <auth-config-name>:
     # Mandatory
-    # Name of the credential in the credential storage
-    # The credential type can be either `usernamePassword` or `secret`
+    # Pointer to the EnvGene Credential object.
     # Depending on `authType`, it can be:
     # access key (username) + secret (password) for longLived
-    # or different authentication credential components for shortLived
+    # Credential with this ID must be located in /configuration/credentials/credentials.yml
     credentialsId: string 
     # Optional
     # Public cloud registry authentication strategy
@@ -1836,6 +1868,16 @@ The filename must match the value of the `name` attribute.
 **Location:** `/environments/<cluster-name>/<environment-name>/AppDefs/<application-name>.yml`
 
 ```yaml
+# Optional
+metadata:
+  # Optional
+  # Describes the strategy for generating the Helm release name.
+  # Deployment automation relies on this attribute to form a unique Helm release name.
+  # Available options:
+  #   `perApplication` - Unique per application
+  #   `perVersion` - Unique per application version
+  #   `perDeployment` - Unique per deployment of this application
+  helmReleaseNameStrategy: enum[ perApplication, perVersion, perDeployment ]
 # Mandatory
 # Name of the artifact application. This corresponds to the `application` part in the `application:version` notation.
 name: string

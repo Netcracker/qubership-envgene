@@ -131,7 +131,7 @@ variables:
 
 ```yaml
 ENV_NAMES: "sdp-dev/env-1"
-GH_ADDITIONAL_PARAMS: "{\"BG_MANAGE\":\"true\",\"BG_STATE\":{\"controllerNamespace\":\"bss-controller\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"active\",\"version\":\"v2.1.0\"},\"peerNamespace\":{\"name\":\"bss-peer\",\"state\":\"candidate\",\"version\":\"v2.2.0\"},\"updateTime\":\"2024-01-15T10:30:00Z\"}, \"CMDB_IMPORT\": \"true\", \"DEPLOYMENT_TICKET_ID\": \"FAKE-000\"}"
+GH_ADDITIONAL_PARAMS: "BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"bss-controller\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"active\",\"version\":\"v2.1.0\"},\"peerNamespace\":{\"name\":\"bss-peer\",\"state\":\"candidate\",\"version\":\"v2.2.0\"},\"updateTime\":\"2024-01-15T10:30:00Z\"}"
 ```
 
 `INSTANCE_PIPELINE_PARAMETERS` deployment parameter should be passed along with BG_STATE and BG_MANAGE parameters while triggering Envgene pipeline.
@@ -228,8 +228,8 @@ As a result, the active and candidate namespace folders become identical (except
 
 Additionally, during the warmup operation, the `bg_manage` job updates the Environment Inventory (`env_definition.yml`):
 
-- **Forward flow (warmup)**: Copies `envTemplate.bgArtifacts.origin` → `envTemplate.bgArtifacts.peer`
-- **Reverse flow (reverse warmup)**: Copies `envTemplate.bgArtifacts.peer` → `envTemplate.bgArtifacts.origin`
+- **Forward flow (warmup)**: Copies `envTemplate.bgNsArtifacts.origin` → `envTemplate.bgNsArtifacts.peer`
+- **Reverse flow (reverse warmup)**: Copies `envTemplate.bgNsArtifacts.peer` → `envTemplate.bgNsArtifacts.origin`
 
 This ensures that the candidate namespace will use the same template artifact version as the active namespace when it becomes active.
 

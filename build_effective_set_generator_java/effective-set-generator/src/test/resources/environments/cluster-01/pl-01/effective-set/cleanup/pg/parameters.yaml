@@ -12,7 +12,7 @@ CLOUD_PROTOCOL: https
 CLOUD_PUBLIC_HOST: cluster-01.qubership.org
 CMDB_URL: https://cluster-01.qubership.org
 CONSUL_ADMIN_TOKEN: token-placeholder-123
-CONSUL_ENABLED: true
+CONSUL_ENABLED: 'true'
 CONSUL_PUBLIC_URL: http://consul.consul:8080
 CONSUL_URL: http://consul.consul:8080
 CUSTOM_HOST: cluster-01.qubership.org
@@ -30,7 +30,7 @@ DOC_STORAGE_PROVIDER: s3
 DOC_STORAGE_REGION: eu-west-1
 DOC_STORAGE_SERVER_URL: https://minio.cluster-01.qubership.org
 DOC_STORAGE_TEMPORARY_BUCKET_NAME: temporary-bucket
-ESCAPE_SEQUENCE: true
+ESCAPE_SEQUENCE: 'true'
 GATEWAY_URL: http://internal-gateway-service:8080
 GRAFANA_UI_URL: https://cluster-01.qubership.org
 GRAYLOG_UI_URL: https://cluster-01.qubership.org
@@ -44,7 +44,7 @@ MAVEN_REPO_DEV_NAME: mvn.group
 MAVEN_REPO_NAME: mvn.group
 MAVEN_REPO_STAGING_NAME: mvn.group
 MAVEN_REPO_URL: https://artifactory.qubership.org
-MONITORING_ENABLED: true
+MONITORING_ENABLED: 'true'
 NAMESPACE: pl-01-pg
 OPENSHIFT_SERVER: https://api.cluster-01.qubership.org:6443
 ORIGIN_NAMESPACE: pl-01-pg
@@ -64,7 +64,7 @@ STORAGE_RWO_CLASS: standard
 STORAGE_RWX_CLASS: ''
 STORAGE_SERVER_URL: https://minio.cluster-01.qubership.org
 TENANTNAME: Platform
-TRACING_ENABLED: false
+TRACING_ENABLED: 'false'
 TRACING_HOST: tracing-agent
 TRACING_UI_URL: https://cluster-01.qubership.org
 ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181

@@ -16,7 +16,7 @@
 
 package org.qubership.cloud.devops.cli;
 
-
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.qubership.cloud.devops.cli.parser.CliParameterParser;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.EffectiveSetVersion;
@@ -60,14 +60,14 @@ public class CmdbCli implements Callable<Integer> {
             logInfo("Starting effective set generation");
             fileDataRepository.prepareProcessingEnv();
             parser.generateEffectiveSet();
-            logSuccess("Successfully generated the effective set");
+            logInfo("Successfully generated the effective set");
             Instant end = Instant.now();
             Duration timeElapsed = Duration.between(start, end);
-            logInfo("Total Time taken : " + timeElapsed.toMillis() + " milliseconds");
+            logInfo("Total Time taken: " + timeElapsed.toMillis() + " milliseconds");
             return 0;
         } catch (Exception e) {
             logError(String.format(EFFECTIVE_SET_FAILED, e.getMessage()));
-            log.debug("stack trace {}", ExceptionUtils.getStackTrace(e));
+            logDebug(String.format("Stack trace: %s", ExceptionUtils.getStackTrace(e)));
             return 1;
         }
     }
@@ -83,13 +83,13 @@ public class CmdbCli implements Callable<Integer> {
         if (version == EffectiveSetVersion.V1_0) {
             List<String> missingParams = new ArrayList<>();
 
-            if (envParams.solsbomPath == null || envParams.solsbomPath.isEmpty()) {
-                missingParams.add("--solution-sbom-path");
+            if (StringUtils.isEmpty(envParams.sdPath)) {
+                missingParams.add("--sd-path");
             }
-            if (envParams.sbomsPath == null || envParams.sbomsPath.isEmpty()) {
+            if (StringUtils.isEmpty(envParams.sbomsPath)) {
                 missingParams.add("--sboms-path");
             }
-            if (envParams.registryPath == null || envParams.registryPath.isEmpty()) {
+            if (StringUtils.isEmpty(envParams.registryPath)) {
                 missingParams.add("--registries");
             }
 
@@ -109,7 +109,7 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setEnvId(envParams.envId);
         sharedData.setEnvsPath(envParams.envsPath);
         sharedData.setSbomsPath(Optional.ofNullable(envParams.sbomsPath));
-        sharedData.setSolsbomPath(Optional.ofNullable(envParams.solsbomPath));
+        sharedData.setSdPath(Optional.ofNullable(envParams.sdPath));
         sharedData.setRegistryPath(Optional.ofNullable(envParams.registryPath));
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
@@ -140,8 +140,8 @@ public class CmdbCli implements Callable<Integer> {
         @CommandLine.Option(names = {"-sp", "--sboms-path"}, description = "Path to the folder with Application and Environment Template SBOMs")
         String sbomsPath;
 
-        @CommandLine.Option(names = {"-ssp", "--solution-sbom-path"}, description = "Path to Solution SBOM")
-        String solsbomPath;
+        @CommandLine.Option(names = {"-sdp", "--sd-path"}, description = "Path to Solution Solution Descriptor")
+        String sdPath;
 
         @CommandLine.Option(names = {"-r", "--registries"}, description = "Path to the registry configuration")
         String registryPath;

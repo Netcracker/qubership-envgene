@@ -50,6 +50,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
+
 
 @Slf4j
 public class ExpressionLanguage extends AbstractLanguage {
@@ -222,7 +224,7 @@ public class ExpressionLanguage extends AbstractLanguage {
             try {
                 rendered = renderStringByJinJava(strValue, binding, escapeDollar);
             } catch (Exception e) {
-                log.debug(String.format("Parameter {} was not processed by JinJava, hence reverting to Groovy.", strValue));
+                logDebug(String.format("Parameter {} was not processed by JinJava, hence reverting to Groovy.", strValue));
                 rendered = renderStringByGroovy(strValue, binding, escapeDollar);
             }
             Object originalValue = this.binding.getTypeCollector().get(rendered);  // Object
@@ -471,7 +473,7 @@ public class ExpressionLanguage extends AbstractLanguage {
             try {
                 processedParams.put(key, processValue(value, this.binding, true));
             } catch (IOException e) {
-                log.error(String.format("Error in processing the parameter key %s and value %s", key, value));
+                logError(String.format("Error in processing the parameter key %s and value %s", key, value));
             }
         });
         return processedParams;

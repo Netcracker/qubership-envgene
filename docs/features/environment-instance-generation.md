@@ -78,16 +78,25 @@ envTemplate:
 
 ### Blue-Green Artifact
 
-For environments that use Blue-Green Deployment support, the Environment Inventory must specify separate template artifacts for `origin` and `peer` namespaces using the `envTemplate.bgArtifacts` attribute.
+For environments that use Blue-Green Deployment support, the Environment Inventory **can** specify separate template artifacts for `origin` and `peer` namespaces using the `envTemplate.bgNsArtifacts` attribute.
 
-The `envTemplate.bgArtifacts` and `envTemplate.artifact` attributes are **not mutually exclusive**:
+The `envTemplate.artifact` attribute is **always mandatory**, regardless of whether `bgNsArtifacts` is specified.
 
-- `envTemplate.bgArtifacts` is used **ONLY** for rendering `peer` and `origin` Namespaces in BG Domain:
-  - `envTemplate.bgArtifacts.origin` is used for rendering the `origin` Namespace
-  - `envTemplate.bgArtifacts.peer` is used for rendering the `peer` Namespace
-- `envTemplate.artifact` is used for rendering all other Environment Instance objects:
-  - All Namespaces that are not part of BG Domain (or are `controller` in BG Domain)
-  - All other Environment Instance objects (Tenant, Cloud, Applications, etc.)
+The `envTemplate.bgNsArtifacts` and `envTemplate.artifact` attributes are **not mutually exclusive**:
+
+**When `envTemplate.bgNsArtifacts` is specified:**
+
+- `envTemplate.bgNsArtifacts` is used **only** for rendering `peer` and `origin` Namespaces in BG Domain:
+  - `envTemplate.bgNsArtifacts.origin` is used for rendering the `origin` Namespace
+  - `envTemplate.bgNsArtifacts.peer` is used for rendering the `peer` Namespace
+- `envTemplate.artifact` is used for rendering all **other** Environment Instance objects:
+  - All Namespaces that are not part of the BG Domain
+  - The `controller` Namespace in BG Domain (if present)
+  - All other Environment Instance objects (Tenant, Cloud, Applications, Resource Profiles, Credentials, etc.)
+
+**When `envTemplate.bgNsArtifacts` is not specified:**
+
+- `envTemplate.artifact` is used for rendering **all** Environment Instance objects, including `origin` and `peer` Namespaces in BG Domain
 
 The role of a Namespace (origin, peer, or controller) is determined through the [BG Domain](/docs/envgene-objects.md#bg-domain) object in the Environment Instance.
 
@@ -97,7 +106,7 @@ The role of a Namespace (origin, peer, or controller) is determined through the 
 envTemplate:
   name: "composite-prod"
   artifact: "project-env-template:v1.2.3"
-  bgArtifacts:
+  bgNsArtifacts:
     origin: "project-env-template:v1.2.3-origin"
     peer: "project-env-template:v1.2.3-peer"
 ```

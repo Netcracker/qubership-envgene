@@ -12,9 +12,9 @@
     - [UC-EIG-NF-7: Peer Namespace in BG Domain with deploy\_postfix](#uc-eig-nf-7-peer-namespace-in-bg-domain-with-deploy_postfix)
     - [UC-EIG-NF-8: Peer Namespace in BG Domain without deploy\_postfix](#uc-eig-nf-8-peer-namespace-in-bg-domain-without-deploy_postfix)
   - [Template Artifacts Selection](#template-artifacts-selection)
-    - [UC-EIG-TA-1: Environment Instance Generation with Common Artifact Only](#uc-eig-ta-1-environment-instance-generation-with-common-artifact-only)
-    - [UC-EIG-TA-2: Environment Instance Generation with Blue-Green Artifacts](#uc-eig-ta-2-environment-instance-generation-with-blue-green-artifacts)
-    - [UC-EIG-TA-3: Environment Instance Generation with Mixed Artifacts (BG and Non-BG Namespaces)](#uc-eig-ta-3-environment-instance-generation-with-mixed-artifacts-bg-and-non-bg-namespaces)
+    - [UC-EIG-TA-1: Environment Instance Generation with `artifact` only](#uc-eig-ta-1-environment-instance-generation-with-artifact-only)
+    - [UC-EIG-TA-2: Environment Instance Generation with `artifact` and `bgNsArtifacts` and BG Domain](#uc-eig-ta-2-environment-instance-generation-with-artifact-and-bgnsartifacts-and-bg-domain)
+    - [UC-EIG-TA-3: Environment Instance Generation with `artifact` and `bgNsArtifacts` and without BG Domain](#uc-eig-ta-3-environment-instance-generation-with-artifact-and-bgnsartifacts-and-without-bg-domain)
 
 ## Overview
 
@@ -330,11 +330,11 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 The artifact selection logic depends on whether Blue-Green artifacts are specified in the Environment Inventory and the role of the namespace being rendered (origin, peer, controller, or non-BG). It determines which template artifact version is used for rendering objects in the Environment Instance.
 
-### UC-EIG-TA-1: Environment Instance Generation with Common Artifact Only
+### UC-EIG-TA-1: Environment Instance Generation with `artifact` only
 
 **Pre-requisites:**
 
-1. Environment Inventory exists with only `envTemplate.artifact` specified (no `bgArtifacts`):
+1. Environment Inventory exists with only `envTemplate.artifact` specified (no `bgNsArtifacts`):
 
    ```yaml
    envTemplate:
@@ -356,8 +356,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Inventory
-   2. Identifies that only `envTemplate.artifact` is specified
-   3. Uses `envTemplate.artifact` for rendering all Environment Instance objects:
+   2. Uses `envTemplate.artifact` for rendering all Environment Instance objects:
       - All Namespaces (including `origin`, `peer`, `controller` if present in BG Domain)
       - Tenant, Cloud, Applications, Resource Profiles, Credentials, and all other objects
 
@@ -365,25 +364,24 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. All Namespaces are rendered using `project-env-template:v1.2.3`
 2. All other objects (Tenant, Cloud, Applications, etc.) are rendered using `project-env-template:v1.2.3`
-3. Environment Instance is generated with consistent artifact usage across all objects
 
-### UC-EIG-TA-2: Environment Instance Generation with Blue-Green Artifacts
+### UC-EIG-TA-2: Environment Instance Generation with `artifact` and `bgNsArtifacts` and BG Domain
 
 **Pre-requisites:**
 
-1. Environment Inventory exists with both `envTemplate.artifact` and `envTemplate.bgArtifacts` specified:
+1. Environment Inventory exists with both `envTemplate.artifact` and `envTemplate.bgNsArtifacts` specified:
 
    ```yaml
    envTemplate:
      name: "composite-prod"
      artifact: "project-env-template:v1.2.3"
-     bgArtifacts:
+     bgNsArtifacts:
        origin: "project-env-template:v1.2.3-origin"
        peer: "project-env-template:v1.2.3-peer"
    ```
 
-2. Environment Instance contains BG Domain object with `origin` and `peer` namespaces
-3. Template artifacts specified in `bgArtifacts` are available
+2. Environment Instance contains BG Domain object
+3. Template artifacts are available
 
 **Trigger:**
 
@@ -397,8 +395,8 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Inventory
    2. Reads BG Domain object to determine namespace roles
-   3. For `origin` Namespace: Uses `envTemplate.bgArtifacts.origin` artifact
-   4. For `peer` Namespace: Uses `envTemplate.bgArtifacts.peer` artifact
+   3. For `origin` Namespace: Uses `envTemplate.bgNsArtifacts.origin` artifact
+   4. For `peer` Namespace: Uses `envTemplate.bgNsArtifacts.peer` artifact
    5. For `controller` Namespace: Uses `envTemplate.artifact` artifact
    6. For all other objects: Uses `envTemplate.artifact` artifact
 
@@ -408,26 +406,24 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 2. `peer` Namespace is rendered using `project-env-template:v1.2.3-peer`
 3. `controller` Namespace is rendered using `project-env-template:v1.2.3`
 4. All other objects (Tenant, Cloud, Applications, etc.) are rendered using `project-env-template:v1.2.3`
-5. Environment Instance is generated with correct artifact assignments based on namespace roles
 
-### UC-EIG-TA-3: Environment Instance Generation with Mixed Artifacts (BG and Non-BG Namespaces)
+### UC-EIG-TA-3: Environment Instance Generation with `artifact` and `bgNsArtifacts` and without BG Domain
 
 **Pre-requisites:**
 
-1. Environment Inventory exists with both `envTemplate.artifact` and `envTemplate.bgArtifacts` specified:
+1. Environment Inventory exists with both `envTemplate.artifact` and `envTemplate.bgNsArtifacts` specified:
 
    ```yaml
    envTemplate:
      name: "composite-prod"
      artifact: "project-env-template:v1.2.3"
-     bgArtifacts:
+     bgNsArtifacts:
        origin: "project-env-template:v1.2.3-origin"
        peer: "project-env-template:v1.2.3-peer"
    ```
 
-2. Environment Instance contains BG Domain object with `origin`, `peer`, and `controller` namespaces
-3. Environment Instance contains additional namespaces not part of BG Domain (e.g., `core`, `api`)
-4. Template artifacts are available
+2. Environment Instance does **not** contain BG Domain object
+3. Template artifacts are available
 
 **Trigger:**
 
@@ -440,20 +436,14 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. The `env_builder` job runs in the pipeline:
    1. Reads Environment Inventory
-   2. Reads BG Domain object to determine namespace roles
-   3. For `origin` Namespace: Uses `envTemplate.bgArtifacts.origin` artifact
-   4. For `peer` Namespace: Uses `envTemplate.bgArtifacts.peer` artifact
-   5. For `controller` Namespace: Uses `envTemplate.artifact` artifact
-   6. For non-BG namespaces (`core`, `api`): Uses `envTemplate.artifact` artifact
-   7. For all other objects: Uses `envTemplate.artifact` artifact
+   2. Attempts to read BG Domain object but finds it does not exist
+   3. Ignores `bgNsArtifacts` since there is no BG Domain to determine namespace roles
+   4. Uses `envTemplate.artifact` for rendering all Environment Instance objects:
+      - All Namespaces
+      - Tenant, Cloud, Applications, Resource Profiles, Credentials, and all other objects
 
 **Results:**
 
-1. `origin` Namespace is rendered using `project-env-template:v1.2.3-origin`
-2. `peer` Namespace is rendered using `project-env-template:v1.2.3-peer`
-3. `controller` Namespace is rendered using `project-env-template:v1.2.3`
-4. Non-BG namespaces (`core`, `api`) are rendered using `project-env-template:v1.2.3`
-5. All other objects (Tenant, Cloud, Applications, etc.) are rendered using `project-env-template:v1.2.3`
-6. Environment Instance is generated with correct artifact assignments:
-   - BG-specific artifacts for `origin` and `peer` namespaces
-   - Common artifact for all other namespaces and objects
+1. All Namespaces are rendered using `project-env-template:v1.2.3`
+2. All other objects (Tenant, Cloud, Applications, etc.) are rendered using `project-env-template:v1.2.3`
+3. `bgNsArtifacts` are ignored since BG Domain is absent
