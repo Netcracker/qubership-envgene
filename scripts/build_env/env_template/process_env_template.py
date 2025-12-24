@@ -61,19 +61,13 @@ def get_artifact_info_from_dd(dd_config: dict, app: Application, cred: Credentia
     return ArtifactInfo(app_name=app.name, app_version=version, url=url)
 
 
-def download_and_get_version(artifact_info: ArtifactInfo, cred: Credentials) -> str:
-    asyncio.run(download_all_async([artifact_info], cred))
-    return artifact_info.app_version
-
-
-def download_zip_direct(app: Application, version: str, cred: Credentials) -> str:
-    url = asyncio.run(artifact.check_artifact_async(app, FileExtension.ZIP, version))
-    artifact_info = ArtifactInfo(app_name=app.name, app_version=version, url=url)
-    return download_and_get_version(artifact_info, cred)
-
-
 def is_zip_template(env_definition: dict) -> bool:
     return env_definition.get('envTemplate', {}).get('artifactIsZip', False)
+
+
+def build_zip_artifact_info(app: Application, version: str, cred: Credentials) -> ArtifactInfo:
+    url = asyncio.run(artifact.check_artifact_async(app, FileExtension.ZIP, version, cred))
+    return ArtifactInfo(app_name=app.name, app_version=version, url=url)
 
 
 def download_artifact_new_logic(env_definition: dict) -> str:
@@ -82,11 +76,14 @@ def download_artifact_new_logic(env_definition: dict) -> str:
     cred = get_registry_creds(app_def.registry)
 
     if is_zip_template(env_definition):
-        return download_zip_direct(app_def, version, cred)
+        artifact_info = build_zip_artifact_info(app_def, version, cred)
+    else:
+        dd_config = fetch_dd(app_def, version, cred)
+        artifact_info = get_artifact_info_from_dd(dd_config, app_def, cred)
 
-    dd_config = fetch_dd(app_def, version, cred)
-    artifact_info = get_artifact_info_from_dd(dd_config, app_def, cred)
-    return download_and_get_version(artifact_info, cred)
+    #TODO downloading to another  folder how fix better?
+    asyncio.run(download_all_async([artifact_info], cred))
+    return artifact_info.app_version
 
 
 def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
