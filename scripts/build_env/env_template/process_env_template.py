@@ -30,13 +30,13 @@ def get_artifact_def(artifact_name: str) -> Application:
     return app
 
 
-def fetch_reg_cred(artifact_def) -> Credentials:
+def fetch_reg_cred(registry_def: Registry) -> Credentials:
     cred_config = crypt.decrypt_file(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
-    credentials_id = artifact_def['registry']['credentialsId']
+    credentials_id = registry_def['credentialsId']
     repository_username = cred_config[credentials_id]['data'].get('username')
     repository_password = cred_config[credentials_id]['data'].get('password')
     if repository_username is None or repository_password is None:
-        raise ValueError(f"Username or password for registry '{artifact_def['registry']['name']}' is null")
+        raise ValueError(f"Username or password for registry '{registry_def['name']}' is null")
     return Credentials(username=repository_username, password=repository_password)
 
 
@@ -78,27 +78,29 @@ def process_env_template() -> str:
     env_instances_dir = Path(f"{base_dir}/environments/{cluster_name}/{environment_name}")
     env_definition = get_env_definition(env_instances_dir)
     artifact_is_zip = env_definition['envTemplate'].get('artifactIsZip', False)
-    artifact_dest = "/tmp/artifact.zip"
+    artifact_dest = Path("/tmp/artifact.zip")
     build_env_path = "/build_env"
 
     if 'artifact' in env_definition.get('envTemplate', {}):
         logger.info("Use template downloading new logic")
-        artifact_name, artifact_version = split_artifact_appver(env_definition)
+        artifact_name, version = split_artifact_appver(env_definition)
         artifact_def = get_artifact_def(artifact_name)
-        cred = fetch_reg_cred(artifact_def)
+        cred = fetch_reg_cred(artifact_def.registry)
         if not artifact_is_zip:
-            dd_template = fetch_dd_template(artifact_def, artifact_version, cred)
+            dd_template = fetch_dd_template(artifact_def, version, cred)
             artifact_info = fetch_zip_artifact_info(dd_template, artifact_def, cred)
             asyncio.run(download_all_async([artifact_info], cred))
+            artifact_latest_version = artifact_info.app_version
         else:
             # when we don't have dd -> directly download zip without parse dd
-            template_url = asyncio.run(artifact.check_artifact_async(artifact_def, FileExtension.ZIP, artifact_version))
-            artifact_info = ArtifactInfo(app_name=artifact_def.name, app_version=artifact_version, url=template_url)
+            template_url = asyncio.run(artifact.check_artifact_async(artifact_def, FileExtension.ZIP, version))
+            artifact_info = ArtifactInfo(app_name=artifact_def.name, app_version=version, url=template_url)
             asyncio.run(download_all_async([artifact_info], cred))
+            artifact_latest_version = version
     else:
         logger.info("Use template downloading old logic")
         registry_config_path = Path(f"{base_dir}/configuration/registry.yml")
-        registry_config = openYaml(registry_config_path)
+        registry_def = openYaml(registry_config_path)
 
         artifact_info = env_definition['envTemplate']['templateArtifact']['artifact']
         group_id = artifact_info['group_id']
@@ -108,14 +110,25 @@ def process_env_template() -> str:
         repository_template_type = artifact_info['templateRepository']
         registry_name = artifact_info['registry']
 
+        cred = fetch_reg_cred(registry_def)
+
         if not artifact_is_zip:
-            repository_url = registry_config[registry_name][repository_type]
+            repository_url = registry_def[registry_name][repository_type]
+            dd_template_url = artifact.create_artifact_url_by_parts(repository_url, group_id, artifact_id, version,
+                                                                    FileExtension.JSON)
+            dd_config = artifact.download_json_content(dd_template_url, cred)
+            artifact_tmp_str = dd_config['configurations'][0]['artifacts'][0].get('id')
+            group_id, artifact_id, artifact_version = artifact_tmp_str.split(':')
+            template_url = artifact.create_artifact_url_by_parts(repository_url, group_id, artifact_id, version,
+                                                                 FileExtension.ZIP)
+            artifact.download(template_url, artifact_dest, cred)
+            unpack_archive(artifact_dest, build_env_path)
+            artifact_latest_version = artifact_version
         else:
-            template_repo_url = registry_config[registry_name][repository_template_type]
+            template_repo_url = registry_def[registry_name][repository_template_type]
             template_url = artifact.create_artifact_url_by_parts(template_repo_url, group_id, artifact_id, version,
                                                                  FileExtension.ZIP)
             artifact.download(template_url, artifact_dest, cred)
             unpack_archive(artifact_dest, build_env_path)
-
-        # TODO download
+            artifact_latest_version = version
     return artifact_latest_version
