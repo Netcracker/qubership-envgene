@@ -145,7 +145,8 @@ def build_pipeline(params: dict):
     # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
     for job in sorted_pipeline.find_jobs(JobFilter()): # gets all jobs in pipeline
-        job.artifacts.add_paths("${CI_PROJECT_DIR}")
+        job.artifacts.add_paths(".")
+        job.artifacts.add_excludes(".git/")
         if job.needs is None or len(job.needs) == 0:
             job.add_variables(GIT_STRATEGY="fetch")
         else:
