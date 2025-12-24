@@ -146,7 +146,6 @@ def build_pipeline(params: dict):
     # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
     for job in sorted_pipeline.find_jobs(JobFilter()): # gets all jobs in pipeline
         job.artifacts.add_paths(".")
-        job.artifacts.add_excludes(".git/")
         if job.needs is None or len(job.needs) == 0:
             job.add_variables(GIT_STRATEGY="fetch")
         else:
