@@ -1,3 +1,8 @@
+from pathlib import Path
+
+from envgenehelper import crypt
+from envgenehelper.config_helper import base_dir
+
 from .logger import logger
 import re
 
@@ -209,3 +214,8 @@ def fetch_cred_value(val, cred_config) -> str:
         return cred_config[cred_name]["data"][cred_property]
     else:
         raise ValueError(f"Value '{val}' does not match expected format")
+
+
+def get_cred_config():
+    cred_config = crypt.decrypt_file(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
+    return cred_config

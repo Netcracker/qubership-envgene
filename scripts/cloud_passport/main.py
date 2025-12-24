@@ -10,6 +10,7 @@ from envgenehelper.errors import ValidationError
 
 from cmdb import update_creds_to_cmdb_format
 from git_client import GitRepoManager, GitLabClient
+from envgenehelper import get_cred_config
 
 SECRET_KEY = "SECRET_KEY"
 
@@ -123,7 +124,7 @@ def main():
     base_dir = os.getenv("CI_PROJECT_DIR")
 
     integration_config = get_integration_config(Path(f"{base_dir}/configuration/integration.yml"))
-    cred_config = crypt.decrypt_file(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
+    cred_config = get_cred_config()
 
     self_git_token = fetch_cred_value(integration_config.get("self_token"), cred_config)
     repo = GitRepoManager(repo_path=base_dir, git_token=self_git_token)
