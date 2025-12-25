@@ -147,7 +147,7 @@ def build_pipeline(params: dict):
     for job in sorted_pipeline.find_jobs(JobFilter()): # gets all jobs in pipeline
         if job.needs is None or len(job.needs) == 0:
             job.add_variables(GIT_STRATEGY="fetch")
-            job.scripts.append('mkdir -p "${{CI_PROJECT_DIR}}-empty" && cp -r "$CI_PROJECT_DIR"/. "${{CI_PROJECT_DIR}}-empty/"')
+            job.scripts.append('mkdir -p "${CI_PROJECT_DIR}-empty" && cp -r "$CI_PROJECT_DIR"/. "${CI_PROJECT_DIR}-empty/"')
             job.artifacts.add_paths("${CI_PROJECT_DIR}-empty")
         else:
             job.add_variables(GIT_STRATEGY="empty")
