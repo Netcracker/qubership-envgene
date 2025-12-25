@@ -152,8 +152,8 @@ def get_env_definition(env_dir):
     return openYaml(env_definition_path)
 
 
-def get_env_definition_path(env_dir):
-    return f"{env_dir}/{INVENTORY_DIR_NAME}/{ENV_DEFINITION_FILE_NAME}"
+def get_env_definition_path(env_dir) -> str:
+    return str(Path(env_dir) / INVENTORY_DIR_NAME / ENV_DEFINITION_FILE_NAME)
 
 
 def getEnvCredentials(env_dir):

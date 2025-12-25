@@ -1,10 +1,9 @@
+import re
 from pathlib import Path
 
-from envgenehelper import crypt
-from envgenehelper.config_helper import base_dir
+from envgenehelper import crypt, getenv_with_error
 
 from .logger import logger
-import re
 
 # const
 CRED_TYPE_SECRET = "secret"
@@ -217,5 +216,6 @@ def fetch_cred_value(val, cred_config) -> str:
 
 
 def get_cred_config():
+    base_dir = getenv_with_error('CI_PROJECT_DIR')
     cred_config = crypt.decrypt_file(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
     return cred_config

@@ -68,7 +68,8 @@ async def resolve_snapshot_version_async(
         return version
     metadata_url = _create_metadata_url(app, version, repo_value)
     try:
-        async with session.get(metadata_url, timeout=DEFAULT_REQUEST_TIMEOUT) as response:
+        timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
+        async with session.get(metadata_url, timeout=timeout) as response:
             if response.status != 200:
                 logger.warning(f"Failed to fetch maven-metadata.xml: {metadata_url}, status: {response.status}")
                 return None
@@ -76,28 +77,6 @@ async def resolve_snapshot_version_async(
             content = await response.text()
             return _parse_snapshot_version(content, app, classifier, extension, stop_event)
 
-    except Exception as e:
-        logger.warning(f"Error resolving snapshot version from {metadata_url}: {e}")
-
-
-def resolve_snapshot_version(
-        app: Application,
-        version: str,
-        repo_value: str,
-        classifier: str = "",
-        extension: FileExtension = FileExtension.JSON,
-) -> str | None:
-    if not version.endswith("-SNAPSHOT"):
-        return version
-
-    metadata_url = _create_metadata_url(app, version, repo_value)
-    try:
-        import requests
-        response = requests.get(metadata_url, timeout=DEFAULT_REQUEST_TIMEOUT)
-        if response.status_code != 200:
-            logger.warning(f"Failed to fetch maven-metadata.xml: {metadata_url}, status: {response.status_code}")
-            return None
-        return _parse_snapshot_version(response.text, app, classifier, extension)
     except Exception as e:
         logger.warning(f"Error resolving snapshot version from {metadata_url}: {e}")
 
@@ -177,7 +156,8 @@ def clean_temp_dir():
 async def download_all_async(artifacts_info: list[ArtifactInfo], cred: Credentials | None = None):
     auth = BasicAuth(login=cred.username, password=cred.password) if cred else None
     connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
-    async with aiohttp.ClientSession(connector=connector, timeout=DEFAULT_REQUEST_TIMEOUT, auth=auth) as session:
+    timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
+    async with aiohttp.ClientSession(connector=connector, timeout=timeout, auth=auth) as session:
         async with asyncio.TaskGroup() as tg:
             tasks = [tg.create_task(download_async(session, artifact_info)) for artifact_info in artifacts_info]
         results = []
@@ -251,7 +231,8 @@ async def check_artifact_by_full_url_async(
             resolved_version = snapshot_version
     full_url = create_full_url(app, resolved_version, repo_value, artifact_extension)
     try:
-        async with session.head(full_url, timeout=DEFAULT_REQUEST_TIMEOUT) as response:
+        timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
+        async with session.head(full_url, timeout=timeout) as response:
             if response.status == 200:
                 stop_event.set()
                 logger.info(f"Artifact found: {full_url}")
@@ -292,7 +273,8 @@ async def _attempt_check(
         app.registry.maven_config.repository_domain_name = registry_url
 
     auth = BasicAuth(login=cred.username, password=cred.password) if cred else None
-    async with aiohttp.ClientSession(timeout=DEFAULT_REQUEST_TIMEOUT, auth=auth) as session:
+    timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
+    async with aiohttp.ClientSession(timeout=timeout, auth=auth) as session:
         async with asyncio.TaskGroup() as tg:
             tasks = [
                 tg.create_task(

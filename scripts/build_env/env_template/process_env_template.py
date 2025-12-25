@@ -7,7 +7,6 @@ from artifact_searcher.artifact import download_all_async
 from artifact_searcher.utils.models import FileExtension, ArtifactInfo, Application, Credentials, Registry
 from envgenehelper import get_env_definition
 from envgenehelper import openYaml, find_all_yaml_files_by_stem, getenv_with_error, logger
-from envgenehelper.config_helper import base_dir
 from envgenehelper import unpack_archive, get_cred_config
 from template_testing import run_env_test_setup
 
@@ -19,29 +18,31 @@ def parse_artifact_appver(env_definition: dict) -> [str, str]:
 
 
 def load_artifact_definition(name: str) -> Application:
+    base_dir = getenv_with_error('CI_PROJECT_DIR')
     path_pattern = os.path.join(base_dir, 'configuration', 'artifact_definitions', name)
     path = next(iter(find_all_yaml_files_by_stem(path_pattern)), None)
     if not path:
-        raise FileNotFoundError(f"No configuration file found for {name} with .yaml or .yml extension")
+        raise FileNotFoundError(f"No artifact definition file found for {name} with .yaml or .yml extension")
     return Application.model_validate(openYaml(path))
 
 
 def get_registry_creds(registry: Registry) -> Credentials:
     cred_config = get_cred_config()
-    cred_id = registry['credentialsId']
+    cred_id = registry.credentials_id
     username = cred_config[cred_id]['data'].get('username')
     password = cred_config[cred_id]['data'].get('password')
-    if not username or not password:
-        raise ValueError(f"Username or password for registry '{registry['name']}' is null")
+    if username is None or password is None:
+        raise ValueError(f"Registry {registry.name} credentials incomplete: username={username}, password={password}")
     return Credentials(username=username, password=password)
 
 
 def fetch_dd(app: Application, version: str, cred: Credentials):
-    url, _ = asyncio.run(artifact.check_artifact_async(app, FileExtension.JSON, version))
-    if not url:
+    artifact_info = asyncio.run(artifact.check_artifact_async(app, FileExtension.JSON, version))
+    if not artifact_info:
         raise ValueError(
             f"[Application {app.name}:{version}]: URL to deployment descriptor could not be resolved"
         )
+    url, _ = artifact_info
     logger.info(f"Resolved deployment descriptor URL: {url}")
     return artifact.download_json_content(url, cred)
 
