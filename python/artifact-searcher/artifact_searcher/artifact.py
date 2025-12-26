@@ -230,9 +230,10 @@ async def check_artifact_by_full_url_async(
         snapshot_info = await resolve_snapshot_version_async(session, app, version, repo_value, task_id,
                                                              stop_artifact_event, stop_snapshot_event_for_others,
                                                              extension=artifact_extension)
-        if snapshot_info:
-            snapshot_version, id_main_task = snapshot_info
-            resolved_version = snapshot_version
+        if not snapshot_info:
+            return None
+        snapshot_version, id_main_task = snapshot_info
+        resolved_version = snapshot_version
 
     if stop_artifact_event.is_set() or (stop_snapshot_event_for_others.is_set() and task_id != id_main_task):
         return None
@@ -243,6 +244,7 @@ async def check_artifact_by_full_url_async(
             if response.status == 200:
                 stop_artifact_event.set()
                 logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found: {full_url}")
+                await asyncio.sleep(10)
                 return full_url, repo
             logger.warning(
                 f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {response.status}")
