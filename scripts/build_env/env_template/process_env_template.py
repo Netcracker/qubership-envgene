@@ -8,7 +8,9 @@ from artifact_searcher.utils.models import FileExtension, ArtifactInfo, Applicat
 from envgenehelper import get_env_definition
 from envgenehelper import openYaml, find_all_yaml_files_by_stem, getenv_with_error, logger
 from envgenehelper import unpack_archive, get_cred_config
-from template_testing import run_env_test_setup
+
+
+# from template_testing import run_env_test_setup
 
 
 def parse_artifact_appver(env_definition: dict) -> [str, str]:
@@ -83,7 +85,7 @@ def download_artifact_new_logic(env_definition: dict) -> str:
         dd_config = fetch_dd(app_def, version, cred)
         artifact_info = get_artifact_info_from_dd(dd_config, app_def, cred)
 
-    #TODO downloading to another  folder how fix better?
+    # TODO downloading to another  folder how fix better?
     asyncio.run(download_all_async([artifact_info], cred))
     return artifact_info.app_version
 
@@ -123,9 +125,9 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
 
 
 def process_env_template() -> str:
-    env_template_test = getenv_with_error("ENV_TEMPLATE_TEST")
-    if env_template_test:
-        run_env_test_setup()
+    #     env_template_test = getenv_with_error("ENV_TEMPLATE_TEST")
+    #     if env_template_test:
+    #         run_env_test_setup()
     project_dir = getenv_with_error("CI_PROJECT_DIR")
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")

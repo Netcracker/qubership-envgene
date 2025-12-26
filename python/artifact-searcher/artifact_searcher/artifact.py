@@ -62,23 +62,25 @@ async def resolve_snapshot_version_async(
         classifier: str = "",
         extension: FileExtension = FileExtension.JSON,
 ) -> str | None:
-    if stop_event.is_set():
-        return None
     if not version.endswith("-SNAPSHOT"):
         return version
     metadata_url = _create_metadata_url(app, version, repo_value)
     try:
-        timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
-        async with session.get(metadata_url, timeout=timeout) as response:
+        async with session.get(metadata_url) as response:
+            if stop_event.is_set():
+                return None
+
             if response.status != 200:
-                logger.warning(f"Failed to fetch maven-metadata.xml: {metadata_url}, status: {response.status}")
+                logger.warning(
+                    f"[Applcation: {app.name}: {version}] - Failed to fetch maven-metadata.xml: {metadata_url}, status: {response.status}"
+                )
                 return None
 
             content = await response.text()
-            return _parse_snapshot_version(content, app, classifier, extension, stop_event)
+            return _parse_snapshot_version(content, app, classifier, extension, version)
 
     except Exception as e:
-        logger.warning(f"Error resolving snapshot version from {metadata_url}: {e}")
+        logger.warning(f"[Applcation: {app.name}: {version}] - Error resolving snapshot version from {metadata_url}: {e}")
 
 
 def _parse_snapshot_version(
@@ -86,12 +88,12 @@ def _parse_snapshot_version(
         app: Application,
         classifier: str,
         extension: FileExtension,
-        stop_event: asyncio.Event | None = None
+        version: str
 ) -> str | None:
     root = ET.fromstring(content)
     snapshot_versions = root.findall(".//snapshotVersions/snapshotVersion")
     if not snapshot_versions:
-        logger.warning(f"No <snapshotVersions> found for {app.artifact_id}")
+        logger.warning(f"[Applcation: {app.name}: {version}] - No <snapshotVersions> found for {app.artifact_id}")
         return
 
     for node in snapshot_versions:
@@ -99,12 +101,10 @@ def _parse_snapshot_version(
         node_extension = node.findtext("extension", default="")
         value = node.findtext("value")
         if node_classifier == classifier and node_extension == extension:
-            if stop_event:
-                stop_event.set()
-            logger.info(f"Resolved snapshot version {app.artifact_id} to {value}")
+            logger.info(f"[Applcation: {app.name}: {version}] - Resolved snapshot version {app.artifact_id} to {value}")
             return value
 
-    logger.warning(f"No matching snapshotVersion found for {app.artifact_id}")
+    logger.warning(f"[Applcation: {app.name}: {version}] - No matching snapshotVersion found for {app.artifact_id}")
 
 
 def version_to_folder_name(version: str):
@@ -223,10 +223,8 @@ async def check_artifact_by_full_url_async(
 
     resolved_version = version
     if version.endswith("-SNAPSHOT"):
-        resolve_stop_event = asyncio.Event()
-        snapshot_version = await resolve_snapshot_version_async(
-            session, app, version, repo_value, resolve_stop_event, extension=artifact_extension
-        )
+        snapshot_version = await resolve_snapshot_version_async(session, app, version, repo_value, stop_event,
+                                                                extension=artifact_extension)
         if snapshot_version:
             resolved_version = snapshot_version
     full_url = create_full_url(app, resolved_version, repo_value, artifact_extension)
@@ -235,11 +233,11 @@ async def check_artifact_by_full_url_async(
         async with session.head(full_url, timeout=timeout) as response:
             if response.status == 200:
                 stop_event.set()
-                logger.info(f"Artifact found: {full_url}")
+                logger.info(f"[Applcation: {app.name}: {version}] - Artifact found: {full_url}")
                 return full_url, repo
-            logger.warning(f"Artifact not found at URL {full_url}, status: {response.status}")
+            logger.warning(f"[Applcation: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {response.status}")
     except Exception as e:
-        logger.warning(f"Error checking artifact URL {full_url}: {e}")
+        logger.warning(f"[Applcation: {app.name}: {version}] - Error checking artifact URL {full_url}: {e}")
 
 
 def get_repo_value_pointer_dict(registry: Registry):
