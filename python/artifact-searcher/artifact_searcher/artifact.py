@@ -58,6 +58,7 @@ async def resolve_snapshot_version_async(
         app: Application,
         version: str,
         repo_value: str,
+        task_index: int,
         stop_event: asyncio.Event,
         classifier: str = "",
         extension: FileExtension = FileExtension.JSON,
@@ -72,25 +73,27 @@ async def resolve_snapshot_version_async(
 
             if response.status != 200:
                 logger.warning(
-                    f"[Application: {app.name}: {version}] - Failed to fetch maven-metadata.xml: {metadata_url}, status: {response.status}")
+                    f"[Task {task_index}] [Application: {app.name}: {version}] - Failed to fetch maven-metadata.xml: {metadata_url}, status: {response.status}")
                 return None
 
             content = await response.text()
             logger.info(
-                f"[Application: {app.name}: {version}] - Successfully fetched maven-metadata.xml: {metadata_url}")
-            resolved_version = _parse_snapshot_version(content, app, classifier, extension, version)
-            stop_event.set()
+                f"[Task {task_index}] [Application: {app.name}: {version}] - Successfully fetched maven-metadata.xml: {metadata_url}")
+            resolved_version = _parse_snapshot_version(content, app, classifier, task_index, extension, version)
+            if resolved_version:
+                stop_event.set()
             return resolved_version
 
     except Exception as e:
         logger.warning(
-            f"[Application: {app.name}: {version}] - Error resolving snapshot version from {metadata_url}: {e}")
+            f"[Task {task_index}] [Application: {app.name}: {version}] - Error resolving snapshot version from {metadata_url}: {e}")
 
 
 def _parse_snapshot_version(
         content: str,
         app: Application,
         classifier: str,
+        task_index: int,
         extension: FileExtension,
         version: str
 ) -> str | None:
@@ -105,10 +108,10 @@ def _parse_snapshot_version(
         node_extension = node.findtext("extension", default="")
         value = node.findtext("value")
         if node_classifier == classifier and node_extension == extension:
-            logger.info(f"[Application: {app.name}: {version}] - Resolved snapshot version '{value}'")
+            logger.info(f"[Task {task_index}] [Application: {app.name}: {version}] - Resolved snapshot version '{value}'")
             return value
 
-    logger.warning(f"[Application: {app.name}: {version}] - No matching snapshotVersion found")
+    logger.warning(f"[Task {task_index}] [Application: {app.name}: {version}] - No matching snapshotVersion found")
 
 
 def version_to_folder_name(version: str):
@@ -215,34 +218,37 @@ async def check_artifact_by_full_url_async(
         repo,
         artifact_extension: FileExtension,
         stop_event: asyncio.Event,
-        session
+        session,
+        task_index: int
 ) -> tuple[str, tuple[str, str]] | None:
-    if stop_event.is_set():
-        return None
-
     repo_value, repo_pointer = repo
     if not repo_value:
-        logger.warning(f"[Registry: {app.registry.name}] - {repo_pointer} is not configured")
+        logger.warning(f"[Task {task_index}] [Registry: {app.registry.name}] - {repo_pointer} is not configured")
         return None
 
     resolved_version = version
     if version.endswith("-SNAPSHOT"):
-        snapshot_version = await resolve_snapshot_version_async(session, app, version, repo_value, stop_event,
+        if stop_event.is_set():
+            return None
+        snapshot_version = await resolve_snapshot_version_async(session, app, version, repo_value, task_index, stop_event,
                                                                 extension=artifact_extension)
         if snapshot_version:
             resolved_version = snapshot_version
     full_url = create_full_url(app, resolved_version, repo_value, artifact_extension)
     try:
         timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
+        if stop_event.is_set():
+            return None
         async with session.head(full_url, timeout=timeout) as response:
             if response.status == 200:
                 stop_event.set()
-                logger.info(f"[Application: {app.name}: {version}] - Artifact found: {full_url}")
+                logger.info(f"[Task {task_index}] [Application: {app.name}: {version}] - Artifact found: {full_url}")
                 return full_url, repo
             logger.warning(
-                f"[Application: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {response.status}")
+                f"[Task {task_index}] [Application: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {response.status}")
     except Exception as e:
-        logger.warning(f"[Application: {app.name}: {version}] - Error checking artifact URL {full_url}: {e}")
+        logger.warning(
+            f"[Task {task_index}] [Application: {app.name}: {version}] - Error checking artifact URL {full_url}: {e}")
 
 
 def get_repo_value_pointer_dict(registry: Registry):
@@ -270,7 +276,6 @@ async def _attempt_check(
         cred: Credentials | None = None
 ) -> Optional[tuple[str, tuple[str, str]]]:
     check_artifact_stop_event = asyncio.Event()
-
     repos_dict = get_repo_value_pointer_dict(app.registry)
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
@@ -287,10 +292,11 @@ async def _attempt_check(
                         repo,
                         artifact_extension,
                         check_artifact_stop_event,
-                        session
+                        session,
+                        task_index=i
                     )
                 )
-                for repo in repos_dict.items()
+                for i, repo in enumerate(repos_dict.items())
             ]
 
         for task in tasks:
