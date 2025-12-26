@@ -1,0 +1,12 @@
+name: {{ current_env.environmentName ~ '-bg-domain' }}
+type: bgdomain
+originNamespace:
+  name: app-core
+  type: namespace
+peerNamespace:
+  name: app
+  type: namespace
+controllerNamespace:
+  name: app
+  type: namespace
+  credentials: bgd-controller-token
