@@ -36,10 +36,10 @@ def convert_nexus_repo_url_to_index_view(url: str) -> str:
 
 
 def create_artifact_path(app: Application, version: str, repo: str) -> str:
-    registry_url = app.registry.maven_config.repository_domain_name
+    registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
-    return urljoin(registry_url, "/".join([repo, group_id, app.artifact_id, folder]))
+    return urljoin(registry_url, f"{repo}/{group_id}/{app.artifact_id}/{folder}/")
 
 
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension) -> str:
@@ -72,15 +72,19 @@ async def resolve_snapshot_version_async(
 
             if response.status != 200:
                 logger.warning(
-                    f"[Applcation: {app.name}: {version}] - Failed to fetch maven-metadata.xml: {metadata_url}, status: {response.status}"
-                )
+                    f"[Application: {app.name}: {version}] - Failed to fetch maven-metadata.xml: {metadata_url}, status: {response.status}")
                 return None
 
             content = await response.text()
-            return _parse_snapshot_version(content, app, classifier, extension, version)
+            logger.info(
+                f"[Application: {app.name}: {version}] - Successfully fetched maven-metadata.xml: {metadata_url}")
+            resolved_version = _parse_snapshot_version(content, app, classifier, extension, version)
+            stop_event.set()
+            return resolved_version
 
     except Exception as e:
-        logger.warning(f"[Applcation: {app.name}: {version}] - Error resolving snapshot version from {metadata_url}: {e}")
+        logger.warning(
+            f"[Application: {app.name}: {version}] - Error resolving snapshot version from {metadata_url}: {e}")
 
 
 def _parse_snapshot_version(
@@ -93,7 +97,7 @@ def _parse_snapshot_version(
     root = ET.fromstring(content)
     snapshot_versions = root.findall(".//snapshotVersions/snapshotVersion")
     if not snapshot_versions:
-        logger.warning(f"[Applcation: {app.name}: {version}] - No <snapshotVersions> found for {app.artifact_id}")
+        logger.warning(f"[Application: {app.name}: {version}] - No <snapshotVersions> found")
         return
 
     for node in snapshot_versions:
@@ -101,10 +105,10 @@ def _parse_snapshot_version(
         node_extension = node.findtext("extension", default="")
         value = node.findtext("value")
         if node_classifier == classifier and node_extension == extension:
-            logger.info(f"[Applcation: {app.name}: {version}] - Resolved snapshot version {app.artifact_id} to {value}")
+            logger.info(f"[Application: {app.name}: {version}] - Resolved snapshot version '{value}'")
             return value
 
-    logger.warning(f"[Applcation: {app.name}: {version}] - No matching snapshotVersion found for {app.artifact_id}")
+    logger.warning(f"[Application: {app.name}: {version}] - No matching snapshotVersion found")
 
 
 def version_to_folder_name(version: str):
@@ -218,7 +222,7 @@ async def check_artifact_by_full_url_async(
 
     repo_value, repo_pointer = repo
     if not repo_value:
-        logger.warning(f"Repository {repo_pointer} is not configured for registry {app.registry.name}")
+        logger.warning(f"[Registry: {app.registry.name}] - {repo_pointer} is not configured")
         return None
 
     resolved_version = version
@@ -233,11 +237,12 @@ async def check_artifact_by_full_url_async(
         async with session.head(full_url, timeout=timeout) as response:
             if response.status == 200:
                 stop_event.set()
-                logger.info(f"[Applcation: {app.name}: {version}] - Artifact found: {full_url}")
+                logger.info(f"[Application: {app.name}: {version}] - Artifact found: {full_url}")
                 return full_url, repo
-            logger.warning(f"[Applcation: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {response.status}")
+            logger.warning(
+                f"[Application: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {response.status}")
     except Exception as e:
-        logger.warning(f"[Applcation: {app.name}: {version}] - Error checking artifact URL {full_url}: {e}")
+        logger.warning(f"[Application: {app.name}: {version}] - Error checking artifact URL {full_url}: {e}")
 
 
 def get_repo_value_pointer_dict(registry: Registry):
