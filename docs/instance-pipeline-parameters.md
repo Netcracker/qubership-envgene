@@ -115,6 +115,28 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 **Example**: `env-template:v1.2.3`
 
+### `ENV_TEMPLATE_VERSION_MODE`
+
+**Description**: Controls how ENV_TEMPLATE_VERSION is applied during the pipeline run.
+
+If ENV_TEMPLATE_VERSION_MODE=APPLY_ONLY, the system uses the version from ENV_TEMPLATE_VERSION only for the current pipeline execution and does not update envTemplate.artifact (or envTemplate.templateArtifact.artifact.version) in the Environment Inventory file `env_definition.yml`
+
+At the same time, the system  update `generatedVersions.generateEnvironmentLatestVersion` in `env_definition.yml` to reflect the template artifact version that was actually applied in this run, for example:
+
+`envTemplate:
+  generatedVersions:
+    generateEnvironmentLatestVersion: "template-project:feature-diis1125-20251125.045717-2"`
+
+
+**Allowed Values**: `APPLY_ONLY`
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `APPLY_ONLY`
+
+
 ### `ENV_TEMPLATE_VERSION_ORIGIN`
 
 **Description**: If provided, system updates the Blue-Green origin template artifact version in the Environment Inventory. System overrides `envTemplate.bgNsArtifacts.origin` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
@@ -184,6 +206,69 @@ envTemplate:
 ```text
 '{"clusterParams":{"clusterEndpoint":"<value>","clusterToken":"<value>"},"additionalTemplateVariables":{"<key>":"<value>"},"cloudName":"<value>","envSpecificParamsets":{"<ns-template-name>":["paramsetA"],"cloud":["paramsetB"]},"paramsets":{"paramsetA":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[{"appName":"<app-name>","parameters":{"<key>":"<value>"}}]},"paramsetB":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[]}},"credentials":{"credX":{"type":"<credential-type>","data":{"username":"<value>","password":"<value>"}},"credY":{"type":"<credential-type>","data":{"secret":"<value>"}}}}'
 ```
+
+### `ENV_INVENTORY_CONTENT`
+**Description**: 
+Specifies Environment Inventory and related env-specific artifacts to be generated/updated. This parameter allows external systems to manage env_definition.yml as well as additional files (paramsets, credentials, resource profiles, shared template variables) without manual repository changes. YAML in string format. See details in Environment Inventory Generation feature documentation [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
+
+
+**Default Value**: None
+
+**Mandatory**: No
+**Example**:
+```yaml
+'env_definition:
+  $action: create
+  $content:
+    inventory:
+      environmentName: "env-1"
+      tenantName: "Applications"
+      cloudName: "cluster-1"
+    envTemplate:
+      name: "composite-prod"
+      artifact: "project-env-template:master_20231024-080204"
+      envSpecificParamsets:
+        bss: ["env-specific-bss"]
+      envSpecificE2EParamsets:
+        cloud: ["cloud-level-params"]
+      envSpecificTechnicalParamsets:
+        bss: ["env-specific-tech"]
+      envSpecificResourceProfiles:
+        cloud: ["cloud-rp-override"]
+      sharedMasterCredentialFiles: ["prod-integration-creds"]
+      sharedTemplateVariables: ["prod-template-variables"]
+paramsets:
+  - $action: create
+    $place: env
+    $content:
+      version: "<paramset-version>"
+      name: "env-specific-bss"
+      parameters: { "<key>": "<value>" }
+      applications: []
+credentials:
+  - $action: create
+    $place: site
+    $content:
+      prod-integration-creds:
+        type: "<credential-type>"
+        data:
+          username: "<value>"
+          password: "<value>"
+resource_profiles:
+  - $action: create
+    $place: cluster
+    $content:
+      name: "cloud-specific-profile"
+      baseline: "dev"
+      applications: []
+      version: 0
+template_variables:
+  - $action: create
+    $place: site
+    $content:
+      prod-template-variables:
+        "<key>": "<value>"'
+```        
 
 ### `GENERATE_EFFECTIVE_SET`
 
