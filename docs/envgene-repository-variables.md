@@ -15,7 +15,7 @@
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
-    - [`ENVGENE_LOG_LEVEL` (reference)](#envgene_log_level-reference)
+    - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
     - [`DOCKER_REGISTRY` (in template repository)](#docker_registry-in-template-repository)
 
 The following are parameters that are set in GitLab CI/CD variables or GitHub environment variables.
@@ -26,30 +26,20 @@ All parameters are of string data type.
 
 ### `ENVGENE_LOG_LEVEL`
 
-**Description**: Defines the global logging level for all EnvGene components executed in the Instance EnvGene pipeline.
-This variable is passed to the pipeline and must be supported by all EnvGene scripts, libraries, and jobs to ensure consistent logging behavior.
+**Description**: Defines the logging level for EnvGene components executed in the Instance EnvGene pipeline.
+This variable is passed to the pipeline and is supported by EnvGene Python and Java based components.
 
-The value controls log verbosity for:
-
-- EnvGene Python libraries
-- Pipeline scripts
-- Supporting tools
-- Java-based components where applicable
-
-Each job logs all its execution parameters at the beginning of execution using this logging level.
-
-**Logging Level Mapping (Java vs Python)**
+**Logging Level Mapping (Java vs Python):**
 
 | ENVGENE_LOG_LEVEL | Python Logging Level | Java Logging Level |
-|------------------|----------------------|--------------------|
-| Debug            | DEBUG                | DEBUG              |
-| Info             | INFO                 | INFO               |
-| Warning          | WARNING              | WARN               |
-| Error            | ERROR                | ERROR              |
+|-------------------|----------------------|--------------------|
+| DEBUG             | DEBUG                | DEBUG              |
+| INFO              | INFO                 | INFO               |
+| WARNING           | WARNING              | WARN               |
+| ERROR             | ERROR                | ERROR              |
 
-This mapping ensures consistent log severity and verbosity across EnvGene components implemented in different languages.
+**Default Value**: INFO
 
-**Default Value**: Info
 **Mandatory**: No
 
 ### `SECRET_KEY`
@@ -160,16 +150,9 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 **Example**: `true`
 
-### `ENVGENE_LOG_LEVEL` (reference)
+### `ENVGENE_LOG_LEVEL` (in template repository)
 
-**Description**: This variable is defined in the Instance EnvGene repository and is referenced here for informational purposes.
-
-When `ENV_TEMPLATE_TEST` is set to `true`, the Template EnvGene pipeline uses the `ENVGENE_LOG_LEVEL` value passed from the Instance pipeline to control logging behavior during template validation and testing.
-
-The variable itself is **not configured in the Template repository**, but its value affects log verbosity when Template Testing mode is enabled.
-
-**Default Value**: Inherited from Instance repository
-**Mandatory**: No
+The same as [`ENVGENE_LOG_LEVEL` in instance repository](#envgene_log_level)
 
 ### `DOCKER_REGISTRY` (in template repository)
 
