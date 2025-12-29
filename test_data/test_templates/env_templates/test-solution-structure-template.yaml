@@ -21,4 +21,5 @@ namespaces:
         - paramset-A
   - template_path: "{{ templates_dir }}/env_templates/test-solution-structure-template/Namespaces/app.yml.j2"
     deploy_postfix: "app"
+bg_domain: "{{ templates_dir }}/env_templates/test-solution-structure-template/bg_domain.yml.j2"
 
