@@ -6,7 +6,7 @@ from pathlib import Path
 from envgenehelper.test_helpers import TestHelpers
 import bg_manage
 
-os.environ["FULL_ENV_NAME"] = "etbss-ocp-01/env-amber"
+os.environ["FULL_ENV_NAME"] = "bgd-cluster/bgd-env"
 TEST_DATA_PATH = Path(f"{os.getenv('CI_PROJECT_DIR')}/test_data/test_bg_manage")
 TEST_DATA_ENV_PATH = TEST_DATA_PATH.joinpath('environments',os.getenv("FULL_ENV_NAME", ""))
 TEST_DATA_NAMESPACES_PATH = TEST_DATA_ENV_PATH.joinpath('Namespaces')
@@ -16,14 +16,14 @@ PEER_NS_PATH = TEST_DATA_ENV_PATH.joinpath('Namespaces','core')
 os.environ["CI_PROJECT_DIR"] = str(TEST_DATA_PATH)
 os.environ["BG_STATE"] = """
 {
-  "controllerNamespace": "devops-apps-test-1-bg-controller",
+  "controllerNamespace": "bg-controller",
   "originNamespace": {
-    "name": "env-amber-bss",
+    "name": "bgd-env-origin-app",
     "state": "active",
     "version": "v5"
   },
   "peerNamespace": {
-    "name": "env-amber-core",
+    "name": "bgd-env-peer-app",
     "state": "idle",
     "version": "v6"
   },
@@ -60,8 +60,8 @@ def test_bg_manage_script():
     run_bg_manage_check("active","candidate")
     # name of candidate in namespace.yml should remain unchanged after warm up and be only difference left
     expected_diff = {
-        "namespace.yml": '-name: "env-amber-bss"\n'
-                         '+name: "env-amber-core"\n'
+        "namespace.yml": '-name: "bgd-env-origin-app"\n'
+                         '+name: "bgd-env-peer-app"\n'
     }
     TestHelpers.assert_dirs_content(ORIGIN_NS_PATH, PEER_NS_PATH, True, True, expected_diff)
 
