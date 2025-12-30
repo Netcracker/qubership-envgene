@@ -101,7 +101,11 @@ async def resolve_snapshot_version_async(
 
 
 def version_to_folder_name(version: str) -> str:
-    """Normalize timestamped snapshot version to -SNAPSHOT folder name."""
+    """
+    Normalizes version string for folder naming.
+    If version is timestamped snapshot (e.g. '1.0.0-20240702.123456-1'), it replaces the timestamp suffix with
+    '-SNAPSHOT'. Otherwise, returns the version unchanged
+    """
     snapshot_pattern = re.compile(r"-\d{8}\.\d{6}-\d+$")
     return snapshot_pattern.sub("-SNAPSHOT", version) if snapshot_pattern.search(version) else version
 
@@ -146,6 +150,12 @@ def create_app_artifacts_local_path(app_name, app_version):
 
 
 async def download(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
+    """
+    Downloads an artifact to a local directory: <workspace_dir>/<app_name>/<app_version>/filename.extension
+    Sets full local path of artifact to artifact info
+    Returns:
+        ArtifactInfo: Object containing related information about the artifact
+    """
     if artifact_info.local_path:
         logger.info(f"Artifact already downloaded: {artifact_info.local_path}")
         return artifact_info
@@ -190,6 +200,7 @@ async def check_artifact_by_full_url_async(
 
 
 def get_repo_value_pointer_dict(registry: Registry):
+    """Permanent set of repositories for searching of artifacts"""
     maven = registry.maven_config
     repos = {
         maven.target_snapshot: "targetSnapshot",
@@ -208,6 +219,7 @@ def get_repo_pointer(repo_value: str, registry: Registry):
 async def _attempt_check(
     app: Application, version: str, artifact_extension: FileExtension, registry_url: str | None = None
 ) -> Optional[tuple[str, tuple[str, str]]]:
+    """Helper function to attempt artifact check with a given registry URL"""
     folder = version_to_folder_name(version)
     check_artifact_stop_event = asyncio.Event()
     resolve_snapshot_stop_event = asyncio.Event()
@@ -253,8 +265,16 @@ async def check_artifact_async(
     app: Application, artifact_extension: FileExtension, version: str,
     env_creds: Optional[dict] = None
 ) -> Optional[tuple[str, tuple[str, str]]]:
+    """
+    Resolves the full artifact URL and the first repository where it was found.
+    Supports both release and snapshot versions.
+    Returns:
+        Optional[tuple[str, tuple[str, str]]]: A tuple containing:
+            - str: Full URL to the artifact.
+            - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
+            Returns None if the artifact could not be resolved
+    """
     registry_version = getattr(app.registry, 'version', "1.0")
-
     if registry_version == "2.0":
         logger.info(f"Detected RegDef V2 for {app.name}, attempting cloud-aware search")
         try:

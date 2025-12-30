@@ -9,7 +9,7 @@ import envgenehelper as helper
 import yaml
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
-from envgenehelper.business_helper import getenv_and_log, getenv_with_error, getCentralCredentialsPath
+from envgenehelper.business_helper import getenv_and_log, getenv_with_error
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.logger import logger
@@ -301,54 +301,31 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
 
 
 def _get_environment_credentials(env: Environment = None) -> dict:
-    """Load ALL credentials from credentials.yml for V2 cloud registry support.
-    
-    For V2 registries, loads from /configuration/credentials/credentials.yml
-    For backward compatibility (V1), also loads from environment-specific credentials if available.
-    
-    Returns a dict mapping credential IDs to their full credential config:
-    {
-        "credential-id": {
-            "type": "usernamePassword" | "secret",
-            "data": {...}
-        }
-    }
-    """
     env_creds = {}
     
-    # V2: Load from central credentials location (/configuration/credentials/credentials.yml)
-    central_creds_path = getCentralCredentialsPath(WORK_DIR)
+    central_creds_path = f"{WORK_DIR}/configuration/credentials/credentials.yml"
     if os.path.exists(central_creds_path):
         try:
             with open(central_creds_path, 'r') as f:
                 central_creds = yaml.safe_load(f) or {}
                 for cred_id, cred_config in central_creds.items():
-                    if cred_id == "sops":  # Skip SOPS metadata
+                    if cred_id == "sops":
                         continue
                     if not isinstance(cred_config, dict):
-                        logger.warning(f"Skipping invalid credential entry '{cred_id}' in central credentials: not a dict")
+                        logger.warning(f"Skipping invalid credential entry '{cred_id}': not a dict")
                         continue
                     env_creds[cred_id] = cred_config
-                    logger.debug(f"Loaded credential '{cred_id}' (type: {cred_config.get('type')}) from central credentials")
         except Exception as e:
-            logger.warning(f"Failed to load central credentials from {central_creds_path}: {e}")
+            logger.warning(f"Failed to load central credentials: {e}")
     
-    # V1: Backward compatibility - also load from environment-specific credentials if they exist
     if env and hasattr(env, 'creds') and env.creds:
         for cred_id, cred_config in env.creds.items():
             if cred_id in env_creds:
-                logger.debug(f"Credential '{cred_id}' already loaded from central location, skipping environment-specific")
                 continue
             if not isinstance(cred_config, dict):
-                logger.warning(f"Skipping invalid credential entry '{cred_id}' in environment: not a dict")
+                logger.warning(f"Skipping invalid credential entry '{cred_id}': not a dict")
                 continue
             env_creds[cred_id] = cred_config
-            logger.debug(f"Loaded credential '{cred_id}' (type: {cred_config.get('type')}) from environment")
-    
-    if env_creds:
-        logger.info(f"Loaded {len(env_creds)} credential(s) from credentials.yml for V2 registry support")
-    else:
-        logger.debug("No credentials found in credentials.yml (V1 will still work if no auth required)")
     
     return env_creds
 
