@@ -60,6 +60,14 @@ runs:
         cd ../../..
         mv junit.xml junit_artifact_searcher.xml
 
+    - name: BG MANAGE test
+      shell: bash
+      run: |
+        - cd scripts/bg_manage
+        - pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
+        - cd ../..
+        - mv junit.xml junit_bg_manage.xml
+
     - name: BUILD ENV test
       shell: bash
       run: |
