@@ -1,15 +1,16 @@
 import os
 import shutil
+from pathlib import Path
 
 from envgenehelper import openYaml, writeYamlToFile, getenv_with_error, writeToFile
-from envgenehelper.config_helper import base_dir, ENVGENE_CONFIG_PATH
 
 
 def run_env_test_setup():
-    deployer_yaml = openYaml(base_dir / "configuration/deployer.yml")
+    base_dir = getenv_with_error('CI_PROJECT_DIR')
+    deployer_yaml = openYaml(Path(f"{base_dir}/configuration/deployer.yml"))
     deployer = next(k for k in deployer_yaml.keys() if "deployer" in k)
 
-    configs_conf_path = ENVGENE_CONFIG_PATH
+    configs_conf_path = Path(f"{base_dir}/configuration/config.yml")
     writeYamlToFile(configs_conf_path, "crypt: false\n")
 
     env_name = getenv_with_error("ENV_NAME")

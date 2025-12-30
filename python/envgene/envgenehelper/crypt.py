@@ -77,7 +77,7 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
     if res != 0:
         return res
     crypt_backend = crypt_backend if crypt_backend else get_crypt_backend()
-    is_crypt = is_crypt if is_crypt is not None else get_crypt()()
+    is_crypt = is_crypt if is_crypt is not None else get_crypt()
     if not ignore_is_crypt and not is_crypt:
         logger.info("'crypt' is set to 'false', skipping encryption")
         return openYaml(file_path)

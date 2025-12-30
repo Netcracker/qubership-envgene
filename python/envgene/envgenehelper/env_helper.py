@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from os import path
 
-from .business_helper import get_env_definition_path, getEnvCredentialsPath, INV_GEN_CREDS_PATH
+from .business_helper import getEnvDefinitionPath, getEnvCredentialsPath, INV_GEN_CREDS_PATH
 from .creds_helper import mask_sensitive
 from .crypt import decrypt_file
 from .logger import logger
@@ -23,7 +23,7 @@ class Environment:
         self.env_path = path.join(self.base_dir, "environments", self.cluster, self.name)
         logger.info(f"env_path: {self.env_path}")
 
-        self.inventory_path = get_env_definition_path(self.env_path)
+        self.inventory_path = getEnvDefinitionPath(self.env_path)
         logger.info(f"inventory_path: {self.inventory_path}")
 
         self.creds_path = getEnvCredentialsPath(self.env_path)

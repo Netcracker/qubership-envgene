@@ -1,6 +1,6 @@
 from .config_helper import get_envgene_config_yaml
 from .creds_helper import check_is_envgen_cred, get_cred_id_and_property_from_cred_macros
-from .business_helper import find_env_instances_dir, findResourcesBottomTop, get_env_definition, getenv_with_error
+from .business_helper import find_env_instances_dir, findResourcesBottomTop, getEnvDefinition, getenv_with_error
 from .yaml_helper import openYaml, get_or_create_nested_yaml_attribute
 from .file_helper import getDirName, check_file_exists
 from .logger import logger
@@ -42,7 +42,7 @@ def get_value_with_path_and_attribute(fp, attr_str, default_value=None):
 
 def get_deployer(env_name, instances_dir, failonerror=True):
     env_path = find_env_instances_dir(env_name, instances_dir)
-    data = get_env_definition(env_path)
+    data = getEnvDefinition(env_path)
     if "deployer" not in data["inventory"]:
         logger.error(f"Deployer definition for environment {env_path} is not specified in environment definition.")
         if failonerror:

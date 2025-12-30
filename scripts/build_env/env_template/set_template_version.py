@@ -1,12 +1,12 @@
 from pathlib import Path
 
 from envgenehelper import beautifyYaml, writeYamlToFile, logger, getenv_with_error
-from envgenehelper import get_env_definition
+from envgenehelper import getEnvDefinition
 
 
 def update_version(env_definition_path, version_to_add):
     logger.info(f"Started version update to {version_to_add} in {env_definition_path}.")
-    data = get_env_definition(env_instances_dir)
+    data = getEnvDefinition(env_instances_dir)
 
     if ":" in version_to_add:
         if 'envTemplate' in data:
