@@ -2,7 +2,7 @@ import json
 import re
 from typing import Dict, Optional
 
-from loguru import logger
+from envgenehelper import logger
 
 from artifact_searcher.utils.models import AuthConfig, Registry
 

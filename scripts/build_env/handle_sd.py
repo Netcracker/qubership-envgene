@@ -10,6 +10,7 @@ import yaml
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from envgenehelper.business_helper import getenv_and_log, getenv_with_error
+from envgenehelper.crypt import decrypt_file
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.logger import logger
@@ -301,31 +302,56 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
 
 
 def _get_environment_credentials(env: Environment = None) -> dict:
-    env_creds = {}
+    """
+    Load credentials from central credentials file and environment-specific credentials.
+    Supports SOPS, Fernet, and plaintext credential formats.
     
-    central_creds_path = f"{WORK_DIR}/configuration/credentials/credentials.yml"
+    Args:
+        env: Optional Environment object containing environment-specific credentials
+        
+    Returns:
+        Dictionary of credential ID to credential configuration
+    """
+    CREDENTIALS_DIR = "configuration/credentials"
+    CREDENTIALS_FILENAME = "credentials.yml"
+    SOPS_METADATA_KEY = "sops"
+    
+    env_creds = {}
+    central_creds_path = f"{WORK_DIR}/{CREDENTIALS_DIR}/{CREDENTIALS_FILENAME}"
+    
     if os.path.exists(central_creds_path):
         try:
-            with open(central_creds_path, 'r') as f:
-                central_creds = yaml.safe_load(f) or {}
-                for cred_id, cred_config in central_creds.items():
-                    if cred_id == "sops":
-                        continue
-                    if not isinstance(cred_config, dict):
-                        logger.warning(f"Skipping invalid credential entry '{cred_id}': not a dict")
-                        continue
-                    env_creds[cred_id] = cred_config
+            logger.debug(f"Loading central credentials from: {central_creds_path}")
+            # decrypt_file handles SOPS, Fernet, and plaintext formats automatically
+            central_creds = decrypt_file(central_creds_path, in_place=False, allow_default=True) or {}
+            
+            for cred_id, cred_config in central_creds.items():
+                if cred_id == SOPS_METADATA_KEY:
+                    continue
+                if not isinstance(cred_config, dict):
+                    logger.warning(f"Skipping invalid credential '{cred_id}': expected dict, got {type(cred_config).__name__}")
+                    continue
+                env_creds[cred_id] = cred_config
+                
+            logger.info(f"Loaded {len(env_creds)} credential(s) from central credentials file")
         except Exception as e:
-            logger.warning(f"Failed to load central credentials: {e}")
+            logger.warning(f"Failed to load central credentials from {central_creds_path}: {e}")
     
+    # Merge environment-specific credentials (do not override central credentials)
     if env and hasattr(env, 'creds') and env.creds:
+        env_specific_count = 0
         for cred_id, cred_config in env.creds.items():
             if cred_id in env_creds:
+                logger.debug(f"Credential '{cred_id}' from environment overridden by central credentials")
                 continue
             if not isinstance(cred_config, dict):
-                logger.warning(f"Skipping invalid credential entry '{cred_id}': not a dict")
+                logger.warning(f"Skipping invalid credential '{cred_id}': expected dict, got {type(cred_config).__name__}")
                 continue
             env_creds[cred_id] = cred_config
+            env_specific_count += 1
+        
+        if env_specific_count > 0:
+            logger.info(f"Loaded {env_specific_count} environment-specific credential(s)")
     
     return env_creds
 
