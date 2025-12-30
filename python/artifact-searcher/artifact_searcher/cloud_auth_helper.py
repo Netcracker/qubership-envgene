@@ -49,18 +49,47 @@ class CloudAuthHelper:
         return auth_config
 
     @staticmethod
-    def resolve_credentials(auth_config: AuthConfig, env_creds: Optional[Dict[str, dict]]) -> dict:
-        """Resolve credentials from env_creds based on auth_config.credentials_id."""
+    def resolve_credentials(auth_config: AuthConfig, env_creds: Optional[Dict[str, dict]]) -> Optional[dict]:
+        """Resolve credentials from env_creds based on auth_config.credentials_id.
+        
+        Returns:
+            dict: Credential data if found and non-anonymous
+            None: For anonymous access (no credentialsId or empty username/password)
+        """
         cred_id = auth_config.credentials_id
         if not cred_id:
-            return {}  # Anonymous access (Artifactory/Nexus with empty credentialsId)
+            logger.info("No credentialsId specified, using anonymous access")
+            return None
 
         if not env_creds or cred_id not in env_creds:
             raise KeyError(f"Credential '{cred_id}' not found in env_creds")
 
         cred_entry = env_creds[cred_id]
-        creds = cred_entry.get("data", cred_entry) if isinstance(cred_entry, dict) else cred_entry
-        logger.info(f"Resolved credentials for '{cred_id}'")
+        
+        # Extract credential data from the new structure: {"type": "...", "data": {...}}
+        cred_type = cred_entry.get("type") if isinstance(cred_entry, dict) else None
+        cred_data = cred_entry.get("data", cred_entry) if isinstance(cred_entry, dict) else cred_entry
+        
+        # Check for anonymous access (empty username/password for usernamePassword type)
+        if cred_type == "usernamePassword":
+            username = cred_data.get("username", "")
+            password = cred_data.get("password", "")
+            if not username and not password:
+                logger.info(f"Credential '{cred_id}' is anonymous (empty username/password)")
+                return None
+            creds = {"username": username, "password": password}
+        elif cred_type == "secret":
+            # For GCP service account JSON or other secret-based credentials
+            if "secret" in cred_data:
+                creds = cred_data
+            else:
+                # Handle case where data itself is the secret
+                creds = {"secret": cred_data}
+        else:
+            # Fallback for unknown credential types
+            creds = cred_data
+        
+        logger.info(f"Resolved credentials for '{cred_id}' (type: {cred_type})")
 
         # Validate required fields per provider
         if auth_config.provider == "aws":
@@ -88,6 +117,7 @@ class CloudAuthHelper:
                 return parts[4]
         return url.split("/")[-1]
 
+    
     @staticmethod
     def _extract_region(url: str, auth_config: AuthConfig) -> str:
         """Extract region from URL or auth_config. Prefers explicit config over URL extraction."""
@@ -104,25 +134,42 @@ class CloudAuthHelper:
 
     @staticmethod
     def create_maven_searcher(registry: Registry, env_creds: Optional[Dict[str, dict]]) -> 'MavenArtifactSearcher':
-        """Create configured MavenArtifactSearcher for the registry provider."""
+        """Create configured MavenArtifactSearcher for the registry provider.
+        
+        Provider auto-detection: If auth_config.provider is not specified, it will be
+        auto-detected from the registry URL.
+        """
         if MavenArtifactSearcher is None:
             raise ImportError("qubership_pipelines_common_library not available")
 
         auth_config = CloudAuthHelper.resolve_auth_config(registry, "maven")
-        if not auth_config or not auth_config.provider:
+        if not auth_config:
             raise ValueError("Could not resolve authConfig for maven artifacts")
-        if auth_config.provider not in ["aws", "gcp", "artifactory", "nexus"]:
-            raise ValueError(f"Unsupported provider: {auth_config.provider}")
-
-        creds = CloudAuthHelper.resolve_credentials(auth_config, env_creds)
+        
         registry_url = registry.maven_config.repository_domain_name
+        
+        # Provider is required in RegDef v2
+        provider = auth_config.provider
+        if not provider:
+            logger.error(f"V2 fallback: provider field is required in authConfig for registry '{registry.name}'")
+            raise ValueError(f"Provider field is required in authConfig for registry '{registry.name}'")
+        
+        if provider not in ["aws", "gcp", "artifactory", "nexus"]:
+            raise ValueError(f"Unsupported provider: {provider}")
+
+        # Resolve credentials (returns None for anonymous access)
+        creds = CloudAuthHelper.resolve_credentials(auth_config, env_creds)
         searcher = MavenArtifactSearcher(registry_url, params={"timeout": DEFAULT_SEARCHER_TIMEOUT})
 
-        if auth_config.provider == "aws":
+        # AWS and GCP require credentials - cannot work anonymously
+        if provider in ["aws", "gcp"] and creds is None:
+            raise ValueError(f"{provider.upper()} requires credentials - anonymous access not supported")
+
+        if provider == "aws":
             return CloudAuthHelper._configure_aws(searcher, auth_config, creds, registry_url)
-        elif auth_config.provider == "gcp":
+        elif provider == "gcp":
             return CloudAuthHelper._configure_gcp(searcher, auth_config, creds, registry_url)
-        elif auth_config.provider == "artifactory":
+        elif provider == "artifactory":
             return CloudAuthHelper._configure_artifactory(searcher, creds)
         else:  # nexus
             return CloudAuthHelper._configure_nexus(searcher, creds)
@@ -165,14 +212,24 @@ class CloudAuthHelper:
         )
 
     @staticmethod
-    def _configure_artifactory(searcher: 'MavenArtifactSearcher', creds: dict) -> 'MavenArtifactSearcher':
+    def _configure_artifactory(searcher: 'MavenArtifactSearcher', creds: Optional[dict]) -> 'MavenArtifactSearcher':
+        """Configure Artifactory authentication. Supports anonymous access if creds is None."""
+        if creds is None:
+            logger.info("Configuring Artifactory with anonymous access (no credentials)")
+            return searcher
+        
         return searcher.with_artifactory(
             username=creds.get("username", ""),
             password=creds.get("password", "")
         )
 
     @staticmethod
-    def _configure_nexus(searcher: 'MavenArtifactSearcher', creds: dict) -> 'MavenArtifactSearcher':
+    def _configure_nexus(searcher: 'MavenArtifactSearcher', creds: Optional[dict]) -> 'MavenArtifactSearcher':
+        """Configure Nexus authentication. Supports anonymous access if creds is None."""
+        if creds is None:
+            logger.info("Configuring Nexus with anonymous access (no credentials)")
+            return searcher
+        
         return searcher.with_nexus(
             username=creds.get("username", ""),
             password=creds.get("password", "")

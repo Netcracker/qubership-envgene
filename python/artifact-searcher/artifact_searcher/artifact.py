@@ -270,33 +270,46 @@ async def check_artifact_async(
 async def _check_artifact_v2_async(app: Application, artifact_extension: FileExtension, version: str,
                                    env_creds: Optional[dict]) -> Optional[tuple[str, tuple[str, str]]]:
     if not getattr(app.registry.maven_config, 'auth_config', None):
+        logger.error(f"V2 fallback for '{app.name}': Registry '{app.registry.name}' version 2.0 missing maven_config.authConfig")
         return await _check_artifact_v1_async(app, artifact_extension, version)
 
     try:
         from artifact_searcher.cloud_auth_helper import CloudAuthHelper
         from qubership_pipelines_common_library.v1.maven_client import Artifact as MavenArtifact
-    except ImportError:
+    except ImportError as e:
+        logger.error(f"V2 fallback for '{app.name}': Missing required libraries - {e}")
         return await _check_artifact_v1_async(app, artifact_extension, version)
 
     auth_config = CloudAuthHelper.resolve_auth_config(app.registry, "maven")
-    if not auth_config or auth_config.provider not in ["aws", "gcp", "artifactory", "nexus"]:
+    if not auth_config:
+        logger.error(f"V2 fallback for '{app.name}': Could not resolve authConfig for registry '{app.registry.name}'")
         return await _check_artifact_v1_async(app, artifact_extension, version)
+    
+    # Note: provider is required in RegDef v2 and validated in cloud_auth_helper
 
     # AWS and GCP require credentials; Artifactory/Nexus can work with anonymous access
-    if auth_config.provider in ["aws", "gcp"] and not env_creds:
-        logger.warning(f"V2 {auth_config.provider} requires credentials but env_creds is empty")
-        return await _check_artifact_v1_async(app, artifact_extension, version)
-    if auth_config.provider in ["aws", "gcp"] and auth_config.credentials_id and auth_config.credentials_id not in (env_creds or {}):
-        logger.warning(f"V2 {auth_config.provider} credentials '{auth_config.credentials_id}' not found in env_creds")
-        return await _check_artifact_v1_async(app, artifact_extension, version)
+    if auth_config.provider in ["aws", "gcp"]:
+        if not env_creds:
+            logger.error(f"V2 fallback for '{app.name}': {auth_config.provider} requires credentials but env_creds is empty")
+            return await _check_artifact_v1_async(app, artifact_extension, version)
+        if auth_config.credentials_id and auth_config.credentials_id not in env_creds:
+            logger.error(f"V2 fallback for '{app.name}': {auth_config.provider} credential '{auth_config.credentials_id}' not found in env_creds")
+            logger.error(f"Available credentials: {list(env_creds.keys())}")
+            return await _check_artifact_v1_async(app, artifact_extension, version)
 
     logger.info(f"V2 search for {app.name} with provider={auth_config.provider}")
     loop = asyncio.get_running_loop()
 
     try:
         searcher = await loop.run_in_executor(None, CloudAuthHelper.create_maven_searcher, app.registry, env_creds)
+    except KeyError as e:
+        logger.error(f"V2 fallback for '{app.name}': Credential not found - {e}")
+        return await _check_artifact_v1_async(app, artifact_extension, version)
+    except ValueError as e:
+        logger.error(f"V2 fallback for '{app.name}': Invalid configuration - {e}")
+        return await _check_artifact_v1_async(app, artifact_extension, version)
     except Exception as e:
-        logger.warning(f"Failed to create V2 searcher for {app.name}: {e}")
+        logger.error(f"V2 fallback for '{app.name}': Failed to create searcher - {e}", exc_info=True)
         return await _check_artifact_v1_async(app, artifact_extension, version)
 
     artifact_string = f"{app.group_id}:{app.artifact_id}:{version}"
@@ -349,13 +362,24 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         except Exception as e:
             last_error = e
             error_str = str(e).lower()
+            
+            # Log registry response if available (for HTTP errors)
+            if hasattr(e, 'response'):
+                try:
+                    response_text = e.response.text[:500] if hasattr(e.response, 'text') else str(e.response)[:500]
+                    logger.error(f"Registry response for {app.name}: HTTP {getattr(e.response, 'status_code', 'N/A')}")
+                    logger.error(f"Response body (first 500 chars): {response_text}")
+                except Exception:
+                    pass
+            
             if attempt < max_retries - 1 and any(x in error_str for x in ["401", "unauthorized", "forbidden", "expired", "timeout"]):
                 logger.warning(f"V2 error for {app.name}: {e}, retrying...")
                 continue
-            logger.warning(f"V2 failed after {max_retries} attempts for {app.name}: {e}")
+            
+            logger.error(f"V2 fallback for '{app.name}': Failed after {attempt + 1} attempt(s) - {e}")
             return await _check_artifact_v1_async(app, artifact_extension, version)
     else:
-        logger.warning(f"V2 failed after {max_retries} attempts: {last_error}")
+        logger.error(f"V2 fallback for '{app.name}': All {max_retries} attempts exhausted - {last_error}")
         return await _check_artifact_v1_async(app, artifact_extension, version)
 
     if auth_config.provider == "aws":

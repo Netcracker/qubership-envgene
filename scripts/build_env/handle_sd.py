@@ -9,7 +9,7 @@ import envgenehelper as helper
 import yaml
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
-from envgenehelper.business_helper import getenv_and_log, getenv_with_error
+from envgenehelper.business_helper import getenv_and_log, getenv_with_error, getCentralCredentialsPath
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.logger import logger
@@ -301,54 +301,54 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
 
 
 def _get_environment_credentials(env: Environment = None) -> dict:
-    """Get credentials from environment for V2 cloud registry support."""
+    """Load ALL credentials from credentials.yml for V2 cloud registry support.
+    
+    For V2 registries, loads from /configuration/credentials/credentials.yml
+    For backward compatibility (V1), also loads from environment-specific credentials if available.
+    
+    Returns a dict mapping credential IDs to their full credential config:
+    {
+        "credential-id": {
+            "type": "usernamePassword" | "secret",
+            "data": {...}
+        }
+    }
+    """
     env_creds = {}
     
-    # First try environment variables
-    aws_access_key = os.getenv("AWS_ACCESS_KEY_ID")
-    aws_secret_key = os.getenv("AWS_SECRET_ACCESS_KEY")
-    if aws_access_key and aws_secret_key:
-        env_creds["aws-keys"] = {
-            "username": aws_access_key,
-            "password": aws_secret_key
-        }
-        logger.debug("Loaded AWS credentials from environment")
-    
-    # If not in environment and env object is provided, try to get from credentials file
-    if not env_creds and env and hasattr(env, 'creds') and env.creds:
-        # Handle AWS credentials
-        if 'aws-keys' in env.creds:
-            # env.creds['aws-keys'] has structure: {'type': 'usernamePassword', 'data': {'username': '...', 'password': '...'}}
-            aws_creds = env.creds['aws-keys']['data']
-            env_creds["aws-keys"] = {
-                "username": aws_creds['username'],
-                "password": aws_creds['password']
-            }
-            logger.debug("Loaded AWS credentials from credentials.yml")
-        
-        # Handle GCP credentials
-        if 'gcp-keys' in env.creds:
-            gcp_creds = env.creds['gcp-keys']['data']['secret']
-            env_creds["gcp-keys"] = {"secret": gcp_creds}
-            logger.debug("Loaded GCP credentials from credentials.yml")
-    
-    gcp_sa_json_path = os.getenv("GCP_SA_JSON_PATH")
-    if gcp_sa_json_path and path.exists(gcp_sa_json_path):
+    # V2: Load from central credentials location (/configuration/credentials/credentials.yml)
+    central_creds_path = getCentralCredentialsPath(WORK_DIR)
+    if os.path.exists(central_creds_path):
         try:
-            with open(gcp_sa_json_path) as f:
-                env_creds["gcp-sa"] = {"secret": f.read()}
-            logger.debug("Loaded GCP service account from file")
+            with open(central_creds_path, 'r') as f:
+                central_creds = yaml.safe_load(f) or {}
+                for cred_id, cred_config in central_creds.items():
+                    if cred_id == "sops":  # Skip SOPS metadata
+                        continue
+                    if not isinstance(cred_config, dict):
+                        logger.warning(f"Skipping invalid credential entry '{cred_id}' in central credentials: not a dict")
+                        continue
+                    env_creds[cred_id] = cred_config
+                    logger.debug(f"Loaded credential '{cred_id}' (type: {cred_config.get('type')}) from central credentials")
         except Exception as e:
-            logger.warning(f"Failed to load GCP credentials from {gcp_sa_json_path}: {e}")
-    gcp_sa_json = os.getenv("GCP_SA_JSON")
-    if gcp_sa_json:
-        env_creds["gcp-sa"] = {"secret": gcp_sa_json}
-        logger.debug("Loaded GCP service account from environment variable")
+            logger.warning(f"Failed to load central credentials from {central_creds_path}: {e}")
+    
+    # V1: Backward compatibility - also load from environment-specific credentials if they exist
+    if env and hasattr(env, 'creds') and env.creds:
+        for cred_id, cred_config in env.creds.items():
+            if cred_id in env_creds:
+                logger.debug(f"Credential '{cred_id}' already loaded from central location, skipping environment-specific")
+                continue
+            if not isinstance(cred_config, dict):
+                logger.warning(f"Skipping invalid credential entry '{cred_id}' in environment: not a dict")
+                continue
+            env_creds[cred_id] = cred_config
+            logger.debug(f"Loaded credential '{cred_id}' (type: {cred_config.get('type')}) from environment")
     
     if env_creds:
-        logger.info(f"Loaded {len(env_creds)} credential set(s) for V2 cloud registry support")
+        logger.info(f"Loaded {len(env_creds)} credential(s) from credentials.yml for V2 registry support")
     else:
-        logger.debug("No V2 cloud credentials found in environment (V1 will still work)")
+        logger.debug("No credentials found in credentials.yml (V1 will still work if no auth required)")
     
     return env_creds
 
