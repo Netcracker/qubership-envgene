@@ -7,7 +7,7 @@ from envgenehelper.test_helpers import TestHelpers
 import bg_manage
 
 os.environ["FULL_ENV_NAME"] = "bgd-cluster/bgd-env"
-TEST_DATA_PATH = Path(f"{os.getenv('CI_PROJECT_DIR')}/test_data/test_bg_manage")
+TEST_DATA_PATH = Path(f"{Path(__file__).resolve().parents[4]}/test_data/test_bg_manage")
 TEST_DATA_ENV_PATH = TEST_DATA_PATH.joinpath('environments',os.getenv("FULL_ENV_NAME", ""))
 TEST_DATA_NAMESPACES_PATH = TEST_DATA_ENV_PATH.joinpath('Namespaces')
 ORIGIN_NS_PATH = TEST_DATA_ENV_PATH.joinpath('Namespaces','bss')
