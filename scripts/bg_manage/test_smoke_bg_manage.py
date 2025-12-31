@@ -10,8 +10,8 @@ os.environ["FULL_ENV_NAME"] = "bgd-cluster/bgd-env"
 TEST_DATA_PATH = Path(f"{Path(__file__).resolve().parents[2]}/test_data/test_bg_manage")
 TEST_DATA_ENV_PATH = TEST_DATA_PATH.joinpath('environments',os.getenv("FULL_ENV_NAME", ""))
 TEST_DATA_NAMESPACES_PATH = TEST_DATA_ENV_PATH.joinpath('Namespaces')
-ORIGIN_NS_PATH = TEST_DATA_ENV_PATH.joinpath('Namespaces','bss')
-PEER_NS_PATH = TEST_DATA_ENV_PATH.joinpath('Namespaces','core')
+ORIGIN_NS_PATH = TEST_DATA_ENV_PATH.joinpath('Namespaces','bgd-env-origin-app')
+PEER_NS_PATH = TEST_DATA_ENV_PATH.joinpath('Namespaces','bgd-env-peer-app')
 
 os.environ["CI_PROJECT_DIR"] = str(TEST_DATA_PATH)
 os.environ["BG_STATE"] = """
