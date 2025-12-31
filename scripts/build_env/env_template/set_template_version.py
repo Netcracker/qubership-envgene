@@ -1,10 +1,12 @@
+from os import getenv
 from pathlib import Path
 
-from envgenehelper import beautifyYaml, writeYamlToFile, logger, getenv_with_error
+from envgenehelper import beautifyYaml, writeYamlToFile, logger, getenv_with_error, getEnvDefinitionPath
 from envgenehelper import getEnvDefinition
 
 
-def update_version(env_definition_path, version_to_add):
+def update_version(env_definition_dir, version_to_add):
+    env_definition_path = getEnvDefinitionPath(env_definition_dir)
     logger.info(f"Started version update to {version_to_add} in {env_definition_path}.")
     data = getEnvDefinition(env_instances_dir)
 
@@ -36,5 +38,5 @@ if __name__ == "__main__":
     cluster_name = getenv_with_error("CLUSTER_NAME")
     environment_name = getenv_with_error("ENVIRONMENT_NAME")
     env_instances_dir = Path(f"{base_dir}/environments/{cluster_name}/{environment_name}")
-    version_to_add = getenv_with_error("ENV_TEMPLATE_VERSION")
+    version_to_add = getenv("ENV_TEMPLATE_VERSION")
     update_version(env_instances_dir, version_to_add)

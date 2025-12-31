@@ -67,5 +67,5 @@ def get_envgene_config_yaml():
         logger.warning(f'Failed to find config file in {envgene_config_path}')
         return get_empty_yaml()
     validate_config_file(config)
-    logger.info(f"Config content: {config}")
+    logger.debug(f"Config content: {config}")
     return config

@@ -12,9 +12,9 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
     ]
     # adding update template version
     if env_template_version and env_template_version != "" and not is_template_test:
-        script.append('python3 /build_env/scripts/build_env/set_template_version.py')
+        script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
 
-    script.append('python3 /build_env/scripts/build_env/main.py')
+    script.append('cd /build_env; python3 /build_env/scripts/build_env/main.py')
 
     if is_template_test:
         script.append("env_name=$(cat set_variable.txt)")

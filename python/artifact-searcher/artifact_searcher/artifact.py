@@ -42,9 +42,10 @@ def create_artifact_path(app: Application, version: str, repo: str) -> str:
     return urljoin(registry_url, f"{repo}/{group_id}/{app.artifact_id}/{folder}/")
 
 
-def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension) -> str:
+def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension,
+                    classifier: str = "") -> str:
     base_path = create_artifact_path(app, version, repo)
-    filename = create_artifact_name(app.artifact_id, artifact_extension, version)
+    filename = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
     return urljoin(base_path, filename)
 
 
@@ -62,6 +63,7 @@ async def resolve_snapshot_version_async(
         stop_artifact_event: asyncio.Event,
         stop_snapshot_event_for_others: asyncio.Event,
         extension: FileExtension = FileExtension.JSON,
+        classifier: str = ""
 ) -> tuple[str, int] | None:
     metadata_url = _create_metadata_url(app, version, repo_value)
     if stop_artifact_event.is_set() or stop_snapshot_event_for_others.is_set():
@@ -74,7 +76,7 @@ async def resolve_snapshot_version_async(
                 return None
 
             content = await response.text()
-            resolved_version = _parse_snapshot_version(content, app, "", task_id, extension, version)
+            resolved_version = _parse_snapshot_version(content, app, task_id, extension, version, classifier)
             if resolved_version:
                 stop_snapshot_event_for_others.set()
                 logger.info(
@@ -88,10 +90,10 @@ async def resolve_snapshot_version_async(
 def _parse_snapshot_version(
         content: str,
         app: Application,
-        classifier: str,
         task_id: int,
         extension: FileExtension,
-        version: str
+        version: str,
+        classifier: str = ""
 ) -> str | None:
     root = ET.fromstring(content)
     snapshot_versions = root.findall(".//snapshotVersions/snapshotVersion")
@@ -192,7 +194,8 @@ async def check_artifact_by_full_url_async(
         stop_snapshot_event_for_others: asyncio.Event,
         stop_artifact_event: asyncio.Event,
         session,
-        task_id: int
+        task_id: int,
+        classifier: str = ""
 ) -> tuple[str, tuple[str, str]] | None:
     repo_value, repo_pointer = repo
     if not repo_value:
@@ -204,7 +207,7 @@ async def check_artifact_by_full_url_async(
     if version.endswith("-SNAPSHOT"):
         snapshot_info = await resolve_snapshot_version_async(session, app, version, repo_value, task_id,
                                                              stop_artifact_event, stop_snapshot_event_for_others,
-                                                             extension=artifact_extension)
+                                                             artifact_extension, classifier)
         if not snapshot_info:
             return None
         snapshot_version, id_main_task = snapshot_info
@@ -213,7 +216,7 @@ async def check_artifact_by_full_url_async(
     if stop_artifact_event.is_set() or (stop_snapshot_event_for_others.is_set() and task_id != id_main_task):
         return None
 
-    full_url = create_full_url(app, resolved_version, repo_value, artifact_extension)
+    full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, classifier)
     try:
         async with session.head(full_url) as response:
             if response.status == 200:
@@ -249,7 +252,8 @@ async def _attempt_check(
         version: str,
         artifact_extension: FileExtension,
         registry_url: str | None = None,
-        cred: Credentials | None = None
+        cred: Credentials | None = None,
+        classifier: str = ""
 ) -> Optional[tuple[str, tuple[str, str]]]:
     repos_dict = get_repo_value_pointer_dict(app.registry)
     if registry_url:
@@ -271,7 +275,8 @@ async def _attempt_check(
                         stop_snapshot_event_for_others,
                         stop_artifact_event,
                         session,
-                        task_id=i
+                        i,
+                        classifier
                     )
                 )
                 for i, repo in enumerate(repos_dict.items())
@@ -284,8 +289,8 @@ async def _attempt_check(
 
 
 async def check_artifact_async(
-        app: Application, artifact_extension: FileExtension, version: str, cred: Credentials | None = None) \
-        -> Optional[tuple[str, tuple[str, str]]] | None:
+        app: Application, artifact_extension: FileExtension, version: str, cred: Credentials | None = None,
+        classifier: str = "") -> Optional[tuple[str, tuple[str, str]]] | None:
     """
     Resolves the full artifact URL and the first repository where it was found.
     Supports both release and snapshot versions.
@@ -309,7 +314,7 @@ async def check_artifact_async(
     fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
     if fixed_domain != original_domain:
         logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
-        result = await _attempt_check(app, version, artifact_extension, fixed_domain, cred)
+        result = await _attempt_check(app, version, artifact_extension, fixed_domain, cred, classifier)
         if result is not None:
             return result
     else:
@@ -337,15 +342,17 @@ def create_aql_artifacts(aqls: list[str]):
     return f'items.find({{"$or":  [{', '.join(aqls)}]}})'
 
 
-def create_artifact_name(artifact_id: str, artifact_extension: FileExtension, version: str):
-    return f"{artifact_id}-{version}.{artifact_extension.value}"
+def create_artifact_name(artifact_id: str, artifact_extension: FileExtension, version: str,
+                         classifier: str = "") -> str:
+    return f"{artifact_id}-{version}{'-' + classifier if classifier else ''}.{artifact_extension.value}"
 
 
-def create_aql_artifact(app: Application, artifact_extension: FileExtension, version: str) -> str:
+def create_aql_artifact(app: Application, artifact_extension: FileExtension, version: str,
+                        classifier: str = "") -> str:
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
     path = f"{group_id}/{app.artifact_id}/{folder}"
-    name = create_artifact_name(app.artifact_id, artifact_extension, version)
+    name = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
     aql = f'{{"$and": [{{"name": "{name}"}},{{"path":"{path}"}}]}}'
     return aql
 
@@ -392,22 +399,44 @@ def download(url: str, target_path: str, cred: Credentials | None = None) -> str
     return target_path
 
 
-def create_artifact_url_by_parts(repo_url: str, group_id: str, artifact_id: str, version: str,
-                                 artifact_extension: FileExtension,
-                                 cred: Credentials | None = None) -> str:
+def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
+                   artifact_extension: FileExtension,
+                   cred: Credentials | None = None,
+                   classifier: str = "") -> str | None:
     base = repo_url.rstrip("/") + "/"
     group_id = group_id.replace(".", "/")
+
     if "SNAPSHOT" in version:
         base_path = urljoin(base, f"{group_id}/{artifact_id}/{version}/")
-        resolved_version = resolve_snapshot_version(base_path, artifact_extension, cred)
-        if resolved_version:
-            version = resolved_version
+        resolved_version = resolve_snapshot_version(base_path, artifact_extension, cred, classifier)
+        if not resolved_version:
+            return None
+        version = resolved_version
+
     folder = version_to_folder_name(version)
-    filename = create_artifact_name(artifact_id, artifact_extension, version)
-    return urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
+    filename = create_artifact_name(artifact_id, artifact_extension, version, classifier)
+    full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
+
+    try:
+        response = requests.head(full_url, timeout=DEFAULT_REQUEST_TIMEOUT)
+        if response.status_code == 200:
+            logger.info(
+                f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact found: {full_url}"
+            )
+            return full_url
+        logger.warning(
+            f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact not found at URL {full_url}, status: {response.status_code}"
+        )
+    except Exception as e:
+        logger.warning(
+            f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Error checking artifact URL {full_url}: {e}"
+        )
+
+    return None
 
 
-def resolve_snapshot_version(base_path, extension: FileExtension, cred: Credentials | None = None) -> Optional[str]:
+def resolve_snapshot_version(base_path, extension: FileExtension, cred: Credentials | None = None,
+                             classifier: str = "") -> Optional[str]:
     metadata_url = urljoin(base_path, METADATA_XML)
     auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
 
@@ -431,7 +460,7 @@ def resolve_snapshot_version(base_path, extension: FileExtension, cred: Credenti
             node_classifier = node.findtext("classifier", default="")
             node_extension = node.findtext("extension", default="")
             value = node.findtext("value")
-            if node_classifier == "" and node_extension == extension:
+            if node_classifier == classifier and node_extension == extension:
                 logger.info(f"Resolved snapshot version '{value}'")
                 return value
 

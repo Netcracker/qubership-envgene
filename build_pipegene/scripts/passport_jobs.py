@@ -52,10 +52,13 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
         "envgen_image": "$envgen_image",
         "envgen_args": " -vv",
         "envgen_debug": "true",
+        "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
         "module_config_default": "/module/templates/defaults.yaml",
         "COMMIT_ENV": "false",
         "COMMIT_MESSAGE": f"[ci_skip] update cloud passport for {cluster_name}",
-        "GITLAB_RUNNER_TAG_NAME": tags
+        "GITLAB_RUNNER_TAG_NAME": tags,
+        "module_ansible_dir": "/module/ansible",
+        "module_ansible_cfg": "/module/ansible/ansible.cfg"
     }
     get_passport_job = job_instance(params=get_passport_params, vars=get_passport_vars)
     base = "${CI_PROJECT_DIR}/environments"

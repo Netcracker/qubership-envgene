@@ -5,8 +5,7 @@ import pytest
 import responses
 from aioresponses import aioresponses
 from env_template.process_env_template import process_env_template
-from tests.test_helpers import TestHelpers
-
+from envgenehelper.test_helpers import TestHelpers
 
 GROUP_ID = "org.qubership"
 PROJECT_GROUP_ID = "org.qubership.project"
@@ -24,24 +23,19 @@ ZIP_HASH = "103e65"
 ZIP_BUILD_TIME = "20251219-035732"
 ZIP_VERSION = f"{ZIP_HASH}_{ZIP_BUILD_TIME}"
 
-
 GROUP_PATH = GROUP_ID.replace(".", "/")
 PROJECT_GROUP_PATH = PROJECT_GROUP_ID.replace(".", "/")
-
 
 SNAPSHOT_BASE = "https://artifactory.qubership.org/mvn.snapshot"
 TMPL_SNAPSHOT_BASE = "https://artifactory.qubership.org/tmpl-mvn.snapshot"
 STAGING_BASE = "https://artifactory.qubership.org/mvn.staging"
 
-
 BASE_PATH = f"{GROUP_PATH}/{ARTIFACT_ID}/{VERSION}"
 ARTIFACT_NAME = f"{ARTIFACT_ID}-{SNAPSHOT_VERSION}"
-
 
 METADATA_URL = f"{SNAPSHOT_BASE}/{BASE_PATH}/maven-metadata.xml"
 DD_URL = f"{SNAPSHOT_BASE}/{BASE_PATH}/{ARTIFACT_NAME}.json"
 ZIP_URL = f"{SNAPSHOT_BASE}/{BASE_PATH}/{ARTIFACT_NAME}.zip"
-
 
 STAGING_ZIP_URL = (
     f"{STAGING_BASE}/{PROJECT_GROUP_PATH}/"
@@ -89,7 +83,6 @@ metadata_xml = f"""<?xml version="1.0" encoding="UTF-8"?>
 </metadata>
 """
 
-
 dd_json = {
     "configurations": [{
         "artifacts": [{
@@ -110,9 +103,13 @@ def mock_metadata(aio_mock, url=METADATA_URL, repeat=1):
     aio_mock.get(url, body=metadata_xml, content_type="application/xml", status=200, repeat=repeat)
 
 
-def mock_dd_exists(aio_mock, exists=True):
+def mock_dd_exists(aio_mock=None, exists=True):
     status = 200 if exists else 404
-    aio_mock.head(DD_URL, payload="", status=status)
+
+    if aio_mock:
+        aio_mock.head(DD_URL, payload="", status=status)
+    else:
+        responses.add(responses.HEAD, DD_URL, status=status)
 
 
 def mock_dd_response():
@@ -125,6 +122,11 @@ def mock_zip(url):
         url,
         body=TestHelpers.create_fake_zip(),
         content_type="application/zip",
+        status=200,
+    )
+    responses.add(
+        responses.HEAD,
+        url,
         status=200,
     )
 
@@ -155,7 +157,7 @@ class TestEnvTemplate:
 
         process_env_template()
 
-        assert len(responses.calls) == 2
+        assert len(responses.calls) == 3
         assert responses.calls[0].request.url == DD_URL
         assert responses.calls[1].request.url == STAGING_ZIP_URL
 
@@ -179,26 +181,29 @@ class TestEnvTemplate:
         set_env("env-02")
 
         responses.add(responses.GET, METADATA_URL, body=metadata_xml, content_type="application/xml", status=200)
+        mock_dd_exists(exists=True)
         responses.add(responses.GET, DD_URL, json=dd_json, status=200)
         mock_zip(TMPL_ZIP_URL)
 
         process_env_template()
 
-        assert len(responses.calls) == 3
-        assert responses.calls[1].request.url == DD_URL
-        assert responses.calls[2].request.url == TMPL_ZIP_URL
+        assert len(responses.calls) == 5
+        assert responses.calls[2].request.url == DD_URL
+        assert responses.calls[4].request.url == TMPL_ZIP_URL
 
     @responses.activate
     def test_old_logic_with_zip(self):
-        set_env("env-03")
+        set_env("env-02")
 
-        metadata_url = f"{TMPL_SNAPSHOT_BASE}/{BASE_PATH}/maven-metadata.xml"
+        tmpl_metadata_url = f"{TMPL_SNAPSHOT_BASE}/{BASE_PATH}/maven-metadata.xml"
         tmpl_zip_url = f"{TMPL_SNAPSHOT_BASE}/{BASE_PATH}/{ARTIFACT_NAME}.zip"
 
-        responses.add(responses.GET, metadata_url, body=metadata_xml, content_type="application/xml", status=200)
+        responses.add(responses.GET, METADATA_URL, body=metadata_xml, content_type="application/xml", status=404)
+        responses.add(responses.GET, tmpl_metadata_url, body=metadata_xml, content_type="application/xml", status=200)
+
         mock_zip(tmpl_zip_url)
 
         process_env_template()
 
-        assert len(responses.calls) == 2
-        assert responses.calls[1].request.url == tmpl_zip_url
+        assert len(responses.calls) == 4
+        assert responses.calls[3].request.url == tmpl_zip_url
