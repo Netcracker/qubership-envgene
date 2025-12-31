@@ -216,7 +216,7 @@ class CloudAuthHelper:
         """Configure Artifactory authentication. Supports anonymous access if creds is None."""
         if creds is None:
             logger.info("Configuring Artifactory with anonymous access (no credentials)")
-            return searcher
+            return searcher.with_artifactory(username=None, password=None)
         
         return searcher.with_artifactory(
             username=creds.get("username", ""),
@@ -228,7 +228,7 @@ class CloudAuthHelper:
         """Configure Nexus authentication. Supports anonymous access if creds is None."""
         if creds is None:
             logger.info("Configuring Nexus with anonymous access (no credentials)")
-            return searcher
+            return searcher.with_nexus(username=None, password=None)
         
         return searcher.with_nexus(
             username=creds.get("username", ""),
