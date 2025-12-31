@@ -65,6 +65,7 @@ runs:
       env:
         FULL_ENV_NAME: "sdp-dev/env-1"
         BG_STATE: ""
+        CI_PROJECT_DIR: ${GITHUB_WORKSPACE}
       run: |
         cd scripts/bg_manage
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
