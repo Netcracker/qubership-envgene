@@ -12,6 +12,7 @@ deployParameters:
   APP_NAMESPACE: "bgd-env-app"
   ENVGENE_CONFIG_REF_NAME: "branch_name"
   ENVGENE_CONFIG_TAG: "No Ref tag"
+  EXTRA_PARAM: "value"
 e2eParameters:
   APP_NAMESPACE: "bgd-env-app"
 technicalConfigurationParameters:
