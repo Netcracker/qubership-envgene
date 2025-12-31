@@ -43,6 +43,7 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
 
     env_build_vars = {
         "ENV_NAME": full_env,
+        "FULL_ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,
         "ENV_TEMPLATE_VERSION": env_template_version,
@@ -141,6 +142,7 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
     git_commit_job = job_instance(params=git_commit_params, vars=git_commit_vars)
     git_commit_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
     git_commit_job.artifacts.add_paths("${CI_PROJECT_DIR}/git_envs")
+    git_commit_job.artifacts.add_paths('${CI_PROJECT_DIR}/sboms')
     git_commit_job.artifacts.when = WhenStatement.ALWAYS
     if (credential_rotation_job is not None):
         git_commit_job.add_needs(credential_rotation_job)

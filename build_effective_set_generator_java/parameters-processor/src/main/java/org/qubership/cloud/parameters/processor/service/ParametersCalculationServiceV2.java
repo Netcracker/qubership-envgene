@@ -180,17 +180,7 @@ public class ParametersCalculationServiceV2 {
             parameterBundle.setSecuredE2eParams(finalSecuredParams);
             parameterBundle.setE2eParams(inSecuredParamsAsObject);
         } else if (parameterType == ParameterType.DEPLOY) {
-            Object appChartName = inSecuredParamsAsObject.get(APPR_CHART_NAME);
-            parameterBundle.setAppChartName(appChartName != null ? appChartName.toString() : "");
-            inSecuredParamsAsObject.remove(APPR_CHART_NAME); //remove app chart name from parameters once after the usage
-            parameterBundle.setCollisionDeployParameters(getCollisionParams(inSecuredParamsAsObject));
-            parameterBundle.setCollisionSecureParameters(getCollisionParams(finalSecuredParams));
-            copyParams(finalSecuredParams, inSecuredParamsAsObject, k8TokenMap, originalNamespace);
-            prepareBundleParameters(finalSecuredParams, inSecuredParamsAsObject);
-            Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject, parameterBundle.isProcessPerServiceParams());
-            Map<String, Object> finalSecParams = prepareFinalParams(finalSecuredParams, true);
-            parameterBundle.setSecuredDeployParams(finalSecParams);
-            parameterBundle.setDeployParams(finalInsecureParams);
+            handleDeployParameters(parameterBundle, k8TokenMap, originalNamespace, finalSecuredParams, inSecuredParamsAsObject);
         } else if (parameterType == ParameterType.TECHNICAL) {
             parameterBundle.setSecuredConfigParams(finalSecuredParams);
             parameterBundle.setConfigServerParams(inSecuredParamsAsObject);
@@ -199,6 +189,23 @@ public class ParametersCalculationServiceV2 {
             parameterBundle.setCleanupSecureParameters(finalSecuredParams);
             parameterBundle.setCleanupParameters(inSecuredParamsAsObject);
         }
+    }
+
+    private void handleDeployParameters(ParameterBundle parameterBundle, Map<String, String> k8TokenMap, String originalNamespace, Map<String, Object> finalSecuredParams, Map<String, Object> inSecuredParamsAsObject) {
+        Object appChartName = inSecuredParamsAsObject.get(APPR_CHART_NAME);
+        parameterBundle.setAppChartName(appChartName != null ? appChartName.toString() : "");
+        inSecuredParamsAsObject.remove(APPR_CHART_NAME); //remove app chart name from parameters once after the usage
+        Map<String, Object> deployCollisionParams = getCollisionParams(inSecuredParamsAsObject);
+        Map<String, Object> securedCollisionParams = getCollisionParams(finalSecuredParams);
+        parameterBundle.setCollisionDeployParameters(deployCollisionParams);
+        parameterBundle.setCollisionSecureParameters(securedCollisionParams);
+        copyParams(finalSecuredParams, inSecuredParamsAsObject, k8TokenMap, originalNamespace);
+        prepareBundleParameters(finalSecuredParams, inSecuredParamsAsObject);
+        Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject, parameterBundle.isProcessPerServiceParams(),
+                deployCollisionParams);
+        Map<String, Object> finalSecParams = prepareFinalParams(finalSecuredParams, true, securedCollisionParams);
+        parameterBundle.setSecuredDeployParams(finalSecParams);
+        parameterBundle.setDeployParams(finalInsecureParams);
     }
 
     private void prepareBundleParameters(Map<String, Object> finalSecParams, Map<String, Object> finalInsecureParams) {
@@ -230,19 +237,25 @@ public class ParametersCalculationServiceV2 {
     private Map<String, Object> getCollisionParams(Map<String, Object> parameters) {
         Map<String, Object> serviceMap = new LinkedHashMap<>();
         Map<String, Object> collisionParams = new LinkedHashMap<>();
+
         if (parameters.containsKey(SERVICES)) {
             serviceMap = (Map<String, Object>) parameters.get(SERVICES);
         }
         Set<String> services = serviceMap.keySet();
-        parameters.entrySet().forEach(entry -> {
-            if (services.contains(entry.getKey()) && !entities.contains(entry.getKey())) {
-                collisionParams.put(entry.getKey(), entry.getValue());
+        Set<String> keysToRemove = new HashSet<>();
+        parameters.forEach((key, value) -> {
+            if (services.contains(key) && !entities.contains(key)) {
+                collisionParams.put(key, value);
+                keysToRemove.add(key); // mark for removal
             }
         });
+        keysToRemove.forEach(parameters::remove);
         return collisionParams;
     }
 
-    private Map<String, Object> prepareFinalParams(Map<String, Object> parameters, boolean processPerServiceParams) {
+    private Map<String, Object> prepareFinalParams(Map<String, Object> parameters,
+                                                   boolean processPerServiceParams,
+                                                   Map<String, Object> collisionParams) {
         Map<String, Object> finalMap = new LinkedHashMap<>();
         Map<String, Object> orderedMap = new LinkedHashMap<>();
 
@@ -253,6 +266,9 @@ public class ParametersCalculationServiceV2 {
         Map<String, Object> sortedMap = new TreeMap<>(parameters);
         orderedMap.putAll(sortedMap);
         if (parameters != null && !parameters.isEmpty()) {
+            if (!collisionParams.isEmpty()) {
+                sortedMap.putAll(collisionParams);
+            }
             orderedMap.put("global", sortedMap);
         }
         if (processPerServiceParams) {

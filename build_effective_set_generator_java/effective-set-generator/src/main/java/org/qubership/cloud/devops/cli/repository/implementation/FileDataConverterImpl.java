@@ -75,7 +75,7 @@ public class FileDataConverterImpl implements FileDataConverter {
         } catch (IOException | IllegalArgumentException e) {
             if (file.getName().startsWith(CLEANUPER) &&
                     e instanceof FileNotFoundException) {
-                log.error("Issue while reading the file " + e.getMessage());
+                logError("Issue while reading the file " + e.getMessage());
                 return null;
             }
             throw new FileParseException(String.format(ExceptionMessage.FILE_READ_ERROR, file.getAbsolutePath(), e.getMessage()));

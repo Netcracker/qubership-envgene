@@ -1,7 +1,8 @@
+import json
 from os import getenv
-from pprint import pformat
-
+from envgenehelper import logger
 from envgenehelper.plugin_engine import PluginEngine
+
 
 def get_pipeline_parameters() -> dict:
     return {
@@ -14,22 +15,21 @@ def get_pipeline_parameters() -> dict:
         'IS_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST") == "true",
         'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
         'JSON_SCHEMAS_DIR': getenv("JSON_SCHEMAS_DIR", "/module/schemas"),
-        'ENV_INVENTORY_GENERATION_PARAMS': {
-            "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE"),
-            "SD_VERSION": getenv("SD_VERSION"),
-            "SD_DATA": getenv("SD_DATA"),
-            "SD_DELTA": getenv("SD_DELTA"),
-            "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE"),
-            "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT"),
-            "ENV_SPECIFIC_PARAMETERS": getenv("ENV_SPECIFIC_PARAMS"),
-            "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
-            "ENV_TEMPLATE_VERSION": getenv("ENV_TEMPLATE_VERSION"),
-        },
+        "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE"),
+        "SD_VERSION": getenv("SD_VERSION"),
+        "SD_DATA": getenv("SD_DATA"),
+        "SD_DELTA": getenv("SD_DELTA"),
+        "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE"),
+        "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT"),
+        "ENV_SPECIFIC_PARAMETERS": getenv("ENV_SPECIFIC_PARAMS"),
+        "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
         'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
         'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", ""),
+        'NS_BUILD_FILTER': getenv("NS_BUILD_FILTER", ""),
         'GITLAB_RUNNER_TAG_NAME' : getenv("GITLAB_RUNNER_TAG_NAME", ""),
         'RUNNER_SCRIPT_TIMEOUT' : getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
-        'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", "")
+        'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", ""),
+        'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL"),
     }
 
 class PipelineParametersHandler:
@@ -40,8 +40,20 @@ class PipelineParametersHandler:
         if pipe_param_plugin.modules:
            pipe_param_plugin.run(pipeline_params=self.params)
 
-    def get_params_str(self) -> str:
-        result = ''
-        for k, v in self.params.items():
-            result += f"\n{k.upper()}: {pformat(v)}"
-        return result
+    def log_pipeline_params(self):
+        params_str = "Input parameters are: "
+
+        params = self.params.copy()
+        if params.get("CRED_ROTATION_PAYLOAD"):
+            params["CRED_ROTATION_PAYLOAD"] = "***"
+
+        for k, v in params.items():
+                try:
+                    parsed = json.loads(v)
+                    params[k] = json.dumps(parsed, separators=(",", ":"))
+                except (TypeError, ValueError):
+                    pass
+
+                params_str += f"\n{k.upper()}: {params[k]}"
+
+        logger.info(params_str)

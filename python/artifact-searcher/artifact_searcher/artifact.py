@@ -14,7 +14,7 @@ import requests
 from aiohttp import BasicAuth
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT, METADATA_XML
 from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
-from loguru import logger
+from envgenehelper import logger
 from requests.auth import HTTPBasicAuth
 
 WORKSPACE = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")

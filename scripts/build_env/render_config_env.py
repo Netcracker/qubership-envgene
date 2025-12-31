@@ -9,6 +9,7 @@ from collections.abc import Iterable
 from deepmerge import always_merger
 from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileAsString, copy_path, dumpYamlToStr, \
     create_yaml_processor, find_all_yaml_files_by_stem, ensure_directory, dump_as_yaml_format
+from envgenehelper.business_helper import get_bgd_object, get_namespaces
 from envgenehelper.validation import ensure_valid_fields, ensure_required_keys
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
@@ -44,6 +45,7 @@ class Context(BaseModel):
     appdef_templates: list = Field(default_factory=list)
     cloud: Optional[str] = ''
     deployer: Optional[str] = ''
+    bgd: Optional[str] = ''
     render_parameters_dir: Optional[str] = ''
     env_vars: OrderedDict = Field(default_factory=OrderedDict)
     render_profiles_dir: Optional[str] = ''
@@ -127,6 +129,21 @@ class EnvGenerator:
 
             logger.info(f"Valid application: {app}")
 
+    def validate_bgd(self):
+        logger.info(f'Validating that all namespaces mentioned in BG domain object are available in namespaces')
+        namespace_names = [ns.name for ns in get_namespaces()]
+        bgd = get_bgd_object()
+        mismatch = ""
+        for k,v in bgd.items():
+            if not 'Namespace' in k:
+                continue
+            if v['name'] not in namespace_names:
+                mismatch += (f"\n{v['name']} from {k}")
+        if mismatch:
+            logger.info(f'Available namespaces: {namespace_names}')
+            raise ValueError(f'Next namespaces were not found in available namespaces: {mismatch}')
+        logger.info(f'Validation was successful')
+
     def generate_ns_postfix(self, ns, ns_template_path) -> str:
         deploy_postfix = ns.get("deploy_postfix")
         if deploy_postfix:
@@ -183,20 +200,20 @@ class EnvGenerator:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
-        logger.info(f"Rendered entity: \n {rendered}")
+        logger.debug(f"Rendered entity: \n{rendered}")
         writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
 
     def render_from_file_to_obj(self, src_template_path) -> dict:
         template = openFileAsString(src_template_path)
         template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
-        logger.info(f"Rendered entity: \n {rendered}")
+        logger.debug(f"Rendered entity: \n{rendered}")
         return readYaml(escaping_quotation(rendered))
 
     def render_from_obj_to_file(self, template, target_file_path):
         template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
         rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
-        logger.info(f"Rendered entity: \n {rendered}")
+        logger.debug(f"Rendered entity: \n{rendered}")
         writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
 
     def generate_tenant_file(self):
@@ -227,6 +244,15 @@ class EnvGenerator:
         else:
             logger.info(f"Generate Cloud yaml for cloud {cloud}")
             self.render_from_file_to_file(Template(cloud_template).render(context), cloud_file)
+
+    def generate_bgd_file(self):
+        logger.info(f"Generate bg domain yaml for {self.ctx.bgd}")
+        target_path = f'{self.ctx.current_env_dir}/bg_domain.yml'
+        template = self.ctx.current_env_template.get("bg_domain", None)
+        if not template:
+            logger.info(f"'bg_domain' key not found in template descriptor, skipping bg domain rendering")
+            return
+        self.render_from_file_to_file(Template(template).render(self.ctx.as_dict()), target_path)
 
     def generate_namespace_file(self):
         context = self.ctx.as_dict()
@@ -415,6 +441,7 @@ class EnvGenerator:
             self.ctx.cloud = self.calculate_cloud_name()
             self.ctx.tenant = current_env.get("tenant", '')
             self.ctx.deployer = current_env.get('deployer', '')
+            self.ctx.bgd = current_env.get('bg_domain','')
             logger.info(f"current_env = {current_env}")
 
             self.ctx.update({
@@ -442,6 +469,7 @@ class EnvGenerator:
             self.generate_cloud_file()
             self.generate_namespace_file()
             self.generate_composite_structure()
+            self.generate_bgd_file()
 
             env_specific_schema = self.ctx.current_env_template.get("envSpecificSchema")
             if env_specific_schema:
@@ -452,3 +480,5 @@ class EnvGenerator:
                                  required=["templates_dir", "env_instances_dir", "cluster_name", "current_env_dir"])
             self.process_app_reg_defs()
             logger.info(f"Rendering of templates for environment {env_name} generation was successful")
+
+            self.validate_bgd()

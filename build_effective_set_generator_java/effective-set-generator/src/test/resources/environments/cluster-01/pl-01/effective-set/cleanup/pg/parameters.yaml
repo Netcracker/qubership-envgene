@@ -21,7 +21,7 @@ DBAAS_AGGREGATOR_PASSWORD: pass-placeholder-123
 DBAAS_AGGREGATOR_USERNAME: user-placeholder-123
 DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: pass-placeholder-123
 DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: user-placeholder-123
-DBAAS_ENABLED: 'true'
+DBAAS_ENABLED: true
 DEFAULT_TENANT_ADMIN_LOGIN: admin
 DEFAULT_TENANT_ADMIN_PASSWORD: password
 DEFAULT_TENANT_NAME: tenant
@@ -36,7 +36,7 @@ GRAFANA_UI_URL: https://cluster-01.qubership.org
 GRAYLOG_UI_URL: https://cluster-01.qubership.org
 MAAS_CREDENTIALS_PASSWORD: pass-placeholder-123
 MAAS_CREDENTIALS_USERNAME: user-placeholder-123
-MAAS_ENABLED: 'true'
+MAAS_ENABLED: true
 MAAS_EXTERNAL_ROUTE: http://maas.cluster-01.qubership.org
 MAAS_INTERNAL_ADDRESS: http://maas.maas:8080
 MAAS_SERVICE_ADDRESS: http://maas.cluster-01.qubership.org
@@ -52,7 +52,7 @@ PARAM_2: value-2
 PARAM_6: value-6
 PRIVATE_GATEWAY_URL: https://private-gateway-pl-01-pg.cluster-01.qubership.org
 PRIVATE_IDENTITY_PROVIDER_URL: https://private-gateway-pl-01-pg.cluster-01.qubership.org
-PRODUCTION_MODE: 'false'
+PRODUCTION_MODE: false
 PUBLIC_GATEWAY_URL: https://public-gateway-pl-01-pg.cluster-01.qubership.org
 PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-pl-01-pg.cluster-01.qubership.org
 SERVER_HOSTNAME: cluster-01.qubership.org

@@ -22,7 +22,7 @@ CONSUL_PUBLIC_URL: http://consul.consul:8080
 CONSUL_URL: http://consul.consul:8080
 CUSTOM_HOST: cluster-01.qubership.org
 DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.qubership.org
-DBAAS_ENABLED: 'true'
+DBAAS_ENABLED: true
 DEFAULT_TENANT_ADMIN_LOGIN: admin
 DEFAULT_TENANT_ADMIN_PASSWORD: password
 DEFAULT_TENANT_NAME: tenant
@@ -36,7 +36,7 @@ ESCAPE_SEQUENCE: 'true'
 GATEWAY_URL: http://internal-gateway-service:8080
 GRAFANA_UI_URL: https://cluster-01.qubership.org
 GRAYLOG_UI_URL: https://cluster-01.qubership.org
-MAAS_ENABLED: 'true'
+MAAS_ENABLED: true
 MAAS_EXTERNAL_ROUTE: http://maas.cluster-01.qubership.org
 MAAS_INTERNAL_ADDRESS: http://maas.maas:8080
 MAAS_SERVICE_ADDRESS: http://maas.cluster-01.qubership.org
@@ -52,7 +52,7 @@ PARAM_2: value-2
 PARAM_6: value-6
 PRIVATE_GATEWAY_URL: https://private-gateway-pl-01-pg.cluster-01.qubership.org
 PRIVATE_IDENTITY_PROVIDER_URL: https://private-gateway-pl-01-pg.cluster-01.qubership.org
-PRODUCTION_MODE: 'false'
+PRODUCTION_MODE: false
 PUBLIC_GATEWAY_URL: https://public-gateway-pl-01-pg.cluster-01.qubership.org
 PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-pl-01-pg.cluster-01.qubership.org
 SERVER_HOSTNAME: cluster-01.qubership.org
@@ -70,7 +70,7 @@ TRACING_HOST: tracing-agent
 TRACING_UI_URL: https://cluster-01.qubership.org
 ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181
 ZOOKEEPER_URL: zookeeper.zookeeper:2181
-pg_patroni: &id001
+global: &id001
   API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
   APPLICATION_NAME: postgres
   ARTIFACT_DESCRIPTOR_ARTIFACT_ID: prod.platform.ha.postgres
@@ -95,7 +95,7 @@ pg_patroni: &id001
   CONSUL_URL: http://consul.consul:8080
   CUSTOM_HOST: cluster-01.qubership.org
   DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.qubership.org
-  DBAAS_ENABLED: 'true'
+  DBAAS_ENABLED: true
   DEFAULT_TENANT_ADMIN_LOGIN: admin
   DEFAULT_TENANT_ADMIN_PASSWORD: password
   DEFAULT_TENANT_NAME: tenant
@@ -109,7 +109,7 @@ pg_patroni: &id001
   GATEWAY_URL: http://internal-gateway-service:8080
   GRAFANA_UI_URL: https://cluster-01.qubership.org
   GRAYLOG_UI_URL: https://cluster-01.qubership.org
-  MAAS_ENABLED: 'true'
+  MAAS_ENABLED: true
   MAAS_EXTERNAL_ROUTE: http://maas.cluster-01.qubership.org
   MAAS_INTERNAL_ADDRESS: http://maas.maas:8080
   MAAS_SERVICE_ADDRESS: http://maas.cluster-01.qubership.org
@@ -125,7 +125,7 @@ pg_patroni: &id001
   PARAM_6: value-6
   PRIVATE_GATEWAY_URL: https://private-gateway-pl-01-pg.cluster-01.qubership.org
   PRIVATE_IDENTITY_PROVIDER_URL: https://private-gateway-pl-01-pg.cluster-01.qubership.org
-  PRODUCTION_MODE: 'false'
+  PRODUCTION_MODE: false
   PUBLIC_GATEWAY_URL: https://public-gateway-pl-01-pg.cluster-01.qubership.org
   PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-pl-01-pg.cluster-01.qubership.org
   SERVER_HOSTNAME: cluster-01.qubership.org
@@ -149,10 +149,10 @@ pg_patroni: &id001
   postgres_operator_init: artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator:2.10.5_20241215-141230_init
   postgres_operator_tests: artifactory.qubership.org:17263/qubership/pgskipper-operator-tests:release-2024.2-2.10.0
   vault_env: artifactory.qubership.org:17175/banzaicloud/vault-env:2.5.1
+patroni-core: *id001
+pg_patroni: *id001
 pg_upgrade: *id001
 pgbackrest_sidecar: *id001
 postgres_operator_init: *id001
 postgres_operator_tests: *id001
 vault_env: *id001
-global: *id001
-patroni-core: *id001
