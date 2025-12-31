@@ -10,6 +10,7 @@ import yaml
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from envgenehelper.business_helper import getenv_and_log, getenv_with_error
+from envgenehelper.crypt import decrypt_file
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.logger import logger
@@ -292,7 +293,7 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
         source_name, version = entry.split(":", 1)
         logger.info(f"Starting download of SD: {source_name}-{version}")
 
-        sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins)
+        sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins, env)
 
         sd_data_list.append(sd_data)
 
@@ -300,17 +301,76 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
     extract_sds_from_json(env, base_sd_path, sd_data_json, effective_merge_mode)
 
 
-def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
-    if 'SNAPSHOT' in version:
-        raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
-    # TODO: check if job would fail without plugins
+def _get_environment_credentials(env: Environment = None) -> dict:
+    """
+    Load credentials from central credentials file and environment-specific credentials.
+    Supports SOPS, Fernet, and plaintext credential formats.
+    
+    Args:
+        env: Optional Environment object containing environment-specific credentials
+        
+    Returns:
+        Dictionary of credential ID to credential configuration
+    """
+    CREDENTIALS_DIR = "configuration/credentials"
+    CREDENTIALS_FILENAME = "credentials.yml"
+    SOPS_METADATA_KEY = "sops"
+    
+    env_creds = {}
+    central_creds_path = f"{WORK_DIR}/{CREDENTIALS_DIR}/{CREDENTIALS_FILENAME}"
+    
+    if os.path.exists(central_creds_path):
+        try:
+            logger.debug(f"Loading central credentials from: {central_creds_path}")
+            # decrypt_file handles SOPS, Fernet, and plaintext formats automatically
+            central_creds = decrypt_file(central_creds_path, in_place=False, allow_default=True) or {}
+            
+            for cred_id, cred_config in central_creds.items():
+                if cred_id == SOPS_METADATA_KEY:
+                    continue
+                if not isinstance(cred_config, dict):
+                    logger.warning(f"Skipping invalid credential '{cred_id}': expected dict, got {type(cred_config).__name__}")
+                    continue
+                env_creds[cred_id] = cred_config
+                
+            logger.info(f"Loaded {len(env_creds)} credential(s) from central credentials file")
+        except Exception as e:
+            logger.warning(f"Failed to load central credentials from {central_creds_path}: {e}")
+    
+    # Merge environment-specific credentials (do not override central credentials)
+    if env and hasattr(env, 'creds') and env.creds:
+        env_specific_count = 0
+        for cred_id, cred_config in env.creds.items():
+            if cred_id in env_creds:
+                logger.debug(f"Credential '{cred_id}' from environment overridden by central credentials")
+                continue
+            if not isinstance(cred_config, dict):
+                logger.warning(f"Skipping invalid credential '{cred_id}': expected dict, got {type(cred_config).__name__}")
+                continue
+            env_creds[cred_id] = cred_config
+            env_specific_count += 1
+        
+        if env_specific_count > 0:
+            logger.info(f"Loaded {env_specific_count} environment-specific credential(s)")
+    
+    return env_creds
+
+
+def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, env: Environment = None) -> dict[str, object]:
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
-    artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version))
+    env_creds = _get_environment_credentials(env)
+    artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version, env_creds))
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')
-    sd_url, _ = artifact_info
+    sd_url, mvn_repo = artifact_info
+    mvn_repo_value, mvn_repo_extra = mvn_repo
+
+    if mvn_repo_value == "v2_downloaded":
+        logger.debug(f"Reading V2 solution descriptor from local file: {mvn_repo_extra}")
+        with open(mvn_repo_extra, 'r') as f:
+            return json.load(f)
     return artifact.download_json_content(sd_url)
 
 
