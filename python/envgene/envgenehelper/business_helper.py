@@ -160,15 +160,14 @@ def getTemplateArtifactName(env_definition_yaml):
 
 
 def getEnvDefinition(env_dir):
-    envDefinitionPath = getEnvDefinitionPath(env_dir)
-    if not check_file_exists(envDefinitionPath):
-        raise ReferenceError(f"Environment definition for env {env_dir} is not found in {envDefinitionPath}")
-    inventoryYaml = openYaml(envDefinitionPath)
-    return inventoryYaml
+    env_definition_path = getEnvDefinitionPath(env_dir)
+    if not check_file_exists(env_definition_path):
+        raise ReferenceError(f"Environment definition for env {env_dir} is not found in {env_definition_path}")
+    return openYaml(env_definition_path)
 
 
-def getEnvDefinitionPath(env_dir):
-    return f"{env_dir}/{INVENTORY_DIR_NAME}/{ENV_DEFINITION_FILE_NAME}"
+def getEnvDefinitionPath(env_dir) -> str:
+    return str(Path(env_dir) / INVENTORY_DIR_NAME / ENV_DEFINITION_FILE_NAME)
 
 
 def getEnvCredentials(env_dir):

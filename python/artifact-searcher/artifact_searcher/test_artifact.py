@@ -1,15 +1,17 @@
 import os
+
 import pytest
-import aiohttp
 from aiohttp import web
 
-os.environ["DEFAULT_REQUEST_TIMEOUT"] = "0.2" # for test cases to run quicker
+os.environ["DEFAULT_REQUEST_TIMEOUT"] = "0.2"  # for test cases to run quicker
 from artifact_searcher.utils import models
 from artifact_searcher.artifact import check_artifact_async
+
 
 class MockResponse:
     def __init__(self, status_code):
         self.status_code = status_code
+
 
 @pytest.mark.parametrize(
     "index_path",
@@ -48,17 +50,21 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
         )
 
     app_web = web.Application()
-    app_web.router.add_get(f"{index_path}repo/com/example/app/1.0.0-SNAPSHOT/maven-metadata.xml", maven_metadata_handler)
-    app_web.router.add_get(f"{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json", maven_metadata_handler)
+    app_web.router.add_get(f"{index_path}repo/com/example/app/1.0.0-SNAPSHOT/maven-metadata.xml",
+                           maven_metadata_handler)
+    app_web.router.add_get(f"{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json",
+                           maven_metadata_handler)
     server = await aiohttp_server(app_web)
 
     base_url = str(server.make_url("/repository/"))
 
     if index_path.startswith("/service/rest/"):
         status_url = str(server.make_url("/service/rest/v1/status"))
+
         def mock_get(url, *args, **kwargs):
             if url == status_url:
                 return MockResponse(200)
+
         monkeypatch.setattr("artifact_searcher.utils.models.requests.get", mock_get)
 
     mvn_cfg = models.MavenConfig(
@@ -87,4 +93,3 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
 
     sample_url = f"{base_url.rstrip('/repository/')}{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json"
     assert full_url == sample_url, f"expected: {sample_url}, received: {full_url}"
-

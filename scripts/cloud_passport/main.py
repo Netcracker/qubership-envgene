@@ -4,12 +4,13 @@ import shutil
 from pathlib import Path
 
 from envgenehelper import logger, findAllFilesInDir, writeYamlToFile, readYaml
-from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml, crypt
+from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml, crypt, fetch_cred_value
 from envgenehelper.crypt import get_configured_encryption_type
 from envgenehelper.errors import ValidationError
 
 from cmdb import update_creds_to_cmdb_format
 from git_client import GitRepoManager, GitLabClient
+from envgenehelper import get_cred_config
 
 SECRET_KEY = "SECRET_KEY"
 
@@ -52,16 +53,6 @@ def find_downstream_pipeline(pipeline_jobs, env_name) -> dict | None:
             logger.info(f"Downstream pipeline found: {result}")
             return result
     logger.warning("Downstream pipeline not found")
-
-
-def fetch_cred_value(val, cred_config) -> str:
-    match = re.search(r".*\('([^']+)'\)\.(\w+)", val)
-    if match:
-        cred_name = match.group(1)
-        cred_property = match.group(2)
-        return cred_config[cred_name]["data"][cred_property]
-    else:
-        raise ValueError(f"Value '{val}' does not match expected format")
 
 
 def process_credentials(discovery_files, cloud_passport_dir, cloud_name, discovery_secret_key):
@@ -133,7 +124,7 @@ def main():
     base_dir = os.getenv("CI_PROJECT_DIR")
 
     integration_config = get_integration_config(Path(f"{base_dir}/configuration/integration.yml"))
-    cred_config = crypt.decrypt_file(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
+    cred_config = get_cred_config()
 
     self_git_token = fetch_cred_value(integration_config.get("self_token"), cred_config)
     repo = GitRepoManager(repo_path=base_dir, git_token=self_git_token)

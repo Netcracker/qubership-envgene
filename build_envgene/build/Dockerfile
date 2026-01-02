@@ -62,6 +62,7 @@ RUN /module/venv/bin/ansible-galaxy collection install community.general -p /mod
 RUN /module/venv/bin/pip install /python/jschon-sort
 RUN /module/venv/bin/pip install /python/envgene
 RUN /module/venv/bin/pip install /python/integration
+RUN /module/venv/bin/pip install /python/artifact-searcher
 RUN /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
 
 # Download and install SOPS for secrets management

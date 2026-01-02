@@ -1,7 +1,9 @@
 import difflib
 import filecmp
+import io
 import os
 import shutil
+import zipfile
 from pathlib import Path
 
 from envgenehelper import dump_as_yaml_format, get_all_files_in_dir, logger
@@ -64,4 +66,14 @@ class TestHelpers:
             assert not mismatch, f"Mismatched files: {dump_as_yaml_format(mismatch)}"
 
         assert not errors, f"Errors: {dump_as_yaml_format(errors)}"
+
+    @staticmethod
+    def create_fake_zip(files: dict[str, str] = None) -> bytes:
+        if files is None:
+            files = {"dummy.txt": "hello"}
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, mode="w") as zf:
+            for filename, content in files.items():
+                zf.writestr(filename, content)
+        return zip_buffer.getvalue()
 

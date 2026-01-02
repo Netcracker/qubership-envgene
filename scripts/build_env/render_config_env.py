@@ -17,6 +17,7 @@ from collections import OrderedDict
 
 from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
+from envgenehelper import getEnvDefinition
 
 yml = create_yaml_processor()
 
@@ -82,8 +83,7 @@ class EnvGenerator:
         logger.debug(f"EnvGenerator initialized with context: {self.ctx.dict(exclude_none=True)}")
 
     def set_inventory(self):
-        inventory_path = Path(self.ctx.env_instances_dir) / "Inventory" / "env_definition.yml"
-        env_definition = openYaml(filePath=inventory_path, safe_load=True)
+        env_definition = getEnvDefinition(self.ctx.env_instances_dir)
         logger.info(f"env_definition = {env_definition}")
         self.ctx.env_definition = env_definition
 
@@ -421,7 +421,7 @@ class EnvGenerator:
             if template_name in profile_names:
                 self.render_from_file_to_file(template_path, self.get_rendered_target_path(template_path))
 
-    def generate_config_env(self, env_name: str, extra_env: dict):
+    def render_config_env(self, env_name: str, extra_env: dict):
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
             all_vars = dict(os.environ)
