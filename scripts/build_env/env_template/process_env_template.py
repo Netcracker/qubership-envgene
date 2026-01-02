@@ -8,7 +8,6 @@ from artifact_searcher.utils.models import FileExtension, Application, Credentia
 from envgenehelper import getEnvDefinition, fetch_cred_value
 from envgenehelper import openYaml, find_all_yaml_files_by_stem, getenv_with_error, logger
 from envgenehelper import unpack_archive, get_cred_config
-from env_template.template_testing import run_env_test_setup
 
 artifact_dest = f"{tempfile.gettempdir()}/artifact.zip"
 build_env_path = "/build_env"
@@ -144,9 +143,6 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
 
 
 def process_env_template() -> str:
-    env_template_test = os.getenv("ENV_TEMPLATE_TEST", "").lower() == "true"
-    if env_template_test:
-        run_env_test_setup()
     project_dir = getenv_with_error("CI_PROJECT_DIR")
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
