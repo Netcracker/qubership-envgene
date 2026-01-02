@@ -1,0 +1,7 @@
+---
+- name: Build environment including artifact gathering
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  roles:
+    - role: build_env

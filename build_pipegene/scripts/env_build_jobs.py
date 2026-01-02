@@ -14,6 +14,7 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
     if env_template_version and env_template_version != "" and not is_template_test:
         script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
 
+    script.append('/module/scripts/prepare.sh "build_env.yaml"')
     script.append('cd /build_env; python3 /build_env/scripts/build_env/main.py')
 
     if is_template_test:
@@ -55,7 +56,10 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         "envgen_args": " -vvv",
         "envgen_debug": "true",
         "module_config_default": "/module/templates/defaults.yaml",
-        "GITLAB_RUNNER_TAG_NAME": tags
+        "GITLAB_RUNNER_TAG_NAME": tags,
+        "module_ansible_dir": "/module/ansible",
+        "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
+        "module_ansible_cfg": "/module/ansible/ansible.cfg"
     }
 
     env_build_job = job_instance(params=env_build_params, vars=env_build_vars)
