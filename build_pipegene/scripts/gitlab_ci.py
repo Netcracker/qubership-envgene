@@ -120,6 +120,7 @@ def build_pipeline(params: dict):
         else:
             logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
 
+        # TODO
         jobs_requiring_git_commit = ["env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job"]
 
         plugin_params = params
