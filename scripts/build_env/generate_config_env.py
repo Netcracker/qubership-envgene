@@ -146,11 +146,25 @@ class EnvGenerator:
 
     def generate_ns_postfix(self, ns, ns_template_path) -> str:
         deploy_postfix = ns.get("deploy_postfix")
+        ns_name = ns.get("name")
+        logger.info(f'ns_name: {ns_name}')
+        bgd = get_bgd_object()
+        logger.info(f'bgd object before comparing with ns: {bgd}')
         if deploy_postfix:
             ns_template_name = deploy_postfix
         else:
             # get base name(deploy postfix) without extensions
             ns_template_name = self.get_template_name(ns_template_path)
+        if bgd:
+            origin_name = bgd["originNamespace"]["name"]
+            logger.info(f'origin_name : {origin_name}')
+            peer_name = bgd["peerNamespace"]["name"]
+            logger.info(f'peer_name: {peer_name}')
+            if ns_name == origin_name:
+                ns_template_name += "-origin"
+            if ns_name == peer_name:
+                ns_template_name += "-peer"
+            logger.info(f'After appending the ns name : {ns_template_name}')
         return ns_template_name
 
     def generate_solution_structure(self):
