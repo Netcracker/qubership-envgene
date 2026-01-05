@@ -1,16 +1,17 @@
 import os
 from os import listdir
 
-from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, getEnvDefinition, get_env_instances_dir
 from gcip import JobFilter, Pipeline
+
 import pipeline_helper
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
-
+from envgenehelper.plugin_engine import PluginEngine
+from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, getEnvDefinition, get_env_instances_dir
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from credential_rotation_job import prepare_credential_rotation_job
+from appregdef_render_job import prepare_appregdef_render_job
 
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 
@@ -67,14 +68,16 @@ def build_pipeline(params: dict):
             else:
                 env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{ci_project_dir}/environments"))
 
-        # trigger_passport_job ->
-        # get_passport_job ->
-        # env_inventory_generation_job ->
-        # env_build_job ->
-        # generate_effective_set_job ->
-        # git_commit_job (commit) ->
-        job_sequence = ["trigger_passport_job", "get_passport_job", "env_inventory_generation_job",
-                    "credential_rotation_job", "env_build_job", "generate_effective_set_job", "git_commit_job"]
+        job_sequence = [
+            "trigger_passport_job",
+            "get_passport_job",
+            "env_inventory_generation_job",
+            "credential_rotation_job",
+            "appregdef_render_job",
+            "env_build_job",
+            "generate_effective_set_job",
+            "git_commit_job"
+        ]
 
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
@@ -95,19 +98,23 @@ def build_pipeline(params: dict):
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
+
         if params['ENV_BUILD']:
+            ### ?
             if env_definition is None:
                 try:
                     env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{ci_project_dir}/environments"))
                 except ReferenceError:
                     pass
-
-            # env_builder job
+            ###
+            # TODO
+            jobs_map["appregdef_render_job"] = prepare_appregdef_render_job()
             jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, tags)
         else:
+            logger.info(f'Preparing of appregdef_render_job {env} is skipped.')
             logger.info(f'Preparing of env_build job for {env} is skipped.')
+            
 
-        # generate_effective_set job
         if params['GENERATE_EFFECTIVE_SET']:
             jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name, cluster_name, tags)
         else:
@@ -124,7 +131,6 @@ def build_pipeline(params: dict):
         plugin_params['full_env'] = env
         per_env_plugin_engine.run(params=plugin_params, pipeline=pipeline, pipeline_helper=pipeline_helper)
 
-        ## git_commit job
         if any(job in jobs_map for job in plugin_params['jobs_requiring_git_commit']) and not params['IS_TEMPLATE_TEST']:
             jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, params['DEPLOYMENT_SESSION_ID'], tags, credential_rotation_job)
         else:
