@@ -55,6 +55,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.APP_PARSE_ERROR;
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.APP_PROCESS_FAILED;
@@ -89,6 +91,7 @@ public class CliParameterParser {
     }
 
     public void generateEffectiveSet() throws IOException, IllegalArgumentException, DirectoryCreateException {
+        log_memory("Inside generateEffectiveSet");
         checkIfEntitiesExist();
         String tenantName = inputData.getTenantDTO().getName();
         String cloudName = inputData.getCloudDTO().getName();
@@ -97,6 +100,7 @@ public class CliParameterParser {
     }
 
     private void processAndSaveParameters(Optional<SolutionBomDTO> solutionDescriptor, String tenantName, String cloudName, Map<String,NamespaceDTO> namespaceDTOMap) throws IOException {
+        log_memory("Inside start of processAndSaveParameters");
         Map<String, Object> deployMappingFileData = new ConcurrentHashMap<>();
         Map<String, Object> runtimeMappingFileData = new ConcurrentHashMap<>();
         Map<String, Object> cleanupMappingFileData = new ConcurrentHashMap<>();
@@ -112,40 +116,52 @@ public class CliParameterParser {
                 }
             }
         });
+        log_memory("Inside before of streaming of processAndSaveParameters");
         List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
                 .orElseGet(Collections::emptyList);
-        applicationDTOList.parallelStream()
-                .forEach(app -> {
-                    String namespaceName = app.getNamespace();
-                    try {
-                        logInfo("Started processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
-                        generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), k8TokenMap);
-                        String deployPostFixDir = EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion() ? String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/') :
-                                String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set", namespaceName).replace('\\', '/');
-                        String runtimePostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/runtime", namespaceName).replace('\\', '/');
-                        String cleanupPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/cleanup", namespaceName).replace('\\', '/');
-                        int index = deployPostFixDir.indexOf("/environments/");
-                        if (index != 1) {
-                            deployPostFixDir = deployPostFixDir.substring(index);
-                        }
-                        index = runtimePostFixDir.indexOf("/environments/");
-                        if (index != 1) {
-                            runtimePostFixDir = runtimePostFixDir.substring(index);
-                        }
-                        index = cleanupPostFixDir.indexOf("/environments/");
-                        if (index != 1) {
-                            cleanupPostFixDir = cleanupPostFixDir.substring(index);
-                        }
-                        deployMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
-                        runtimeMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), runtimePostFixDir);
-                        cleanupMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), cleanupPostFixDir);
-                        logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
-                    } catch (Exception e) {
-                        logDebug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
-                        logDebug(String.format("Stack trace for further details: %s", ExceptionUtils.getStackTrace(e)));
-                        errorList.computeIfAbsent(app.getAppName() + ":" + namespaceName, k -> e.getMessage());
-                    }
-                });
+
+        ForkJoinPool customPool = new ForkJoinPool(4);
+
+        try {
+            customPool.submit(() ->
+                    applicationDTOList.parallelStream()
+                        .forEach(app -> {
+                            String namespaceName = app.getNamespace();
+                            try {
+                                logInfo("Started processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
+                                generateOutput(tenantName, cloudName, namespaceName, app.getAppName(), app.getAppVersion(), app.getAppFileRef(), k8TokenMap);
+                                String deployPostFixDir = EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion() ? String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/deployment", namespaceName).replace('\\', '/') :
+                                        String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set", namespaceName).replace('\\', '/');
+                                String runtimePostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/runtime", namespaceName).replace('\\', '/');
+                                String cleanupPostFixDir = String.format("%s/%s/%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId(), "effective-set/cleanup", namespaceName).replace('\\', '/');
+                                int index = deployPostFixDir.indexOf("/environments/");
+                                if (index != 1) {
+                                    deployPostFixDir = deployPostFixDir.substring(index);
+                                }
+                                index = runtimePostFixDir.indexOf("/environments/");
+                                if (index != 1) {
+                                    runtimePostFixDir = runtimePostFixDir.substring(index);
+                                }
+                                index = cleanupPostFixDir.indexOf("/environments/");
+                                if (index != 1) {
+                                    cleanupPostFixDir = cleanupPostFixDir.substring(index);
+                                }
+                                deployMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
+                                runtimeMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), runtimePostFixDir);
+                                cleanupMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), cleanupPostFixDir);
+                                logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
+                            } catch (Exception e) {
+                                logDebug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
+                                logDebug(String.format("Stack trace for further details: %s", ExceptionUtils.getStackTrace(e)));
+                                errorList.computeIfAbsent(app.getAppName() + ":" + namespaceName, k -> e.getMessage());
+                            }
+                        })
+                    ).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Error while processing applications", e);
+        } finally {
+            customPool.shutdown();
+        }
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap);
             if (solutionDescriptor.isPresent()) {
@@ -374,6 +390,17 @@ public class CliParameterParser {
         if (inputData.getCloudDTO() == null) {
             throw new NotFoundException(String.format(ENTITY_NOT_FOUND, "Cloud"));
         }
+    }
+
+    private void log_memory(String place) {
+        Runtime runtime = Runtime.getRuntime();
+        long usedBytes = runtime.totalMemory() - runtime.freeMemory();
+        long maxBytes = runtime.maxMemory();
+        logInfo(String.format("[MEM] %s BEFORE STREAM: used=%.2f MB, max=%.2f MB",
+                place,
+                usedBytes / (1024.0 * 1024.0),
+                maxBytes / (1024.0 * 1024.0)));
+
     }
 
 }
