@@ -36,7 +36,7 @@ debugging.
             call_debug_sh = 'bash ${CI_PROJECT_DIR}/devtest/debug.sh || true'
             jobs_map = params['jobs_map']
             for job in jobs_map.values():
-                job.script.insert(0, call_debug_sh)
+                job.scripts.insert(0, call_debug_sh)
     ```
 
 1. Update .gitlab-ci.yml to add code for copying previously created extension to path for plugins
