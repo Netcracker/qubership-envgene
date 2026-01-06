@@ -481,9 +481,9 @@ class EnvGenerator:
             self.generate_solution_structure()
             self.generate_tenant_file()
             self.generate_cloud_file()
+            self.generate_bgd_file()
             self.generate_namespace_file()
             self.generate_composite_structure()
-            self.generate_bgd_file()
 
             env_specific_schema = self.ctx.current_env_template.get("envSpecificSchema")
             if env_specific_schema:
