@@ -1,9 +1,14 @@
-import argparse
-from envgenehelper import beautifyYaml, openYaml, writeYamlToFile, logger
+from os import getenv
+from pathlib import Path
 
-def update_version(env_definition_path, version_to_add):
+from envgenehelper import beautifyYaml, writeYamlToFile, logger, getenv_with_error, getEnvDefinitionPath
+from envgenehelper import getEnvDefinition
+
+
+def update_version(env_definition_dir, version_to_add):
+    env_definition_path = getEnvDefinitionPath(env_definition_dir)
     logger.info(f"Started version update to {version_to_add} in {env_definition_path}.")
-    data = openYaml(env_definition_path)
+    data = getEnvDefinition(env_instances_dir)
 
     if ":" in version_to_add:
         if 'envTemplate' in data:
@@ -14,7 +19,8 @@ def update_version(env_definition_path, version_to_add):
             logger.error(f"Bad env_definition structure in file {env_definition_path}.")
             raise ReferenceError(f"Can't update version in {env_definition_path}. See logs above.")
     else:
-        if 'envTemplate' in data and 'templateArtifact' in data['envTemplate'] and 'artifact' in data['envTemplate']['templateArtifact']:
+        if 'envTemplate' in data and 'templateArtifact' in data['envTemplate'] and 'artifact' in data['envTemplate'][
+            'templateArtifact']:
             oldVersion = "undefined"
             if 'version' in data['envTemplate']['templateArtifact']['artifact']:
                 oldVersion = data['envTemplate']['templateArtifact']['artifact']['version']
@@ -26,9 +32,11 @@ def update_version(env_definition_path, version_to_add):
     writeYamlToFile(env_definition_path, data)
     beautifyYaml(env_definition_path)
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--env_definition_path', help="Path to env definition file", type=str)
-    parser.add_argument('--version_to_add', help="New version to set", type=str)
-    args = parser.parse_args()
-    update_version(args.env_definition_path, args.version_to_add)
+    base_dir = getenv_with_error("CI_PROJECT_DIR")
+    cluster_name = getenv_with_error("CLUSTER_NAME")
+    environment_name = getenv_with_error("ENVIRONMENT_NAME")
+    env_instances_dir = Path(f"{base_dir}/environments/{cluster_name}/{environment_name}")
+    version_to_add = getenv("ENV_TEMPLATE_VERSION")
+    update_version(env_instances_dir, version_to_add)
