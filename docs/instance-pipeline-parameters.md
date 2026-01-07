@@ -9,11 +9,13 @@
     - [`CMDB_IMPORT`](#cmdb_import)
     - [`DEPLOYMENT_TICKET_ID`](#deployment_ticket_id)
     - [`ENV_TEMPLATE_VERSION`](#env_template_version)
+    - [`ENV_TEMPLATE_VERSION_UPDATE_MODE`](#env_template_version_update_mode)
     - [`ENV_TEMPLATE_VERSION_ORIGIN`](#env_template_version_origin)
     - [`ENV_TEMPLATE_VERSION_PEER`](#env_template_version_peer)
     - [`ENV_INVENTORY_INIT`](#env_inventory_init)
     - [`ENV_TEMPLATE_NAME`](#env_template_name)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
+    - [`ENV_INVENTORY_CONTENT`](#env_inventory_content)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
     - [`EFFECTIVE_SET_CONFIG`](#effective_set_config)
     - [`APP_REG_DEFS_JOB`](#app_reg_defs_job)
@@ -115,27 +117,29 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 **Example**: `env-template:v1.2.3`
 
-### `ENV_TEMPLATE_VERSION_MODE`
+### `ENV_TEMPLATE_VERSION_UPDATE_MODE`
 
 **Description**: Controls how ENV_TEMPLATE_VERSION is applied during the pipeline run.
 
-If ENV_TEMPLATE_VERSION_MODE=APPLY_ONLY, the system uses the version from ENV_TEMPLATE_VERSION only for the current pipeline execution and does not update envTemplate.artifact (or envTemplate.templateArtifact.artifact.version) in the Environment Inventory file `env_definition.yml`
+**Allowed values**:
 
-At the same time, the system  update `generatedVersions.generateEnvironmentLatestVersion` in `env_definition.yml` to reflect the template artifact version that was actually applied in this run, for example:
+- `PERSISTENT` (default)  
+  Applies the standard behavior: the pipeline updates the template version in Environment Inventory by updating `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
 
-`envTemplate:
+- `TEMPORARY`  
+  Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.  
+  The pipeline updates `generatedVersions.generateEnvironmentLatestVersion` in `env_definition.yml` to reflect the template artifact version that was actually applied in this run, for example:
+
+  ```yaml
+  # env_definition.yml
   generatedVersions:
-    generateEnvironmentLatestVersion: "template-project:feature-diis1125-20251125.045717-2"`
+    generateEnvironmentLatestVersion: "template-project:feature-diis1125-20251125.045717-2"
 
-
-**Allowed Values**: `APPLY_ONLY`
-
-**Default Value**: None
+**Default Value**: `PERSISTENT`
 
 **Mandatory**: No
 
-**Example**: `APPLY_ONLY`
-
+**Example**: `PERSISTENT`
 
 ### `ENV_TEMPLATE_VERSION_ORIGIN`
 
@@ -197,6 +201,8 @@ envTemplate:
 
 **Description**: Specifies Environment Inventory and env-specific parameters. This is can used together with `ENV_INVENTORY_INIT`. **JSON in string** format. See details in [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
 
+**Note:** This parameter is deprecated and will be removed in future releases. Use `ENV_INVENTORY_CONTENT` instead.
+
 **Default Value**: None
 
 **Mandatory**: No
@@ -208,67 +214,23 @@ envTemplate:
 ```
 
 ### `ENV_INVENTORY_CONTENT`
-**Description**: 
-Specifies Environment Inventory and related env-specific artifacts to be generated/updated. This parameter allows external systems to manage env_definition.yml as well as additional files (paramsets, credentials, resource profiles, shared template variables) without manual repository changes. YAML in string format. See details in Environment Inventory Generation feature documentation [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
 
+**Description**:
+
+Provides the Environment Inventory and related artifacts to be created or updated.  
+It allows external systems to manage `env_definition.yml` and additional files paramsets, credentials, resource profiles without manual changes in the Instance repository.
+
+See details in Environment Inventory Generation feature documentation [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
 
 **Default Value**: None
 
 **Mandatory**: No
-**Example**:
-```yaml
-'env_definition:
-  $action: create
-  $content:
-    inventory:
-      environmentName: "env-1"
-      tenantName: "Applications"
-      cloudName: "cluster-1"
-    envTemplate:
-      name: "composite-prod"
-      artifact: "project-env-template:master_20231024-080204"
-      envSpecificParamsets:
-        bss: ["env-specific-bss"]
-      envSpecificE2EParamsets:
-        cloud: ["cloud-level-params"]
-      envSpecificTechnicalParamsets:
-        bss: ["env-specific-tech"]
-      envSpecificResourceProfiles:
-        cloud: ["cloud-rp-override"]
-      sharedMasterCredentialFiles: ["prod-integration-creds"]
-      sharedTemplateVariables: ["prod-template-variables"]
-paramsets:
-  - $action: create
-    $place: env
-    $content:
-      version: "<paramset-version>"
-      name: "env-specific-bss"
-      parameters: { "<key>": "<value>" }
-      applications: []
-credentials:
-  - $action: create
-    $place: site
-    $content:
-      prod-integration-creds:
-        type: "<credential-type>"
-        data:
-          username: "<value>"
-          password: "<value>"
-resource_profiles:
-  - $action: create
-    $place: cluster
-    $content:
-      name: "cloud-specific-profile"
-      baseline: "dev"
-      applications: []
-      version: 0
-template_variables:
-  - $action: create
-    $place: site
-    $content:
-      prod-template-variables:
-        "<key>": "<value>"'
-```        
+
+**Example in string format**:
+
+```json
+"{\"envDefinition\":{\"action\":\"create_or_replace\",\"content\":{\"inventory\":{\"environmentName\":\"env-1\",\"tenantName\":\"Applications\",\"cloudName\":\"cluster-1\",\"description\":\"Fullsample\",\"owners\":\"Qubershipteam\",\"config\":{\"updateRPOverrideNameWithEnvName\":false,\"updateCredIdsWithEnvName\":true}},\"envTemplate\":{\"name\":\"composite-prod\",\"artifact\":\"project-env-template:master_20231024-080204\",\"additionalTemplateVariables\":{\"ci\":{\"CI_PARAM_1\":\"ci-param-val-1\",\"CI_PARAM_2\":\"ci-param-val-2\"},\"e2eParameters\":{\"E2E_PARAM_1\":\"e2e-param-val-1\",\"E2E_PARAM_2\":\"e2e-param-val-2\"}},\"sharedTemplateVariables\":[\"prod-template-variables\",\"sample-cloud-template-variables\"],\"envSpecificParamsets\":{\"bss\":[\"env-specific-bss\"]},\"envSpecificTechnicalParamsets\":{\"bss\":[\"env-specific-tech\"]},\"envSpecificE2EParamsets\":{\"cloud\":[\"cloud-level-params\"]},\"sharedMasterCredentialFiles\":[\"prod-integration-creds\"],\"envSpecificResourceProfiles\":{\"cloud\":[\"cloud-specific-profile\"]}}}},\"paramsets\":[{\"action\":\"create_or_replace\",\"place\":\"env\",\"content\":{\"version\":\"<paramset-version>\",\"name\":\"env-specific-bss\",\"parameters\":{\"key\":\"value\"},\"applications\":[]}}],\"credentials\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"content\":{\"prod-integration-creds\":{\"type\":\"<credential-type>\",\"data\":{\"username\":\"<value>\",\"password\":\"<value>\"}}}}],\"resourceProfiles\":[{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"content\":{\"name\":\"cloud-specific-profile\",\"baseline\":\"dev\",\"description\":\"\",\"applications\":[{\"name\":\"core\",\"version\":\"release-20241103.225817\",\"sd\":\"\",\"services\":[{\"name\":\"operator\",\"parameters\":[{\"name\":\"GATEWAY_MEMORY_LIMIT\",\"value\":\"96Mi\"},{\"name\":\"GATEWAY_CPU_REQUEST\",\"value\":\"50m\"}]}]}],\"version\":0}}]}"
+```
 
 ### `GENERATE_EFFECTIVE_SET`
 
@@ -300,7 +262,7 @@ contexts:
 ```
 
 | Attribute | Mandatory | Description | Default | Example |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **version** | Optional | The version of the effective set to be generated. Available options are `v1.0` and `v2.0`. EnvGene uses `--effective-set-version` to pass this attribute to the Calculator CLI. | `v1.0` | `v2.0` |
 | **app_chart_validation** | Optional | [App chart validation](/docs/features/calculator-cli.md#version-20-app-chart-validation) feature flag. This validation checks whether all applications in the solution for which the effective set is being calculated are built using the app chart model. If at least one is not, the calculation fails. If `true`: validation is performed, if `false`: validation is skipped  | `true` | `false` |
 | **effective_set_expiry** | Optional | The duration for which the effective set (stored as a job artifact) will remain available for download. Envgene passes this value unchanged to: 1) The `retention-days` job attribute in case of GitHub pipeline. 2) The `expire_in` job attribute in case of GitLab pipeline. The exact syntax and constraints differ between platforms. Refer to the GitHub and GitLab documentation for details. | GitLab: `1 hours`, GitHub: `1` (day) | GitLab: `2 hours`, GitHub: `2` |
