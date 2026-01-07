@@ -5,7 +5,7 @@ ARG RUN_JAVA_VERSION=1.3.8
 
 
 # Configure JVM memory settings
-ENV JAVA_OPTIONS="-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
+#ENV JAVA_OPTIONS="-XX:InitialRAMPercentage=50.0 -XX:MaxRAMPercentage=75.0"
 
 # Enable JVM metrics and debugging
 ENV JAVA_OPTS_APPEND="-XX:+ExitOnOutOfMemoryError"
