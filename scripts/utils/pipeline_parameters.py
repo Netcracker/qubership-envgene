@@ -40,6 +40,7 @@ def get_pipeline_parameters() -> dict:
         "APP_REG_DEFS_JOB": getenv("APP_REG_DEFS_JOB"),
         "EFFECTIVE_SET_CONFIG" : getenv("EFFECTIVE_SET_CONFIG"),
         "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
+        "ES_TRACE_ENABLED": getenv("ES_TRACE_ENABLED","false"),
         "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
             "ENV_TEMPLATE_VERSION_UPDATE_MODE") or TemplateVersionUpdateMode.PERSISTENT.value,
     }
