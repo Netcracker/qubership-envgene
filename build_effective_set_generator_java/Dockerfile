@@ -3,6 +3,8 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1 AS builder
 ARG JAVA_PACKAGE=java-17-openjdk-headless
 ARG RUN_JAVA_VERSION=1.3.8
 
+ENV JAVA_TOOL_OPTIONS="-Xms30g -Xmx30g"
+
 # hadolint ignore=DL3041
 RUN microdnf install -y curl ca-certificates ${JAVA_PACKAGE} && \
     microdnf clean all && \
