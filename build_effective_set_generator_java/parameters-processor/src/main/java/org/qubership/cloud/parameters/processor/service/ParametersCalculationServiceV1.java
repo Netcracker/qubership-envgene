@@ -43,16 +43,16 @@ public class ParametersCalculationServiceV1 {
     }
 
     public ParameterBundle getCliParameter(String tenantName, String cloudName, String namespaceName, String applicationName,
-                                           DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap) {
-        return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace, k8TokenMap);
+                                           DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap, boolean enableTraceability) {
+        return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace, k8TokenMap, enableTraceability);
     }
 
-    public ParameterBundle getCliE2EParameter(String tenantName, String cloudName) {
-        return getE2EParameterBundle(tenantName, cloudName);
+    public ParameterBundle getCliE2EParameter(String tenantName, String cloudName, boolean enableTraceability) {
+        return getE2EParameterBundle(tenantName, cloudName, enableTraceability);
     }
 
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName, DeployerInputs deployerInputs
-            , String originalNamespace, Map<String, String> k8TokenMap) {
+            , String originalNamespace, Map<String, String> k8TokenMap, boolean enableTraceability) {
         Params parameters = parametersProcessor.processAllParameters(tenantName,
                 cloudName,
                 namespaceName,
@@ -63,19 +63,19 @@ public class ParametersCalculationServiceV1 {
 
 
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
-        prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY);
-        prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL);
+        prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, enableTraceability);
+        prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL, enableTraceability);
         return parameterBundle;
     }
 
-    private ParameterBundle getE2EParameterBundle(String tenantName, String cloudName) {
+    private ParameterBundle getE2EParameterBundle(String tenantName, String cloudName, boolean enableTraceability) {
         Params parameters = parametersProcessor.processE2EParameters(tenantName, cloudName, null, null, "false", null, null);
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
-        prepareSecureInsecureParams(parameters.getE2eParams(), parameterBundle, ParameterType.E2E);
+        prepareSecureInsecureParams(parameters.getE2eParams(), parameterBundle, ParameterType.E2E, enableTraceability);
         return parameterBundle;
     }
 
-    public void prepareSecureInsecureParams(Map<String, Parameter> parameters, ParameterBundle parameterBundle, ParameterType parameterType) {
+    public void prepareSecureInsecureParams(Map<String, Parameter> parameters, ParameterBundle parameterBundle, ParameterType parameterType, boolean enableTraceability) {
         Map<String, Parameter> securedParams = new TreeMap<>();
         Map<String, Parameter> inSecuredParams = new TreeMap<>();
         if (parameters == null || parameters.isEmpty()) {
@@ -84,14 +84,22 @@ public class ParametersCalculationServiceV1 {
         }
         filterSecuredParams(parameters, securedParams, inSecuredParams);
 
-        Map<String, Object> finalSecuredParams = ParametersProcessor.convertParameterMapToObject(securedParams);
-        Map<String, Object> inSecuredParamsAsObject = ParametersProcessor.convertParameterMapToObject(inSecuredParams);
+        Map<String, Object> finalSecuredParams = ParametersProcessor.convertParameterMapToObject(securedParams, null, enableTraceability);
+        Map<String, Object> inSecuredParamsAsObject = ParametersProcessor.convertParameterMapToObject(inSecuredParams, null, enableTraceability);
         if (parameterType == ParameterType.E2E) {
             parameterBundle.setSecuredE2eParams(finalSecuredParams);
             parameterBundle.setE2eParams(inSecuredParamsAsObject);
         } else if (parameterType == ParameterType.DEPLOY) {
-            removeUnusedParams(inSecuredParamsAsObject);
-            Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject);
+            // Unwrap Parameter objects for processing, extract origin info, then re-wrap after processing
+            Map<String, String> insecureOriginMap = new TreeMap<>();
+            Map<String, Object> unwrappedForProcessing = enableTraceability ? 
+                ParametersProcessor.unwrapParameterMap(new TreeMap<>(inSecuredParamsAsObject), insecureOriginMap) : inSecuredParamsAsObject;
+            removeUnusedParams(unwrappedForProcessing);
+            Map<String, Object> finalInsecureParams = prepareFinalParams(unwrappedForProcessing);
+            // Re-wrap with origin info if traceability is enabled
+            if (!insecureOriginMap.isEmpty()) {
+                finalInsecureParams = ParametersProcessor.rewrapWithOrigin(finalInsecureParams, insecureOriginMap);
+            }
             parameterBundle.setSecuredDeployParams(finalSecuredParams);
             parameterBundle.setDeployParams(finalInsecureParams);
         } else if (parameterType == ParameterType.TECHNICAL) {

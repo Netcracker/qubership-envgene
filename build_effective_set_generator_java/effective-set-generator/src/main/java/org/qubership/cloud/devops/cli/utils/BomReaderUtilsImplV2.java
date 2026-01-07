@@ -29,6 +29,7 @@ import org.cyclonedx.model.component.data.ComponentData;
 import org.cyclonedx.model.component.data.Content;
 import org.qubership.cloud.devops.cli.exceptions.MandatoryParameterException;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
+import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.exceptions.AppChartValidationException;
 import org.qubership.cloud.devops.commons.exceptions.BomProcessingException;
 import org.qubership.cloud.devops.commons.pojo.bom.ApplicationBomDTO;
@@ -67,7 +68,7 @@ public class BomReaderUtilsImplV2 {
         this.bomCommonUtils = bomCommonUtils;
     }
 
-    public ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override) {
+    public ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override, String overrideProfileName) {
         Bom bomContent = fileDataConverter.parseSbomFile(new File(appFileRef));
         if (bomContent == null) {
             return null;
@@ -89,7 +90,7 @@ public class BomReaderUtilsImplV2 {
 
                 validateAppChart(entitiesMap, bomContent.getComponents(), appName, appFileRef);
 
-                getPerServiceEntities(entitiesMap, bomContent.getComponents(), appName, baseline, override, bomContent);
+                getPerServiceEntities(entitiesMap, bomContent.getComponents(), appName, baseline, override, bomContent, overrideProfileName);
 
                 populateEntityDeployDescParams(entitiesMap, bomContent.getComponents(), bomContent);
 
@@ -135,6 +136,7 @@ public class BomReaderUtilsImplV2 {
 
     private void processConfigServiceComponentDeployDescParams(Map<String, Map<String, Object>> deployParamsMap, Component component) {
         Map<String, Object> deployDescParams = new TreeMap<>();
+        boolean enableTraceability = sharedData.isEnableTraceability();
         ServiceArtifactType serviceArtifactType = ServiceArtifactType.of(component.getMimeType());
         String entity = "service:" + component.getName();
         Map<String, Object> primaryArtifactMap = new TreeMap<>();
@@ -193,6 +195,10 @@ public class BomReaderUtilsImplV2 {
         deployDescParams.put("version", checkIfMandatory(component.getVersion(), "version", entity));
         populateOptionalParam(deployDescParams, "type", getPropertyValue(component, "type", null, false, entity));
 
+        // Wrap all values in Parameter objects with "sbom" origin when traceability is enabled
+        if (enableTraceability && MapUtils.isNotEmpty(deployDescParams)) {
+            deployDescParams = wrapMapWithOriginRecursive(deployDescParams, "sbom");
+        }
 
         deployParamsMap.put(component.getName(), deployDescParams);
     }
@@ -205,6 +211,7 @@ public class BomReaderUtilsImplV2 {
 
     private void processImageServiceComponentDeployDescParams(Map<String, Map<String, Object>> deployParamsMap, Component component) {
         Map<String, Object> deployDescParams = new TreeMap<>();
+        boolean enableTraceability = sharedData.isEnableTraceability();
         String entity = "service:" + component.getName();
         if (CollectionUtils.isNotEmpty(component.getComponents())) {
             for (Component subComponent : component.getComponents()) {
@@ -231,6 +238,11 @@ public class BomReaderUtilsImplV2 {
         deployDescParams.put("qualifier", getPropertyValue(component, "qualifier", null, true, entity));
         deployDescParams.put("version", checkIfMandatory(component.getVersion(), "version", entity));
 
+        // Wrap all values in Parameter objects with "sbom" origin when traceability is enabled
+        if (enableTraceability && MapUtils.isNotEmpty(deployDescParams)) {
+            deployDescParams = wrapMapWithOriginRecursive(deployDescParams, "sbom");
+        }
+
         deployParamsMap.put(component.getName(), deployDescParams);
     }
 
@@ -254,12 +266,12 @@ public class BomReaderUtilsImplV2 {
         return value;
     }
 
-    private void getPerServiceEntities(EntitiesMap entitiesMap, List<Component> components, String appName, String baseline, Profile override, Bom bomContent) {
+    private void getPerServiceEntities(EntitiesMap entitiesMap, List<Component> components, String appName, String baseline, Profile override, Bom bomContent, String overrideProfileName) {
         for (Component component : components) {
             if (IMAGE_SERVICE_MIME_TYPES.contains(component.getMimeType())) {
-                processImageServiceComponent(entitiesMap, component, appName, baseline, override, bomContent);
+                processImageServiceComponent(entitiesMap, component, appName, baseline, override, bomContent, overrideProfileName);
             } else if (CONFIG_SERVICE_MIME_TYPES.contains(component.getMimeType())) {
-                processConfigServiceComponent(entitiesMap.getPerServiceParams(), component, appName, baseline, override, bomContent);
+                processConfigServiceComponent(entitiesMap.getPerServiceParams(), component, appName, baseline, override, bomContent, overrideProfileName);
             }
         }
     }
@@ -274,54 +286,100 @@ public class BomReaderUtilsImplV2 {
         }
     }
 
-    private void processConfigServiceComponent(Map<String, Map<String, Object>> serviceMap, Component component, String appName, String baseline, Profile override, Bom bomContent) {
+    private void processConfigServiceComponent(Map<String, Map<String, Object>> serviceMap, Component component, String appName, String baseline, Profile override, Bom bomContent, String overrideProfileName) {
         Map<String, Object> profileValues = new TreeMap<>();
         Map<String, Object> serviceParams = new TreeMap<>();
         String entity = "service:" + component.getName();
-        serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity));
-        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", checkIfMandatory(component.getName(), "name", entity) + "-v1");
-        serviceParams.put("DEPLOYMENT_VERSION", "v1");
-        serviceParams.put("SERVICE_NAME", checkIfMandatory(component.getName(), "name", entity));
+        boolean enableTraceability = sharedData.isEnableTraceability();
+        
+        // Wrap SBOM-derived values in Parameter objects with "sbom" origin when traceability is enabled
+        // These values come directly from SBOM metadata, not from baseline profile, so they use "sbom" origin
+        Object artifactVersion = checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity);
+        Object deploymentResourceName = checkIfMandatory(component.getName(), "name", entity) + "-v1";
+        Object deploymentVersion = "v1";
+        Object serviceName = checkIfMandatory(component.getName(), "name", entity);
+        
+        if (enableTraceability) {
+            serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", new Parameter(artifactVersion, "sbom", false));
+            serviceParams.put("DEPLOYMENT_RESOURCE_NAME", new Parameter(deploymentResourceName, "sbom", false));
+            serviceParams.put("DEPLOYMENT_VERSION", new Parameter(deploymentVersion, "sbom", false));
+            serviceParams.put("SERVICE_NAME", new Parameter(serviceName, "sbom", false));
+        } else {
+            serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", artifactVersion);
+            serviceParams.put("DEPLOYMENT_RESOURCE_NAME", deploymentResourceName);
+            serviceParams.put("DEPLOYMENT_VERSION", deploymentVersion);
+            serviceParams.put("SERVICE_NAME", serviceName);
+        }
 
-
+        // Extract profile values (from baseline profile) - these will have baseline origin if baseline exists
         if (CollectionUtils.isNotEmpty(component.getComponents())) {
             for (Component subComponent : component.getComponents()) {
                 if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.qubership.resource-profile-baseline")) {
-                    profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
+                    profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline, enableTraceability, overrideProfileName);
                 }
             }
         }
 
+        // Profile values (if any) will overwrite direct SBOM values and have their own origin (baseline or override)
         if (MapUtils.isNotEmpty(profileValues)) {
             serviceParams.putAll(profileValues);
         }
         serviceMap.put(component.getName(), serviceParams);
     }
 
-    private void processImageServiceComponent(EntitiesMap entitiesMap, Component component, String appName, String baseline, Profile override, Bom bomContent) {
+    private void processImageServiceComponent(EntitiesMap entitiesMap, Component component, String appName, String baseline, Profile override, Bom bomContent, String overrideProfileName) {
         Map<String, Map<String, Object>> perServiceMap = entitiesMap.getPerServiceParams();
         Map<String, Object> profileValues = new TreeMap<>();
         Map<String, Object> serviceParams = new TreeMap<>();
         String tag = null;
         String entity = "service:" + component.getName();
-        serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity));
-        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", checkIfMandatory(component.getName(), "name", entity) + "-v1");
-        serviceParams.put("DEPLOYMENT_VERSION", "v1");
-        serviceParams.put("SERVICE_NAME", checkIfMandatory(component.getName(), "name", entity));
+        boolean enableTraceability = sharedData.isEnableTraceability();
+        
+        // Wrap SBOM-derived values in Parameter objects with "sbom" origin when traceability is enabled
+        // These values come directly from SBOM metadata, not from baseline profile, so they use "sbom" origin
+        Object artifactVersion = checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity);
+        Object deploymentResourceName = checkIfMandatory(component.getName(), "name", entity) + "-v1";
+        Object deploymentVersion = "v1";
+        Object serviceName = checkIfMandatory(component.getName(), "name", entity);
         String dockerTag = getPropertyValue(component, "full_image_name", null, true, entity);
-        serviceParams.put("DOCKER_TAG", dockerTag);
-        serviceParams.put("IMAGE_REPOSITORY", getImageRepository(dockerTag));
+        Object imageRepository = getImageRepository(dockerTag);
+        
+        if (enableTraceability) {
+            serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", new Parameter(artifactVersion, "sbom", false));
+            serviceParams.put("DEPLOYMENT_RESOURCE_NAME", new Parameter(deploymentResourceName, "sbom", false));
+            serviceParams.put("DEPLOYMENT_VERSION", new Parameter(deploymentVersion, "sbom", false));
+            serviceParams.put("SERVICE_NAME", new Parameter(serviceName, "sbom", false));
+            serviceParams.put("DOCKER_TAG", new Parameter(dockerTag, "sbom", false));
+            if (imageRepository != null) {
+                serviceParams.put("IMAGE_REPOSITORY", new Parameter(imageRepository, "sbom", false));
+            }
+        } else {
+            serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", artifactVersion);
+            serviceParams.put("DEPLOYMENT_RESOURCE_NAME", deploymentResourceName);
+            serviceParams.put("DEPLOYMENT_VERSION", deploymentVersion);
+            serviceParams.put("SERVICE_NAME", serviceName);
+            serviceParams.put("DOCKER_TAG", dockerTag);
+            if (imageRepository != null) {
+                serviceParams.put("IMAGE_REPOSITORY", imageRepository);
+            }
+        }
         addImageParameters(component, entitiesMap.getDeployParams());
 
+        // Extract profile values (from baseline profile) and tag - these will have baseline origin if baseline exists
         if (CollectionUtils.isNotEmpty(component.getComponents())) {
             for (Component subComponent : component.getComponents()) {
                 if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
                     tag = subComponent.getVersion();
                 } else if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.qubership.resource-profile-baseline")) {
-                    profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
+                    profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline, enableTraceability, overrideProfileName);
                 }
             }
-            serviceParams.put("TAG", checkIfMandatory(tag, "TAG", entity));
+            Object tagValue = checkIfMandatory(tag, "TAG", entity);
+            if (enableTraceability) {
+                serviceParams.put("TAG", new Parameter(tagValue, "sbom", false));
+            } else {
+                serviceParams.put("TAG", tagValue);
+            }
         }
         if (MapUtils.isNotEmpty(profileValues)) {
             serviceParams.putAll(profileValues);
@@ -347,10 +405,14 @@ public class BomReaderUtilsImplV2 {
     }
 
     private Map<String, Object> extractProfileValues(Component dataComponent, String appName, String serviceName,
-                                                     Profile overrideProfile, String baseline) {
+                                                     Profile overrideProfile, String baseline, boolean enableTraceability, String overrideProfileName) {
         Map<String, Object> profileValues = new TreeMap<>();
         if (baseline == null) {
             profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
+            // Wrap profile values recursively in Parameter objects with "sbom" origin when traceability is enabled (no baseline)
+            if (enableTraceability && MapUtils.isNotEmpty(profileValues)) {
+                profileValues = wrapMapWithOriginRecursive(profileValues, "sbom");
+            }
         }
         for (ComponentData data : dataComponent.getData()) {
             if (baseline != null && baseline.equals(data.getName().split("\\.")[0])) {
@@ -359,10 +421,289 @@ public class BomReaderUtilsImplV2 {
                 profileValues = fileDataConverter.decodeAndParse(encodedText, new TypeReference<TreeMap<String, Object>>() {
                 });
 
+                // Track which values exist before override (to detect which ones were overridden)
+                Map<String, Object> baselineValuesSnapshot = new TreeMap<>();
+                if (enableTraceability && MapUtils.isNotEmpty(profileValues)) {
+                    deepCopyMap(profileValues, baselineValuesSnapshot);
+                }
+
                 profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
+                
+                // Wrap profile values recursively in Parameter objects with appropriate origin when traceability is enabled
+                // Values that were overridden should have override origin (higher priority)
+                // Values that were not overridden should have baseline origin
+                if (enableTraceability && MapUtils.isNotEmpty(profileValues)) {
+                    String baselineOrigin = "sbom:resource-profile-baseline:" + baseline;
+                    String overrideOrigin = getOverrideOrigin(overrideProfile, appName, serviceName, overrideProfileName);
+                    
+                    // If there are overrides, track which values changed and apply override origin to them
+                    if (overrideProfile != null && overrideOrigin != null) {
+                        profileValues = wrapMapWithOriginSelective(profileValues, baselineValuesSnapshot, baselineOrigin, overrideOrigin);
+                    } else {
+                        // No overrides, just wrap with baseline origin
+                        profileValues = wrapMapWithOriginRecursive(profileValues, baselineOrigin);
+                    }
+                }
                 break;
             }
         }
         return profileValues;
+    }
+    
+    /**
+     * Recursively wraps all values in a map (including nested maps and lists) with Parameter objects.
+     * This ensures that values added/modified by setOverrideProfiles also get origins.
+     */
+    private Map<String, Object> wrapMapWithOriginRecursive(Map<String, Object> map, String origin) {
+        if (map == null || map.isEmpty()) {
+            return map;
+        }
+        Map<String, Object> wrapped = new TreeMap<>();
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof Map) {
+                // Recursively wrap nested maps
+                Map<String, Object> nestedMap = (Map<String, Object>) value;
+                Map<String, Object> wrappedNested = wrapMapWithOriginRecursive(nestedMap, origin);
+                wrapped.put(entry.getKey(), wrappedNested);
+            } else if (value instanceof List) {
+                // Recursively wrap list items
+                List<Object> list = (List<Object>) value;
+                List<Object> wrappedList = new java.util.ArrayList<>();
+                for (Object item : list) {
+                    if (item instanceof Map) {
+                        wrappedList.add(wrapMapWithOriginRecursive((Map<String, Object>) item, origin));
+                    } else if (item instanceof List) {
+                        wrappedList.add(wrapListWithOriginRecursive((List<Object>) item, origin));
+                    } else {
+                        wrappedList.add(new Parameter(item, origin, false));
+                    }
+                }
+                wrapped.put(entry.getKey(), wrappedList);
+            } else if (value instanceof Parameter) {
+                // If already a Parameter, preserve it but ensure it has an origin
+                Parameter param = (Parameter) value;
+                if (param.getOrigin() == null || param.getOrigin().isEmpty()) {
+                    // Replace with new Parameter if it doesn't have origin
+                    Object paramValue = param.getValue();
+                    if (paramValue instanceof Map) {
+                        wrapped.put(entry.getKey(), wrapMapWithOriginRecursive((Map<String, Object>) paramValue, origin));
+                    } else if (paramValue instanceof List) {
+                        wrapped.put(entry.getKey(), wrapListWithOriginRecursive((List<Object>) paramValue, origin));
+                    } else {
+                        wrapped.put(entry.getKey(), new Parameter(paramValue, origin, false, param.isSecured(), null));
+                    }
+                } else {
+                    // Preserve existing Parameter but recursively process its value
+                    Object paramValue = param.getValue();
+                    if (paramValue instanceof Map) {
+                        wrapped.put(entry.getKey(), new Parameter(wrapMapWithOriginRecursive((Map<String, Object>) paramValue, param.getOrigin()), param.getOrigin(), false, param.isSecured(), null));
+                    } else if (paramValue instanceof List) {
+                        wrapped.put(entry.getKey(), new Parameter(wrapListWithOriginRecursive((List<Object>) paramValue, param.getOrigin()), param.getOrigin(), false, param.isSecured(), null));
+                    } else {
+                        wrapped.put(entry.getKey(), param);
+                    }
+                }
+            } else {
+                // Wrap scalar values
+                wrapped.put(entry.getKey(), new Parameter(value, origin, false));
+            }
+        }
+        return wrapped;
+    }
+    
+    private List<Object> wrapListWithOriginRecursive(List<Object> list, String origin) {
+        if (list == null || list.isEmpty()) {
+            return list;
+        }
+        List<Object> wrapped = new java.util.ArrayList<>();
+        for (Object item : list) {
+            if (item instanceof Map) {
+                wrapped.add(wrapMapWithOriginRecursive((Map<String, Object>) item, origin));
+            } else if (item instanceof List) {
+                wrapped.add(wrapListWithOriginRecursive((List<Object>) item, origin));
+            } else if (item instanceof Parameter) {
+                Parameter param = (Parameter) item;
+                Object paramValue = param.getValue();
+                if (paramValue instanceof Map) {
+                    wrapped.add(new Parameter(wrapMapWithOriginRecursive((Map<String, Object>) paramValue, param.getOrigin()), param.getOrigin(), false, param.isSecured(), null));
+                } else if (paramValue instanceof List) {
+                    wrapped.add(new Parameter(wrapListWithOriginRecursive((List<Object>) paramValue, param.getOrigin()), param.getOrigin(), false, param.isSecured(), null));
+                } else {
+                    wrapped.add(param);
+                }
+            } else {
+                wrapped.add(new Parameter(item, origin, false));
+            }
+        }
+        return wrapped;
+    }
+    
+    /**
+     * Creates a deep copy of a map for comparison purposes.
+     */
+    @SuppressWarnings("unchecked")
+    private void deepCopyMap(Map<String, Object> source, Map<String, Object> target) {
+        if (source == null || target == null) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof Map) {
+                Map<String, Object> nestedMap = new TreeMap<>();
+                deepCopyMap((Map<String, Object>) value, nestedMap);
+                target.put(entry.getKey(), nestedMap);
+            } else if (value instanceof List) {
+                List<Object> nestedList = new java.util.ArrayList<>();
+                for (Object item : (List<Object>) value) {
+                    if (item instanceof Map) {
+                        Map<String, Object> nestedMap = new TreeMap<>();
+                        deepCopyMap((Map<String, Object>) item, nestedMap);
+                        nestedList.add(nestedMap);
+                    } else {
+                        nestedList.add(item);
+                    }
+                }
+                target.put(entry.getKey(), nestedList);
+            } else {
+                target.put(entry.getKey(), value);
+            }
+        }
+    }
+    
+    /**
+     * Gets the origin string for resource-profile-override values.
+     * Returns null if no override profile exists for this app/service.
+     * If overrideProfileName is provided, includes it in the origin: "resource-profile-override:<name>"
+     */
+    private String getOverrideOrigin(Profile overrideProfile, String appName, String serviceName, String overrideProfileName) {
+        if (overrideProfile == null || overrideProfile.getApplications() == null) {
+            return null;
+        }
+        
+        boolean hasOverride = overrideProfile.getApplications().stream()
+                .filter(app -> appName.equals(app.getName()))
+                .findFirst()
+                .filter(app -> app.getServices() != null)
+                .flatMap(app -> app.getServices().stream()
+                        .filter(service -> serviceName.equals(service.getName()))
+                        .findFirst())
+                .isPresent();
+        
+        if (!hasOverride) {
+            return null;
+        }
+        
+        // Include profile name if available
+        if (overrideProfileName != null && !overrideProfileName.isEmpty()) {
+            return "resource-profile-override:" + overrideProfileName;
+        }
+        
+        return "resource-profile-override";
+    }
+    
+    /**
+     * Wraps map values with origins, using override origin for values that were changed by setOverrideProfiles,
+     * and baseline origin for values that were not changed.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> wrapMapWithOriginSelective(Map<String, Object> current, 
+                                                             Map<String, Object> baselineSnapshot,
+                                                             String baselineOrigin, 
+                                                             String overrideOrigin) {
+        if (current == null || current.isEmpty()) {
+            return current;
+        }
+        
+        Map<String, Object> wrapped = new TreeMap<>();
+        for (Map.Entry<String, Object> entry : current.entrySet()) {
+            String key = entry.getKey();
+            Object currentValue = entry.getValue();
+            Object baselineValue = baselineSnapshot != null ? baselineSnapshot.get(key) : null;
+            
+            // Check if this value was overridden (changed or newly added)
+            boolean wasOverridden = !valuesEqual(currentValue, baselineValue);
+            String origin = wasOverridden ? overrideOrigin : baselineOrigin;
+            
+            if (currentValue instanceof Map) {
+                Map<String, Object> nestedBaseline = baselineValue instanceof Map ? (Map<String, Object>) baselineValue : null;
+                wrapped.put(key, wrapMapWithOriginSelective((Map<String, Object>) currentValue, nestedBaseline, baselineOrigin, overrideOrigin));
+            } else if (currentValue instanceof List) {
+                List<Object> nestedBaseline = baselineValue instanceof List ? (List<Object>) baselineValue : null;
+                wrapped.put(key, wrapListWithOriginSelective((List<Object>) currentValue, nestedBaseline, baselineOrigin, overrideOrigin));
+            } else if (currentValue instanceof Parameter) {
+                // Already a Parameter, preserve it but update origin if it was overridden
+                Parameter param = (Parameter) currentValue;
+                if (wasOverridden) {
+                    wrapped.put(key, new Parameter(param.getValue(), overrideOrigin, false, param.isSecured(), null));
+                } else {
+                    wrapped.put(key, param);
+                }
+            } else {
+                wrapped.put(key, new Parameter(currentValue, origin, false));
+            }
+        }
+        return wrapped;
+    }
+    
+    /**
+     * Wraps list values with origins, using override origin for values that were changed.
+     */
+    @SuppressWarnings("unchecked")
+    private List<Object> wrapListWithOriginSelective(List<Object> current, 
+                                                      List<Object> baselineSnapshot,
+                                                      String baselineOrigin, 
+                                                      String overrideOrigin) {
+        if (current == null || current.isEmpty()) {
+            return current;
+        }
+        
+        List<Object> wrapped = new java.util.ArrayList<>();
+        for (int i = 0; i < current.size(); i++) {
+            Object currentValue = current.get(i);
+            Object baselineValue = (baselineSnapshot != null && i < baselineSnapshot.size()) ? baselineSnapshot.get(i) : null;
+            
+            boolean wasOverridden = !valuesEqual(currentValue, baselineValue);
+            String origin = wasOverridden ? overrideOrigin : baselineOrigin;
+            
+            if (currentValue instanceof Map) {
+                Map<String, Object> nestedBaseline = baselineValue instanceof Map ? (Map<String, Object>) baselineValue : null;
+                wrapped.add(wrapMapWithOriginSelective((Map<String, Object>) currentValue, nestedBaseline, baselineOrigin, overrideOrigin));
+            } else if (currentValue instanceof List) {
+                List<Object> nestedBaseline = baselineValue instanceof List ? (List<Object>) baselineValue : null;
+                wrapped.add(wrapListWithOriginSelective((List<Object>) currentValue, nestedBaseline, baselineOrigin, overrideOrigin));
+            } else if (currentValue instanceof Parameter) {
+                Parameter param = (Parameter) currentValue;
+                if (wasOverridden) {
+                    wrapped.add(new Parameter(param.getValue(), overrideOrigin, false, param.isSecured(), null));
+                } else {
+                    wrapped.add(param);
+                }
+            } else {
+                wrapped.add(new Parameter(currentValue, origin, false));
+            }
+        }
+        return wrapped;
+    }
+    
+    /**
+     * Compares two values for equality, handling nested structures.
+     */
+    private boolean valuesEqual(Object value1, Object value2) {
+        if (value1 == value2) {
+            return true;
+        }
+        if (value1 == null || value2 == null) {
+            return false;
+        }
+        if (value1 instanceof Parameter) {
+            value1 = ((Parameter) value1).getValue();
+        }
+        if (value2 instanceof Parameter) {
+            value2 = ((Parameter) value2).getValue();
+        }
+        // For simple comparison, use equals. For complex nested structures, this is a simplified check.
+        // In practice, setOverrideProfiles typically replaces entire values, so this should work.
+        return value1.equals(value2);
     }
 }
