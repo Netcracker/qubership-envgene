@@ -57,4 +57,6 @@ public class SharedData {
     @Builder.Default
     private Map<String, Object> customRuntimeParamMap = Collections.emptyMap();
 
+    private boolean enableTraceability;
+
 }

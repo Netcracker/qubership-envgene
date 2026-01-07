@@ -43,7 +43,7 @@ public class ParametersCalculationServiceV1 {
     }
 
     public ParameterBundle getCliParameter(String tenantName, String cloudName, String namespaceName, String applicationName,
-                                           DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap) {
+                                           DeployerInputs deployerInputs, String originalNamespace, Map<String, Object> k8TokenMap) {
         return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace, k8TokenMap);
     }
 
@@ -52,7 +52,7 @@ public class ParametersCalculationServiceV1 {
     }
 
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName, DeployerInputs deployerInputs
-            , String originalNamespace, Map<String, String> k8TokenMap) {
+            , String originalNamespace, Map<String, Object> k8TokenMap) {
         Params parameters = parametersProcessor.processAllParameters(tenantName,
                 cloudName,
                 namespaceName,
