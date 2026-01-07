@@ -41,5 +41,14 @@ public class ParametersConstants {
             APP_ORIGIN = "Application: %s",
             CUSTOM_PARAMS_ORIGIN = "Custom",
             STRUCTURED_GLOBAL_RESOURCE_PROFILE = "STRUCTURED_GLOBAL_RESOURCE_PROFILE",
-            GLOBAL_RESOURCE_PROFILE = "GLOBAL_RESOURCE_PROFILE";
+            GLOBAL_RESOURCE_PROFILE = "GLOBAL_RESOURCE_PROFILE",
+            BG_DOMAIN = "bg-domain",
+            ENVGENE_DEFAULT = "envgene default",
+            ENVGENE_PIPELINE_PARAMETER =  "envgene pipeline parameter",
+            ENVGENE_CALCULATED = "envgene calculated",
+            COMPOSITE_STRUCTURE = "composite-structure",
+            SBOM_RESOURCE_PROFILE_BASELINE_ORIGIN = "sbom, resource-profile-baseline: %s",
+            NAMESPACE_ORIGIN = "namespace: %s",
+            CLOUD = "cloud: %s",
+            RESOURCE_PROFILE_OVERRIDE_ORIGIN = "resource-profile-override: %s";
 }
