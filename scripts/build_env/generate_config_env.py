@@ -157,7 +157,7 @@ class EnvGenerator:
             rendered_ns = self.render_from_file_to_obj(ns_template_path)
             ns_name = rendered_ns.get("name")
         logger.info(f'ns_name: {ns_name}')
-        bgd = get_bgd_object()
+        bgd = self.get_current_bgd_object()
         logger.info(f'bgd object before comparing with ns: {bgd}')
         if bgd:
             origin_name = bgd["originNamespace"]["name"]
@@ -170,6 +170,12 @@ class EnvGenerator:
                 ns_template_name += "-peer"
             logger.info(f'After appending the ns name : {ns_template_name}')
         return ns_template_name
+
+    def get_current_bgd_object(self):
+        bgd_path = f'{self.ctx.current_env_dir}/bg_domain.yml'
+        bgd_object = openYaml(bgd_path, allow_default=True)
+        logger.info(f'bgd_object: {bgd_object}')
+        return bgd_object
 
     def generate_solution_structure(self):
         sd_path_stem = f'{self.ctx.current_env_dir}/Inventory/solution-descriptor/sd'
