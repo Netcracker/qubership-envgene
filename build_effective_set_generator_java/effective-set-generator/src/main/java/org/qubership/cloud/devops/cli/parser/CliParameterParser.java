@@ -116,7 +116,7 @@ public class CliParameterParser {
                 }
             }
         });
-        log_memory("Inside before of streaming of processAndSaveParameters");
+        log_memory("Inside new before of streaming of processAndSaveParameters");
         List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
                 .orElseGet(Collections::emptyList);
 
