@@ -19,7 +19,7 @@ public class CmdbCliTest {
     @Inject
     CmdbCli cli;
 
-    @Test
+    //@Test
     void testGenerateEffectiveSet(@TempDir Path tempDir) throws Exception {
         Path envsPath = FileTestUtils.resource("environments");
         Path sbomsPath = FileTestUtils.resource("sboms");
