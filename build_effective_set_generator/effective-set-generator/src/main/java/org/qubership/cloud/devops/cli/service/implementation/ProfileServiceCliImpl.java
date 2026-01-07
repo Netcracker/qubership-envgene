@@ -26,6 +26,7 @@ import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
 import org.qubership.cloud.devops.commons.service.interfaces.TenantConfigurationService;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
+import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.mapper.ProfileMapper;
 import org.qubership.cloud.devops.commons.service.interfaces.ProfileService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -88,6 +89,27 @@ public class ProfileServiceCliImpl implements ProfileService {
                 if (serviceOverride != null) {
                     for (ParameterProfile param : serviceOverride.getParameters()) {
                         putNestedValue(profileValues, param.getName(), param.getValue());
+                    }
+                }
+            }
+        }
+    }
+
+    public void setOverrideProfilesWithOrigin(String appName, String serviceName, Profile overrideProfile, Map<String, Object> profileValues, String origin) {
+        expandDottedKeys(profileValues);
+        if (overrideProfile != null) {
+            ApplicationProfile override = overrideProfile.getApplications().stream()
+                    .filter(app -> appName.equals(app.getName()))
+                    .findFirst()
+                    .orElse(null);
+
+            if (override != null) {
+                ServiceProfile serviceOverride = override.getServices().stream()
+                        .filter(serviceProfileEntity -> serviceName.equals(serviceProfileEntity.getName()))
+                        .findFirst().orElse(null);
+                if (serviceOverride != null) {
+                    for (ParameterProfile param : serviceOverride.getParameters()) {
+                        putNestedValue(profileValues, param.getName(), new Parameter(param.getValue(),origin,false) );
                     }
                 }
             }
