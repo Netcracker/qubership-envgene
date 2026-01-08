@@ -151,6 +151,21 @@ class EnvGenerator:
         else:
             # get base name(deploy postfix) without extensions
             ns_template_name = self.get_template_name(ns_template_path)
+        
+        ns_name = None
+        if ns_template_path:
+            rendered_ns = self.render_from_file_to_obj(ns_template_path)
+            ns_name = rendered_ns.get("name")
+        bgd = get_bgd_object(Path(f'{self.ctx.current_env_dir}'))
+        logger.debug(f'bgd object before comparing with ns: {bgd}')
+        if bgd:
+            origin_name = bgd["originNamespace"]["name"]
+            peer_name = bgd["peerNamespace"]["name"]
+            if ns_name == origin_name:
+                ns_template_name += "-origin"
+            elif ns_name == peer_name:
+                ns_template_name += "-peer"
+            logger.debug(f'After appending the ns name : {ns_template_name}')
         return ns_template_name
 
     def generate_solution_structure(self):
@@ -464,12 +479,12 @@ class EnvGenerator:
             self.ctx.current_env_dir = current_env_dir
             self.set_env_template()
 
+            self.generate_bgd_file()
             self.generate_solution_structure()
             self.generate_tenant_file()
             self.generate_cloud_file()
             self.generate_namespace_file()
             self.generate_composite_structure()
-            self.generate_bgd_file()
 
             env_specific_schema = self.ctx.current_env_template.get("envSpecificSchema")
             if env_specific_schema:
