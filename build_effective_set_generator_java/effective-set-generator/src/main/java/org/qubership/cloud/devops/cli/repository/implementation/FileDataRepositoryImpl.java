@@ -432,16 +432,12 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                                     inputData.getNamespaceDTOMap().get(deployPostFix + "-peer")));
             if (namespaceDTO != null) {
                 String originalNamespace = namespaceDTO.getName();
-                if (deployPostFix.equalsIgnoreCase(originalNamespace)) {
-                    return deployPostFix;
-                } else {
-                    BgDomainEntityDTO.NamespaceDTO originNamespaceDTO = inputData.getBgDomainEntityDTO().getOriginNamespace();
-                    BgDomainEntityDTO.NamespaceDTO peerNamespaceDTO = inputData.getBgDomainEntityDTO().getPeerNamespace();
-                    if (originalNamespace.equalsIgnoreCase(originNamespaceDTO.getName())) {
-                        return deployPostFix + "-origin";
-                    } else if (originalNamespace.equalsIgnoreCase(peerNamespaceDTO.getName())) {
-                        return deployPostFix + "-peer";
-                    }
+                BgDomainEntityDTO.NamespaceDTO originNamespaceDTO = inputData.getBgDomainEntityDTO().getOriginNamespace();
+                BgDomainEntityDTO.NamespaceDTO peerNamespaceDTO = inputData.getBgDomainEntityDTO().getPeerNamespace();
+                if (originalNamespace.equalsIgnoreCase(originNamespaceDTO.getName())) {
+                    return deployPostFix + "-origin";
+                } else if (originalNamespace.equalsIgnoreCase(peerNamespaceDTO.getName())) {
+                    return deployPostFix + "-peer";
                 }
             }
         }
