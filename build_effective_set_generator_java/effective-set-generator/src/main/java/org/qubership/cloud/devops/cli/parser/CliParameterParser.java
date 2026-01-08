@@ -120,11 +120,11 @@ public class CliParameterParser {
         List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
                 .orElseGet(Collections::emptyList);
 
-        ForkJoinPool customPool = new ForkJoinPool(4);
+        // ForkJoinPool customPool = new ForkJoinPool(4);
 
-        try {
-            customPool.submit(() ->
-                    applicationDTOList.parallelStream()
+        // try {
+        //     customPool.submit(() ->
+                    applicationDTOList.stream()
                         .forEach(app -> {
                             String namespaceName = app.getNamespace();
                             try {
@@ -155,13 +155,13 @@ public class CliParameterParser {
                                 logDebug(String.format("Stack trace for further details: %s", ExceptionUtils.getStackTrace(e)));
                                 errorList.computeIfAbsent(app.getAppName() + ":" + namespaceName, k -> e.getMessage());
                             }
-                        })
-                    ).get();
-        } catch (InterruptedException | ExecutionException e) {
-            throw new RuntimeException("Error while processing applications", e);
-        } finally {
-            customPool.shutdown();
-        }
+                        });
+        //             ).get();
+        // } catch (InterruptedException | ExecutionException e) {
+        //     throw new RuntimeException("Error while processing applications", e);
+        // } finally {
+        //     customPool.shutdown();
+        // }
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap);
             if (solutionDescriptor.isPresent()) {
