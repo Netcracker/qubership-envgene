@@ -40,11 +40,11 @@ public class BomReaderUtilsImpl implements BomReaderUtils {
         this.sharedData = sharedData;
     }
 
-    public ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override) {
+    public ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override, String overrideProfileName) {
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
-            return bomReaderUtilsImplV2.getAppServicesWithProfiles(appName, appFileRef, baseline, override);
+            return bomReaderUtilsImplV2.getAppServicesWithProfiles(appName, appFileRef, baseline, override, overrideProfileName);
         }
-        return bomReaderUtilsImplV1.getAppServicesWithProfiles(appName, appFileRef, baseline, override);
+        return bomReaderUtilsImplV1.getAppServicesWithProfiles(appName, appFileRef, baseline, override, overrideProfileName);
     }
 
     public String getExternalRefValue(Component component, String propertyName) {

@@ -114,11 +114,13 @@ public class NamespaceApplicationMap extends DynamicMap {
         }
         BomReaderUtils bomReaderUtils = Injector.getInstance().get(BomReaderUtils.class);
         String baseline = null;
+        String overrideProfileName = null;
         if (overrideProfile != null) {
             baseline = overrideProfile.getBaseline();
+            overrideProfileName = overrideProfile.getName();
         } else if (StringUtils.isNotEmpty(baselineProfile)) {
             baseline = baselineProfile;
         }
-        return bomReaderUtils.getAppServicesWithProfiles(appName, appFileRef, baseline, overrideProfile);
+        return bomReaderUtils.getAppServicesWithProfiles(appName, appFileRef, baseline, overrideProfile, overrideProfileName);
     }
 }

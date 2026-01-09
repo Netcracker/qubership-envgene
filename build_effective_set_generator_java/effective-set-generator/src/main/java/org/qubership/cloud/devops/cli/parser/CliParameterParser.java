@@ -45,6 +45,7 @@ import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverte
 import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
+import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1;
@@ -167,7 +168,7 @@ public class CliParameterParser {
     }
 
     private void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
-        ParameterBundle parameterBundle = parametersServiceV2.getCliE2EParameter(tenantName, cloudName);
+        ParameterBundle parameterBundle = parametersServiceV2.getCliE2EParameter(tenantName, cloudName, sharedData.isEnableTraceability());
         if (parameterBundle.getE2eParams() == null) {
             parameterBundle.setE2eParams(new HashMap<>());
         }
@@ -175,13 +176,13 @@ public class CliParameterParser {
             parameterBundle.setSecuredE2eParams(new HashMap<>());
         }
         processBgDomainParameters();
-        createTopologyFiles(k8TokenMap);
+        createTopologyFiles(tenantName, cloudName, k8TokenMap);
         createE2EFiles(parameterBundle);
         createPipelineFiles(parameterBundle);
     }
 
     private void generateCleanupOutput(String tenantName, String cloudName, String namespace, String originalNamespace, Map<String, String> k8TokenMap) throws IOException {
-        ParameterBundle parameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespace, null, originalNamespace, k8TokenMap);
+        ParameterBundle parameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespace, null, originalNamespace, k8TokenMap, sharedData.isEnableTraceability());
         if (parameterBundle.getCleanupParameters() == null) {
             parameterBundle.setCleanupParameters(new HashMap<>());
         }
@@ -210,20 +211,69 @@ public class CliParameterParser {
         fileDataConverter.writeToFile(parameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
     }
 
-    private void createTopologyFiles(Map<String, String> k8TokenMap) throws IOException {
+    private void createTopologyFiles(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
         Map<String, Object> topologyParams = new TreeMap<>();
         Map<String, Object> topologySecuredParams = new TreeMap<>();
         Map<String, Object> clusterParameterMap = getClusterMap();
-        topologyParams.put("composite_structure", getObjectMap(inputData.getCompositeStructureDTO()));
-        topologyParams.put("environments", inputData.getClusterMap());
-        topologyParams.put("cluster", clusterParameterMap);
-        topologySecuredParams.put("k8s_tokens", k8TokenMap);
+        
+        // Wrap topology values in Parameter objects with origin information for traceability
+        boolean enableTraceability = sharedData.isEnableTraceability();
+        
+        // Construct origin strings with tenant and cloud names
+        String cloudOrigin = "Env/Cloud: " + tenantName + "/" + cloudName;
+        
+        // composite_structure comes from composite_structure.yaml file
+        Object compositeStructure = getObjectMap(inputData.getCompositeStructureDTO());
+        if (enableTraceability && compositeStructure instanceof Map) {
+            topologyParams.put("composite_structure", wrapMapWithOrigin((Map<String, Object>) compositeStructure, "composite-structure"));
+        } else {
+            topologyParams.put("composite_structure", compositeStructure);
+        }
+        
+        // environments comes from cluster/environments configuration
+        Object environments = inputData.getClusterMap();
+        if (enableTraceability && environments instanceof Map) {
+            topologyParams.put("environments", wrapMapWithOrigin((Map<String, Object>) environments, cloudOrigin));
+        } else {
+            topologyParams.put("environments", environments);
+        }
+        
+        // cluster comes from cloud.yaml file
+        if (enableTraceability && clusterParameterMap != null && !clusterParameterMap.isEmpty()) {
+            topologyParams.put("cluster", wrapMapWithOrigin(clusterParameterMap, cloudOrigin));
+        } else {
+            topologyParams.put("cluster", clusterParameterMap);
+        }
+        
+        // k8s_tokens come from credentials
+        if (enableTraceability && k8TokenMap != null && !k8TokenMap.isEmpty()) {
+            topologySecuredParams.put("k8s_tokens", wrapMapWithOrigin(new TreeMap<>(k8TokenMap), cloudOrigin));
+        } else {
+            topologySecuredParams.put("k8s_tokens", k8TokenMap);
+        }
+        
         Map<String, Object> bgDomainMap = getObjectMap(inputData.getBgDomainEntityDTO());
         Map<String, Object> bgDomainSecureMap = new LinkedHashMap<>();
         Map<String, Object> bgDomainParamsMap = new LinkedHashMap<>();
         ParameterUtils.splitBgDomainParams(bgDomainMap, bgDomainSecureMap, bgDomainParamsMap);
-        topologySecuredParams.put("bg_domain", bgDomainSecureMap);
-        topologyParams.put("bg_domain", bgDomainParamsMap);
+        
+        // bg_domain comes from bg-domain.yaml file
+        if (enableTraceability) {
+            if (bgDomainSecureMap != null && !bgDomainSecureMap.isEmpty()) {
+                topologySecuredParams.put("bg_domain", wrapMapWithOrigin(bgDomainSecureMap, "bg-domain"));
+            } else {
+                topologySecuredParams.put("bg_domain", bgDomainSecureMap);
+            }
+            if (bgDomainParamsMap != null && !bgDomainParamsMap.isEmpty()) {
+                topologyParams.put("bg_domain", wrapMapWithOrigin(bgDomainParamsMap, "bg-domain"));
+            } else {
+                topologyParams.put("bg_domain", bgDomainParamsMap);
+            }
+        } else {
+            topologySecuredParams.put("bg_domain", bgDomainSecureMap);
+            topologyParams.put("bg_domain", bgDomainParamsMap);
+        }
+        
         String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
         fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
         fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
@@ -232,6 +282,42 @@ public class CliParameterParser {
 
     private <T> Map<String, Object> getObjectMap(T input) {
         return fileDataConverter.getObjectMap(input != null ? input : new HashMap<>());
+    }
+    
+    /**
+     * Recursively wraps values in a map with Parameter objects containing origin information.
+     * This ensures that nested values also get origin comments in the output YAML.
+     */
+    private Map<String, Object> wrapMapWithOrigin(Map<String, Object> map, String origin) {
+        if (map == null || map.isEmpty()) {
+            return map;
+        }
+        Map<String, Object> wrapped = new TreeMap<>();
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof Map) {
+                // Recursively wrap nested maps - wrap the map itself, not individual values
+                Map<String, Object> nestedMap = (Map<String, Object>) value;
+                Map<String, Object> wrappedNested = wrapMapWithOrigin(nestedMap, origin);
+                wrapped.put(entry.getKey(), new Parameter(wrappedNested, origin, false));
+            } else if (value instanceof List) {
+                // Wrap list items
+                List<Object> wrappedList = new java.util.ArrayList<>();
+                for (Object item : (List<Object>) value) {
+                    if (item instanceof Map) {
+                        Map<String, Object> wrappedItem = wrapMapWithOrigin((Map<String, Object>) item, origin);
+                        wrappedList.add(new Parameter(wrappedItem, origin, false));
+                    } else {
+                        wrappedList.add(new Parameter(item, origin, false));
+                    }
+                }
+                wrapped.put(entry.getKey(), new Parameter(wrappedList, origin, false));
+            } else {
+                // Wrap scalar values
+                wrapped.put(entry.getKey(), new Parameter(value, origin, false));
+            }
+        }
+        return wrapped;
     }
 
     private Map<String, Object> getClusterMap() {
@@ -246,6 +332,7 @@ public class CliParameterParser {
     private void createPipelineFiles(ParameterBundle parameterBundle) {
         String pipelineDir = String.format("%s/%s", sharedData.getOutputDir(), "pipeline");
         Map<String, ConsumerDTO> consumerDTOMap = inputData.getConsumerDTOMap();
+        boolean enableTraceability = sharedData.isEnableTraceability();
         consumerDTOMap.forEach((key, value) -> {
             Map<String, Object> consumerParamsMap = new LinkedHashMap<>();
             Map<String, Object> consumersecureMap = new LinkedHashMap<>();
@@ -262,7 +349,12 @@ public class CliParameterParser {
                     }
                 }
                 if (obj == null && StringUtils.isNotEmpty(k.getValue())) {
-                    consumerParamsMap.put(k.getName(), k.getValue());
+                    // Wrap plain values in Parameter objects with origin information for traceability
+                    if (enableTraceability) {
+                        consumerParamsMap.put(k.getName(), new Parameter(k.getValue(), "envgene pipeline parameter", false));
+                    } else {
+                        consumerParamsMap.put(k.getName(), k.getValue());
+                    }
                 }
                 if (obj == null && StringUtils.isEmpty(k.getValue()) && k.isRequired()) {
                     throw new ConsumerFileProcessingException("Property " + k + " is required and no value is defined in E2E configurations");
@@ -303,7 +395,8 @@ public class CliParameterParser {
                     appName,
                     deployerInputs,
                     originalNamespace,
-                    k8TokenMap);
+                    k8TokenMap,
+                    sharedData.isEnableTraceability());
             generateCleanupOutput(tenantName, cloudName, namespaceName, originalNamespace, k8TokenMap);
         } else {
             parameterBundle = parametersServiceV1.getCliParameter(tenantName,
@@ -312,7 +405,8 @@ public class CliParameterParser {
                     appName,
                     deployerInputs,
                     originalNamespace,
-                    k8TokenMap);
+                    k8TokenMap,
+                    sharedData.isEnableTraceability());
 
         }
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
@@ -338,7 +432,11 @@ public class CliParameterParser {
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
             if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
-                fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
+                // For app chart, write per-service params directly - FileDataConverter will extract origins recursively
+                // The structure is: { "service1": Parameter(Map(...)), "service2": Parameter(Map(...)) }
+                // FileDataConverter.extractOriginMapRecursive will find Parameter objects at all levels
+                Map<String, Object> perServiceParams = parameterBundle.getPerServiceParams();
+                fileDataConverter.writeToFile(perServiceParams, appChartPath.toString(), "deployment-parameters.yaml");
             }
             fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), deploymentDir, "collision-deployment-parameters.yaml");
@@ -347,7 +445,27 @@ public class CliParameterParser {
                     try {
                         Path servicePath = fileSystemUtils.getFileFromGivenPath(sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters", entry.getKey()).toPath();
                         Files.createDirectories(servicePath);
-                        fileDataConverter.writeToFile((Map<String, Object>) entry.getValue(), servicePath.toString(), "deployment-parameters.yaml");
+                        // Extract the service parameters map, handling Parameter objects if present
+                        // Pass the value directly - FileDataConverter will handle Parameter objects recursively
+                        // If value is a Parameter wrapping a Map, extractOriginMapRecursive will find nested Parameter objects
+                        Object value = entry.getValue();
+                        Map<String, Object> serviceParams;
+                        if (value instanceof Parameter) {
+                            // If value is a Parameter object, extract the Map from it
+                            // The inner Map should contain Parameter objects for nested values with origins
+                            Object paramValue = ((Parameter) value).getValue();
+                            if (paramValue instanceof Map) {
+                                serviceParams = (Map<String, Object>) paramValue;
+                            } else {
+                                serviceParams = new TreeMap<>();
+                            }
+                        } else if (value instanceof Map) {
+                            serviceParams = (Map<String, Object>) value;
+                        } else {
+                            serviceParams = new TreeMap<>();
+                        }
+                        // Write the service params - FileDataConverter will extract origins from nested Parameter objects
+                        fileDataConverter.writeToFile(serviceParams, servicePath.toString(), "deployment-parameters.yaml");
                     } catch (IOException e) {
                         throw new RuntimeException("Failed to write per service parameters of service " + entry.getKey());
                     }

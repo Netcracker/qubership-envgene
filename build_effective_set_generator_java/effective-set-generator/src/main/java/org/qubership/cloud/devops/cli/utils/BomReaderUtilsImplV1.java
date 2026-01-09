@@ -45,7 +45,7 @@ public class BomReaderUtilsImplV1 {
         this.bomCommonUtils = bomCommonUtils;
     }
 
-    public ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override) {
+    public ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override, String overrideProfileName) {
         Bom bomContent = fileDataConverter.parseSbomFile(new File(appFileRef));
         if (bomContent == null) {
             return null;

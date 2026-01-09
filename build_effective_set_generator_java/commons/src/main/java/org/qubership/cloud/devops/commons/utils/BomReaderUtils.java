@@ -21,7 +21,7 @@ import org.qubership.cloud.devops.commons.pojo.bom.ApplicationBomDTO;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 
 public interface BomReaderUtils {
-    ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override);
+    ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override, String overrideProfileName);
     String getExternalRefValue(Component component, String propertyName);
     String getPropertyValue(Component component, String propertyName);
 }
