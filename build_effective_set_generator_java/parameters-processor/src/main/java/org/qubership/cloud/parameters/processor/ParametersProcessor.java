@@ -16,6 +16,7 @@
 
 package org.qubership.cloud.parameters.processor;
 
+import org.qubership.cloud.devops.commons.utils.LogMemoryClas;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.otel.OpenTelemetryProvider;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
@@ -44,6 +45,7 @@ public class ParametersProcessor implements Serializable {
     }
 
     public Params processAllParameters(String tenant, String cloud, String namespace, String application, String defaultEscapeSequence, DeployerInputs deployerInputs, String originalNamespace) {
+        LogMemoryClas.logMemoryUsage("Start of processAllParameters");
         return openTelemetryProvider.withSpan("process", () -> {
             Binding binding = new Binding(defaultEscapeSequence, deployerInputs).init(tenant, cloud, namespace, application, originalNamespace);
             Language lang;
@@ -56,6 +58,7 @@ public class ParametersProcessor implements Serializable {
             Map<String, Parameter> deploy = lang.processDeployment();
             Map<String, Parameter> tech = lang.processConfigServerApp();
             binding.additionalParameters(deploy);
+            LogMemoryClas.logMemoryUsage("End of processAllParameters");
             return Params.builder().deployParams(deploy).techParams(tech).build();
         });
     }

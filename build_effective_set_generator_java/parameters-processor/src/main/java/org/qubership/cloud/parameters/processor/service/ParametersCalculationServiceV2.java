@@ -21,6 +21,7 @@ import jakarta.inject.Inject;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.qubership.cloud.devops.commons.utils.LogMemoryClas;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.parameters.processor.ParametersProcessor;
@@ -50,7 +51,10 @@ public class ParametersCalculationServiceV2 {
 
     public ParameterBundle getCliParameter(String tenantName, String cloudName, String namespaceName, String applicationName,
                                            DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap) {
-        return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace, k8TokenMap);
+        LogMemoryClas.logMemoryUsage("Start of getCliParameter");
+        ParameterBundle parameterBundle =  getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace, k8TokenMap);
+        LogMemoryClas.logMemoryUsage("End of getCliParameter");
+        return parameterBundle;
     }
 
     public ParameterBundle getCliE2EParameter(String tenantName, String cloudName) {
@@ -75,6 +79,7 @@ public class ParametersCalculationServiceV2 {
 
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName,
                                                DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap) {
+        LogMemoryClas.logMemoryUsage("Start of getParameterBundle");
         Params parameters = parametersProcessor.processAllParameters(tenantName,
                 cloudName,
                 namespaceName,
@@ -93,6 +98,7 @@ public class ParametersCalculationServiceV2 {
         }
         prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, k8TokenMap, originalNamespace);
         prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL, k8TokenMap, originalNamespace);
+        LogMemoryClas.logMemoryUsage("End of getParameterBundle");
         return parameterBundle;
     }
 
@@ -102,6 +108,7 @@ public class ParametersCalculationServiceV2 {
     }
 
     private static void processPerServiceParams(Params parameters, ParameterBundle parameterBundle) {
+        LogMemoryClas.logMemoryUsage("Start of processPerServiceParams");
         Parameter parameter = parameters.getDeployParams().get(PER_SERVICE_DEPLOY_PARAMS);
         if (parameter.getValue() == null) {
             parameters.getDeployParams().remove(PER_SERVICE_DEPLOY_PARAMS);
@@ -113,9 +120,11 @@ public class ParametersCalculationServiceV2 {
 
         parameterBundle.setPerServiceParams(perServiceParams);
         parameters.getDeployParams().remove(PER_SERVICE_DEPLOY_PARAMS);
+        LogMemoryClas.logMemoryUsage("End of processPerServiceParams");
     }
 
     private static void processDeploymentDescriptorParams(Params parameters, ParameterBundle parameterBundle) {
+        LogMemoryClas.logMemoryUsage("Start of processDeploymentDescriptorParams");
         Parameter commParameter = parameters.getDeployParams().get(COMMON_DEPLOY_DESC);
         if (commParameter.getValue() == null) {
             parameters.getDeployParams().remove(COMMON_DEPLOY_DESC);
@@ -155,6 +164,7 @@ public class ParametersCalculationServiceV2 {
         parameterBundle.setDeployDescParams(finalDeployDescMap);
         parameters.getDeployParams().remove(DEPLOY_DESC);
         parameters.getDeployParams().remove(COMMON_DEPLOY_DESC);
+        LogMemoryClas.logMemoryUsage("End of processDeploymentDescriptorParams");
     }
 
     private ParameterBundle getE2EParameterBundle(String tenantName, String cloudName) {
@@ -166,6 +176,7 @@ public class ParametersCalculationServiceV2 {
 
     public void prepareSecureInsecureParams(Map<String, Parameter> parameters, ParameterBundle parameterBundle
             , ParameterType parameterType, Map<String, String> k8TokenMap, String originalNamespace) {
+        LogMemoryClas.logMemoryUsage("Start of prepareSecureInsecureParams");
         Map<String, Parameter> securedParams = new TreeMap<>();
         Map<String, Parameter> inSecuredParams = new TreeMap<>();
         if (parameters == null || parameters.isEmpty()) {
@@ -189,6 +200,7 @@ public class ParametersCalculationServiceV2 {
             parameterBundle.setCleanupSecureParameters(finalSecuredParams);
             parameterBundle.setCleanupParameters(inSecuredParamsAsObject);
         }
+        LogMemoryClas.logMemoryUsage("End of prepareSecureInsecureParams");
     }
 
     private void handleDeployParameters(ParameterBundle parameterBundle, Map<String, String> k8TokenMap, String originalNamespace, Map<String, Object> finalSecuredParams, Map<String, Object> inSecuredParamsAsObject) {
