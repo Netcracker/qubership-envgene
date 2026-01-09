@@ -25,6 +25,7 @@ import org.qubership.cloud.devops.commons.pojo.bom.ApplicationBomDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.model.Namespace;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 import org.qubership.cloud.devops.commons.utils.BomReaderUtils;
+import org.qubership.cloud.devops.commons.utils.LogMemoryClas;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
 
@@ -80,6 +81,7 @@ public class NamespaceApplicationMap extends DynamicMap {
     }
 
     private void populateAdditionalParams(String appName, String appFileRef, EscapeMap map) {
+        LogMemoryClas.logMemoryUsage("Start of populateAdditionalParams");
         ApplicationBomDTO applicationBomDto = getApplicationBomDto(appName, appFileRef);
         if (applicationBomDto != null) {
             map.put("ARTIFACT_DESCRIPTOR_ARTIFACT_ID", applicationBomDto.getArtifactId());
@@ -103,9 +105,11 @@ public class NamespaceApplicationMap extends DynamicMap {
                 });
             }
         }
+        LogMemoryClas.logMemoryUsage("End of populateAdditionalParams");
     }
 
     private ApplicationBomDTO getApplicationBomDto(String appName, String appFileRef) {
+        LogMemoryClas.logMemoryUsage("Start of getApplicationBomDto");
         String baselineProfile = namespace.getBaseline();
         Profile overrideProfile = namespace.getProfile();
         if (StringUtils.isEmpty(baselineProfile)) {
@@ -119,6 +123,8 @@ public class NamespaceApplicationMap extends DynamicMap {
         } else if (StringUtils.isNotEmpty(baselineProfile)) {
             baseline = baselineProfile;
         }
-        return bomReaderUtils.getAppServicesWithProfiles(appName, appFileRef, baseline, overrideProfile);
+        ApplicationBomDTO app = bomReaderUtils.getAppServicesWithProfiles(appName, appFileRef, baseline, overrideProfile);
+        LogMemoryClas.logMemoryUsage("End of getApplicationBomDto");
+        return app;
     }
 }

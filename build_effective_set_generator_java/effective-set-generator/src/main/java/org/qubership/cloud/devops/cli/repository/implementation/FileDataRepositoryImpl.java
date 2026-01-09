@@ -52,6 +52,7 @@ import org.qubership.cloud.devops.commons.pojo.tenants.dto.TenantDTO;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataRepository;
 import org.qubership.cloud.devops.commons.utils.BomReaderUtils;
+import org.qubership.cloud.devops.commons.utils.LogMemoryClas;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,6 +106,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     @Override
     public void prepareProcessingEnv() {
         try {
+            LogMemoryClas.logMemoryUsage("Start of prepareProcessingEnv");
             Map<String, List<String>> nsWithAppsFromSD = new HashMap<>();
             Set<String> appsToProcess = new HashSet<>();
             loadSDData(nsWithAppsFromSD, appsToProcess);
@@ -113,6 +115,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             traverseSourceDirectory(nsWithAppsFromSD, appsToProcess);
             populateEnvironments();
             fileSystemUtils.createEffectiveSetFolder(inputData.getSolutionBomDTO());
+            LogMemoryClas.logMemoryUsage("End of prepareProcessingEnv");
         } catch (Exception e) {
             throw new FileParseException("Error preparing data due to " + e.getMessage());
         }
@@ -120,6 +123,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void loadConsumerData() {
+        LogMemoryClas.logMemoryUsage("Start of loadConsumerData");
         Map<String, ConsumerDTO> consumerDTOMap = new LinkedHashMap<>();
         if (CollectionUtils.isNotEmpty(sharedData.getPcsspPaths())) {
             sharedData.getPcsspPaths().forEach(path -> {
@@ -130,7 +134,14 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                     }
                     ConsumerDTO consumerDTO = ConsumerDTO.builder().build();
                     List<Property> properties = new ArrayList<>();
-                    String jsonContent = new String(Files.readAllBytes(Paths.get(path)));
+                    StringBuilder contentBuilder = new StringBuilder();
+                    try (var reader = Files.newBufferedReader(Paths.get(path))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            contentBuilder.append(line).append(System.lineSeparator());
+                        }
+                    }
+                    String jsonContent = contentBuilder.toString();
                     JSONObject consumerObject = new JSONObject(jsonContent);
                     JSONArray requiredFieldArray = (JSONArray) consumerObject.get("required");
                     List<String> requiredFields = requiredFieldArray.toList().stream().map(Object::toString).collect(Collectors.toList());
@@ -153,9 +164,11 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             });
         }
         inputData.setConsumerDTOMap(consumerDTOMap);
+        LogMemoryClas.logMemoryUsage("End of loadConsumerData");
     }
 
     private void populateEnvironments() {
+        LogMemoryClas.logMemoryUsage("Start of populateEnvironments");
         Path basePath = Paths.get(sharedData.getEnvsPath());
         Map<String, List<NamespacePrefixDTO>> clusterMap = new HashMap<>();
         Set<String> foldersToSkip = Set.of("parameters", "credentials", "resource_profiles", "cloud-passport", "app-deployer");
@@ -185,7 +198,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         } catch (Exception e) {
             throw new FileParseException("Failure in reading input Directory", e);
         }
-
+        LogMemoryClas.logMemoryUsage("End of populateEnvironments");
     }
 
     private Map<String, Object> prepareEnvMap(Map<String, List<NamespacePrefixDTO>> clusterMap) {
@@ -211,6 +224,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void traverseSourceDirectory(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
+        LogMemoryClas.logMemoryUsage("Start of traverseSourceDirectory");
         Map<String, ProfileFullDto> profilesMap = new HashMap<>();
         Map<String, NamespaceDTO> namespaceMap = new HashMap<>();
         List<ApplicationLinkDTO> cloudApps = new ArrayList<>();
@@ -273,6 +287,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             throw new FileParseException("Failure in reading input Directory", e);
         }
         inputData.setCloudDTO(inputData.getCloudDTO().toBuilder().applications(cloudApps).build());
+        LogMemoryClas.logMemoryUsage("End of traverseSourceDirectory");
     }
 
     private void handleNamespaceYamlFile(Path file, Map<String, List<NamespacePrefixDTO>> clusterMap) {
@@ -377,6 +392,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void loadSDData(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
+        LogMemoryClas.logMemoryUsage("Start of loadSDData");
         Optional<String> sdPath = sharedData.getSdPath();
         if (sdPath.isPresent()) {
             SolutionDescriptorDTO solDescDTO = fileDataConverter.parseInputFile(SolutionDescriptorDTO.class, new File(sdPath.get()));
@@ -385,6 +401,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                     .collect(Collectors.toList());
 
             inputData.setSolutionBomDTO(Optional.ofNullable(SolutionBomDTO.builder().applications(applications).build()));
+            LogMemoryClas.logMemoryUsage("End of loadSDData");
         }
     }
 
@@ -405,6 +422,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void loadRegistryData() {
+        LogMemoryClas.logMemoryUsage("Start of loadRegistryData");
         Optional<String> registryPath = sharedData.getRegistryPath();
         if (registryPath.isPresent()) {
             Map<String, RegistryDTO> registries = fileDataConverter.parseInputFile(new TypeReference<HashMap<String, RegistryDTO>>() {
@@ -416,6 +434,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 registryMap.put(cleanKey, entry.getValue());
             }
             inputData.setRegistryDTOMap(registryMap);
+            LogMemoryClas.logMemoryUsage("End of loadRegistryData");
         }
     }
 

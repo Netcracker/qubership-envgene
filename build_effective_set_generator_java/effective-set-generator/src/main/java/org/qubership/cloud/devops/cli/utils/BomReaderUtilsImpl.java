@@ -26,6 +26,7 @@ import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.commons.pojo.bom.ApplicationBomDTO;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 import org.qubership.cloud.devops.commons.utils.BomReaderUtils;
+import org.qubership.cloud.devops.commons.utils.LogMemoryClas;
 
 @ApplicationScoped
 @Slf4j
@@ -41,9 +42,11 @@ public class BomReaderUtilsImpl implements BomReaderUtils {
     }
 
     public ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override) {
+        LogMemoryClas.logMemoryUsage("Start of getAppServicesWithProfiles");
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             return bomReaderUtilsImplV2.getAppServicesWithProfiles(appName, appFileRef, baseline, override);
         }
+        LogMemoryClas.logMemoryUsage("End of getAppServicesWithProfiles");
         return bomReaderUtilsImplV1.getAppServicesWithProfiles(appName, appFileRef, baseline, override);
     }
 

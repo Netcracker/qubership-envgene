@@ -44,6 +44,7 @@ import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
 import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
+import org.qubership.cloud.devops.commons.utils.LogMemoryClas;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
@@ -91,16 +92,17 @@ public class CliParameterParser {
     }
 
     public void generateEffectiveSet() throws IOException, IllegalArgumentException, DirectoryCreateException {
-        log_memory("Inside generateEffectiveSet");
+        LogMemoryClas.logMemoryUsage("Start of  generateEffectiveSet");
         checkIfEntitiesExist();
         String tenantName = inputData.getTenantDTO().getName();
         String cloudName = inputData.getCloudDTO().getName();
         Map<String, NamespaceDTO> namespaceDTOMap = inputData.getNamespaceDTOMap();
         processAndSaveParameters(inputData.getSolutionBomDTO(), tenantName, cloudName, namespaceDTOMap);
+        LogMemoryClas.logMemoryUsage("End of  generateEffectiveSet");
     }
 
     private void processAndSaveParameters(Optional<SolutionBomDTO> solutionDescriptor, String tenantName, String cloudName, Map<String,NamespaceDTO> namespaceDTOMap) throws IOException {
-        log_memory("Inside start of processAndSaveParameters");
+        LogMemoryClas.logMemoryUsage("Start of processAndSaveParameters");
         Map<String, Object> deployMappingFileData = new ConcurrentHashMap<>();
         Map<String, Object> runtimeMappingFileData = new ConcurrentHashMap<>();
         Map<String, Object> cleanupMappingFileData = new ConcurrentHashMap<>();
@@ -116,15 +118,15 @@ public class CliParameterParser {
                 }
             }
         });
-        log_memory("Inside pool before of streaming of processAndSaveParameters");
+        LogMemoryClas.logMemoryUsage("Inside before of streaming of processAndSaveParameters");
         List<SBApplicationDTO> applicationDTOList = solutionDescriptor.map(SolutionBomDTO::getApplications)
                 .orElseGet(Collections::emptyList);
 
-        // ForkJoinPool customPool = new ForkJoinPool(4);
-
-        // try {
-        //     customPool.submit(() ->
-                    applicationDTOList.stream()
+//        ForkJoinPool customPool = new ForkJoinPool(4);
+//
+//        try {
+//            customPool.submit(() ->
+                    applicationDTOList.parallelStream()
                         .forEach(app -> {
                             String namespaceName = app.getNamespace();
                             try {
@@ -149,6 +151,7 @@ public class CliParameterParser {
                                 deployMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), deployPostFixDir);
                                 runtimeMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), runtimePostFixDir);
                                 cleanupMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), cleanupPostFixDir);
+
                                 logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                             } catch (Exception e) {
                                 logDebug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
@@ -156,12 +159,12 @@ public class CliParameterParser {
                                 errorList.computeIfAbsent(app.getAppName() + ":" + namespaceName, k -> e.getMessage());
                             }
                         });
-        //             ).get();
-        // } catch (InterruptedException | ExecutionException e) {
-        //     throw new RuntimeException("Error while processing applications", e);
-        // } finally {
-        //     customPool.shutdown();
-        // }
+//                    ).get();
+//        } catch (InterruptedException | ExecutionException e) {
+//            throw new RuntimeException("Error while processing applications", e);
+//        } finally {
+//            customPool.shutdown();
+//        }
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap);
             if (solutionDescriptor.isPresent()) {
@@ -172,6 +175,7 @@ public class CliParameterParser {
         } else {
             fileDataConverter.writeToFile(new TreeMap<>(deployMappingFileData), sharedData.getOutputDir(), "mapping.yaml");
         }
+        LogMemoryClas.logMemoryUsage("End of processAndSaveParameters");
         if (!errorList.isEmpty()) {
             errorList.forEach((key, value) -> {
                 String[] valueSplits = key.split(":");
@@ -183,6 +187,7 @@ public class CliParameterParser {
     }
 
     private void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
+        LogMemoryClas.logMemoryUsage("Start of generateE2EOutput");
         ParameterBundle parameterBundle = parametersServiceV2.getCliE2EParameter(tenantName, cloudName);
         if (parameterBundle.getE2eParams() == null) {
             parameterBundle.setE2eParams(new HashMap<>());
@@ -194,9 +199,11 @@ public class CliParameterParser {
         createTopologyFiles(k8TokenMap);
         createE2EFiles(parameterBundle);
         createPipelineFiles(parameterBundle);
+        LogMemoryClas.logMemoryUsage("End of generateE2EOutput");
     }
 
     private void generateCleanupOutput(String tenantName, String cloudName, String namespace, String originalNamespace, Map<String, String> k8TokenMap) throws IOException {
+        LogMemoryClas.logMemoryUsage("start of generateCleanupOutput");
         ParameterBundle parameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespace, null, originalNamespace, k8TokenMap);
         if (parameterBundle.getCleanupParameters() == null) {
             parameterBundle.setCleanupParameters(new HashMap<>());
@@ -205,9 +212,11 @@ public class CliParameterParser {
             parameterBundle.setCleanupSecureParameters(new HashMap<>());
         }
         createCleanupFiles(parameterBundle, namespace);
+        LogMemoryClas.logMemoryUsage("End of generateCleanupOutput");
     }
 
     private void processBgDomainParameters() {
+        LogMemoryClas.logMemoryUsage("start of processBgDomainParameters");
         BgDomainEntityDTO bgDomainEntityDTO = inputData.getBgDomainEntityDTO();
         if (bgDomainEntityDTO != null && bgDomainEntityDTO.getControllerNamespace().getCredentials() != null) {
             CredentialUtils credentialUtils = Injector.getInstance().getDi().get(CredentialUtils.class);
@@ -218,15 +227,19 @@ public class CliParameterParser {
                 bgDomainEntityDTO.getControllerNamespace().setPassword(usernamePasswordCredentials.getPassword());
             }
         }
+        LogMemoryClas.logMemoryUsage("End of processBgDomainParameters");
     }
 
     private void createCleanupFiles(ParameterBundle parameterBundle, String namespace) throws IOException {
+        LogMemoryClas.logMemoryUsage("start of createCleanupFiles");
         String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespace);
         fileDataConverter.writeToFile(parameterBundle.getCleanupParameters(), cleanupDir, "parameters.yaml");
         fileDataConverter.writeToFile(parameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
+        LogMemoryClas.logMemoryUsage("End of createCleanupFiles");
     }
 
     private void createTopologyFiles(Map<String, String> k8TokenMap) throws IOException {
+        LogMemoryClas.logMemoryUsage("start of createTopologyFiles");
         Map<String, Object> topologyParams = new TreeMap<>();
         Map<String, Object> topologySecuredParams = new TreeMap<>();
         Map<String, Object> clusterParameterMap = getClusterMap();
@@ -243,6 +256,7 @@ public class CliParameterParser {
         String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
         fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
         fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
+        LogMemoryClas.logMemoryUsage("End of createTopologyFiles");
 
     }
 
@@ -251,15 +265,18 @@ public class CliParameterParser {
     }
 
     private Map<String, Object> getClusterMap() {
+        LogMemoryClas.logMemoryUsage("start of getClusterMap");
         Map<String, Object> clusterParameterMap = new TreeMap<>();
         clusterParameterMap.put("api_url", inputData.getCloudDTO().getApiUrl());
         clusterParameterMap.put("api_port", inputData.getCloudDTO().getApiPort());
         clusterParameterMap.put("public_url", inputData.getCloudDTO().getPublicUrl());
         clusterParameterMap.put("protocol", inputData.getCloudDTO().getProtocol());
+        LogMemoryClas.logMemoryUsage("End of getClusterMap");
         return clusterParameterMap;
     }
 
     private void createPipelineFiles(ParameterBundle parameterBundle) {
+        LogMemoryClas.logMemoryUsage("start of createPipelineFiles");
         String pipelineDir = String.format("%s/%s", sharedData.getOutputDir(), "pipeline");
         Map<String, ConsumerDTO> consumerDTOMap = inputData.getConsumerDTOMap();
         consumerDTOMap.forEach((key, value) -> {
@@ -291,16 +308,20 @@ public class CliParameterParser {
                 throw new CreateWorkDirException(e.getMessage());
             }
         });
+        LogMemoryClas.logMemoryUsage("end of createPipelineFiles");
     }
 
     private void createE2EFiles(ParameterBundle parameterBundle) throws IOException {
+        LogMemoryClas.logMemoryUsage("Start of createE2EFiles");
         String pipelineDir = String.format("%s/%s", sharedData.getOutputDir(), "pipeline");
         fileDataConverter.writeToFile(parameterBundle.getE2eParams(), pipelineDir, "parameters.yaml");
         fileDataConverter.writeToFile(parameterBundle.getSecuredE2eParams(), pipelineDir, "credentials.yaml");
+        LogMemoryClas.logMemoryUsage("End of createE2EFiles");
     }
 
     public void generateOutput(String tenantName, String cloudName, String namespaceName, String appName,
                                String appVersion, String appFileRef, Map<String, String> k8TokenMap) throws IOException {
+        LogMemoryClas.logMemoryUsage("Start of generateOutput");
         DeployerInputs deployerInputs = DeployerInputs.builder().appVersion(appVersion).appFileRef(appFileRef).build();
         String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
         String credentialsId = findDefaultCredentialsId(namespaceName);
@@ -311,6 +332,7 @@ public class CliParameterParser {
                 k8TokenMap.put(originalNamespace, secCred.getSecret());
             }
         }
+        LogMemoryClas.logMemoryUsage("Between of generateOutput");
         ParameterBundle parameterBundle = null;
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             parameterBundle = parametersServiceV2.getCliParameter(tenantName,
@@ -332,14 +354,19 @@ public class CliParameterParser {
 
         }
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
+        LogMemoryClas.logMemoryUsage("End of generateOutput");
     }
 
     private String findDefaultCredentialsId(String namespace) {
-        return !StringUtils.isEmpty(inputData.getNamespaceDTOMap().get(namespace).getCredentialsId()) ?
+        LogMemoryClas.logMemoryUsage("Start of findDefaultCredentialsId");
+        String val= !StringUtils.isEmpty(inputData.getNamespaceDTOMap().get(namespace).getCredentialsId()) ?
                 inputData.getNamespaceDTOMap().get(namespace).getCredentialsId() : inputData.getCloudDTO().getDefaultCredentialsId();
+        LogMemoryClas.logMemoryUsage("End of findDefaultCredentialsId");
+        return val;
     }
 
     private void createFiles(String namespaceName, String appName, ParameterBundle parameterBundle, String originalNamespace) throws IOException {
+        LogMemoryClas.logMemoryUsage("Start of createFiles");
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             Path appChartPath = null;
             if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
@@ -375,6 +402,7 @@ public class CliParameterParser {
             //runtime parameters
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), runtimeDir, "parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
+            LogMemoryClas.logMemoryUsage("End of createFiles");
         } else {
             String appDirectory = String.format("%s/%s/%s", sharedData.getOutputDir(), namespaceName, appName);
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), appDirectory, "deployment-parameters.yaml");
@@ -390,17 +418,6 @@ public class CliParameterParser {
         if (inputData.getCloudDTO() == null) {
             throw new NotFoundException(String.format(ENTITY_NOT_FOUND, "Cloud"));
         }
-    }
-
-    private void log_memory(String place) {
-        Runtime runtime = Runtime.getRuntime();
-        long usedBytes = runtime.totalMemory() - runtime.freeMemory();
-        long maxBytes = runtime.maxMemory();
-        logInfo(String.format("[MEM] %s BEFORE STREAM: used=%.2f MB, max=%.2f MB",
-                place,
-                usedBytes / (1024.0 * 1024.0),
-                maxBytes / (1024.0 * 1024.0)));
-
     }
 
 }

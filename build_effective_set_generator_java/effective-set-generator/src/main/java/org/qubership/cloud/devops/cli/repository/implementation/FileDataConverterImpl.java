@@ -29,6 +29,7 @@ import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverte
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.qubership.cloud.devops.commons.utils.LogMemoryClas;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Node;
@@ -58,20 +59,24 @@ public class FileDataConverterImpl implements FileDataConverter {
 
     @Override
     public <T> T parseInputFile(Class<T> type, File file) {
+        LogMemoryClas.logMemoryUsage("Start of parseInputFile");
         try (InputStream inputStream = new FileInputStream(file)) {
             return objectMapper.readValue(inputStream, type);
         } catch (IOException | IllegalArgumentException e) {
             logError(String.format(ExceptionMessage.FILE_READ_ERROR, file.getAbsolutePath(), e.getMessage()));
             return null;
+        } finally {
+            LogMemoryClas.logMemoryUsage("End of parseInputFile");
         }
     }
 
     @Override
     public Bom parseSbomFile(File file) {
         try {
+            LogMemoryClas.logMemoryUsage("Start of parseSbomFile");
             ObjectMapper bomMapper = new ObjectMapper();
             bomMapper.addMixIn(Bom.class, BomMixin.class);
-            return bomMapper.readValue(file, Bom.class);
+            return  bomMapper.readValue(file, Bom.class);
         } catch (IOException | IllegalArgumentException e) {
             if (file.getName().startsWith(CLEANUPER) &&
                     e instanceof FileNotFoundException) {
@@ -79,28 +84,35 @@ public class FileDataConverterImpl implements FileDataConverter {
                 return null;
             }
             throw new FileParseException(String.format(ExceptionMessage.FILE_READ_ERROR, file.getAbsolutePath(), e.getMessage()));
+        } finally {
+            LogMemoryClas.logMemoryUsage("End of parseSbomFile");
         }
     }
 
 
     @Override
     public <T> T parseInputFile(TypeReference<T> typeReference, File file) {
+        LogMemoryClas.logMemoryUsage("Start of parseInputFile2");
         try (InputStream inputStream = new FileInputStream(file)) {
             return objectMapper.readValue(inputStream, typeReference);
         } catch (IOException | IllegalArgumentException e) {
             logError(String.format(ExceptionMessage.FILE_READ_ERROR, file.getAbsolutePath(), e.getMessage()));
             return null;
+        } finally {
+            LogMemoryClas.logMemoryUsage("End of parseInputFile2");
         }
     }
 
     @Override
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
+        LogMemoryClas.logMemoryUsage("Start of writeToFile");
         File file = fileSystemUtils.getFileFromGivenPath(args);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             if (params != null && !params.isEmpty()) {
                 getYamlObject().dump(params, writer);
             }
         }
+        LogMemoryClas.logMemoryUsage("End of writeToFile");
     }
 
 
@@ -138,19 +150,25 @@ public class FileDataConverterImpl implements FileDataConverter {
 
     public <T> T decodeAndParse(String encodedText, TypeReference<T> typeReference) {
         try {
+            LogMemoryClas.logMemoryUsage("Start of decodeAndParse");
             byte[] decoded = Base64.getDecoder().decode(encodedText);
             return objectMapper.readValue(decoded, typeReference);
         } catch (IOException e) {
             throw new JsonParseException("Failed to parse encoded content", e);
+        } finally {
+            LogMemoryClas.logMemoryUsage("End of decodeAndParse");
         }
     }
 
     public <T> T decodeAndParse(String encodedText, Class<T> clazz) {
         try {
+            LogMemoryClas.logMemoryUsage("Start of decodeAndParse2");
             byte[] decoded = Base64.getDecoder().decode(encodedText);
             return objectMapper.readValue(decoded, clazz);
         } catch (IOException e) {
             throw new JsonParseException("Failed to parse encoded content", e);
+        } finally {
+            LogMemoryClas.logMemoryUsage("End of decodeAndParse2");
         }
     }
 

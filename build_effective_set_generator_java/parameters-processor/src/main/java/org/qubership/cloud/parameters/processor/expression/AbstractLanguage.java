@@ -16,6 +16,7 @@
 
 package org.qubership.cloud.parameters.processor.expression;
 
+import org.qubership.cloud.devops.commons.utils.LogMemoryClas;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.parameters.processor.expression.binding.Binding;
 import org.qubership.cloud.parameters.processor.expression.binding.CloudMap;
@@ -85,6 +86,7 @@ public abstract class AbstractLanguage implements Language {
     }
 
     protected void processNamespaceApp(Map<String, Parameter> map) {
+        LogMemoryClas.logMemoryUsage("Start of processNamespaceApp");
         process(map, function -> {
             function.accept("tenant");
 
@@ -98,6 +100,7 @@ public abstract class AbstractLanguage implements Language {
 
             function.accept("tenant.cloud.namespace.app");
         });
+        LogMemoryClas.logMemoryUsage("End of processNamespaceApp");
     }
 
     protected void processNamespace(Map<String, Parameter> map) {

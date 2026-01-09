@@ -30,6 +30,7 @@ import groovy.text.StreamingTemplateEngine;
 import groovy.text.Template;
 import groovy.text.TemplateEngine;
 import lombok.extern.slf4j.Slf4j;
+import org.qubership.cloud.devops.commons.utils.LogMemoryClas;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
 import org.qubership.cloud.devops.gstringtojinjavatranslator.jinjava.*;
@@ -354,19 +355,29 @@ public class ExpressionLanguage extends AbstractLanguage {
     }
 
     protected Map<String, Parameter> processMap(String mapName) {
-        return processMap(binding.setDefault(mapName));
+        LogMemoryClas.logMemoryUsage("start of  processMap");
+        Map<String, Parameter> val =  processMap(binding.setDefault(mapName));
+        LogMemoryClas.logMemoryUsage("end of  processMap");
+        return val;
     }
 
     @Override
     public Map<String, Parameter> processDeployment() {
+        LogMemoryClas.logMemoryUsage("Start of processDeployment");
         Map<String, Parameter> result = new MergeMap();
 
         processNamespaceApp(result);
+        LogMemoryClas.logMemoryUsage("Bw1 of processDeployment");
         result.putAll(processMap(""));
+        LogMemoryClas.logMemoryUsage("End of Bw1 of processDeployment");
 
 
         insecure = false;
-        return processMap(result, result, true);
+        LogMemoryClas.logMemoryUsage("Bw2 of processDeployment");
+        Map<String, Parameter> vals = processMap(result, result, true);
+        LogMemoryClas.logMemoryUsage("End of Bw2 of processDeployment");
+        LogMemoryClas.logMemoryUsage("End of processDeployment");
+        return vals;
     }
 
     @Override
@@ -411,11 +422,14 @@ public class ExpressionLanguage extends AbstractLanguage {
     }
 
     public Map<String, Parameter> processConfigServerAppsInternal() {
+        LogMemoryClas.logMemoryUsage("Start of processConfigServerAppsInternal");
         Map<String, Parameter> result = new MergeMap();
 
         processNamespaceAppConfigServer(result);
         insecure = false;
-        return processMap(result, result, true);
+        Map<String, Parameter>  vals =  processMap(result, result, true);
+        LogMemoryClas.logMemoryUsage("Start of processConfigServerAppsInternal");
+        return vals;
     }
 
     @Override

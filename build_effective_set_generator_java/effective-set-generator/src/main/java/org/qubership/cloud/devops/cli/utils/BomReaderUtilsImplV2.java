@@ -38,6 +38,7 @@ import org.qubership.cloud.devops.commons.pojo.registries.dto.RegistrySummaryDTO
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
 import org.qubership.cloud.devops.commons.service.interfaces.ProfileService;
 import org.qubership.cloud.devops.commons.service.interfaces.RegistryConfigurationService;
+import org.qubership.cloud.devops.commons.utils.LogMemoryClas;
 import org.qubership.cloud.devops.commons.utils.ServiceArtifactType;
 
 import java.io.File;
@@ -68,6 +69,7 @@ public class BomReaderUtilsImplV2 {
     }
 
     public ApplicationBomDTO getAppServicesWithProfiles(String appName, String appFileRef, String baseline, Profile override) {
+        LogMemoryClas.logMemoryUsage("Start of getAppServicesWithProfiles");
         Bom bomContent = fileDataConverter.parseSbomFile(new File(appFileRef));
         if (bomContent == null) {
             return null;
@@ -102,6 +104,7 @@ public class BomReaderUtilsImplV2 {
                     applicationBomDto.setAppChartName(entitiesMap.getAppChartName());
                     applicationBomDto.setDeployParams(entitiesMap.getDeployParams());
                 }
+                LogMemoryClas.logMemoryUsage("End of getAppServicesWithProfiles");
                 return applicationBomDto;
             }
         } catch (Exception e) {

@@ -24,6 +24,7 @@ import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.repository.implementation.FileDataRepositoryImpl;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.qubership.cloud.devops.commons.utils.LogMemoryClas;
 import picocli.CommandLine;
 
 import java.time.Duration;
@@ -56,6 +57,7 @@ public class CmdbCli implements Callable<Integer> {
     public Integer call() {
         initializeParams();
         try {
+            LogMemoryClas.logMemoryUsage("Start of initial call");
             Instant start = Instant.now();
             logInfo("Starting effective set generation");
             fileDataRepository.prepareProcessingEnv();
@@ -64,6 +66,7 @@ public class CmdbCli implements Callable<Integer> {
             Instant end = Instant.now();
             Duration timeElapsed = Duration.between(start, end);
             logInfo("Total Time taken: " + timeElapsed.toMillis() + " milliseconds");
+            LogMemoryClas.logMemoryUsage("End of initial call");
             return 0;
         } catch (Exception e) {
             logError(String.format(EFFECTIVE_SET_FAILED, e.getMessage()));
