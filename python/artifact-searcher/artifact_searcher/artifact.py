@@ -329,7 +329,7 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         from qubership_pipelines_common_library.v1.maven_client import Artifact as MavenArtifact
     except ImportError as e:
         logger.error(f"V2 fallback for '{app.name}': Missing required libraries - {e}")
-        return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier=""
+        return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
 
     auth_config = CloudAuthHelper.resolve_auth_config(app.registry, "maven")
     if not auth_config:
