@@ -11,10 +11,11 @@ from envgenehelper import unpack_archive, get_cred_config
 
 artifact_dest = f"{tempfile.gettempdir()}/artifact.zip"
 build_env_path = "/build_env"
+origin_ns_template_path = "/build_env_origin_ns"
+peer_ns_template_path = "/build_env_peer_ns"
 
 
-def parse_artifact_appver(env_definition: dict) -> [str, str]:
-    artifact_appver = env_definition['envTemplate'].get('artifact', '')
+def parse_artifact_appver(artifact_appver: str) -> list[str]:
     logger.info(f"Environment template artifact version: {artifact_appver}")
     return artifact_appver.split(':')
 
@@ -54,8 +55,8 @@ def extract_snapshot_version(url: str, snapshot_version: str) -> str:
 
 
 # logic downloading template by artifact definition
-def download_artifact_new_logic(env_definition: dict) -> str:
-    app_name, app_version = parse_artifact_appver(env_definition)
+def download_artifact_new_logic(artifact_appver: str, target_path: str) -> str:
+    app_name, app_version = parse_artifact_appver(artifact_appver)
     app_def = load_artifact_definition(app_name)
     cred = get_registry_creds(app_def.registry)
     template_url = None
@@ -90,7 +91,7 @@ def download_artifact_new_logic(env_definition: dict) -> str:
         raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={version}")
     logger.info(f"Environment template url has been resolved: {template_url}")
     artifact.download(template_url, artifact_dest, cred)
-    unpack_archive(artifact_dest, build_env_path)
+    unpack_archive(artifact_dest, target_path)
     return resolved_version
 
 
@@ -142,16 +143,28 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
     return resolved_version
 
 
-def process_env_template() -> str:
+def process_env_template() -> tuple[str, str | None, str | None]:
     project_dir = getenv_with_error("CI_PROJECT_DIR")
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
     env_dir = Path(f"{project_dir}/environments/{cluster}/{environment}")
     env_definition = getEnvDefinition(env_dir)
+    env_template = env_definition.get('envTemplate', {})
+    bg_artifacts = env_template.get('BgArtifacts', {})
 
-    if 'artifact' in env_definition.get('envTemplate', {}):
+    if 'artifact' in env_template:
         logger.info("Use template downloading new logic")
-        return download_artifact_new_logic(env_definition)
+        template_version = download_artifact_new_logic(env_template.get('artifact', ''), build_env_path)
     else:
         logger.info("Use template downloading old logic")
-        return download_artifact_old_logic(env_definition, project_dir)
+        template_version = download_artifact_old_logic(env_definition, project_dir)
+
+    def download_optional(artifact: str | None, target_path: str) -> str | None:
+        return download_artifact_new_logic(artifact, target_path) if artifact else None
+
+    return (
+        template_version,
+        download_optional(bg_artifacts.get('origin', None), origin_ns_template_path),
+        download_optional(bg_artifacts.get('peer', None), peer_ns_template_path),
+    )
+

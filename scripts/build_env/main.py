@@ -319,7 +319,8 @@ if __name__ == "__main__":
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
     base_dir = getenv_with_error('CI_PROJECT_DIR')
-    template_version = process_env_template()
+    # tv - template version
+    common_tv, origin_ns_tv, peer_ns_tv = process_env_template()
     g_templates_dir = "/build_env/templates"
     g_all_instances_dir = f"{base_dir}/environments"
     g_output_dir = f"{base_dir}/environments"
@@ -327,5 +328,5 @@ if __name__ == "__main__":
 
     decrypt_all_cred_files_for_env()
     render_environment(environment, cluster, g_templates_dir, g_all_instances_dir, g_output_dir,
-                       template_version, g_work_dir)
+                       common_tv, g_work_dir)
     encrypt_all_cred_files_for_env()
