@@ -382,7 +382,7 @@ async def test_check_artifact_async_with_classifier(monkeypatch):
 
     async def mock_v1_async(*args, **kwargs):
         nonlocal classifier_passed
-        classifier_passed = kwargs.get('classifier') if kwargs else args[3] if len(args) > 3 else ""
+        classifier_passed = kwargs.get('classifier', args[4] if len(args) > 4 else "")
         return ("http://url", ("repo", "pointer"))
 
     monkeypatch.setattr("artifact_searcher.artifact._check_artifact_v1_async", mock_v1_async)
@@ -413,11 +413,21 @@ def test_parse_snapshot_version_with_matching_extension():
     </metadata>
     """
     
+    dummy_registry = models.Registry(
+        name="dummy",
+        maven_config=models.MavenConfig(
+            target_snapshot="snapshots",
+            target_staging="staging",
+            target_release="releases",
+            repository_domain_name="http://dummy.repo/"
+        ),
+        docker_config=models.DockerConfig()
+    )
     app = models.Application(
         name="test-app",
         artifact_id="test-artifact",
         group_id="com.test",
-        registry=None,
+        registry=dummy_registry,
         solution_descriptor=False,
     )
     
@@ -447,11 +457,21 @@ def test_parse_snapshot_version_with_classifier():
     </metadata>
     """
     
+    dummy_registry = models.Registry(
+        name="dummy",
+        maven_config=models.MavenConfig(
+            target_snapshot="snapshots",
+            target_staging="staging",
+            target_release="releases",
+            repository_domain_name="http://dummy.repo/"
+        ),
+        docker_config=models.DockerConfig()
+    )
     app = models.Application(
         name="test-app",
         artifact_id="test-artifact",
         group_id="com.test",
-        registry=None,
+        registry=dummy_registry,
         solution_descriptor=False,
     )
     
@@ -476,11 +496,21 @@ def test_parse_snapshot_version_no_matching_version():
     </metadata>
     """
     
+    dummy_registry = models.Registry(
+        name="dummy",
+        maven_config=models.MavenConfig(
+            target_snapshot="snapshots",
+            target_staging="staging",
+            target_release="releases",
+            repository_domain_name="http://dummy.repo/"
+        ),
+        docker_config=models.DockerConfig()
+    )
     app = models.Application(
         name="test-app",
         artifact_id="test-artifact",
         group_id="com.test",
-        registry=None,
+        registry=dummy_registry,
         solution_descriptor=False,
     )
     
@@ -501,11 +531,21 @@ def test_parse_snapshot_version_empty_snapshot_versions():
     </metadata>
     """
     
+    dummy_registry = models.Registry(
+        name="dummy",
+        maven_config=models.MavenConfig(
+            target_snapshot="snapshots",
+            target_staging="staging",
+            target_release="releases",
+            repository_domain_name="http://dummy.repo/"
+        ),
+        docker_config=models.DockerConfig()
+    )
     app = models.Application(
         name="test-app",
         artifact_id="test-artifact",
         group_id="com.test",
-        registry=None,
+        registry=dummy_registry,
         solution_descriptor=False,
     )
     
