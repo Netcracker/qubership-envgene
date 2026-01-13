@@ -8,6 +8,7 @@ FROM python:3.12-alpine3.19 AS build
 # Install build dependencies
 # checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
 # hadolint ignore=DL3018
+# hadolint ignore=DL3059
 RUN apk add --no-cache \
     gcc \
     musl-dev \

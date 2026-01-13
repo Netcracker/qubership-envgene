@@ -1,4 +1,7 @@
 #STAGE 1: CLI
+# checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
+# hadolint ignore=DL3018
+
 FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1 AS cli
 
 ARG JAVA_PACKAGE=java-17-openjdk-headless
