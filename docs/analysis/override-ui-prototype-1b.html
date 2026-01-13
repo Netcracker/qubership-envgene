@@ -1,0 +1,2225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EnvGene UI - Option 1B: Extended Levels</title>
+    
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    
+    <!-- js-yaml -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    
+    <!-- CodeMirror JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/yaml/yaml.min.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .selector-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            position: relative;
+        }
+
+        .selector-group label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #666;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .help-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: #999;
+            color: white;
+            font-size: 10px;
+            font-weight: bold;
+            cursor: help;
+            line-height: 1;
+            transition: background-color 0.2s ease;
+        }
+
+        .help-icon:hover {
+            background-color: #666;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            line-height: 1.4;
+            max-width: 250px;
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .tooltip.show {
+            opacity: 1;
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            border: 6px solid transparent;
+        }
+
+        .tooltip.top::after {
+            bottom: -12px;
+            left: 20px;
+            border-top-color: #333;
+        }
+
+        .tooltip.bottom::after {
+            top: -12px;
+            left: 20px;
+            border-bottom-color: #333;
+        }
+
+        .tooltip.left::after {
+            right: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-left-color: #333;
+        }
+
+        .tooltip.right::after {
+            left: -12px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-right-color: #333;
+        }
+
+        .selector-group select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            background-color: #fff;
+            color: #999;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .selector-group select:hover {
+            border-color: #999;
+        }
+
+        .selector-group select:focus {
+            outline: none;
+            border-color: #666;
+            color: #000;
+        }
+
+        .selector-group select.has-value {
+            color: #000;
+        }
+
+        .selector-group select option {
+            color: #333;
+        }
+
+        .selector-group select option:disabled {
+            color: #999;
+        }
+
+        .selector-group select:disabled {
+            background-color: #f5f5f5;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .commit-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .commit-message-input {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 13px;
+            min-width: 300px;
+            transition: border-color 0.3s ease;
+        }
+
+        .commit-message-input:focus {
+            outline: none;
+            border-color: #666;
+        }
+
+        .commit-message-input.invalid {
+            border-color: #f44336;
+            background-color: #ffebee;
+        }
+
+        .commit-message-input.valid {
+            border-color: #4CAF50;
+        }
+
+        .commit-message-error {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            padding: 4px 8px;
+            background-color: #f44336;
+            color: white;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            z-index: 1000;
+            display: none;
+        }
+
+        .commit-message-error.show {
+            display: block;
+        }
+
+        .commit-button {
+            padding: 6px 16px;
+            background-color: #9e9e9e;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+        }
+
+        .commit-button.has-changes {
+            background-color: #4CAF50;
+        }
+
+        .commit-button.has-changes:hover {
+            background-color: #45a049;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transform: translateY(-1px);
+        }
+
+        .commit-button:active {
+            transform: translateY(0);
+        }
+
+        .commit-button:disabled {
+            background-color: #9e9e9e;
+            cursor: not-allowed;
+            transform: none;
+            opacity: 0.7;
+        }
+
+        .commit-button .spinner {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        .commit-button.loading .spinner {
+            display: block;
+        }
+
+        .commit-button.loading .button-text {
+            opacity: 0.7;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Scope Bar с селекторами */
+        .scope-bar {
+            background-color: #fff;
+            padding: 12px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .scope-bar-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            flex: 1;
+        }
+
+        .scope-bar-selectors {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .scope-bar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .scope-item {
+            padding: 4px 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            display: flex;
+            align-items: center;
+        }
+
+        .scope-separator {
+            color: #999;
+            font-size: 14px;
+        }
+
+        /* Основной контент */
+        .content-area {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #fafafa;
+        }
+
+        .overrides-section {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+
+        .section-header {
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .section-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .effective-set-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin: 15px 0 0 0;
+            padding: 8px 12px;
+            background-color: transparent;
+            color: #1976d2;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .effective-set-link:hover {
+            background-color: #f5f5f5;
+            color: #1565c0;
+            text-decoration: none;
+        }
+
+        .overrides-block {
+            margin-top: 15px;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            margin-bottom: 15px;
+        }
+
+        .tabs-header {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 0;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background-color: #f5f5f5;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            top: 2px;
+            display: flex;
+            align-items: center;
+        }
+
+        .tab-button .help-icon {
+            margin-left: 6px;
+        }
+
+        .tab-button:hover {
+            background-color: #e8e8e8;
+            color: #333;
+        }
+
+        .tab-button.active {
+            background-color: #fff;
+            color: #000;
+            border-bottom-color: #4CAF50;
+        }
+
+        .tab-content {
+            display: none;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            overflow: hidden;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .context-section {
+            margin: 0;
+            border: none;
+            border-radius: 0;
+        }
+
+        .context-header {
+            background-color: #f5f5f5;
+            padding: 8px 12px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+
+        .context-content {
+            padding: 12px;
+        }
+
+        .yaml-editor-wrapper {
+            position: relative;
+            border: 2px solid #ddd;
+            border-radius: 4px;
+            overflow: auto;
+            resize: vertical;
+            min-height: 200px;
+            max-height: 800px;
+        }
+
+        .yaml-editor-wrapper.valid {
+            border-color: #4CAF50;
+        }
+
+        .yaml-editor-wrapper.invalid {
+            border-color: #f44336;
+        }
+
+        .yaml-editor-wrapper .CodeMirror {
+            height: 400px;
+            font-size: 13px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+        }
+
+        .yaml-editor-wrapper .CodeMirror-scroll {
+            min-height: 200px;
+        }
+
+        /* Визуальный индикатор для изменения размера */
+        .yaml-editor-wrapper::after {
+            content: '';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 16px;
+            height: 16px;
+            background: linear-gradient(-45deg, transparent 30%, #999 30%, #999 35%, transparent 35%, transparent 65%, #999 65%, #999 70%, transparent 70%);
+            cursor: ns-resize;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .yaml-editor-wrapper:hover::after {
+            opacity: 1;
+        }
+
+        .validation-status {
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 500;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: auto;
+        }
+
+        .validation-status.valid {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .validation-status.invalid {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .validation-status::before {
+            content: '';
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .validation-status.valid::before {
+            background-color: #4CAF50;
+        }
+
+        .validation-status.invalid::before {
+            background-color: #f44336;
+        }
+
+        .error-message {
+            color: #c62828;
+            font-size: 12px;
+            margin-top: 4px;
+            padding-left: 20px;
+        }
+
+        /* Модальное окно для эффективного сета */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 1200px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #666;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background-color: #f5f5f5;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .effective-set-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #e0e0e0;
+            margin-bottom: 15px;
+        }
+
+        .effective-set-tab {
+            padding: 10px 20px;
+            background-color: #f5f5f5;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-size: 14px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            top: 2px;
+        }
+
+        .effective-set-tab:hover {
+            background-color: #e8e8e8;
+            color: #333;
+        }
+
+        .effective-set-tab.active {
+            background-color: #fff;
+            color: #000;
+            border-bottom-color: #1976d2;
+        }
+
+        .effective-set-content {
+            display: none;
+        }
+
+        .effective-set-content.active {
+            display: block;
+        }
+
+        .effective-set-yaml {
+            background-color: #fafafa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-x: auto;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .effective-set-button {
+            transition: background-color 0.2s ease;
+        }
+
+        .effective-set-button:hover {
+            background-color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Scope Bar с селекторами -->
+        <div class="scope-bar" id="scope-bar">
+            <div class="scope-bar-left">
+                <div class="scope-bar-selectors">
+                    <div class="selector-group">
+                        <label>
+                            Environment
+                            <span class="help-icon" data-tooltip="Select the target environment. If only environment is selected, parameters apply to all namespaces in the environment.">?</span>
+                        </label>
+                        <select id="environment-select">
+                            <option value="cluster-1/env-1">cluster-1/env-1</option>
+                            <option value="cluster-2/env-2">cluster-2/env-2</option>
+                            <option value="cluster-3/env-3">cluster-3/env-3</option>
+                            <option value="cluster-3/env-4">cluster-3/env-4</option>
+                        </select>
+                    </div>
+                    <div class="selector-group" id="namespace-selector-group">
+                        <label>
+                            Namespace
+                            <span class="help-icon" data-tooltip="Optional: Select a namespace to apply parameters to a specific namespace. If not selected, parameters apply to all namespaces in the environment.">?</span>
+                        </label>
+                        <select id="namespace-select">
+                            <option value="">-- All namespaces --</option>
+                            <option value="ns-1">ns-1</option>
+                            <option value="ns-2">ns-2</option>
+                            <option value="ns-3">ns-3</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="scope-bar-right">
+                <a href="https://github.com/Netcracker/qubership-envgene" target="_blank" style="color: #1976d2; text-decoration: none; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; margin-right: 15px; padding: 6px 10px; border-radius: 4px; transition: background-color 0.2s ease; font-weight: 500;" onmouseover="this.style.backgroundColor='#f5f5f5'" onmouseout="this.style.backgroundColor='transparent'">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>Docs</span>
+                </a>
+                <div class="commit-section">
+                    <div style="position: relative;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <input 
+                                type="text" 
+                                class="commit-message-input" 
+                                id="commit-message" 
+                                placeholder="Commit message"
+                            />
+                            <span class="help-icon" data-tooltip="Enter a commit message with a ticket ID (e.g., ACME-123). This helps track changes and link them to your work items.">?</span>
+                        </div>
+                        <div class="commit-message-error" id="commit-message-error">
+                            Please add a ticket ID to your commit message (for example, ACME-123)
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <button class="commit-button" id="commit-btn">
+                            <span class="spinner"></span>
+                            <span class="button-text">Commit</span>
+                        </button>
+                        <span class="help-icon" data-tooltip="Save your parameter changes to the repository. Make sure your commit message includes a ticket ID (e.g., ACME-123).">?</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Основной контент -->
+        <div class="content-area">
+                <div class="overrides-section">
+                    <div class="section-header">
+                    </div>
+
+                    <div class="overrides-block">
+                        <div class="tabs-container">
+                            <div class="tabs-header">
+                                <button class="tab-button active" data-tab="deployment">
+                                    deployment
+                                    <span class="help-icon" data-tooltip="Configure parameters used during application deployment. These settings control how your app is installed and started." style="margin-left: 6px;">?</span>
+                                </button>
+                                <button class="tab-button" data-tab="runtime">
+                                    runtime
+                                    <span class="help-icon" data-tooltip="Set parameters that your application uses while running. These values are available to your app at runtime." style="margin-left: 6px;">?</span>
+                                </button>
+                                <button class="tab-button" data-tab="pipeline">
+                                    pipeline
+                                    <span class="help-icon" data-tooltip="Configure CI/CD pipeline parameters. These apply to the entire environment, not individual applications." style="margin-left: 6px;">?</span>
+                                </button>
+                            </div>
+
+                            <!-- Deployment Tab -->
+                            <div class="tab-content active" id="deployment-tab">
+                                <div class="context-section">
+                                    <div class="context-header">
+                                        <div class="validation-status" id="deployment-validation">
+                                            <span>Valid YAML</span>
+                                        </div>
+                                    </div>
+                                    <div class="context-content">
+                                        <div class="yaml-editor-wrapper" id="deployment-editor-wrapper">
+                                            <textarea id="deployment-yaml"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Runtime Tab -->
+                            <div class="tab-content" id="runtime-tab">
+                                <div class="context-section">
+                                    <div class="context-header">
+                                        <div class="validation-status" id="runtime-validation">
+                                            <span>Valid YAML</span>
+                                        </div>
+                                    </div>
+                                    <div class="context-content">
+                                        <div class="yaml-editor-wrapper" id="runtime-editor-wrapper">
+                                            <textarea id="runtime-yaml"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pipeline Tab -->
+                            <div class="tab-content" id="pipeline-tab">
+                                <div class="context-section">
+                                    <div class="context-header">
+                                        <div class="validation-status" id="pipeline-validation">
+                                            <span>Valid YAML</span>
+                                        </div>
+                                    </div>
+                                    <div class="context-content">
+                                        <div class="yaml-editor-wrapper" id="pipeline-editor-wrapper">
+                                            <textarea id="pipeline-yaml"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                            <button class="effective-set-button" id="show-effective-set-btn" style="padding: 8px 12px; background-color: #1976d2; color: white; border: none; border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color 0.2s ease;">
+                                Show Effective Set
+                            </button>
+                            <span class="help-icon" data-tooltip="View the effective parameter set with merged values from ParamSets applied to the base configuration.">?</span>
+                            <a href="#" class="effective-set-link" id="effective-set-link" target="_blank">
+                                View Environment in Git
+                            </a>
+                            <span class="help-icon" data-tooltip="Open the environment configuration in Git to see all files and settings for this environment.">?</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Модальное окно для эффективного сета -->
+    <div class="modal-overlay" id="effective-set-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div>
+                    <div class="modal-title">Effective Set</div>
+                    <div class="modal-date" id="effective-set-date" style="font-size: 12px; color: #666; margin-top: 4px;"></div>
+                </div>
+                <button class="modal-close" id="close-effective-set-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="effective-set-tabs">
+                    <button class="effective-set-tab active" data-tab="deployment-effective">deployment</button>
+                    <button class="effective-set-tab" data-tab="runtime-effective">runtime</button>
+                    <button class="effective-set-tab" data-tab="pipeline-effective">pipeline</button>
+                </div>
+                <div class="effective-set-content active" id="deployment-effective-content">
+                    <div class="effective-set-selectors" style="margin-bottom: 15px; display: flex; gap: 15px; align-items: flex-end;">
+                        <div class="selector-group" style="min-width: 150px;">
+                            <label style="font-size: 11px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 3px;">Namespace</label>
+                            <select id="effective-set-ns-select" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; width: 100%;">
+                                <option value="">-- Select --</option>
+                                <option value="ns-1">ns-1</option>
+                                <option value="ns-2">ns-2</option>
+                                <option value="ns-3">ns-3</option>
+                            </select>
+                        </div>
+                        <div class="selector-group" style="min-width: 150px;">
+                            <label style="font-size: 11px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 3px;">Application</label>
+                            <select id="effective-set-app-select" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; width: 100%;" disabled>
+                                <option value="">-- Select NS first --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="effective-set-yaml" id="deployment-effective-yaml"></div>
+                </div>
+                <div class="effective-set-content" id="runtime-effective-content">
+                    <div class="effective-set-selectors" style="margin-bottom: 15px; display: flex; gap: 15px; align-items: flex-end;">
+                        <div class="selector-group" style="min-width: 150px;">
+                            <label style="font-size: 11px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 3px;">Namespace</label>
+                            <select id="effective-set-runtime-ns-select" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; width: 100%;">
+                                <option value="">-- Select --</option>
+                                <option value="ns-1">ns-1</option>
+                                <option value="ns-2">ns-2</option>
+                                <option value="ns-3">ns-3</option>
+                            </select>
+                        </div>
+                        <div class="selector-group" style="min-width: 150px;">
+                            <label style="font-size: 11px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 3px;">Application</label>
+                            <select id="effective-set-runtime-app-select" style="padding: 6px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 13px; width: 100%;" disabled>
+                                <option value="">-- Select NS first --</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="effective-set-yaml" id="runtime-effective-yaml"></div>
+                </div>
+                <div class="effective-set-content" id="pipeline-effective-content">
+                    <div class="effective-set-yaml" id="pipeline-effective-yaml"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Mock данные для Option 1B - структура с поддержкой уровней
+        const mockData = {
+            repositories: ['repo-1', 'repo-2', 'repo-3'],
+            environments: ['cluster-1/env-1', 'cluster-2/env-2', 'cluster-3/env-3', 'cluster-3/env-4'],
+            namespaces: ['ns-1', 'ns-2', 'ns-3'],
+            // Структура: effectiveSetOverrides[context][level][key] = ParamSet YAML
+            effectiveSetOverrides: {
+                deployment: {
+                    environment: {
+                        'cluster-1/env-1': `name: deploy-ui-override
+parameters:
+  env-param-1: value
+  env-param-2: value2
+applications: []`,
+                        'cluster-2/env-2': `name: deploy-ui-override
+parameters:
+  env-param-1: value3
+applications: []`
+                    },
+                    namespace: {
+                        'cluster-1/env-1/ns-1': `name: ns-1-deploy-ui-override
+parameters:
+  ns-param-1: value
+  ns-param-2: value2
+applications:
+  - appName: app-1
+    parameters:
+      app-param-1: value
+      app-param-2: value2
+  - appName: app-2
+    parameters:
+      app-param-1: value3`,
+                        'cluster-1/env-1/ns-2': `name: ns-2-deploy-ui-override
+parameters:
+  ns-param-1: value3
+applications: []`
+                    }
+                },
+                runtime: {
+                    environment: {
+                        'cluster-1/env-1': `name: runtime-ui-override
+parameters:
+  env-runtime-param-1: value
+applications: []`,
+                        'cluster-2/env-2': `name: runtime-ui-override
+parameters:
+  env-runtime-param-1: value2
+applications: []`
+                    },
+                    namespace: {
+                        'cluster-1/env-1/ns-1': `name: ns-1-runtime-ui-override
+parameters:
+  ns-runtime-param-1: value
+applications:
+  - appName: app-1
+    parameters:
+      app-runtime-param-1: value
+  - appName: app-2
+    parameters:
+      app-runtime-param-1: value2`,
+                        'cluster-1/env-1/ns-2': `name: ns-2-runtime-ui-override
+parameters:
+  ns-runtime-param-1: value2
+applications: []`
+                    }
+                },
+                pipeline: {
+                    environment: {
+                        'cluster-1/env-1': `name: pipeline-ui-override
+parameters:
+  env-pipeline-param-1: value
+  env-pipeline-param-2: value2
+applications: []`,
+                        'cluster-2/env-2': `name: pipeline-ui-override
+parameters:
+  env-pipeline-param-1: value3
+applications: []`
+                    },
+                    namespace: {
+                        'cluster-1/env-1/ns-1': `name: ns-1-pipeline-ui-override
+parameters:
+  ns-pipeline-param-1: value
+applications: []`,
+                        'cluster-1/env-1/ns-2': `name: ns-2-pipeline-ui-override
+parameters:
+  ns-pipeline-param-1: value2
+applications: []`
+                    }
+                }
+            },
+            getEffectiveSetLink: function(env, ns, app) {
+                return `https://git.example.com/effective-set/deployment/${ns}/${app}`;
+            }
+        };
+
+        // Базовые данные эффективного сета из репозитория (до применения ParamSet)
+        const baseEffectiveSet = {
+            deployment: {
+                environment: {
+                    'cluster-1/env-1': `APPLICATION_NAME: platform-service
+ARTIFACT_DESCRIPTOR_ARTIFACT_ID: prod.platform.system.platform-service
+ARTIFACT_DESCRIPTOR_GROUP_ID: com.netcracker.deploy.product
+ARTIFACT_DESCRIPTOR_VERSION: 0.37.0-supplementary-20250923.050933-1-RELEASE
+CLOUDNAME: platform_00
+CLOUD_API_HOST: api.saas-zt-test.managed.netcracker.cloud
+CLOUD_API_PORT: '6443'
+CLOUD_PRIVATE_HOST: saas-zt-test.managed.netcracker.cloud
+CLOUD_PROTOCOL: https
+CLOUD_PUBLIC_HOST: saas-zt-test.managed.netcracker.cloud
+CUSTOM_HOST: saas-zt-test.managed.netcracker.cloud
+GATEWAY_URL: http://internal-gateway-service:8080
+NAMESPACE: platform
+OPENSHIFT_SERVER: https://api.saas-zt-test.managed.netcracker.cloud:6443
+PAAS_PLATFORM: KUBERNETES
+PRODUCTION_MODE: false
+SERVER_HOSTNAME: saas-zt-test.managed.netcracker.cloud
+TENANTNAME: Infrastructure`,
+                    'cluster-2/env-2': `APPLICATION_NAME: platform-service
+ARTIFACT_DESCRIPTOR_ARTIFACT_ID: prod.platform.system.platform-service
+CLOUDNAME: platform_00
+CLOUD_API_HOST: api.cluster-2.managed.netcracker.cloud
+PAAS_PLATFORM: KUBERNETES`
+                },
+                namespace: {
+                    'cluster-1/env-1/ns-1': {
+                        'app-1': `APPLICATION_NAME: clickhouse-services
+ARTIFACT_DESCRIPTOR_ARTIFACT_ID: prod.platform.databases_clickhouse-services
+ARTIFACT_DESCRIPTOR_GROUP_ID: com.netcracker.deploy.product
+ARTIFACT_DESCRIPTOR_VERSION: 0.37.0-supplementary-20250923.050933-1-RELEASE
+BUILD_TAG_NEW: keycloak-database
+CLIENT_PREFIX: clickhouse
+CLOUDNAME: platform_00
+CLOUD_API_HOST: api.saas-zt-test.managed.netcracker.cloud
+CLOUD_API_PORT: '6443'
+CLOUD_PRIVATE_HOST: saas-zt-test.managed.netcracker.cloud
+CLOUD_PROTOCOL: https
+CLOUD_PUBLIC_HOST: saas-zt-test.managed.netcracker.cloud
+CUSTOM_HOST: saas-zt-test.managed.netcracker.cloud
+DBAAS_ENABLED: false
+ESCAPE_SEQUENCE: true
+GATEWAY_URL: http://internal-gateway-service:8080
+MAAS_ENABLED: false
+NAMESPACE: clickhouse
+OPENSHIFT_SERVER: https://api.saas-zt-test.managed.netcracker.cloud:6443
+ORIGIN_NAMESPACE: clickhouse
+PAAS_PLATFORM: KUBERNETES
+PRIVATE_GATEWAY_URL: https://private-gateway-clickhouse.saas-zt-test.managed.netcracker.cloud
+PRIVATE_IDENTITY_PROVIDER_URL: https://private-gateway-clickhouse.saas-zt-test.managed.netcracker.cloud
+PRODUCTION_MODE: false
+PUBLIC_GATEWAY_URL: https://public-gateway-clickhouse.saas-zt-test.managed.netcracker.cloud
+PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-clickhouse.saas-zt-test.managed.netcracker.cloud
+SERVER_HOSTNAME: saas-zt-test.managed.netcracker.cloud
+SSL_SECRET: defaultsslcertificate
+STATIC_CACHE_SERVICE_ROUTE_HOST: static-cache-service-clickhouse.saas-zt-test.managed.netcracker.cloud
+TENANTNAME: Infrastructure`,
+                        'app-2': `APPLICATION_NAME: postgresql-service
+ARTIFACT_DESCRIPTOR_ARTIFACT_ID: prod.platform.databases_postgresql-service
+CLOUDNAME: platform_00
+NAMESPACE: postgresql
+PAAS_PLATFORM: KUBERNETES`
+                    },
+                    'cluster-1/env-1/ns-2': {
+                        'app-1': `APPLICATION_NAME: mongodb-service
+ARTIFACT_DESCRIPTOR_ARTIFACT_ID: prod.platform.databases_mongodb-service
+CLOUDNAME: platform_00
+NAMESPACE: mongodb
+PAAS_PLATFORM: KUBERNETES`
+                    }
+                }
+            },
+            runtime: {
+                environment: {
+                    'cluster-1/env-1': `LOG_LEVEL: INFO
+MONITORING_ENABLED: true
+METRICS_PORT: '8080'`,
+                    'cluster-2/env-2': `LOG_LEVEL: INFO
+MONITORING_ENABLED: true`
+                },
+                namespace: {
+                    'cluster-1/env-1/ns-1': {
+                        'app-1': `LOG_LEVEL: DEBUG
+MONITORING_ENABLED: true
+METRICS_PORT: '8080'
+DATABASE_URL: postgresql://localhost:5432/clickhouse
+CACHE_ENABLED: true`,
+                        'app-2': `LOG_LEVEL: INFO
+MONITORING_ENABLED: true
+DATABASE_URL: postgresql://localhost:5432/postgresql`
+                    },
+                    'cluster-1/env-1/ns-2': {
+                        'app-1': `LOG_LEVEL: WARN
+MONITORING_ENABLED: false
+DATABASE_URL: mongodb://localhost:27017/mongodb`
+                    }
+                }
+            },
+            pipeline: {
+                environment: {
+                    'cluster-1/env-1': `DCL_CONFIG_ARGOCD_AUTH_SSO_URL: https://keycloak-central.mgmt3.managed.netcracker.cloud
+DCL_CONFIG_ARGOCD_PROJECT: infra
+DCL_CONFIG_ARGOCD_URL: https://argocd-server.saas-zt-test.managed.netcracker.cloud
+DCL_CONFIG_DOCKER_REGISTRY: artifactorycn.netcracker.com:17014
+DCL_CONFIG_REGISTRY_URL: https://artifactorycn.netcracker.com
+DCL_CONFIG_SKIP_CREDENTIALS_ENCRYPTION: false
+DCL_GIT_BRANCH: master
+DCL_GIT_URL: https://git.netcracker.com/prod.dobp/dobp-ci/configurations/nc.paas/pipelines/gitlab-dcl`,
+                    'cluster-2/env-2': `DCL_CONFIG_ARGOCD_URL: https://argocd-server.cluster-2.managed.netcracker.cloud
+DCL_CONFIG_DOCKER_REGISTRY: artifactorycn.netcracker.com:17014
+DCL_GIT_BRANCH: master`
+                },
+                namespace: {
+                    'cluster-1/env-1/ns-1': `DCL_CONFIG_ARGOCD_PROJECT: ns-1-project
+DCL_CONFIG_DOCKER_REGISTRY: artifactorycn.netcracker.com:17014`,
+                    'cluster-1/env-1/ns-2': `DCL_CONFIG_ARGOCD_PROJECT: ns-2-project
+DCL_CONFIG_DOCKER_REGISTRY: artifactorycn.netcracker.com:17014`
+                }
+            }
+        };
+
+        // Список приложений для каждого namespace
+        const namespaceApplications = {
+            'cluster-1/env-1/ns-1': ['app-1', 'app-2'],
+            'cluster-1/env-1/ns-2': ['app-1'],
+            'cluster-1/env-1/ns-3': ['app-1', 'app-2', 'app-3'],
+            'cluster-2/env-2/ns-1': ['app-1'],
+            'cluster-2/env-2/ns-2': ['app-1', 'app-2']
+        };
+
+        // Состояние приложения
+        let currentState = {
+            environment: 'cluster-1/env-1',
+            namespace: '',
+            currentContext: 'deployment'
+        };
+
+        // Определение уровня на основе выбранных Environment и Namespace
+        function getCurrentLevel() {
+            if (currentState.namespace && currentState.namespace.trim() !== '') {
+                return 'namespace';
+            }
+            return 'environment';
+        }
+
+        // CodeMirror редакторы
+        const editors = {
+            deployment: null,
+            pipeline: null,
+            runtime: null
+        };
+
+        // Исходные значения для отслеживания изменений
+        let originalValues = {
+            deployment: '',
+            pipeline: '',
+            runtime: ''
+        };
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            loadFromLocalStorage();
+            initializeSelectors();
+            initializeTabs();
+            initializeEditors();
+            initializeEffectiveSetModal();
+            updateScopeBar();
+            updateSelectorStates();
+            updateEffectiveSetLink();
+            // Загружаем параметры после инициализации редакторов
+            setTimeout(() => {
+                loadParameters();
+            }, 100);
+        });
+
+        // Инициализация селекторов
+        function initializeSelectors() {
+            const selects = ['environment', 'namespace'];
+            selects.forEach(selectName => {
+                const select = document.getElementById(`${selectName}-select`);
+                if (!select) return;
+                
+                // Добавляем класс has-value если есть выбранное значение
+                if (select.value) {
+                    select.classList.add('has-value');
+                }
+                
+                select.addEventListener('change', function() {
+                    currentState[selectName] = this.value;
+                    // Добавляем класс при выборе значения
+                    if (this.value) {
+                        this.classList.add('has-value');
+                    } else {
+                        this.classList.remove('has-value');
+                    }
+                    updateScopeBar();
+                    updateSelectorStates();
+                    updateEffectiveSetLink();
+                    loadParameters();
+                    // Обновляем эффективный сет если модальное окно открыто
+                    const modal = document.getElementById('effective-set-modal');
+                    if (modal && modal.classList.contains('show')) {
+                        // Обновляем списки приложений при изменении Environment
+                        updateApplicationList('effective-set-ns-select', 'effective-set-app-select');
+                        updateApplicationList('effective-set-runtime-ns-select', 'effective-set-runtime-app-select');
+                        updateEffectiveSetDisplay();
+                    }
+                });
+            });
+
+            document.getElementById('commit-btn').addEventListener('click', handleCommit);
+            
+            // Инициализация подсказок
+            initializeTooltips();
+            
+            // Валидация commit message при вводе
+            const commitMessageInput = document.getElementById('commit-message');
+            const commitMessageError = document.getElementById('commit-message-error');
+            
+            commitMessageInput.addEventListener('input', function() {
+                const message = this.value.trim();
+                if (message === '') {
+                    this.classList.remove('invalid', 'valid');
+                    commitMessageError.classList.remove('show');
+                } else if (validateCommitMessage(message)) {
+                    this.classList.remove('invalid');
+                    this.classList.add('valid');
+                    commitMessageError.classList.remove('show');
+                } else {
+                    this.classList.remove('valid');
+                    this.classList.add('invalid');
+                    commitMessageError.classList.add('show');
+                }
+                // Обновляем состояние кнопки Commit
+                updateCommitButton();
+            });
+            
+            // Показываем подсказку при фокусе, если валидация не прошла
+            commitMessageInput.addEventListener('focus', function() {
+                const message = this.value.trim();
+                if (message !== '' && !validateCommitMessage(message)) {
+                    commitMessageError.classList.add('show');
+                }
+            });
+            
+            // Скрываем подсказку при потере фокуса, если поле валидно
+            commitMessageInput.addEventListener('blur', function() {
+                const message = this.value.trim();
+                if (message === '' || validateCommitMessage(message)) {
+                    commitMessageError.classList.remove('show');
+                }
+            });
+        }
+
+        // Инициализация подсказок
+        function initializeTooltips() {
+            const helpIcons = document.querySelectorAll('.help-icon');
+            let tooltipTimeout = null;
+            let currentTooltip = null;
+
+            helpIcons.forEach(icon => {
+                const tooltipText = icon.getAttribute('data-tooltip');
+                if (!tooltipText) return;
+
+                // Создаем элемент подсказки
+                const tooltip = document.createElement('div');
+                tooltip.className = 'tooltip';
+                tooltip.textContent = tooltipText;
+                document.body.appendChild(tooltip);
+
+                icon.addEventListener('mouseenter', function(e) {
+                    // Отменяем предыдущий таймер
+                    if (tooltipTimeout) {
+                        clearTimeout(tooltipTimeout);
+                    }
+                    if (currentTooltip) {
+                        currentTooltip.classList.remove('show');
+                    }
+
+                    // Устанавливаем новый таймер на 1 секунду
+                    tooltipTimeout = setTimeout(() => {
+                        const rect = icon.getBoundingClientRect();
+                        const tooltipRect = tooltip.getBoundingClientRect();
+                        
+                        // Определяем позицию подсказки
+                        let top = rect.top - tooltipRect.height - 8;
+                        let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
+                        
+                        // Проверяем, не выходит ли за границы экрана
+                        if (top < 0) {
+                            top = rect.bottom + 8;
+                            tooltip.classList.remove('top');
+                            tooltip.classList.add('bottom');
+                        } else {
+                            tooltip.classList.remove('bottom');
+                            tooltip.classList.add('top');
+                        }
+                        
+                        if (left < 0) {
+                            left = 8;
+                        } else if (left + tooltipRect.width > window.innerWidth) {
+                            left = window.innerWidth - tooltipRect.width - 8;
+                        }
+                        
+                        tooltip.style.top = top + 'px';
+                        tooltip.style.left = left + 'px';
+                        tooltip.classList.add('show');
+                        currentTooltip = tooltip;
+                    }, 1000);
+                });
+
+                icon.addEventListener('mouseleave', function() {
+                    if (tooltipTimeout) {
+                        clearTimeout(tooltipTimeout);
+                        tooltipTimeout = null;
+                    }
+                    if (currentTooltip) {
+                        currentTooltip.classList.remove('show');
+                        currentTooltip = null;
+                    }
+                });
+            });
+        }
+
+        // Инициализация табов
+        function initializeTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            // Восстанавливаем сохраненную вкладку
+            const savedTab = currentState.currentContext || 'deployment';
+            const savedTabButton = document.querySelector(`.tab-button[data-tab="${savedTab}"]`);
+            const savedTabContent = document.getElementById(`${savedTab}-tab`);
+            
+            if (savedTabButton && savedTabContent) {
+                // Убираем активный класс у всех кнопок и контента
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                // Восстанавливаем сохраненную вкладку
+                savedTabButton.classList.add('active');
+                savedTabContent.classList.add('active');
+                currentState.currentContext = savedTab;
+            }
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    currentState.currentContext = targetTab;
+
+                    // Убираем активный класс у всех кнопок и контента
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+
+                    // Добавляем активный класс к выбранной кнопке и контенту
+                    this.classList.add('active');
+                    document.getElementById(`${targetTab}-tab`).classList.add('active');
+
+                    // Обновляем состояние селекторов
+                    updateSelectorStates();
+
+                    // Сохраняем выбранную вкладку
+                    localStorage.setItem('envgene-state', JSON.stringify(currentState));
+
+                    // Загружаем параметры для нового контекста
+                    loadParameters();
+
+                    // Обновляем размер редактора при переключении таба
+                    const editor = editors[targetTab];
+                    if (editor) {
+                        setTimeout(() => {
+                            const wrapper = document.getElementById(`${targetTab}-editor-wrapper`);
+                            const wrapperHeight = wrapper ? wrapper.offsetHeight : 400;
+                            const finalHeight = wrapperHeight > 100 ? wrapperHeight : 400;
+                            editor.setSize(null, finalHeight);
+                            editor.refresh();
+                        }, 100);
+                    }
+                });
+            });
+        }
+
+        // Обновление состояния селекторов
+        function updateSelectorStates() {
+            // Namespace селектор всегда доступен (может быть пустым для выбора всех NS)
+            updateEffectiveSetLink();
+        }
+
+        // Инициализация YAML редакторов
+        function initializeEditors() {
+            const contexts = ['deployment', 'pipeline', 'runtime'];
+            
+            contexts.forEach(context => {
+                const textarea = document.getElementById(`${context}-yaml`);
+                const wrapper = document.getElementById(`${context}-editor-wrapper`);
+                const editor = CodeMirror.fromTextArea(textarea, {
+                    lineNumbers: true,
+                    mode: 'yaml',
+                    theme: 'monokai',
+                    indentUnit: 2,
+                    lineWrapping: true,
+                    autofocus: false
+                });
+
+                editors[context] = editor;
+
+                // Устанавливаем начальную высоту редактора
+                editor.setSize(null, 400);
+
+                // Валидация при изменении
+                editor.on('change', function() {
+                    validateYAML(context);
+                    checkForChanges();
+                    saveToLocalStorage();
+                });
+
+                // Обработчик изменения размера wrapper
+                let resizeObserver;
+                if (window.ResizeObserver) {
+                    resizeObserver = new ResizeObserver(entries => {
+                        for (let entry of entries) {
+                            const newHeight = entry.contentRect.height;
+                            if (newHeight > 100) {
+                                editor.setSize(null, newHeight);
+                            }
+                        }
+                    });
+                    resizeObserver.observe(wrapper);
+                } else {
+                    let resizeTimeout;
+                    wrapper.addEventListener('mouseup', function() {
+                        clearTimeout(resizeTimeout);
+                        resizeTimeout = setTimeout(() => {
+                            const newHeight = wrapper.offsetHeight;
+                            editor.setSize(null, newHeight);
+                        }, 10);
+                    });
+                }
+            });
+        }
+
+        // Валидация структуры ParamSet
+        function validateParamSetStructure(paramset, context, level) {
+            const errors = [];
+
+            // Проверка обязательных полей
+            if (!paramset.name || typeof paramset.name !== 'string') {
+                errors.push('Field "name" is required and must be a string');
+            }
+
+            if (paramset.parameters === undefined) {
+                errors.push('Field "parameters" is required');
+            }
+
+            if (paramset.applications === undefined) {
+                errors.push('Field "applications" is required');
+            }
+
+            if (errors.length > 0) {
+                return { valid: false, errors };
+            }
+
+            // Валидация в зависимости от level и context
+            // Поддерживаются только environment и namespace уровни
+            
+            // Проверка applications - всегда должен быть массивом
+            if (!Array.isArray(paramset.applications)) {
+                errors.push('Field "applications" must be an array');
+            }
+            
+            if (context === 'pipeline') {
+                // Для pipeline: applications всегда пустой массив
+                if (paramset.applications.length !== 0) {
+                    errors.push('For pipeline context: "applications" must be an empty array');
+                }
+                // Для pipeline: parameters обязателен (не пустой)
+                if (!paramset.parameters || typeof paramset.parameters !== 'object' || Array.isArray(paramset.parameters)) {
+                    errors.push('For pipeline context: "parameters" must be a non-empty map');
+                } else if (Object.keys(paramset.parameters).length === 0) {
+                    errors.push('For pipeline context: "parameters" must not be empty');
+                }
+            } else if (context === 'deployment' || context === 'runtime') {
+                if (level === 'environment') {
+                    // Для environment level: parameters обязателен (не пустой), applications пустой массив
+                    if (!paramset.parameters || typeof paramset.parameters !== 'object' || Array.isArray(paramset.parameters)) {
+                        errors.push('For environment level: "parameters" must be a non-empty map');
+                    } else if (Object.keys(paramset.parameters).length === 0) {
+                        errors.push('For environment level: "parameters" must not be empty');
+                    }
+                    if (paramset.applications.length !== 0) {
+                        errors.push('For environment level: "applications" must be an empty array');
+                    }
+                } else if (level === 'namespace') {
+                    // Для namespace level: могут быть и parameters, и applications (хотя бы один не пустой)
+                    const hasParameters = paramset.parameters && typeof paramset.parameters === 'object' && !Array.isArray(paramset.parameters) && Object.keys(paramset.parameters).length > 0;
+                    const hasApplications = paramset.applications && Array.isArray(paramset.applications) && paramset.applications.length > 0;
+                    
+                    if (!hasParameters && !hasApplications) {
+                        errors.push('For namespace level: at least one of "parameters" or "applications" must be non-empty');
+                    }
+                    
+                    // Валидация parameters если он задан
+                    if (paramset.parameters !== undefined) {
+                        if (typeof paramset.parameters !== 'object' || Array.isArray(paramset.parameters)) {
+                            errors.push('For namespace level: "parameters" must be a map');
+                        }
+                    }
+                    
+                    // Валидация applications если он задан
+                    if (hasApplications) {
+                        paramset.applications.forEach((app, index) => {
+                            if (!app.appName || typeof app.appName !== 'string') {
+                                errors.push(`applications[${index}]: "appName" is required and must be a string`);
+                            }
+                            if (app.parameters === undefined) {
+                                errors.push(`applications[${index}]: "parameters" is required`);
+                            } else if (typeof app.parameters !== 'object' || Array.isArray(app.parameters)) {
+                                errors.push(`applications[${index}]: "parameters" must be a map`);
+                            } else if (Object.keys(app.parameters).length === 0) {
+                                errors.push(`applications[${index}]: "parameters" must not be empty`);
+                            }
+                        });
+                    }
+                } else {
+                    errors.push(`Unsupported level: "${level}". Only "environment" and "namespace" levels are supported.`);
+                }
+            } else {
+                errors.push(`Unsupported context: "${context}". Only "deployment", "runtime", and "pipeline" contexts are supported.`);
+            }
+
+            return {
+                valid: errors.length === 0,
+                errors: errors
+            };
+        }
+
+        // Валидация YAML и структуры ParamSet
+        function validateYAML(context) {
+            const editor = editors[context];
+            const wrapper = document.getElementById(`${context}-editor-wrapper`);
+            const validationStatus = document.getElementById(`${context}-validation`);
+            
+            try {
+                const yamlContent = editor.getValue();
+                
+                // Пустой YAML считается валидным
+                if (yamlContent.trim() === '') {
+                    wrapper.classList.remove('invalid');
+                    wrapper.classList.add('valid');
+                    validationStatus.classList.remove('invalid');
+                    validationStatus.classList.add('valid');
+                    validationStatus.innerHTML = '<span>Valid YAML (empty)</span>';
+                    updateCommitButton();
+                    return true;
+                }
+
+                // Проверка на кириллические символы
+                const cyrillicPattern = /[\u0400-\u04FF]/;
+                if (cyrillicPattern.test(yamlContent)) {
+                    wrapper.classList.remove('valid');
+                    wrapper.classList.add('invalid');
+                    validationStatus.classList.remove('valid');
+                    validationStatus.classList.add('invalid');
+                    validationStatus.innerHTML = '<span>Invalid: Cyrillic characters are not allowed</span>';
+                    updateCommitButton();
+                    return false;
+                }
+
+                // Парсинг YAML
+                const paramset = jsyaml.load(yamlContent);
+                
+                if (!paramset || typeof paramset !== 'object') {
+                    throw new Error('YAML must represent an object');
+                }
+
+                // Валидация структуры ParamSet
+                const level = getCurrentLevel();
+                const validation = validateParamSetStructure(paramset, context, level);
+                
+                if (!validation.valid) {
+                    wrapper.classList.remove('valid');
+                    wrapper.classList.add('invalid');
+                    validationStatus.classList.remove('valid');
+                    validationStatus.classList.add('invalid');
+                    const errorMsg = validation.errors.length > 0 
+                        ? validation.errors.join('; ') 
+                        : 'Invalid ParamSet structure';
+                    validationStatus.innerHTML = `<span>Invalid ParamSet: ${errorMsg}</span>`;
+                    updateCommitButton();
+                    return false;
+                }
+                
+                wrapper.classList.remove('invalid');
+                wrapper.classList.add('valid');
+                validationStatus.classList.remove('invalid');
+                validationStatus.classList.add('valid');
+                validationStatus.innerHTML = '<span>Valid ParamSet</span>';
+                updateCommitButton();
+                return true;
+            } catch (e) {
+                wrapper.classList.remove('valid');
+                wrapper.classList.add('invalid');
+                validationStatus.classList.remove('valid');
+                validationStatus.classList.add('invalid');
+                validationStatus.innerHTML = `<span>Invalid YAML: ${e.message}</span>`;
+                updateCommitButton();
+                return false;
+            }
+        }
+
+        // Проверка наличия изменений
+        function checkForChanges() {
+            const contexts = ['deployment', 'pipeline', 'runtime'];
+            let hasChanges = false;
+
+            contexts.forEach(context => {
+                const editor = editors[context];
+                if (editor) {
+                    const currentValue = editor.getValue();
+                    if (currentValue !== originalValues[context]) {
+                        hasChanges = true;
+                    }
+                }
+            });
+
+            updateCommitButton(hasChanges);
+        }
+
+        // Валидация commit message
+        function validateCommitMessage(message) {
+            if (!message || message.trim() === '') {
+                return false;
+            }
+            // Проверка наличия ticket ID: минимум 4 заглавные буквы, тире, минимум 1 цифра
+            const ticketIdPattern = /[A-Z]{4,}-[0-9]{1,}/;
+            return ticketIdPattern.test(message);
+        }
+
+        // Обновление состояния кнопки Commit
+        function updateCommitButton(hasChanges = null) {
+            const commitBtn = document.getElementById('commit-btn');
+            const commitMessageInput = document.getElementById('commit-message');
+            const contexts = ['deployment', 'pipeline', 'runtime'];
+            
+            // Проверка валидности YAML редакторов
+            const hasInvalid = contexts.some(context => {
+                const wrapper = document.getElementById(`${context}-editor-wrapper`);
+                return wrapper.classList.contains('invalid');
+            });
+            
+            // Проверка валидности commit message
+            const commitMessage = commitMessageInput.value.trim();
+            const isCommitMessageValid = commitMessage === '' || validateCommitMessage(commitMessage);
+            
+            // Если hasChanges не передан, проверяем сами
+            if (hasChanges === null) {
+                hasChanges = contexts.some(context => {
+                    const editor = editors[context];
+                    if (editor) {
+                        return editor.getValue() !== originalValues[context];
+                    }
+                    return false;
+                });
+            }
+
+            // Обновляем цвет кнопки
+            if (hasChanges && !hasInvalid && isCommitMessageValid) {
+                commitBtn.classList.add('has-changes');
+            } else {
+                commitBtn.classList.remove('has-changes');
+            }
+
+            // Блокируем кнопку, если есть невалидные данные или commit message не прошел валидацию
+            commitBtn.disabled = hasInvalid || !isCommitMessageValid || commitBtn.classList.contains('loading');
+        }
+
+        // Обновление Scope Bar
+        function updateScopeBar() {
+            // Путь больше не отображается, информация видна в селекторах
+        }
+
+        // Обновление ссылки на окружение в энвгене
+        function updateEffectiveSetLink() {
+            const link = document.getElementById('effective-set-link');
+            link.href = `https://git.example.com/environments/${currentState.environment}`;
+            link.innerHTML = `View Environment in Git <span style="opacity: 0.6; font-weight: 400;">(${currentState.environment})</span>`;
+        }
+
+        // Генерация ключа для хранения оверрайдов
+        function getOverrideKey(context, level) {
+            if (level === 'environment') {
+                return currentState.environment;
+            } else if (level === 'namespace') {
+                return `${currentState.environment}/${currentState.namespace}`;
+            }
+            return '';
+        }
+
+        // Генерация пустого шаблона ParamSet
+        function generateEmptyParamSet(context, level) {
+            let name = '';
+            if (level === 'environment') {
+                if (context === 'deployment') name = 'deploy-ui-override';
+                else if (context === 'runtime') name = 'runtime-ui-override';
+                else if (context === 'pipeline') name = 'pipeline-ui-override';
+            } else if (level === 'namespace') {
+                const ns = currentState.namespace || 'ns';
+                if (context === 'deployment') name = `${ns}-deploy-ui-override`;
+                else if (context === 'runtime') name = `${ns}-runtime-ui-override`;
+                else if (context === 'pipeline') name = `${ns}-pipeline-ui-override`;
+            }
+
+            // Для pipeline: applications всегда пустой массив
+            if (context === 'pipeline') {
+                return `name: ${name}\nparameters:\n  example-param: example-value\napplications: []`;
+            }
+            
+            // Для deployment/runtime на уровне environment: только parameters
+            if (level === 'environment') {
+                return `name: ${name}\nparameters:\n  example-param: example-value\napplications: []`;
+            }
+            
+            // Для deployment/runtime на уровне namespace: могут быть и parameters, и applications
+            // В шаблоне показываем пример с parameters (applications можно добавить при необходимости)
+            return `name: ${name}\nparameters:\n  example-param: example-value\napplications: []`;
+        }
+
+        // Загрузка параметров
+        function loadParameters() {
+            const context = currentState.currentContext;
+            const level = getCurrentLevel();
+            
+            const key = getOverrideKey(context, level);
+            
+            // Получаем данные из mockData
+            const overrides = mockData.effectiveSetOverrides[context] || {};
+            const levelOverrides = overrides[level] || {};
+            let content = levelOverrides[key] || '';
+
+            // Если данных нет, генерируем пустой шаблон
+            if (!content) {
+                content = generateEmptyParamSet(context, level);
+            }
+
+            // Загружаем в редактор
+            const editor = editors[context];
+            if (editor) {
+                editor.setValue(content);
+                originalValues[context] = content;
+                validateYAML(context);
+            }
+            
+            // Проверяем изменения после загрузки
+            checkForChanges();
+            updateCommitButton();
+        }
+
+        // Commit изменений
+        function handleCommit() {
+            const commitBtn = document.getElementById('commit-btn');
+            const commitMessageInput = document.getElementById('commit-message');
+            const commitMessageError = document.getElementById('commit-message-error');
+            const contexts = ['deployment', 'pipeline', 'runtime'];
+            
+            // Проверка валидности всех редакторов
+            const allValid = contexts.every(context => {
+                return validateYAML(context);
+            });
+
+            if (!allValid) {
+                alert('Исправьте ошибки YAML перед коммитом');
+                return;
+            }
+
+            // Проверка наличия изменений
+            const hasChanges = contexts.some(context => {
+                const editor = editors[context];
+                return editor.getValue() !== originalValues[context];
+            });
+
+            if (!hasChanges) {
+                return; // Нет изменений, ничего не делаем
+            }
+
+            // Валидация commit message
+            const commitMessage = commitMessageInput.value.trim();
+            if (!validateCommitMessage(commitMessage)) {
+                commitMessageInput.classList.add('invalid');
+                commitMessageInput.classList.remove('valid');
+                commitMessageError.classList.add('show');
+                commitMessageInput.focus();
+                return;
+            }
+
+            // Убираем ошибку валидации
+            commitMessageInput.classList.remove('invalid');
+            commitMessageInput.classList.add('valid');
+            commitMessageError.classList.remove('show');
+
+            // Показываем спиннер
+            commitBtn.classList.add('loading');
+            commitBtn.disabled = true;
+
+            // Сохранение данных с учетом уровня
+            contexts.forEach(context => {
+                const editor = editors[context];
+                const newValue = editor.getValue();
+                
+                // Определяем уровень для контекста
+                const level = getCurrentLevel();
+                
+                const key = getOverrideKey(context, level);
+                
+                // Инициализируем структуру если нужно
+                if (!mockData.effectiveSetOverrides[context]) {
+                    mockData.effectiveSetOverrides[context] = {};
+                }
+                if (!mockData.effectiveSetOverrides[context][level]) {
+                    mockData.effectiveSetOverrides[context][level] = {};
+                }
+                
+                mockData.effectiveSetOverrides[context][level][key] = newValue;
+                
+                // Обновляем исходные значения только для текущего контекста
+                if (context === currentState.currentContext) {
+                    originalValues[context] = newValue;
+                }
+            });
+
+            saveToLocalStorage();
+
+            // Имитация коммита (10 секунд)
+            setTimeout(() => {
+                // Убираем спиннер
+                commitBtn.classList.remove('loading');
+                commitBtn.disabled = false;
+                
+                // Очищаем commit message
+                commitMessageInput.value = '';
+                commitMessageInput.classList.remove('valid');
+                
+                // Сбрасываем состояние изменений
+                checkForChanges();
+                
+                // В реальном приложении здесь был бы вызов API
+                console.log('Commit completed with message:', commitMessage, 
+                    `- Context: ${currentState.currentContext}, Level: ${getCurrentLevel()}`);
+            }, 10000);
+        }
+
+        // Обновление списка приложений для выбранного namespace
+        function updateApplicationList(nsSelectId, appSelectId) {
+            const nsSelect = document.getElementById(nsSelectId);
+            const appSelect = document.getElementById(appSelectId);
+            
+            if (!nsSelect || !appSelect) return;
+            
+            const selectedNs = nsSelect.value;
+            
+            // Очищаем список приложений
+            appSelect.innerHTML = '<option value="">-- Select NS first --</option>';
+            appSelect.disabled = true;
+            
+            if (selectedNs && selectedNs.trim() !== '') {
+                const key = `${currentState.environment}/${selectedNs}`;
+                const apps = namespaceApplications[key] || [];
+                
+                if (apps.length > 0) {
+                    apps.forEach(app => {
+                        const option = document.createElement('option');
+                        option.value = app;
+                        option.textContent = app;
+                        appSelect.appendChild(option);
+                    });
+                    appSelect.disabled = false;
+                } else {
+                    appSelect.innerHTML = '<option value="">No applications available</option>';
+                }
+            }
+        }
+
+        // Инициализация модального окна эффективного сета
+        function initializeEffectiveSetModal() {
+            const showBtn = document.getElementById('show-effective-set-btn');
+            const modal = document.getElementById('effective-set-modal');
+            const closeBtn = document.getElementById('close-effective-set-modal');
+            const tabButtons = document.querySelectorAll('.effective-set-tab');
+            const tabContents = document.querySelectorAll('.effective-set-content');
+
+            // Селекторы для deployment
+            const deploymentNsSelect = document.getElementById('effective-set-ns-select');
+            const deploymentAppSelect = document.getElementById('effective-set-app-select');
+            
+            // Селекторы для runtime
+            const runtimeNsSelect = document.getElementById('effective-set-runtime-ns-select');
+            const runtimeAppSelect = document.getElementById('effective-set-runtime-app-select');
+
+            // Обработчики для deployment селекторов
+            if (deploymentNsSelect) {
+                deploymentNsSelect.addEventListener('change', function() {
+                    updateApplicationList('effective-set-ns-select', 'effective-set-app-select');
+                    updateEffectiveSetDisplay();
+                });
+            }
+            
+            if (deploymentAppSelect) {
+                deploymentAppSelect.addEventListener('change', function() {
+                    updateEffectiveSetDisplay();
+                });
+            }
+
+            // Обработчики для runtime селекторов
+            if (runtimeNsSelect) {
+                runtimeNsSelect.addEventListener('change', function() {
+                    updateApplicationList('effective-set-runtime-ns-select', 'effective-set-runtime-app-select');
+                    updateEffectiveSetDisplay();
+                });
+            }
+            
+            if (runtimeAppSelect) {
+                runtimeAppSelect.addEventListener('change', function() {
+                    updateEffectiveSetDisplay();
+                });
+            }
+
+            // Открытие модального окна
+            showBtn.addEventListener('click', function() {
+                updateEffectiveSetDisplay();
+                modal.classList.add('show');
+            });
+
+            // Закрытие модального окна
+            closeBtn.addEventListener('click', function() {
+                modal.classList.remove('show');
+            });
+
+            // Закрытие при клике вне модального окна
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+
+            // Переключение табов в модальном окне
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetTab = this.getAttribute('data-tab');
+                    
+                    // Убираем активный класс у всех кнопок и контента
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.remove('active'));
+
+                    // Добавляем активный класс к выбранной кнопке и контенту
+                    this.classList.add('active');
+                    document.getElementById(`${targetTab}-content`).classList.add('active');
+                    
+                    // Обновляем отображение при переключении таба
+                    updateEffectiveSetDisplay();
+                });
+            });
+        }
+
+        // Мерж параметров из ParamSet в базовый эффективный сет
+        function mergeParamSetIntoEffectiveSet(baseYaml, paramsetYaml) {
+            try {
+                // Парсим базовый YAML
+                let base = {};
+                if (baseYaml && baseYaml.trim() !== '') {
+                    base = jsyaml.load(baseYaml) || {};
+                }
+
+                // Парсим ParamSet YAML
+                const paramset = jsyaml.load(paramsetYaml);
+                if (!paramset) return baseYaml;
+
+                // Мержим parameters (shallow merge)
+                if (paramset.parameters && typeof paramset.parameters === 'object') {
+                    base = { ...base, ...paramset.parameters };
+                }
+
+                // Мержим applications (для namespace level)
+                if (paramset.applications && Array.isArray(paramset.applications) && paramset.applications.length > 0) {
+                    paramset.applications.forEach(app => {
+                        if (app.appName && app.parameters) {
+                            // Если приложение уже существует в базе, мержим параметры
+                            if (base[app.appName]) {
+                                base[app.appName] = { ...base[app.appName], ...app.parameters };
+                            } else {
+                                // Иначе создаем новую секцию для приложения
+                                base[app.appName] = { ...app.parameters };
+                            }
+                        }
+                    });
+                }
+
+                // Конвертируем обратно в YAML
+                return jsyaml.dump(base, { indent: 2, lineWidth: -1 });
+            } catch (e) {
+                console.error('Error merging ParamSet:', e);
+                return baseYaml;
+            }
+        }
+
+        // Получение эффективного сета для контекста
+        function getEffectiveSet(context, selectedNs, selectedApp) {
+            if (context === 'pipeline') {
+                // Для pipeline сразу возвращаем параметры уровня environment или namespace
+                const level = getCurrentLevel();
+                const key = getOverrideKey(context, level);
+                
+                const baseSet = baseEffectiveSet[context] || {};
+                const levelBaseSet = baseSet[level] || {};
+                let baseYaml = levelBaseSet[key] || '';
+
+                // Получаем ParamSet оверрайды
+                const overrides = mockData.effectiveSetOverrides[context] || {};
+                const levelOverrides = overrides[level] || {};
+                const paramsetYaml = levelOverrides[key] || '';
+
+                // Если есть ParamSet, мержим его в базовый сет
+                if (paramsetYaml) {
+                    baseYaml = mergeParamSetIntoEffectiveSet(baseYaml, paramsetYaml);
+                }
+
+                // Если базовый сет пустой, используем пример
+                if (!baseYaml || baseYaml.trim() === '') {
+                    baseYaml = `DCL_CONFIG_ARGOCD_AUTH_SSO_URL: https://keycloak-central.mgmt3.managed.netcracker.cloud
+DCL_CONFIG_ARGOCD_PROJECT: infra
+DCL_CONFIG_ARGOCD_URL: https://argocd-server.saas-zt-test.managed.netcracker.cloud
+DCL_CONFIG_DOCKER_REGISTRY: artifactorycn.netcracker.com:17014
+DCL_CONFIG_REGISTRY_URL: https://artifactorycn.netcracker.com
+DCL_CONFIG_SKIP_CREDENTIALS_ENCRYPTION: false
+DCL_GIT_BRANCH: master
+DCL_GIT_URL: https://git.netcracker.com/prod.dobp/dobp-ci/configurations/nc.paas/pipelines/gitlab-dcl`;
+                }
+
+                return baseYaml;
+            } else {
+                // Для deployment и runtime нужны NS и App
+                if (!selectedNs || selectedNs.trim() === '') {
+                    return '# Please select a namespace';
+                }
+                
+                if (!selectedApp || selectedApp.trim() === '') {
+                    return '# Please select an application';
+                }
+
+                const key = `${currentState.environment}/${selectedNs}`;
+                const baseSet = baseEffectiveSet[context] || {};
+                const namespaceSet = baseSet.namespace || {};
+                const appData = namespaceSet[key] || {};
+                let baseYaml = appData[selectedApp] || '';
+
+                // Получаем ParamSet оверрайды для namespace level
+                const overrides = mockData.effectiveSetOverrides[context] || {};
+                const namespaceOverrides = overrides.namespace || {};
+                const paramsetYaml = namespaceOverrides[key] || '';
+
+                // Если есть ParamSet, мержим его в базовый сет
+                if (paramsetYaml) {
+                    try {
+                        // Парсим базовый YAML
+                        let base = {};
+                        if (baseYaml && baseYaml.trim() !== '') {
+                            base = jsyaml.load(baseYaml) || {};
+                        }
+
+                        // Парсим ParamSet YAML
+                        const paramset = jsyaml.load(paramsetYaml);
+                        if (paramset) {
+                            // Мержим parameters уровня namespace
+                            if (paramset.parameters && typeof paramset.parameters === 'object') {
+                                base = { ...base, ...paramset.parameters };
+                            }
+
+                            // Мержим parameters конкретного приложения из applications
+                            if (paramset.applications && Array.isArray(paramset.applications)) {
+                                const appOverride = paramset.applications.find(app => app.appName === selectedApp);
+                                if (appOverride && appOverride.parameters) {
+                                    base = { ...base, ...appOverride.parameters };
+                                }
+                            }
+                        }
+
+                        // Конвертируем обратно в YAML
+                        baseYaml = jsyaml.dump(base, { indent: 2, lineWidth: -1 });
+                    } catch (e) {
+                        console.error('Error merging ParamSet:', e);
+                    }
+                }
+
+                // Если базовый сет пустой, используем пример
+                if (!baseYaml || baseYaml.trim() === '') {
+                    if (context === 'deployment') {
+                        baseYaml = `APPLICATION_NAME: ${selectedApp}
+ARTIFACT_DESCRIPTOR_ARTIFACT_ID: prod.platform.databases_${selectedApp}
+ARTIFACT_DESCRIPTOR_GROUP_ID: com.netcracker.deploy.product
+ARTIFACT_DESCRIPTOR_VERSION: 0.37.0-supplementary-20250923.050933-1-RELEASE
+CLOUDNAME: platform_00
+CLOUD_API_HOST: api.saas-zt-test.managed.netcracker.cloud
+CLOUD_API_PORT: '6443'
+CLOUD_PRIVATE_HOST: saas-zt-test.managed.netcracker.cloud
+CLOUD_PROTOCOL: https
+CLOUD_PUBLIC_HOST: saas-zt-test.managed.netcracker.cloud
+CUSTOM_HOST: saas-zt-test.managed.netcracker.cloud
+DBAAS_ENABLED: false
+ESCAPE_SEQUENCE: true
+GATEWAY_URL: http://internal-gateway-service:8080
+MAAS_ENABLED: false
+NAMESPACE: ${selectedNs}
+OPENSHIFT_SERVER: https://api.saas-zt-test.managed.netcracker.cloud:6443
+ORIGIN_NAMESPACE: ${selectedNs}
+PAAS_PLATFORM: KUBERNETES
+PRODUCTION_MODE: false
+SERVER_HOSTNAME: saas-zt-test.managed.netcracker.cloud
+TENANTNAME: Infrastructure`;
+                    } else {
+                        baseYaml = `LOG_LEVEL: INFO
+MONITORING_ENABLED: true
+METRICS_PORT: '8080'
+DATABASE_URL: postgresql://localhost:5432/${selectedApp}
+CACHE_ENABLED: true`;
+                    }
+                }
+
+                return baseYaml;
+            }
+        }
+
+        // Обновление отображения эффективного сета
+        function updateEffectiveSetDisplay() {
+            // Обновляем дату
+            const dateElement = document.getElementById('effective-set-date');
+            if (dateElement) {
+                const now = new Date();
+                const dateStr = now.toLocaleString('ru-RU', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                dateElement.textContent = `Generated: ${dateStr}`;
+            }
+            
+            // Для pipeline сразу показываем параметры
+            const pipelineYaml = getEffectiveSet('pipeline');
+            const pipelineElement = document.getElementById('pipeline-effective-yaml');
+            if (pipelineElement) {
+                pipelineElement.textContent = pipelineYaml;
+            }
+            
+            // Для deployment и runtime нужны NS и App
+            const deploymentNs = document.getElementById('effective-set-ns-select')?.value || '';
+            const deploymentApp = document.getElementById('effective-set-app-select')?.value || '';
+            const deploymentYaml = getEffectiveSet('deployment', deploymentNs, deploymentApp);
+            const deploymentElement = document.getElementById('deployment-effective-yaml');
+            if (deploymentElement) {
+                deploymentElement.textContent = deploymentYaml;
+            }
+            
+            const runtimeNs = document.getElementById('effective-set-runtime-ns-select')?.value || '';
+            const runtimeApp = document.getElementById('effective-set-runtime-app-select')?.value || '';
+            const runtimeYaml = getEffectiveSet('runtime', runtimeNs, runtimeApp);
+            const runtimeElement = document.getElementById('runtime-effective-yaml');
+            if (runtimeElement) {
+                runtimeElement.textContent = runtimeYaml;
+            }
+        }
+
+        // Сохранение в localStorage
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('envgene-overrides', JSON.stringify(mockData.effectiveSetOverrides));
+                localStorage.setItem('envgene-state', JSON.stringify(currentState));
+            } catch (e) {
+                console.warn('Не удалось сохранить в localStorage:', e);
+            }
+        }
+
+        // Загрузка из localStorage
+        function loadFromLocalStorage() {
+            try {
+                const savedOverrides = localStorage.getItem('envgene-overrides');
+                const savedState = localStorage.getItem('envgene-state');
+                if (savedOverrides) {
+                    // Мержим с существующими данными
+                    const parsed = JSON.parse(savedOverrides);
+                    Object.keys(parsed).forEach(context => {
+                        if (!mockData.effectiveSetOverrides[context]) {
+                            mockData.effectiveSetOverrides[context] = {};
+                        }
+                        Object.keys(parsed[context]).forEach(level => {
+                            if (!mockData.effectiveSetOverrides[context][level]) {
+                                mockData.effectiveSetOverrides[context][level] = {};
+                            }
+                            Object.assign(mockData.effectiveSetOverrides[context][level], parsed[context][level]);
+                        });
+                    });
+                }
+                if (savedState) {
+                    Object.assign(currentState, JSON.parse(savedState));
+                    // Обновляем селекторы
+                    const selects = ['environment', 'namespace'];
+                    selects.forEach(selectName => {
+                        const select = document.getElementById(`${selectName}-select`);
+                        if (select && currentState[selectName]) {
+                            select.value = currentState[selectName];
+                            select.classList.add('has-value');
+                        }
+                    });
+                }
+            } catch (e) {
+                console.warn('Не удалось загрузить из localStorage:', e);
+            }
+        }
+
+    </script>
+</body>
+</html>
+
