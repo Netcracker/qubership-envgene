@@ -34,6 +34,7 @@ ENTRYPOINT [ "/deployments/run-java.sh" ]
 #STAGE 3: Builder
 FROM python:3.12-alpine3.19 AS build
 
+# hadolint ignore=DL3018
 RUN apk add --update --no-cache \
     gcc \
     curl \
@@ -47,6 +48,6 @@ COPY build_effective_set_generator/build/requirements.txt /build/requirements.tx
 COPY build_effective_set_generator/build/constraint.txt /build/constraint.txt
 
 # Create virtual environment and install Python packages
-RUN python -m venv /module/venv
-RUN /module/venv/bin/pip install --upgrade pip setuptools wheel
-RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
+RUN python -m venv /module/venv && \
+    /module/venv/bin/pip install --upgrade pip setuptools wheel && \
+    /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
