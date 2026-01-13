@@ -7,7 +7,7 @@ FROM python:3.12-alpine3.19 AS build
 
 # Install build dependencies
 # checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
-# hadolint ignore=DL3018:Alpine packages use stable versions from repository
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     gcc \
     musl-dev \
@@ -97,7 +97,7 @@ FROM python:3.12-alpine3.19 AS runtime
 
 # Install only essential runtime dependencies
 # checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
-# hadolint ignore=DL3018:Alpine packages use stable versions from repository
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     bash \
     ca-certificates \
@@ -121,11 +121,9 @@ COPY --from=build /cloud_passport /cloud_passport
 COPY --from=build /python /python
 COPY --from=build /etc/pip.conf /etc/pip.conf
 
-# Verify collections are accessible in runtime stage
-RUN /module/venv/bin/python -c "import ansible_collections.ansible.posix; print('ansible.posix collection accessible in runtime')"
-
-# Set permissions (already set in build stage, but ensure it's executable)
-RUN chmod +x /usr/local/bin/sops
+# Verify collections are accessible in runtime stage and set permissions
+RUN /module/venv/bin/python -c "import ansible_collections.ansible.posix; print('ansible.posix collection accessible in runtime')" && \
+    chmod +x /usr/local/bin/sops
 
 # Create directories that might be needed for CI environments
 # These directories are commonly used by GitHub Actions and GitLab CI
