@@ -239,6 +239,7 @@ class TestEnvTemplate:
         set_env("env-01")
         
         mock_get_creds.return_value = {
+            'artifactory-cred': {'type': 'usernamePassword', 'data': {'username': 'test-user', 'password': 'test-pass'}},
             'aws-creds': {'type': 'usernamePassword', 'data': {'username': 'key', 'password': 'secret'}}
         }
         
