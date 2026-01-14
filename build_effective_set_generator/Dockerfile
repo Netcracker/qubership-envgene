@@ -85,7 +85,8 @@ COPY build_effective_set_generator/build/scripts /module/scripts
 
 RUN addgroup ci && adduser -D -h /module/ -s /bin/bash -G ci ci && \
     chown ci:ci -R /module && \
-    chmod 754 /module/scripts/* && \
+    chmod +x /module/scripts/*.sh && \
+    chmod 644 /module/scripts/*.py 2>/dev/null || true && \
     chmod +x /usr/local/bin/sops
 
 ENV PATH=/module/venv/bin:$PATH
