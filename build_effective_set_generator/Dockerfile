@@ -17,21 +17,7 @@ RUN microdnf install -y curl ca-certificates ${JAVA_PACKAGE} && \
 
 COPY build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
 
-#STAGE 2: Minimize the CLI image
-FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1 AS minimized_cli
-
-ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
-
-COPY --from=cli --chown=1001:root /deployments /deployments
-COPY --from=cli /etc/alternatives/jre/lib/security/java.security /etc/alternatives/jre/lib/security/java.security
-
-RUN chmod g+rwX /deployments
-
-USER 1001
-
-ENTRYPOINT [ "/deployments/run-java.sh" ]
-
-#STAGE 3: Builder
+#STAGE 2: Builder
 FROM python:3.12-alpine3.19 AS build
 
 # hadolint ignore=DL3018
@@ -43,9 +29,9 @@ RUN apk add --update --no-cache \
     openssl-dev
 
 # Copy configuration files
-COPY build_effective_set_generator/build/pip.conf /etc/pip.conf
-COPY build_effective_set_generator/build/requirements.txt /build/requirements.txt
-COPY build_effective_set_generator/build/constraint.txt /build/constraint.txt
+COPY build_effective_set_generator/build/configuration/pip.conf /etc/pip.conf
+COPY build_effective_set_generator/build/configuration/requirements.txt /build/requirements.txt
+COPY build_effective_set_generator/build/configuration/constraint.txt /build/constraint.txt
 
 # Create virtual environment and install Python packages
 RUN python -m venv /module/venv && \
@@ -57,3 +43,52 @@ RUN wget --quiet --tries=3 \
     https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
     -O /usr/local/bin/sops && \
     chmod +x /usr/local/bin/sops
+
+
+# Aggressive cleanup to reduce image size
+RUN apk del gcc musl-dev libffi-dev openssl-dev && \
+    rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache
+# Remove unnecessary files from Python packages
+RUN find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
+    find /module/venv/lib/python3.12/site-packages -name '*.pyo' -delete && \
+    find /module/venv/lib/python3.12/site-packages -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
+
+
+#STAGE 3: Runtime
+FROM python:3.12-alpine3.19 AS runtime
+
+ENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'
+
+COPY --from=cli --chown=1001:root /deployments /deployments
+COPY --from=cli /etc/alternatives/jre/lib/security/java.security /etc/alternatives/jre/lib/security/java.security
+
+RUN chmod g+rwX /deployments
+
+COPY build_effective_set_generator/build/configuration/pip.conf /etc/pip.conf
+COPY build_effective_set_generator/build/configuration/constraint.txt /build/constraint.txt
+COPY build_effective_set_generator/build/configuration/sources.list /etc/apk/repositories
+
+RUN apk add --no-cache \
+    bash \
+    ca-certificates \
+    tar \
+    curl \
+    jq \
+    yq \
+    gettext \
+    sed \
+    age
+
+COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
+COPY build_effective_set_generator/build/scripts /module/scripts
+
+RUN addgroup ci && adduser -D -h /module/ -s /bin/bash -G ci ci && \
+    chown ci:ci -R /module && \
+    chmod 754 /module/scripts/* && \
+    chmod +x /usr/local/bin/sops
+
+ENV PATH=/module/venv/bin:$PATH
+
+USER ci:ci
+
+ENTRYPOINT [""]
