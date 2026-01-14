@@ -19,7 +19,7 @@ def prepare_appregdef_render_job(pipeline, env_template_version, full_env, envir
     # TODO
     after_script = [
         ## test
-        'ls "${CI_PROJECT_DIR}/environments/${full_env}"'
+        'ls "${CI_PROJECT_DIR}/environments/${FULL_ENV_NAME}"'
         ##
     ]
 

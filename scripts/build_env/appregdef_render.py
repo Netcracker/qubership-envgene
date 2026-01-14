@@ -52,5 +52,6 @@ if __name__ == '__main__':
     
     # validate_appregdefs(current_env_dir)
     
+    
     env_dir = f"{BASE_DIR}/environments/{FULL_ENV}"
     shutil.copytree(current_env_dir, env_dir, dirs_exist_ok=True)
