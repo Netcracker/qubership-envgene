@@ -236,42 +236,7 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
-            bash -c "
-              source /module/venv/bin/activate
-              if [ -d \"\${CI_PROJECT_DIR}/configuration/certs\" ]; then
-                env_path=\$(ls -A \"\${CI_PROJECT_DIR}/configuration/certs\");
-                for path in \$env_path; do bash /module/scripts/update_ca_cert.sh \${CI_PROJECT_DIR}/configuration/certs/\$path; done
-              fi
-
-              echo \"Executing build environment operations...\"
-              if [ \"\$ENV_TEMPLATE_VERSION\" != \"\" ] && [ \"\$ENV_TEMPLATE_TEST\" != \"true\" ]; then
-                if ! /module/scripts/prepare.sh \"set_template_version.yaml\"; then
-                  exit 1
-                fi
-                if ! /module/scripts/prepare.sh \"build_env.yaml\"; then
-                  exit 1
-                fi
-              else
-                if ! /module/scripts/prepare.sh \"build_env.yaml\"; then
-                  exit 1
-                fi
-              fi
-
-              if [ \"\$ENV_TEMPLATE_TEST\" == \"true\" ]; then
-                env_name=\$(cat set_variable.txt)
-                sed -i \"s|\\\\\\\"envgeneNullValue\\\\\\\"|\\\\\\\"test_value\\\\\\\"|g\" \"\${CI_PROJECT_DIR}/environments/\$env_name/Credentials/credentials.yml\"
-              else
-                env_name=\$(echo \"\$ENV_NAME\" | awk -F \"/\" '{print \$NF}')
-                export env_name
-              fi
-
-              env_path=\$(find \"\${CI_PROJECT_DIR}/environments\" -type d -name \"\$env_name\")
-              for path in \$env_path; do
-                if [ -d \"\$path/Credentials\" ]; then
-                  chmod ugo+rw \"\$path/Credentials/\"*
-                fi
-              done
-            "
+            bash /module/scripts/build_env_job.sh
 
       - name: Upload Build Env Package
         uses: actions/upload-artifact@v4
