@@ -39,25 +39,12 @@ def create_artifact_path(app: Application, version: str, repo: str) -> str:
     registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
-    path_template = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
+    # If repo is empty, use direct path without repo (for GitHub Packages when all target repos are empty)
+    if repo:
+        path_template = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
+    else:
+        path_template = f"{group_id}/{app.artifact_id}/{folder}/"
     full_path = urljoin(registry_url, path_template)
-    
-    # Debug logging - using INFO level to ensure visibility
-    logger.info(f"[create_artifact_path] Input parameters:")
-    logger.info(f"  - app.name: {app.name}")
-    logger.info(f"  - app.group_id: {app.group_id}")
-    logger.info(f"  - app.artifact_id: {app.artifact_id}")
-    logger.info(f"  - app.registry.name: {app.registry.name}")
-    logger.info(f"  - app.registry.maven_config.repository_domain_name: {app.registry.maven_config.repository_domain_name}")
-    logger.info(f"  - version: {version}")
-    logger.info(f"  - repo: '{repo}' (length: {len(repo)}, repr: {repr(repo)})")
-    logger.info(f"[create_artifact_path] Intermediate values:")
-    logger.info(f"  - registry_url: {registry_url}")
-    logger.info(f"  - group_id (converted): {group_id}")
-    logger.info(f"  - folder: {folder}")
-    logger.info(f"  - path_template: {path_template}")
-    logger.info(f"[create_artifact_path] Final path: {full_path}")
-    
     return full_path
 
 
@@ -66,13 +53,6 @@ def create_full_url(app: Application, version: str, repo: str, artifact_extensio
     base_path = create_artifact_path(app, version, repo)
     filename = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
     full_url = urljoin(base_path, filename)
-    
-    # Debug logging - using INFO level to ensure visibility
-    logger.info(f"[create_full_url] Final URL components:")
-    logger.info(f"  - base_path: {base_path}")
-    logger.info(f"  - filename: {filename}")
-    logger.info(f"  - full_url: {full_url}")
-    
     return full_url
 
 
@@ -225,10 +205,12 @@ async def check_artifact_by_full_url_async(
         classifier: str = ""
 ) -> tuple[str, tuple[str, str]] | None:
     repo_value, repo_pointer = repo
-    logger.info(f"[check_artifact_by_full_url_async] Task {task_id}, repo_value='{repo_value}' (len={len(repo_value) if repo_value else 0}), repo_pointer='{repo_pointer}'")
-    if not repo_value:
+    # Allow empty repo_value only for main target repositories (targetRelease, targetStaging, targetSnapshot)
+    # Skip empty snapshotGroup as it's optional
+    if not repo_value and repo_pointer == "snapshotGroup":
         logger.warning(f"[Task {task_id}] [Registry: {app.registry.name}] - {repo_pointer} is not configured (repo_value is empty or None)")
         return None
+    # For empty repo_value with main target repos, use empty string (will be handled in create_artifact_path)
 
     resolved_version = version
     id_main_task = None
@@ -245,10 +227,8 @@ async def check_artifact_by_full_url_async(
         return None
 
     full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, classifier)
-    logger.info(f"[Task {task_id}] [Registry: {app.registry.name}] Checking artifact at URL: {full_url}")
     try:
         async with session.head(full_url) as response:
-            logger.info(f"[Task {task_id}] [Registry: {app.registry.name}] HTTP response status: {response.status} for URL: {full_url}")
             if response.status == 200:
                 stop_artifact_event.set()
                 logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found: {full_url}")
@@ -263,17 +243,23 @@ async def check_artifact_by_full_url_async(
 def get_repo_value_pointer_dict(registry: Registry):
     """Permanent set of repositories for searching of artifacts"""
     maven = registry.maven_config
-    repos = {
-        maven.target_snapshot: "targetSnapshot",
-        maven.target_staging: "targetStaging",
-        maven.target_release: "targetRelease",
-        maven.snapshot_group: "snapshotGroup",
-    }
-    logger.info(f"[get_repo_value_pointer_dict] Registry: {registry.name}, repos dict: {repos}")
-    logger.info(f"[get_repo_value_pointer_dict] Values: targetSnapshot='{maven.target_snapshot}' (len={len(maven.target_snapshot)}), "
-                f"targetStaging='{maven.target_staging}' (len={len(maven.target_staging)}), "
-                f"targetRelease='{maven.target_release}' (len={len(maven.target_release)}), "
-                f"snapshotGroup='{maven.snapshot_group}' (len={len(maven.snapshot_group)})")
+    repos = {}
+    
+    # Add non-empty repositories
+    if maven.target_snapshot:
+        repos[maven.target_snapshot] = "targetSnapshot"
+    if maven.target_staging:
+        repos[maven.target_staging] = "targetStaging"
+    if maven.target_release:
+        repos[maven.target_release] = "targetRelease"
+    if maven.snapshot_group:
+        repos[maven.snapshot_group] = "snapshotGroup"
+    
+    # If all target repositories are empty, add empty string as default (for GitHub Packages)
+    # This allows using repositoryDomainName directly without repo prefix
+    if not maven.target_snapshot and not maven.target_staging and not maven.target_release:
+        repos[""] = "targetRelease"
+    
     return repos
 
 
@@ -290,9 +276,7 @@ async def _attempt_check(
         cred: Credentials | None = None,
         classifier: str = ""
 ) -> Optional[tuple[str, tuple[str, str]]]:
-    logger.info(f"[_attempt_check] Called with app.name={app.name}, version={version}, extension={artifact_extension.value}")
     repos_dict = get_repo_value_pointer_dict(app.registry)
-    logger.info(f"[_attempt_check] Repositories dict: {repos_dict}")
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
 
@@ -319,14 +303,10 @@ async def _attempt_check(
                 for i, repo in enumerate(repos_dict.items())
             ]
 
-        logger.info(f"[_attempt_check] Created {len(tasks)} tasks for checking artifacts, processing results...")
-        for idx, task in enumerate(tasks):
+        for task in tasks:
             result = task.result()
-            logger.info(f"[_attempt_check] Task {idx} result: {result}")
             if result is not None:
-                logger.info(f"[_attempt_check] Found artifact, returning: {result}")
                 return result
-        logger.warning(f"[_attempt_check] No artifact found in any of {len(tasks)} repositories")
 
 
 async def check_artifact_async(
@@ -342,15 +322,7 @@ async def check_artifact_async(
             - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
             Returns None if the artifact could not be resolved
     """
-    logger.info(f"[check_artifact_async] Called with app.name={app.name}, app.group_id={app.group_id}, "
-                f"app.artifact_id={app.artifact_id}, version={version}, extension={artifact_extension.value}")
-    logger.info(f"[check_artifact_async] Registry: {app.registry.name}, "
-                f"repositoryDomainName: {app.registry.maven_config.repository_domain_name}")
-    logger.info(f"[check_artifact_async] targetSnapshot='{app.registry.maven_config.target_snapshot}', "
-                f"targetStaging='{app.registry.maven_config.target_staging}', "
-                f"targetRelease='{app.registry.maven_config.target_release}'")
-
-    result = await _attempt_check(app, version, artifact_extension)
+    result = await _attempt_check(app, version, artifact_extension, None, cred)
     if result is not None:
         return result
 
