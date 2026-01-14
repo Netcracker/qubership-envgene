@@ -13,20 +13,19 @@ from inventory_generation_job import prepare_inventory_generation_job, is_invent
 from credential_rotation_job import prepare_credential_rotation_job
 from appregdef_render_job import prepare_appregdef_render_job
 
-project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
+PROJECT_DIR = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
+IS_GITLAB = bool(os.getenv('CI_PROJECT_DIR')) and not bool(os.getenv('GITHUB_ACTIONS'))
+IS_GITHUB = bool(os.getenv('GITHUB_WORKSPACE')) or bool(os.getenv('GITHUB_ACTIONS'))
 
-is_gitlab = bool(os.getenv('CI_PROJECT_DIR')) and not bool(os.getenv('GITHUB_ACTIONS'))
-is_github = bool(os.getenv('GITHUB_WORKSPACE')) or bool(os.getenv('GITHUB_ACTIONS'))
+logger.info(f"Detected environment - GitLab: {IS_GITLAB}, GitHub: {IS_GITHUB}")
 
-logger.info(f"Detected environment - GitLab: {is_gitlab}, GitHub: {is_github}")
 
-def build_pipeline(params: dict):
-    # if we are in template testing during template build
+def build_pipeline(params: dict) -> None:
     tags=params['GITLAB_RUNNER_TAG_NAME']
 
     if params['IS_TEMPLATE_TEST']:
         logger.info("We are generating jobs in template test mode.")
-        templates_dir = f"{project_dir}/templates/env_templates"
+        templates_dir = f"{PROJECT_DIR}/templates/env_templates"
         # getting build artifact
         build_artifact = get_gav_coordinates_from_build()
         group_id = build_artifact["group_id"]
@@ -54,7 +53,6 @@ def build_pipeline(params: dict):
 
     for env in params['ENV_NAMES'].split("\n"):
         logger.info(f'----------------start processing for {env}---------------------')
-        ci_project_dir = project_dir
 
         if params['IS_TEMPLATE_TEST']:
             cluster_name = ""
@@ -66,7 +64,7 @@ def build_pipeline(params: dict):
             if params['ENV_INVENTORY_INIT']:
                 env_definition = None
             else:
-                env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{ci_project_dir}/environments"))
+                env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{PROJECT_DIR}/environments"))
 
         job_sequence = [
             "trigger_passport_job",
@@ -103,12 +101,12 @@ def build_pipeline(params: dict):
             ### ?
             if env_definition is None:
                 try:
-                    env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{ci_project_dir}/environments"))
+                    env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{PROJECT_DIR}/environments"))
                 except ReferenceError:
                     pass
             ###
             # TODO
-            jobs_map["appregdef_render_job"] = prepare_appregdef_render_job()
+            jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, tags)
             jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, tags)
         else:
             logger.info(f'Preparing of appregdef_render_job {env} is skipped.')
@@ -120,8 +118,7 @@ def build_pipeline(params: dict):
         else:
             logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
 
-        # TODO
-        jobs_requiring_git_commit = ["env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job"]
+        jobs_requiring_git_commit = ["appregdef_render_job", "env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job"]
 
         plugin_params = params
         plugin_params['jobs_map'] = jobs_map

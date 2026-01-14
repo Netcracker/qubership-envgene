@@ -10,10 +10,6 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
     script = [
         'if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then cert_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs"); for path in $cert_path; do . /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/$path; done; fi',
     ]
-    # adding update template version
-    if env_template_version and env_template_version != "" and not is_template_test:
-        script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
-
     script.append('/module/scripts/prepare.sh "build_env.yaml"')
     script.append('cd /build_env; python3 /build_env/scripts/build_env/main.py')
 
@@ -21,19 +17,12 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         script.append("env_name=$(cat set_variable.txt)")
         script.append(
             'sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "$CI_PROJECT_DIR/environments/$env_name/Credentials/credentials.yml"')
-    else:
-        script.append("export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')")
 
-    script.extend([
-        'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
-        'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
-    ])
-    # add after script
     after_script = [
         'mkdir -p "$CI_PROJECT_DIR/tmp"',
         'cp -r /build_env/tmp/* $CI_PROJECT_DIR/tmp'
     ]
-    #
+
     env_build_params = {
         "name": f'env_builder.{full_env}',
         "image": '${envgen_image}',
