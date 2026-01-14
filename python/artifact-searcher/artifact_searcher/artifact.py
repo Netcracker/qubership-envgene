@@ -42,21 +42,21 @@ def create_artifact_path(app: Application, version: str, repo: str) -> str:
     path_template = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
     full_path = urljoin(registry_url, path_template)
     
-    # Debug logging
-    logger.debug(f"[create_artifact_path] Input parameters:")
-    logger.debug(f"  - app.name: {app.name}")
-    logger.debug(f"  - app.group_id: {app.group_id}")
-    logger.debug(f"  - app.artifact_id: {app.artifact_id}")
-    logger.debug(f"  - app.registry.name: {app.registry.name}")
-    logger.debug(f"  - app.registry.maven_config.repository_domain_name: {app.registry.maven_config.repository_domain_name}")
-    logger.debug(f"  - version: {version}")
-    logger.debug(f"  - repo: '{repo}' (length: {len(repo)})")
-    logger.debug(f"[create_artifact_path] Intermediate values:")
-    logger.debug(f"  - registry_url: {registry_url}")
-    logger.debug(f"  - group_id (converted): {group_id}")
-    logger.debug(f"  - folder: {folder}")
-    logger.debug(f"  - path_template: {path_template}")
-    logger.debug(f"[create_artifact_path] Final path: {full_path}")
+    # Debug logging - using INFO level to ensure visibility
+    logger.info(f"[create_artifact_path] Input parameters:")
+    logger.info(f"  - app.name: {app.name}")
+    logger.info(f"  - app.group_id: {app.group_id}")
+    logger.info(f"  - app.artifact_id: {app.artifact_id}")
+    logger.info(f"  - app.registry.name: {app.registry.name}")
+    logger.info(f"  - app.registry.maven_config.repository_domain_name: {app.registry.maven_config.repository_domain_name}")
+    logger.info(f"  - version: {version}")
+    logger.info(f"  - repo: '{repo}' (length: {len(repo)}, repr: {repr(repo)})")
+    logger.info(f"[create_artifact_path] Intermediate values:")
+    logger.info(f"  - registry_url: {registry_url}")
+    logger.info(f"  - group_id (converted): {group_id}")
+    logger.info(f"  - folder: {folder}")
+    logger.info(f"  - path_template: {path_template}")
+    logger.info(f"[create_artifact_path] Final path: {full_path}")
     
     return full_path
 
@@ -67,11 +67,11 @@ def create_full_url(app: Application, version: str, repo: str, artifact_extensio
     filename = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
     full_url = urljoin(base_path, filename)
     
-    # Debug logging
-    logger.debug(f"[create_full_url] Final URL components:")
-    logger.debug(f"  - base_path: {base_path}")
-    logger.debug(f"  - filename: {filename}")
-    logger.debug(f"  - full_url: {full_url}")
+    # Debug logging - using INFO level to ensure visibility
+    logger.info(f"[create_full_url] Final URL components:")
+    logger.info(f"  - base_path: {base_path}")
+    logger.info(f"  - filename: {filename}")
+    logger.info(f"  - full_url: {full_url}")
     
     return full_url
 
@@ -244,8 +244,10 @@ async def check_artifact_by_full_url_async(
         return None
 
     full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, classifier)
+    logger.info(f"[Task {task_id}] [Registry: {app.registry.name}] Checking artifact at URL: {full_url}")
     try:
         async with session.head(full_url) as response:
+            logger.info(f"[Task {task_id}] [Registry: {app.registry.name}] HTTP response status: {response.status} for URL: {full_url}")
             if response.status == 200:
                 stop_artifact_event.set()
                 logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found: {full_url}")
