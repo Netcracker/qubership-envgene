@@ -225,8 +225,9 @@ async def check_artifact_by_full_url_async(
         classifier: str = ""
 ) -> tuple[str, tuple[str, str]] | None:
     repo_value, repo_pointer = repo
+    logger.info(f"[check_artifact_by_full_url_async] Task {task_id}, repo_value='{repo_value}' (len={len(repo_value) if repo_value else 0}), repo_pointer='{repo_pointer}'")
     if not repo_value:
-        logger.warning(f"[Task {task_id}] [Registry: {app.registry.name}] - {repo_pointer} is not configured")
+        logger.warning(f"[Task {task_id}] [Registry: {app.registry.name}] - {repo_pointer} is not configured (repo_value is empty or None)")
         return None
 
     resolved_version = version
@@ -268,6 +269,11 @@ def get_repo_value_pointer_dict(registry: Registry):
         maven.target_release: "targetRelease",
         maven.snapshot_group: "snapshotGroup",
     }
+    logger.info(f"[get_repo_value_pointer_dict] Registry: {registry.name}, repos dict: {repos}")
+    logger.info(f"[get_repo_value_pointer_dict] Values: targetSnapshot='{maven.target_snapshot}' (len={len(maven.target_snapshot)}), "
+                f"targetStaging='{maven.target_staging}' (len={len(maven.target_staging)}), "
+                f"targetRelease='{maven.target_release}' (len={len(maven.target_release)}), "
+                f"snapshotGroup='{maven.snapshot_group}' (len={len(maven.snapshot_group)})")
     return repos
 
 
@@ -284,7 +290,9 @@ async def _attempt_check(
         cred: Credentials | None = None,
         classifier: str = ""
 ) -> Optional[tuple[str, tuple[str, str]]]:
+    logger.info(f"[_attempt_check] Called with app.name={app.name}, version={version}, extension={artifact_extension.value}")
     repos_dict = get_repo_value_pointer_dict(app.registry)
+    logger.info(f"[_attempt_check] Repositories dict: {repos_dict}")
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
 
@@ -311,10 +319,14 @@ async def _attempt_check(
                 for i, repo in enumerate(repos_dict.items())
             ]
 
-        for task in tasks:
+        logger.info(f"[_attempt_check] Created {len(tasks)} tasks for checking artifacts, processing results...")
+        for idx, task in enumerate(tasks):
             result = task.result()
+            logger.info(f"[_attempt_check] Task {idx} result: {result}")
             if result is not None:
+                logger.info(f"[_attempt_check] Found artifact, returning: {result}")
                 return result
+        logger.warning(f"[_attempt_check] No artifact found in any of {len(tasks)} repositories")
 
 
 async def check_artifact_async(
@@ -330,6 +342,13 @@ async def check_artifact_async(
             - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
             Returns None if the artifact could not be resolved
     """
+    logger.info(f"[check_artifact_async] Called with app.name={app.name}, app.group_id={app.group_id}, "
+                f"app.artifact_id={app.artifact_id}, version={version}, extension={artifact_extension.value}")
+    logger.info(f"[check_artifact_async] Registry: {app.registry.name}, "
+                f"repositoryDomainName: {app.registry.maven_config.repository_domain_name}")
+    logger.info(f"[check_artifact_async] targetSnapshot='{app.registry.maven_config.target_snapshot}', "
+                f"targetStaging='{app.registry.maven_config.target_staging}', "
+                f"targetRelease='{app.registry.maven_config.target_release}'")
 
     result = await _attempt_check(app, version, artifact_extension)
     if result is not None:
