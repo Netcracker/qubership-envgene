@@ -356,7 +356,6 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         logger.error(f"V2 fallback for '{app.name}': Could not resolve authConfig for registry '{app.registry.name}'")
         return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
     
-    # Note: provider is required in RegDef v2 and validated in cloud_auth_helper
 
     # AWS and GCP require credentials; Artifactory/Nexus can work with anonymous access
     if auth_config.provider in ["aws", "gcp"]:
@@ -529,7 +528,7 @@ async def _check_artifact_v1_async(
     fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
     if fixed_domain != original_domain:
         logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
-        result = await _attempt_check(app, version, artifact_extension, fixed_domain, cred, classifier)  # Now works
+        result = await _attempt_check(app, version, artifact_extension, fixed_domain, cred, classifier)
         if result is not None:
             return result
     else:
