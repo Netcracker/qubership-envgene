@@ -68,6 +68,7 @@ COPY build_effective_set_generator/build/configuration/pip.conf /etc/pip.conf
 COPY build_effective_set_generator/build/configuration/constraint.txt /build/constraint.txt
 COPY build_effective_set_generator/build/configuration/sources.list /etc/apk/repositories
 
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     bash \
     ca-certificates \
