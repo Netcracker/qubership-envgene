@@ -99,8 +99,11 @@ def run_env_test_setup():
     shutil.copy(src, dest)
 
     env_name = f"{tenant_name}/{tenant_name}_{env_template_vers_split.replace('-', '_')}"
-    # cluster_name = tenant_name
-    # environment_name = f"{tenant_name}_{env_template_vers_split.replace('-', '_')}"
+    cluster_name = tenant_name
+    environment_name = f"{tenant_name}_{env_template_vers_split.replace('-', '_')}"
+
+    os.environ["CLUSTER_NAME"] = cluster_name
+    os.environ["ENVIRONMENT_NAME"] = environment_name
 
     set_variable_path = base_dir / "set_variable.txt"
     writeToFile(set_variable_path, env_name)
