@@ -54,6 +54,7 @@ if [ "${ENV_TEMPLATE_TEST}" == "true" ]; then
   fi
 else
   # Extract environment name from ENV_NAME (last part after /)
+  # shellcheck disable=SC2153
   env_name=$(echo "${ENV_NAME}" | awk -F '/' '{print $NF}')
   export env_name
 fi
