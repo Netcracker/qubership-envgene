@@ -39,14 +39,41 @@ def create_artifact_path(app: Application, version: str, repo: str) -> str:
     registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
-    return urljoin(registry_url, f"{repo}/{group_id}/{app.artifact_id}/{folder}/")
+    path_template = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
+    full_path = urljoin(registry_url, path_template)
+    
+    # Debug logging
+    logger.debug(f"[create_artifact_path] Input parameters:")
+    logger.debug(f"  - app.name: {app.name}")
+    logger.debug(f"  - app.group_id: {app.group_id}")
+    logger.debug(f"  - app.artifact_id: {app.artifact_id}")
+    logger.debug(f"  - app.registry.name: {app.registry.name}")
+    logger.debug(f"  - app.registry.maven_config.repository_domain_name: {app.registry.maven_config.repository_domain_name}")
+    logger.debug(f"  - version: {version}")
+    logger.debug(f"  - repo: '{repo}' (length: {len(repo)})")
+    logger.debug(f"[create_artifact_path] Intermediate values:")
+    logger.debug(f"  - registry_url: {registry_url}")
+    logger.debug(f"  - group_id (converted): {group_id}")
+    logger.debug(f"  - folder: {folder}")
+    logger.debug(f"  - path_template: {path_template}")
+    logger.debug(f"[create_artifact_path] Final path: {full_path}")
+    
+    return full_path
 
 
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension,
                     classifier: str = "") -> str:
     base_path = create_artifact_path(app, version, repo)
     filename = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
-    return urljoin(base_path, filename)
+    full_url = urljoin(base_path, filename)
+    
+    # Debug logging
+    logger.debug(f"[create_full_url] Final URL components:")
+    logger.debug(f"  - base_path: {base_path}")
+    logger.debug(f"  - filename: {filename}")
+    logger.debug(f"  - full_url: {full_url}")
+    
+    return full_url
 
 
 def _create_metadata_url(app: Application, version: str, repo_value: str) -> str:
