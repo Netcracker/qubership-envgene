@@ -14,7 +14,7 @@ def prepare_appregdef_render_job(pipeline, env_template_version, full_env, envir
     if env_template_version:
         script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
     
-    script.append('cd /build_env; python3 /build_env/scripts/build_env/appregdef_render_job.py')
+    script.append('cd /build_env; python3 /build_env/scripts/build_env/appregdef_render.py')
     
     # TODO
     after_script = [
