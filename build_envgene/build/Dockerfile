@@ -66,7 +66,7 @@ RUN /module/venv/bin/pip install /python/jschon-sort && \
     /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
 
 # Download and install SOPS for secrets management
-RUN wget --progress=dot:giga --tries=3 \
+RUN wget --quiet --tries=3 \
     https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
     -O /usr/local/bin/sops && \
     chmod +x /usr/local/bin/sops
