@@ -8,6 +8,8 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
     logger.info(f'prepare env_build job for {full_env}')
     # prepare script
     script = [
+        ## test
+        'ls "${CI_PROJECT_DIR}/environments/${FULL_ENV_NAME}"',
         'if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then cert_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs"); for path in $cert_path; do . /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/$path; done; fi',
     ]
     script.append('/module/scripts/prepare.sh "build_env.yaml"')
@@ -20,7 +22,9 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
 
     after_script = [
         'mkdir -p "$CI_PROJECT_DIR/tmp"',
-        'cp -r /build_env/tmp/* $CI_PROJECT_DIR/tmp'
+        'cp -r /build_env/tmp/* $CI_PROJECT_DIR/tmp',
+        ## test
+        'ls "${CI_PROJECT_DIR}/environments/${FULL_ENV_NAME}"'
     ]
 
     env_build_params = {
