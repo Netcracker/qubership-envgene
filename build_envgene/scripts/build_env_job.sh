@@ -6,6 +6,9 @@ set -e
 # It performs environment build operations including certificate updates,
 # template version setting, environment building, and cleanup
 
+# Activate Python virtual environment
+source /module/venv/bin/activate
+
 # Enable debug mode if envgen_debug is set
 if [ "${envgen_debug}" == "true" ]; then
   set -o xtrace
