@@ -51,3 +51,9 @@ COPY build_effective_set_generator/build/constraint.txt /build/constraint.txt
 RUN python -m venv /module/venv && \
     /module/venv/bin/pip install --upgrade pip setuptools wheel && \
     /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
+
+# Download and install SOPS for secrets management
+RUN wget --quiet --tries=3 \
+    https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
+    -O /usr/local/bin/sops && \
+    chmod +x /usr/local/bin/sops
