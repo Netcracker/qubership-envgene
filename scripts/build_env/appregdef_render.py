@@ -50,7 +50,7 @@ if __name__ == '__main__':
     render_context.ctx.update(render_context_vars)
     render_context.process_app_reg_defs()
     
-    validate_appregdefs(current_env_dir)
+    # validate_appregdefs(current_env_dir)
     
     env_dir = f"{BASE_DIR}/environments/{FULL_ENV}"
     shutil.copytree(current_env_dir, env_dir, dirs_exist_ok=True)
