@@ -177,6 +177,7 @@ class CloudAuthHelper:
     @staticmethod
     def _configure_aws(searcher: 'MavenArtifactSearcher', auth_config: AuthConfig,
                        creds: dict, registry_url: str) -> 'MavenArtifactSearcher':
+        """Configure MavenArtifactSearcher for AWS CodeArtifact using username/password creds."""
         if not auth_config.aws_domain:
             raise ValueError("AWS auth requires aws_domain in authConfig")
         region = CloudAuthHelper._extract_region(registry_url, auth_config)
@@ -193,6 +194,7 @@ class CloudAuthHelper:
     @staticmethod
     def _configure_gcp(searcher: 'MavenArtifactSearcher', auth_config: AuthConfig,
                        creds: dict, registry_url: str) -> 'MavenArtifactSearcher':
+        """Configure MavenArtifactSearcher for GCP Artifact Registry using service account JSON."""
         if auth_config.auth_method != "service_account":
             raise ValueError(f"GCP auth_method '{auth_config.auth_method}' not supported")
         if not auth_config.gcp_reg_project:

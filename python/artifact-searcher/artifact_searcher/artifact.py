@@ -13,10 +13,21 @@ from zipfile import ZipFile
 import aiohttp
 import requests
 from aiohttp import BasicAuth
+from requests.auth import HTTPBasicAuth
+
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT, METADATA_XML
 from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
 from envgenehelper import logger
-from requests.auth import HTTPBasicAuth
+
+try:
+    from qubership_pipelines_common_library.v1.maven_client import Artifact as MavenArtifact
+except ImportError:
+    MavenArtifact = None
+
+try:
+    from artifact_searcher.cloud_auth_helper import CloudAuthHelper
+except ImportError:
+    CloudAuthHelper = None
 
 WORKSPACE = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
 
@@ -320,15 +331,24 @@ async def check_artifact_async(
 
 async def _check_artifact_v2_async(app: Application, artifact_extension: FileExtension, version: str,
                                    env_creds: Optional[dict]) -> Optional[tuple[str, tuple[str, str]]]:
+    """Resolve and download artifacts using RegDef V2 cloud configuration.
+
+    Uses CloudAuthHelper and the shared Maven client to search and download
+    artifacts from cloud-backed registries (AWS, GCP, Artifactory, Nexus).
+    Falls back to the V1 HTTP-based logic when configuration or credentials
+    are missing, or when any unrecoverable error occurs.
+    """
     if not getattr(app.registry.maven_config, 'auth_config', None):
         logger.error(f"V2 fallback for '{app.name}': Registry '{app.registry.name}' version 2.0 missing maven_config.authConfig")
         return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
 
-    try:
-        from artifact_searcher.cloud_auth_helper import CloudAuthHelper
-        from qubership_pipelines_common_library.v1.maven_client import Artifact as MavenArtifact
-    except ImportError as e:
-        logger.error(f"V2 fallback for '{app.name}': Missing required libraries - {e}")
+    if CloudAuthHelper is None or MavenArtifact is None:
+        missing = []
+        if CloudAuthHelper is None:
+            missing.append("artifact_searcher.cloud_auth_helper")
+        if MavenArtifact is None:
+            missing.append("qubership_pipelines_common_library.v1.maven_client.Artifact")
+        logger.error(f"V2 fallback for '{app.name}': Missing required libraries - {', '.join(missing)}")
         return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
 
     auth_config = CloudAuthHelper.resolve_auth_config(app.registry, "maven")
@@ -446,6 +466,13 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
 
 async def _v2_download_with_fallback(searcher, url: str, local_path: str, auth_config,
                                      registry: Registry, env_creds: Optional[dict]) -> bool:
+    """Download artifact using MavenArtifactSearcher with HTTP fallback.
+
+    Attempts to download via the configured MavenArtifactSearcher first,
+    bounded by V2_DOWNLOAD_TIMEOUT. For supported providers (GCP, Artifactory,
+    Nexus), falls back to a direct HTTP GET when the searcher-based download
+    fails, optionally adding GCP access tokens to the request.
+    """
     loop = asyncio.get_running_loop()
 
     try:
@@ -463,7 +490,6 @@ async def _v2_download_with_fallback(searcher, url: str, local_path: str, auth_c
         return False
 
     try:
-        from artifact_searcher.cloud_auth_helper import CloudAuthHelper
         headers = {}
         if auth_config.provider == "gcp":
             sa_json = CloudAuthHelper.get_gcp_credentials_from_registry(registry, env_creds)
