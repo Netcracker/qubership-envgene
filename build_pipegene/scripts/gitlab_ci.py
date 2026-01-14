@@ -23,14 +23,16 @@ def build_pipeline(params: dict):
     # if we are in template testing during template build
     tags=params['GITLAB_RUNNER_TAG_NAME']
 
+    artifact_url = None
     if params['IS_TEMPLATE_TEST']:
         logger.info("We are generating jobs in template test mode.")
+        artifact_url = os.getenv("artifact_url")
         templates_dir = f"{project_dir}/templates/env_templates"
         # getting build artifact
         build_artifact = get_gav_coordinates_from_build()
         group_id = build_artifact["group_id"]
         artifact_id = build_artifact["artifact_id"]
-        params['ENV_TEMPLATE_VERSION'] = build_artifact["version"]
+        params['ENV_TEMPLATE_VERSION'] = f"{artifact_id}:{build_artifact["version"]}"
         # get env_names for all templates types
         templateFiles = [
             os.path.splitext(f)[0]
@@ -103,7 +105,7 @@ def build_pipeline(params: dict):
                     pass
 
             # env_builder job
-            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, tags)
+            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, artifact_url, tags)
         else:
             logger.info(f'Preparing of env_build job for {env} is skipped.')
 

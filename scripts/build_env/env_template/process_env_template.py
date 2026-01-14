@@ -4,9 +4,10 @@ import tempfile
 from pathlib import Path
 
 from artifact_searcher import artifact
-from artifact_searcher.utils.models import FileExtension, Application, Credentials, Registry
-from envgenehelper import getEnvDefinition, fetch_cred_value
-from envgenehelper import openYaml, find_all_yaml_files_by_stem, getenv_with_error, logger
+from artifact_searcher.utils.models import FileExtension, Credentials, Registry, Application
+from env_template.template_testing import run_env_test_setup
+from envgenehelper import getEnvDefinition, fetch_cred_value, getAppDefinitionPath
+from envgenehelper import openYaml, getenv_with_error, logger
 from envgenehelper import unpack_archive, get_cred_config
 
 artifact_dest = f"{tempfile.gettempdir()}/artifact.zip"
@@ -17,15 +18,6 @@ def parse_artifact_appver(env_definition: dict) -> [str, str]:
     artifact_appver = env_definition['envTemplate'].get('artifact', '')
     logger.info(f"Environment template artifact version: {artifact_appver}")
     return artifact_appver.split(':')
-
-
-def load_artifact_definition(name: str) -> Application:
-    base_dir = getenv_with_error('CI_PROJECT_DIR')
-    path_pattern = os.path.join(base_dir, 'configuration', 'artifact_definitions', name)
-    path = next(iter(find_all_yaml_files_by_stem(path_pattern)), None)
-    if not path:
-        raise FileNotFoundError(f"No artifact definition file found for {name} with .yaml or .yml extension")
-    return Application.model_validate(openYaml(path))
 
 
 def get_registry_creds(registry: Registry) -> Credentials:
@@ -56,7 +48,12 @@ def extract_snapshot_version(url: str, snapshot_version: str) -> str:
 # logic downloading template by artifact definition
 def download_artifact_new_logic(env_definition: dict) -> str:
     app_name, app_version = parse_artifact_appver(env_definition)
-    app_def = load_artifact_definition(app_name)
+
+    base_dir = getenv_with_error('CI_PROJECT_DIR')
+    artifact_path = getAppDefinitionPath(base_dir, app_name)
+    if not artifact_path:
+        raise FileNotFoundError(f"No artifact definition file found for {app_name} with .yaml or .yml extension")
+    app_def = Application.model_validate(openYaml(artifact_path))
     cred = get_registry_creds(app_def.registry)
     template_url = None
 
@@ -135,7 +132,8 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
         template_url = artifact.check_artifact(repo_url, group_id, artifact_id, dd_version, FileExtension.ZIP)
         if "-SNAPSHOT" in dd_version:
             resolved_version = extract_snapshot_version(template_url, dd_version)
-
+    if not template_url:
+        raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={resolved_version}")
     logger.info(f"Environment template url has been resolved: {template_url}")
     artifact.download(template_url, artifact_dest, cred)
     unpack_archive(artifact_dest, build_env_path)
@@ -143,6 +141,9 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
 
 
 def process_env_template() -> str:
+    env_template_test = os.getenv("ENV_TEMPLATE_TEST", "").lower() == "true"
+    if env_template_test:
+        run_env_test_setup()
     project_dir = getenv_with_error("CI_PROJECT_DIR")
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
