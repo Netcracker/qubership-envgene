@@ -127,6 +127,8 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 ### UC-EINV-ED-3: Delete `env_definition.yml`
 
+**Pre-requisites:**
+
 1. The Environment Inventory file exists:
    - `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
 
