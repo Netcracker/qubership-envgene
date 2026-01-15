@@ -425,12 +425,8 @@ class EnvGenerator:
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
             all_vars = dict(os.environ)
-            ci_vars = {}
-            if "CI_COMMIT_TAG" in all_vars:
-                ci_vars["CI_COMMIT_TAG"] = all_vars["CI_COMMIT_TAG"]
-            ci_vars["CI_COMMIT_REF_NAME"] = all_vars.get("CI_COMMIT_REF_NAME")
             self.ctx.update(extra_env)
-            self.ctx.env_vars.update(ci_vars)
+            self.ctx.env_vars.update(all_vars)
             self.set_inventory()
             self.set_cloud_passport()
             self.generate_config()
