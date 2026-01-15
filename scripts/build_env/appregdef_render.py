@@ -35,13 +35,13 @@ if __name__ == '__main__':
     _ = process_env_template(download_template=True)
     
     output_dir = f"{BASE_DIR}/environments"
-    current_env_dir = f"/tmp/render/{ENVIRONMENT_NAME}"
-    templates_dir = "/build_env/templates"
+    render_dir = f"/tmp/render/{ENVIRONMENT_NAME}"
+    templates_dir = "/tmp/templates"
     
     render_context_vars = {
         "cluster_name": CLUSTER_NAME,
         "output_dir": output_dir,
-        "current_env_dir": current_env_dir,
+        "current_env_dir": render_dir,
         "templates_dir": templates_dir
     }
     
@@ -49,7 +49,7 @@ if __name__ == '__main__':
     render_context.ctx.update(render_context_vars)
     render_context.process_app_reg_defs()
     
-    # validate_appregdefs(current_env_dir)
+    # validate_appregdefs(render_dir)
     
     env_dir = f"{BASE_DIR}/environments/{FULL_ENV}"
-    shutil.copytree(current_env_dir, env_dir, dirs_exist_ok=True)
+    shutil.copytree(render_dir, env_dir, dirs_exist_ok=True)

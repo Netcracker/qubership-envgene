@@ -29,7 +29,6 @@ def prepare_appregdef_render_job(pipeline, env_template_version, full_env, envir
         "ENVIRONMENT_NAME": environment_name,
         "ENV_TEMPLATE_VERSION": env_template_version,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
-        "TEMPLATES_PATH": "/build_env/templates",
         "GITLAB_RUNNER_TAG_NAME": tags,
     }
 
@@ -38,7 +37,6 @@ def prepare_appregdef_render_job(pipeline, env_template_version, full_env, envir
     appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/{full_env}")
     appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
     appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
-    appregdef_render_job.artifacts.add_paths("${TEMPLATES_PATH}")
     appregdef_render_job.artifacts.when = WhenStatement.ALWAYS
     
     pipeline.add_children(appregdef_render_job)

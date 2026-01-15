@@ -11,6 +11,7 @@ from resource_profiles import get_env_specific_resource_profiles
 from filter_namespaces import apply_ns_build_filter
 
 # const
+BASE_DIR = getenv_with_error('CI_PROJECT_DIR')
 INVENTORY_DIR_NAME = "Inventory"
 ENV_DEFINITION_FILE_NAME = "env_definition.yml"
 PARAMSET_SCHEMA = "schemas/paramset.schema.json"
@@ -100,9 +101,9 @@ def handle_template_override(render_dir):
 def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all_instances_dir, output_dir,
     # defining folders that will be used during generation
                       g_template_version, work_dir):
-    render_dir = getAbsPath('tmp/render')
-    render_parameters_dir = getAbsPath('tmp/parameters_templates')
-    render_profiles_dir = getAbsPath('tmp/resource_profiles')
+    render_dir = f"{BASE_DIR}/tmp/render"
+    render_parameters_dir = f"{BASE_DIR}/tmp/parameters_templates"
+    render_profiles_dir = f"{BASE_DIR}/tmp/resource_profiles"
 
     namespaces_path = get_namespaces_path()
     if check_dir_exists(str(namespaces_path.absolute())):
@@ -253,7 +254,7 @@ def validate_parameters(templates_dir, all_instances_dir, cluster_name=None, env
 def validate_parameter_files(param_files):
     errors = []
     for param_file_path in param_files:
-        rel_param_file_path = os.path.relpath(param_file_path, os.getenv('CI_PROJECT_DIR'))
+        rel_param_file_path = os.path.relpath(param_file_path, BASE_DIR)
         try:
             validate_yaml_by_scheme_or_fail(param_file_path, PARAMSET_SCHEMA)
         except ValueError:
@@ -296,13 +297,12 @@ def render_environment(env_name, cluster_name, templates_dir, all_instances_dir,
 if __name__ == "__main__":
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
-    base_dir = getenv_with_error('CI_PROJECT_DIR')
     template_version = process_env_template(download_template=False)
-    g_templates_dir = "/build_env/templates"
-    g_all_instances_dir = f"{base_dir}/environments"
-    g_output_dir = f"{base_dir}/environments"
+    g_templates_dir = f"{BASE_DIR}/tmp/templates"
+    g_all_instances_dir = f"{BASE_DIR}/environments"
+    g_output_dir = f"{BASE_DIR}/environments"
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
-
+    
     decrypt_all_cred_files_for_env()
     render_environment(environment, cluster, g_templates_dir, g_all_instances_dir, g_output_dir,
                        template_version, g_work_dir)
