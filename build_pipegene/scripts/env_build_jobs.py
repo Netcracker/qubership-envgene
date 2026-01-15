@@ -61,7 +61,8 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
         
     env_build_job.artifacts.when = WhenStatement.ALWAYS
-    pipeline.add_needs(appregdef_render_job)
+    env_build_job.add_needs(appregdef_render_job)
+
     pipeline.add_children(env_build_job)
 
     return env_build_job
