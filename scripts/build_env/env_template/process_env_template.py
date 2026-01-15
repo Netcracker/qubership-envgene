@@ -136,7 +136,8 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
         template_url = artifact.check_artifact(repo_url, group_id, artifact_id, dd_version, FileExtension.ZIP)
         if "-SNAPSHOT" in dd_version:
             resolved_version = extract_snapshot_version(template_url, dd_version)
-
+    if not template_url:
+        raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={resolved_version}")
     logger.info(f"Environment template url has been resolved: {template_url}")
     artifact.download(template_url, artifact_dest, cred)
     unpack_archive(artifact_dest, build_env_path)

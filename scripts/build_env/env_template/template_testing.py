@@ -3,9 +3,11 @@ import shutil
 from pathlib import Path
 
 from envgenehelper import openYaml, writeYamlToFile, getenv_with_error, writeToFile
+from envgenehelper import logger
 
 
 def run_env_test_setup():
+    logger.info("Start template testing...")
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     deployer_yaml = openYaml(Path(f"{base_dir}/configuration/deployer.yml"))
     deployer = next(k for k in deployer_yaml.keys() if "deployer" in k)
@@ -39,6 +41,7 @@ def run_env_test_setup():
         },
     }
 
+    logger.info(f"env_definition: {env_definition}")
     env_definition_conf_path = base_dir / "configuration" / "env_definition.yml"
     writeYamlToFile(env_definition_conf_path, env_definition)
 
@@ -55,6 +58,7 @@ def run_env_test_setup():
 
     os.environ["CLUSTER_NAME"] = tenant_name
     os.environ["ENVIRONMENT_NAME"] = environment_name
+    os.environ["ENV_NAME"] = env_name
 
     set_variable_path = base_dir / "set_variable.txt"
     writeToFile(set_variable_path, env_name)
