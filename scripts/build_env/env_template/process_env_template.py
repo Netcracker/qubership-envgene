@@ -28,7 +28,7 @@ def load_artifact_definition(name: str) -> Application:
     return Application.model_validate(openYaml(path))
 
 
-def get_registry_creds(registry: Registry) -> Credentials:
+def get_registry_creds(registry: Registry) -> Credentials | None:
     cred_config = get_cred_config()
     cred_id = registry.credentials_id
     if cred_id:
@@ -38,6 +38,7 @@ def get_registry_creds(registry: Registry) -> Credentials:
             raise ValueError(
                 f"Registry {registry.name} credentials incomplete: username={username}, password={password}")
         return Credentials(username=username, password=password)
+    return None
 
 
 def parse_maven_coord_from_dd(dd_config: dict) -> tuple[str, str, str]:
@@ -58,6 +59,9 @@ def download_artifact_new_logic(env_definition: dict) -> str:
     app_name, app_version = parse_artifact_appver(env_definition)
     app_def = load_artifact_definition(app_name)
     cred = get_registry_creds(app_def.registry)
+    if not cred:
+        raise ValueError(f"Registry {app_def.registry.name} credentials not found (credentials_id: {app_def.registry.credentials_id})")
+    logger.info(f"Using credentials for registry {app_def.registry.name}: username={cred.username if cred else 'None'}")
     template_url = None
 
     resolved_version = app_version

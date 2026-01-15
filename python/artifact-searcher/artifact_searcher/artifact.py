@@ -262,7 +262,16 @@ async def _attempt_check(
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
 
-    auth = BasicAuth(login=cred.username, password=cred.password) if cred else None
+    # Create BasicAuth for GitHub Packages authentication
+    # GitHub Packages requires username (usually GitHub username or token) and password (Personal Access Token)
+    auth = None
+    if cred:
+        if not cred.username or not cred.password:
+            logger.warning(f"[_attempt_check] Credentials incomplete: username={'set' if cred.username else 'None'}, password={'set' if cred.password else 'None'}")
+        else:
+            auth = BasicAuth(login=cred.username, password=cred.password)
+    else:
+        logger.warning(f"[_attempt_check] No credentials provided for registry {app.registry.name}")
     timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
     stop_snapshot_event_for_others = asyncio.Event()
     stop_artifact_event = asyncio.Event()
