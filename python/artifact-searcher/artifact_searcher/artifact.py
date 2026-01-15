@@ -39,11 +39,7 @@ def create_artifact_path(app: Application, version: str, repo: str) -> str:
     registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
-    # If repo is empty, use direct path without repo (for GitHub Packages when all target repos are empty)
-    if repo:
-        path_template = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
-    else:
-        path_template = f"{group_id}/{app.artifact_id}/{folder}/"
+    path_template = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
     full_path = urljoin(registry_url, path_template)
     return full_path
 
@@ -205,12 +201,9 @@ async def check_artifact_by_full_url_async(
         classifier: str = ""
 ) -> tuple[str, tuple[str, str]] | None:
     repo_value, repo_pointer = repo
-    # Allow empty repo_value only for main target repositories (targetRelease, targetStaging, targetSnapshot)
-    # Skip empty snapshotGroup as it's optional
-    if not repo_value and repo_pointer == "snapshotGroup":
+    if not repo_value:
         logger.warning(f"[Task {task_id}] [Registry: {app.registry.name}] - {repo_pointer} is not configured (repo_value is empty or None)")
         return None
-    # For empty repo_value with main target repos, use empty string (will be handled in create_artifact_path)
 
     resolved_version = version
     id_main_task = None
@@ -243,23 +236,12 @@ async def check_artifact_by_full_url_async(
 def get_repo_value_pointer_dict(registry: Registry):
     """Permanent set of repositories for searching of artifacts"""
     maven = registry.maven_config
-    repos = {}
-    
-    # Add non-empty repositories
-    if maven.target_snapshot:
-        repos[maven.target_snapshot] = "targetSnapshot"
-    if maven.target_staging:
-        repos[maven.target_staging] = "targetStaging"
-    if maven.target_release:
-        repos[maven.target_release] = "targetRelease"
-    if maven.snapshot_group:
-        repos[maven.snapshot_group] = "snapshotGroup"
-    
-    # If all target repositories are empty, add empty string as default (for GitHub Packages)
-    # This allows using repositoryDomainName directly without repo prefix
-    if not maven.target_snapshot and not maven.target_staging and not maven.target_release:
-        repos[""] = "targetRelease"
-    
+    repos = {
+        maven.target_snapshot: "targetSnapshot",
+        maven.target_staging: "targetStaging",
+        maven.target_release: "targetRelease",
+        maven.snapshot_group: "snapshotGroup",
+    }
     return repos
 
 
