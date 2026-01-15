@@ -105,8 +105,10 @@ def build_pipeline(params: dict) -> None:
                 except ReferenceError:
                     pass
             ###
-            jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, tags)     
-            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, tags)
+            appregdef_render_job = prepare_appregdef_render_job(pipeline, params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, tags)
+            
+            jobs_map["appregdef_render_job"] = appregdef_render_job     
+            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, tags, appregdef_render_job)
         else:
             logger.info(f'Preparing of appregdef_render_job {env} is skipped.')
             logger.info(f'Preparing of env_build job for {env} is skipped.')

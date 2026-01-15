@@ -98,8 +98,8 @@ def handle_template_override(render_dir):
 
 
 def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all_instances_dir, output_dir,
-                      g_template_version, work_dir):
     # defining folders that will be used during generation
+                      g_template_version, work_dir):
     render_dir = getAbsPath('tmp/render')
     render_parameters_dir = getAbsPath('tmp/parameters_templates')
     render_profiles_dir = getAbsPath('tmp/resource_profiles')
@@ -297,7 +297,7 @@ if __name__ == "__main__":
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
     base_dir = getenv_with_error('CI_PROJECT_DIR')
-    template_version = process_env_template()
+    template_version = process_env_template(download_template=False)
     g_templates_dir = "/build_env/templates"
     g_all_instances_dir = f"{base_dir}/environments"
     g_output_dir = f"{base_dir}/environments"

@@ -4,12 +4,10 @@ from pipeline_helper import job_instance
 
 
 def prepare_env_build_job(pipeline, is_template_test, env_template_version, full_env, enviroment_name, cluster_name,
-                          group_id, artifact_id, tags):
+                          group_id, artifact_id, tags, appregdef_render_job):
     logger.info(f'prepare env_build job for {full_env}')
     # prepare script
     script = [
-        ## test
-        'ls "${CI_PROJECT_DIR}/environments/${FULL_ENV_NAME}"',
         'if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then cert_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs"); for path in $cert_path; do . /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/$path; done; fi',
     ]
     script.append('/module/scripts/prepare.sh "build_env.yaml"')
@@ -22,9 +20,7 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
 
     after_script = [
         'mkdir -p "$CI_PROJECT_DIR/tmp"',
-        'cp -r /build_env/tmp/* $CI_PROJECT_DIR/tmp',
-        ## test
-        'ls "${CI_PROJECT_DIR}/environments/${FULL_ENV_NAME}"'
+        'cp -r /build_env/tmp/* $CI_PROJECT_DIR/tmp'
     ]
 
     env_build_params = {
@@ -65,6 +61,7 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
         
     env_build_job.artifacts.when = WhenStatement.ALWAYS
+    pipeline.add_needs(appregdef_render_job)
     pipeline.add_children(env_build_job)
 
     return env_build_job

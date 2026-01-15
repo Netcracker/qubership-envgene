@@ -32,7 +32,7 @@ def validate_appregdefs(render_dir):
 
 
 if __name__ == '__main__':
-    process_env_template()
+    _ = process_env_template(download_template=True)
     
     output_dir = f"{BASE_DIR}/environments"
     current_env_dir = f"/tmp/render/{ENVIRONMENT_NAME}"
