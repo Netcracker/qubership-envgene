@@ -181,7 +181,6 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
               env_specific_resource_profile_map, all_instances_dir, render_context)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
                                                      output_dir)
-    validate_appregdefs(render_dir, env_name)
 
     return resulting_dir
 
@@ -266,27 +265,6 @@ def validate_parameter_files(param_files):
         if file_name != name:
             errors.append(f'Parameter "name" must be equal to filename without extension in file {rel_param_file_path}')
     return errors
-
-
-def validate_appregdefs(render_dir, env_name):
-    appdef_dir = f"{render_dir}/{env_name}/AppDefs"
-    regdef_dir = f"{render_dir}/{env_name}/RegDefs"
-
-    if os.path.exists(appdef_dir):
-        appdef_files = findAllYamlsInDir(appdef_dir)
-        if not appdef_files:
-            logger.info(f"No AppDef YAMLs found in {appdef_dir}")
-        for file in appdef_files:
-            logger.info(f"AppDef file: {file}")
-            validate_yaml_by_scheme_or_fail(file, "schemas/appdef.schema.json")
-
-    if os.path.exists(regdef_dir):
-        regdef_files = findAllYamlsInDir(regdef_dir)
-        if not regdef_files:
-            logger.info(f"No RegDef YAMLs found in {regdef_dir}")
-        for file in regdef_files:
-            logger.info(f"RegDef file: {file}")
-            validate_yaml_by_scheme_or_fail(file, "schemas/regdef.schema.json")
 
 
 def render_environment(env_name, cluster_name, templates_dir, all_instances_dir, output_dir, g_template_version,

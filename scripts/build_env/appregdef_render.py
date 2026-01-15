@@ -10,7 +10,6 @@ BASE_DIR = getenv_with_error('CI_PROJECT_DIR')
 FULL_ENV = getenv_with_error("FULL_ENV_NAME")
 
 
-## dublicate
 def validate_appregdefs(render_dir):
     appdef_dir = f"{render_dir}/AppDefs"
     regdef_dir = f"{render_dir}/RegDefs"
@@ -51,7 +50,6 @@ if __name__ == '__main__':
     render_context.process_app_reg_defs()
     
     # validate_appregdefs(current_env_dir)
-    
     
     env_dir = f"{BASE_DIR}/environments/{FULL_ENV}"
     shutil.copytree(current_env_dir, env_dir, dirs_exist_ok=True)

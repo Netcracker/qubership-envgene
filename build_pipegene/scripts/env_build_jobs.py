@@ -4,7 +4,7 @@ from pipeline_helper import job_instance
 
 
 def prepare_env_build_job(pipeline, is_template_test, env_template_version, full_env, enviroment_name, cluster_name,
-                          group_id, artifact_id, tags, appregdef_render_job):
+                          group_id, artifact_id, tags):
     logger.info(f'prepare env_build job for {full_env}')
     # prepare script
     script = [
@@ -64,7 +64,6 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
         
-    env_build_job.add_needs(appregdef_render_job)
     env_build_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(env_build_job)
 
