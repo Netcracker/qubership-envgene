@@ -220,10 +220,8 @@ async def check_artifact_by_full_url_async(
         return None
 
     full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, classifier)
-    logger.info(f"[check_artifact_by_full_url_async] Task {task_id} checking URL: {full_url}")
     try:
         async with session.head(full_url) as response:
-            logger.info(f"[check_artifact_by_full_url_async] Task {task_id} response status: {response.status} for URL: {full_url}")
             if response.status == 200:
                 stop_artifact_event.set()
                 logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found: {full_url}")
@@ -264,19 +262,7 @@ async def _attempt_check(
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
 
-    # Create BasicAuth for GitHub Packages authentication
-    # GitHub Packages requires username (usually GitHub username or token) and password (Personal Access Token)
-    logger.info(f"[_attempt_check] Registry: {app.registry.name}, credentials provided: {cred is not None}")
-    auth = None
-    if cred:
-        logger.info(f"[_attempt_check] Credentials username: {cred.username if cred.username else 'None'}, password: {'***' if cred.password else 'None'}")
-        if not cred.username or not cred.password:
-            logger.warning(f"[_attempt_check] Credentials incomplete: username={'set' if cred.username else 'None'}, password={'set' if cred.password else 'None'}")
-        else:
-            auth = BasicAuth(login=cred.username, password=cred.password)
-            logger.info(f"[_attempt_check] BasicAuth created successfully")
-    else:
-        logger.warning(f"[_attempt_check] No credentials provided for registry {app.registry.name}")
+    auth = BasicAuth(login=cred.username, password=cred.password) if cred else None
     timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
     stop_snapshot_event_for_others = asyncio.Event()
     stop_artifact_event = asyncio.Event()
@@ -318,7 +304,6 @@ async def check_artifact_async(
             - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
             Returns None if the artifact could not be resolved
     """
-    logger.info(f"[check_artifact_async] Called with app={app.name}, version={version}, cred={'provided' if cred else 'None'}")
     result = await _attempt_check(app, version, artifact_extension, None, cred)
     if result is not None:
         return result
