@@ -9,10 +9,9 @@ from envgenehelper import getEnvDefinition, fetch_cred_value
 from envgenehelper import openYaml, find_all_yaml_files_by_stem, getenv_with_error, logger
 from envgenehelper import unpack_archive, get_cred_config
 
-artifact_dest = f"{tempfile.gettempdir()}/artifact.zip"
 build_env_path = "/build_env"
-origin_ns_template_path = "/build_env_origin_ns"
-peer_ns_template_path = "/build_env_peer_ns"
+ORIGIN_NS_TEMPLATE_PATH = "/build_env_origin_ns"
+PEER_NS_TEMPLATE_PATH = "/build_env_peer_ns"
 
 
 def parse_artifact_appver(artifact_appver: str) -> list[str]:
@@ -20,8 +19,7 @@ def parse_artifact_appver(artifact_appver: str) -> list[str]:
     return artifact_appver.split(':')
 
 
-def load_artifact_definition(name: str) -> Application:
-    base_dir = getenv_with_error('CI_PROJECT_DIR')
+def load_artifact_definition(name: str, base_dir: str) -> Application:
     path_pattern = os.path.join(base_dir, 'configuration', 'artifact_definitions', name)
     path = next(iter(find_all_yaml_files_by_stem(path_pattern)), None)
     if not path:
@@ -29,8 +27,7 @@ def load_artifact_definition(name: str) -> Application:
     return Application.model_validate(openYaml(path))
 
 
-def get_registry_creds(registry: Registry) -> Credentials:
-    cred_config = get_cred_config()
+def get_registry_creds(registry: Registry, cred_config: dict) -> Credentials:
     cred_id = registry.credentials_id
     if cred_id:
         username = cred_config[cred_id]['data'].get('username')
@@ -55,10 +52,10 @@ def extract_snapshot_version(url: str, snapshot_version: str) -> str:
 
 
 # logic downloading template by artifact definition
-def download_artifact_new_logic(artifact_appver: str, target_path: str) -> str:
+def download_artifact_new_logic(artifact_appver: str, target_path: str, base_dir: str, cred_config: dict) -> str:
     app_name, app_version = parse_artifact_appver(artifact_appver)
-    app_def = load_artifact_definition(app_name)
-    cred = get_registry_creds(app_def.registry)
+    app_def = load_artifact_definition(app_name, base_dir)
+    cred = get_registry_creds(app_def.registry, cred_config)
     template_url = None
 
     resolved_version = app_version
@@ -90,13 +87,24 @@ def download_artifact_new_logic(artifact_appver: str, target_path: str) -> str:
     if not template_url:
         raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={version}")
     logger.info(f"Environment template url has been resolved: {template_url}")
-    artifact.download(template_url, artifact_dest, cred)
-    unpack_archive(artifact_dest, target_path)
+
+    # Use a unique temporary file for each download to avoid conflicts
+    with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmp_file:
+        artifact_dest = tmp_file.name
+
+    try:
+        artifact.download(template_url, artifact_dest, cred)
+        unpack_archive(artifact_dest, target_path)
+    finally:
+        # Clean up the temporary file
+        if os.path.exists(artifact_dest):
+            os.unlink(artifact_dest)
+
     return resolved_version
 
 
 # logic downloading template by exact coordinates and repo, deprecated
-def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
+def download_artifact_old_logic(env_definition: dict, project_dir: str, cred_config: dict) -> str:
     template_artifact = env_definition['envTemplate']['templateArtifact']
     artifact_info = template_artifact['artifact']
 
@@ -112,7 +120,6 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
     repo_url = registry.get(repo_type)
     dd_repo_url = registry.get(dd_repo_type)
 
-    cred_config = get_cred_config()
     repository_username = fetch_cred_value(registry.get("username"), cred_config)
     repository_password = fetch_cred_value(registry.get("password"), cred_config)
     cred = Credentials(username=repository_username, password=repository_password)
@@ -138,9 +145,30 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
             resolved_version = extract_snapshot_version(template_url, dd_version)
 
     logger.info(f"Environment template url has been resolved: {template_url}")
-    artifact.download(template_url, artifact_dest, cred)
-    unpack_archive(artifact_dest, build_env_path)
+
+    # Use a unique temporary file for each download to avoid conflicts
+    with tempfile.NamedTemporaryFile(suffix='.zip', delete=False) as tmp_file:
+        artifact_dest = tmp_file.name
+
+    try:
+        artifact.download(template_url, artifact_dest, cred)
+        unpack_archive(artifact_dest, build_env_path)
+    finally:
+        # Clean up the temporary file
+        if os.path.exists(artifact_dest):
+            os.unlink(artifact_dest)
+
     return resolved_version
+
+
+async def download_artifact_new_logic_async(artifact_appver: str, target_path: str, base_dir: str, cred_config: dict) -> str:
+    """Async wrapper for download_artifact_new_logic to enable concurrent downloads"""
+    return await asyncio.to_thread(download_artifact_new_logic, artifact_appver, target_path, base_dir, cred_config)
+
+
+async def download_artifact_old_logic_async(env_definition: dict, project_dir: str, cred_config: dict) -> str:
+    """Async wrapper for download_artifact_old_logic to enable concurrent downloads"""
+    return await asyncio.to_thread(download_artifact_old_logic, env_definition, project_dir, cred_config)
 
 
 def process_env_template() -> tuple[str, str | None, str | None]:
@@ -150,21 +178,47 @@ def process_env_template() -> tuple[str, str | None, str | None]:
     env_dir = Path(f"{project_dir}/environments/{cluster}/{environment}")
     env_definition = getEnvDefinition(env_dir)
     env_template = env_definition.get('envTemplate', {})
-    bg_artifacts = env_template.get('BgArtifacts', {})
 
-    if 'artifact' in env_template:
-        logger.info("Use template downloading new logic")
-        template_version = download_artifact_new_logic(env_template.get('artifact', ''), build_env_path)
-    else:
-        logger.info("Use template downloading old logic")
-        template_version = download_artifact_old_logic(env_definition, project_dir)
+    cred_config = get_cred_config()
 
-    def download_optional(artifact: str | None, target_path: str) -> str | None:
-        return download_artifact_new_logic(artifact, target_path) if artifact else None
+    bg_artifacts_key = 'bgNsArtifacts'
+    bg_artifacts = env_template.get(bg_artifacts_key, {})
 
-    return (
-        template_version,
-        download_optional(bg_artifacts.get('origin', None), origin_ns_template_path),
-        download_optional(bg_artifacts.get('peer', None), peer_ns_template_path),
-    )
+    async def download_all_templates():
+        if 'artifact' in env_template:
+            logger.info("Use template downloading new logic")
+            main_task = download_artifact_new_logic_async(
+                env_template.get('artifact', ''),
+                build_env_path,
+                project_dir,
+                cred_config
+            )
+        else:
+            logger.info("Use template downloading old logic")
+            main_task = download_artifact_old_logic_async(env_definition, project_dir, cred_config)
 
+        tasks = [main_task]
+        task_labels = ['main']
+
+        bg_artifact_configs = [
+            ('origin', ORIGIN_NS_TEMPLATE_PATH),
+            ('peer', PEER_NS_TEMPLATE_PATH),
+        ]
+
+        for artifact_key, target_path in bg_artifact_configs:
+            artifact_appver = bg_artifacts.get(artifact_key)
+            if artifact_appver:
+                logger.info(f'Try to download template for appver: {artifact_appver}, from {bg_artifacts_key}.{artifact_key}')
+                tasks.append(download_artifact_new_logic_async(artifact_appver, target_path, project_dir, cred_config))
+                task_labels.append(artifact_key)
+
+        results = await asyncio.gather(*tasks)
+
+        result_map = dict(zip(task_labels, results))
+        return (
+            result_map['main'],
+            result_map.get('origin', None),
+            result_map.get('peer', None)
+        )
+
+    return asyncio.run(download_all_templates())
