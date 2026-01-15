@@ -1,23 +1,23 @@
 import os
 import re
+from collections import OrderedDict
+from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-from collections.abc import Iterable
 
 from deepmerge import always_merger
+from envgenehelper import getEnvDefinition
 from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileAsString, copy_path, dumpYamlToStr, \
     create_yaml_processor, find_all_yaml_files_by_stem, ensure_directory, dump_as_yaml_format
 from envgenehelper.business_helper import get_bgd_object, get_namespaces
 from envgenehelper.validation import ensure_valid_fields, ensure_required_keys
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
-from collections import OrderedDict
 
 from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-from envgenehelper import getEnvDefinition
 
 yml = create_yaml_processor()
 
@@ -75,6 +75,12 @@ class Context(BaseModel):
 
     def as_dict(self, include_none: bool = False) -> dict:
         return self.model_dump(exclude_none=not include_none)
+
+
+def render_obj_by_context(template: dict, context: Context) -> dict:
+    template_str = replace_ansible_stuff(template_str=dumpYamlToStr(template))
+    rendered_str = create_jinja_env().from_string(template_str).render(context.as_dict())
+    return yml.load(rendered_str)
 
 
 class EnvGenerator:

@@ -9,6 +9,8 @@ from envgenehelper import getEnvDefinition, fetch_cred_value
 from envgenehelper import openYaml, find_all_yaml_files_by_stem, getenv_with_error, logger
 from envgenehelper import unpack_archive, get_cred_config
 
+from render_config_env import render_obj_by_context, Context
+
 artifact_dest = f"{tempfile.gettempdir()}/artifact.zip"
 build_env_path = "/build_env"
 
@@ -29,7 +31,7 @@ def load_artifact_definition(name: str) -> Application:
 
 
 def get_registry_creds(registry: Registry) -> Credentials:
-    cred_config = get_cred_config()
+    cred_config = render_creds()
     cred_id = registry.credentials_id
     if cred_id:
         username = cred_config[cred_id]['data'].get('username')
@@ -94,6 +96,15 @@ def download_artifact_new_logic(env_definition: dict) -> str:
     return resolved_version
 
 
+def render_creds() -> dict:
+    cred_config = get_cred_config()
+    context = Context()
+    context.env_vars.update(dict(os.environ))
+    rendered = render_obj_by_context(cred_config, context)
+    logger.info("Credentials rendered successfully")
+    return rendered
+
+
 # logic downloading template by exact coordinates and repo, deprecated
 def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
     template_artifact = env_definition['envTemplate']['templateArtifact']
@@ -111,7 +122,7 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
     repo_url = registry.get(repo_type)
     dd_repo_url = registry.get(dd_repo_type)
 
-    cred_config = get_cred_config()
+    cred_config = render_creds()
     repository_username = fetch_cred_value(registry.get("username"), cred_config)
     repository_password = fetch_cred_value(registry.get("password"), cred_config)
     cred = Credentials(username=repository_username, password=repository_password)
