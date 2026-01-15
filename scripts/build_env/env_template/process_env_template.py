@@ -1,5 +1,6 @@
 import asyncio
 import os
+import re
 import tempfile
 from pathlib import Path
 
@@ -37,6 +38,29 @@ def get_registry_creds(registry: Registry) -> Credentials | None:
         if username is None or password is None:
             raise ValueError(
                 f"Registry {registry.name} credentials incomplete: username={username}, password={password}")
+        
+        # Substitute environment variables in format ${VAR_NAME} or $VAR_NAME
+        def substitute_env_vars(value: str) -> str:
+            if not value:
+                return value
+            # Replace ${VAR_NAME} format
+            def replace_braced_var(match):
+                var_name = match.group(1)
+                return os.getenv(var_name, match.group(0))  # Return original if not found
+            
+            # Replace $VAR_NAME format (without braces)
+            def replace_simple_var(match):
+                var_name = match.group(1)
+                return os.getenv(var_name, match.group(0))  # Return original if not found
+            
+            # Replace ${VAR_NAME} first, then $VAR_NAME
+            value = re.sub(r'\$\{([^}]+)\}', replace_braced_var, value)
+            value = re.sub(r'\$([A-Z_][A-Z0-9_]*)', replace_simple_var, value)
+            return value
+        
+        username = substitute_env_vars(username)
+        password = substitute_env_vars(password)
+        
         return Credentials(username=username, password=password)
     return None
 
