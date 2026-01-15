@@ -22,8 +22,7 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         "name": f'env_builder.{full_env}',
         "image": '${envgen_image}',
         "stage": 'env_builder',
-        "script": script,
-        "after_script": after_script
+        "script": script
     }
 
     env_build_vars = {
