@@ -535,9 +535,9 @@ async def _check_artifact_v1_async(
     artifact_extension: FileExtension,
     version: str,
     cred: Credentials | None = None,  # ADD from incoming
-    classifier: str = ""  # ADD from incoming
+    classifier: str = ""
 ) -> Optional[tuple[str, tuple[str, str]]]:
-    result = await _attempt_check(app, version, artifact_extension, cred=cred, classifier=classifier)  # FIX line 490
+    result = await _attempt_check(app, version, artifact_extension, cred=cred, classifier=classifier)
     if result is not None:
         return result
 
