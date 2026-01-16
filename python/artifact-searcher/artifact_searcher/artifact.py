@@ -39,17 +39,14 @@ def create_artifact_path(app: Application, version: str, repo: str) -> str:
     registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
-    path_template = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
-    full_path = urljoin(registry_url, path_template)
-    return full_path
+    return urljoin(registry_url, f"{repo}/{group_id}/{app.artifact_id}/{folder}/")
 
 
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension,
                     classifier: str = "") -> str:
     base_path = create_artifact_path(app, version, repo)
     filename = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
-    full_url = urljoin(base_path, filename)
-    return full_url
+    return urljoin(base_path, filename)
 
 
 def _create_metadata_url(app: Application, version: str, repo_value: str) -> str:
@@ -202,7 +199,7 @@ async def check_artifact_by_full_url_async(
 ) -> tuple[str, tuple[str, str]] | None:
     repo_value, repo_pointer = repo
     if not repo_value:
-        logger.warning(f"[Task {task_id}] [Registry: {app.registry.name}] - {repo_pointer} is not configured (repo_value is empty or None)")
+        logger.warning(f"[Task {task_id}] [Registry: {app.registry.name}] - {repo_pointer} is not configured")
         return None
 
     resolved_version = version
@@ -304,7 +301,8 @@ async def check_artifact_async(
             - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
             Returns None if the artifact could not be resolved
     """
-    result = await _attempt_check(app, version, artifact_extension, None, cred)
+
+    result = await _attempt_check(app, version, artifact_extension)
     if result is not None:
         return result
 
