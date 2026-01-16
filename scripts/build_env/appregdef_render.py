@@ -48,7 +48,8 @@ if __name__ == '__main__':
         "output_dir": output_dir,
         "current_env_dir": render_dir,
         "templates_dir": templates_dir,
-        "cloud_passport_file_path": cloud_passport_file_path
+        "cloud_passport_file_path": cloud_passport_file_path,
+        "env_instances_dir": env_dir
     }
     
     render_context = EnvGenerator()

@@ -410,9 +410,14 @@ class EnvGenerator:
         logger.info(f"Starting rendering app_reg_defs for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
             self.ctx.update(extra_env)
-            self.set_cloud_passport()
             
-            current_env_dir = self.ctx.current_env_dir
+            self.set_inventory()
+            self.set_cloud_passport()
+            self.generate_config()
+
+            current_env = self.ctx.config["environment"]
+            self.ctx.current_env = current_env
+            
             templates_dir = self.ctx.templates_dir
             patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
             appdef_templates = self.find_templates(f"{templates_dir}/appdefs", patterns)
