@@ -302,7 +302,7 @@ async def check_artifact_async(
             Returns None if the artifact could not be resolved
     """
 
-    result = await _attempt_check(app, version, artifact_extension)
+    result = await _attempt_check(app, version, artifact_extension, None, cred)
     if result is not None:
         return result
 

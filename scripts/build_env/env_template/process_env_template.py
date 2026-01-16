@@ -9,6 +9,8 @@ from envgenehelper import getEnvDefinition, fetch_cred_value
 from envgenehelper import openYaml, find_all_yaml_files_by_stem, getenv_with_error, logger
 from envgenehelper import unpack_archive, get_cred_config
 
+from render_config_env import render_obj_by_context, Context
+
 artifact_dest = f"{tempfile.gettempdir()}/artifact.zip"
 build_env_path = "/build_env"
 
@@ -29,7 +31,7 @@ def load_artifact_definition(name: str) -> Application:
 
 
 def get_registry_creds(registry: Registry) -> Credentials:
-    cred_config = get_cred_config()
+    cred_config = render_creds()
     cred_id = registry.credentials_id
     if cred_id:
         username = cred_config[cred_id]['data'].get('username')
@@ -38,6 +40,7 @@ def get_registry_creds(registry: Registry) -> Credentials:
             raise ValueError(
                 f"Registry {registry.name} credentials incomplete: username={username}, password={password}")
         return Credentials(username=username, password=password)
+    return None
 
 
 def parse_maven_coord_from_dd(dd_config: dict) -> tuple[str, str, str]:
@@ -61,7 +64,7 @@ def download_artifact_new_logic(env_definition: dict) -> str:
     template_url = None
 
     resolved_version = app_version
-    dd_artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.JSON, app_version))
+    dd_artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.JSON, app_version, cred))
     if dd_artifact_info:
         logger.info("Loading environment template artifact info from deployment descriptor...")
         dd_url, dd_repo = dd_artifact_info
@@ -81,7 +84,7 @@ def download_artifact_new_logic(env_definition: dict) -> str:
     else:
         logger.info("Loading environment template artifact from zip directly...")
         group_id, artifact_id, version = app_def.group_id, app_def.artifact_id, app_version
-        artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version))
+        artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version, cred))
         if artifact_info:
             template_url, _ = artifact_info
         if "-SNAPSHOT" in app_version:
@@ -92,6 +95,15 @@ def download_artifact_new_logic(env_definition: dict) -> str:
     artifact.download(template_url, artifact_dest, cred)
     unpack_archive(artifact_dest, build_env_path)
     return resolved_version
+
+
+def render_creds() -> dict:
+    cred_config = get_cred_config()
+    context = Context()
+    context.env_vars.update(dict(os.environ))
+    rendered = render_obj_by_context(cred_config, context)
+    logger.info("Credentials rendered successfully")
+    return rendered
 
 
 # logic downloading template by exact coordinates and repo, deprecated
@@ -111,7 +123,7 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
     repo_url = registry.get(repo_type)
     dd_repo_url = registry.get(dd_repo_type)
 
-    cred_config = get_cred_config()
+    cred_config = render_creds()
     repository_username = fetch_cred_value(registry.get("username"), cred_config)
     repository_password = fetch_cred_value(registry.get("password"), cred_config)
     cred = Credentials(username=repository_username, password=repository_password)

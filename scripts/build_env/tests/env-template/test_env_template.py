@@ -139,6 +139,8 @@ class TestEnvTemplate:
 
         environ["CI_PROJECT_DIR"] = str((base_dir / "test_data/test_template/projects").resolve())
         environ["CLUSTER_NAME"] = "cluster-01"
+        environ["GITHUB_TOKEN"] = "token"
+        environ["GITHUB_USER_NAME"] = "user"
 
         yield
 
