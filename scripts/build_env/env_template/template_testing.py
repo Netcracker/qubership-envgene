@@ -4,6 +4,7 @@ from pathlib import Path
 
 from envgenehelper import openYaml, writeYamlToFile, getenv_with_error, writeToFile, logger
 
+
 def run_env_test_setup():
     logger.info("Start template testing...")
     base_dir = getenv_with_error('CI_PROJECT_DIR')

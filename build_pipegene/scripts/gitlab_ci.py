@@ -30,7 +30,7 @@ def build_pipeline(params: dict):
         build_artifact = get_gav_coordinates_from_build()
         group_id = build_artifact["group_id"]
         artifact_id = build_artifact["artifact_id"]
-        params['ENV_TEMPLATE_VERSION'] = build_artifact["version"]
+        params['ENV_TEMPLATE_VERSION'] = f"{artifact_id}:{build_artifact["version"]}"
         # get env_names for all templates types
         templateFiles = [
             os.path.splitext(f)[0]
