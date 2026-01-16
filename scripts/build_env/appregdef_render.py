@@ -19,7 +19,7 @@ def validate_appregdefs(render_dir):
     if os.path.exists(appdef_dir):
         appdef_files = findAllYamlsInDir(appdef_dir)
         if not appdef_files:
-            logger.info(f"No AppDef YAMLs found in {appdef_dir}")
+            logger.warning(f"No AppDef YAMLs found in {appdef_dir}")
         for file in appdef_files:
             logger.info(f"AppDef file: {file}")
             validate_yaml_by_scheme_or_fail(file, "schemas/appdef.schema.json")
@@ -27,7 +27,7 @@ def validate_appregdefs(render_dir):
     if os.path.exists(regdef_dir):
         regdef_files = findAllYamlsInDir(regdef_dir)
         if not regdef_files:
-            logger.info(f"No RegDef YAMLs found in {regdef_dir}")
+            logger.warning(f"No RegDef YAMLs found in {regdef_dir}")
         for file in regdef_files:
             logger.info(f"RegDef file: {file}")
             validate_yaml_by_scheme_or_fail(file, "schemas/regdef.schema.json")
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     
     output_dir = f"{BASE_DIR}/environments"
     render_dir = f"/tmp/render/{ENVIRONMENT_NAME}"
-    templates_dir = "/tmp/templates"
+    templates_dir = f"{BASE_DIR}/tmp/templates"
     
     env_dir = get_env_instances_dir(ENV_NAME, CLUSTER_NAME, INSTANCES_DIR)
     cloud_passport_file_path = find_cloud_passport_definition(env_dir, INSTANCES_DIR)

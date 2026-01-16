@@ -325,7 +325,7 @@ class EnvGenerator:
     def find_templates(self, path: str, patterns) -> list[Path]:
         path = Path(path)
         if not path.exists():
-            logger.info(f"Templates directory not found: {path}")
+            logger.warning(f"Templates directory not found: {path}")
             return []
         templates = []
         for pattern in patterns:
