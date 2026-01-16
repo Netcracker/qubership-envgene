@@ -236,7 +236,14 @@ jobs:
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
-            bash ${CI_PROJECT_DIR}/github_workflows/instance-repo-pipeline/.github/jobs/build_env_job.sh
+            bash -c "
+              # Copy build_env_job.sh to container and make it executable
+              cp ${CI_PROJECT_DIR}/github_workflows/instance-repo-pipeline/.github/jobs/build_env_job.sh /tmp/build_env_job.sh
+              chmod +x /tmp/build_env_job.sh
+              
+              # Execute the script
+              bash /tmp/build_env_job.sh
+            "
 
       - name: Upload Build Env Package
         uses: actions/upload-artifact@v4
