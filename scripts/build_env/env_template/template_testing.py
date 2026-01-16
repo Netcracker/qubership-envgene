@@ -6,7 +6,7 @@ from envgenehelper import openYaml, writeYamlToFile, getenv_with_error, writeToF
 
 
 def run_env_test_setup():
-    logger.info("Start template testing...")
+    logger.info("Start set up environment for template testing")
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     deployer_yaml = openYaml(Path(f"{base_dir}/configuration/deployer.yml"))
     deployer = next(k for k in deployer_yaml.keys() if "deployer" in k)
@@ -14,18 +14,19 @@ def run_env_test_setup():
     configs_conf_path = Path(f"{base_dir}/configuration/config.yml")
     writeYamlToFile(configs_conf_path, "crypt: false\n")
 
-    env_template_vers = getenv_with_error("ENV_TEMPLATE_VERSION")
+    env_template_art_vers = getenv_with_error("ENV_TEMPLATE_VERSION")
     env_name = os.getenv("ENV_NAME")
     project_dir = os.getenv("CI_PROJECT_NAME")
-    env_template_vers_split = env_template_vers.replace('.', '_')
+    env_template_vers_split = env_template_art_vers.split(':')[1].replace('.', '_')
     cluster_example_url = os.getenv("ansible_var_clusterExampleUrl", "https://test-cluster.example.com")
     tenant_name = f"template_testing_{project_dir}_{env_name}"
 
     definition_env_name = "env-test"
+    env_template_version_normalized = f"{tenant_name}_{env_template_vers_split.replace('-', '_')}"
     env_definition = {
         "inventory": {
             "environmentName": definition_env_name,
-            "cloudName": env_template_vers_split.replace("-", "_"),
+            "cloudName": env_template_version_normalized,
             "tenantName": tenant_name,
             "deployer": deployer,
             "clusterUrl": cluster_example_url,
@@ -36,7 +37,7 @@ def run_env_test_setup():
         },
         "envTemplate": {
             "name": env_name,
-            "artifact": env_template_vers
+            "artifact": env_template_art_vers
         },
     }
 
@@ -57,12 +58,12 @@ def run_env_test_setup():
 
     shutil.copy(env_definition_conf_path, version_dir_path / "env_definition.yml")
 
-    env_name = f"{tenant_name}/{tenant_name}_{env_template_vers_split.replace('-', '_')}"
-    environment_name = f"{tenant_name}_{env_template_vers_split.replace('-', '_')}"
+    env_name = f"{tenant_name}/{tenant_name}_{env_template_version_normalized}"
+    environment_name = f"{tenant_name}_{env_template_version_normalized}"
 
     for k, v in {"CLUSTER_NAME": tenant_name, "ENVIRONMENT_NAME": environment_name, "ENV_NAME": env_name}.items():
         os.environ[k] = v
         logger.info("Env var set: %s=%s", k, v)
 
-    set_variable_path = base_dir / "set_variable.txt"
+    set_variable_path = Path(f"{base_dir}/set_variable.txt")
     writeToFile(set_variable_path, env_name)
