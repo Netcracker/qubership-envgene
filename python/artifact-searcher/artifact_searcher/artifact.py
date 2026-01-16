@@ -98,7 +98,8 @@ async def resolve_snapshot_version_async(
                 stop_snapshot_event_for_others.set()
                 logger.info(
                     f"[Task {task_id}] [Application: {app.name}: {version}] - Successfully fetched maven-metadata.xml: {metadata_url}")
-            return resolved_version, task_id
+                return resolved_version, task_id
+            return None
     except Exception as e:
         logger.warning(
             f"[Task {task_id}] [Application: {app.name}: {version}] - Error resolving snapshot version from {metadata_url}: {e}")
@@ -113,21 +114,40 @@ def _parse_snapshot_version(
         classifier: str = ""
 ) -> str | None:
     root = ET.fromstring(content)
+    
+    # Try new-style <snapshotVersions> first (Maven 3+)
     snapshot_versions = root.findall(".//snapshotVersions/snapshotVersion")
-    if not snapshot_versions:
-        logger.warning(f"[Application: {app.name}: {version}] - No <snapshotVersions> found")
-        return
-
-    for node in snapshot_versions:
-        node_classifier = node.findtext("classifier", default="")
-        node_extension = node.findtext("extension", default="")
-        value = node.findtext("value")
-        if node_classifier == classifier and node_extension == extension.value:
+    if snapshot_versions:
+        for node in snapshot_versions:
+            node_classifier = node.findtext("classifier", default="")
+            node_extension = node.findtext("extension", default="")
+            value = node.findtext("value")
+            if node_classifier == classifier and node_extension == extension.value:
+                logger.info(
+                    f"[Task {task_id}] [Application: {app.name}: {version}] - Resolved snapshot version '{value}'")
+                return value
+        logger.warning(f"[Task {task_id}] [Application: {app.name}: {version}] - No matching snapshotVersion found")
+        return None
+    
+    # Fallback to old-style <snapshot> metadata (Maven 2 / some Nexus repos)
+    snapshot_node = root.find(".//snapshot")
+    if snapshot_node is not None:
+        timestamp = snapshot_node.findtext("timestamp")
+        build_number = snapshot_node.findtext("buildNumber")
+        
+        if timestamp and build_number:
+            # Convert timestamp from "yyyyMMdd.HHmmss" format and build timestamped version
+            base_version = version.replace("-SNAPSHOT", "")
+            resolved = f"{base_version}-{timestamp}-{build_number}"
             logger.info(
-                f"[Task {task_id}] [Application: {app.name}: {version}] - Resolved snapshot version '{value}'")
-            return value
-
-    logger.warning(f"[Task {task_id}] [Application: {app.name}: {version}] - No matching snapshotVersion found")
+                f"[Task {task_id}] [Application: {app.name}: {version}] - Resolved snapshot version '{resolved}' from old-style metadata")
+            return resolved
+        
+        logger.warning(f"[Task {task_id}] [Application: {app.name}: {version}] - <snapshot> found but missing timestamp or buildNumber")
+        return None
+    
+    logger.warning(f"[Application: {app.name}: {version}] - No <snapshotVersions> or <snapshot> found in metadata")
+    return None
 
 
 def version_to_folder_name(version: str) -> str:

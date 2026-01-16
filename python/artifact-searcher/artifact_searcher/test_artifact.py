@@ -552,3 +552,160 @@ def test_parse_snapshot_version_empty_snapshot_versions():
     result = _parse_snapshot_version(metadata_xml, app, 1, models.FileExtension.JSON, "1.0.0-SNAPSHOT")
     
     assert result is None
+
+
+def test_parse_snapshot_version_old_style_metadata():
+    """Test _parse_snapshot_version supports old-style <snapshot> metadata (Maven 2 format)"""
+    metadata_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <metadata modelVersion="1.1.0">
+      <groupId>com.netcracker.cloud.code2prod.deployment-descriptor</groupId>
+      <artifactId>c2p-test-sd-1</artifactId>
+      <version>feature-sd_public_cloud_registry_testing-SNAPSHOT</version>
+      <versioning>
+        <snapshot>
+          <timestamp>20260102.092159</timestamp>
+          <buildNumber>1</buildNumber>
+        </snapshot>
+        <lastUpdated>20260102092159</lastUpdated>
+      </versioning>
+    </metadata>
+    """
+    
+    dummy_registry = models.Registry(
+        name="dummy",
+        maven_config=models.MavenConfig(
+            target_snapshot="snapshots",
+            target_staging="staging",
+            target_release="releases",
+            repository_domain_name="http://dummy.repo/"
+        ),
+        docker_config=models.DockerConfig()
+    )
+    app = models.Application(
+        name="test-app",
+        artifact_id="test-artifact",
+        group_id="com.test",
+        registry=dummy_registry,
+        solution_descriptor=False,
+    )
+    
+    result = _parse_snapshot_version(
+        metadata_xml, app, 1, models.FileExtension.JSON, 
+        "feature-sd_public_cloud_registry_testing-SNAPSHOT"
+    )
+    
+    assert result == "feature-sd_public_cloud_registry_testing-20260102.092159-1"
+
+
+def test_parse_snapshot_version_old_style_missing_timestamp():
+    """Test _parse_snapshot_version returns None when <snapshot> has no timestamp"""
+    metadata_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <metadata modelVersion="1.1.0">
+      <versioning>
+        <snapshot>
+          <buildNumber>1</buildNumber>
+        </snapshot>
+      </versioning>
+    </metadata>
+    """
+    
+    dummy_registry = models.Registry(
+        name="dummy",
+        maven_config=models.MavenConfig(
+            target_snapshot="snapshots",
+            target_staging="staging",
+            target_release="releases",
+            repository_domain_name="http://dummy.repo/"
+        ),
+        docker_config=models.DockerConfig()
+    )
+    app = models.Application(
+        name="test-app",
+        artifact_id="test-artifact",
+        group_id="com.test",
+        registry=dummy_registry,
+        solution_descriptor=False,
+    )
+    
+    result = _parse_snapshot_version(metadata_xml, app, 1, models.FileExtension.JSON, "1.0.0-SNAPSHOT")
+    
+    assert result is None
+
+
+def test_parse_snapshot_version_old_style_missing_buildnumber():
+    """Test _parse_snapshot_version returns None when <snapshot> has no buildNumber"""
+    metadata_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <metadata modelVersion="1.1.0">
+      <versioning>
+        <snapshot>
+          <timestamp>20260102.092159</timestamp>
+        </snapshot>
+      </versioning>
+    </metadata>
+    """
+    
+    dummy_registry = models.Registry(
+        name="dummy",
+        maven_config=models.MavenConfig(
+            target_snapshot="snapshots",
+            target_staging="staging",
+            target_release="releases",
+            repository_domain_name="http://dummy.repo/"
+        ),
+        docker_config=models.DockerConfig()
+    )
+    app = models.Application(
+        name="test-app",
+        artifact_id="test-artifact",
+        group_id="com.test",
+        registry=dummy_registry,
+        solution_descriptor=False,
+    )
+    
+    result = _parse_snapshot_version(metadata_xml, app, 1, models.FileExtension.JSON, "1.0.0-SNAPSHOT")
+    
+    assert result is None
+
+
+def test_parse_snapshot_version_prefers_new_style_over_old():
+    """Test _parse_snapshot_version prefers new-style <snapshotVersions> when both are present"""
+    metadata_xml = """<?xml version="1.0" encoding="UTF-8"?>
+    <metadata>
+      <versioning>
+        <snapshot>
+          <timestamp>20240101.120000</timestamp>
+          <buildNumber>99</buildNumber>
+        </snapshot>
+        <snapshotVersions>
+          <snapshotVersion>
+            <classifier></classifier>
+            <extension>json</extension>
+            <value>1.0.0-20240702.123456-1</value>
+          </snapshotVersion>
+        </snapshotVersions>
+      </versioning>
+    </metadata>
+    """
+    
+    dummy_registry = models.Registry(
+        name="dummy",
+        maven_config=models.MavenConfig(
+            target_snapshot="snapshots",
+            target_staging="staging",
+            target_release="releases",
+            repository_domain_name="http://dummy.repo/"
+        ),
+        docker_config=models.DockerConfig()
+    )
+    app = models.Application(
+        name="test-app",
+        artifact_id="test-artifact",
+        group_id="com.test",
+        registry=dummy_registry,
+        solution_descriptor=False,
+    )
+    
+    result = _parse_snapshot_version(metadata_xml, app, 1, models.FileExtension.JSON, "1.0.0-SNAPSHOT")
+    
+    # Should use new-style value, not old-style
+    assert result == "1.0.0-20240702.123456-1"
