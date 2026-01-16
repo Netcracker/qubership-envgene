@@ -22,7 +22,7 @@ def run_env_test_setup():
     tenant_name = f"template_testing_{project_dir}_{env_name}"
 
     definition_env_name = "env-test"
-    env_template_version_normalized = f"{tenant_name}_{env_template_vers_split.replace('-', '_')}"
+    env_template_version_normalized = f"{env_template_vers_split.replace('-', '_')}"
     env_definition = {
         "inventory": {
             "environmentName": definition_env_name,
@@ -46,7 +46,7 @@ def run_env_test_setup():
     writeYamlToFile(env_definition_conf_path, env_definition)
 
     base_path = Path(base_dir)
-    version_dir_path = base_path / "environments" / tenant_name / f"{tenant_name}_{env_template_vers_split.replace('-', '_')}" / "Inventory"
+    version_dir_path = base_path / "environments" / tenant_name / f"{tenant_name}_{env_template_version_normalized}" / "Inventory"
 
     for path in (
             base_path / "environments",
