@@ -418,6 +418,7 @@ class EnvGenerator:
             current_env = self.ctx.config["environment"]
             self.ctx.current_env = current_env
             
+            current_env_dir = self.ctx.current_env_dir
             templates_dir = self.ctx.templates_dir
             patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
             appdef_templates = self.find_templates(f"{templates_dir}/appdefs", patterns)
