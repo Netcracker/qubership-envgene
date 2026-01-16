@@ -2,9 +2,7 @@ import os
 import shutil
 from pathlib import Path
 
-from envgenehelper import openYaml, writeYamlToFile, getenv_with_error, writeToFile
-from envgenehelper import logger
-
+from envgenehelper import openYaml, writeYamlToFile, getenv_with_error, writeToFile, logger
 
 def run_env_test_setup():
     logger.info("Start template testing...")
@@ -15,11 +13,11 @@ def run_env_test_setup():
     configs_conf_path = Path(f"{base_dir}/configuration/config.yml")
     writeYamlToFile(configs_conf_path, "crypt: false\n")
 
-    env_name = getenv_with_error("ENV_NAME")
     env_template_vers = getenv_with_error("ENV_TEMPLATE_VERSION")
-    project_dir = getenv_with_error("CI_PROJECT_DIR")
+    env_name = os.getenv("ENV_NAME")
+    project_dir = os.getenv("CI_PROJECT_NAME")
     env_template_vers_split = env_template_vers.replace('.', '_')
-    cluster_example_url = os.getenv("ansible_var_clusterExampleUrl")
+    cluster_example_url = os.getenv("ansible_var_clusterExampleUrl", "https://test-cluster.example.com")
     tenant_name = f"template_testing_{project_dir}_{env_name}"
 
     definition_env_name = "env-test"
@@ -42,23 +40,28 @@ def run_env_test_setup():
     }
 
     logger.info(f"env_definition: {env_definition}")
-    env_definition_conf_path = base_dir / "configuration" / "env_definition.yml"
+    env_definition_conf_path = Path(f"{base_dir}/configuration/env_definition.yml")
     writeYamlToFile(env_definition_conf_path, env_definition)
 
-    envs_directory_path = base_dir / "environments"
-    envs_directory_path.mkdir(parents=True, exist_ok=True)
-    (envs_directory_path / tenant_name).mkdir(parents=True, exist_ok=True)
-    version_path = envs_directory_path / tenant_name / f"{tenant_name}_{env_template_vers_split.replace('-', '_')}" / "Inventory"
-    version_path.mkdir(parents=True, exist_ok=True)
+    base_path = Path(base_dir)
+    version_dir_path = base_path / "environments" / tenant_name / f"{tenant_name}_{env_template_vers_split.replace('-', '_')}" / "Inventory"
 
-    shutil.copy(env_definition_conf_path, version_path / "env_definition.yml")
+    for path in (
+            base_path / "environments",
+            base_path / "environments" / tenant_name,
+            version_dir_path,
+    ):
+        path.mkdir(parents=True, exist_ok=True)
+        logger.info("Created directory: %s", path)
+
+    shutil.copy(env_definition_conf_path, version_dir_path / "env_definition.yml")
 
     env_name = f"{tenant_name}/{tenant_name}_{env_template_vers_split.replace('-', '_')}"
     environment_name = f"{tenant_name}_{env_template_vers_split.replace('-', '_')}"
 
-    os.environ["CLUSTER_NAME"] = tenant_name
-    os.environ["ENVIRONMENT_NAME"] = environment_name
-    os.environ["ENV_NAME"] = env_name
+    for k, v in {"CLUSTER_NAME": tenant_name, "ENVIRONMENT_NAME": environment_name, "ENV_NAME": env_name}.items():
+        os.environ[k] = v
+        logger.info("Env var set: %s=%s", k, v)
 
     set_variable_path = base_dir / "set_variable.txt"
     writeToFile(set_variable_path, env_name)
