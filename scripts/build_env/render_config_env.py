@@ -397,21 +397,6 @@ class EnvGenerator:
             appdefs["overrides"] = appregdef_config.get(appdefs, {}).get("overrides", {})
             regdefs["overrides"] = appregdef_config.get(regdefs, {}).get("overrides", {})
 
-    def process_app_reg_defs(self):
-        current_env_dir = self.ctx.current_env_dir
-        templates_dir = self.ctx.templates_dir
-        patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
-        appdef_templates = self.find_templates(f"{templates_dir}/appdefs", patterns)
-        regdef_templates = self.find_templates(f"{templates_dir}/regdefs", patterns)
-        self.ctx.appdef_templates = appdef_templates
-        self.ctx.regdef_templates = regdef_templates
-
-        ensure_directory(Path(current_env_dir).joinpath("AppDefs"), 0o755)
-        ensure_directory(Path(current_env_dir).joinpath("RegDefs"), 0o755)
-        self.set_appreg_def_overrides()
-        self.render_app_defs()
-        self.render_reg_defs()
-
     def generate_profiles(self, profile_names: Iterable[str]):
         logger.info(f"Start rendering profiles from list: {profile_names}")
         render_profiles_dir = self.ctx.render_profiles_dir
@@ -420,6 +405,26 @@ class EnvGenerator:
             template_name = self.get_template_name(template_path)
             if template_name in profile_names:
                 self.render_from_file_to_file(template_path, self.get_rendered_target_path(template_path))
+
+    def process_app_reg_defs(self, env_name: str, extra_env: dict):
+        logger.info(f"Starting rendering app_reg_defs for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
+        with self.ctx.use():
+            self.ctx.update(extra_env)
+            self.set_cloud_passport()
+            
+            current_env_dir = self.ctx.current_env_dir
+            templates_dir = self.ctx.templates_dir
+            patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
+            appdef_templates = self.find_templates(f"{templates_dir}/appdefs", patterns)
+            regdef_templates = self.find_templates(f"{templates_dir}/regdefs", patterns)
+            self.ctx.appdef_templates = appdef_templates
+            self.ctx.regdef_templates = regdef_templates
+
+            ensure_directory(Path(current_env_dir).joinpath("AppDefs"), 0o755)
+            ensure_directory(Path(current_env_dir).joinpath("RegDefs"), 0o755)
+            self.set_appreg_def_overrides()
+            self.render_app_defs()
+            self.render_reg_defs()
 
     def render_config_env(self, env_name: str, extra_env: dict):
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")

@@ -8,6 +8,8 @@ CLUSTER_NAME = getenv_with_error("CLUSTER_NAME")
 ENVIRONMENT_NAME = getenv_with_error("ENVIRONMENT_NAME")
 BASE_DIR = getenv_with_error('CI_PROJECT_DIR')
 FULL_ENV = getenv_with_error("FULL_ENV_NAME")
+INSTANCES_DIR = getenv_with_error("INSTANCES_DIR")
+ENV_NAME = getenv_with_error("ENVIRONMENT_NAME")
 
 
 def validate_appregdefs(render_dir):
@@ -38,18 +40,21 @@ if __name__ == '__main__':
     render_dir = f"/tmp/render/{ENVIRONMENT_NAME}"
     templates_dir = "/tmp/templates"
     
+    env_dir = get_env_instances_dir(ENV_NAME, CLUSTER_NAME, INSTANCES_DIR)
+    cloud_passport_file_path = find_cloud_passport_definition(env_dir, INSTANCES_DIR)
+    
     render_context_vars = {
         "cluster_name": CLUSTER_NAME,
         "output_dir": output_dir,
         "current_env_dir": render_dir,
-        "templates_dir": templates_dir
+        "templates_dir": templates_dir,
+        "cloud_passport_file_path": cloud_passport_file_path
     }
     
     render_context = EnvGenerator()
-    render_context.ctx.update(render_context_vars)
-    render_context.process_app_reg_defs()
+    render_context.process_app_reg_defs(ENV_NAME, render_context_vars)
     
-    # validate_appregdefs(render_dir)
+    validate_appregdefs(render_dir)
     
     env_dir = f"{BASE_DIR}/environments/{FULL_ENV}"
     shutil.copytree(render_dir, env_dir, dirs_exist_ok=True)

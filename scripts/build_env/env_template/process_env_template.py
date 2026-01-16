@@ -164,8 +164,8 @@ def process_env_template(download_template: bool = True) -> str:
     check_dir_exist_and_create(TEMPLATE_DEST)
 
     if 'artifact' in env_definition.get('envTemplate', {}):
-        logger.info("Use template downloading new logic")
+        logger.info("Use template resolving new logic")
         return resolve_artifact_new_logic(env_definition, download_template)
     else:
-        logger.info("Use template downloading old logic")
+        logger.info("Use template resolving old logic")
         return resolve_artifact_old_logic(env_definition, download_template)
