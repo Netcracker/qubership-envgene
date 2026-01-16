@@ -40,6 +40,7 @@ def get_registry_creds(registry: Registry) -> Credentials:
             raise ValueError(
                 f"Registry {registry.name} credentials incomplete: username={username}, password={password}")
         return Credentials(username=username, password=password)
+    return None
 
 
 def parse_maven_coord_from_dd(dd_config: dict) -> tuple[str, str, str]:
@@ -63,7 +64,7 @@ def download_artifact_new_logic(env_definition: dict) -> str:
     template_url = None
 
     resolved_version = app_version
-    dd_artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.JSON, app_version))
+    dd_artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.JSON, app_version, cred))
     if dd_artifact_info:
         logger.info("Loading environment template artifact info from deployment descriptor...")
         dd_url, dd_repo = dd_artifact_info
@@ -83,7 +84,7 @@ def download_artifact_new_logic(env_definition: dict) -> str:
     else:
         logger.info("Loading environment template artifact from zip directly...")
         group_id, artifact_id, version = app_def.group_id, app_def.artifact_id, app_version
-        artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version))
+        artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version, cred))
         if artifact_info:
             template_url, _ = artifact_info
         if "-SNAPSHOT" in app_version:
