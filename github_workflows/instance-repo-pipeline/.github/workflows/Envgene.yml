@@ -240,7 +240,7 @@ jobs:
               # Copy build_env_job.sh to container and make it executable
               cp ${CI_PROJECT_DIR}/github_workflows/instance-repo-pipeline/.github/jobs/build_env_job.sh /tmp/build_env_job.sh
               chmod +x /tmp/build_env_job.sh
-              
+
               # Execute the script
               bash /tmp/build_env_job.sh
             "
