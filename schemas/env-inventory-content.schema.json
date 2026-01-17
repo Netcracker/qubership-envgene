@@ -1,0 +1,204 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Environment Inventory Content",
+  "description": "Schema for ENV_INVENTORY_CONTENT parameter that allows to create, replace, and delete Environment Inventory and related objects",
+  "additionalProperties": false,
+  "properties": {
+    "envDefinition": {
+      "type": "object",
+      "title": "Environment Definition Block",
+      "description": "Block that controls env_definition.yml",
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": ["create_or_replace", "delete"],
+          "title": "Action",
+          "description": "Operation mode for env_definition.yml"
+        },
+        "content": {
+          "$ref": "env-definition.schema.json",
+          "title": "Environment Definition Content",
+          "description": "Full content of env_definition.yml"
+        }
+      },
+      "required": ["action"],
+      "if": {
+        "properties": {
+          "action": {
+            "const": "create_or_replace"
+          }
+        }
+      },
+      "then": {
+        "required": ["content"]
+      }
+    },
+    "paramSets": {
+      "type": "array",
+      "title": "Parameter Sets",
+      "description": "Block that controls Parameter Set file operations",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["create_or_replace", "delete"],
+            "title": "Action",
+            "description": "Operation mode for the target Parameter Set file"
+          },
+          "place": {
+            "type": "string",
+            "enum": ["site", "cluster", "env"],
+            "title": "Place",
+            "description": "Defines where the Parameter Set file is stored"
+          },
+          "content": {
+            "$ref": "paramset.schema.json",
+            "title": "Parameter Set Content",
+            "description": "Parameter Set definition as file content"
+          }
+        },
+        "required": ["action", "place"],
+        "if": {
+          "properties": {
+            "action": {
+              "const": "create_or_replace"
+            }
+          }
+        },
+        "then": {
+          "required": ["content"]
+        }
+      }
+    },
+    "credentials": {
+      "type": "array",
+      "title": "Shared Credentials",
+      "description": "Block that controls Shared Credentials operations",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["create_or_replace", "delete"],
+            "title": "Action",
+            "description": "Operation mode for the Shared Credentials file"
+          },
+          "place": {
+            "type": "string",
+            "enum": ["site", "cluster", "env"],
+            "title": "Place",
+            "description": "Defines where the Shared Credentials file is stored"
+          },
+          "content": {
+            "$ref": "credential.schema.json",
+            "title": "Shared Credentials Content",
+            "description": "Shared Credential as file content"
+          }
+        },
+        "required": ["action", "place"],
+        "if": {
+          "properties": {
+            "action": {
+              "const": "create_or_replace"
+            }
+          }
+        },
+        "then": {
+          "required": ["content"]
+        }
+      }
+    },
+    "resourceProfiles": {
+      "type": "array",
+      "title": "Resource Profile Overrides",
+      "description": "List of Resource Profile Override operations",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["create_or_replace", "delete"],
+            "title": "Action",
+            "description": "Operation mode for the Resource Profile Override file"
+          },
+          "place": {
+            "type": "string",
+            "enum": ["site", "cluster", "env"],
+            "title": "Place",
+            "description": "Defines where the Resource Profile Override file is stored"
+          },
+          "content": {
+            "$ref": "resource-profile.schema.json",
+            "title": "Resource Profile Override Content",
+            "description": "Resource Profile Override as file content"
+          }
+        },
+        "required": ["action", "place"],
+        "if": {
+          "properties": {
+            "action": {
+              "const": "create_or_replace"
+            }
+          }
+        },
+        "then": {
+          "required": ["content"]
+        }
+      }
+    },
+    "sharedTemplateVariables": {
+      "type": "array",
+      "title": "Shared Template Variable Files",
+      "description": "Block that controls Shared Template Variable File operations",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["create_or_replace", "delete"],
+            "title": "Action",
+            "description": "Operation mode for the Shared Template Variable File"
+          },
+          "place": {
+            "type": "string",
+            "enum": ["site", "cluster", "env"],
+            "title": "Place",
+            "description": "Defines where the Shared Template Variable File is stored"
+          },
+          "name": {
+            "type": "string",
+            "title": "File Name",
+            "description": "Name of the Shared Template Variable File (without extension). The file will be saved as <name>.yml",
+            "pattern": "^[^/\\\\\\.\\.]+$",
+            "examples": ["prod-template-variables"]
+          },
+          "content": {
+            "type": "object",
+            "title": "Shared Template Variable File Content",
+            "description": "Shared Template Variable File content as key-value hashmap. Must NOT be located in a parameters directory",
+            "additionalProperties": true
+          }
+        },
+        "required": ["action", "place", "name"],
+        "if": {
+          "properties": {
+            "action": {
+              "const": "create_or_replace"
+            }
+          }
+        },
+        "then": {
+          "required": ["content"]
+        }
+      }
+    }
+  }
+}
+
