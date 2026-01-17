@@ -61,10 +61,11 @@ def download_artifact_new_logic(env_definition: dict) -> str:
     app_name, app_version = parse_artifact_appver(env_definition)
     app_def = load_artifact_definition(app_name)
     cred = get_registry_creds(app_def.registry)
+    env_creds = get_cred_config()
     template_url = None
 
     resolved_version = app_version
-    dd_artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.JSON, app_version, cred))
+    dd_artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.JSON, app_version, cred=cred, env_creds=env_creds))
     if dd_artifact_info:
         logger.info("Loading environment template artifact info from deployment descriptor...")
         dd_url, dd_repo = dd_artifact_info
@@ -84,7 +85,7 @@ def download_artifact_new_logic(env_definition: dict) -> str:
     else:
         logger.info("Loading environment template artifact from zip directly...")
         group_id, artifact_id, version = app_def.group_id, app_def.artifact_id, app_version
-        artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version, cred))
+        artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version, cred=cred, env_creds=env_creds))
         if artifact_info:
             template_url, _ = artifact_info
         if "-SNAPSHOT" in app_version:
