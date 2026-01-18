@@ -17,7 +17,6 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         script.append("env_name=$(cat set_variable.txt)")
         script.append(
             'sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "$CI_PROJECT_DIR/environments/$env_name/Credentials/credentials.yml"')
-
     env_build_params = {
         "name": f'env_builder.{full_env}',
         "image": '${envgen_image}',
@@ -53,11 +52,8 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
-        
     env_build_job.artifacts.when = WhenStatement.ALWAYS
-
     pipeline.add_children(env_build_job)
-
     return env_build_job
 
 

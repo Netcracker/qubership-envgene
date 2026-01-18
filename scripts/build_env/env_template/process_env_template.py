@@ -8,6 +8,7 @@ from artifact_searcher.utils.models import FileExtension, Application, Credentia
 from envgenehelper import getEnvDefinition, fetch_cred_value
 from envgenehelper import openYaml, find_all_yaml_files_by_stem, getenv_with_error, logger
 from envgenehelper import unpack_archive, get_cred_config, check_dir_exist_and_create
+from render_config_env import render_obj_by_context, Context
 
 PROJECT_DIR = getenv_with_error('CI_PROJECT_DIR')
 ARTIFACT_DEST = f"{tempfile.gettempdir()}/artifact.zip"
@@ -29,7 +30,7 @@ def load_artifact_definition(name: str) -> Application:
 
 
 def get_registry_creds(registry: Registry) -> Credentials:
-    cred_config = get_cred_config()
+    cred_config = render_creds()
     cred_id = registry.credentials_id
     if cred_id:
         username = cred_config[cred_id]['data'].get('username')
@@ -38,6 +39,7 @@ def get_registry_creds(registry: Registry) -> Credentials:
             raise ValueError(
                 f"Registry {registry.name} credentials incomplete: username={username}, password={password}")
         return Credentials(username=username, password=password)
+    return None
 
 
 def parse_maven_coord_from_dd(dd_config: dict) -> tuple[str, str, str]:
@@ -61,7 +63,7 @@ def resolve_artifact_new_logic(env_definition: dict, download_template: bool = T
     template_url = None
 
     resolved_version = app_version
-    dd_artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.JSON, app_version))
+    dd_artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.JSON, app_version, cred))
     if dd_artifact_info:
         logger.info("Loading environment template artifact info from deployment descriptor...")
         dd_url, dd_repo = dd_artifact_info
@@ -81,25 +83,30 @@ def resolve_artifact_new_logic(env_definition: dict, download_template: bool = T
     else:
         logger.info("Loading environment template artifact from zip directly...")
         group_id, artifact_id, version = app_def.group_id, app_def.artifact_id, app_version
-        artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version))
+        artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version, cred))
 
         if artifact_info:
             template_url, _ = artifact_info
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(template_url, app_version)
-
-    if download_template:
-        if not template_url:
-            raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={version}")
-
-        logger.info(f"Environment template url has been resolved: {template_url}")
-        artifact.download(template_url, ARTIFACT_DEST, cred)
-        unpack_archive(ARTIFACT_DEST, TEMPLATE_DEST)
-
+    if not template_url:
+        raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={version}")
+    logger.info(f"Environment template url has been resolved: {template_url}")
+    artifact.download(template_url, ARTIFACT_DEST, cred)
+    unpack_archive(ARTIFACT_DEST, TEMPLATE_DEST)
     return resolved_version
 
 
-# logic resolving artifact version by exact coordinates and repo, deprecated
+def render_creds() -> dict:
+    cred_config = get_cred_config()
+    context = Context()
+    context.env_vars.update(dict(os.environ))
+    rendered = render_obj_by_context(cred_config, context)
+    logger.info("Credentials rendered successfully")
+    return rendered
+
+
+# logic downloading template by exact coordinates and repo, deprecated
 def resolve_artifact_old_logic(env_definition: dict, download_template: bool = True) -> str:
     template_artifact = env_definition['envTemplate']['templateArtifact']
     artifact_info = template_artifact['artifact']
@@ -118,7 +125,7 @@ def resolve_artifact_old_logic(env_definition: dict, download_template: bool = T
 
     cred = None
     if download_template:
-        cred_config = get_cred_config()
+        cred_config = render_creds()
         repository_username = fetch_cred_value(registry.get("username"), cred_config)
         repository_password = fetch_cred_value(registry.get("password"), cred_config)
         cred = Credentials(username=repository_username, password=repository_password)
