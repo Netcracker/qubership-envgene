@@ -89,11 +89,13 @@ def resolve_artifact_new_logic(env_definition: dict, download_template: bool = T
             template_url, _ = artifact_info
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(template_url, app_version)
-    if not template_url:
-        raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={version}")
-    logger.info(f"Environment template url has been resolved: {template_url}")
-    artifact.download(template_url, ARTIFACT_DEST, cred)
-    unpack_archive(ARTIFACT_DEST, TEMPLATE_DEST)
+    if download_template:
+        if not template_url:
+            raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={version}")
+        logger.info(f"Environment template url has been resolved: {template_url}")
+        artifact.download(template_url, ARTIFACT_DEST, cred)
+        unpack_archive(ARTIFACT_DEST, TEMPLATE_DEST)
+
     return resolved_version
 
 
