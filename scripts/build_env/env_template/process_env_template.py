@@ -10,9 +10,7 @@ from envgenehelper import openYaml, find_all_yaml_files_by_stem, getenv_with_err
 from envgenehelper import unpack_archive, get_cred_config, check_dir_exist_and_create
 from render_config_env import render_obj_by_context, Context
 
-PROJECT_DIR = getenv_with_error('CI_PROJECT_DIR')
 ARTIFACT_DEST = f"{tempfile.gettempdir()}/artifact.zip"
-TEMPLATE_DEST = f"{PROJECT_DIR}/tmp"
 
 
 def parse_artifact_appver(env_definition: dict) -> [str, str]:
@@ -22,7 +20,7 @@ def parse_artifact_appver(env_definition: dict) -> [str, str]:
 
 
 def load_artifact_definition(name: str) -> Application:
-    path_pattern = os.path.join(PROJECT_DIR, 'configuration', 'artifact_definitions', name)
+    path_pattern = os.path.join(getenv_with_error('CI_PROJECT_DIR'), 'configuration', 'artifact_definitions', name)
     path = next(iter(find_all_yaml_files_by_stem(path_pattern)), None)
     if not path:
         raise FileNotFoundError(f"No artifact definition file found for {name} with .yaml or .yml extension")
@@ -56,7 +54,7 @@ def extract_snapshot_version(url: str, snapshot_version: str) -> str:
 
 
 # logic resolving artifact version by artifact definition
-def resolve_artifact_new_logic(env_definition: dict, download_template: bool = True) -> str:
+def resolve_artifact_new_logic(env_definition: dict, template_dest: str, download_template: bool = True) -> str:
     app_name, app_version = parse_artifact_appver(env_definition)
     app_def = load_artifact_definition(app_name)
     cred = get_registry_creds(app_def.registry)
@@ -94,7 +92,7 @@ def resolve_artifact_new_logic(env_definition: dict, download_template: bool = T
             raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={version}")
         logger.info(f"Environment template url has been resolved: {template_url}")
         artifact.download(template_url, ARTIFACT_DEST, cred)
-        unpack_archive(ARTIFACT_DEST, TEMPLATE_DEST)
+        unpack_archive(ARTIFACT_DEST, template_dest)
 
     return resolved_version
 
@@ -109,7 +107,7 @@ def render_creds() -> dict:
 
 
 # logic downloading template by exact coordinates and repo, deprecated
-def resolve_artifact_old_logic(env_definition: dict, download_template: bool = True) -> str:
+def resolve_artifact_old_logic(env_definition: dict, template_dest: str, download_template: bool = True) -> str:
     template_artifact = env_definition['envTemplate']['templateArtifact']
     artifact_info = template_artifact['artifact']
 
@@ -120,7 +118,7 @@ def resolve_artifact_old_logic(env_definition: dict, download_template: bool = T
     repo_type = template_artifact['templateRepository']
     registry_name = template_artifact['registry']
 
-    registry_dict = openYaml(Path(f"{PROJECT_DIR}/configuration/registry.yml"))  # another registry model
+    registry_dict = openYaml(Path(f"{getenv_with_error('CI_PROJECT_DIR')}/configuration/registry.yml"))  # another registry model
     registry = registry_dict[registry_name]
     repo_url = registry.get(repo_type)
     dd_repo_url = registry.get(dd_repo_type)
@@ -159,22 +157,24 @@ def resolve_artifact_old_logic(env_definition: dict, download_template: bool = T
             raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={version}")
         logger.info(f"Environment template url has been resolved: {template_url}")
         artifact.download(template_url, ARTIFACT_DEST, cred)
-        unpack_archive(ARTIFACT_DEST, TEMPLATE_DEST)
+        unpack_archive(ARTIFACT_DEST, template_dest)
 
     return resolved_version
 
 
 def process_env_template(download_template: bool = True) -> str:
+    project_dir = getenv_with_error('CI_PROJECT_DIR')
+    template_dest = f"{project_dir}/tmp"
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
-    env_dir = Path(f"{PROJECT_DIR}/environments/{cluster}/{environment}")
+    env_dir = Path(f"{project_dir}/environments/{cluster}/{environment}")
     env_definition = getEnvDefinition(env_dir)
     
-    check_dir_exist_and_create(TEMPLATE_DEST)
+    check_dir_exist_and_create(template_dest)
 
     if 'artifact' in env_definition.get('envTemplate', {}):
         logger.info("Use template resolving new logic")
-        return resolve_artifact_new_logic(env_definition, download_template)
+        return resolve_artifact_new_logic(env_definition, template_dest, download_template)
     else:
         logger.info("Use template resolving old logic")
-        return resolve_artifact_old_logic(env_definition, download_template)
+        return resolve_artifact_old_logic(env_definition, template_dest, download_template)

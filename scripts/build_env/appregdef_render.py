@@ -4,13 +4,6 @@ from env_template.process_env_template import process_env_template
 from envgenehelper import *
 from render_config_env import EnvGenerator
 
-CLUSTER_NAME = getenv_with_error("CLUSTER_NAME")
-ENVIRONMENT_NAME = getenv_with_error("ENVIRONMENT_NAME")
-BASE_DIR = getenv_with_error('CI_PROJECT_DIR')
-FULL_ENV = getenv_with_error("FULL_ENV_NAME")
-INSTANCES_DIR = getenv_with_error("INSTANCES_DIR")
-ENV_NAME = getenv_with_error("ENVIRONMENT_NAME")
-
 
 def validate_appregdefs(render_dir):
     appdef_dir = f"{render_dir}/AppDefs"
@@ -34,17 +27,24 @@ def validate_appregdefs(render_dir):
 
 
 if __name__ == '__main__':
+    cluster_name = getenv_with_error("CLUSTER_NAME")
+    environment_name = getenv_with_error("ENVIRONMENT_NAME")
+    base_dir = getenv_with_error('CI_PROJECT_DIR')
+    full_env = getenv_with_error("FULL_ENV_NAME")
+    instances_dir = getenv_with_error("INSTANCES_DIR")
+    env_name = getenv_with_error("ENVIRONMENT_NAME")
+
     _ = process_env_template(download_template=True)
     
-    output_dir = f"{BASE_DIR}/environments"
-    render_dir = f"/tmp/render/{ENVIRONMENT_NAME}"
-    templates_dir = f"{BASE_DIR}/tmp/templates"
+    output_dir = f"{base_dir}/environments"
+    render_dir = f"/tmp/render/{environment_name}"
+    templates_dir = f"{base_dir}/tmp/templates"
     
-    env_dir = get_env_instances_dir(ENV_NAME, CLUSTER_NAME, INSTANCES_DIR)
-    cloud_passport_file_path = find_cloud_passport_definition(env_dir, INSTANCES_DIR)
+    env_dir = get_env_instances_dir(env_name, cluster_name, instances_dir)
+    cloud_passport_file_path = find_cloud_passport_definition(env_dir, instances_dir)
     
     render_context_vars = {
-        "cluster_name": CLUSTER_NAME,
+        "cluster_name": cluster_name,
         "output_dir": output_dir,
         "current_env_dir": render_dir,
         "templates_dir": templates_dir,
@@ -53,9 +53,9 @@ if __name__ == '__main__':
     }
     
     render_context = EnvGenerator()
-    render_context.process_app_reg_defs(ENV_NAME, render_context_vars)
+    render_context.process_app_reg_defs(env_name, render_context_vars)
     
     validate_appregdefs(render_dir)
     
-    env_dir = f"{BASE_DIR}/environments/{FULL_ENV}"
+    env_dir = f"{base_dir}/environments/{full_env}"
     shutil.copytree(render_dir, env_dir, dirs_exist_ok=True)
