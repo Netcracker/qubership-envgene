@@ -33,16 +33,16 @@ def change_test_dir(monkeypatch):
     monkeypatch.chdir(base_dir)
 
 
-# @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
-# def test_render_envs(cluster_name, env_name, version):
-#     environ['CI_PROJECT_DIR'] = g_base_dir
-#     environ['FULL_ENV_NAME'] = cluster_name + '/' + env_name
-#     render_environment(env_name, cluster_name, g_templates_dir, g_inventory_dir, g_output_dir, version, g_base_dir)
-#     source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
-#     generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
-#     files_to_compare = get_all_files_in_dir(source_dir)
-#     logger.info(dump_as_yaml_format(files_to_compare))
-#     TestHelpers.assert_dirs_content(source_dir, generated_dir, True, False)
+@pytest.mark.parametrize("cluster_name, env_name, version", test_data)
+def test_render_envs(cluster_name, env_name, version):
+    environ['CI_PROJECT_DIR'] = g_base_dir
+    environ['FULL_ENV_NAME'] = cluster_name + '/' + env_name
+    render_environment(env_name, cluster_name, g_templates_dir, g_inventory_dir, g_output_dir, version, g_base_dir)
+    source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
+    generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
+    files_to_compare = get_all_files_in_dir(source_dir)
+    logger.info(dump_as_yaml_format(files_to_compare))
+    TestHelpers.assert_dirs_content(source_dir, generated_dir, True, False)
 
 
 def setup_test_dir(tmp_path):
