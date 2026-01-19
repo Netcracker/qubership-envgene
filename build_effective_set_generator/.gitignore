@@ -37,6 +37,10 @@
 **/settings.gradle
 **/build
 
+# Exception: build directory for Docker build files (must be after **/build rule)
+!build/
+!build/**
+
 # CMake
 cmake-build-debug/
 
