@@ -3,6 +3,8 @@ import os
 import tempfile
 from pathlib import Path
 
+from pkg_resources import functools
+
 from artifact_searcher import artifact
 from artifact_searcher.utils.models import FileExtension, Application, Credentials, Registry
 from envgenehelper import getEnvDefinition, fetch_cred_value
@@ -18,7 +20,8 @@ def parse_artifact_appver(artifact_appver: str) -> list[str]:
     logger.info(f"Environment template artifact version: {artifact_appver}")
     return artifact_appver.split(':')
 
-
+# TODO not actually safe, do something else
+@functools.lru_cache(maxsize=2, typed=False)
 def load_artifact_definition(name: str, base_dir: str) -> Application:
     path_pattern = os.path.join(base_dir, 'configuration', 'artifact_definitions', name)
     path = next(iter(find_all_yaml_files_by_stem(path_pattern)), None)
