@@ -10,6 +10,7 @@ from resource_profiles import processResourceProfiles
 from schema_validation import checkEnvSpecificParametersBySchema
 from cloud_passport import process_cloud_passport
 from pathlib import Path
+from render_config_env import get_namespace_role
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
@@ -461,6 +462,95 @@ def getTemplateNameFromNamespacePath(namespacePath):
     return path.parent.name
 
 
+def create_role_specific_paramset_map(base_paramset_map: dict, parameters_dir: str, role: str) -> dict:
+    """Create a paramset map for a specific BG role (origin/peer).
+
+    This merges paramsets from the main template with role-specific paramsets,
+    where role-specific paramsets take precedence.
+
+    Args:
+        base_paramset_map: The base paramset map from main template
+        parameters_dir: The parameters directory path
+        role: The namespace role ('origin' or 'peer')
+
+    Returns:
+        A merged paramset map with role-specific overrides
+    """
+    if role not in ('origin', 'peer'):
+        return base_paramset_map
+
+    role_dir_suffix = f'from_template_{role}_ns'
+    role_specific_dir = os.path.join(parameters_dir, role_dir_suffix)
+
+    if not os.path.exists(role_specific_dir):
+        logger.debug(f"No role-specific paramset directory found at {role_specific_dir}")
+        return base_paramset_map
+
+    # Create role-specific paramset map
+    role_paramset_map = createParamsetsMap(role_specific_dir)
+
+    if not role_paramset_map:
+        return base_paramset_map
+
+    # Merge: start with base, override with role-specific
+    merged_map = copy.deepcopy(base_paramset_map)
+
+    for paramset_name, entries in role_paramset_map.items():
+        if paramset_name in merged_map:
+            # Replace entries from main template with role-specific ones
+            # Keep instance paramsets (from_instance), replace template paramsets
+            filtered_base_entries = [
+                e for e in merged_map[paramset_name]
+                if 'from_template' not in e['filePath'] or role_dir_suffix in e['filePath']
+            ]
+            # Add role-specific entries
+            merged_map[paramset_name] = filtered_base_entries + entries
+        else:
+            merged_map[paramset_name] = entries
+
+    logger.info(f"Created {role}-specific paramset map with {len(role_paramset_map)} role-specific paramsets")
+    return merged_map
+
+
+def get_bgd_object_from_file(env_dir: str) -> dict:
+    """Load the BG domain object from the rendered bg_domain.yml file.
+
+    Args:
+        env_dir: The environment directory path
+
+    Returns:
+        The BG domain object dict, or empty dict if not found
+    """
+    bgd_path = os.path.join(env_dir, 'bg_domain.yml')
+    if not os.path.exists(bgd_path):
+        return {}
+
+    try:
+        bgd_object = openYaml(bgd_path)
+        logger.info(f"Loaded BG domain for paramset routing: {bgd_object}")
+        return bgd_object
+    except Exception as e:
+        logger.warning(f"Failed to load BG domain from {bgd_path}: {e}")
+        return {}
+
+
+def get_namespace_name_from_file(namespace_path: str) -> str:
+    """Extract the namespace name from a namespace.yml file.
+
+    Args:
+        namespace_path: Path to the namespace.yml file
+
+    Returns:
+        The namespace name, or empty string if not found
+    """
+    try:
+        ns_data = openYaml(namespace_path)
+        return ns_data.get('name', '')
+    except Exception as e:
+        logger.warning(f"Failed to read namespace name from {namespace_path}: {e}")
+        return ''
+
+
 def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, resource_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context):
     paramset_map = createParamsetsMap(parameters_dir)
@@ -522,18 +612,44 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
 
     # process namespaces
     template_namespace_names = []
+    # Track namespace roles for resource profile routing
+    namespace_roles_map = {}
+
+    # Load BG domain for namespace role detection
+    bgd_object = get_bgd_object_from_file(env_dir)
+
+    # Create role-specific paramset maps if needed
+    origin_paramset_map = create_role_specific_paramset_map(paramset_map, parameters_dir, 'origin') if bgd_object else paramset_map
+    peer_paramset_map = create_role_specific_paramset_map(paramset_map, parameters_dir, 'peer') if bgd_object else paramset_map
+
     # iterate through namespace definitions and create namespace parameters
     for templatePath in namespaceTemplates:
         logger.info(f"Processing namespace: {templatePath}")
         templateName = getTemplateNameFromNamespacePath(templatePath)
         template_namespace_names.append(templateName)
         initParametersStructure(env_specific_parameters_map["namespaces"], templateName)
+
+        # Determine namespace role and select appropriate paramset map
+        ns_name = get_namespace_name_from_file(templatePath)
+        ns_role = get_namespace_role(ns_name, bgd_object)
+        logger.info(f"Namespace {ns_name} has role: {ns_role}")
+
+        # Track namespace role for resource profile routing
+        namespace_roles_map[templateName] = ns_role
+
+        if ns_role == 'origin':
+            ns_paramset_map = origin_paramset_map
+        elif ns_role == 'peer':
+            ns_paramset_map = peer_paramset_map
+        else:
+            ns_paramset_map = paramset_map
+
         processTemplate(
             templatePath,
             templateName,
             env_instances_dir,
             namespace_schema,
-            paramset_map,
+            ns_paramset_map,
             env_specific_parameters_map["namespaces"][templateName],
             resource_profiles_map=needed_resource_profiles_map,
             header_text=generated_header_text)
@@ -541,6 +657,13 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     logger.info(f"EnvSpecific parameters are: \n{dump_as_yaml_format(env_specific_parameters_map)}")
     checkEnvSpecificParametersBySchema(env_dir, env_specific_parameters_map, template_namespace_names)
 
+    # Determine role-specific resource profile directories
+    origin_profiles_dir = f'{resource_profiles_dir}_origin_ns' if os.path.exists(f'{resource_profiles_dir}_origin_ns') else None
+    peer_profiles_dir = f'{resource_profiles_dir}_peer_ns' if os.path.exists(f'{resource_profiles_dir}_peer_ns') else None
+
     # process resource profiles
     processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, needed_resource_profiles_map,
-                            env_specific_resource_profile_map, render_context, header_text=generated_header_text)
+                            env_specific_resource_profile_map, render_context, header_text=generated_header_text,
+                            namespace_roles_map=namespace_roles_map,
+                            origin_profiles_dir=origin_profiles_dir,
+                            peer_profiles_dir=peer_profiles_dir)

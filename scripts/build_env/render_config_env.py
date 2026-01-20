@@ -22,17 +22,58 @@ from envgenehelper import getEnvDefinition
 yml = create_yaml_processor()
 
 
+def get_namespace_role(ns_name: str, bgd_object: dict) -> str:
+    """Determine the role of a namespace in a Blue-Green deployment.
+
+    Args:
+        ns_name: The name of the namespace to check
+        bgd_object: The Blue-Green domain object containing namespace mappings
+
+    Returns:
+        'origin' - if the namespace is the origin namespace
+        'peer' - if the namespace is the peer namespace
+        'controller' - if the namespace is the controller namespace
+        'common' - for all other namespaces or if no BG domain is configured
+    """
+    if not bgd_object:
+        return 'common'
+
+    # Check if this is the origin namespace
+    origin_ns = bgd_object.get('originNamespace', {})
+    if isinstance(origin_ns, dict) and origin_ns.get('name') == ns_name:
+        return 'origin'
+
+    # Check if this is the peer namespace
+    peer_ns = bgd_object.get('peerNamespace', {})
+    if isinstance(peer_ns, dict) and peer_ns.get('name') == ns_name:
+        return 'peer'
+
+    # Check if this is the controller namespace
+    ctrl_ns = bgd_object.get('controllerNamespace')
+    if ctrl_ns:
+        if isinstance(ctrl_ns, str) and ctrl_ns == ns_name:
+            return 'controller'
+        if isinstance(ctrl_ns, dict) and ctrl_ns.get('name') == ns_name:
+            return 'controller'
+
+    return 'common'
+
+
 class Context(BaseModel):
     env: Optional[str] = ''
     render_dir: Optional[str] = ''
     cloud_passport: OrderedDict = Field(default_factory=OrderedDict)
     templates_dir: Optional[Path] = None
+    origin_ns_templates_dir: Optional[Path] = None
+    peer_ns_templates_dir: Optional[Path] = None
     output_dir: Optional[str] = ''
     cluster_name: Optional[str] = ''
     env_definition: OrderedDict = Field(default_factory=OrderedDict)
     current_env: OrderedDict = Field(default_factory=OrderedDict)
     current_env_dir: Optional[str] = ''
     current_env_template: OrderedDict = Field(default_factory=OrderedDict)
+    origin_ns_env_template: OrderedDict = Field(default_factory=OrderedDict)
+    peer_ns_env_template: OrderedDict = Field(default_factory=OrderedDict)
     tenant: Optional[str] = ''
     env_template: OrderedDict = Field(default_factory=OrderedDict)
     env_instances_dir: Optional[str] = ''
@@ -101,7 +142,27 @@ class EnvGenerator:
         logger.info(f"config = {config}")
         self.ctx.config = config
 
+    def _load_template_descriptor(self, templates_dir: Path, target_attr: str) -> bool:
+        """Load template descriptor from a templates directory into context attribute.
+
+        Returns True if template was loaded successfully, False otherwise.
+        """
+        if not templates_dir:
+            return False
+
+        env_template_path_stem = f'{templates_dir}/env_templates/{self.ctx.current_env["env_template"]}'
+        env_template_path = next(iter(find_all_yaml_files_by_stem(env_template_path_stem)), None)
+        if not env_template_path:
+            logger.warning(f'Template descriptor was not found in {env_template_path_stem}')
+            return False
+
+        env_template = openYaml(filePath=env_template_path, safe_load=True)
+        logger.info(f"{target_attr} = {env_template}")
+        setattr(self.ctx, target_attr, env_template)
+        return True
+
     def set_env_template(self):
+        # Load main template (required)
         env_template_path_stem = f'{self.ctx.templates_dir}/env_templates/{self.ctx.current_env["env_template"]}'
         env_template_path = next(iter(find_all_yaml_files_by_stem(env_template_path_stem)), None)
         if not env_template_path:
@@ -110,6 +171,14 @@ class EnvGenerator:
         env_template = openYaml(filePath=env_template_path, safe_load=True)
         logger.info(f"env_template = {env_template}")
         self.ctx.current_env_template = env_template
+
+        # Load origin NS template if exists
+        if self.ctx.origin_ns_templates_dir:
+            self._load_template_descriptor(self.ctx.origin_ns_templates_dir, 'origin_ns_env_template')
+
+        # Load peer NS template if exists
+        if self.ctx.peer_ns_templates_dir:
+            self._load_template_descriptor(self.ctx.peer_ns_templates_dir, 'peer_ns_env_template')
 
     def validate_applications(self):
         applications = self.ctx.sd_config.get("applications", [])
@@ -254,20 +323,108 @@ class EnvGenerator:
             return
         self.render_from_file_to_file(Template(template).render(self.ctx.as_dict()), target_path)
 
+    def _get_bgd_object_for_namespace_routing(self) -> dict:
+        """Render and return the BG domain object for namespace routing decisions.
+
+        Returns an empty dict if no BG domain is configured.
+        """
+        bg_domain_template = self.ctx.current_env_template.get("bg_domain")
+        if not bg_domain_template:
+            return {}
+
+        try:
+            bg_domain_path = Template(bg_domain_template).render(self.ctx.as_dict())
+            bgd_object = self.render_from_file_to_obj(bg_domain_path)
+            logger.info(f"Loaded BG domain for namespace routing: {bgd_object}")
+            return bgd_object
+        except Exception as e:
+            logger.warning(f"Failed to load BG domain for namespace routing: {e}")
+            return {}
+
+    def _render_namespace_from_template(self, ns: dict, templates_dir: Path, context: dict):
+        """Render a single namespace from the specified template directory."""
+        ns_template_path = Template(ns["template_path"]).render(context)
+        # Replace the main template dir with the specific template dir
+        if templates_dir and str(self.ctx.templates_dir) in ns_template_path:
+            ns_template_path = ns_template_path.replace(str(self.ctx.templates_dir), str(templates_dir))
+
+        ns_template_name = self.generate_ns_postfix(ns, ns_template_path)
+        logger.info(f"Generate Namespace yaml for {ns_template_name} from {templates_dir}")
+        current_env_dir = self.ctx.current_env_dir
+        ns_dir = f'{current_env_dir}/Namespaces/{ns_template_name}'
+        namespace_file = f'{ns_dir}/namespace.yml'
+        self.render_from_file_to_file(ns_template_path, namespace_file)
+
+        self.generate_override_template(ns.get("template_override"), Path(f'{ns_dir}/namespace.yml_override'),
+                                        ns_template_name)
+        return ns_template_name
+
     def generate_namespace_file(self):
         context = self.ctx.as_dict()
-        namespaces = self.ctx.current_env_template["namespaces"]
-        for ns in namespaces:
-            ns_template_path = Template(ns["template_path"]).render(context)
-            ns_template_name = self.generate_ns_postfix(ns, ns_template_path)
-            logger.info(f"Generate Namespace yaml for {ns_template_name}")
-            current_env_dir = self.ctx.current_env_dir
-            ns_dir = f'{current_env_dir}/Namespaces/{ns_template_name}'
-            namespace_file = f'{ns_dir}/namespace.yml'
-            self.render_from_file_to_file(ns_template_path, namespace_file)
 
-            self.generate_override_template(ns.get("template_override"), Path(f'{ns_dir}/namespace.yml_override'),
-                                            ns_template_name)
+        # Get BG domain info for namespace routing
+        bgd_object = self._get_bgd_object_for_namespace_routing()
+        has_origin_template = bool(self.ctx.origin_ns_templates_dir and self.ctx.origin_ns_env_template)
+        has_peer_template = bool(self.ctx.peer_ns_templates_dir and self.ctx.peer_ns_env_template)
+
+        # Track which namespaces have been rendered from BG-specific templates
+        rendered_ns_names = set()
+
+        # Render namespaces from main template (skip origin/peer if BG artifacts exist)
+        main_namespaces = self.ctx.current_env_template.get("namespaces", [])
+        for ns in main_namespaces:
+            ns_template_path = Template(ns["template_path"]).render(context)
+            # Pre-render to get namespace name for role check
+            rendered_ns = self.render_from_file_to_obj(ns_template_path)
+            ns_name = rendered_ns.get("name", "")
+            role = get_namespace_role(ns_name, bgd_object)
+
+            # Skip origin/peer namespaces if BG-specific templates are available
+            if role == 'origin' and has_origin_template:
+                logger.info(f"Skipping namespace {ns_name} from main template (will render from origin template)")
+                continue
+            if role == 'peer' and has_peer_template:
+                logger.info(f"Skipping namespace {ns_name} from main template (will render from peer template)")
+                continue
+
+            ns_template_name = self._render_namespace_from_template(ns, self.ctx.templates_dir, context)
+            rendered_ns_names.add(ns_template_name)
+
+        # Render origin namespace from origin template if available
+        if has_origin_template:
+            origin_namespaces = self.ctx.origin_ns_env_template.get("namespaces", [])
+            for ns in origin_namespaces:
+                ns_template_path = Template(ns["template_path"]).render(context)
+                # Replace main template dir with origin template dir
+                if str(self.ctx.templates_dir) in ns_template_path:
+                    ns_template_path = ns_template_path.replace(str(self.ctx.templates_dir),
+                                                                str(self.ctx.origin_ns_templates_dir))
+                rendered_ns = self.render_from_file_to_obj(ns_template_path)
+                ns_name = rendered_ns.get("name", "")
+                role = get_namespace_role(ns_name, bgd_object)
+
+                if role == 'origin':
+                    ns_template_name = self._render_namespace_from_template(ns, self.ctx.origin_ns_templates_dir, context)
+                    rendered_ns_names.add(ns_template_name)
+                    logger.info(f"Rendered origin namespace {ns_name} from origin template")
+
+        # Render peer namespace from peer template if available
+        if has_peer_template:
+            peer_namespaces = self.ctx.peer_ns_env_template.get("namespaces", [])
+            for ns in peer_namespaces:
+                ns_template_path = Template(ns["template_path"]).render(context)
+                # Replace main template dir with peer template dir
+                if str(self.ctx.templates_dir) in ns_template_path:
+                    ns_template_path = ns_template_path.replace(str(self.ctx.templates_dir),
+                                                                str(self.ctx.peer_ns_templates_dir))
+                rendered_ns = self.render_from_file_to_obj(ns_template_path)
+                ns_name = rendered_ns.get("name", "")
+                role = get_namespace_role(ns_name, bgd_object)
+
+                if role == 'peer':
+                    ns_template_name = self._render_namespace_from_template(ns, self.ctx.peer_ns_templates_dir, context)
+                    rendered_ns_names.add(ns_template_name)
+                    logger.info(f"Rendered peer namespace {ns_name} from peer template")
 
     def calculate_cloud_name(self) -> str:
         inv = self.ctx.env_definition["inventory"]

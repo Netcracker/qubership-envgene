@@ -130,20 +130,108 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
     return profiles_map
 
 
+def validate_resource_profiles_with_roles(needed_resource_profiles: dict[str, str], source_profiles: dict[str, str],
+                                          profiles_schema: str, namespace_roles_map: dict[str, str] = None,
+                                          origin_source_profiles: dict[str, str] = None,
+                                          peer_source_profiles: dict[str, str] = None) -> dict[str, str]:
+    """Validate resource profiles with role-specific source maps for BG namespaces.
+
+    Args:
+        needed_resource_profiles: Map of template_name -> profile_name
+        source_profiles: Default source profiles map (for common/controller namespaces)
+        profiles_schema: Schema path for validation
+        namespace_roles_map: Map of template_name -> role (origin/peer/controller/common)
+        origin_source_profiles: Source profiles map for origin namespace
+        peer_source_profiles: Source profiles map for peer namespace
+
+    Returns:
+        Map of template_name -> profile_path
+    """
+    profiles_map = {}
+    not_found = ''
+    not_valid = ''
+    err_msg = ''
+    rp_data_template = "\n\t profile: {} for namespace {}"
+
+    if not needed_resource_profiles:
+        return profiles_map
+
+    # Default to empty dict if not provided
+    namespace_roles_map = namespace_roles_map or {}
+    origin_source_profiles = origin_source_profiles or source_profiles
+    peer_source_profiles = peer_source_profiles or source_profiles
+
+    for template_name, needed_profile in needed_resource_profiles.items():
+        # Select appropriate source map based on namespace role
+        ns_role = namespace_roles_map.get(template_name, 'common')
+        if ns_role == 'origin':
+            role_source_profiles = origin_source_profiles
+            logger.info(f"Using origin profiles map for namespace {template_name}")
+        elif ns_role == 'peer':
+            role_source_profiles = peer_source_profiles
+            logger.info(f"Using peer profiles map for namespace {template_name}")
+        else:
+            role_source_profiles = source_profiles
+
+        if needed_profile not in role_source_profiles:
+            # Fallback to default source profiles if not found in role-specific
+            if needed_profile in source_profiles:
+                role_source_profiles = source_profiles
+                logger.info(f"Profile {needed_profile} not found in role-specific map, falling back to default")
+            else:
+                not_found += rp_data_template.format(needed_profile, template_name)
+                continue
+
+        profile_path = role_source_profiles[needed_profile]
+        logger.info(f"Found resource profile {needed_profile} for {template_name} (role: {ns_role}) in path: {profile_path}")
+        try:
+            validate_yaml_by_scheme_or_fail(profile_path, profiles_schema)
+        except ValueError:
+            not_valid += rp_data_template.format(needed_profile, template_name)
+            continue
+        profiles_map[template_name] = profile_path
+
+    if len(not_valid) > 0:
+        err_msg += "These resource profiles are invalid, look for details above:"
+        err_msg += not_valid
+    if len(not_found) > 0:
+        err_msg += "Can't find resource profiles:"
+        err_msg += not_found
+    if len(err_msg) > 0:
+        logger.error(err_msg)
+        raise ReferenceError("Not all needed resource profiles found or valid. See logs above.")
+    return profiles_map
+
+
 def processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, needed_resource_profiles_map,
-                            env_specific_resource_profile_map, render_context: EnvGenerator, header_text=""):
+                            env_specific_resource_profile_map, render_context: EnvGenerator, header_text="",
+                            namespace_roles_map=None, origin_profiles_dir=None, peer_profiles_dir=None):
     logger.info(f"Needed profiles map: \n{dump_as_yaml_format(needed_resource_profiles_map)}")
     render_context.generate_profiles(set(needed_resource_profiles_map.values()))
     render_context.generate_profiles(set(env_specific_resource_profile_map.values()))
     # map for profiles from templates
     templateProfilesMap = getResourceProfilesFromDir(resource_profiles_dir)
+
+    # Load role-specific profile maps if available
+    origin_profiles_map = getResourceProfilesFromDir(origin_profiles_dir) if origin_profiles_dir else {}
+    peer_profiles_map = getResourceProfilesFromDir(peer_profiles_dir) if peer_profiles_dir else {}
+
     envRpDir = f"{env_dir}/Profiles"
     environmentDirProfilesMap = getResourceProfilesFromDir(envRpDir)
     # joining resource profiles with the result of Jinja generation
     sourceProfilesMap = templateProfilesMap | environmentDirProfilesMap
     logger.info(f"All resource profiles map is: \n{dump_as_yaml_format(sourceProfilesMap)}")
+
+    # Build role-specific source maps for origin/peer namespaces
+    origin_source_profiles_map = origin_profiles_map | environmentDirProfilesMap if origin_profiles_map else sourceProfilesMap
+    peer_source_profiles_map = peer_profiles_map | environmentDirProfilesMap if peer_profiles_map else sourceProfilesMap
+
     # check that all required resource profiles exists and are valid
-    profilesMap = validate_resource_profiles(needed_resource_profiles_map, sourceProfilesMap, profiles_schema)
+    # Use role-specific maps based on namespace roles
+    profilesMap = validate_resource_profiles_with_roles(
+        needed_resource_profiles_map, sourceProfilesMap, profiles_schema,
+        namespace_roles_map, origin_source_profiles_map, peer_source_profiles_map
+    )
     # iterate through env specific resource profiles and perform override
     for templateName, envSpecificProfileFile in env_specific_resource_profile_map.items():
         if templateName not in profilesMap:
