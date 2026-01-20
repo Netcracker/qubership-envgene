@@ -385,23 +385,27 @@ class EnvGenerator:
         potential_config_files = [
             output_dir / cluster_name / config_file_name_yaml,
             output_dir / cluster_name / config_file_name_yml,
-            output_dir.parent / config_file_name_yaml,
-            output_dir.parent / config_file_name_yml,
+            output_dir / config_file_name_yaml,
+            output_dir / config_file_name_yml,
         ]
         appregdef_config_paths = [f for f in potential_config_files if f.exists()]
-        if appregdef_config_paths:
-            appregdef_config = {}
-            appregdef_config_path = appregdef_config_paths[0]
-            try:
-                appregdef_config = openYaml(appregdef_config_path)
-                logger.info(f"Overrides applications/registries definitions config found at: {appregdef_config_path}")
-            except Exception as e:
-                logger.warning(f"Failed to load config at: {appregdef_config_path}. Error: {e}")
+        
+        if not appregdef_config_paths:
+            logger.info("No appregdef_config file found, skipping overrides")
+            return
 
-            appdefs = self.ctx.appdefs
-            regdefs = self.ctx.regdefs
-            appdefs["overrides"] = appregdef_config.get(appdefs, {}).get("overrides", {})
-            regdefs["overrides"] = appregdef_config.get(regdefs, {}).get("overrides", {})
+        appregdef_config = {}
+        appregdef_config_path = appregdef_config_paths[0]
+        try:
+            appregdef_config = openYaml(appregdef_config_path)
+            logger.info(f"Overrides applications/registries definitions config found at: {appregdef_config_path}")
+        except Exception as e:
+            logger.warning(f"Failed to load config at: {appregdef_config_path}. Error: {e}")
+
+        appdefs = self.ctx.appdefs
+        regdefs = self.ctx.regdefs
+        appdefs["overrides"] = appregdef_config.get("appdefs", {}).get("overrides", {})
+        regdefs["overrides"] = appregdef_config.get("regdefs", {}).get("overrides", {})
 
     def generate_profiles(self, profile_names: Iterable[str]):
         logger.info(f"Start rendering profiles from list: {profile_names}")
