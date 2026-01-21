@@ -11,6 +11,7 @@ from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from credential_rotation_job import prepare_credential_rotation_job
+from bg_manage_job import prepare_bg_manage_job
 
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 
@@ -23,14 +24,16 @@ def build_pipeline(params: dict):
     # if we are in template testing during template build
     tags=params['GITLAB_RUNNER_TAG_NAME']
 
+    artifact_url = None
     if params['IS_TEMPLATE_TEST']:
         logger.info("We are generating jobs in template test mode.")
+        artifact_url = os.getenv("artifact_url")
         templates_dir = f"{project_dir}/templates/env_templates"
         # getting build artifact
         build_artifact = get_gav_coordinates_from_build()
         group_id = build_artifact["group_id"]
         artifact_id = build_artifact["artifact_id"]
-        params['ENV_TEMPLATE_VERSION'] = build_artifact["version"]
+        params['ENV_TEMPLATE_VERSION'] = f"{artifact_id}:{build_artifact["version"]}"
         # get env_names for all templates types
         templateFiles = [
             os.path.splitext(f)[0]
@@ -67,14 +70,20 @@ def build_pipeline(params: dict):
             else:
                 env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{ci_project_dir}/environments"))
 
+        # bg_manage_job ->
         # trigger_passport_job ->
         # get_passport_job ->
         # env_inventory_generation_job ->
         # env_build_job ->
         # generate_effective_set_job ->
         # git_commit_job (commit) ->
-        job_sequence = ["trigger_passport_job", "get_passport_job", "env_inventory_generation_job",
+        job_sequence = ["bg_manage_job", "trigger_passport_job", "get_passport_job", "env_inventory_generation_job",
                     "credential_rotation_job", "env_build_job", "generate_effective_set_job", "git_commit_job"]
+
+        if params.get('BG_MANAGE', None) != True:
+            logger.info(f'Preparing of bg_manage job for environment {env} is skipped.')
+        else:
+            jobs_map['bg_manage_job'] = prepare_bg_manage_job(pipeline, env, tags)
 
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
@@ -103,7 +112,7 @@ def build_pipeline(params: dict):
                     pass
 
             # env_builder job
-            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, tags)
+            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, artifact_url, tags)
         else:
             logger.info(f'Preparing of env_build job for {env} is skipped.')
 
@@ -113,7 +122,7 @@ def build_pipeline(params: dict):
         else:
             logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
 
-        jobs_requiring_git_commit = ["env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job"]
+        jobs_requiring_git_commit = ["env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job", "bg_manage_job"]
 
         plugin_params = params
         plugin_params['jobs_map'] = jobs_map

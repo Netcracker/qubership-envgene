@@ -316,10 +316,10 @@ def render_environment(env_name, cluster_name, templates_dir, all_instances_dir,
 
 
 if __name__ == "__main__":
-    cluster = getenv_with_error("CLUSTER_NAME")
-    environment = getenv_with_error("ENVIRONMENT_NAME")
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     template_version = process_env_template()
+    cluster = getenv("CLUSTER_NAME")
+    environment = getenv_with_error("ENVIRONMENT_NAME")
     g_templates_dir = "/build_env/templates"
     g_all_instances_dir = f"{base_dir}/environments"
     g_output_dir = f"{base_dir}/environments"
