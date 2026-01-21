@@ -32,9 +32,6 @@ default:
 
 .common_module.variables:
   variables:
-    module_ansible_dir: "/module/ansible"
-    module_inventory: "${CI_PROJECT_DIR}/configuration/inventory.yaml"
-    module_ansible_cfg: "/module/ansible/ansible.cfg"
     module_config_default: "/module/templates/defaults.yaml"
 
 .images.variables:
