@@ -20,8 +20,7 @@ ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
 
 
 def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
-                                  render_parameters_dir, render_profiles_dir, output_dir,
-                                  origin_ns_templates_dir=None, peer_ns_templates_dir=None):
+                                  render_parameters_dir, render_profiles_dir, output_dir):
     # clearing folders
     delete_dir(render_dir)
     delete_dir(render_parameters_dir)
@@ -41,21 +40,6 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/parameters', f'{render_parameters_dir}/from_instance')
     # copying all template resource profiles
     copy_path(f'{templates_dir}/resource_profiles', render_profiles_dir)
-
-    # Copy origin NS template parameters/profiles
-    if origin_ns_templates_dir:
-        check_dir_exist_and_create(f'{render_parameters_dir}/from_template_origin_ns')
-        copy_path(f'{origin_ns_templates_dir}/parameters', f'{render_parameters_dir}/from_template_origin_ns')
-        origin_ns_profiles_dir = f'{render_profiles_dir}_origin_ns'
-        copy_path(f'{origin_ns_templates_dir}/resource_profiles', origin_ns_profiles_dir)
-
-    # Copy peer NS template parameters/profiles
-    if peer_ns_templates_dir:
-        check_dir_exist_and_create(f'{render_parameters_dir}/from_template_peer_ns')
-        copy_path(f'{peer_ns_templates_dir}/parameters', f'{render_parameters_dir}/from_template_peer_ns')
-        peer_ns_profiles_dir = f'{render_profiles_dir}_peer_ns'
-        copy_path(f'{peer_ns_templates_dir}/resource_profiles', peer_ns_profiles_dir)
-
     return render_env_dir
 
 
@@ -114,7 +98,7 @@ def handle_template_override(render_dir):
 
 
 def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all_instances_dir, output_dir,
-                      g_template_version, work_dir, origin_ns_templates_dir=None, peer_ns_templates_dir=None):
+                      g_template_version, work_dir):
     # defining folders that will be used during generation
     render_dir = getAbsPath('tmp/render')
     render_parameters_dir = getAbsPath('tmp/parameters_templates')
@@ -127,8 +111,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
 
     # preparing folders for generation
     render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
-                                                   render_parameters_dir, render_profiles_dir, output_dir,
-                                                   origin_ns_templates_dir, peer_ns_templates_dir)
+                                                   render_parameters_dir, render_profiles_dir, output_dir)
     pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instances_dir)
     # get deployer parameters
     cmdb_url, _, _ = get_deployer_config(f"{cluster_name}/{env_name}", work_dir, all_instances_dir, None, None, False)
@@ -180,8 +163,6 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     envvars["current_env"] = current_env  # Object for Jinja2 templates that need current_env.environmentName
     envvars["cluster_name"] = cluster_name
     envvars["templates_dir"] = templates_dir
-    envvars["origin_ns_templates_dir"] = origin_ns_templates_dir
-    envvars["peer_ns_templates_dir"] = peer_ns_templates_dir
     envvars["env_instances_dir"] = getAbsPath(render_env_dir)
     envvars["render_dir"] = getAbsPath(render_dir)
     envvars["render_parameters_dir"] = getAbsPath(render_parameters_dir)
@@ -309,12 +290,10 @@ def validate_appregdefs(render_dir, env_name):
 
 
 def render_environment(env_name, cluster_name, templates_dir, all_instances_dir, output_dir, g_template_version,
-                       work_dir, origin_ns_templates_dir=None, peer_ns_templates_dir=None):
+                       work_dir):
     logger.info(f'env: {env_name}')
     logger.info(f'cluster_name: {cluster_name}')
     logger.info(f'templates_dir: {templates_dir}')
-    logger.info(f'origin_ns_templates_dir: {origin_ns_templates_dir}')
-    logger.info(f'peer_ns_templates_dir: {peer_ns_templates_dir}')
     logger.info(f'instances_dir: {all_instances_dir}')
     logger.info(f'output_dir: {output_dir}')
     logger.info(f'template_version: {g_template_version}')
@@ -328,7 +307,7 @@ def render_environment(env_name, cluster_name, templates_dir, all_instances_dir,
     logger.info(f"Environment {env_name} directory is {env_dir}")
     # build env
     resulting_env_dir = build_environment(env_name, cluster_name, templates_dir, env_dir, all_instances_dir, output_dir,
-                                          g_template_version, work_dir, origin_ns_templates_dir, peer_ns_templates_dir)
+                                          g_template_version, work_dir)
     # create credentials
     create_credentials(resulting_env_dir, env_dir, all_instances_dir)
     # update versions
@@ -343,13 +322,11 @@ if __name__ == "__main__":
     # tv - template version
     common_tv, origin_ns_tv, peer_ns_tv = process_env_template()
     g_templates_dir = "/build_env/templates"
-    g_origin_ns_templates_dir = "/build_env_origin_ns/templates" if origin_ns_tv else None
-    g_peer_ns_templates_dir = "/build_env_peer_ns/templates" if peer_ns_tv else None
     g_all_instances_dir = f"{base_dir}/environments"
     g_output_dir = f"{base_dir}/environments"
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
 
     decrypt_all_cred_files_for_env()
     render_environment(environment, cluster, g_templates_dir, g_all_instances_dir, g_output_dir,
-                       common_tv, g_work_dir, g_origin_ns_templates_dir, g_peer_ns_templates_dir)
+                       common_tv, g_work_dir)
     encrypt_all_cred_files_for_env()
