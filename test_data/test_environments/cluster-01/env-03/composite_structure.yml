@@ -1,9 +1,0 @@
-name: "cluster_01_env_03-composite-structure"
-baseline:
-  name: "env-03-core"
-  type: "namespace"
-satellites:
-  - name: "env-03-bss"
-    type: "namespace"
-  - name: "env-03-oss"
-    type: "namespace"

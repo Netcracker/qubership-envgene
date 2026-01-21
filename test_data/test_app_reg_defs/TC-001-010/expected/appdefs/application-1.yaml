@@ -1,0 +1,7 @@
+name: "application-1"
+registryName: "registry-1"
+artifactd: "application-1"
+groupId: "org.qubership"
+supportParallelDeploy: true
+deployParameters: {}
+technicalConfigurationParameters: {}

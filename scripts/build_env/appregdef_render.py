@@ -5,27 +5,6 @@ from envgenehelper import *
 from render_config_env import EnvGenerator
 
 
-def validate_appregdefs(render_dir):
-    appdef_dir = f"{render_dir}/AppDefs"
-    regdef_dir = f"{render_dir}/RegDefs"
-
-    if os.path.exists(appdef_dir):
-        appdef_files = findAllYamlsInDir(appdef_dir)
-        if not appdef_files:
-            logger.warning(f"No AppDef YAMLs found in {appdef_dir}")
-        for file in appdef_files:
-            logger.info(f"AppDef file: {file}")
-            validate_yaml_by_scheme_or_fail(file, "schemas/appdef.schema.json")
-
-    if os.path.exists(regdef_dir):
-        regdef_files = findAllYamlsInDir(regdef_dir)
-        if not regdef_files:
-            logger.warning(f"No RegDef YAMLs found in {regdef_dir}")
-        for file in regdef_files:
-            logger.info(f"RegDef file: {file}")
-            validate_yaml_by_scheme_or_fail(file, "schemas/regdef.schema.json")
-
-
 if __name__ == '__main__':
     cluster_name = getenv_with_error("CLUSTER_NAME")
     environment_name = getenv_with_error("ENVIRONMENT_NAME")
@@ -54,8 +33,6 @@ if __name__ == '__main__':
     
     render_context = EnvGenerator()
     render_context.process_app_reg_defs(env_name, render_context_vars)
-    
-    validate_appregdefs(render_dir)
-    
+        
     env_dir = f"{base_dir}/environments/{full_env}"
     shutil.copytree(render_dir, env_dir, dirs_exist_ok=True)

@@ -1,0 +1,4 @@
+name: "registry-1"
+credentialsId: "registry-cred"
+docker-registry:
+  url: "https://custom-docker-registry.example.com"

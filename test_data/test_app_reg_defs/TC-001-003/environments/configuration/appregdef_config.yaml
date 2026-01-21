@@ -1,0 +1,5 @@
+appdefs:
+  overrides:
+    "com.example:app1":
+      version: "2.0.0"
+      registry: "custom-registry"

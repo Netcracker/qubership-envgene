@@ -1,0 +1,8 @@
+name: "application-1"
+registryName: {{ appdefs.overrides["com.example:app1"].registry | default('registry-1') }}
+version: {{ appdefs.overrides["com.example:app1"].version | default('1.9.9') }}
+artifactId: "application-1"
+groupId: "org.qubership"
+supportParallelDeploy: true
+deployParameters: {}
+technicalConfigurationParameters: {}

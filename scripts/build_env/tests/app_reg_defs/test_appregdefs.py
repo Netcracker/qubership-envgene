@@ -1,5 +1,6 @@
 import os
 import shutil
+from jinja2.exceptions import TemplateSyntaxError
 from pathlib import Path
 import pytest
 import yaml
@@ -39,9 +40,7 @@ class TestAppRegDefRendering:
         return render_dir
 
     def _get_render_context(self, test_number: str) -> dict:
-        """Get the render context variables"""
         render_dir = self.output_dir / "render" / self.env_name
-        render_dir.mkdir(parents=True, exist_ok=True)
         
         test_case_dir = self._get_test_case_dir(test_number)
         
@@ -62,11 +61,9 @@ class TestAppRegDefRendering:
         test_case_dir = self._get_test_case_dir(test_number)
         expected_appdefs = test_case_dir / "expected" / "appdefs"
         expected_regdefs = test_case_dir / "expected" / "regdefs"
-        print(expected_appdefs)
         
         if expected_appdefs.exists():
             for expected_file in expected_appdefs.glob("*.y*ml"):
-                # Find the rendered file - could be .yml or .yaml
                 base_name = expected_file.stem
                 rendered_file = None
                 for ext in ['.yml', '.yaml']:
@@ -78,18 +75,16 @@ class TestAppRegDefRendering:
                 assert rendered_file and rendered_file.exists(), \
                     f"AppDef file {expected_file.name} should be rendered (checked {base_name}.yml and {base_name}.yaml)"
                 
-                with open(expected_file) as f:
+                with open(expected_file, encoding="utf-8") as f:
                     expected_content = yaml.safe_load(f)
-                with open(rendered_file) as f:
+                with open(rendered_file, encoding="utf-8") as f:
                     rendered_content = yaml.safe_load(f)
                 
                 assert rendered_content == expected_content, \
                     f"AppDef {expected_file.name} content mismatch.\nExpected: {expected_content}\nGot: {rendered_content}"
         
-        # Verify RegDefs
         if expected_regdefs.exists():
             for expected_file in expected_regdefs.glob("*.y*ml"):
-                # Find the rendered file - could be .yml or .yaml
                 base_name = expected_file.stem
                 rendered_file = None
                 for ext in ['.yml', '.yaml']:
@@ -109,108 +104,39 @@ class TestAppRegDefRendering:
                 assert rendered_content == expected_content, \
                     f"RegDef {expected_file.name} content mismatch.\nExpected: {expected_content}\nGot: {rendered_content}"
                     
-    def test_001_001_basic_appdef_rendering(self):
-        test_number = "TC-001-001"
-        
-        # Setup
+    POSITIVE_CASES = [        
+        "TC-001-001",
+        "TC-001-002",
+        "TC-001-003",
+        "TC-001-004",
+        "TC-001-005",
+        "TC-001-006",
+        "TC-001-008",
+    ]
+
+    @pytest.mark.parametrize("test_number", POSITIVE_CASES)                
+    def test_positive_basic_appdef_rendering(self, test_number):
         self._setup_render_dir()
         
-        # Execute
         render_context = EnvGenerator()
         context_vars = self._get_render_context(test_number)
         render_context.process_app_reg_defs(self.env_name, context_vars)
         
-        # Verify
         render_dir = Path(context_vars["current_env_dir"])
         self._verify_rendered_files(test_number, render_dir)
+        
+    NEGATIVE_CASES = {
+        "TC-001-010": TemplateSyntaxError,
+        "TC-001-011": ValueError,
+        "TC-001-012": ValueError,
+    }
     
-    def test_001_002_basic_appdef_rendering(self):
-        test_number = "TC-001-002"
-        
-        # Setup
+    @pytest.mark.parametrize("test_number,expected_exception", NEGATIVE_CASES.items())
+    def test_negative_appregdef_rendering(self, test_number, expected_exception):
         self._setup_render_dir()
         
-        # Execute
         render_context = EnvGenerator()
         context_vars = self._get_render_context(test_number)
-        render_context.process_app_reg_defs(self.env_name, context_vars)
-        
-        # Verify
-        render_dir = Path(context_vars["current_env_dir"])
-        self._verify_rendered_files(test_number, render_dir)
-        
-    def test_001_003_basic_appdef_rendering(self):
-        test_number = "TC-001-003"
-        
-        # Setup
-        self._setup_render_dir()
-        
-        # Execute
-        render_context = EnvGenerator()
-        context_vars = self._get_render_context(test_number)
-        render_context.process_app_reg_defs(self.env_name, context_vars)
-        
-        # Verify
-        render_dir = Path(context_vars["current_env_dir"])
-        self._verify_rendered_files(test_number, render_dir)
-        
-    def test_001_004_basic_appdef_rendering(self):
-        test_number = "TC-001-004"
-        
-        # Setup
-        self._setup_render_dir()
-        
-        # Execute
-        render_context = EnvGenerator()
-        context_vars = self._get_render_context(test_number)
-        render_context.process_app_reg_defs(self.env_name, context_vars)
-        
-        # Verify
-        render_dir = Path(context_vars["current_env_dir"])
-        self._verify_rendered_files(test_number, render_dir)
-        
-    def test_001_005_basic_appdef_rendering(self):
-        test_number = "TC-001-005"
-        
-        # Setup
-        self._setup_render_dir()
-        
-        # Execute
-        render_context = EnvGenerator()
-        context_vars = self._get_render_context(test_number)
-        render_context.process_app_reg_defs(self.env_name, context_vars)
-        
-        # Verify
-        render_dir = Path(context_vars["current_env_dir"])
-        self._verify_rendered_files(test_number, render_dir)
-        
-    def test_001_006_basic_appdef_rendering(self):
-        test_number = "TC-001-006"
-        
-        # Setup
-        self._setup_render_dir()
-        
-        # Execute
-        render_context = EnvGenerator()
-        context_vars = self._get_render_context(test_number)
-        render_context.process_app_reg_defs(self.env_name, context_vars)
-        
-        # Verify
-        render_dir = Path(context_vars["current_env_dir"])
-        self._verify_rendered_files(test_number, render_dir)
-        
-        
-    def test_001_008_basic_appdef_rendering(self):
-        test_number = "TC-001-008"
-        
-        # Setup
-        self._setup_render_dir()
-        
-        # Execute
-        render_context = EnvGenerator()
-        context_vars = self._get_render_context(test_number)
-        render_context.process_app_reg_defs(self.env_name, context_vars)
-        
-        # Verify
-        render_dir = Path(context_vars["current_env_dir"])
-        self._verify_rendered_files(test_number, render_dir)
+        with pytest.raises(expected_exception):
+            render_context.process_app_reg_defs(self.env_name, context_vars)
+    

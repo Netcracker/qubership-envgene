@@ -1,0 +1,4 @@
+regdefs:
+  overrides:
+    "docker-registry":
+      url: "https://custom-docker-registry.example.com"

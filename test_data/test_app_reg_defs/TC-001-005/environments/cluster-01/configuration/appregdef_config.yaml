@@ -1,0 +1,5 @@
+appdefs:
+  overrides:
+    "com.example:app1":
+      version: "3.0.0"
+      replicas: 3
