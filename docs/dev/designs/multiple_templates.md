@@ -14,10 +14,12 @@ namespaces from 2 templates
 
 ### B
 
+Render template/environment descriptors for all template artifact.
+
 bg_domain object is now rendered before namespaces.
 
 During namespaces rendering check bg_domain and if namespace is origin or peer,
-use namespace template and template_override value from respective template.
+use namespace template and template_override value from respective template/environment descriptor.
 
 During processing paramsets check namespace role and use paramsets from respective
 templates.
