@@ -27,7 +27,6 @@ RUN apk add --no-cache \
 # Copy configuration files
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
-COPY build_envgene/build/requirements.yml /build/requirements.yml
 COPY build_envgene/build/constraint.txt /build/constraint.txt
 COPY creds_rotation/build/requirements.txt /build/creds_rotation_requirements.txt
 
