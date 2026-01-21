@@ -1,7 +1,0 @@
----
-### Defaults for BUILD_EFFECTIVE_SET_GENERATOR
-module_dir: "/module"
-cluster_name: "{{ lookup('env', 'CLUSTER_NAME') }}"
-environment_name: "{{ lookup('env', 'ENVIRONMENT_NAME') }}"
-instances_dir: "{{ lookup('env', 'INSTANCES_DIR') }}"
-script_args: "--cluster_name={{ cluster_name }} --environment_name={{ environment_name }} --instances_dir={{ instances_dir }}"

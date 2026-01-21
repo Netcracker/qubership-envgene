@@ -25,10 +25,11 @@ def get_pipeline_parameters() -> dict:
         "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
         'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
         'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", ""),
+        'NS_BUILD_FILTER': getenv("NS_BUILD_FILTER", ""),
         'GITLAB_RUNNER_TAG_NAME' : getenv("GITLAB_RUNNER_TAG_NAME", ""),
         'RUNNER_SCRIPT_TIMEOUT' : getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
         'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", ""),
-        'LOG_LEVEL': getenv("LOG_LEVEL")
+        'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL"),
     }
 
 class PipelineParametersHandler:
@@ -38,12 +39,12 @@ class PipelineParametersHandler:
         pipe_param_plugin = PluginEngine(plugins_dir=plugins_dir)
         if pipe_param_plugin.modules:
            pipe_param_plugin.run(pipeline_params=self.params)
-           
+
     def log_pipeline_params(self):
         params_str = "Input parameters are: "
-        
+
         params = self.params.copy()
-        if params.get("CRED_ROTATION_PAYLOAD"): 
+        if params.get("CRED_ROTATION_PAYLOAD"):
             params["CRED_ROTATION_PAYLOAD"] = "***"
 
         for k, v in params.items():

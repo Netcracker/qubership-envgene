@@ -28,6 +28,9 @@
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
+    - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
+    - [`NS_BUILD_FILTER`](#ns_build_filter)
+    - [`GITHUB_PIPELINE_API_INPUT`](#github_pipeline_api_input)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
     - [`BG_MANAGE`](#bg_manage)
     - [`BG_STATE`](#bg_state)
@@ -514,7 +517,7 @@ Example of calling EnvGene pipeline via GitHub API:
 
 ```bash
 curl -X POST \
-  -H "Authorization: token ghp_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789" \
+  -H "Authorization: token token-placeholder-123" \
   -H "Accept: application/vnd.github.v3+json" \
   https://api.github.com/repos/qubership/instance-repo/actions/workflows/pipeline.yml/dispatches \
   -d '{

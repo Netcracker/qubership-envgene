@@ -3,7 +3,7 @@ from os import listdir
 
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, getEnvDefinition, get_env_instances_dir
-from gcip import Pipeline
+from gcip import JobFilter, Pipeline
 import pipeline_helper
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 
@@ -23,14 +23,16 @@ def build_pipeline(params: dict):
     # if we are in template testing during template build
     tags=params['GITLAB_RUNNER_TAG_NAME']
 
+    artifact_url = None
     if params['IS_TEMPLATE_TEST']:
         logger.info("We are generating jobs in template test mode.")
+        artifact_url = os.getenv("artifact_url")
         templates_dir = f"{project_dir}/templates/env_templates"
         # getting build artifact
         build_artifact = get_gav_coordinates_from_build()
         group_id = build_artifact["group_id"]
         artifact_id = build_artifact["artifact_id"]
-        params['ENV_TEMPLATE_VERSION'] = build_artifact["version"]
+        params['ENV_TEMPLATE_VERSION'] = f"{artifact_id}:{build_artifact["version"]}"
         # get env_names for all templates types
         templateFiles = [
             os.path.splitext(f)[0]
@@ -103,7 +105,7 @@ def build_pipeline(params: dict):
                     pass
 
             # env_builder job
-            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, tags)
+            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, artifact_url, tags)
         else:
             logger.info(f'Preparing of env_build job for {env} is skipped.')
 
@@ -113,20 +115,22 @@ def build_pipeline(params: dict):
         else:
             logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
 
-        ## git_commit job
-        jobs_requiring_git_commit = ("env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job")
-        if any(job in jobs_map for job in jobs_requiring_git_commit) and not params['IS_TEMPLATE_TEST']:
-            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, params['DEPLOYMENT_SESSION_ID'], tags, credential_rotation_job)
-        else:
-            logger.info(f'Preparing of git commit job for {env} is skipped.')
+        jobs_requiring_git_commit = ["env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job"]
 
         plugin_params = params
         plugin_params['jobs_map'] = jobs_map
         plugin_params['job_sequence'] = job_sequence
+        plugin_params['jobs_requiring_git_commit'] = jobs_requiring_git_commit
         plugin_params['env_name'] = environment_name
         plugin_params['cluster_name'] = cluster_name
         plugin_params['full_env'] = env
         per_env_plugin_engine.run(params=plugin_params, pipeline=pipeline, pipeline_helper=pipeline_helper)
+
+        ## git_commit job
+        if any(job in jobs_map for job in plugin_params['jobs_requiring_git_commit']) and not params['IS_TEMPLATE_TEST']:
+            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, env, environment_name, cluster_name, params['DEPLOYMENT_SESSION_ID'], tags, credential_rotation_job)
+        else:
+            logger.info(f'Preparing of git commit job for {env} is skipped.')
 
         for job in job_sequence:
             if job not in jobs_map.keys():
@@ -140,4 +144,14 @@ def build_pipeline(params: dict):
 
         logger.info(f'----------------end processing for {env}---------------------')
 
+    # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
+    # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
+    for job in sorted_pipeline.find_jobs(JobFilter()): # gets all jobs in pipeline
+        job.artifacts.add_paths('./')
+        is_first_job = job.needs is None or len(job.needs) == 0
+        if not is_first_job:
+            job.add_variables(GIT_CHECKOUT="false")
+
+
     sorted_pipeline.write_yaml()
+
