@@ -1,4 +1,19 @@
 name: "registry-1"
 credentialsId: "registry-cred"
-docker-registry:
-  url: {{ regdefs.overrides["docker-registry"].url | default('https://docker-registry.example.com') }}
+mavenConfig:
+  repositoryDomainName: "{{ regdefs.overrides['maven-registry'].repositoryDomainName | default('maven.qubership.org') }}"
+  fullRepositoryUrl: "{{ regdefs.overrides['maven-registry'].fullRepositoryUrl | default('https://maven.qubership.org/repository') }}"
+  targetSnapshot: "snapshot"
+  targetStaging: "staging"
+  targetRelease: "release"
+  releaseGroup: ""
+  snapshotGroup: ""
+dockerConfig:
+  snapshotUri: "docker.qubership.org/snapshot"
+  stagingUri: "docker.qubership.org/staging"
+  releaseUri: "docker.qubership.org/release"
+  groupUri: "docker.qubership.org/group"
+  snapshotRepoName: "docker-snapshot"
+  stagingRepoName: "docker-staging"
+  releaseRepoName: "docker-release"
+  groupName: "docker-group"

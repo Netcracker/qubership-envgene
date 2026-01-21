@@ -1,5 +1,0 @@
-registryName: "registry-1"
-artifactId: "application-1"
-supportParallelDeploy: true
-deployParameters: {}
-technicalConfigurationParameters: {}

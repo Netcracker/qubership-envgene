@@ -1,6 +1,5 @@
 name: "application-1"
 registryName: "global-registry"
-version: "3.0.0"
 artifactId: "application-1"
 groupId: "org.qubership"
 supportParallelDeploy: true

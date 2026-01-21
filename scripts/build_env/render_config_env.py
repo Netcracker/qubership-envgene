@@ -479,7 +479,7 @@ class EnvGenerator:
             self.render_app_defs()
             self.render_reg_defs()
             
-            # self.validate_appregdefs()
+            self.validate_appregdefs()
 
     def render_config_env(self, env_name: str, extra_env: dict):
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")

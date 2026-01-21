@@ -33,6 +33,12 @@ if __name__ == '__main__':
     
     render_context = EnvGenerator()
     render_context.process_app_reg_defs(env_name, render_context_vars)
+    
+    for dir_name in ["AppDefs", "RegDefs"]:
+        src = Path(render_dir) / dir_name
+        dst = Path(env_dir) / dir_name
         
-    env_dir = f"{base_dir}/environments/{full_env}"
-    shutil.copytree(render_dir, env_dir, dirs_exist_ok=True)
+        if dst.exists():
+            shutil.rmtree(dst)
+        if src.exists():
+            shutil.move(src, dst)

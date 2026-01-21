@@ -1,7 +1,5 @@
 name: "application-1"
-registryName: "registry-1"
-version: "3.0.0"
-replicas: 3
+registryName: "custom-registry"
 artifactId: "application-1"
 groupId: "org.qubership"
 supportParallelDeploy: true

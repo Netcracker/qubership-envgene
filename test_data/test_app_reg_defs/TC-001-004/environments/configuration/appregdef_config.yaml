@@ -1,4 +1,5 @@
 regdefs:
   overrides:
-    "docker-registry":
-      url: "https://custom-docker-registry.example.com"
+    "maven-registry":
+      repositoryDomainName: "qubership.org"
+      fullRepositoryUrl: "https://qubership.org"
