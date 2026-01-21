@@ -18,7 +18,7 @@ inputs:
   dockerfile-path:
     description: 'Path to Dockerfile'
     required: false
-    default: './build_effective_set_generator_java/Dockerfile'
+    default: './build_effective_set_generator/Dockerfile'
   git-user:
     description: 'Git username for build args'
     required: false
