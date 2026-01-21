@@ -9,7 +9,7 @@ from collections.abc import Iterable
 from deepmerge import always_merger
 from envgenehelper import logger, openYaml, readYaml, writeYamlToFile, openFileAsString, copy_path, dumpYamlToStr, \
     create_yaml_processor, find_all_yaml_files_by_stem, ensure_directory, dump_as_yaml_format
-from envgenehelper.business_helper import get_bgd_object, get_namespaces
+from envgenehelper.business_helper import get_bgd_object, get_namespaces, get_namespace_role
 from envgenehelper.validation import ensure_valid_fields, ensure_required_keys
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
@@ -21,18 +21,21 @@ from envgenehelper import getEnvDefinition
 
 yml = create_yaml_processor()
 
-
 class Context(BaseModel):
     env: Optional[str] = ''
     render_dir: Optional[str] = ''
     cloud_passport: OrderedDict = Field(default_factory=OrderedDict)
     templates_dir: Optional[Path] = None
+    origin_ns_templates_dir: Optional[Path] = None
+    peer_ns_templates_dir: Optional[Path] = None
     output_dir: Optional[str] = ''
     cluster_name: Optional[str] = ''
     env_definition: OrderedDict = Field(default_factory=OrderedDict)
     current_env: OrderedDict = Field(default_factory=OrderedDict)
     current_env_dir: Optional[str] = ''
     current_env_template: OrderedDict = Field(default_factory=OrderedDict)
+    origin_ns_env_template: OrderedDict = Field(default_factory=OrderedDict)
+    peer_ns_env_template: OrderedDict = Field(default_factory=OrderedDict)
     tenant: Optional[str] = ''
     env_template: OrderedDict = Field(default_factory=OrderedDict)
     env_instances_dir: Optional[str] = ''
@@ -101,15 +104,24 @@ class EnvGenerator:
         logger.info(f"config = {config}")
         self.ctx.config = config
 
-    def set_env_template(self):
-        env_template_path_stem = f'{self.ctx.templates_dir}/env_templates/{self.ctx.current_env["env_template"]}'
-        env_template_path = next(iter(find_all_yaml_files_by_stem(env_template_path_stem)), None)
-        if not env_template_path:
-            raise ValueError(f'Template descriptor was not found in {env_template_path_stem}')
+    def _load_template_descriptor(self, templates_dir: Path | None, target_attr: str):
+        stem = f'{templates_dir}/env_templates/{self.ctx.current_env["env_template"]}'
+        path = next(iter(find_all_yaml_files_by_stem(stem)), None)
+        if not path:
+            raise ValueError(f'Template descriptor was not found in {stem}')
 
-        env_template = openYaml(filePath=env_template_path, safe_load=True)
-        logger.info(f"env_template = {env_template}")
-        self.ctx.current_env_template = env_template
+        template = openYaml(filePath=path, safe_load=True)
+        logger.info(f"{target_attr} = {template}")
+        setattr(self.ctx, target_attr, template)
+
+    def set_env_templates(self):
+        # main template (required)
+        self._load_template_descriptor(self.ctx.templates_dir, 'current_env_template')
+
+        if self.ctx.origin_ns_templates_dir:
+            self._load_template_descriptor(self.ctx.origin_ns_templates_dir, 'origin_ns_env_template')
+        if self.ctx.peer_ns_templates_dir:
+            self._load_template_descriptor(self.ctx.peer_ns_templates_dir, 'peer_ns_env_template')
 
     def validate_applications(self):
         applications = self.ctx.sd_config.get("applications", [])
@@ -254,20 +266,68 @@ class EnvGenerator:
             return
         self.render_from_file_to_file(Template(template).render(self.ctx.as_dict()), target_path)
 
+    def _get_bgd_object_for_namespace_routing(self) -> dict:
+        bg_domain_template = self.ctx.current_env_template.get("bg_domain")
+        if not bg_domain_template:
+            return {}
+
+        try:
+            bg_domain_path = Template(bg_domain_template).render(self.ctx.as_dict())
+            bgd_object = self.render_from_file_to_obj(bg_domain_path)
+            logger.info(f"Loaded BG domain for namespace routing: {bgd_object}")
+            return bgd_object
+        except Exception as e:
+            logger.warning(f"Failed to load BG domain for namespace routing: {e}")
+            return {}
+
+    def _resolve_ns_template_path(self, ns: dict, templates_dir: Path, context: dict) -> str:
+        ns_template_path = Template(ns["template_path"]).render(context)
+        if templates_dir and str(self.ctx.templates_dir) in ns_template_path:
+            ns_template_path = ns_template_path.replace(str(self.ctx.templates_dir), str(templates_dir))
+        return ns_template_path
+
+    def _write_namespace(self, ns: dict, ns_template_path: str, rendered_ns: dict, templates_dir: Path):
+        ns_template_name = self.generate_ns_postfix(ns, ns_template_path)
+        logger.info(f"Generate Namespace yaml for {ns_template_name} from {templates_dir}")
+
+        ns_dir = f'{self.ctx.current_env_dir}/Namespaces/{ns_template_name}'
+        writeYamlToFile(f'{ns_dir}/namespace.yml', rendered_ns)
+        self.generate_override_template(ns.get("template_override"), Path(f'{ns_dir}/namespace.yml_override'),
+                                        ns_template_name)
+
+    def _get_bg_template_for_role(self, role: str) -> tuple[dict, Path | None]:
+        """Return (env_template, templates_dir) if BG template handles this role."""
+        if role == 'origin' and self.ctx.origin_ns_templates_dir:
+            return self.ctx.origin_ns_env_template, self.ctx.origin_ns_templates_dir
+        if role == 'peer' and self.ctx.peer_ns_templates_dir:
+            return self.ctx.peer_ns_env_template, self.ctx.peer_ns_templates_dir
+        return self.ctx.current_env_template, self.ctx.templates_dir
+
     def generate_namespace_file(self):
         context = self.ctx.as_dict()
-        namespaces = self.ctx.current_env_template["namespaces"]
-        for ns in namespaces:
-            ns_template_path = Template(ns["template_path"]).render(context)
-            ns_template_name = self.generate_ns_postfix(ns, ns_template_path)
-            logger.info(f"Generate Namespace yaml for {ns_template_name}")
-            current_env_dir = self.ctx.current_env_dir
-            ns_dir = f'{current_env_dir}/Namespaces/{ns_template_name}'
-            namespace_file = f'{ns_dir}/namespace.yml'
-            self.render_from_file_to_file(ns_template_path, namespace_file)
+        bgd_object = self._get_bgd_object_for_namespace_routing()
+        rendered_roles = set()
 
-            self.generate_override_template(ns.get("template_override"), Path(f'{ns_dir}/namespace.yml_override'),
-                                            ns_template_name)
+        for ns in self.ctx.current_env_template.get("namespaces", []):
+            ns_template_path = self._resolve_ns_template_path(ns, self.ctx.templates_dir, context)
+            rendered_ns = self.render_from_file_to_obj(ns_template_path)
+            ns_name = rendered_ns.get("name", "")
+            role = get_namespace_role(ns_name, bgd_object)
+
+            bg_template = self._get_bg_template_for_role(role)
+            if bg_template:
+                if role in rendered_roles:
+                    continue
+                # Render all namespaces of this role from BG template
+                env_template, templates_dir = bg_template
+                for bg_ns in env_template.get("namespaces", []):
+                    bg_path = self._resolve_ns_template_path(bg_ns, templates_dir, context)
+                    bg_rendered = self.render_from_file_to_obj(bg_path)
+                    if get_namespace_role(bg_rendered.get("name", ""), bgd_object) == role:
+                        self._write_namespace(bg_ns, bg_path, bg_rendered, templates_dir)
+                rendered_roles.add(role)
+            else:
+                self._write_namespace(ns, ns_template_path, rendered_ns, self.ctx.templates_dir)
 
     def calculate_cloud_name(self) -> str:
         inv = self.ctx.env_definition["inventory"]
@@ -462,7 +522,7 @@ class EnvGenerator:
 
             current_env_dir = f'{self.ctx.render_dir}/{self.ctx.env}'
             self.ctx.current_env_dir = current_env_dir
-            self.set_env_template()
+            self.set_env_templates()
 
             self.generate_solution_structure()
             self.generate_tenant_file()

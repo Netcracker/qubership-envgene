@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
+from enum import Enum
 import re
 from os import getenv
 from pathlib import Path
 from typing import overload
+from functools import cache
 
 from ruyaml import CommentedMap
 
@@ -360,15 +362,35 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
     else:
         return ""
 
+class NamespaceRole(Enum):
+    COMMON = 1
+    ORIGIN = 2
+    PEER = 3
+
+def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> NamespaceRole:
+    if not bgd_object:
+        bgd_object = get_bgd_object()
+    if not bgd_object:
+        return NamespaceRole.COMMON
+    if bgd_object['originNamespace']['name'] == ns_name:
+        return NamespaceRole.ORIGIN
+    if bgd_object['peerNamespace']['name'] == ns_name:
+        return NamespaceRole.PEER
+    return NamespaceRole.COMMON
+
 @dataclass
 class NamespaceFile:
     path: Path
     name: str = field(init=False)
+    postfix: str = field(init=False)
     definition_path: Path = field(init=False)
+    role: NamespaceRole = field(init=False)
 
     def __post_init__(self):
         self.definition_path = self.path.joinpath('namespace.yml')
         self.name = openYaml(self.definition_path)['name']
+        self.postfix = self.path.name
+        self.role = get_namespace_role(self.name)
 
 def get_namespaces_path(env_dir: Path | None = None) -> Path:
     env_dir = env_dir or get_current_env_dir_from_env_vars()
@@ -391,6 +413,7 @@ def get_bgd_path() -> Path:
     logger.debug(bgd_path)
     return bgd_path
 
+@cache
 def get_bgd_object() -> CommentedMap:
     bgd_path = get_bgd_path()
     bgd_object = openYaml(bgd_path, allow_default=True)

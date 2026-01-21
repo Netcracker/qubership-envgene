@@ -10,6 +10,7 @@ from resource_profiles import processResourceProfiles
 from schema_validation import checkEnvSpecificParametersBySchema
 from cloud_passport import process_cloud_passport
 from pathlib import Path
+from envgenehelper.business_helper import get_namespace_role, get_namespaces
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
@@ -460,6 +461,30 @@ def getTemplateNameFromNamespacePath(namespacePath):
     path = pathlib.Path(namespacePath)
     return path.parent.name
 
+def create_role_specific_paramset_map(base_paramset_map: dict, parameters_dir: str, role: str) -> dict:
+    role_dir_suffix = f'from_template_{role}_ns'
+    role_specific_dir = os.path.join(parameters_dir, role_dir_suffix)
+
+    role_paramset_map = createParamsetsMap(role_specific_dir)
+
+    if not role_paramset_map:
+        return base_paramset_map
+
+    merged_map = copy.deepcopy(base_paramset_map)
+
+    for paramset_name, entries in role_paramset_map.items():
+        if paramset_name not in merged_map:
+            merged_map[paramset_name] = entries
+            continue
+        # Keep paramsets from_instance and replace template paramsets
+        filtered_base_entries = [
+            e for e in merged_map[paramset_name]
+            if 'from_template' not in e['filePath'] or role_dir_suffix in e['filePath']
+        ]
+        merged_map[paramset_name] = filtered_base_entries + entries
+
+    logger.info(f"Created {role}-specific paramset map with {len(role_paramset_map)} role-specific paramsets")
+    return merged_map
 
 def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, resource_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context):
@@ -482,7 +507,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     # pathes
     tenantTemplatePath = env_dir + "/tenant.yml"
     cloudTemlatePath = env_dir + "/cloud.yml"
-    namespaceTemplates = find_namespaces(env_dir)
+    namespaces = get_namespaces()
     # env specific parameters map - will be filled with env specific parameters during template processing
     env_specific_parameters_map = {}
     env_specific_parameters_map["namespaces"] = {}
@@ -522,21 +547,34 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
 
     # process namespaces
     template_namespace_names = []
+
+    # Create role-specific paramset maps if needed
+    origin_paramset_map = create_role_specific_paramset_map(paramset_map, parameters_dir, 'origin')
+    peer_paramset_map = create_role_specific_paramset_map(paramset_map, parameters_dir, 'peer')
+
     # iterate through namespace definitions and create namespace parameters
-    for templatePath in namespaceTemplates:
-        logger.info(f"Processing namespace: {templatePath}")
-        templateName = getTemplateNameFromNamespacePath(templatePath)
-        template_namespace_names.append(templateName)
-        initParametersStructure(env_specific_parameters_map["namespaces"], templateName)
+    for ns in namespaces:
+        logger.info(f"Processing namespace: {ns.definition_path}")
+        template_namespace_names.append(ns.postfix)
+        initParametersStructure(env_specific_parameters_map['namespaces'], ns.postfix)
+
+        if ns.role == NamespaceRole.ORIGIN:
+            ns_paramset_map = origin_paramset_map
+        elif ns.role == NamespaceRole.PEER:
+            ns_paramset_map = peer_paramset_map
+        else:
+            ns_paramset_map = paramset_map
+
         processTemplate(
-            templatePath,
-            templateName,
+            ns.definition_path,
+            ns.postfix,
             env_instances_dir,
             namespace_schema,
-            paramset_map,
-            env_specific_parameters_map["namespaces"][templateName],
+            ns_paramset_map,
+            env_specific_parameters_map['namespaces'][ns.postfix],
             resource_profiles_map=needed_resource_profiles_map,
-            header_text=generated_header_text)
+            header_text=generated_header_text,
+        )
 
     logger.info(f"EnvSpecific parameters are: \n{dump_as_yaml_format(env_specific_parameters_map)}")
     checkEnvSpecificParametersBySchema(env_dir, env_specific_parameters_map, template_namespace_names)
