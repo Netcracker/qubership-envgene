@@ -56,9 +56,6 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         "envgen_debug": "true",
         "module_config_default": "/module/templates/defaults.yaml",
         "GITLAB_RUNNER_TAG_NAME": tags,
-        "module_ansible_dir": "/module/ansible",
-        "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
-        "module_ansible_cfg": "/module/ansible/ansible.cfg",
         "ARTIFACT_URL": artifact_url
     }
 
