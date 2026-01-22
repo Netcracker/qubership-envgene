@@ -4,19 +4,19 @@ from pipeline_helper import job_instance
 
 
 def prepare_env_build_job(pipeline, is_template_test, env_template_version, full_env, enviroment_name, cluster_name,
-                          group_id, artifact_id, tags):
+                          group_id, artifact_id, artifact_url, tags):
     logger.info(f'prepare env_build job for {full_env}')
-    # prepare script
+
     script = [
-        'if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then cert_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs"); for path in $cert_path; do . /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/$path; done; fi',
+       '/module/scripts/handle_certs.sh',
     ]
-    script.append('/module/scripts/prepare.sh "build_env.yaml"')
     script.append('cd /build_env; python3 /build_env/scripts/build_env/main.py')
 
     if is_template_test:
-        script.append("env_name=$(cat set_variable.txt)")
+        script.append('env_name=$(cat "$CI_PROJECT_DIR/set_variable.txt")')
         script.append(
             'sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "$CI_PROJECT_DIR/environments/$env_name/Credentials/credentials.yml"')
+    
     env_build_params = {
         "name": f'env_builder.{full_env}',
         "image": '${envgen_image}',
@@ -39,9 +39,7 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         "envgen_debug": "true",
         "module_config_default": "/module/templates/defaults.yaml",
         "GITLAB_RUNNER_TAG_NAME": tags,
-        "module_ansible_dir": "/module/ansible",
-        "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
-        "module_ansible_cfg": "/module/ansible/ansible.cfg"
+        "ARTIFACT_URL": artifact_url
     }
 
     env_build_job = job_instance(params=env_build_params, vars=env_build_vars)
@@ -100,7 +98,7 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
         "image": '${envgen_image}',
         "stage": 'git_commit',
         "script": [
-            'if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then cert_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs"); for path in $cert_path; do . /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/$path; done; fi',
+            '/module/scripts/handle_certs.sh',
             '/module/scripts/prepare.sh "git_commit.yaml"',
             "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
             'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',

@@ -23,14 +23,16 @@ logger.info(f"Detected environment - GitLab: {IS_GITLAB}, GitHub: {IS_GITHUB}")
 def build_pipeline(params: dict) -> None:
     tags=params['GITLAB_RUNNER_TAG_NAME']
 
+    artifact_url = None
     if params['IS_TEMPLATE_TEST']:
-        logger.info("We are generating jobs in template test mode.")
+        logger.info("Generating jobs in template test mode.")
+        artifact_url = os.getenv("artifact_url")
         templates_dir = f"{PROJECT_DIR}/templates/env_templates"
         # getting build artifact
         build_artifact = get_gav_coordinates_from_build()
         group_id = build_artifact["group_id"]
         artifact_id = build_artifact["artifact_id"]
-        params['ENV_TEMPLATE_VERSION'] = build_artifact["version"]
+        params['ENV_TEMPLATE_VERSION'] = f"{artifact_id}:{build_artifact["version"]}"
         # get env_names for all templates types
         templateFiles = [
             os.path.splitext(f)[0]
@@ -98,15 +100,14 @@ def build_pipeline(params: dict) -> None:
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
 
         if params['ENV_BUILD']:
-            ### ?
             if env_definition is None:
                 try:
                     env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{PROJECT_DIR}/environments"))
                 except ReferenceError:
                     pass
-            ###
+
             jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, tags)     
-            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, tags)
+            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, artifact_url, tags)
         else:
             logger.info(f'Preparing of appregdef_render_job {env} is skipped.')
             logger.info(f'Preparing of env_build job for {env} is skipped.')

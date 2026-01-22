@@ -4,9 +4,10 @@ import tempfile
 from pathlib import Path
 
 from artifact_searcher import artifact
-from artifact_searcher.utils.models import FileExtension, Application, Credentials, Registry
-from envgenehelper import getEnvDefinition, fetch_cred_value
-from envgenehelper import openYaml, find_all_yaml_files_by_stem, getenv_with_error, logger
+from artifact_searcher.utils.models import FileExtension, Credentials, Registry, Application
+from env_template.template_testing import run_env_test_setup
+from envgenehelper import getEnvDefinition, fetch_cred_value, getAppDefinitionPath
+from envgenehelper import openYaml, getenv_with_error, logger
 from envgenehelper import unpack_archive, get_cred_config, check_dir_exist_and_create
 from render_config_env import render_obj_by_context, Context
 
@@ -17,14 +18,6 @@ def parse_artifact_appver(env_definition: dict) -> [str, str]:
     artifact_appver = env_definition['envTemplate'].get('artifact', '')
     logger.info(f"Environment template artifact version: {artifact_appver}")
     return artifact_appver.split(':')
-
-
-def load_artifact_definition(name: str) -> Application:
-    path_pattern = os.path.join(getenv_with_error('CI_PROJECT_DIR'), 'configuration', 'artifact_definitions', name)
-    path = next(iter(find_all_yaml_files_by_stem(path_pattern)), None)
-    if not path:
-        raise FileNotFoundError(f"No artifact definition file found for {name} with .yaml or .yml extension")
-    return Application.model_validate(openYaml(path))
 
 
 def get_registry_creds(registry: Registry) -> Credentials:
@@ -56,7 +49,12 @@ def extract_snapshot_version(url: str, snapshot_version: str) -> str:
 # logic resolving artifact version by artifact definition
 def resolve_artifact_new_logic(env_definition: dict, template_dest: str, download_template: bool = True) -> str:
     app_name, app_version = parse_artifact_appver(env_definition)
-    app_def = load_artifact_definition(app_name)
+
+    base_dir = getenv_with_error('CI_PROJECT_DIR')
+    artifact_path = getAppDefinitionPath(base_dir, app_name)
+    if not artifact_path:
+        raise FileNotFoundError(f"No artifact definition file found for {app_name} with .yaml or .yml extension")
+    app_def = Application.model_validate(openYaml(artifact_path))
     cred = get_registry_creds(app_def.registry)
     template_url = None
 
@@ -163,6 +161,9 @@ def resolve_artifact_old_logic(env_definition: dict, template_dest: str, downloa
 
 
 def process_env_template(download_template: bool = True) -> str:
+    env_template_test = os.getenv("ENV_TEMPLATE_TEST", "").lower() == "true"
+    if env_template_test:
+        run_env_test_setup()
     project_dir = getenv_with_error('CI_PROJECT_DIR')
     template_dest = f"{project_dir}/tmp"
     cluster = getenv_with_error("CLUSTER_NAME")
