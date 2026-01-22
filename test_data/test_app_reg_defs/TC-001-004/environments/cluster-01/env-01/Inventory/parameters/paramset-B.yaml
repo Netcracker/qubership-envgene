@@ -1,9 +1,0 @@
-version: 23.4
-name: paramset-B
-parameters:
-  core:
-    apps:
-      volumes:
-        outputs:
-          capacity: 20Gi
-

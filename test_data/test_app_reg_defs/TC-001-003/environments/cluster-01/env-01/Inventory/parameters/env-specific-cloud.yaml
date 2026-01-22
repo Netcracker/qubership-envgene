@@ -1,5 +1,0 @@
-name: env-specific-cloud
-version: 23.1
-parameters:
-  CLOUD_ENV_SPECIFIC_E2E_PARAM1: VALUE_E2E_1
-applications: []

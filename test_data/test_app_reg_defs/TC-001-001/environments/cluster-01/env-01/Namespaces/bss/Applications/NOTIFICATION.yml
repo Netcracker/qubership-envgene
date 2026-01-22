@@ -1,9 +1,0 @@
-# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
-# Contents will be overwritten by next generation.
-# Please modify this contents only for development purposes or as workaround.
-name: "NOTIFICATION"
-deployParameters:
-  NOTIFICATION_SERVICE_TOPIC: "product.product" # paramset: env-specific-bss version: 23.1 source: instance
-  NOTIFICATION_TOPIC: "customer.quote" # paramset: env-specific-bss version: 23.1 source: instance
-  ORDER_NOTIFICATION_TOPIC: "customer.order" # paramset: env-specific-bss version: 23.1 source: instance
-technicalConfigurationParameters: {}
