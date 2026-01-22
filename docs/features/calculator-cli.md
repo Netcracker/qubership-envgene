@@ -580,6 +580,8 @@ For each component with the MIME type `application/octet-stream`, if its `.compo
 - The key is the value of `.components[].properties[?name=deploy_param].value`.
 - The value is the value of `.components[].properties[?name=full_image_name].value`.
 
+If the key of such parameter (i.e., `.components[].properties[?name=deploy_param].value`) matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention), the parameter is **not** added.
+
 All such parameters are added to `deployment-parameters.yaml` as `<image-params-key>: <image-params-value>`, as described in the structure [above](#version-20deployment-parameter-context-deployment-parametersyaml).
 
 ##### \[Version 2.0][Deployment Parameter Context] `credentials.yaml`
@@ -628,10 +630,15 @@ global: &id001
 
 ##### \[Version 2.0][Deployment Parameter Context] Collision Parameters
 
-Parameters at the **root level** of `deployment-parameters.yaml` or `credentials.yaml` whose keys match the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention) are placed in the following files:
+Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` are moved to collision files if they meet **both** conditions:
 
-- `collision-deployment-parameters.yaml`: if the parameter is non-sensitive (i.e., not defined via a credential macro).
-- `collision-credentials.yaml`: if the parameter is sensitive (i.e., defined via a credential macro).
+1. The parameter key matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention)
+2. The parameter is **not** an [Image parameter derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
+
+**Destination files:**
+
+- `collision-deployment-parameters.yaml` — for non-sensitive parameters (not defined via a credential macro)
+- `collision-credentials.yaml` — for sensitive parameters (defined via a credential macro)
 
 > [!NOTE]
 > Only root-level parameters are processed by this collision logic. If a parameter with a service name as its key is nested under a service section, it is not moved to the collision files and remains in its original location.
