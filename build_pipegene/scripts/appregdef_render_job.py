@@ -7,7 +7,7 @@ from pipeline_helper import job_instance
 def prepare_appregdef_render_job(pipeline, env_template_version, full_env, environment_name, cluster_name, tags):
     logger.info(f'Prepare appregdef render job for {full_env}')
     script = [
-        'if [ -d "${CI_PROJECT_DIR}/configuration/certs" ]; then cert_path=$(ls -A "${CI_PROJECT_DIR}/configuration/certs"); for path in ${cert_path}; do . /module/scripts/update_ca_cert.sh ${CI_PROJECT_DIR}/configuration/certs/${path}; done; fi',
+       '/module/scripts/handle_certs.sh',
     ]
     
     if env_template_version:
