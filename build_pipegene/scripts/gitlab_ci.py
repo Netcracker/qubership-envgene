@@ -8,7 +8,7 @@ import pipeline_helper
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
-from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
+from env_build_jobs import prepare_env_build_job, prepare_git_commit_job
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from credential_rotation_job import prepare_credential_rotation_job
 
@@ -108,12 +108,6 @@ def build_pipeline(params: dict):
             jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, artifact_url, tags)
         else:
             logger.info(f'Preparing of env_build job for {env} is skipped.')
-
-        # generate_effective_set job
-        if params['GENERATE_EFFECTIVE_SET']:
-            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name, cluster_name, tags)
-        else:
-            logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
 
         jobs_requiring_git_commit = ["env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job"]
 
