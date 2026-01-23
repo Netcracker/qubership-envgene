@@ -138,6 +138,9 @@ def openFileAsString(filePath):
 def deleteFile(filePath):
     os.remove(filePath)
 
+def deleteFileIfExists(filePath):
+    if check_file_exists(filePath):
+        os.remove(filePath)
 
 def writeToFile(filePath, contents):
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
@@ -228,13 +231,14 @@ def ensure_directory(path: Path, mode: int):
 
 def unpack_archive(src: str, dest: str):
     os.makedirs(dest, exist_ok=True)
-
     if src.endswith(".zip"):
         with zipfile.ZipFile(src, "r") as z:
             z.extractall(dest)
+        logger.info(f"Unpacked zip archive {src} to {dest}")
     elif src.endswith((".tar.gz", ".tgz", ".tar")):
         with tarfile.open(src, "r:*") as t:
             t.extractall(dest)
+        logger.info(f"Unpacked tar archive {src} to {dest}")
     else:
         raise ValueError(f"Unsupported archive format: {src}")
 
