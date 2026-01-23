@@ -12,11 +12,13 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
     ]
     script.append('cd /build_env; python3 /build_env/scripts/build_env/main.py')
 
+    # ?
     if is_template_test:
         script.append('env_name=$(cat "$CI_PROJECT_DIR/set_variable.txt")')
         script.append(
             'sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "$CI_PROJECT_DIR/environments/$env_name/Credentials/credentials.yml"')
-    
+    #
+        
     env_build_params = {
         "name": f'env_builder.{full_env}',
         "image": '${envgen_image}',

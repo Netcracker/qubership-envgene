@@ -14,6 +14,13 @@ def prepare_appregdef_render_job(pipeline, is_template_test, env_template_versio
         script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
     
     script.append('cd /build_env; python3 /build_env/scripts/build_env/appregdef_render.py')
+    
+    # ?
+    if is_template_test:
+        script.append('env_name=$(cat "$CI_PROJECT_DIR/set_variable.txt")')
+        script.append(
+            'sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "$CI_PROJECT_DIR/environments/$env_name/Credentials/credentials.yml"')
+    #
 
     appregdef_render_params = {
         "name": f'app_reg_def_render.{full_env}',
@@ -27,6 +34,7 @@ def prepare_appregdef_render_job(pipeline, is_template_test, env_template_versio
         "FULL_ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": environment_name,
+        "ENV_TEMPLATE_TEST": "true" if is_template_test else "false",
         "ENV_TEMPLATE_VERSION": env_template_version,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
         "GITLAB_RUNNER_TAG_NAME": tags,
