@@ -45,7 +45,7 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
                    'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
                    ],
     }
-    get_passport_params['script'].append('/module/scripts/prepare.sh "git_commit.yaml"')
+    get_passport_params['script'].append('/module/scripts/git_commit.sh')
     get_passport_vars = {
         "ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
