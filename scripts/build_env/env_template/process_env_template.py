@@ -85,7 +85,7 @@ def resolve_artifact_new_logic(env_definition: dict, template_dest: str) -> str:
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(template_url, app_version)
     if not template_url:
-        raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={version}")
+        raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={resolved_version}")
     logger.info(f"Environment template url has been resolved: {template_url}")
     artifact.download(template_url, ARTIFACT_DEST, cred)
     unpack_archive(ARTIFACT_DEST, template_dest)
@@ -130,7 +130,6 @@ def resolve_artifact_old_logic(env_definition: dict, template_dest: str) -> str:
         logger.info(f"Deployment descriptor url for environment template has been resolved: {dd_url}")
         if "-SNAPSHOT" in dd_version:
             resolved_version = extract_snapshot_version(dd_url, dd_version)
-
         dd_config = artifact.download_json_content(dd_url, cred)
         group_id, artifact_id, version = parse_maven_coord_from_dd(dd_config)
         logger.info(
@@ -146,7 +145,7 @@ def resolve_artifact_old_logic(env_definition: dict, template_dest: str) -> str:
             resolved_version = extract_snapshot_version(template_url, dd_version)
 
     if not template_url:
-        raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={version}")
+        raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={resolved_version}")
     logger.info(f"Environment template url has been resolved: {template_url}")
     artifact.download(template_url, ARTIFACT_DEST, cred)
     unpack_archive(ARTIFACT_DEST, template_dest)
