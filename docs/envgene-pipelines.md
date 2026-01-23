@@ -54,7 +54,7 @@ flowchart LR
           1. Templates, as described in [User Defined by Template](/docs/features/app-reg-defs.md#user-defined-by-template)
           2. External Job, as described in [External Job](/docs/features/app-reg-defs.md#external-job)
        3. Runs [Application and Registry Definitions Transformation](/docs/features/app-reg-defs.md#application-and-registry-definitions-transformation)
-   - **Condition**: Runs if ( [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder) ) OR ( [`SOURCE_TYPE: json`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_DATA`](/docs/instance-pipeline-parameters.md#sd_data) is provided ) OR ( [`SOURCE_TYPE: artifact`](/docs/instance-pipeline-parameters.md#sd_source_type) AND [`SD_VERSIONS`](/docs/instance-pipeline-parameters.md#sd_version) is provided )
+   - **Condition**: Runs if ( [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder) )
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 7. **process_sd**:
