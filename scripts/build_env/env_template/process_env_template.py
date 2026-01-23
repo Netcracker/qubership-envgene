@@ -75,7 +75,7 @@ def resolve_artifact_new_logic(env_definition: dict, template_dest: str, downloa
                 raise ValueError(f"Invalid maven coordinates from deployment descriptor {dd_url}")
 
             repo_url = dd_config.get("configurations", [{}])[0].get("maven_repository") or dd_repo
-            template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP)
+            template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP, cred)
     else:
         logger.info("Loading environment template artifact from zip directly...")
         group_id, artifact_id, version = app_def.group_id, app_def.artifact_id, app_version
@@ -121,16 +121,14 @@ def resolve_artifact_old_logic(env_definition: dict, template_dest: str, downloa
     repo_url = registry.get(repo_type)
     dd_repo_url = registry.get(dd_repo_type)
 
-    cred = None
-    if download_template:
-        cred_config = render_creds()
-        repository_username = fetch_cred_value(registry.get("username"), cred_config)
-        repository_password = fetch_cred_value(registry.get("password"), cred_config)
-        cred = Credentials(username=repository_username, password=repository_password)
+    cred_config = render_creds()
+    repository_username = fetch_cred_value(registry.get("username"), cred_config)
+    repository_password = fetch_cred_value(registry.get("password"), cred_config)
+    cred = Credentials(username=repository_username, password=repository_password)
     
     template_url = None
     resolved_version = dd_version
-    dd_url = artifact.check_artifact(dd_repo_url, group_id, artifact_id, dd_version, FileExtension.JSON)
+    dd_url = artifact.check_artifact(dd_repo_url, group_id, artifact_id, dd_version, FileExtension.JSON, cred)
     if dd_url:
         logger.info(f"Deployment descriptor url for environment template has been resolved: {dd_url}")
         if "-SNAPSHOT" in dd_version:
@@ -143,10 +141,10 @@ def resolve_artifact_old_logic(env_definition: dict, template_dest: str, downloa
             if not all([group_id, artifact_id, version]):
                 raise ValueError(f"Invalid maven coordinates from deployment descriptor {dd_url}")
 
-            template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP)
+            template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP, cred)
     else:
         logger.info("Loading environment template artifact from zip directly...")
-        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, dd_version, FileExtension.ZIP)
+        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, dd_version, FileExtension.ZIP, cred)
         if "-SNAPSHOT" in dd_version:
             resolved_version = extract_snapshot_version(template_url, dd_version)
 
