@@ -105,7 +105,7 @@ def build_pipeline(params: dict) -> None:
         else:
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
             
-        if params['ENV_BUILD'] or (params["SD_SOURCE_TYPE"].lower() == "json" and params["SD_DATA"] or params["SD_SOURCE_TYPE"].lower() == "artifact" and params["SD_VERSION"]):
+        if params['ENV_BUILD']:
             jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, tags)
         else:
             logger.info(f'Preparing of appregdef_render_job {env} is skipped.')
