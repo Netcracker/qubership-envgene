@@ -4,7 +4,8 @@ from envgenehelper import logger
 from pipeline_helper import job_instance
 
 
-def prepare_appregdef_render_job(pipeline, is_template_test, env_template_version, full_env, environment_name, cluster_name, tags):
+def prepare_appregdef_render_job(pipeline, is_template_test, env_template_version, full_env, environment_name, 
+                                 cluster_name, group_id, artifact_id, artifact_url, tags):
     logger.info(f'Prepare appregdef render job for {full_env}')
     script = [
        '/module/scripts/handle_certs.sh',
@@ -37,6 +38,9 @@ def prepare_appregdef_render_job(pipeline, is_template_test, env_template_versio
         "ENV_TEMPLATE_TEST": "true" if is_template_test else "false",
         "ENV_TEMPLATE_VERSION": env_template_version,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
+        "GROUP_ID": group_id,
+        "ARTIFACT_ID": artifact_id,
+        "ARTIFACT_URL": artifact_url,
         "GITLAB_RUNNER_TAG_NAME": tags,
     }
 

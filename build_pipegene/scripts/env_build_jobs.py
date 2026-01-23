@@ -3,8 +3,7 @@ from envgenehelper import logger
 from pipeline_helper import job_instance
 
 
-def prepare_env_build_job(pipeline, is_template_test, env_template_version, full_env, enviroment_name, cluster_name,
-                          group_id, artifact_id, artifact_url, tags):
+def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name, cluster_name, group_id, artifact_id, tags):
     logger.info(f'prepare env_build job for {full_env}')
 
     script = [
@@ -31,7 +30,6 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         "FULL_ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,
-        "ENV_TEMPLATE_VERSION": env_template_version,
         "GROUP_ID": group_id,
         "ARTIFACT_ID": artifact_id,
         "ENV_TEMPLATE_TEST": "true" if is_template_test else "false",
@@ -41,7 +39,6 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         "envgen_debug": "true",
         "module_config_default": "/module/templates/defaults.yaml",
         "GITLAB_RUNNER_TAG_NAME": tags,
-        "ARTIFACT_URL": artifact_url
     }
 
     env_build_job = job_instance(params=env_build_params, vars=env_build_vars)
