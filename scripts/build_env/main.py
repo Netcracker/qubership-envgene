@@ -4,13 +4,11 @@ from envgenehelper.deployer import *
 from build_env import build_env, process_additional_template_parameters
 from cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
-from env_template.process_env_template import process_env_template
 from render_config_env import EnvGenerator
 from resource_profiles import get_env_specific_resource_profiles
 
 from filter_namespaces import apply_ns_build_filter
 
-# const
 INVENTORY_DIR_NAME = "Inventory"
 ENV_DEFINITION_FILE_NAME = "env_definition.yml"
 PARAMSET_SCHEMA = "schemas/paramset.schema.json"
@@ -97,9 +95,8 @@ def handle_template_override(render_dir):
         deleteFile(file)
 
 
-def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all_instances_dir, output_dir,
+def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all_instances_dir, output_dir, work_dir):
     # defining folders that will be used during generation
-                      g_template_version, work_dir):
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     render_dir = f"{base_dir}/tmp/render"
     render_parameters_dir = f"{base_dir}/tmp/parameters_templates"
@@ -167,7 +164,6 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     envvars["env_instances_dir"] = getAbsPath(render_env_dir)
     envvars["render_dir"] = getAbsPath(render_dir)
     envvars["render_parameters_dir"] = getAbsPath(render_parameters_dir)
-    envvars["template_version"] = g_template_version
     envvars["cloud_passport_file_path"] = find_cloud_passport_definition(source_env_dir, all_instances_dir)
     envvars["cmdb_url"] = cmdb_url
     envvars["output_dir"] = output_dir
@@ -177,7 +173,6 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     handle_template_override(render_dir)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
                                                                            ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
-    # building env
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
@@ -268,35 +263,29 @@ def validate_parameter_files(param_files):
     return errors
 
 
-def render_environment(env_name, cluster_name, templates_dir, all_instances_dir, output_dir, g_template_version,
-                       work_dir):
+def render_environment(env_name, cluster_name, templates_dir, all_instances_dir, output_dir, work_dir):
     logger.info(f'env: {env_name}')
     logger.info(f'cluster_name: {cluster_name}')
     logger.info(f'templates_dir: {templates_dir}')
     logger.info(f'instances_dir: {all_instances_dir}')
     logger.info(f'output_dir: {output_dir}')
-    logger.info(f'template_version: {g_template_version}')
     logger.info(f'work_dir: {work_dir}')
-    # checking that directory is valid
+
     check_environment_is_valid_or_fail(env_name, cluster_name, all_instances_dir,
                                        validate_env_definition_by_schema=True)
     # searching for env directory in instances
     validate_parameters(templates_dir, all_instances_dir, cluster_name, env_name)
     env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
     logger.info(f"Environment {env_name} directory is {env_dir}")
-    # build env
-    resulting_env_dir = build_environment(env_name, cluster_name, templates_dir, env_dir, all_instances_dir, output_dir,
-                                          g_template_version, work_dir)
-    # create credentials
+
+    resulting_env_dir = build_environment(env_name, cluster_name, templates_dir, env_dir, all_instances_dir, 
+                                          output_dir, work_dir)
     create_credentials(resulting_env_dir, env_dir, all_instances_dir)
-    # update versions
-    update_generated_versions(resulting_env_dir, BUILD_ENV_TAG, g_template_version)
     apply_ns_build_filter()
 
 
 if __name__ == "__main__":
     base_dir = getenv_with_error('CI_PROJECT_DIR')
-    template_version = process_env_template(download_template=False)
     cluster = getenv("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
     g_templates_dir = f"{base_dir}/tmp/templates"
@@ -305,6 +294,5 @@ if __name__ == "__main__":
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
     
     decrypt_all_cred_files_for_env()
-    render_environment(environment, cluster, g_templates_dir, g_all_instances_dir, g_output_dir,
-                       template_version, g_work_dir)
+    render_environment(environment, cluster, g_templates_dir, g_all_instances_dir, g_output_dir, g_work_dir)
     encrypt_all_cred_files_for_env()
