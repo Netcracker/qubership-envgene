@@ -63,10 +63,10 @@ def build_pipeline(params: dict) -> None:
         else:
             cluster_name = get_cluster_name_from_full_name(env)
             environment_name = get_environment_name_from_full_name(env)
-            if params['ENV_INVENTORY_INIT']:
-                env_definition = None
-            else:
+            env_definition = None
+            if not params['ENV_INVENTORY_INIT']:
                 env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{PROJECT_DIR}/environments"))
+                
 
         job_sequence = [
             "trigger_passport_job",
@@ -91,6 +91,12 @@ def build_pipeline(params: dict) -> None:
             jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, env, environment_name, cluster_name, params, tags)
         else:
             logger.info(f'Preparing of env inventory generation job for {env} is skipped because we are in template test mode.')
+            
+        if env_definition is None:
+            try:
+                env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{PROJECT_DIR}/environments"))
+            except ReferenceError:
+                pass
 
         credential_rotation_job = None
         if params['CRED_ROTATION_PAYLOAD']:
@@ -98,20 +104,16 @@ def build_pipeline(params: dict) -> None:
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
-
-        if params['ENV_BUILD']:
-            if env_definition is None:
-                try:
-                    env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{PROJECT_DIR}/environments"))
-                except ReferenceError:
-                    pass
-
-            jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, tags)     
-            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, artifact_url, tags)
+            
+        if params['ENV_BUILD'] or (params["SD_SOURCE_TYPE"].lower() == "json" and params["SD_DATA"] or params["SD_SOURCE_TYPE"].lower() == "artifact" and params["SD_VERSION"]):
+            jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, tags)
         else:
             logger.info(f'Preparing of appregdef_render_job {env} is skipped.')
+
+        if params['ENV_BUILD']:     
+            jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, artifact_url, tags)
+        else:
             logger.info(f'Preparing of env_build job for {env} is skipped.')
-            
 
         if params['GENERATE_EFFECTIVE_SET']:
             jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name, cluster_name, tags)

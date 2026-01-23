@@ -4,13 +4,13 @@ from envgenehelper import logger
 from pipeline_helper import job_instance
 
 
-def prepare_appregdef_render_job(pipeline, env_template_version, full_env, environment_name, cluster_name, tags):
+def prepare_appregdef_render_job(pipeline, is_template_test, env_template_version, full_env, environment_name, cluster_name, tags):
     logger.info(f'Prepare appregdef render job for {full_env}')
     script = [
        '/module/scripts/handle_certs.sh',
     ]
     
-    if env_template_version:
+    if env_template_version and not is_template_test:
         script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
     
     script.append('cd /build_env; python3 /build_env/scripts/build_env/appregdef_render.py')
