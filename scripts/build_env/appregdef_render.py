@@ -13,7 +13,7 @@ if __name__ == '__main__':
     instances_dir = getenv_with_error("INSTANCES_DIR")
     env_name = getenv_with_error("ENVIRONMENT_NAME")
 
-    _ = process_env_template(download_template=True)
+    template_version = process_env_template()
     
     output_dir = f"{base_dir}/environments"
     render_dir = f"/tmp/render/{environment_name}"
@@ -42,3 +42,5 @@ if __name__ == '__main__':
             shutil.rmtree(dst)
         if src.exists():
             shutil.move(src, dst)
+            
+    update_generated_versions(env_dir, BUILD_ENV_TAG, template_version)
