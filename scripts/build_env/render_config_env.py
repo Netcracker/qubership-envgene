@@ -115,6 +115,18 @@ class EnvGenerator:
         env_template = openYaml(filePath=env_template_path, safe_load=True)
         logger.info(f"env_template = {env_template}")
         self.ctx.current_env_template = env_template
+        
+    def setup_base_context(self, extra_env: dict):
+        all_vars = dict(os.environ)
+        self.ctx.update(extra_env)
+        self.ctx.env_vars.update(all_vars)
+        
+        self.set_inventory()
+        self.set_cloud_passport()
+        self.generate_config()
+        
+        current_env = self.ctx.config["environment"]
+        self.ctx.current_env = current_env
 
     def validate_applications(self):
         applications = self.ctx.sd_config.get("applications", [])
@@ -456,14 +468,7 @@ class EnvGenerator:
     def process_app_reg_defs(self, env_name: str, extra_env: dict):
         logger.info(f"Starting rendering app_reg_defs for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
-            self.ctx.update(extra_env)
-            
-            self.set_inventory()
-            self.set_cloud_passport()
-            self.generate_config()
-
-            current_env = self.ctx.config["environment"]
-            self.ctx.current_env = current_env
+            self.setup_base_context(extra_env)
             
             current_env_dir = self.ctx.current_env_dir
             templates_dir = self.ctx.templates_dir
@@ -484,15 +489,9 @@ class EnvGenerator:
     def render_config_env(self, env_name: str, extra_env: dict):
         logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
-            all_vars = dict(os.environ)
-            self.ctx.update(extra_env)
-            self.ctx.env_vars.update(all_vars)
-            self.set_inventory()
-            self.set_cloud_passport()
-            self.generate_config()
-
-            current_env = self.ctx.config["environment"]
-            self.ctx.current_env = current_env
+            self.setup_base_context(extra_env)
+            all_vars = self.ctx.env_vars
+            current_env = self.ctx.current_env
 
             self.ctx.cloud = self.calculate_cloud_name()
             self.ctx.tenant = current_env.get("tenant", '')
