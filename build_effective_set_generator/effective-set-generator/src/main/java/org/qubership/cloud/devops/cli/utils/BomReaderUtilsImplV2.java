@@ -89,7 +89,8 @@ public class BomReaderUtilsImplV2 {
 
                 validateAppChart(entitiesMap, bomContent.getComponents(), appName, appFileRef);
 
-                getPerServiceEntities(entitiesMap, bomContent.getComponents(), appName, baseline, override, bomContent);
+                Set<String> serviceNames = getPerServiceEntityNames(bomContent.getComponents());
+                getPerServiceEntities(entitiesMap, bomContent.getComponents(), appName, baseline, override, bomContent, serviceNames);
 
                 populateEntityDeployDescParams(entitiesMap, bomContent.getComponents(), bomContent);
 
@@ -254,10 +255,19 @@ public class BomReaderUtilsImplV2 {
         return value;
     }
 
-    private void getPerServiceEntities(EntitiesMap entitiesMap, List<Component> components, String appName, String baseline, Profile override, Bom bomContent) {
+    private Set<String> getPerServiceEntityNames(List<Component> components){
+        Set<String> serviceNames = new HashSet<>();
+        for (Component component : components) {
+            String name = component.getName();
+            serviceNames.add(name);
+        }
+        return serviceNames;
+    }
+
+    private void getPerServiceEntities(EntitiesMap entitiesMap, List<Component> components, String appName, String baseline, Profile override, Bom bomContent, Set<String> serviceNames) {
         for (Component component : components) {
             if (IMAGE_SERVICE_MIME_TYPES.contains(component.getMimeType())) {
-                processImageServiceComponent(entitiesMap, component, appName, baseline, override, bomContent);
+                processImageServiceComponent(entitiesMap, component, appName, baseline, override, bomContent, serviceNames);
             } else if (CONFIG_SERVICE_MIME_TYPES.contains(component.getMimeType())) {
                 processConfigServiceComponent(entitiesMap.getPerServiceParams(), component, appName, baseline, override, bomContent);
             }
@@ -298,7 +308,7 @@ public class BomReaderUtilsImplV2 {
         serviceMap.put(component.getName(), serviceParams);
     }
 
-    private void processImageServiceComponent(EntitiesMap entitiesMap, Component component, String appName, String baseline, Profile override, Bom bomContent) {
+    private void processImageServiceComponent(EntitiesMap entitiesMap, Component component, String appName, String baseline, Profile override, Bom bomContent, Set<String> serviceNames) {
         Map<String, Map<String, Object>> perServiceMap = entitiesMap.getPerServiceParams();
         Map<String, Object> profileValues = new TreeMap<>();
         Map<String, Object> serviceParams = new TreeMap<>();
@@ -311,7 +321,7 @@ public class BomReaderUtilsImplV2 {
         String dockerTag = getPropertyValue(component, "full_image_name", null, true, entity);
         serviceParams.put("DOCKER_TAG", dockerTag);
         serviceParams.put("IMAGE_REPOSITORY", getImageRepository(dockerTag));
-        addImageParameters(component, entitiesMap.getDeployParams());
+        addImageParameters(component, entitiesMap.getDeployParams(), serviceNames);
 
         if (CollectionUtils.isNotEmpty(component.getComponents())) {
             for (Component subComponent : component.getComponents()) {
@@ -329,10 +339,10 @@ public class BomReaderUtilsImplV2 {
         perServiceMap.put(component.getName(), serviceParams);
     }
 
-    private void addImageParameters(Component component, Map<String, String> serviceParams) {
+    private void addImageParameters(Component component, Map<String, String> serviceParams, Set<String> serviceNames) {
         if (component.getMimeType().equalsIgnoreCase(APPLICATION_OCTET_STREAM)) {
             String key = getPropertyValue(component, "deploy_param", null, false, component.getName());
-            if (StringUtils.isNotEmpty(key)) {
+            if (StringUtils.isNotEmpty(key) && !serviceNames.contains(key)) {
                 String value = getPropertyValue(component, "full_image_name", null, false, component.getName());
                 serviceParams.put(key, value);
             }
