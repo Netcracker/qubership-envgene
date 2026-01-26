@@ -77,6 +77,7 @@ jobs:
   process_environment_variables:
     name: "Input Parameters Processing"
     runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04'  }}
+    timeout-minutes: ${{ fromJSON(vars.GH_RUNNER_SCRIPT_TIMEOUT || '10') }}
     outputs:
       env_matrix: ${{ steps.matrix-generator.outputs.env_matrix }}
       BG_MANAGE: ${{ env.BG_MANAGE }}
@@ -141,6 +142,7 @@ jobs:
   envgene_execution:
     name: "EnvGene - ${{ matrix.environment }}"
     runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
+    timeout-minutes: ${{ fromJSON(vars.GH_RUNNER_SCRIPT_TIMEOUT || '10') }}
     needs:
       - process_environment_variables
     strategy:
