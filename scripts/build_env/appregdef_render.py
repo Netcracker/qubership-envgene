@@ -6,17 +6,16 @@ from render_config_env import EnvGenerator
 
 
 if __name__ == '__main__':
-    cluster_name = getenv("CLUSTER_NAME")
-    environment_name = getenv_with_error("ENVIRONMENT_NAME")
+    template_version = process_env_template()
+    
+    cluster_name = getenv_with_error("CLUSTER_NAME")
+    env_name = getenv_with_error("ENVIRONMENT_NAME")
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     full_env = getenv_with_error("FULL_ENV_NAME")
     instances_dir = getenv_with_error("INSTANCES_DIR")
-    env_name = getenv_with_error("ENVIRONMENT_NAME")
-
-    template_version = process_env_template()
     
     output_dir = f"{base_dir}/environments"
-    render_dir = f"/tmp/render/{environment_name}"
+    render_dir = f"/tmp/render/{env_name}"
     templates_dir = f"{base_dir}/tmp/templates"
     
     env_dir = get_env_instances_dir(env_name, cluster_name, instances_dir)

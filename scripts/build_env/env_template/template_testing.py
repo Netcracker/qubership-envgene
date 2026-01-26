@@ -18,7 +18,7 @@ def run_env_test_setup():
     writeYamlToFile(configs_conf_path, yaml.safe_load("crypt: false\n"))
 
     env_template_art_vers = getenv_with_error("ENV_TEMPLATE_VERSION")
-    env_name = os.getenv("ENV_NAME")
+    env_name = getenv_with_error("ENV_NAME")
     project_dir = os.getenv("CI_PROJECT_NAME")
     env_template_vers_split = env_template_art_vers.split(':')[1].replace('.', '_')
     cluster_example_url = os.getenv("ansible_var_clusterExampleUrl", "https://test-cluster.example.com")
