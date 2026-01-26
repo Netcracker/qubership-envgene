@@ -1,0 +1,13 @@
+---
+# Template for origin namespace in Blue-Green deployment
+# This template is used when bgNsArtifacts.origin is specified in env_definition.yml
+tenant: "{{ templates_dir }}/env_templates/bgd/tenant.yml.j2"
+cloud:
+  template_path: "{{ templates_dir }}/env_templates/bgd/cloud.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/bgd-origin/Namespaces/app.yml.j2"
+    deploy_postfix: "origin-app"
+    template_override:
+      name: "{{current_env.name}}-origin-app"
+bg_domain: "{{ templates_dir }}/env_templates/bgd/bg_domain.yml.j2"
+parametersets: []

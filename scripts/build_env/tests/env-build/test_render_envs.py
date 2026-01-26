@@ -17,6 +17,7 @@ test_data = [
     ("cluster01", "env04", "test-template-2"),
     ("bgd-cluster","bgd-env","bgd"),
     ("cluster03", "rpo-replacement-mode", "simple"),
+    ("bgd-cluster", "bgd-ns-artifacts-env", "bgd"),
 ]
 
 base_dir = Path(__file__).resolve().parents[4]
@@ -37,7 +38,22 @@ def change_test_dir(monkeypatch):
 def test_render_envs(cluster_name, env_name, version):
     environ['CI_PROJECT_DIR'] = g_base_dir
     environ['FULL_ENV_NAME'] = cluster_name + '/' + env_name
-    render_environment(env_name, cluster_name, g_templates_dir, g_inventory_dir, g_output_dir, version, g_base_dir)
+    origin_ns_templates_dir = None
+    peer_ns_templates_dir = None
+    if env_name == "bgd-ns-artifacts-env": # for testing multiple artifact case
+        origin_ns_templates_dir = str((base_dir / "test_data/test_templates").resolve())
+        peer_ns_templates_dir = str((base_dir / "test_data/test_templates").resolve())
+    render_environment(
+        env_name,
+        cluster_name,
+        g_templates_dir,
+        g_inventory_dir,
+        g_output_dir,
+        version,
+        g_base_dir,
+        origin_ns_templates_dir,
+        peer_ns_templates_dir,
+    )
     source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
     generated_dir = f"{g_output_dir}/{cluster_name}/{env_name}"
     files_to_compare = get_all_files_in_dir(source_dir)
@@ -74,3 +90,4 @@ def test_cleanup_target_dir_removes_expected_items():
     assert (target_dir / "keep").exists()
 
     delete_dir(target_dir)
+
