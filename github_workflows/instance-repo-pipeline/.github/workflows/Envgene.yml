@@ -197,9 +197,9 @@ jobs:
               echo "BG Manage failed with exit code $?"
               exit 1
             fi
-          "  
+          "
       ##########################
-      
+
       ### GENERATE INVENTORY ###
       - name: Generate Inventory
         if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
