@@ -51,13 +51,13 @@ RUN /module/venv/bin/pip install --upgrade pip setuptools wheel
 RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
 # Install essential Ansible collections
 # Install to virtual environment site-packages for Python module access
-RUN /module/venv/bin/ansible-galaxy collection install ansible.utils -p /module/venv/lib/python3.12/site-packages/ansible_collections
-RUN /module/venv/bin/ansible-galaxy collection install ansible.posix -p /module/venv/lib/python3.12/site-packages/ansible_collections
-RUN /module/venv/bin/ansible-galaxy collection install community.general -p /module/venv/lib/python3.12/site-packages/ansible_collections
+RUN /module/venv/bin/ansible-galaxy collection install git+https://github.com/ansible-collections/ansible.utils.git -p /module/venv/lib/python3.12/site-packages/ansible_collections
+RUN /module/venv/bin/ansible-galaxy collection install git+https://github.com/ansible-collections/ansible.posix.git -p /module/venv/lib/python3.12/site-packages/ansible_collections
+RUN /module/venv/bin/ansible-galaxy collection install git+https://github.com/ansible-collections/community.general.git -p /module/venv/lib/python3.12/site-packages/ansible_collections
 # Also install to custom location for playbook usage
-RUN /module/venv/bin/ansible-galaxy collection install ansible.utils -p /module/ansible/collections
-RUN /module/venv/bin/ansible-galaxy collection install ansible.posix -p /module/ansible/collections
-RUN /module/venv/bin/ansible-galaxy collection install community.general -p /module/ansible/collections
+RUN /module/venv/bin/ansible-galaxy collection install git+https://github.com/ansible-collections/ansible.utils.git -p /module/ansible/collections
+RUN /module/venv/bin/ansible-galaxy collection install git+https://github.com/ansible-collections/ansible.posix.git -p /module/ansible/collections
+RUN /module/venv/bin/ansible-galaxy collection install git+https://github.com/ansible-collections/community.general.git -p /module/ansible/collections
 
 RUN /module/venv/bin/pip install /python/jschon-sort
 RUN /module/venv/bin/pip install /python/envgene
