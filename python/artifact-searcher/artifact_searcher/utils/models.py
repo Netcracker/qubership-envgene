@@ -1,8 +1,11 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator, Field
+from pydantic import BaseModel, ConfigDict, field_validator, Field, model_validator
 from pydantic.alias_generators import to_camel
+import requests
+
+from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT
 
 
 class BaseSchema(BaseModel):
@@ -23,11 +26,31 @@ class MavenConfig(BaseSchema):
     snapshot_group: Optional[str] = ""
     release_group: Optional[str] = ""
 
+    is_nexus: bool = False
+
     @field_validator('full_repository_url')
     def check_full_repository_url(cls, full_repository_url):
         if full_repository_url:
             raise ValueError(f"Full URL {full_repository_url} is not supported, please use domain URL")
         return full_repository_url
+
+    @field_validator('repository_domain_name')
+    def ensure_trailing_slash(cls, value):
+        return value.rstrip("/") + "/"
+
+    @model_validator(mode="after")
+    def detect_nexus(self):
+        if not self.repository_domain_name.endswith("/repository/"):
+            return self
+        base = self.repository_domain_name[: -len("repository/")]
+        status_url = f"{base}service/rest/v1/status"
+        try:
+            resp = requests.get(status_url, timeout=DEFAULT_REQUEST_TIMEOUT)
+            self.is_nexus = resp.status_code == 200
+        except Exception:
+            self.is_nexus = False
+
+        return self
 
 
 class DockerConfig(BaseSchema):
@@ -85,7 +108,7 @@ class Registry(BaseSchema):
     credentials_id: Optional[str] = ""
     name: str
     maven_config: MavenConfig
-    docker_config: DockerConfig
+    docker_config: Optional[DockerConfig] = None
     go_config: Optional[GoConfig] = None
     raw_config: Optional[RawConfig] = None
     npm_config: Optional[NpmConfig] = None
@@ -93,12 +116,13 @@ class Registry(BaseSchema):
     helm_app_config: Optional[HelmAppConfig] = None
 
 
+# artifact definition
 class Application(BaseSchema):
     name: str
     artifact_id: str
     group_id: str
     registry: Registry
-    solution_descriptor: bool
+    solution_descriptor: bool = False
 
 
 class FileExtension(str, Enum):

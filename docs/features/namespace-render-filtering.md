@@ -16,9 +16,9 @@ You can set the value of `NS_BUILD_FILTER` in two ways:
 
 You can use BG Domain role aliases as namespace selectors:
 
-- `${controller}` - controller namespace
-- `${origin}` - origin namespace  
-- `${peer}` - peer namespace
+- `@controller` - controller namespace
+- `@origin` - origin namespace  
+- `@peer` - peer namespace
 
 EnvGene resolves these aliases using the [BG Domain](/docs/envgene-objects.md#bg-domain) object. To use aliases, the BG Domain object must exist in the Environment.
 
@@ -40,7 +40,7 @@ The following operators are available:
 ### Update all except the peer NS
 
 ```yaml
-NS_BUILD_FILTER: "! ${peer}"
+NS_BUILD_FILTER: "! @peer"
 # or
 NS_BUILD_FILTER: "! env-name-peer"
 ```
@@ -48,7 +48,7 @@ NS_BUILD_FILTER: "! env-name-peer"
 ### Update only the peer NS
 
 ```yaml
-NS_BUILD_FILTER: "${peer}"
+NS_BUILD_FILTER: "@peer"
 # or
 NS_BUILD_FILTER: "env-name-peer"
 ```
@@ -65,10 +65,10 @@ NS_BUILD_FILTER is not provided
 
 ```yaml
 # Update controller and origin
-NS_BUILD_FILTER: "${peer},${origin}"
+NS_BUILD_FILTER: "@peer,@origin"
 
 # Update all except peer and controller
-NS_BUILD_FILTER: "! ${peer},${controller}"
+NS_BUILD_FILTER: "! @peer,@controller"
 
 # Update specific namespaces by name
 NS_BUILD_FILTER: "env-name-api,env-name-frontend"
@@ -80,4 +80,3 @@ Mixed use of aliases and names is not allowed
 
 - Invalid/non-existent namespace names: Pipeline fails
 - Missing BG Domain: Pipeline fails when using aliases without BG Domain
-- Mixed aliases and names: Pipeline fails with validation error

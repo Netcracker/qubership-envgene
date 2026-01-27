@@ -3,18 +3,19 @@
 
 - [EnvGene Repository Variables](#envgene-repository-variables)
   - [Instance EnvGene Repository](#instance-envgene-repository)
+    - [`ENVGENE_LOG_LEVEL`](#envgene_log_level)
     - [`SECRET_KEY`](#secret_key)
     - [`GITLAB_TOKEN`](#gitlab_token)
     - [`ENVGENE_AGE_PRIVATE_KEY`](#envgene_age_private_key)
     - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
     - [`PUBLIC_AGE_KEYS`](#public_age_keys)
-    - [`IS_OFFSITE`](#is_offsite)
     - [`GITLAB_RUNNER_TAG_NAME`](#gitlab_runner_tag_name)
     - [`GH_RUNNER_TAG_NAME`](#gh_runner_tag_name)
     - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
+    - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
     - [`DOCKER_REGISTRY` (in template repository)](#docker_registry-in-template-repository)
 
 The following are parameters that are set in GitLab CI/CD variables or GitHub environment variables.
@@ -22,6 +23,24 @@ The following are parameters that are set in GitLab CI/CD variables or GitHub en
 All parameters are of string data type.
 
 ## Instance EnvGene Repository
+
+### `ENVGENE_LOG_LEVEL`
+
+**Description**: Defines the logging level for EnvGene components executed in the Instance EnvGene pipeline.
+This variable is passed to the pipeline and is supported by EnvGene Python and Java based components.
+
+**Logging Level Mapping (Java vs Python):**
+
+| ENVGENE_LOG_LEVEL | Python Logging Level | Java Logging Level |
+|-------------------|----------------------|--------------------|
+| DEBUG             | DEBUG                | DEBUG              |
+| INFO              | INFO                 | INFO               |
+| WARNING           | WARNING              | WARN               |
+| ERROR             | ERROR                | ERROR              |
+
+**Default Value**: INFO
+
+**Mandatory**: No
 
 ### `SECRET_KEY`
 
@@ -79,18 +98,6 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 **Example**: `key-placeholder-123,key-placeholder-124`
 
-### `IS_OFFSITE`
-
-**Description**: Determines whether this repository is located "offsite". Based on this parameter:
-
-- The Cloud Passport is decrypted in the case of Cloud Passport discovery.
-
-**Default Value**: `true`
-
-**Mandatory**: No
-
-**Example**: `false`
-
 ### `GITLAB_RUNNER_TAG_NAME`
 
 **Description**: The tag that identifies the GitLab runner used for executing CI jobs. This tag is used to specify which runner will pick up and execute the job in the CI pipeline.
@@ -142,6 +149,10 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 **Mandatory**: No
 
 **Example**: `true`
+
+### `ENVGENE_LOG_LEVEL` (in template repository)
+
+The same as [`ENVGENE_LOG_LEVEL` in instance repository](#envgene_log_level)
 
 ### `DOCKER_REGISTRY` (in template repository)
 

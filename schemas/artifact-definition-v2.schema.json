@@ -1,0 +1,300 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Artifact Definition Configuration v2.0",
+  "description": "Configuration for artifact identification and associated registry information with support for advanced authentication configurations, including public cloud registries (AWS, Azure, GCP)",
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "enum": [
+        "2.0"
+      ],
+      "title": "Version",
+      "description": "Artifact Definition object version"
+    },
+    "name": {
+      "type": "string",
+      "title": "Artifact Name",
+      "description": "The name of the artifact template. This corresponds to the application part in the application:version notation",
+      "examples": [
+        "env-template"
+      ]
+    },
+    "groupId": {
+      "type": "string",
+      "title": "Group ID",
+      "description": "The group ID used to identify the artifact",
+      "examples": [
+        "org.qubership"
+      ]
+    },
+    "artifactId": {
+      "type": "string",
+      "title": "Artifact ID",
+      "description": "The artifact ID used to identify the artifact",
+      "examples": [
+        "env-template"
+      ]
+    },
+    "registry": {
+      "type": "object",
+      "title": "Registry Configuration",
+      "description": "Details about the registry configuration",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "Registry Name",
+          "description": "The name of the registry where the artifact is stored",
+          "examples": [
+            "sandbox",
+            "aws-codeartifact"
+          ]
+        },
+        "credentialsId": {
+          "type": "string",
+          "title": "Credentials ID",
+          "description": "Deprecated: Use authConfig section instead. Pointer to the EnvGene Credential object. Credential with this ID must be located in /configuration/credentials/credentials.yml",
+          "examples": [
+            "artifactory-cred"
+          ]
+        },
+        "authConfig": {
+          "type": "object",
+          "title": "Authentication Configurations",
+          "description": "Authentication configs supporting advanced authentication methods including public cloud registries",
+          "additionalProperties": {
+            "$ref": "#/definitions/AuthConfig"
+          }
+        },
+        "mavenConfig": {
+          "$ref": "#/definitions/MavenConfig"
+        }
+      },
+      "required": [
+        "name",
+        "mavenConfig"
+      ]
+    }
+  },
+  "required": [
+    "version",
+    "name",
+    "groupId",
+    "artifactId",
+    "registry"
+  ],
+  "definitions": {
+    "AuthConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "credentialsId": {
+          "type": "string",
+          "title": "Credentials ID",
+          "description": "Pointer to the EnvGene Credential object. Depending on authType, it can be access key (username) + secret (password) for longLived. Credential with this ID must be located in /configuration/credentials/credentials.yml"
+        },
+        "authType": {
+          "type": "string",
+          "enum": [
+            "shortLived",
+            "longLived"
+          ],
+          "title": "Authentication Type",
+          "description": "Public cloud registry authentication strategy. Used in case of public cloud registries"
+        },
+        "provider": {
+          "type": "string",
+          "enum": [
+            "aws",
+            "azure",
+            "gcp"
+          ],
+          "title": "Provider",
+          "description": "Public cloud registry type. Used in case of public cloud registries"
+        },
+        "authMethod": {
+          "type": "string",
+          "enum": [
+            "secret",
+            "assume_role",
+            "federation",
+            "service_account",
+            "oauth2",
+            "user_pass"
+          ],
+          "title": "Authentication Method",
+          "description": "In case of non-cloud public registries, user_pass is used. In case of public cloud registries valid values depend on provider: aws: secret or assume_role, gcp: federation or service_account, azure: oauth2"
+        },
+        "awsRegion": {
+          "type": "string",
+          "title": "AWS Region",
+          "description": "Region of the AWS cloud. Used with provider: aws only"
+        },
+        "awsDomain": {
+          "type": "string",
+          "title": "AWS Domain",
+          "description": "Domain of the AWS cloud. Used with provider: aws only. Required for CodeArtifact"
+        },
+        "awsRoleARN": {
+          "type": "string",
+          "title": "AWS Role ARN",
+          "description": "Amazon Resource Name (ARN) of the role to assume. Used with provider: aws AND authMethod: assume_role only"
+        },
+        "awsRoleSessionPrefix": {
+          "type": "string",
+          "title": "AWS Role Session Prefix",
+          "description": "Constant session name part to be used to generate --role-session-name parameter for AssumeRole. Used with provider: aws AND authMethod: assume_role only"
+        },
+        "gcpOIDC": {
+          "type": "object",
+          "title": "GCP OIDC Configuration",
+          "description": "Section that describes OIDC interaction. Used with provider: gcp AND authMethod: federation only",
+          "additionalProperties": false,
+          "properties": {
+            "URL": {
+              "type": "string",
+              "title": "OIDC Server URL",
+              "description": "URL of external OIDC server"
+            },
+            "customParams": {
+              "type": "array",
+              "title": "Custom Parameters",
+              "description": "Custom parameters for external OIDC server",
+              "items": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": [
+            "URL"
+          ]
+        },
+        "gcpRegProject": {
+          "type": "string",
+          "title": "GCP Registry Project",
+          "description": "GCP project number. Used with provider: gcp AND authMethod: federation only"
+        },
+        "gcpRegPoolId": {
+          "type": "string",
+          "title": "GCP Registry Pool ID",
+          "description": "Workload identity pool ID. Used with provider: gcp AND authMethod: federation only"
+        },
+        "gcpRegProviderId": {
+          "type": "string",
+          "title": "GCP Registry Provider ID",
+          "description": "Workload identity Provider ID. Used with provider: gcp AND authMethod: federation only"
+        },
+        "gcpRegSAEmail": {
+          "type": "string",
+          "title": "GCP Registry Service Account Email",
+          "description": "Service account email. Used with provider: gcp AND authMethod: federation only"
+        },
+        "azureTenantId": {
+          "type": "string",
+          "title": "Azure Tenant ID",
+          "description": "Azure AD tenant ID. Used with provider: azure only"
+        },
+        "azureACRResource": {
+          "type": "string",
+          "title": "Azure ACR Resource",
+          "description": "Target resource for ACR. Used with provider: azure only"
+        },
+        "azureACRName": {
+          "type": "string",
+          "title": "Azure ACR Name",
+          "description": "Azure Container Registry name. Used with provider: azure only. Required for ACR"
+        },
+        "azureArtifactsResource": {
+          "type": "string",
+          "title": "Azure Artifacts Resource",
+          "description": "Target resource for Azure Artifacts. Used with provider: azure only"
+        }
+      },
+      "required": [
+        "credentialsId"
+      ]
+    },
+    "MavenConfig": {
+      "type": "object",
+      "title": "Maven Repository Configuration",
+      "description": "Configuration details for Maven repositories",
+      "additionalProperties": false,
+      "properties": {
+        "authConfig": {
+          "type": "string",
+          "title": "Authentication Config Reference",
+          "description": "Pointer to authentication config described in authConfig section. Cannot be set if anonymous access is used"
+        },
+        "repositoryDomainName": {
+          "type": "string",
+          "title": "Repository Domain",
+          "description": "Domain name of the registry",
+          "examples": [
+            "https://artifactory.qubership.org",
+            "https://codeartifact.eu-west-1.amazonaws.com/maven/app"
+          ]
+        },
+        "targetSnapshot": {
+          "type": "string",
+          "title": "Snapshot Repository",
+          "description": "Snapshot repository name. EnvGene checks repositories in this order: release -> staging -> snapshot. It stops when it finds the artifact",
+          "examples": [
+            "mvn.snapshot",
+            "snapshots"
+          ]
+        },
+        "targetStaging": {
+          "type": "string",
+          "title": "Staging Repository",
+          "description": "Staging repository name",
+          "examples": [
+            "mvn.staging",
+            "staging"
+          ]
+        },
+        "targetRelease": {
+          "type": "string",
+          "title": "Release Repository",
+          "description": "Release repository name",
+          "examples": [
+            "mvn.release",
+            "releases"
+          ]
+        },
+        "snapshotGroup": {
+          "type": "string",
+          "title": "Snapshot Group",
+          "description": "Snapshot Maven repository group name",
+          "examples": [
+            "mvn.snapshot-group",
+            "snapshot-group"
+          ]
+        },
+        "releaseGroup": {
+          "type": "string",
+          "title": "Release Group",
+          "description": "Release Maven repository group name",
+          "examples": [
+            "mvn.release-group",
+            "release-group"
+          ]
+        }
+      },
+      "required": [
+        "repositoryDomainName",
+        "targetSnapshot",
+        "targetStaging",
+        "targetRelease",
+        "snapshotGroup",
+        "releaseGroup"
+      ]
+    }
+  }
+}
+
+

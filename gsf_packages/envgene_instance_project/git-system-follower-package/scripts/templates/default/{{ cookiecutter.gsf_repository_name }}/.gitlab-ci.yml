@@ -1,40 +1,51 @@
 ---
+#Rules
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: always
+
 #Stages
 stages:
   - generate
   - run_generated_pipe
 
-#Runner
-default:
-  tags: [ $GITLAB_RUNNER_TAG_NAME ]
-
+#Variables
 variables:
-  ENVGENE_VERSION: "1.2.3"
+  ENVGENE_VERSION: "{{cookiecutter.envgene_version}}"
+  DOCKER_REGISTRY: "{{cookiecutter.docker_registry}}"
+  DOCKER_NAMESPACE: "{{cookiecutter.docker_namespace}}"
+  ENVGENE_IMAGE: "{{cookiecutter.envgen_image}}"
+  PIPEGENE_IMAGE: "{{cookiecutter.pipe_image}}"
+  CLOUD_DEPLOYTOOL_IMAGE: "{{cookiecutter.cloud_deploytool_image}}"
+  EFFECTIVE_SET_GENERATOR_IMAGE: "{{cookiecutter.effective_set_generator_image}}"
+  GITLAB_RUNNER_TAG_NAME: "{{cookiecutter.gitlab_runner_tag_name}}"
 
 include:
   - local: 'gitlab-ci/pipeline_vars.yaml'
 
-####################################
-# Templates
-####################################
+#Runner
+default:
+  tags: [ $GITLAB_RUNNER_TAG_NAME ]
+
 
 .common_module.variables:
   variables:
-    module_ansible_dir: /module/ansible
+    module_ansible_dir: "/module/ansible"
     module_inventory: "${CI_PROJECT_DIR}/configuration/inventory.yaml"
-    module_ansible_cfg: /module/ansible/ansible.cfg
-    module_config_default: /module/templates/defaults.yaml
+    module_ansible_cfg: "/module/ansible/ansible.cfg"
+    module_config_default: "/module/templates/defaults.yaml"
 
 .images.variables:
   variables:
-    envgen_image: "{{cookiecutter.docker_registry}}/qubership-envgene:${ENVGENE_VERSION}"
-    pipegene_image: "{{cookiecutter.docker_registry}}/qubership-pipegene:${ENVGENE_VERSION}"
-    effective_set_generator_image: "{{cookiecutter.docker_registry}}/qubership-effective-set-generator:${ENVGENE_VERSION}"
+    envgen_image: "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${ENVGENE_IMAGE}:${ENVGENE_VERSION}"
+    pipegene_image: "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${PIPEGENE_IMAGE}:${ENVGENE_VERSION}"
+    effective_set_generator_image: "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${EFFECTIVE_SET_GENERATOR_IMAGE}:${ENVGENE_VERSION}"
+    cloud_deploytool_image: "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${CLOUD_DEPLOYTOOL_IMAGE}:${ENVGENE_VERSION}"
 
-####################################
+
 # Jobs
-####################################
-
 generate_pipeline:
   extends:
     - .common_module.variables

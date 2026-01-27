@@ -35,10 +35,14 @@ COPY creds_rotation/build/requirements.txt /build/creds_rotation_requirements.tx
 COPY python /python
 COPY build_envgene/ansible /module/ansible
 COPY build_envgene/scripts /module/scripts
+COPY scripts/bg_manage /scripts/bg_manage
 COPY creds_rotation/scripts /module/creds_rotation_scripts
 COPY build_* create_* produce_* sort* /build_env/
-COPY scripts /build_env/scripts
+COPY scripts/build_env /build_env/scripts/build_env/
+COPY scripts/build_template /build_env/scripts/build_template/
+COPY scripts/cloud_passport/ /cloud_passport/scripts/
 COPY schemas /build_env/schemas
+COPY scripts/utils /module/scripts/utils
 
 ENV ANSIBLE_LIBRARY=/module/ansible/library
 
@@ -59,6 +63,7 @@ RUN /module/venv/bin/ansible-galaxy collection install community.general -p /mod
 RUN /module/venv/bin/pip install /python/jschon-sort
 RUN /module/venv/bin/pip install /python/envgene
 RUN /module/venv/bin/pip install /python/integration
+RUN /module/venv/bin/pip install /python/artifact-searcher
 RUN /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
 
 # Download and install SOPS for secrets management
@@ -113,8 +118,10 @@ RUN apk add --no-cache \
 
 # Copy everything from build stage
 COPY --from=build /module /module
+COPY --from=build /scripts/bg_manage /scripts/bg_manage
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=build /build_env /build_env
+COPY --from=build /cloud_passport /cloud_passport
 COPY --from=build /python /python
 COPY --from=build /etc/pip.conf /etc/pip.conf
 

@@ -10,13 +10,18 @@ on:
         required: false
         default: false
         type: boolean
+      build-envgene:
+        description: 'Build Qubership Envgene image'
+        required: false
+        default: true
+        type: boolean
       build-pipegene:
         description: 'Build Qubership PipeGene image'
         required: false
         default: true
         type: boolean
-      build-envgene:
-        description: 'Build Qubership Envgene image'
+      build-effective-set:
+        description: 'Build Effective Set Generator image'
         required: false
         default: true
         type: boolean
@@ -25,8 +30,13 @@ on:
         required: false
         default: true
         type: boolean
-      build-effective-set:
-        description: 'Build Effective Set Generator image'
+      build-gsf-instance:
+        description: 'Build GSF Instance image'
+        required: false
+        default: true
+        type: boolean
+      build-gsf-discovery:
+        description: 'Build GSF Discovery image'
         required: false
         default: true
         type: boolean
@@ -136,7 +146,7 @@ jobs:
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
     with:
-      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
+      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator/pom.xml"
       java-version: 17
       upload-artifact: true
       artifact-id: effective_set_jar
@@ -203,6 +213,82 @@ jobs:
 
       - name: Build Instance Repo Pipeline Docker Image
         uses: ./.github/actions/build-pipeline
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-gsf-instance:
+    needs:
+      - linters
+      - tests
+      - link-check
+      - build-qubership-pipegene
+      - build-qubership-envgene
+      - build-effective-set-generator
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gsf-instance == 'true') ||
+      (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: "Prepare app token"
+        if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
+          private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+      - name: Build GSF Instance Docker Image
+        uses: ./.github/actions/build-gsf-instance
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-gsf-discovery:
+    needs:
+      - linters
+      - tests
+      - link-check
+      - build-qubership-pipegene
+      - build-qubership-envgene
+      - build-effective-set-generator
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gsf-discovery == 'true') ||
+      (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: "Prepare app token"
+        if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
+          private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+      - name: Build GSF Discovery Docker Image
+        uses: ./.github/actions/build-gsf-discovery
         with:
           registry: ${{ env.REGISTRY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

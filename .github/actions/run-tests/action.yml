@@ -52,6 +52,26 @@ runs:
         cd ../../..
         mv junit.xml junit_envgenehelper.xml
 
+    - name: ARTIFACT SEARCHER test
+      shell: bash
+      run: |
+        cd python/artifact-searcher/artifact_searcher
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit.xml
+        cd ../../..
+        mv junit.xml junit_artifact_searcher.xml
+
+    - name: BG MANAGE test
+      shell: bash
+      env:
+        FULL_ENV_NAME: "sdp-dev/env-1"
+        BG_STATE: ""
+        CI_PROJECT_DIR: ${GITHUB_WORKSPACE}
+      run: |
+        cd scripts/bg_manage
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
+        cd ../..
+        mv junit.xml junit_bg_manage.xml
+
     - name: BUILD ENV test
       shell: bash
       run: |
