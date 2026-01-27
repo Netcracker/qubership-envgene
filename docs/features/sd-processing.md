@@ -231,7 +231,7 @@ The following set of terms is used to describe the rules and assumptions of SD m
 - if `deployPostfix` is not present, the alias defaults to the Application Name
 - if `deployPostfix` is present, the alias defaults to the Application Name + : + `deployPostfix` (concatenation of Application Name, a colon, and `deployPostfix`)
 
-**Chunk** - is an entry in a SD's `deployGraph` list. A Сhunk is uniquely identified by its name attribute within a specific SD
+**Chunk** - is an entry in a SD's `deployGraph` list. A Chunk is uniquely identified by its name attribute within a specific SD
 
 ##### `extended-merge` Merge Mode Assumptions
 

@@ -104,7 +104,7 @@ Template inheritance is configured in the [Template Descriptor](/docs/envgene-ob
 # Optional
 # If not set than no Templates Inheritance is assumed
 parent-templates:
-  # Кey is a parent template name
+  # Key is a parent template name
   # Value is a parent template artifact is a in app:ver notation. SNAPSHOT version is not supported
   default-bss: bss-product-template:2.0.0
   basic-template: basic-product-template:10.1.3

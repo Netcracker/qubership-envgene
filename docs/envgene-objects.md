@@ -755,7 +755,7 @@ applications:
     parameters:
     - # Mandatory
       # Parameter key
-      # Точки в ключе параметры рассматриваются как маркер вложенной структуры
+      # Dots in parameter keys are considered as markers of nested structure
       # See details in [resource-profile](/docs/features/resource-profile.md)
       name: string
       # Mandatory
@@ -1218,7 +1218,7 @@ applications:
     parameters:
     - # Mandatory
       # Parameter key
-      # Точки в ключе параметры рассматриваются как маркер вложенной структуры
+      # Dots in parameter keys are considered as markers of nested structure
       # See details in [resource-profile](/docs/features/resource-profile.md)
       name: string
       # Mandatory

@@ -235,7 +235,7 @@ System Configuration File for External Integrations
 
 ```yaml
 # Optional
-# Configuration for Сloud Passport discovery integration
+# Configuration for Cloud Passport discovery integration
 cp_discovery:
   # Optional
   # Parameters for GitLab-based discovery repository
