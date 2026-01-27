@@ -67,7 +67,7 @@ curl -X POST \
 
 ```bash
 curl -X POST \
-  -H "Authorization: token ghp_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789" \
+  -H "Authorization: token token-placeholder-123" \
   -H "Accept: application/vnd.github.v3+json" \
   https://api.github.com/repos/qubership/instance-repo/actions/workflows/Envgene.yaml/dispatches \
   -d '{

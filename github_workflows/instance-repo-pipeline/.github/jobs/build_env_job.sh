@@ -28,13 +28,6 @@ if [ -n "${ENV_TEMPLATE_VERSION}" ] && [ "${ENV_TEMPLATE_VERSION}" != "" ] && [ 
   python3 /build_env/scripts/build_env/env_template/set_template_version.py
 fi
 
-# Execute build_env.yaml playbook
-echo "Executing build_env.yaml playbook..."
-if ! /module/scripts/prepare.sh "build_env.yaml"; then
-  echo "Failed to execute build_env.yaml playbook"
-  exit 1
-fi
-
 # Execute main.py to build the environment
 echo "Executing main.py to build environment..."
 cd /build_env
