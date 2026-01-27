@@ -15,6 +15,8 @@
     - [UC-EIG-TA-1: Environment Instance Generation with `artifact` only](#uc-eig-ta-1-environment-instance-generation-with-artifact-only)
     - [UC-EIG-TA-2: Environment Instance Generation with `artifact` and `bgNsArtifacts` and BG Domain](#uc-eig-ta-2-environment-instance-generation-with-artifact-and-bgnsartifacts-and-bg-domain)
     - [UC-EIG-TA-3: Environment Instance Generation with `artifact` and `bgNsArtifacts` and without BG Domain](#uc-eig-ta-3-environment-instance-generation-with-artifact-and-bgnsartifacts-and-without-bg-domain)
+  - [Multiple Environments Processing](#multiple-environments-processing)
+    - [UC-EIG-ME-1: Parallel Environment Instance Generation for Multiple Environments](#uc-eig-me-1-parallel-environment-instance-generation-for-multiple-environments)
 
 ## Overview
 
@@ -447,3 +449,65 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 1. All Namespaces are rendered using `project-env-template:v1.2.3`
 2. All other objects (Tenant, Cloud, Applications, etc.) are rendered using `project-env-template:v1.2.3`
 3. `bgNsArtifacts` are ignored since BG Domain is absent
+
+## Multiple Environments Processing
+
+When multiple environments are specified in `ENV_NAMES`, the pipeline processes them in parallel. Each environment triggers an independent pipeline flow with the same set of pipeline parameters. This section describes how Environment Instance generation works for multiple environments.
+
+### UC-EIG-ME-1: Parallel Environment Instance Generation for Multiple Environments
+
+**Pre-requisites:**
+
+1. Multiple Environment Inventories exist
+2. Each Environment Inventory contains valid Environment Template configuration
+3. Template artifacts are available for all environments
+
+**Trigger:**
+
+> [!Note]
+> One of the following conditions must be met.
+
+1. GitLab Instance pipeline is started with parameters:
+   1. `ENV_NAMES: <env_name>\n<env_name>`
+   2. `ENV_BUILDER: true`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>;<env_name>`
+   2. `ENV_BUILDER: true`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>,<env_name>`
+   2. `ENV_BUILDER: true`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name> <env_name>`
+   2. `ENV_BUILDER: true`
+2. GitHub Instance pipeline is started with parameters:
+   1. `ENV_NAMES: <env_name>\n<env_name>`
+   2. `ENV_BUILDER: true`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>;<env_name>`
+   2. `ENV_BUILDER: true`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>,<env_name>`
+   2. `ENV_BUILDER: true`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name> <env_name>`
+   2. `ENV_BUILDER: true`
+
+**Steps:**
+
+1. For each environment from the list, parallel and independent pipeline flows are started
+2. For each environment, the `env_builder` job runs in parallel:
+   1. Reads Environment Inventory for the specific environment
+   2. Generates Environment Instance objects according to the template configuration
+
+**Results:**
+
+1. Environment Instance for each environment from `ENV_NAMES` is generated and saved to `/environments/<cluster-name>/<env-name>/`
+2. All Environment Instances are generated in parallel, independently of each other
+3. Each Environment Instance generation uses the same pipeline parameters but processes its own Environment Inventory
+4. If one environment generation fails, other environments continue processing independently
