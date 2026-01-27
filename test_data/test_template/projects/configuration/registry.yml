@@ -1,0 +1,5 @@
+artifactory:
+  username: "envgen.creds.get('artifactory-cred').username"
+  password: "envgen.creds.get('artifactory-cred').password"
+  snapshotRepository: "https://artifactory.qubership.org/mvn.snapshot"
+  snapshotTemplateRepository: "https://artifactory.qubership.org/tmpl-mvn.snapshot"

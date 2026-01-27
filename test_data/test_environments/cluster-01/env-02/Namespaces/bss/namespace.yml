@@ -13,13 +13,14 @@ profile:
   name: "dev_bss_override"
   baseline: "dev"
 deployParameters:
-  ENVGENE_CONFIG_REF_NAME: ""
-  ENVGENE_CONFIG_TAG: ""
+  ENVGENE_CONFIG_REF_NAME: "branch_name"
+  ENVGENE_CONFIG_TAG: "No Ref tag"
   KMS_CERT_IN_BASE64: "${envgen.creds.get( \"kms-cert\" ).secret}" # paramset: test-deploy-creds version: 1 source: template
   OVERRIDE_PARAMETER: "env-specific-value" # paramset: env-specific-bss version: 23.1 source: instance
   PARAM_2: "value-2" # paramset: bss version: 25.1 source: template
   PARAM_6: "value-6" # paramset: bss version: 25.1 source: template
   SITE_LEVEL_PARAM_1: "site-level-value-1" # paramset: prod-shared version: 25.1 source: instance
+  STORAGE_USERNAME: "${creds.get(\"minio-cred\").username}"
   TEST_CREDS_GET_PASSWORD_PASSWORD: "${envgen.creds.get('creds-get-password-cred').password}" # paramset: test-deploy-creds version: 1 source: template
   TEST_CREDS_GET_PASSWORD_USERNAME: "${envgen.creds.get('creds-get-username-cred').username}" # paramset: test-deploy-creds version: 1 source: template
   TEST_CREDS_GET_SECRET_PARAM: "${envgen.creds.get('creds-get-secret').secret}" # paramset: test-deploy-creds version: 1 source: template
@@ -37,6 +38,14 @@ deployParameters:
   TEST_SHARED_CREDS: "${envgen.creds.get('integration-cred').username}" # paramset: test-deploy-creds version: 1 source: template
   TEST_SHARED_CREDS_ACTIVATOR: "${envgen.creds.get('service-integration-cred').password}" # paramset: test-deploy-creds version: 1 source: template
   bss-app-exist: false
+  core: # paramset: paramset-B version: 23.4 source: instance
+    apps:
+      volumes:
+        outputs:
+          capacity: "20Gi"
+  kafka: # paramset: paramset-B version: 23.4 source: template
+    password: "${creds.get(\"kafka-cred\").password}"
+    username: "${creds.get(\"kafka-cred\").username}"
 e2eParameters: {}
 technicalConfigurationParameters:
   PARAM_2: "value-2" # paramset: bss-tech version: 25.1 source: template

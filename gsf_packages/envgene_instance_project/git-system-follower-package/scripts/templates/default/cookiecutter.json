@@ -1,0 +1,12 @@
+{
+  "gsf_repository_name": "envgene_instance_project",
+  "docker_registry": "ghcr.io",
+  "docker_namespace": "netcracker",
+  "envgene_version": "1.18.1",
+  "envgen_image": "qubership-envgene",
+  "pipe_image": "qubership-pipegene",
+  "cloud_deploytool_image": "env-generator-deploytool_build_deploytool",
+  "effective_set_generator_image": "qubership-effective-set-generator",
+  "gitlab_runner_tag_name": "gitlab-org-docker"
+}
+

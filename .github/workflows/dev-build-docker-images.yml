@@ -10,13 +10,18 @@ on:
         required: false
         default: false
         type: boolean
+      build-envgene:
+        description: 'Build Qubership Envgene image'
+        required: false
+        default: true
+        type: boolean
       build-pipegene:
         description: 'Build Qubership PipeGene image'
         required: false
         default: true
         type: boolean
-      build-envgene:
-        description: 'Build Qubership Envgene image'
+      build-effective-set:
+        description: 'Build Effective Set Generator image'
         required: false
         default: true
         type: boolean
@@ -25,8 +30,13 @@ on:
         required: false
         default: true
         type: boolean
-      build-effective-set:
-        description: 'Build Effective Set Generator image'
+      build-gsf-instance:
+        description: 'Build GSF Instance image'
+        required: false
+        default: true
+        type: boolean
+      build-gsf-discovery:
+        description: 'Build GSF Discovery image'
         required: false
         default: true
         type: boolean
@@ -136,7 +146,7 @@ jobs:
     if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
     uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
     with:
-      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
+      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator/pom.xml"
       java-version: 17
       upload-artifact: true
       artifact-id: effective_set_jar
@@ -201,54 +211,84 @@ jobs:
           fetch-depth: 0
           token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
-      - name: Update Docker Image Tags in Pipeline
-        run: |
-          # Use outputs from previous jobs instead of regenerating tags
-          echo "Using tags from previous job outputs:"
-
-          # Check which images were built and update accordingly
-          TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml"
-
-          if [[ "${{ needs.build-qubership-pipegene.result }}" == "success" ]]; then
-            # Store the new tag in a variable to avoid complex escaping
-            NEW_TAG="${{ needs.build-qubership-pipegene.outputs.custom_tag }}"
-            sed -i "/DOCKER_IMAGE_TAG_PIPEGENE:/c\\  DOCKER_IMAGE_TAG_PIPEGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
-          fi
-          if [[ "${{ needs.build-qubership-envgene.result }}" == "success" ]]; then
-            NEW_TAG="${{ needs.build-qubership-envgene.outputs.custom_tag }}"
-            sed -i "/DOCKER_IMAGE_TAG_ENVGENE:/c\\  DOCKER_IMAGE_TAG_ENVGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
-          fi
-          if [[ "${{ needs.build-effective-set-generator.result }}" == "success" ]]; then
-            NEW_TAG="${{ needs.build-effective-set-generator.outputs.custom_tag }}"
-            sed -i "/DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR:/c\\  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: \"${NEW_TAG}\"" "$TARGET_FILE"
-          fi
-
-          # Check if any images were updated
-          if git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml; then
-            echo "No changes to commit - no images were built or tags were already up to date"
-          else
-            echo "Updated Envgene.yml with docker tags from job outputs"
-          fi
-
-          # Show the changes
-          echo "Changes made to Envgene.yml:"
-          git diff github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml || true
-
-          # Commit the changes only if there are actual changes
-          if ! git diff --quiet github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml; then
-            git config --global user.name "qubership-actions[bot]"
-            git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
-            git add github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml
-            git commit -m "chore: Update docker image tags from job outputs for branch ${{ github.ref_name }} [skip ci]"
-
-            # Push the changes
-            git push origin HEAD:${{ github.ref_name }} || echo "Failed to push changes"
-          else
-            echo "No changes to commit - skipping git operations"
-          fi
-
       - name: Build Instance Repo Pipeline Docker Image
         uses: ./.github/actions/build-pipeline
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-gsf-instance:
+    needs:
+      - linters
+      - tests
+      - link-check
+      - build-qubership-pipegene
+      - build-qubership-envgene
+      - build-effective-set-generator
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gsf-instance == 'true') ||
+      (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: "Prepare app token"
+        if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
+          private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+      - name: Build GSF Instance Docker Image
+        uses: ./.github/actions/build-gsf-instance
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-gsf-discovery:
+    needs:
+      - linters
+      - tests
+      - link-check
+      - build-qubership-pipegene
+      - build-qubership-envgene
+      - build-effective-set-generator
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gsf-discovery == 'true') ||
+      (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: "Prepare app token"
+        if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
+          private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+      - name: Build GSF Discovery Docker Image
+        uses: ./.github/actions/build-gsf-discovery
         with:
           registry: ${{ env.REGISTRY }}
           github-token: ${{ secrets.GITHUB_TOKEN }}

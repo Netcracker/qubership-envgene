@@ -1,7 +1,0 @@
----
-- name: Generate effective set
-  hosts: localhost
-  connection: local
-  gather_facts: false
-  roles:
-    - role: generate_effective_set

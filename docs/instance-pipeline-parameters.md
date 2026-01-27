@@ -9,6 +9,8 @@
     - [`CMDB_IMPORT`](#cmdb_import)
     - [`DEPLOYMENT_TICKET_ID`](#deployment_ticket_id)
     - [`ENV_TEMPLATE_VERSION`](#env_template_version)
+    - [`ENV_TEMPLATE_VERSION_ORIGIN`](#env_template_version_origin)
+    - [`ENV_TEMPLATE_VERSION_PEER`](#env_template_version_peer)
     - [`ENV_INVENTORY_INIT`](#env_inventory_init)
     - [`ENV_TEMPLATE_NAME`](#env_template_name)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
@@ -26,7 +28,12 @@
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
+    - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
+    - [`NS_BUILD_FILTER`](#ns_build_filter)
+    - [`GITHUB_PIPELINE_API_INPUT`](#github_pipeline_api_input)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
+    - [`BG_MANAGE`](#bg_manage)
+    - [`BG_STATE`](#bg_state)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
@@ -110,6 +117,30 @@ This parameter serves as a configuration for an extension point. Integration wit
 **Mandatory**: No
 
 **Example**: `env-template:v1.2.3`
+
+### `ENV_TEMPLATE_VERSION_ORIGIN`
+
+**Description**: If provided, system updates the Blue-Green origin template artifact version in the Environment Inventory. System overrides `envTemplate.bgNsArtifacts.origin` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
+
+This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `project-env-template:v1.2.3`
+
+### `ENV_TEMPLATE_VERSION_PEER`
+
+**Description**: If provided, system updates the Blue-Green peer template artifact version in the Environment Inventory. System overrides `envTemplate.bgNsArtifacts.peer` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
+
+This parameter is used for environments that use Blue-Green Deployment support. The value should be in `application:version` notation.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `project-env-template:v1.2.3`
 
 ### `ENV_INVENTORY_INIT`
 
@@ -285,9 +316,9 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 ### `SD_DATA`
 
-**Description**: Specifies the **list** of contents of one or more SD in JSON-in-string format.
+**Description**: Specifies the contents of one or more SD in JSON-in-string format. Can be either a single SD object or a list of SD objects.
 
-EnvGene sequentially merges them in the `basic-merge` mode, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
+If a single SD object is provided, it is processed directly. If a list is provided, EnvGene sequentially merges them in the `basic-merge` mode, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
 See details in [SD processing](/docs/features/sd-processing.md)
 
@@ -297,16 +328,22 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 **Example**:
 
-- Single SD:
+- Single SD (as object):
 
 ```text
-'[{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"}]},{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"postgres-services:1.32.6","deployPostfix":"postgresql"},{"version":"postgres:1.32.3","deployPostfix":"postgresql-dbaas"}]}]'
+'{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"}]}'
+```
+
+- Single SD (as list with one element):
+
+```text
+'[{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"}]}]'
 ```
 
 - Multiple SD:
 
 ```text
-'[{[{"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "MONITORING:0.64.1", "deployPostfix": "platform-monitoring"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql"}]}, {"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "postgres-services:1.32.6", "deployPostfix": "postgresql"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql-dbaas"}]}]}]'
+'[{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"MONITORING:0.64.1","deployPostfix":"platform-monitoring"},{"version":"postgres:1.32.6","deployPostfix":"postgresql"}]},{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"postgres-services:1.32.6","deployPostfix":"postgresql"},{"version":"postgres:1.32.3","deployPostfix":"postgresql-dbaas"}]}]'
 ```
 
 ### `SD_REPO_MERGE_MODE`
@@ -355,7 +392,7 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 
 ### `CRED_ROTATION_PAYLOAD`
 
-**Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macros)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
+**Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macro)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
 
 ```json
 {
@@ -439,7 +476,7 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 
 ### `CRED_ROTATION_FORCE`
 
-**Description**: Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential. See details in [Credential Rotation](/docs/cred-rotation.md)
+**Description**: Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential. See details in [Credential Rotation](/docs/features/cred-rotation.md)
 
 **Default Value**: `false`
 
@@ -449,7 +486,7 @@ When rotating sensitive parameters, EnvGene checks if the Credential is [shared]
 
 ### `GH_ADDITIONAL_PARAMS`
 
-**Description**: A JSON in string parameter for GitHub pipeline. Use it to pass all pipeline parameters except these main ones, which must be set directly:
+**Description**: A comma-separated string of key-value pairs for GitHub pipeline. Use it to pass all pipeline parameters except these main ones, which must be set directly:
 
 - `ENV_NAMES`
 - `DEPLOYMENT_TICKET_ID`
@@ -464,19 +501,23 @@ The parameters must follow the parameter schema defined in this document.
 This parameter is only available in the [GitHub version](/github_workflows/instance-repo-pipeline/) of the pipeline.
 
 > [!NOTE]
-> GitHub only allows 10 input parameters for the pipeline. To work around this but keep full functionality, the main parameters are provided at the top level, and all additional ones are sent as JSON in this field.
+> GitHub only allows 10 input parameters for the pipeline. To work around this but keep full functionality, the main parameters are provided at the top level, and all additional ones are sent as comma-separated key-value pairs in this field.
+
+**Format**: `KEY1=VALUE1,KEY2=VALUE2,KEY3=VALUE3`
+
+If a value contains JSON (e.g., `SD_DATA`, `EFFECTIVE_SET_CONFIG`, `ENV_SPECIFIC_PARAMS`, `CRED_ROTATION_PAYLOAD`, `BG_STATE`), the JSON must be properly escaped within the value part. For example: `SD_DATA=[{\"version\":2.1,...}],EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\"}`
 
 **Default Value**: None
 
 **Mandatory**: No
 
-**Example**: `{\"ENV_BUILDER\": \"true\", \"DEPLOYMENT_TICKET_ID\": \"TICKET-123\", \"ENV_TEMPLATE_VERSION\": \"qubership_envgene_templates:0.0.2\"}`
+**Example**: `SD_SOURCE_TYPE=json,SD_DATA=[{\"version\":2.1,\"type\":\"solutionDeploy\"}],ENV_SPECIFIC_PARAMS={\"tenantName\":\"value\"}`
 
 Example of calling EnvGene pipeline via GitHub API:
 
 ```bash
 curl -X POST \
-  -H "Authorization: token ghp_AbCdEfGhIjKlMnOpQrStUvWxYz0123456789" \
+  -H "Authorization: token token-placeholder-123" \
   -H "Accept: application/vnd.github.v3+json" \
   https://api.github.com/repos/qubership/instance-repo/actions/workflows/pipeline.yml/dispatches \
   -d '{
@@ -484,12 +525,34 @@ curl -X POST \
         "inputs": {
             "ENV_NAMES": "test-cluster/e01",
             "ENV_BUILDER": "true",
-            `GENERATE_EFFECTIVE_SET`: "true"
+            "GENERATE_EFFECTIVE_SET": "true",
             "DEPLOYMENT_TICKET_ID": "QBSHP-0001",
-            "GH_ADDITIONAL_PARAMS": "EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
+            "GH_ADDITIONAL_PARAMS": "SD_SOURCE_TYPE=json,SD_DATA=[{\"version\":2.1,\"type\":\"solutionDeploy\"}],EFFECTIVE_SET_CONFIG={\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
         }
       }'
 ```
+
+### `BG_MANAGE`
+
+**Description**: Enable Blue-Green operation. When set to `true`, the `bg_manage` pipeline job is executed to perform BG operations including state management and validation , Origin/Peer configuration copying for WarmUp operations.
+
+**Default Value**: `false`
+
+**Mandatory**: No
+
+**Example**: `true`
+
+### `BG_STATE`
+
+**Description**: Contains the description of the target state of the Blue-Green namespaces of the Environment. Used together with `BG_MANAGE`.
+
+See details in [Blue-Green Deployment](/docs/features/blue-green-deployment.md)
+
+**Default Value**: None
+
+**Mandatory**: No (Yes, when `BG_MANAGE` is `true`)
+
+**Example**: `{"peerNamespace":{"name":"prod-ns2","state":"IDLE","version":null},"controllerNamespace":"ns-controller","originNamespace":{"name":"prod-ns1","state":"ACTIVE","version":"v5"},"updateTime":"2023-07-07T10:00:54Z"}`
 
 ## Deprecated Parameters
 
