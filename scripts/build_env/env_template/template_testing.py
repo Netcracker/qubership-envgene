@@ -21,7 +21,7 @@ def run_env_test_setup():
     env_name = os.getenv("ENV_NAME")
     project_dir = os.getenv("CI_PROJECT_NAME")
     env_template_vers_split = env_template_art_vers.split(':')[1].replace('.', '_')
-    cluster_example_url = os.getenv("ansible_var_clusterExampleUrl", "https://test-cluster.example.com")
+    cluster_example_url = os.getenv("build_env_clusterExampleUrl", "https://test-cluster.example.com")
     tenant_name = f"template_testing_{project_dir}_{env_name}"
 
     definition_env_name = "env-test"
