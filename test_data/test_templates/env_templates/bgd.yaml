@@ -4,13 +4,11 @@ cloud:
   template_path: "{{ templates_dir }}/env_templates/bgd/cloud.yml.j2"
 namespaces:
   - template_path: "{{ templates_dir }}/env_templates/bgd/Namespaces/app.yml.j2"
-    deploy_postfix: "peer-app"
     template_override:
-      name: "{{current_env.name}}-peer-app"
+      name: "{{ current_env.name }}-peer-app"
   - template_path: "{{ templates_dir }}/env_templates/bgd/Namespaces/app.yml.j2"
-    deploy_postfix: "origin-app"
     template_override:
-      name: "{{current_env.name}}-origin-app"
+      name: "{{ current_env.name }}-origin-app"
   - template_path: "{{ templates_dir }}/env_templates/bgd/Namespaces/bg-plugin.yml.j2"
   - template_path: "{{ templates_dir }}/env_templates/bgd/Namespaces/bg-controller.yml.j2"
   - template_path: "{{ templates_dir }}/env_templates/bgd/Namespaces/other-app.yml.j2"
