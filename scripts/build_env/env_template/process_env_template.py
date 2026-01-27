@@ -84,7 +84,18 @@ def download_artifact_new_logic(env_definition: dict) -> str:
         group_id, artifact_id, version = app_def.group_id, app_def.artifact_id, app_version
         artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version, cred=cred, env_creds=env_creds))
         if artifact_info:
-            template_url, _ = artifact_info
+            template_url, repo_info = artifact_info
+            # Check if v2 already downloaded the artifact
+            if isinstance(repo_info, tuple) and len(repo_info) == 2 and repo_info[0] == "v2_downloaded":
+                local_path = repo_info[1]
+                logger.info(f"V2 artifact already downloaded at: {local_path}")
+                import shutil
+                shutil.copy(local_path, artifact_dest)
+                logger.info(f"Copied V2 artifact to: {artifact_dest}")
+                if "-SNAPSHOT" in app_version:
+                    resolved_version = extract_snapshot_version(template_url, app_version)
+                unpack_archive(artifact_dest, build_env_path)
+                return resolved_version
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(template_url, app_version)
     if not template_url:
