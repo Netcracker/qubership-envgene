@@ -311,7 +311,7 @@ public class BomReaderUtilsImplV2 {
         String dockerTag = getPropertyValue(component, "full_image_name", null, true, entity);
         serviceParams.put("DOCKER_TAG", dockerTag);
         serviceParams.put("IMAGE_REPOSITORY", getImageRepository(dockerTag));
-        addImageParameters(component, entitiesMap.getDeployParams());
+        addImageParameters(component, entitiesMap.getDeployParams(), entitiesMap.getServiceMap().keySet());
 
         if (CollectionUtils.isNotEmpty(component.getComponents())) {
             for (Component subComponent : component.getComponents()) {
@@ -329,10 +329,10 @@ public class BomReaderUtilsImplV2 {
         perServiceMap.put(component.getName(), serviceParams);
     }
 
-    private void addImageParameters(Component component, Map<String, String> serviceParams) {
+    private void addImageParameters(Component component, Map<String, String> serviceParams, Set<String> serviceNames) {
         if (component.getMimeType().equalsIgnoreCase(APPLICATION_OCTET_STREAM)) {
             String key = getPropertyValue(component, "deploy_param", null, false, component.getName());
-            if (StringUtils.isNotEmpty(key)) {
+            if (StringUtils.isNotEmpty(key) && !serviceNames.contains(key)) {
                 String value = getPropertyValue(component, "full_image_name", null, false, component.getName());
                 serviceParams.put(key, value);
             }
