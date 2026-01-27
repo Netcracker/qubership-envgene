@@ -115,7 +115,7 @@ def _parse_snapshot_version(
 ) -> str | None:
     root = ET.fromstring(content)
     
-    # Try new-style <snapshotVersions> first (Maven 3+)
+    # Trying new-style <snapshotVersions> first (Maven 3+) if its not found then its switched to Old Style
     snapshot_versions = root.findall(".//snapshotVersions/snapshotVersion")
     if snapshot_versions:
         for node in snapshot_versions:

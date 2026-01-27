@@ -1,7 +1,9 @@
 import asyncio
 import os
+import shutil
 import tempfile
 from pathlib import Path
+from typing import Optional
 
 from artifact_searcher import artifact
 from artifact_searcher.utils.models import FileExtension, Credentials, Registry, Application
@@ -16,13 +18,15 @@ artifact_dest = f"{tempfile.gettempdir()}/artifact.zip"
 build_env_path = "/build_env"
 
 
-def parse_artifact_appver(env_definition: dict) -> [str, str]:
+def parse_artifact_appver(env_definition: dict) -> tuple[str, str]:
+    """Extract artifact name and version from env_definition.yml."""
     artifact_appver = env_definition['envTemplate'].get('artifact', '')
     logger.info(f"Environment template artifact version: {artifact_appver}")
     return artifact_appver.split(':')
 
 
-def get_registry_creds(registry: Registry) -> Credentials:
+def get_registry_creds(registry: Registry) -> Optional[Credentials]:
+    """Resolve V1 registry credentials. Returns None for registries without credentials."""
     cred_config = render_creds()
     cred_id = registry.credentials_id
     if cred_id:
@@ -36,11 +40,15 @@ def get_registry_creds(registry: Registry) -> Credentials:
 
 
 def parse_maven_coord_from_dd(dd_config: dict) -> tuple[str, str, str]:
+    """Extract Maven coordinates (groupId:artifactId:version) from deployment descriptor."""
     artifact_str = dd_config['configurations'][0]['artifacts'][0].get('id')
     return artifact_str.split(':')
 
 
 def extract_snapshot_version(url: str, snapshot_version: str) -> str:
+    """Extract timestamped SNAPSHOT version from artifact URL.
+    Converts 'feature-branch-SNAPSHOT' to 'feature-branch-20250113.102430-45'.
+    """
     base = snapshot_version.replace("-SNAPSHOT", "")
     filename = url.split("/")[-1]
     name = filename.rsplit(".", 1)[0]
@@ -48,20 +56,29 @@ def extract_snapshot_version(url: str, snapshot_version: str) -> str:
     return name[pos:]
 
 
-# logic downloading template by artifact definition
 def download_artifact_new_logic(env_definition: dict) -> str:
+    """Download environment template using artifact definition (V2-aware).
+    
+    Supports both V1 and V2 registries. For V2 cloud registries (AWS/GCP/Artifactory/Nexus),
+    uses CloudAuthHelper and MavenArtifactSearcher with automatic fallback to V1.
+    
+    Returns:
+        Resolved version string (with SNAPSHOT timestamp if applicable)
+    """
     app_name, app_version = parse_artifact_appver(env_definition)
 
+    # Load artifact definition and credentials
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     artifact_path = getAppDefinitionPath(base_dir, app_name)
     if not artifact_path:
         raise FileNotFoundError(f"No artifact definition file found for {app_name} with .yaml or .yml extension")
     app_def = Application.model_validate(openYaml(artifact_path))
-    cred = get_registry_creds(app_def.registry)
-    env_creds = get_cred_config()
+    cred = get_registry_creds(app_def.registry)  # V1 credentials
+    env_creds = get_cred_config()  # V2 credentials (Jenkins credential store)
     template_url = None
 
     resolved_version = app_version
+    # Try deployment descriptor first (multi-artifact solutions)
     dd_artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.JSON, app_version, cred=cred, env_creds=env_creds))
     if dd_artifact_info:
         logger.info("Loading environment template artifact info from deployment descriptor...")
@@ -80,17 +97,17 @@ def download_artifact_new_logic(env_definition: dict) -> str:
         repo_url = dd_config.get("configurations", [{}])[0].get("maven_repository") or dd_repo
         template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP)
     else:
+        # No deployment descriptor, download ZIP directly
         logger.info("Loading environment template artifact from zip directly...")
         group_id, artifact_id, version = app_def.group_id, app_def.artifact_id, app_version
         artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version, cred=cred, env_creds=env_creds))
         if artifact_info:
             template_url, repo_info = artifact_info
-            # Check if v2 already downloaded the artifact
+            # V2 optimization: artifact already downloaded by MavenArtifactSearcher
             if isinstance(repo_info, tuple) and len(repo_info) == 2 and repo_info[0] == "v2_downloaded":
                 local_path = repo_info[1]
                 logger.info(f"V2 artifact already downloaded at: {local_path}")
-                import shutil
-                shutil.copy(local_path, artifact_dest)
+                shutil.copy(local_path, artifact_dest)  # Copy to standard location
                 logger.info(f"Copied V2 artifact to: {artifact_dest}")
                 if "-SNAPSHOT" in app_version:
                     resolved_version = extract_snapshot_version(template_url, app_version)
@@ -100,6 +117,8 @@ def download_artifact_new_logic(env_definition: dict) -> str:
             resolved_version = extract_snapshot_version(template_url, app_version)
     if not template_url:
         raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={version}")
+    
+    # V1 path or V2 fallback: download via HTTP
     logger.info(f"Environment template url has been resolved: {template_url}")
     artifact.download(template_url, artifact_dest, cred)
     unpack_archive(artifact_dest, build_env_path)
@@ -107,6 +126,7 @@ def download_artifact_new_logic(env_definition: dict) -> str:
 
 
 def render_creds() -> dict:
+    """Render credential templates with environment variables."""
     cred_config = get_cred_config()
     context = Context()
     context.env_vars.update(dict(os.environ))
@@ -115,7 +135,7 @@ def render_creds() -> dict:
     return rendered
 
 
-# logic downloading template by exact coordinates and repo, deprecated
+# downloading template by exact coordinates and repo, deprecated
 def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
     template_artifact = env_definition['envTemplate']['templateArtifact']
     artifact_info = template_artifact['artifact']
@@ -165,6 +185,7 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
 
 
 def process_env_template() -> str:
+    """Main entry point for template download. Routes to new or old logic based on env_definition format."""
     env_template_test = os.getenv("ENV_TEMPLATE_TEST", "").lower() == "true"
     if env_template_test:
         run_env_test_setup()
@@ -174,6 +195,7 @@ def process_env_template() -> str:
     env_dir = Path(f"{project_dir}/environments/{cluster}/{environment}")
     env_definition = getEnvDefinition(env_dir)
 
+    # New format: uses artifact definitions (V2-aware)
     if 'artifact' in env_definition.get('envTemplate', {}):
         logger.info("Use template downloading new logic")
         return download_artifact_new_logic(env_definition)
