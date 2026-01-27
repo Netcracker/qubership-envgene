@@ -49,11 +49,12 @@ flowchart LR
 
 6. **app_reg_def_process**:
    - **What happens in this job**:
-       1. Downloads the Environment Template artifact.
-       2. Renders [Application Definitions](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition) from:
+       1. Handles certificate updates from the configuration directory.
+       2. Downloads the Environment Template artifact.
+       3. Renders [Application Definitions](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition) from:
           1. Templates, as described in [User Defined by Template](/docs/features/app-reg-defs.md#user-defined-by-template)
           2. External Job, as described in [External Job](/docs/features/app-reg-defs.md#external-job)
-       3. Runs [Application and Registry Definitions Transformation](/docs/features/app-reg-defs.md#application-and-registry-definitions-transformation)
+       4. Runs [Application and Registry Definitions Transformation](/docs/features/app-reg-defs.md#application-and-registry-definitions-transformation)
    - **Condition**: Runs if ( [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder) )
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
@@ -62,6 +63,15 @@ flowchart LR
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 8. **env_build**:
+   - **What happens in this job**:
+       1. Handles certificate updates from the configuration directory.
+       2. Downloads the Environment Template artifact from the `app_reg_def_process` job artifacts, **not from the registry**
+       3. Updates the Environment Template version if [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) is provided.
+       4. Renders the environment using Jinja2 templates (renders Namespaces, Clouds, and other environment components, but not Application and Registry Definitions).
+       5. Handles template overrides
+       6. Handles template Parameter Set and Resource profiles.
+       7. Handles environment-specific Parameter Set and Resource profiles.
+       8. Creates Credentials including shared Credentials
    - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
