@@ -61,11 +61,6 @@ def run_env_test_setup():
     shutil.copy(env_definition_conf_path, version_dir_path / "env_definition.yml")
 
     env_name = f"{tenant_name}/{tenant_name}_{env_template_version_normalized}"
-    # environment_name = f"{tenant_name}_{env_template_version_normalized}"
-
-    # for k, v in {"CLUSTER_NAME": tenant_name, "ENVIRONMENT_NAME": environment_name, "ENV_NAME": env_name}.items():
-    #     os.environ[k] = v
-    #     logger.info("Env var set: %s=%s", k, v)
 
     set_variable_path = Path(f"{base_dir}/set_variable.txt")
     writeToFile(set_variable_path, env_name)

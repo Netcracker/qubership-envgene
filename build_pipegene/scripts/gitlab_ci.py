@@ -61,7 +61,8 @@ def build_pipeline(params: dict) -> None:
             env_template_vers_split = env_template_art_vers.split(':')[1].replace('.', '_')
             env_template_version_normalized = f"{env_template_vers_split.replace('-', '_')}"
             
-            cluster_name = f"template_testing_{PROJECT_DIR}_{env}"
+            project_name = os.getenv("CI_PROJECT_NAME")
+            cluster_name = f"template_testing_{project_name}_{env}"
             environment_name = f"{cluster_name}_{env_template_version_normalized}"
             env_definition = {}
         else:
