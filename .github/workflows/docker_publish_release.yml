@@ -210,7 +210,7 @@ jobs:
     needs: [tag]
     uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
     with:
-      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
+      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator/pom.xml"
       java-version: 17
       upload-artifact: true
       artifact-id: effective_set_jar
