@@ -41,6 +41,7 @@ template: |
   - **[qubership-effective-set-generator](https://github.com/$OWNER/$REPOSITORY/pkgs/container/qubership-effective-set-generator)** - `ghcr.io/netcracker/qubership-effective-set-generator:$RESOLVED_VERSION`
   - **[qubership-envgene-instance-pipeline-github](https://github.com/$OWNER/$REPOSITORY/pkgs/container/qubership-instance-repo-pipeline)** - `ghcr.io/netcracker/qubership-instance-repo-pipeline:$RESOLVED_VERSION`
   - **[qubership-envgene-instance-gsf-gitlab](https://github.com/$OWNER/$REPOSITORY/pkgs/container/qubership-gsf-instance)** - `ghcr.io/netcracker/qubership-gsf-instance:$RESOLVED_VERSION`
+  - **[qubership-envgene-discovery-gsf-gitlab](https://github.com/$OWNER/$REPOSITORY/pkgs/container/qubership-gsf-discovery)** - `ghcr.io/netcracker/qubership-gsf-discovery:$RESOLVED_VERSION`
 
   ---
 

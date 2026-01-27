@@ -88,19 +88,27 @@ jobs:
 
         - name: Update Docker Image Tags in Pipeline
           run: |
+            # Paths to files
             TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml"
-            GITLAB_CI_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/.gitlab-ci.yml"
-            GSF_PACKAGE_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/package.yaml"
+            ENVGENE_COOKIECUTTER_JSON_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/cookiecutter.json"
+            GSF_INSTANCE_PACKAGE_FILE="gsf_packages/envgene_instance_project/git-system-follower-package/package.yaml"
+            GSF_DISCOVERY_PACKAGE_FILE="gsf_packages/envgene_discovery_project/git-system-follower-package/package.yaml"
+
+            # New tag
             NEW_TAG="${{ github.event.inputs.version }}"
+
             sed -i "/DOCKER_IMAGE_TAG_PIPEGENE:/c\\  DOCKER_IMAGE_TAG_PIPEGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
             sed -i "/DOCKER_IMAGE_TAG_ENVGENE:/c\\  DOCKER_IMAGE_TAG_ENVGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
             sed -i "/DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR:/c\\  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: \"${NEW_TAG}\"" "$TARGET_FILE"
 
-            # Update ENVGENE_VERSION in .gitlab-ci.yml
-            sed -i "/ENVGENE_VERSION:/c\\  ENVGENE_VERSION: \"${NEW_TAG}\"" "$GITLAB_CI_FILE"
+            # Update envgene_version in cookiecutter.json for GSF EnvGene instance
+            sed -i 's/"envgene_version": "[^"]*"/"envgene_version": "'"${NEW_TAG}"'"/' "$ENVGENE_COOKIECUTTER_JSON_FILE"
 
-            # Update version in package.yaml
-            sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_PACKAGE_FILE"
+            # Update version in GSF Instance package.yaml
+            sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_INSTANCE_PACKAGE_FILE"
+
+            # Update version in GSF Discovery package.yaml
+            sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_DISCOVERY_PACKAGE_FILE"
 
             CHANGES_MADE=false
             if ! git diff --quiet "$TARGET_FILE"; then
@@ -108,12 +116,17 @@ jobs:
               CHANGES_MADE=true
             fi
 
-            if ! git diff --quiet "$GITLAB_CI_FILE"; then
-              echo "Updated .gitlab-ci.yml with ENVGENE_VERSION"
+            if ! git diff --quiet "$ENVGENE_COOKIECUTTER_JSON_FILE"; then
+              echo "Updated cookiecutter.json with envgene_version"
               CHANGES_MADE=true
             fi
 
-            if ! git diff --quiet "$GSF_PACKAGE_FILE"; then
+            if ! git diff --quiet "$GSF_INSTANCE_PACKAGE_FILE"; then
+              echo "Updated package.yaml with version"
+              CHANGES_MADE=true
+            fi
+
+            if ! git diff --quiet "$GSF_DISCOVERY_PACKAGE_FILE"; then
               echo "Updated package.yaml with version"
               CHANGES_MADE=true
             fi
@@ -123,14 +136,15 @@ jobs:
             fi
 
             git diff "$TARGET_FILE" || true
-            git diff "$GITLAB_CI_FILE" || true
-            git diff "$GSF_PACKAGE_FILE" || true
+            git diff "$ENVGENE_COOKIECUTTER_JSON_FILE" || true
+            git diff "$GSF_INSTANCE_PACKAGE_FILE" || true
+            git diff "$GSF_DISCOVERY_PACKAGE_FILE" || true
 
             if [ "$CHANGES_MADE" = true ]; then
               git config --global user.name "qubership-actions[bot]"
               git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
-              git add "$TARGET_FILE" "$GITLAB_CI_FILE" "$GSF_PACKAGE_FILE"
-              git commit -m "chore: Update docker image tags and ENVGENE_VERSION for branch ${{ github.ref_name }} [skip ci]"
+              git add "$TARGET_FILE" "$ENVGENE_COOKIECUTTER_JSON_FILE" "$GSF_INSTANCE_PACKAGE_FILE" "$GSF_DISCOVERY_PACKAGE_FILE"
+              git commit -m "chore: Update docker image tags and envgene_version for branch ${{ github.ref_name }} [skip ci]"
 
               git push origin HEAD:${{ github.ref_name }} || echo "Failed to push changes"
             else
@@ -196,7 +210,7 @@ jobs:
     needs: [tag]
     uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
     with:
-      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator_java/pom.xml"
+      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator/pom.xml"
       java-version: 17
       upload-artifact: true
       artifact-id: effective_set_jar
@@ -267,6 +281,25 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         version: ${{ inputs.version }}
 
+  build-gsf-envgene-discovery:
+    needs: [tag]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build GSF Envgene Instance
+      uses: ./.github/actions/build-gsf-discovery
+      with:
+        registry: ${{ env.REGISTRY }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        version: ${{ inputs.version }}
+
   github-release:
     needs:
       - build-qubership-pipegene
@@ -274,6 +307,7 @@ jobs:
       - build-effective-set-generator
       - build-instance-repo-pipeline
       - build-gsf-envgene-instance
+      - build-gsf-envgene-discovery
     uses: netcracker/qubership-workflow-hub/.github/workflows/release-drafter.yml@v2.0.5
     with:
       version: ${{ github.event.inputs.version }}
