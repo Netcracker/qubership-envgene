@@ -385,14 +385,14 @@ def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     logger.debug(namespaces)
     return namespaces
 
-def get_bgd_path() -> Path:
-    env_dir = get_current_env_dir_from_env_vars()
+def get_bgd_path(env_dir: Path | None = None) -> Path:
+    env_dir = env_dir or get_current_env_dir_from_env_vars()
     bgd_path = env_dir.joinpath('bg_domain.yml')
     logger.debug(bgd_path)
     return bgd_path
 
-def get_bgd_object() -> CommentedMap:
-    bgd_path = get_bgd_path()
+def get_bgd_object(env_dir: Path | None = None) -> CommentedMap:
+    bgd_path = get_bgd_path(env_dir)
     bgd_object = openYaml(bgd_path, allow_default=True)
     logger.debug(bgd_object)
     return bgd_object
