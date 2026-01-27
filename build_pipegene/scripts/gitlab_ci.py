@@ -57,8 +57,12 @@ def build_pipeline(params: dict) -> None:
         logger.info(f'----------------start processing for {env}---------------------')
 
         if params['IS_TEMPLATE_TEST']:
-            cluster_name = ""
-            environment_name = env
+            env_template_art_vers = params["ENV_TEMPLATE_VERSION"]
+            env_template_vers_split = env_template_art_vers.split(':')[1].replace('.', '_')
+            env_template_version_normalized = f"{env_template_vers_split.replace('-', '_')}"
+            
+            cluster_name = f"template_testing_{PROJECT_DIR}_{env}"
+            environment_name = f"{cluster_name}_{env_template_version_normalized}"
             env_definition = {}
         else:
             cluster_name = get_cluster_name_from_full_name(env)

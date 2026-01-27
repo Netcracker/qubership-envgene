@@ -11,7 +11,6 @@ if __name__ == '__main__':
     cluster_name = getenv_with_error("CLUSTER_NAME")
     env_name = getenv_with_error("ENVIRONMENT_NAME")
     base_dir = getenv_with_error('CI_PROJECT_DIR')
-    full_env = getenv_with_error("FULL_ENV_NAME")
     instances_dir = getenv_with_error("INSTANCES_DIR")
     
     output_dir = f"{base_dir}/environments"

@@ -19,10 +19,9 @@ def run_env_test_setup():
 
     env_template_art_vers = getenv_with_error("ENV_TEMPLATE_VERSION")
     env_name = getenv_with_error("ENV_NAME")
-    project_dir = os.getenv("CI_PROJECT_NAME")
     env_template_vers_split = env_template_art_vers.split(':')[1].replace('.', '_')
     cluster_example_url = os.getenv("ansible_var_clusterExampleUrl", "https://test-cluster.example.com")
-    tenant_name = f"template_testing_{project_dir}_{env_name}"
+    tenant_name = getenv_with_error("CLUSTER_NAME")
 
     definition_env_name = "env-test"
     env_template_version_normalized = f"{env_template_vers_split.replace('-', '_')}"
@@ -62,11 +61,11 @@ def run_env_test_setup():
     shutil.copy(env_definition_conf_path, version_dir_path / "env_definition.yml")
 
     env_name = f"{tenant_name}/{tenant_name}_{env_template_version_normalized}"
-    environment_name = f"{tenant_name}_{env_template_version_normalized}"
+    # environment_name = f"{tenant_name}_{env_template_version_normalized}"
 
-    for k, v in {"CLUSTER_NAME": tenant_name, "ENVIRONMENT_NAME": environment_name, "ENV_NAME": env_name}.items():
-        os.environ[k] = v
-        logger.info("Env var set: %s=%s", k, v)
+    # for k, v in {"CLUSTER_NAME": tenant_name, "ENVIRONMENT_NAME": environment_name, "ENV_NAME": env_name}.items():
+    #     os.environ[k] = v
+    #     logger.info("Env var set: %s=%s", k, v)
 
     set_variable_path = Path(f"{base_dir}/set_variable.txt")
     writeToFile(set_variable_path, env_name)
