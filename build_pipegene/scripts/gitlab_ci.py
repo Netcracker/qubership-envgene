@@ -12,6 +12,7 @@ from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from credential_rotation_job import prepare_credential_rotation_job
 from appregdef_render_job import prepare_appregdef_render_job
+from bg_manage_job import prepare_bg_manage_job
 
 PROJECT_DIR = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 IS_GITLAB = bool(os.getenv('CI_PROJECT_DIR')) and not bool(os.getenv('GITHUB_ACTIONS'))
@@ -74,6 +75,7 @@ def build_pipeline(params: dict) -> None:
                 
 
         job_sequence = [
+            "bg_manage_job",
             "trigger_passport_job",
             "get_passport_job",
             "env_inventory_generation_job",
@@ -83,6 +85,11 @@ def build_pipeline(params: dict) -> None:
             "generate_effective_set_job",
             "git_commit_job"
         ]
+
+        if params.get('BG_MANAGE', None) != True:
+            logger.info(f'Preparing of bg_manage job for environment {env} is skipped.')
+        else:
+            jobs_map['bg_manage_job'] = prepare_bg_manage_job(pipeline, env, tags)
 
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
@@ -125,7 +132,7 @@ def build_pipeline(params: dict) -> None:
         else:
             logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
 
-        jobs_requiring_git_commit = ["appregdef_render_job", "env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job"]
+        jobs_requiring_git_commit = ["appregdef_render_job", "env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job", "bg_manage_job"]
 
         plugin_params = params
         plugin_params['jobs_map'] = jobs_map

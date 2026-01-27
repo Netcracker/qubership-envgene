@@ -46,6 +46,14 @@ def extract_snapshot_version(url: str, snapshot_version: str) -> str:
     return name[pos:]
 
 
+def validate_url(url, group_id, artifact_id, version):
+    if not url:
+        raise ValueError(
+            f"artifact not found group_id={group_id}, "
+            f"artifact_id={artifact_id}, version={version}"
+        )
+
+
 # logic resolving template by artifact definition
 def resolve_artifact_new_logic(env_definition: dict, template_dest: str) -> str:
     app_name, app_version = parse_artifact_appver(env_definition)
@@ -76,16 +84,16 @@ def resolve_artifact_new_logic(env_definition: dict, template_dest: str) -> str:
 
         repo_url = dd_config.get("configurations", [{}])[0].get("maven_repository") or dd_repo
         template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP, cred)
+        validate_url(template_url, group_id, artifact_id, version)
     else:
         logger.info("Loading environment template artifact from zip directly...")
         group_id, artifact_id, version = app_def.group_id, app_def.artifact_id, app_version
         artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version, cred))
         if artifact_info:
             template_url, _ = artifact_info
+        validate_url(template_url, group_id, artifact_id, version)
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(template_url, app_version)
-    if not template_url:
-        raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={resolved_version}")
     logger.info(f"Environment template url has been resolved: {template_url}")
     artifact.download(template_url, ARTIFACT_DEST, cred)
     unpack_archive(ARTIFACT_DEST, template_dest)
@@ -138,14 +146,13 @@ def resolve_artifact_old_logic(env_definition: dict, template_dest: str) -> str:
             raise ValueError(f"Invalid maven coordinates from deployment descriptor {dd_url}")
 
         template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP, cred)
+        validate_url(template_url, group_id, artifact_id, version)
     else:
         logger.info("Loading environment template artifact from zip directly...")
         template_url = artifact.check_artifact(repo_url, group_id, artifact_id, dd_version, FileExtension.ZIP, cred)
+        validate_url(template_url, group_id, artifact_id, dd_version)
         if "-SNAPSHOT" in dd_version:
             resolved_version = extract_snapshot_version(template_url, dd_version)
-
-    if not template_url:
-        raise ValueError(f"artifact not found group_id={group_id}, artifact_id={artifact_id}, version={resolved_version}")
     logger.info(f"Environment template url has been resolved: {template_url}")
     artifact.download(template_url, ARTIFACT_DEST, cred)
     unpack_archive(ARTIFACT_DEST, template_dest)
