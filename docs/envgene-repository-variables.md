@@ -12,6 +12,7 @@
     - [`GITLAB_RUNNER_TAG_NAME`](#gitlab_runner_tag_name)
     - [`GH_RUNNER_TAG_NAME`](#gh_runner_tag_name)
     - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
+    - [`GH_RUNNER_SCRIPT_TIMEOUT`](#gh_runner_script_timeout)
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
@@ -127,6 +128,18 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 **Mandatory**: No
 
 **Example**: `15m`
+
+### `GH_RUNNER_SCRIPT_TIMEOUT`
+
+**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner in GitHub pipeline. This value is passed to the `timeout-minutes` attribute of the pipeline job. This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running processes. The parameter value must be specified as a number in minutes.
+
+This parameter is only available in the GitHub version of the pipeline. For more information about `timeout-minutes`, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idtimeout-minutes).
+
+**Default Value**: `10`
+
+**Mandatory**: No
+
+**Example**: `15`
 
 ### `DOCKER_REGISTRY` (in instance repository)
 
