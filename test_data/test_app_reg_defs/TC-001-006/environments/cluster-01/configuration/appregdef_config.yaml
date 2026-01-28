@@ -1,0 +1,4 @@
+appdefs:
+  overrides:
+    "com.example:app1":
+      supportParallelDeploy: true
