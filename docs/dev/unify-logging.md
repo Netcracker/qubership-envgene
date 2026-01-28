@@ -4,18 +4,19 @@ This document describes the logging improvements in issue: https://github.com/Ne
 
 ## Problem Statement
 
-Previously:
+**Previously:**
 - Logging logic was duplicated across files
 - Log formatting made logs unreadable
 - Different colours for the same log level across jobs
 - No log level control on Instance Project
 
-Now:
+**Now:**
 - Logging is centralized
 - Output is more readable and consistent
 - Colour is consistent across jobs
 - Input pipeline parameters logged on each job
 - Log level can be set on Instance Project
+
 ---
 
 ## Key Changes
@@ -29,7 +30,7 @@ All other modules import and use it.
 - No duplicated logging logic
 - Easier maintenance
 - Consistent format across the repository
-- Usage of one logging library ("import logging")
+- Usage of one logging library (`import logging`)
 
 [Link to file](https://github.com/Netcracker/qubership-envgene/blob/main/python/envgene/envgenehelper/logger.py)
 
@@ -47,12 +48,12 @@ A new parameter was added to control logging behavior.
 
 Different log levels now have consistent colours across jobs:
 
-| Level  | Colour   |
-|------|--------|
-| DEBUG | Blue   |
+| Level          | Colour |
+|----------------|--------|
+| DEBUG          | Blue   |
 | INFO (default) | White  |
-| WARNING | Yellow |
-| ERROR | Red    |
+| WARNING        | Yellow |
+| ERROR          | Red    |
 
 ---
 
