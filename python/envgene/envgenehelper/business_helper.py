@@ -408,7 +408,3 @@ def get_bgd_object(env_dir: Path | None = None) -> CommentedMap:
     bgd_object = openYaml(bgd_path, allow_default=True)
     logger.debug(bgd_object)
     return bgd_object
-
-
-def parse_env_names(full_env_names: str):
-    return full_env_names.split("\n")
