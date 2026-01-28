@@ -1,5 +1,7 @@
 import os
 from os import listdir
+import copy
+
 
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, parse_env_names
 from envgenehelper.plugin_engine import PluginEngine
@@ -13,6 +15,8 @@ from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
+from envgenehelper.collections_helper import split_multi_value_param
+
 
 PROJECT_DIR = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 IS_GITLAB = bool(os.getenv('CI_PROJECT_DIR')) and not bool(os.getenv('GITHUB_ACTIONS'))
@@ -54,7 +58,7 @@ def build_pipeline(params: dict) -> None:
 
     per_env_plugin_engine = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/per_env')
 
-    env_names = parse_env_names(params['ENV_NAMES'])
+    env_names = split_multi_value_param(params['ENV_NAMES'])
     if len(env_names) > 1:
         raise ValueError(
             f"Generating Inventories for multiple Environments in single pipeline is not supported. "
@@ -145,7 +149,7 @@ def build_pipeline(params: dict) -> None:
         jobs_requiring_git_commit = ["appregdef_render_job", "env_build_job", "generate_effective_set_job",
                                      "env_inventory_generation_job", "credential_rotation_job", "bg_manage_job"]
 
-        plugin_params = params
+        plugin_params = copy.deepcopy(params)
         plugin_params['jobs_map'] = jobs_map
         plugin_params['job_sequence'] = job_sequence
         plugin_params['jobs_requiring_git_commit'] = jobs_requiring_git_commit
