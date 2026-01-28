@@ -1,6 +1,6 @@
-# Unified Logging – Demo Overview
+# Unified Logging
 
-This document describes the logging improvements in issue: <https://github.com/Netcracker/qubership-envgene/issues/751>
+This document describes the logging improvements in issue: <https://github.com/Netcracker/qubership-envgene/issues/821>
 
 ## Problem Statement
 
