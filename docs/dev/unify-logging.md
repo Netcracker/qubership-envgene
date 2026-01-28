@@ -1,16 +1,18 @@
 # Unified Logging – Demo Overview
 
-This document describes the logging improvements in issue: https://github.com/Netcracker/qubership-envgene/issues/751
+This document describes the logging improvements in issue: <https://github.com/Netcracker/qubership-envgene/issues/751>
 
 ## Problem Statement
 
 **Previously:**
+
 - Logging logic was duplicated across files
 - Log formatting made logs unreadable
 - Different colours for the same log level across jobs
 - No log level control on Instance Project
 
 **Now:**
+
 - Logging is centralized
 - Output is more readable and consistent
 - Colour is consistent across jobs
@@ -27,6 +29,7 @@ A single logging module was introduced.
 All other modules import and use it.
 
 **Benefits:**
+
 - No duplicated logging logic
 - Easier maintenance
 - Consistent format across the repository
@@ -60,9 +63,8 @@ Different log levels now have consistent colours across jobs:
 ### 4. Parameter Logging Script for Generated Jobs
 
 A script was added that:
+
 - Runs at the start of every generated job
 - Logs input parameters
 
 [How it was implemented](https://github.com/Netcracker/qubership-envgene/blob/main/build_pipegene/scripts/pipeline_helper.py#L47-L50)
-
----
