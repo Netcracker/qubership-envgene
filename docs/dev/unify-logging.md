@@ -2,13 +2,12 @@
 
 This document describes the logging improvements in issue: https://github.com/Netcracker/qubership-envgene/issues/751
 
-## Motivation
+## Problem Statement
 
 Previously:
 - Logging logic was duplicated across files
 - Log formatting and levels were inconsistent
-- Log level configuration was limited
-- Different colours for the same Log level across jobs
+- Different colours for the same log level across jobs
 - No log level control on Instance Project
 
 Now:
@@ -31,6 +30,8 @@ All other modules import and use it.
 - Easier maintenance
 - Consistent format across the repository
 
+[Link to file](https://github.com/Netcracker/qubership-envgene/blob/main/python/envgene/envgenehelper/logger.py)
+
 ---
 
 ### 2. Coloured Log Levels
@@ -50,7 +51,7 @@ Different log levels now have consistent colours across jobs:
 
 A new parameter was added to control logging behavior.
 
-https://github.com/Netcracker/qubership-envgene/blob/a823f450a671d058813991b218b9afde59f6db41/docs/envgene-repository-variables.md#envgene_log_level
+[Link to documentation](https://github.com/Netcracker/qubership-envgene/blob/a823f450a671d058813991b218b9afde59f6db41/docs/envgene-repository-variables.md#envgene_log_level)
 
 ---
 
@@ -59,5 +60,7 @@ https://github.com/Netcracker/qubership-envgene/blob/a823f450a671d058813991b218b
 A script was added that:
 - Runs at the start of every generated job
 - Logs input parameters
+
+[How it was implemented](https://github.com/Netcracker/qubership-envgene/blob/main/build_pipegene/scripts/pipeline_helper.py#L47-L50)
 
 ---
