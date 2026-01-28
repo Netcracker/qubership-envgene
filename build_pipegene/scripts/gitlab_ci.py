@@ -1,11 +1,13 @@
 import os
 from os import listdir
 
+
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, getEnvDefinition, get_env_instances_dir
 from gcip import JobFilter, Pipeline
 import pipeline_helper
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
+from envgenehelper.collections_helper import split_multi_value_param
 
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
@@ -53,8 +55,9 @@ def build_pipeline(params: dict):
     queued_job_names = []
 
     per_env_plugin_engine = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/per_env')
-
-    for env in params['ENV_NAMES'].split("\n"):
+    
+    env_names = split_multi_value_param(params['ENV_NAMES'])
+    for env in env_names:
         logger.info(f'----------------start processing for {env}---------------------')
         ci_project_dir = project_dir
 
