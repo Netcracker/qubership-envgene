@@ -57,7 +57,7 @@ def delete_dir(path):
     try:
         shutil.rmtree(path)
     except:
-        logger.info(f'{path} directory does not exist')
+        logger.warning(f'{path} directory does not exist')
 
 
 def is_glob(path: str) -> bool:

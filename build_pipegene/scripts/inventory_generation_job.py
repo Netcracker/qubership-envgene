@@ -1,19 +1,34 @@
+import warnings
+
 from gcip import WhenStatement
 from envgenehelper import logger
+from typing_extensions import deprecated
+
 from pipeline_helper import job_instance
 import json
 
 
-def is_inventory_generation_needed(is_template_test, inv_gen_params):
+@deprecated
+def is_inventory_generation_needed(is_template_test, inventory_params):
     if is_template_test:
         return False
-    if inv_gen_params['ENV_INVENTORY_INIT'] == 'true':
-        return True
-    params_processed_by_inv_gen = ['ENV_SPECIFIC_PARAMETERS', 'ENV_TEMPLATE_NAME']
-    for param in params_processed_by_inv_gen:
-        if inv_gen_params[param] not in (None, ''):
-            return True
-    return False
+
+    env_inventory_init = inventory_params.get('ENV_INVENTORY_INIT') == 'true'
+    env_specific_parameters = inventory_params.get('ENV_SPECIFIC_PARAMETERS')
+    env_template_name = inventory_params.get('ENV_TEMPLATE_NAME')
+    env_inventory_content = inventory_params.get('ENV_INVENTORY_CONTENT')
+
+    if env_inventory_content and (env_inventory_init or env_specific_parameters or env_template_name):
+        warnings.warn(
+            "ENV_INVENTORY_INIT, ENV_SPECIFIC_PARAMETERS, and ENV_TEMPLATE_NAME are deprecated",
+            DeprecationWarning
+        )
+        raise ValueError(
+            "ENV_INVENTORY_CONTENT cannot be used together with "
+            "ENV_INVENTORY_INIT, ENV_SPECIFIC_PARAMETERS, or ENV_TEMPLATE_NAME"
+        )
+
+    return env_inventory_init or bool(env_specific_parameters) or bool(env_template_name)
 
 
 def prepare_inventory_generation_job(pipeline, full_env, environment_name, cluster_name, env_generation_params, tags):

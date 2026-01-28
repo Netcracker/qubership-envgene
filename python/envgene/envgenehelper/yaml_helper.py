@@ -44,6 +44,7 @@ def openYaml(filePath, safe_load=False, default_yaml: Callable = get_empty_yaml,
         resultYaml = readYaml(f.read(), safe_load, context=f"File: {filePath}")
     return resultYaml
 
+
 def readYaml(text, safe_load=False, context=None) -> CommentedMap:
     if text is None:
         resultYaml = None
@@ -229,7 +230,7 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
             merge_yaml_into_target(target_yaml[k], "", v, overwrite_existing_values, overwrite_existing_comments)
         elif isinstance(target_yaml[k], list) and isinstance(v, list):
             target_yaml[k].extend(v_el for v_el in v if v_el not in target_yaml[k] and (
-                        isinstance(v_el, primitiveTypes) or isinstance(v_el, list)))
+                    isinstance(v_el, primitiveTypes) or isinstance(v_el, list)))
             src_dicts = {}
             for v_k, v_el in enumerate(v):
                 if isinstance(v_el, dict):
@@ -376,16 +377,18 @@ def yaml_from_string(yaml_str):
     return result
 
 
-def validate_yaml_by_scheme_or_fail(yaml_file_path: str, schema_file_path: str) -> None:
-    yaml_content = openYaml(yaml_file_path)
-    schema_content = openJson(schema_file_path)
+def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
+                                    input_yaml_content: dict = None, input_schema_content: dict = None):
+    yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
+    schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
+
     errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
     if len(errors) > 0:
         rel_path = getRelPath(yaml_file_path)
         logger.error(f"Validation of {rel_path} file has failed")
         for err in errors:
             log_jsonschema_validation_error(err)
-        raise ValueError(f"Validation failed") from None
+        raise ValueError("Validation failed") from None
 
 
 def validate_yaml_data_by_scheme(data, schema, cls=None, *args, **kwargs):
