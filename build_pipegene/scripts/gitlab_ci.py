@@ -8,6 +8,7 @@ from gcip import JobFilter, Pipeline
 import pipeline_helper
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 from envgenehelper.collections_helper import split_multi_value_param
+import copy
 
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
@@ -128,7 +129,7 @@ def build_pipeline(params: dict):
 
         jobs_requiring_git_commit = ["env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job", "bg_manage_job"]
 
-        plugin_params = params
+        plugin_params = copy.deepcopy(params)
         plugin_params['jobs_map'] = jobs_map
         plugin_params['job_sequence'] = job_sequence
         plugin_params['jobs_requiring_git_commit'] = jobs_requiring_git_commit
