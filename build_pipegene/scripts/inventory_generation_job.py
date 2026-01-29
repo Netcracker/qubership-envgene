@@ -1,23 +1,15 @@
+import json
 import warnings
 
-from gcip import WhenStatement
 from envgenehelper import logger
-from typing_extensions import deprecated
+from gcip import WhenStatement
 
 from pipeline_helper import job_instance
-import json
 
 
-@deprecated
 def is_inventory_generation_needed(is_template_test, inventory_params):
     if is_template_test:
         return False
-
-    env_names = inventory_params.get('ENV_NAMES')
-
-    if len(env_names.split("\n")) > 1:
-        raise ValueError(
-            f"Generating Inventories for multiple Environments in single pipeline is not supported. ENV_NAMES: {env_names}")
 
     env_inventory_init = inventory_params.get('ENV_INVENTORY_INIT') == 'true'
     env_specific_parameters = inventory_params.get('ENV_SPECIFIC_PARAMS')
@@ -37,10 +29,11 @@ def is_inventory_generation_needed(is_template_test, inventory_params):
     return env_inventory_init or bool(env_specific_parameters) or bool(env_template_name)
 
 
-def prepare_inventory_generation_job(pipeline, full_env, environment_name, cluster_name, env_generation_params, tags):
-    logger.info(f"prepare env_generation job for {full_env}")
+def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, cluster_name, env_generation_params,
+                                     tags):
+    logger.info(f"prepare env_generation job for {full_env_name}")
     params = {
-        "name": f"env_inventory_generation.{full_env}",
+        "name": f"env_inventory_generation.{full_env_name}",
         "image": "${envgen_image}",
         "stage": "env_inventory_generation",
         "script": [
@@ -58,11 +51,11 @@ def prepare_inventory_generation_job(pipeline, full_env, environment_name, clust
         "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
         "module_ansible_cfg": "/module/ansible/ansible.cfg",
         "module_config_default": "/module/templates/defaults.yaml",
-        "ENV_GENERATION_PARAMS": json.dumps(env_generation_params, ensure_ascii=False, indent=2),
-        "GITLAB_RUNNER_TAG_NAME": tags
+        "GITLAB_RUNNER_TAG_NAME": tags,
+        **env_generation_params
     }
     job = job_instance(params=params, vars=vars)
-    job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env)
+    job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env_name)
     job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(job)
     return job
