@@ -1,18 +1,18 @@
 import os
 from os import listdir
 
+from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name
+from envgenehelper.plugin_engine import PluginEngine
 from gcip import JobFilter, Pipeline
 
 import pipeline_helper
-from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
-from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, getEnvDefinition, get_env_instances_dir
-from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
-from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
-from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
-from credential_rotation_job import prepare_credential_rotation_job
 from appregdef_render_job import prepare_appregdef_render_job
 from bg_manage_job import prepare_bg_manage_job
+from credential_rotation_job import prepare_credential_rotation_job
+from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
+from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
+from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
+from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 
 PROJECT_DIR = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 IS_GITLAB = bool(os.getenv('CI_PROJECT_DIR')) and not bool(os.getenv('GITHUB_ACTIONS'))
@@ -61,18 +61,13 @@ def build_pipeline(params: dict) -> None:
             env_template_art_vers = params["ENV_TEMPLATE_VERSION"]
             env_template_vers_split = env_template_art_vers.split(':')[1].replace('.', '_')
             env_template_version_normalized = f"{env_template_vers_split.replace('-', '_')}"
-            
+
             project_name = os.getenv("CI_PROJECT_NAME")
             cluster_name = f"template_testing_{project_name}_{env}"
             environment_name = f"{cluster_name}_{env_template_version_normalized}"
-            env_definition = {}
         else:
             cluster_name = get_cluster_name_from_full_name(env)
             environment_name = get_environment_name_from_full_name(env)
-            env_definition = None
-            if not params['ENV_INVENTORY_INIT']:
-                env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{PROJECT_DIR}/environments"))
-                
 
         job_sequence = [
             "bg_manage_job",
@@ -103,12 +98,6 @@ def build_pipeline(params: dict) -> None:
             jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, env, environment_name, cluster_name, params, tags)
         else:
             logger.info(f'Preparing of env inventory generation job for {env} is skipped because we are in template test mode.')
-            
-        if env_definition is None:
-            try:
-                env_definition = getEnvDefinition(get_env_instances_dir(environment_name, cluster_name, f"{PROJECT_DIR}/environments"))
-            except ReferenceError:
-                pass
 
         credential_rotation_job = None
         if params['CRED_ROTATION_PAYLOAD']:
@@ -116,13 +105,13 @@ def build_pipeline(params: dict) -> None:
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
             logger.info(f'Credential rotation job for {env} is skipped because CRED_ROTATION_PAYLOAD is empty.')
-            
+
         if params['ENV_BUILD']:
             jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, artifact_url, tags)
         else:
             logger.info(f'Preparing of appregdef_render_job {env} is skipped.')
 
-        if params['ENV_BUILD']:     
+        if params['ENV_BUILD']:
             jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], env, environment_name, cluster_name, group_id, artifact_id, tags)
         else:
             logger.info(f'Preparing of env_build job for {env} is skipped.')
