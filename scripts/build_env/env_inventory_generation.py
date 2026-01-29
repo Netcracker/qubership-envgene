@@ -15,24 +15,32 @@ INVENTORY = "Inventory"
 SCHEMAS_DIR = getenv("JSON_SCHEMAS_DIR", path.join(path.dirname(path.dirname(path.dirname(__file__))), "schemas"))
 
 
-def generate_env():
-    base_dir = getenv_and_log('CI_PROJECT_DIR')
-    env_name = getenv_and_log('ENV_NAME')
-    cluster = getenv_and_log('CLUSTER_NAME')
-
-    params_json = getenv_and_log("ENV_GENERATION_PARAMS")
-    params = json.loads(params_json)
-
-    env_inventory_init = params['ENV_INVENTORY_INIT']
-    env_specific_params = params['ENV_SPECIFIC_PARAMS']
-    env_template_name = params['ENV_TEMPLATE_NAME']
-    env_template_version = params['ENV_TEMPLATE_VERSION']
+def generate_env_new_approach(params: dict):
+    base_dir = getenv_with_error('CI_PROJECT_DIR')
+    env_name = getenv_with_error('ENV_NAMES')
+    cluster = getenv_with_error('CLUSTER_NAME')
 
     env_inventory_content = params.get('ENV_INVENTORY_CONTENT')
     env_inv_content_schema_path = path.join(SCHEMAS_DIR, "env-inventory-content.schema.json")
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
                                     schema_file_path=env_inv_content_schema_path)
+
+    env = Environment(base_dir, cluster, env_name)
+    logger.info(f"Starting env inventory generation for env: {env.name} in cluster: {env.cluster}")
+
     handle_env_inv_content(env_inventory_content)
+
+
+@deprecated
+def generate_env(params):
+    base_dir = getenv_and_log('CI_PROJECT_DIR')
+    env_name = getenv_and_log('ENV_NAME')
+    cluster = getenv_and_log('CLUSTER_NAME')
+
+    env_inventory_init = params['ENV_INVENTORY_INIT']
+    env_specific_params = params['ENV_SPECIFIC_PARAMS']
+    env_template_name = params['ENV_TEMPLATE_NAME']
+    env_template_version = params['ENV_TEMPLATE_VERSION']
 
     env = Environment(base_dir, cluster, env_name)
     logger.info(f"Starting env inventory generation for env: {env.name} in cluster: {env.cluster}")
@@ -215,4 +223,10 @@ def handle_env_inv_content(env_inventory_content: dict):
 
 
 if __name__ == "__main__":
-    generate_env()
+    params_json = getenv_and_log("ENV_GENERATION_PARAMS")
+    params = json.loads(params_json)
+
+    if params.get('ENV_INVENTORY_CONTENT'):
+        generate_env_new_approach(params)
+    else:
+        generate_env(params)
