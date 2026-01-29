@@ -64,10 +64,6 @@ public class TenantMap extends DynamicMap {
             EscapeMap e2e = new EscapeMap(config.getGlobalParameters().getE2eParameters().getEnvParameters(), binding, String.format(ParametersConstants.TENANT_E2E_ORIGIN, tenantName));
             EscapeMap configServer = new EscapeMap(config.getGlobalParameters().getTechnicalConfiguration(), binding, String.format(ParametersConstants.TENANT_CONFIG_SERVER_ORIGIN, tenantName));
 
-            checkEscape(map);
-            checkEscape(e2e);
-            checkEscape(configServer);
-
             map.put("cloud", new Parameter(new CloudMap(tenantName, defaultCloud, defaultNamespace, defaultApp, binding, originalNamespace).init()));
             map.put("e2e", new Parameter(e2e));
             map.put("TENANTNAME", tenantName);

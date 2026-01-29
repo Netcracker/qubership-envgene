@@ -63,7 +63,6 @@ public class ParametersCalculationServiceV2 {
         Params parameters = parametersProcessor.processNamespaceParameters(tenantName,
                 cloudName,
                 namespaceName,
-                "false",
                 deployerInputs,
                 originalNamespace);
 
@@ -79,7 +78,6 @@ public class ParametersCalculationServiceV2 {
                 cloudName,
                 namespaceName,
                 applicationName,
-                "false",
                 deployerInputs,
                 originalNamespace);
 
@@ -158,7 +156,7 @@ public class ParametersCalculationServiceV2 {
     }
 
     private ParameterBundle getE2EParameterBundle(String tenantName, String cloudName) {
-        Params parameters = parametersProcessor.processE2EParameters(tenantName, cloudName, null, null, "false", null, null);
+        Params parameters = parametersProcessor.processE2EParameters(tenantName, cloudName, null, null, null, null);
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
         prepareSecureInsecureParams(parameters.getE2eParams(), parameterBundle, ParameterType.E2E, null, null);
         return parameterBundle;

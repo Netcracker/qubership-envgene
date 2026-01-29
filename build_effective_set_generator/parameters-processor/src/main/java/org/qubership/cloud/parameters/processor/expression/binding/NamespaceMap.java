@@ -204,10 +204,6 @@ public class NamespaceMap extends DynamicMap {
             EscapeMap e2e = new EscapeMap(config.getE2eParameters(), binding, String.format(ParametersConstants.NS_E2E_ORIGIN, tenant, this.cloud, namespaceName));
             EscapeMap configServer = new EscapeMap(config.getConfigServerParameters(), binding, String.format(ParametersConstants.NS_CONFIG_SERVER_ORIGIN, tenant, this.cloud, namespaceName));
 
-            checkEscape(map);
-            checkEscape(e2e);
-            checkEscape(configServer);
-
             map.put(E2E, new Parameter(e2e));
             map.put(CONFIG_SERVER, new Parameter(configServer));
             maps.put(namespaceName, map);

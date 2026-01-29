@@ -40,12 +40,6 @@ public abstract class DynamicMap implements Map<String, Parameter>, Serializable
 
     public abstract Map<String, Parameter> getMap(String key);
 
-    protected void checkEscape(Map<String, Parameter> map) {
-        Object processor = map.get("ESCAPE_SEQUENCE").getValue();
-        if (processor != null) {
-            binding.escapeSequence = processor.toString();
-        }
-    }
 
     public DynamicMap init() {
         if (defaultMap != null) {
