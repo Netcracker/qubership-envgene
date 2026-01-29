@@ -54,8 +54,6 @@ def convert_nexus_repo_url_to_index_view(url: str) -> str:
 
 def create_artifact_path(app: Application, version: str, repo: str) -> str:
     registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
-    if app.registry.maven_config.is_nexus:
-        registry_url = convert_nexus_repo_url_to_index_view(registry_url)
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
     return urljoin(registry_url, f"{repo}/{group_id}/{app.artifact_id}/{folder}/")
@@ -219,7 +217,8 @@ async def download_async(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
                 artifact_info.local_path = artifact_local_path
                 return artifact_info
             else:
-                logger.error(f"Download process with error {response.text}: {url}")
+                error_text = await response.text()
+                logger.error(f"Download process with error (status {response.status}): {url} - {error_text}")
     except Exception as e:
         logger.error(f"Download process with exception {url}: {e}")
 
@@ -628,7 +627,7 @@ async def _v2_download_with_fallback(searcher, url: str, local_path: str, auth_c
         logger.info(f"Direct HTTP download successful: {local_path}")
         return True
     except Exception as e:
-        logger.warning(f"Direct HTTP download failed: {e}")
+        logger.warning(f"Direct HTTP download failed for {url}: {e}", exc_info=True)
         return False
 
 
@@ -659,7 +658,7 @@ def unzip_file(artifact_id: str, app_name: str, app_version: str, zip_url: str):
                     zip_file.extract(file, create_app_artifacts_local_path(app_name, app_version))
                     extracted = True
     except Exception as e:
-        logger.error(f"Error unpacking {e}")
+        logger.error(f"Error unpacking artifact {artifact_id} for {app_name}:{app_version} from {zip_url}: {e}", exc_info=True)
     if not extracted:
         logger.warning(f"No files were extracted for application {app_name}:{app_version}")
 
@@ -786,7 +785,7 @@ def resolve_snapshot_version(base_path, extension: FileExtension, cred: Credenti
             node_classifier = node.findtext("classifier", default="")
             node_extension = node.findtext("extension", default="")
             value = node.findtext("value")
-            if node_classifier == classifier and node_extension == extension:
+            if node_classifier == classifier and node_extension == extension.value:
                 logger.info(f"Resolved snapshot version '{value}'")
                 return value
 

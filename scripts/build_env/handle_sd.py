@@ -317,7 +317,19 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, en
         logger.debug(f"Reading V2 solution descriptor from local file: {mvn_repo_extra}")
         with open(mvn_repo_extra, 'r') as f:
             return json.load(f)
-    return artifact.download_json_content(sd_url)
+    
+    # V1 fallback path or non-V2 registry - need credentials for HTTP download
+    cred = None
+    if app_def.registry.credentials_id and env_creds:
+        cred_data = env_creds.get(app_def.registry.credentials_id)
+        if cred_data and cred_data.get('username'):
+            cred = artifact_models.Credentials(
+                username=cred_data.get('username', ''), 
+                password=cred_data.get('password', '')
+            )
+            logger.debug(f"Using credentials '{app_def.registry.credentials_id}' for SD download")
+    
+    return artifact.download_json_content(sd_url, cred)
 
 
 def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> artifact_models.Application:

@@ -36,9 +36,9 @@ if __name__ == '__main__':
         src = Path(render_dir) / dir_name
         dst = Path(env_dir) / dir_name
         
-        if dst.exists():
-            shutil.rmtree(dst)
-        if src.exists():
-            shutil.move(src, dst)
+        if src.exists() and any(src.iterdir()):
+            dst.mkdir(parents=True, exist_ok=True)
+            for item in src.iterdir():
+                shutil.copy2(item, dst / item.name)
             
     update_generated_versions(env_dir, BUILD_ENV_TAG, template_version)
