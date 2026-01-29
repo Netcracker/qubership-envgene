@@ -54,6 +54,8 @@ def convert_nexus_repo_url_to_index_view(url: str) -> str:
 
 def create_artifact_path(app: Application, version: str, repo: str) -> str:
     registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
+    if app.registry.maven_config.is_nexus:
+        registry_url = convert_nexus_repo_url_to_index_view(registry_url)
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
     return urljoin(registry_url, f"{repo}/{group_id}/{app.artifact_id}/{folder}/")
