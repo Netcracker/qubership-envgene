@@ -20,18 +20,18 @@ def is_inventory_generation_needed(is_template_test, inventory_params):
             f"Generating Inventories for multiple Environments in single pipeline is not supported. ENV_NAMES: {env_names}")
 
     env_inventory_init = inventory_params.get('ENV_INVENTORY_INIT') == 'true'
-    env_specific_parameters = inventory_params.get('ENV_SPECIFIC_PARAMETERS')
+    env_specific_parameters = inventory_params.get('ENV_SPECIFIC_PARAMS')
     env_template_name = inventory_params.get('ENV_TEMPLATE_NAME')
     env_inventory_content = inventory_params.get('ENV_INVENTORY_CONTENT')
 
     if env_inventory_content and (env_inventory_init or env_specific_parameters or env_template_name):
         warnings.warn(
-            "ENV_INVENTORY_INIT, ENV_SPECIFIC_PARAMETERS, and ENV_TEMPLATE_NAME are deprecated",
+            "ENV_INVENTORY_INIT, ENV_SPECIFIC_PARAMS, and ENV_TEMPLATE_NAME are deprecated",
             DeprecationWarning
         )
         raise ValueError(
             "ENV_INVENTORY_CONTENT cannot be used together with "
-            "ENV_INVENTORY_INIT, ENV_SPECIFIC_PARAMETERS, or ENV_TEMPLATE_NAME"
+            "ENV_INVENTORY_INIT, ENV_SPECIFIC_PARAMS, or ENV_TEMPLATE_NAME"
         )
 
     return env_inventory_init or bool(env_specific_parameters) or bool(env_template_name)

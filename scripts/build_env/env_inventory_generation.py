@@ -24,7 +24,7 @@ def generate_env():
     params = json.loads(params_json)
 
     env_inventory_init = params['ENV_INVENTORY_INIT']
-    env_specific_params = params['ENV_SPECIFIC_PARAMETERS']
+    env_specific_params = params['ENV_SPECIFIC_PARAMS']
     env_template_name = params['ENV_TEMPLATE_NAME']
     env_template_version = params['ENV_TEMPLATE_VERSION']
 
@@ -49,6 +49,7 @@ def generate_env():
         helper.encrypt_file(env.inv_gen_creds_path)
 
 
+@deprecated
 def handle_env_inventory_init(env, env_inventory_init, env_template_version):
     if env_inventory_init != "true":
         logger.info("ENV_INVENTORY_INIT is not set to 'true'. Skipping env inventory initialization")
@@ -97,6 +98,7 @@ def handle_env_specific_params(env, env_specific_params):
     logger.info(f"ENV_SPECIFIC_PARAMS env details : {vars(env)}")
 
 
+@deprecated
 def create_paramset_files(env, paramsets):
     if not paramsets:
         return
@@ -112,6 +114,7 @@ def create_paramset_files(env, paramsets):
         logger.info(f"Created paramset {filename}")
 
 
+@deprecated
 def handle_credentials(env, creds):
     if not creds:
         return
@@ -126,6 +129,7 @@ def handle_credentials(env, creds):
                                      sharedMasterCredentialFiles)
 
 
+@deprecated
 def handle_cluster_params(env, cluster_params):
     if not cluster_params:
         return

@@ -82,7 +82,7 @@ jobs:
       env_matrix: ${{ steps.matrix-generator.outputs.env_matrix }}
       BG_MANAGE: ${{ env.BG_MANAGE }}
       ENV_TEMPLATE_TEST: ${{ env.ENV_TEMPLATE_TEST }}
-      ENV_SPECIFIC_PARAMETERS: ${{ env.ENV_SPECIFIC_PARAMETERS }}
+      ENV_SPECIFIC_PARAMS: ${{ env.ENV_SPECIFIC_PARAMS }}
       ENV_TEMPLATE_NAME: ${{ env.ENV_TEMPLATE_NAME }}
       CRED_ROTATION_PAYLOAD: ${{ env.CRED_ROTATION_PAYLOAD }}
       ENV_BUILDER: ${{ env.ENV_BUILDER }}
@@ -204,7 +204,7 @@ jobs:
 
       ### GENERATE INVENTORY ###
       - name: Generate Inventory
-        if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
+        if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
@@ -220,7 +220,7 @@ jobs:
 
       - name: Upload Generate Inventory Package
         uses: actions/upload-artifact@v4
-        if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
+        if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         with:
           name: generate_inventory_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
