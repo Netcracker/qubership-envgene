@@ -11,7 +11,7 @@ from create_credentials import CRED_TYPE_SECRET
 
 PARAMSETS_DIR_PATH = "Inventory/parameters/"
 CLUSTER_TOKEN_CRED_ID = "cloud-deploy-sa-token"
-
+INVENTORY = "Inventory"
 SCHEMAS_DIR = getenv("JSON_SCHEMAS_DIR", path.join(path.dirname(path.dirname(path.dirname(__file__))), "schemas"))
 
 
@@ -147,12 +147,52 @@ class Place(Enum):
     SITE = "site"
 
 
-def handle_env_def(env_dir: Path, env_def):
+def resolve_path(env_dir: Path, place: Place, subdir: str, name: str) -> Path:
+    if place is Place.ENV:
+        base = env_dir
+    elif place is Place.CLUSTER:
+        base = env_dir.parent
+    elif place is Place.SITE:
+        base = env_dir.parent.parent
+    else:
+        raise ValueError(place)
+    return base / subdir / f"{name}.yml"
+
+
+def handle_items(env_dir: Path, items: list[dict], subdir: str, schema: str = None):
+    if not items:
+        return
+
+    for item in items:
+        place = Place(item["place"])
+        action = Action(item["action"])
+
+        if "content" in item and "name" in item["content"]:
+            name = item["content"]["name"]
+            content = item["content"]
+        else:
+            name = item["name"]
+            content = item.get("content")
+
+        item_path = resolve_path(env_dir, place, subdir, name)
+
+        if action is Action.CREATE_OR_REPLACE:
+            if schema:
+                validate_yaml_by_scheme_or_fail(
+                    input_yaml_content=content,
+                    schema_file_path=path.join(SCHEMAS_DIR, schema),
+                )
+            writeYamlToFile(item_path, content)
+        elif action is Action.DELETE:
+            deleteFileIfExists(item_path)
+
+
+def handle_env_def(env_dir: Path, env_def: dict | None):
     if not env_def:
         return
 
     action = Action(env_def["action"])
-    env_def_path = env_dir / "Inventory" / "env_definition.yml"
+    env_def_path = env_dir / INVENTORY / "env_definition.yml"
 
     if action is Action.DELETE:
         delete_dir(env_dir)
@@ -160,122 +200,19 @@ def handle_env_def(env_dir: Path, env_def):
         writeYamlToFile(env_def_path, env_def.get("content"))
 
 
-def handle_param_sets(env_dir: Path, param_sets: list[dict]):
-    if not param_sets:
-        return
-
-    for ps in param_sets:
-        place = Place(ps["place"])
-        action = Action(ps["action"])
-        name = ps["content"]["name"]
-
-        ps_path = None
-        if place == Place.ENV:
-            ps_path = env_dir / "Inventory" / "parameters" / f"{name}.yml"
-        elif place == Place.CLUSTER:
-            ps_path = env_dir.parent / "parameters" / f"{name}.yml"
-        elif place == Place.SITE:
-            ps_path = env_dir.parent.parent / "parameters" / f"{name}.yml"
-
-        if action == Action.CREATE_OR_REPLACE:
-            content = ps.get("content")
-            param_set_schema_path = path.join(SCHEMAS_DIR, "paramset.schema.json")
-            validate_yaml_by_scheme_or_fail(
-                input_yaml_content=content,
-                schema_file_path=param_set_schema_path
-            )
-            writeYamlToFile(ps_path, content)
-
-        elif action == Action.DELETE:
-            deleteFileIfExists(ps_path)
-
-
-def handle_credentials_2(env_dir: Path, credentials):
-    if not credentials:
-        return
-    for cred in credentials:
-        place = Place(cred["place"])
-        action = Action(cred["action"])
-        name = cred["name"]
-
-        cred_path = None
-        if place == Place.ENV:
-            cred_path = env_dir / "Inventory" / "credentials" / f"{name}.yml"
-        elif place == Place.CLUSTER:
-            cred_path = env_dir.parent / "credentials" / f"{name}.yml"
-        elif place == Place.SITE:
-            cred_path = env_dir.parent.parent / "credentials" / f"{name}.yml"
-
-        if action == Action.CREATE_OR_REPLACE:
-            cred_schema_path = path.join(SCHEMAS_DIR, "credential.schema.json")
-            content = cred["content"]
-            validate_yaml_by_scheme_or_fail(
-                input_yaml_content=content,
-                schema_file_path=cred_schema_path
-            )
-            writeYamlToFile(cred_path, content)
-        elif action == Action.DELETE:
-            deleteFileIfExists(cred_path)
-
-
-def handle_resource_profiles(env_dir: Path, resource_profiles: list[dict]):
-    if not resource_profiles:
-        return
-    for profile in resource_profiles:
-        place = Place(profile["place"])
-        action = Action(profile["action"])
-        name = profile["content"]["name"]
-        profile_path = None
-        if place == Place.ENV:
-            profile_path = env_dir / "Inventory" / "resource_profiles" / f"{name}.yml"
-        elif place == Place.CLUSTER:
-            profile_path = env_dir.parent / "resource_profiles" / f"{name}.yml"
-        elif place == Place.SITE:
-            profile_path = env_dir.parent.parent / "resource_profiles" / f"{name}.yml"
-
-        if action == Action.CREATE_OR_REPLACE:
-            profile_schema_path = path.join(SCHEMAS_DIR, "resource-profile.schema.json")
-            content = profile["content"]
-            validate_yaml_by_scheme_or_fail(
-                input_yaml_content=content,
-                schema_file_path=profile_schema_path
-            )
-            writeYamlToFile(profile_path, content)
-        elif action == Action.DELETE:
-            deleteFileIfExists(profile_path)
-
-
-def handle_shared_template_variables(env_dir: Path, shared_template_variables: list[dict]):
-    if not shared_template_variables:
-        return
-    for variable in shared_template_variables:
-        place = Place(variable["place"])
-        action = Action(variable["action"])
-        name = variable["name"]
-
-        vars_path = None
-        if place == Place.ENV:
-            vars_path = env_dir / "Inventory" / "shared-template-variables" / f"{name}.yml"
-        elif place == Place.CLUSTER:
-            vars_path = env_dir.parent / "shared-template-variables" / f"{name}.yml"
-        elif place == Place.SITE:
-            vars_path = env_dir.parent.parent / "shared-template-variables" / f"{name}.yml"
-
-        if action == Action.CREATE_OR_REPLACE:
-            content = variable["content"]
-            writeYamlToFile(vars_path, content)
-        elif action == Action.DELETE:
-            deleteFileIfExists(vars_path)
-
-
-def handle_env_inv_content(env_inventory_content):
+def handle_env_inv_content(env_inventory_content: dict):
     env_dir = Path(get_current_env_dir_from_env_vars())
 
     handle_env_def(env_dir, env_inventory_content.get("envDefinition"))
-    handle_param_sets(env_dir, env_inventory_content.get("paramSets"))
-    handle_credentials_2(env_dir, env_inventory_content.get("credentials"))
-    handle_resource_profiles(env_dir, env_inventory_content.get("resourceProfiles"))
-    handle_shared_template_variables(env_dir, env_inventory_content.get("sharedTemplateVariables"))
+
+    handle_items(env_dir, env_inventory_content.get("paramSets"), subdir=f"{INVENTORY}/parameters",
+                 schema="paramset.schema.json")
+    handle_items(env_dir, env_inventory_content.get("credentials"), subdir=f"{INVENTORY}/credentials",
+                 schema="credential.schema.json")
+    handle_items(env_dir, env_inventory_content.get("resourceProfiles"), subdir=f"{INVENTORY}/resource_profiles",
+                 schema="resource-profile.schema.json")
+    handle_items(env_dir, env_inventory_content.get("sharedTemplateVariables"),
+                 subdir=f"{INVENTORY}/shared-template-variables")
 
 
 if __name__ == "__main__":
