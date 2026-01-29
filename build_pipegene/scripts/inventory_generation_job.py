@@ -13,6 +13,12 @@ def is_inventory_generation_needed(is_template_test, inventory_params):
     if is_template_test:
         return False
 
+    env_names = inventory_params.get('ENV_NAMES')
+
+    if len(env_names.split("\n")) > 1:
+        raise ValueError(
+            f"Generating Inventories for multiple Environments in single pipeline is not supported. ENV_NAMES: {env_names}")
+
     env_inventory_init = inventory_params.get('ENV_INVENTORY_INIT') == 'true'
     env_specific_parameters = inventory_params.get('ENV_SPECIFIC_PARAMETERS')
     env_template_name = inventory_params.get('ENV_TEMPLATE_NAME')

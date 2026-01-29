@@ -166,14 +166,9 @@ def handle_items(env_dir: Path, items: list[dict], subdir: str, schema: str = No
     for item in items:
         place = Place(item["place"])
         action = Action(item["action"])
+        content = item["content"]
 
-        if "content" in item and "name" in item["content"]:
-            name = item["content"]["name"]
-            content = item["content"]
-        else:
-            name = item["name"]
-            content = item.get("content")
-
+        name = content["name"] if content.get("name") else item["name"]
         item_path = resolve_path(env_dir, place, subdir, name)
 
         if action is Action.CREATE_OR_REPLACE:
