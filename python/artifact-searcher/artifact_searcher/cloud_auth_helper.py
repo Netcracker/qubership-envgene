@@ -24,11 +24,27 @@ DEFAULT_SEARCHER_TIMEOUT = (30, 60)
 
 
 class CloudAuthHelper:
-    """Helper for V2 cloud registry authentication (AWS, GCP, Artifactory, Nexus)."""
+    """Helper to connect to cloud registries using V2 authentication.
+    
+    This class knows how to authenticate with different types of artifact registries:
+    - AWS CodeArtifact (uses AWS access keys)
+    - GCP Artifact Registry (uses service account JSON)
+    - Artifactory (uses username/password)
+    - Nexus (uses username/password or anonymous access)
+    
+    It creates a MavenArtifactSearcher configured for each specific provider.
+    """
 
     @staticmethod
     def resolve_auth_config(registry: Registry, artifact_type: str = "maven") -> Optional[AuthConfig]:
-        """Resolve authConfig from registry maven config reference."""
+        """Find the authentication settings for this registry.
+        
+        Each registry can have multiple authConfig entries (for different artifact types).
+        This looks up which authConfig to use based on what the maven_config references.
+        
+        Returns:
+            AuthConfig object with provider and credentials info, or None if not configured
+        """
         if artifact_type != "maven":
             return None
 
@@ -50,11 +66,17 @@ class CloudAuthHelper:
 
     @staticmethod
     def resolve_credentials(auth_config: AuthConfig, env_creds: Optional[Dict[str, dict]]) -> Optional[dict]:
-        """Resolve credentials from env_creds based on auth_config.credentials_id.
+        """Get the actual username/password or secrets from the credentials vault.
+        
+        The authConfig tells us the credentials ID to look up. This function finds
+        those credentials in the environment's credential store and extracts them.
+        
+        Special handling:
+        - Empty username/password = anonymous access (returns None)
+        - Different credential types: usernamePassword, secret (for GCP service accounts)
         
         Returns:
-            dict: Credential data if found and non-anonymous
-            None: For anonymous access (no credentialsId or empty username/password)
+            dict with username/password or secret, or None for anonymous access
         """
         cred_id = auth_config.credentials_id
         if not cred_id:
@@ -66,11 +88,12 @@ class CloudAuthHelper:
 
         cred_entry = env_creds[cred_id]
         
-        # Extract credential data from the new structure: {"type": "...", "data": {...}}
+        # Credentials can be structured as {"type": "usernamePassword", "data": {"username": "..."}}
+        # or as a flat dict {"username": "...", "password": "..."}
         cred_type = cred_entry.get("type") if isinstance(cred_entry, dict) else None
         cred_data = cred_entry.get("data", cred_entry) if isinstance(cred_entry, dict) else cred_entry
         
-        # Check for anonymous access (empty username/password for usernamePassword type)
+        # For Nexus/Artifactory: empty username+password means anonymous/public access
         if cred_type == "usernamePassword":
             username = cred_data.get("username", "")
             password = cred_data.get("password", "")
@@ -91,10 +114,12 @@ class CloudAuthHelper:
         
         logger.info(f"Resolved credentials for '{cred_id}' (type: {cred_type})")
 
-        # Validate required fields per provider
+        # Make sure we have the right credential format for each cloud provider
+        # AWS needs username (access key ID) and password (secret access key)
         if auth_config.provider == "aws":
             if "username" not in creds or "password" not in creds:
                 raise ValueError(f"AWS credentials must have 'username' and 'password'")
+        # GCP needs a service account JSON file (stored as 'secret')
         elif auth_config.provider == "gcp" and auth_config.auth_method == "service_account":
             if "secret" not in creds:
                 raise ValueError(f"GCP service_account credentials must have 'secret'")
@@ -103,7 +128,13 @@ class CloudAuthHelper:
 
     @staticmethod
     def _extract_repository_name(url: str) -> str:
-        """Extract repository name from registry URL."""
+        """Extract the repository name from a registry URL.
+        
+        Different providers have different URL patterns:
+        - AWS: https://domain.d.codeartifact.region.amazonaws.com/maven/repo-name/
+        - GCP: https://region-maven.pkg.dev/project/repo-name/
+        - Others: uses last path segment
+        """
         url = url.rstrip("/")
         # AWS CodeArtifact: .../maven/<repo>/...
         if "codeartifact" in url and "/maven/" in url:
@@ -120,7 +151,13 @@ class CloudAuthHelper:
     
     @staticmethod
     def _extract_region(url: str, auth_config: AuthConfig) -> str:
-        """Extract region from URL or auth_config. Prefers explicit config over URL extraction."""
+        """Figure out which cloud region to use.
+        
+        Tries these sources in order:
+        1. Explicit region in authConfig (if configured)
+        2. Extract from URL pattern (e.g., 'us-west-2.amazonaws.com')
+        3. Default to 'us-east-1' if can't determine
+        """
         if auth_config.provider == "aws" and auth_config.aws_region:
             return auth_config.aws_region
         aws_match = re.search(r'\.([a-z0-9-]+)\.amazonaws\.com', url)
@@ -134,10 +171,15 @@ class CloudAuthHelper:
 
     @staticmethod
     def create_maven_searcher(registry: Registry, env_creds: Optional[Dict[str, dict]]) -> 'MavenArtifactSearcher':
-        """Create configured MavenArtifactSearcher for the registry provider.
+        """Create a searcher object that knows how to find artifacts in this registry.
         
-        Provider auto-detection: If auth_config.provider is not specified, it will be
-        auto-detected from the registry URL.
+        This is the main entry point for V2 artifact searching. It:
+        1. Reads the registry configuration to determine the provider type
+        2. Loads the appropriate credentials from the vault
+        3. Creates and configures a MavenArtifactSearcher for that specific provider
+        
+        Returns:
+            Configured MavenArtifactSearcher ready to search for and download artifacts
         """
         if MavenArtifactSearcher is None:
             raise ImportError("qubership_pipelines_common_library not available")
@@ -157,11 +199,22 @@ class CloudAuthHelper:
         if provider not in ["aws", "gcp", "artifactory", "nexus"]:
             raise ValueError(f"Unsupported provider: {provider}")
 
-        # Resolve credentials (returns None for anonymous access)
+        # Nexus URLs need special handling:
+        # Download URLs use: http://nexus/repository/repo-name/...
+        # Search API uses:   http://nexus/service/rest/v1/search/...
+        # So we need to remove the /repository/ suffix before initializing the searcher
+        if provider == "nexus" and registry_url.endswith("/repository/"):
+            registry_url = registry_url[:-len("repository/")]
+            logger.info(f"Nexus: adjusted registry URL to {registry_url} for search API")
+
+        # Get the credentials (or None if anonymous access is allowed)
         creds = CloudAuthHelper.resolve_credentials(auth_config, env_creds)
+        
+        # Create the base searcher object - provider-specific config comes next
         searcher = MavenArtifactSearcher(registry_url, params={"timeout": DEFAULT_SEARCHER_TIMEOUT})
 
-        # AWS and GCP require credentials - cannot work anonymously
+        # Check if anonymous access is allowed for this provider type
+        # AWS and GCP APIs require authentication - they don't support anonymous access
         if provider in ["aws", "gcp"] and creds is None:
             raise ValueError(f"{provider.upper()} requires credentials - anonymous access not supported")
 
@@ -172,12 +225,20 @@ class CloudAuthHelper:
         elif provider == "artifactory":
             return CloudAuthHelper._configure_artifactory(searcher, creds)
         else:  # nexus
-            return CloudAuthHelper._configure_nexus(searcher, creds)
+            return CloudAuthHelper._configure_nexus(searcher, creds, registry)
 
     @staticmethod
     def _configure_aws(searcher: 'MavenArtifactSearcher', auth_config: AuthConfig,
                        creds: dict, registry_url: str) -> 'MavenArtifactSearcher':
-        """Configure MavenArtifactSearcher for AWS CodeArtifact using username/password creds."""
+        """Set up the searcher to work with AWS CodeArtifact.
+        
+        AWS needs:
+        - Access key (stored as username)
+        - Secret key (stored as password)
+        - Domain name (from authConfig)
+        - Region (from authConfig or URL)
+        - Repository name (from URL)
+        """
         if not auth_config.aws_domain:
             raise ValueError("AWS auth requires aws_domain in authConfig")
         region = CloudAuthHelper._extract_region(registry_url, auth_config)
@@ -194,7 +255,14 @@ class CloudAuthHelper:
     @staticmethod
     def _configure_gcp(searcher: 'MavenArtifactSearcher', auth_config: AuthConfig,
                        creds: dict, registry_url: str) -> 'MavenArtifactSearcher':
-        """Configure MavenArtifactSearcher for GCP Artifact Registry using service account JSON."""
+        """Set up the searcher to work with GCP Artifact Registry.
+        
+        GCP needs:
+        - Service account JSON (stored as secret)
+        - Project name (from authConfig or URL)
+        - Region (from URL, like 'us-central1')
+        - Repository name (from URL)
+        """
         if auth_config.auth_method != "service_account":
             raise ValueError(f"GCP auth_method '{auth_config.auth_method}' not supported")
         if not auth_config.gcp_reg_project:
@@ -215,7 +283,11 @@ class CloudAuthHelper:
 
     @staticmethod
     def _configure_artifactory(searcher: 'MavenArtifactSearcher', creds: Optional[dict]) -> 'MavenArtifactSearcher':
-        """Configure Artifactory authentication. Supports anonymous access if creds is None."""
+        """Set up the searcher to work with Artifactory.
+        
+        Artifactory is simpler - just username and password.
+        Can work anonymously if the repository allows public access.
+        """
         if creds is None:
             logger.info("Configuring Artifactory with anonymous access (no credentials)")
             return searcher.with_artifactory(username=None, password=None)
@@ -226,8 +298,16 @@ class CloudAuthHelper:
         )
 
     @staticmethod
-    def _configure_nexus(searcher: 'MavenArtifactSearcher', creds: Optional[dict]) -> 'MavenArtifactSearcher':
-        """Configure Nexus authentication. Supports anonymous access if creds is None."""
+    def _configure_nexus(searcher: 'MavenArtifactSearcher', creds: Optional[dict], registry: Registry) -> 'MavenArtifactSearcher':
+        """Set up the searcher to work with Nexus Repository Manager.
+        
+        Nexus is simple - just username and password, or anonymous if allowed.
+        
+        Important: The MavenArtifactSearcher library searches across ALL repositories
+        in Nexus (we can't limit to a specific repository). This is a library limitation,
+        not a bug in our code. Nexus will return results from any repository the user
+        has access to.
+        """
         if creds is None:
             logger.info("Configuring Nexus with anonymous access (no credentials)")
             return searcher.with_nexus(username=None, password=None)
