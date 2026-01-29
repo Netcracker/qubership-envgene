@@ -143,11 +143,11 @@ def _parse_snapshot_version(
                 f"[Task {task_id}] [Application: {app.name}: {version}] - Resolved snapshot version '{resolved}' from old-style metadata")
             return resolved
         
-        logger.warning(f"[Task {task_id}] [Application: {app.name}: {version}] - <snapshot> found but missing timestamp or buildNumber, will try direct SNAPSHOT filename")
-        return version
+        logger.warning(f"[Task {task_id}] [Application: {app.name}: {version}] - <snapshot> found but missing timestamp or buildNumber")
+        return None
     
-    logger.warning(f"[Application: {app.name}: {version}] - No <snapshotVersions> or <snapshot> found in metadata, will try direct SNAPSHOT filename")
-    return version
+    logger.warning(f"[Application: {app.name}: {version}] - No <snapshotVersions> or <snapshot> found in metadata")
+    return None
 
 
 def version_to_folder_name(version: str) -> str:
