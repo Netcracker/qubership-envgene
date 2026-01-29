@@ -17,7 +17,6 @@ class MockResponse:
     "index_path",
     [
         ("/repository/"),
-        ("/service/rest/repository/browse/"),
     ],
 )
 async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch):
