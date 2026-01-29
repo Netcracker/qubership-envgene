@@ -2,7 +2,7 @@ from io import StringIO
 from pprint import pformat
 from .yaml_helper import yaml
 import copy
-import re
+from .logger import logger
 
 def merge_lists(list1, list2) :
     if len(list2) > 0 :
@@ -118,12 +118,16 @@ def split_multi_value_param(param: str)-> list[str]:
         )
 
     if has_comma:
+        logger.info(f"env names {param} has comma as delimiter. splitting it")
         parts = param.split(',')
     elif has_semicolon:
+        logger.info(f"env names {param} has semicolon as delimiter. splitting it")
         parts = param.split(';')
     elif has_space:
+        logger.info(f"env names {param} has space as delimiter. splitting it")
         parts = param.split()
     elif has_newline:
+        logger.info(f"env names {param} has newline as delimiter. splitting it")
         parts = param.splitlines()
     else:
         return [param]
