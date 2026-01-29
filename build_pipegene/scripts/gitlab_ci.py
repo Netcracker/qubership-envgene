@@ -59,6 +59,7 @@ def build_pipeline(params: dict):
     env_names = split_multi_value_param(params['ENV_NAMES'])
     for env in env_names:
         logger.info(f'----------------start processing for {env}---------------------')
+        logger.info(f'----------------params for  {env} are {params}---------------------')
         ci_project_dir = project_dir
 
         if params['IS_TEMPLATE_TEST']:
