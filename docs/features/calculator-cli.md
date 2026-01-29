@@ -1,4 +1,3 @@
-
 # Calculator CLI
 
 - [Calculator CLI](#calculator-cli)
@@ -25,6 +24,10 @@
       - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
       - [\[Version 2.0\] Sensitive parameters processing](#version-20-sensitive-parameters-processing)
       - [\[Version 2.0\] No SBOMs Mode](#version-20-no-sboms-mode)
+      - [\[Version 2.0\] Parameters Priority](#version-20-parameters-priority)
+      - [\[Version 2.0\] Traceability Comments](#version-20-traceability-comments)
+        - [Parameter Source to Comment Mapping](#parameter-source-to-comment-mapping)
+        - [Rules for Adding Comments](#rules-for-adding-comments)
       - [\[Version 2.0\] Deployment Parameter Context](#version-20-deployment-parameter-context)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml)
           - [\[Version 2.0\] Predefined `deployment-parameters.yaml` parameters](#version-20-predefined-deployment-parametersyaml-parameters)
@@ -95,18 +98,19 @@
 
 Below is a **complete** list of attributes
 
-| Attribute | Type | Mandatory | Description | Default | Example |
-|---|---|---|---|---|--|
-| `--env-id`/`-e` | string | yes | Environment ID in `<cluster-name>/<environment-name>` notation | N/A | `cluster/platform-00` |
-| `--envs-path`/`-ep` | string | yes | Path to `/environments` folder | N/A |  `/environments` |
-| `--sboms-path`/`-sp`| string | no | Path to the folder with Application SBOMs. If the attribute is not provided, generation occurs in [No SBOMs Mode](#version-20-no-sboms-mode) | N/A |`/sboms` |
-| `--sd-path`/`-sdp`| string | yes | Path to the Solution Descriptor | N/A | `/environments/cluster/platform-00/Inventory/solution-descriptor/sd.yaml` |
-| `--registries`/`-r`| string | no | Required when `--sd-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)   | N/A | `/configuration/registry.yml` |
-| `--output`/`-o` | string | yes | Folder where the result will be put by Calculator command-line tool | N/A | `/environments/cluster/platform-00/effective-set` |
-| `--effective-set-version`/`-esv` | string | no | The version of the effective set to be generated. Available options are `v1.0` and `v2.0` | `v2.0` | `v1.0` |
-| `--pipeline-consumer-specific-schema-path`/`-pcssp` | string | no | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided  | N/A |  |
-| `--extra_params`/`-ex` | string | no | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided | N/A | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000` |
-| `--app_chart_validation`/`-acv` | boolean | no | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped | `true` | `false` |
+| Attribute                                           | Type    | Mandatory | Description                                                                                                                                                                                                                   | Default | Example                                                                              |
+|-----------------------------------------------------|---------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|--------------------------------------------------------------------------------------|
+| `--env-id`/`-e`                                     | string  | yes       | Environment ID in `<cluster-name>/<environment-name>` notation                                                                                                                                                                | N/A     | `cluster/platform-00`                                                                |
+| `--envs-path`/`-ep`                                 | string  | yes       | Path to `/environments` folder                                                                                                                                                                                                | N/A     |  `/environments`                                                                     |
+| `--sboms-path`/`-sp`                                | string  | no        | Path to the folder with Application SBOMs. If the attribute is not provided, generation occurs in [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                  | N/A     | `/sboms`                                                                             |
+| `--sd-path`/`-sdp`                                  | string  | yes       | Path to the Solution Descriptor                                                                                                                                                                                               | N/A     | `/environments/cluster/platform-00/Inventory/solution-descriptor/sd.yaml`            |
+| `--registries`/`-r`                                 | string  | no        | Required when `--sd-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                                            | N/A     | `/configuration/registry.yml`                                                        |
+| `--output`/`-o`                                     | string  | yes       | Folder where the result will be put by Calculator command-line tool                                                                                                                                                           | N/A     | `/environments/cluster/platform-00/effective-set`                                    |
+| `--effective-set-version`/`-esv`                    | string  | no        | The version of the effective set to be generated. Available options are `v1.0` and `v2.0`                                                                                                                                     | `v2.0`  | `v1.0`                                                                               |
+| `--pipeline-consumer-specific-schema-path`/`-pcssp` | string  | no        | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided                                                                                               | N/A     |                                                                                      |
+| `--extra_params`/`-ex`                              | string  | no        | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided                                                                                               | N/A     | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000`                         |
+| `--app_chart_validation`/`-acv`                     | boolean | no        | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped | `true`  | `false`                                                                              |
+| `--enable-traceability`/`-etr`                      | boolean | no        | Determines whether [traceability](#version-20-traceability-comments) will be enabled. If `true`, traceability comments will be added. If `false`, they will be omitted.                                                       | `false` | `true`                                                                               |
 
 ### Registry Configuration
 
@@ -479,6 +483,123 @@ The Calculator generates only the following contexts:
 
 These contexts are used as a source exclusively from the environment instance.
 
+#### [Version 2.0] Parameters Priority
+
+Parameters in the Effective Set come from different sources:
+
+1. User-defined in the [Environment Instance](/docs/envgene-objects.md#environment-instance-objects)
+2. [Application SBOM](/docs/sbom.md#application-sbom)
+3. Generated by the calculator
+4. Calculator extra parameters (`--extra_params`)
+5. Calculator defaults
+
+Parameters can be set at different levels:
+
+1. Service level
+2. Application level
+3. Namespace level
+4. Cloud level
+5. Tenant level
+
+If the same parameter key is set in multiple sources or levels, the Calculator uses the following priority (from highest to lowest):
+
+1. User-defined in [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override-in-instance) of the Environment Instance
+2. Service level defined in Resource Profile Baseline in Application SBOM
+3. Service level defined in other Application SBOM attributes
+4. Calculator-generated at the Service level
+5. User-defined at the [Application](/docs/envgene-objects.md#application) level in Environment Instance
+6. Application level defined in Application SBOM
+7. Calculator-generated at the Application level
+8. User-defined at the [Namespace](/docs/envgene-objects.md#namespace) level in Environment Instance
+9. Namespace level defined in Application SBOM
+10. Calculator-generated at the Namespace level
+11. User-defined at the [Cloud](/docs/envgene-objects.md#cloud) level in Environment Instance
+12. Cloud level defined in Application SBOM
+13. Calculator-generated at the Cloud level
+14. User-defined at the [Tenant](/docs/envgene-objects.md#tenant) level in Environment Instance
+15. Calculator extra parameters (`--extra_params`)
+16. Default values by calculator
+
+For example, if a user sets `BASELINE_PROJ` at the Namespace level, this value will override the value calculated by the calculator. If `BASELINE_PROJ` is set at the cloud level, it will be overridden by calculator-generated values at Namespace or Application levels.
+
+Not every parameter in the Effective Set can be overridden. Overriding service-level parameters is only possible via [resource profile override](/docs/envgene-objects.md#resource-profile-override-in-instance).
+
+> [!NOTE]
+> If a complex parameter is set, the value from the higher-priority source **completely replaces** the lower-priority one; merging is not performed.
+
+#### [Version 2.0] Traceability Comments
+
+To make it clear where each parameter in the Effective Set comes from, comments are added next to every value showing its source.
+
+The CLI flag [`--enable-traceability`](#calculator-command-line-tool-execution-attributes) enables these comments in Effective Set.
+
+##### Parameter Source to Comment Mapping
+
+| Parameter Source                                   | Comment                                    | Example                                                                                      |
+|----------------------------------------------------|--------------------------------------------|----------------------------------------------------------------------------------------------|
+| Environment Instance, Tenant                       | `# tenant`                                 | `GITLAB_URL: "https://git.qibership.org" # tenant`                                           |
+| Environment Instance, Cloud                        | `# cloud`                                  | `CLOUD_API_HOST: "https://api.example.com" # cloud`                                          |
+| Environment Instance, Namespace                    | `# namespace: <name>`                      | `NAMESPACE_NAME: "env-1-core" # namespace: env-1-core`                                       |
+| Environment Instance, Application                  | `# application: <name>`                    | `APP_FEATURE_FLAG: true # application: my-app`                                               |
+| Environment Instance, Resource Profile Override    | `# resource-profile-override: <name>`      | `CPU_LIMIT: "500m" # resource-profile-override: perf-small`                                  |
+| Environment Instance, Composite Structure          | `# composite-structure`                    | `composite_structure: # composite-structure`                                                 |
+| Environment Instance, BG Domain                    | `# bg-domain`                              | `bg_domain: # bg-domain`                                                                     |
+| Application SBOM                                   | `# sbom`                                   | `deploy_param: '' # sbom`                                                                    |
+| Application SBOM, Resource Profile Baseline        | `# sbom, resource-profile-baseline: <name>`| `PROFILE_BASELINE: "dev" # sbom, resource-profile-baseline: dev`                             |
+| Calculated by calculator                           | `# envgene calculated`                     | `PUBLIC_GATEWAY_URL: "https://public-gateway-bss.qubership.org" # envgene calculated`        |
+| Calculator `--extra_params`                        | `# envgene pipeline parameter`             | `DEPLOYMENT_SESSION_ID: "7e9f5f54-4be2-4fbd-a267-19e78d09810d" # envgene pipeline parameter` |
+| Default value by calculator                        | `# envgene default`                        | `MANAGED_BY: "argocd" # envgene default`                                                     |
+
+##### Rules for Adding Comments
+
+1. The comment is added after a single space following the parameter value on the same line for non-multiline values.
+
+    ```yaml
+    SECURITY_POLICY: strict # cloud
+    ```
+
+2. The comment is added on the previous line above the parameter for multiline values (using `|` or `>`).
+
+    ```yaml
+    # cloud
+    CS_CONTENT_SECURITY_POLICY: |
+      {"CONTENT_SECURITY_POLICY":"default-src..."}
+    ```
+
+3. Comments are added in all Effective Set contexts.
+
+4. Comments are not added in `mapping.yaml` files.
+
+5. The source is determined by [priority](#version-20-parameters-priority): if a parameter is defined in multiple sources, the source with the highest priority is used.
+
+6. A parameter is considered calculated by the calculator if its value has been changed by the calculator (transformed, generated, obtained via concatenation, etc.)
+
+7. For complex parameters calculated by the calculator, the comment is added only to the root parameter.
+
+8. Complex parameters (objects, lists) are processed recursively, with each item receiving a comment based on its own source.
+
+    ```yaml
+    servers:
+      - "server1.example.com" # cloud
+      - "server2.example.com" # namespace: env-1
+    
+    servers:
+      name: "server1" # cloud
+      host: "host1" # cloud
+      port: 8080 # namespace: env-1
+    ```
+
+9. Comments are not added to YAML anchors/aliases (`&id001`, `*id001`, `<<: *id001`). But for regular keys/values filled in via anchors/aliases, still show their source as a comment:
+
+    ```yaml
+    global: &id001
+      key1: value1 # cloud
+      key2: value2 # cloud
+    service1:
+      <<: *id001
+      key3: value3 # namespace: env-1-core
+    ```
+
 #### [Version 2.0] Deployment Parameter Context
 
 These parameters establish a dedicated rendering context exclusively applied during application (re)deployment operations for Helm manifest rendering.
@@ -555,7 +676,7 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 | `GATEWAY_URL`                     | yes       | string  | **Deprecated**. Internal Gateway URL                                                                                                                                   | `http://internal-gateway-service:8080`         | N/A                                                                                          |
 | `STATIC_CACHE_SERVICE_ROUTE_HOST` | yes       | string  | **Deprecated**. Constructed as static-cache-service-`NAMESPACE`.`CLOUD_PUBLIC_HOST`                                                                                    | None                                           | N/A                                                                                          |
 | `BUILD_TAG_NEW`                   | yes       | string  | TBD                                                                                                                                                                    | `keycloak-database`                            | N/A                                                                                          |
-| `SSL_SECRET`                      | yes       | string  | Specifies the name of the Kubernetes secret that holds the SSL certificate bundle. This parameter can be explicitly set by the user at the `Tenant`, `Cloud`, `Namespace`, or `Application` level. If not provided, the default value will be used. | `defaultsslcertificate`                        | N/A                                                                                          |
+| `SSL_SECRET`                      | yes       | string  | Specifies the name of the Kubernetes secret that holds the SSL certificate bundle. This parameter can be explicitly set by the user at the `Tenant`, `Cloud`, `Namespace`, or `Application` level. If not provided, the default value will be used. | `defaultsslcertificate`                        | N/A             |
 | `CERTIFICATE_BUNDLE_MD5SUM`       | no        | string  | Hash sum of the value provided in `DEFAULT_SSL_CERTIFICATES_BUNDLE`, calculated using the MD5 algorithm                                                                | None                                           | N/A                                                                                          |
 | `ORIGIN_NAMESPACE`                | yes       | string  | The name of the origin namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, this defaults to the value of `${NAMESPACE}`     | `${NAMESPACE}`                                 | N/A                                                                                          |
 | `PEER_NAMESPACE`                  | yes       | string  | The name of the peer namespace for the [BG Domain](/docs/envgene-objects.md#bg-domain). If no BG Domain is present, this defaults to the value of `${NAMESPACE}`       | `${NAMESPACE}`                                 | N/A                                                                                          |
@@ -566,8 +687,8 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 | `BASELINE_PROJ`                   | no        | string  | **Deprecated**                                                                                                                                                         | TBD                                            | N/A                                                                                          |
 | `PUBLIC_GATEWAY_URL`              | yes       | string  | URL of the public gateway for the namespace. The value is calculated using `${ORIGIN_NAMESPACE}` to have the same value for Origin, Peer and Controller namespaces in case when namespace belongs to [BG Domain](/docs/envgene-objects.md#bg-domain). Computed as `${CLOUD_PROTOCOL}://${PUBLIC_GATEWAY_ROUTE_HOST}` if `${PUBLIC_GATEWAY_ROUTE_HOST}` is set; otherwise, `${CLOUD_PROTOCOL}://public-gateway-${ORIGIN_NAMESPACE}.${CLOUD_PUBLIC_HOST}`                                                           | `${CLOUD_PROTOCOL}://public-gateway-${ORIGIN_NAMESPACE}.${CLOUD_PUBLIC_HOST}`  | N/A |
 | `PRIVATE_GATEWAY_URL`             | yes       | string  | URL of the private gateway for the namespace. The value is calculated using `${ORIGIN_NAMESPACE}` to have the same value for Origin, Peer and Controller namespaces in case when namespace belongs to [BG Domain](/docs/envgene-objects.md#bg-domain). Computed as `${CLOUD_PROTOCOL}://${PRIVATE_GATEWAY_ROUTE_HOST}` if `${PRIVATE_GATEWAY_ROUTE_HOST}` is set; otherwise, `${CLOUD_PROTOCOL}://private-gateway-${ORIGIN_NAMESPACE}.${CLOUD_PUBLIC_HOST}`                                                       | `${CLOUD_PROTOCOL}://private-gateway-${ORIGIN_NAMESPACE}.${CLOUD_PUBLIC_HOST}` | N/A |
-| `PUBLIC_IDENTITY_PROVIDER_URL`    | yes       | string  | URL of the public gateway for the IDP namespace. For namespaces in a [Composite Structure](/docs/envgene-objects.md#composite-structure), this points to the baseline namespace’s public gateway even if the current namespace is a satellite. Computed as URL of the public gateway where the IDP is published: Use the value of `PUBLIC_IDENTITY_PROVIDER_URL` from the `BASELINE_ORIGIN` namespace if `BASELINE_ORIGIN` is defined; otherwise, use `${PUBLIC_GATEWAY_URL}` from the current namespace          | `${PUBLIC_GATEWAY_URL}`                                                        | N/A |
-| `PRIVATE_IDENTITY_PROVIDER_URL`   | yes       | string  | URL of the private gateway for the IDP namespace. For namespaces in a [Composite Structure](/docs/envgene-objects.md#composite-structure), this points to the baseline namespace’s private gateway even if the current namespace is a satellite. Computed as the URL of the private gateway where the IDP is published: Use the value of `PRIVATE_IDENTITY_PROVIDER_URL` from the `BASELINE_ORIGIN` namespace if `BASELINE_ORIGIN` is defined; otherwise, use `${PRIVATE_GATEWAY_URL}` from the current namespace | `${PRIVATE_GATEWAY_URL}`                                                       | N/A |
+| `PUBLIC_IDENTITY_PROVIDER_URL`    | yes       | string  | URL of the public gateway for the IDP namespace. For namespaces in a [Composite Structure](/docs/envgene-objects.md#composite-structure), this points to the baseline namespace's public gateway even if the current namespace is a satellite. Computed as URL of the public gateway where the IDP is published: Use the value of `PUBLIC_IDENTITY_PROVIDER_URL` from the `BASELINE_ORIGIN` namespace if `BASELINE_ORIGIN` is defined; otherwise, use `${PUBLIC_GATEWAY_URL}` from the current namespace          | `${PUBLIC_GATEWAY_URL}`                                                        | N/A |
+| `PRIVATE_IDENTITY_PROVIDER_URL`   | yes       | string  | URL of the private gateway for the IDP namespace. For namespaces in a [Composite Structure](/docs/envgene-objects.md#composite-structure), this points to the baseline namespace's private gateway even if the current namespace is a satellite. Computed as the URL of the private gateway where the IDP is published: Use the value of `PRIVATE_IDENTITY_PROVIDER_URL` from the `BASELINE_ORIGIN` namespace if `BASELINE_ORIGIN` is defined; otherwise, use `${PRIVATE_GATEWAY_URL}` from the current namespace | `${PRIVATE_GATEWAY_URL}`                                                       | N/A |
 
 > [!IMPORTANT]
 > Parameters whose keys match the name of one of the services must be excluded from this file
@@ -702,66 +823,66 @@ Below are the descriptions of predefined parameters.
 
 Common Predefined Parameters:
 
-| Attribute | Mandatory | Type | Description | Default | Source in Application SBOM |
-|---|---|---|---|---|---|
-| `APPLICATION_NAME` | yes | string | Name of the application | None | `.metadata.component.name` |
-| `DEPLOYMENT_SESSION_ID` | yes | string | Effective Set calculation operation ID  | None | Taken from input parameter  `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM) |
-| `MANAGED_BY` | yes | string | Deployer type. Always `argocd` | `argocd` | None |
+| Attribute              | Mandatory | Type   | Description                             | Default   | Source in Application SBOM                                                                   |
+|------------------------|-----------|--------|-----------------------------------------|-----------|----------------------------------------------------------------------------------------------|
+| `APPLICATION_NAME`     | yes       | string | Name of the application                 | None      | `.metadata.component.name`                                                                   |
+| `DEPLOYMENT_SESSION_ID`| yes       | string | Effective Set calculation operation ID  | None      | Taken from input parameter `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM) |
+| `MANAGED_BY`           | yes       | string | Deployer type. Always `argocd`          | `argocd`  | None                                                                                         |
 
 **Image Type** Service Predefined Parameters:
 
-| Attribute | Mandatory | Type | Description | Default | Source in Application SBOM |
-|---|---|---|---|---|---|
-| `artifacts` | yes | list | always `[]` | `[]` | None |
-| `deploy_param` | yes | string | None | `""` | `.components[?name=<service-name>].properties[?name=deploy_param].value` |
-| `docker_digest` | yes | string | Docker image checksum for the service, calculated using `SHA-256` algorithm | `""` | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].hashes[0].content` |
-| `docker_registry` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=docker_registry].value` |
-| `docker_repository_name` | yes | string | The registry repository where the Docker image is located | None | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].group` |
-| `docker_tag` | yes | string | Docker image version | None | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].version` |
-| `full_image_name` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=full_image_name].value` |
-| `git_branch` | yes | string | Source code branch name used for service build | None | `.components[?name=<service-name>].properties[?name=git_branch].value` |
-| `git_revision` | yes | string | Git revision of the repository used for the build | None | `.components[?name=<service-name>].properties[?name=git_revision].value` |
-| `git_url` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=git_url].value` |
-| `image` | yes | string | The same as `full_image_name` | None | `.components[?name=<service-name>].properties[?name=full_image_name].value` |
-| `image_name` | yes | string | Docker image name | None | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].name` |
-| `image_type` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=image_type].value` |
-| `name` | yes | string | Service name | None | `<service-name>` |
-| `promote_artifacts` | yes | bool | None | None | `.components[?name=<service-name>].properties[?name=promote_artifacts].value` |
-| `qualifier` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=qualifier].value` |
-| `version` | yes | string | Service version | None | `.components[?name=<service-name>].version` |
+| Attribute               | Mandatory | Type   | Description                                                                  | Default | Source in Application SBOM                                                                                |
+|-------------------------|-----------|--------|------------------------------------------------------------------------------|---------|-----------------------------------------------------------------------------------------------------------|
+| `artifacts`             | yes       | list   | always `[]`                                                                  | `[]`    | None                                                                                                      |
+| `deploy_param`          | yes       | string | None                                                                         | `""`    | `.components[?name=<service-name>].properties[?name=deploy_param].value`                                  |
+| `docker_digest`         | yes       | string | Docker image checksum for the service, calculated using `SHA-256` algorithm  | `""`    | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].hashes[0].content` |
+| `docker_registry`       | yes       | string | None                                                                         | None    | `.components[?name=<service-name>].properties[?name=docker_registry].value`                               |
+| `docker_repository_name`| yes       | string | The registry repository where the Docker image is located                    | None    | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].group`             |
+| `docker_tag`            | yes       | string | Docker image version                                                         | None    | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].version`           |
+| `full_image_name`       | yes       | string | None                                                                         | None    | `.components[?name=<service-name>].properties[?name=full_image_name].value`                               |
+| `git_branch`            | yes       | string | Source code branch name used for service build                               | None    | `.components[?name=<service-name>].properties[?name=git_branch].value`                                    |
+| `git_revision`          | yes       | string | Git revision of the repository used for the build                            | None    | `.components[?name=<service-name>].properties[?name=git_revision].value`                                  |
+| `git_url`               | yes       | string | None                                                                         | None    | `.components[?name=<service-name>].properties[?name=git_url].value`                                       |
+| `image`                 | yes       | string | The same as `full_image_name`                                                | None    | `.components[?name=<service-name>].properties[?name=full_image_name].value`                               |
+| `image_name`            | yes       | string | Docker image name                                                            | None    | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].name`              |
+| `image_type`            | yes       | string | None                                                                         | None    | `.components[?name=<service-name>].properties[?name=image_type].value`                                    |
+| `name`                  | yes       | string | Service name                                                                 | None    | `<service-name>`                                                                                          |
+| `promote_artifacts`     | yes       | bool   | None                                                                         | None    | `.components[?name=<service-name>].properties[?name=promote_artifacts].value`                             |
+| `qualifier`             | yes       | string | None                                                                         | None    | `.components[?name=<service-name>].properties[?name=qualifier].value`                                     |
+| `version`               | yes       | string | Service version                                                              | None    | `.components[?name=<service-name>].version`                                                               |
 
 **Config Type** Service Predefined Parameters:
 
-| Attribute                    | Mandatory | Type     | Description                                                                                                                                                                                                                                                                     | Default | Source in Application SBOM                                                                                                                    |
-|------------------------------|-----------|----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------|
-| `artifact`                   | no        | string   | [Primary Service Artifact](#version-20-primary-service-artifact)                                                                                                                                                                                                                | None    | None                                                                                                                                          |
-| `artifact.artifactId`        | no        | string   | artifact ID of [Primary Service Artifact](#version-20-primary-service-artifact)                                                                                                                                                                                                 | None    | `<primary-service-artifact>.name`                                                                                                             |
-| `artifact.groupId`           | no        | string   | group ID of [Primary Service Artifact](#version-20-primary-service-artifact)                                                                                                                                                                                                    | None    | `<primary-service-artifact>.group`                                                                                                            |
-| `artifact.version`           | no        | string   | version of [Primary Service Artifact](#version-20-primary-service-artifact)                                                                                                                                                                                                     | None    | `<primary-service-artifact>.version`                                                                                                          |
-| `artifacts`                  | yes       | list     | This section defines microservice artifacts. Artifacts are only populated for services/SBOM components that meet [specified conditions](#version-20-service-artifacts). All other cases should return `[]`                                                                      | `[]`    | None                                                                                                                                          |
-| `artifacts[].artifact_id`    | yes       | string   | always `''`                                                                                                                                                                                                                                                                     | `''`    | None                                                                                                                                          |
-| `artifacts[].artifact_path`  | yes       | string   | always `''`                                                                                                                                                                                                                                                                     | `''`    | None                                                                                                                                          |
-| `artifacts[].artifact_type`  | yes       | string   | always `''`                                                                                                                                                                                                                                                                     | `''`    | None                                                                                                                                          |
-| `artifacts[].classifier`     | yes       | string   | None                                                                                                                                                                                                                                                                            | None    | `.components[?name=<service-name>].components[].properties[?name=classifier].value`                                                           |
-| `artifacts[].deploy_params`  | yes       | string   | always `''`                                                                                                                                                                                                                                                                     | `''`    | None                                                                                                                                          |
-| `artifacts[].gav`            | yes       | string   | always `''`                                                                                                                                                                                                                                                                     | `''`    | None                                                                                                                                          |
-| `artifacts[].group_id`       | yes       | string   | always `''`                                                                                                                                                                                                                                                                     | `''`    | None                                                                                                                                          |
-| `artifacts[].id`             | yes       | string   | GAV coordinates of the artifact. Constructed by concatenating the `group`, `name`, and `version` attributes using `:` as separator                                                                                                                                              | None    | `.components[?name=<service-name>].components[].group`:`.components[?name=<service-name>].components[].name`:`.components[?name=<service-name>].components[].version` |
-| `artifacts[].name`           | yes       | string   | Constructed by concatenating the `name`, `version` and `type` attributes using `-` and `.` as separator                                                                                                                                                                         | None    | `.components[?name=<service-name>].components[].name`-`.components[?name=<service-name>].components[].version`.`.components[?name=<service-name>].components[].properties[?name=type].value` |
-| `artifacts[].repository`     | yes       | string   | always `''`                                                                                                                                                                                                                                                                     | `''`    | None                                                                                                                                          |
-| `artifacts[].type`           | yes       | string   | None                                                                                                                                                                                                                                                                            | None    | `.components[?name=<service-name>].components[].properties[?name=type].value`                                                                 |
-| `artifacts[].url`            | yes       | string   | always `''`                                                                                                                                                                                                                                                                     | `''`    | None                                                                                                                                          |
-| `artifacts[].version`        | yes       | string   | always `''`                                                                                                                                                                                                                                                                     | `''`    | None                                                                                                                                          |
-| `build_id_dtrust`            | yes       | string   | None                                                                                                                                                                                                                                                                            | None    | `.components[?name=<service-name>].components[].properties[?name=build_id_dtrust].value`                                                      |
-| `git_branch`                 | yes       | string   | Source code branch name used for service build                                                                                                                                                                                                                                  | None    | `.components[?name=<service-name>].properties[?name=git_branch].value`                                                                        |
-| `git_revision`               | yes       | string   | Git revision of the repository used for the build                                                                                                                                                                                                                               | None    | `.components[?name=<service-name>].properties[?name=git_revision].value`                                                                      |
-| `git_url`                    | yes       | string   | None                                                                                                                                                                                                                                                                            | None    | `.components[?name=<service-name>].components[].properties[?name=git_url].value`                                                              |
-| `maven_repository`           | yes       | string   | None                                                                                                                                                                                                                                                                            | None    | `.components[?name=<service-name>].components[].properties[?name=maven_repository].value`                                                     |
-| `name`                       | yes       | string   | Service name                                                                                                                                                                                                                                                                    | None    | `<service-name>`                                                                                                                              |
-| `service_name`               | yes       | string   | Service name                                                                                                                                                                                                                                                                    | None    | `<service-name>`                                                                                                                              |
-| `tArtifactNames`             | yes       | hashmap  | This section defines microservice ZIP artifacts. Artifacts are only populated for services/SBOM components that meet [specified conditions](#version-20-service-artifacts). All other cases should return `{}` Described in [`tArtifactNames`](#version-20-tartifactnames) | `{}`    | None                                                                                                                                               |
-| `type`                       | no        | string   | None                                                                                                                                                                                                                                                                            | None    | `.components[?name=<service-name>].components[].properties[?name=type].value`                                                                 |
-| `version`                    | yes       | string   | Service version                                                                                                                                                                                                                                                                 | None    | `.components[?name=<service-name>].version`                                                                                                   |
+| Attribute                   | Mandatory | Type     | Description                                                                                                                                                                                                                                                                | Default | Source in Application SBOM                                                                                                                    |
+|-----------------------------|-----------|----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------|
+| `artifact`                  | no        | string   | [Primary Service Artifact](#version-20-primary-service-artifact)                                                                                                                                                                                                           | None    | None                                                                                                                                          |
+| `artifact.artifactId`       | no        | string   | artifact ID of [Primary Service Artifact](#version-20-primary-service-artifact)                                                                                                                                                                                            | None    | `<primary-service-artifact>.name`                                                                                                             |
+| `artifact.groupId`          | no        | string   | group ID of [Primary Service Artifact](#version-20-primary-service-artifact)                                                                                                                                                                                               | None    | `<primary-service-artifact>.group`                                                                                                            |
+| `artifact.version`          | no        | string   | version of [Primary Service Artifact](#version-20-primary-service-artifact)                                                                                                                                                                                                | None    | `<primary-service-artifact>.version`                                                                                                          |
+| `artifacts`                 | yes       | list     | This section defines microservice artifacts. Artifacts are only populated for services/SBOM components that meet [specified conditions](#version-20-service-artifacts). All other cases should return `[]`                                                                 | `[]`    | None                                                                                                                                          |
+| `artifacts[].artifact_id`   | yes       | string   | always `''`                                                                                                                                                                                                                                                                | `''`    | None                                                                                                                                          |
+| `artifacts[].artifact_path` | yes       | string   | always `''`                                                                                                                                                                                                                                                                | `''`    | None                                                                                                                                          |
+| `artifacts[].artifact_type` | yes       | string   | always `''`                                                                                                                                                                                                                                                                | `''`    | None                                                                                                                                          |
+| `artifacts[].classifier`    | yes       | string   | None                                                                                                                                                                                                                                                                       | None    | `.components[?name=<service-name>].components[].properties[?name=classifier].value`                                                           |
+| `artifacts[].deploy_params` | yes       | string   | always `''`                                                                                                                                                                                                                                                                | `''`    | None                                                                                                                                          |
+| `artifacts[].gav`           | yes       | string   | always `''`                                                                                                                                                                                                                                                                | `''`    | None                                                                                                                                          |
+| `artifacts[].group_id`      | yes       | string   | always `''`                                                                                                                                                                                                                                                                | `''`    | None                                                                                                                                          |
+| `artifacts[].id`            | yes       | string   | GAV coordinates of the artifact. Constructed by concatenating the `group`, `name`, and `version` attributes using `:` as separator                                                                                                                                         | None    | `.components[?name=<service-name>].components[].group`:`.components[?name=<service-name>].components[].name`:`.components[?name=<service-name>].components[].version` |
+| `artifacts[].name`          | yes       | string   | Constructed by concatenating the `name`, `version` and `type` attributes using `-` and `.` as separator                                                                                                                                                                    | None    | `.components[?name=<service-name>].components[].name`-`.components[?name=<service-name>].components[].version`.`.components[?name=<service-name>].components[].properties[?name=type].value` |
+| `artifacts[].repository`    | yes       | string   | always `''`                                                                                                                                                                                                                                                                | `''`    | None                                                                                                                                          |
+| `artifacts[].type`          | yes       | string   | None                                                                                                                                                                                                                                                                       | None    | `.components[?name=<service-name>].components[].properties[?name=type].value`                                                                 |
+| `artifacts[].url`           | yes       | string   | always `''`                                                                                                                                                                                                                                                                | `''`    | None                                                                                                                                          |
+| `artifacts[].version`       | yes       | string   | always `''`                                                                                                                                                                                                                                                                | `''`    | None                                                                                                                                          |
+| `build_id_dtrust`           | yes       | string   | None                                                                                                                                                                                                                                                                       | None    | `.components[?name=<service-name>].components[].properties[?name=build_id_dtrust].value`                                                      |
+| `git_branch`                | yes       | string   | Source code branch name used for service build                                                                                                                                                                                                                             | None    | `.components[?name=<service-name>].properties[?name=git_branch].value`                                                                        |
+| `git_revision`              | yes       | string   | Git revision of the repository used for the build                                                                                                                                                                                                                          | None    | `.components[?name=<service-name>].properties[?name=git_revision].value`                                                                      |
+| `git_url`                   | yes       | string   | None                                                                                                                                                                                                                                                                       | None    | `.components[?name=<service-name>].components[].properties[?name=git_url].value`                                                              |
+| `maven_repository`          | yes       | string   | None                                                                                                                                                                                                                                                                       | None    | `.components[?name=<service-name>].components[].properties[?name=maven_repository].value`                                                     |
+| `name`                      | yes       | string   | Service name                                                                                                                                                                                                                                                               | None    | `<service-name>`                                                                                                                              |
+| `service_name`              | yes       | string   | Service name                                                                                                                                                                                                                                                               | None    | `<service-name>`                                                                                                                              |
+| `tArtifactNames`            | yes       | hashmap  | This section defines microservice ZIP artifacts. Artifacts are only populated for services/SBOM components that meet [specified conditions](#version-20-service-artifacts). All other cases should return `{}` Described in [`tArtifactNames`](#version-20-tartifactnames) | `{}`    | None                                                                                                                                          |
+| `type`                      | no        | string   | None                                                                                                                                                                                                                                                                       | None    | `.components[?name=<service-name>].components[].properties[?name=type].value`                                                                 |
+| `version`                   | yes       | string   | Service version                                                                                                                                                                                                                                                            | None    | `.components[?name=<service-name>].version`                                                                                                   |
 
 ###### [Version 2.0] Service Artifacts
 
@@ -905,28 +1026,28 @@ Set of per service keys depends on the service type, determined by the MIME type
 
 **Image Type** Per Service Parameters:
 
-| Attribute | Mandatory | Type | Description | Default | Source in Application SBOM |
-|---|---|---|---|---|---|
-| `DEPLOYMENT_SESSION_ID` | yes | string | Effective Set calculation operation ID  | None | Taken from input parameter  `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM) |
-| `MANAGED_BY` | yes | string | Deployer type. Always `argocd` | `argocd` | None |
-| `ARTIFACT_DESCRIPTOR_VERSION` | yes | string | `.metadata.component.version` | None | None |
-| `DEPLOYMENT_RESOURCE_NAME` | yes | string | Is formed by concatenating `<service-name>`-v1 | None | None |
-| `DEPLOYMENT_VERSION` | yes | string | always `v1` | `v1` | None |
-| `DOCKER_TAG` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=full_image_name].value` |
-| `IMAGE_REPOSITORY` | yes | string | None | None | `.components[?name=<service-name>].properties[?name=full_image_name].value.split(':').join(parts[:2]` |
-| `SERVICE_NAME` | yes | string | `<service-name>` | None | None |
-| `TAG` | yes | string | Docker image version | None | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].version` |
+| Attribute                    | Mandatory | Type   | Description                                    | Default | Source in Application SBOM                                                                             |
+|------------------------------|-----------|--------|------------------------------------------------|---------|--------------------------------------------------------------------------------------------------------|
+| `DEPLOYMENT_SESSION_ID`      | yes       | string | Effective Set calculation operation ID         | None    | Taken from input parameter `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM)           |
+| `MANAGED_BY`                 | yes       | string | Deployer type. Always `argocd`                 | `argocd`| None                                                                                                   |
+| `ARTIFACT_DESCRIPTOR_VERSION`| yes       | string | `.metadata.component.version`                  | None    | None                                                                                                   |
+| `DEPLOYMENT_RESOURCE_NAME`   | yes       | string | Is formed by concatenating `<service-name>`-v1 | None    | None                                                                                                   |
+| `DEPLOYMENT_VERSION`         | yes       | string | always `v1`                                    | `v1`    | None                                                                                                   |
+| `DOCKER_TAG`                 | yes       | string | None                                           | None    | `.components[?name=<service-name>].properties[?name=full_image_name].value`                            |
+| `IMAGE_REPOSITORY`           | yes       | string | None                                           | None    | `.components[?name=<service-name>].properties[?name=full_image_name].value.split(':').join(parts[:2])` |
+| `SERVICE_NAME`               | yes       | string | `<service-name>`                               | None    | None                                                                                                   |
+| `TAG`                        | yes       | string | Docker image version                           | None    | `.components[?name=<service-name>].components[?mime-type=application/vnd.docker.image].version`        |
 
 **Config Type** Per Service Parameters:
 
-| Attribute | Mandatory | Type | Description | Default | Source in Application SBOM |
-|---|---|---|---|---|---|
-| `DEPLOYMENT_SESSION_ID` | yes | string | Effective Set calculation operation ID  | None | Taken from input parameter  `DEPLOYMENT_SESSION_ID` passed via `extra_params` (not from SBOM) |
-| `MANAGED_BY` | yes | string | Deployer type. Always `argocd` | `argocd` | None |
-| `ARTIFACT_DESCRIPTOR_VERSION` | yes | string | `.metadata.component.version` | None | None |
-| `DEPLOYMENT_RESOURCE_NAME` | yes | string | Is formed by concatenating `<service-name>`-v1 | None | None |
-| `DEPLOYMENT_VERSION` | yes | string | always `v1` | `v1` | None |
-| `SERVICE_NAME` | yes | string | `<service-name>` | None | None |
+| Attribute                     | Mandatory | Type   | Description                                  | Default | Source in Application SBOM                                                                |
+|-------------------------------|-----------|--------|----------------------------------------------|---------|-------------------------------------------------------------------------------------------|
+| `DEPLOYMENT_SESSION_ID`       | yes       | string | Effective Set calculation operation ID       | None    | Taken from the `DEPLOYMENT_SESSION_ID` input parameter via `extra_params` (not from SBOM) |
+| `MANAGED_BY`                  | yes       | string | Type of deployer. Always `argocd`            | `argocd`| None                                                                                      |
+| `ARTIFACT_DESCRIPTOR_VERSION` | yes       | string | `.metadata.component.version`                | None    | None                                                                                      |
+| `DEPLOYMENT_RESOURCE_NAME`    | yes       | string | Formed by concatenating `<service-name>`-v1  | None    | None                                                                                      |
+| `DEPLOYMENT_VERSION`          | yes       | string | always `v1`                                  | `v1`    | None                                                                                      |
+| `SERVICE_NAME`                | yes       | string | `<service-name>`                             | None    | None                                                                                      |
 
 ###### \[Version 2.0][Deployment Parameter Context] Resource Profile Processing
 
@@ -1065,13 +1186,13 @@ For more information, refer to [Sensitive parameters processing](#version-20-sen
 
 This context only contains parameters generated by EnvGene:
 
-| Attribute | Mandatory | Description | Default | Example |
-|---|---|---|---|---|
-| **composite_structure** | Mandatory | Contains the unmodified [Composite Structure](/docs/envgene-objects.md#composite-structure) object of the Environment Instance for which the Effective Set is generated. This variable is located in `parameters.yaml` | `{}`| [example](#version-20topology-context-composite_structure-example) |
-| **k8s_tokens** | Mandatory | Contains deployment tokens for each namespace in the Environment Instance. The value is derived from the `data.secret` property of the Credential specified via `defaultCredentialsId` attribute in the corresponding `Namespace` or parent `Cloud`. If the attribute is not defined at the `Namespace` level, it is inherited from the parent `Cloud`. If defined at both levels, the `Namespace` value takes precedence. Either the `Cloud` or `Namespace` must define `defaultCredentialsId`. This variable is located in `credentials.yaml` | None | [example](#version-20topology-context-k8s_tokens-example) |
-| **environments** | Mandatory | Contains **all** repository Environments, not just the one for which the Effective Set calculation was run. For each Environment, it includes the names of its contained namespaces. For each namespace, it provides a `deployPostfix` attribute. The `deployPostfix` value is derived from the namespace folder name (a child of `Namespaces` and parent of `namespace.yml`). For namespaces that are part of a BG Domain with roles `peer` or `origin`, the `deployPostfix` is obtained by removing the suffix `-peer` or `-origin` respectively from the namespace folder name. For all other namespaces (including `controller` namespace in BG Domain), the `deployPostfix` equals the namespace folder name. The namespace folder name is determined according to [Namespace Folder Name Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation) rules. This variable is located in `parameters.yaml` | None | [example](#version-20topology-context-environments-example) |
-| **cluster** | Mandatory | Contains information about the cluster where the Environment Instance is deployed. Includes cluster name, type, and other cluster-specific metadata taken from the [Cloud](/docs/envgene-objects.md#cloud) object. This variable is located in `parameters.yaml` | `{}` | [example](#version-20topology-context-cluster-example) |
-| **bg_domain** | Mandatory | Contains the [BG Domain](/docs/envgene-objects.md#bg-domain) object from the Environment Instance for which the Effective Set is generated. Additionally, two extra sensitive attributes are added: `bg_domain.controllerNamespace.username` and `bg_domain.controllerNamespace.password`, whose values are taken from the [Credential](/docs/envgene-objects.md#credential) with `usernamePassword` type and the ID from the `bg_domain.controllerNamespace.credentials` attribute. The `credentials` attribute is removed. Non-sensitive parts of this variable are stored in `parameters.yaml`, while sensitive parts are stored in `credentials.yaml`. | `{}` | [example](#version-20topology-context-bg_domain-example) |
+| Attribute             | Mandatory | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Default | Example                                                            |
+|-----------------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|--------------------------------------------------------------------|
+| `composite_structure` | Mandatory | Contains the unmodified [Composite Structure](/docs/envgene-objects.md#composite-structure) object of the Environment Instance for which the Effective Set is generated. This variable is located in `parameters.yaml`                                                                                                                                                                                                                                                                                                                           | `{}`    | [example](#version-20topology-context-composite_structure-example) |
+| `k8s_tokens`          | Mandatory | Contains deployment tokens for each namespace in the Environment Instance. The value is derived from the `data.secret` property of the Credential specified via `defaultCredentialsId` attribute in the corresponding `Namespace` or parent `Cloud`. If the attribute is not defined at the `Namespace` level, it is inherited from the parent `Cloud`. If defined at both levels, the `Namespace` value takes precedence. Either the `Cloud` or `Namespace` must define `defaultCredentialsId`. This variable is located in `credentials.yaml`  | None    | [example](#version-20topology-context-k8s_tokens-example)          |
+| `environments`        | Mandatory | Contains **all** repository Environments, not just the one for which the Effective Set calculation was run. For each Environment, it includes the names of its contained namespaces. For each namespace, it provides a `deployPostfix` attribute. The `deployPostfix` value is derived from the namespace folder name (a child of `Namespaces` and parent of `namespace.yml`). For namespaces that are part of a BG Domain with roles `peer` or `origin`, the `deployPostfix` is obtained by removing the suffix `-peer` or `-origin` respectively from the namespace folder name. For all other namespaces (including `controller` namespace in BG Domain), the `deployPostfix` equals the namespace folder name. The namespace folder name is determined according to [Namespace Folder Name Generation](/docs/features/environment-instance-generation.md#namespace-folder-name-generation) rules. This variable is located in `parameters.yaml` | None | [example](#version-20topology-context-environments-example) |
+| `cluster`             | Mandatory | Contains information about the cluster where the Environment Instance is deployed. Includes cluster name, type, and other cluster-specific metadata taken from the [Cloud](/docs/envgene-objects.md#cloud) object. This variable is located in `parameters.yaml`                                                                                                                                                                                                                                                                                 | `{}`    | [example](#version-20topology-context-cluster-example)             |
+| `bg_domain`           | Mandatory | Contains the [BG Domain](/docs/envgene-objects.md#bg-domain) object from the Environment Instance for which the Effective Set is generated. Additionally, two extra sensitive attributes are added: `bg_domain.controllerNamespace.username` and `bg_domain.controllerNamespace.password`, whose values are taken from the [Credential](/docs/envgene-objects.md#credential) with `usernamePassword` type and the ID from the `bg_domain.controllerNamespace.credentials` attribute. The `credentials` attribute is removed. Non-sensitive parts of this variable are stored in `parameters.yaml`, while sensitive parts are stored in `credentials.yaml`. | `{}` | [example](#version-20topology-context-bg_domain-example) |
 
 ##### \[Version 2.0][Topology Context] `composite_structure` Example
 
