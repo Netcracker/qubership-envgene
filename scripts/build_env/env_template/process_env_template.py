@@ -10,12 +10,10 @@ from artifact_searcher.utils.models import FileExtension, Credentials, Registry,
 from env_template.template_testing import run_env_test_setup
 from envgenehelper import getEnvDefinition, fetch_cred_value, getAppDefinitionPath
 from envgenehelper import openYaml, getenv_with_error, logger
-from envgenehelper import unpack_archive, get_cred_config
-
+from envgenehelper import unpack_archive, get_cred_config, check_dir_exist_and_create
 from render_config_env import render_obj_by_context, Context
 
-artifact_dest = f"{tempfile.gettempdir()}/artifact.zip"
-build_env_path = "/build_env"
+ARTIFACT_DEST = f"{tempfile.gettempdir()}/artifact.zip"
 
 
 def parse_artifact_appver(env_definition: dict) -> tuple[str, str]:
@@ -65,8 +63,8 @@ def validate_url(url, group_id, artifact_id, version):
         )
 
 
-# downloading template by artifact definition
-def download_artifact_new_logic(env_definition: dict) -> str:
+# logic resolving template by artifact definition
+def resolve_artifact_new_logic(env_definition: dict, template_dest: str) -> str:
     """Download environment template using artifact definition (V2-aware).
     
     Supports both V1 and V2 registries. For V2 cloud registries (AWS/GCP/Artifactory/Nexus),
@@ -105,7 +103,7 @@ def download_artifact_new_logic(env_definition: dict) -> str:
             raise ValueError(f"Invalid maven coordinates from deployment descriptor {dd_url}")
 
         repo_url = dd_config.get("configurations", [{}])[0].get("maven_repository") or dd_repo
-        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP)
+        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP, cred)
         validate_url(template_url, group_id, artifact_id, version)
     else:
         # No deployment descriptor, download ZIP directly
@@ -118,11 +116,11 @@ def download_artifact_new_logic(env_definition: dict) -> str:
             if isinstance(repo_info, tuple) and len(repo_info) == 2 and repo_info[0] == "v2_downloaded":
                 local_path = repo_info[1]
                 logger.info(f"V2 artifact already downloaded at: {local_path}")
-                shutil.copy(local_path, artifact_dest)  # Copy to standard location
-                logger.info(f"Copied V2 artifact to: {artifact_dest}")
+                shutil.copy(local_path, ARTIFACT_DEST)  # Copy to standard location
+                logger.info(f"Copied V2 artifact to: {ARTIFACT_DEST}")
                 if "-SNAPSHOT" in app_version:
                     resolved_version = extract_snapshot_version(template_url, app_version)
-                unpack_archive(artifact_dest, build_env_path)
+                unpack_archive(ARTIFACT_DEST, template_dest)
                 return resolved_version  # Early return - artifact already available locally
         
         # Standard path: validate URL and continue to HTTP download
@@ -132,8 +130,8 @@ def download_artifact_new_logic(env_definition: dict) -> str:
     
     # V1 path or V2 fallback: download via HTTP
     logger.info(f"Environment template url has been resolved: {template_url}")
-    artifact.download(template_url, artifact_dest, cred)
-    unpack_archive(artifact_dest, build_env_path)
+    artifact.download(template_url, ARTIFACT_DEST, cred)
+    unpack_archive(ARTIFACT_DEST, template_dest)
     return resolved_version
 
 
@@ -147,8 +145,8 @@ def render_creds() -> dict:
     return rendered
 
 
-# downloading template by exact coordinates and repo, deprecated
-def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
+# logic resolving template by exact coordinates and repo, deprecated
+def resolve_artifact_old_logic(env_definition: dict, template_dest: str) -> str:
     template_artifact = env_definition['envTemplate']['templateArtifact']
     artifact_info = template_artifact['artifact']
 
@@ -159,7 +157,7 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
     repo_type = template_artifact['templateRepository']
     registry_name = template_artifact['registry']
 
-    registry_dict = openYaml(Path(f"{project_dir}/configuration/registry.yml"))  # another registry model
+    registry_dict = openYaml(Path(f"{getenv_with_error('CI_PROJECT_DIR')}/configuration/registry.yml"))  # another registry model
     registry = registry_dict[registry_name]
     repo_url = registry.get(repo_type)
     dd_repo_url = registry.get(dd_repo_type)
@@ -168,9 +166,10 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
     repository_username = fetch_cred_value(registry.get("username"), cred_config)
     repository_password = fetch_cred_value(registry.get("password"), cred_config)
     cred = Credentials(username=repository_username, password=repository_password)
-
+    
+    template_url = None
     resolved_version = dd_version
-    dd_url = artifact.check_artifact(dd_repo_url, group_id, artifact_id, dd_version, FileExtension.JSON)
+    dd_url = artifact.check_artifact(dd_repo_url, group_id, artifact_id, dd_version, FileExtension.JSON, cred)
     if dd_url:
         logger.info(f"Deployment descriptor url for environment template has been resolved: {dd_url}")
         if "-SNAPSHOT" in dd_version:
@@ -182,17 +181,17 @@ def download_artifact_old_logic(env_definition: dict, project_dir: str) -> str:
         if not all([group_id, artifact_id, version]):
             raise ValueError(f"Invalid maven coordinates from deployment descriptor {dd_url}")
 
-        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP)
+        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP, cred)
         validate_url(template_url, group_id, artifact_id, version)
     else:
         logger.info("Loading environment template artifact from zip directly...")
-        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, dd_version, FileExtension.ZIP)
+        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, dd_version, FileExtension.ZIP, cred)
         validate_url(template_url, group_id, artifact_id, dd_version)
         if "-SNAPSHOT" in dd_version:
             resolved_version = extract_snapshot_version(template_url, dd_version)
     logger.info(f"Environment template url has been resolved: {template_url}")
-    artifact.download(template_url, artifact_dest, cred)
-    unpack_archive(artifact_dest, build_env_path)
+    artifact.download(template_url, ARTIFACT_DEST, cred)
+    unpack_archive(ARTIFACT_DEST, template_dest)
     return resolved_version
 
 
@@ -201,16 +200,19 @@ def process_env_template() -> str:
     env_template_test = os.getenv("ENV_TEMPLATE_TEST", "").lower() == "true"
     if env_template_test:
         run_env_test_setup()
-    project_dir = getenv_with_error("CI_PROJECT_DIR")
+    project_dir = getenv_with_error('CI_PROJECT_DIR')
+    template_dest = f"{project_dir}/tmp"
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
     env_dir = Path(f"{project_dir}/environments/{cluster}/{environment}")
     env_definition = getEnvDefinition(env_dir)
+    
+    check_dir_exist_and_create(template_dest)
 
     # New format: uses artifact definitions (V2-aware)
     if 'artifact' in env_definition.get('envTemplate', {}):
-        logger.info("Use template downloading new logic")
-        return download_artifact_new_logic(env_definition)
+        logger.info("Use template resolving new logic")
+        return resolve_artifact_new_logic(env_definition, template_dest)
     else:
-        logger.info("Use template downloading old logic")
-        return download_artifact_old_logic(env_definition, project_dir)
+        logger.info("Use template resolving old logic")
+        return resolve_artifact_old_logic(env_definition, template_dest)
