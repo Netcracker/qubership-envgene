@@ -252,6 +252,22 @@ jobs:
           include-hidden-files: true
       ##########################
 
+      ### APP_REG_DEF_PROCESS ###
+      - name: APP_REG_DEF_PROCESS
+        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
+        run: |
+          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
+            ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
+            bash -c "
+              source /module/venv/bin/activate
+              echo "Executing APP_REG_DEF_PROCESS..."
+              python /module/scripts/utils/log_pipe_params.py
+              /module/scripts/handle_certs.sh
+              python3 /build_env/scripts/build_env/env_template/set_template_version.py
+              python3 /build_env/scripts/build_env/appregdef_render.py
+            "
+      ##########################
+
       ### BUILD ENV ###
       - name: Build Env
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
