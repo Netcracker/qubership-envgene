@@ -72,6 +72,7 @@ COPY build_effective_set_generator/build/configuration/sources.list /etc/apk/rep
 RUN apk add --no-cache \
     bash \
     ca-certificates \
+    openssl \
     tar \
     curl \
     jq \
