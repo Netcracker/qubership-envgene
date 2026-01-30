@@ -29,6 +29,7 @@ def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
     yaml.width = 200
     yaml.indent(mapping=2, sequence=4, offset=2)
     yaml.Representer.add_representer(type(None), _null_representer)
+    yaml.default_flow_style = False
     return yaml
 
 

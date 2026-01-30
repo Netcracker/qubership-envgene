@@ -1,0 +1,144 @@
+{
+    "envDefinition": {
+        "action": "{{ action }}",
+        "content": {
+            "inventory": {
+                "environmentName": "{{ env }}",
+                "tenantName": "Applications",
+                "cloudName": "{{ cluster }}",
+                "description": "Full sample",
+                "owners": "Qubership team",
+                "config": {
+                    "updateRPOverrideNameWithEnvName": false,
+                    "updateCredIdsWithEnvName": true
+                }
+            },
+            "envTemplate": {
+                "name": "composite-prod",
+                "artifact": "project-env-template:master_20231024-080204",
+                "additionalTemplateVariables": {
+                    "ci": {
+                        "CI_PARAM_1": "ci-param-val-1",
+                        "CI_PARAM_2": "ci-param-val-2"
+                    },
+                    "e2eParameters": {
+                        "E2E_PARAM_1": "e2e-param-val-1",
+                        "E2E_PARAM_2": "e2e-param-val-2"
+                    }
+                },
+                "sharedTemplateVariables": [
+                    "prod-template-variables",
+                    "sample-cloud-template-variables"
+                ],
+                "envSpecificParamsets": {
+                    "bss": [
+                        "env-specific-bss"
+                    ]
+                },
+                "envSpecificTechnicalParamsets": {
+                    "bss": [
+                        "env-specific-tech"
+                    ]
+                },
+                "envSpecificE2EParamsets": {
+                    "cloud": [
+                        "cloud-level-params"
+                    ]
+                },
+                "sharedMasterCredentialFiles": [
+                    "prod-integration-creds"
+                ],
+                "envSpecificResourceProfiles": {
+                    "cloud": "cloud-specific-profile"
+                }
+            }
+        }
+    },
+    "paramSets": [
+        {% for place in places %}
+        {
+          "action": "{{ action }}",
+          "place": "{{ place }}",
+          "content": {
+            "version": 1,
+            "name": "env-specific-bss-{{ place }}",
+            "parameters": {
+              "key": "value"
+            },
+            "applications": []
+          }
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ],
+    "credentials": [
+        {% for place in places %}
+            {
+                "action": "{{ action }}",
+                "place": "{{ place }}",
+                "name": "shared-credentials-{{ place }}",
+                "content": {
+                    "prod-integration-creds": {
+                        "type": "usernamePassword",
+                        "data": {
+                            "username": "",
+                            "password": ""
+                        }
+                    }
+                }
+            }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ],
+    "resourceProfiles": [
+        {% for place in places %}
+        {
+          "action": "{{ action }}",
+          "place": "{{ place }}",
+          "content": {
+            "name": "cloud-specific-profile-{{ place }}",
+            "baseline": "dev",
+            "description": "",
+            "applications": [
+              {
+                "name": "core",
+                "version": "release-20241103.225817",
+                "sd": "",
+                "services": [
+                  {
+                    "name": "operator",
+                    "parameters": [
+                      {
+                        "name": "GATEWAY_MEMORY_LIMIT",
+                        "value": "96Mi"
+                      },
+                      {
+                        "name": "GATEWAY_CPU_REQUEST",
+                        "value": "50m"
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "version": 0
+          }
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ],
+    "sharedTemplateVariables": [
+        {% for place in places %}
+        {
+          "action": "{{ action }}",
+          "place": "{{ place }}",
+          "name": "prod-template-variables-{{ place }}",
+          "content": {
+            "TEMPLATE_VAR_1": "prod-value-1",
+            "TEMPLATE_VAR_2": "prod-value-2",
+            "nested": {
+              "key1": "nested-prod-value-1",
+              "key2": "nested-prod-value-2"
+            }
+          }
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ]
+}

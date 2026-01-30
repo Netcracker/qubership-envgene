@@ -21,7 +21,7 @@ def generate_env_new_approach():
     cluster = getenv_with_error('CLUSTER_NAME')
     schemas_dir = get_schemas_dir()
 
-    env_inventory_content = readYaml(getenv_with_error('ENV_INVENTORY_CONTENT'))
+    env_inventory_content = readYaml(getenv_with_error('ENV_INVENTORY_CONTENT'), safe_load=True)
     env_inv_content_schema_path = path.join(schemas_dir, "env-inventory-content.schema.json")
 
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
@@ -163,9 +163,9 @@ class Place(Enum):
     SITE = "site"
 
 
-def resolve_path(env_dir: Path, place: Place, subdir: str, name: str) -> Path:
+def resolve_path(env_dir: Path, place: Place, subdir: str, name: str, inventory: str = "") -> Path:
     if place is Place.ENV:
-        base = env_dir / INVENTORY
+        base = env_dir / inventory
     elif place is Place.CLUSTER:
         base = env_dir.parent
     elif place is Place.SITE:
@@ -175,7 +175,7 @@ def resolve_path(env_dir: Path, place: Place, subdir: str, name: str) -> Path:
     return base / subdir / f"{name}.yml"
 
 
-def handle_items(env_dir: Path, items: list[CommentedMap], subdir: str):
+def handle_items(env_dir: Path, items: list[CommentedMap], subdir: str, inventory: str = ""):
     if not items:
         return
 
@@ -185,10 +185,11 @@ def handle_items(env_dir: Path, items: list[CommentedMap], subdir: str):
         content = item["content"]
 
         name = content["name"] if content.get("name") else item["name"]
-        item_path = resolve_path(env_dir, place, subdir, name)
+        item_path = resolve_path(env_dir, place, subdir, name, inventory)
 
         if action is Action.CREATE_OR_REPLACE:
-            writeYamlToFile(item_path, content)
+            writeYamlToFile(item_path, convert_dict_to_yaml(content))
+            beautifyYaml(item_path)
         elif action is Action.DELETE:
             deleteFileIfExists(item_path)
 
@@ -203,7 +204,8 @@ def handle_env_def(env_dir: Path, env_def: CommentedMap | None):
     if action is Action.DELETE:
         delete_dir(env_dir)
     else:
-        writeYamlToFile(env_def_path, env_def.get("content"))
+        writeYamlToFile(env_def_path, convert_dict_to_yaml(env_def.get("content")))
+        beautifyYaml(env_def_path)
 
 
 def handle_env_inv_content(env_inventory_content: CommentedMap):
@@ -211,9 +213,9 @@ def handle_env_inv_content(env_inventory_content: CommentedMap):
 
     handle_env_def(env_dir, env_inventory_content.get("envDefinition"))
 
-    handle_items(env_dir, env_inventory_content.get("paramSets"), subdir="parameters")
-    handle_items(env_dir, env_inventory_content.get("credentials"), subdir="credentials")
-    handle_items(env_dir, env_inventory_content.get("resourceProfiles"), subdir="resource_profiles")
+    handle_items(env_dir, env_inventory_content.get("paramSets"), subdir="parameters", inventory=INVENTORY)
+    handle_items(env_dir, env_inventory_content.get("credentials"), subdir="credentials", inventory=INVENTORY)
+    handle_items(env_dir, env_inventory_content.get("resourceProfiles"), subdir="resource_profiles", inventory=INVENTORY)
     handle_items(env_dir, env_inventory_content.get("sharedTemplateVariables"), subdir="shared-template-variables")
 
 
