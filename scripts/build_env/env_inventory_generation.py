@@ -17,7 +17,6 @@ DEPRECATED_MESSAGE = "Deprecated inventory generation approach"
 
 
 def generate_env_new_approach():
-    base_dir = getenv_with_error('CI_PROJECT_DIR')
     env_name = getenv_with_error('ENV_NAME')
     cluster = getenv_with_error('CLUSTER_NAME')
     schemas_dir = get_schemas_dir()
@@ -29,8 +28,7 @@ def generate_env_new_approach():
                                     schema_file_path=env_inv_content_schema_path,
                                     schemas_dir=schemas_dir)
 
-    env = Environment(base_dir, cluster, env_name)
-    logger.info(f"Starting env inventory generation for env: {env.name} in cluster: {env.cluster}")
+    logger.info(f"Starting env inventory generation for env: {env_name} in cluster: {cluster}")
 
     handle_env_inv_content(env_inventory_content)
 
@@ -167,7 +165,7 @@ class Place(Enum):
 
 def resolve_path(env_dir: Path, place: Place, subdir: str, name: str) -> Path:
     if place is Place.ENV:
-        base = env_dir
+        base = env_dir / INVENTORY
     elif place is Place.CLUSTER:
         base = env_dir.parent
     elif place is Place.SITE:
@@ -177,7 +175,7 @@ def resolve_path(env_dir: Path, place: Place, subdir: str, name: str) -> Path:
     return base / subdir / f"{name}.yml"
 
 
-def handle_items(env_dir: Path, items: list[dict], subdir: str):
+def handle_items(env_dir: Path, items: list[CommentedMap], subdir: str):
     if not items:
         return
 
@@ -195,7 +193,7 @@ def handle_items(env_dir: Path, items: list[dict], subdir: str):
             deleteFileIfExists(item_path)
 
 
-def handle_env_def(env_dir: Path, env_def: dict | None):
+def handle_env_def(env_dir: Path, env_def: CommentedMap | None):
     if not env_def:
         return
 
@@ -208,16 +206,15 @@ def handle_env_def(env_dir: Path, env_def: dict | None):
         writeYamlToFile(env_def_path, env_def.get("content"))
 
 
-def handle_env_inv_content(env_inventory_content: dict):
+def handle_env_inv_content(env_inventory_content: CommentedMap):
     env_dir = Path(get_current_env_dir_from_env_vars())
 
     handle_env_def(env_dir, env_inventory_content.get("envDefinition"))
 
-    handle_items(env_dir, env_inventory_content.get("paramSets"), subdir=f"{INVENTORY}/parameters")
-    handle_items(env_dir, env_inventory_content.get("credentials"), subdir=f"{INVENTORY}/credentials")
-    handle_items(env_dir, env_inventory_content.get("resourceProfiles"), subdir=f"{INVENTORY}/resource_profiles")
-    handle_items(env_dir, env_inventory_content.get("sharedTemplateVariables"),
-                 subdir=f"{INVENTORY}/shared-template-variables")
+    handle_items(env_dir, env_inventory_content.get("paramSets"), subdir="parameters")
+    handle_items(env_dir, env_inventory_content.get("credentials"), subdir="credentials")
+    handle_items(env_dir, env_inventory_content.get("resourceProfiles"), subdir="resource_profiles")
+    handle_items(env_dir, env_inventory_content.get("sharedTemplateVariables"), subdir="shared-template-variables")
 
 
 if __name__ == "__main__":

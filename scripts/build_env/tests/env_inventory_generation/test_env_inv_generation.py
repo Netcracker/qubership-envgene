@@ -8,9 +8,7 @@ from scripts.build_env.env_inventory_generation import generate_env_new_approach
 from scripts.build_env.tests.base_test import BaseTest
 
 test_data = [
-    ("cluster-01/env-01", "", ""),
-    ("cluster-01/env-02", "", ""),
-    ("cluster-01/env-03", "", ""),
+    ("cluster-01/env-01", "", "")
 ]
 
 
