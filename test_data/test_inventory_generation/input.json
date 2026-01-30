@@ -49,9 +49,7 @@
                     "prod-integration-creds"
                 ],
                 "envSpecificResourceProfiles": {
-                    "cloud": [
-                        "cloud-specific-profile"
-                    ]
+                    "cloud": "cloud-specific-profile"
                 }
             }
         }
@@ -61,7 +59,7 @@
             "action": "create_or_replace",
             "place": "env",
             "content": {
-                "version": "<paramset-version>",
+                "version": 1,
                 "name": "env-specific-bss",
                 "parameters": {
                     "key": "value"
@@ -74,12 +72,13 @@
         {
             "action": "create_or_replace",
             "place": "site",
+            "name": "shared-credentials",
             "content": {
                 "prod-integration-creds": {
-                    "type": "<credential-type>",
+                    "type": "usernamePassword",
                     "data": {
-                        "username": "<value>",
-                        "password": "<value>"
+                        "username": "",
+                        "password": ""
                     }
                 }
             }

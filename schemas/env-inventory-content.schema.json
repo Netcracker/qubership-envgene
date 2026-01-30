@@ -98,6 +98,11 @@
             "$ref": "credential.schema.json",
             "title": "Shared Credentials Content",
             "description": "Shared Credential as file content"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the Shared Credentials File (without extension). The file will be saved as <name>.yml"
           }
         },
         "required": ["action", "place"],

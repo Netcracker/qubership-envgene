@@ -22,10 +22,10 @@ def generate_env_new_approach():
     cluster = getenv_with_error('CLUSTER_NAME')
     schemas_dir = get_schemas_dir()
 
-    env_inventory_content = getenv_with_error('ENV_INVENTORY_CONTENT')
+    env_inventory_content = readYaml(getenv_with_error('ENV_INVENTORY_CONTENT'))
     env_inv_content_schema_path = path.join(schemas_dir, "env-inventory-content.schema.json")
 
-    validate_yaml_by_scheme_or_fail(input_yaml_content=readYaml(env_inventory_content),
+    validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
                                     schema_file_path=env_inv_content_schema_path,
                                     schemas_dir=schemas_dir)
 
@@ -213,14 +213,11 @@ def handle_env_inv_content(env_inventory_content: dict):
 
     handle_env_def(env_dir, env_inventory_content.get("envDefinition"))
 
-    # handle_items(env_dir, env_inventory_content.get("paramSets"), subdir=f"{INVENTORY}/parameters",
-    #              schema="paramset.schema.json")
-    # handle_items(env_dir, env_inventory_content.get("credentials"), subdir=f"{INVENTORY}/credentials",
-    #              schema="credential.schema.json")
-    # handle_items(env_dir, env_inventory_content.get("resourceProfiles"), subdir=f"{INVENTORY}/resource_profiles",
-    #              schema="resource-profile.schema.json")
-    # handle_items(env_dir, env_inventory_content.get("sharedTemplateVariables"),
-    #              subdir=f"{INVENTORY}/shared-template-variables")
+    handle_items(env_dir, env_inventory_content.get("paramSets"), subdir=f"{INVENTORY}/parameters")
+    handle_items(env_dir, env_inventory_content.get("credentials"), subdir=f"{INVENTORY}/credentials")
+    handle_items(env_dir, env_inventory_content.get("resourceProfiles"), subdir=f"{INVENTORY}/resource_profiles")
+    handle_items(env_dir, env_inventory_content.get("sharedTemplateVariables"),
+                 subdir=f"{INVENTORY}/shared-template-variables")
 
 
 if __name__ == "__main__":
