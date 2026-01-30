@@ -400,9 +400,12 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         logger.error(f"V2 fallback for '{app.name}': Could not resolve authConfig for registry '{app.registry.name}'")
         return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
     
-    # Some cloud providers need credentials, others allow anonymous access
+    # Early validation: Some cloud providers need credentials, others allow anonymous access
     # AWS and GCP: must have credentials (their APIs don't allow anonymous)
     # Artifactory/Nexus: can work without credentials if repository allows public read
+    # Note: This check only works when provider is explicitly set in authConfig.
+    # If provider is None (will be auto-detected later), this validation is skipped here
+    # and will be enforced in create_maven_searcher() after auto-detection.
     if auth_config.provider in ["aws", "gcp"]:
         if not env_creds:
             logger.error(f"V2 fallback for '{app.name}': {auth_config.provider} requires credentials but env_creds is empty")

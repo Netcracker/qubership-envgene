@@ -130,25 +130,19 @@ class CloudAuthHelper:
     def _extract_repository_name(url: str) -> str:
         """Extract the repository name from a registry URL.
         
-        Different providers have different URL patterns:
-        - AWS: https://domain.d.codeartifact.region.amazonaws.com/maven/repo-name/
-        - GCP: https://region-maven.pkg.dev/project/repo-name/
-        - Others: uses last path segment
+        For CodeArtifact: https://domain-owner.d.codeartifact.region.amazonaws.com/maven/repo-name/
+        Returns 'repo-name'
+        
+        For Artifact Registry: https://region-maven.pkg.dev/project/repo-name/
+        Returns 'repo-name'
         """
-        url = url.rstrip("/")
-        # AWS CodeArtifact: .../maven/<repo>/...
-        if "codeartifact" in url and "/maven/" in url:
-            parts = url.split("/maven/")
-            if len(parts) > 1:
-                return parts[1].split("/")[0]
-        # GCP Artifact Registry: https://<region>-maven.pkg.dev/<project>/<repo>/
-        if "pkg.dev" in url:
-            parts = url.split("/")
-            if len(parts) >= 5:
-                return parts[4]
-        return url.split("/")[-1]
+        parts = [p for p in url.rstrip('/').split('/') if p]
+        if parts:
+            repo_name = parts[-1]
+            logger.debug(f"Extracted repository name: {repo_name} from URL: {url}")
+            return repo_name
+        raise ValueError(f"Could not extract repository name from URL: {url}")
 
-    
     @staticmethod
     def _extract_region(url: str, auth_config: AuthConfig) -> str:
         """Figure out which cloud region to use.
@@ -159,15 +153,49 @@ class CloudAuthHelper:
         3. Default to 'us-east-1' if can't determine
         """
         if auth_config.provider == "aws" and auth_config.aws_region:
+            logger.debug(f"Using explicit AWS region: {auth_config.aws_region}")
             return auth_config.aws_region
         aws_match = re.search(r'\.([a-z0-9-]+)\.amazonaws\.com', url)
         if aws_match:
-            return aws_match.group(1)
-        gcp_match = re.search(r'([a-z0-9-]+)-maven\.pkg\.dev', url)
-        if gcp_match:
-            return gcp_match.group(1)
-        logger.warning(f"Could not extract region from URL '{url}', using default 'us-east-1'")
+            region = aws_match.group(1)
+            logger.debug(f"Extracted AWS region from URL: {region}")
+            return region
+        logger.debug("AWS region not found in URL, defaulting to us-east-1")
         return "us-east-1"
+
+    @staticmethod
+    def _detect_provider(url: str, auth_config: AuthConfig) -> Optional[str]:
+        """Auto-detect provider from URL patterns for on-premise registries only.
+        
+        Auto-detection is ONLY for Nexus and Artifactory (on-premise registries).
+        AWS and GCP (cloud registries) require explicit provider specification.
+        
+        Returns:
+            Provider name or None if cannot be detected
+        """
+        # If provider is explicitly set, use it
+        if auth_config.provider:
+            logger.debug(f"Using explicit provider: {auth_config.provider}")
+            return auth_config.provider
+        
+        url_lower = url.lower()
+        
+        # Auto-detect ONLY for on-premise registries (Nexus and Artifactory)
+        # AWS and GCP must be explicitly specified
+        
+        # Artifactory patterns
+        if "artifactory" in url_lower or "/artifactory/" in url_lower:
+            logger.info(f"Auto-detected provider: artifactory from URL pattern")
+            return "artifactory"
+        
+        # Nexus patterns
+        if "nexus" in url_lower or "/nexus/" in url_lower or "/service/rest/" in url_lower:
+            logger.info(f"Auto-detected provider: nexus from URL pattern")
+            return "nexus"
+        
+        # AWS and GCP require explicit provider - no auto-detection
+        logger.warning(f"Could not auto-detect provider from URL: {url}. AWS and GCP require explicit provider specification.")
+        return None
 
     @staticmethod
     def create_maven_searcher(registry: Registry, env_creds: Optional[Dict[str, dict]]) -> 'MavenArtifactSearcher':
@@ -190,11 +218,13 @@ class CloudAuthHelper:
         
         registry_url = registry.maven_config.repository_domain_name
         
-        # Provider is required in RegDef v2
-        provider = auth_config.provider
+        # Try to detect provider if not explicitly set
+        # Auto-detection works for Nexus and Artifactory (on-premise registries)
+        # AWS and GCP must be explicitly specified
+        provider = CloudAuthHelper._detect_provider(registry_url, auth_config)
         if not provider:
-            logger.error(f"V2 fallback: provider field is required in authConfig for registry '{registry.name}'")
-            raise ValueError(f"Provider field is required in authConfig for registry '{registry.name}'")
+            logger.error(f"V2 fallback: Could not determine provider for registry '{registry.name}'. Please specify provider in authConfig or use recognizable URL pattern (nexus/artifactory)")
+            raise ValueError(f"Could not determine provider for registry '{registry.name}'")
         
         if provider not in ["aws", "gcp", "artifactory", "nexus"]:
             raise ValueError(f"Unsupported provider: {provider}")
@@ -259,24 +289,33 @@ class CloudAuthHelper:
         
         GCP needs:
         - Service account JSON (stored as secret)
-        - Project name (from authConfig or URL)
+        - Project name (from authConfig or extracted from URL)
         - Region (from URL, like 'us-central1')
         - Repository name (from URL)
         """
         if auth_config.auth_method != "service_account":
             raise ValueError(f"GCP auth_method '{auth_config.auth_method}' not supported")
-        if not auth_config.gcp_reg_project:
-            raise ValueError("GCP auth requires gcp_reg_project in authConfig")
+        
+        # Extract project from authConfig or URL
+        project = auth_config.gcp_reg_project
+        if not project:
+            # Extract from GCP URL pattern: https://<region>-maven.pkg.dev/<project>/<repo>/
+            match = re.search(r'pkg\.dev/([^/]+)/', registry_url)
+            if match:
+                project = match.group(1)
+                logger.info(f"Extracted GCP project from URL: {project}")
+            else:
+                raise ValueError("GCP auth requires gcp_reg_project in authConfig or valid GCP URL format (https://<region>-maven.pkg.dev/<project>/<repo>/)")
 
         sa_data = creds["secret"]
         sa_json = json.dumps(sa_data) if isinstance(sa_data, dict) else sa_data
         region = CloudAuthHelper._extract_region(registry_url, auth_config)
         repo_name = CloudAuthHelper._extract_repository_name(registry_url)
 
-        logger.info(f"Configuring GCP Artifact Registry: project={auth_config.gcp_reg_project}, region={region}")
+        logger.info(f"Configuring GCP Artifact Registry: project={project}, region={region}")
         return searcher.with_gcp_artifact_registry(
             credential_params={"service_account_key": sa_json},
-            project=auth_config.gcp_reg_project,
+            project=project,
             region_name=region,
             repository=repo_name
         )
