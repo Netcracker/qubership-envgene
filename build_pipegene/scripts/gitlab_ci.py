@@ -1,7 +1,7 @@
 import os
 from os import listdir
 
-from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name
+from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, parse_env_names
 from envgenehelper.plugin_engine import PluginEngine
 from gcip import JobFilter, Pipeline
 
@@ -54,7 +54,7 @@ def build_pipeline(params: dict) -> None:
 
     per_env_plugin_engine = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/per_env')
 
-    env_names = params['ENV_NAMES'].split("\n")
+    env_names = parse_env_names(params['ENV_NAMES'])
     if len(env_names) > 1:
         raise ValueError(
             f"Generating Inventories for multiple Environments in single pipeline is not supported. "

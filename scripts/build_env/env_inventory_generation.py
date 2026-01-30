@@ -14,6 +14,8 @@ CLUSTER_TOKEN_CRED_ID = "cloud-deploy-sa-token"
 INVENTORY = "Inventory"
 SCHEMAS_DIR = getenv("JSON_SCHEMAS_DIR", path.join(path.dirname(path.dirname(path.dirname(__file__))), "schemas"))
 
+DEPRECATED_MESSAGE = "Deprecated inventory generation approach"
+
 
 def generate_env_new_approach():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
@@ -31,7 +33,7 @@ def generate_env_new_approach():
     handle_env_inv_content(env_inventory_content)
 
 
-@deprecated
+@deprecated(DEPRECATED_MESSAGE)
 def generate_env():
     base_dir = getenv_and_log('CI_PROJECT_DIR')
     env_name = getenv_and_log('ENV_NAME')
@@ -58,7 +60,7 @@ def generate_env():
         helper.encrypt_file(env.inv_gen_creds_path)
 
 
-@deprecated
+@deprecated(DEPRECATED_MESSAGE)
 def handle_env_inventory_init(env, env_inventory_init, env_template_version):
     if env_inventory_init != "true":
         logger.info("ENV_INVENTORY_INIT is not set to 'true'. Skipping env inventory initialization")
@@ -73,7 +75,7 @@ def handle_env_inventory_init(env, env_inventory_init, env_template_version):
     helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.envSpecificParamsets', helper.get_empty_yaml())
 
 
-@deprecated
+@deprecated(DEPRECATED_MESSAGE)
 def handle_env_specific_params(env, env_specific_params):
     if not env_specific_params or env_specific_params == "":
         logger.info("ENV_SPECIFIC_PARAMS are not set. Skipping env inventory update")
@@ -107,7 +109,7 @@ def handle_env_specific_params(env, env_specific_params):
     logger.info(f"ENV_SPECIFIC_PARAMS env details : {vars(env)}")
 
 
-@deprecated
+@deprecated(DEPRECATED_MESSAGE)
 def create_paramset_files(env, paramsets):
     if not paramsets:
         return
@@ -123,7 +125,7 @@ def create_paramset_files(env, paramsets):
         logger.info(f"Created paramset {filename}")
 
 
-@deprecated
+@deprecated(DEPRECATED_MESSAGE)
 def handle_credentials(env, creds):
     if not creds:
         return
@@ -138,7 +140,7 @@ def handle_credentials(env, creds):
                                      sharedMasterCredentialFiles)
 
 
-@deprecated
+@deprecated(DEPRECATED_MESSAGE)
 def handle_cluster_params(env, cluster_params):
     if not cluster_params:
         return
