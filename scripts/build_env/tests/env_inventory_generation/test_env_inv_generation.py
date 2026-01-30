@@ -1,9 +1,7 @@
 from os import environ
-from pathlib import Path
 
 import pytest
-from envgenehelper import get_parent_dir_for_dir, parse_env_names, get_cluster_name_from_full_name, openYaml, \
-    dumpYamlToStr
+from envgenehelper import parse_env_names, get_cluster_name_from_full_name, openYaml, dumpYamlToStr
 
 from scripts.build_env.env_inventory_generation import generate_env_new_approach
 from scripts.build_env.tests.base_test import BaseTest

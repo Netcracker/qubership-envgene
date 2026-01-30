@@ -1,22 +1,24 @@
+import copy
 import json
 import pathlib
-import os
+from io import StringIO
+from typing import OrderedDict
+
 import jschon
 import jschon_tools
-import ruyaml
 import jsonschema
-import copy
-from io import StringIO
-from .file_helper import *
-from .logger import logger
-from .json_helper import openJson
-from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
+import ruyaml
 from ruyaml import CommentedMap, CommentedSeq
-from typing import Callable, OrderedDict
+from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
+
+from .file_helper import *
+from .json_helper import openJson
+from .logger import logger
+from jsonschema import RefResolver
 
 
 def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
-    def _null_representer(self: ruyaml.representer.BaseRepresenter, data: None) -> ruyaml.Any:
+    def _null_representer(self: ruyaml.representer.BaseRepresenter) -> ruyaml.Any:
         return self.represent_scalar('tag:yaml.org,2002:null', 'null')
 
     if is_safe:
@@ -378,14 +380,21 @@ def yaml_from_string(yaml_str):
 
 
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
-                                    input_yaml_content: dict = None, input_schema_content: dict = None):
+                                    input_yaml_content: dict = None, input_schema_content: dict = None,
+                                    schemas_dir=None):
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
     schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
 
-    errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
+    if schemas_dir:
+        base_uri = Path(schemas_dir).absolute().as_uri() + "/"
+        resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
+        errors = validate_yaml_data_by_scheme(yaml_content, schema_content, resolver=resolver)
+    else:
+        errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
     if len(errors) > 0:
-        rel_path = getRelPath(yaml_file_path)
-        logger.error(f"Validation of {rel_path} file has failed")
+        if yaml_file_path:
+            rel_path = getRelPath(yaml_file_path)
+            logger.error(f"Validation of {rel_path} file has failed")
         for err in errors:
             log_jsonschema_validation_error(err)
         raise ValueError("Validation failed") from None

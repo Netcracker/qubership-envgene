@@ -8,12 +8,11 @@ from envgenehelper.env_helper import Environment
 from typing_extensions import deprecated
 
 from create_credentials import CRED_TYPE_SECRET
+from python.envgene.envgenehelper import get_schemas_dir
 
 PARAMSETS_DIR_PATH = "Inventory/parameters/"
 CLUSTER_TOKEN_CRED_ID = "cloud-deploy-sa-token"
 INVENTORY = "Inventory"
-SCHEMAS_DIR = getenv("JSON_SCHEMAS_DIR", path.join(path.dirname(path.dirname(path.dirname(__file__))), "schemas"))
-
 DEPRECATED_MESSAGE = "Deprecated inventory generation approach"
 
 
@@ -21,11 +20,14 @@ def generate_env_new_approach():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     env_name = getenv_with_error('ENV_NAME')
     cluster = getenv_with_error('CLUSTER_NAME')
+    schemas_dir = get_schemas_dir()
 
     env_inventory_content = getenv_with_error('ENV_INVENTORY_CONTENT')
-    env_inv_content_schema_path = path.join(SCHEMAS_DIR, "env-inventory-content.schema.json")
-    validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
-                                    schema_file_path=env_inv_content_schema_path)
+    env_inv_content_schema_path = path.join(schemas_dir, "env-inventory-content.schema.json")
+
+    validate_yaml_by_scheme_or_fail(input_yaml_content=readYaml(env_inventory_content),
+                                    schema_file_path=env_inv_content_schema_path,
+                                    schemas_dir=schemas_dir)
 
     env = Environment(base_dir, cluster, env_name)
     logger.info(f"Starting env inventory generation for env: {env.name} in cluster: {env.cluster}")
@@ -38,6 +40,7 @@ def generate_env():
     base_dir = getenv_and_log('CI_PROJECT_DIR')
     env_name = getenv_and_log('ENV_NAME')
     cluster = getenv_and_log('CLUSTER_NAME')
+    schemas_dir = getenv("JSON_SCHEMAS_DIR", get_schemas_dir())
 
     env_inventory_init = getenv('ENV_INVENTORY_INIT')
     env_specific_params = getenv('ENV_SPECIFIC_PARAMS')
@@ -49,7 +52,7 @@ def generate_env():
     logger.info(f"Starting env inventory generation for env: {env.name} in cluster: {env.cluster}")
 
     handle_env_inventory_init(env, env_inventory_init, env_template_version)
-    handle_env_specific_params(env, env_specific_params)
+    handle_env_specific_params(env, env_specific_params, schemas_dir)
     helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.name', env_template_name)
 
     helper.writeYamlToFile(env.inventory_path, env.inventory)
@@ -76,7 +79,7 @@ def handle_env_inventory_init(env, env_inventory_init, env_template_version):
 
 
 @deprecated(DEPRECATED_MESSAGE)
-def handle_env_specific_params(env, env_specific_params):
+def handle_env_specific_params(env, env_specific_params, schemas_dir):
     if not env_specific_params or env_specific_params == "":
         logger.info("ENV_SPECIFIC_PARAMS are not set. Skipping env inventory update")
         return
@@ -101,7 +104,7 @@ def handle_env_specific_params(env, env_specific_params):
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.envSpecificParamsets', envSpecificParamsets)
     logger.info("ENV_SPECIFIC_PARAMS env details ", vars(env))
     handle_credentials(env, creds)
-    create_paramset_files(env, paramsets)
+    create_paramset_files(env, paramsets, schemas_dir)
 
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
@@ -110,10 +113,10 @@ def handle_env_specific_params(env, env_specific_params):
 
 
 @deprecated(DEPRECATED_MESSAGE)
-def create_paramset_files(env, paramsets):
+def create_paramset_files(env, paramsets, schemas_dir):
     if not paramsets:
         return
-    PARAMSET_SCHEMA_PATH = path.join(SCHEMAS_DIR, "paramset.schema.json")
+    PARAMSET_SCHEMA_PATH = path.join(schemas_dir, "paramset.schema.json")
     ps_dir_path = path.join(env.env_path, PARAMSETS_DIR_PATH)
     helper.check_dir_exist_and_create(ps_dir_path)
     logger.info(f"Creating paramsets in {ps_dir_path}")
@@ -174,7 +177,7 @@ def resolve_path(env_dir: Path, place: Place, subdir: str, name: str) -> Path:
     return base / subdir / f"{name}.yml"
 
 
-def handle_items(env_dir: Path, items: list[dict], subdir: str, schema: str = None):
+def handle_items(env_dir: Path, items: list[dict], subdir: str):
     if not items:
         return
 
@@ -187,11 +190,6 @@ def handle_items(env_dir: Path, items: list[dict], subdir: str, schema: str = No
         item_path = resolve_path(env_dir, place, subdir, name)
 
         if action is Action.CREATE_OR_REPLACE:
-            if schema:
-                validate_yaml_by_scheme_or_fail(
-                    input_yaml_content=content,
-                    schema_file_path=path.join(SCHEMAS_DIR, schema),
-                )
             writeYamlToFile(item_path, content)
         elif action is Action.DELETE:
             deleteFileIfExists(item_path)
@@ -215,14 +213,14 @@ def handle_env_inv_content(env_inventory_content: dict):
 
     handle_env_def(env_dir, env_inventory_content.get("envDefinition"))
 
-    handle_items(env_dir, env_inventory_content.get("paramSets"), subdir=f"{INVENTORY}/parameters",
-                 schema="paramset.schema.json")
-    handle_items(env_dir, env_inventory_content.get("credentials"), subdir=f"{INVENTORY}/credentials",
-                 schema="credential.schema.json")
-    handle_items(env_dir, env_inventory_content.get("resourceProfiles"), subdir=f"{INVENTORY}/resource_profiles",
-                 schema="resource-profile.schema.json")
-    handle_items(env_dir, env_inventory_content.get("sharedTemplateVariables"),
-                 subdir=f"{INVENTORY}/shared-template-variables")
+    # handle_items(env_dir, env_inventory_content.get("paramSets"), subdir=f"{INVENTORY}/parameters",
+    #              schema="paramset.schema.json")
+    # handle_items(env_dir, env_inventory_content.get("credentials"), subdir=f"{INVENTORY}/credentials",
+    #              schema="credential.schema.json")
+    # handle_items(env_dir, env_inventory_content.get("resourceProfiles"), subdir=f"{INVENTORY}/resource_profiles",
+    #              schema="resource-profile.schema.json")
+    # handle_items(env_dir, env_inventory_content.get("sharedTemplateVariables"),
+    #              subdir=f"{INVENTORY}/shared-template-variables")
 
 
 if __name__ == "__main__":

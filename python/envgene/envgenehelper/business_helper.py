@@ -1,21 +1,20 @@
-from dataclasses import dataclass, field
 import re
+from dataclasses import dataclass, field
 from os import getenv
 from pathlib import Path
 from typing import overload
 
 from ruyaml import CommentedMap
+from ruyaml.scalarstring import DoubleQuotedScalarString
 
+from .collections_helper import dump_as_yaml_format
 from .collections_helper import merge_lists
-from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
-    validate_yaml_by_scheme_or_fail
-from .json_helper import findJsons
 from .file_helper import getAbsPath, extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
-from .collections_helper import dump_as_yaml_format
+from .json_helper import findJsons
 from .logger import logger
-from ruyaml.scalarstring import DoubleQuotedScalarString
-from pathlib import Path
+from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
+    validate_yaml_by_scheme_or_fail
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -413,3 +412,7 @@ def get_bgd_object() -> CommentedMap:
 
 def parse_env_names(full_env_names: str):
     return full_env_names.split("\n")
+
+
+def get_schemas_dir() -> str:
+    return getenv("JSON_SCHEMAS_DIR", "/module/schemas")

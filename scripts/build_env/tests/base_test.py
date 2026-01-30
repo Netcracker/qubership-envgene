@@ -6,3 +6,4 @@ class BaseTest:
     base_dir = Path(__file__).resolve().parents[3]
     test_data_dir = base_dir / "test_data"
     os.environ['CI_PROJECT_DIR'] = str(test_data_dir)
+    os.environ['JSON_SCHEMAS_DIR'] = str(Path(__file__).resolve().parents[3] / "schemas")
