@@ -200,6 +200,14 @@ jobs:
               exit 1
             fi
           "
+
+      - name: BG_MANAGE - Upload BG_MANAGE Package
+        uses: actions/upload-artifact@v4
+        if: needs.process_environment_variables.outputs.BG_MANAGE == 'true'
+        with:
+          name: bg_manage_${{ env.PACKAGE_NAME }}
+          path: environments/${{ matrix.environment }}
+          include-hidden-files: true    
       ##########################
 
       ### ENV_INVENTORY_GENERATION ###
@@ -218,14 +226,15 @@ jobs:
               fi
             "
 
-      - name: Upload Generate Inventory Package
+      - name: ENV_INVENTORY_GENERATION - Upload ENV_INVENTORY_GENERATION Package
         uses: actions/upload-artifact@v4
         if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         with:
-          name: generate_inventory_${{ env.PACKAGE_NAME }}
+          name: env_inventory_generation_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
       ##########################
+
 
       ### CREDENTIAL ROTATION ###
       - name: CREDENTIAL_ROTATION
@@ -243,7 +252,7 @@ jobs:
               fi
             "
 
-      - name: Upload Credential Rotation Artifact
+      - name: CREDENTIAL_ROTATION - Upload Credential Rotation Artifact
         uses: actions/upload-artifact@v4
         if: needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         with:
@@ -251,6 +260,7 @@ jobs:
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
       ##########################
+
 
       ### APP_REG_DEF_PROCESS ###
       - name: APP_REG_DEF_PROCESS
@@ -266,7 +276,19 @@ jobs:
               python3 /build_env/scripts/build_env/env_template/set_template_version.py
               python3 /build_env/scripts/build_env/appregdef_render.py
             "
+
+      - name: APP_REG_DEF_PROCESS - Upload APP_REG_DEF_PROCESS Package
+        uses: actions/upload-artifact@v4
+        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
+        with:
+          name: app_reg_def_process_${{ env.PACKAGE_NAME }}
+          path: |
+            environments/${{ matrix.environment }}
+            configuration
+            tmp
+          include-hidden-files: true      
       ##########################
+
 
       ### ENV_BUILD ###
       - name: ENV_BUILD
@@ -280,16 +302,25 @@ jobs:
               python /module/scripts/utils/log_pipe_params.py
               /module/scripts/handle_certs.sh
               cd /build_env; python3 /build_env/scripts/build_env/main.py
+
+              if [ \"\$ENV_TEMPLATE_TEST\" == \"true\" ]; then
+                env_name=\$(cat set_variable.txt)
+                sed -i \"s|\\\\\\\"envgeneNullValue\\\\\\\"|\\\\\\\"test_value\\\\\\\"|g\" \"\${CI_PROJECT_DIR}/environments/\$env_name/Credentials/credentials.yml\"
+              fi
             "
 
-      - name: Upload Build Env Package
+      - name: ENV_BUILD - Upload Build Env Package
         uses: actions/upload-artifact@v4
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         with:
           name: env_build_${{ env.PACKAGE_NAME }}
-          path: environments/${{ matrix.environment }}
+          path: |
+            environments/${{ matrix.environment }}
+            configuration
+            tmp
           include-hidden-files: true
       ##########################
+
 
       ### GENERATE EFFECTIVE SET ###
       - name: GENERATE_EFFECTIVE_SET
@@ -315,7 +346,7 @@ jobs:
               done
             "
 
-      - name: Upload Generate Effective Set Package
+      - name: GENERATE_EFFECTIVE_SET - Upload Generate Effective Set Package
         uses: actions/upload-artifact@v4
         if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         with:
@@ -358,7 +389,7 @@ jobs:
             "
             env > .env.container
 
-      - name: Upload Git Commit Package
+      - name: GIT_COMMIT - Upload Git Commit Package
         uses: actions/upload-artifact@v4
         with:
           name: git_commit_${{ env.PACKAGE_NAME }}
