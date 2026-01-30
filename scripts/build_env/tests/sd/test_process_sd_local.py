@@ -9,7 +9,7 @@ os.environ['ENVIRONMENT_NAME'] = "temporary"
 os.environ['CLUSTER_NAME'] = "temporary"
 os.environ['CI_PROJECT_DIR'] = "temporary"
 
-from handle_sd import handle_sd
+from scripts.build_env.process_sd import handle_sd
 from envgenehelper import *
 from envgenehelper.env_helper import Environment
 

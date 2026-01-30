@@ -13,6 +13,7 @@ from inventory_generation_job import prepare_inventory_generation_job, is_invent
 from credential_rotation_job import prepare_credential_rotation_job
 from appregdef_render_job import prepare_appregdef_render_job
 from bg_manage_job import prepare_bg_manage_job
+from process_sd_job import prepare_process_sd
 
 PROJECT_DIR = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 IS_GITLAB = bool(os.getenv('CI_PROJECT_DIR')) and not bool(os.getenv('GITHUB_ACTIONS'))
@@ -81,6 +82,7 @@ def build_pipeline(params: dict) -> None:
             "env_inventory_generation_job",
             "credential_rotation_job",
             "appregdef_render_job",
+            "process_sd_job",
             "env_build_job",
             "generate_effective_set_job",
             "git_commit_job"
@@ -120,7 +122,12 @@ def build_pipeline(params: dict) -> None:
         if params['ENV_BUILD']:
             jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['IS_TEMPLATE_TEST'], params['ENV_TEMPLATE_VERSION'], env, environment_name, cluster_name, group_id, artifact_id, artifact_url, tags)
         else:
-            logger.info(f'Preparing of appregdef_render_job {env} is skipped.')
+            logger.info(f'Preparing of appregdef_render_job for {env} is skipped.')
+            
+        if params["SD_SOURCE_TYPE"].lower() == "json" and params["SD_DATA"] or params["SD_SOURCE_TYPE"].lower() == "artifact" and params["SD_VERSION"]:
+            jobs_map["process_sd_job"] = prepare_process_sd(pipeline, env, environment_name, cluster_name, params["APP_DEFS_PATH"], params["REG_DEFS_PATH"], tags)
+        else:
+            logger.info(f'Preparing of process_sd_job for {env} is skipped')
 
         if params['ENV_BUILD']:     
             jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], env, environment_name, cluster_name, group_id, artifact_id, tags)
@@ -130,9 +137,17 @@ def build_pipeline(params: dict) -> None:
         if params['GENERATE_EFFECTIVE_SET']:
             jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name, cluster_name, tags)
         else:
-            logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
+            logger.info(f'Preparing of generate_effective_set job for {env} is skipped.')
 
-        jobs_requiring_git_commit = ["appregdef_render_job", "env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job", "bg_manage_job"]
+        jobs_requiring_git_commit = [
+            "appregdef_render_job",
+            "process_sd_job",
+            "env_build_job",
+            "generate_effective_set_job",
+            "env_inventory_generation_job",
+            "credential_rotation_job",
+            "bg_manage_job"
+        ]
 
         plugin_params = params
         plugin_params['jobs_map'] = jobs_map
