@@ -38,7 +38,7 @@ SD = "sd.yaml"
 
 
 @pytest.mark.parametrize("test_case_name", TEST_CASES_POSITIVE)
-@patch("handle_sd.download_sd_by_appver")
+@patch("process_sd.download_sd_by_appver")
 def test_sd_positive(mock_download_sd, test_case_name):
     env = Environment(str(Path(OUTPUT_DIR, test_case_name)), "cluster-01", "env-01")
     do_prerequisites(SD, TEST_SD_DIR, OUTPUT_DIR, test_case_name, env, test_suits_map)
@@ -60,7 +60,7 @@ def test_sd_positive(mock_download_sd, test_case_name):
     
     
 @pytest.mark.parametrize("test_case_name,expected_exception", [(k, v) for k, v in TEST_CASES_NEGATIVE.items()])
-@patch("handle_sd.download_sd_by_appver")
+@patch("process_sd.download_sd_by_appver")
 def test_sd_negative(mock_download_sd, test_case_name, expected_exception):
     env = Environment(str(Path(OUTPUT_DIR, test_case_name)), "cluster-01", "env-01")
     do_prerequisites(SD, TEST_SD_DIR, OUTPUT_DIR, test_case_name, env, test_suits_map)
