@@ -4,7 +4,9 @@ from jinja2.exceptions import TemplateSyntaxError
 from pathlib import Path
 import pytest
 import yaml
+
 from render_config_env import EnvGenerator
+from envgenehelper.test_helpers import TestHelpers
 
 
 class TestAppRegDefRendering:
@@ -62,47 +64,8 @@ class TestAppRegDefRendering:
         expected_appdefs = test_case_dir / "expected" / "appdefs"
         expected_regdefs = test_case_dir / "expected" / "regdefs"
         
-        if expected_appdefs.exists():
-            for expected_file in expected_appdefs.glob("*.y*ml"):
-                base_name = expected_file.stem
-                rendered_file = None
-                for ext in ['.yml', '.yaml']:
-                    candidate = render_dir / "AppDefs" / f"{base_name}{ext}"
-                    if candidate.exists():
-                        rendered_file = candidate
-                        break
-                
-                assert rendered_file and rendered_file.exists(), \
-                    f"AppDef file {expected_file.name} should be rendered (checked {base_name}.yml and {base_name}.yaml)"
-                
-                with open(expected_file, encoding="utf-8") as f:
-                    expected_content = yaml.safe_load(f)
-                with open(rendered_file, encoding="utf-8") as f:
-                    rendered_content = yaml.safe_load(f)
-                
-                assert rendered_content == expected_content, \
-                    f"AppDef {expected_file.name} content mismatch.\nExpected: {expected_content}\nGot: {rendered_content}"
-        
-        if expected_regdefs.exists():
-            for expected_file in expected_regdefs.glob("*.y*ml"):
-                base_name = expected_file.stem
-                rendered_file = None
-                for ext in ['.yml', '.yaml']:
-                    candidate = render_dir / "RegDefs" / f"{base_name}{ext}"
-                    if candidate.exists():
-                        rendered_file = candidate
-                        break
-                
-                assert rendered_file and rendered_file.exists(), \
-                    f"RegDef file {expected_file.name} should be rendered (checked {base_name}.yml and {base_name}.yaml)"
-                
-                with open(expected_file) as f:
-                    expected_content = yaml.safe_load(f)
-                with open(rendered_file) as f:
-                    rendered_content = yaml.safe_load(f)
-                
-                assert rendered_content == expected_content, \
-                    f"RegDef {expected_file.name} content mismatch.\nExpected: {expected_content}\nGot: {rendered_content}"
+        TestHelpers.assert_dirs_content(expected_appdefs, render_dir / "AppDefs")
+        TestHelpers.assert_dirs_content(expected_regdefs, render_dir / "RegDefs")
                     
     POSITIVE_CASES = [        
         "TC-001-001",
