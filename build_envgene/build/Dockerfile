@@ -35,6 +35,7 @@ COPY creds_rotation/build/requirements.txt /build/creds_rotation_requirements.tx
 COPY python /python
 COPY build_envgene/ansible /module/ansible
 COPY build_envgene/scripts /module/scripts
+COPY scripts/bg_manage /scripts/bg_manage
 COPY creds_rotation/scripts /module/creds_rotation_scripts
 COPY build_* create_* produce_* sort* /build_env/
 COPY scripts/build_env /build_env/scripts/build_env/
@@ -115,6 +116,7 @@ RUN apk add --no-cache \
 
 # Copy everything from build stage
 COPY --from=build /module /module
+COPY --from=build /scripts/bg_manage /scripts/bg_manage
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=build /build_env /build_env
 COPY --from=build /cloud_passport /cloud_passport
