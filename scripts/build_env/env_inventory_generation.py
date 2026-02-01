@@ -37,7 +37,6 @@ def generate_env():
     base_dir = getenv_and_log('CI_PROJECT_DIR')
     env_name = getenv_and_log('ENV_NAME')
     cluster = getenv_and_log('CLUSTER_NAME')
-    schemas_dir = getenv("JSON_SCHEMAS_DIR", get_schemas_dir())
 
     env_inventory_init = getenv('ENV_INVENTORY_INIT')
     env_specific_params = getenv('ENV_SPECIFIC_PARAMS')
@@ -49,7 +48,7 @@ def generate_env():
     logger.info(f"Starting env inventory generation for env: {env.name} in cluster: {env.cluster}")
 
     handle_env_inventory_init(env, env_inventory_init, env_template_version)
-    handle_env_specific_params(env, env_specific_params, schemas_dir)
+    handle_env_specific_params(env, env_specific_params, SCHEMAS_DIR)
     helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.name', env_template_name)
 
     helper.writeYamlToFile(env.inventory_path, env.inventory)
