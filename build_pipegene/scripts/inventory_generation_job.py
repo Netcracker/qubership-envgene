@@ -25,7 +25,7 @@ def is_inventory_generation_needed(is_template_test, inventory_params):
             "ENV_INVENTORY_INIT, ENV_SPECIFIC_PARAMS, or ENV_TEMPLATE_NAME"
         )
 
-    return env_inventory_init or bool(env_specific_parameters) or bool(env_template_name)
+    return env_inventory_content or env_inventory_init or bool(env_specific_parameters) or bool(env_template_name)
 
 
 def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, cluster_name, env_generation_params,
