@@ -19,6 +19,7 @@ SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 def generate_env_new_approach():
     env_name = getenv_with_error('ENV_NAME')
     cluster = getenv_with_error('CLUSTER_NAME')
+    logger.info(f"Starting env inventory generation for env: {env_name} in cluster: {cluster}")
 
     env_inventory_content = json.loads(getenv_with_error('ENV_INVENTORY_CONTENT'))
     env_inv_content_schema_path = path.join(SCHEMAS_DIR, "env-inventory-content.schema.json")
@@ -26,8 +27,6 @@ def generate_env_new_approach():
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
                                     schema_file_path=env_inv_content_schema_path,
                                     schemas_dir=SCHEMAS_DIR)
-
-    logger.info(f"Starting env inventory generation for env: {env_name} in cluster: {cluster}")
 
     handle_env_inv_content(env_inventory_content)
 
@@ -175,6 +174,7 @@ def resolve_path(env_dir: Path, place: Place, subdir: str, name: str, inventory:
 
 def handle_objects(env_dir, objects, subdir, inventory="", encrypt=False):
     if not objects:
+        logger.info(f"No objects for {subdir}, skipping")
         return
 
     for obj in objects:
@@ -185,6 +185,7 @@ def handle_objects(env_dir, objects, subdir, inventory="", encrypt=False):
         name = content["name"] if content.get("name") else obj["name"]
         obj_path = resolve_path(env_dir, place, subdir, name, inventory)
 
+        logger.info(f"Processing {subdir}, action={action.value}, place={place}. Target path: {obj_path}")
         if action is Action.CREATE_OR_REPLACE:
             writeYamlToFile(obj_path, content)
             if encrypt:
@@ -192,24 +193,30 @@ def handle_objects(env_dir, objects, subdir, inventory="", encrypt=False):
             beautifyYaml(obj_path)
 
         elif action is Action.DELETE:
+            logger.info(f"Deleting file: {obj_path}")
             deleteFileIfExists(obj_path)
 
 
 def handle_env_def(env_dir: Path, env_def: dict | None):
     env_template_version = getenv('ENV_TEMPLATE_VERSION')
     if not env_def:
+        logger.info("env_definition is not provided, skipping")
         return
 
     action = Action(env_def["action"])
     env_def_path = env_dir / INVENTORY / "env_definition.yml"
     content = env_def.get("content")
+    logger.info(f"Processing env_definition, action={action.value}. Target path: {env_def_path}")
     if action is Action.DELETE:
+        logger.info(f"Deleting environment directory: {env_dir}")
         delete_dir(env_dir)
     else:
         if env_template_version:
+            logger.info(f"Overriding envTemplate.artifact with ENV_TEMPLATE_VERSION={env_template_version}")
             content["envTemplate"]["artifact"] = env_template_version
         writeYamlToFile(env_def_path, content)
         beautifyYaml(env_def_path)
+        logger.info("env_definition.yml successfully created/updated")
 
 
 def handle_env_inv_content(env_inventory_content: dict):

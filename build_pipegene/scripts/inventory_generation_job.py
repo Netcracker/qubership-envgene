@@ -55,7 +55,7 @@ def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, 
         **env_generation_params
     }
     job = job_instance(params=params, vars=vars)
-    job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env_name)
+    job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/")
     job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(job)
     return job
