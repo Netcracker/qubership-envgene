@@ -441,7 +441,7 @@ class EnvGenerator:
                 self.render_from_file_to_file(template_path, self.get_rendered_target_path(template_path))
 
     def validate_appregdefs(self):
-        schemas_dir = get_schemas_dir()
+        schemas_dir = Path(get_schemas_dir())
         render_dir = self.ctx.current_env_dir
 
         appdef_dir = f"{render_dir}/AppDefs"
