@@ -173,23 +173,26 @@ def resolve_path(env_dir: Path, place: Place, subdir: str, name: str, inventory:
     return base / subdir / f"{name}.yml"
 
 
-def handle_items(env_dir: Path, items: list[dict], subdir: str, inventory: str = ""):
-    if not items:
+def handle_objects(env_dir, objects, subdir, inventory="", encrypt=False):
+    if not objects:
         return
 
-    for item in items:
-        place = Place(item["place"])
-        action = Action(item["action"])
-        content = item["content"]
+    for obj in objects:
+        place = Place(obj["place"])
+        action = Action(obj["action"])
+        content = obj["content"]
 
-        name = content["name"] if content.get("name") else item["name"]
-        item_path = resolve_path(env_dir, place, subdir, name, inventory)
+        name = content["name"] if content.get("name") else obj["name"]
+        obj_path = resolve_path(env_dir, place, subdir, name, inventory)
 
         if action is Action.CREATE_OR_REPLACE:
-            writeYamlToFile(item_path, content)
-            beautifyYaml(item_path)
+            writeYamlToFile(obj_path, content)
+            if encrypt:
+                encrypt_file(obj_path)
+            beautifyYaml(obj_path)
+
         elif action is Action.DELETE:
-            deleteFileIfExists(item_path)
+            deleteFileIfExists(obj_path)
 
 
 def handle_env_def(env_dir: Path, env_def: dict | None):
@@ -214,11 +217,10 @@ def handle_env_inv_content(env_inventory_content: dict):
 
     handle_env_def(env_dir, env_inventory_content.get("envDefinition"))
 
-    handle_items(env_dir, env_inventory_content.get("paramSets"), subdir="parameters", inventory=INVENTORY)
-    handle_items(env_dir, env_inventory_content.get("credentials"), subdir="credentials", inventory=INVENTORY)
-    handle_items(env_dir, env_inventory_content.get("resourceProfiles"), subdir="resource_profiles",
-                 inventory=INVENTORY)
-    handle_items(env_dir, env_inventory_content.get("sharedTemplateVariables"), subdir="shared_template_variables")
+    handle_objects(env_dir, env_inventory_content.get("paramSets"), "parameters", INVENTORY)
+    handle_objects(env_dir, env_inventory_content.get("credentials"), "credentials", INVENTORY, encrypt=False)
+    handle_objects(env_dir, env_inventory_content.get("resourceProfiles"), "resource_profiles", INVENTORY)
+    handle_objects(env_dir, env_inventory_content.get("sharedTemplateVariables"), "shared_template_variables")
 
 
 if __name__ == "__main__":
