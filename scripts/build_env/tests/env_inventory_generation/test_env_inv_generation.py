@@ -114,7 +114,7 @@ class TestEnvInvGen(BaseTest):
 
         assert not self.env_dir.exists()
 
-    @pytest.mark.skip
+    @pytest.mark.skip(reason="temp")
     def test_env_template_version(self):
         self.action = Action.CREATE_OR_REPLACE
         self.set_inv_content()
