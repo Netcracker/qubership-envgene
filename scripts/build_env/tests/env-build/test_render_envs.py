@@ -6,7 +6,7 @@ from envgenehelper import *
 from main import render_environment, cleanup_resulting_dir
 from envgenehelper.test_helpers import TestHelpers
 
-from scripts.build_env.tests.base_test import BaseTest
+from tests.base_test import BaseTest
 
 test_data = [
     # (cluster_name, environment_name, template)
