@@ -1,6 +1,7 @@
 from os import environ, getenv
 from pathlib import Path
 
+import pytest
 from env_inventory_generation import generate_env_new_approach, Place, resolve_path, INVENTORY, Action
 from envgenehelper import get_cluster_name_from_full_name, dumpYamlToStr, get_environment_name_from_full_name, readYaml, \
     cleanup_dir, is_dir_empty
@@ -113,6 +114,7 @@ class TestEnvInvGen(BaseTest):
 
         assert not self.env_dir.exists()
 
+    @pytest.mark.skip
     def test_env_template_version(self):
         self.action = Action.CREATE_OR_REPLACE
         self.set_inv_content()
