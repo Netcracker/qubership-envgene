@@ -218,7 +218,7 @@ def handle_env_inv_content(env_inventory_content: dict):
     handle_items(env_dir, env_inventory_content.get("credentials"), subdir="credentials", inventory=INVENTORY)
     handle_items(env_dir, env_inventory_content.get("resourceProfiles"), subdir="resource_profiles",
                  inventory=INVENTORY)
-    handle_items(env_dir, env_inventory_content.get("sharedTemplateVariables"), subdir="shared-template-variables")
+    handle_items(env_dir, env_inventory_content.get("sharedTemplateVariables"), subdir="shared_template_variables")
 
 
 if __name__ == "__main__":

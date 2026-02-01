@@ -68,12 +68,12 @@ class TestEnvInvGen(BaseTest):
             (Place.CLUSTER, "resource_profiles", INVENTORY, "rp1",
              "/repo/environments/cluster-01/resource_profiles/rp1.yml"),
             (Place.SITE, "resource_profiles", INVENTORY, "rp1", "/repo/environments/resource_profiles/rp1.yml"),
-            (Place.ENV, "shared-template-variables", "", "stv1",
-             "/repo/environments/cluster-01/env-01/shared-template-variables/stv1.yml"),
-            (Place.CLUSTER, "shared-template-variables", "", "stv1",
-             "/repo/environments/cluster-01/shared-template-variables/stv1.yml"),
-            (Place.SITE, "shared-template-variables", "", "stv1",
-             "/repo/environments/shared-template-variables/stv1.yml"),
+            (Place.ENV, "shared_template_variables", "", "stv1",
+             "/repo/environments/cluster-01/env-01/shared_template_variables/stv1.yml"),
+            (Place.CLUSTER, "shared_template_variables", "", "stv1",
+             "/repo/environments/cluster-01/shared_template_variables/stv1.yml"),
+            (Place.SITE, "shared_template_variables", "", "stv1",
+             "/repo/environments/shared_template_variables/stv1.yml"),
         ]
         for place, subdir, inventory, name, expected in cases:
             result_path = resolve_path(env_dir, place, subdir, name, inventory)
@@ -93,7 +93,7 @@ class TestEnvInvGen(BaseTest):
         for item in content.get("resourceProfiles", []):
             _assert_item(self.env_dir, item, "resource_profiles", INVENTORY)
         for item in content.get("sharedTemplateVariables", []):
-            _assert_item(self.env_dir, item, "shared-template-variables")
+            _assert_item(self.env_dir, item, "shared_template_variables")
 
         self.action = Action.DELETE
         self.set_inv_content()
@@ -104,13 +104,13 @@ class TestEnvInvGen(BaseTest):
         assert is_dir_empty(self.site_dir / "parameters")
         assert is_dir_empty(self.site_dir / "credentials")
         assert is_dir_empty(self.site_dir / "resource_profiles")
-        assert is_dir_empty(self.site_dir / "shared-template-variables")
+        assert is_dir_empty(self.site_dir / "shared_template_variables")
 
         assert self.cluster_dir.exists()
         assert is_dir_empty(self.cluster_dir / "parameters")
         assert is_dir_empty(self.cluster_dir / "credentials")
         assert is_dir_empty(self.cluster_dir / "resource_profiles")
-        assert is_dir_empty(self.cluster_dir / "shared-template-variables")
+        assert is_dir_empty(self.cluster_dir / "shared_template_variables")
 
         assert not self.env_dir.exists()
 
