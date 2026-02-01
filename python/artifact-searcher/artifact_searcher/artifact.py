@@ -45,7 +45,7 @@ def convert_nexus_repo_url_to_index_view(url: str) -> str:
 
     if not parts or parts[-1] != "repository":
         return url
-
+    # Build new path
     new_parts = parts[:-1] + ["service", "rest", "repository", "browse"]
     new_path = "/".join(new_parts) + "/"
 
@@ -153,12 +153,16 @@ def _parse_snapshot_version(
 def version_to_folder_name(version: str) -> str:
     """
     Normalizes version string for folder naming.
+
     If version is timestamped snapshot (e.g. '1.0.0-20240702.123456-1'), it replaces the timestamp suffix with
     '-SNAPSHOT'. Otherwise, returns the version unchanged
     """
     snapshot_pattern = re.compile(r"-\d{8}\.\d{6}-\d+$")
-    return snapshot_pattern.sub("-SNAPSHOT", version) if snapshot_pattern.search(version) else version
-
+    if snapshot_pattern.search(version):
+        folder = snapshot_pattern.sub("-SNAPSHOT", version)
+    else:
+        folder = version
+    return folder
 
 def clean_temp_dir():
     if WORKSPACE.exists():
@@ -367,24 +371,20 @@ async def check_artifact_async(
 
 async def _check_artifact_v2_async(app: Application, artifact_extension: FileExtension, version: str,
                                    env_creds: Optional[dict]) -> Optional[tuple[str, tuple[str, str]]]:
-    """Search for and download artifacts using the V2 cloud registry approach.
-
-    This is the modern way to find artifacts in cloud registries like AWS CodeArtifact,
-    GCP Artifact Registry, Artifactory, and Nexus. It uses the shared MavenArtifactSearcher
-    library to talk to these different registry types in a unified way.
+    """Search for artifacts using V2 cloud registry approach.
     
-    If anything goes wrong (missing config, wrong credentials, search fails), we automatically
-    fall back to the older V1 method which tries direct HTTP URLs.
+    Supports AWS CodeArtifact, GCP Artifact Registry, Artifactory, and Nexus via
+    MavenArtifactSearcher library. Falls back to V1 on failure.
     
     Returns:
-        URL to the artifact and download location info, or None if not found
+        (artifact_url, download_info) tuple or None
     """
     # V2 requires authConfig to know how to authenticate with the registry
     if not getattr(app.registry.maven_config, 'auth_config', None):
         logger.error(f"V2 fallback for '{app.name}': Registry '{app.registry.name}' version 2.0 missing maven_config.authConfig")
         return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
 
-    # Check if required libraries are available (they're optional dependencies)
+    # Check optional V2 dependencies
     if CloudAuthHelper is None or MavenArtifact is None:
         missing = []
         if CloudAuthHelper is None:
@@ -394,18 +394,12 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         logger.error(f"V2 fallback for '{app.name}': Missing required libraries - {', '.join(missing)}")
         return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
 
-    # Get authentication settings from the registry definition
     auth_config = CloudAuthHelper.resolve_auth_config(app.registry, "maven")
     if not auth_config:
         logger.error(f"V2 fallback for '{app.name}': Could not resolve authConfig for registry '{app.registry.name}'")
         return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
     
-    # Early validation: Some cloud providers need credentials, others allow anonymous access
-    # AWS and GCP: must have credentials (their APIs don't allow anonymous)
-    # Artifactory/Nexus: can work without credentials if repository allows public read
-    # Note: This check only works when provider is explicitly set in authConfig.
-    # If provider is None (will be auto-detected later), this validation is skipped here
-    # and will be enforced in create_maven_searcher() after auto-detection.
+    # AWS/GCP require credentials; Artifactory/Nexus support anonymous if provider is set
     if auth_config.provider in ["aws", "gcp"]:
         if not env_creds:
             logger.error(f"V2 fallback for '{app.name}': {auth_config.provider} requires credentials but env_creds is empty")
@@ -418,29 +412,24 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
     logger.info(f"V2 search for {app.name} with provider={auth_config.provider}")
     loop = asyncio.get_running_loop()
 
-    # Handle SNAPSHOT versions (development/pre-release builds)
-    # SNAPSHOTs work differently: we search using the base version like "1.0-SNAPSHOT"
-    # but download using the actual timestamped version like "1.0-20260129.071325-2"
-    # This is because Nexus/Artifactory index by base version for searching
+    # SNAPSHOT: search by base version, download by timestamped version
     resolved_version = version  # This will become the timestamped version if it's a SNAPSHOT
     search_version = version    # Always use base version for searching
     
     if version.endswith("-SNAPSHOT"):
         logger.info(f"Resolving SNAPSHOT version for verification: {app.artifact_id}:{version}")
         
-        # Need credentials to fetch maven-metadata.xml (even if repository allows anonymous download)
+        # Credentials needed for maven-metadata.xml fetch
         cred = None
         if auth_config.credentials_id and env_creds:
             cred_data = env_creds.get(auth_config.credentials_id)
             if cred_data and cred_data.get('username'):
-                from artifact_searcher.utils.models import Credentials
                 cred = Credentials(username=cred_data['username'], password=cred_data['password'])
         
         auth = BasicAuth(login=cred.username, password=cred.password) if cred else None
         timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
         
-        # Try to resolve the SNAPSHOT to its actual timestamped version
-        # We check multiple repositories in order (snapshot repo, then public/group repos)
+        # Resolve SNAPSHOT to timestamped version across repos
         async with aiohttp.ClientSession(timeout=timeout, auth=auth) as session:
             repos_dict = get_repo_value_pointer_dict(app.registry)
             
@@ -450,7 +439,7 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
                     continue
                 
                 try:
-                    # This fetches maven-metadata.xml and extracts the timestamped version
+                    # Fetch maven-metadata.xml for timestamped version
                     result = await resolve_snapshot_version_async(
                         session, app, version, repo_value, 0,
                         asyncio.Event(), asyncio.Event(),
@@ -470,8 +459,7 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
             logger.warning(f"Could not resolve SNAPSHOT, falling back to V1")
             return await _check_artifact_v1_async(app, artifact_extension, version, cred=cred, classifier="")
 
-    # Create the searcher object that knows how to talk to this specific registry type
-    # This handles AWS, GCP, Artifactory, and Nexus in a unified way
+    # Create registry-specific searcher (AWS, GCP, Artifactory, Nexus)
     try:
         searcher = await loop.run_in_executor(None, CloudAuthHelper.create_maven_searcher, app.registry, env_creds)
     except KeyError as e:
@@ -484,9 +472,7 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         logger.error(f"V2 fallback for '{app.name}': Failed to create searcher - {e}", exc_info=True)
         return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
 
-    # Build the artifact identifier for searching
-    # Important: We search with the base SNAPSHOT version (e.g., "1.0-SNAPSHOT")
-    # because that's how artifacts are indexed in Nexus/Artifactory search APIs
+    # Build artifact identifier (use base SNAPSHOT version for search APIs)
     artifact_string = f"{app.group_id}:{app.artifact_id}:{search_version}"
     maven_artifact = MavenArtifact.from_string(artifact_string)
     maven_artifact.extension = artifact_extension.value
@@ -500,7 +486,7 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
     local_path = None
     maven_url = None
 
-    # Try up to 2 times in case of temporary network issues or expired credentials
+    # Retry on transient errors (401, timeout, expired)
     for attempt in range(max_retries):
         try:
             if attempt > 0:
@@ -509,7 +495,6 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
                 await asyncio.sleep(5)
                 searcher = await loop.run_in_executor(None, CloudAuthHelper.create_maven_searcher, app.registry, env_creds)
 
-            # Search for the artifact with a timeout to avoid hanging forever
             urls = await asyncio.wait_for(
                 loop.run_in_executor(None, partial(searcher.find_artifact_urls, artifact=maven_artifact)),
                 timeout=V2_SEARCH_TIMEOUT
@@ -544,8 +529,7 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
             last_error = e
             error_str = str(e).lower()
             
-            # Special case: Nexus search API returns 404 when artifact isn't in the search index yet
-            # (it takes time for newly uploaded artifacts to appear in search)
+            # Nexus: 404 means artifact not yet indexed in search
             if "404" in error_str and "search request" in error_str:
                 logger.info(f"V2 search index miss for {app.name} - artifact may not be indexed in Nexus search DB")
                 logger.info(f"Falling back to V1 direct HTTP lookup")
@@ -560,9 +544,7 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
                 except Exception:
                     pass
             
-            # Some errors are temporary and worth retrying:
-            # 401/unauthorized: credentials might need refresh
-            # timeout: network might be slow
+            # Retry on transient errors (401, timeout, expired)
             if attempt < max_retries - 1 and any(x in error_str for x in ["401", "unauthorized", "forbidden", "expired", "timeout"]):
                 logger.warning(f"V2 transient error for {app.name}, retrying: {e}")
                 continue
@@ -573,15 +555,14 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         logger.error(f"V2 fallback for '{app.name}': All {max_retries} attempts exhausted - {last_error}")
         return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
 
-    # AWS CodeArtifact returns resource IDs instead of direct URLs
-    # We need to construct the full download URL ourselves
+    # AWS: construct full URL from resource ID
     if auth_config.provider == "aws":
         registry_domain = app.registry.maven_config.repository_domain_name
         folder_name = version_to_folder_name(version)
         repo_path = app.registry.maven_config.target_snapshot if folder_name.endswith("-SNAPSHOT") else app.registry.maven_config.target_release
         full_url = f"{registry_domain.rstrip('/')}/{repo_path.rstrip('/')}/{maven_url}"
     else:
-        # Other providers (GCP, Artifactory, Nexus) return ready-to-use URLs
+        # GCP/Artifactory/Nexus: URL ready-to-use
         full_url = maven_url
 
     return full_url, ("v2_downloaded", local_path)
@@ -589,12 +570,10 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
 
 async def _v2_download_with_fallback(searcher, url: str, local_path: str, auth_config,
                                      registry: Registry, env_creds: Optional[dict]) -> bool:
-    """Download artifact using MavenArtifactSearcher with HTTP fallback.
-
-    Attempts to download via the configured MavenArtifactSearcher first,
-    bounded by V2_DOWNLOAD_TIMEOUT. For supported providers (GCP, Artifactory,
-    Nexus), falls back to a direct HTTP GET when the searcher-based download
-    fails, optionally adding GCP access tokens to the request.
+    """Download artifact via searcher with HTTP fallback.
+    
+    Tries searcher download first, falls back to HTTP GET for GCP/Artifactory/Nexus.
+    Adds GCP access tokens if needed.
     """
     loop = asyncio.get_running_loop()
 
