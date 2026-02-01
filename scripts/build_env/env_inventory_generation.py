@@ -185,7 +185,7 @@ def handle_objects(env_dir, objects, subdir, inventory="", encrypt=False):
         name = content["name"] if content.get("name") else obj["name"]
         obj_path = resolve_path(env_dir, place, subdir, name, inventory)
 
-        logger.info(f"Processing {subdir}, action={action.value}, place={place}. Target path: {obj_path}")
+        logger.info(f"Processing {subdir}, action={action.value}, place={place.value}. Target path: {obj_path}")
         if action is Action.CREATE_OR_REPLACE:
             writeYamlToFile(obj_path, content)
             if encrypt:

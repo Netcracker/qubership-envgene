@@ -38,6 +38,7 @@ def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, 
         "script": [
             '/module/scripts/handle_certs.sh',
             "python3 /build_env/scripts/build_env/env_inventory_generation.py",
+            '/module/scripts/prepare.sh "git_commit.yaml"'
         ],
     }
     vars = {
