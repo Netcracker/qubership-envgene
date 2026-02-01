@@ -43,10 +43,8 @@ class TestEnvInvGen(BaseTest):
     def set_inv_content(self):
         places = [p.value for p in Place]
         template = create_jinja_env(self.test_data_dir / FEATURE_TEST_DIR / "input").get_template("content.yml.j2")
-        content = readYaml(
-            text=template.render(places=places, action=self.action.value, env=self.env_name, cluster=self.cluster),
-            safe_load=True)
-        environ["ENV_INVENTORY_CONTENT"] = dumpYamlToStr(content)
+        content = template.render(places=places, action=self.action.value, env=self.env_name, cluster=self.cluster)
+        environ["ENV_INVENTORY_CONTENT"] = content
 
     def test_resolve_path(self):
         env_dir = Path("/repo/environments/cluster-01/env-01")

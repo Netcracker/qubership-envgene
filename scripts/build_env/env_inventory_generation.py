@@ -20,7 +20,7 @@ def generate_env_new_approach():
     env_name = getenv_with_error('ENV_NAME')
     cluster = getenv_with_error('CLUSTER_NAME')
 
-    env_inventory_content = readYaml(getenv_with_error('ENV_INVENTORY_CONTENT'), safe_load=True)
+    env_inventory_content = json.loads(getenv_with_error('ENV_INVENTORY_CONTENT'))
     env_inv_content_schema_path = path.join(SCHEMAS_DIR, "env-inventory-content.schema.json")
 
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
