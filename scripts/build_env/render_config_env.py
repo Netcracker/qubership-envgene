@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 
 from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-from python.envgene.envgenehelper import get_schemas_dir
+from envgenehelper import get_schemas_dir
 
 yml = create_yaml_processor()
 
