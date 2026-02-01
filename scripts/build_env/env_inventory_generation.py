@@ -6,9 +6,7 @@ from envgenehelper import *
 from envgenehelper.business_helper import INV_GEN_CREDS_PATH
 from envgenehelper.env_helper import Environment
 from typing_extensions import deprecated
-
 from create_credentials import CRED_TYPE_SECRET
-from python.envgene.envgenehelper import get_schemas_dir
 
 PARAMSETS_DIR_PATH = "Inventory/parameters/"
 CLUSTER_TOKEN_CRED_ID = "cloud-deploy-sa-token"
@@ -175,7 +173,7 @@ def resolve_path(env_dir: Path, place: Place, subdir: str, name: str, inventory:
     return base / subdir / f"{name}.yml"
 
 
-def handle_items(env_dir: Path, items: list[CommentedMap], subdir: str, inventory: str = ""):
+def handle_items(env_dir: Path, items: list[dict], subdir: str, inventory: str = ""):
     if not items:
         return
 
@@ -188,13 +186,13 @@ def handle_items(env_dir: Path, items: list[CommentedMap], subdir: str, inventor
         item_path = resolve_path(env_dir, place, subdir, name, inventory)
 
         if action is Action.CREATE_OR_REPLACE:
-            writeYamlToFile(item_path, convert_dict_to_yaml(content))
+            writeYamlToFile(item_path, content)
             beautifyYaml(item_path)
         elif action is Action.DELETE:
             deleteFileIfExists(item_path)
 
 
-def handle_env_def(env_dir: Path, env_def: CommentedMap | None):
+def handle_env_def(env_dir: Path, env_def: dict | None):
     env_template_version = getenv('ENV_TEMPLATE_VERSION')
     if not env_def:
         return
@@ -207,11 +205,11 @@ def handle_env_def(env_dir: Path, env_def: CommentedMap | None):
     else:
         if env_template_version:
             set_nested_yaml_attribute(content, 'envTemplate.artifact', env_template_version)
-        writeYamlToFile(env_def_path, convert_dict_to_yaml(content))
+        writeYamlToFile(env_def_path, content)
         beautifyYaml(env_def_path)
 
 
-def handle_env_inv_content(env_inventory_content: CommentedMap):
+def handle_env_inv_content(env_inventory_content: dict):
     env_dir = Path(get_current_env_dir_from_env_vars())
 
     handle_env_def(env_dir, env_inventory_content.get("envDefinition"))
