@@ -253,3 +253,8 @@ def cleanup_dir(path: str):
 
     dir_path.mkdir(parents=True, exist_ok=True)
     logger.info(f"Directory has been recreated: {path}")
+
+
+def is_dir_empty(dir_path):
+    dir_path = Path(dir_path)
+    return dir_path.exists() and dir_path.is_dir() and not any(dir_path.iterdir())
