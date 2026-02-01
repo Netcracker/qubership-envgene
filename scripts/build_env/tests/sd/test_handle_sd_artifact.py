@@ -38,7 +38,7 @@ SD = "sd.yaml"
 
 
 @pytest.mark.parametrize("test_case_name", TEST_CASES_POSITIVE)
-@patch("handle_sd.download_sd_by_appver")
+@patch("handle_sd._download_sd_by_appver_async")
 def test_sd_positive(mock_download_sd, test_case_name):
     env = Environment(str(Path(OUTPUT_DIR, test_case_name)), "cluster-01", "env-01")
     do_prerequisites(SD, TEST_SD_DIR, OUTPUT_DIR, test_case_name, env, test_suits_map)
@@ -50,7 +50,11 @@ def test_sd_positive(mock_download_sd, test_case_name):
 
     file_path = Path(TEST_SD_DIR, test_case_name, f"mock_sd.json")
     sd_data = openJson(file_path)
-    mock_download_sd.return_value = sd_data
+    
+    # Mock async function to return coroutine
+    async def mock_return(*args, **kwargs):
+        return sd_data
+    mock_download_sd.side_effect = mock_return
         
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
     actual_dir = os.path.join(env.env_path, "Inventory", "solution-descriptor")
@@ -60,7 +64,7 @@ def test_sd_positive(mock_download_sd, test_case_name):
     
     
 @pytest.mark.parametrize("test_case_name,expected_exception", [(k, v) for k, v in TEST_CASES_NEGATIVE.items()])
-@patch("handle_sd.download_sd_by_appver")
+@patch("handle_sd._download_sd_by_appver_async")
 def test_sd_negative(mock_download_sd, test_case_name, expected_exception):
     env = Environment(str(Path(OUTPUT_DIR, test_case_name)), "cluster-01", "env-01")
     do_prerequisites(SD, TEST_SD_DIR, OUTPUT_DIR, test_case_name, env, test_suits_map)
@@ -72,7 +76,11 @@ def test_sd_negative(mock_download_sd, test_case_name, expected_exception):
 
     file_path = Path(TEST_SD_DIR, test_case_name, f"mock_sd.json")
     sd_data = openJson(file_path)
-    mock_download_sd.return_value = sd_data
+    
+    # Mock async function to return coroutine
+    async def mock_return(*args, **kwargs):
+        return sd_data
+    mock_download_sd.side_effect = mock_return
     
     with pytest.raises(expected_exception):
         handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)

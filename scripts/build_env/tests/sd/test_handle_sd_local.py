@@ -66,19 +66,21 @@ def test_download_sd_uses_get_cred_config(mock_get_appdef, mock_check_artifact, 
         'aws-creds': {'type': 'usernamePassword', 'data': {'username': 'key', 'password': 'secret'}}
     }
     mock_app_def = MagicMock()
+    mock_app_def.registry.credentials_id = None
     mock_get_appdef.return_value = mock_app_def
     
-    def capture_run(coro):
+    # Mock the async check_artifact_async to return a future
+    async def mock_check_return():
         return ("http://sd-url", ("repo", "/tmp/sd.json"))
+    mock_check_artifact.return_value = mock_check_return()
     
-    with patch('handle_sd.asyncio.run', side_effect=capture_run):
-        with patch('handle_sd.open', create=True) as mock_open:
-            mock_open.return_value.__enter__.return_value.read.return_value = '{"applications": []}'
-            
-            try:
-                env = Environment("/test/path", "test-cluster", "test-env")
-                download_sd_by_appver("test-app", "1.0.0", MagicMock(), env)
-            except:
-                pass
+    with patch('handle_sd.open', create=True) as mock_open:
+        mock_open.return_value.__enter__.return_value.read.return_value = '{"applications": []}'
+        
+        try:
+            env = Environment("/test/path", "test-cluster", "test-env")
+            download_sd_by_appver("test-app", "1.0.0", MagicMock(), env)
+        except:
+            pass
     
     assert mock_get_creds.called
