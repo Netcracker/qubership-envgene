@@ -3,9 +3,7 @@ from pathlib import Path
 
 from envgenehelper import get_cluster_name_from_full_name, dumpYamlToStr, get_environment_name_from_full_name, readYaml, \
     cleanup_dir
-
 from env_inventory_generation import generate_env_new_approach, Place, resolve_path, INVENTORY
-
 from jinja.jinja import create_jinja_env
 from tests.base_test import BaseTest
 
@@ -23,6 +21,39 @@ def _assert_item(env_dir, item, subdir, inventory=""):
 
 
 class TestEnvInvGen(BaseTest):
+
+    def test_resolve_path(self):
+
+        env_dir = Path("/repo/environments/cluster-01/env-01")
+        cases = [
+
+            (Place.ENV, "parameters", INVENTORY, "ps1",
+             "/repo/environments/cluster-01/env-01/Inventory/parameters/ps1.yml"),
+            (Place.CLUSTER, "parameters", INVENTORY, "ps1", "/repo/environments/cluster-01/parameters/ps1.yml"),
+            (Place.SITE, "parameters", INVENTORY, "ps1", "/repo/environments/parameters/ps1.yml"),
+
+            (Place.ENV, "credentials", INVENTORY, "cred1",
+             "/repo/environments/cluster-01/env-01/Inventory/credentials/cred1.yml"),
+            (Place.CLUSTER, "credentials", INVENTORY, "cred1", "/repo/environments/cluster-01/credentials/cred1.yml"),
+            (Place.SITE, "credentials", INVENTORY, "cred1", "/repo/environments/credentials/cred1.yml"),
+
+            (Place.ENV, "resource_profiles", INVENTORY, "rp1",
+             "/repo/environments/cluster-01/env-01/Inventory/resource_profiles/rp1.yml"),
+            (Place.CLUSTER, "resource_profiles", INVENTORY, "rp1",
+             "/repo/environments/cluster-01/resource_profiles/rp1.yml"),
+            (Place.SITE, "resource_profiles", INVENTORY, "rp1", "/repo/environments/resource_profiles/rp1.yml"),
+
+            (Place.ENV, "shared-template-variables", "", "stv1",
+             "/repo/environments/cluster-01/env-01/shared-template-variables/stv1.yml"),
+            (Place.CLUSTER, "shared-template-variables", "", "stv1",
+             "/repo/environments/cluster-01/shared-template-variables/stv1.yml"),
+            (Place.SITE, "shared-template-variables", "", "stv1",
+             "/repo/environments/shared-template-variables/stv1.yml"),
+        ]
+
+        for place, subdir, inventory, name, expected in cases:
+            result_path = resolve_path(env_dir, place, subdir, name, inventory)
+            assert result_path == Path(expected)
 
     def test_generate_env_create(self):
 
