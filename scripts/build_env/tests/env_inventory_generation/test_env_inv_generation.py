@@ -1,6 +1,5 @@
 from os import environ
 from pathlib import Path
-
 from envgenehelper import get_cluster_name_from_full_name, dumpYamlToStr, get_environment_name_from_full_name, readYaml, \
     cleanup_dir
 from env_inventory_generation import generate_env_new_approach, Place, resolve_path, INVENTORY
@@ -12,37 +11,42 @@ FEATURE_TEST_DIR = "test_inventory_generation"
 
 def _assert_item(env_dir, item, subdir, inventory=""):
     place = Place(item["place"])
-    name = item["content"]["name"]
+    content = item["content"]
+    name = content.get("name") or item["name"]
     path = resolve_path(env_dir, place, subdir, name, inventory)
     assert path.exists(), path
     actual = readYaml(path, safe_load=True)
-    expected = item["content"]
-    assert actual == expected
+    assert actual == content
 
 
 class TestEnvInvGen(BaseTest):
+    full_env_name = "cluster-01/env-01"
+
+    def setup_method(self):
+        self.set_project_dir(FEATURE_TEST_DIR, "output")
+        cleanup_dir(self.ci_project_dir)
+        self.env_name = get_environment_name_from_full_name(self.full_env_name)
+        self.cluster = get_cluster_name_from_full_name(self.full_env_name)
+        environ["ENV_NAME"] = self.env_name
+        environ["CLUSTER_NAME"] = self.cluster
+        environ["FULL_ENV_NAME"] = self.full_env_name
 
     def test_resolve_path(self):
-
         env_dir = Path("/repo/environments/cluster-01/env-01")
         cases = [
-
             (Place.ENV, "parameters", INVENTORY, "ps1",
              "/repo/environments/cluster-01/env-01/Inventory/parameters/ps1.yml"),
             (Place.CLUSTER, "parameters", INVENTORY, "ps1", "/repo/environments/cluster-01/parameters/ps1.yml"),
             (Place.SITE, "parameters", INVENTORY, "ps1", "/repo/environments/parameters/ps1.yml"),
-
             (Place.ENV, "credentials", INVENTORY, "cred1",
              "/repo/environments/cluster-01/env-01/Inventory/credentials/cred1.yml"),
             (Place.CLUSTER, "credentials", INVENTORY, "cred1", "/repo/environments/cluster-01/credentials/cred1.yml"),
             (Place.SITE, "credentials", INVENTORY, "cred1", "/repo/environments/credentials/cred1.yml"),
-
             (Place.ENV, "resource_profiles", INVENTORY, "rp1",
              "/repo/environments/cluster-01/env-01/Inventory/resource_profiles/rp1.yml"),
             (Place.CLUSTER, "resource_profiles", INVENTORY, "rp1",
              "/repo/environments/cluster-01/resource_profiles/rp1.yml"),
             (Place.SITE, "resource_profiles", INVENTORY, "rp1", "/repo/environments/resource_profiles/rp1.yml"),
-
             (Place.ENV, "shared-template-variables", "", "stv1",
              "/repo/environments/cluster-01/env-01/shared-template-variables/stv1.yml"),
             (Place.CLUSTER, "shared-template-variables", "", "stv1",
@@ -50,35 +54,21 @@ class TestEnvInvGen(BaseTest):
             (Place.SITE, "shared-template-variables", "", "stv1",
              "/repo/environments/shared-template-variables/stv1.yml"),
         ]
-
         for place, subdir, inventory, name, expected in cases:
             result_path = resolve_path(env_dir, place, subdir, name, inventory)
             assert result_path == Path(expected)
 
     def test_generate_env_create(self):
-
-        self.set_project_dir(FEATURE_TEST_DIR, "output")
-        cleanup_dir(self.ci_project_dir)
-
-        full_env_name = "cluster-01/env-01"
-
-        env_name = get_environment_name_from_full_name(full_env_name)
-        cluster = get_cluster_name_from_full_name(full_env_name)
-
-        environ["ENV_NAME"] = env_name
-        environ["CLUSTER_NAME"] = cluster
-        environ["FULL_ENV_NAME"] = full_env_name
-
         places = [p.value for p in Place]
         action = "create_or_replace"
         template = create_jinja_env(self.test_data_dir / FEATURE_TEST_DIR / "input").get_template("content.yml.j2")
-        content = readYaml(text=template.render(places=places, action=action, env=env_name, cluster=cluster),
+        content = readYaml(text=template.render(places=places, action=action, env=self.env_name, cluster=self.cluster),
                            safe_load=True)
         environ["ENV_INVENTORY_CONTENT"] = dumpYamlToStr(content)
 
         generate_env_new_approach()
 
-        env_dir = Path(self.ci_project_dir) / "environments" / full_env_name
+        env_dir = Path(self.ci_project_dir) / "environments" / self.full_env_name
         for item in content.get("paramSets", []):
             _assert_item(env_dir, item, "parameters", INVENTORY)
         for item in content.get("credentials", []):
@@ -87,3 +77,16 @@ class TestEnvInvGen(BaseTest):
             _assert_item(env_dir, item, "resource_profiles", INVENTORY)
         for item in content.get("sharedTemplateVariables", []):
             _assert_item(env_dir, item, "shared-template-variables")
+
+    def test_env_template_version(self):
+        updated_version = "v2.5.0"
+        environ["ENV_TEMPLATE_VERSION"] = updated_version
+        environ["ENV_INVENTORY_CONTENT"] = dumpYamlToStr(
+            {"envDefinition": {"action": "create_or_replace", "content": {"name": "envDef"}}})
+
+        generate_env_new_approach()
+
+        inventory_path = Path(
+            self.ci_project_dir) / "environments" / self.full_env_name / INVENTORY / "env_definition.yml"
+        inventory = readYaml(inventory_path, safe_load=True)
+        assert inventory["envTemplate"]["artifact"] == updated_version
