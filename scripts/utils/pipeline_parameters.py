@@ -32,6 +32,7 @@ def get_pipeline_parameters() -> dict:
         'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL"),
         "BG_STATE": getenv("BG_STATE", None),
         "BG_MANAGE": getenv("BG_MANAGE", None) == "true",
+        "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT")
     }
 
 class PipelineParametersHandler:

@@ -412,7 +412,3 @@ def get_bgd_object() -> CommentedMap:
 
 def parse_env_names(full_env_names: str):
     return full_env_names.split("\n")
-
-
-def get_schemas_dir() -> str:
-    return getenv("JSON_SCHEMAS_DIR", "/module/schemas")

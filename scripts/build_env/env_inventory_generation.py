@@ -6,25 +6,26 @@ from envgenehelper import *
 from envgenehelper.business_helper import INV_GEN_CREDS_PATH
 from envgenehelper.env_helper import Environment
 from typing_extensions import deprecated
+
 from create_credentials import CRED_TYPE_SECRET
 
 PARAMSETS_DIR_PATH = "Inventory/parameters/"
 CLUSTER_TOKEN_CRED_ID = "cloud-deploy-sa-token"
 INVENTORY = "Inventory"
 DEPRECATED_MESSAGE = "Deprecated inventory generation approach"
+SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 
 
 def generate_env_new_approach():
     env_name = getenv_with_error('ENV_NAME')
     cluster = getenv_with_error('CLUSTER_NAME')
-    schemas_dir = get_schemas_dir()
 
     env_inventory_content = readYaml(getenv_with_error('ENV_INVENTORY_CONTENT'), safe_load=True)
-    env_inv_content_schema_path = path.join(schemas_dir, "env-inventory-content.schema.json")
+    env_inv_content_schema_path = path.join(SCHEMAS_DIR, "env-inventory-content.schema.json")
 
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
                                     schema_file_path=env_inv_content_schema_path,
-                                    schemas_dir=schemas_dir)
+                                    schemas_dir=SCHEMAS_DIR)
 
     logger.info(f"Starting env inventory generation for env: {env_name} in cluster: {cluster}")
 
