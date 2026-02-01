@@ -207,7 +207,7 @@ def handle_env_def(env_dir: Path, env_def: dict | None):
         delete_dir(env_dir)
     else:
         if env_template_version:
-            set_nested_yaml_attribute(content, 'envTemplate.artifact', env_template_version)
+            content["envTemplate"]["artifact"] = env_template_version
         writeYamlToFile(env_def_path, content)
         beautifyYaml(env_def_path)
 
@@ -218,7 +218,7 @@ def handle_env_inv_content(env_inventory_content: dict):
     handle_env_def(env_dir, env_inventory_content.get("envDefinition"))
 
     handle_objects(env_dir, env_inventory_content.get("paramSets"), "parameters", INVENTORY)
-    handle_objects(env_dir, env_inventory_content.get("credentials"), "credentials", INVENTORY, encrypt=False)
+    handle_objects(env_dir, env_inventory_content.get("credentials"), "credentials", INVENTORY, encrypt=True)
     handle_objects(env_dir, env_inventory_content.get("resourceProfiles"), "resource_profiles", INVENTORY)
     handle_objects(env_dir, env_inventory_content.get("sharedTemplateVariables"), "shared_template_variables")
 

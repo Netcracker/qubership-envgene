@@ -1,10 +1,10 @@
 from os import environ
 from pathlib import Path
 
-import pytest
+import yaml
 from env_inventory_generation import generate_env_new_approach, Place, resolve_path, INVENTORY, Action
 from envgenehelper import get_cluster_name_from_full_name, dumpYamlToStr, get_environment_name_from_full_name, readYaml, \
-    is_dir_empty
+    is_dir_empty, writeYamlToFile
 from envgenehelper.test_helpers import TestHelpers
 from jinja.jinja import create_jinja_env
 from tests.base_test import BaseTest
@@ -17,6 +17,7 @@ class TestEnvInvGen(BaseTest):
     env_dir = ""
     site_dir = ""
     cluster_dir = ""
+    config_dir = ""
     action: Action = None
 
     def setup_method(self):
@@ -35,6 +36,9 @@ class TestEnvInvGen(BaseTest):
         self.site_dir = site
         self.cluster_dir = self.site_dir / self.cluster
         self.env_dir = site / self.full_env_name
+
+        self.config_dir = self.ci_project_dir / "configuration" / "config.yml"
+        writeYamlToFile(self.config_dir, yaml.safe_load("crypt: false\n"))
 
     def set_inv_content(self):
         places = [p.value for p in Place]
@@ -98,7 +102,6 @@ class TestEnvInvGen(BaseTest):
 
         assert not self.env_dir.exists()
 
-    @pytest.mark.skip(reason="temp")
     def test_env_template_version(self):
         self.action = Action.CREATE_OR_REPLACE
         self.set_inv_content()
