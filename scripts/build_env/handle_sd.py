@@ -284,29 +284,63 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
         exit(1)
 
     app_def_getter_plugins = PluginEngine(plugins_dir='/module/scripts/handle_sd_plugins/app_def_getter')
-    sd_data_list = []
-    for entry in sd_entries:  # appvers
+    
+    # Validate all entries before starting downloads
+    for entry in sd_entries:
         if ":" not in entry:
             logger.error(f"Invalid SD_VERSION format: '{entry}'. Expected 'name:version'")
             exit(1)
 
-        source_name, version = entry.split(":", 1)
-        logger.info(f"Starting download of SD: {source_name}-{version}")
-
-        sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins, env)
-
-        sd_data_list.append(sd_data)
+    # Download all SDs in parallel using asyncio
+    logger.info(f"Starting parallel download of {len(sd_entries)} SD(s)...")
+    sd_data_list = asyncio.run(_download_sds_parallel(sd_entries, app_def_getter_plugins, env))
+    logger.info(f"Successfully downloaded {len(sd_data_list)} SD(s)")
 
     sd_data_json = json.dumps(sd_data_list)
     extract_sds_from_json(env, base_sd_path, sd_data_json, effective_merge_mode)
 
 
-def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, env: Environment = None) -> dict[str, object]:
+async def _download_sds_parallel(sd_entries: list[str], plugins: PluginEngine, env: Environment) -> list[dict]:
+    """Download multiple SDs in parallel while preserving order.
+    
+    Args:
+        sd_entries: List of "name:version" entries
+        plugins: Plugin engine for app def resolution
+        env: Environment object
+    
+    Returns:
+        List of SD data dictionaries in the same order as sd_entries
+    """
+    tasks = []
+    for entry in sd_entries:
+        source_name, version = entry.split(":", 1)
+        logger.info(f"Queuing download of SD: {source_name}-{version}")
+        task = _download_sd_by_appver_async(source_name, version, plugins, env)
+        tasks.append(task)
+    
+    # asyncio.gather preserves order of results matching order of tasks
+    sd_data_list = await asyncio.gather(*tasks)
+    return sd_data_list
+
+
+async def _download_sd_by_appver_async(app_name: str, version: str, plugins: PluginEngine, env: Environment = None) -> dict[str, object]:
+    """Async version of SD download by app name and version.
+    
+    Args:
+        app_name: Application name
+        version: Application version
+        plugins: Plugin engine for app def resolution
+        env: Environment object
+    
+    Returns:
+        SD data dictionary
+    """
+    logger.info(f"Starting download of SD: {app_name}-{version}")
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
     # Use existing get_cred_config() utility for credentials
     env_creds = get_cred_config()
-    artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version, env_creds=env_creds))
+    artifact_info = await artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version, env_creds=env_creds)
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')
@@ -316,7 +350,9 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, en
     if mvn_repo_value == "v2_downloaded":
         logger.debug(f"Reading V2 solution descriptor from local file: {mvn_repo_extra}")
         with open(mvn_repo_extra, 'r') as f:
-            return json.load(f)
+            sd_data = json.load(f)
+            logger.info(f"Successfully downloaded SD: {app_name}-{version}")
+            return sd_data
     
     # V1 fallback path or non-V2 registry - need credentials for HTTP download
     cred = None
@@ -329,7 +365,24 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, en
             )
             logger.debug(f"Using credentials '{app_def.registry.credentials_id}' for SD download")
     
-    return artifact.download_json_content(sd_url, cred)
+    sd_data = artifact.download_json_content(sd_url, cred)
+    logger.info(f"Successfully downloaded SD: {app_name}-{version}")
+    return sd_data
+
+
+def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, env: Environment = None) -> dict[str, object]:
+    """Synchronous wrapper for backward compatibility (used by tests).
+    
+    Args:
+        app_name: Application name
+        version: Application version  
+        plugins: Plugin engine for app def resolution
+        env: Environment object
+    
+    Returns:
+        SD data dictionary
+    """
+    return asyncio.run(_download_sd_by_appver_async(app_name, version, plugins, env))
 
 
 def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> artifact_models.Application:
