@@ -1,24 +1,15 @@
-from os import environ, getenv
+from os import environ
 from pathlib import Path
 
 import pytest
 from env_inventory_generation import generate_env_new_approach, Place, resolve_path, INVENTORY, Action
 from envgenehelper import get_cluster_name_from_full_name, dumpYamlToStr, get_environment_name_from_full_name, readYaml, \
-    cleanup_dir, is_dir_empty
+    cleanup_dir
+from envgenehelper.test_helpers import TestHelpers
 from jinja.jinja import create_jinja_env
 from tests.base_test import BaseTest
 
 FEATURE_TEST_DIR = "test_inventory_generation"
-
-
-def _assert_item(env_dir, item, subdir, inventory=""):
-    place = Place(item["place"])
-    content = item["content"]
-    name = content.get("name") or item["name"]
-    path = resolve_path(env_dir, place, subdir, name, inventory)
-    assert path.exists(), path
-    actual = readYaml(path, safe_load=True)
-    assert actual == content
 
 
 class TestEnvInvGen(BaseTest):
@@ -29,7 +20,8 @@ class TestEnvInvGen(BaseTest):
     action: Action = None
 
     def setup_method(self):
-        self.set_project_dir(FEATURE_TEST_DIR, "output")
+        self.set_ci_project_dir(FEATURE_TEST_DIR, "output")
+        self.expected_dir = self.expected_dir.joinpath(FEATURE_TEST_DIR, "expected")
         cleanup_dir(self.ci_project_dir)
 
         self.env_name = get_environment_name_from_full_name(self.full_env_name)
@@ -82,37 +74,11 @@ class TestEnvInvGen(BaseTest):
     def test_gen_env_create_delete(self):
         self.action = Action.CREATE_OR_REPLACE
         self.set_inv_content()
-        content = readYaml(getenv('ENV_INVENTORY_CONTENT'), safe_load=True)
 
         generate_env_new_approach()
 
-        for item in content.get("paramSets", []):
-            _assert_item(self.env_dir, item, "parameters", INVENTORY)
-        for item in content.get("credentials", []):
-            _assert_item(self.env_dir, item, "credentials", INVENTORY)
-        for item in content.get("resourceProfiles", []):
-            _assert_item(self.env_dir, item, "resource_profiles", INVENTORY)
-        for item in content.get("sharedTemplateVariables", []):
-            _assert_item(self.env_dir, item, "shared_template_variables")
-
-        self.action = Action.DELETE
-        self.set_inv_content()
-
-        generate_env_new_approach()
-
-        assert self.site_dir.exists()
-        assert is_dir_empty(self.site_dir / "parameters")
-        assert is_dir_empty(self.site_dir / "credentials")
-        assert is_dir_empty(self.site_dir / "resource_profiles")
-        assert is_dir_empty(self.site_dir / "shared_template_variables")
-
-        assert self.cluster_dir.exists()
-        assert is_dir_empty(self.cluster_dir / "parameters")
-        assert is_dir_empty(self.cluster_dir / "credentials")
-        assert is_dir_empty(self.cluster_dir / "resource_profiles")
-        assert is_dir_empty(self.cluster_dir / "shared_template_variables")
-
-        assert not self.env_dir.exists()
+        TestHelpers.assert_dirs_content(self.ci_project_dir, self.expected_dir, check_for_extra_files=True,
+                                        check_for_missing_files=True)
 
     @pytest.mark.skip(reason="temp")
     def test_env_template_version(self):
