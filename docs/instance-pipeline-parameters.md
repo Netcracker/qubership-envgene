@@ -187,6 +187,8 @@ envTemplate:
 ...
 ```
 
+**Note:** This parameter is deprecated and will be removed in future releases. Use `ENV_INVENTORY_CONTENT` instead.
+
 **Default Value**: None
 
 **Mandatory**: No
