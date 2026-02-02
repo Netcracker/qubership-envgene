@@ -83,7 +83,11 @@ RUN apk add --no-cache \
     yq \
     gettext \
     sed \
-    age
+    age \
+    gcc \
+    musl-dev \
+    libffi-dev \
+    openssl-dev
 
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY build_effective_set_generator/build/scripts /module/scripts
