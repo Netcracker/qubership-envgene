@@ -560,7 +560,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 - `action: delete`
 - `place: env | cluster | site`
 - `content.name: <override-name>`
-- `content` is present (used to resolve the target file name)
+- `content` is present (used to resolve the target filename)
 
 **Steps:**
 
@@ -638,7 +638,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 **Results:**
 
 1. Shared Template Variable file is created at the resolved path.
-2. File name is saved as `<name>.yml`.
+2. Filename is saved as `<name>.yml`.
 3. File content matches `sharedTemplateVariables[].content`.
 4. Changes are committed.
 
