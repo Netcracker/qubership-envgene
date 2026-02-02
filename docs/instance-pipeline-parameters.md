@@ -9,11 +9,9 @@
     - [`CMDB_IMPORT`](#cmdb_import)
     - [`DEPLOYMENT_TICKET_ID`](#deployment_ticket_id)
     - [`ENV_TEMPLATE_VERSION`](#env_template_version)
-    - [`ENV_TEMPLATE_VERSION_ORIGIN`](#env_template_version_origin)
-    - [`ENV_TEMPLATE_VERSION_PEER`](#env_template_version_peer)
-    - [`ENV_INVENTORY_INIT`](#env_inventory_init)
-    - [`ENV_TEMPLATE_NAME`](#env_template_name)
+    - [`ENV_TEMPLATE_VERSION_UPDATE_MODE`](#env_template_version_update_mode)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
+    - [`ENV_INVENTORY_CONTENT`](#env_inventory_content)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
     - [`EFFECTIVE_SET_CONFIG`](#effective_set_config)
     - [`APP_REG_DEFS_JOB`](#app_reg_defs_job)
@@ -28,9 +26,6 @@
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
-    - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
-    - [`NS_BUILD_FILTER`](#ns_build_filter)
-    - [`GITHUB_PIPELINE_API_INPUT`](#github_pipeline_api_input)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
     - [`BG_MANAGE`](#bg_manage)
     - [`BG_STATE`](#bg_state)
@@ -118,6 +113,30 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 **Example**: `env-template:v1.2.3`
 
+### `ENV_TEMPLATE_VERSION_UPDATE_MODE`
+
+**Description**: Controls how ENV_TEMPLATE_VERSION is applied during the pipeline run.
+
+**Allowed values**:
+
+- `PERSISTENT` (default)  
+  Applies the standard behavior: the pipeline updates the template version in Environment Inventory by updating `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
+
+- `TEMPORARY`  
+  Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.  
+  The pipeline updates `generatedVersions.generateEnvironmentLatestVersion` in `env_definition.yml` to reflect the template artifact version that was actually applied in this run, for example:
+
+  ```yaml
+  # env_definition.yml
+  generatedVersions:
+    generateEnvironmentLatestVersion: "template-project:feature-diis1125-20251125.045717-2"
+
+**Default Value**: `PERSISTENT`
+
+**Mandatory**: No
+
+**Example**: `PERSISTENT`
+
 ### `ENV_TEMPLATE_VERSION_ORIGIN`
 
 **Description**: If provided, system updates the Blue-Green origin template artifact version in the Environment Inventory. System overrides `envTemplate.bgNsArtifacts.origin` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
@@ -168,6 +187,8 @@ envTemplate:
 ...
 ```
 
+**Note:** This parameter is deprecated and will be removed in future releases. Use `ENV_INVENTORY_CONTENT`.
+
 **Default Value**: None
 
 **Mandatory**: No
@@ -178,6 +199,8 @@ envTemplate:
 
 **Description**: Specifies Environment Inventory and env-specific parameters. This is can used together with `ENV_INVENTORY_INIT`. **JSON in string** format. See details in [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
 
+**Note:** This parameter is deprecated and will be removed in future releases. Use `ENV_INVENTORY_CONTENT` instead.
+
 **Default Value**: None
 
 **Mandatory**: No
@@ -186,6 +209,25 @@ envTemplate:
 
 ```text
 '{"clusterParams":{"clusterEndpoint":"<value>","clusterToken":"<value>"},"additionalTemplateVariables":{"<key>":"<value>"},"cloudName":"<value>","envSpecificParamsets":{"<ns-template-name>":["paramsetA"],"cloud":["paramsetB"]},"paramsets":{"paramsetA":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[{"appName":"<app-name>","parameters":{"<key>":"<value>"}}]},"paramsetB":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[]}},"credentials":{"credX":{"type":"<credential-type>","data":{"username":"<value>","password":"<value>"}},"credY":{"type":"<credential-type>","data":{"secret":"<value>"}}}}'
+```
+
+### `ENV_INVENTORY_CONTENT`
+
+**Description**:
+
+Provides the Environment Inventory and related artifacts to be created or updated.  
+It allows external systems to manage `env_definition.yml` and additional files paramsets, credentials, resource profiles without manual changes in the Instance repository.
+
+See details in Environment Inventory Generation feature documentation [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example in string format**:
+
+```json
+"{\"envDefinition\":{\"action\":\"create_or_replace\",\"content\":{\"inventory\":{\"environmentName\":\"env-1\",\"tenantName\":\"Applications\",\"cloudName\":\"cluster-1\",\"description\":\"Fullsample\",\"owners\":\"Qubershipteam\",\"config\":{\"updateRPOverrideNameWithEnvName\":false,\"updateCredIdsWithEnvName\":true}},\"envTemplate\":{\"name\":\"composite-prod\",\"artifact\":\"project-env-template:master_20231024-080204\",\"additionalTemplateVariables\":{\"ci\":{\"CI_PARAM_1\":\"ci-param-val-1\",\"CI_PARAM_2\":\"ci-param-val-2\"},\"e2eParameters\":{\"E2E_PARAM_1\":\"e2e-param-val-1\",\"E2E_PARAM_2\":\"e2e-param-val-2\"}},\"sharedTemplateVariables\":[\"prod-template-variables\",\"sample-cloud-template-variables\"],\"envSpecificParamsets\":{\"bss\":[\"env-specific-bss\"]},\"envSpecificTechnicalParamsets\":{\"bss\":[\"env-specific-tech\"]},\"envSpecificE2EParamsets\":{\"cloud\":[\"cloud-level-params\"]},\"sharedMasterCredentialFiles\":[\"prod-integration-creds\"],\"envSpecificResourceProfiles\":{\"cloud\":[\"cloud-specific-profile\"]}}}},\"paramsets\":[{\"action\":\"create_or_replace\",\"place\":\"env\",\"content\":{\"version\":\"<paramset-version>\",\"name\":\"env-specific-bss\",\"parameters\":{\"key\":\"value\"},\"applications\":[]}}],\"credentials\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"content\":{\"prod-integration-creds\":{\"type\":\"<credential-type>\",\"data\":{\"username\":\"<value>\",\"password\":\"<value>\"}}}}],\"resourceProfiles\":[{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"content\":{\"name\":\"cloud-specific-profile\",\"baseline\":\"dev\",\"description\":\"\",\"applications\":[{\"name\":\"core\",\"version\":\"release-20241103.225817\",\"sd\":\"\",\"services\":[{\"name\":\"operator\",\"parameters\":[{\"name\":\"GATEWAY_MEMORY_LIMIT\",\"value\":\"96Mi\"},{\"name\":\"GATEWAY_CPU_REQUEST\",\"value\":\"50m\"}]}]}],\"version\":0}}]}"
 ```
 
 ### `GENERATE_EFFECTIVE_SET`
