@@ -93,7 +93,7 @@ RUN apk add --no-cache \
 
 # Bring the virtual environment compiled in build stage
 COPY --from=build /module/venv /module/venv
-
+COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY build_effective_set_generator/build/scripts /module/scripts
 COPY scripts/utils /module/scripts/utils
 
