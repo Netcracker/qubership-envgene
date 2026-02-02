@@ -131,7 +131,8 @@ def build_pipeline(params: dict) -> None:
         else:
             logger.info(f'Preparing of appregdef_render_job {full_env_name} is skipped.')
 
-        if params["SD_SOURCE_TYPE"].lower() == "json" and params["SD_DATA"] or params["SD_SOURCE_TYPE"].lower() == "artifact" and params["SD_VERSION"]:
+        if (params["SD_SOURCE_TYPE"].lower() == "json" and params["SD_DATA"]) or \
+           (params["SD_SOURCE_TYPE"].lower() == "artifact" and params["SD_VERSION"]):
             jobs_map["process_sd_job"] = prepare_process_sd(pipeline, full_env_name, environment_name, cluster_name,
                                                             params["APP_DEFS_PATH"], params["REG_DEFS_PATH"], tags)
         else:
