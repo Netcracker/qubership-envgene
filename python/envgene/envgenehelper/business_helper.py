@@ -1,21 +1,20 @@
-from dataclasses import dataclass, field
 import re
+from dataclasses import dataclass, field
 from os import getenv
 from pathlib import Path
 from typing import overload
 
 from ruyaml import CommentedMap
+from ruyaml.scalarstring import DoubleQuotedScalarString
 
+from .collections_helper import dump_as_yaml_format
 from .collections_helper import merge_lists
-from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
-    validate_yaml_by_scheme_or_fail
-from .json_helper import findJsons
 from .file_helper import getAbsPath, extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
-from .collections_helper import dump_as_yaml_format
+from .json_helper import findJsons
 from .logger import logger
-from ruyaml.scalarstring import DoubleQuotedScalarString
-from pathlib import Path
+from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
+    validate_yaml_by_scheme_or_fail
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -45,15 +44,20 @@ def find_env_instances_dir(env_name, instances_dir):
     logger.error(f"Directory for {env_name} is not found in {instances_dir}")
     raise ReferenceError(f"Can't find directory for {env_name}")
 
+
 @overload
 def getenv_and_log(name: str) -> None | str: ...
+
+
 @overload
 def getenv_and_log(name: str, default: str) -> str: ...
+
 
 def getenv_and_log(name, *args, **kwargs):
     var = getenv(name, *args, **kwargs)
     logger.info(f"{name}: {var}")
     return var
+
 
 def getenv_with_error(var_name):
     var = getenv(var_name)
@@ -62,8 +66,10 @@ def getenv_with_error(var_name):
     logger.debug(f"{var_name}: {var}")
     return var
 
+
 def get_env_instances_dir(environment_name, cluster_name, instances_dir):
     return f"{instances_dir}/{cluster_name}/{environment_name}"
+
 
 def get_current_env_dir_from_env_vars() -> Path:
     instances_dir = getenv_with_error('CI_PROJECT_DIR')
@@ -71,6 +77,7 @@ def get_current_env_dir_from_env_vars() -> Path:
     env_dir_path = Path(f"{instances_dir}/environments/{env_name}")
     logger.debug(env_dir_path)
     return env_dir_path
+
 
 def check_environment_is_valid_or_fail(environment_name, cluster_name, instances_dir, skip_env_definition_check=False,
                                        validate_env_definition_by_schema=False, schemas_dir=""):
@@ -360,6 +367,7 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
     else:
         return ""
 
+
 @dataclass
 class NamespaceFile:
     path: Path
@@ -370,11 +378,13 @@ class NamespaceFile:
         self.definition_path = self.path.joinpath('namespace.yml')
         self.name = openYaml(self.definition_path)['name']
 
+
 def get_namespaces_path(env_dir: Path | None = None) -> Path:
     env_dir = env_dir or get_current_env_dir_from_env_vars()
     namespaces_path = env_dir.joinpath('Namespaces')
     logger.debug(namespaces_path)
     return namespaces_path
+
 
 def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     namespaces_path = get_namespaces_path(env_dir)
@@ -385,11 +395,13 @@ def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     logger.debug(namespaces)
     return namespaces
 
+
 def get_bgd_path(env_dir: Path | None = None) -> Path:
     env_dir = env_dir or get_current_env_dir_from_env_vars()
     bgd_path = env_dir.joinpath('bg_domain.yml')
     logger.debug(bgd_path)
     return bgd_path
+
 
 def get_bgd_object(env_dir: Path | None = None) -> CommentedMap:
     bgd_path = get_bgd_path(env_dir)
@@ -397,3 +409,6 @@ def get_bgd_object(env_dir: Path | None = None) -> CommentedMap:
     logger.debug(bgd_object)
     return bgd_object
 
+
+def parse_env_names(full_env_names: str):
+    return full_env_names.split("\n")

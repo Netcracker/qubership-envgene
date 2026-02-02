@@ -2,7 +2,7 @@
   "gsf_repository_name": "envgene_instance_project",
   "docker_registry": "ghcr.io",
   "docker_namespace": "netcracker",
-  "envgene_version": "1.20.1",
+  "envgene_version": "1.21.0",
   "envgen_image": "qubership-envgene",
   "pipe_image": "qubership-pipegene",
   "cloud_deploytool_image": "env-generator-deploytool_build_deploytool",

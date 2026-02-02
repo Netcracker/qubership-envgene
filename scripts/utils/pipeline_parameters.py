@@ -21,7 +21,7 @@ def get_pipeline_parameters() -> dict:
         "SD_DELTA": getenv("SD_DELTA"),
         "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE"),
         "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT"),
-        "ENV_SPECIFIC_PARAMETERS": getenv("ENV_SPECIFIC_PARAMS"),
+        "ENV_SPECIFIC_PARAMS": getenv("ENV_SPECIFIC_PARAMS"),
         "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
         'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
         'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", ""),
@@ -34,6 +34,7 @@ def get_pipeline_parameters() -> dict:
         "BG_MANAGE": getenv("BG_MANAGE") == "true",
         "APP_DEFS_PATH": getenv("APP_DEFS_PATH"),
         "REG_DEFS_PATH": getenv("REG_DEFS_PATH"),
+        "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
     }
 
 class PipelineParametersHandler:

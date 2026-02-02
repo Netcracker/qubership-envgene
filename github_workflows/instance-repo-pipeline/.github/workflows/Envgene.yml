@@ -69,9 +69,9 @@ env:
   DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator"
 
   #DOCKER_IMAGE_TAGS
-  DOCKER_IMAGE_TAG_PIPEGENE: "1.20.1"
-  DOCKER_IMAGE_TAG_ENVGENE: "1.20.1"
-  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.20.1"
+  DOCKER_IMAGE_TAG_PIPEGENE: "1.21.0"
+  DOCKER_IMAGE_TAG_ENVGENE: "1.21.0"
+  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.21.0"
 
 jobs:
   process_environment_variables:
@@ -82,7 +82,7 @@ jobs:
       env_matrix: ${{ steps.matrix-generator.outputs.env_matrix }}
       BG_MANAGE: ${{ env.BG_MANAGE }}
       ENV_TEMPLATE_TEST: ${{ env.ENV_TEMPLATE_TEST }}
-      ENV_SPECIFIC_PARAMETERS: ${{ env.ENV_SPECIFIC_PARAMETERS }}
+      ENV_SPECIFIC_PARAMS: ${{ env.ENV_SPECIFIC_PARAMS }}
       ENV_TEMPLATE_NAME: ${{ env.ENV_TEMPLATE_NAME }}
       CRED_ROTATION_PAYLOAD: ${{ env.CRED_ROTATION_PAYLOAD }}
       ENV_BUILDER: ${{ env.ENV_BUILDER }}
@@ -184,7 +184,7 @@ jobs:
         run: env > .env.container
 
       ### BG MANAGE ###
-      - name: BG Manage
+      - name: BG_MANAGE
         if: needs.process_environment_variables.outputs.BG_MANAGE == 'true'
         env:
           FULL_ENV_NAME: ${{ matrix.environment }}
@@ -194,41 +194,51 @@ jobs:
           bash -c "
             source /module/venv/bin/activate
 
-            echo "Executing BG Manage..."
+            echo 'Executing BG Manage...'
             if ! python /scripts/bg_manage/bg_manage.py; then
-              echo "BG Manage failed with exit code $?"
+              echo 'BG Manage failed with exit code $?'
               exit 1
             fi
           "
+
+      - name: BG_MANAGE - Upload BG_MANAGE Package
+        uses: actions/upload-artifact@v4
+        if: needs.process_environment_variables.outputs.BG_MANAGE == 'true'
+        with:
+          name: bg_manage_${{ env.PACKAGE_NAME }}
+          path: environments/${{ matrix.environment }}
+          include-hidden-files: true
       ##########################
 
-      ### GENERATE INVENTORY ###
-      - name: Generate Inventory
-        if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
+
+      ### ENV_INVENTORY_GENERATION ###
+      - name: ENV_INVENTORY_GENERATION
+        if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               source /module/venv/bin/activate
 
-              echo \"Executing inventory generation...\"
+              echo 'Executing inventory generation...'
               if ! python3 /build_env/scripts/build_env/env_inventory_generation.py; then
                 echo \"Inventory generation failed with exit code \$?\"
                 exit 1
               fi
             "
 
-      - name: Upload Generate Inventory Package
+      - name: ENV_INVENTORY_GENERATION - Upload ENV_INVENTORY_GENERATION Package
         uses: actions/upload-artifact@v4
-        if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
+        if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         with:
-          name: generate_inventory_${{ env.PACKAGE_NAME }}
+          name: env_inventory_generation_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
       ##########################
 
+
       ### CREDENTIAL ROTATION ###
-      - name: Credential Rotation
+      - name: CREDENTIAL_ROTATION
         if: needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
@@ -236,14 +246,14 @@ jobs:
             bash -c "
               source /module/venv/bin/activate
 
-              echo \"Executing credential rotation...\"
+              echo 'Executing credential rotation...'
               if ! python3 /module/creds_rotation_scripts/creds_rotation_handler.py; then
-                echo \"Credential rotation failed with exit code \$?\"
+                echo 'Credential rotation failed with exit code \$?'
                 exit 1
               fi
             "
 
-      - name: Upload Credential Rotation Artifact
+      - name: CREDENTIAL_ROTATION - Upload Credential Rotation Artifact
         uses: actions/upload-artifact@v4
         if: needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         with:
@@ -252,25 +262,69 @@ jobs:
           include-hidden-files: true
       ##########################
 
-      ### BUILD ENV ###
-      - name: Build Env
+
+      ### APP_REG_DEF_PROCESS ###
+      - name: APP_REG_DEF_PROCESS
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
-            sh -c "cp ${CI_PROJECT_DIR}/.github/jobs/build_env_job.sh /tmp/build_env_job.sh && chmod +x /tmp/build_env_job.sh && bash /tmp/build_env_job.sh"
+            bash -c "
+              source /module/venv/bin/activate
+              echo 'Executing APP_REG_DEF_PROCESS...'
+              python3 /module/scripts/utils/log_pipe_params.py
+              /module/scripts/handle_certs.sh
+              python3 /build_env/scripts/build_env/env_template/set_template_version.py
+              python3 /build_env/scripts/build_env/appregdef_render.py
+            "
 
-      - name: Upload Build Env Package
+      - name: APP_REG_DEF_PROCESS - Upload APP_REG_DEF_PROCESS Package
         uses: actions/upload-artifact@v4
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         with:
-          name: build_env_${{ env.PACKAGE_NAME }}
-          path: environments/${{ matrix.environment }}
+          name: app_reg_def_process_${{ env.PACKAGE_NAME }}
+          path: |
+            environments/${{ matrix.environment }}
+            configuration
+            tmp
           include-hidden-files: true
       ##########################
 
+
+      ### ENV_BUILD ###
+      - name: ENV_BUILD
+        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
+        run: |
+          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
+            ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
+            bash -c "
+              source /module/venv/bin/activate
+              echo 'Executing ENV_BUILD...'
+              python /module/scripts/utils/log_pipe_params.py
+              /module/scripts/handle_certs.sh
+              cd /build_env; python3 /build_env/scripts/build_env/main.py
+
+              if [ \"\$ENV_TEMPLATE_TEST\" == \"true\" ]; then
+                env_name=\$(cat set_variable.txt)
+                sed -i \"s|\\\\\\\"envgeneNullValue\\\\\\\"|\\\\\\\"test_value\\\\\\\"|g\" \"\${CI_PROJECT_DIR}/environments/\$env_name/Credentials/credentials.yml\"
+              fi
+            "
+
+      - name: ENV_BUILD - Upload Build Env Package
+        uses: actions/upload-artifact@v4
+        if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
+        with:
+          name: env_build_${{ env.PACKAGE_NAME }}
+          path: |
+            environments/${{ matrix.environment }}
+            configuration
+            tmp
+          include-hidden-files: true
+      ##########################
+
+
       ### GENERATE EFFECTIVE SET ###
-      - name: Generate Effective Set
+      - name: GENERATE_EFFECTIVE_SET
         if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
@@ -293,7 +347,7 @@ jobs:
               done
             "
 
-      - name: Upload Generate Effective Set Package
+      - name: GENERATE_EFFECTIVE_SET - Upload Generate Effective Set Package
         uses: actions/upload-artifact@v4
         if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         with:
@@ -304,7 +358,7 @@ jobs:
 
 
       ### GIT COMMIT ###
-      - name: Git Commit
+      - name: GIT_COMMIT
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
@@ -336,7 +390,7 @@ jobs:
             "
             env > .env.container
 
-      - name: Upload Git Commit Package
+      - name: GIT_COMMIT - Upload Git Commit Package
         uses: actions/upload-artifact@v4
         with:
           name: git_commit_${{ env.PACKAGE_NAME }}
