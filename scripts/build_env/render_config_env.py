@@ -159,14 +159,33 @@ class EnvGenerator:
             raise ValueError(f'Next namespaces were not found in available namespaces: {mismatch}')
         logger.info('Validation was successful')
 
-    def generate_ns_postfix(self, ns, ns_template_path) -> str:
+    def generate_ns_postfix(self, ns, ns_template_path, override_template_ns_name: str | None = None) -> str:
         deploy_postfix = ns.get("deploy_postfix")
         if deploy_postfix:
             ns_template_name = deploy_postfix
         else:
             # get base name(deploy postfix) without extensions
             ns_template_name = self.get_template_name(ns_template_path)
-        return ns_template_name
+
+        ns_name = None
+        if override_template_ns_name:
+            ns_name = override_template_ns_name
+        elif ns_template_path:
+            rendered_ns = self.render_from_file_to_obj(ns_template_path)
+            ns_name = rendered_ns.get("name")
+        bgd = get_bgd_object(Path(f'{self.ctx.current_env_dir}'))
+        logger.debug(f'bgd object before comparing with ns: {bgd}')
+        if not bgd:
+            return ns_template_name
+
+        origin_name = bgd["originNamespace"]["name"]
+        peer_name = bgd["peerNamespace"]["name"]
+        if ns_name == origin_name:
+            ns_template_name += "-origin"
+        elif ns_name == peer_name:
+            ns_template_name += "-peer"
+        logger.debug(f'After appending the ns name : {ns_template_name}')
+        return ns_template_name 
 
     def generate_solution_structure(self):
         sd_path_stem = f'{self.ctx.current_env_dir}/Inventory/solution-descriptor/sd'
@@ -269,20 +288,30 @@ class EnvGenerator:
             return
         self.render_from_file_to_file(Template(template).render(self.ctx.as_dict()), target_path)
 
+    def fetch_template_override_name(self, ns) -> str:
+        override_namespace_content = ns.get("template_override")
+        if override_namespace_content:
+            rendered = create_jinja_env().from_string(str(override_namespace_content)).render(self.ctx.as_dict())
+            if rendered:
+                template_name = readYaml(rendered)
+                return template_name.get("name")
+        return ""
+
     def generate_namespace_file(self):
         context = self.ctx.as_dict()
         namespaces = self.ctx.current_env_template["namespaces"]
         for ns in namespaces:
             ns_template_path = Template(ns["template_path"]).render(context)
-            ns_template_name = self.generate_ns_postfix(ns, ns_template_path)
-            logger.info(f"Generate Namespace yaml for {ns_template_name}")
+            override_template_ns_name = self.fetch_template_override_name(ns)
+            deploy_postfx = self.generate_ns_postfix(ns, ns_template_path, override_template_ns_name)
+            logger.info(f"Generate Namespace yaml for {deploy_postfx}")
             current_env_dir = self.ctx.current_env_dir
-            ns_dir = f'{current_env_dir}/Namespaces/{ns_template_name}'
+            ns_dir = f'{current_env_dir}/Namespaces/{deploy_postfx}'
             namespace_file = f'{ns_dir}/namespace.yml'
             self.render_from_file_to_file(ns_template_path, namespace_file)
 
             self.generate_override_template(ns.get("template_override"), Path(f'{ns_dir}/namespace.yml_override'),
-                                            ns_template_name)
+                                            deploy_postfx)
 
     def calculate_cloud_name(self) -> str:
         inv = self.ctx.env_definition["inventory"]
@@ -518,12 +547,12 @@ class EnvGenerator:
             self.ctx.current_env_dir = current_env_dir
             self.set_env_template()
 
+            self.generate_bgd_file()
             self.generate_solution_structure()
             self.generate_tenant_file()
             self.generate_cloud_file()
             self.generate_namespace_file()
             self.generate_composite_structure()
-            self.generate_bgd_file()
 
             env_specific_schema = self.ctx.current_env_template.get("envSpecificSchema")
             if env_specific_schema:
