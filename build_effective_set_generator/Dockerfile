@@ -21,12 +21,16 @@ COPY build_effective_set_generator/effective-set-generator/target/*.jar /deploym
 FROM python:3.12-alpine3.19 AS build
 
 # hadolint ignore=DL3018
-RUN apk add --update --no-cache \
+RUN apk add --no-cache \
     gcc \
-    curl \
     musl-dev \
     libffi-dev \
-    openssl-dev
+    openssl-dev \
+    cargo \
+    rust \
+    build-base \
+    curl \
+    wget
 
 # Copy configuration files
 COPY build_effective_set_generator/build/configuration/pip.conf /etc/pip.conf
