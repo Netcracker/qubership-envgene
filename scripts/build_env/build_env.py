@@ -180,14 +180,15 @@ def findEnvDefinitionFromTemplatePath(templatePath, env_instances_dir=None):
 
 
 def sort_paramsets_with_same_name(entries: list[dict]) -> list[dict]:
-    # strict order processing paramsets template -> instance
+    # Strict order processing paramsets template -> cluster -> instance
+    # Lower sort keys are processed first, later values override earlier ones
     def sort_key(e):
         path = e["filePath"]
         if "from_template" in path:
-            return 1, path
+            return 0, path  # Template processed first (can be overridden)
         elif "from_instance" in path:
-            return 2, path
-        return 0, path
+            return 2, path  # Env-specific instance processed last (highest priority)
+        return 1, path  # Root/cluster instance processed after template
 
     return sorted(entries, key=sort_key)
 
