@@ -83,6 +83,7 @@ RUN apk add --no-cache \
 
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY build_effective_set_generator/build/scripts /module/scripts
+COPY scripts/utils /module/scripts/utils
 
 RUN addgroup ci && adduser -D -h /module/ -s /bin/bash -G ci ci && \
     chown ci:ci -R /module && \
