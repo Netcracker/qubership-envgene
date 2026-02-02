@@ -2,30 +2,32 @@
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Environment Inventory: env_definition.yml](#environment-inventory-env_definitionyml)
-  - [UC-EINV-ED-1: Create `env_definition.yml` (`create_or_replace`, file does not exist)](#uc-einv-ed-1-create-env_definitionyml-create_or_replace-file-does-not-exist)
-  - [UC-EINV-ED-2: Replace `env_definition.yml` (`create_or_replace`, file exists)](#uc-einv-ed-2-replace-env_definitionyml-create_or_replace-file-exists)
-  - [UC-EINV-ED-3: Delete `env_definition.yml`](#uc-einv-ed-3-delete-env_definitionyml)
-- [Environment Inventory: Paramsets](#environment-inventory-paramsets)
-  - [UC-EINV-PS-1: Create paramset file (`create_or_replace`, file does not exist)](#uc-einv-ps-1-create-paramset-file-create_or_replace-file-does-not-exist)
-  - [UC-EINV-PS-2: Replace paramset file (`create_or_replace`, file exists)](#uc-einv-ps-2-replace-paramset-file-create_or_replace-file-exists)
-  - [UC-EINV-PS-3: Delete paramset file](#uc-einv-ps-3-delete-paramset-file)
-- [Environment Inventory: Credentials](#environment-inventory-credentials)
-  - [UC-EINV-CR-1: Create credentials file (`create_or_replace`, file does not exist)](#uc-einv-cr-1-create-credentials-file-create_or_replace-file-does-not-exist)
-  - [UC-EINV-CR-2: Replace credentials file (`create_or_replace`, file exists)](#uc-einv-cr-2-replace-credentials-file-create_or_replace-file-exists)
-  - [UC-EINV-CR-3: Delete credentials file](#uc-einv-cr-3-delete-credentials-file)
-- [Environment Inventory: Resource Profile Overrides](#environment-inventory-resource-profile-overrides)
-  - [UC-EINV-RP-1: Create resource profile override file (`create_or_replace`, file does not exist)](#uc-einv-rp-1-create-resource-profile-override-file-create_or_replace-file-does-not-exist)
-  - [UC-EINV-RP-2: Replace resource profile override file (`create_or_replace`, file exists)](#uc-einv-rp-2-replace-resource-profile-override-file-create_or_replace-file-exists)
-  - [UC-EINV-RP-3: Delete resource profile override file](#uc-einv-rp-3-delete-resource-profile-override-file)
-- [Environment Inventory: Shared Template Variable Files](#environment-inventory-shared-template-variable-files)
-  - [UC-EINV-STV-1: Create Shared Template Variable file (`create_or_replace`, file does not exist)](#uc-einv-stv-1-create-shared-template-variable-file-create_or_replace-file-does-not-exist)
-  - [UC-EINV-STV-2: Replace Shared Template Variable file (`create_or_replace`, file exists)](#uc-einv-stv-2-replace-shared-template-variable-file-create_or_replace-file-exists)
-  - [UC-EINV-STV-3: Delete Shared Template Variable file](#uc-einv-stv-3-delete-shared-template-variable-file)
-  - [UC-EINV-AT-ALL-1: Rollback all Inventory changes if any operation fails (negative, atomic processing)](#uc-einv-at-all-1-rollback-all-inventory-changes-if-any-operation-fails-negative-atomic-processing)
-- [Template Version Update](#template-version-update)
-  - [UC-EINV-TV-1: Apply `ENV_TEMPLATE_VERSION` (`PERSISTENT` vs `TEMPORARY`)](#uc-einv-tv-1-apply-env_template_version-persistent-vs-temporary)
+- [Environment Inventory Generation Use Cases](#environment-inventory-generation-use-cases)
+  - [Table of Contents](#table-of-contents)
+  - [Overview](#overview)
+  - [Environment Inventory: env\_definition.yml](#environment-inventory-env_definitionyml)
+    - [UC-EINV-ED-1: Create `env_definition.yml` (`create_or_replace`, file does not exist)](#uc-einv-ed-1-create-env_definitionyml-create_or_replace-file-does-not-exist)
+    - [UC-EINV-ED-2: Replace `env_definition.yml` (`create_or_replace`, file exists)](#uc-einv-ed-2-replace-env_definitionyml-create_or_replace-file-exists)
+    - [UC-EINV-ED-3: Delete `env_definition.yml`](#uc-einv-ed-3-delete-env_definitionyml)
+  - [Environment Inventory: Paramsets](#environment-inventory-paramsets)
+    - [UC-EINV-PS-1: Create paramset file (`create_or_replace`, file does not exist)](#uc-einv-ps-1-create-paramset-file-create_or_replace-file-does-not-exist)
+    - [UC-EINV-PS-2: Replace paramset file (`create_or_replace`, file exists)](#uc-einv-ps-2-replace-paramset-file-create_or_replace-file-exists)
+    - [UC-EINV-PS-3: Delete paramSet file](#uc-einv-ps-3-delete-paramset-file)
+  - [Environment Inventory: Credentials](#environment-inventory-credentials)
+    - [UC-EINV-CR-1: Create credentials file (`create_or_replace`, file does not exist)](#uc-einv-cr-1-create-credentials-file-create_or_replace-file-does-not-exist)
+    - [UC-EINV-CR-2: Replace credentials file (`create_or_replace`, file exists)](#uc-einv-cr-2-replace-credentials-file-create_or_replace-file-exists)
+    - [UC-EINV-CR-3: Delete credentials file](#uc-einv-cr-3-delete-credentials-file)
+  - [Environment Inventory: Resource Profile Overrides](#environment-inventory-resource-profile-overrides)
+    - [UC-EINV-RP-1: Create resource profile override file (`create_or_replace`, file does not exist)](#uc-einv-rp-1-create-resource-profile-override-file-create_or_replace-file-does-not-exist)
+    - [UC-EINV-RP-2: Replace resource profile override file (`create_or_replace`, file exists)](#uc-einv-rp-2-replace-resource-profile-override-file-create_or_replace-file-exists)
+    - [UC-EINV-RP-3: Delete resource profile override file](#uc-einv-rp-3-delete-resource-profile-override-file)
+  - [Environment Inventory: Shared Template Variable Files](#environment-inventory-shared-template-variable-files)
+    - [UC-EINV-STV-1: Create Shared Template Variable file (`create_or_replace`, file does not exist)](#uc-einv-stv-1-create-shared-template-variable-file-create_or_replace-file-does-not-exist)
+    - [UC-EINV-STV-2: Replace Shared Template Variable file (create\_or\_replace, file exists)](#uc-einv-stv-2-replace-shared-template-variable-file-create_or_replace-file-exists)
+    - [UC-EINV-STV-3: Delete Shared Template Variable file](#uc-einv-stv-3-delete-shared-template-variable-file)
+    - [UC-EINV-AT-ALL-1: Rollback all Inventory changes if any operation fails (negative, atomic processing)](#uc-einv-at-all-1-rollback-all-inventory-changes-if-any-operation-fails-negative-atomic-processing)
+  - [Template Version Update](#template-version-update)
+    - [UC-EINV-TV-1: Apply `ENV_TEMPLATE_VERSION` (`PERSISTENT` vs `TEMPORARY`)](#uc-einv-tv-1-apply-env_template_version-persistent-vs-temporary)
 
 ---
 
@@ -560,7 +562,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 - `action: delete`
 - `place: env | cluster | site`
 - `content.name: <override-name>`
-- `content` is present (used to resolve the target file name)
+- `content` is present (used to resolve the target filename)
 
 **Steps:**
 
@@ -638,7 +640,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 **Results:**
 
 1. Shared Template Variable file is created at the resolved path.
-2. File name is saved as `<name>.yml`.
+2. Filename is saved as `<name>.yml`.
 3. File content matches `sharedTemplateVariables[].content`.
 4. Changes are committed.
 
