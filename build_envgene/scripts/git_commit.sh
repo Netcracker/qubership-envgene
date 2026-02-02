@@ -67,7 +67,7 @@ echo "Commit message: ${message}"
 echo "Moving env environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME} artifacts to temporary location"
 mkdir -p /tmp/artifact_environments/${CLUSTER_NAME}
 
-if [ "${COMMIT_ENV}" = "true" ]; then
+if [ "${COMMIT_ENV}" = "true" ] && [ -d "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}" ]; then
     cp -r environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME} /tmp/artifact_environments/${CLUSTER_NAME}/
 fi
 
@@ -200,7 +200,7 @@ done
 
 echo "Restoring environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
 
-if [ "${COMMIT_ENV}" = "true" ]; then
+if [ "${COMMIT_ENV}" = "true" ] && [ -d "/tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}" ]; then
     rm -rf "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
     mkdir -p "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
     cp -r /tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/. "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"
