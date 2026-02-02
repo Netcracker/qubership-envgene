@@ -205,12 +205,12 @@ def handle_env_def(env_dir: Path, env_def: dict | None):
 
     action = Action(env_def["action"])
     env_def_path = env_dir / INVENTORY / "env_definition.yml"
-    content = env_def.get("content")
     logger.info(f"Processing env_definition, action={action.value}. Target path: {env_def_path}")
     if action is Action.DELETE:
         logger.info(f"Deleting environment directory: {env_dir}")
         delete_dir(env_dir)
     else:
+        content = env_def.get("content")
         if env_template_version:
             logger.info(f"Overriding envTemplate.artifact with ENV_TEMPLATE_VERSION={env_template_version}")
             content["envTemplate"]["artifact"] = env_template_version
@@ -233,6 +233,8 @@ def handle_env_inv_content(env_inventory_content: dict):
 if __name__ == "__main__":
 
     if getenv('ENV_INVENTORY_CONTENT'):
+        logger.info("Using new inventory generation approach")
         generate_env_new_approach()
     else:
+        logger.info("Using old inventory generation approach")
         generate_env()
