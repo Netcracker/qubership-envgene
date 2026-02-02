@@ -200,10 +200,17 @@ done
 
 echo "Restoring environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
 
-if [ "${COMMIT_ENV}" = "true" ] && [ -d "/tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}" ]; then
-    rm -rf "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
-    mkdir -p "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
-    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/. "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"
+if [ "${COMMIT_ENV}" = "true" ]; then
+    if [ -d "/tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}" ]; then
+        rm -rf "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
+        mkdir -p "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
+        cp -r "/tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/." "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"
+    else
+        if [ -d "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}" ]; then
+            echo "Folder environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME} no longer exists, deleting from repo"
+            rm -rf "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
+        fi
+    fi
 fi
 
 if [ -e /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport ]; then
