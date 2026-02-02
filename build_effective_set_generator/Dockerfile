@@ -6,6 +6,7 @@ FROM registry.access.redhat.com/ubi8/ubi-minimal:8.1 AS cli
 ARG JAVA_PACKAGE=java-17-openjdk-headless
 ARG RUN_JAVA_VERSION=1.3.8
 
+# hadolint ignore=DL3041
 RUN microdnf install -y curl ca-certificates ${JAVA_PACKAGE} && \
     microdnf clean all && \
     mkdir -p /deployments && \
@@ -24,6 +25,7 @@ COPY build_effective_set_generator/effective-set-generator/target/*.jar /deploym
 FROM python:3.12-alpine3.19 AS build
 
 # Install ALL system-level *build dependencies*
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     gcc \
     musl-dev \
@@ -75,6 +77,7 @@ COPY build_effective_set_generator/build/configuration/constraint.txt /build/con
 COPY build_effective_set_generator/build/configuration/sources.list /etc/apk/repositories
 
 # Install ONLY runtime dependencies (NO dev packages)
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     libffi \
     openssl \
