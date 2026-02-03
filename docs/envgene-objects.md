@@ -1171,7 +1171,90 @@ nested:
 
 ### Environment Specific ParameterSet
 
-TBD
+Environment Specific ParameterSets are containers for parameters that override template-level parameters for a specific environment or group of environments. These ParameterSets are created by the configurator in the Instance repository to customize parameter values without modifying the Template repository.
+
+The Environment-Specific ParameterSet is specified individually for each Namespace or Cloud via the `envTemplate.envSpecificParamsets`, `envTemplate.envSpecificE2EParamsets`, or `envTemplate.envSpecificTechnicalParamsets` parameters in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
+
+During the generation of an Environment Instance, parameters from Environment-Specific ParameterSets are merged with parameters from Template ParameterSets, with environment-specific values taking precedence:
+
+- Parameters from ParameterSets referenced in `envSpecificParamsets` override values in `deployParameters` of the corresponding Cloud or Namespace.
+- Parameters from ParameterSets referenced in `envSpecificE2EParamsets` override values in `e2eParameters`.
+- Parameters from ParameterSets referenced in `envSpecificTechnicalParamsets` override values in `technicalConfigurationParameters`.
+
+Environment Specific ParameterSets also support application-level parameters through the `applications` section, allowing you to override parameters for specific applications within a namespace.
+
+**Location:**
+
+When an Environment Specific ParameterSet is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
+
+1. `/environments/<cluster-name>/<environment-name>/Inventory/parameters/` — Environment-specific, highest priority  
+2. `/environments/<cluster-name>/parameters/` — Cluster-wide, applies to all environments in the cluster  
+3. `/environments/parameters/` — Global, common for the entire repository  
+
+The first match found is used as the environment-specific override for the given Cloud or Namespace.
+
+```yaml
+# Optional
+# Deprecated
+version: string
+# Mandatory
+# The name of the Parameter Set
+# Used to reference the Parameter Set in env_definition.yml
+# Must match the Parameter Set filename
+name: string
+# Mandatory
+# Key-value pairs of parameters that will override template-level parameters
+parameters: hashmap
+# Optional
+# Section describing application-level parameters
+# For each `appName`, parameters will be merged with the Application object parameters
+applications:
+  - # Mandatory
+    appName: string
+    # Mandatory
+    parameters: hashmap
+```
+
+**Example:**
+
+```yaml
+# File: environments/prod-cluster/prod-env/Inventory/parameters/billing-prod-deploy.yml
+# Deployment parameters - used for Helm chart rendering during deployment
+name: billing-prod-deploy
+version: 1.0
+parameters:
+  INGRESS_HOST: "billing.prod.example.com"
+  INGRESS_TLS_ENABLED: "true"
+  STORAGE_CLASS: "ssd-retain"
+  DATABASE_NAME: "billing_prod"
+  FEATURE_NEW_PAYMENT_GATEWAY: "true"
+  FEATURE_INVOICE_GENERATOR: "true"
+applications:
+  - appName: billing-api
+    parameters:
+      SERVICE_TYPE: "LoadBalancer"
+      EXTERNAL_PORT: "8443"
+      HEALTH_CHECK_PATH: "/api/health"
+  - appName: billing-worker
+    parameters:
+      CRON_SCHEDULE: "0 */6 * * *"
+      PERSISTENCE_ENABLED: "true"
+```
+
+Referenced in `env_definition.yml`:
+
+```yaml
+envTemplate:
+  envSpecificParamsets:
+    billing:
+      - billing-prod-deploy
+```
+
+The filename of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the repository scope where it is located. This is validated during processing; if the validation fails, the operation will stop with an error.
+
+The Environment Specific ParameterSet schema is identical to the [Template ParameterSet](#template-parameterset).
+
+[ParameterSet JSON schema](/schemas/paramset.schema.json)
 
 ### Environment Specific Resource Profile Override
 
