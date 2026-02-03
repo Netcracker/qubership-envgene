@@ -2,18 +2,21 @@
 
 ## Executive Summary
 
-Current EnvGene documentation is **heavily skewed towards Reference** (object descriptions and configuration formats) but **critically lacks Tutorials** (learning materials) and **practical How-to guides**. This makes the tool difficult for new users to adopt.
+Current EnvGene documentation is **heavily skewed towards Reference**
+(object descriptions and configuration formats) but **critically lacks
+Tutorials** (learning materials) and **practical How-to guides**. This
+makes the tool difficult for new users to adopt.
 
 **Main Gap: Absence of step-by-step learning materials from simple to complex.**
 
 ### Current Coverage by Diátaxis Categories
 
-| Category        | Current Coverage | Target Coverage | Priority    | Documents Needed         |
-|-----------------|------------------|-----------------|-------------|--------------------------|
-| **TUTORIAL**    | 0%               | 80%             | 🔴 CRITICAL | 3-4 tutorials            |
-| **HOW-TO**      | 33%              | 90%             | 🔴 HIGH     | 20-25 guides             |
-| **REFERENCE**   | 60%              | 95%             | 🟡 MEDIUM   | Expand existing + 10 new |
-| **EXPLANATION** | 45%              | 70%             | 🟡 MEDIUM   | 12-15 articles           |
+| Category        | Current | Target | Priority    | Needed             |
+|-----------------|---------|--------|-------------|--------------------|
+| **TUTORIAL**    | 0%      | 80%    | 🔴 CRITICAL | 3-4 tutorials      |
+| **HOW-TO**      | 33%     | 90%    | 🔴 HIGH     | 20-25 guides       |
+| **REFERENCE**   | 60%     | 95%    | 🟡 MEDIUM   | Expand + 10 new    |
+| **EXPLANATION** | 45%     | 70%    | 🟡 MEDIUM   | 12-15 articles     |
 
 ---
 
@@ -71,7 +74,8 @@ Current EnvGene documentation is **heavily skewed towards Reference** (object de
 
 #### 2. **Comprehensive HOW-TO GUIDES** - 67% missing
 
-Basic guides exist (10 out of 30 target guides completed), but many practical scenarios are still missing.
+Basic guides exist (10 out of 30 target guides completed), but many
+practical scenarios are still missing.
 
 #### 3. **Complete REFERENCE** - 40% missing
 
@@ -79,7 +83,8 @@ Basic reference exists but lacks completeness and systematization.
 
 #### 4. **Conceptual EXPLANATION** - 55% missing
 
-Partially covered in `docs/features/` and enhanced `envgene-objects.md`, but still lacks comprehensive conceptual explanations.
+Partially covered in `docs/features/` and enhanced `envgene-objects.md`,
+but still lacks comprehensive conceptual explanations.
 
 ---
 
@@ -89,13 +94,16 @@ Partially covered in `docs/features/` and enhanced `envgene-objects.md`, but sti
 
 **Status:** 0% coverage - COMPLETELY ABSENT ⚠️
 
-Tutorials should take learners by the hand through a series of steps to complete a project. They are **learning-oriented** and help users gain competence.
+Tutorials should take learners by the hand through a series of steps
+to complete a project. They are **learning-oriented** and help users
+gain competence.
 
 #### Missing Tutorials
 
 ##### ❌ Tutorial 1: "Your First Environment in 15 Minutes"
 
-**Target audience:** Complete beginners  
+**Target audience:** Complete beginners
+
 **Goal:** Guide a newcomer from zero to a working environment
 
 **Content should include:**
@@ -171,15 +179,18 @@ Tutorials should take learners by the hand through a series of steps to complete
 
 ### 2. HOW-TO GUIDES (Task-Oriented)
 
-**Status:** 33% coverage - Missing practical scenarios ⚠️
+**Status:** 33% coverage - Missing practical scenarios
 
 How-to guides are **task-oriented** recipes that guide users through steps to solve real-world problems.
 
-#### What Exists
+#### Existing How-To Guides
 
-- ✅ **Repository Setup** (4 guides): create-simple-template, create-cluster, create-environment-inventory, envgene-maitanance
-- ✅ **Configuration Management** (3 guides): update-template-version ⭐, environment-specific-parameters ⭐, configure-resource-profiles ⭐
-- ✅ **Advanced Configuration** (3 guides): credential-encryption, dot-notated-parameter-migration, configure-ns-names-for-sites
+- ✅ **Repository Setup** (4 guides): create-simple-template,
+  create-cluster, create-environment-inventory, envgene-maitanance
+- ✅ **Configuration Management** (3 guides): update-template-version ⭐,
+  environment-specific-parameters ⭐, configure-resource-profiles ⭐
+- ✅ **Advanced Configuration** (3 guides): credential-encryption,
+  dot-notated-parameter-migration, configure-ns-names-for-sites
 
 #### Critical Missing How-To Guides
 
@@ -360,15 +371,17 @@ How-to guides are **task-oriented** recipes that guide users through steps to so
 
 ### 3. REFERENCE (Information-Oriented)
 
-**Status:** 60% coverage - Basic reference exists but needs expansion ⚠️
+**Status:** 60% coverage - Basic reference exists but needs expansion
 
-Reference documentation provides **technical descriptions** of the machinery and how to operate it.
+Reference documentation provides **technical descriptions** of the
+machinery and how to operate it.
 
 #### What Exists
 
 - ✅ `envgene-objects.md` - object descriptions (needs expansion)
 - ✅ `envgene-configs.md` - configuration formats (needs completion)
-- ✅ `instance-pipeline-parameters.md` - pipeline parameters (needs GitLab/GitHub split)
+- ✅ `instance-pipeline-parameters.md` - pipeline parameters
+  (needs GitLab/GitHub split)
 - ✅ `template-macros.md` - macros (needs examples)
 - ✅ `glossary.md` - basic glossary
 
@@ -404,7 +417,8 @@ Reference documentation provides **technical descriptions** of the machinery and
 ---
 
 ##### Configuration Reference (40% complete)
-⚠️ **Expand existing `envgene-configs.md`:**
+
+**Expand existing `envgene-configs.md`:**
 
 - ❌ **Complete `env_definition.yml` reference**
   - All possible parameters with examples
@@ -434,7 +448,8 @@ Reference documentation provides **technical descriptions** of the machinery and
 ---
 
 ##### Templates Reference (30% complete)
-⚠️ **Expand existing `template-macros.md`:**
+
+**Expand existing `template-macros.md`:**
 
 - ❌ **Complete list of Jinja2 filters available**
   - Built-in Jinja2 filters
@@ -463,7 +478,8 @@ Reference documentation provides **technical descriptions** of the machinery and
 ---
 
 ##### Pipeline Reference (50% complete)
-⚠️ **Expand existing `instance-pipeline-parameters.md`:**
+
+**Expand existing `instance-pipeline-parameters.md`:**
 
 - ❌ **Complete GitLab CI pipeline reference**
   - All parameters
@@ -492,7 +508,8 @@ Reference documentation provides **technical descriptions** of the machinery and
 ---
 
 ##### Objects Schema Reference (70% complete)
-⚠️ **Expand existing `envgene-objects.md`:**
+
+**Expand existing `envgene-objects.md`:**
 
 - ❌ **JSON Schema for each object**
   - Formal schema definition
@@ -515,6 +532,7 @@ Reference documentation provides **technical descriptions** of the machinery and
 ---
 
 ##### Error Reference (0% coverage)
+
 - ❌ **Error codes catalog**
   - All error codes
   - Error categories
@@ -535,17 +553,22 @@ Reference documentation provides **technical descriptions** of the machinery and
 
 ### 4. EXPLANATION (Understanding-Oriented)
 
-**Status:** 40% coverage - Partially covered in `docs/features/`, but lacks conceptual depth ⚠️
+**Status:** 40% coverage - Partially covered in `docs/features/`,
+but lacks conceptual depth
 
-Explanation documentation provides **background and context**. It explains why things are the way they are.
+Explanation documentation provides **background and context**. It explains
+why things are the way they are.
 
-#### What Exists
-- ⚠️ `docs/features/` - describes features but focuses on "how" rather than "why"
+#### Existing Explanation Documentation
+
+- ⚠️ `docs/features/` - describes features but focuses on "how"
+  rather than "why"
 - ⚠️ Some architectural context scattered across various docs
 
 #### Critical Missing Explanation Documentation
 
 ##### Architectural Concepts (0% coverage) 🔴 CRITICAL
+
 - ❌ **EnvGene Philosophy: Why Git-based approach**
   - Design principles
   - Advantages of Git-based config management
@@ -579,6 +602,7 @@ Explanation documentation provides **background and context**. It explains why t
 ---
 
 ##### Conceptual Explanations (20% coverage)
+
 - ❌ **What is Effective Set and why does it exist**
   - Concept explained
   - Purpose and benefits
@@ -612,6 +636,7 @@ Explanation documentation provides **background and context**. It explains why t
 ---
 
 ##### Design Patterns (0% coverage)
+
 - ❌ **Best Practices: Template Repository organization**
   - Directory structure
   - Naming conventions
@@ -627,7 +652,7 @@ Explanation documentation provides **background and context**. It explains why t
 - ❌ **Template Override patterns**
   - When to use override
   - Common patterns
-  - Anti-patterns
+  - Antipatterns
   - Examples
 
 - ❌ **Credentials management strategies**
@@ -645,6 +670,7 @@ Explanation documentation provides **background and context**. It explains why t
 ---
 
 ##### Comparisons and Alternatives (0% coverage)
+
 - ❌ **EnvGene vs Helm: When to use what**
   - Key differences
   - Use cases for each
@@ -665,6 +691,7 @@ Explanation documentation provides **background and context**. It explains why t
 ---
 
 ##### Advanced Topics (0% coverage)
+
 - ❌ **Scaling EnvGene to 100+ environments**
   - Scalability challenges
   - Repository organization at scale
@@ -691,20 +718,23 @@ Explanation documentation provides **background and context**. It explains why t
 
 #### Priority 1: TUTORIALS - Learning Materials (0% → 80%)
 
-**Impact:** High - Enables user onboarding  
+**Impact:** High - Enables user onboarding
+
 **Effort:** Medium (2-3 weeks)
 
 - [ ] Tutorial: "Your First Environment in 15 Minutes"
 - [ ] Tutorial: "Blue-Green Deployment"
 - [ ] Update README.md with clear getting started path
 
-**Rationale:** Without tutorials, new users cannot learn the tool. This is blocking adoption.
+**Rationale:** Without tutorials, new users cannot learn the tool.
+This is blocking adoption.
 
 ---
 
 #### Priority 2: HOW-TO - Troubleshooting (0% → 100%)
 
-**Impact:** High - Reduces support burden  
+**Impact:** High - Reduces support burden
+
 **Effort:** Low (1 week)
 
 - [ ] How to debug template rendering errors
@@ -712,18 +742,21 @@ Explanation documentation provides **background and context**. It explains why t
 - [ ] How to validate env_definition.yml
 - [ ] How to validate Template Descriptor
 
-**Rationale:** Users get stuck and need immediate help. Troubleshooting guides reduce support load.
+**Rationale:** Users get stuck and need immediate help.
+Troubleshooting guides reduce support load.
 
 ---
 
 #### Priority 3: EXPLANATION - Architectural Concepts (0% → 60%)
 
-**Impact:** High - Enables understanding  
+**Impact:** High - Enables understanding
+
 **Effort:** Medium (2 weeks)
 
 - [ ] EnvGene Philosophy: Why Git-based approach
 - [ ] System Architecture Overview
 - [ ] Data Model: From Template to Effective Set
+
 - [ ] Environment Instance Lifecycle
 
 **Rationale:** Users need conceptual understanding to use the tool effectively, not just recipes.
@@ -1048,7 +1081,7 @@ Restructure `/docs` according to ideal structure:
 - Move existing docs to appropriate categories
 - Add category markers to each page
 - Update all internal links
-- Create category README files
+- Create category README.md files
 
 **Success Metrics:**
 
@@ -1079,8 +1112,10 @@ Create lifecycle management guides:
 
 #### Action 2.3: Expand Reference Documentation
 
-**Priority:** 🟡 MEDIUM  
-**Effort:** 2 weeks  
+**Priority:** 🟡 MEDIUM
+
+**Effort:** 2 weeks
+
 **Owner:** Development Team + Technical Writer
 
 Expand existing reference docs:
@@ -1091,6 +1126,7 @@ Expand existing reference docs:
 - Add more examples
 
 **Success Metrics:**
+
 - 95% coverage of all configuration options
 - Zero ambiguity in reference docs
 
@@ -1116,7 +1152,7 @@ Expand existing reference docs:
 
 - Best practices guides
 - Common patterns
-- Anti-patterns
+- Antipatterns
 - Real-world examples
 
 ---
@@ -1179,7 +1215,8 @@ Create documentation for each primary user journey:
 
 ### Journey 1: New User → First Environment
 
-**Persona:** Developer new to EnvGene  
+**Persona:** Developer new to EnvGene
+
 **Goal:** Deploy first environment to understand the tool
 
 **Documentation path:**
@@ -1303,14 +1340,14 @@ Create documentation for each primary user journey:
 - [ ] Create quickstart tutorial
 - [ ] Create troubleshooting section
 - [ ] Write architecture overview
-- [ ] Update main README with Diátaxis structure
+- [ ] Update main README.md with Diátaxis structure
 
 **Deliverables:**
 
 - 1 complete tutorial
 - 4 troubleshooting guides
 - 1 architecture document
-- Restructured README
+- Restructured README.md
 
 ---
 
@@ -1345,6 +1382,7 @@ Create documentation for each primary user journey:
 **Deliverables:**
 
 - 2 additional tutorials
+
 - 5 pattern documents
 - 4 integration guides
 - 8 advanced how-to guides

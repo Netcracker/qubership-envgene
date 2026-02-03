@@ -16,7 +16,7 @@
 This guide provides instructions for updating the template version for an existing environment. Template version updates are necessary when:
 
 - A new version of the Environment Template artifact has been published
-- You want to apply template improvements or bug fixes to your environment
+- You want to apply template improvements or bugfixes to your environment
 
 There are two approaches to update the template version:
 

@@ -8,9 +8,9 @@ This document contains guidelines and rules for AI coding assistants working wit
 
 #### Lists
 
-**CRITICAL: All lists (bullet or numbered) MUST have blank lines before and after them.**
+**CRITICAL: All lists (bullet or numbered) MUST have empty lines before and after them.**
 
-❌ **INCORRECT (no blank lines):**
+❌ **INCORRECT (no empty lines):**
 
 ```markdown
 Template-level parameters are defined in two ways:
@@ -19,7 +19,7 @@ Template-level parameters are defined in two ways:
 When you need environment-specific values...
 ```
 
-✅ **CORRECT (with blank lines):**
+✅ **CORRECT (with empty lines):**
 
 ```markdown
 Template-level parameters are defined in two ways:
@@ -30,7 +30,7 @@ Template-level parameters are defined in two ways:
 When you need environment-specific values...
 ```
 
-**Why:** Markdown linters require blank lines around lists for proper parsing and rendering.
+**Why:** Markdown linters require empty lines around lists for proper parsing and rendering.
 
 #### Table of Contents
 
@@ -88,7 +88,7 @@ Content...
 | Very long value here | Val | D |
 ```
 
-**Problem:** Pipes are not aligned, causing markdown linter warnings and poor readability.
+**Problem:** Pipes are not aligned, causing Markdown linting warnings and poor readability.
 
 ##### ✅ CORRECT Format
 
@@ -255,7 +255,7 @@ Template-level parameters are defined in two ways:
 
 Before committing documentation:
 
-1. Check markdown syntax
+1. Check Markdown syntax
 2. Verify all links work
 3. Ensure tables are aligned
 4. Review for clarity and accuracy
