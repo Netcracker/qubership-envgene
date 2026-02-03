@@ -69,3 +69,23 @@ TRACING_HOST: tracing-agent
 TRACING_UI_URL: https://cluster-01.qubership.org
 ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181
 ZOOKEEPER_URL: zookeeper.zookeeper:2181
+api_config:
+  connection:
+    host: db.example.com
+    port: 5432
+database_config:
+  connection:
+    host: db.example.com
+    port: 5432
+rendered_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
+yaml_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080

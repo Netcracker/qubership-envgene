@@ -70,7 +70,27 @@ TRACING_HOST: tracing-agent
 TRACING_UI_URL: https://cluster-01.qubership.org
 ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181
 ZOOKEEPER_URL: zookeeper.zookeeper:2181
-global: &id001
+api_config: &id001
+  connection:
+    host: db.example.com
+    port: 5432
+database_config: &id002
+  connection:
+    host: db.example.com
+    port: 5432
+rendered_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
+yaml_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
+global: &id003
   API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
   APPLICATION_NAME: postgres
   ARTIFACT_DESCRIPTOR_ARTIFACT_ID: prod.platform.ha.postgres
@@ -143,16 +163,30 @@ global: &id001
   TRACING_UI_URL: https://cluster-01.qubership.org
   ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181
   ZOOKEEPER_URL: zookeeper.zookeeper:2181
+  api_config: *id001
+  database_config: *id002
   pg_patroni: artifactory.qubership.org:17125/product/prod.platform.ha_pg-patroni:release-2024.2-2.10.0_20240715-123045_pg16
   pg_upgrade: artifactory.qubership.org:17125/product/prod.platform.ha_pg-service:release-2024.2-2.10.0_20240716-142315_pg-upgrade
   pgbackrest_sidecar: artifactory.qubership.org:17263/qubership/pgskipper-pgbackrest-sidecar:release-2024.2-2.10.0
   postgres_operator_init: artifactory.qubership.org:17208/product/prod.platform.ha_postgres-operator:2.10.5_20241215-141230_init
   postgres_operator_tests: artifactory.qubership.org:17263/qubership/pgskipper-operator-tests:release-2024.2-2.10.0
+  rendered_template: |-
+    services:
+      api:
+        image: api:latest
+        ports:
+          - 8080:8080
   vault_env: artifactory.qubership.org:17175/banzaicloud/vault-env:2.5.1
-patroni-core: *id001
-pg_patroni: *id001
-pg_upgrade: *id001
-pgbackrest_sidecar: *id001
-postgres_operator_init: *id001
-postgres_operator_tests: *id001
-vault_env: *id001
+  yaml_template: |-
+    services:
+      api:
+        image: api:latest
+        ports:
+          - 8080:8080
+patroni-core: *id003
+pg_patroni: *id003
+pg_upgrade: *id003
+pgbackrest_sidecar: *id003
+postgres_operator_init: *id003
+postgres_operator_tests: *id003
+vault_env: *id003
