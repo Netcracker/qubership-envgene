@@ -55,7 +55,7 @@ def build_pipeline(params: dict) -> None:
     per_env_plugin_engine = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/per_env')
 
     env_names = parse_env_names(params['ENV_NAMES'])
-    if len(env_names) > 1:
+    if len(env_names) > 1 and is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params):
         raise ValueError(
             f"Generating Inventories for multiple Environments in single pipeline is not supported. "
             f"ENV_NAMES: {env_names}"
