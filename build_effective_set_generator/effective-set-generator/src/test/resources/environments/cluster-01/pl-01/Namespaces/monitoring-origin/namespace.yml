@@ -17,6 +17,10 @@ deployParameters:
   app_version: "3.0"
   ssl_enabled: true
   debug_mode_test: "true"
+  api_port: ${server_port}
+  service_version: ${app_version}
+  use_ssl: ${ssl_enabled}
+  log_level: ${debug_mode_test}
   ENVGENE_CONFIG_REF_NAME: "branch_name"
   ENVGENE_CONFIG_TAG: "No Ref tag"
   KMS_CERT_IN_BASE64: "${creds.get( \"kms-cert\" ).secret}" # paramset: test-deploy-creds version: 1 source: template
