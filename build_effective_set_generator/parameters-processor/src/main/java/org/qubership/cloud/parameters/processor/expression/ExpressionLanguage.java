@@ -220,6 +220,13 @@ public class ExpressionLanguage extends AbstractLanguage {
 
 
             String rendered = "";
+            if (strValue.matches("^\\$\\{[^}]+}$")) {
+                String key = strValue.substring(2, strValue.length() - 1);
+                Parameter ref = binding.get(key);
+                if (ref != null) {
+                    return ref;
+                }
+            }
             this.binding.getTypeCollector().clear();
             try {
                 rendered = renderStringByJinJava(strValue, binding, escapeDollar);
