@@ -16,6 +16,7 @@ def validate_pipeline(params: dict):
             params["GET_PASSPORT"],
             params["ENV_BUILD"],
             params["ENV_INVENTORY_INIT"],
+            params["ENV_INVENTORY_CONTENT"]
         )
 
 def basic_checks(env_names):
@@ -40,7 +41,7 @@ def template_test_checks():
     if errorFound:
         raise ReferenceError("Execution is aborted as validation is not successful. See logs above.")
 
-def real_execution_checks(env_names, get_passport, env_build, env_inventory_init):
+def real_execution_checks(env_names, get_passport, env_build, env_inventory_init, env_inventory_content):
     for env in env_names.split("\n"):
         # now we are using only complex environment names that contain both cluster_name and environment_name
         if env.count('/') != 1:
@@ -50,11 +51,12 @@ def real_execution_checks(env_names, get_passport, env_build, env_inventory_init
         cluster_name = get_cluster_name_from_full_name(env)
         environment_name = get_environment_name_from_full_name(env)
         # checks
-        check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init)
+        check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init,
+                          env_inventory_content)
         check_passport_params(get_passport)
 
-def check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init):
-    if env_inventory_init == "true":
+def check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init, env_inventory_content):
+    if env_inventory_init == "true" or env_inventory_content:
         return
     schemas_dir = getenv("JSON_SCHEMAS_DIR", "/module/schemas")
     all_environments_dir = f"{project_dir}/environments"
