@@ -72,7 +72,7 @@ It has the following structure:
 ```yaml
 # Optional
 # Template Inheritance configuration
-# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
 parent-templates:
   # Optional
   # Value must be in `application:version` notation
@@ -83,7 +83,7 @@ tenant: string
 # or
 tenant:
   # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
   parent: string
 # Mandatory
 # Can be specified either as direct template path (string) or as an object
@@ -100,11 +100,11 @@ cloud:
     <yaml or jinja expression>
   # Optional
   # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
   parent: string
   # Optional
   # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
   overrides-parent:
     profile:
       override-profile-name: <resource-profile-override-name>
@@ -137,15 +137,15 @@ namespaces:
       <yaml or jinja expression>
     # Optional
     # Name of Namespace in Parent Template
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
     name: string
     # Optional
     # Parent template name
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
     parent: string
     # Optional
     # Template Inheritance configuration
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
     overrides-parent:
       profile:
         override-profile-name: string
