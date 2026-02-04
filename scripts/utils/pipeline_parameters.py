@@ -34,6 +34,8 @@ def get_pipeline_parameters() -> dict:
         'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL"),
         "BG_STATE": getenv("BG_STATE"),
         "BG_MANAGE": getenv("BG_MANAGE") == "true",
+        "APP_DEFS_PATH": getenv("APP_DEFS_PATH"),
+        "REG_DEFS_PATH": getenv("REG_DEFS_PATH"),
         "APP_REG_DEFS_JOB": getenv("APP_REG_DEFS_JOB"),
         "EFFECTIVE_SET_CONFIG" : getenv("EFFECTIVE_SET_CONFIG"),
     }
