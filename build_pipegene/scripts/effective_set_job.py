@@ -32,7 +32,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         # cert handling for java
         'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/ && cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/default_cert.pem"',
         'for cert in "${CI_PROJECT_DIR}/configuration/certs/*" ; do [ -f "$cert" ] && keytool -import -trustcacerts -alias "$(basename "$cert")" -file "$cert" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done',
-        'python3 /module/scripts/main.py',
+        'python3 /module/scripts/main.py decrypt_cred_files',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p {app_defs_path} && cp -rf {artifact_app_defs_path}/* {app_defs_path}',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p {reg_defs_path} && cp -fr {artifact_reg_defs_path}/* {reg_defs_path}',
     ]
