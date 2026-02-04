@@ -73,9 +73,37 @@ TRACING_HOST: tracing-agent
 TRACING_UI_URL: https://cluster-01.qubership.org
 ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181
 ZOOKEEPER_URL: zookeeper.zookeeper:2181
+api_config:
+  connection:
+    host: db.example.com
+    port: 5432
+api_port: 8080
+app_version: '3.0'
 bss-app-exist: false
 core:
   apps:
     volumes:
       outputs:
         capacity: 20Gi
+database_config:
+  connection:
+    host: db.example.com
+    port: 5432
+debug_mode_test: 'true'
+log_level: 'true'
+rendered_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
+server_port: 8080
+service_version: '3.0'
+ssl_enabled: true
+use_ssl: true
+yaml_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
