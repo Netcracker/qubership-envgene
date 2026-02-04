@@ -16,7 +16,7 @@
 
 ## Description
 
-This feature describes the process of generating an [Environment Instance](/docs/envgene-objects.md#environment-instance) from an [Environment Template](/docs/envgene-objects.md#environment-template) and [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). The generation process creates the directory structure and files for the Environment Instance, including Namespaces, Applications, Resource Profiles, Credentials, and other EnvGene objects.
+This feature describes the process of generating an [Environment Instance](/docs/envgene-objects.md#environment-instance-objects) from an [Environment Template](/docs/envgene-objects.md#environment-template-objects) and [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). The generation process creates the directory structure and files for the Environment Instance, including Namespaces, Applications, Resource Profiles, Credentials, and other EnvGene objects.
 
 ## Namespace Folder Name Generation
 

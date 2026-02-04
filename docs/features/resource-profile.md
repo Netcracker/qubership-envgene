@@ -17,7 +17,7 @@ The Resource Profiles system has a 3-level hierarchy:
 
 1. Resource Profile Baselines
 
-    These are sets of pre-configured performance parameters for services, intended to provide a standardized performance configuration for a service.  
+    These are sets of pre-configured performance parameters for services, intended to provide a standardized performance configuration for a service.
     Service developers create these baselines and distribute them together with the application artifact. Later, they are included in the Application SBOM.
 
     Typical baseline profiles are:
@@ -27,7 +27,7 @@ The Resource Profiles system has a 3-level hierarchy:
 
     You can have any number of profiles and call them whatever you want, e.g. `small`, `medium`, `large`.
 
-2. [Template Resource Profile Override](/docs/envgene-objects.md#templates-resource-profile-override)
+2. [Template Resource Profile Override](/docs/envgene-objects.md#template-resource-profile-override)
 
     These are customizations for performance parameters, over a Baseline Resource Profile.
     Such overrides are created by the configurator in the Template repository, to further adjust performance parameters on top of the Baseline Resource Profile Override for all environments of the same type.
@@ -45,10 +45,10 @@ When calculating the [Effective Set](/docs/features/calculator-cli.md#effective-
 
 During Environment generation, as part of the [`env_build`](/docs/envgene-pipelines.md#instance-pipeline) job, two types of Resource Profile Overrides are processed and combined:
 
-1. [Template Resource Profile Override](/docs/envgene-objects.md#templates-resource-profile-override)
+1. [Template Resource Profile Override](/docs/envgene-objects.md#template-resource-profile-override)
 
-    The Template Resource Profile Override is configured individually for each Namespace or Cloud, identified by the `profile.name` property.  
-    Each override is represented as a YAML file located at `/templates/resource_profiles` within the Environment Template repository.  
+    The Template Resource Profile Override is configured individually for each Namespace or Cloud, identified by the `profile.name` property.
+    Each override is represented as a YAML file located at `/templates/resource_profiles` within the Environment Template repository.
     The filename (without the `.yaml` or `.yml` extension) must exactly correspond to the value set in `profile.name` for that specific Cloud or Namespace.
 
     For example, if a namespace specifies `profile.name: dev-over`, it will use `/templates/resource_profiles/dev-over.yaml` as its template resource profile override.
@@ -68,9 +68,9 @@ During Environment generation, as part of the [`env_build`](/docs/envgene-pipeli
 
     When an Environment Specific Resource Profile Override is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
 
-    1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority  
-    2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster  
-    3. `/environments/resource_profiles` — Global, common for the entire repository  
+    1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority
+    2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster
+    3. `/environments/resource_profiles` — Global, common for the entire repository
 
     The first match found is used as the environment-specific override for the given Cloud or Namespace.
 
@@ -78,7 +78,7 @@ The final result of processing is a [Resource Profile Override](/docs/envgene-ob
 
 ### Combination Logic
 
-Resource Profile combination happens when you define Environment-Specific Resource Profile Overrides for a particular Cloud or Namespace.  
+Resource Profile combination happens when you define Environment-Specific Resource Profile Overrides for a particular Cloud or Namespace.
 These overrides are referenced via `envTemplate.envSpecificResourceProfiles` in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml):
 
 ```yaml
@@ -90,7 +90,7 @@ envTemplate:
     <namespace-template-name>: <env-specific-override-name>
 ```
 
-There are two ways to combine overrides: **merge** and **replace**.  
+There are two ways to combine overrides: **merge** and **replace**.
 Which mode is used is controlled by the `inventory.config.mergeEnvSpecificResourceProfiles` setting in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml):
 
 ```yaml
@@ -123,7 +123,7 @@ The Environment-Specific Resource Profile Override is merged **into** the Templa
         - If the parameter is missing in the target, add the entire parameter from the template.
         - If the parameter exists in both, update the parameter in the target by overwriting its `value` with the one from the template.
 
-In this mode, the resulting [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) will have the same name as the [Template Resource Profile Override](/docs/envgene-objects.md#templates-resource-profile-override).
+In this mode, the resulting [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) will have the same name as the [Template Resource Profile Override](/docs/envgene-objects.md#template-resource-profile-override).
 
 ### Naming Rules for Resource Profile Override
 
@@ -140,7 +140,7 @@ inventory:
 ```
 
 If you set `updateRPOverrideNameWithEnvName: true`, the system will:
-  
+
 1. Add a prefix to the name of each [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override). The prefix will be constructed from the [`<tenant-name>`](/docs/template-macros.md#current_envtenant), [`<cloud-name>`](/docs/template-macros.md#current_envcloud), and [`<environment-name>`](/docs/template-macros.md#current_envname), joined by hyphens, followed by the original Resource Profile Override name.
 2. Add the same prefix to the `profile.name` attribute of the Cloud or Namespace
 
