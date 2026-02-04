@@ -112,11 +112,20 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             loadConsumerData();
             traverseSourceDirectory(nsWithAppsFromSD, appsToProcess);
             populateEnvironments();
+            correctDeployPostfix();
             fileSystemUtils.createEffectiveSetFolder(inputData.getSolutionBomDTO());
         } catch (Exception e) {
             throw new FileParseException("Error preparing data due to " + e.getMessage());
         }
 
+    }
+
+    private void correctDeployPostfix() {
+        List<SBApplicationDTO> applicationDTOList = inputData.getSolutionBomDTO().map(SolutionBomDTO::getApplications)
+                .orElseGet(Collections::emptyList);
+        applicationDTOList.parallelStream().forEach(app -> {
+            app.setNamespace(getNamespaceName(app.getNamespace()));
+        });
     }
 
     private void loadConsumerData() {
@@ -227,7 +236,8 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                     if (dir.getParent().getFileName().toString().equals(GenericConstants.NS_FOLDER)) {
                         String namespace = dir.getFileName().toString();
-                        if (!nsWithAppsFromSD.containsKey(namespace)) {
+                        String correctedNamespace = getCorrectedNamespace(dir.getFileName().toString());
+                        if (!nsWithAppsFromSD.containsKey(correctedNamespace)) {
                             Path namespaceYaml = dir.resolve("namespace.yml");
                             if (Files.exists(namespaceYaml)) {
                                 NamespaceDTO namespaceDTO = fileDataConverter.parseInputFile(NamespaceDTO.class, namespaceYaml.toFile());
@@ -273,6 +283,15 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             throw new FileParseException("Failure in reading input Directory", e);
         }
         inputData.setCloudDTO(inputData.getCloudDTO().toBuilder().applications(cloudApps).build());
+    }
+
+    private String getCorrectedNamespace(String namespace) {
+        if (namespace.endsWith("-origin")) {
+            return namespace.substring(0, namespace.indexOf("-origin"));
+        } else if (namespace.endsWith("-peer")) {
+            return namespace.substring(0, namespace.indexOf("-peer"));
+        }
+        return namespace;
     }
 
     private void handleNamespaceYamlFile(Path file, Map<String, List<NamespacePrefixDTO>> clusterMap) {
@@ -329,7 +348,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 CompositeStructureDTO compositeStructureDTO = fileDataConverter.parseInputFile(CompositeStructureDTO.class, file.toFile());
                 inputData.setCompositeStructureDTO(compositeStructureDTO);
                 break;
-            case "bg-domain":
+            case "bg_domain":
                 BgDomainEntityDTO bgDomainEntityDTO = fileDataConverter.parseInputFile(BgDomainEntityDTO.class, file.toFile());
                 inputData.setBgDomainEntityDTO(bgDomainEntityDTO);
                 break;
@@ -362,8 +381,9 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         ApplicationLinkDTO applicationLinkDTO = fileDataConverter.parseInputFile(ApplicationLinkDTO.class, file.toFile());
         if (parent.getParent().getParent().getFileName().toString().equals(GenericConstants.NS_FOLDER)) {
             String namespace = parent.getParent().getFileName().toString();
+            String correctedNamespace = getCorrectedNamespace(namespace);
             String appName = file.getFileName().toString().replaceFirst("\\.(ya?ml)$", "");
-            if (checkIfAppValid(namespace, appName, nsWithAppsFromSD)) {
+            if (checkIfAppValid(correctedNamespace, appName, nsWithAppsFromSD)) {
                 appsOnNamespace.computeIfAbsent(namespace, k -> new ArrayList<>()).add(applicationLinkDTO);
             }
         } else {
@@ -392,7 +412,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         String namespace = applicationDTO.getDeployPostfix();
         String appName = applicationDTO.getVersion().split(":")[0];
         String appVersion = applicationDTO.getVersion().replace(":", "-");
-        String appFileRef = String.format("%s/%s", sharedData.getSbomsPath().get(), appVersion +".sbom.json");
+        String appFileRef = String.format("%s/%s", sharedData.getSbomsPath().get(), appVersion + ".sbom.json");
         SBApplicationDTO dto = SBApplicationDTO.builder()
                 .appName(appName)
                 .appVersion(appVersion)
@@ -402,6 +422,26 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         appsToProcess.add(appName);
         nsWithAppsFromSD.computeIfAbsent(namespace, k -> new ArrayList<>()).add(appName);
         return dto;
+    }
+
+    private String getNamespaceName(String deployPostFix) {
+        if (inputData.getBgDomainEntityDTO() != null) {
+            NamespaceDTO namespaceDTO =
+                    inputData.getNamespaceDTOMap().getOrDefault(deployPostFix,
+                            inputData.getNamespaceDTOMap().getOrDefault(deployPostFix + "-origin",
+                                    inputData.getNamespaceDTOMap().get(deployPostFix + "-peer")));
+            if (namespaceDTO != null) {
+                String originalNamespace = namespaceDTO.getName();
+                BgDomainEntityDTO.NamespaceDTO originNamespaceDTO = inputData.getBgDomainEntityDTO().getOriginNamespace();
+                BgDomainEntityDTO.NamespaceDTO peerNamespaceDTO = inputData.getBgDomainEntityDTO().getPeerNamespace();
+                if (originalNamespace.equalsIgnoreCase(originNamespaceDTO.getName())) {
+                    return deployPostFix + "-origin";
+                } else if (originalNamespace.equalsIgnoreCase(peerNamespaceDTO.getName())) {
+                    return deployPostFix + "-peer";
+                }
+            }
+        }
+        return deployPostFix;
     }
 
     private void loadRegistryData() {

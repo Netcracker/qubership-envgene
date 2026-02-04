@@ -3,42 +3,24 @@ from envgenehelper import logger
 from pipeline_helper import job_instance
 
 
-def prepare_env_build_job(pipeline, is_template_test, env_template_version, full_env, enviroment_name, cluster_name,
-                          group_id, artifact_id, artifact_url, tags):
+def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name, cluster_name, group_id, artifact_id, tags):
     logger.info(f'prepare env_build job for {full_env}')
-    # prepare script
+
     script = [
        '/module/scripts/handle_certs.sh',
     ]
-    # adding update template version
-    if env_template_version and env_template_version != "" and not is_template_test:
-        script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
-
     script.append('cd /build_env; python3 /build_env/scripts/build_env/main.py')
 
     if is_template_test:
         script.append('env_name=$(cat "$CI_PROJECT_DIR/set_variable.txt")')
         script.append(
             'sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "$CI_PROJECT_DIR/environments/$env_name/Credentials/credentials.yml"')
-    else:
-        script.append("export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')")
-
-    script.extend([
-        'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
-        'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
-    ])
-    # add after script
-    after_script = [
-        'mkdir -p "$CI_PROJECT_DIR/tmp"',
-        'cp -r /build_env/tmp/* $CI_PROJECT_DIR/tmp'
-    ]
-    #
+        
     env_build_params = {
         "name": f'env_builder.{full_env}',
         "image": '${envgen_image}',
         "stage": 'env_builder',
-        "script": script,
-        "after_script": after_script
+        "script": script
     }
 
     env_build_vars = {
@@ -46,7 +28,6 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         "FULL_ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,
-        "ENV_TEMPLATE_VERSION": env_template_version,
         "GROUP_ID": group_id,
         "ARTIFACT_ID": artifact_id,
         "ENV_TEMPLATE_TEST": "true" if is_template_test else "false",
@@ -56,7 +37,6 @@ def prepare_env_build_job(pipeline, is_template_test, env_template_version, full
         "envgen_debug": "true",
         "module_config_default": "/module/templates/defaults.yaml",
         "GITLAB_RUNNER_TAG_NAME": tags,
-        "ARTIFACT_URL": artifact_url
     }
 
     env_build_job = job_instance(params=env_build_params, vars=env_build_vars)
