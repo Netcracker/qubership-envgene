@@ -69,7 +69,27 @@ TRACING_HOST: tracing-agent
 TRACING_UI_URL: https://cluster-01.qubership.org
 ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181
 ZOOKEEPER_URL: zookeeper.zookeeper:2181
-global: &id001
+api_config: &id001
+  connection:
+    host: db.example.com
+    port: 5432
+database_config: &id002
+  connection:
+    host: db.example.com
+    port: 5432
+rendered_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
+yaml_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
+global: &id003
   API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
   APPLICATION_NAME: postgres
   ARTIFACT_DESCRIPTOR_ARTIFACT_ID: prod.platform.ha.postgres
@@ -141,10 +161,24 @@ global: &id001
   TRACING_UI_URL: https://cluster-01.qubership.org
   ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181
   ZOOKEEPER_URL: zookeeper.zookeeper:2181
-patroni-core: *id001
-pg_patroni: *id001
-pg_upgrade: *id001
-pgbackrest_sidecar: *id001
-postgres_operator_init: *id001
-postgres_operator_tests: *id001
-vault_env: *id001
+  api_config: *id001
+  database_config: *id002
+  rendered_template: |-
+    services:
+      api:
+        image: api:latest
+        ports:
+          - 8080:8080
+  yaml_template: |-
+    services:
+      api:
+        image: api:latest
+        ports:
+          - 8080:8080
+patroni-core: *id003
+pg_patroni: *id003
+pg_upgrade: *id003
+pgbackrest_sidecar: *id003
+postgres_operator_init: *id003
+postgres_operator_tests: *id003
+vault_env: *id003
