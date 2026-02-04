@@ -8,11 +8,12 @@ from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, getEnvDefinition, get_env_instances_dir
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
-from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
+from env_build_jobs import prepare_env_build_job, prepare_git_commit_job
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from credential_rotation_job import prepare_credential_rotation_job
 from appregdef_render_job import prepare_appregdef_render_job
 from bg_manage_job import prepare_bg_manage_job
+from effective_set_job import prepare_generate_effective_set_job
 
 PROJECT_DIR = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 IS_GITLAB = bool(os.getenv('CI_PROJECT_DIR')) and not bool(os.getenv('GITHUB_ACTIONS'))
@@ -128,9 +129,10 @@ def build_pipeline(params: dict) -> None:
             logger.info(f'Preparing of env_build job for {env} is skipped.')
 
         if params['GENERATE_EFFECTIVE_SET']:
-            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name, cluster_name, tags)
+            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, env, environment_name, cluster_name, params["APP_REG_DEFS_JOB"], params["APP_DEFS_PATH"], params["REG_DEFS_PATH"],
+                                                                                        params["SD_VERSION"], params["SD_DATA"], params["DEPLOYMENT_SESSION_ID"], params["EFFECTIVE_SET_CONFIG"], tags)
         else:
-            logger.info(f'Preparing of generate_effective_set job for {cluster_name}/{environment_name} is skipped.')
+            logger.info(f'Preparing of generate_effective_set job for {env} is skipped.')
 
         jobs_requiring_git_commit = ["appregdef_render_job", "env_build_job", "generate_effective_set_job", "env_inventory_generation_job", "credential_rotation_job", "bg_manage_job"]
 

@@ -1,5 +1,7 @@
 import json
+import uuid
 from os import getenv
+
 from envgenehelper import logger
 from envgenehelper.plugin_engine import PluginEngine
 
@@ -28,10 +30,12 @@ def get_pipeline_parameters() -> dict:
         'NS_BUILD_FILTER': getenv("NS_BUILD_FILTER", ""),
         'GITLAB_RUNNER_TAG_NAME' : getenv("GITLAB_RUNNER_TAG_NAME", ""),
         'RUNNER_SCRIPT_TIMEOUT' : getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
-        'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", ""),
+        'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", "") or str(uuid.uuid4()),
         'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL"),
-        "BG_STATE": getenv("BG_STATE", None),
-        "BG_MANAGE": getenv("BG_MANAGE", None) == "true",
+        "BG_STATE": getenv("BG_STATE"),
+        "BG_MANAGE": getenv("BG_MANAGE") == "true",
+        "APP_REG_DEFS_JOB": getenv("APP_REG_DEFS_JOB"),
+        "EFFECTIVE_SET_CONFIG" : getenv("EFFECTIVE_SET_CONFIG"),
     }
 
 class PipelineParametersHandler:
