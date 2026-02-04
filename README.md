@@ -18,6 +18,7 @@
   - [📚 Documentation](#-documentation)
     - [Getting Started](#getting-started)
     - [Core Concepts](#core-concepts)
+    - [How-To Guides](#how-to-guides)
     - [Advanced Features](#advanced-features)
     - [Examples \& Samples](#examples--samples)
     - [Development](#development)
@@ -120,6 +121,27 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Template Macros**](/docs/template-macros.md) - How to use EnvGene macros in templates
 - [**Instance Pipeline Parameters**](/docs/instance-pipeline-parameters.md) - Reference for Instance pipeline inputs
 
+### How-To Guides
+
+**Repository Setup:**
+
+- [**Create Simple Template**](/docs/how-to/create-simple-template.md) - Create your first environment template
+- [**Create Cluster**](/docs/how-to/create-cluster.md) - Set up a new cluster
+- [**Create Environment Inventory**](/docs/how-to/create-environment-inventory.md) - Define environment inventory
+- [**Initialize and Upgrade Instance Repository**](/docs/how-to/envgene-maitanance.md) - Set up or upgrade Instance Repository using GSF
+
+**Configuration Management:**
+
+- [**Update Template Version**](/docs/how-to/update-template-version.md) - Update environment template version
+- [**Override Template Parameters**](/docs/how-to/environment-specific-parameters.md) - Override template parameters for specific environments
+- [**Configure Resource Profiles**](/docs/how-to/configure-resource-profiles.md) - Configure performance parameters for different environment types
+
+**Advanced Configuration:**
+
+- [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
+- [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
+- [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
+
 ### Advanced Features
 
 - [**Solution Descriptor Processing**](/docs/features/sd-processing.md) - Manage [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) for your Environments
@@ -133,7 +155,6 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Template Override**](/docs/features/template-override.md) - Use a base Environment template and override parts as needed
 - [**Automatic Environment Name Derivation**](/docs/features/auto-env-name-derivation.md) - Auto-detect Environment name from folder structure
 - [**Template Inheritance**](/docs/features/template-inheritance.md) - Advanced Environment template patterns
-- [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure [Credential](/docs/envgene-objects.md#credential) rotation
 - [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - BG domains, state management, and `bg_manage` pipeline job
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
 

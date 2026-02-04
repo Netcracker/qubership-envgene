@@ -363,7 +363,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Results:**
 
 1. All Namespaces are rendered using `project-env-template:v1.2.3`
-2. All other objects (Tenant, Cloud, Applications, etc.) are rendered using `project-env-template:v1.2.3`
+2. All other objects are rendered using `project-env-template:v1.2.3`
 
 ### UC-EIG-TA-2: Environment Instance Generation with `artifact` and `bgNsArtifacts` and BG Domain
 

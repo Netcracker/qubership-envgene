@@ -1,10 +1,6 @@
-import os
-import re
-from collections import OrderedDict
 from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 from deepmerge import always_merger
@@ -18,6 +14,7 @@ from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
+
 yml = create_yaml_processor()
 
 
@@ -85,7 +82,8 @@ def render_obj_by_context(template: dict, context: Context) -> dict:
 class EnvGenerator:
     def __init__(self):
         self.ctx = Context()
-        logger.debug("EnvGenerator initialized with context: %s", self.ctx.dict(exclude_none=True, exclude={"env_vars"}))
+        logger.debug("EnvGenerator initialized with context: %s",
+                     self.ctx.dict(exclude_none=True, exclude={"env_vars"}))
 
     def set_inventory(self):
         env_definition = getEnvDefinition(self.ctx.env_instances_dir)
@@ -115,16 +113,16 @@ class EnvGenerator:
         env_template = openYaml(filePath=env_template_path, safe_load=True)
         logger.info(f"env_template = {env_template}")
         self.ctx.current_env_template = env_template
-        
+
     def setup_base_context(self, extra_env: dict):
         all_vars = dict(os.environ)
         self.ctx.update(extra_env)
         self.ctx.env_vars.update(all_vars)
-        
+
         self.set_inventory()
         self.set_cloud_passport()
         self.generate_config()
-        
+
         current_env = self.ctx.config["environment"]
         self.ctx.current_env = current_env
 
@@ -151,7 +149,7 @@ class EnvGenerator:
         namespace_names = [ns.name for ns in get_namespaces()]
         bgd = get_bgd_object()
         mismatch = ""
-        for k,v in bgd.items():
+        for k, v in bgd.items():
             if 'Namespace' not in k:
                 continue
             if v['name'] not in namespace_names:
@@ -429,10 +427,10 @@ class EnvGenerator:
             output_dir / cluster_name / f"{config_file_name}.yaml",
             output_dir / cluster_name / f"{config_file_name}.yml",
         ]
-        
+
         global_config_paths = [f for f in potential_global_config_files if f.exists()]
         cluster_config_paths = [f for f in potential_cluster_config_files if f.exists()]
-        
+
         if not global_config_paths and not cluster_config_paths:
             logger.info("No appregdef_config file found, skipping overrides")
             return
@@ -471,10 +469,10 @@ class EnvGenerator:
             template_name = self.get_template_name(template_path)
             if template_name in profile_names:
                 self.render_from_file_to_file(template_path, self.get_rendered_target_path(template_path))
-                
+
     def validate_appregdefs(self):
         render_dir = self.ctx.current_env_dir
-        
+
         appdef_dir = f"{render_dir}/AppDefs"
         regdef_dir = f"{render_dir}/RegDefs"
 
@@ -495,10 +493,11 @@ class EnvGenerator:
                 validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "regdef.schema.json"))
 
     def process_app_reg_defs(self, env_name: str, extra_env: dict):
-        logger.info(f"Starting rendering app_reg_defs for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
+        logger.info(
+            f"Starting rendering app_reg_defs for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
         with self.ctx.use():
             self.setup_base_context(extra_env)
-            
+
             current_env_dir = self.ctx.current_env_dir
             templates_dir = self.ctx.templates_dir
             patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
@@ -512,7 +511,7 @@ class EnvGenerator:
             self.set_appreg_def_overrides()
             self.render_app_defs()
             self.render_reg_defs()
-            
+
             self.validate_appregdefs()
 
     def render_config_env(self, env_name: str, extra_env: dict):
@@ -525,7 +524,7 @@ class EnvGenerator:
             self.ctx.cloud = self.calculate_cloud_name()
             self.ctx.tenant = current_env.get("tenant", '')
             self.ctx.deployer = current_env.get('deployer', '')
-            self.ctx.bgd = current_env.get('bg_domain','')
+            self.ctx.bgd = current_env.get('bg_domain', '')
             logger.info(f"current_env = {current_env}")
 
             self.ctx.update({
