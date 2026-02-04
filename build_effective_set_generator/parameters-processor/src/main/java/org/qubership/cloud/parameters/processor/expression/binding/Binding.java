@@ -41,7 +41,7 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
     String escapeSequence;
     @Getter
     private DeployerInputs deployerInputs;
-    private Map<String, Parameter> defaultMap;
+    private Map<String, Parameter> defaultMap = new HashMap<>();
     private final Map<String, Parameter> calculatedMap = new HashMap<>();
     @Getter
     private String tenant;
