@@ -53,8 +53,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
             f"--sd-path={sd_path}",
         ])
 
-        script.append('python3 /module/scripts/get_sboms.py')
-
     if not (full_sd_exists and sd_data) and effective_set_version.lower() == "v1.0":
         raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
 
