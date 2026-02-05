@@ -423,7 +423,7 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 
 **Description**: Operation identifier in Envgene. Must be a valid [UUID v4](https://www.rfc-editor.org/rfc/rfc4122). This parameter is used in two scenarios:
 
-1. If this parameter is provided, the resulting pipeline commit will include a [Git trailer](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt-code--trailerlttokengtltvaluegtcode) in the format: `DEPLOYMENT_SESSION_ID: <value of DEPLOYMENT_SESSION_ID>`.
+1. If this parameter is provided, the resulting pipeline commit will include a [Git trailer](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---trailertokenvalue) in the format: `DEPLOYMENT_SESSION_ID: <value of DEPLOYMENT_SESSION_ID>`.
 2. It will also be part of the deployment context of the Effective Set. The EnvGene passes it to the Calculator command-line tool using the `--extra_params` attribute. In this case it is used together with `GENERATE_EFFECTIVE_SET`.
 
 **Default Value**: None
