@@ -26,7 +26,7 @@
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
-    - [`GH_ADDITIONAL_PARAMS`](#gh-additional-params)
+    - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
     - [`BG_MANAGE`](#bg_manage)
     - [`BG_STATE`](#bg_state)
   - [Deprecated Parameters](#deprecated-parameters)
