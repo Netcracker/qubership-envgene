@@ -65,3 +65,4 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
     get_passport_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(get_passport_job)
     return get_passport_job
+

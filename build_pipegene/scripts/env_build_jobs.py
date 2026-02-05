@@ -3,7 +3,8 @@ from envgenehelper import logger
 from pipeline_helper import job_instance
 
 
-def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name, cluster_name, group_id, artifact_id, tags):
+def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name, cluster_name, group_id, artifact_id,
+                          tags):
     logger.info(f'prepare env_build job for {full_env}')
 
     script = [
@@ -15,7 +16,7 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
         script.append('env_name=$(cat "$CI_PROJECT_DIR/set_variable.txt")')
         script.append(
             'sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "$CI_PROJECT_DIR/environments/$env_name/Credentials/credentials.yml"')
-        
+
     env_build_params = {
         "name": f'env_builder.{full_env}',
         "image": '${envgen_image}',
@@ -50,6 +51,40 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
     env_build_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(env_build_job)
     return env_build_job
+
+
+def prepare_generate_effective_set_job(pipeline, environment_name, cluster_name, tags):
+    logger.info(f'Prepare generate_effective_set job for {cluster_name}/{environment_name}.')
+    generate_effective_set_params = {
+        "name": f'generate_effective_set.{cluster_name}/{environment_name}',
+        "image": '${effective_set_generator_image}',
+        "stage": 'generate_effective_set',
+        "script": ['/module/scripts/prepare.sh "generate_effective_set.yaml"',
+                   "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
+                   'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
+                   'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
+                   ],
+    }
+
+    generate_effective_set_vars = {
+        "CLUSTER_NAME": cluster_name,
+        "ENVIRONMENT_NAME": environment_name,
+        "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
+        "effective_set_generator_image": "$effective_set_generator_image",
+        "envgen_args": " -vv",
+        "envgen_debug": "true",
+        "module_ansible_dir": "/module/ansible",
+        "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
+        "module_ansible_cfg": "/module/ansible/ansible.cfg",
+        "module_config_default": "/module/templates/defaults.yaml",
+        "GITLAB_RUNNER_TAG_NAME": tags
+    }
+    generate_effective_set_job = job_instance(params=generate_effective_set_params, vars=generate_effective_set_vars)
+    generate_effective_set_job.artifacts.add_paths(
+        "${CI_PROJECT_DIR}/environments/" + f"{cluster_name}/{environment_name}")
+    generate_effective_set_job.artifacts.when = WhenStatement.ALWAYS
+    pipeline.add_children(generate_effective_set_job)
+    return generate_effective_set_job
 
 
 def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, deployment_session_id, tags,
