@@ -14,6 +14,7 @@
     - [`ENV_INVENTORY_CONTENT`](#env_inventory_content)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
     - [`EFFECTIVE_SET_CONFIG`](#effective_set_config)
+    - [`CUSTOM_PARAMS`](#custom_params)
     - [`APP_REG_DEFS_JOB`](#app_reg_defs_job)
     - [`APP_DEFS_PATH`](#app_defs_path)
     - [`REG_DEFS_PATH`](#reg_defs_path)
@@ -281,6 +282,33 @@ Consumer-specific pipeline context components registered in EnvGene:
 "{\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
 ```
 
+### `CUSTOM_PARAMS`
+
+**Description**: Session-scoped parameters injected into the Effective Set during parameter calculation. Custom Params are not persisted across parameter calculation sessions, have the highest priority in the parameter resolution hierarchy, and are treated as sensitive.
+
+EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. See [Calculator CLI](/docs/features/calculator-cli.md) for how Custom Params are applied to the Effective Set.
+
+**Format**: A string containing a JSON object (JSON-in-string). The JSON object must conform to the [schema](/schemas/custom-params.schema.json).
+
+```json
+{
+  "deployment": {
+    "<key>": "<value>",
+    "...": "..."
+  },
+  "runtime": {
+    "<key>": "<value>",
+    "...": "..."
+  }
+}
+```
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `"{\"deployment\":{\"MY_OVERRIDE\":\"value\"}}"`
+
 ### `APP_REG_DEFS_JOB`
 
 **Description**: Specifies the name of the job that is the source of [Application Definition](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition).
@@ -358,11 +386,13 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 ### `SD_DATA`
 
-**Description**: Specifies the contents of one or more SD in JSON-in-string format. Can be either a single SD object or a list of SD objects.
+**Description**: Specifies the contents of one or more SD. Can be either a single SD object or a list of SD objects.
 
 If a single SD object is provided, it is processed directly. If a list is provided, EnvGene sequentially merges them in the `basic-merge` mode, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
 See details in [SD processing](/docs/features/sd-processing.md)
+
+**Format**: A string containing a JSON object (JSON-in-string)
 
 **Default Value**: None
 
