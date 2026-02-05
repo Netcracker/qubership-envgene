@@ -229,7 +229,7 @@ jobs:
 
       - name: ENV_INVENTORY_GENERATION - Upload ENV_INVENTORY_GENERATION Package
         uses: actions/upload-artifact@v4
-        if: needs.process_environment_variables.outputs.ENV_INVENTORY_CONTENT != ''
+        if: (needs.process_environment_variables.outputs.ENV_INVENTORY_CONTENT != '') || (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         with:
           name: env_inventory_generation_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
