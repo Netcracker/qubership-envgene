@@ -15,7 +15,9 @@ ARTIFACT_DEST = f"{tempfile.gettempdir()}/artifact.zip"
 
 
 def parse_artifact_appver(env_definition: dict) -> [str, str]:
-    artifact_appver = env_definition['envTemplate'].get('artifact', '')
+    artifact_appver = env_definition.get('envTemplate', {}).get('artifact')
+    if not artifact_appver:
+        raise ValueError(f"Environment template artifact is empty or missing from env_definition: {env_definition}")
     logger.info(f"Environment template artifact version: {artifact_appver}")
     return artifact_appver.split(':')
 
@@ -121,7 +123,8 @@ def resolve_artifact_old_logic(env_definition: dict, template_dest: str) -> str:
     repo_type = template_artifact['templateRepository']
     registry_name = template_artifact['registry']
 
-    registry_dict = openYaml(Path(f"{getenv_with_error('CI_PROJECT_DIR')}/configuration/registry.yml"))  # another registry model
+    registry_dict = openYaml(
+        Path(f"{getenv_with_error('CI_PROJECT_DIR')}/configuration/registry.yml"))  # another registry model
     registry = registry_dict[registry_name]
     repo_url = registry.get(repo_type)
     dd_repo_url = registry.get(dd_repo_type)
@@ -130,7 +133,7 @@ def resolve_artifact_old_logic(env_definition: dict, template_dest: str) -> str:
     repository_username = fetch_cred_value(registry.get("username"), cred_config)
     repository_password = fetch_cred_value(registry.get("password"), cred_config)
     cred = Credentials(username=repository_username, password=repository_password)
-    
+
     template_url = None
     resolved_version = dd_version
     dd_url = artifact.check_artifact(dd_repo_url, group_id, artifact_id, dd_version, FileExtension.JSON, cred)
@@ -169,7 +172,7 @@ def process_env_template() -> str:
     environment = getenv_with_error("ENVIRONMENT_NAME")
     env_dir = Path(f"{project_dir}/environments/{cluster}/{environment}")
     env_definition = getEnvDefinition(env_dir)
-    
+
     check_dir_exist_and_create(template_dest)
 
     if 'artifact' in env_definition.get('envTemplate', {}):

@@ -69,9 +69,9 @@ env:
   DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator"
 
   #DOCKER_IMAGE_TAGS
-  DOCKER_IMAGE_TAG_PIPEGENE: "1.20.2"
-  DOCKER_IMAGE_TAG_ENVGENE: "1.20.2"
-  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.20.2"
+  DOCKER_IMAGE_TAG_PIPEGENE: "1.22.1"
+  DOCKER_IMAGE_TAG_ENVGENE: "1.22.1"
+  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.22.1"
 
 jobs:
   process_environment_variables:
@@ -81,13 +81,13 @@ jobs:
     outputs:
       env_matrix: ${{ steps.matrix-generator.outputs.env_matrix }}
       BG_MANAGE: ${{ env.BG_MANAGE }}
-      ENV_TEMPLATE_TEST: ${{ env.ENV_TEMPLATE_TEST }}
-      ENV_SPECIFIC_PARAMETERS: ${{ env.ENV_SPECIFIC_PARAMETERS }}
-      ENV_TEMPLATE_NAME: ${{ env.ENV_TEMPLATE_NAME }}
+      ENV_INVENTORY_CONTENT: ${{ env.ENV_INVENTORY_CONTENT }}
       CRED_ROTATION_PAYLOAD: ${{ env.CRED_ROTATION_PAYLOAD }}
       ENV_BUILDER: ${{ env.ENV_BUILDER }}
       GENERATE_EFFECTIVE_SET: ${{ env.GENERATE_EFFECTIVE_SET }}
       ENV_INVENTORY_INIT: ${{ env.ENV_INVENTORY_INIT }}
+      ENV_SPECIFIC_PARAMS: ${{ env.ENV_SPECIFIC_PARAMS }}
+      ENV_TEMPLATE_NAME: ${{ env.ENV_TEMPLATE_NAME }}
     steps:
       - name: Repository Checkout
         uses: actions/checkout@v4.1.0
@@ -213,7 +213,7 @@ jobs:
 
       ### ENV_INVENTORY_GENERATION ###
       - name: ENV_INVENTORY_GENERATION
-        if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
+        if: (needs.process_environment_variables.outputs.ENV_INVENTORY_CONTENT != '') || (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
@@ -229,7 +229,7 @@ jobs:
 
       - name: ENV_INVENTORY_GENERATION - Upload ENV_INVENTORY_GENERATION Package
         uses: actions/upload-artifact@v4
-        if: needs.process_environment_variables.outputs.ENV_TEMPLATE_TEST == 'false' && (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMETERS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
+        if: (needs.process_environment_variables.outputs.ENV_INVENTORY_CONTENT != '') || (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         with:
           name: env_inventory_generation_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
@@ -303,11 +303,6 @@ jobs:
               python /module/scripts/utils/log_pipe_params.py
               /module/scripts/handle_certs.sh
               cd /build_env; python3 /build_env/scripts/build_env/main.py
-
-              if [ \"\$ENV_TEMPLATE_TEST\" == \"true\" ]; then
-                env_name=\$(cat set_variable.txt)
-                sed -i \"s|\\\\\\\"envgeneNullValue\\\\\\\"|\\\\\\\"test_value\\\\\\\"|g\" \"\${CI_PROJECT_DIR}/environments/\$env_name/Credentials/credentials.yml\"
-              fi
             "
 
       - name: ENV_BUILD - Upload Build Env Package

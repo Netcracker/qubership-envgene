@@ -4,7 +4,7 @@ possible_vars=(
     "SD_VERSION"
     "SD_DATA"
     "SD_DELTA"
-    "ENV_SPECIFIC_PARAMETERS"
+    "ENV_SPECIFIC_PARAMS"
     "ENV_TEMPLATE_NAME"
 )
 
