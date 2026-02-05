@@ -51,10 +51,8 @@ def test_sd_positive(mock_download_sd, test_case_name):
     file_path = Path(TEST_SD_DIR, test_case_name, f"mock_sd.json")
     sd_data = openJson(file_path)
     
-    # Mock async function to return coroutine
-    async def mock_return(*args, **kwargs):
-        return sd_data
-    mock_download_sd.side_effect = mock_return
+    # Mock synchronous function to return SD data directly
+    mock_download_sd.return_value = sd_data
         
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
     actual_dir = os.path.join(env.env_path, "Inventory", "solution-descriptor")
@@ -77,10 +75,8 @@ def test_sd_negative(mock_download_sd, test_case_name, expected_exception):
     file_path = Path(TEST_SD_DIR, test_case_name, f"mock_sd.json")
     sd_data = openJson(file_path)
     
-    # Mock async function to return coroutine
-    async def mock_return(*args, **kwargs):
-        return sd_data
-    mock_download_sd.side_effect = mock_return
+    # Mock synchronous function to return SD data directly
+    mock_download_sd.return_value = sd_data
     
     with pytest.raises(expected_exception):
         handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
