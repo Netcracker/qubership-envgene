@@ -303,9 +303,6 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, en
     Returns:
         SD data dictionary
     """
-    if 'SNAPSHOT' in version:
-        raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
-    
     logger.info(f"Starting download of SD: {app_name}-{version}")
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
