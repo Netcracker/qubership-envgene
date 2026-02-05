@@ -21,9 +21,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     base_env_path = f"{base_dir}/environments/{full_env_name}"
     app_defs_path = f"{base_env_path}/AppDefs"
     reg_defs_path = f"{base_env_path}/RegDefs"
-
     sboms_path = f"{base_dir}/sboms"
-    effective_set_config_dict = json.loads(effective_set_config)
 
     sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
@@ -42,23 +40,28 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         "--envs-path=$CI_PROJECT_DIR/environments",
         f"--output=$CI_PROJECT_DIR/environments/{full_env_name}/effective-set"
     ]
+    
+    effective_set_config_dict = {}
+    if effective_set_config:
+        effective_set_config_dict = json.loads(effective_set_config)
 
     effective_set_version = effective_set_config_dict.get("version") or "v2.0"
     full_sd_exists = sd_path.parent.is_dir() and sd_path.is_file()
     sd_data = bool(sd_data) or bool(sd_version)
+    
+    if not (full_sd_exists and sd_data) and effective_set_version.lower() == "v1.0":
+        raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
+    
     if full_sd_exists or sd_data:
         cmdb_cli_cmd_call.extend([
-            "--registries=$CI_PROJECT_DIR/configuration/registry.yml",
+            "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
             f"--sboms-path={sboms_path}",
             f"--sd-path={sd_path}",
         ])
 
-    if not (full_sd_exists and sd_data) and effective_set_version.lower() == "v1.0":
-        raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
-
     logger.info(f'Prepare generate_effective_set job for {full_env_name}.')
     if effective_set_config:
-        logger.info(f"EFFECTIVE_SET_CONFIG : {effective_set_config}")
+        logger.info(f"EFFECTIVE_SET_CONFIG: {effective_set_config}")
         script.extend([
             f"python3 /module/scripts/handle_effective_set_config.py --effective-set-config '{effective_set_config}'",
             'extra_args=$(jq -r \'.extra_args // [] | join(" ")\' /tmp/effective_set_output.json)',
