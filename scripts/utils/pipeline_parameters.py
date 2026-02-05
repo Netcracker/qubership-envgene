@@ -15,7 +15,7 @@ def get_pipeline_parameters() -> dict:
         'IS_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST") == "true",
         'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
         'JSON_SCHEMAS_DIR': getenv("JSON_SCHEMAS_DIR", "/module/schemas"),
-        "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE"),
+        "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE") or "artifact",
         "SD_VERSION": getenv("SD_VERSION"),
         "SD_DATA": getenv("SD_DATA"),
         "SD_DELTA": getenv("SD_DELTA"),
