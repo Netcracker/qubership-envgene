@@ -57,7 +57,7 @@ def test_sd_positive(test_case_name):
     logger.info(f"=====SUCCESS - {test_case_name}======")
 
 
-@patch('envgenehelper.get_cred_config')
+@patch('process_sd.get_cred_config')
 @patch('artifact_searcher.artifact.check_artifact_async')
 @patch('process_sd.get_appdef_for_app')
 def test_download_sd_uses_get_cred_config(mock_get_appdef, mock_check_artifact, mock_get_creds):
