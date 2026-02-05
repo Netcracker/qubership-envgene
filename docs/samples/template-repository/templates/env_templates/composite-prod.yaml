@@ -24,3 +24,4 @@ namespaces:
       profile:
         name: prod_billing_override
         baseline: prod
+envSpecificSchema: "{{ templates_dir }}/env_templates/composite/env-specific-schema.yml"

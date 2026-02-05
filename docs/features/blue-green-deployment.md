@@ -83,13 +83,13 @@ The following functionality is used in these scenarios:
 - EnvGene is able to generate particular [Namespaces](/docs/envgene-objects.md#namespace) only of Environment using [Namespace Render Filter](#namespace-render-filter) feature
 - EnvGene provides parameters describing BG domain in [Effective Set](/docs/feature/calculator-cli.md#version-20topology-context-bg_domain-example)
 - EnvGene creates, updates and validates [BG state files](#bg-state-files) for peer and origin namespaces, based on BG Plugin call
-- EnvGene supports the [warmup operation](#warmup-operation) by copying [Namespace](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#namespace) and [Application](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#application) for origin/peer
+- EnvGene supports the [warmup operation](#warmup-operation) by copying [Namespace](/docs/envgene-objects.md#namespace) and [Application](/docs/envgene-objects.md#application) for origin/peer
 - EnvGene [imports](#cmdb-import) the BG domain object into CMDB
 
 ### BG Related EnvGene objects
 
-- [BG Domain](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#bg-domain): Configuration object that defines domain structure
-- [BG Domain Template](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#bg-domain-template): Template used to generate BG Domain object during Environment Instance generation. During Environment Instance generation, EnvGene validates that all namespaces referenced in the generated BG Domain object (origin, peer, and controller namespaces) actually exist in the Environment. If any referenced namespace is missing, the generation fails with a validation error.
+- [BG Domain](/docs/envgene-objects.md#bg-domain): Configuration object that defines domain structure
+- [BG Domain Template](/docs/envgene-objects.md#bg-domain-template): Template used to generate BG Domain object during Environment Instance generation. During Environment Instance generation, EnvGene validates that all namespaces referenced in the generated BG Domain object (origin, peer, and controller namespaces) actually exist in the Environment. If any referenced namespace is missing, the generation fails with a validation error.
 - [BG State Files](/docs/envgene-objects.md#bg-state-files): Files that track origin and peer namespace states
 
 ### Namespace Render Filter
@@ -105,13 +105,13 @@ This job is part of the Instance pipeline and does the following:
 - Validates namespace names in `BG_STATE` against the [BG Domain](/docs/envgene-objects.md#bg-domain) object in the Environment Instance
 - Validates BG states received in `BG_STATE` against BG state files in the repository
 - Creates/updates [BG state files](/docs/envgene-objects.md#bg-state-files)
-- During warmup, copies [Namespace](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#namespace) and [Applications](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#application) under it
+- During warmup, copies [Namespace](/docs/envgene-objects.md#namespace) and [Applications](/docs/envgene-objects.md#application) under it
 
 The criteria for running this job and its order relative to other jobs are described in [envgene-pipelines](/docs/envgene-pipelines.md).
 
 ### BG Related Instance Pipeline Parameters
 
-- [`ENV_NAMES`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#env_names)
+- [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names)
 - [`BG_MANAGE`](/docs/instance-pipeline-parameters.md#bg_manage)
 - [`BG_STATE`](/docs/instance-pipeline-parameters.md#bg_state)
 - [`GH_ADDITIONAL_PARAMS`](/docs/instance-pipeline-parameters.md#gh_additional_params)
@@ -235,7 +235,7 @@ This ensures that the candidate namespace will use the same template artifact ve
 
 ### CMDB Import
 
-The CMDB Import feature creates, among other entities such as Cloud or Namespace the [Blue Green Domain](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#bg-domain) in the CMDB.
+The CMDB Import feature creates, among other entities such as Cloud or Namespace the [Blue Green Domain](/docs/envgene-objects.md#bg-domain) in the CMDB.
 
 To do this, run the instance pipeline with the `CMDB_IMPORT: true` pipeline parameter.
 

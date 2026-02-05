@@ -1,0 +1,77 @@
+# Cloud passport parameters validation
+cloudPassport:
+  # list of white listed parameters,
+  # contains the list of parameters that can be defined on cloud passport level
+  # during passport generation we will go thorough parameters
+  # and check that all of them are present and no other parameters are present.
+  # If no env_builder job will fail
+  whiteList:
+    version:
+      type: "number"
+      regexpPattern: "1.5"
+    cloud:
+      CLOUD_API_HOST: "string"
+      CLOUD_API_PORT: "number"
+      CLOUD_DEPLOY_TOKEN: "string"
+      CLOUD_PUBLIC_HOST: "string"
+      CLOUD_PRIVATE_HOST: "string"
+      CLOUD_DASHBOARD_URL:
+        type: "string"
+        regexpPattern: "^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$"
+      CLOUD_PROTOCOL: "string"
+    dbaas:
+      API_DBAAS_ADDRESS:
+        type: "string"
+        regexpPattern: "^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$"
+      DBAAS_AGGREGATOR_ADDRESS: "string"
+      DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME: "string"
+      DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD: "string"
+    maas:
+      MAAS_INTERNAL_ADDRESS: "string"
+      MAAS_SERVICE_ADDRESS: "string"
+      MAAS_CREDENTIALS_USERNAME: "string"
+      MAAS_CREDENTIALS_PASSWORD: "string"
+    consul:
+      CONSUL_URL: "string"
+      CONSUL_ENABLED: "boolean"
+      CONSUL_PUBLIC_URL: "string"
+      CONSUL_ADMIN_TOKEN: "string"
+    zookeeper:
+      ZOOKEEPER_URL: "string"
+      ZOOKEEPER_ADDRESS: "string"
+    vault:
+      VAULT_ADDR: "string"
+      VAULT_AUTH_ROLE_ID: "string"
+      VAULT_AUTH_SECRET_ID: "string"
+      VAULT_AUTH_PATH: "string"
+      VAULT_AUTH_NAMESPACE: "string"
+envSpecific:
+  # list of white listed parameters, that can be present on environment specific level
+  # during environment specific parameters generation we will go thorough parameters
+  # and check that all of them are present and no other parameters are present.
+  # If no env_builder job will fail
+  whiteList:
+    cloud:
+      e2eParameters:
+        CLOUD_LEVEL_PARAM_1: "string"
+    namespaces:
+      bss:
+        technicalConfigurationParameters:
+          TECHNICAL_PARAM_1: "string"
+        applications:
+          NOTIFICATION:
+            deployParameters:
+              NOTIFICATION_TOPIC: "string"
+              NOTIFICATION_SERVICE_TOPIC:
+                type: "string"
+                allowNone: true
+  # list of black listed parameters, that can be present on environment specific level
+  # if they will be present in the result of generation on any level, than env_builder job will fail
+  blackList:
+    deployParameters:
+      - "key8"
+      - "key9"
+    e2eParameters:
+      - "key10"
+    technicalConfigurationParameters: []
+
