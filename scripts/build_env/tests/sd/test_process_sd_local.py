@@ -10,7 +10,7 @@ os.environ['ENVIRONMENT_NAME'] = "temporary"
 os.environ['CLUSTER_NAME'] = "temporary"
 os.environ['CI_PROJECT_DIR'] = "temporary"
 
-from handle_sd import handle_sd, download_sd_by_appver
+from process_sd import handle_sd, download_sd_by_appver
 from envgenehelper import *
 from envgenehelper.env_helper import Environment
 
@@ -57,9 +57,9 @@ def test_sd_positive(test_case_name):
     logger.info(f"=====SUCCESS - {test_case_name}======")
 
 
-@patch('handle_sd.get_cred_config')
-@patch('handle_sd.artifact.check_artifact_async')
-@patch('handle_sd.get_appdef_for_app')
+@patch('process_sd.get_cred_config')
+@patch('process_sd.artifact.check_artifact_async')
+@patch('process_sd.get_appdef_for_app')
 def test_download_sd_uses_get_cred_config(mock_get_appdef, mock_check_artifact, mock_get_creds):
     """Test that download_sd_by_appver uses existing get_cred_config utility"""
     mock_get_creds.return_value = {
@@ -74,7 +74,7 @@ def test_download_sd_uses_get_cred_config(mock_get_appdef, mock_check_artifact, 
         return ("http://sd-url", ("repo", "/tmp/sd.json"))
     mock_check_artifact.return_value = mock_check_return()
     
-    with patch('handle_sd.open', create=True) as mock_open:
+    with patch('process_sd.open', create=True) as mock_open:
         mock_open.return_value.__enter__.return_value.read.return_value = '{"applications": []}'
         
         try:
