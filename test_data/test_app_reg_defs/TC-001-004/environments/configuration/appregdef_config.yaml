@@ -1,0 +1,5 @@
+regdefs:
+  overrides:
+    "maven-registry":
+      repositoryDomainName: "qubership.org"
+      fullRepositoryUrl: "https://qubership.org"
