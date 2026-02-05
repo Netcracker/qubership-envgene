@@ -119,8 +119,8 @@ def build_pipeline(params: dict) -> None:
                                                                       cluster_name, tags)
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
-            logger.info(f'Credential rotation job for {full_env_name} is skipped because CRED_ROTATION_PAYLOAD is empty.')
-
+            logger.info(
+                f'Credential rotation job for {full_env_name} is skipped because CRED_ROTATION_PAYLOAD is empty.')
 
         if params['ENV_BUILD']:
             jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['IS_TEMPLATE_TEST'],
@@ -131,8 +131,11 @@ def build_pipeline(params: dict) -> None:
         else:
             logger.info(f'Preparing of appregdef_render_job {full_env_name} is skipped.')
 
-        if (params["SD_SOURCE_TYPE"].lower() == "json" and params["SD_DATA"]) or \
-           (params["SD_SOURCE_TYPE"].lower() == "artifact" and params["SD_VERSION"]):
+        source_type = (params.get("SD_SOURCE_TYPE") or "").lower()
+        if (
+                (source_type == "json" and params.get("SD_DATA")) or
+                (source_type == "artifact" and params.get("SD_VERSION"))
+        ):
             jobs_map["process_sd_job"] = prepare_process_sd(pipeline, full_env_name, environment_name, cluster_name,
                                                             params["APP_DEFS_PATH"], params["REG_DEFS_PATH"], tags)
         else:
