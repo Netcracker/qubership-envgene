@@ -81,7 +81,7 @@ The following functionality is used in these scenarios:
 - EnvGene generates a [BG Domain](/docs/envgene-objects.md#bg-domain) from a [BG Domain Template](/docs/envgene-objects.md#bg-domain-template) as part of Environment Instance generation
 - EnvGene validates that namespaces referenced in the BG Domain object exist in the Environment during Environment Instance generation
 - EnvGene is able to generate particular [Namespaces](/docs/envgene-objects.md#namespace) only of Environment using [Namespace Render Filter](#namespace-render-filter) feature
-- EnvGene provides parameters describing BG domain in [Effective Set](/docs/feature/calculator-cli.md#version-20topology-context-bg_domain-example)
+- EnvGene provides parameters describing BG domain in [Effective Set](/docs/features/calculator-cli.md#version-20topology-context-bg_domain-example)
 - EnvGene creates, updates and validates [BG state files](#bg-state-files) for peer and origin namespaces, based on BG Plugin call
 - EnvGene supports the [warmup operation](#warmup-operation) by copying [Namespace](/docs/envgene-objects.md#namespace) and [Application](/docs/envgene-objects.md#application) for origin/peer
 - EnvGene [imports](#cmdb-import) the BG domain object into CMDB

@@ -522,7 +522,7 @@ If the same parameter key is set in multiple sources or levels, the Calculator u
 
 For example, if a user sets `BASELINE_PROJ` at the Namespace level, this value will override the value calculated by the calculator. If `BASELINE_PROJ` is set at the cloud level, it will be overridden by calculator-generated values at Namespace or Application levels.
 
-Not every parameter in the Effective Set can be overridden. Overriding service-level parameters is only possible via [resource profile override](/docs/envgene-objects.md#resource-profile-override-in-instance).
+Not every parameter in the Effective Set can be overridden. Overriding service-level parameters is only possible via [resource profile override](/docs/envgene-objects.md#resource-profile-override).
 
 > [!NOTE]
 > If a complex parameter is set, the value from the higher-priority source **completely replaces** the lower-priority one; merging is not performed.
