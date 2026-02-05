@@ -291,10 +291,7 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
             exit(1)
 
         source_name, version = entry.split(":", 1)
-        logger.info(f"Starting download of SD: {source_name}-{version}")
-
         sd_data = download_sd_by_appver(source_name, version, app_def_getter_plugins, env)
-
         sd_data_list.append(sd_data)
 
     sd_data_json = json.dumps(sd_data_list)
@@ -316,9 +313,10 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, en
     if 'SNAPSHOT' in version:
         raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
     
+    logger.info(f"Starting download of SD: {app_name}-{version}")
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
-    # Use get_cred_config() for V2 credential resolution
+    # Use existing get_cred_config() utility for credentials
     env_creds = get_cred_config()
     artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version, env_creds=env_creds))
     if not artifact_info:
@@ -332,9 +330,10 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, en
         logger.debug(f"Reading V2 solution descriptor from local file: {mvn_repo_extra}")
         with open(mvn_repo_extra, 'r') as f:
             sd_data = json.load(f)
+            logger.info(f"Successfully downloaded SD: {app_name}-{version}")
             return sd_data
     
-    # V1 fallback or non-V2 registry: download via HTTP
+    # V1 fallback path or non-V2 registry - need credentials for HTTP download
     cred = None
     if app_def.registry.credentials_id and env_creds:
         cred_data = env_creds.get(app_def.registry.credentials_id)
@@ -345,7 +344,9 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine, en
             )
             logger.debug(f"Using credentials '{app_def.registry.credentials_id}' for SD download")
     
-    return artifact.download_json_content(sd_url, cred)
+    sd_data = artifact.download_json_content(sd_url, cred)
+    logger.info(f"Successfully downloaded SD: {app_name}-{version}")
+    return sd_data
 
 
 def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> artifact_models.Application:
