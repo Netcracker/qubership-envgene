@@ -131,7 +131,7 @@ def build_pipeline(params: dict) -> None:
         else:
             logger.info(f'Preparing of appregdef_render_job {full_env_name} is skipped.')
 
-        source_type = (params.get("SD_SOURCE_TYPE") or "").lower()
+        source_type = (params.get("SD_SOURCE_TYPE", "artifact")).lower()
         if (
                 (source_type == "json" and params.get("SD_DATA")) or
                 (source_type == "artifact" and params.get("SD_VERSION"))
