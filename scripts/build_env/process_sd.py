@@ -188,6 +188,13 @@ def multiply_sds_to_single(sds_data, effective_merge_mode):
 
 def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
     base_sd_path = Path(f'{env.env_path}/Inventory/solution-descriptor/')
+    handle_sd_skip_msg = "SD_SOURCE_TYPE is not specified, skipping SD file creation"
+    if not sd_source_type:
+        if not sd_version and not sd_data:
+            logger.info(handle_sd_skip_msg)
+        else:
+            logger.warning(handle_sd_skip_msg)
+        return
 
     sd_delta = calculate_sd_delta(sd_delta)
     effective_merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
