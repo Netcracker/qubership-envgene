@@ -178,7 +178,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 ## Parameter Type Preservation in Macro Resolution
 
-This section covers use cases for [Macro Parameter Resolution](/docs/features/calculator-cli.md#calculator-command-line-tool-macros) in Effective Set v2.0. The Calculator CLI resolves parameter references while preserving the original parameter types according to [Parameter type conversion](/docs/features/calculator-cli.md#version-20-parameter-type-conversion) rules.
+This section covers use cases for [Macro Parameter Resolution](/docs/template-macros.md#calculator-command-line-tool-macros) in Effective Set v2.0. The Calculator CLI resolves parameter references while preserving the original parameter types according to [Parameter type conversion](/docs/features/calculator-cli.md#version-20-parameter-type-conversion) rules.
 
 ### UC-CC-MR-1: Simple Type Resolution
 
