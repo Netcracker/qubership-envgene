@@ -56,23 +56,20 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     if not (full_sd_exists and sd_data) and effective_set_version.lower() == "v1.0":
         raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
 
-    effective_set_expiry = None
     logger.info(f'Prepare generate_effective_set job for {full_env_name}.')
     if effective_set_config:
         logger.info(f"EFFECTIVE_SET_CONFIG : {effective_set_config}")
         script.extend([
             f"python3 /module/scripts/handle_effective_set_config.py --effective-set-config '{effective_set_config}'",
             'extra_args=$(jq -r \'.extra_args // [] | join(" ")\' /tmp/effective_set_output.json)',
-            'effective_set_expiry=$(jq -r \'.effective_set_expiry\' /tmp/effective_set_output.json)',
-            'echo "extra_args before calling cmdb cli: $extra_args"',
         ])
         cmdb_cli_cmd_call.extend(["$extra_args"])
-        effective_set_expiry = effective_set_config_dict.get("effective_set_expiry") or "1 hour"
     if deployment_id:
-        cmdb_cli_cmd_call.extend([f"--extra_params=DEPLOYMENT_SESSION_ID={deployment_id}", ])
+        cmdb_cli_cmd_call.extend([f"--extra_params=DEPLOYMENT_SESSION_ID={deployment_id}"])
 
     script.append(" ".join(cmdb_cli_cmd_call))
     script.append('python3 /module/scripts/main.py encrypt_cred_files')
+    
     generate_effective_set_params = {
         "name": f'generate_effective_set.{full_env_name}',
         "image": '${effective_set_generator_image}',
@@ -95,6 +92,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         "GITLAB_RUNNER_TAG_NAME": tags,
         "EXCLUDE_CLEANUP_TARGETS": " ".join(cleanup_targets)
     }
+ 
     needs = []
     if is_local_app_def:
         # gcip library doesn't allow to create a Need object that has the same pipeline as one it runs within.
@@ -110,9 +108,9 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     generate_effective_set_job.artifacts.add_paths('${CI_PROJECT_DIR}/sboms')
     generate_effective_set_job.artifacts.add_paths('${CI_PROJECT_DIR}/configuration/registry.y*ml')
 
-    if effective_set_expiry:
-        logger.info(f"effective set expiry value '{effective_set_expiry}'")
-        generate_effective_set_job.artifacts.expire_in = effective_set_expiry
+    effective_set_expiry = effective_set_config_dict.get("effective_set_expiry") or "1 hour"
+    logger.info(f"effective set expiry value '{effective_set_expiry}'")
+    generate_effective_set_job.artifacts.expire_in = effective_set_expiry
     
     generate_effective_set_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(generate_effective_set_job)
