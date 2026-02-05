@@ -114,7 +114,7 @@ The criteria for running this job and its order relative to other jobs are descr
 - [`ENV_NAMES`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md#env_names)
 - [`BG_MANAGE`](/docs/instance-pipeline-parameters.md#bg_manage)
 - [`BG_STATE`](/docs/instance-pipeline-parameters.md#bg_state)
-- [`GH_ADDITIONAL_PARAMS`](/docs/instance-pipeline-parameters.md#gh_additional_params)
+- [`GH_ADDITIONAL_PARAMS`](/docs/instance-pipeline-parameters.md#gh-additional-params)
 
 The set of parameters differs between GitLab and GitHub EnvGene pipelines.
 
