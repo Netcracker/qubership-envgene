@@ -64,11 +64,8 @@ RUN apk add --no-cache \
     yq \
     gettext \
     sed \
-    age
-
-# hadolint ignore=DL3018
-RUN apk add --no-cache ${JAVA_PACKAGE} && \
-    echo "securerandom.source=file:/dev/urandom" >> /usr/lib/jvm/java-17-openjdk/conf/security/java.security
+    age \
+    ${JAVA_PACKAGE}
 
 COPY --from=BUILD /module/venv /module/venv
 COPY --from=BUILD /usr/local/bin/sops /usr/local/bin/sops
