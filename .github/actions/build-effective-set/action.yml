@@ -74,7 +74,7 @@ runs:
     - name: Generate Docker tags
       id: tags
       uses: ./.github/actions/generate-docker-tags
-    
+
     - name: Debug Docker build (no cache, plain progress)
       shell: bash
       run: |
