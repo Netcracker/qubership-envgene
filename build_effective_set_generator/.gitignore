@@ -35,7 +35,6 @@
 **/.gradle
 **/build.gradle
 **/settings.gradle
-**/build
 
 # CMake
 cmake-build-debug/

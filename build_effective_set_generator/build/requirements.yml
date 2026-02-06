@@ -1,0 +1,13 @@
+collections:
+  - name: https://git.netcracker.com/prod.devops.automation.library/library_collection/community-ansible-collections/community.general.git
+    type: git
+    version: 7.0.1
+  - name: https://git.netcracker.com/prod.devops.automation.library/library_collection/kubernetes.git
+    type: git
+    version: 1.0.5
+  - name: https://git.netcracker.com/prod.devops.automation.library/library_collection/community-ansible-collections/kubernetes.core.git
+    type: git
+    version: 2.3.2
+  - name: https://git.netcracker.com/prod.devops.automation.library/library_collection/community-ansible-collections/ansible.posix.git
+    type: git
+    version: 1.5.4
