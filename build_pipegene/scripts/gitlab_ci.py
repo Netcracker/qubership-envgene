@@ -1,7 +1,7 @@
 import os
 from os import listdir
 
-from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, parse_env_names
+from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name
 from envgenehelper.plugin_engine import PluginEngine
 from gcip import JobFilter, Pipeline
 
@@ -15,6 +15,8 @@ from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from process_sd_job import prepare_process_sd
 from effective_set_job import prepare_generate_effective_set_job
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
+from envgenehelper.collections_helper import split_multi_value_param
+
 
 PROJECT_DIR = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 IS_GITLAB = bool(os.getenv('CI_PROJECT_DIR')) and not bool(os.getenv('GITHUB_ACTIONS'))
@@ -56,7 +58,7 @@ def build_pipeline(params: dict) -> None:
 
     per_env_plugin_engine = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/per_env')
 
-    env_names = parse_env_names(params['ENV_NAMES'])
+    env_names = split_multi_value_param(params['ENV_NAMES'])
     if len(env_names) > 1 and is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params):
         raise ValueError(
             f"Generating Inventories for multiple Environments in single pipeline is not supported. "

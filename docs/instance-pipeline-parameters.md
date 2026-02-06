@@ -14,6 +14,7 @@
     - [`ENV_INVENTORY_CONTENT`](#env_inventory_content)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
     - [`EFFECTIVE_SET_CONFIG`](#effective_set_config)
+    - [`CUSTOM_PARAMS`](#custom_params)
     - [`APP_REG_DEFS_JOB`](#app_reg_defs_job)
     - [`APP_DEFS_PATH`](#app_defs_path)
     - [`REG_DEFS_PATH`](#reg_defs_path)
@@ -32,6 +33,7 @@
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
+  - [Multiple Values Support](#multiple-values-support)
 
 The following are the launch parameters for the instance repository pipeline. These parameters influence, the execution of specific jobs within the pipeline.
 
@@ -41,7 +43,10 @@ All parameters are of the string data type
 
 ### `ENV_NAMES`
 
-**Description**: Specifies the environment(s) for which processing will be triggered. Uses the `<cluster-name>/<env-name>` notation. If multiple environments are provided, they must be separated by a `\n` (newline) delimiter. In multi-environment case, each environment will trigger its own independent pipeline flow. All environments will use the same set of pipeline parameters (as documented in this spec)
+**Description**: Specifies the environment(s) for which processing will be triggered. Uses the `<cluster-name>/<env-name>` notation.
+
+If specifying more than one environment, separate them as described in [Multiple Values Support](#multiple-values-support).
+For multiple environments, each environment will initiate its own independent pipeline flow, using the same set of pipeline parameters for all.
 
 **Default Value**: None
 
@@ -50,7 +55,11 @@ All parameters are of the string data type
 **Example**:
 
 - Single environment: `ocp-01/platform`
-- Multiple environments (separated by \n) `k8s-01/env-1\nk8s-01/env2`
+- Multiple environments:
+  - `k8s-01/env-1\nk8s-01/env2`
+  - `k8s-01/env-1;k8s-01/env2`
+  - `k8s-01/env-1,k8s-01/env2`
+  - `k8s-01/env-1 k8s-01/env2`
 
 ### `ENV_BUILDER`
 
@@ -281,6 +290,33 @@ Consumer-specific pipeline context components registered in EnvGene:
 "{\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
 ```
 
+### `CUSTOM_PARAMS`
+
+**Description**: Session-scoped parameters injected into the Effective Set during parameter calculation. Custom Params are not persisted across parameter calculation sessions, have the highest priority in the parameter resolution hierarchy, and are treated as sensitive.
+
+EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. See [Calculator CLI](/docs/features/calculator-cli.md) for how Custom Params are applied to the Effective Set.
+
+**Format**: A string containing a JSON object (JSON-in-string). The JSON object must conform to the [schema](/schemas/custom-params.schema.json).
+
+```json
+{
+  "deployment": {
+    "<key>": "<value>",
+    "...": "..."
+  },
+  "runtime": {
+    "<key>": "<value>",
+    "...": "..."
+  }
+}
+```
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `"{\"deployment\":{\"MY_OVERRIDE\":\"value\"}}"`
+
 ### `APP_REG_DEFS_JOB`
 
 **Description**: Specifies the name of the job that is the source of [Application Definition](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition).
@@ -341,7 +377,9 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 ### `SD_VERSION`
 
-**Description**: Specifies one or more SD artifacts in `application:version` notation passed via a `\n` separator.
+**Description**: Specifies one or more SD artifacts in `application:version` notation.
+
+If specifying more than one environment, separate them as described in [Multiple Values Support](#multiple-values-support).
 
 EnvGene downloads and sequentially merges them in the `basic-merge` mode, where subsequent `application:version` takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
@@ -354,15 +392,21 @@ See details in [SD processing](/docs/features/sd-processing.md)
 **Example**:
 
 - Single SD: `MONITORING:0.64.1`
-- Multiple SD (separated by \n) `solution-part-1:0.64.2\nsolution-part-2:0.44.1`
+- Multiple SDs:
+  - `solution-part-1:0.64.2\nsolution-part-2:0.44.1`
+  - `solution-part-1:0.64.2;solution-part-2:0.44.1`
+  - `solution-part-1:0.64.2,solution-part-2:0.44.1`
+  - `solution-part-1:0.64.2 solution-part-2:0.44.1`
 
 ### `SD_DATA`
 
-**Description**: Specifies the contents of one or more SD in JSON-in-string format. Can be either a single SD object or a list of SD objects.
+**Description**: Specifies the contents of one or more SD. Can be either a single SD object or a list of SD objects.
 
 If a single SD object is provided, it is processed directly. If a list is provided, EnvGene sequentially merges them in the `basic-merge` mode, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
 See details in [SD processing](/docs/features/sd-processing.md)
+
+**Format**: A string containing a JSON object (JSON-in-string)
 
 **Default Value**: None
 
@@ -619,3 +663,29 @@ See details in [SD processing](/docs/features/sd-processing.md)
 ## Archived Parameters
 
 These parameters are no longer in use and are maintained for historical reference
+
+## Multiple Values Support
+
+Some pipeline parameters support multiple values.
+Values can be separated using one of the following delimiters:
+
+- Newline (`\n`)
+- Semicolon (`;`)
+- Comma (`,`)
+- Space (` `)
+
+**Example:**
+
+```text
+# Using newline
+k8s-01/env-1\nk8s-01/env-2
+
+# Using comma
+k8s-01/env-1,k8s-01/env-2
+
+# Using semicolon
+k8s-01/env-1;k8s-01/env-2
+
+# Using space
+k8s-01/env-1 k8s-01/env-2
+```

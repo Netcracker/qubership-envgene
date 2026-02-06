@@ -5,6 +5,7 @@ from enum import Enum
 from os import path, getenv
 from pathlib import Path
 
+
 import envgenehelper as helper
 import yaml
 from artifact_searcher import artifact
@@ -15,6 +16,7 @@ from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_merge_helper import basic_merge_multiple
+from envgenehelper.collections_helper import split_multi_value_param
 
 
 class MergeType(Enum):
@@ -270,7 +272,7 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
         logger.error("SD_SOURCE_TYPE is set to 'artifact', but SD_VERSION was not given in pipeline variables")
         exit(1)
     sd_version = sd_version.replace("\\n", "\n")
-    sd_entries = [line.strip() for line in sd_version.strip().splitlines() if line.strip()]
+    sd_entries = split_multi_value_param(sd_version)
     if not sd_entries:
         logger.error("No valid SD versions found in SD_VERSION")
         exit(1)
