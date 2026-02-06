@@ -30,7 +30,7 @@ RUN python3 -m venv /module/venv && \
 
 RUN curl -fsSL \
     https://github.com/mozilla/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.amd64 \
-    -O /usr/local/bin/sops && \
+    -o /usr/local/bin/sops && \
     chmod +x /usr/local/bin/sops
 
 RUN mkdir -p /deployments && \
