@@ -1,4 +1,5 @@
 from .collections_helper import *
+import pytest
 
 def convert_list_elements_to_strings_in_place(lst):
     for i in range(len(lst)):
@@ -59,3 +60,38 @@ def test_compare_dicts():
 
     assert len(s_diff) == len(diff) # no duplicates
     assert s_diff == set(expected_arr) and removed == [], f"Failed Test 8: {diff}, {removed}"
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ("env01", ["env01"]),
+        ("env01,env02", ["env01", "env02"]),
+        ("env01;env02", ["env01", "env02"]),
+        ("env01 env02", ["env01", "env02"]),
+        ("env01\nenv02", ["env01", "env02"]),
+        (" env01 env02 ", ["env01", "env02"]),
+        ("app1:1.0", ["app1:1.0"]),
+        ("app1:1.0;app2:2.0", ["app1:1.0", "app2:2.0"]),
+        ("app1:1.0;app2:2.0", ["app1:1.0", "app2:2.0"]),
+        ("app1:1.0;app2:2.0", ["app1:1.0", "app2:2.0"]),
+        ("app1:1.0;app2:2.0", ["app1:1.0", "app2:2.0"]),
+        ("", []),
+        ("   ", []),
+    ],
+)
+def test_split_multi_value_param_valid(value, expected):
+    assert split_multi_value_param(value) == expected
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "env01, env02", 
+        "env01; env02",
+        "env01\nenv02 env03",
+        "env01,env02;env03",
+    ],
+)
+def test_split_multi_value_param_invalid(value):
+    with pytest.raises(ValueError, match=r"use only ONE delimiter type"):
+        split_multi_value_param(value)

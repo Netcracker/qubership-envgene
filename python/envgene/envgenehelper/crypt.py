@@ -7,6 +7,7 @@ from .config_helper import get_envgene_config_yaml
 from .yaml_helper import openYaml, get_empty_yaml
 from .file_helper import check_file_exists, get_files_with_filter
 from .logger import logger
+from .collections_helper import split_multi_value_param
 
 from .crypt_backends.fernet_handler import crypt_Fernet, extract_value_Fernet, is_encrypted_Fernet
 from .crypt_backends.sops_handler import crypt_SOPS, extract_value_SOPS, is_encrypted_SOPS
@@ -117,7 +118,7 @@ def get_all_necessary_cred_files() -> set[str]:
     if env_names == "env_template_test":
         logger.info("Running in env_template_test mode")
         return get_files_with_filter(BASE_DIR, is_cred_file)
-    env_names_list = env_names.split("\n")
+    env_names_list = split_multi_value_param(env_names)
 
     sources = set()
     sources.add("configuration")
