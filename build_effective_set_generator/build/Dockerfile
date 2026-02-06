@@ -33,7 +33,6 @@ RUN wget --quiet --tries=3 \
     -O /usr/local/bin/sops && \
     chmod +x /usr/local/bin/sops
 
-# hadolint ignore=DL3041
 RUN mkdir -p /deployments && \
     curl -sSL https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh \
     -o /deployments/run-java.sh
@@ -67,6 +66,7 @@ RUN apk add --no-cache \
     sed \
     age
 
+# hadolint ignore=DL3018
 RUN apk add --no-cache ${JAVA_PACKAGE} && \
     echo "securerandom.source=file:/dev/urandom" >> /usr/lib/jvm/java-17-openjdk/conf/security/java.security
 
