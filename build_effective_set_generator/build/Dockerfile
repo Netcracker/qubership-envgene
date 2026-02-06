@@ -1,4 +1,4 @@
-FROM python:3.12-alpine3.19 AS BUILD
+FROM python:3.12-alpine3.19 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 ARG SOPS_VERSION=3.9.0
@@ -40,9 +40,9 @@ RUN mkdir -p /deployments && \
 COPY build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
 
 
-FROM python:3.12-alpine3.19 AS RUNTIME
+FROM python:3.12-alpine3.19 AS runtime
 
-ARG JAVA_PACKAGE=java-17-openjdk-headless
+ARG JAVA_PACKAGE=openjdk17-jre-headless
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
@@ -67,9 +67,9 @@ RUN apk add --no-cache \
     age \
     ${JAVA_PACKAGE}
 
-COPY --from=BUILD /module/venv /module/venv
-COPY --from=BUILD /usr/local/bin/sops /usr/local/bin/sops
-COPY --from=BUILD /deployments /deployments
+COPY --from=build /module/venv /module/venv
+COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
+COPY --from=build /deployments /deployments
 
 COPY build_effective_set_generator/scripts /module/scripts
 COPY scripts/utils /module/scripts/utils
