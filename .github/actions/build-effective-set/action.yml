@@ -74,27 +74,40 @@ runs:
     - name: Generate Docker tags
       id: tags
       uses: ./.github/actions/generate-docker-tags
+    
+    - name: Debug Docker build (no cache, plain progress)
+      shell: bash
+      run: |
+        IMAGE="${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.custom_tag }}"
 
-    - name: Extract metadata (tags, labels) for Docker
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
+        echo "Building image: $IMAGE"
+        docker build \
+          --no-cache \
+          --progress=plain \
+          -f ${{ inputs.dockerfile-path }} \
+          -t "$IMAGE" \
+          .
 
-    - name: Build and push Docker image
-      id: push
-      uses: docker/build-push-action@v6
-      with:
-        provenance: false
-        context: .
-        file: ${{ inputs.dockerfile-path }}
-        push: true
-        tags: |
-          ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.custom_tag }}
-          ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.branch_latest_tag }}
-          ${{ inputs.version != '' && format('{0}/{1}/{2}:{3}', inputs.registry, inputs.repository-owner, inputs.image-name, inputs.version) || '' }}
-          ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+    # - name: Extract metadata (tags, labels) for Docker
+    #   id: meta
+    #   uses: docker/metadata-action@v5
+    #   with:
+    #     images: ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}
+    #     tags: |
+    #       type=ref,event=branch
+    #       type=ref,event=pr
+
+    # - name: Build and push Docker image
+    #   id: push
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     provenance: false
+    #     context: .
+    #     file: ${{ inputs.dockerfile-path }}
+    #     push: true
+    #     tags: |
+    #       ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.custom_tag }}
+    #       ${{ inputs.registry }}/${{ inputs.repository-owner }}/${{ inputs.image-name }}:${{ steps.tags.outputs.branch_latest_tag }}
+    #       ${{ inputs.version != '' && format('{0}/{1}/{2}:{3}', inputs.registry, inputs.repository-owner, inputs.image-name, inputs.version) || '' }}
+    #       ${{ steps.meta.outputs.tags }}
+    #     labels: ${{ steps.meta.outputs.labels }}
