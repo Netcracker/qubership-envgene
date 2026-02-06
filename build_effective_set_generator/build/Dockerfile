@@ -28,7 +28,7 @@ RUN python3 -m venv /module/venv && \
     --no-binary cryptography \
     -r /build/requirements.txt
 
-RUN wget --quiet --tries=3 \
+RUN curl -fsSL \
     https://github.com/mozilla/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.amd64 \
     -O /usr/local/bin/sops && \
     chmod +x /usr/local/bin/sops
