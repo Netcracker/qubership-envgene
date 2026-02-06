@@ -33,7 +33,6 @@ RUN apk add --no-cache \
 
 COPY build_effective_set_generator/build/sources.list /etc/apk/repositories
 COPY build_effective_set_generator/build/pip.conf /etc/pip.conf
-COPY build_effective_set_generator/build/constraint.txt /build/constraint.txt
 COPY build_effective_set_generator/build/requirements.txt /build/requirements.txt
 COPY build_effective_set_generator/build/requirements.yml /build/requirements.yml
 
@@ -62,7 +61,6 @@ COPY --from=cli /etc/alternatives/jre/lib/security/java.security \
 RUN chmod g+rwX /deployments
 
 COPY build_effective_set_generator/build/pip.conf /etc/pip.conf
-COPY build_effective_set_generator/build/constraint.txt /build/constraint.txt
 COPY build_effective_set_generator/build/sources.list /etc/apk/repositories
 
 # Install ONLY runtime dependencies (NO dev packages)
