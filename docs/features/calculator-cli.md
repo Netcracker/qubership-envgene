@@ -511,7 +511,7 @@ Parameters can be set at different levels:
 If the same parameter key is set in multiple sources or levels, the Calculator uses the following priority (from highest to lowest):
 
 1. [Custom Params](/docs/glossary.md#custom-params) (`--custom-params`)
-2. User-defined in [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override-in-instance) of the Environment Instance
+2. User-defined in [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) of the Environment Instance
 3. Service level defined in Resource Profile Baseline in Application SBOM
 4. Service level defined in other Application SBOM attributes
 5. Calculator-generated at the Service level
