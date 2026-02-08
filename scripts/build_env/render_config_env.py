@@ -489,8 +489,11 @@ class EnvGenerator:
             if not regdef_files:
                 logger.warning(f"No RegDef YAMLs found in {regdef_dir}")
             for file in regdef_files:
-                logger.info(f"RegDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "regdef.schema.json"))
+                logger.info(f"Validating RegDef file: {file}")
+                regdef_content = openYaml(file)
+                version = str(regdef_content.get('version', '1.0'))
+                schema_path = SCHEMAS_DIR / "regdef-v2.schema.json" if version != '1.0' else SCHEMAS_DIR / "regdef.schema.json"
+                validate_yaml_by_scheme_or_fail(file, str(schema_path))
 
     def process_app_reg_defs(self, env_name: str, extra_env: dict):
         logger.info(
