@@ -4,7 +4,7 @@
   - [Problem Statement](#problem-statement)
   - [Proposed Approach](#proposed-approach)
     - [Application and Registry Definitions Source](#application-and-registry-definitions-source)
-      - [External Job. **Deprecated**](#external-job-deprecated)
+      - [External Job **Deprecated**](#external-job-deprecated)
       - [User Defined by Template](#user-defined-by-template)
     - [Using Application and Registry Definitions](#using-application-and-registry-definitions)
       - [Used by EnvGene](#used-by-envgene)
@@ -44,7 +44,7 @@ These objects are used to resolve application pointers written in the `applicati
 
 There are two sources for obtaining Application and Registry Definitions in EnvGene:
 
-#### External Job. **Deprecated**
+#### External Job **Deprecated**
 
 > [!WARNING]
 > The External Job–based mechanism is **deprecated**, is not recommended for use in new or actively maintained environments, and is planned to be removed in a future EnvGene release. Consumers should migrate to template-based Application and Registry Definitions as soon as reasonably possible.
