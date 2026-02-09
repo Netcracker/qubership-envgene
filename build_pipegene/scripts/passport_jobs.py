@@ -45,7 +45,7 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
                    'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done'
                    ],
     }
-    get_passport_params['script'].append('/module/scripts/prepare.sh "git_commit.yaml"')
+    get_passport_params['script'].append('/module/scripts/git_commit.sh')
     get_passport_vars = {
         "ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
@@ -53,13 +53,10 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
         "envgen_image": "$envgen_image",
         "envgen_args": " -vv",
         "envgen_debug": "true",
-        "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
         "module_config_default": "/module/templates/defaults.yaml",
         "COMMIT_ENV": "false",
         "COMMIT_MESSAGE": f"[ci_skip] update cloud passport for {cluster_name}",
-        "GITLAB_RUNNER_TAG_NAME": tags,
-        "module_ansible_dir": "/module/ansible",
-        "module_ansible_cfg": "/module/ansible/ansible.cfg"
+        "GITLAB_RUNNER_TAG_NAME": tags
     }
     get_passport_job = job_instance(params=get_passport_params, vars=get_passport_vars)
     base = "${CI_PROJECT_DIR}/environments"
@@ -68,3 +65,4 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
     get_passport_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(get_passport_job)
     return get_passport_job
+
