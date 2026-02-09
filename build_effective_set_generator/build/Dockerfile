@@ -76,6 +76,7 @@ RUN apk add --no-cache \
     age \
     ${JAVA_PACKAGE}
 
+COPY --from=build /python /python
 COPY --from=build /module/venv /module/venv
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=build /deployments /deployments
