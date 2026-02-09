@@ -19,7 +19,6 @@ RUN apk add --no-cache \
 COPY build_effective_set_generator/build/sources.list /etc/apk/repositories
 COPY build_effective_set_generator/build/pip.conf /etc/pip.conf
 COPY build_effective_set_generator/build/requirements.txt /build/requirements.txt
-COPY build_effective_set_generator/build/requirements.yml /build/requirements.yml
 COPY python /python
 
 RUN python3 -m venv /module/venv && \

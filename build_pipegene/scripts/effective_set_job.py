@@ -88,9 +88,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         "effective_set_generator_image": "$effective_set_generator_image",
         "envgen_args": " -vv",
         "envgen_debug": "true",
-        "module_ansible_dir": "/module/ansible",
-        "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
-        "module_ansible_cfg": "/module/ansible/ansible.cfg",
         "module_config_default": "/module/templates/defaults.yaml",
         "GITLAB_RUNNER_TAG_NAME": tags,
         "EXCLUDE_CLEANUP_TARGETS": " ".join(cleanup_targets)
