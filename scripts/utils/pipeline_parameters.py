@@ -2,8 +2,7 @@ import json
 from os import getenv
 from envgenehelper import logger
 from envgenehelper.plugin_engine import PluginEngine
-
-from python.envgene.envgenehelper.models import EnvTemplateVersionUpdateMode
+from envgenehelper.models import EnvTemplateVersionUpdateMode
 
 
 def get_pipeline_parameters() -> dict:
