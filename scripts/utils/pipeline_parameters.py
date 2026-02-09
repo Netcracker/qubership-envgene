@@ -2,7 +2,7 @@ import json
 from os import getenv
 from envgenehelper import logger
 from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper.models import EnvTemplateVersionUpdateMode
+from envgenehelper.models import TemplateVersionUpdateMode
 
 
 def get_pipeline_parameters() -> dict:
@@ -37,7 +37,7 @@ def get_pipeline_parameters() -> dict:
         "REG_DEFS_PATH": getenv("REG_DEFS_PATH"),
         "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
         "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
-            "ENV_TEMPLATE_VERSION_UPDATE_MODE") or EnvTemplateVersionUpdateMode.PERSISTENT.value,
+            "ENV_TEMPLATE_VERSION_UPDATE_MODE") or TemplateVersionUpdateMode.PERSISTENT.value,
     }
 
 
