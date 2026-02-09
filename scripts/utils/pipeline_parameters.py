@@ -3,6 +3,8 @@ from os import getenv
 from envgenehelper import logger
 from envgenehelper.plugin_engine import PluginEngine
 
+from python.envgene.envgenehelper.models import EnvTemplateVersionUpdateMode
+
 
 def get_pipeline_parameters() -> dict:
     return {
@@ -35,7 +37,10 @@ def get_pipeline_parameters() -> dict:
         "APP_DEFS_PATH": getenv("APP_DEFS_PATH"),
         "REG_DEFS_PATH": getenv("REG_DEFS_PATH"),
         "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
+        "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
+            "ENV_TEMPLATE_VERSION_UPDATE_MODE") or EnvTemplateVersionUpdateMode.PERSISTENT.value,
     }
+
 
 class PipelineParametersHandler:
     def __init__(self, **kwargs):
