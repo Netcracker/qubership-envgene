@@ -2,6 +2,7 @@ import os
 from os import getenv
 
 from envgenehelper import check_for_cyrillic, logger, findAllYamlsInDir, openYaml, check_dir_exists, get_cluster_name_from_full_name, get_environment_name_from_full_name, check_environment_is_valid_or_fail, check_file_exists, validate_yaml_by_scheme_or_fail
+from envgenehelper.collections_helper import split_multi_value_param
 
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 logger.info(f"Info about project_dir: {project_dir}")
@@ -42,7 +43,8 @@ def template_test_checks():
         raise ReferenceError("Execution is aborted as validation is not successful. See logs above.")
 
 def real_execution_checks(env_names, get_passport, env_build, env_inventory_init, env_inventory_content):
-    for env in env_names.split("\n"):
+    environment_names = split_multi_value_param(env_names)
+    for env in environment_names:
         # now we are using only complex environment names that contain both cluster_name and environment_name
         if env.count('/') != 1:
             logger.fatal(f"Wrong env_name given: {env}. Env_name should contain both cloud name and environment name by pattern '<cluster_name>/<environment_name>'")

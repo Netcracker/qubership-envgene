@@ -41,10 +41,13 @@
               --max-retries 8
               --accept 100..=103,200..=299,429
               --cookie-jar cookies.json
-              --exclude-all-private
+              --include 'https?://.*'
               --max-concurrency 4
               --cache
               --cache-exclude-status '429, 500..502'
               --max-cache-age 1d
+              --include file
+              --include-fragments
+              --root-dir $GITHUB_WORKSPACE
             format: markdown
             fail: true

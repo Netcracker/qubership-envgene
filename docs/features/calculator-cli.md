@@ -35,6 +35,7 @@
         - [\[Version 2.0\]\[Deployment Parameter Context\] `credentials.yaml`](#version-20deployment-parameter-context-credentialsyaml)
           - [\[Version 2.0\] Predefined `credentials.yaml` parameters](#version-20-predefined-credentialsyaml-parameters)
         - [\[Version 2.0\]\[Deployment Parameter Context\] Collision Parameters](#version-20deployment-parameter-context-collision-parameters)
+        - [\[Version 2.0\]\[Deployment Parameter Context\] `custom-params.yaml`](#version-20deployment-parameter-context-custom-paramsyaml)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml)
           - [\[Version 2.0\] Predefined `deploy-descriptor.yaml` parameters](#version-20-predefined-deploy-descriptoryaml-parameters)
           - [\[Version 2.0\] Service Artifacts](#version-20-service-artifacts)
@@ -72,7 +73,7 @@
 2. Calculator command-line tool must support [Effective Set version 2.0](#effective-set-v20) generation
 3. Calculator command-line tool must process [execution attributes](#calculator-command-line-tool-execution-attributes)
 4. Calculator command-line tool must not encrypt or decrypt sensitive parameters (credentials.yaml)
-5. Calculator command-line tool must resolve [macros](/docs/template-macros.md#calculator-cli-macros)
+5. Calculator command-line tool must resolve [macros](/docs/template-macros.md#calculator-command-line-tool-macros)
 6. Calculator command-line tool should not process Parameter Sets
 7. Calculator command-line tool must not cast parameters type
 8. Calculator command-line tool must display reason of error
@@ -98,19 +99,20 @@
 
 Below is a **complete** list of attributes
 
-| Attribute                                           | Type    | Mandatory | Description                                                                                                                                                                                                                   | Default | Example                                                                              |
-|-----------------------------------------------------|---------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|--------------------------------------------------------------------------------------|
-| `--env-id`/`-e`                                     | string  | yes       | Environment ID in `<cluster-name>/<environment-name>` notation                                                                                                                                                                | N/A     | `cluster/platform-00`                                                                |
-| `--envs-path`/`-ep`                                 | string  | yes       | Path to `/environments` folder                                                                                                                                                                                                | N/A     |  `/environments`                                                                     |
-| `--sboms-path`/`-sp`                                | string  | no        | Path to the folder with Application SBOMs. If the attribute is not provided, generation occurs in [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                  | N/A     | `/sboms`                                                                             |
-| `--sd-path`/`-sdp`                                  | string  | yes       | Path to the Solution Descriptor                                                                                                                                                                                               | N/A     | `/environments/cluster/platform-00/Inventory/solution-descriptor/sd.yaml`            |
-| `--registries`/`-r`                                 | string  | no        | Required when `--sd-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                                            | N/A     | `/configuration/registry.yml`                                                        |
-| `--output`/`-o`                                     | string  | yes       | Folder where the result will be put by Calculator command-line tool                                                                                                                                                           | N/A     | `/environments/cluster/platform-00/effective-set`                                    |
-| `--effective-set-version`/`-esv`                    | string  | no        | The version of the effective set to be generated. Available options are `v1.0` and `v2.0`                                                                                                                                     | `v2.0`  | `v1.0`                                                                               |
-| `--pipeline-consumer-specific-schema-path`/`-pcssp` | string  | no        | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided                                                                                               | N/A     |                                                                                      |
-| `--extra_params`/`-ex`                              | string  | no        | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided                                                                                               | N/A     | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000`                         |
-| `--app_chart_validation`/`-acv`                     | boolean | no        | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped | `true`  | `false`                                                                              |
-| `--enable-traceability`/`-etr`                      | boolean | no        | Determines whether [traceability](#version-20-traceability-comments) will be enabled. If `true`, traceability comments will be added. If `false`, they will be omitted.                                                       | `false` | `true`                                                                               |
+| Attribute                                           | Type    | Mandatory | Description                                                                                                                                                                                                                                                                                                   | Default | Example                                                                   |
+|-----------------------------------------------------|---------|-----------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|---------------------------------------------------------------------------|
+| `--env-id`/`-e`                                     | string  | yes       | Environment ID in `<cluster-name>/<environment-name>` notation                                                                                                                                                                                                                                                | N/A     | `cluster/platform-00`                                                     |
+| `--envs-path`/`-ep`                                 | string  | yes       | Path to `/environments` folder                                                                                                                                                                                                                                                                                | N/A     |  `/environments`                                                          |
+| `--sboms-path`/`-sp`                                | string  | no        | Path to the folder with Application SBOMs. If the attribute is not provided, generation occurs in [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                                                                                                  | N/A     | `/sboms`                                                                  |
+| `--sd-path`/`-sdp`                                  | string  | yes       | Path to the Solution Descriptor                                                                                                                                                                                                                                                                               | N/A     | `/environments/cluster/platform-00/Inventory/solution-descriptor/sd.yaml` |
+| `--registries`/`-r`                                 | string  | no        | Required when `--sd-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                                                                                                                            | N/A     | `/configuration/registry.yml`                                             |
+| `--output`/`-o`                                     | string  | yes       | Folder where the result will be put by Calculator command-line tool                                                                                                                                                                                                                                           | N/A     | `/environments/cluster/platform-00/effective-set`                         |
+| `--effective-set-version`/`-esv`                    | string  | no        | The version of the effective set to be generated. Available options are `v1.0` and `v2.0`                                                                                                                                                                                                                     | `v2.0`  | `v1.0`                                                                    |
+| `--pipeline-consumer-specific-schema-path`/`-pcssp` | string  | no        | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided                                                                                                                                                                               | N/A     |                                                                           |
+| `--extra_params`/`-ex`                              | string  | no        | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided                                                                                                                                                                               | N/A     | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000`              |
+| `--app_chart_validation`/`-acv`                     | boolean | no        | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped                                                                                 | `true`  | `false`                                                                   |
+| `--enable-traceability`/`-etr`                      | boolean | no        | Determines whether [traceability](#version-20-traceability-comments) will be enabled. If `true`, traceability comments will be added. If `false`, they will be omitted.                                                                                                                                       | `false` | `true`                                                                    |
+| `--custom-params`/`-cp`                             | string  | no        | [Custom Params](/docs/glossary.md#custom-params) to inject into the Effective Set with highest priority. Applied to deployment, runtime, and cleanup contexts. Treated as sensitive. JSON-in-string format; value structure described in [CUSTOM_PARAMS](/docs/instance-pipeline-parameters.md#custom_params) | N/A     | `"{\"deployment\":{\"KEY\":\"val\"}}"`                                    |
 
 ### Registry Configuration
 
@@ -278,7 +280,8 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   |   |       ├── collision-deployment-parameters.yaml
                 |   |   |       ├── credentials.yaml
                 |   |   |       ├── collision-credentials.yaml
-                |   |   |       └── deploy-descriptor.yaml
+                |   |   |       ├── deploy-descriptor.yaml
+                |   |   |       └── custom-params.yaml
                 |   |   └── <application-name-02>
                 |   |       └── values
                 |   |           ├── per-service-parameters
@@ -292,7 +295,8 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   |           ├── collision-deployment-parameters.yaml
                 |   |           ├── credentials.yaml
                 |   |           ├── collision-credentials.yaml
-                |   |           └── deploy-descriptor.yaml
+                |   |           ├── deploy-descriptor.yaml
+                |   |           └── custom-params.yaml
                 |   └── <namespace-folder-02>
                 |       ├── <application-name-01>
                 |       |   └── values
@@ -307,7 +311,8 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |       |       ├── collision-deployment-parameters.yaml
                 |       |       ├── credentials.yaml
                 |       |       ├── collision-credentials.yaml
-                |       |       └── deploy-descriptor.yaml
+                |       |       ├── deploy-descriptor.yaml
+                |       |       └── custom-params.yaml
                 |       └── <application-name-02>
                 |           └── values
                 |               ├── per-service-parameters
@@ -321,7 +326,8 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |               ├── collision-deployment-parameters.yaml
                 |               ├── credentials.yaml
                 |               ├── collision-credentials.yaml
-                |               └── deploy-descriptor.yaml
+                |               ├── deploy-descriptor.yaml
+                |               └── custom-params.yaml
                 ├── runtime
                 |   ├── mapping.yml
                 |   ├── <namespace-folder-01>
@@ -428,6 +434,7 @@ Sensitive parameters in the Effective Set are grouped into dedicated credentials
 4. `effective-set/deployment/<namespace-folder>/<application-name>/credentials.yaml`
 5. `effective-set/deployment/<namespace-folder>/<application-name>/collision-credentials.yaml`
 6. `effective-set/runtime/<namespace-folder>/<application-name>/credentials.yaml`
+7. `effective-set/deployment/<namespace-folder>/<application-name>/values/custom-params.yaml`
 
 **Splitting principle:**
 
@@ -488,7 +495,7 @@ These contexts are used as a source exclusively from the environment instance.
 Parameters in the Effective Set come from different sources:
 
 1. User-defined in the [Environment Instance](/docs/envgene-objects.md#environment-instance-objects)
-2. [Application SBOM](/docs/sbom.md#application-sbom)
+2. [Application SBOM](/docs/features/sbom.md#application-sbom)
 3. Generated by the calculator
 4. Calculator extra parameters (`--extra_params`)
 5. Calculator defaults
@@ -503,26 +510,27 @@ Parameters can be set at different levels:
 
 If the same parameter key is set in multiple sources or levels, the Calculator uses the following priority (from highest to lowest):
 
-1. User-defined in [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override-in-instance) of the Environment Instance
-2. Service level defined in Resource Profile Baseline in Application SBOM
-3. Service level defined in other Application SBOM attributes
-4. Calculator-generated at the Service level
-5. User-defined at the [Application](/docs/envgene-objects.md#application) level in Environment Instance
-6. Application level defined in Application SBOM
-7. Calculator-generated at the Application level
-8. User-defined at the [Namespace](/docs/envgene-objects.md#namespace) level in Environment Instance
-9. Namespace level defined in Application SBOM
-10. Calculator-generated at the Namespace level
-11. User-defined at the [Cloud](/docs/envgene-objects.md#cloud) level in Environment Instance
-12. Cloud level defined in Application SBOM
-13. Calculator-generated at the Cloud level
-14. User-defined at the [Tenant](/docs/envgene-objects.md#tenant) level in Environment Instance
-15. Calculator extra parameters (`--extra_params`)
-16. Default values by calculator
+1. [Custom Params](/docs/glossary.md#custom-params) (`--custom-params`)
+2. User-defined in [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) of the Environment Instance
+3. Service level defined in Resource Profile Baseline in Application SBOM
+4. Service level defined in other Application SBOM attributes
+5. Calculator-generated at the Service level
+6. User-defined at the [Application](/docs/envgene-objects.md#application) level in Environment Instance
+7. Application level defined in Application SBOM
+8. Calculator-generated at the Application level
+9. User-defined at the [Namespace](/docs/envgene-objects.md#namespace) level in Environment Instance
+10. Namespace level defined in Application SBOM
+11. Calculator-generated at the Namespace level
+12. User-defined at the [Cloud](/docs/envgene-objects.md#cloud) level in Environment Instance
+13. Cloud level defined in Application SBOM
+14. Calculator-generated at the Cloud level
+15. User-defined at the [Tenant](/docs/envgene-objects.md#tenant) level in Environment Instance
+16. Calculator extra parameters (`--extra_params`)
+17. Default values by calculator
 
 For example, if a user sets `BASELINE_PROJ` at the Namespace level, this value will override the value calculated by the calculator. If `BASELINE_PROJ` is set at the cloud level, it will be overridden by calculator-generated values at Namespace or Application levels.
 
-Not every parameter in the Effective Set can be overridden. Overriding service-level parameters is only possible via [resource profile override](/docs/envgene-objects.md#resource-profile-override-in-instance).
+Not every parameter in the Effective Set can be overridden. Overriding service-level parameters is only possible via [resource profile override](/docs/envgene-objects.md#resource-profile-override).
 
 > [!NOTE]
 > If a complex parameter is set, the value from the higher-priority source **completely replaces** the lower-priority one; merging is not performed.
@@ -537,6 +545,7 @@ The CLI flag [`--enable-traceability`](#calculator-command-line-tool-execution-a
 
 | Parameter Source                                   | Comment                                    | Example                                                                                      |
 |----------------------------------------------------|--------------------------------------------|----------------------------------------------------------------------------------------------|
+| Custom Params (`--custom-params`)                  | `# custom params`                          | `OVERRIDE_KEY: "value" # custom params`                                                      |
 | Environment Instance, Tenant                       | `# tenant`                                 | `GITLAB_URL: "https://git.qibership.org" # tenant`                                           |
 | Environment Instance, Cloud                        | `# cloud`                                  | `CLOUD_API_HOST: "https://api.example.com" # cloud`                                          |
 | Environment Instance, Namespace                    | `# namespace: <name>`                      | `NAMESPACE_NAME: "env-1-core" # namespace: env-1-core`                                       |
@@ -582,7 +591,7 @@ The CLI flag [`--enable-traceability`](#calculator-command-line-tool-execution-a
     servers:
       - "server1.example.com" # cloud
       - "server2.example.com" # namespace: env-1
-    
+
     servers:
       name: "server1" # cloud
       host: "host1" # cloud
@@ -772,6 +781,14 @@ The structure of both files is following:
 ```
 
 These files must only contain keys that match the name of a [services](#version-20-service-inclusion-criteria-and-naming-convention)
+
+##### \[Version 2.0][Deployment Parameter Context] `custom-params.yaml`
+
+This file is based on the parameter passed to the Calculator via `--custom-params`.
+
+It contains parameters from the `deployment` section of the object passed to `--custom-params`.
+
+If `--custom-params` is not passed, the file is generated empty.
 
 ##### \[Version 2.0][Deployment Parameter Context] `deploy-descriptor.yaml`
 
@@ -1335,9 +1352,13 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ##### \[Version 2.0][Runtime Parameter Context] `credentials.yaml`
 
-This file contains sensitive parameters defined in the `technicalConfigurationParameters` section.
+This file contains:
 
-For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
+1. Sensitive parameters defined in the `technicalConfigurationParameters` section. For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing)
+
+2. Parameters from the `runtime` section of the object passed to `--custom-params`
+
+Parameters from `--custom-params` have higher priority.
 
 The structure of this file is as follows:
 
@@ -1371,9 +1392,13 @@ The structure of this file is as follows:
 
 ##### \[Version 2.0][Cleanup Context] `credentials.yaml`
 
-This file contains sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects.
+This file contains
 
-For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
+1. Sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects. For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing)
+
+2. Parameters from the `runtime` section of the object passed to `--custom-params`
+
+Parameters from `--custom-params` have higher priority.
 
 The structure of this file is as follows:
 
