@@ -66,9 +66,7 @@
           "enum": [
             "aws",
             "azure",
-            "gcp",
-            "nexus",
-            "artifactory"
+            "gcp"
           ]
         },
         "authMethod": {
