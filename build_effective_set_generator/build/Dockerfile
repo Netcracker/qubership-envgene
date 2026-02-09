@@ -23,7 +23,7 @@ COPY build_effective_set_generator/build/requirements.yml /build/requirements.ym
 COPY python /python
 
 RUN python3 -m venv /module/venv && \
-    /module/venv/bin/pip install --upgrade pip 'setuptools<81' wheel
+    /module/venv/bin/pip install --upgrade pip "setuptools<82" wheel
 
 RUN /module/venv/bin/pip install --no-cache-dir \
     --no-binary cffi \
