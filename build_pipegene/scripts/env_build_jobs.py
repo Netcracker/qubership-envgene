@@ -3,11 +3,12 @@ from envgenehelper import logger
 from pipeline_helper import job_instance
 
 
-def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name, cluster_name, group_id, artifact_id, tags):
+def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name, cluster_name, group_id, artifact_id,
+                          tags):
     logger.info(f'prepare env_build job for {full_env}')
 
     script = [
-       '/module/scripts/handle_certs.sh',
+        '/module/scripts/handle_certs.sh',
     ]
     script.append('cd /build_env; python3 /build_env/scripts/build_env/main.py')
 
@@ -15,7 +16,7 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
         script.append('env_name=$(cat "$CI_PROJECT_DIR/set_variable.txt")')
         script.append(
             'sed -i "s|\\\"envgeneNullValue\\\"|\\\"test_value\\\"|g" "$CI_PROJECT_DIR/environments/$env_name/Credentials/credentials.yml"')
-        
+
     env_build_params = {
         "name": f'env_builder.{full_env}',
         "image": '${envgen_image}',
@@ -96,12 +97,12 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
         "stage": 'git_commit',
         "script": [
             '/module/scripts/handle_certs.sh',
-            '/module/scripts/prepare.sh "git_commit.yaml"',
+            '/module/scripts/git_commit.sh',
             "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
             'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
             'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done',
             'cp -rf $CI_PROJECT_DIR/environments $CI_PROJECT_DIR/git_envs',
-            ],
+        ],
     }
 
     git_commit_vars = {
@@ -111,9 +112,6 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
         "envgen_image": "$envgen_image",
         "envgen_args": " -vv",
         "envgen_debug": "true",
-        "module_ansible_dir": "/module/ansible",
-        "module_inventory": "${CI_PROJECT_DIR}/configuration/inventory.yaml",
-        "module_ansible_cfg": "/module/ansible/ansible.cfg",
         "module_config_default": "/module/templates/defaults.yaml",
         "GIT_STRATEGY": "none",
         "COMMIT_ENV": "true",

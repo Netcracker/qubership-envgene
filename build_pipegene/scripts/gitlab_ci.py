@@ -1,7 +1,7 @@
 import os
 from os import listdir
 
-from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name, parse_env_names
+from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name
 from envgenehelper.plugin_engine import PluginEngine
 from gcip import JobFilter, Pipeline
 
@@ -14,6 +14,8 @@ from inventory_generation_job import prepare_inventory_generation_job, is_invent
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from process_sd_job import prepare_process_sd
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
+from envgenehelper.collections_helper import split_multi_value_param
+
 
 PROJECT_DIR = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 IS_GITLAB = bool(os.getenv('CI_PROJECT_DIR')) and not bool(os.getenv('GITHUB_ACTIONS'))
@@ -55,7 +57,7 @@ def build_pipeline(params: dict) -> None:
 
     per_env_plugin_engine = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/per_env')
 
-    env_names = parse_env_names(params['ENV_NAMES'])
+    env_names = split_multi_value_param(params['ENV_NAMES'])
     if len(env_names) > 1 and is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params):
         raise ValueError(
             f"Generating Inventories for multiple Environments in single pipeline is not supported. "
@@ -119,8 +121,8 @@ def build_pipeline(params: dict) -> None:
                                                                       cluster_name, tags)
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
-            logger.info(f'Credential rotation job for {full_env_name} is skipped because CRED_ROTATION_PAYLOAD is empty.')
-
+            logger.info(
+                f'Credential rotation job for {full_env_name} is skipped because CRED_ROTATION_PAYLOAD is empty.')
 
         if params['ENV_BUILD']:
             jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['IS_TEMPLATE_TEST'],
@@ -131,8 +133,11 @@ def build_pipeline(params: dict) -> None:
         else:
             logger.info(f'Preparing of appregdef_render_job {full_env_name} is skipped.')
 
-        if (params["SD_SOURCE_TYPE"].lower() == "json" and params["SD_DATA"]) or \
-           (params["SD_SOURCE_TYPE"].lower() == "artifact" and params["SD_VERSION"]):
+        source_type = (params.get("SD_SOURCE_TYPE", "artifact")).lower()
+        if (
+                (source_type == "json" and params.get("SD_DATA")) or
+                (source_type == "artifact" and params.get("SD_VERSION"))
+        ):
             jobs_map["process_sd_job"] = prepare_process_sd(pipeline, full_env_name, environment_name, cluster_name,
                                                             params["APP_DEFS_PATH"], params["REG_DEFS_PATH"], tags)
         else:
