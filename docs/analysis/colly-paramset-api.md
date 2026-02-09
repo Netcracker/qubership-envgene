@@ -2,29 +2,24 @@
 
 - [ParamSet API Design для Colly](#paramset-api-design-для-colly)
   - [Введение](#введение)
-  - [Контекст и требования](#контекст-и-требования)
+  - [Требования](#требования)
+  - [Контекст](#контекст)
     - [Факты о ParamSet в EnvGene](#факты-о-paramset-в-envgene)
     - [Структура ParamSet (YAML)](#структура-paramset-yaml)
     - [Ассоциация в Inventory](#ассоциация-в-inventory)
   - [Архитектура и объектная модель](#архитектура-и-объектная-модель)
     - [Объектная модель](#объектная-модель)
     - [API Endpoints](#api-endpoints)
+      - [ParamSet](#paramset)
+      - [Effective Set](#effective-set)
+      - [Convenience endpoints](#convenience-endpoints)
   - [Детальное описание API](#детальное-описание-api)
     - [1. GET /api/v1/environments/{environmentId}/ui-parameters](#1-get-apiv1environmentsenvironmentidui-parameters)
     - [2. POST /api/v1/environments/{environmentId}/ui-parameters](#2-post-apiv1environmentsenvironmentidui-parameters)
+    - [DELETE /api/v1/environments/{environmentId}/ui-parameters](#delete-apiv1environmentsenvironmentidui-parameters)
   - [Управление версиями и конфликтами **TBD**](#управление-версиями-и-конфликтами-tbd)
     - [Версионирование через Git](#версионирование-через-git)
     - [Обработка конфликтов](#обработка-конфликтов)
-  - [Маппинг в Git репозиторий](#маппинг-в-git-репозиторий)
-    - [Путь к файлу ParamSet](#путь-к-файлу-paramset)
-    - [Маппинг ассоциаций в Inventory](#маппинг-ассоциаций-в-inventory)
-  - [Чтение UI override ParamSet](#чтение-ui-override-paramset)
-    - [Чтения UI override ParamSet с учетом ассоциаций окружения](#чтения-ui-override-paramset-с-учетом-ассоциаций-окружения)
-      - [Определение `path`](#определение-path)
-      - [Чтение одного UI override ParamSet файла](#чтение-одного-ui-override-paramset-файла)
-  - [Валидация **TBD**](#валидация-tbd)
-    - [Валидация структуры ParamSet](#валидация-структуры-paramset)
-    - [Валидация ассоциаций](#валидация-ассоциаций)
 
 ## Введение
 
@@ -37,7 +32,13 @@
   откатывать коммит
   сообщать об ошибке
 
-## Контекст и требования
+## Требования
+
+1. Время ответа на `GET /api/v1/environments/{environmentId}/ui-parameters` должно быть менее 300 мс
+2. Валидации `commitMessage` в `POST /api/v1/environments/{environmentId}/ui-parameters` со стороны колли быть не должно
+3. `POST, DELETE /api/v1/environments/{environmentId}/ui-parameters` должны быть транзакционными - **TBD**
+
+## Контекст
 
 ### Факты о ParamSet в EnvGene
 
@@ -137,20 +138,29 @@ metadata:
 > [!NOTE]
 > Endpoints для работы с ParamSet (`/api/v1/paramset/`) и ассоциациями (`/api/v1/environments/{environmentId}/paramset-associations`) в текущей версии реализовывать не планируется. Для работы с UI override параметрами используются convenience endpoints.
 
+#### ParamSet
+
 ```text
 GET    /api/v1/paramset/{paramsetId}
 POST   /api/v1/paramset
 PUT    /api/v1/paramset/{paramsetId}
 DELETE /api/v1/paramset/{paramsetId}
+```
 
+#### Effective Set
+
+```text
 GET    /api/v1/environments/{environmentId}/paramset-associations
 POST   /api/v1/environments/{environmentId}/paramset-associations
 DELETE /api/v1/environments/{environmentId}/paramset-associations/{associationId}
+```
 
-// Convenience endpoints
-GET    /api/v1/environments/{environmentId}/ui-parameters?context={context}[&namespaceName={ns}][&applicationName={app}]
-POST   /api/v1/environments/{environmentId}/ui-parameters
-       Body: { context: string, parameters: map[, namespaceName: string][, applicationName: string] }
+#### Convenience endpoints
+
+```text
+GET      /api/v1/environments/{environmentId}/ui-parameters
+POST     /api/v1/environments/{environmentId}/ui-parameters
+DELETE   /api/v1/environments/{environmentId}/ui-parameters
 ```
 
 ---
@@ -161,12 +171,12 @@ POST   /api/v1/environments/{environmentId}/ui-parameters
 
 Получить UI override параметры для окружения
 
-200-300 мс - нужно кэшировать
+> [!WARNING]
+> время ответа должно быть менее 300 мс
 
 **Параметры:**
 
 - `environmentId` (path) - `cluster/env`
-<!-- - `context` (query, mandatory) - Контекст параметров (`deployment`, `runtime`, `pipeline`) --> не передается, возвращается сразу все
 - `namespaceName` (query, optional) - Имя namespace (для Namespace/Application уровня)
 - `applicationName` (query, optional) - Имя приложения (для Application уровня)
 
@@ -174,36 +184,39 @@ POST   /api/v1/environments/{environmentId}/ui-parameters
 
 - `200 OK` - Параметры найдены
   - Headers: `ETag: "<commit-hash>"`
-  - Body: `map` (ключ-значение параметры)
+  - Body: `map`
 - `404 Not Found` - ParamSet не найден или ассоциация отсутствует
 
 **Примеры запросов:**
 
-**Environment Level:**
-
-```http
+```text
+## Environment Level
 GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment
-```
 
-**Namespace Level:**
-
-```http
+## Namespace Level
 GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&namespaceName=env-01-core
-```
 
-**Application Level:**
-
-```http
+## Application Level
 GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&namespaceName=env-01-core&applicationName=my-app
 ```
 
-**Пример ответа (Environment, Namespace, Application Levels):**
+**Пример ответа:**
+
+Общий для Environment, Namespace, Application Levels
 
 ```json
 {
   
   "parameters": {
-    "deployment|...": {
+    "deployment": { //optional
+      "KEY1": "value1",
+      "KEY2": "value2"
+    },
+    "runtime": { //optional
+      "KEY1": "value1",
+      "KEY2": "value2"
+    },
+    "pipeline": { //optional
       "KEY1": "value1",
       "KEY2": "value2"
     }
@@ -211,7 +224,7 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 }
 ```
 
-**Алгоритм:**
+<!-- **Алгоритм:**
 
 1. **Environment Level:**
    - Определить имя файла ParamSet: `<context>-ui-override.yaml`
@@ -235,45 +248,50 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
    - Найти ParamSet по пути: `/environments/<environmentId>/Inventory/parameters/<deployPostfix>-<applicationName>-<context>-ui-override.yaml`
    - Проверить ассоциацию в `env_definition.yml` для `deployPostfix`
    - Найти в `applications` запись с `appName=<applicationName>`
-   - Вернуть `applications[?appName=<applicationName>].parameters` из ParamSet
+   - Вернуть `applications[?appName=<applicationName>].parameters` из ParamSet -->
 
 ---
 
 ### 2. POST /api/v1/environments/{environmentId}/ui-parameters
 
-    **DELETE /api/v1/environments/{environmentId}/ui-parameters**
+Создать или обновить UI override параметры
 
-    ```json
-    {
-      "commitMessage": "any-string", // нужна ли валидиция? да, но мы не делаем, расчитываем что Егор сделает
-      "commitUser": "Vasya A. Pupkin",
-      "commitUserEmail": "Vasya@mail.com"
-    }
-    ```
-
-Создать или обновить UI override параметры (транзакционная операция)
+**Параметры:**
 
 - `environmentId` (path) - `cluster/env`
-<!-- - `context` (query, mandatory) - Контекст параметров (`deployment`, `runtime`, `pipeline`) -->
 - `namespaceName` (query, optional) - Имя namespace (для Namespace/Application уровня)
 - `applicationName` (query, optional) - Имя приложения (для Application уровня)
-- `parameters` - в боди
+- `commitMessage` (body) - Коммит мессадж для коммита в энвген рпеозиторий
+- `commitUser` (body) - Имя пользователя под которым происходит коммит
+- `commitUserEmail` (body) - email пользователя под которым происходит коммит
+- `parameters` (body)
 
-колли коммитит из под своего пользователя но "притворяясь  пользователем UI , тем которй передан в commitUser
+> [!WARNING]
+> создание парамсетов и ассоциаций должно быть транзакционной операцией
+
+<!-- колли коммитит из под своего пользователя но "притворяясь  пользователем UI, тем которй передан в commitUser
 проверить позволяет ли гит это и какой аттрибут нужно передать - только юзер нэйм или еще емэйл
-добавить примеры комплексных вэлью - передавать в json ли yaml - Егор скажет как ему удобнее
+добавить примеры комплексных вэлью - передавать в json ли yaml - Егор скажет как ему удобнее -->
 
-**Тело запроса:**
+**Пример запросов:**
 
 **Environment Level:**
 
 ```json
 {
-  "commitMessage": "any-string", // нужна ли валидиция? да, но мы не делаем, расчитываем что Егор сделает
+  "commitMessage": "FAKE-0000",
   "commitUser": "Vasya A. Pupkin",
   "commitUserEmail": "Vasya@mail.com",
   "parameters": {
-    "deployment|...": {
+    "deployment": { // optional
+      "KEY1": "value1",
+      "KEY2": "value2"
+    },
+    "runtime": { // optional
+      "KEY1": "value1",
+      "KEY2": "value2"
+    },
+    "pipeline": { // optional
       "KEY1": "value1",
       "KEY2": "value2"
     }
@@ -285,11 +303,23 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 
 ```json
 {
-  "namespaceName": "env-01-core", !
-  "context": "deployment", !
+  "commitMessage": "FAKE-0000",
+  "commitUser": "Vasya A. Pupkin",
+  "commitUserEmail": "Vasya@mail.com",
+  "namespaceName": "env-01-core",
   "parameters": {
-    "KEY1": "value1",
-    "KEY2": "value2"
+    "deployment": { // optional
+      "KEY1": "value1",
+      "KEY2": "value2"
+    },
+    "runtime": { // optional
+      "KEY1": "value1",
+      "KEY2": "value2"
+    },
+    "pipeline": { // optional
+      "KEY1": "value1",
+      "KEY2": "value2"
+    }
   }
 }
 ```
@@ -298,17 +328,29 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 
 ```json
 {
+  "commitMessage": "FAKE-0000",
+  "commitUser": "Vasya A. Pupkin",
+  "commitUserEmail": "Vasya@mail.com",
   "namespaceName": "env-01-core",
   "applicationName": "my-app",
-  "context": "deployment",
   "parameters": {
-    "KEY1": "value1",
-    "KEY2": "value2"
+    "deployment": { // optional
+      "KEY1": "value1",
+      "KEY2": "value2"
+    },
+    "runtime": { // optional
+      "KEY1": "value1",
+      "KEY2": "value2"
+    },
+    "pipeline": { // optional
+      "KEY1": "value1",
+      "KEY2": "value2"
+    }
   }
 }
 ```
 
-**Логика определения уровня:**
+<!-- **Логика определения уровня:**
 
 - Если указаны `namespaceName` и `applicationName` → Application level
 - Если указан только `namespaceName` → Namespace level
@@ -320,29 +362,29 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 - Path вычисляется автоматически: `/environments/<environmentId>/Inventory/parameters/`
 - Ассоциация добавляется автоматически в `env_definition.yml`
 - Если ParamSet уже существует, параметры обновляются (merge)
-- Операция транзакционная: либо создаются/обновляются ParamSet и ассоциация, либо откат
+- Операция транзакционная: либо создаются/обновляются ParamSet и ассоциация, либо откат -->
 
 **Ответы:**
 
 - `200 OK` - Параметры обновлены (если ParamSet существовал)
   - Headers: `ETag: "<commit-hash>"`
-  - Body: `map` (обновленные параметры)
+  - Body: `map` (запрос)
 - `201 Created` - Параметры созданы (если ParamSet не существовал)
   - Headers: `ETag: "<commit-hash>"`
-  - Body: `map` (созданные параметры)
+  - Body: `map` (запрос)
 - `400 Bad Request` - Ошибка валидации
 - `404 Not Found` - Environment, Namespace или Application не найден
 
-**Пример ответа:**
+<!-- **Пример ответа:**
 
 ```json
 {
   "KEY1": "value1",
   "KEY2": "value2"
 }
-```
+``` -->
 
-**Алгоритм:**
+<!-- **Алгоритм:**
 
 1. **Environment Level:**
    - Определить имя файла ParamSet: `<context>-ui-override.yaml`
@@ -397,7 +439,59 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
        ```
 
    - Добавить/обновить ассоциацию в `env_definition.yml` для `deployPostfix`
-   - Вернуть `applications[?appName=<applicationName>].parameters`
+   - Вернуть `applications[?appName=<applicationName>].parameters` -->
+
+### DELETE /api/v1/environments/{environmentId}/ui-parameters
+
+Удалить UI override параметры
+
+**Параметры:**
+
+- `environmentId` (path) - `cluster/env`
+- `namespaceName` (query, optional) - Имя namespace (для Namespace/Application уровня)
+- `applicationName` (query, optional) - Имя приложения (для Application уровня)
+- `commitMessage` (body) - Коммит мессадж для коммита в энвген рпеозиторий
+- `commitUser` (body) - Имя пользователя под которым происходит коммит
+- `commitUserEmail` (body) - email пользователя под которым происходит коммит
+
+> [!WARNING]
+> создание парамсетов и ассоциаций должно быть транзакционной операцией
+
+**Пример запросов:**
+
+**Environment Level:**
+
+```json
+{
+  "commitMessage": "FAKE-0000",
+  "commitUser": "Vasya A. Pupkin",
+  "commitUserEmail": "Vasya@mail.com"
+  }
+}
+```
+
+**Namespace Level:**
+
+```json
+{
+  "commitMessage": "FAKE-0000",
+  "commitUser": "Vasya A. Pupkin",
+  "commitUserEmail": "Vasya@mail.com",
+  "namespaceName": "env-01-core"
+}
+```
+
+**Application Level:**
+
+```json
+{
+  "commitMessage": "FAKE-0000",
+  "commitUser": "Vasya A. Pupkin",
+  "commitUserEmail": "Vasya@mail.com",
+  "namespaceName": "env-01-core",
+  "applicationName": "my-app"
+}
+```
 
 ---
 
@@ -430,7 +524,7 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 
 ---
 
-## Маппинг в Git репозиторий
+<!-- ## Маппинг в Git репозиторий
 
 ### Путь к файлу ParamSet
 
@@ -480,9 +574,9 @@ envTemplate:
 
 **Порядок важен!** ParamSet применяются в порядке списка.
 
----
+--- -->
 
-## Чтение UI override ParamSet
+<!-- ## Чтение UI override ParamSet
 
 Эта операция используется во всех местах, где Colly читает UI override ParamSet (включая Effective Set API и UI-parameters API). Она включает как чтение ассоциаций окружения, так и чтение самих файлов ParamSet.
 
@@ -647,4 +741,4 @@ commitHashes: map     # Опционально: map<paramSetName, commitHash> д
    - `"cloud"` - для Cloud объекта
    - Существующий `deployPostfix` - для Namespace
 3. `context` должен быть одним из: `deployment`, `runtime`, `pipeline`
-4. `level` должен соответствовать `context` (см. правила выше)
+4. `level` должен соответствовать `context` (см. правила выше) -->
