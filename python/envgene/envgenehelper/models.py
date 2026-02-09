@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class EnvTemplateVersionUpdateMode(str, Enum):
+class TemplateVersionUpdateMode(str, Enum):
     PERSISTENT = "PERSISTENT"
     TEMPORARY = "TEMPORARY"
 
