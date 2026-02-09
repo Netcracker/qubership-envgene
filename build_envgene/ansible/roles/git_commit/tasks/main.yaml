@@ -1,6 +1,0 @@
----
-- name: 01. prepare vars
-  include_tasks: 01_prepare_vars.yaml
-
-- name: 02. git commit
-  include_tasks: 02_git_commit.yaml
