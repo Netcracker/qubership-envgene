@@ -20,13 +20,19 @@ COPY build_effective_set_generator/build/sources.list /etc/apk/repositories
 COPY build_effective_set_generator/build/pip.conf /etc/pip.conf
 COPY build_effective_set_generator/build/requirements.txt /build/requirements.txt
 COPY build_effective_set_generator/build/requirements.yml /build/requirements.yml
+COPY python /python
 
 RUN python3 -m venv /module/venv && \
     /module/venv/bin/pip install --upgrade pip setuptools wheel && \
     /module/venv/bin/pip install --no-cache-dir \
     --no-binary cffi \
     --no-binary cryptography \
-    -r /build/requirements.txt
+    -r /build/requirements.txt && \
+    /module/venv/bin/pip install --no-cache-dir \
+    /python/integration \
+    /python/jschon-sort \
+    /python/envgene \
+    /python/artifact-searcher
 
 RUN curl -fsSL \
     https://github.com/mozilla/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.amd64 \
@@ -67,12 +73,18 @@ RUN apk add --no-cache \
     age \
     ${JAVA_PACKAGE}
 
+COPY --from=build /python /python
 COPY --from=build /module/venv /module/venv
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=build /deployments /deployments
 
-COPY build_effective_set_generator/scripts /module/scripts
-COPY scripts/utils /module/scripts/utils
+COPY scripts/build_env/ /build_env/scripts/build_env/
+COPY scripts/build_env/process_sd.py /module/scripts/
+COPY build_effective_set_generator/scripts/ /module/scripts/
+COPY scripts/utils/ /module/scripts/utils/
+
+# cert script should be moved to scripts/utils/
+COPY build_envgene/scripts/handle_certs.sh /module/scripts/
 
 # User creation + permissions
 RUN addgroup ci && \
