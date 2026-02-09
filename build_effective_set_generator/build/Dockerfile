@@ -23,12 +23,14 @@ COPY build_effective_set_generator/build/requirements.yml /build/requirements.ym
 COPY python /python
 
 RUN python3 -m venv /module/venv && \
-    /module/venv/bin/pip install --upgrade pip setuptools wheel && \
-    /module/venv/bin/pip install --no-cache-dir \
+    /module/venv/bin/pip install --upgrade pip setuptools wheel
+
+RUN /module/venv/bin/pip install --no-cache-dir \
     --no-binary cffi \
     --no-binary cryptography \
-    -r /build/requirements.txt && \
-    /module/venv/bin/pip install --no-cache-dir \
+    -r /build/requirements.txt
+
+RUN /module/venv/bin/pip install --no-cache-dir \
     /python/integration \
     /python/jschon-sort \
     /python/envgene \
