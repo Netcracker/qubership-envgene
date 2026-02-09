@@ -4,12 +4,17 @@ from pathlib import Path
 from envgenehelper import beautifyYaml, writeYamlToFile, logger, getenv_with_error, getEnvDefinitionPath
 from envgenehelper import getEnvDefinition
 
+from envgenehelper.models import EnvTemplateVersionUpdateMode
 
-def update_version(env_definition_dir, version_to_add):
+
+def update_version(env_definition_dir, version_to_add, update_mode: EnvTemplateVersionUpdateMode):
     env_definition_path = getEnvDefinitionPath(env_definition_dir)
     logger.info(f"Started version update to {version_to_add} in {env_definition_path}.")
     data = getEnvDefinition(env_instances_dir)
 
+    if update_mode == EnvTemplateVersionUpdateMode.TEMPORARY:
+        logger.info("Template update mode: TEMPORARY, Skip updating template artifact version in env_definition.yml")
+        return
     if ":" in version_to_add:
         if 'envTemplate' in data:
             if 'templateArtifact' in data['envTemplate']:
@@ -39,4 +44,6 @@ if __name__ == "__main__":
     environment_name = getenv_with_error("ENVIRONMENT_NAME")
     env_instances_dir = Path(f"{base_dir}/environments/{cluster_name}/{environment_name}")
     version_to_add = getenv("ENV_TEMPLATE_VERSION")
-    update_version(env_instances_dir, version_to_add)
+    env_tmp_ver_update_mode = (EnvTemplateVersionUpdateMode(getenv("ENV_TEMPLATE_VERSION_UPDATE_MODE"))
+                               or EnvTemplateVersionUpdateMode.PERSISTENT)
+    update_version(env_instances_dir, version_to_add, env_tmp_ver_update_mode)
