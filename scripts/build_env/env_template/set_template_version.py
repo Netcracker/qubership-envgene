@@ -44,6 +44,5 @@ if __name__ == "__main__":
     environment_name = getenv_with_error("ENVIRONMENT_NAME")
     env_instances_dir = Path(f"{base_dir}/environments/{cluster_name}/{environment_name}")
     version_to_add = getenv("ENV_TEMPLATE_VERSION")
-    env_tmp_ver_update_mode = (EnvTemplateVersionUpdateMode(getenv("ENV_TEMPLATE_VERSION_UPDATE_MODE"))
-                               or EnvTemplateVersionUpdateMode.PERSISTENT)
+    env_tmp_ver_update_mode = EnvTemplateVersionUpdateMode(getenv("ENV_TEMPLATE_VERSION_UPDATE_MODE"))
     update_version(env_instances_dir, version_to_add, env_tmp_ver_update_mode)
