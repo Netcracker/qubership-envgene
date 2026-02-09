@@ -208,15 +208,15 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 {
   
   "parameters": {
-    "deployment": { //optional
+    "deployment": { // mandatory, default - {}
       "KEY1": "value1",
       "KEY2": "value2"
     },
-    "runtime": { //optional
+    "runtime": { // mandatory, default - {}
       "KEY1": "value1",
       "KEY2": "value2"
     },
-    "pipeline": { //optional
+    "pipeline": { // mandatory, default - {}
       "KEY1": "value1",
       "KEY2": "value2"
     }
