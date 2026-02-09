@@ -45,7 +45,7 @@ RUN mkdir -p /deployments && \
     curl -sSL https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh \
     -o /deployments/run-java.sh
 
-COPY build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
+# COPY build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
 
 
 FROM python:3.12-alpine3.19 AS runtime
@@ -74,7 +74,8 @@ RUN apk add --no-cache \
     gettext \
     sed \
     age \
-    ${JAVA_PACKAGE}
+    # ${JAVA_PACKAGE}
+
 
 COPY --from=build /module/venv /module/venv
 COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
