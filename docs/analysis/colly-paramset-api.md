@@ -554,7 +554,7 @@ envTemplate:
 1. Определить `level`:
    1. Если не переданы ни `namespaceName`, ни `applicationName` -> Environment уровень
    2. Если передан `namespaceName`, но не `applicationName` -> Namespace уровень
-   3. Если не переданы `namespaceName` и `applicationName` -> Application уровень
+   3. Если переданы `namespaceName` и `applicationName` -> Application уровень
 2. Прочитать ассоциации ParamSet для окружения:
    - Прочитать файл `env_definition.yml` (см. раздел ["Маппинг ассоциаций в Inventory"](#маппинг-ассоциаций-в-inventory))
    - Для заданного `context` определить соответствующую секцию:
