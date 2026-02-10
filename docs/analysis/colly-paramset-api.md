@@ -568,8 +568,6 @@ envTemplate:
 3. Для каждого ассоциированного UI override ParamSet (в порядке перечисления в `env_definition.yml`):
    - Определить имя файла и [`path`](#определение-path)
    - Выполнить [Чтения одного UI override ParamSet файла](#чтение-одного-ui-override-paramset-файла)
-   - Если файл найден и успешно прочитан:
-     - Добавить его параметры в агрегированный результат (с учётом порядка в списке ассоциаций)
 
 Результат:
 
@@ -577,11 +575,6 @@ envTemplate:
 parameters: map
 commitHash: string
 ```
-
-Этот результат содержит всю информацию, необходимую для:
-
-- построения объектов `ParamSet` в Colly (по `path`, `parameters`, `applications`, `commitHash`)
-- формирования и обновления секции `metadata.paramSetAssociations` в объекте `Environment` (по списку ассоциированных ParamSet и их `associatedObjectType`/`context` из `env_definition.yml`)
 
 #### Определение `path`
 
