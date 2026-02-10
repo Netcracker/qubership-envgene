@@ -71,7 +71,7 @@ env:
   #DOCKER_IMAGE_TAGS
   DOCKER_IMAGE_TAG_PIPEGENE: "1.23.2"
   DOCKER_IMAGE_TAG_ENVGENE: "1.23.2"
-  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.23.2"
+  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "feature_effective_set_job_publication"
 
 jobs:
   process_environment_variables:
@@ -88,6 +88,9 @@ jobs:
       ENV_INVENTORY_INIT: ${{ env.ENV_INVENTORY_INIT }}
       ENV_SPECIFIC_PARAMS: ${{ env.ENV_SPECIFIC_PARAMS }}
       ENV_TEMPLATE_NAME: ${{ env.ENV_TEMPLATE_NAME }}
+      SD_SOURCE_TYPE: ${{ env.SD_SOURCE_TYPE }}
+      SD_DATA: ${{ env.SD_DATA }}
+      SD_VERSION: ${{ env.SD_VERSION }}
     steps:
       - name: Repository Checkout
         uses: actions/checkout@v4.1.0
@@ -289,6 +292,38 @@ jobs:
             tmp
           include-hidden-files: true
       ##########################
+
+
+      ### PROCESS_SD ###
+      - name: PROCESS_SD
+        if: (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'json' && needs.process_environment_variables.outputs.SD_DATA != '') || (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'artifact' && needs.process_environment_variables.outputs.SD_VERSION != '')
+        run: |
+          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
+            ${{ env.DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
+            bash -c "
+              source /module/venv/bin/activate
+
+              echo 'Executing PROCESS_SD...'
+              /module/scripts/handle_certs.sh
+              base_env_path=\"\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}\"
+              app_defs_path=\"\${base_env_path}/AppDefs\"
+              reg_defs_path=\"\${base_env_path}/RegDefs\"
+              if [ -n \"\$APP_REG_DEFS_JOB\" ] && [ -n \"\$APP_DEFS_PATH\" ]; then mkdir -p \"\$app_defs_path\" && cp -rf \"\$APP_DEFS_PATH\"/* \"\$app_defs_path\"; fi
+              if [ -n \"\$APP_REG_DEFS_JOB\" ] && [ -n \"\$REG_DEFS_PATH\" ]; then mkdir -p \"\$reg_defs_path\" && cp -fr \"\$REG_DEFS_PATH\"/* \"\$reg_defs_path\"; fi
+              if ! python3 /build_env/scripts/build_env/process_sd.py; then
+                echo 'PROCESS_SD failed with exit code \$?'
+                exit 1
+              fi
+            "
+
+      - name: PROCESS_SD - Upload PROCESS_SD Package
+        uses: actions/upload-artifact@v4
+        if: (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'json' && needs.process_environment_variables.outputs.SD_DATA != '') || (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'artifact' && needs.process_environment_variables.outputs.SD_VERSION != '')
+        with:
+          name: process_sd_${{ env.PACKAGE_NAME }}
+          path: environments/${{ matrix.environment }}
+          include-hidden-files: true
+      ##################
 
 
       ### ENV_BUILD ###
