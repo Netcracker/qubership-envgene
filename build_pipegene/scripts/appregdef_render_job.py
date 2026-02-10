@@ -39,7 +39,7 @@ def prepare_appregdef_render_job(pipeline, is_template_test, env_template_versio
 
     appregdef_render_job = job_instance(params=appregdef_render_params, vars=appregdef_render_vars)
     
-    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/{full_env}")
+    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env)
     appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
     appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
     appregdef_render_job.artifacts.when = WhenStatement.ALWAYS

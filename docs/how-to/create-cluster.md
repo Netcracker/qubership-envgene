@@ -86,8 +86,8 @@ In this approach, the [Cloud](/docs/envgene-objects.md) is generated from the [C
 
    - Collect all required parameters necessary to define the [Cloud](/docs/envgene-objects.md).
    - Assemble the [Cloud Passport](/docs/envgene-objects.md#cloud-passport) using the expected format. Refer to the sample:
-     - [cluster-01.yml](/docs/samples/instance-repository/environmentscluster-01/cloud-passport/cluster-01.yml)
-     - [cluster-01-creds.yml](/docs/samples/instance-repository/environmentscluster-01/cloud-passport/cluster-01-creds.yml)
+     - [cluster-01.yml](/docs/samples/instance-repository/environments/cluster-01/cloud-passport/cluster-01.yml)
+     - [cluster-01-creds.yml](/docs/samples/instance-repository/environments/cluster-01/cloud-passport/cluster-01-creds.yml)
    - Place it under the right location: `/environments/<cluster-name>/cloud-passport/`
 
    Example:
@@ -121,7 +121,7 @@ In this approach, the [Cloud](/docs/envgene-objects.md#cloud) is generated using
 
 1. The Instance and Discovery repositories has already been initialized and follows the required structure.
 2. Integration with Discovery repository is configured in the Instance repository:
-  
+
     `/configuration/integration.yml`:
 
     ```yaml

@@ -27,13 +27,11 @@ RUN apk add --no-cache \
 # Copy configuration files
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
-COPY build_envgene/build/requirements.yml /build/requirements.yml
 COPY build_envgene/build/constraint.txt /build/constraint.txt
 COPY creds_rotation/build/requirements.txt /build/creds_rotation_requirements.txt
 
 # Copy source code
 COPY python /python
-COPY build_envgene/ansible /module/ansible
 COPY build_envgene/scripts /module/scripts
 COPY scripts/bg_manage /scripts/bg_manage
 COPY creds_rotation/scripts /module/creds_rotation_scripts
@@ -44,21 +42,10 @@ COPY scripts/cloud_passport/ /cloud_passport/scripts/
 COPY schemas /build_env/schemas
 COPY scripts/utils /module/scripts/utils
 
-ENV ANSIBLE_LIBRARY=/module/ansible/library
-
 # Create virtual environment and install Python packages
-RUN python -m venv /module/venv && \
-    /module/venv/bin/pip install --upgrade pip setuptools wheel && \
-    /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
-# Install essential Ansible collections
-# Install to virtual environment site-packages for Python module access
-RUN /module/venv/bin/ansible-galaxy collection install ansible.utils -p /module/venv/lib/python3.12/site-packages/ansible_collections && \
-    /module/venv/bin/ansible-galaxy collection install ansible.posix -p /module/venv/lib/python3.12/site-packages/ansible_collections && \
-    /module/venv/bin/ansible-galaxy collection install community.general -p /module/venv/lib/python3.12/site-packages/ansible_collections
-# Also install to custom location for playbook usage
-RUN /module/venv/bin/ansible-galaxy collection install ansible.utils -p /module/ansible/collections && \
-    /module/venv/bin/ansible-galaxy collection install ansible.posix -p /module/ansible/collections && \
-    /module/venv/bin/ansible-galaxy collection install community.general -p /module/ansible/collections
+RUN python -m venv /module/venv
+RUN /module/venv/bin/pip install --upgrade pip "setuptools<82" wheel
+RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
 
 RUN /module/venv/bin/pip install /python/jschon-sort && \
     /module/venv/bin/pip install /python/envgene && \
@@ -76,16 +63,13 @@ RUN wget --quiet --tries=3 \
 RUN apk del gcc musl-dev libffi-dev openssl-dev libxml2-dev libxslt-dev zlib-dev && \
     rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache
 # Remove unnecessary files from Python packages
-RUN find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
-    find /module/venv/lib/python3.12/site-packages -name '*.pyo' -delete && \
-    find /module/venv/lib/python3.12/site-packages -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
-# Remove heavy Ansible collections that are not essential (but keep ansible.posix and ansible.utils)
-RUN rm -rf /module/venv/lib/python3.12/site-packages/ansible_collections/amazon /module/venv/lib/python3.12/site-packages/ansible_collections/azure /module/venv/lib/python3.12/site-packages/ansible_collections/google /module/venv/lib/python3.12/site-packages/ansible_collections/kubernetes 2>/dev/null || true && \
-    rm -rf /module/venv/lib/python3.12/site-packages/pytest* /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true && \
-    /module/venv/bin/pip cache purge
+RUN find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete
 
-# Verify collections are still accessible after cleanup
-RUN /module/venv/bin/python -c "import ansible_collections.ansible.posix; print('ansible.posix collection still accessible after cleanup')"
+RUN find /module/venv/lib/python3.12/site-packages -name '*.pyo' -delete
+RUN find /module/venv/lib/python3.12/site-packages -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
+RUN rm -rf /module/venv/lib/python3.12/site-packages/pytest* \
+           /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true
+RUN /module/venv/bin/pip cache purge
 
 # Set permissions
 RUN chmod 754 /module/scripts/* && \
@@ -123,9 +107,8 @@ COPY --from=build /cloud_passport /cloud_passport
 COPY --from=build /python /python
 COPY --from=build /etc/pip.conf /etc/pip.conf
 
-# Verify collections are accessible in runtime stage and set permissions
-RUN /module/venv/bin/python -c "import ansible_collections.ansible.posix; print('ansible.posix collection accessible in runtime')" && \
-    chmod +x /usr/local/bin/sops
+# Set permissions
+RUN chmod +x /usr/local/bin/sops
 
 # Create directories that might be needed for CI environments
 # These directories are commonly used by GitHub Actions and GitLab CI
@@ -141,21 +124,17 @@ RUN mkdir -p /__w/_temp/_runner_file_commands && \
     chmod 777 /cache
 
 # Final cleanup
-RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
-    find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
-    /module/venv/bin/pip cache purge && \
-    rm -rf /module/venv/lib/python3.12/site-packages/setuptools* /module/venv/lib/python3.12/site-packages/wheel* 2>/dev/null || true
+RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache
+RUN find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete
+RUN /module/venv/bin/pip cache purge
+# Keep pip for runtime compatibility, but remove setuptools and wheel
+RUN rm -rf /module/venv/lib/python3.12/site-packages/setuptools* \
+           /module/venv/lib/python3.12/site-packages/wheel* 2>/dev/null || true
 
 # Set environment
 ENV PATH=/module/venv/bin:$PATH \
     PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    ANSIBLE_LIBRARY=/module/ansible/library \
-    ANSIBLE_COLLECTIONS_PATH=/module/venv/lib/python3.12/site-packages/ansible_collections:/module/ansible/collections
-
-# Simple root-based container for CI/CD environments
-# This container runs as root to avoid permission issues in CI/CD pipelines
-WORKDIR /module/ansible
+    PYTHONDONTWRITEBYTECODE=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

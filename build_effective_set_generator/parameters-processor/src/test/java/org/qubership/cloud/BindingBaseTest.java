@@ -124,12 +124,11 @@ public class BindingBaseTest {
             provider.setNamespaceConfigurationService(nsService);
             provider.setInputDataService(inputDataService);
             provider.add(appService);
-            Constructor<Binding> constructor = Binding.class.getDeclaredConstructor(String.class);
+            Constructor<Binding> constructor = Binding.class.getDeclaredConstructor();
             constructor.setAccessible(true);
-            Binding binding = constructor.newInstance(params.get("defaultEscapeSequence") != null ? params.get("defaultEscapeSequence") : "false")
+            Binding binding = constructor.newInstance()
                     .init("tenant", "cloud", "namespace", "application", "namespace");
             return binding;
-
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | IllegalArgumentException |
                  InvocationTargetException | SecurityException e) {
             throw new RuntimeException(e);

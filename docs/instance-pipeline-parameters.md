@@ -9,13 +9,12 @@
     - [`CMDB_IMPORT`](#cmdb_import)
     - [`DEPLOYMENT_TICKET_ID`](#deployment_ticket_id)
     - [`ENV_TEMPLATE_VERSION`](#env_template_version)
-    - [`ENV_TEMPLATE_VERSION_ORIGIN`](#env_template_version_origin)
-    - [`ENV_TEMPLATE_VERSION_PEER`](#env_template_version_peer)
-    - [`ENV_INVENTORY_INIT`](#env_inventory_init)
-    - [`ENV_TEMPLATE_NAME`](#env_template_name)
+    - [`ENV_TEMPLATE_VERSION_UPDATE_MODE`](#env_template_version_update_mode)
     - [`ENV_SPECIFIC_PARAMS`](#env_specific_params)
+    - [`ENV_INVENTORY_CONTENT`](#env_inventory_content)
     - [`GENERATE_EFFECTIVE_SET`](#generate_effective_set)
     - [`EFFECTIVE_SET_CONFIG`](#effective_set_config)
+    - [`CUSTOM_PARAMS`](#custom_params)
     - [`APP_REG_DEFS_JOB`](#app_reg_defs_job)
     - [`APP_DEFS_PATH`](#app_defs_path)
     - [`REG_DEFS_PATH`](#reg_defs_path)
@@ -28,15 +27,13 @@
     - [`CRED_ROTATION_PAYLOAD`](#cred_rotation_payload)
       - [Affected Parameters and Troubleshooting](#affected-parameters-and-troubleshooting)
     - [`CRED_ROTATION_FORCE`](#cred_rotation_force)
-    - [`SD_REPO_MERGE_MODE`](#sd_repo_merge_mode)
-    - [`NS_BUILD_FILTER`](#ns_build_filter)
-    - [`GITHUB_PIPELINE_API_INPUT`](#github_pipeline_api_input)
     - [`GH_ADDITIONAL_PARAMS`](#gh_additional_params)
     - [`BG_MANAGE`](#bg_manage)
     - [`BG_STATE`](#bg_state)
   - [Deprecated Parameters](#deprecated-parameters)
     - [`SD_DELTA`](#sd_delta)
   - [Archived Parameters](#archived-parameters)
+  - [Multiple Values Support](#multiple-values-support)
 
 The following are the launch parameters for the instance repository pipeline. These parameters influence, the execution of specific jobs within the pipeline.
 
@@ -46,7 +43,10 @@ All parameters are of the string data type
 
 ### `ENV_NAMES`
 
-**Description**: Specifies the environment(s) for which processing will be triggered. Uses the `<cluster-name>/<env-name>` notation. If multiple environments are provided, they must be separated by a `\n` (newline) delimiter. In multi-environment case, each environment will trigger its own independent pipeline flow. All environments will use the same set of pipeline parameters (as documented in this spec)
+**Description**: Specifies the environment(s) for which processing will be triggered. Uses the `<cluster-name>/<env-name>` notation.
+
+If specifying more than one environment, separate them as described in [Multiple Values Support](#multiple-values-support).
+For multiple environments, each environment will initiate its own independent pipeline flow, using the same set of pipeline parameters for all.
 
 **Default Value**: None
 
@@ -55,7 +55,11 @@ All parameters are of the string data type
 **Example**:
 
 - Single environment: `ocp-01/platform`
-- Multiple environments (separated by \n) `k8s-01/env-1\nk8s-01/env2`
+- Multiple environments:
+  - `k8s-01/env-1\nk8s-01/env2`
+  - `k8s-01/env-1;k8s-01/env2`
+  - `k8s-01/env-1,k8s-01/env2`
+  - `k8s-01/env-1 k8s-01/env2`
 
 ### `ENV_BUILDER`
 
@@ -118,6 +122,30 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 **Example**: `env-template:v1.2.3`
 
+### `ENV_TEMPLATE_VERSION_UPDATE_MODE`
+
+**Description**: Controls how ENV_TEMPLATE_VERSION is applied during the pipeline run.
+
+**Allowed values**:
+
+- `PERSISTENT` (default)  
+  Applies the standard behavior: the pipeline updates the template version in Environment Inventory by updating `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
+
+- `TEMPORARY`  
+  Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.  
+  The pipeline updates `generatedVersions.generateEnvironmentLatestVersion` in `env_definition.yml` to reflect the template artifact version that was actually applied in this run, for example:
+
+  ```yaml
+  # env_definition.yml
+  generatedVersions:
+    generateEnvironmentLatestVersion: "template-project:feature-diis1125-20251125.045717-2"
+
+**Default Value**: `PERSISTENT`
+
+**Mandatory**: No
+
+**Example**: `PERSISTENT`
+
 ### `ENV_TEMPLATE_VERSION_ORIGIN`
 
 **Description**: If provided, system updates the Blue-Green origin template artifact version in the Environment Inventory. System overrides `envTemplate.bgNsArtifacts.origin` at `/environments/<ENV_NAME>/Inventory/env_definition.yml`
@@ -178,6 +206,8 @@ envTemplate:
 
 **Description**: Specifies Environment Inventory and env-specific parameters. This is can used together with `ENV_INVENTORY_INIT`. **JSON in string** format. See details in [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
 
+**Note:** This parameter is deprecated and will be removed in future releases. Use `ENV_INVENTORY_CONTENT` instead.
+
 **Default Value**: None
 
 **Mandatory**: No
@@ -186,6 +216,25 @@ envTemplate:
 
 ```text
 '{"clusterParams":{"clusterEndpoint":"<value>","clusterToken":"<value>"},"additionalTemplateVariables":{"<key>":"<value>"},"cloudName":"<value>","envSpecificParamsets":{"<ns-template-name>":["paramsetA"],"cloud":["paramsetB"]},"paramsets":{"paramsetA":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[{"appName":"<app-name>","parameters":{"<key>":"<value>"}}]},"paramsetB":{"version":"<paramset-version>","name":"<paramset-name>","parameters":{"<key>":"<value>"},"applications":[]}},"credentials":{"credX":{"type":"<credential-type>","data":{"username":"<value>","password":"<value>"}},"credY":{"type":"<credential-type>","data":{"secret":"<value>"}}}}'
+```
+
+### `ENV_INVENTORY_CONTENT`
+
+**Description**:
+
+Provides the Environment Inventory and related artifacts to be created or updated.  
+It allows external systems to manage `env_definition.yml` and additional files paramsets, credentials, resource profiles without manual changes in the Instance repository.
+
+See details in Environment Inventory Generation feature documentation [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example in string format**:
+
+```json
+"{\"envDefinition\":{\"action\":\"create_or_replace\",\"content\":{\"inventory\":{\"environmentName\":\"env-1\",\"tenantName\":\"Applications\",\"cloudName\":\"cluster-1\",\"description\":\"Fullsample\",\"owners\":\"Qubershipteam\",\"config\":{\"updateRPOverrideNameWithEnvName\":false,\"updateCredIdsWithEnvName\":true}},\"envTemplate\":{\"name\":\"composite-prod\",\"artifact\":\"project-env-template:master_20231024-080204\",\"additionalTemplateVariables\":{\"ci\":{\"CI_PARAM_1\":\"ci-param-val-1\",\"CI_PARAM_2\":\"ci-param-val-2\"},\"e2eParameters\":{\"E2E_PARAM_1\":\"e2e-param-val-1\",\"E2E_PARAM_2\":\"e2e-param-val-2\"}},\"sharedTemplateVariables\":[\"prod-template-variables\",\"sample-cloud-template-variables\"],\"envSpecificParamsets\":{\"bss\":[\"env-specific-bss\"]},\"envSpecificTechnicalParamsets\":{\"bss\":[\"env-specific-tech\"]},\"envSpecificE2EParamsets\":{\"cloud\":[\"cloud-level-params\"]},\"sharedMasterCredentialFiles\":[\"prod-integration-creds\"],\"envSpecificResourceProfiles\":{\"cloud\":[\"cloud-specific-profile\"]}}}},\"paramsets\":[{\"action\":\"create_or_replace\",\"place\":\"env\",\"content\":{\"version\":\"<paramset-version>\",\"name\":\"env-specific-bss\",\"parameters\":{\"key\":\"value\"},\"applications\":[]}}],\"credentials\":[{\"action\":\"create_or_replace\",\"place\":\"site\",\"content\":{\"prod-integration-creds\":{\"type\":\"<credential-type>\",\"data\":{\"username\":\"<value>\",\"password\":\"<value>\"}}}}],\"resourceProfiles\":[{\"action\":\"create_or_replace\",\"place\":\"cluster\",\"content\":{\"name\":\"cloud-specific-profile\",\"baseline\":\"dev\",\"description\":\"\",\"applications\":[{\"name\":\"core\",\"version\":\"release-20241103.225817\",\"sd\":\"\",\"services\":[{\"name\":\"operator\",\"parameters\":[{\"name\":\"GATEWAY_MEMORY_LIMIT\",\"value\":\"96Mi\"},{\"name\":\"GATEWAY_CPU_REQUEST\",\"value\":\"50m\"}]}]}],\"version\":0}}]}"
 ```
 
 ### `GENERATE_EFFECTIVE_SET`
@@ -240,6 +289,33 @@ Consumer-specific pipeline context components registered in EnvGene:
 ```yaml
 "{\"version\": \"v2.0\", \"app_chart_validation\": \"false\"}"
 ```
+
+### `CUSTOM_PARAMS`
+
+**Description**: Session-scoped parameters injected into the Effective Set during parameter calculation. Custom Params are not persisted across parameter calculation sessions, have the highest priority in the parameter resolution hierarchy, and are treated as sensitive.
+
+EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. See [Calculator CLI](/docs/features/calculator-cli.md) for how Custom Params are applied to the Effective Set.
+
+**Format**: A string containing a JSON object (JSON-in-string). The JSON object must conform to the [schema](/schemas/custom-params.schema.json).
+
+```json
+{
+  "deployment": {
+    "<key>": "<value>",
+    "...": "..."
+  },
+  "runtime": {
+    "<key>": "<value>",
+    "...": "..."
+  }
+}
+```
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `"{\"deployment\":{\"MY_OVERRIDE\":\"value\"}}"`
 
 ### `APP_REG_DEFS_JOB`
 
@@ -301,7 +377,9 @@ See details in [SD processing](/docs/features/sd-processing.md)
 
 ### `SD_VERSION`
 
-**Description**: Specifies one or more SD artifacts in `application:version` notation passed via a `\n` separator.
+**Description**: Specifies one or more SD artifacts in `application:version` notation.
+
+If specifying more than one environment, separate them as described in [Multiple Values Support](#multiple-values-support).
 
 EnvGene downloads and sequentially merges them in the `basic-merge` mode, where subsequent `application:version` takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
@@ -314,15 +392,21 @@ See details in [SD processing](/docs/features/sd-processing.md)
 **Example**:
 
 - Single SD: `MONITORING:0.64.1`
-- Multiple SD (separated by \n) `solution-part-1:0.64.2\nsolution-part-2:0.44.1`
+- Multiple SDs:
+  - `solution-part-1:0.64.2\nsolution-part-2:0.44.1`
+  - `solution-part-1:0.64.2;solution-part-2:0.44.1`
+  - `solution-part-1:0.64.2,solution-part-2:0.44.1`
+  - `solution-part-1:0.64.2 solution-part-2:0.44.1`
 
 ### `SD_DATA`
 
-**Description**: Specifies the contents of one or more SD in JSON-in-string format. Can be either a single SD object or a list of SD objects.
+**Description**: Specifies the contents of one or more SD. Can be either a single SD object or a list of SD objects.
 
 If a single SD object is provided, it is processed directly. If a list is provided, EnvGene sequentially merges them in the `basic-merge` mode, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](/docs/features/sd-processing.md#delta-sd), then merges with [Full SD](/docs/features/sd-processing.md#full-sd) using `SD_REPO_MERGE_MODE` merge mode
 
 See details in [SD processing](/docs/features/sd-processing.md)
+
+**Format**: A string containing a JSON object (JSON-in-string)
 
 **Default Value**: None
 
@@ -383,7 +467,7 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 
 **Description**: Operation identifier in Envgene. Must be a valid [UUID v4](https://www.rfc-editor.org/rfc/rfc4122). This parameter is used in two scenarios:
 
-1. If this parameter is provided, the resulting pipeline commit will include a [Git trailer](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt-code--trailerlttokengtltvaluegtcode) in the format: `DEPLOYMENT_SESSION_ID: <value of DEPLOYMENT_SESSION_ID>`.
+1. If this parameter is provided, the resulting pipeline commit will include a [Git trailer](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---trailertokenvalue) in the format: `DEPLOYMENT_SESSION_ID: <value of DEPLOYMENT_SESSION_ID>`.
 2. It will also be part of the deployment context of the Effective Set. The EnvGene passes it to the Calculator command-line tool using the `--extra_params` attribute. In this case it is used together with `GENERATE_EFFECTIVE_SET`.
 
 **Default Value**: None
@@ -579,3 +663,29 @@ See details in [SD processing](/docs/features/sd-processing.md)
 ## Archived Parameters
 
 These parameters are no longer in use and are maintained for historical reference
+
+## Multiple Values Support
+
+Some pipeline parameters support multiple values.
+Values can be separated using one of the following delimiters:
+
+- Newline (`\n`)
+- Semicolon (`;`)
+- Comma (`,`)
+- Space (` `)
+
+**Example:**
+
+```text
+# Using newline
+k8s-01/env-1\nk8s-01/env-2
+
+# Using comma
+k8s-01/env-1,k8s-01/env-2
+
+# Using semicolon
+k8s-01/env-1;k8s-01/env-2
+
+# Using space
+k8s-01/env-1 k8s-01/env-2
+```

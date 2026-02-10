@@ -31,6 +31,7 @@
     - [Environment Credentials File](#environment-credentials-file)
     - [Shared Credentials File](#shared-credentials-file)
     - [System Credentials File (in Instance repository)](#system-credentials-file-in-instance-repository)
+    - [Shared Template Variable Files](#shared-template-variable-files)
     - [Environment Specific ParameterSet](#environment-specific-parameterset)
     - [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override)
     - [Cloud Passport](#cloud-passport)
@@ -71,7 +72,7 @@ It has the following structure:
 ```yaml
 # Optional
 # Template Inheritance configuration
-# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
 parent-templates:
   # Optional
   # Value must be in `application:version` notation
@@ -82,7 +83,7 @@ tenant: string
 # or
 tenant:
   # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
   parent: string
 # Mandatory
 # Can be specified either as direct template path (string) or as an object
@@ -99,11 +100,11 @@ cloud:
     <yaml or jinja expression>
   # Optional
   # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
   parent: string
   # Optional
   # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
   overrides-parent:
     profile:
       override-profile-name: <resource-profile-override-name>
@@ -136,15 +137,15 @@ namespaces:
       <yaml or jinja expression>
     # Optional
     # Name of Namespace in Parent Template
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
     name: string
     # Optional
     # Parent template name
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
     parent: string
     # Optional
     # Template Inheritance configuration
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
     overrides-parent:
       profile:
         override-profile-name: string
@@ -1134,9 +1135,126 @@ gitlab-token-cred:
     secret: "token-placeholder-123"
 ```
 
+### Shared Template Variable Files
+
+This file includes template variables that can be shared across multiple environments. During Environment Instance generation, EnvGene automatically merges variables from these shared files with `additionalTemplateVariables` from the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
+
+The relationship between Shared Template Variable Files and Environment is established through:
+
+- The `envTemplate.sharedTemplateVariables` property in [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
+- The property value should be the filename (without extension) of the Shared Template Variable File
+
+Files can be defined at three scopes with different precedence:
+
+1. **Environment-level**
+   **Location:** `/environments/<cluster-name>/<environment-name>/shared-template-variables/`
+2. **Cluster-level**
+   **Location:** `/environments/<cluster-name>/shared-template-variables/`
+3. **Site-level**
+   **Location:** `/environments/shared-template-variables/`
+
+EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
+
+The file must contain a key-value hashmap and must NOT be located in a `parameters` directory.
+
+During Environment Instance generation, variables from Shared Template Variable Files are merged with `additionalTemplateVariables` from the Environment Inventory. Variables from `additionalTemplateVariables` take precedence over variables from Shared Template Variable Files if there are conflicts.
+
+**Example:**
+
+```yaml
+TEMPLATE_VARIABLE_1: "value-1"
+TEMPLATE_VARIABLE_2: "value-2"
+nested:
+  key1: "nested-value-1"
+  key2: "nested-value-2"
+```
+
 ### Environment Specific ParameterSet
 
-TBD
+Environment Specific ParameterSets are containers for parameters that override template-level parameters for a specific environment or group of environments. These ParameterSets are created by the configurator in the Instance repository to customize parameter values without modifying the Template repository.
+
+The Environment-Specific ParameterSet is specified individually for each Namespace or Cloud via the `envTemplate.envSpecificParamsets`, `envTemplate.envSpecificE2EParamsets`, or `envTemplate.envSpecificTechnicalParamsets` parameters in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
+
+During the generation of an Environment Instance, parameters from Environment-Specific ParameterSets are merged with parameters from Template ParameterSets, with environment-specific values taking precedence:
+
+- Parameters from ParameterSets referenced in `envSpecificParamsets` override values in `deployParameters` of the corresponding Cloud or Namespace.
+- Parameters from ParameterSets referenced in `envSpecificE2EParamsets` override values in `e2eParameters`.
+- Parameters from ParameterSets referenced in `envSpecificTechnicalParamsets` override values in `technicalConfigurationParameters`.
+
+Environment Specific ParameterSets also support application-level parameters through the `applications` section, allowing you to override parameters for specific applications within a namespace.
+
+**Location:**
+
+When an Environment Specific ParameterSet is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
+
+1. `/environments/<cluster-name>/<environment-name>/Inventory/parameters/` — Environment-specific, highest priority  
+2. `/environments/<cluster-name>/parameters/` — Cluster-wide, applies to all environments in the cluster  
+3. `/environments/parameters/` — Global, common for the entire repository  
+
+The first match found is used as the environment-specific override for the given Cloud or Namespace.
+
+```yaml
+# Optional
+# Deprecated
+version: string
+# Mandatory
+# The name of the Parameter Set
+# Used to reference the Parameter Set in env_definition.yml
+# Must match the Parameter Set filename
+name: string
+# Mandatory
+# Key-value pairs of parameters that will override template-level parameters
+parameters: hashmap
+# Optional
+# Section describing application-level parameters
+# For each `appName`, parameters will be merged with the Application object parameters
+applications:
+  - # Mandatory
+    appName: string
+    # Mandatory
+    parameters: hashmap
+```
+
+**Example:**
+
+```yaml
+# File: environments/prod-cluster/prod-env/Inventory/parameters/billing-prod-deploy.yml
+# Deployment parameters - used for Helm chart rendering during deployment
+name: billing-prod-deploy
+version: 1.0
+parameters:
+  INGRESS_HOST: "billing.prod.example.com"
+  INGRESS_TLS_ENABLED: "true"
+  STORAGE_CLASS: "ssd-retain"
+  DATABASE_NAME: "billing_prod"
+  FEATURE_NEW_PAYMENT_GATEWAY: "true"
+  FEATURE_INVOICE_GENERATOR: "true"
+applications:
+  - appName: billing-api
+    parameters:
+      SERVICE_TYPE: "LoadBalancer"
+      EXTERNAL_PORT: "8443"
+      HEALTH_CHECK_PATH: "/api/health"
+  - appName: billing-worker
+    parameters:
+      CRON_SCHEDULE: "0 */6 * * *"
+      PERSISTENCE_ENABLED: "true"
+```
+
+Referenced in `env_definition.yml`:
+
+```yaml
+envTemplate:
+  envSpecificParamsets:
+    billing:
+      - billing-prod-deploy
+```
+
+The filename of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the repository scope where it is located. This is validated during processing; if the validation fails, the operation will stop with an error.
+
+The Environment Specific ParameterSet schema is identical to the [Template ParameterSet](#template-parameterset).
+
+[ParameterSet JSON schema](/schemas/paramset.schema.json)
 
 ### Environment Specific Resource Profile Override
 
