@@ -575,7 +575,7 @@ envTemplate:
 
 ```yaml
 parameters: map
-commitHashes: map
+commitHash: string
 ```
 
 Этот результат содержит всю информацию, необходимую для:
