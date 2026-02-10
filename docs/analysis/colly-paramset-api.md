@@ -18,8 +18,14 @@
     - [2. POST /api/v1/environments/{environmentId}/ui-parameters](#2-post-apiv1environmentsenvironmentidui-parameters)
     - [DELETE /api/v1/environments/{environmentId}/ui-parameters](#delete-apiv1environmentsenvironmentidui-parameters)
   - [Управление версиями и конфликтами **TBD**](#управление-версиями-и-конфликтами-tbd)
-    - [Версионирование через Git](#версионирование-через-git)
-    - [Обработка конфликтов](#обработка-конфликтов)
+  - [Маппинг в Git репозиторий](#маппинг-в-git-репозиторий)
+    - [Путь к файлу ParamSet](#путь-к-файлу-paramset)
+    - [Маппинг ассоциаций в Inventory](#маппинг-ассоциаций-в-inventory)
+  - [Чтение UI override ParamSet](#чтение-ui-override-paramset)
+    - [Чтения UI override ParamSet с учетом ассоциаций окружения](#чтения-ui-override-paramset-с-учетом-ассоциаций-окружения)
+      - [Определение `path`](#определение-path)
+      - [Чтение одного UI override ParamSet файла](#чтение-одного-ui-override-paramset-файла)
+  - [Валидация **TBD**](#валидация-tbd)
 
 ## Введение
 
@@ -27,16 +33,11 @@
 
 Этот документ является технической спецификацией Colly API. Для понимания концепции UI override, вариантов реализации в EnvGene и общего подхода см. [override-ui.md](./override-ui.md).
 
-Коммит мессадж !!!
-Обработка ошибки пуша
-  откатывать коммит
-  сообщать об ошибке
-
 ## Требования
 
 1. Время ответа на `GET /api/v1/environments/{environmentId}/ui-parameters` должно быть менее 300 мс
 2. Валидации `commitMessage` в `POST /api/v1/environments/{environmentId}/ui-parameters` со стороны колли быть не должно
-3. `POST, DELETE /api/v1/environments/{environmentId}/ui-parameters` должны быть транзакционными - **TBD**
+3. `POST /api/v1/environments/{environmentId}/ui-parameters` должны быть транзакционными
 
 ## Контекст
 
@@ -87,11 +88,11 @@ ParamSet ассоциируется через файл `env_definition.yml` в 
 
 ```yaml
 envTemplate:
-  envSpecificParamsets:          # deployment context
+  envSpecificParamsets:           # deployment context
     <deployPostfix> | cloud:
       - "paramset-name-1"
       - "paramset-name-2"
-  envSpecificTechnicalParamsets: # runtime context
+  envSpecificTechnicalParamsets:  # runtime context
     <deployPostfix> | cloud:
       - "paramset-name-1"
   envSpecificE2EParamsets:        # pipeline context
@@ -112,7 +113,7 @@ Colly управляет как файлами ParamSet, так и их ассо
 ```yaml
 ## ParamSet
 name: string                                    # Имя парамсета (из YAML)
-type: enum[standard, ui-override]               # default: "standard" (из YAML)
+type: enum[ standard, ui-override]              # default: "standard" (из YAML)
 parameters: map                                 # Параметры из YAML (ключ-значение)
 applications:                                   # Параметры приложений
   - appName: string                             # Имя приложения
@@ -268,6 +269,8 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 
 > [!WARNING]
 > создание парамсетов и ассоциаций должно быть транзакционной операцией
+
+Когда в колли приходит пустой `parameters: {}` это является для Колли признаком что такой парамсет должен быть удален. В этом случае происходит как удаление соответствующего парамсета, так и удаление ассоциации
 
 <!-- колли коммитит из под своего пользователя но "притворяясь  пользователем UI, тем которй передан в commitUser
 проверить позволяет ли гит это и какой аттрибут нужно передать - только юзер нэйм или еще емэйл
@@ -443,61 +446,13 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 
 ### DELETE /api/v1/environments/{environmentId}/ui-parameters
 
-Удалить UI override параметры
-
-**Параметры:**
-
-- `environmentId` (path) - `cluster/env`
-- `namespaceName` (query, optional) - Имя namespace (для Namespace/Application уровня)
-- `applicationName` (query, optional) - Имя приложения (для Application уровня)
-- `commitMessage` (body) - Коммит мессадж для коммита в энвген рпеозиторий
-- `commitUser` (body) - Имя пользователя под которым происходит коммит
-- `commitUserEmail` (body) - email пользователя под которым происходит коммит
-
-> [!WARNING]
-> создание парамсетов и ассоциаций должно быть транзакционной операцией
-
-**Пример запросов:**
-
-**Environment Level:**
-
-```json
-{
-  "commitMessage": "FAKE-0000",
-  "commitUser": "Vasya A. Pupkin",
-  "commitUserEmail": "Vasya@mail.com"
-  }
-}
-```
-
-**Namespace Level:**
-
-```json
-{
-  "commitMessage": "FAKE-0000",
-  "commitUser": "Vasya A. Pupkin",
-  "commitUserEmail": "Vasya@mail.com",
-  "namespaceName": "env-01-core"
-}
-```
-
-**Application Level:**
-
-```json
-{
-  "commitMessage": "FAKE-0000",
-  "commitUser": "Vasya A. Pupkin",
-  "commitUserEmail": "Vasya@mail.com",
-  "namespaceName": "env-01-core",
-  "applicationName": "my-app"
-}
-```
+Решить будем ли использовать это в revert кэйсе
 
 ---
 
 ## Управление версиями и конфликтами **TBD**
 
-### Версионирование через Git
+<!-- ### Версионирование через Git
 
 - `commitHash` ParamSet = Git commit hash последнего коммита файла
 - Используется HTTP ETag для оптимистичной блокировки
@@ -520,11 +475,11 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
    - При получении `412` или `409`:
      - Показать ошибку пользователю
      - Отобразить текущее содержимое из ответа
-     - Предложить разрешить конфликт (merge или overwrite)
+     - Предложить разрешить конфликт (merge или overwrite) -->
 
 ---
 
-<!-- ## Маппинг в Git репозиторий
+## Маппинг в Git репозиторий
 
 ### Путь к файлу ParamSet
 
@@ -574,9 +529,9 @@ envTemplate:
 
 **Порядок важен!** ParamSet применяются в порядке списка.
 
---- -->
+---
 
-<!-- ## Чтение UI override ParamSet
+## Чтение UI override ParamSet
 
 Эта операция используется во всех местах, где Colly читает UI override ParamSet (включая Effective Set API и UI-parameters API). Она включает как чтение ассоциаций окружения, так и чтение самих файлов ParamSet.
 
@@ -591,13 +546,16 @@ envTemplate:
 
 - `environmentId`
 - `context` (`deployment`, `runtime`, `pipeline`)
-- `level` (`environment`, `namespace`, `application`)
-- `namespaceName` (для `namespace`/`application` уровней)
-- `applicationName` (для `application` уровня)
+- `namespaceName` (optional)
+- `applicationName` (optional)
 
 Шаги:
 
-1. Прочитать ассоциации ParamSet для окружения:
+1. Определить `level`:
+   1. Если не переданы ни `namespaceName`, ни `applicationName` -> Environment уровень
+   2. Если передан `namespaceName`, но не `applicationName` -> Namespace уровень
+   3. Если не переданы `namespaceName` и `applicationName` -> Application уровень
+2. Прочитать ассоциации ParamSet для окружения:
    - Прочитать файл `env_definition.yml` (см. раздел ["Маппинг ассоциаций в Inventory"](#маппинг-ассоциаций-в-inventory))
    - Для заданного `context` определить соответствующую секцию:
      - `envSpecificParamsets` — для `deployment`
@@ -607,7 +565,7 @@ envTemplate:
      - `cloud` — для Environment уровня
      - `<deployPostfix>` — для Namespace/Application уровней
    - Получить список ассоциированных ParamSet по этому `associatedObjectType` и `context`
-2. Для каждого ассоциированного UI override ParamSet (в порядке перечисления в `env_definition.yml`):
+3. Для каждого ассоциированного UI override ParamSet (в порядке перечисления в `env_definition.yml`):
    - Определить имя файла и [`path`](#определение-path)
    - Выполнить [Чтения одного UI override ParamSet файла](#чтение-одного-ui-override-paramset-файла)
    - Если файл найден и успешно прочитан:
@@ -616,8 +574,8 @@ envTemplate:
 Результат:
 
 ```yaml
-parameters: map       # Замерженные параметры всех UI override ParamSet для заданного level/context
-commitHashes: map     # Опционально: map<paramSetName, commitHash> для трассировки/актуальности
+parameters: map
+commitHashes: map
 ```
 
 Этот результат содержит всю информацию, необходимую для:
@@ -650,7 +608,7 @@ commitHashes: map     # Опционально: map<paramSetName, commitHash> д
 
 Где:
 
-- `<deployPostfix>` — значение из объекта `Namespace` (определяется по `namespaceName` и `environmentId`)
+- `<deployPostfix>` — значение из объекта Namespace (определяется по `namespaceName` и `environmentId`)
 - `<applicationName>` — имя приложения из запроса
 
 #### Чтение одного UI override ParamSet файла
@@ -659,23 +617,19 @@ commitHashes: map     # Опционально: map<paramSetName, commitHash> д
 
 - `environmentId`
 - `context` (`deployment`, `runtime`, `pipeline`)
-- `level` (`environment`, `namespace`, `application`)
+- `level` (Environment, Namespace, Application)
 - `namespaceName` (для `namespace`/`application` уровней)
 - `applicationName` (для `application` уровня)
+- `path`
 
 Шаги:
 
-1. Определить путь к файлу (см. раздел "Определение `path`")
-2. Получить содержимое файла и `commitHash`:
-   - Попытаться получить файл из кеша Colly
-   - Если файл отсутствует в кеше или `commitHash` изменился:
-     - Прочитать YAML файл из Git репозитория
-     - Получить `commitHash` файла из Git
-3. Если файл существует:
+1. Получить `commitHash` и содержимое файла
+2. Если файл существует:
    - Проверить, что `type: "ui-override"` (если `type` не указан или `type: "standard"` — ошибка валидации)
    - Извлечь параметры:
-     - Для `environment`/`namespace` уровней: из секции `parameters`
-     - Для `application` уровня: из секции `applications[?appName=<applicationName>].parameters`
+     - Для Environment/Namespace уровней: из секции `parameters`
+     - Для Application уровня: из секции `applications[?appName=<applicationName>].parameters`
    - Вернуть:
 
    ```yaml
@@ -683,11 +637,11 @@ commitHashes: map     # Опционально: map<paramSetName, commitHash> д
    commitHash: string    # Git commit hash файла
    ```
 
-4. Если файл не существует:
+3. Если файл не существует:
    - Вернуть «пустой» результат (параметры отсутствуют для данного уровня)
 
 ## Валидация **TBD**
-
+<!-- 
 ### Валидация структуры ParamSet
 
 1. **Валидация атрибута `type`:**
@@ -741,4 +695,6 @@ commitHashes: map     # Опционально: map<paramSetName, commitHash> д
    - `"cloud"` - для Cloud объекта
    - Существующий `deployPostfix` - для Namespace
 3. `context` должен быть одним из: `deployment`, `runtime`, `pipeline`
-4. `level` должен соответствовать `context` (см. правила выше) -->
+4. `level` должен соответствовать `context` (см. правила выше)
+
+добавить валидацию при удаление парамсета, что он проассоциирован "куда то еще" -->
