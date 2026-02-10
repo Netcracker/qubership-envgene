@@ -75,6 +75,7 @@ class TestAppRegDefRendering:
         "TC-001-005",
         "TC-001-006",
         "TC-001-008",
+        "TC-001-013",
     ]
 
     @pytest.mark.parametrize("test_number", POSITIVE_CASES)                

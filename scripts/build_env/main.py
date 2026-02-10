@@ -1,6 +1,3 @@
-import argparse
-import os
-
 from envgenehelper import *
 from envgenehelper.deployer import *
 
@@ -18,9 +15,6 @@ PARAMSET_SCHEMA = "schemas/paramset.schema.json"
 CLOUD_SCHEMA = "schemas/cloud.schema.json"
 NAMESPACE_SCHEMA = "schemas/namespace.schema.json"
 ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
-APPDEF_SCHEMA = "schemas/appdef.schema.json"
-REGDEF_V1_SCHEMA = "schemas/regdef.schema.json"
-REGDEF_V2_SCHEMA = "schemas/regdef-v2.schema.json"
 
 
 def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
@@ -267,30 +261,6 @@ def validate_parameter_files(param_files):
         if file_name != name:
             errors.append(f'Parameter "name" must be equal to filename without extension in file {rel_param_file_path}')
     return errors
-
-
-def validate_appregdefs(render_dir, env_name):
-    appdef_dir = f"{render_dir}/{env_name}/AppDefs"
-    regdef_dir = f"{render_dir}/{env_name}/RegDefs"
-
-    if os.path.exists(appdef_dir):
-        appdef_files = findAllYamlsInDir(appdef_dir)
-        if not appdef_files:
-            logger.info(f"No AppDef YAMLs found in {appdef_dir}")
-        for file in appdef_files:
-            logger.info(f"AppDef file: {file}")
-            validate_yaml_by_scheme_or_fail(file, APPDEF_SCHEMA)
-
-    if os.path.exists(regdef_dir):
-        regdef_files = findAllYamlsInDir(regdef_dir)
-        if not regdef_files:
-            logger.info(f"No RegDef YAMLs found in {regdef_dir}")
-        for file in regdef_files:
-            logger.info(f"Validating RegDef file: {file}")
-            regdef_content = openYaml(file)
-            version = str(regdef_content.get('version', '1.0'))
-            schema_path = REGDEF_V2_SCHEMA if version != '1.0' else REGDEF_V1_SCHEMA
-            validate_yaml_by_scheme_or_fail(file, schema_path)
 
 
 def render_environment(env_name, cluster_name, templates_dir, all_instances_dir, output_dir, work_dir):
