@@ -1,0 +1,4 @@
+---
+name: "paramset-A"
+parameters:
+  param-A: "value from peer template version of paramset"

@@ -41,4 +41,4 @@ if __name__ == '__main__':
         if src.exists():
             shutil.move(src, dst)
             
-    update_generated_versions(env_dir, BUILD_ENV_TAG, template_version)
+    update_generated_versions(env_dir, BUILD_ENV_TAG, template_version['common'])

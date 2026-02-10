@@ -1,0 +1,22 @@
+# The contents of this file is generated from template artifact: bgd-ns-artifacts.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "bgd-ns-artifacts-env-origin-app"
+credentialsId: ""
+isServerSideMerge: false
+labels:
+  - "Instance-bgd-ns-artifacts-env"
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  APP_NAMESPACE: "bgd-ns-artifacts-env-app"
+  ENVGENE_CONFIG_REF_NAME: "branch_name"
+  ENVGENE_CONFIG_TAG: "No Ref tag"
+  ROLE_SPECIFIC_PARAM: "ORIGIN"
+e2eParameters:
+  APP_NAMESPACE: "bgd-ns-artifacts-env-app"
+technicalConfigurationParameters:
+  APP_NAMESPACE: "bgd-ns-artifacts-env-app"
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

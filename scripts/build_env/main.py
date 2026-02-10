@@ -17,7 +17,7 @@ NAMESPACE_SCHEMA = "schemas/namespace.schema.json"
 ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
 
 
-def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
+def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,
                                   render_parameters_dir, render_profiles_dir, output_dir):
     # clearing folders
     delete_dir(render_dir)
@@ -28,8 +28,14 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     # clearing instances dir
     cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
-    check_dir_exist_and_create(f'{render_parameters_dir}/from_template')
-    copy_path(f'{templates_dir}/parameters', f'{render_parameters_dir}/from_template')
+    for k, v in templates_dirs.items():
+        if not (v and check_dir_exists(f'{v}/parameters')):
+            continue
+        if k == 'common':
+            param_dir_name = 'from_template'
+        else:
+            param_dir_name = f'from_{k}_template'
+        copy_path(f'{v}/parameters', f'{render_parameters_dir}/{param_dir_name}')
     cluster_path = getDirName(source_env_dir)
     instances_dir = getDirName(cluster_path)
     check_dir_exist_and_create(f'{render_parameters_dir}/from_instance')
@@ -37,7 +43,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     copy_path(f'{cluster_path}/parameters', render_parameters_dir)
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/parameters', f'{render_parameters_dir}/from_instance')
     # copying all template resource profiles
-    copy_path(f'{templates_dir}/resource_profiles', render_profiles_dir)
+    copy_path(f'{templates_dirs['common']}/resource_profiles', render_profiles_dir)
     return render_env_dir
 
 
@@ -95,7 +101,7 @@ def handle_template_override(render_dir):
         deleteFile(file)
 
 
-def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all_instances_dir, output_dir, work_dir):
+def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, output_dir, work_dir):
     # defining folders that will be used during generation
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     render_dir = f"{base_dir}/tmp/render"
@@ -108,7 +114,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
         shutil.copytree(get_namespaces_path(), os.path.join(work_dir,'build_env','tmp','initial_namespaces_content','Namespaces'), dirs_exist_ok=True)
 
     # preparing folders for generation
-    render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dir, render_dir,
+    render_env_dir = prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,
                                                    render_parameters_dir, render_profiles_dir, output_dir)
     pre_process_env_before_rendering(render_env_dir, source_env_dir, all_instances_dir)
     # get deployer parameters
@@ -160,7 +166,8 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     envvars["env"] = env_name  # Keep as string for file paths
     envvars["current_env"] = current_env  # Object for Jinja2 templates that need current_env.environmentName
     envvars["cluster_name"] = cluster_name
-    envvars["templates_dir"] = templates_dir
+    envvars["templates_dirs"] = templates_dirs
+    envvars["templates_dir"] = templates_dirs.get('common', '')
     envvars["env_instances_dir"] = getAbsPath(render_env_dir)
     envvars["render_dir"] = getAbsPath(render_dir)
     envvars["render_parameters_dir"] = getAbsPath(render_parameters_dir)
@@ -174,7 +181,7 @@ def build_environment(env_name, cluster_name, templates_dir, source_env_dir, all
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
                                                                            ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir, render_context)
+              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
                                                      output_dir)
 
@@ -263,22 +270,23 @@ def validate_parameter_files(param_files):
     return errors
 
 
-def render_environment(env_name, cluster_name, templates_dir, all_instances_dir, output_dir, work_dir):
+def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir, output_dir, work_dir):
     logger.info(f'env: {env_name}')
     logger.info(f'cluster_name: {cluster_name}')
-    logger.info(f'templates_dir: {templates_dir}')
+    logger.info(f'templates_dirs: {templates_dirs}')
     logger.info(f'instances_dir: {all_instances_dir}')
     logger.info(f'output_dir: {output_dir}')
     logger.info(f'work_dir: {work_dir}')
 
     check_environment_is_valid_or_fail(env_name, cluster_name, all_instances_dir,
                                        validate_env_definition_by_schema=True)
-    # searching for env directory in instances
-    validate_parameters(templates_dir, all_instances_dir, cluster_name, env_name)
+    for _, template_dir in templates_dirs.items():
+        if template_dir:
+            validate_parameters(template_dir, all_instances_dir, cluster_name, env_name)
     env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
     logger.info(f"Environment {env_name} directory is {env_dir}")
 
-    resulting_env_dir = build_environment(env_name, cluster_name, templates_dir, env_dir, all_instances_dir, 
+    resulting_env_dir = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
                                           output_dir, work_dir)
     create_credentials(resulting_env_dir, env_dir, all_instances_dir)
     apply_ns_build_filter()
@@ -288,11 +296,19 @@ if __name__ == "__main__":
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
-    g_templates_dir = f"{base_dir}/tmp/templates"
+    g_template_dirs = {
+        'common': f"{base_dir}/tmp/templates",
+    }
+    origin_template_path = f"{base_dir}/tmp/origin/templates"
+    if check_dir_exists(origin_template_path):
+        g_template_dirs['origin'] = origin_template_path
+    peer_template_path = f"{base_dir}/tmp/peer/templates"
+    if check_dir_exists(peer_template_path):
+        g_template_dirs['peer'] = peer_template_path
     g_all_instances_dir = f"{base_dir}/environments"
     g_output_dir = f"{base_dir}/environments"
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)
-    
+
     decrypt_all_cred_files_for_env()
-    render_environment(environment, cluster, g_templates_dir, g_all_instances_dir, g_output_dir, g_work_dir)
+    render_environment(environment, cluster, g_template_dirs, g_all_instances_dir, g_output_dir, g_work_dir)
     encrypt_all_cred_files_for_env()
