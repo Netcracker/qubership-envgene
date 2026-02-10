@@ -44,7 +44,7 @@ COPY scripts/utils /module/scripts/utils
 
 # Create virtual environment and install Python packages
 RUN python -m venv /module/venv
-RUN /module/venv/bin/pip install --upgrade pip setuptools wheel
+RUN /module/venv/bin/pip install --upgrade pip "setuptools<82" wheel
 RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
 
 RUN /module/venv/bin/pip install /python/jschon-sort
