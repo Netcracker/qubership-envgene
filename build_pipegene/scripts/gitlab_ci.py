@@ -152,20 +152,9 @@ def build_pipeline(params: dict) -> None:
             logger.info(f'Preparing of env_build job for {full_env_name} is skipped.')
 
         if params['GENERATE_EFFECTIVE_SET']:
-            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(
-                pipeline, 
-                full_env_name, 
-                environment_name, 
-                cluster_name, 
-                params["APP_REG_DEFS_JOB"], 
-                params["APP_DEFS_PATH"], 
-                params["REG_DEFS_PATH"],
-                params["SD_VERSION"], 
-                params["SD_DATA"], 
-                params["DEPLOYMENT_SESSION_ID"], 
-                params["EFFECTIVE_SET_CONFIG"], 
-                tags
-            )
+            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, full_env_name,
+                                                                                        environment_name, cluster_name,
+                                                                                        params)
         else:
             logger.info(f'Preparing of generate_effective_set job for {full_env_name} is skipped.')
 

@@ -9,11 +9,18 @@ from envgenehelper import cleanup_targets
 from pipeline_helper import job_instance
 
 
-def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluster_name, app_reg_defs_job,
-                                       artifact_app_defs_path, artifact_reg_defs_path, sd_version, sd_data,
-                                       deployment_id, effective_set_config, tags):
+def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluster_name, params):
     logger.info(f'Prepare generate-effective-set job for {full_env_name}')
     logger.info(f'Cleanup_targets: {cleanup_targets}')
+    
+    app_reg_defs_job = params["APP_REG_DEFS_JOB"]
+    artifact_app_defs_path = params["APP_DEFS_PATH"] 
+    artifact_reg_defs_path = params["REG_DEFS_PATH"]
+    sd_version = params["SD_VERSION"]
+    sd_data = params["SD_DATA"]
+    deployment_id = params["DEPLOYMENT_SESSION_ID"]
+    effective_set_config = params["EFFECTIVE_SET_CONFIG"]
+    tags = params['GITLAB_RUNNER_TAG_NAME']
             
     is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
 
@@ -33,6 +40,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         'python3 /module/scripts/main.py decrypt_cred_files',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p {app_defs_path} && cp -rf {artifact_app_defs_path}/* {app_defs_path}',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p {reg_defs_path} && cp -fr {artifact_reg_defs_path}/* {reg_defs_path}',
+        'python3 /module/scripts/validate_creds.py',
     ]
 
     cmdb_cli_cmd_call = [
