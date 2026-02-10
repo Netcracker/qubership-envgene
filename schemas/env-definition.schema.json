@@ -5,6 +5,12 @@
   "description": "Configuration for the environment, Environment Inventory",
   "additionalProperties": true,
   "properties": {
+    "metadata": {
+      "type": "object",
+      "title": "Metadata",
+      "description": "Optional metadata map for the environment definition. Structure is not specified. Used only by Colly.",
+      "additionalProperties": true
+    },
     "inventory": {
       "type": "object",
       "title": "Environment definition for Inventory",

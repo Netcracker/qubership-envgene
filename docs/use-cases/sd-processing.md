@@ -329,24 +329,70 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_VERSION: <application:version>\n<application:version>`
 
-   Or with explicit parameters:
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version>;<application:version>`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version>,<application:version>`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version> <application:version>`
+
+   Or with explicit parameters (using newline):
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using semicolon):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using comma):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using space):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
    4. `SD_REPO_MERGE_MODE: basic-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version>\\n<application:version>"`
 
-   Or with explicit parameters:
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version>,<application:version>"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version> <application:version>"`
+
+   Or with explicit parameters (using newline):
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=basic-merge"`
+
+   Or with explicit parameters (using comma):
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=basic-merge"`
+
+   Or with explicit parameters (using space):
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=basic-merge"`
 
 **Steps:**
 
@@ -375,24 +421,70 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_VERSION: <application:version>\n<application:version>`
 
-   Or with explicit parameters:
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version>;<application:version>`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version>,<application:version>`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version> <application:version>`
+
+   Or with explicit parameters (using newline):
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using semicolon):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using comma):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using space):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
    4. `SD_REPO_MERGE_MODE: basic-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version>\\n<application:version>"`
 
-   Or with explicit parameters:
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version>,<application:version>"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version> <application:version>"`
+
+   Or with explicit parameters (using newline):
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=basic-merge"`
+
+   Or with explicit parameters (using comma):
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=basic-merge"`
+
+   Or with explicit parameters (using space):
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=basic-merge"`
 
 **Steps:**
 
@@ -420,16 +512,42 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
    4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
 
 **Steps:**
 
@@ -458,16 +576,42 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
    4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
 
 **Steps:**
 
@@ -495,16 +639,42 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met. Multiple SDs with `extended-merge` mode are not supported and will result in an error.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
    4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=extended-merge"`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=extended-merge"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=extended-merge"`
 
 **Steps:**
 
@@ -534,16 +704,42 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met. Multiple SDs with `extended-merge` mode are not supported and will result in an error.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
    4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=extended-merge"`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=extended-merge"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=extended-merge"`
 
 **Steps:**
 
@@ -570,16 +766,42 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
    4. `SD_REPO_MERGE_MODE: replace`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: replace`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: replace`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
+   4. `SD_REPO_MERGE_MODE: replace`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=replace"`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=replace"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=replace"`
 
 **Steps:**
 

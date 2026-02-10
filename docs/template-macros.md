@@ -1209,7 +1209,7 @@ ${creds.get('<cred-id>').username|password|secret}
 
 Where `username`, `password`, and `secret` are **credential fields** that define the type of sensitive data being referenced.
 
-For each `<cred-id>` during Environment Instance generation a [Credential](/docs/envgene-objects.md#credential) object is created in the [Environment Credential File](/docs/envgene-objects.md#environment-credential-file)
+For each `<cred-id>` during Environment Instance generation a [Credential](/docs/envgene-objects.md#credential) object is created in the [Environment Credential File](/docs/envgene-objects.md#environment-credentials-file)
 
 Type assignment:
 
@@ -1224,7 +1224,7 @@ kafka_password: ${creds.get('kafka-cred').password}
 k8s_token: ${creds.get('k8s-cred').secret}
 ```
 
-**Usage in sample:** [Sample](/docs/samples/templates/parameters/migration/test-deploy-creds.yml)
+**Usage in sample:** [Sample](/docs/samples/template-repository/templates/parameters/migration/test-deploy-creds.yml)
 
 ## Deprecated Macros
 

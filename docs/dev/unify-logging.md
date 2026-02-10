@@ -43,7 +43,7 @@ All other modules import and use it.
 
 A new parameter was added to control logging behavior.
 
-[Link to documentation](https://github.com/Netcracker/qubership-envgene/blob/a823f450a671d058813991b218b9afde59f6db41/docs/envgene-repository-variables.md#envgene_log_level)
+[Link to documentation](/docs/envgene-repository-variables.md#envgene_log_level)
 
 ---
 
@@ -67,4 +67,4 @@ A script was added that:
 - Runs at the start of every generated job
 - Logs input parameters
 
-[How it was implemented](https://github.com/Netcracker/qubership-envgene/blob/main/build_pipegene/scripts/pipeline_helper.py#L47-L50)
+[How it was implemented](/build_pipegene/scripts/pipeline_helper.py#L47-L50)
