@@ -16,7 +16,7 @@
   - [Детальное описание API](#детальное-описание-api)
     - [1. GET /api/v1/environments/{environmentId}/ui-parameters](#1-get-apiv1environmentsenvironmentidui-parameters)
     - [2. POST /api/v1/environments/{environmentId}/ui-parameters](#2-post-apiv1environmentsenvironmentidui-parameters)
-    - [DELETE /api/v1/environments/{environmentId}/ui-parameters](#delete-apiv1environmentsenvironmentidui-parameters)
+    - [3. DELETE /api/v1/environments/{environmentId}/ui-parameters](#3-delete-apiv1environmentsenvironmentidui-parameters)
   - [Управление версиями и конфликтами **TBD**](#управление-версиями-и-конфликтами-tbd)
   - [Маппинг в Git репозиторий](#маппинг-в-git-репозиторий)
     - [Путь к файлу ParamSet](#путь-к-файлу-paramset)
@@ -444,7 +444,7 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
    - Добавить/обновить ассоциацию в `env_definition.yml` для `deployPostfix`
    - Вернуть `applications[?appName=<applicationName>].parameters` -->
 
-### DELETE /api/v1/environments/{environmentId}/ui-parameters
+### 3. DELETE /api/v1/environments/{environmentId}/ui-parameters
 
 Решить будем ли использовать это в revert кэйсе
 
