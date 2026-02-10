@@ -15,7 +15,7 @@ def get_pipeline_parameters() -> dict:
         'IS_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST") == "true",
         'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
         'JSON_SCHEMAS_DIR': getenv("JSON_SCHEMAS_DIR", "/module/schemas"),
-        "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE"),
+        "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE") or "artifact",
         "SD_VERSION": getenv("SD_VERSION"),
         "SD_DATA": getenv("SD_DATA"),
         "SD_DELTA": getenv("SD_DELTA"),
@@ -30,9 +30,11 @@ def get_pipeline_parameters() -> dict:
         'RUNNER_SCRIPT_TIMEOUT' : getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
         'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", ""),
         'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL"),
-        "BG_STATE": getenv("BG_STATE", None),
-        "BG_MANAGE": getenv("BG_MANAGE", None) == "true",
-        "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT")
+        "BG_STATE": getenv("BG_STATE"),
+        "BG_MANAGE": getenv("BG_MANAGE") == "true",
+        "APP_DEFS_PATH": getenv("APP_DEFS_PATH"),
+        "REG_DEFS_PATH": getenv("REG_DEFS_PATH"),
+        "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
     }
 
 class PipelineParametersHandler:
