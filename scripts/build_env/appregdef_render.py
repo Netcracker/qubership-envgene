@@ -40,5 +40,4 @@ if __name__ == '__main__':
         if src.exists():
             shutil.move(src, dst)
 
-    if TemplateVersionUpdateMode(getenv("ENV_TEMPLATE_VERSION_UPDATE_MODE")) == TemplateVersionUpdateMode.TEMPORARY:
-        update_generated_versions(env_dir, BUILD_ENV_TAG, template_version)
+    update_generated_versions(env_dir, BUILD_ENV_TAG, template_version)
