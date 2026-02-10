@@ -67,10 +67,6 @@ public class CloudApplicationMap extends DynamicMap {
             });
         }
 
-        checkEscape(map);
-        checkEscape(parameterSetMap);
-        checkEscape(configServerMap);
-        checkEscape(parameterSetConfigServerMap);
         map.put("config-server", configServerMap);
         maps.put(appName, map);
         return map;

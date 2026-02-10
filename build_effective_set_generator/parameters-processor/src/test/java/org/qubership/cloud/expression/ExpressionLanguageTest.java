@@ -448,7 +448,7 @@ public class ExpressionLanguageTest extends BindingBaseTest {
     @ParameterizedTest
     @MethodSource
     public void processValue(Map<String, Parameter> params, Map<String, Parameter> result) throws IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        Binding binding = new Binding("true");
+        Binding binding = new Binding();
         binding.putAll(params);
 
         ExpressionLanguage el = new ExpressionLanguage(binding);
@@ -548,7 +548,7 @@ public class ExpressionLanguageTest extends BindingBaseTest {
 
     @Test
     void processedGlobalResourceProfileMustBeSuccessfullyProcessedAgain() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Binding binding = new Binding("true");
+        Binding binding = new Binding();
         binding.setDefault("");
         HashMap<String, Object> map = new HashMap<>(){{
             put("key1", "value1");
