@@ -126,9 +126,7 @@ def build_pipeline(params: dict) -> None:
                 f'Credential rotation job for {full_env_name} is skipped because CRED_ROTATION_PAYLOAD is empty.')
 
         if params['ENV_BUILD']:
-            jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['IS_TEMPLATE_TEST'],
-                                                                            params['ENV_TEMPLATE_VERSION'],
-                                                                            full_env_name,
+            jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params, full_env_name,
                                                                             environment_name, cluster_name, group_id,
                                                                             artifact_id, artifact_url, tags)
         else:
