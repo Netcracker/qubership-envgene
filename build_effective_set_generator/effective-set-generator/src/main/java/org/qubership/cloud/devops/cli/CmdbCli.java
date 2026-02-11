@@ -36,6 +36,7 @@ import java.util.concurrent.Callable;
 
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.EFFECTIVE_SET_FAILED;
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
+import static org.qubership.cloud.devops.cli.parser.MemoryMonitor.logMemoryUsage;
 
 @Slf4j
 @CommandLine.Command(name = "generate-effective-set", mixinStandardHelpOptions = true, description = "generate effective parameter set")
@@ -56,6 +57,7 @@ public class CmdbCli implements Callable<Integer> {
     public Integer call() {
         initializeParams();
         try {
+            logMemoryUsage();
             Instant start = Instant.now();
             logInfo("Starting effective set generation");
             fileDataRepository.prepareProcessingEnv();
