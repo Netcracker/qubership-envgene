@@ -31,4 +31,4 @@ RUN chmod -R u=rwX,go=rX /deployments && \
 
 USER 1001
 
-ENTRYPOINT [ "/deployments/run-java.sh" ]
+ENTRYPOINT [ "/module/scripts/utils/entrypoint.sh" ]
