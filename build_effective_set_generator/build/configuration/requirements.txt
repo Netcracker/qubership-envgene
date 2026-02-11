@@ -1,0 +1,9 @@
+# Base module requirements (essential only)
+shyaml==0.6.2
+yamale==4.0.4
+prettytable==3.5.0
+cryptography==38.0.0
+pyyaml>=6.0
+PyGithub==1.55
+certifi==2022.6.15
+GitPython==3.1.45

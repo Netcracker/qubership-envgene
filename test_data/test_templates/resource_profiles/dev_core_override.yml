@@ -1,0 +1,20 @@
+---
+name: "dev_core_override"
+baseline: "dev"
+description: "Override for dev-profile"
+applications:
+- name: "core-app"
+  version: "release-2023.3-11.17.0-20231107.113613-36-RELEASE"
+  sd: ""
+  services:
+  - name: "core-service"
+    parameters:
+    - name: "CPU_LIMIT"
+      value: "1"
+    - name: "MEMORY_LIMIT"
+      value: "562Mi"
+    - name: "REPLICAS"
+      value: "3"
+    - name: "CPU_REQUEST"
+      value: "150m"
+version: 0
