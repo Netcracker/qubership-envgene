@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 
 from envgenehelper import crypt, getenv_with_error, findAllYamlsInDir, openYaml
-from envgenehelper.errors import  ValidationError
+from envgenehelper.errors import ValidationError
 
 from .logger import logger
 
@@ -235,7 +235,7 @@ def validate_creds(creds_path: str = ""):
     for credListPath in credsYamls:
         credListYaml = openYaml(credListPath)
         for key, value in credListYaml.items() :
-            errorCheck = _check_cred_value(key, value)
+            errorCheck = check_cred_value(key, value)
             if errorCheck :
                 credsErrors.append(errorCheck)
     if len(credsErrors) > 0:
@@ -247,26 +247,26 @@ def validate_creds(creds_path: str = ""):
     logger.info(f"Validation of credentials is completed")
 
 
-def _check_cred_value(credId, credValue):
+def check_cred_value(credId, credValue) -> str:
     result = ""
     type = credValue["type"]
     data = credValue["data"]
     match type:
         case _ if type == CRED_TYPE_USERPASS:
-            if _is_envgenenullvalue(data["username"]) or _is_envgenenullvalue(data["password"]):
+            if is_envgenenullvalue(data["username"]) or is_envgenenullvalue(data["password"]):
                 result = f"credId: {credId} - username or password is not set"
         case _ if type == CRED_TYPE_SECRET:
-            if _is_envgenenullvalue(data["secret"]):
+            if is_envgenenullvalue(data["secret"]):
                 result = f"credId: {credId} - secret is not set"
         case _ if type == CRED_TYPE_VAULT:
-            if _is_envgenenullvalue(data["secretId"]):
+            if is_envgenenullvalue(data["secretId"]):
                 result = f"credId: {credId} - secretId is not set"
         case _:
             result = ""
     return result
 
 
-def _is_envgenenullvalue(value: object) -> bool:
+def is_envgenenullvalue(value: object) -> bool:
     if not isinstance(value, str):
         return False
     if value.lower() == "envgenenullvalue":
