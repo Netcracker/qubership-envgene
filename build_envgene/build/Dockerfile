@@ -47,21 +47,21 @@ RUN python -m venv /module/venv
 RUN /module/venv/bin/pip install --upgrade pip "setuptools<82" wheel
 RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt
 
-RUN /module/venv/bin/pip install /python/jschon-sort
-RUN /module/venv/bin/pip install /python/envgene
-RUN /module/venv/bin/pip install /python/integration
-RUN /module/venv/bin/pip install /python/artifact-searcher
-RUN /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
+RUN /module/venv/bin/pip install /python/jschon-sort && \
+    /module/venv/bin/pip install /python/envgene && \
+    /module/venv/bin/pip install /python/integration && \
+    /module/venv/bin/pip install /python/artifact-searcher && \
+    /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
 
 # Download and install SOPS for secrets management
-RUN wget --tries=3 \
+RUN wget --quiet --tries=3 \
     https://github.com/mozilla/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64 \
     -O /usr/local/bin/sops && \
     chmod +x /usr/local/bin/sops
 
 # Aggressive cleanup to reduce image size
-RUN apk del gcc musl-dev libffi-dev openssl-dev libxml2-dev libxslt-dev zlib-dev
-RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache
+RUN apk del gcc musl-dev libffi-dev openssl-dev libxml2-dev libxslt-dev zlib-dev && \
+    rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache
 # Remove unnecessary files from Python packages
 RUN find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete
 
@@ -72,8 +72,8 @@ RUN rm -rf /module/venv/lib/python3.12/site-packages/pytest* \
 RUN /module/venv/bin/pip cache purge
 
 # Set permissions
-RUN chmod 754 /module/scripts/*
-RUN chmod 754 /module/creds_rotation_scripts/*
+RUN chmod 754 /module/scripts/* && \
+    chmod 754 /module/creds_rotation_scripts/*
 
 #########################################
 # Stage 2: Runtime

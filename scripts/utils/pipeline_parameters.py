@@ -2,6 +2,7 @@ import json
 from os import getenv
 from envgenehelper import logger
 from envgenehelper.plugin_engine import PluginEngine
+from envgenehelper.models import TemplateVersionUpdateMode
 
 
 def get_pipeline_parameters() -> dict:
@@ -26,8 +27,8 @@ def get_pipeline_parameters() -> dict:
         'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
         'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", ""),
         'NS_BUILD_FILTER': getenv("NS_BUILD_FILTER", ""),
-        'GITLAB_RUNNER_TAG_NAME' : getenv("GITLAB_RUNNER_TAG_NAME", ""),
-        'RUNNER_SCRIPT_TIMEOUT' : getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
+        'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
+        'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
         'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", ""),
         'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL"),
         "BG_STATE": getenv("BG_STATE"),
@@ -35,7 +36,10 @@ def get_pipeline_parameters() -> dict:
         "APP_DEFS_PATH": getenv("APP_DEFS_PATH"),
         "REG_DEFS_PATH": getenv("REG_DEFS_PATH"),
         "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
+        "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
+            "ENV_TEMPLATE_VERSION_UPDATE_MODE") or TemplateVersionUpdateMode.PERSISTENT.value,
     }
+
 
 class PipelineParametersHandler:
     def __init__(self, **kwargs):
