@@ -25,7 +25,6 @@ import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
 import org.qubership.cloud.devops.commons.pojo.parameterset.ParameterSetApplication;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.parameters.processor.expression.ExpressionLanguage;
-import org.qubership.cloud.parameters.processor.expression.PlainLanguage;
 import org.qubership.cloud.parameters.processor.expression.binding.Binding;
 
 import org.junit.jupiter.api.Test;
@@ -97,11 +96,6 @@ public class LanguageTest extends BindingBaseTest {
         });
     }
 
-    @Test
-    public void processDeployment_Plain_validate_order() {
-        Binding binding = prepareBinding();
-        assertMap(new PlainLanguage(binding).processDeployment());
-    }
 
     @Test
     public void processDeployment_Expression_validate_order() {

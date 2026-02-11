@@ -80,10 +80,6 @@ public class CloudMap extends DynamicMap {
 
         map.put("app", new Parameter(new CloudApplicationMap(config, defaultApp, binding).init()));
 
-
-        checkEscape(map);
-        checkEscape(e2e);
-        checkEscape(configServer);
         CredentialUtils credentialUtils = Injector.getInstance().getCredentialUtils();
         for (DBaaS dbaas : config.getDbaasCfg()) {
             if (dbaas.getApiUrl() != null) {

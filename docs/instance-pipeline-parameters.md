@@ -129,7 +129,7 @@ This parameter serves as a configuration for an extension point. Integration wit
 **Allowed values**:
 
 - `PERSISTENT` (default)  
-  Applies the standard behavior: the pipeline updates the template version in Environment Inventory by updating `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
+  Applies the standard behavior: the pipeline updates the template version in Environment Inventory by modifying `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`, and records the template artifact version actually applied during the run in `generatedVersions.generateEnvironmentLatestVersion` in the same file.
 
 - `TEMPORARY`  
   Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.  
