@@ -49,4 +49,6 @@ public class SharedData {
 
     private boolean appChartValidation;
 
+    private boolean enableTraceability;
+
 }

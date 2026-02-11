@@ -45,6 +45,7 @@ import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverte
 import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
+import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1;
@@ -175,7 +176,7 @@ public class CliParameterParser {
             parameterBundle.setSecuredE2eParams(new HashMap<>());
         }
         processBgDomainParameters();
-        createTopologyFiles(k8TokenMap);
+        createTopologyFiles(tenantName, cloudName, k8TokenMap);
         createE2EFiles(parameterBundle);
         createPipelineFiles(parameterBundle);
     }
@@ -206,27 +207,31 @@ public class CliParameterParser {
 
     private void createCleanupFiles(ParameterBundle parameterBundle, String namespace) throws IOException {
         String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespace);
-        fileDataConverter.writeToFile(parameterBundle.getCleanupParameters(), cleanupDir, "parameters.yaml");
-        fileDataConverter.writeToFile(parameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
+        fileDataConverter.writeToFile(parameterBundle.getCleanupParameters(), sharedData.isEnableTraceability(), cleanupDir, "parameters.yaml");
+        fileDataConverter.writeToFile(parameterBundle.getCleanupSecureParameters(), sharedData.isEnableTraceability(), cleanupDir, "credentials.yaml");
     }
 
-    private void createTopologyFiles(Map<String, String> k8TokenMap) throws IOException {
+    private void createTopologyFiles(String tenantName, String cloudName, Map<String, String> k8TokenMap) throws IOException {
         Map<String, Object> topologyParams = new TreeMap<>();
         Map<String, Object> topologySecuredParams = new TreeMap<>();
         Map<String, Object> clusterParameterMap = getClusterMap();
-        topologyParams.put("composite_structure", getObjectMap(inputData.getCompositeStructureDTO()));
-        topologyParams.put("environments", inputData.getClusterMap());
-        topologyParams.put("cluster", clusterParameterMap);
-        topologySecuredParams.put("k8s_tokens", k8TokenMap);
+        String cloudOrigin = "Env/Cloud: " + tenantName + "/" + cloudName;
+        Object compositeStructure = getObjectMap(inputData.getCompositeStructureDTO());
+        topologyParams.put("composite_structure", new Parameter(compositeStructure,"composite-structure",false));
+        Object environments = inputData.getClusterMap();
+        topologyParams.put("environments", new Parameter(environments, cloudOrigin,false));
+        topologyParams.put("cluster", new Parameter(clusterParameterMap, cloudOrigin,false));
+        topologySecuredParams.put("k8s_tokens", new Parameter(new TreeMap<>(k8TokenMap), cloudOrigin,false));
+
         Map<String, Object> bgDomainMap = getObjectMap(inputData.getBgDomainEntityDTO());
         Map<String, Object> bgDomainSecureMap = new LinkedHashMap<>();
         Map<String, Object> bgDomainParamsMap = new LinkedHashMap<>();
         ParameterUtils.splitBgDomainParams(bgDomainMap, bgDomainSecureMap, bgDomainParamsMap);
-        topologySecuredParams.put("bg_domain", bgDomainSecureMap);
-        topologyParams.put("bg_domain", bgDomainParamsMap);
+        topologySecuredParams.put("bg_domain", new Parameter(bgDomainSecureMap, "bg-domain",false));
+        topologyParams.put("bg_domain", new Parameter(bgDomainParamsMap, "bg-domain",false));
         String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
-        fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
-        fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
+        fileDataConverter.writeToFile(topologyParams, sharedData.isEnableTraceability(), topologyDir, "parameters.yaml");
+        fileDataConverter.writeToFile(topologySecuredParams, sharedData.isEnableTraceability(), topologyDir, "credentials.yaml");
 
     }
 
@@ -262,15 +267,15 @@ public class CliParameterParser {
                     }
                 }
                 if (obj == null && StringUtils.isNotEmpty(k.getValue())) {
-                    consumerParamsMap.put(k.getName(), k.getValue());
+                    consumerParamsMap.put(k.getName(), new Parameter(k.getValue(), String.join(",",sharedData.getPcsspPaths()),false));
                 }
                 if (obj == null && StringUtils.isEmpty(k.getValue()) && k.isRequired()) {
                     throw new ConsumerFileProcessingException("Property " + k + " is required and no value is defined in E2E configurations");
                 }
             });
             try {
-                fileDataConverter.writeToFile(consumerParamsMap, pipelineDir, parametersFilename);
-                fileDataConverter.writeToFile(consumersecureMap, pipelineDir, secureFilename);
+                fileDataConverter.writeToFile(consumerParamsMap, sharedData.isEnableTraceability(), pipelineDir, parametersFilename);
+                fileDataConverter.writeToFile(consumersecureMap, sharedData.isEnableTraceability(), pipelineDir, secureFilename);
             } catch (IOException e) {
                 throw new CreateWorkDirException(e.getMessage());
             }
@@ -279,8 +284,8 @@ public class CliParameterParser {
 
     private void createE2EFiles(ParameterBundle parameterBundle) throws IOException {
         String pipelineDir = String.format("%s/%s", sharedData.getOutputDir(), "pipeline");
-        fileDataConverter.writeToFile(parameterBundle.getE2eParams(), pipelineDir, "parameters.yaml");
-        fileDataConverter.writeToFile(parameterBundle.getSecuredE2eParams(), pipelineDir, "credentials.yaml");
+        fileDataConverter.writeToFile(parameterBundle.getE2eParams(), sharedData.isEnableTraceability(), pipelineDir, "parameters.yaml");
+        fileDataConverter.writeToFile(parameterBundle.getSecuredE2eParams(), sharedData.isEnableTraceability(), pipelineDir, "credentials.yaml");
     }
 
     public void generateOutput(String tenantName, String cloudName, String namespaceName, String appName,
@@ -336,34 +341,35 @@ public class CliParameterParser {
             String runtimeDir = String.format("%s/%s/%s/%s", sharedData.getOutputDir(), "runtime", namespaceName, appName);
 
             //deployment
-            fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getDeployParams(), sharedData.isEnableTraceability(), deploymentDir, "deployment-parameters.yaml");
             if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
-                fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
+                Map<String, Object> perServiceParams = parameterBundle.getPerServiceParams();
+                fileDataConverter.writeToFile(perServiceParams, sharedData.isEnableTraceability(), appChartPath.toString(), "deployment-parameters.yaml");
             }
-            fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
-            fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), deploymentDir, "collision-deployment-parameters.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), sharedData.isEnableTraceability(), deploymentDir, "collision-credentials.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), sharedData.isEnableTraceability(), deploymentDir, "collision-deployment-parameters.yaml");
             if (StringUtils.isBlank(parameterBundle.getAppChartName()) && MapUtils.isNotEmpty(parameterBundle.getPerServiceParams())) {
                 parameterBundle.getPerServiceParams().entrySet().stream().forEach(entry -> {
                     try {
                         Path servicePath = fileSystemUtils.getFileFromGivenPath(sharedData.getOutputDir(), "deployment", namespaceName, appName, "values", "per-service-parameters", entry.getKey()).toPath();
                         Files.createDirectories(servicePath);
-                        fileDataConverter.writeToFile((Map<String, Object>) entry.getValue(), servicePath.toString(), "deployment-parameters.yaml");
+                        fileDataConverter.writeToFile((Map<String, Object>) entry.getValue(), sharedData.isEnableTraceability(), servicePath.toString(), "deployment-parameters.yaml");
                     } catch (IOException e) {
                         throw new RuntimeException("Failed to write per service parameters of service " + entry.getKey());
                     }
                 });
             }
-            fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), deploymentDir, "credentials.yaml");
-            fileDataConverter.writeToFile(parameterBundle.getDeployDescParams(), deploymentDir, "deploy-descriptor.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), sharedData.isEnableTraceability(), deploymentDir, "credentials.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getDeployDescParams(), sharedData.isEnableTraceability(), deploymentDir, "deploy-descriptor.yaml");
 
             //runtime parameters
-            fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), runtimeDir, "parameters.yaml");
-            fileDataConverter.writeToFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), sharedData.isEnableTraceability(), runtimeDir, "parameters.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getSecuredConfigParams(), sharedData.isEnableTraceability(), runtimeDir, "credentials.yaml");
         } else {
             String appDirectory = String.format("%s/%s/%s", sharedData.getOutputDir(), namespaceName, appName);
-            fileDataConverter.writeToFile(parameterBundle.getDeployParams(), appDirectory, "deployment-parameters.yaml");
-            fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), appDirectory, "technical-configuration-parameters.yaml");
-            fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), appDirectory, "credentials.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getDeployParams(), sharedData.isEnableTraceability(), appDirectory, "deployment-parameters.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), sharedData.isEnableTraceability(), appDirectory, "technical-configuration-parameters.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), sharedData.isEnableTraceability(), appDirectory, "credentials.yaml");
         }
     }
 
