@@ -107,13 +107,14 @@ Colly управляет как файлами ParamSet, так и их ассо
 - В Колли вводится объект ParamSet. Colly предоставляет CRUD операции над ParamSet.
 - В Колли расширяется объект Environment - вводится атрибут `metadata.ParamSetAssociations`. Colly предоставляет CRUD операции над ParamSetAssociations в инвентори.
 - Все атрибуты на верхнем уровне объекта ParamSet идентичны структуре YAML файла в Git репозитории. Метаданные, генерируемые/вычисляемые Colly (`id`, `commitHash`, `path`), вынесены в секцию `metadata`
+- В EnvGene расширяется модель ParamSet - вводится опциональный аттрибут `type: enum[ standard, ui-override]` для явного разделения ParamSet созданных вручную и через Colly.
 
 ### Объектная модель
 
 ```yaml
 ## ParamSet
 name: string                                    # Имя парамсета (из YAML)
-type: enum[ standard, ui-override]              # default: "standard" (из YAML)
+type: enum[ standard, ui-override]              # optional. default: "standard" (из YAML)
 parameters: map                                 # Параметры из YAML (ключ-значение)
 applications:                                   # Параметры приложений
   - appName: string                             # Имя приложения
