@@ -45,8 +45,8 @@
 
 1. **Расположение в репозитории:**
    - `/environments/parameters` - глобальный уровень (site-wide)
-   - `/environments/parameters/<cluster-name>` - уровень кластера
-   - `/environments/parameters/<cluster-name>/<env-name>` - уровень окружения
+   - `/environments/parameters/<cluster-name>` - уровень кластера (cluster-wide)
+   - `/environments/parameters/<cluster-name>/<env-name>/Inventory/parameters` - уровень окружения (environment-wide)
 
 2. **Ассоциация к объектам:**
    - К Cloud - по зарезервированному слову `cloud`
@@ -488,9 +488,9 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 **Примеры путей:**
 
 - **Стандартные ParamSet:**
-  - Site level: `/environments/parameters/common-params.yaml`
-  - Cluster level: `/environments/cluster-01/parameters/cluster-params.yaml`
-  - Environment level: `/environments/cluster-01/env-01/Inventory/parameters/env-params.yaml`
+  - Site wide: `/environments/parameters/common-params.yaml`
+  - Cluster wide: `/environments/cluster-01/parameters/cluster-params.yaml`
+  - Environment wide: `/environments/cluster-01/env-01/Inventory/parameters/env-params.yaml`
 
 - **UI Override ParamSet:**
   - Environment level: `/environments/cluster-01/env-01/Inventory/parameters/deploy-ui-override.yaml`
