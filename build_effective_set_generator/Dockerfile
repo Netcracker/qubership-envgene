@@ -27,6 +27,7 @@ RUN chmod g+rwX /deployments
 
 # Ensure sane permissions on copied tree without findutils
 RUN chmod -R u=rwX,go=rX /deployments && \
+    chmod 540 /module/scripts/utils/entrypoint.sh && \
     chmod 540 /deployments/run-java.sh
 
 USER 1001
