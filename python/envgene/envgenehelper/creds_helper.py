@@ -232,7 +232,7 @@ def validate_creds(creds_path: str = ""):
     
     credsErrors = []
     credsYamls = findAllYamlsInDir(creds_path)
-    logger.info(f"Validating credential before effective set generation")
+    logger.info(f"Starting validation of credentials")
     for credListPath in credsYamls:
         credListYaml = openYaml(credListPath)
         for key, value in credListYaml.items() :
