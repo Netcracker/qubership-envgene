@@ -222,7 +222,7 @@ def get_cred_config():
     return cred_config
 
 
-def validate_creds(creds_path: str | Path = ""):
+def validate_creds(creds_path: str = ""):
     if not creds_path:
         environment_name = getenv_with_error('ENVIRONMENT_NAME')
         cluster_name = getenv_with_error('CLUSTER_NAME')
