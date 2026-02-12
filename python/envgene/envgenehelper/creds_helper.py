@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from envgenehelper import crypt, getenv_with_error, findAllYamlsInDir, openYaml
+from envgenehelper import crypt, getenv_with_error, get_env_instances_dir, findAllYamlsInDir, openYaml, getEnvCredentialsPath
 from envgenehelper.errors import ValidationError
 
 from .logger import logger
@@ -222,12 +222,13 @@ def get_cred_config():
     return cred_config
 
 
-def validate_creds(creds_path: str = ""):
+def validate_creds(creds_path: str | Path = ""):
     if not creds_path:
         environment_name = getenv_with_error('ENVIRONMENT_NAME')
         cluster_name = getenv_with_error('CLUSTER_NAME')
-        base_dir = getenv_with_error('CI_PROJECT_DIR')
-        creds_path = f"{base_dir}/environments/{cluster_name}/{environment_name}/Credentials"   
+        instances_dir = getenv_with_error('INSTANCES_DIR')
+        env_dir = get_env_instances_dir(environment_name, cluster_name, instances_dir)
+        creds_path = Path(getEnvCredentialsPath(env_dir)).parent
     
     credsErrors = []
     credsYamls = findAllYamlsInDir(creds_path)
@@ -242,7 +243,7 @@ def validate_creds(creds_path: str = ""):
         errorMessage = "Error while validating credentials: \n"
         for err in credsErrors:
             errorMessage += f"\t{err}\n"
-        raise ValidationError(errorMessage, "ENVGENE-4002")
+        raise ValidationError(errorMessage)
     
     logger.info(f"Validation of credentials is completed")
 
