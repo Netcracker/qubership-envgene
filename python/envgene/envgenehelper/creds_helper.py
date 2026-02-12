@@ -1,7 +1,8 @@
 import re
 from pathlib import Path
 
-from envgenehelper import crypt, getenv_with_error
+from envgenehelper import crypt, getenv_with_error, get_env_instances_dir, findAllYamlsInDir, openYaml, getEnvCredentialsPath
+from envgenehelper.errors import ValidationError
 
 from .logger import logger
 
@@ -219,3 +220,56 @@ def get_cred_config():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cred_config = crypt.decrypt_file(Path(f"{base_dir}/configuration/credentials/credentials.yml"))
     return cred_config
+
+
+def validate_creds(creds_path: str = ""):
+    if not creds_path:
+        environment_name = getenv_with_error('ENVIRONMENT_NAME')
+        cluster_name = getenv_with_error('CLUSTER_NAME')
+        instances_dir = getenv_with_error('INSTANCES_DIR')
+        env_dir = get_env_instances_dir(environment_name, cluster_name, instances_dir)
+        creds_path = Path(getEnvCredentialsPath(env_dir)).parent
+    
+    credsErrors = []
+    credsYamls = findAllYamlsInDir(creds_path)
+    logger.info(f"Starting validation of credentials")
+    for credListPath in credsYamls:
+        credListYaml = openYaml(credListPath)
+        for key, value in credListYaml.items() :
+            errorCheck = check_cred_value(key, value)
+            if errorCheck :
+                credsErrors.append(errorCheck)
+    if len(credsErrors) > 0:
+        errorMessage = "Error while validating credentials: \n"
+        for err in credsErrors:
+            errorMessage += f"\t{err}\n"
+        raise ValidationError(errorMessage)
+    
+    logger.info(f"Validation of credentials is completed")
+
+
+def check_cred_value(credId, credValue) -> str:
+    result = ""
+    type = credValue["type"]
+    data = credValue["data"]
+    match type:
+        case _ if type == CRED_TYPE_USERPASS:
+            if is_envgenenullvalue(data["username"]) or is_envgenenullvalue(data["password"]):
+                result = f"credId: {credId} - username or password is not set"
+        case _ if type == CRED_TYPE_SECRET:
+            if is_envgenenullvalue(data["secret"]):
+                result = f"credId: {credId} - secret is not set"
+        case _ if type == CRED_TYPE_VAULT:
+            if is_envgenenullvalue(data["secretId"]):
+                result = f"credId: {credId} - secretId is not set"
+        case _:
+            result = ""
+    return result
+
+
+def is_envgenenullvalue(value: object) -> bool:
+    if not isinstance(value, str):
+        return False
+    if value.lower() == "envgenenullvalue":
+        return True
+    return False

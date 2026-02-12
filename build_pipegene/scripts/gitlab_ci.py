@@ -9,10 +9,11 @@ import pipeline_helper
 from appregdef_render_job import prepare_appregdef_render_job
 from bg_manage_job import prepare_bg_manage_job
 from credential_rotation_job import prepare_credential_rotation_job
-from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
+from env_build_jobs import prepare_env_build_job, prepare_git_commit_job
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from process_sd_job import prepare_process_sd
+from effective_set_job import prepare_generate_effective_set_job
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 from envgenehelper.collections_helper import split_multi_value_param
 
@@ -149,8 +150,9 @@ def build_pipeline(params: dict) -> None:
             logger.info(f'Preparing of env_build job for {full_env_name} is skipped.')
 
         if params['GENERATE_EFFECTIVE_SET']:
-            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name,
-                                                                                        cluster_name, tags)
+            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, full_env_name,
+                                                                                        environment_name, cluster_name,
+                                                                                        params)
         else:
             logger.info(f'Preparing of generate_effective_set job for {full_env_name} is skipped.')
 
