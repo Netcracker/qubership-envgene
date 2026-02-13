@@ -114,7 +114,7 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
         sharedData.setAppChartValidation(envParams.appChartValidation);
-        logInfo("Custom parameters from Envgen---> "+ envParams.customParams);
+        logInfo("Custom parameters from Envgen---> " + envParams.customParams);
         sharedData.setCustomParams(envParams.customParams);
         populateDeploymentSessionId(envParams.extraParams);
     }
