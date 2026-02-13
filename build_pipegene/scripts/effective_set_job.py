@@ -21,6 +21,10 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     deployment_id = params["DEPLOYMENT_SESSION_ID"]
     effective_set_config = params["EFFECTIVE_SET_CONFIG"]
     tags = params['GITLAB_RUNNER_TAG_NAME']
+    custom_params = getenv("CUSTOM_PARAMS")
+    if custom_params:
+        data = json.loads(custom_params)
+        custom_params = json.dumps(data, separators=(",", ":"))
             
     is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
 
@@ -78,6 +82,9 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     if deployment_id:
         cmdb_cli_cmd_call.extend([f"--extra_params=DEPLOYMENT_SESSION_ID={deployment_id}"])
 
+    if custom_params:
+        logger.info(f"custom_params : {custom_params}")
+        cmdb_cli_cmd_call.extend([f"--custom-params=\"{custom_params}\""])
     script.append(" ".join(cmdb_cli_cmd_call))
     script.append('python3 /module/scripts/main.py encrypt_cred_files')
     

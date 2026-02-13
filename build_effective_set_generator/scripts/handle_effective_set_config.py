@@ -4,6 +4,7 @@ import tempfile
 import shutil
 import argparse
 from envgenehelper import logger
+from os import getenv
 
 def handle_effective_set_config(config_str):
     
@@ -102,6 +103,8 @@ if __name__ == "__main__":
     try:
         result_args = handle_effective_set_config(config_str)
         logger.info(f"Resolved Extra args: {result_args}")
+        custom_params = getenv("CUSTOM_PARAMS")
+        logger.info(f"custom_params in handle ES : {custom_params}")
         with open("/tmp/effective_set_output.json", "w") as f:
             json.dump(result_args, f)
     except Exception as e:

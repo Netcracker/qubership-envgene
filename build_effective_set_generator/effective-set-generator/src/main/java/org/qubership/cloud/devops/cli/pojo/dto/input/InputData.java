@@ -58,4 +58,8 @@ public class InputData {
     private Optional<SolutionBomDTO> solutionBomDTO = Optional.empty();
     @Builder.Default
     private Map<String, Object> clusterMap = Collections.emptyMap();
+    @Builder.Default
+    private Map<String, Object> customDeployParamMap = Collections.emptyMap();
+    @Builder.Default
+    private Map<String, Object> customRuntimeParamMap = Collections.emptyMap();
 }

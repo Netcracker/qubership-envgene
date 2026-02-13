@@ -16,6 +16,7 @@
 
 package org.qubership.cloud.devops.cli;
 
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.qubership.cloud.devops.cli.parser.CliParameterParser;
@@ -26,6 +27,9 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -49,6 +53,7 @@ public class CmdbCli implements Callable<Integer> {
 
     @Inject
     FileDataRepositoryImpl fileDataRepository;
+
     @Inject
     CliParameterParser parser;
 
@@ -114,7 +119,23 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
         sharedData.setAppChartValidation(envParams.appChartValidation);
+        sharedData.setCustomParams(getCustomParams(envParams.customParams));
         populateDeploymentSessionId(envParams.extraParams);
+    }
+
+    @SneakyThrows
+    private String getCustomParams(String customParams) {
+        if (StringUtils.isNotEmpty(customParams) &&
+                customParams.startsWith("@")) {
+            String fileName = customParams.substring(1);
+            Path projectRoot = Paths.get(System.getProperty("user.dir"));
+            Path path = projectRoot
+                    .resolve("src/test/resources")
+                    .resolve(fileName)
+                    .normalize();
+            customParams = Files.readString(path);
+        }
+        return customParams;
     }
 
 
@@ -160,6 +181,9 @@ public class CmdbCli implements Callable<Integer> {
 
         @CommandLine.Option(names = {"-acv", "--app_chart_validation"}, description = "App chart validation parameter on sbom", arity = "1")
         boolean appChartValidation = true;
+
+        @CommandLine.Option(names = {"-cp", "--custom-params"}, description = "Effective Set Version")
+        String customParams;
 
     }
 
