@@ -1,0 +1,14 @@
+inventory:
+  environmentName: env-01
+  tenantName: tenant
+  cloudName: cluster_01_env_01
+  cloudPassport: cluster-01
+  description: V2 RegDef rendering test
+  owners: Qubership team
+envTemplate:
+  name: composite-prod
+  artifact: deployment-configuration-env-templates:1.2.3
+  sharedTemplateVariables:
+    - prod-template-variables
+generatedVersions:
+  generateEnvironmentLatestVersion: "deployment-configuration-env-templates:composite-prod"

@@ -6,7 +6,8 @@ from typing import Optional
 from deepmerge import always_merger
 from envgenehelper import *
 from envgenehelper.business_helper import get_bgd_object, get_namespaces
-from envgenehelper.validation import ensure_valid_fields, ensure_required_keys
+from envgenehelper.validation import (ensure_valid_fields, ensure_required_keys,
+                                      validate_appregdefs as _validate_appregdefs)
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
 
@@ -472,25 +473,9 @@ class EnvGenerator:
 
     def validate_appregdefs(self):
         render_dir = self.ctx.current_env_dir
-
         appdef_dir = f"{render_dir}/AppDefs"
         regdef_dir = f"{render_dir}/RegDefs"
-
-        if os.path.exists(appdef_dir):
-            appdef_files = findAllYamlsInDir(appdef_dir)
-            if not appdef_files:
-                logger.warning(f"No AppDef YAMLs found in {appdef_dir}")
-            for file in appdef_files:
-                logger.info(f"AppDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "appdef.schema.json"))
-
-        if os.path.exists(regdef_dir):
-            regdef_files = findAllYamlsInDir(regdef_dir)
-            if not regdef_files:
-                logger.warning(f"No RegDef YAMLs found in {regdef_dir}")
-            for file in regdef_files:
-                logger.info(f"RegDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "regdef.schema.json"))
+        _validate_appregdefs(appdef_dir, regdef_dir, SCHEMAS_DIR)
 
     def process_app_reg_defs(self, env_name: str, extra_env: dict):
         logger.info(

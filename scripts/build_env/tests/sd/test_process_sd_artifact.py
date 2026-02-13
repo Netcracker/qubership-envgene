@@ -50,6 +50,8 @@ def test_sd_positive(mock_download_sd, test_case_name):
 
     file_path = Path(TEST_SD_DIR, test_case_name, f"mock_sd.json")
     sd_data = openJson(file_path)
+    
+    # Mock synchronous function to return SD data directly
     mock_download_sd.return_value = sd_data
         
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
@@ -72,6 +74,8 @@ def test_sd_negative(mock_download_sd, test_case_name, expected_exception):
 
     file_path = Path(TEST_SD_DIR, test_case_name, f"mock_sd.json")
     sd_data = openJson(file_path)
+    
+    # Mock synchronous function to return SD data directly
     mock_download_sd.return_value = sd_data
     
     with pytest.raises(expected_exception):

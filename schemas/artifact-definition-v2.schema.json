@@ -109,7 +109,9 @@
           "enum": [
             "aws",
             "azure",
-            "gcp"
+            "gcp",
+            "artifactory",
+            "nexus"
           ],
           "title": "Provider",
           "description": "Public cloud registry type. Used in case of public cloud registries"
