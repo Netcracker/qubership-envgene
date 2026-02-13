@@ -17,6 +17,9 @@
 package org.qubership.cloud.devops.cli.parser;
 
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.enterprise.context.Dependent;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -93,10 +96,11 @@ public class CliParameterParser {
         String tenantName = inputData.getTenantDTO().getName();
         String cloudName = inputData.getCloudDTO().getName();
         Map<String, NamespaceDTO> namespaceDTOMap = inputData.getNamespaceDTOMap();
+        prepareCustomParameters(sharedData.getCustomParams());
         processAndSaveParameters(inputData.getSolutionBomDTO(), tenantName, cloudName, namespaceDTOMap);
     }
 
-    private void processAndSaveParameters(Optional<SolutionBomDTO> solutionDescriptor, String tenantName, String cloudName, Map<String,NamespaceDTO> namespaceDTOMap) throws IOException {
+    private void processAndSaveParameters(Optional<SolutionBomDTO> solutionDescriptor, String tenantName, String cloudName, Map<String, NamespaceDTO> namespaceDTOMap) throws IOException {
         Map<String, Object> deployMappingFileData = new ConcurrentHashMap<>();
         Map<String, Object> runtimeMappingFileData = new ConcurrentHashMap<>();
         Map<String, Object> cleanupMappingFileData = new ConcurrentHashMap<>();
@@ -180,17 +184,6 @@ public class CliParameterParser {
         createPipelineFiles(parameterBundle);
     }
 
-    private void generateCleanupOutput(String tenantName, String cloudName, String namespace, String originalNamespace, Map<String, String> k8TokenMap) throws IOException {
-        ParameterBundle parameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespace, null, originalNamespace, k8TokenMap);
-        if (parameterBundle.getCleanupParameters() == null) {
-            parameterBundle.setCleanupParameters(new HashMap<>());
-        }
-        if (parameterBundle.getCleanupSecureParameters() == null) {
-            parameterBundle.setCleanupSecureParameters(new HashMap<>());
-        }
-        createCleanupFiles(parameterBundle, namespace);
-    }
-
     private void processBgDomainParameters() {
         BgDomainEntityDTO bgDomainEntityDTO = inputData.getBgDomainEntityDTO();
         if (bgDomainEntityDTO != null && bgDomainEntityDTO.getControllerNamespace().getCredentials() != null) {
@@ -202,12 +195,6 @@ public class CliParameterParser {
                 bgDomainEntityDTO.getControllerNamespace().setPassword(usernamePasswordCredentials.getPassword());
             }
         }
-    }
-
-    private void createCleanupFiles(ParameterBundle parameterBundle, String namespace) throws IOException {
-        String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespace);
-        fileDataConverter.writeToFile(parameterBundle.getCleanupParameters(), cleanupDir, "parameters.yaml");
-        fileDataConverter.writeToFile(parameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
     }
 
     private void createTopologyFiles(Map<String, String> k8TokenMap) throws IOException {
@@ -304,7 +291,8 @@ public class CliParameterParser {
                     deployerInputs,
                     originalNamespace,
                     k8TokenMap);
-            generateCleanupOutput(tenantName, cloudName, namespaceName, originalNamespace, k8TokenMap);
+            ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap);
+            createCleanupParams(parameterBundle, cleanupParameterBundle);
         } else {
             parameterBundle = parametersServiceV1.getCliParameter(tenantName,
                     cloudName,
@@ -316,6 +304,21 @@ public class CliParameterParser {
 
         }
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
+    }
+
+    private void createCleanupParams(ParameterBundle parameterBundle, ParameterBundle cleanupParameterBundle) {
+        if (cleanupParameterBundle.getCleanupParameters() == null) {
+            cleanupParameterBundle.setCleanupParameters(new HashMap<>());
+        }
+        if (cleanupParameterBundle.getCleanupSecureParameters() == null) {
+            cleanupParameterBundle.setCleanupSecureParameters(new HashMap<>());
+        }
+        if (MapUtils.isNotEmpty(cleanupParameterBundle.getCleanupSecureParameters()) &&
+                MapUtils.isNotEmpty(inputData.getCustomRuntimeParamMap())) {
+            cleanupParameterBundle.getCleanupSecureParameters().putAll(inputData.getCustomRuntimeParamMap());
+        }
+        parameterBundle.setCleanupParameters(cleanupParameterBundle.getCleanupParameters());
+        parameterBundle.setCleanupSecureParameters(cleanupParameterBundle.getCleanupSecureParameters());
     }
 
     private String findDefaultCredentialsId(String namespace) {
@@ -334,6 +337,10 @@ public class CliParameterParser {
 
             String deploymentDir = String.format("%s/%s/%s/%s/%s", sharedData.getOutputDir(), "deployment", namespaceName, appName, "values");
             String runtimeDir = String.format("%s/%s/%s/%s", sharedData.getOutputDir(), "runtime", namespaceName, appName);
+
+            String cleanupDir = String.format("%s/%s/%s", sharedData.getOutputDir(), "cleanup", namespaceName);
+            fileDataConverter.writeToFile(parameterBundle.getCleanupParameters(), cleanupDir, "parameters.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getCleanupSecureParameters(), cleanupDir, "credentials.yaml");
 
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
@@ -356,9 +363,16 @@ public class CliParameterParser {
             fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), deploymentDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getDeployDescParams(), deploymentDir, "deploy-descriptor.yaml");
 
+            if (MapUtils.isNotEmpty(parameterBundle.getSecuredConfigParams())) {
+                parameterBundle.getSecuredConfigParams().putAll(inputData.getCustomRuntimeParamMap());
+            } else {
+                parameterBundle.setSecuredConfigParams(new TreeMap<>(inputData.getCustomRuntimeParamMap()));
+            }
+
             //runtime parameters
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), runtimeDir, "parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
+            fileDataConverter.writeToFile(inputData.getCustomDeployParamMap(), deploymentDir, "custom-params.yaml");
         } else {
             String appDirectory = String.format("%s/%s/%s", sharedData.getOutputDir(), namespaceName, appName);
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), appDirectory, "deployment-parameters.yaml");
@@ -373,6 +387,21 @@ public class CliParameterParser {
         }
         if (inputData.getCloudDTO() == null) {
             throw new NotFoundException(String.format(ENTITY_NOT_FOUND, "Cloud"));
+        }
+    }
+
+    private void prepareCustomParameters(String customParams) throws JsonProcessingException {
+        if (StringUtils.isEmpty(customParams)) {
+            return;
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Map<String, Object>> map = mapper.readValue(customParams, new TypeReference<>() {
+        });
+        if (map.containsKey("deployment")) {
+            inputData.setCustomDeployParamMap(map.get("deployment"));
+        }
+        if (map.containsKey("runtime")) {
+            inputData.setCustomRuntimeParamMap(map.get("runtime"));
         }
     }
 

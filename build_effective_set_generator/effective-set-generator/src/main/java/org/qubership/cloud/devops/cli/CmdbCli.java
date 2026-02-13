@@ -114,6 +114,8 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
         sharedData.setAppChartValidation(envParams.appChartValidation);
+        logInfo("Custom parameters from Envgen---> "+ envParams.customParams);
+        sharedData.setCustomParams(envParams.customParams);
         populateDeploymentSessionId(envParams.extraParams);
     }
 
@@ -160,6 +162,9 @@ public class CmdbCli implements Callable<Integer> {
 
         @CommandLine.Option(names = {"-acv", "--app_chart_validation"}, description = "App chart validation parameter on sbom", arity = "1")
         boolean appChartValidation = true;
+
+        @CommandLine.Option(names = {"-cp", "--custom-params"}, description = "Effective Set Version")
+        String customParams;
 
     }
 
