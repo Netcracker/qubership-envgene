@@ -74,13 +74,41 @@ TRACING_HOST: tracing-agent
 TRACING_UI_URL: https://cluster-01.qubership.org
 ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181
 ZOOKEEPER_URL: zookeeper.zookeeper:2181
+api_config: &id001
+  connection:
+    host: db.example.com
+    port: 5432
+api_port: 8080
+app_version: '3.0'
 bss-app-exist: false
-core: &id001
+core: &id002
   apps:
     volumes:
       outputs:
         capacity: 20Gi
-global: &id002
+database_config: &id003
+  connection:
+    host: db.example.com
+    port: 5432
+debug_mode_test: 'true'
+log_level: 'true'
+rendered_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
+server_port: 8080
+service_version: '3.0'
+ssl_enabled: true
+use_ssl: true
+yaml_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
+global: &id004
   API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
   APPLICATION_NAME: MONITORING
   ARTIFACT_DESCRIPTOR_ARTIFACT_ID: prod.platform.system.monitoring_monitoring-operator
@@ -157,50 +185,72 @@ global: &id002
   TRACING_UI_URL: https://cluster-01.qubership.org
   ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181
   ZOOKEEPER_URL: zookeeper.zookeeper:2181
+  api_config: *id001
+  api_port: 8080
+  app_version: '3.0'
   bss-app-exist: false
-  core: *id001
-alertmanager: *id002
-blackbox-exporter: *id002
-cert-exporter: *id002
-cloud-events-exporter: *id002
-cloud-events-reader: *id002
-cloudwatch-exporter: *id002
-common-dashboards: *id002
-configmap-reload: *id002
-configurations-streamer: *id002
-grafana: *id002
-grafana-image-renderer: *id002
-grafana-operator: *id002
-grafana-plugins-init: *id002
-graphite-remote-adapter: *id002
-json-exporter: *id002
-kube-rbac-proxy: *id002
-kube-state-metrics: *id002
-monitoring-operator: *id002
-network-latency-exporter: *id002
-node-exporter: *id002
-oauth2-proxy: *id002
-platform_monitoring_tests: *id002
-prometheus: *id002
-prometheus-adapter: *id002
-prometheus-adapter-converter: *id002
-prometheus-adapter-operator: *id002
-prometheus-config-reloader: *id002
-prometheus-operator: *id002
-promitor-agent-resource-discovery: *id002
-promitor-agent-scraper: *id002
-promxy: *id002
-pushgateway: *id002
-stackdriver-exporter: *id002
-version-exporter: *id002
-victoriametrics-operator: *id002
-vmagent: *id002
-vmalert: *id002
-vmauth: *id002
-vmcleanup: *id002
-vminsert: *id002
-vmoperator: *id002
-vmoperator_config_reloader: *id002
-vmselect: *id002
-vmsingle: *id002
-vmstorage: *id002
+  core: *id002
+  database_config: *id003
+  debug_mode_test: 'true'
+  log_level: 'true'
+  rendered_template: |-
+    services:
+      api:
+        image: api:latest
+        ports:
+          - 8080:8080
+  server_port: 8080
+  service_version: '3.0'
+  ssl_enabled: true
+  use_ssl: true
+  yaml_template: |-
+    services:
+      api:
+        image: api:latest
+        ports:
+          - 8080:8080
+alertmanager: *id004
+blackbox-exporter: *id004
+cert-exporter: *id004
+cloud-events-exporter: *id004
+cloud-events-reader: *id004
+cloudwatch-exporter: *id004
+common-dashboards: *id004
+configmap-reload: *id004
+configurations-streamer: *id004
+grafana: *id004
+grafana-image-renderer: *id004
+grafana-operator: *id004
+grafana-plugins-init: *id004
+graphite-remote-adapter: *id004
+json-exporter: *id004
+kube-rbac-proxy: *id004
+kube-state-metrics: *id004
+monitoring-operator: *id004
+network-latency-exporter: *id004
+node-exporter: *id004
+oauth2-proxy: *id004
+platform_monitoring_tests: *id004
+prometheus: *id004
+prometheus-adapter: *id004
+prometheus-adapter-converter: *id004
+prometheus-adapter-operator: *id004
+prometheus-config-reloader: *id004
+prometheus-operator: *id004
+promitor-agent-resource-discovery: *id004
+promitor-agent-scraper: *id004
+promxy: *id004
+pushgateway: *id004
+stackdriver-exporter: *id004
+version-exporter: *id004
+victoriametrics-operator: *id004
+vmagent: *id004
+vmalert: *id004
+vmauth: *id004
+vmcleanup: *id004
+vminsert: *id004
+vmoperator: *id004
+vmoperator_config_reloader: *id004
+vmselect: *id004
+vmsingle: *id004
+vmstorage: *id004
