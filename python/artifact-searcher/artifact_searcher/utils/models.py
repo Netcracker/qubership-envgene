@@ -94,6 +94,70 @@ class HelmAppConfig(BaseSchema):
     helm_dev_repo_name: Optional[str] = ""
 
 
+REGDEF_V2_VERSION = "2.0"
+
+
+class Provider(str, Enum):
+    NEXUS = "nexus"
+    ARTIFACTORY = "artifactory"
+    AWS = "aws"
+    GCP = "gcp"
+    AZURE = "azure"
+
+
+class GcpOIDC(BaseSchema):
+    url: str = Field(alias="URL")
+    custom_params: Optional[list[dict[str, str]]] = None
+
+
+class AuthConfig(BaseSchema):
+    credentials_id: str
+    auth_type: Optional[str] = None
+    provider: Optional[Provider] = None
+    auth_method: Optional[str] = None
+    aws_region: Optional[str] = None
+    aws_domain: Optional[str] = None
+    aws_role_arn: Optional[str] = Field(default=None, alias="awsRoleARN")
+    aws_role_session_prefix: Optional[str] = None
+    gcp_oidc: Optional[GcpOIDC] = Field(default=None, alias="gcpOIDC")
+    gcp_reg_project: Optional[str] = None
+    gcp_reg_pool_id: Optional[str] = None
+    gcp_reg_provider_id: Optional[str] = None
+    gcp_reg_sa_email: Optional[str] = Field(default=None, alias="gcpRegSAEmail")
+    azure_tenant_id: Optional[str] = None
+    azure_acr_resource: Optional[str] = Field(default=None, alias="azureACRResource")
+    azure_acr_name: Optional[str] = Field(default=None, alias="azureACRName")
+    azure_artifacts_resource: Optional[str] = None
+
+
+class MavenConfigV2(BaseSchema):
+    auth_config: Optional[str] = None
+    repository_domain_name: str
+    target_snapshot: str
+    target_staging: str
+    target_release: str
+    snapshot_group: Optional[str] = ""
+    release_group: Optional[str] = ""
+    is_nexus: bool = False
+
+    @field_validator('repository_domain_name')
+    def ensure_trailing_slash(cls, value):
+        return value.rstrip("/") + "/"
+
+
+class RegistryV2(BaseSchema):
+    version: str = REGDEF_V2_VERSION
+    name: str
+    auth_config: dict[str, AuthConfig] = {}
+    maven_config: MavenConfigV2
+    docker_config: Optional[DockerConfig] = None
+    go_config: Optional[GoConfig] = None
+    raw_config: Optional[RawConfig] = None
+    npm_config: Optional[NpmConfig] = None
+    helm_config: Optional[HelmConfig] = None
+    helm_app_config: Optional[HelmAppConfig] = None
+
+
 class ArtifactInfo(BaseSchema):
     url: Optional[str]
     app_name: Optional[str] = ""
@@ -116,13 +180,26 @@ class Registry(BaseSchema):
     helm_app_config: Optional[HelmAppConfig] = None
 
 
+def parse_registry(data: dict) -> Registry | RegistryV2:
+    if data.get("version") == REGDEF_V2_VERSION or "authConfig" in data:
+        return RegistryV2.model_validate(data)
+    return Registry.model_validate(data)
+
+
 # artifact definition
 class Application(BaseSchema):
     name: str
     artifact_id: str
     group_id: str
-    registry: Registry
+    registry: Registry | RegistryV2
     solution_descriptor: bool = False
+
+    @field_validator('registry', mode='before')
+    @classmethod
+    def parse_registry_field(cls, v):
+        if isinstance(v, dict):
+            return parse_registry(v)
+        return v
 
 
 class FileExtension(str, Enum):

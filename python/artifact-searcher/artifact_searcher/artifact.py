@@ -13,7 +13,7 @@ import aiohttp
 import requests
 from aiohttp import BasicAuth
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT, METADATA_XML
-from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
+from artifact_searcher.utils.models import Registry, RegistryV2, Application, FileExtension, Credentials, ArtifactInfo
 from envgenehelper import logger
 from requests.auth import HTTPBasicAuth
 
@@ -134,11 +134,20 @@ def clean_temp_dir():
     os.makedirs(WORKSPACE, exist_ok=True)
 
 
-async def download_all_async(artifacts_info: list[ArtifactInfo], cred: Credentials | None = None):
-    auth = BasicAuth(login=cred.username, password=cred.password) if cred else None
+async def download_all_async(artifacts_info: list[ArtifactInfo], cred: Credentials | None = None,
+                              auth_headers: dict | None = None):
+    if auth_headers:
+        auth = None
+        session_headers = auth_headers
+    elif cred:
+        auth = BasicAuth(login=cred.username, password=cred.password)
+        session_headers = None
+    else:
+        auth = None
+        session_headers = None
     connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
     timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
-    async with aiohttp.ClientSession(connector=connector, timeout=timeout, auth=auth) as session:
+    async with aiohttp.ClientSession(connector=connector, timeout=timeout, auth=auth, headers=session_headers) as session:
         async with asyncio.TaskGroup() as tg:
             tasks = [tg.create_task(download_async(session, artifact_info)) for artifact_info in artifacts_info]
         results = []
@@ -253,17 +262,26 @@ async def _attempt_check(
         artifact_extension: FileExtension,
         registry_url: str | None = None,
         cred: Credentials | None = None,
+        auth_headers: dict | None = None,
         classifier: str = ""
 ) -> Optional[tuple[str, tuple[str, str]]]:
     repos_dict = get_repo_value_pointer_dict(app.registry)
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
 
-    auth = BasicAuth(login=cred.username, password=cred.password) if cred else None
+    if auth_headers:
+        auth = None
+        session_headers = auth_headers
+    elif cred:
+        auth = BasicAuth(login=cred.username, password=cred.password)
+        session_headers = None
+    else:
+        auth = None
+        session_headers = None
     timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
     stop_snapshot_event_for_others = asyncio.Event()
     stop_artifact_event = asyncio.Event()
-    async with aiohttp.ClientSession(timeout=timeout, auth=auth) as session:
+    async with aiohttp.ClientSession(timeout=timeout, auth=auth, headers=session_headers) as session:
         async with asyncio.TaskGroup() as tg:
             tasks = [
                 tg.create_task(
@@ -290,6 +308,7 @@ async def _attempt_check(
 
 async def check_artifact_async(
         app: Application, artifact_extension: FileExtension, version: str, cred: Credentials | None = None,
+        auth_headers: dict | None = None,
         classifier: str = "") -> Optional[tuple[str, tuple[str, str]]] | None:
     """
     Resolves the full artifact URL and the first repository where it was found.
@@ -302,7 +321,7 @@ async def check_artifact_async(
             Returns None if the artifact could not be resolved
     """
 
-    result = await _attempt_check(app, version, artifact_extension, None, cred)
+    result = await _attempt_check(app, version, artifact_extension, None, cred, auth_headers)
     if result is not None:
         return result
 
@@ -314,7 +333,7 @@ async def check_artifact_async(
     fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
     if fixed_domain != original_domain:
         logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
-        result = await _attempt_check(app, version, artifact_extension, fixed_domain, cred, classifier)
+        result = await _attempt_check(app, version, artifact_extension, fixed_domain, cred, auth_headers, classifier)
         if result is not None:
             return result
     else:
@@ -357,9 +376,14 @@ def create_aql_artifact(app: Application, artifact_extension: FileExtension, ver
     return aql
 
 
-def check_artifacts_by_aql(aql: str, cred: Credentials, url: str) -> list[ArtifactInfo]:
+def check_artifacts_by_aql(aql: str, cred: Credentials | None = None, url: str = "",
+                            auth_headers: dict | None = None) -> list[ArtifactInfo]:
     artifacts = []
-    response = requests.post(f"{url}/api/search/aql", data=aql, auth=HTTPBasicAuth(cred.username, cred.password))
+    if auth_headers:
+        response = requests.post(f"{url}/api/search/aql", data=aql, headers=auth_headers)
+    else:
+        auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
+        response = requests.post(f"{url}/api/search/aql", data=aql, auth=auth)
     results = response.json()
     for result in results.get("results"):
         repo = result.get("repo")
@@ -375,23 +399,27 @@ def check_artifacts_by_aql(aql: str, cred: Credentials, url: str) -> list[Artifa
 # TODO delete after deletion feature getting artifact by not artifact def
 # --------------------------------------------------------------------------------------
 
-def download_json_content(url: str, cred: Credentials | None = None) -> dict[str, Any]:
-    auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
-    response = requests.get(
-        url,
-        auth=auth,
-        timeout=DEFAULT_REQUEST_TIMEOUT
-    )
+def download_json_content(url: str, cred: Credentials | None = None,
+                          auth_headers: dict | None = None) -> dict[str, Any]:
+    if auth_headers:
+        response = requests.get(url, headers=auth_headers, timeout=DEFAULT_REQUEST_TIMEOUT)
+    else:
+        auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
+        response = requests.get(url, auth=auth, timeout=DEFAULT_REQUEST_TIMEOUT)
     response.raise_for_status()
     json_data = response.json()
     logger.info(f"Got json data by url {url}")
     return json_data
 
 
-def download(url: str, target_path: str, cred: Credentials | None = None) -> str:
-    auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
+def download(url: str, target_path: str, cred: Credentials | None = None,
+             auth_headers: dict | None = None) -> str:
+    if auth_headers:
+        response = requests.get(url, headers=auth_headers, timeout=DEFAULT_REQUEST_TIMEOUT)
+    else:
+        auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
+        response = requests.get(url, auth=auth, timeout=DEFAULT_REQUEST_TIMEOUT)
     os.makedirs(os.path.dirname(target_path), exist_ok=True)
-    response = requests.get(url, auth=auth, timeout=DEFAULT_REQUEST_TIMEOUT)
     response.raise_for_status()
     with open(target_path, "wb") as f:
         f.write(response.content)
@@ -402,13 +430,14 @@ def download(url: str, target_path: str, cred: Credentials | None = None) -> str
 def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
                    artifact_extension: FileExtension,
                    cred: Credentials | None = None,
+                   auth_headers: dict | None = None,
                    classifier: str = "") -> str | None:
     base = repo_url.rstrip("/") + "/"
     group_id = group_id.replace(".", "/")
 
     if "SNAPSHOT" in version:
         base_path = urljoin(base, f"{group_id}/{artifact_id}/{version}/")
-        resolved_version = resolve_snapshot_version(base_path, artifact_extension, cred, classifier)
+        resolved_version = resolve_snapshot_version(base_path, artifact_extension, cred, auth_headers, classifier)
         if not resolved_version:
             return None
         version = resolved_version
@@ -418,7 +447,11 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
 
     try:
-        response = requests.head(full_url, timeout=DEFAULT_REQUEST_TIMEOUT)
+        if auth_headers:
+            response = requests.head(full_url, headers=auth_headers, timeout=DEFAULT_REQUEST_TIMEOUT)
+        else:
+            auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
+            response = requests.head(full_url, auth=auth, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code == 200:
             logger.info(
                 f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact found: {full_url}"
@@ -436,16 +469,16 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
 
 
 def resolve_snapshot_version(base_path, extension: FileExtension, cred: Credentials | None = None,
+                             auth_headers: dict | None = None,
                              classifier: str = "") -> Optional[str]:
     metadata_url = urljoin(base_path, METADATA_XML)
-    auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
 
     try:
-        response = requests.get(
-            metadata_url,
-            auth=auth,
-            timeout=DEFAULT_REQUEST_TIMEOUT,
-        )
+        if auth_headers:
+            response = requests.get(metadata_url, headers=auth_headers, timeout=DEFAULT_REQUEST_TIMEOUT)
+        else:
+            auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
+            response = requests.get(metadata_url, auth=auth, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code != 200:
             logger.warning(f"Failed to fetch {metadata_url}, status={response.status_code}")
             return None

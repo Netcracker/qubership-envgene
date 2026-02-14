@@ -14,6 +14,10 @@ from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
+APPDEF_SCHEMA = str(SCHEMAS_DIR / "appdef.schema.json")
+REGDEF_SCHEMA = str(SCHEMAS_DIR / "regdef.schema.json")
+REGDEF_V2_SCHEMA = str(SCHEMAS_DIR / "regdef-v2.schema.json")
+REGDEF_V2_VERSION = "2.0"
 
 yml = create_yaml_processor()
 
@@ -482,7 +486,7 @@ class EnvGenerator:
                 logger.warning(f"No AppDef YAMLs found in {appdef_dir}")
             for file in appdef_files:
                 logger.info(f"AppDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "appdef.schema.json"))
+                validate_yaml_by_scheme_or_fail(file, APPDEF_SCHEMA)
 
         if os.path.exists(regdef_dir):
             regdef_files = findAllYamlsInDir(regdef_dir)
@@ -490,7 +494,12 @@ class EnvGenerator:
                 logger.warning(f"No RegDef YAMLs found in {regdef_dir}")
             for file in regdef_files:
                 logger.info(f"RegDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "regdef.schema.json"))
+                content = openYaml(file)
+                if isinstance(content, dict) and content.get("version") == REGDEF_V2_VERSION:
+                    regdef_schema = REGDEF_V2_SCHEMA
+                else:
+                    regdef_schema = REGDEF_SCHEMA
+                validate_yaml_by_scheme_or_fail(file, regdef_schema)
 
     def process_app_reg_defs(self, env_name: str, extra_env: dict):
         logger.info(
