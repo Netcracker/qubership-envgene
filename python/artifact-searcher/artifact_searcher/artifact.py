@@ -43,20 +43,8 @@ def create_artifact_path(app: Application, version: str, repo: str) -> str:
 
 
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension,
-                    classifier: str = "", folder_version: str = None) -> str:
-    """
-    Creates full artifact URL.
-    
-    Args:
-        folder_version: Version to use for folder path. If None, uses version_to_folder_name(version).
-                       Pass original user-provided version for flat repos with exact timestamped versions.
-    """
-    if folder_version is None:
-        folder_version = version_to_folder_name(version)
-    
-    registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
-    group_id = app.group_id.replace(".", "/")
-    base_path = urljoin(registry_url, f"{repo}/{group_id}/{app.artifact_id}/{folder_version}/")
+                    classifier: str = "") -> str:
+    base_path = create_artifact_path(app, version, repo)
     filename = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
     return urljoin(base_path, filename)
 
@@ -130,7 +118,7 @@ def version_to_folder_name(version: str):
     Normalizes version string for folder naming.
 
     If version is timestamped snapshot (e.g. '1.0.0-20240702.123456-1'), it replaces the timestamp suffix with
-    '-SNAPSHOT' for traditional Maven repos. Otherwise, returns the version unchanged
+    '-SNAPSHOT'. Otherwise, returns the version unchanged
     """
     snapshot_pattern = re.compile(r"-\d{8}\.\d{6}-\d+$")
     if snapshot_pattern.search(version):
@@ -224,7 +212,6 @@ async def check_artifact_by_full_url_async(
         return None
 
     resolved_version = version
-    folder_version = version  # Track original version for folder path
     id_main_task = None
     if version.endswith("-SNAPSHOT"):
         snapshot_info = await resolve_snapshot_version_async(session, app, version, repo_value, task_id,
@@ -232,21 +219,17 @@ async def check_artifact_by_full_url_async(
                                                              artifact_extension, classifier)
         if snapshot_info:
             # Successfully resolved SNAPSHOT via maven-metadata.xml (Nexus/Artifactory)
-            # Folder stays as -SNAPSHOT, but file uses resolved timestamped version
             snapshot_version, id_main_task = snapshot_info
             resolved_version = snapshot_version
-            folder_version = version  # Keep -SNAPSHOT for folder
         else:
             # SNAPSHOT resolution failed - fall back to direct -SNAPSHOT URL (AWS/GCP flat repos)
             logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - SNAPSHOT metadata not available, will try direct -SNAPSHOT URL")
             resolved_version = version
-            folder_version = version  # Keep -SNAPSHOT for folder
-    # else: user provided exact version (possibly timestamped), use as-is for both folder and file
 
     if stop_artifact_event.is_set() or (stop_snapshot_event_for_others.is_set() and task_id != id_main_task):
         return None
 
-    full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, classifier, folder_version=folder_version)
+    full_url = create_full_url(app, resolved_version, repo_value, artifact_extension, classifier)
     try:
         async with session.head(full_url) as response:
             if response.status == 200:
@@ -456,21 +439,17 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     base = repo_url.rstrip("/") + "/"
     group_id = group_id.replace(".", "/")
 
-    original_version = version  # Track original version for folder path
     if "SNAPSHOT" in version:
         base_path = urljoin(base, f"{group_id}/{artifact_id}/{version}/")
         resolved_version = resolve_snapshot_version(base_path, artifact_extension, cred, auth_headers, classifier)
         if resolved_version:
             # Successfully resolved SNAPSHOT via maven-metadata.xml (Nexus/Artifactory)
-            # Folder stays as -SNAPSHOT, but file uses resolved timestamped version
             version = resolved_version
         else:
             # SNAPSHOT resolution failed - fall back to direct -SNAPSHOT URL (AWS/GCP flat repos)
             logger.info(f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - SNAPSHOT metadata not available, will try direct -SNAPSHOT URL")
-    # else: user provided exact version (possibly timestamped), use as-is for both folder and file
 
-    # For folder: use original version if user provided exact version, otherwise use version_to_folder_name
-    folder = original_version if not original_version.endswith("-SNAPSHOT") else version_to_folder_name(version)
+    folder = version_to_folder_name(version)
     filename = create_artifact_name(artifact_id, artifact_extension, version, classifier)
     full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
 
