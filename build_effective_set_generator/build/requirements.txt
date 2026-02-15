@@ -2,14 +2,11 @@
 PyGithub==1.55
 certifi==2022.6.15
 
-boto3==1.39.4
-botocore==1.39.4
 gcip==3.0.2
 jmespath==1.0.1
 packaging==23.2
 python-dateutil==2.8.2
 PyYAML==6.0.2
-s3transfer==0.7.0
 setuptools-git-versioning==1.13.5
 six==1.16.0
 toml==0.10.2
