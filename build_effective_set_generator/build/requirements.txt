@@ -3,7 +3,7 @@ PyGithub==1.55
 certifi==2022.6.15
 
 boto3==1.39.4
-botocore==1.42.4
+botocore==1.39.4
 gcip==3.0.2
 jmespath==1.0.1
 packaging==23.2
