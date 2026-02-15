@@ -23,6 +23,10 @@ Jinja2==3.1.6
 # Additional required packages
 platformdirs>=3.0.0
 
+# V2 RegDef authentication support (GCP/AWS)
+google-auth~=2.34.0
+qubership-pipelines-common-library @ git+https://github.com/Netcracker/qubership-pipelines-common-python-library.git@main
+
 # Removed heavy packages:
 # - shyaml, yamale, prettytable (not essential)
 # - ruyaml (duplicate of ruamel.yaml)

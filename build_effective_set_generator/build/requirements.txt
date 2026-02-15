@@ -30,3 +30,7 @@ cryptography==41.0.3
 click==8.1.7
 deepmerge==2.0
 flatten_dict==0.4.2
+
+# V2 RegDef authentication support (GCP/AWS)
+google-auth~=2.34.0
+qubership-pipelines-common-library @ git+https://github.com/Netcracker/qubership-pipelines-common-python-library.git@main
