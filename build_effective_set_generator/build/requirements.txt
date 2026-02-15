@@ -13,7 +13,7 @@ s3transfer==0.7.0
 setuptools-git-versioning==1.13.5
 six==1.16.0
 toml==0.10.2
-urllib3==2.0.7
+urllib3==2.2.3
 lxml==4.9.3
 ruamel.yaml==0.18.5
 ruamel.yaml.clib==0.2.8
