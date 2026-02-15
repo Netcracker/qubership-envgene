@@ -297,9 +297,7 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
 
 
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
-    if 'SNAPSHOT' in version:
-        raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
-    # TODO: check if job would fail without plugins
+    # SNAPSHOT versions are supported via maven-metadata.xml resolution in artifact-searcher
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
     cred = None
