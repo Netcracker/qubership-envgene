@@ -217,10 +217,14 @@ async def check_artifact_by_full_url_async(
         snapshot_info = await resolve_snapshot_version_async(session, app, version, repo_value, task_id,
                                                              stop_artifact_event, stop_snapshot_event_for_others,
                                                              artifact_extension, classifier)
-        if not snapshot_info:
-            return None
-        snapshot_version, id_main_task = snapshot_info
-        resolved_version = snapshot_version
+        if snapshot_info:
+            # Successfully resolved SNAPSHOT via maven-metadata.xml (Nexus/Artifactory)
+            snapshot_version, id_main_task = snapshot_info
+            resolved_version = snapshot_version
+        else:
+            # SNAPSHOT resolution failed - fall back to direct -SNAPSHOT URL (AWS/GCP flat repos)
+            logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - SNAPSHOT metadata not available, will try direct -SNAPSHOT URL")
+            resolved_version = version
 
     if stop_artifact_event.is_set() or (stop_snapshot_event_for_others.is_set() and task_id != id_main_task):
         return None
@@ -438,9 +442,12 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     if "SNAPSHOT" in version:
         base_path = urljoin(base, f"{group_id}/{artifact_id}/{version}/")
         resolved_version = resolve_snapshot_version(base_path, artifact_extension, cred, auth_headers, classifier)
-        if not resolved_version:
-            return None
-        version = resolved_version
+        if resolved_version:
+            # Successfully resolved SNAPSHOT via maven-metadata.xml (Nexus/Artifactory)
+            version = resolved_version
+        else:
+            # SNAPSHOT resolution failed - fall back to direct -SNAPSHOT URL (AWS/GCP flat repos)
+            logger.info(f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - SNAPSHOT metadata not available, will try direct -SNAPSHOT URL")
 
     folder = version_to_folder_name(version)
     filename = create_artifact_name(artifact_id, artifact_extension, version, classifier)
