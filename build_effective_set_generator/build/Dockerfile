@@ -4,8 +4,8 @@
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:feature_add_all_deps AS base
 
 ARG RUN_JAVA_VERSION=1.3.8
-# hadolint ignore=DL3018
 # Add build deps for artifact-searcher (Rust/cargo) and cryptography (compile from source)
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     gcc \
     musl-dev \
@@ -43,13 +43,13 @@ COPY build_effective_set_generator/effective-set-generator/target/*.jar /deploym
 # Stage 2: Runtime
 #########################################
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:feature_add_all_deps AS runtime
-# hadolint ignore=DL3018
 ARG JAVA_PACKAGE=openjdk17-jre-headless
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en'
 
 # Add Java runtime (effective_set-specific)
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     libffi \
     libgcc \
