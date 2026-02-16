@@ -72,6 +72,9 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     rm -rf /module/venv/lib/python3.12/site-packages/setuptools* \
         /module/venv/lib/python3.12/site-packages/wheel* 2>/dev/null || true
 
+# Ensure ci user can read all copied files (COPY creates files as root)
+RUN chown -R ci:ci /module /build_env /cloud_passport /scripts
+
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
 
