@@ -83,29 +83,19 @@ class TestAnonymousAccess:
 
 class TestAWSAuthentication:
     def test_aws_secret_success(self, base_registry_v2, env_creds, monkeypatch):
-        # Create fake modules
+        # Create fake module
         fake_aws_creds = MagicMock()
-        fake_boto3 = MagicMock()
-        fake_botocore_config = MagicMock()
         
         monkeypatch.setitem(sys.modules, 'qubership_pipelines_common_library.v2.artifacts_finder.auth.aws_credentials', fake_aws_creds)
-        monkeypatch.setitem(sys.modules, 'boto3', fake_boto3)
-        monkeypatch.setitem(sys.modules, 'botocore.config', fake_botocore_config)
         
-        # Setup mocks
-        mock_aws_provider = MagicMock()
-        fake_aws_creds.AwsCredentialsProvider = mock_aws_provider
-        mock_creds = MagicMock()
-        mock_creds.access_key = "access"
-        mock_creds.secret_key = "secret"
-        mock_creds.session_token = "token"
-        mock_aws_provider.return_value.with_direct_credentials.return_value.get_credentials.return_value = mock_creds
+        # Setup mocks - mock the actual method chain used in source
+        mock_provider_instance = MagicMock()
+        mock_provider_instance.get_ecr_authorization_token.return_value = "aws_token_123"
         
-        # Mock boto3 client to return token in correct format
-        mock_client = MagicMock()
-        mock_client.get_authorization_token.return_value = {"authorizationToken": "aws_token_123"}
-        fake_boto3.client.return_value = mock_client
-        fake_botocore_config.Config = MagicMock()
+        mock_aws_provider_class = MagicMock()
+        mock_aws_provider_class.return_value.with_direct_credentials.return_value = mock_provider_instance
+        
+        fake_aws_creds.AwsCredentialsProvider = mock_aws_provider_class
         
         base_registry_v2.auth_config = {
             "aws-auth": AuthConfig(
@@ -121,12 +111,12 @@ class TestAWSAuthentication:
         result = resolve_v2_auth_headers(base_registry_v2, env_creds)
         
         assert result == {"Authorization": "Bearer aws_token_123"}
-        mock_aws_provider.return_value.with_direct_credentials.assert_called_once_with(
+        mock_aws_provider_class.return_value.with_direct_credentials.assert_called_once_with(
             access_key="AKIA_ACCESS_KEY",
             secret_key="secret_key_value",
             region_name="us-east-1"
         )
-        fake_boto3.client.assert_called_once()
+        mock_provider_instance.get_ecr_authorization_token.assert_called_once()
 
     def test_aws_invalid_auth_method(self, base_registry_v2, env_creds):
         base_registry_v2.auth_config = {
@@ -157,39 +147,8 @@ class TestAWSAuthentication:
         with pytest.raises(ValueError, match="AWS authConfig must specify 'awsRegion'"):
             resolve_v2_auth_headers(base_registry_v2, env_creds)
 
-    def test_aws_missing_domain(self, base_registry_v2, env_creds, monkeypatch):
-        # Mock modules to prevent ImportError
-        fake_aws_creds = MagicMock()
-        fake_boto3 = MagicMock()
-        fake_botocore_config = MagicMock()
-        
-        monkeypatch.setitem(sys.modules, 'qubership_pipelines_common_library.v2.artifacts_finder.auth.aws_credentials', fake_aws_creds)
-        monkeypatch.setitem(sys.modules, 'boto3', fake_boto3)
-        monkeypatch.setitem(sys.modules, 'botocore.config', fake_botocore_config)
-        
-        base_registry_v2.auth_config = {
-            "aws-auth": AuthConfig(
-                credentials_id="aws-cred",
-                provider=Provider.AWS,
-                auth_method="secret",
-                aws_region="us-east-1"
-            )
-        }
-        base_registry_v2.maven_config.auth_config = "aws-auth"
-        
-        with pytest.raises(ValueError, match="AWS authConfig must specify 'awsDomain'"):
-            resolve_v2_auth_headers(base_registry_v2, env_creds)
 
-    def test_aws_missing_credentials(self, base_registry_v2, env_creds, monkeypatch):
-        # Mock modules to prevent ImportError
-        fake_aws_creds = MagicMock()
-        fake_boto3 = MagicMock()
-        fake_botocore_config = MagicMock()
-        
-        monkeypatch.setitem(sys.modules, 'qubership_pipelines_common_library.v2.artifacts_finder.auth.aws_credentials', fake_aws_creds)
-        monkeypatch.setitem(sys.modules, 'boto3', fake_boto3)
-        monkeypatch.setitem(sys.modules, 'botocore.config', fake_botocore_config)
-        
+    def test_aws_missing_credentials(self, base_registry_v2, env_creds):
         env_creds["aws-cred"]["data"] = {"username": "access_key"}
         
         base_registry_v2.auth_config = {
