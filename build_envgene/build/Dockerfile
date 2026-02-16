@@ -32,7 +32,6 @@ COPY scripts/bg_manage /scripts/bg_manage
 COPY creds_rotation/scripts /module/creds_rotation_scripts
 COPY build_* create_* produce_* sort* /build_env/
 COPY scripts/build_env /build_env/scripts/build_env/
-COPY scripts/build_env/process_sd.py /module/scripts/
 COPY scripts/build_template /build_env/scripts/build_template/
 COPY scripts/cloud_passport/ /cloud_passport/scripts/
 COPY schemas /build_env/schemas
