@@ -61,9 +61,8 @@ ENV PATH=/module/venv/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
 
-# Create user for security
-RUN addgroup ci && adduser -D -h /module/ -s /bin/bash -G ci ci && \
-    chown ci:ci -R /module
+# Ensure ci user can read all module files (COPY creates files as root)
+RUN chown -R ci:ci /module
 USER ci:ci
 WORKDIR /module/scripts
 CMD ["bash"]
