@@ -81,7 +81,6 @@ COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=build /deployments /deployments
 
 COPY scripts/build_env/ /build_env/scripts/build_env/
-COPY scripts/build_env/process_sd.py /module/scripts/
 COPY build_effective_set_generator/scripts/ /module/scripts/
 COPY scripts/utils/ /module/scripts/utils/
 

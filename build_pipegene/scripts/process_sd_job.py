@@ -24,7 +24,7 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, artif
 
     process_sd_set_params = {
         "name": f'process_sd.{full_env}',
-        "image": '${effective_set_generator_image}',
+        "image": '${envgen_image}',
         "stage": 'process_sd',
         "script": script
     }
@@ -34,7 +34,7 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, artif
         "ENVIRONMENT_NAME": environment_name,
         "ENV_NAME": environment_name,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
-        "effective_set_generator_image": "$effective_set_generator_image",
+        "envgen_image": "$envgen_image",
         "envgen_args": " -vv",
         "envgen_debug": "true",
         "GITLAB_RUNNER_TAG_NAME": tags,
