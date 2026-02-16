@@ -93,6 +93,7 @@ RUN addgroup ci && \
     adduser -D -h /module/ -s /bin/bash -G ci ci && \
     chown ci:ci -R /module /deployments && \
     chmod +x /module/scripts/*.sh && \
+    chmod +x /module/scripts/utils/entrypoint.sh && \
     chmod 644 /module/scripts/*.py 2>/dev/null || true && \
     chmod +x /usr/local/bin/sops && \
     chmod 540 /deployments/run-java.sh && \
