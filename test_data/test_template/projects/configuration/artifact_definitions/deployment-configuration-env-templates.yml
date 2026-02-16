@@ -1,0 +1,11 @@
+name: "deployment-configuration-env-templates"
+groupId: "org.qubership"
+artifactId: "qubership_envgene_templates"
+registry:
+  name: "artifactory"
+  credentialsId: "artifactory-cred"
+  mavenConfig:
+    repositoryDomainName: "https://artifactory.qubership.org"
+    targetSnapshot: "mvn.snapshot"
+    targetStaging: "mvn.staging"
+    targetRelease: "mvn.release"

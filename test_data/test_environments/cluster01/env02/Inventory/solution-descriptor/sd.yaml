@@ -1,0 +1,12 @@
+version: '2.1'
+type: solutionDeploy
+deployMode: composite
+applications:
+  - version: MONITORING:0.64.1
+    deployPostfix: platform-monitoring
+  - version: postgres:1.32.6
+    deployPostfix: postgresql
+  - version: postgres-services:1.32.6
+    deployPostfix: postgresql
+  - version: postgres:1.32.6
+    deployPostfix: postgresql-dbaas
