@@ -7,6 +7,7 @@
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:feature_add_all_deps AS base
 
 # Add sudo for CI/CD operations
+# hadolint ignore=DL3018
 RUN apk add --no-cache sudo
 
 # Copy configuration and source code
@@ -53,6 +54,7 @@ RUN chmod 754 /module/scripts/* && \
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:feature_add_all_deps AS runtime
 
 # Add sudo for CI/CD operations
+# hadolint ignore=DL3018
 RUN apk add --no-cache sudo
 
 # Copy envgene-specific artifacts from build
