@@ -56,9 +56,14 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
 
+# Set environment
 ENV PATH=/module/venv/bin:$PATH \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
+
+# Create user for security
+RUN addgroup ci && adduser -D -h /module/ -s /bin/bash -G ci ci && \
+    chown ci:ci -R /module
 USER ci:ci
 WORKDIR /module/scripts
 CMD ["bash"]
