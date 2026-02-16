@@ -87,39 +87,30 @@ def _is_anonymous(cred_data: dict) -> bool:
             and not cred_data.get(CRED_FIELD_SECRET))
 
 
-def _aws_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
+def _aws_ecr_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
+    """Get ECR authorization token and return as Bearer token header."""
     if not auth_cfg.aws_region:
         raise ValueError("AWS authConfig must specify 'awsRegion'")
-    if not auth_cfg.aws_domain:
-        raise ValueError("AWS authConfig must specify 'awsDomain'")
 
     username = cred_data.get(CRED_FIELD_USERNAME)
     password = cred_data.get(CRED_FIELD_PASSWORD)
     if not username or not password:
-        raise ValueError("AWS auth requires both username (access key) and password (secret key) in credentials")
+        raise ValueError("AWS ECR auth requires both username (access key) and password (secret key)")
 
     try:
         from qubership_pipelines_common_library.v2.artifacts_finder.auth.aws_credentials import AwsCredentialsProvider
-        import boto3
-        from botocore.config import Config
     except ImportError as e:
         raise ValueError(f"AWS dependencies not available: {e}")
 
-    creds = AwsCredentialsProvider().with_direct_credentials(
+    provider = AwsCredentialsProvider().with_direct_credentials(
         access_key=username,
         secret_key=password,
         region_name=auth_cfg.aws_region,
-    ).get_credentials()
-
-    client = boto3.client(
-        AWS_SERVICE_CODEARTIFACT,
-        config=Config(region_name=auth_cfg.aws_region),
-        aws_access_key_id=creds.access_key,
-        aws_secret_access_key=creds.secret_key,
-        aws_session_token=creds.session_token,
     )
-    token = client.get_authorization_token(domain=auth_cfg.aws_domain)[AWS_TOKEN_KEY]
-    logger.info(f"AWS token obtained for domain '{auth_cfg.aws_domain}'")
+    
+    token = provider.get_ecr_authorization_token()
+    
+    logger.info(f"AWS ECR token obtained for region '{auth_cfg.aws_region}'")
     return {"Authorization": f"Bearer {token}"}
 
 
