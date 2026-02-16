@@ -109,6 +109,7 @@ jobs:
            echo "DEPLOYMENT_TICKET_ID=${{ github.event.inputs.DEPLOYMENT_TICKET_ID }}" >> $GITHUB_ENV
            echo "ENV_NAMES=${{ github.event.inputs.ENV_NAMES }}" >> $GITHUB_ENV
            echo "ENV_BUILDER=${{ github.event.inputs.ENV_BUILDER }}" >> $GITHUB_ENV
+           echo "GENERATE_EFFECTIVE_SET=${{ github.event.inputs.GENERATE_EFFECTIVE_SET }}" >> $GITHUB_ENV
            echo "GET_PASSPORT=${{ github.event.inputs.GET_PASSPORT }}" >> $GITHUB_ENV
            echo "CMDB_IMPORT=${{ github.event.inputs.CMDB_IMPORT }}" >> $GITHUB_ENV
            echo "ENV_TEMPLATE_VERSION=${{ github.event.inputs.ENV_TEMPLATE_VERSION }}" >> $GITHUB_ENV
@@ -360,21 +361,34 @@ jobs:
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR }}:${{ env.DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR }} \
             bash -c "
-              # Export all variables using unified exporter
+              echo 'Executing effective set generation...'
+              source /module/venv/bin/activate
               /module/scripts/handle_certs.sh
-
-              echo \"Executing effective set generation...\"
-              if ! /module/scripts/prepare.sh \"generate_effective_set.yaml\"; then
-                echo \"Effective set generation failed with exit code \$?\"
+              mkdir -p \"\${CI_PROJECT_DIR}/configuration/certs\"
+              [ -f /default_cert.pem ] && cp /default_cert.pem \"\${CI_PROJECT_DIR}/configuration/certs/default_cert.pem\" || true
+              for cert in \"\${CI_PROJECT_DIR}/configuration/certs/\"*; do [ -f \"\$cert\" ] && keytool -import -trustcacerts -alias \"\$(basename \"\$cert\")\" -file \"\$cert\" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done
+              python3 /module/scripts/main.py decrypt_cred_files
+              base_env_path=\"\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}\"
+              app_defs_path=\"\${base_env_path}/AppDefs\"
+              reg_defs_path=\"\${base_env_path}/RegDefs\"
+              if [ -n \"\$APP_REG_DEFS_JOB\" ] && [ -n \"\$APP_DEFS_PATH\" ]; then mkdir -p \"\$app_defs_path\" && cp -rf \"\$APP_DEFS_PATH\"/* \"\$app_defs_path\"; fi
+              if [ -n \"\$APP_REG_DEFS_JOB\" ] && [ -n \"\$REG_DEFS_PATH\" ]; then mkdir -p \"\$reg_defs_path\" && cp -fr \"\$REG_DEFS_PATH\"/* \"\$reg_defs_path\"; fi
+              python3 /module/scripts/main.py validate_creds
+              java_cmd=\"/deployments/run-java.sh --env-id=${{ matrix.environment }} --envs-path=\${CI_PROJECT_DIR}/environments --output=\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}/effective-set --registries=\${CI_PROJECT_DIR}/configuration/registry.yml --sboms-path=\${CI_PROJECT_DIR}/sboms --sd-path=\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}/Inventory/solution-descriptor/sd.yaml\"
+              if [ -n \"\$EFFECTIVE_SET_CONFIG\" ]; then
+                python3 /module/scripts/handle_effective_set_config.py --effective-set-config \"\$EFFECTIVE_SET_CONFIG\"
+                extra_args=\$(jq -r '.extra_args // [] | join(\" \")' /tmp/effective_set_output.json)
+                java_cmd=\"\$java_cmd \$extra_args\"
+              fi
+              deploy_id=\"\${DEPLOYMENT_SESSION_ID:-\$DEPLOYMENT_TICKET_ID}\"
+              if [ -n \"\$deploy_id\" ]; then java_cmd=\"\$java_cmd --extra_params=DEPLOYMENT_SESSION_ID=\$deploy_id\"; fi
+              if ! eval \"\$java_cmd\"; then
+                echo 'Effective set generation failed with exit code '\$?
                 exit 1
               fi
-
-              env_path=\$(find \"\${CI_PROJECT_DIR}/environments\" -type d -name \"\$env_name\")
-              for path in \$env_path; do
-                if [ -d \"\$path/Credentials\" ]; then
-                  chmod ugo+rw \"\$path/Credentials/\"*
-                fi
-              done
+              python3 /module/scripts/main.py encrypt_cred_files
+              env_path=\"\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}\"
+              if [ -d \"\$env_path/Credentials\" ]; then chmod -R ugo+rw \"\$env_path/Credentials\"; fi
             "
 
       - name: GENERATE_EFFECTIVE_SET - Upload Generate Effective Set Package
@@ -382,7 +396,10 @@ jobs:
         if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         with:
           name: generate_effective_set_${{ env.PACKAGE_NAME }}
-          path: environments/${{ matrix.environment }}
+          path: |
+            environments/${{ matrix.environment }}
+            sboms
+            configuration
           include-hidden-files: true
       ##########################
 
