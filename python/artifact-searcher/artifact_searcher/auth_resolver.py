@@ -87,7 +87,7 @@ def _is_anonymous(cred_data: dict) -> bool:
             and not cred_data.get(CRED_FIELD_SECRET))
 
 
-def _aws_ecr_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
+def _aws_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
     """Get ECR authorization token and return as Bearer token header."""
     if not auth_cfg.aws_region:
         raise ValueError("AWS authConfig must specify 'awsRegion'")
