@@ -238,6 +238,24 @@ async def check_artifact_by_full_url_async(
                 return full_url, repo
             logger.warning(
                 f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {response.status}")
+            
+            # Fallback for timestamped SNAPSHOT: try using original version as folder name (AWS CodeArtifact stores timestamped SNAPSHOTs in timestamped folders)
+            snapshot_pattern = re.compile(r"-\d{8}\.\d{6}-\d+$")
+            if response.status == 404 and snapshot_pattern.search(version):
+                # Original version has timestamp, try using it as-is for folder name
+                registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
+                group_id = app.group_id.replace(".", "/")
+                filename = create_artifact_name(app.artifact_id, artifact_extension, version, classifier)
+                fallback_url = urljoin(registry_url, f"{repo_value}/{group_id}/{app.artifact_id}/{version}/{filename}")
+                
+                logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - Trying timestamped folder as fallback: {fallback_url}")
+                async with session.head(fallback_url) as fallback_response:
+                    if fallback_response.status == 200:
+                        stop_artifact_event.set()
+                        logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found in timestamped folder: {fallback_url}")
+                        return fallback_url, repo
+                    logger.warning(
+                        f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact not found at fallback URL {fallback_url}, status: {fallback_response.status}")
     except Exception as e:
         logger.warning(
             f"[Task {task_id}] [Application: {app.name}: {version}] - Error checking artifact URL {full_url}: {e}")
@@ -467,6 +485,27 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
         logger.warning(
             f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact not found at URL {full_url}, status: {response.status_code}"
         )
+        
+        # Fallback for timestamped SNAPSHOT: try using original version as folder name (AWS CodeArtifact stores timestamped SNAPSHOTs in timestamped folders)
+        snapshot_pattern = re.compile(r"-\d{8}\.\d{6}-\d+$")
+        if response.status_code == 404 and snapshot_pattern.search(version):
+            # Original version has timestamp, try using it as-is for folder name
+            fallback_url = urljoin(base, f"{group_id}/{artifact_id}/{version}/{filename}")
+            
+            logger.info(f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Trying timestamped folder as fallback: {fallback_url}")
+            if auth_headers:
+                fallback_response = requests.head(fallback_url, headers=auth_headers, timeout=DEFAULT_REQUEST_TIMEOUT)
+            else:
+                fallback_response = requests.head(fallback_url, auth=auth, timeout=DEFAULT_REQUEST_TIMEOUT)
+            
+            if fallback_response.status_code == 200:
+                logger.info(
+                    f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact found in timestamped folder: {fallback_url}"
+                )
+                return fallback_url
+            logger.warning(
+                f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact not found at fallback URL {fallback_url}, status: {fallback_response.status_code}"
+            )
     except Exception as e:
         logger.warning(
             f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Error checking artifact URL {full_url}: {e}"
