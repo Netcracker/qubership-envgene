@@ -412,54 +412,6 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
     logger.info(f"V2 search for {app.name} with provider={auth_config.provider}")
     loop = asyncio.get_running_loop()
 
-    # SNAPSHOT: search by base version, download by timestamped version
-    resolved_version = version  # This will become the timestamped version if it's a SNAPSHOT
-    search_version = version    # Always use base version for searching
-    
-    if version.endswith("-SNAPSHOT"):
-        logger.info(f"Resolving SNAPSHOT version for verification: {app.artifact_id}:{version}")
-        
-        # Credentials needed for maven-metadata.xml fetch
-        cred = None
-        if auth_config.credentials_id and env_creds:
-            cred_data = env_creds.get(auth_config.credentials_id)
-            if cred_data and cred_data.get('username'):
-                cred = Credentials(username=cred_data['username'], password=cred_data['password'])
-        
-        auth = BasicAuth(login=cred.username, password=cred.password) if cred else None
-        timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
-        
-        # Resolve SNAPSHOT to timestamped version across repos
-        async with aiohttp.ClientSession(timeout=timeout, auth=auth) as session:
-            repos_dict = get_repo_value_pointer_dict(app.registry)
-            
-            # Loop through configured repositories until we find maven-metadata.xml
-            for repo_value, repo_pointer in repos_dict.items():
-                if not repo_value:
-                    continue
-                
-                try:
-                    # Fetch maven-metadata.xml for timestamped version
-                    result = await resolve_snapshot_version_async(
-                        session, app, version, repo_value, 0,
-                        asyncio.Event(), asyncio.Event(),
-                        artifact_extension, classifier=""
-                    )
-                    
-                    if result:
-                        resolved_version = result[0]
-                        logger.info(f"V2 resolved SNAPSHOT: {version} -> {resolved_version}")
-                        break
-                except Exception as e:
-                    logger.debug(f"Failed to resolve SNAPSHOT from {repo_pointer}: {e}")
-                    continue
-        
-        # If we couldn't resolve the SNAPSHOT version, fall back to V1
-        if resolved_version == version:
-            logger.warning(f"Could not resolve SNAPSHOT, falling back to V1")
-            return await _check_artifact_v1_async(app, artifact_extension, version, cred=cred, classifier="")
-
-    # Create registry-specific searcher (AWS, GCP, Artifactory, Nexus)
     try:
         searcher = await loop.run_in_executor(None, CloudAuthHelper.create_maven_searcher, app.registry, env_creds)
     except KeyError as e:
@@ -472,14 +424,12 @@ async def _check_artifact_v2_async(app: Application, artifact_extension: FileExt
         logger.error(f"V2 fallback for '{app.name}': Failed to create searcher - {e}", exc_info=True)
         return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
 
-    # Build artifact identifier (use base SNAPSHOT version for search APIs)
-    artifact_string = f"{app.group_id}:{app.artifact_id}:{search_version}"
+    # Build artifact identifier — pass version as-is; the library resolves SNAPSHOTs internally
+    artifact_string = f"{app.group_id}:{app.artifact_id}:{version}"
     maven_artifact = MavenArtifact.from_string(artifact_string)
     maven_artifact.extension = artifact_extension.value
 
     logger.info(f"V2 searching: {artifact_string}.{artifact_extension.value}")
-    if resolved_version != search_version:
-        logger.info(f"V2 resolved version for download: {resolved_version}")
 
     max_retries = 2
     last_error = None
