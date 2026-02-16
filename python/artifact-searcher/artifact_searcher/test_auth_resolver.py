@@ -101,6 +101,7 @@ class TestAWSAuthentication:
         mock_creds.session_token = "token"
         mock_aws_provider.return_value.with_direct_credentials.return_value.get_credentials.return_value = mock_creds
         
+        # Mock boto3 client to return token in correct format
         mock_client = MagicMock()
         mock_client.get_authorization_token.return_value = {"authorizationToken": "aws_token_123"}
         fake_boto3.client.return_value = mock_client
@@ -156,7 +157,16 @@ class TestAWSAuthentication:
         with pytest.raises(ValueError, match="AWS authConfig must specify 'awsRegion'"):
             resolve_v2_auth_headers(base_registry_v2, env_creds)
 
-    def test_aws_missing_domain(self, base_registry_v2, env_creds):
+    def test_aws_missing_domain(self, base_registry_v2, env_creds, monkeypatch):
+        # Mock modules to prevent ImportError
+        fake_aws_creds = MagicMock()
+        fake_boto3 = MagicMock()
+        fake_botocore_config = MagicMock()
+        
+        monkeypatch.setitem(sys.modules, 'qubership_pipelines_common_library.v2.artifacts_finder.auth.aws_credentials', fake_aws_creds)
+        monkeypatch.setitem(sys.modules, 'boto3', fake_boto3)
+        monkeypatch.setitem(sys.modules, 'botocore.config', fake_botocore_config)
+        
         base_registry_v2.auth_config = {
             "aws-auth": AuthConfig(
                 credentials_id="aws-cred",
@@ -170,7 +180,16 @@ class TestAWSAuthentication:
         with pytest.raises(ValueError, match="AWS authConfig must specify 'awsDomain'"):
             resolve_v2_auth_headers(base_registry_v2, env_creds)
 
-    def test_aws_missing_credentials(self, base_registry_v2, env_creds):
+    def test_aws_missing_credentials(self, base_registry_v2, env_creds, monkeypatch):
+        # Mock modules to prevent ImportError
+        fake_aws_creds = MagicMock()
+        fake_boto3 = MagicMock()
+        fake_botocore_config = MagicMock()
+        
+        monkeypatch.setitem(sys.modules, 'qubership_pipelines_common_library.v2.artifacts_finder.auth.aws_credentials', fake_aws_creds)
+        monkeypatch.setitem(sys.modules, 'boto3', fake_boto3)
+        monkeypatch.setitem(sys.modules, 'botocore.config', fake_botocore_config)
+        
         env_creds["aws-cred"]["data"] = {"username": "access_key"}
         
         base_registry_v2.auth_config = {
@@ -184,7 +203,7 @@ class TestAWSAuthentication:
         }
         base_registry_v2.maven_config.auth_config = "aws-auth"
         
-        with pytest.raises(ValueError, match="AWS auth requires both username .* and password"):
+        with pytest.raises(ValueError, match="AWS .* auth requires both username .* and password"):
             resolve_v2_auth_headers(base_registry_v2, env_creds)
 
 
