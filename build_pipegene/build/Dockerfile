@@ -12,7 +12,7 @@ COPY python /python
 COPY schemas /module/schemas
 COPY base_modules/scripts /module/scripts
 COPY build_pipegene/scripts /module/scripts
-COPY scripts/utils /module/scripts/scripts/utils/
+COPY scripts/utils /module/scripts/utils/
 COPY build_pipegene/pipegene_plugins /module/scripts/pipegene_plugins
 
 # Install pipegene-specific Python packages
@@ -56,6 +56,7 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
 
+ENV PYTHONPATH=/module
 USER ci:ci
 WORKDIR /module/scripts
 CMD ["bash"]
