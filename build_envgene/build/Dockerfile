@@ -1,4 +1,5 @@
 # checkov:skip=CKV_DOCKER_3:This build container requires root privileges for CI/CD operations
+# checkov:skip=CKV_DOCKER_8:Root required for workspace write (shutil.copy2 utime) in CI/CD
 # checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
 
 #########################################
@@ -78,7 +79,7 @@ RUN chown -R ci:ci /module /build_env /cloud_passport /scripts
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
 
-# checkov:skip=CKV_DOCKER_3 documents this requirement
+# checkov:skip=CKV_DOCKER_8:Root required for workspace write in CI/CD
 USER root
 WORKDIR /module/scripts
 CMD ["bash"]
