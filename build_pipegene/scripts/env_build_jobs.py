@@ -7,8 +7,9 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
                           tags):
     logger.info(f'prepare env_build job for {full_env}')
 
-    script = []
-    script.append('cd /build_env; python3 /build_env/scripts/build_env/main.py')
+    script = [
+        'cd /build_env; python3 /build_env/scripts/build_env/main.py'
+    ]
 
     if is_template_test:
         script.append('env_name=$(cat "$CI_PROJECT_DIR/set_variable.txt")')
