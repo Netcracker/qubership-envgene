@@ -14,6 +14,7 @@ from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
+TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
 
 yml = create_yaml_processor()
 
@@ -127,10 +128,10 @@ class EnvGenerator:
         env_tmpl_final_path = env_template_path
         if env_template_path.suffix.endswith("j2"):
             logger.info(f"Template descriptor is {env_template_path}, rendering required")
-            env_tmpl_final_path = env_template_path.suffix.removesuffix("j2")
+            env_tmpl_final_path = str(env_template_path).removesuffix(".j2")
             self.render_from_file_to_file(env_template_path, env_tmpl_final_path)
 
-        check_env_definition_is_valid_or_fail(env_tmpl_final_path, SCHEMAS_DIR)
+        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, TD_SCHEMA)
         env_template = openYaml(filePath=env_tmpl_final_path, safe_load=True)
         logger.info(f"env_template = {env_template}")
         self.ctx.current_env_template = env_template
