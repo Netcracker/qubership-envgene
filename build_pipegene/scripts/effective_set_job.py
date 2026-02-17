@@ -35,7 +35,8 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     script = [
         '/module/scripts/handle_certs.sh',
         # cert handling for java
-        'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/ && cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/default_cert.pem"',
+        'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/',
+        'if [ -f /default_cert.pem ]; then cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/"; fi',
         'for cert in "${CI_PROJECT_DIR}/configuration/certs/*" ; do [ -f "$cert" ] && keytool -import -trustcacerts -alias "$(basename "$cert")" -file "$cert" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done',
         'python3 /module/scripts/main.py decrypt_cred_files',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p {app_defs_path} && cp -rf {artifact_app_defs_path}/* {app_defs_path}',
