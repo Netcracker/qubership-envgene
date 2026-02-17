@@ -84,9 +84,6 @@ COPY scripts/build_env/ /build_env/scripts/build_env/
 COPY build_effective_set_generator/scripts/ /module/scripts/
 COPY scripts/utils/ /module/scripts/utils/
 
-# cert script should be moved to scripts/utils/
-COPY build_envgene/scripts/handle_certs.sh /module/scripts/
-
 # User creation + permissions
 RUN addgroup ci && \
     adduser -D -h /module/ -s /bin/bash -G ci ci && \
