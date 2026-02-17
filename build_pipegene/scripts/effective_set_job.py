@@ -33,7 +33,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
     script = [
-        '/module/scripts/handle_certs.sh',
         # cert handling for java
         'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/ && cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/default_cert.pem"',
         'for cert in "${CI_PROJECT_DIR}/configuration/certs/*" ; do [ -f "$cert" ] && keytool -import -trustcacerts -alias "$(basename "$cert")" -file "$cert" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done',

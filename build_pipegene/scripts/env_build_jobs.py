@@ -7,9 +7,7 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
                           tags):
     logger.info(f'prepare env_build job for {full_env}')
 
-    script = [
-        '/module/scripts/handle_certs.sh',
-    ]
+    script = []
     script.append('cd /build_env; python3 /build_env/scripts/build_env/main.py')
 
     if is_template_test:
@@ -62,7 +60,6 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
         "image": '${envgen_image}',
         "stage": 'git_commit',
         "script": [
-            '/module/scripts/handle_certs.sh',
             '/module/scripts/git_commit.sh',
             "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
             'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',

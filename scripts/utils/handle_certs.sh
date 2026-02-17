@@ -15,7 +15,7 @@ fi
 if [ ! -d "$certs_dir" ] || ! find "$certs_dir" -mindepth 1 -print -quit >/dev/null 2>&1; then
   if [ -f "$default_cert" ]; then
     # shellcheck disable=SC1091
-    . /module/scripts/update_ca_cert.sh "$default_cert"
+    . /module/scripts/utils/update_ca_cert.sh "$default_cert"
   else
     log "No certificates found and default certificate does not exist: $default_cert"
   fi
@@ -23,6 +23,6 @@ else
   # Iterate files safely (handles spaces/newlines)
   while IFS= read -r -d '' cert; do
     # shellcheck disable=SC1091
-    . /module/scripts/update_ca_cert.sh "$cert"
+    . /module/scripts/utils/update_ca_cert.sh "$cert"
   done < <(find "$certs_dir" -mindepth 1 -maxdepth 1 -type f -print0)
 fi

@@ -277,7 +277,7 @@ jobs:
               source /module/venv/bin/activate
               echo 'Executing APP_REG_DEF_PROCESS...'
               python3 /module/scripts/utils/log_pipe_params.py
-              /module/scripts/handle_certs.sh
+              /module/scripts/utils/handle_certs.sh
               python3 /build_env/scripts/build_env/env_template/set_template_version.py
               python3 /build_env/scripts/build_env/appregdef_render.py
             "
@@ -305,7 +305,7 @@ jobs:
               source /module/venv/bin/activate
 
               echo 'Executing PROCESS_SD...'
-              /module/scripts/handle_certs.sh
+              /module/scripts/utils/handle_certs.sh
               base_env_path=\"\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}\"
               app_defs_path=\"\${base_env_path}/AppDefs\"
               reg_defs_path=\"\${base_env_path}/RegDefs\"
@@ -337,7 +337,7 @@ jobs:
               source /module/venv/bin/activate
               echo 'Executing ENV_BUILD...'
               python /module/scripts/utils/log_pipe_params.py
-              /module/scripts/handle_certs.sh
+              /module/scripts/utils/handle_certs.sh
               cd /build_env; python3 /build_env/scripts/build_env/main.py
             "
 
@@ -363,7 +363,7 @@ jobs:
             bash -c "
               echo 'Executing effective set generation...'
               source /module/venv/bin/activate
-              /module/scripts/handle_certs.sh
+              /module/scripts/utils/handle_certs.sh
               mkdir -p \"\${CI_PROJECT_DIR}/configuration/certs\"
               [ -f /default_cert.pem ] && cp /default_cert.pem \"\${CI_PROJECT_DIR}/configuration/certs/default_cert.pem\" || true
               for cert in \"\${CI_PROJECT_DIR}/configuration/certs/\"*; do [ -f \"\$cert\" ] && keytool -import -trustcacerts -alias \"\$(basename \"\$cert\")\" -file \"\$cert\" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done
@@ -412,7 +412,7 @@ jobs:
             bash -c "
               source /module/venv/bin/activate
               echo 'Prepare git_commit job for \${ENVIRONMENT_NAME}...'
-              /module/scripts/handle_certs.sh
+              /module/scripts/utils/handle_certs.sh
               # Execute git commit with proper error handling
               echo 'Executing git commit operations...'
               /module/scripts/git_commit.sh
