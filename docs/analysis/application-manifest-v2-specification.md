@@ -159,8 +159,6 @@ Properties are key-value pairs stored in the `properties` array:
 | `name`    | string                                 | Yes       | Property name                                |
 | `value`   | string\|number\|boolean\|object\|array | Yes       | Property value. Type depends on the property |
 
-Properties with the prefix `nc:dd:*` are used for bidirectional transformation between DD and AMv2. These properties preserve DD field values to allow complete restoration of the original DD from AMv2. See component-specific sections for detailed property descriptions.
-
 #### Hash Attributes
 
 Hashes are used for component verification:
@@ -258,16 +256,7 @@ Represents an application component that, after deployment to the cloud, runs co
   "bom-ref": "standalone-runnable-ref-123",
   "name": "application-name",
   "version": "application-version",
-  "properties": [
-    {
-      "name": "nc:dd:metadata:descriptorFormat",
-      "value": "1.21"
-    },
-    {
-      "name": "nc:dd:metadata:builderVersion",
-      "value": "dd-plugin/1.0.0"
-    }
-  ],
+  "properties": [],
   "components": []
 }
 ```
@@ -496,35 +485,9 @@ Represents a Docker image artifact that contains containerized application code.
 | `group`         | string | yes       | `""`                           | Group or namespace for the image (empty string if none)    |
 | `version`       | string | yes       | None                           | Docker image version (tag)                                 |
 | `purl`          | string | yes       | None                           | Package URL (PURL) for the image                           |
-| `hashes`        | array  | yes       | `[]`                           | List of hashes for the image (empty array if none)         |
+| `hashes`        | array  | no        | None                           | List of hashes for the image (optional)                    |
 | `hashes.alg`    | string | yes       | None                           | Hash algorithm, e.g., "SHA-256" (required if hash present) |
 | `hashes.content`| string | yes       | None                           | Hash value as a hex string (required if hash present)      |
-| `properties`    | array  | no        | `[]`                           | Array of property objects. See Properties below            |
-| `components`    | array  | yes       | `[]`                           | Always `[]`                                                |
-
-**Properties:**
-
-| Property Name                 | Type    | Mandatory | Description                                                                                                                                                          |
-|-------------------------------|---------|-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `nc:dd:image_type`            | string  | No        | Service type. Value `service` for Docker images associated with service Helm charts, `image` for standalone Docker images. Preserved from `DD.services[].image_type` |
-| `nc:dd:service_name`          | string  | No        | Service name. Preserved from `DD.services[].service_name`                                                                                                            |
-| `nc:dd:version`               | string  | No        | Service version. Preserved from `DD.services[].version`                                                                                                              |
-| `nc:dd:docker_registry`       | string  | No        | Docker registry URL. Preserved from `DD.services[].docker_registry`                                                                                                  |
-| `nc:dd:docker_repository_name`| string  | No        | Repository/group name. Preserved from `DD.services[].docker_repository_name`                                                                                         |
-| `nc:dd:docker_tag`            | string  | No        | Docker image tag. Preserved from `DD.services[].docker_tag`                                                                                                          |
-| `nc:dd:docker_digest`         | string  | No        | Docker image digest. Preserved from `DD.services[].docker_digest`                                                                                                    |
-| `nc:dd:full_image_name`       | string  | No        | Full Docker image reference. Preserved from `DD.services[].full_image_name`                                                                                          |
-| `nc:dd:deploy_param`          | string  | No        | Deployment parameters for standalone Docker images. Preserved from `DD.services[].deploy_param`                                                                      |
-| `nc:dd:git_url`               | string  | No        | Git repository URL. Preserved from `DD.services[].git_url`                                                                                                           |
-| `nc:dd:git_branch`            | string  | No        | Git branch name. Preserved from `DD.services[].git_branch`                                                                                                           |
-| `nc:dd:git_revision`          | string  | No        | Git commit revision. Preserved from `DD.services[].git_revision`                                                                                                     |
-| `nc:dd:qualifier`             | string  | No        | Chart qualifier. Preserved from `DD.services[].qualifier`                                                                                                            |
-| `nc:dd:build_id_dtrust`       | string  | No        | Build ID from DTrust. Preserved from `DD.services[].build_id_dtrust`                                                                                                 |
-| `nc:dd:promote_artifacts`     | boolean | No        | Promote artifacts flag. Preserved from `DD.services[].promote_artifacts`                                                                                             |
-| `nc:dd:includeFrom`           | string  | No        | Source descriptor reference. Preserved from `DD.services[].includeFrom`                                                                                              |
-
-> [!NOTE]
-> The list above is an example set of commonly seen DD attributes. All attributes from `DD.services[]` are copied as-is with prefix `nc:dd:<attribute-name>`, so the exact set depends on the source DD.
 
 ```json
 {
@@ -535,25 +498,12 @@ Represents a Docker image artifact that contains containerized application code.
   "group": "repository-group",
   "version": "image-tag",
   "purl": "pkg:docker/group/image-name@version?registry_id=registry",
-  "properties": [
+  "hashes": [
     {
-      "name": "nc:dd:image_type",
-      "value": "image"
-    },
-    {
-      "name": "nc:dd:service_name",
-      "value": "service-name"
-    },
-    {
-      "name": "nc:dd:docker_registry",
-      "value": "registry.example.com"
-    },
-    {
-      "name": "nc:dd:full_image_name",
-      "value": "registry.example.com/repository-group/image-name:image-tag"
+      "alg": "SHA-256",
+      "content": "abc123..."
     }
-  ],
-  "components": []
+  ]
 }
 ```
 
@@ -618,20 +568,6 @@ Root components of this type describe Helm Chart artifact, nested helm charts de
 |------------------------------------------|---------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `isLibrary`                              | boolean | Yes       | Indicates if the chart is a library chart. Value `true` for library charts, `false` for application charts                                                               |
 | `nc:helm.values.artifactMappings`        | object  | No        | Maps Docker image bom-refs to Helm values paths. Used to specify how Docker images should be referenced in Helm chart values. See nc:helm.values.artifactMappings bellow |
-| `nc:dd:type`                             | string  | No        | Chart type. Value `"app-chart"` for app-chart (umbrella chart) components. Preserved from `DD.charts[].type`                                                             |
-| `nc:dd:helm_chart_name`                  | string  | No        | Helm chart name. Preserved from `DD.charts[].helm_chart_name` (if provided)                                                                                              |
-| `nc:dd:helm_chart_version`               | string  | No        | Helm chart version from DD. Preserved from `DD.charts[].helm_chart_version`                                                                                              |
-| `nc:dd:helm_registry`                    | string  | No        | Helm registry URL. Preserved from `DD.charts[].helm_registry`                                                                                                            |
-| `nc:dd:full_chart_name`                  | string  | No        | Full Helm chart reference. Preserved from `DD.charts[].full_chart_name`                                                                                                  |
-| `nc:dd:qualifier`                        | string  | No        | Chart qualifier. Preserved from `DD.charts[].qualifier`                                                                                                                  |
-| `nc:dd:version`                          | string  | No        | Chart version. Preserved from `DD.charts[].version`                                                                                                                      |
-| `nc:dd:git_url`                          | string  | No        | Git repository URL. Preserved from `DD.charts[].git_url`                                                                                                                 |
-| `nc:dd:git_branch`                       | string  | No        | Git branch name. Preserved from `DD.charts[].git_branch`                                                                                                                 |
-| `nc:dd:git_revision`                     | string  | No        | Git commit revision. Preserved from `DD.charts[].git_revision`                                                                                                           |
-| `nc:dd:promote_artifacts`                | boolean | No        | Promote artifacts flag. Preserved from `DD.charts[].promote_artifacts`                                                                                                   |
-
-> [!NOTE]
-> The list above is an example set of commonly seen DD chart attributes. All attributes from `DD.charts[]` are copied as-is with prefix `nc:dd:<attribute-name>`, so the exact set depends on the source DD.
 
 ```json
 {
@@ -652,10 +588,6 @@ Root components of this type describe Helm Chart artifact, nested helm charts de
           "valuesPathPrefix": "images.service1"
         }
       }
-    },
-    {
-      "name": "nc:dd:type",
-      "value": "app-chart"
     }
     }
   ],
