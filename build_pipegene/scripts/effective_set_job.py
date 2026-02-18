@@ -45,7 +45,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     ]
 
     cmdb_cli_cmd_call = [
-        f"/deployments/run-java.sh --env-id={full_env_name}",
+        f"/module/scripts/utils/entrypoint.sh --env-id={full_env_name}",
         "--envs-path=$CI_PROJECT_DIR/environments",
         f"--output=$CI_PROJECT_DIR/environments/{full_env_name}/effective-set"
     ]
