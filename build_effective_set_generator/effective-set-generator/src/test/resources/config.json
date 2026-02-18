@@ -1,0 +1,8 @@
+{
+  "deployment": {
+    "one": "one"
+  },
+  "runtime": {
+    "password": "test"
+  }
+}
