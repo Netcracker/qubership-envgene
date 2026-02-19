@@ -29,6 +29,7 @@ import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverte
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Node;
@@ -37,6 +38,7 @@ import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.*;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -129,6 +131,36 @@ public class FileDataConverterImpl implements FileDataConverter {
                 } else {
                     return super.representScalar(tag, value, style);
                 }
+            }
+
+            {
+                this.representers.put(Parameter.class, data -> {
+                    Parameter param = (Parameter) data;
+
+                    Node valueNode;
+
+                    Object val = param.getValue();
+                    boolean multiline = val instanceof String s && s.contains("\n");
+
+                    // Use literal style for multiline strings
+                    if (multiline) {
+                        valueNode = super.representScalar(Tag.STR, val.toString(), DumperOptions.ScalarStyle.LITERAL);
+                        // Block comment above node (classic SnakeYAML 1.x uses CommentLine)
+//                        valueNode.setBlockComments(Collections.singletonList(
+//                                new org.yaml.snakeyaml.comments.CommentLine(null, null, param.getOrigin(), org.yaml.snakeyaml.comments.CommentType.BLOCK)
+//                        ));
+                    } else {
+                        valueNode = super.representData(val);
+                        // Inline comment for single-line values
+//                        if (param.getOrigin() != null && !param.getOrigin().isBlank()) {
+//                            valueNode.setInLineComments(Collections.singletonList(
+//                                    new org.yaml.snakeyaml.comments.CommentLine(null, null, param.getOrigin(), org.yaml.snakeyaml.comments.CommentType.IN_LINE)
+//                            ));
+//                        }
+                    }
+
+                    return valueNode;
+                });
             }
 
 
