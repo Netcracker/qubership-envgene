@@ -29,6 +29,7 @@ import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverte
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Node;
@@ -37,6 +38,7 @@ import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.*;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -99,6 +101,18 @@ public class FileDataConverterImpl implements FileDataConverter {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             if (params != null && !params.isEmpty()) {
                 getYamlObject().dump(params, writer);
+            }
+        }
+    }
+
+    public void writeToFileWithTraceability(Map<String, Object> params, boolean enableTraceability,
+                                            String fileName, String... args) throws IOException {
+        File file = fileSystemUtils.getFileFromGivenPath(args);
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            if (params != null && !params.isEmpty()) {
+                TraceableYamlDumper dumper = new TraceableYamlDumper(enableTraceability, fileName);
+                String yamlContent = dumper.dump(params);
+                writer.write(yamlContent);
             }
         }
     }
