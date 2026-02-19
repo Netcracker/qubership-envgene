@@ -185,7 +185,7 @@ class EnvGenerator:
         elif ns_name == peer_name:
             ns_template_name += "-peer"
         logger.debug(f'After appending the ns name : {ns_template_name}')
-        return ns_template_name 
+        return ns_template_name
 
     def generate_solution_structure(self):
         sd_path_stem = f'{self.ctx.current_env_dir}/Inventory/solution-descriptor/sd'
@@ -382,35 +382,26 @@ class EnvGenerator:
 
     def render_app_defs(self):
         for def_tmpl_path in self.ctx.appdef_templates:
-            app_def_str = openFileAsString(def_tmpl_path)
-            matches = re.findall(
-                r'^\s*(name|artifactId|groupId):\s*"([^"]+)"',
-                app_def_str,
-                flags=re.MULTILINE,
-            )
-            appdef_meta = dict(matches)
-            ensure_valid_fields(appdef_meta, ["artifactId", "groupId", "name"])
-            group_id = appdef_meta["groupId"]
-            artifact_id = appdef_meta["artifactId"]
+            app_def = self.render_from_file_to_obj(def_tmpl_path)
+            ensure_valid_fields(app_def, ["artifactId", "groupId", "name"])
+
+            app_name = app_def.get("name")
+            group_id = app_def["groupId"]
+            artifact_id = app_def["artifactId"]
+
             self.ctx.update({
                 "app_lookup_key": f"{group_id}:{artifact_id}",
                 "groupId": group_id,
                 "artifactId": artifact_id,
             })
-            app_def_trg_path = f"{self.ctx.current_env_dir}/AppDefs/{appdef_meta.get("name")}.yml"
-            self.render_from_file_to_file(def_tmpl_path, app_def_trg_path)
+            app_def_trg_path = f"{self.ctx.current_env_dir}/AppDefs/{app_name}.yml"
+            writeYamlToFile(app_def_trg_path, app_def)
 
     def render_reg_defs(self):
         for def_tmpl_path in self.ctx.regdef_templates:
-            reg_def_str = openFileAsString(def_tmpl_path)
-            matches = re.findall(
-                r'^\s*(name):\s*"([^"]+)"',
-                reg_def_str,
-                flags=re.MULTILINE,
-            )
-            regdef_meta = dict(matches)
-            ensure_valid_fields(regdef_meta, ["name"])
-            reg_def_trg_path = f"{self.ctx.current_env_dir}/RegDefs/{regdef_meta['name']}.yml"
+            reg_def = self.render_from_file_to_obj(def_tmpl_path)
+            ensure_valid_fields(reg_def, ["name"])
+            reg_def_trg_path = f"{self.ctx.current_env_dir}/RegDefs/{reg_def.get('name')}.yml"
             self.render_from_file_to_file(def_tmpl_path, reg_def_trg_path)
 
     def set_appreg_def_overrides(self):
