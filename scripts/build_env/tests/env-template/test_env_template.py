@@ -207,5 +207,5 @@ class TestEnvTemplate:
 
         process_env_template()
 
-        assert len(responses.calls) == 4
-        assert responses.calls[3].request.url == tmpl_zip_url
+        assert len(responses.calls) == 5  # Now tries direct -SNAPSHOT URL as fallback when metadata 404
+        assert responses.calls[4].request.url == tmpl_zip_url

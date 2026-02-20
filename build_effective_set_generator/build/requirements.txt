@@ -2,18 +2,14 @@
 PyGithub==1.55
 certifi==2022.6.15
 
-boto3==1.29.3
-botocore==1.32.3
 gcip==3.0.2
 jmespath==1.0.1
 packaging==23.2
 python-dateutil==2.8.2
-PyYAML==6.0.1
-s3transfer==0.7.0
+PyYAML>=6.0.2
 setuptools-git-versioning==1.13.5
 six==1.16.0
 toml==0.10.2
-urllib3==2.0.7
 lxml==4.9.3
 ruamel.yaml==0.18.5
 ruamel.yaml.clib==0.2.8
@@ -30,3 +26,7 @@ cryptography==41.0.3
 click==8.1.7
 deepmerge==2.0
 flatten_dict==0.4.2
+
+# V2 RegDef authentication support (GCP/AWS)
+google-auth~=2.34.0
+qubership-pipelines-common-library @ git+https://github.com/Netcracker/qubership-pipelines-common-python-library.git@main

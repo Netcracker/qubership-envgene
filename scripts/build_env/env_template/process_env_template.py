@@ -4,7 +4,8 @@ import tempfile
 from pathlib import Path
 
 from artifact_searcher import artifact
-from artifact_searcher.utils.models import FileExtension, Credentials, Registry, Application
+from artifact_searcher.auth_resolver import resolve_v2_auth_headers
+from artifact_searcher.utils.models import FileExtension, Credentials, Registry, RegistryV2, Application
 from env_template.template_testing import run_env_test_setup
 from envgenehelper import getEnvDefinition, fetch_cred_value, getAppDefinitionPath
 from envgenehelper import openYaml, getenv_with_error, logger
@@ -65,11 +66,22 @@ def resolve_artifact_new_logic(env_definition: dict, template_dest: str) -> str:
     if not artifact_path:
         raise FileNotFoundError(f"No artifact definition file found for {app_name} with .yaml or .yml extension")
     app_def = Application.model_validate(openYaml(artifact_path))
-    cred = get_registry_creds(app_def.registry)
+
+    cred = None
+    auth_headers = None
+    if isinstance(app_def.registry, RegistryV2):
+        env_creds = render_creds()
+        if not env_creds:
+            raise ValueError("Decrypted credentials unavailable for V2 registry")
+        auth_headers = resolve_v2_auth_headers(app_def.registry, env_creds)
+    else:
+        cred = get_registry_creds(app_def.registry)
+
     template_url = None
 
     resolved_version = app_version
-    dd_artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.JSON, app_version, cred))
+    dd_artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.JSON, app_version,
+                                                                  cred=cred, auth_headers=auth_headers))
     if dd_artifact_info:
         logger.info("Loading environment template artifact info from deployment descriptor...")
         dd_url, dd_repo = dd_artifact_info
@@ -77,7 +89,7 @@ def resolve_artifact_new_logic(env_definition: dict, template_dest: str) -> str:
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(dd_url, app_version)
 
-        dd_config = artifact.download_json_content(dd_url, cred)
+        dd_config = artifact.download_json_content(dd_url, cred=cred, auth_headers=auth_headers)
         group_id, artifact_id, version = parse_maven_coord_from_dd(dd_config)
         logger.info(
             f"Parsed maven coordinates: group_id={group_id}, artifact_id={artifact_id}, version={version} from dd")
@@ -85,19 +97,21 @@ def resolve_artifact_new_logic(env_definition: dict, template_dest: str) -> str:
             raise ValueError(f"Invalid maven coordinates from deployment descriptor {dd_url}")
 
         repo_url = dd_config.get("configurations", [{}])[0].get("maven_repository") or dd_repo
-        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP, cred)
+        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP,
+                                                cred=cred, auth_headers=auth_headers)
         validate_url(template_url, group_id, artifact_id, version)
     else:
         logger.info("Loading environment template artifact from zip directly...")
         group_id, artifact_id, version = app_def.group_id, app_def.artifact_id, app_version
-        artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version, cred))
+        artifact_info = asyncio.run(artifact.check_artifact_async(app_def, FileExtension.ZIP, app_version,
+                                                                   cred=cred, auth_headers=auth_headers))
         if artifact_info:
             template_url, _ = artifact_info
         validate_url(template_url, group_id, artifact_id, version)
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(template_url, app_version)
     logger.info(f"Environment template url has been resolved: {template_url}")
-    artifact.download(template_url, ARTIFACT_DEST, cred)
+    artifact.download(template_url, ARTIFACT_DEST, cred=cred, auth_headers=auth_headers)
     unpack_archive(ARTIFACT_DEST, template_dest)
     return resolved_version
 

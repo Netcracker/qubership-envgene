@@ -9,6 +9,7 @@ from pathlib import Path
 import envgenehelper as helper
 import yaml
 from artifact_searcher import artifact
+from artifact_searcher.auth_resolver import resolve_v2_auth_headers
 from artifact_searcher.utils import models as artifact_models
 from envgenehelper.business_helper import getenv_and_log, getenv_with_error
 from envgenehelper.env_helper import Environment
@@ -296,17 +297,25 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
 
 
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
-    if 'SNAPSHOT' in version:
-        raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
-    # TODO: check if job would fail without plugins
+    # SNAPSHOT versions are supported via maven-metadata.xml resolution in artifact-searcher
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
-    artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version))
+    cred = None
+    auth_headers = None
+    if isinstance(app_def.registry, artifact_models.RegistryV2):
+        env_creds = helper.get_cred_config()
+        if not env_creds:
+            raise ValueError("Decrypted credentials unavailable for V2 registry")
+        auth_headers = resolve_v2_auth_headers(app_def.registry, env_creds)
+
+    artifact_info = asyncio.run(
+        artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,
+                                       auth_headers=auth_headers))
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')
     sd_url, _ = artifact_info
-    return artifact.download_json_content(sd_url)
+    return artifact.download_json_content(sd_url, auth_headers=auth_headers)
 
 
 def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> artifact_models.Application:
@@ -317,7 +326,7 @@ def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> art
     app_def_path = identify_yaml_extension(f"{APP_DEFS_PATH}/{app_name}")
     app_dict = helper.openYaml(app_def_path)
     reg_def_path = identify_yaml_extension(f"{REG_DEFS_PATH}/{app_dict['registryName']}")
-    app_dict['registry'] = artifact_models.Registry.model_validate(helper.openYaml(reg_def_path))
+    app_dict['registry'] = artifact_models.parse_registry(helper.openYaml(reg_def_path))
     app_def = artifact_models.Application.model_validate(app_dict)
     return app_def
 
