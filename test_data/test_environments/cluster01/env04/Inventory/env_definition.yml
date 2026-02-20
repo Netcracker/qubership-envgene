@@ -6,7 +6,10 @@ inventory:
   cloudPassport: ""
 envTemplate:
   name: "test-template-2"
-  additionalTemplateVariables: {}
+  additionalTemplateVariables:
+    namespaces:
+      app:
+        enabled: true
   templateArtifact:
     registry: "artifactory"
     repository: "snapshotRepository"
