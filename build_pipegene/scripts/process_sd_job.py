@@ -15,16 +15,14 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, artif
     reg_defs_path = f"{base_env_path}/RegDefs"
     
     script = [
-        'bash /module/scripts/handle_certs.sh',
-        'source ~/.bashrc',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p {app_defs_path} && cp -rf {artifact_app_defs_path}/* {app_defs_path}',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p {reg_defs_path} && cp -fr {artifact_reg_defs_path}/* {reg_defs_path}',
-        'python3 /module/scripts/process_sd.py',
+        'python3 /build_env/scripts/build_env/process_sd.py',
     ]
 
     process_sd_set_params = {
         "name": f'process_sd.{full_env}',
-        "image": '${effective_set_generator_image}',
+        "image": '${envgen_image}',
         "stage": 'process_sd',
         "script": script
     }
@@ -34,7 +32,7 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, artif
         "ENVIRONMENT_NAME": environment_name,
         "ENV_NAME": environment_name,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
-        "effective_set_generator_image": "$effective_set_generator_image",
+        "envgen_image": "$envgen_image",
         "envgen_args": " -vv",
         "envgen_debug": "true",
         "GITLAB_RUNNER_TAG_NAME": tags,
