@@ -4,6 +4,7 @@ import re
 import shutil
 import tempfile
 import xml.etree.ElementTree as ET
+from functools import partial
 from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urljoin, urlparse, urlunparse
@@ -12,12 +13,29 @@ from zipfile import ZipFile
 import aiohttp
 import requests
 from aiohttp import BasicAuth
+from requests.auth import HTTPBasicAuth
+
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT, METADATA_XML
 from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
 from envgenehelper import logger
-from requests.auth import HTTPBasicAuth
+
+try:
+    from qubership_pipelines_common_library.v1.maven_client import Artifact as MavenArtifact
+except ImportError:
+    MavenArtifact = None
+
+try:
+    from artifact_searcher.cloud_auth_helper import CloudAuthHelper
+except ImportError:
+    CloudAuthHelper = None
 
 WORKSPACE = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
+
+# V2 timeouts for cloud registries
+V2_SEARCH_TIMEOUT = 60  # Timeout for find_artifact_urls
+V2_DOWNLOAD_TIMEOUT = 120  # Timeout for download_artifact
+V2_HTTP_TIMEOUT = (30, 60)  # (connect, read) for HTTP requests
+
 
 
 def convert_nexus_repo_url_to_index_view(url: str) -> str:
@@ -27,7 +45,6 @@ def convert_nexus_repo_url_to_index_view(url: str) -> str:
 
     if not parts or parts[-1] != "repository":
         return url
-
     # Build new path
     new_parts = parts[:-1] + ["service", "rest", "repository", "browse"]
     new_path = "/".join(new_parts) + "/"
@@ -81,7 +98,8 @@ async def resolve_snapshot_version_async(
                 stop_snapshot_event_for_others.set()
                 logger.info(
                     f"[Task {task_id}] [Application: {app.name}: {version}] - Successfully fetched maven-metadata.xml: {metadata_url}")
-            return resolved_version, task_id
+                return resolved_version, task_id
+            return None
     except Exception as e:
         logger.warning(
             f"[Task {task_id}] [Application: {app.name}: {version}] - Error resolving snapshot version from {metadata_url}: {e}")
@@ -96,24 +114,43 @@ def _parse_snapshot_version(
         classifier: str = ""
 ) -> str | None:
     root = ET.fromstring(content)
+    
+    # Trying new-style <snapshotVersions> first (Maven 3+) if its not found then its switched to Old Style
     snapshot_versions = root.findall(".//snapshotVersions/snapshotVersion")
-    if not snapshot_versions:
-        logger.warning(f"[Application: {app.name}: {version}] - No <snapshotVersions> found")
-        return
-
-    for node in snapshot_versions:
-        node_classifier = node.findtext("classifier", default="")
-        node_extension = node.findtext("extension", default="")
-        value = node.findtext("value")
-        if node_classifier == classifier and node_extension == extension:
+    if snapshot_versions:
+        for node in snapshot_versions:
+            node_classifier = node.findtext("classifier", default="")
+            node_extension = node.findtext("extension", default="")
+            value = node.findtext("value")
+            if node_classifier == classifier and node_extension == extension.value:
+                logger.info(
+                    f"[Task {task_id}] [Application: {app.name}: {version}] - Resolved snapshot version '{value}'")
+                return value
+        logger.warning(f"[Task {task_id}] [Application: {app.name}: {version}] - No matching snapshotVersion found")
+        return None
+    
+    # Fallback to old-style <snapshot> metadata (Maven 2 / some Nexus repos)
+    snapshot_node = root.find(".//snapshot")
+    if snapshot_node is not None:
+        timestamp = snapshot_node.findtext("timestamp")
+        build_number = snapshot_node.findtext("buildNumber")
+        
+        if timestamp and build_number:
+            # Convert timestamp from "yyyyMMdd.HHmmss" format and build timestamped version
+            base_version = version.replace("-SNAPSHOT", "")
+            resolved = f"{base_version}-{timestamp}-{build_number}"
             logger.info(
-                f"[Task {task_id}] [Application: {app.name}: {version}] - Resolved snapshot version '{value}'")
-            return value
+                f"[Task {task_id}] [Application: {app.name}: {version}] - Resolved snapshot version '{resolved}' from old-style metadata")
+            return resolved
+        
+        logger.warning(f"[Task {task_id}] [Application: {app.name}: {version}] - <snapshot> found but missing timestamp or buildNumber")
+        return None
+    
+    logger.warning(f"[Application: {app.name}: {version}] - No <snapshotVersions> or <snapshot> found in metadata")
+    return None
 
-    logger.warning(f"[Task {task_id}] [Application: {app.name}: {version}] - No matching snapshotVersion found")
 
-
-def version_to_folder_name(version: str):
+def version_to_folder_name(version: str) -> str:
     """
     Normalizes version string for folder naming.
 
@@ -126,7 +163,6 @@ def version_to_folder_name(version: str):
     else:
         folder = version
     return folder
-
 
 def clean_temp_dir():
     if WORKSPACE.exists():
@@ -168,6 +204,10 @@ async def download_async(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
     Returns:
         ArtifactInfo: Object containing related information about the artifact
     """
+    if artifact_info.local_path:
+        logger.info(f"Artifact already downloaded: {artifact_info.local_path}")
+        return artifact_info
+
     url = artifact_info.url
     app_local_path = create_app_artifacts_local_path(artifact_info.app_name, artifact_info.app_version)
     artifact_local_path = os.path.join(app_local_path, os.path.basename(url))
@@ -181,7 +221,8 @@ async def download_async(session, artifact_info: ArtifactInfo) -> ArtifactInfo:
                 artifact_info.local_path = artifact_local_path
                 return artifact_info
             else:
-                logger.error(f"Download process with error {response.text}: {url}")
+                error_text = await response.text()
+                logger.error(f"Download process with error (status {response.status}): {url} - {error_text}")
     except Exception as e:
         logger.error(f"Download process with exception {url}: {e}")
 
@@ -225,6 +266,15 @@ async def check_artifact_by_full_url_async(
                 return full_url, repo
             logger.warning(
                 f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact not found at URL {full_url}, status: {response.status}")
+            
+            # Fallback: Try direct -SNAPSHOT filename if resolved version failed (Nexus compatibility)
+            if version.endswith("-SNAPSHOT") and resolved_version != version:
+                fallback_url = create_full_url(app, version, repo_value, artifact_extension, classifier)
+                async with session.head(fallback_url) as fallback_response:
+                    if fallback_response.status == 200:
+                        stop_artifact_event.set()
+                        logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - Artifact found with direct SNAPSHOT fallback: {fallback_url}")
+                        return fallback_url, repo
     except Exception as e:
         logger.warning(
             f"[Task {task_id}] [Application: {app.name}: {version}] - Error checking artifact URL {full_url}: {e}")
@@ -256,6 +306,7 @@ async def _attempt_check(
         classifier: str = ""
 ) -> Optional[tuple[str, tuple[str, str]]]:
     repos_dict = get_repo_value_pointer_dict(app.registry)
+    original_domain = app.registry.maven_config.repository_domain_name
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
 
@@ -263,64 +314,270 @@ async def _attempt_check(
     timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
     stop_snapshot_event_for_others = asyncio.Event()
     stop_artifact_event = asyncio.Event()
-    async with aiohttp.ClientSession(timeout=timeout, auth=auth) as session:
-        async with asyncio.TaskGroup() as tg:
-            tasks = [
-                tg.create_task(
-                    check_artifact_by_full_url_async(
-                        app,
-                        version,
-                        repo,
-                        artifact_extension,
-                        stop_snapshot_event_for_others,
-                        stop_artifact_event,
-                        session,
-                        i,
-                        classifier
+    try:
+        async with aiohttp.ClientSession(timeout=timeout, auth=auth) as session:
+            async with asyncio.TaskGroup() as tg:
+                tasks = [
+                    tg.create_task(
+                        check_artifact_by_full_url_async(
+                            app,
+                            version,
+                            repo,
+                            artifact_extension,
+                            stop_snapshot_event_for_others,
+                            stop_artifact_event,
+                            session,
+                            i,
+                            classifier
+                        )
                     )
-                )
-                for i, repo in enumerate(repos_dict.items())
-            ]
+                    for i, repo in enumerate(repos_dict.items())
+                ]
 
-        for task in tasks:
-            result = task.result()
-            if result is not None:
-                return result
+            for task in tasks:
+                result = task.result()
+                if result is not None:
+                    return result
+    finally:
+        # Always restore original repository domain to avoid persisting browse-index URL
+        if registry_url:
+            app.registry.maven_config.repository_domain_name = original_domain
 
 
 async def check_artifact_async(
         app: Application, artifact_extension: FileExtension, version: str, cred: Credentials | None = None,
-        classifier: str = "") -> Optional[tuple[str, tuple[str, str]]] | None:
+        classifier: str = "", env_creds: Optional[dict] = None) -> Optional[tuple[str, tuple[str, str]]] | None:
     """
     Resolves the full artifact URL and the first repository where it was found.
     Supports both release and snapshot versions.
-
     Returns:
         Optional[tuple[str, tuple[str, str]]]: A tuple containing:
             - str: Full URL to the artifact.
             - tuple[str, str]: A pair of (repository name, repository pointer/alias in CMDB).
             Returns None if the artifact could not be resolved
     """
+    registry_version = getattr(app.registry, 'version', "1.0")
+    if registry_version == "2.0":
+        logger.info(f"Detected RegDef V2 for {app.name}, attempting cloud-aware search")
+        try:
+            return await _check_artifact_v2_async(app, artifact_extension, version, env_creds)
+        except Exception as e:
+            logger.warning(f"V2 artifact search failed for {app.name}: {e}. Falling back to V1.")
+            return await _check_artifact_v1_async(app, artifact_extension, version, cred, classifier)
+    else:
+        logger.debug(f"Using V1 artifact search for {app.name} (version={registry_version})")
+        return await _check_artifact_v1_async(app, artifact_extension, version, cred, classifier)
 
-    result = await _attempt_check(app, version, artifact_extension, None, cred)
+
+async def _check_artifact_v2_async(app: Application, artifact_extension: FileExtension, version: str,
+                                   env_creds: Optional[dict]) -> Optional[tuple[str, tuple[str, str]]]:
+    """Search for artifacts using V2 cloud registry approach.
+    
+    Supports AWS CodeArtifact, GCP Artifact Registry, Artifactory, and Nexus via
+    MavenArtifactSearcher library. Falls back to V1 on failure.
+    
+    Returns:
+        (artifact_url, download_info) tuple or None
+    """
+    # V2 requires authConfig to know how to authenticate with the registry
+    if not getattr(app.registry.maven_config, 'auth_config', None):
+        logger.error(f"V2 fallback for '{app.name}': Registry '{app.registry.name}' version 2.0 missing maven_config.authConfig")
+        return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+
+    # Check optional V2 dependencies
+    if CloudAuthHelper is None or MavenArtifact is None:
+        missing = []
+        if CloudAuthHelper is None:
+            missing.append("artifact_searcher.cloud_auth_helper")
+        if MavenArtifact is None:
+            missing.append("qubership_pipelines_common_library.v1.maven_client.Artifact")
+        logger.error(f"V2 fallback for '{app.name}': Missing required libraries - {', '.join(missing)}")
+        return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+
+    auth_config = CloudAuthHelper.resolve_auth_config(app.registry, "maven")
+    if not auth_config:
+        logger.error(f"V2 fallback for '{app.name}': Could not resolve authConfig for registry '{app.registry.name}'")
+        return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+    
+    # AWS/GCP require credentials; Artifactory/Nexus support anonymous if provider is set
+    if auth_config.provider in ["aws", "gcp"]:
+        if not env_creds:
+            logger.error(f"V2 fallback for '{app.name}': {auth_config.provider} requires credentials but env_creds is empty")
+            return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+        if auth_config.credentials_id and auth_config.credentials_id not in env_creds:
+            logger.error(f"V2 fallback for '{app.name}': {auth_config.provider} credential '{auth_config.credentials_id}' not found in env_creds")
+            logger.error(f"Available credentials: {list(env_creds.keys())}")
+            return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+
+    logger.info(f"V2 search for {app.name} with provider={auth_config.provider}")
+    loop = asyncio.get_running_loop()
+
+    try:
+        searcher = await loop.run_in_executor(None, CloudAuthHelper.create_maven_searcher, app.registry, env_creds)
+    except KeyError as e:
+        logger.error(f"V2 fallback for '{app.name}': Credential not found - {e}")
+        return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+    except ValueError as e:
+        logger.error(f"V2 fallback for '{app.name}': Invalid configuration - {e}")
+        return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+    except Exception as e:
+        logger.error(f"V2 fallback for '{app.name}': Failed to create searcher - {e}", exc_info=True)
+        return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+
+    # Build artifact identifier — pass version as-is; the library resolves SNAPSHOTs internally
+    artifact_string = f"{app.group_id}:{app.artifact_id}:{version}"
+    maven_artifact = MavenArtifact.from_string(artifact_string)
+    maven_artifact.extension = artifact_extension.value
+
+    logger.info(f"V2 searching: {artifact_string}.{artifact_extension.value}")
+
+    max_retries = 2
+    last_error = None
+    local_path = None
+    maven_url = None
+
+    # Retry on transient errors (401, timeout, expired)
+    for attempt in range(max_retries):
+        try:
+            if attempt > 0:
+                # On retry, recreate the searcher in case credentials expired
+                logger.info(f"V2 retry {attempt} for {app.name} after 5s delay...")
+                await asyncio.sleep(5)
+                searcher = await loop.run_in_executor(None, CloudAuthHelper.create_maven_searcher, app.registry, env_creds)
+
+            urls = await asyncio.wait_for(
+                loop.run_in_executor(None, partial(searcher.find_artifact_urls, artifact=maven_artifact)),
+                timeout=V2_SEARCH_TIMEOUT
+            )
+            if not urls:
+                logger.warning(f"V2 search returned no artifacts for {app.artifact_id}:{version}")
+                return None
+
+            maven_url = urls[0]
+            logger.info(f"Found V2 artifact: {maven_url}")
+
+            local_path = os.path.join(create_app_artifacts_local_path(app.name, version), os.path.basename(maven_url))
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
+
+            download_success = await _v2_download_with_fallback(
+                searcher, maven_url, local_path, auth_config, app.registry, env_creds
+            )
+
+            if download_success:
+                logger.info(f"V2 artifact downloaded: {local_path}")
+                break
+            raise TimeoutError(f"V2 download failed for {maven_url}")
+
+        except asyncio.TimeoutError:
+            last_error = TimeoutError(f"V2 search timed out after {V2_SEARCH_TIMEOUT}s")
+            logger.warning(f"V2 search timed out for {app.name} (attempt {attempt + 1}/{max_retries})")
+            if attempt < max_retries - 1:
+                continue
+            return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+
+        except Exception as e:
+            last_error = e
+            error_str = str(e).lower()
+            
+            # Nexus: 404 means artifact not yet indexed in search
+            if "404" in error_str and "search request" in error_str:
+                logger.info(f"V2 search index miss for {app.name} - artifact may not be indexed in Nexus search DB")
+                logger.info(f"Falling back to V1 direct HTTP lookup")
+                return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+            
+            # Try to extract useful HTTP error details for debugging
+            if hasattr(e, 'response'):
+                try:
+                    status = getattr(e.response, 'status_code', 'N/A')
+                    url = getattr(e.response, 'url', 'N/A')
+                    logger.error(f"V2 HTTP {status} from {url}")
+                except Exception:
+                    pass
+            
+            # Retry on transient errors (401, timeout, expired)
+            if attempt < max_retries - 1 and any(x in error_str for x in ["401", "unauthorized", "forbidden", "expired", "timeout"]):
+                logger.warning(f"V2 transient error for {app.name}, retrying: {e}")
+                continue
+            
+            logger.error(f"V2 error for '{app.name}': {e}")
+            return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+    else:
+        logger.error(f"V2 fallback for '{app.name}': All {max_retries} attempts exhausted - {last_error}")
+        return await _check_artifact_v1_async(app, artifact_extension, version, cred=None, classifier="")
+
+    # AWS: construct full URL from resource ID
+    if auth_config.provider == "aws":
+        registry_domain = app.registry.maven_config.repository_domain_name
+        folder_name = version_to_folder_name(version)
+        repo_path = app.registry.maven_config.target_snapshot if folder_name.endswith("-SNAPSHOT") else app.registry.maven_config.target_release
+        full_url = f"{registry_domain.rstrip('/')}/{repo_path.rstrip('/')}/{maven_url}"
+    else:
+        # GCP/Artifactory/Nexus: URL ready-to-use
+        full_url = maven_url
+
+    return full_url, ("v2_downloaded", local_path)
+
+
+async def _v2_download_with_fallback(searcher, url: str, local_path: str, auth_config,
+                                     registry: Registry, env_creds: Optional[dict]) -> bool:
+    """Download artifact via searcher with HTTP fallback.
+    
+    Tries searcher download first, falls back to HTTP GET for GCP/Artifactory/Nexus.
+    Adds GCP access tokens if needed.
+    """
+    loop = asyncio.get_running_loop()
+
+    try:
+        await asyncio.wait_for(
+            loop.run_in_executor(None, lambda: searcher.download_artifact(url, str(local_path))),
+            timeout=V2_DOWNLOAD_TIMEOUT
+        )
+        return True
+    except asyncio.TimeoutError:
+        logger.warning(f"Searcher download timed out after {V2_DOWNLOAD_TIMEOUT}s")
+    except Exception as e:
+        logger.warning(f"Searcher download failed: {e}")
+
+    if auth_config.provider not in ["gcp", "artifactory", "nexus"]:
+        return False
+
+    try:
+        headers = {}
+        if auth_config.provider == "gcp":
+            sa_json = CloudAuthHelper.get_gcp_credentials_from_registry(registry, env_creds)
+            if sa_json:
+                token = CloudAuthHelper.get_gcp_access_token(sa_json)
+                if token:
+                    headers["Authorization"] = f"Bearer {token}"
+
+        response = requests.get(url, headers=headers, timeout=V2_HTTP_TIMEOUT, stream=True)
+        response.raise_for_status()
+        with open(local_path, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+        logger.info(f"Direct HTTP download successful: {local_path}")
+        return True
+    except Exception as e:
+        logger.warning(f"Direct HTTP download failed for {url}: {e}", exc_info=True)
+        return False
+
+
+async def _check_artifact_v1_async(
+    app: Application, 
+    artifact_extension: FileExtension,
+    version: str,
+    cred: Credentials | None = None,  # ADD from incoming
+    classifier: str = ""
+) -> Optional[tuple[str, tuple[str, str]]]:
+    result = await _attempt_check(app, version, artifact_extension, cred=cred, classifier=classifier)
     if result is not None:
         return result
 
-    if not app.registry.maven_config.is_nexus:
-        return result
-
-    # trying to edit url for nexus and repeat
-    original_domain = app.registry.maven_config.repository_domain_name
-    fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
-    if fixed_domain != original_domain:
-        logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
-        result = await _attempt_check(app, version, artifact_extension, fixed_domain, cred, classifier)
-        if result is not None:
-            return result
-    else:
-        logger.debug("Domain is same after editing, skipping retry")
-
+    # Browse URL retry removed - browse endpoints don't support downloads
+    # V1 fallback will rely on V2 search or direct repository URLs only
     logger.warning("Artifact not found")
+    return None
 
 
 def unzip_file(artifact_id: str, app_name: str, app_version: str, zip_url: str):
@@ -333,7 +590,7 @@ def unzip_file(artifact_id: str, app_name: str, app_version: str, zip_url: str):
                     zip_file.extract(file, create_app_artifacts_local_path(app_name, app_version))
                     extracted = True
     except Exception as e:
-        logger.error(f"Error unpacking {e}")
+        logger.error(f"Error unpacking artifact {artifact_id} for {app_name}:{app_version} from {zip_url}: {e}", exc_info=True)
     if not extracted:
         logger.warning(f"No files were extracted for application {app_name}:{app_version}")
 
@@ -460,7 +717,7 @@ def resolve_snapshot_version(base_path, extension: FileExtension, cred: Credenti
             node_classifier = node.findtext("classifier", default="")
             node_extension = node.findtext("extension", default="")
             value = node.findtext("value")
-            if node_classifier == classifier and node_extension == extension:
+            if node_classifier == classifier and node_extension == extension.value:
                 logger.info(f"Resolved snapshot version '{value}'")
                 return value
 

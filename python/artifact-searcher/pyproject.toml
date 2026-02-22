@@ -16,7 +16,12 @@ dependencies = [
     "asyncio~=3.4.3",
     "aioresponses~=0.7.8",
     "pytest-asyncio~=1.0.0",
-    "pytest-aiohttp~=1.1.0"
+    "pytest-aiohttp~=1.1.0",
+    # V2 cloud registry support dependencies
+    "boto3>=1.39.4,<2.0.0",
+    "google-auth~=2.34.0",
+    # Maven Client library for V2 cloud registry support
+    "qubership-pipelines-common-library>=0.2.5,<1.0.0"
 ]
 
 [project.optional-dependencies]

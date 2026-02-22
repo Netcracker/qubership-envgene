@@ -1,10 +1,14 @@
 from os import environ
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 import responses
 from aioresponses import aioresponses
-from env_template.process_env_template import process_env_template
+from env_template.process_env_template import (
+    process_env_template,
+    extract_snapshot_version
+)
 from envgenehelper.test_helpers import TestHelpers
 
 GROUP_ID = "org.qubership"
@@ -209,3 +213,47 @@ class TestEnvTemplate:
 
         assert len(responses.calls) == 4
         assert responses.calls[3].request.url == tmpl_zip_url
+
+    def test_extract_snapshot_version_with_snapshot(self):
+        """Test snapshot version extraction from URL"""
+        url = f"{SNAPSHOT_BASE}/{BASE_PATH}/{ARTIFACT_NAME}.json"
+        snapshot_version = VERSION
+        
+        result = extract_snapshot_version(url, snapshot_version)
+        
+        assert result == SNAPSHOT_VERSION
+        assert "-SNAPSHOT" not in result
+        assert SNAPSHOT_TIMESTAMP in result
+
+    def test_extract_snapshot_version_without_snapshot(self):
+        """Test version extraction from non-snapshot URL"""
+        release_version = "1.0.0"
+        url = f"{STAGING_BASE}/{GROUP_PATH}/{ARTIFACT_ID}/{release_version}/{ARTIFACT_ID}-{release_version}.zip"
+        
+        result = extract_snapshot_version(url, release_version)
+        
+        assert result == release_version
+
+    @responses.activate
+    @patch('env_template.process_env_template.get_cred_config')
+    def test_new_logic_with_v2_credentials(self, mock_get_creds, mock_aio_response):
+        """Test new logic with RegDef v2 credentials passed through"""
+        set_env("env-01")
+        
+        mock_get_creds.return_value = {
+            'artifactory-cred': {'type': 'usernamePassword', 'data': {'username': 'test-user', 'password': 'test-pass'}},
+            'aws-creds': {'type': 'usernamePassword', 'data': {'username': 'key', 'password': 'secret'}}
+        }
+        
+        mock_metadata(mock_aio_response)
+        mock_dd_exists(mock_aio_response, exists=True)
+        mock_dd_response()
+        mock_zip(STAGING_ZIP_URL)
+        
+        with patch('env_template.process_env_template.artifact.check_artifact_async') as mock_check:
+            mock_check.return_value = (DD_URL, ("repo", "pointer"))
+            
+            process_env_template()
+            
+            # Verify get_cred_config was called
+            assert mock_get_creds.called

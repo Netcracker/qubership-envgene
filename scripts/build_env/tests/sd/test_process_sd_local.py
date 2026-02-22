@@ -1,6 +1,7 @@
 import os
 
 import pytest
+from unittest.mock import patch, MagicMock
 from ruamel.yaml import YAML
 
 from test_sd_helpers import do_prerequisites, assert_sd_contents, load_test_pipeline_sd_data
@@ -9,7 +10,7 @@ os.environ['ENVIRONMENT_NAME'] = "temporary"
 os.environ['CLUSTER_NAME'] = "temporary"
 os.environ['CI_PROJECT_DIR'] = "temporary"
 
-from process_sd import handle_sd
+from process_sd import handle_sd, download_sd_by_appver
 from envgenehelper import *
 from envgenehelper.env_helper import Environment
 
@@ -54,3 +55,32 @@ def test_sd_positive(test_case_name):
 
     assert_sd_contents(TEST_SD_DIR, OUTPUT_DIR, test_case_name, actual_dir, test_suits_map)
     logger.info(f"=====SUCCESS - {test_case_name}======")
+
+
+@patch('process_sd.get_cred_config')
+@patch('artifact_searcher.artifact.check_artifact_async')
+@patch('process_sd.get_appdef_for_app')
+def test_download_sd_uses_get_cred_config(mock_get_appdef, mock_check_artifact, mock_get_creds):
+    """Test that download_sd_by_appver uses existing get_cred_config utility"""
+    mock_get_creds.return_value = {
+        'aws-creds': {'type': 'usernamePassword', 'data': {'username': 'key', 'password': 'secret'}}
+    }
+    mock_app_def = MagicMock()
+    mock_app_def.registry.credentials_id = None
+    mock_get_appdef.return_value = mock_app_def
+    
+    # Mock the async check_artifact_async to return a future
+    async def mock_check_return():
+        return ("http://sd-url", ("repo", "/tmp/sd.json"))
+    mock_check_artifact.return_value = mock_check_return()
+    
+    with patch('process_sd.open', create=True) as mock_open:
+        mock_open.return_value.__enter__.return_value.read.return_value = '{"applications": []}'
+        
+        try:
+            env = Environment("/test/path", "test-cluster", "test-env")
+            download_sd_by_appver("test-app", "1.0.0", MagicMock(), env)
+        except:
+            pass
+    
+    assert mock_get_creds.called
