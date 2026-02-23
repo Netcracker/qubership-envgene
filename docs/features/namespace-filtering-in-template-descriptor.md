@@ -94,4 +94,4 @@ If a namespace is disabled by a condition:
 >
 > Therefore, such a namespace cannot be processed via `NS_BUILD_FILTER`, because it does not exist in the Environment model.
 > For details about `NS_BUILD_FILTER` syntax and usage, see:
-[Namespace Render Filter](/docs/features/namespace-render-filtering.md)
+[Namespace Render Filter][Namespace Render Filter](namespace-render-filtering.md)
