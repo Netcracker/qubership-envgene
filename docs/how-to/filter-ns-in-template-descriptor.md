@@ -6,9 +6,8 @@ This guide explains how to generate an Environment that includes only a selected
 
 Use this approach if:
 
-- You use a shared platform template with multiple namespaces  
-- You need to include or exclude namespaces depending on cluster type (k8s / ocp)  
-- You need to filter namespaces based on the Solution Descriptor
+- You use a unified Environment Template with multiple namespaces  
+- You need to include or exclude namespaces depending on specific environment need
 
 ---
 
@@ -36,7 +35,7 @@ Each namespace can be conditionally included using a Jinja `if` expression.
 
 ```jinja
 namespaces:
-{% if ns_list.get('namespace-key', false) %}
+{% if current_env.additionalTemplateVariables.ns_list.get('namespace-key', false) %}
   - template_path: {{ templates_dir }}/env_templates/Namespaces/<namespace-template-file>.yml.j2
     deploy_postfix: <deploy-postfix>
 {% endif %}
@@ -51,22 +50,22 @@ namespaces:
 
 ```jinja
 namespaces:
-{% if ns_list.get('postgresql', false) %}
+{% if current_env.additionalTemplateVariables.ns_list.get('postgresql', false) %}
   - template_path: {{ templates_dir }}/env_templates/Namespaces/postgresql.yml.j2
     deploy_postfix: postgresql
 {% endif %}
 
-{% if ns_list.get('postgresql-dbaas', false) %}
+{% if current_env.additionalTemplateVariables.ns_list.get('postgresql-dbaas', false) %}
   - template_path: {{ templates_dir }}/env_templates/Namespaces/postgresql-dbaas.yml.j2
     deploy_postfix: postgresql-dbaas
 {% endif %}
 
-{% if ns_list.get('kafka', false) %}
+{% if current_env.additionalTemplateVariables.ns_list.get('kafka', false) %}
   - template_path: {{ templates_dir }}/env_templates/Namespaces/kafka.yml.j2
     deploy_postfix: kafka
 {% endif %}
 
-{% if ns_list.get('platform-monitoring', false) %}
+{% if current_env.additionalTemplateVariables.ns_list.get('platform-monitoring', false) %}
   - template_path: {{ templates_dir }}/env_templates/Namespaces/platform-monitoring.yml.j2
     deploy_postfix: platform-monitoring
 {% endif %}
@@ -114,9 +113,9 @@ envTemplate:
 
 This makes the ns_list variable available during Template Descriptor rendering.
 
-## Step 5. Run Environment generation
+## Step 5. Run Environment Instance generation
 
-Run the Environment generation process using the standard EnvGene pipeline.
+Run the Environment Instance generation process using the standard EnvGene pipeline.
 
 During generation:
 
@@ -128,10 +127,9 @@ If a condition evaluates to `false`:
 
 - The namespace folder is not created  
 - The namespace object is not generated  
-- The namespace is absent from the effective-set topology
 
-## Step 7. Verify the result
+## Step 6. Verify the result
 
-After generation, verify the directory:: `/environments/<cluster>/<env-name>/Namespaces/`
+After generation, verify the directory: `/environments/<cluster>/<env-name>/Namespaces/`
 
 Only namespaces that passed the Jinja conditions should be present.

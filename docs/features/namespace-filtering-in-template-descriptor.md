@@ -1,26 +1,33 @@
 # Namespace Filtering in Template Descriptor
 
+- [Namespace Filtering in Template Descriptor](#namespace-filtering-in-template-descriptor)
+  - [Overview](#overview)
+  - [Problem Statement](#problem-statement)
+  - [Proposed Approach](#proposed-approach)
+    - [Example (cluster type filtering)](#example-cluster-type-filtering)
+  - [File Resolution Priority](#file-resolution-priority)
+  - [Behavior During Environment Generation](#behavior-during-environment-generation)
+    - [Scenario: Generating an Environment with namespace filtering](#scenario-generating-an-environment-with-namespace-filtering)
+    - [What happens when a namespace condition is `false`](#what-happens-when-a-namespace-condition-is-false)
+  - [How-To](#how-to)
+
 ## Overview
 
 Namespace Filtering in Template Descriptor allows generating an Environment that includes only a selected subset of namespaces from a unified Environment Template.
 
-This feature works at Template Descriptor rendering time and defines the structural composition of the generated Environment.
-
-## How-To
-
-For step-by-step instructions, see:  
-[How to filter namespaces in an Environment Template](../how-to/namespace-filtering-in-template-descriptor(Jinja%20TD).md)
+This feature works during Environment Instance generation, and defines the structural composition of the generated Environment.
 
 ## Problem Statement
 
-We have been using a unified platform template for different projects. This template contains namespaces for a Default Cloud Layout, but during deployment we often need only a subset of available namespaces.
+We have been using a unified Environment Template for different projects. This template contains all possible namespaces, but during deployment we often need only a subset of available namespaces.
 
-Currently, there is no possibility to filter namespaces during Template Descriptor rendering. This leads to the following:
+Currently, there is no possibility to filter namespaces during Environment Instance generation. This leads to the following:
 
-- The `Namespaces/` folder in the EnvGene Instance repository contains non-relevant namespaces
-- The effective-set topology includes namespaces that are not required for the target deployment
+- The `Namespaces/` folder in the EnvGene Instance Repository contains non-relevant namespaces
+- The Effective Set includes namespaces that are not required for the target deployment
 - We cannot include/exclude namespaces specific to the cluster type (k8s or ocp)
-- It prevents using a single unified platform template
+
+It prevents using a single unified Environment Template
 
 ## Proposed Approach
 
@@ -28,11 +35,11 @@ Treat the Template Descriptor (TD) as a Jinja template while keeping backward co
 
 This enables filtering individual namespaces during Environment generation using Jinja `if` expressions.
 
-Filtering can be driven by:
+You can use different filtering approaches depending on your use case:
 
-- `current_env.solution_structure` (solution-descriptor–based scenarios)
-- `env_type` (cluster-type–based include/exclude scenarios)
-- shared template variables (e.g., `ns_list`)
+- **Cluster-type filtering**: Use a variable to include/exclude namespaces based on cluster type (k8s/ocp)
+- **Explicit namespace list**: Use shared template variables (e.g., `ns_list`) to control which namespaces are enabled
+- **Solution-based filtering**: Use `current_env.solution_structure` for solution-descriptor–based scenarios
 
 ### Example (cluster type filtering)
 
@@ -42,20 +49,6 @@ Filtering can be driven by:
     name: ingress-nginx
 {% endif %}
 ```
-
-## Supported Template Descriptor Formats
-
-In addition to existing extensions:
-
-- `yaml`
-- `yml`
-
-EnvGene also supports:
-
-- `yaml.j2`
-- `yml.j2`
-
----
 
 ## File Resolution Priority
 
@@ -68,7 +61,7 @@ If multiple Template Descriptor files exist, EnvGene selects them in descending 
 
 Jinja-based descriptors take precedence over static ones.
 
-## Behavior During Environment Generation (Scenario)
+## Behavior During Environment Generation
 
 ### Scenario: Generating an Environment with namespace filtering
 
@@ -77,20 +70,25 @@ Jinja-based descriptors take precedence over static ones.
 3. If the TD is a Jinja template (`*.yml.j2` / `*.yaml.j2`), EnvGene renders it first.
 4. While rendering, EnvGene evaluates all Jinja `if` conditions for namespaces.
 5. EnvGene keeps only the namespaces where the condition is `true`.
-6. EnvGene generates the Environment using the final (rendered) TD.
+6. EnvGene generates the Environment Instance using the final (rendered) TD.
 
 ### What happens when a namespace condition is `false`
 
 If a namespace is disabled by a condition:
 
-- EnvGene does **not** create the namespace folder in the Instance repository
+- EnvGene does **not** create the namespace folder in the Instance Repository
 - EnvGene does **not** generate the namespace object
-- The namespace does **not** appear in the effective-set topology
+- The namespace does **not** appear in the Effective Set
 
-> [!IMPORTANT]
+> [!NOTE]
 > If you are using `NS_BUILD_FILTER`, keep in mind that this parameter only limits which namespaces are processed during a specific pipeline run — it does not add namespaces to the Environment structure.
 >
-> If a namespace is excluded during Template Descriptor rendering (Jinja condition = `false`), it will not be generated and will not appear in the Instance repository or effective-set topology.
+> If a namespace is excluded during Template Descriptor rendering (Jinja condition = `false`), it will not be generated and will not appear in the Instance Repository or Effective Set.
 >
 > Therefore, such a namespace cannot be processed via `NS_BUILD_FILTER`, because it does not exist in the Environment model.
 > For details about `NS_BUILD_FILTER` syntax and usage, see: [Namespace Render Filter](../features/namespace-render-filtering.md)
+
+## How-To
+
+For step-by-step instructions, see:  
+[How to filter namespaces in an Environment Template](/docs/how-to/filter-ns-in-template-descriptor.md)

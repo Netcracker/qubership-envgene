@@ -65,7 +65,14 @@ This object is a describes the structure of a solution, links to solution's comp
 
 The name of this file serves as the name of the Environment Template. In the Environment Inventory, this name is used to specify which Environment Template from the artifact should be used.
 
-**Location:** Any YAML file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
+**Location:** Any YAML or Jinja file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
+
+**Supported file extensions:**
+
+- `.yml` / `.yaml` — Static Template Descriptor
+- `.yml.j2` / `.yaml.j2` — Jinja Template Descriptor (rendered before Environment Instance generation)
+
+When multiple Template Descriptors with the same base name but different extensions exist, EnvGene selects them in descending priority order: `yml.j2` > `yaml.j2` > `yml` > `yaml`. Jinja Template Descriptors enable conditional namespace inclusion. See [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md) for details.
 
 It has the following structure:
 
@@ -1973,7 +1980,7 @@ authConfig:
     azureArtifactsResource: string
 # Mandatory
 mavenConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
   authConfig: string
@@ -1997,7 +2004,7 @@ mavenConfig:
   releaseGroup: string
 # Mandatory
 dockerConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
   authConfig: string
@@ -2027,7 +2034,7 @@ dockerConfig:
   groupName: string
 # Optional
 helmConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
   authConfig: string
@@ -2042,9 +2049,8 @@ helmConfig:
   helmTargetRelease: string
 # Optional
 helmAppConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
@@ -2063,7 +2069,7 @@ helmAppConfig:
   helmDevRepoName: string
 # Optional
 goConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
   authConfig: string
@@ -2082,7 +2088,7 @@ goConfig:
   goProxyRepository: string
 # Optional
 npmConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
   authConfig: string
@@ -2097,7 +2103,7 @@ npmConfig:
   npmTargetRelease: string
 # Optional
 rawConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
   # Cannot be set in if anonymous access is used
   authConfig: string
