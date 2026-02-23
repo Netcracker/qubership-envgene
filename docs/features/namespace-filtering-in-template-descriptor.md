@@ -93,4 +93,5 @@ If a namespace is disabled by a condition:
 > If a namespace is excluded during Template Descriptor rendering (Jinja condition = `false`), it will not be generated and will not appear in the Instance repository or effective-set topology.
 >
 > Therefore, such a namespace cannot be processed via `NS_BUILD_FILTER`, because it does not exist in the Environment model.
-> For details about `NS_BUILD_FILTER` syntax and usage, see: [Namespace Render Filter](/features/namespace-render-filtering.md)
+> For details about `NS_BUILD_FILTER` syntax and usage, see:
+[Namespace Render Filter](/docs/features/namespace-render-filtering.md)
