@@ -143,7 +143,7 @@
         "sharedTemplateVariables": {
           "type": "array",
           "title": "Shared Template Variables",
-          "description": "Array of file names in 'shared-template-variables' folders",
+          "description": "Array of file names in 'shared_template_variables' folders",
           "items": {
             "type": "string"
           },
