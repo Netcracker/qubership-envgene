@@ -1,0 +1,3 @@
+---
+- name: Run version updater script
+  shell: "cd {{ build_env_path }}; python3 {{ build_env_path }}/scripts/build_env/versionupdater.py  {{script_args}}"

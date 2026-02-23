@@ -1,0 +1,135 @@
+
+# EnvGene Repository Variables
+
+- [EnvGene Repository Variables](#envgene-repository-variables)
+  - [Instance EnvGene Repository](#instance-envgene-repository)
+    - [`SECRET_KEY`](#secret_key)
+    - [`GITLAB_TOKEN`](#gitlab_token)
+    - [`ENVGENE_AGE_PRIVATE_KEY`](#envgene_age_private_key)
+    - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
+    - [`PUBLIC_AGE_KEYS`](#public_age_keys)
+    - [`GITLAB_RUNNER_TAG_NAME`](#gitlab_runner_tag_name)
+    - [`GH_RUNNER_TAG_NAME`](#gh_runner_tag_name)
+    - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
+    - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
+  - [Template EnvGene Repository](#template-envgene-repository)
+    - [`ENV_TEMPLATE_TEST`](#env_template_test)
+    - [`DOCKER_REGISTRY` (in template repository)](#docker_registry-in-template-repository)
+
+The following are parameters that are set in GitLab CI/CD variables or GitHub environment variables.
+
+All parameters are of string data type.
+
+## Instance EnvGene Repository
+
+### `SECRET_KEY`
+
+**Description**: Fernet key. Used to encrypt/decrypt credentials when [`crypt_backend`](/docs/envgene-configs.md#configyml) is set to `Fernet`
+
+Used by EnvGene at runtime, when using pre-commit hooks, the same value must be specified in `.git/secret_key.txt`.
+
+**Default Value**: None
+
+**Mandatory**: Yes, if repository encryption is enabled with `Fernet` crypt backend
+
+**Example**: `key-placeholder-123`
+
+### `GITLAB_TOKEN`
+
+**Description**: Access token used to authenticate with GitLab for accessing repository.
+
+Used by EnvGene to commit changes to the GitLab repository where the EnvGene pipeline is executed during the execution of the [git_commit](/docs/envgene-pipelines.md) job in GitLab
+
+**Default Value**: None
+
+**Mandatory**: No. Required for GitLab EnvGene pipeline, not used in GitHub EnvGene pipeline
+
+**Example**: `token-placeholder-123`
+
+### `ENVGENE_AGE_PRIVATE_KEY`
+
+**Description**: Private key from EnvGene's AGE key pair. Used to decrypt credentials when [`crypt_backend`](/docs/envgene-configs.md#configyml) is set to `SOPS`
+
+Used by EnvGene at runtime. When using pre-commit hooks, the same value must be specified in `.git/private-age-key.txt`.
+
+**Default Value**: None
+
+**Mandatory**: Yes, if repository encryption is enabled with `SOPS` crypt backend
+
+**Example**: `key-placeholder-123`
+
+### `ENVGENE_AGE_PUBLIC_KEY`
+
+**Description**: Public key from EnvGene's AGE key pair. Added for logical completeness (not currently used in operations). **For encryption, `PUBLIC_AGE_KEYS` is used instead.**
+
+**Example**: `key-placeholder-123`
+
+### `PUBLIC_AGE_KEYS`
+
+**Description**: Contains a comma-separated list of public AGE keys from EnvGene and external systems (`<key_1>,<key_2>,...,<key_N>`). Used for credential encryption when [`crypt_backend`](/docs/envgene-configs.md#configyml) is `SOPS`
+
+Must include at least one key: EnvGene's own AGE public key.
+If an external system provides encrypted parameters, its public AGE key must also be included.
+Used by EnvGene at runtime. When using pre-commit hooks, the same value must be specified in `.git/public-age-key.txt`.
+
+**Default Value**: None
+
+**Mandatory**: Yes, if repository encryption is enabled with `SOPS` crypt backend
+
+**Example**: `key-placeholder-123,key-placeholder-124`
+
+### `GITLAB_RUNNER_TAG_NAME`
+
+**Description**: The tag that identifies the GitLab runner used for executing CI jobs. This tag is used to specify which runner will pick up and execute the job in the CI pipeline.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `ubuntu-latest`
+
+### `GH_RUNNER_TAG_NAME`
+
+**Description**: The tag that identifies the GitHub runner used for executing CI jobs. This tag is used to specify which runner will pick up and execute the job in the CI pipeline.
+
+**Default Value**: `ubuntu-22.04`
+
+**Mandatory**: No
+
+**Example**: `ubuntu-latest`
+
+### `RUNNER_SCRIPT_TIMEOUT`
+
+**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner. This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running processes.The parameter value must be specified in [Go's duration format](https://pkg.go.dev/time#ParseDuration).
+
+**Default Value**: 10m
+
+**Mandatory**: No
+
+**Example**: `15m`
+
+### `DOCKER_REGISTRY` (in instance repository)
+
+**Description**: Specifies the registry where the EnvGene Docker images are located
+
+**Default Value**: `ghcr.io/netcracker`
+
+**Mandatory**: No
+
+**Example**: `registry.example.com/docker`
+
+## Template EnvGene Repository
+
+### `ENV_TEMPLATE_TEST`
+
+**Description**: Determines whether the generation of the Environment Instance is running in Template Testing mode.
+
+**Default Value**: `false`
+
+**Mandatory**: No
+
+**Example**: `true`
+
+### `DOCKER_REGISTRY` (in template repository)
+
+The same as [`DOCKER_REGISTRY` in instance repository](#docker_registry-in-instance-repository)

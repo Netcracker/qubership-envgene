@@ -1,0 +1,5 @@
+---
+tenant: "{{ templates_dir }}/env_templates/simple/tenant.yml.j2"
+cloud: "{{ templates_dir }}/env_templates/simple/cloud.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/simple/billing.yml.j2"

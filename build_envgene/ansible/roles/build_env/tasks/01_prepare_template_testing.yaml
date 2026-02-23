@@ -1,0 +1,89 @@
+---
+- name: Set deployer variable
+  set_fact:
+    deployer: "{{ lookup('file', base_dir + '/configuration/deployer.yml') | from_yaml | dict2items | selectattr('key', 'search', '^.*deployer.*$') | map(attribute='key') | first }}"
+
+- name: Create configs file
+  copy:
+    content: |
+      crypt: false
+    dest: "{{ configs_conf_path }}"
+
+- name: Create env definition file
+  copy:
+    content: |
+      inventory:
+        environmentName: "{{ definition_env_name }}"
+        cloudName: "{{ env_template_vers_split.replace('-', '_') }}"
+        tenantName: "{{ tenant_name }}"
+        deployer: "{{ deployer }}"
+        clusterUrl: "{{ clusterExampleUrl }}"
+        config:
+          updateCredIdsWithEnvName: true
+          updateRPOverrideNameWithEnvName: false
+      envTemplate:
+        name: "{{ env_name }}"
+        templateArtifact:
+          registry: "{{ build_env_registry }}"
+          repository: "{{ build_env_repository }}"
+          templateRepository: "{{ build_env_templateRepository }}"
+          artifact:
+            group_id: "{{ ggroup_id }}"
+            artifact_id: "{{ aartifact_id }}"
+            version: "{{ env_template_vers }}"
+    dest: "{{ env_definition_conf_path }}"
+
+- name: Create registry file
+  copy:
+    content: |
+      artifactorycn:
+        username: {{ build_env_username }}
+        password: {{ build_env_password }}
+        releaseRepository: "{{ build_env_releaseRepository }}"
+        snapshotRepository: "{{ build_env_snapshotRepository }}"
+        stagingRepository: "{{ build_env_stagingRepository }}"
+        proxyRepository: "{{ build_env_proxyRepository }}"
+        releaseTemplateRepository: "{{ build_env_releaseTemplateRepository }}"
+        snapshotTemplateRepository: "{{ build_env_snapshotTemplateRepository }}"
+        stagingTemplateRepository: "{{ build_env_stagingTemplateRepository }}"
+    dest: "{{ registry_config_path }}"
+
+- name: Include vars from env_definition and environments files
+  set_fact:
+    env_definition: "{{ lookup('file', env_definition_conf_path) | from_yaml }}"
+    registry_config:  "{{ lookup('file', registry_config_path) | from_yaml }}"
+  no_log: false
+
+- name: Set tenant_name
+  set_fact:
+    tenant_name: "{{ env_definition['inventory']['tenantName'] }}"
+  no_log: false
+
+- name: Create environment directory
+  file:
+    path: "{{ envs_directory_path }}"
+    state: directory
+
+- name: Create environment/{{ tenant_name }} directory
+  file:
+    path: "{{ envs_directory_path }}/{{ tenant_name }}"
+    state: directory
+
+- name: Create {{ tenant_name }}_{{ env_template_vers_split.replace('-', '_') }} directory
+  file:
+    path: "{{ envs_directory_path }}/{{ tenant_name }}/{{ tenant_name }}_{{ env_template_vers_split.replace('-', '_') }}/Inventory"
+    state: directory
+
+- name: Copy templates to {{ tenant_name }}_{{ env_template_vers_split.replace('-', '_') }} directory
+  copy:
+    src: "{{ env_definition_conf_path }}"
+    dest: "{{ envs_directory_path }}/{{ tenant_name }}/{{ tenant_name }}_{{ env_template_vers_split.replace('-', '_') }}/Inventory/env_definition.yml"
+- name: Override env_name variable
+  set_fact:
+    env_name: "{{ tenant_name }}/{{ tenant_name }}_{{ env_template_vers_split.replace('-', '_') }}"
+    cluster_name: "{{ tenant_name }}"
+    environment_name: "{{ tenant_name }}_{{ env_template_vers_split.replace('-', '_') }}"
+
+- name: Transfer env_name variable
+  shell: |
+    echo "{{ env_name }}" > "{{ base_dir }}"/set_variable.txt

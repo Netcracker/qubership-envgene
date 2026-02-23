@@ -1,0 +1,2 @@
+pl-01-monitoring: /environments/cluster-01/pl-01/effective-set/runtime/monitoring
+pl-01-pg: /environments/cluster-01/pl-01/effective-set/runtime/pg
