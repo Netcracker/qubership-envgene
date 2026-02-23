@@ -102,8 +102,6 @@ ns_list:
 
 Set true for namespaces that must be generated.
 
----
-
 ## Step 4. Reference ns_list in env_definition.yml
 
 Add the shared template variable:
