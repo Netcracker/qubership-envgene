@@ -13,6 +13,7 @@
     - [`GH_RUNNER_TAG_NAME`](#gh_runner_tag_name)
     - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
     - [`GH_RUNNER_SCRIPT_TIMEOUT`](#gh_runner_script_timeout)
+    - [`CALCULATOR_CLI_JAVA_OPTIONS`](#calculator_cli_java_options)
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
@@ -140,6 +141,20 @@ This parameter is only available in the GitHub version of the pipeline. For more
 **Mandatory**: No
 
 **Example**: `15`
+
+### `CALCULATOR_CLI_JAVA_OPTIONS`
+
+**Description**: Java options passed to the Calculator CLI to override default settings. Used to control heap size and ForkJoinPool thread count (number of applications processed in parallel during effective set generation).
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**:
+
+```text
+CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallelism=4 -Xmx2g -Xms2g"
+```
 
 ### `DOCKER_REGISTRY` (in instance repository)
 
