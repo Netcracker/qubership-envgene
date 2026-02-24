@@ -14,6 +14,7 @@ from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
+TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
 
 yml = create_yaml_processor()
 
@@ -47,6 +48,7 @@ class Context(BaseModel):
     render_profiles_dir: Optional[str] = ''
 
     start_time: datetime | None = Field(default=None, exclude=True)
+    end_time: datetime | None = Field(default=None, exclude=True)
 
     class Config:
         extra = "allow"
@@ -67,7 +69,11 @@ class Context(BaseModel):
         try:
             yield self
         finally:
-            logger.debug(f"Final state: {self.dict(exclude_none=True)}")
+            self.end_time = datetime.now()
+            logger.debug(
+                f"Exit context at {self.end_time}. Duration: {self.end_time - self.start_time}. "
+                f"Final state: {self.dict(exclude_none=True)}"
+            )
 
     def as_dict(self, include_none: bool = False) -> dict:
         return self.model_dump(exclude_none=not include_none)
@@ -105,12 +111,28 @@ class EnvGenerator:
         self.ctx.config = config
 
     def set_env_template(self):
-        env_template_path_stem = f'{self.ctx.templates_dir}/env_templates/{self.ctx.current_env["env_template"]}'
-        env_template_path = next(iter(find_all_yaml_files_by_stem(env_template_path_stem)), None)
+        extensions = ("yml.j2", "yaml.j2", "yml", "yaml")
+        env_templates_dir = Path(f'{self.ctx.templates_dir}/env_templates')
+        env_template_basename = env_templates_dir / self.ctx.current_env["env_template"]
+        suitable_files = find_files_by_basename(env_template_basename, extensions)
+        env_template_path = suitable_files[0] if suitable_files else None
         if not env_template_path:
-            raise ValueError(f'Template descriptor was not found in {env_template_path_stem}')
+            all_files = [f for f in env_templates_dir.iterdir() if f.is_file()]
+            remains_files = list(set(all_files) - set(suitable_files))
+            raise ValueError(
+                f"Template descriptor not found: {env_template_basename}."
+                f" Expected location in template repository: {env_template_path}."
+                f" Allowed extensions: 'yml', 'yaml', 'yml.j2', 'yaml.j2'."
+                f" Found templates: {remains_files}")
 
-        env_template = openYaml(filePath=env_template_path, safe_load=True)
+        env_tmpl_final_path = env_template_path
+        if env_template_path.suffix.endswith("j2"):
+            logger.info(f"Template descriptor is {env_template_path}, rendering required")
+            env_tmpl_final_path = str(env_template_path).removesuffix(".j2")
+            self.render_from_file_to_file(env_template_path, env_tmpl_final_path)
+
+        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, TD_SCHEMA)
+        env_template = openYaml(filePath=env_tmpl_final_path, safe_load=True)
         logger.info(f"env_template = {env_template}")
         self.ctx.current_env_template = env_template
 
@@ -185,11 +207,11 @@ class EnvGenerator:
         elif ns_name == peer_name:
             ns_template_name += "-peer"
         logger.debug(f'After appending the ns name : {ns_template_name}')
-        return ns_template_name 
+        return ns_template_name
 
     def generate_solution_structure(self):
-        sd_path_stem = f'{self.ctx.current_env_dir}/Inventory/solution-descriptor/sd'
-        sd_path = next(iter(find_all_yaml_files_by_stem(sd_path_stem)), None)
+        sd_basename = f'{self.ctx.current_env_dir}/Inventory/solution-descriptor/sd'
+        sd_path = next(iter(find_files_by_basename(sd_basename)), None)
         solution_structure = {}
         if sd_path:
             self.ctx.sd_file_path = str(sd_path)
