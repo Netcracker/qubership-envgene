@@ -16,7 +16,8 @@ dependencies = [
     "asyncio~=3.4.3",
     "aioresponses~=0.7.8",
     "pytest-asyncio~=1.0.0",
-    "pytest-aiohttp~=1.1.0"
+    "pytest-aiohttp~=1.1.0",
+    "qubership-pipelines-common-library @ git+https://github.com/Netcracker/qubership-pipelines-common-python-library.git@v2.0.3"
 ]
 
 [project.optional-dependencies]

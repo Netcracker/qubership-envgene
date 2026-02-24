@@ -8,8 +8,10 @@ from envgenehelper import logger
 AUTH_METHOD_USER_PASS = "user_pass"
 AUTH_METHOD_SECRET = "secret"
 AUTH_METHOD_SERVICE_ACCOUNT = "service_account"
+AUTH_METHOD_ANONYMOUS = "anonymous"
 AUTH_METHOD_ASSUME_ROLE = "assume_role"
 AUTH_METHOD_FEDERATION = "federation"
+AUTH_METHOD_OAUTH2 = "oauth2"
 
 AWS_SERVICE_CODEARTIFACT = "codeartifact"
 AWS_TOKEN_KEY = "authorizationToken"
@@ -24,51 +26,53 @@ CRED_FIELD_DATA = "data"
 def resolve_v2_auth_headers(registry: RegistryV2, env_creds: dict) -> Optional[dict]:
     """Resolve V2 registry authConfig into HTTP Authorization headers.
     Returns None for anonymous access."""
-    auth_ref = registry.maven_config.auth_config
-    if not auth_ref:
-        logger.info(f"No authConfig for registry '{registry.name}', using anonymous")
-        return None
-
-    if auth_ref not in registry.auth_config:
+    auth_config_ref = registry.maven_config.auth_config
+    if auth_config_ref not in registry.auth_config:
         raise ValueError(
-            f"AuthConfig '{auth_ref}' not found in registry '{registry.name}'. "
+            f"AuthConfig '{auth_config_ref}' not found in registry '{registry.name}'. "
             f"Available: {list(registry.auth_config.keys())}")
 
-    auth_cfg = registry.auth_config[auth_ref]
+    auth_cfg = registry.auth_config[auth_config_ref]
+    
+    if auth_cfg.auth_method == AUTH_METHOD_ANONYMOUS:
+        logger.info(f"Anonymous access for registry '{registry.name}'")
+        return None
+    
     cred_data = _get_cred_data(auth_cfg.credentials_id, env_creds)
 
-    if _is_anonymous(cred_data):
-        logger.info(f"Anonymous credentials for registry '{registry.name}'")
-        return None
-
     if auth_cfg.provider == Provider.AWS:
-        if auth_cfg.auth_method not in (AUTH_METHOD_SECRET, AUTH_METHOD_ASSUME_ROLE):
-            raise ValueError(
-                f"AWS provider requires authMethod='{AUTH_METHOD_SECRET}' or '{AUTH_METHOD_ASSUME_ROLE}', got '{auth_cfg.auth_method}'")
-        logger.info(f"Resolving AWS auth for registry '{registry.name}'")
-        return _aws_bearer(auth_cfg, cred_data)
+        if auth_cfg.auth_method == AUTH_METHOD_SECRET:
+            logger.info(f"Resolving AWS ECR secret auth for registry '{registry.name}'")
+            return _aws_bearer(auth_cfg, cred_data)
+        elif auth_cfg.auth_method == AUTH_METHOD_ASSUME_ROLE:
+            logger.info(f"Resolving AWS assume role auth for registry '{registry.name}'")
+            return _aws_assume_role(auth_cfg, cred_data)
+        else:
+            raise ValueError(f"Unsupported AWS authMethod: {auth_cfg.auth_method}")
 
     if auth_cfg.provider == Provider.GCP:
-        if auth_cfg.auth_method == AUTH_METHOD_FEDERATION:
-            raise NotImplementedError(
-                f"GCP federation (OIDC) is not yet implemented for registry '{registry.name}'")
-        if auth_cfg.auth_method != AUTH_METHOD_SERVICE_ACCOUNT:
-            raise ValueError(
-                f"GCP provider requires authMethod='{AUTH_METHOD_SERVICE_ACCOUNT}' or '{AUTH_METHOD_FEDERATION}', got '{auth_cfg.auth_method}'")
-        logger.info(f"Resolving GCP auth for registry '{registry.name}'")
-        return _gcp_bearer(auth_cfg, cred_data)
+        if auth_cfg.auth_method == AUTH_METHOD_SERVICE_ACCOUNT:
+            logger.info(f"Resolving GCP service account auth for registry '{registry.name}'")
+            return _gcp_bearer(auth_cfg, cred_data)
+        elif auth_cfg.auth_method == AUTH_METHOD_FEDERATION:
+            logger.info(f"Resolving GCP federation (OIDC) auth for registry '{registry.name}'")
+            return _gcp_federation(auth_cfg, cred_data)
+        else:
+            raise ValueError(f"Unsupported GCP authMethod: {auth_cfg.auth_method}")
 
     if auth_cfg.provider == Provider.AZURE:
-        raise NotImplementedError(
-            f"Azure auth is not yet implemented for registry '{registry.name}'")
+        if auth_cfg.auth_method == AUTH_METHOD_OAUTH2:
+            logger.info(f"Resolving Azure OAuth2 auth for registry '{registry.name}'")
+            return _azure_oauth2(auth_cfg, cred_data)
+        else:
+            raise ValueError(f"Unsupported Azure authMethod: {auth_cfg.auth_method}")
 
     if auth_cfg.provider in (Provider.NEXUS, Provider.ARTIFACTORY):
-        logger.info(f"Resolving basic auth for {auth_cfg.provider.value} registry '{registry.name}'")
-        return _basic_auth(cred_data)
-
-    if auth_cfg.auth_method == AUTH_METHOD_USER_PASS or auth_cfg.provider is None:
-        logger.info(f"Resolving basic auth for registry '{registry.name}'")
-        return _basic_auth(cred_data)
+        if auth_cfg.auth_method == AUTH_METHOD_USER_PASS:
+            logger.info(f"Resolving basic auth for {auth_cfg.provider.value} registry '{registry.name}'")
+            return _basic_auth(cred_data)
+        else:
+            raise ValueError(f"Unsupported {auth_cfg.provider.value} authMethod: {auth_cfg.auth_method}")
 
     raise ValueError(
         f"Unsupported auth configuration (provider='{auth_cfg.provider}', "
@@ -81,10 +85,6 @@ def _get_cred_data(cred_id: str, env_creds: dict) -> dict:
     return env_creds[cred_id].get(CRED_FIELD_DATA, {})
 
 
-def _is_anonymous(cred_data: dict) -> bool:
-    return (not cred_data.get(CRED_FIELD_USERNAME)
-            and not cred_data.get(CRED_FIELD_PASSWORD)
-            and not cred_data.get(CRED_FIELD_SECRET))
 
 
 def _aws_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
@@ -134,6 +134,32 @@ def _gcp_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
     ).get_credentials()
     logger.info(f"GCP token obtained for registry '{auth_cfg.gcp_reg_project}'")
     return {"Authorization": f"Bearer {getattr(creds, GCP_TOKEN_ATTR)}"}
+
+
+def _aws_assume_role(auth_cfg: AuthConfig, cred_data: dict) -> dict:
+    if not auth_cfg.aws_role_arn:
+        raise ValueError("AWS assume_role requires awsRoleARN to be specified")
+    
+    username = cred_data.get(CRED_FIELD_USERNAME)
+    password = cred_data.get(CRED_FIELD_PASSWORD)
+    if not username or not password:
+        raise ValueError("AWS assume_role requires both username (access key) and password (secret key)")
+    
+    raise NotImplementedError("AWS assume_role auth is not yet implemented")
+
+
+def _gcp_federation(auth_cfg: AuthConfig, cred_data: dict) -> dict:
+    if not auth_cfg.gcp_oidc:
+        raise ValueError("GCP federation requires gcpOIDC configuration")
+    
+    raise NotImplementedError("GCP federation (OIDC) auth is not yet implemented")
+
+
+def _azure_oauth2(auth_cfg: AuthConfig, cred_data: dict) -> dict:
+    if not auth_cfg.azure_tenant_id:
+        raise ValueError("Azure OAuth2 requires azureTenantId")
+    
+    raise NotImplementedError("Azure OAuth2 auth is not yet implemented")
 
 
 def _basic_auth(cred_data: dict) -> dict:

@@ -495,7 +495,7 @@ class EnvGenerator:
             for file in regdef_files:
                 logger.info(f"RegDef file: {file}")
                 content = openYaml(file)
-                if isinstance(content, dict) and content.get("version") == REGDEF_V2_VERSION:
+                if content.get("version") == REGDEF_V2_VERSION:
                     regdef_schema = REGDEF_V2_SCHEMA
                 else:
                     regdef_schema = REGDEF_SCHEMA

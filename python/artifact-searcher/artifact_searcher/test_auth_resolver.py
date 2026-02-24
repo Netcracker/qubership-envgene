@@ -48,27 +48,17 @@ def base_registry_v2():
         name="test-registry",
         auth_config={},
         maven_config=MavenConfigV2(
-            repository_domain_name="https://registry.example.com",
-            target_snapshot="snapshots",
-            target_staging="staging",
-            target_release="releases"
+            auth_config="test-auth",
+            repository_domain_name="https://registry.example.com"
         )
     )
 
 
 class TestAnonymousAccess:
-    def test_no_auth_config_reference(self, base_registry_v2, env_creds):
-        base_registry_v2.maven_config.auth_config = None
-        
-        result = resolve_v2_auth_headers(base_registry_v2, env_creds)
-        
-        assert result is None
-
-    def test_empty_credentials(self, base_registry_v2, env_creds):
+    def test_anonymous_auth(self, base_registry_v2, env_creds):
         base_registry_v2.auth_config = {
-            "anonymous": AuthConfig(credentials_id="anonymous-cred")
+            "test-auth": AuthConfig(provider=Provider.NEXUS, auth_method="anonymous")
         }
-        base_registry_v2.maven_config.auth_config = "anonymous"
         
         result = resolve_v2_auth_headers(base_registry_v2, env_creds)
         
@@ -76,6 +66,7 @@ class TestAnonymousAccess:
 
     def test_missing_authconfig_reference(self, base_registry_v2, env_creds):
         base_registry_v2.maven_config.auth_config = "nonexistent"
+        base_registry_v2.auth_config = {}
         
         with pytest.raises(ValueError, match="AuthConfig 'nonexistent' not found"):
             resolve_v2_auth_headers(base_registry_v2, env_creds)
@@ -119,33 +110,26 @@ class TestAWSAuthentication:
         mock_provider_instance.get_ecr_authorization_token.assert_called_once()
 
     def test_aws_invalid_auth_method(self, base_registry_v2, env_creds):
-        base_registry_v2.auth_config = {
-            "aws-auth": AuthConfig(
+        from pydantic import ValidationError
+        
+        with pytest.raises(ValidationError, match="AWS provider requires authMethod to be"):
+            AuthConfig(
                 credentials_id="aws-cred",
                 provider=Provider.AWS,
                 auth_method="invalid_method",
-                aws_region="us-east-1",
-                aws_domain="my-domain"
+                aws_region="us-east-1"
             )
-        }
-        base_registry_v2.maven_config.auth_config = "aws-auth"
-        
-        with pytest.raises(ValueError, match="AWS provider requires authMethod='secret' or 'assume_role'"):
-            resolve_v2_auth_headers(base_registry_v2, env_creds)
 
     def test_aws_missing_region(self, base_registry_v2, env_creds):
-        base_registry_v2.auth_config = {
-            "aws-auth": AuthConfig(
+        from pydantic import ValidationError
+        
+        with pytest.raises(ValidationError, match="aws_region is required when provider is 'aws'"):
+            AuthConfig(
                 credentials_id="aws-cred",
                 provider=Provider.AWS,
                 auth_method="secret",
                 aws_domain="my-domain"
             )
-        }
-        base_registry_v2.maven_config.auth_config = "aws-auth"
-        
-        with pytest.raises(ValueError, match="AWS authConfig must specify 'awsRegion'"):
-            resolve_v2_auth_headers(base_registry_v2, env_creds)
 
 
     def test_aws_missing_credentials(self, base_registry_v2, env_creds):

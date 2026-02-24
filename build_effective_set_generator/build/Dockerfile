@@ -14,8 +14,7 @@ RUN apk add --no-cache \
     rust \
     build-base \
     curl \
-    wget \
-    git
+    wget
 
 COPY build_effective_set_generator/build/sources.list /etc/apk/repositories
 COPY build_effective_set_generator/build/pip.conf /etc/pip.conf

@@ -4,8 +4,7 @@ import tempfile
 from pathlib import Path
 
 from artifact_searcher import artifact
-from artifact_searcher.auth_resolver import resolve_v2_auth_headers
-from artifact_searcher.utils.models import FileExtension, Credentials, Registry, RegistryV2, Application
+from artifact_searcher.utils.models import FileExtension, Credentials, Registry, Application
 from env_template.template_testing import run_env_test_setup
 from envgenehelper import getEnvDefinition, fetch_cred_value, getAppDefinitionPath
 from envgenehelper import openYaml, getenv_with_error, logger
@@ -67,14 +66,11 @@ def resolve_artifact_new_logic(env_definition: dict, template_dest: str) -> str:
         raise FileNotFoundError(f"No artifact definition file found for {app_name} with .yaml or .yml extension")
     app_def = Application.model_validate(openYaml(artifact_path))
 
+    env_creds = render_creds()
+    auth_headers = app_def.registry.resolve_auth_headers(env_creds)
+    
     cred = None
-    auth_headers = None
-    if isinstance(app_def.registry, RegistryV2):
-        env_creds = render_creds()
-        if not env_creds:
-            raise ValueError("Decrypted credentials unavailable for V2 registry")
-        auth_headers = resolve_v2_auth_headers(app_def.registry, env_creds)
-    else:
+    if isinstance(app_def.registry, Registry) and auth_headers is None:
         cred = get_registry_creds(app_def.registry)
 
     template_url = None
