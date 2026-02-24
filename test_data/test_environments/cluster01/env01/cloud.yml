@@ -15,7 +15,7 @@ databases: []
 mergeDeployParametersAndE2EParameters: false
 maasConfig:
   credentialsId: "maas"
-  enable: true
+  enable: false
   maasUrl: "http://maas.qubership.org"
   maasInternalAddress: "http://maas.maas:8888"
 vaultConfig:
@@ -24,12 +24,12 @@ vaultConfig:
   url: ""
 dbaasConfigs:
   - credentialsId: "dbaas"
-    enable: true
+    enable: false
     apiUrl: "http://dbaas.dbaas:8888"
     aggregatorUrl: "https://dbaas.qubership.org"
 consulConfig:
   tokenSecret: "consul-token"
-  enabled: true
+  enabled: false
   publicUrl: "https://consul.qubership.org"
   internalUrl: "http://consul.consul:8888"
 deployParameters:

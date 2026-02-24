@@ -27,6 +27,7 @@ def mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment) :
             store_value_to_yaml(cloudYaml["deployParameters"], paramKey, paramValue, comment)
 
 def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
+    logger.info(f"cloudPassportYaml is {cloudPassportYaml}")
     cloud_schema="schemas/cloud.schema.json"
     # cloud
     cloudYamlPath = f"{env_dir}/cloud.yml"
@@ -46,7 +47,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
         process_and_update_key("maasInternalAddress", cloudYaml["maasConfig"], "MAAS_INTERNAL_ADDRESS", maasPassportYaml, comment)
         del cloudPassportYaml["maas"]
     else:
-        store_value_to_yaml(cloudYaml["maasConfig"], "enable", False, comment)
+        store_value_to_yaml(cloudYaml["maasConfig"], "enable", False)
     if "vault" in cloudPassportYaml :
         vaultPassportYaml = cloudPassportYaml["vault"]
         vaultUrl = vaultPassportYaml["VAULT_ADDR"]
@@ -60,7 +61,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
             store_value_to_yaml(cloudYaml["vaultConfig"], "url", "", comment)
         del cloudPassportYaml["vault"]
     else:
-        store_value_to_yaml(cloudYaml["vaultConfig"], "enable", False, comment)
+        store_value_to_yaml(cloudYaml["vaultConfig"], "enable", False)
     if "dbaas" in cloudPassportYaml :
         dbaasPassportYaml = cloudPassportYaml["dbaas"]
         if "dbaasConfigs" not in cloudYaml or len(cloudYaml["dbaasConfigs"]) != 1 :
@@ -74,7 +75,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
         del cloudPassportYaml["dbaas"]
     else:
         for cfg in cloudYaml["dbaasConfigs"]:
-            store_value_to_yaml(cfg, "enable", False, comment)
+            store_value_to_yaml(cfg, "enable", False)
     if "consul" in cloudPassportYaml :
           consulPassportYaml = cloudPassportYaml["consul"]
           consulConfigYaml = cloudYaml["consulConfig"]
@@ -86,7 +87,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
           store_value_to_yaml(cloudYaml["deployParameters"], "CONSUL_ENABLED", f"{consulConfigYaml['enabled']}".lower(), comment)
           del cloudPassportYaml["consul"]
     else:
-        store_value_to_yaml(cloudYaml["consulConfig"], "enabled", False, comment)
+        store_value_to_yaml(cloudYaml["consulConfig"], "enabled", False)
     # adding rest of cloud passport parameters to cloud deploy parameters
     logger.debug(f"Rest of params from cloud passport are: \n{dump_as_yaml_format(cloudPassportYaml)}")
     mergeDeployParametersFromPassport(cloudPassportYaml, cloudYaml, comment)
@@ -135,6 +136,7 @@ def update_env_definition_with_cloud_name(render_env_dir, source_env_dir, all_in
 def process_cloud_passport(render_env_dir, env_instances_dir, instances_dir) :
     logger.info(f"Trying to find cloud passport definition file")
     cloudPassportFilePath = find_cloud_passport_definition(env_instances_dir, instances_dir)
+    logger.info(f"cloudPassportFilePath is {cloudPassportFilePath}")
     cloudPassportFileName = extractNameFromFile(cloudPassportFilePath)
     # checking passport by schema
     checkCloudPassportBySchema(render_env_dir, cloudPassportFilePath)
