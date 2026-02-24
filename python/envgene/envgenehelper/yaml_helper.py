@@ -8,13 +8,13 @@ import jschon
 import jschon_tools
 import jsonschema
 import ruyaml
+from jsonschema import RefResolver
 from ruyaml import CommentedMap, CommentedSeq
 from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
 
 from .file_helper import *
 from .json_helper import openJson
 from .logger import logger
-from jsonschema import RefResolver
 
 
 def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
@@ -433,13 +433,15 @@ def convert_ordereddict_to_dict(obj):
         return obj
 
 
-def find_all_yaml_files_by_stem(path: str):
-    file_paths = []
-    for ext in ["yaml", "yml"]:
-        file_path = Path(f"{path}.{ext}")
-        if file_path.exists():
-            file_paths.append(file_path)
-    return file_paths
+def find_files_by_basename(path: str, extensions_priority: tuple[str] = ("yml", "yaml")) -> list[Path]:
+    base_path = Path(path)
+    found_files: list[Path] = []
+
+    for ext in extensions_priority:
+        candidate = base_path.with_suffix(f".{ext}")
+        if candidate.exists():
+            found_files.append(candidate)
+    return found_files
 
 
 jschon.create_catalog('2020-12')
