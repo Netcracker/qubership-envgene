@@ -47,7 +47,6 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
         process_and_update_key("maasInternalAddress", cloudYaml["maasConfig"], "MAAS_INTERNAL_ADDRESS", maasPassportYaml, comment)
         del cloudPassportYaml["maas"]
     else:
-        print("inisde maasConfig false")
         store_value_to_yaml(cloudYaml["maasConfig"], "enable", False)
     if "vault" in cloudPassportYaml :
         vaultPassportYaml = cloudPassportYaml["vault"]
