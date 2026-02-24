@@ -1,0 +1,4 @@
+name: oss-env-specific
+parameters:
+    LISTENER_NODE_IP: 10.10.10.10
+applications: []

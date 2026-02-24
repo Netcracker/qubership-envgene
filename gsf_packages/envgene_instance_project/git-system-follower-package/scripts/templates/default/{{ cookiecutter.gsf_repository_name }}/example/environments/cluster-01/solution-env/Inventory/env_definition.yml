@@ -1,0 +1,16 @@
+# See detailed description in https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml
+envTemplate:
+  name: solution
+  artifact: template-project:feature-sample-template-SNAPSHOT
+  additionalTemplateVariables:
+    use_env_prefix: true
+  sharedTemplateVariables: []
+  envSpecificParamsets:
+    bss:
+      - "env-specific-bss"
+    oss:
+      - "oss-env-specific"
+  envSpecificE2EParamsets: {}
+  envSpecificTechnicalParamsets: {}
+  envSpecificResourceProfiles: {}
+  sharedMasterCredentialFiles: []

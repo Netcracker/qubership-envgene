@@ -1,0 +1,13 @@
+# See detailed description in https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml
+envTemplate:
+  name: platform
+  artifact: template-project:feature-sample-template-SNAPSHOT
+  additionalTemplateVariables:
+    use_env_prefix: true
+  sharedTemplateVariables: []
+  envSpecificParamsets: {}
+  envSpecificE2EParamsets: {}
+  envSpecificTechnicalParamsets: {}
+  envSpecificResourceProfiles: {}
+  sharedMasterCredentialFiles:
+    - "share-creds"
