@@ -9,7 +9,6 @@ from pathlib import Path
 import envgenehelper as helper
 import yaml
 from artifact_searcher import artifact
-from artifact_searcher.auth_resolver import resolve_v2_auth_headers
 from artifact_searcher.utils import models as artifact_models
 from envgenehelper.business_helper import getenv_and_log, getenv_with_error
 from envgenehelper.env_helper import Environment
@@ -297,16 +296,10 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
 
 
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
-    # SNAPSHOT versions are supported via maven-metadata.xml resolution in artifact-searcher
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
-    cred = None
-    auth_headers = None
-    if isinstance(app_def.registry, artifact_models.RegistryV2):
-        env_creds = helper.get_cred_config()
-        if not env_creds:
-            raise ValueError("Decrypted credentials unavailable for V2 registry")
-        auth_headers = resolve_v2_auth_headers(app_def.registry, env_creds)
+    env_creds = helper.get_cred_config()
+    auth_headers = app_def.registry.resolve_auth_headers(env_creds)
 
     artifact_info = asyncio.run(
         artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,

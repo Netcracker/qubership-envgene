@@ -26,8 +26,6 @@ class MavenConfig(BaseSchema):
     snapshot_group: Optional[str] = ""
     release_group: Optional[str] = ""
 
-    is_nexus: bool = False
-
     @field_validator('full_repository_url')
     def check_full_repository_url(cls, full_repository_url):
         if full_repository_url:
@@ -38,60 +36,57 @@ class MavenConfig(BaseSchema):
     def ensure_trailing_slash(cls, value):
         return value.rstrip("/") + "/"
 
-    @model_validator(mode="after")
-    def detect_nexus(self):
-        if not self.repository_domain_name.endswith("/repository/"):
-            return self
-        base = self.repository_domain_name[: -len("repository/")]
-        status_url = f"{base}service/rest/v1/status"
-        try:
-            resp = requests.get(status_url, timeout=DEFAULT_REQUEST_TIMEOUT)
-            self.is_nexus = resp.status_code == 200
-        except Exception:
-            self.is_nexus = False
-
-        return self
-
 
 class DockerConfig(BaseSchema):
-    snapshot_uri: Optional[str] = ""
-    staging_uri: Optional[str] = ""
-    release_uri: Optional[str] = ""
-    group_uri: Optional[str] = ""
-    snapshot_repo_name: Optional[str] = ""
-    staging_repo_name: Optional[str] = ""
-    release_repo_name: Optional[str] = ""
-    group_name: Optional[str] = ""
+    auth_config: str
+    snapshot_uri: str
+    staging_uri: str
+    release_uri: str
+    group_uri: str
+    snapshot_repo_name: str
+    staging_repo_name: str
+    release_repo_name: str
+    group_name: str
 
 
 class GoConfig(BaseSchema):
-    go_target_snapshot: Optional[str] = ""
-    go_target_release: Optional[str] = ""
-    go_proxy_repository: Optional[str] = ""
+    auth_config: str
+    repository_domain_name: str
+    go_target_snapshot: str
+    go_target_release: str
+    go_proxy_repository: str
 
 
 class RawConfig(BaseSchema):
-    raw_target_snapshot: Optional[str] = ""
-    raw_target_release: Optional[str] = ""
-    raw_target_staging: Optional[str] = ""
-    raw_target_proxy: Optional[str] = ""
+    auth_config: str
+    repository_domain_name: str
+    raw_target_snapshot: str
+    raw_target_release: str
+    raw_target_staging: str
+    raw_target_proxy: str
 
 
 class NpmConfig(BaseSchema):
-    npm_target_snapshot: Optional[str] = ""
-    npm_target_release: Optional[str] = ""
+    auth_config: str
+    repository_domain_name: str
+    npm_target_snapshot: str
+    npm_target_release: str
 
 
 class HelmConfig(BaseSchema):
-    helm_target_staging: Optional[str] = ""
-    helm_target_release: Optional[str] = ""
+    auth_config: str
+    repository_domain_name: str
+    helm_target_staging: str
+    helm_target_release: str
 
 
 class HelmAppConfig(BaseSchema):
-    helm_staging_repo_name: Optional[str] = ""
-    helm_release_repo_name: Optional[str] = ""
-    helm_group_repo_name: Optional[str] = ""
-    helm_dev_repo_name: Optional[str] = ""
+    auth_config: str
+    repository_domain_name: str
+    helm_staging_repo_name: str
+    helm_release_repo_name: str
+    helm_group_repo_name: str
+    helm_dev_repo_name: str
 
 
 REGDEF_V2_VERSION = "2.0"
@@ -111,10 +106,10 @@ class GcpOIDC(BaseSchema):
 
 
 class AuthConfig(BaseSchema):
-    credentials_id: str
+    credentials_id: Optional[str] = None
     auth_type: Optional[str] = None
-    provider: Optional[Provider] = None
-    auth_method: Optional[str] = None
+    provider: Provider
+    auth_method: str
     aws_region: Optional[str] = None
     aws_domain: Optional[str] = None
     aws_role_arn: Optional[str] = Field(default=None, alias="awsRoleARN")
@@ -124,30 +119,65 @@ class AuthConfig(BaseSchema):
     gcp_reg_pool_id: Optional[str] = None
     gcp_reg_provider_id: Optional[str] = None
     gcp_reg_sa_email: Optional[str] = Field(default=None, alias="gcpRegSAEmail")
+    gcp_region: Optional[str] = None
     azure_tenant_id: Optional[str] = None
     azure_acr_resource: Optional[str] = Field(default=None, alias="azureACRResource")
     azure_acr_name: Optional[str] = Field(default=None, alias="azureACRName")
     azure_artifacts_resource: Optional[str] = None
+    
+    @model_validator(mode='after')
+    def validate_conditional_fields(self):
+        if self.auth_method != "anonymous" and not self.credentials_id:
+            raise ValueError("credentialsId is required when authMethod is not 'anonymous'")
+        
+        if self.provider == Provider.AWS and self.auth_method == "assume_role" and not self.aws_role_arn:
+            raise ValueError("awsRoleARN is required when provider is 'aws' and authMethod is 'assume_role'")
+        
+        if self.provider == Provider.GCP and self.auth_method == "federation" and not self.gcp_oidc:
+            raise ValueError("gcpOIDC is required when provider is 'gcp' and authMethod is 'federation'")
+        
+        if self.provider == Provider.NEXUS and self.auth_method not in ["user_pass", "anonymous"]:
+            raise ValueError(f"Nexus provider requires authMethod to be 'user_pass' or 'anonymous', got '{self.auth_method}'")
+        
+        if self.provider == Provider.ARTIFACTORY and self.auth_method not in ["user_pass", "anonymous"]:
+            raise ValueError(f"Artifactory provider requires authMethod to be 'user_pass' or 'anonymous', got '{self.auth_method}'")
+        
+        if self.provider == Provider.AWS and self.auth_method not in ["secret", "assume_role", "anonymous"]:
+            raise ValueError(f"AWS provider requires authMethod to be 'secret', 'assume_role', or 'anonymous', got '{self.auth_method}'")
+        
+        if self.provider == Provider.GCP and self.auth_method not in ["federation", "service_account", "anonymous"]:
+            raise ValueError(f"GCP provider requires authMethod to be 'federation', 'service_account', or 'anonymous', got '{self.auth_method}'")
+        
+        if self.provider == Provider.AZURE and self.auth_method not in ["oauth2", "anonymous"]:
+            raise ValueError(f"Azure provider requires authMethod to be 'oauth2' or 'anonymous', got '{self.auth_method}'")
+        
+        return self
 
 
 class MavenConfigV2(BaseSchema):
-    auth_config: Optional[str] = None
+    auth_config: str
     repository_domain_name: str
-    target_snapshot: str
-    target_staging: str
-    target_release: str
+    target_snapshot: Optional[str] = ""
+    target_staging: Optional[str] = ""
+    target_release: Optional[str] = ""
     snapshot_group: Optional[str] = ""
     release_group: Optional[str] = ""
-    is_nexus: bool = False
 
     @field_validator('repository_domain_name')
     def ensure_trailing_slash(cls, value):
         return value.rstrip("/") + "/"
 
 
-class RegistryV2(BaseSchema):
-    version: str = REGDEF_V2_VERSION
+class BaseRegistry(BaseSchema):
     name: str
+    maven_config: MavenConfig | MavenConfigV2
+    
+    def resolve_auth_headers(self, env_creds: Optional[dict] = None) -> Optional[dict]:
+        raise NotImplementedError("Subclasses must implement resolve_auth_headers()")
+
+
+class RegistryV2(BaseRegistry):
+    version: str = REGDEF_V2_VERSION
     auth_config: dict[str, AuthConfig] = {}
     maven_config: MavenConfigV2
     docker_config: Optional[DockerConfig] = None
@@ -156,6 +186,10 @@ class RegistryV2(BaseSchema):
     npm_config: Optional[NpmConfig] = None
     helm_config: Optional[HelmConfig] = None
     helm_app_config: Optional[HelmAppConfig] = None
+    
+    def resolve_auth_headers(self, env_creds: Optional[dict] = None) -> Optional[dict]:
+        from artifact_searcher.auth_resolver import resolve_v2_auth_headers
+        return resolve_v2_auth_headers(self, env_creds or {})
 
 
 class ArtifactInfo(BaseSchema):
@@ -168,9 +202,8 @@ class ArtifactInfo(BaseSchema):
     name: Optional[str] = ""
 
 
-class Registry(BaseSchema):
+class Registry(BaseRegistry):
     credentials_id: Optional[str] = ""
-    name: str
     maven_config: MavenConfig
     docker_config: Optional[DockerConfig] = None
     go_config: Optional[GoConfig] = None
@@ -178,6 +211,9 @@ class Registry(BaseSchema):
     npm_config: Optional[NpmConfig] = None
     helm_config: Optional[HelmConfig] = None
     helm_app_config: Optional[HelmAppConfig] = None
+    
+    def resolve_auth_headers(self, env_creds: Optional[dict] = None) -> Optional[dict]:
+        return None
 
 
 def parse_registry(data: dict) -> Registry | RegistryV2:
