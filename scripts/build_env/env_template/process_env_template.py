@@ -158,10 +158,6 @@ async def resolve_artifact_old_logic(env_definition: dict, template_dest: str, c
     return resolved_version
 
 
-def is_valid_appver(appver: list[str]) -> bool:
-    return len(appver) >= 2 and bool(appver[0]) and bool(appver[1])
-
-
 def process_env_template() -> dict:
     env_template_test = os.getenv("ENV_TEMPLATE_TEST", "").lower() == "true"
     if env_template_test:
@@ -179,19 +175,19 @@ def process_env_template() -> dict:
     project_dir = getenv_with_error('CI_PROJECT_DIR')
     cred_config = render_creds()
 
-    for key, appver in appvers.items():
-        if key == 'common':
+    for template_type, appver in appvers.items():
+        if template_type == 'common':
             template_dest = f'{project_dir}/tmp'
         else:
-            template_dest = f'{project_dir}/tmp/{key}'
+            template_dest = f'{project_dir}/tmp/{template_type}'
 
-        if not is_valid_appver(appver):
-            if not key == "common":
+        if len(appver) >= 2 and bool(appver[0]) and bool(appver[1]):
+            if template_type != "common":
                 continue
             registry_dict = openYaml(Path(f"{project_dir}/configuration/registry.yml"))
 
             logger.info('Using template resolving old logic')
-            tasks[key] = resolve_artifact_old_logic(env_definition, template_dest, cred_config, registry_dict)
+            tasks[template_type] = resolve_artifact_old_logic(env_definition, template_dest, cred_config, registry_dict)
             continue
 
         app_name, app_version = appver[0], appver[1]
@@ -202,7 +198,7 @@ def process_env_template() -> dict:
         cred = get_registry_creds(app_def.registry, cred_config)
 
         logger.info(f'Use template resolving new logic for {appver}')
-        tasks[key] = resolve_artifact_new_logic(app_def, app_version, template_dest, cred)
+        tasks[template_type] = resolve_artifact_new_logic(app_def, app_version, template_dest, cred)
 
     async def resolve_all():
         results = await asyncio.gather(*tasks.values())

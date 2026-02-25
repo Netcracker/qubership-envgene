@@ -23,7 +23,6 @@ class Context(BaseModel):
     env: Optional[str] = ''
     render_dir: Optional[str] = ''
     cloud_passport: OrderedDict = Field(default_factory=OrderedDict)
-    templates_dir: Optional[Path] = None
     templates_dirs: dict = Field(default_factory=dict)
     output_dir: Optional[str] = ''
     cluster_name: Optional[str] = ''
@@ -138,9 +137,9 @@ class EnvGenerator:
     def set_env_templates(self):
         env_template_name = self.ctx.current_env["env_template"]
 
-        env_templates_dir = Path(f'{self.ctx.templates_dir}/env_templates')
+        env_templates_dir = Path(f'{self.ctx.templates_dirs.get('common')}/env_templates')
         env_template_basename = env_templates_dir / env_template_name
-        env_template, suitable_files = self.find_env_template_in_dir(self.ctx.templates_dir, env_template_name)
+        env_template, suitable_files = self.find_env_template_in_dir(self.ctx.templates_dirs.get('common'), env_template_name)
         if not env_template:
             all_files = [f for f in env_templates_dir.iterdir() if f.is_file()]
             remains_files = list(set(all_files) - set(suitable_files))
@@ -226,7 +225,7 @@ class EnvGenerator:
             return Path(self.ctx.templates_dirs['origin'])
         if role == NamespaceRole.PEER and self.ctx.templates_dirs.get('peer'):
             return Path(self.ctx.templates_dirs['peer'])
-        return self.ctx.templates_dir  # common
+        return self.ctx.templates_dirs['common']
 
     def _get_env_template_for_role(self, role: NamespaceRole) -> dict:
         if role == NamespaceRole.ORIGIN and self.ctx.origin_env_template:
@@ -583,7 +582,7 @@ class EnvGenerator:
             self.setup_base_context(extra_env)
 
             current_env_dir = self.ctx.current_env_dir
-            templates_dir = self.ctx.templates_dir
+            templates_dir = self.ctx.templates_dirs['common']
             patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
             appdef_templates = self.find_templates(f"{templates_dir}/appdefs", patterns)
             regdef_templates = self.find_templates(f"{templates_dir}/regdefs", patterns)
