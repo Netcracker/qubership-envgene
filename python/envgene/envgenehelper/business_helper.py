@@ -1,10 +1,9 @@
-from enum import Enum
+from enum import auto, StrEnum
 import re
 from dataclasses import InitVar, dataclass, field
 from os import getenv
 from pathlib import Path
 from typing import overload
-from functools import cache
 
 from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
@@ -370,10 +369,10 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
     else:
         return ""
 
-class NamespaceRole(Enum):
-    COMMON = 1
-    ORIGIN = 2
-    PEER = 3
+class NamespaceRole(StrEnum):
+    COMMON = auto()
+    ORIGIN = auto()
+    PEER = auto()
 
 def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> NamespaceRole:
     if not bgd_object:
