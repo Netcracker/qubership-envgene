@@ -42,9 +42,10 @@ public class ParametersProcessor implements Serializable {
         this.openTelemetryProvider = openTelemetryProvider;
     }
 
-    public Params processAllParameters(String tenant, String cloud, String namespace, String application, DeployerInputs deployerInputs, String originalNamespace) {
+    public Params processAllParameters(String tenant, String cloud, String namespace, String application,
+                                       DeployerInputs deployerInputs, String originalNamespace, Map<String, Parameter> customParams) {
         return openTelemetryProvider.withSpan("process", () -> {
-            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, application, originalNamespace);
+            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, application, originalNamespace, customParams);
             Language lang;
             lang = new ExpressionLanguage(binding);
             Map<String, Parameter> deploy = lang.processDeployment();
@@ -56,7 +57,7 @@ public class ParametersProcessor implements Serializable {
 
     public Params processE2EParameters(String tenant, String cloud, String namespace, String application, DeployerInputs deployerInputs, String originalNamespace) {
         return openTelemetryProvider.withSpan("process", () -> {
-            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, application, originalNamespace);
+            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, application, originalNamespace, new HashMap<>());
             Language lang;
             lang = new ExpressionLanguage(binding);
             Map<String, Parameter> e2e = lang.processCloudE2E();
@@ -66,7 +67,7 @@ public class ParametersProcessor implements Serializable {
 
     public Params processNamespaceParameters(String tenant, String cloud, String namespace, DeployerInputs deployerInputs, String originalNamespace) {
         return openTelemetryProvider.withSpan("process", () -> {
-            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, null, originalNamespace);
+            Binding binding = new Binding(deployerInputs).init(tenant, cloud, namespace, null, originalNamespace, new HashMap<>());
             Language lang;
             lang = new ExpressionLanguage(binding);
             Map<String, Parameter> namespaceParams = lang.processNamespace();

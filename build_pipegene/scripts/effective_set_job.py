@@ -12,16 +12,18 @@ from pipeline_helper import job_instance
 def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluster_name, params):
     logger.info(f'Prepare generate-effective-set job for {full_env_name}')
     logger.info(f'Cleanup_targets: {cleanup_targets}')
-    
+
     app_reg_defs_job = params["APP_REG_DEFS_JOB"]
-    artifact_app_defs_path = params["APP_DEFS_PATH"] 
+    artifact_app_defs_path = params["APP_DEFS_PATH"]
     artifact_reg_defs_path = params["REG_DEFS_PATH"]
     sd_version = params["SD_VERSION"]
     sd_data = params["SD_DATA"]
     deployment_id = params["DEPLOYMENT_SESSION_ID"]
     effective_set_config = params["EFFECTIVE_SET_CONFIG"]
     tags = params['GITLAB_RUNNER_TAG_NAME']
-            
+    if "CUSTOM_PARAMS" in params:
+        custom_params = params["CUSTOM_PARAMS"]
+
     is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
 
     base_dir = getenv('CI_PROJECT_DIR')
@@ -49,7 +51,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         "--envs-path=$CI_PROJECT_DIR/environments",
         f"--output=$CI_PROJECT_DIR/environments/{full_env_name}/effective-set"
     ]
-    
+
     effective_set_config_dict = {}
     if effective_set_config:
         effective_set_config_dict = json.loads(effective_set_config)
@@ -57,10 +59,10 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     effective_set_version = effective_set_config_dict.get("version") or "v2.0"
     full_sd_exists = sd_path.parent.is_dir() and sd_path.is_file()
     sd_data = bool(sd_data) or bool(sd_version)
-    
+
     if not (full_sd_exists and sd_data) and effective_set_version.lower() == "v1.0":
         raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
-    
+
     if full_sd_exists or sd_data:
         cmdb_cli_cmd_call.extend([
             "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
@@ -79,9 +81,12 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     if deployment_id:
         cmdb_cli_cmd_call.extend([f"--extra_params=DEPLOYMENT_SESSION_ID={deployment_id}"])
 
+    if custom_params:
+        logger.info(f"custom_params : {custom_params}")
+        cmdb_cli_cmd_call.extend([f"--custom-params='{custom_params}'"])
     script.append(" ".join(cmdb_cli_cmd_call))
     script.append('python3 /module/scripts/main.py encrypt_cred_files')
-    
+
     generate_effective_set_params = {
         "name": f'generate_effective_set.{full_env_name}',
         "image": '${effective_set_generator_image}',
@@ -101,7 +106,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         "GITLAB_RUNNER_TAG_NAME": tags,
         "EXCLUDE_CLEANUP_TARGETS": " ".join(cleanup_targets)
     }
- 
+
     needs = []
     if is_local_app_def:
         # gcip library doesn't allow to create a Need object that has the same pipeline as one it runs within.
@@ -120,8 +125,8 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     effective_set_expiry = effective_set_config_dict.get("effective_set_expiry") or "1 hour"
     logger.info(f"effective set expiry value '{effective_set_expiry}'")
     generate_effective_set_job.artifacts.expire_in = effective_set_expiry
-    
+
     generate_effective_set_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(generate_effective_set_job)
-    
+
     return generate_effective_set_job
