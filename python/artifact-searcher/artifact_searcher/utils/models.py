@@ -38,7 +38,7 @@ class MavenConfig(BaseSchema):
 
 
 class DockerConfig(BaseSchema):
-    auth_config: str
+    auth_config: str = ""
     snapshot_uri: str
     staging_uri: str
     release_uri: str
@@ -50,16 +50,16 @@ class DockerConfig(BaseSchema):
 
 
 class GoConfig(BaseSchema):
-    auth_config: str
-    repository_domain_name: str
+    auth_config: str = ""
+    repository_domain_name: str = ""
     go_target_snapshot: str
     go_target_release: str
     go_proxy_repository: str
 
 
 class RawConfig(BaseSchema):
-    auth_config: str
-    repository_domain_name: str
+    auth_config: str = ""
+    repository_domain_name: str = ""
     raw_target_snapshot: str
     raw_target_release: str
     raw_target_staging: str
@@ -67,22 +67,22 @@ class RawConfig(BaseSchema):
 
 
 class NpmConfig(BaseSchema):
-    auth_config: str
-    repository_domain_name: str
+    auth_config: str = ""
+    repository_domain_name: str = ""
     npm_target_snapshot: str
     npm_target_release: str
 
 
 class HelmConfig(BaseSchema):
-    auth_config: str
-    repository_domain_name: str
+    auth_config: str = ""
+    repository_domain_name: str = ""
     helm_target_staging: str
     helm_target_release: str
 
 
 class HelmAppConfig(BaseSchema):
-    auth_config: str
-    repository_domain_name: str
+    auth_config: str = ""
+    repository_domain_name: str = ""
     helm_staging_repo_name: str
     helm_release_repo_name: str
     helm_group_repo_name: str
