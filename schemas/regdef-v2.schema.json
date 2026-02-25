@@ -116,9 +116,6 @@
             "URL"
           ]
         },
-        "gcpRegion": {
-          "type": "string"
-        },
         "gcpRegProject": {
           "type": "string"
         },

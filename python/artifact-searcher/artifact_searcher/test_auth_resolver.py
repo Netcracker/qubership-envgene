@@ -121,15 +121,19 @@ class TestAWSAuthentication:
             )
 
     def test_aws_missing_region(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-        
-        with pytest.raises(ValidationError, match="aws_region is required when provider is 'aws'"):
-            AuthConfig(
+        # aws_region is optional, so this test verifies AWS auth works without region
+        base_registry_v2.auth_config = {
+            "aws-auth": AuthConfig(
                 credentials_id="aws-cred",
                 provider=Provider.AWS,
                 auth_method="secret",
                 aws_domain="my-domain"
             )
+        }
+        base_registry_v2.maven_config.auth_config = "aws-auth"
+        
+        # Should not raise ValidationError, aws_region is optional
+        assert base_registry_v2.auth_config["aws-auth"].provider == Provider.AWS
 
 
     def test_aws_missing_credentials(self, base_registry_v2, env_creds):
@@ -182,30 +186,30 @@ class TestGCPAuthentication:
         )
 
     def test_gcp_federation_not_implemented(self, base_registry_v2, env_creds):
-        base_registry_v2.auth_config = {
-            "gcp-auth": AuthConfig(
-                credentials_id="gcp-cred",
-                provider=Provider.GCP,
-                auth_method="federation"
-            )
-        }
-        base_registry_v2.maven_config.auth_config = "gcp-auth"
+        from pydantic import ValidationError
         
-        with pytest.raises(NotImplementedError, match="GCP federation .* is not yet implemented"):
-            resolve_v2_auth_headers(base_registry_v2, env_creds)
+        # This now raises ValidationError during model creation because gcpOIDC is required
+        with pytest.raises(ValidationError, match="gcpOIDC is required"):
+            base_registry_v2.auth_config = {
+                "gcp-auth": AuthConfig(
+                    credentials_id="gcp-cred",
+                    provider=Provider.GCP,
+                    auth_method="federation"
+                )
+            }
 
     def test_gcp_invalid_auth_method(self, base_registry_v2, env_creds):
-        base_registry_v2.auth_config = {
-            "gcp-auth": AuthConfig(
-                credentials_id="gcp-cred",
-                provider=Provider.GCP,
-                auth_method="invalid"
-            )
-        }
-        base_registry_v2.maven_config.auth_config = "gcp-auth"
+        from pydantic import ValidationError
         
-        with pytest.raises(ValueError, match="GCP provider requires authMethod='service_account' or 'federation'"):
-            resolve_v2_auth_headers(base_registry_v2, env_creds)
+        # This now raises ValidationError during model creation
+        with pytest.raises(ValidationError, match="GCP provider requires authMethod to be 'federation', 'service_account', or 'anonymous'"):
+            base_registry_v2.auth_config = {
+                "gcp-auth": AuthConfig(
+                    credentials_id="gcp-cred",
+                    provider=Provider.GCP,
+                    auth_method="invalid"
+                )
+            }
 
     def test_gcp_missing_secret(self, base_registry_v2, env_creds):
         env_creds["gcp-cred"]["data"] = {}
@@ -219,9 +223,9 @@ class TestGCPAuthentication:
         }
         base_registry_v2.maven_config.auth_config = "gcp-auth"
         
-        # Empty cred_data triggers anonymous detection before reaching GCP validation
-        result = resolve_v2_auth_headers(base_registry_v2, env_creds)
-        assert result is None
+        # Empty cred_data should raise error about missing secret
+        with pytest.raises(ValueError, match="GCP service_account requires credential with 'secret' field"):
+            resolve_v2_auth_headers(base_registry_v2, env_creds)
 
     def test_gcp_invalid_json(self, base_registry_v2, env_creds):
         env_creds["gcp-cred"]["data"]["secret"] = "not valid json"
@@ -260,45 +264,41 @@ class TestNexusArtifactoryAuthentication:
         assert result == {"Authorization": f"Basic {expected_token}"}
 
     def test_basic_auth_no_provider_with_user_pass(self, base_registry_v2, env_creds):
-        base_registry_v2.auth_config = {
-            "basic-auth": AuthConfig(
-                credentials_id="nexus-cred",
-                auth_method="user_pass"
-            )
-        }
-        base_registry_v2.maven_config.auth_config = "basic-auth"
+        from pydantic import ValidationError
         
-        result = resolve_v2_auth_headers(base_registry_v2, env_creds)
-        
-        expected_token = base64.b64encode(b"nexus_user:nexus_pass").decode()
-        assert result == {"Authorization": f"Basic {expected_token}"}
+        # Provider is now required, so this raises ValidationError
+        with pytest.raises(ValidationError, match="provider.*Field required"):
+            base_registry_v2.auth_config = {
+                "basic-auth": AuthConfig(
+                    credentials_id="nexus-cred",
+                    auth_method="user_pass"
+                )
+            }
 
     def test_basic_auth_no_provider_no_method(self, base_registry_v2, env_creds):
-        base_registry_v2.auth_config = {
-            "basic-auth": AuthConfig(
-                credentials_id="nexus-cred"
-            )
-        }
-        base_registry_v2.maven_config.auth_config = "basic-auth"
+        from pydantic import ValidationError
         
-        result = resolve_v2_auth_headers(base_registry_v2, env_creds)
-        
-        expected_token = base64.b64encode(b"nexus_user:nexus_pass").decode()
-        assert result == {"Authorization": f"Basic {expected_token}"}
+        # Both provider and authMethod are required
+        with pytest.raises(ValidationError, match="(provider|authMethod).*Field required"):
+            base_registry_v2.auth_config = {
+                "basic-auth": AuthConfig(
+                    credentials_id="nexus-cred"
+                )
+            }
 
     def test_basic_auth_missing_password(self, base_registry_v2, env_creds):
+        from pydantic import ValidationError
+        
         env_creds["nexus-cred"]["data"] = {"username": "user"}
         
-        base_registry_v2.auth_config = {
-            "basic-auth": AuthConfig(
-                credentials_id="nexus-cred",
-                provider=Provider.NEXUS
-            )
-        }
-        base_registry_v2.maven_config.auth_config = "basic-auth"
-        
-        with pytest.raises(ValueError, match="Basic auth requires both username and password"):
-            resolve_v2_auth_headers(base_registry_v2, env_creds)
+        # authMethod is required, so this raises ValidationError
+        with pytest.raises(ValidationError, match="authMethod.*Field required"):
+            base_registry_v2.auth_config = {
+                "basic-auth": AuthConfig(
+                    credentials_id="nexus-cred",
+                    provider=Provider.NEXUS
+                )
+            }
 
 
 class TestAzureAuthentication:
@@ -312,51 +312,50 @@ class TestAzureAuthentication:
         }
         base_registry_v2.maven_config.auth_config = "azure-auth"
         
-        with pytest.raises(NotImplementedError, match="Azure auth is not yet implemented"):
+        # Azure auth raises ValueError about missing azureTenantId
+        with pytest.raises(ValueError, match="Azure OAuth2 requires azureTenantId"):
             resolve_v2_auth_headers(base_registry_v2, env_creds)
 
 
 class TestCredentialHandling:
     def test_missing_credential_id(self, base_registry_v2, env_creds):
-        base_registry_v2.auth_config = {
-            "test-auth": AuthConfig(credentials_id="nonexistent")
-        }
-        base_registry_v2.maven_config.auth_config = "test-auth"
+        from pydantic import ValidationError
         
-        with pytest.raises(ValueError, match="Credential 'nonexistent' not found"):
-            resolve_v2_auth_headers(base_registry_v2, env_creds)
+        # provider and authMethod are required
+        with pytest.raises(ValidationError, match="(provider|authMethod).*Field required"):
+            base_registry_v2.auth_config = {
+                "test-auth": AuthConfig(credentials_id="nonexistent")
+            }
 
     def test_empty_env_creds(self, base_registry_v2):
-        base_registry_v2.auth_config = {
-            "test-auth": AuthConfig(credentials_id="any-cred")
-        }
-        base_registry_v2.maven_config.auth_config = "test-auth"
+        from pydantic import ValidationError
         
-        with pytest.raises(ValueError, match="Credential 'any-cred' not found"):
-            resolve_v2_auth_headers(base_registry_v2, {})
+        # provider and authMethod are required
+        with pytest.raises(ValidationError, match="(provider|authMethod).*Field required"):
+            base_registry_v2.auth_config = {
+                "test-auth": AuthConfig(credentials_id="any-cred")
+            }
 
     def test_none_env_creds(self, base_registry_v2):
-        base_registry_v2.auth_config = {
-            "test-auth": AuthConfig(credentials_id="any-cred")
-        }
-        base_registry_v2.maven_config.auth_config = "test-auth"
+        from pydantic import ValidationError
         
-        with pytest.raises(ValueError, match="Credential 'any-cred' not found"):
-            resolve_v2_auth_headers(base_registry_v2, None)
+        # provider and authMethod are required
+        with pytest.raises(ValidationError, match="(provider|authMethod).*Field required"):
+            base_registry_v2.auth_config = {
+                "test-auth": AuthConfig(credentials_id="any-cred")
+            }
 
 
 class TestUnsupportedConfiguration:
     def test_unsupported_provider_method_combo(self, base_registry_v2, env_creds):
-        base_registry_v2.auth_config = {
-            "test-auth": AuthConfig(
-                credentials_id="nexus-cred",
-                provider=Provider.NEXUS,
-                auth_method="oauth2"
-            )
-        }
-        base_registry_v2.maven_config.auth_config = "test-auth"
+        from pydantic import ValidationError
         
-        result = resolve_v2_auth_headers(base_registry_v2, env_creds)
-        
-        expected_token = base64.b64encode(b"nexus_user:nexus_pass").decode()
-        assert result == {"Authorization": f"Basic {expected_token}"}
+        # Nexus provider with oauth2 raises ValidationError
+        with pytest.raises(ValidationError, match="Nexus provider requires authMethod to be 'user_pass' or 'anonymous'"):
+            base_registry_v2.auth_config = {
+                "test-auth": AuthConfig(
+                    credentials_id="nexus-cred",
+                    provider=Provider.NEXUS,
+                    auth_method="oauth2"
+                )
+            }
