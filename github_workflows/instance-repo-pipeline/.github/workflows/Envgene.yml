@@ -69,9 +69,9 @@ env:
   DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator"
 
   #DOCKER_IMAGE_TAGS
-  DOCKER_IMAGE_TAG_PIPEGENE: "1.22.2"
-  DOCKER_IMAGE_TAG_ENVGENE: "1.22.2"
-  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.22.2"
+  DOCKER_IMAGE_TAG_PIPEGENE: "1.27.0"
+  DOCKER_IMAGE_TAG_ENVGENE: "1.27.0"
+  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.27.0"
 
 jobs:
   process_environment_variables:
@@ -88,6 +88,9 @@ jobs:
       ENV_INVENTORY_INIT: ${{ env.ENV_INVENTORY_INIT }}
       ENV_SPECIFIC_PARAMS: ${{ env.ENV_SPECIFIC_PARAMS }}
       ENV_TEMPLATE_NAME: ${{ env.ENV_TEMPLATE_NAME }}
+      SD_SOURCE_TYPE: ${{ env.SD_SOURCE_TYPE }}
+      SD_DATA: ${{ env.SD_DATA }}
+      SD_VERSION: ${{ env.SD_VERSION }}
     steps:
       - name: Repository Checkout
         uses: actions/checkout@v4.1.0
@@ -106,6 +109,7 @@ jobs:
            echo "DEPLOYMENT_TICKET_ID=${{ github.event.inputs.DEPLOYMENT_TICKET_ID }}" >> $GITHUB_ENV
            echo "ENV_NAMES=${{ github.event.inputs.ENV_NAMES }}" >> $GITHUB_ENV
            echo "ENV_BUILDER=${{ github.event.inputs.ENV_BUILDER }}" >> $GITHUB_ENV
+           echo "GENERATE_EFFECTIVE_SET=${{ github.event.inputs.GENERATE_EFFECTIVE_SET }}" >> $GITHUB_ENV
            echo "GET_PASSPORT=${{ github.event.inputs.GET_PASSPORT }}" >> $GITHUB_ENV
            echo "CMDB_IMPORT=${{ github.event.inputs.CMDB_IMPORT }}" >> $GITHUB_ENV
            echo "ENV_TEMPLATE_VERSION=${{ github.event.inputs.ENV_TEMPLATE_VERSION }}" >> $GITHUB_ENV
@@ -291,6 +295,38 @@ jobs:
       ##########################
 
 
+      ### PROCESS_SD ###
+      - name: PROCESS_SD
+        if: (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'json' && needs.process_environment_variables.outputs.SD_DATA != '') || (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'artifact' && needs.process_environment_variables.outputs.SD_VERSION != '')
+        run: |
+          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
+            ${{ env.DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR }}:${{ env.DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR }} \
+            bash -c "
+              source /module/venv/bin/activate
+
+              echo 'Executing PROCESS_SD...'
+              /module/scripts/handle_certs.sh
+              base_env_path=\"\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}\"
+              app_defs_path=\"\${base_env_path}/AppDefs\"
+              reg_defs_path=\"\${base_env_path}/RegDefs\"
+              if [ -n \"\$APP_REG_DEFS_JOB\" ] && [ -n \"\$APP_DEFS_PATH\" ]; then mkdir -p \"\$app_defs_path\" && cp -rf \"\$APP_DEFS_PATH\"/* \"\$app_defs_path\"; fi
+              if [ -n \"\$APP_REG_DEFS_JOB\" ] && [ -n \"\$REG_DEFS_PATH\" ]; then mkdir -p \"\$reg_defs_path\" && cp -fr \"\$REG_DEFS_PATH\"/* \"\$reg_defs_path\"; fi
+              if ! python3 /build_env/scripts/build_env/process_sd.py; then
+                echo 'PROCESS_SD failed with exit code \$?'
+                exit 1
+              fi
+            "
+
+      - name: PROCESS_SD - Upload PROCESS_SD Package
+        uses: actions/upload-artifact@v4
+        if: (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'json' && needs.process_environment_variables.outputs.SD_DATA != '') || (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'artifact' && needs.process_environment_variables.outputs.SD_VERSION != '')
+        with:
+          name: process_sd_${{ env.PACKAGE_NAME }}
+          path: environments/${{ matrix.environment }}
+          include-hidden-files: true
+      ##################
+
+
       ### ENV_BUILD ###
       - name: ENV_BUILD
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
@@ -325,21 +361,34 @@ jobs:
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR }}:${{ env.DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR }} \
             bash -c "
-              # Export all variables using unified exporter
+              echo 'Executing effective set generation...'
+              source /module/venv/bin/activate
               /module/scripts/handle_certs.sh
-
-              echo \"Executing effective set generation...\"
-              if ! /module/scripts/prepare.sh \"generate_effective_set.yaml\"; then
-                echo \"Effective set generation failed with exit code \$?\"
+              mkdir -p \"\${CI_PROJECT_DIR}/configuration/certs\"
+              [ -f /default_cert.pem ] && cp /default_cert.pem \"\${CI_PROJECT_DIR}/configuration/certs/default_cert.pem\" || true
+              for cert in \"\${CI_PROJECT_DIR}/configuration/certs/\"*; do [ -f \"\$cert\" ] && keytool -import -trustcacerts -alias \"\$(basename \"\$cert\")\" -file \"\$cert\" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done
+              python3 /module/scripts/main.py decrypt_cred_files
+              base_env_path=\"\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}\"
+              app_defs_path=\"\${base_env_path}/AppDefs\"
+              reg_defs_path=\"\${base_env_path}/RegDefs\"
+              if [ -n \"\$APP_REG_DEFS_JOB\" ] && [ -n \"\$APP_DEFS_PATH\" ]; then mkdir -p \"\$app_defs_path\" && cp -rf \"\$APP_DEFS_PATH\"/* \"\$app_defs_path\"; fi
+              if [ -n \"\$APP_REG_DEFS_JOB\" ] && [ -n \"\$REG_DEFS_PATH\" ]; then mkdir -p \"\$reg_defs_path\" && cp -fr \"\$REG_DEFS_PATH\"/* \"\$reg_defs_path\"; fi
+              python3 /module/scripts/main.py validate_creds
+              java_cmd=\"/deployments/run-java.sh --env-id=${{ matrix.environment }} --envs-path=\${CI_PROJECT_DIR}/environments --output=\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}/effective-set --registries=\${CI_PROJECT_DIR}/configuration/registry.yml --sboms-path=\${CI_PROJECT_DIR}/sboms --sd-path=\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}/Inventory/solution-descriptor/sd.yaml\"
+              if [ -n \"\$EFFECTIVE_SET_CONFIG\" ]; then
+                python3 /module/scripts/handle_effective_set_config.py --effective-set-config \"\$EFFECTIVE_SET_CONFIG\"
+                extra_args=\$(jq -r '.extra_args // [] | join(\" \")' /tmp/effective_set_output.json)
+                java_cmd=\"\$java_cmd \$extra_args\"
+              fi
+              deploy_id=\"\${DEPLOYMENT_SESSION_ID:-\$DEPLOYMENT_TICKET_ID}\"
+              if [ -n \"\$deploy_id\" ]; then java_cmd=\"\$java_cmd --extra_params=DEPLOYMENT_SESSION_ID=\$deploy_id\"; fi
+              if ! eval \"\$java_cmd\"; then
+                echo 'Effective set generation failed with exit code '\$?
                 exit 1
               fi
-
-              env_path=\$(find \"\${CI_PROJECT_DIR}/environments\" -type d -name \"\$env_name\")
-              for path in \$env_path; do
-                if [ -d \"\$path/Credentials\" ]; then
-                  chmod ugo+rw \"\$path/Credentials/\"*
-                fi
-              done
+              python3 /module/scripts/main.py encrypt_cred_files
+              env_path=\"\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}\"
+              if [ -d \"\$env_path/Credentials\" ]; then chmod -R ugo+rw \"\$env_path/Credentials\"; fi
             "
 
       - name: GENERATE_EFFECTIVE_SET - Upload Generate Effective Set Package
@@ -347,7 +396,10 @@ jobs:
         if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         with:
           name: generate_effective_set_${{ env.PACKAGE_NAME }}
-          path: environments/${{ matrix.environment }}
+          path: |
+            environments/${{ matrix.environment }}
+            sboms
+            configuration
           include-hidden-files: true
       ##########################
 
@@ -359,20 +411,11 @@ jobs:
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               source /module/venv/bin/activate
-
               echo 'Prepare git_commit job for \${ENVIRONMENT_NAME}...'
-
               /module/scripts/handle_certs.sh
-
-              git config --global --add safe.directory \"\${CI_PROJECT_DIR}\"
-
               # Execute git commit with proper error handling
               echo 'Executing git commit operations...'
-              if ! /module/scripts/prepare.sh \"git_commit.yaml\"; then
-                echo 'Git commit operations failed with exit code \$?'
-                echo 'This could be due to authentication issues or other git errors'
-                exit 1
-              fi
+              /module/scripts/git_commit.sh
 
               env_path=\$(find \"\${CI_PROJECT_DIR}/environments\" -type d -name \"\$env_name\")
               for path in \$env_path; do
@@ -389,6 +432,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: git_commit_${{ env.PACKAGE_NAME }}
-          path: environments/${{ matrix.environment }}
+          path: |
+            environments/${{ matrix.environment }}
+            git_envs
+            sboms
           include-hidden-files: true
       ##########################

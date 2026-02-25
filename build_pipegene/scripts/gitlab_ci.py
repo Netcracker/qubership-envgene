@@ -9,10 +9,11 @@ import pipeline_helper
 from appregdef_render_job import prepare_appregdef_render_job
 from bg_manage_job import prepare_bg_manage_job
 from credential_rotation_job import prepare_credential_rotation_job
-from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
+from env_build_jobs import prepare_env_build_job, prepare_git_commit_job
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from process_sd_job import prepare_process_sd
+from effective_set_job import prepare_generate_effective_set_job
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 from envgenehelper.collections_helper import split_multi_value_param
 
@@ -121,20 +122,21 @@ def build_pipeline(params: dict) -> None:
                                                                       cluster_name, tags)
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
-            logger.info(f'Credential rotation job for {full_env_name} is skipped because CRED_ROTATION_PAYLOAD is empty.')
-
+            logger.info(
+                f'Credential rotation job for {full_env_name} is skipped because CRED_ROTATION_PAYLOAD is empty.')
 
         if params['ENV_BUILD']:
-            jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params['IS_TEMPLATE_TEST'],
-                                                                            params['ENV_TEMPLATE_VERSION'],
-                                                                            full_env_name,
+            jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params, full_env_name,
                                                                             environment_name, cluster_name, group_id,
                                                                             artifact_id, artifact_url, tags)
         else:
             logger.info(f'Preparing of appregdef_render_job {full_env_name} is skipped.')
 
-        if (params["SD_SOURCE_TYPE"].lower() == "json" and params["SD_DATA"]) or \
-           (params["SD_SOURCE_TYPE"].lower() == "artifact" and params["SD_VERSION"]):
+        source_type = (params.get("SD_SOURCE_TYPE", "artifact")).lower()
+        if (
+                (source_type == "json" and params.get("SD_DATA")) or
+                (source_type == "artifact" and params.get("SD_VERSION"))
+        ):
             jobs_map["process_sd_job"] = prepare_process_sd(pipeline, full_env_name, environment_name, cluster_name,
                                                             params["APP_DEFS_PATH"], params["REG_DEFS_PATH"], tags)
         else:
@@ -148,8 +150,9 @@ def build_pipeline(params: dict) -> None:
             logger.info(f'Preparing of env_build job for {full_env_name} is skipped.')
 
         if params['GENERATE_EFFECTIVE_SET']:
-            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name,
-                                                                                        cluster_name, tags)
+            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, full_env_name,
+                                                                                        environment_name, cluster_name,
+                                                                                        params)
         else:
             logger.info(f'Preparing of generate_effective_set job for {full_env_name} is skipped.')
 

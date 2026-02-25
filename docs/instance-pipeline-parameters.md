@@ -129,7 +129,7 @@ This parameter serves as a configuration for an extension point. Integration wit
 **Allowed values**:
 
 - `PERSISTENT` (default)  
-  Applies the standard behavior: the pipeline updates the template version in Environment Inventory by updating `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
+  Applies the standard behavior: the pipeline updates the template version in Environment Inventory by modifying `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`, and records the template artifact version actually applied during the run in `generatedVersions.generateEnvironmentLatestVersion` in the same file.
 
 - `TEMPORARY`  
   Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.  
@@ -467,7 +467,7 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 
 **Description**: Operation identifier in Envgene. Must be a valid [UUID v4](https://www.rfc-editor.org/rfc/rfc4122). This parameter is used in two scenarios:
 
-1. If this parameter is provided, the resulting pipeline commit will include a [Git trailer](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt-code--trailerlttokengtltvaluegtcode) in the format: `DEPLOYMENT_SESSION_ID: <value of DEPLOYMENT_SESSION_ID>`.
+1. If this parameter is provided, the resulting pipeline commit will include a [Git trailer](https://git-scm.com/docs/git-commit#Documentation/git-commit.txt---trailertokenvalue) in the format: `DEPLOYMENT_SESSION_ID: <value of DEPLOYMENT_SESSION_ID>`.
 2. It will also be part of the deployment context of the Effective Set. The EnvGene passes it to the Calculator command-line tool using the `--extra_params` attribute. In this case it is used together with `GENERATE_EFFECTIVE_SET`.
 
 **Default Value**: None
