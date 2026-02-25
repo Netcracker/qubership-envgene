@@ -13,7 +13,8 @@ class BaseSchema(BaseModel):
         alias_generator=to_camel,
         populate_by_name=True,
         from_attributes=True,
-        extra="ignore"
+        extra="ignore",
+        exclude_none=True
     )
 
 
@@ -38,7 +39,7 @@ class MavenConfig(BaseSchema):
 
 
 class DockerConfig(BaseSchema):
-    auth_config: str = ""
+    auth_config: Optional[str] = None
     snapshot_uri: str
     staging_uri: str
     release_uri: str
@@ -50,16 +51,16 @@ class DockerConfig(BaseSchema):
 
 
 class GoConfig(BaseSchema):
-    auth_config: str = ""
-    repository_domain_name: str = ""
+    auth_config: Optional[str] = None
+    repository_domain_name: Optional[str] = None
     go_target_snapshot: str
     go_target_release: str
     go_proxy_repository: str
 
 
 class RawConfig(BaseSchema):
-    auth_config: str = ""
-    repository_domain_name: str = ""
+    auth_config: Optional[str] = None
+    repository_domain_name: Optional[str] = None
     raw_target_snapshot: str
     raw_target_release: str
     raw_target_staging: str
@@ -67,22 +68,22 @@ class RawConfig(BaseSchema):
 
 
 class NpmConfig(BaseSchema):
-    auth_config: str = ""
-    repository_domain_name: str = ""
+    auth_config: Optional[str] = None
+    repository_domain_name: Optional[str] = None
     npm_target_snapshot: str
     npm_target_release: str
 
 
 class HelmConfig(BaseSchema):
-    auth_config: str = ""
-    repository_domain_name: str = ""
+    auth_config: Optional[str] = None
+    repository_domain_name: Optional[str] = None
     helm_target_staging: str
     helm_target_release: str
 
 
 class HelmAppConfig(BaseSchema):
-    auth_config: str = ""
-    repository_domain_name: str = ""
+    auth_config: Optional[str] = None
+    repository_domain_name: Optional[str] = None
     helm_staging_repo_name: str
     helm_release_repo_name: str
     helm_group_repo_name: str
