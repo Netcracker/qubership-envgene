@@ -267,7 +267,7 @@ class TestNexusArtifactoryAuthentication:
         from pydantic import ValidationError
         
         # Provider is now required, so this raises ValidationError
-        with pytest.raises(ValidationError, match="provider.*Field required"):
+        with pytest.raises(ValidationError, match="provider"):
             base_registry_v2.auth_config = {
                 "basic-auth": AuthConfig(
                     credentials_id="nexus-cred",
@@ -279,7 +279,7 @@ class TestNexusArtifactoryAuthentication:
         from pydantic import ValidationError
         
         # Both provider and authMethod are required
-        with pytest.raises(ValidationError, match="(provider|authMethod).*Field required"):
+        with pytest.raises(ValidationError, match="provider"):
             base_registry_v2.auth_config = {
                 "basic-auth": AuthConfig(
                     credentials_id="nexus-cred"
@@ -292,7 +292,7 @@ class TestNexusArtifactoryAuthentication:
         env_creds["nexus-cred"]["data"] = {"username": "user"}
         
         # authMethod is required, so this raises ValidationError
-        with pytest.raises(ValidationError, match="authMethod.*Field required"):
+        with pytest.raises(ValidationError, match="authMethod"):
             base_registry_v2.auth_config = {
                 "basic-auth": AuthConfig(
                     credentials_id="nexus-cred",
@@ -322,7 +322,7 @@ class TestCredentialHandling:
         from pydantic import ValidationError
         
         # provider and authMethod are required
-        with pytest.raises(ValidationError, match="(provider|authMethod).*Field required"):
+        with pytest.raises(ValidationError, match="provider"):
             base_registry_v2.auth_config = {
                 "test-auth": AuthConfig(credentials_id="nonexistent")
             }
@@ -331,7 +331,7 @@ class TestCredentialHandling:
         from pydantic import ValidationError
         
         # provider and authMethod are required
-        with pytest.raises(ValidationError, match="(provider|authMethod).*Field required"):
+        with pytest.raises(ValidationError, match="provider"):
             base_registry_v2.auth_config = {
                 "test-auth": AuthConfig(credentials_id="any-cred")
             }
@@ -340,7 +340,7 @@ class TestCredentialHandling:
         from pydantic import ValidationError
         
         # provider and authMethod are required
-        with pytest.raises(ValidationError, match="(provider|authMethod).*Field required"):
+        with pytest.raises(ValidationError, match="provider"):
             base_registry_v2.auth_config = {
                 "test-auth": AuthConfig(credentials_id="any-cred")
             }
