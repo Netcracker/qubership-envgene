@@ -73,7 +73,17 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
         target_release="repo",
         repository_domain_name=base_url,
     )
-    dcr_cfg = models.DockerConfig()
+    dcr_cfg = models.DockerConfig(
+        auth_config="test-auth",
+        snapshot_uri="https://docker.example.com/snapshot",
+        staging_uri="https://docker.example.com/staging",
+        release_uri="https://docker.example.com/release",
+        group_uri="https://docker.example.com/group",
+        snapshot_repo_name="snapshot-repo",
+        staging_repo_name="staging-repo",
+        release_repo_name="release-repo",
+        group_name="test-group"
+    )
     reg = models.Registry(
         name="registry",
         maven_config=mvn_cfg,
