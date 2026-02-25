@@ -84,7 +84,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
 
     if custom_params:
         logger.info(f"custom_params : {custom_params}")
-        cmdb_cli_cmd_call.extend([f"--custom-params=\"{custom_params}\""])
+        cmdb_cli_cmd_call.extend([f"--custom-params='{custom_params}'"])
     script.append(" ".join(cmdb_cli_cmd_call))
     script.append('python3 /module/scripts/main.py encrypt_cred_files')
     
