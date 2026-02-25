@@ -44,10 +44,13 @@ import org.qubership.cloud.devops.commons.pojo.credentials.dto.SecretCredentials
 import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
+import org.qubership.cloud.devops.commons.pojo.parameterset.CustomParameterDTO;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
 import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
+import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
+import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1;
@@ -152,7 +155,7 @@ public class CliParameterParser {
                 });
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap);
-            if (solutionDescriptor.isPresent()) {
+            if (solutionDescriptor.isPresent())  {
                 fileDataConverter.writeToFile(new TreeMap<>(deployMappingFileData), sharedData.getOutputDir(), "deployment", "mapping.yaml");
                 fileDataConverter.writeToFile(new TreeMap<>(runtimeMappingFileData), sharedData.getOutputDir(), "runtime", "mapping.yaml");
                 fileDataConverter.writeToFile(new TreeMap<>(cleanupMappingFileData), sharedData.getOutputDir(), "cleanup", "mapping.yaml");
@@ -284,13 +287,15 @@ public class CliParameterParser {
         }
         ParameterBundle parameterBundle = null;
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
+            CustomParameterDTO customParams = getCustomParameters();
             parameterBundle = parametersServiceV2.getCliParameter(tenantName,
                     cloudName,
                     namespaceName,
                     appName,
                     deployerInputs,
                     originalNamespace,
-                    k8TokenMap);
+                    k8TokenMap,
+                    customParams);
             ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap);
             createCleanupParams(parameterBundle, cleanupParameterBundle);
         } else {
@@ -306,6 +311,21 @@ public class CliParameterParser {
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
 
+    private CustomParameterDTO getCustomParameters() {
+        CustomParameterDTO parameterDTO = CustomParameterDTO.builder().build();
+        Map<String, Parameter> deployParams = new HashMap<>();
+        Map<String, Parameter> techParams = new HashMap<>();
+        inputData.getCustomDeployParamMap().forEach((key, value) -> {
+            deployParams.put(key, new Parameter(value, ParametersConstants.CUSTOM_PARAMS_ORIGIN, false));
+        });
+        inputData.getCustomRuntimeParamMap().forEach((key, value) -> {
+            techParams.put(key, new Parameter(value, ParametersConstants.CUSTOM_PARAMS_ORIGIN, false));
+        });
+        parameterDTO.setDeployParams(deployParams);
+        parameterDTO.setTechnicalParams(techParams);
+        return parameterDTO;
+    }
+
     private void createCleanupParams(ParameterBundle parameterBundle, ParameterBundle cleanupParameterBundle) {
         if (cleanupParameterBundle.getCleanupParameters() == null) {
             cleanupParameterBundle.setCleanupParameters(new HashMap<>());
@@ -314,8 +334,8 @@ public class CliParameterParser {
             cleanupParameterBundle.setCleanupSecureParameters(new HashMap<>());
         }
         if (MapUtils.isNotEmpty(cleanupParameterBundle.getCleanupSecureParameters()) &&
-                MapUtils.isNotEmpty(inputData.getCustomRuntimeParamMap())) {
-            cleanupParameterBundle.getCleanupSecureParameters().putAll(inputData.getCustomRuntimeParamMap());
+                MapUtils.isNotEmpty(parameterBundle.getCustomTechParameters())) {
+            cleanupParameterBundle.getCleanupSecureParameters().putAll(parameterBundle.getCustomTechParameters());
         }
         parameterBundle.setCleanupParameters(cleanupParameterBundle.getCleanupParameters());
         parameterBundle.setCleanupSecureParameters(cleanupParameterBundle.getCleanupSecureParameters());
@@ -363,16 +383,10 @@ public class CliParameterParser {
             fileDataConverter.writeToFile(parameterBundle.getSecuredDeployParams(), deploymentDir, "credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getDeployDescParams(), deploymentDir, "deploy-descriptor.yaml");
 
-            if (MapUtils.isNotEmpty(parameterBundle.getSecuredConfigParams())) {
-                parameterBundle.getSecuredConfigParams().putAll(inputData.getCustomRuntimeParamMap());
-            } else {
-                parameterBundle.setSecuredConfigParams(new TreeMap<>(inputData.getCustomRuntimeParamMap()));
-            }
-
             //runtime parameters
             fileDataConverter.writeToFile(parameterBundle.getConfigServerParams(), runtimeDir, "parameters.yaml");
             fileDataConverter.writeToFile(parameterBundle.getSecuredConfigParams(), runtimeDir, "credentials.yaml");
-            fileDataConverter.writeToFile(inputData.getCustomDeployParamMap(), deploymentDir, "custom-params.yaml");
+            fileDataConverter.writeToFile(parameterBundle.getCustomDeployParameters(), deploymentDir, "custom-params.yaml");
         } else {
             String appDirectory = String.format("%s/%s/%s", sharedData.getOutputDir(), namespaceName, appName);
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), appDirectory, "deployment-parameters.yaml");
