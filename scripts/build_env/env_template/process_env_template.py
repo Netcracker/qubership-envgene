@@ -23,7 +23,7 @@ def parse_artifact_appver(env_definition: dict, attribute_str: str) -> list[str]
 
     if exists and not appver:
         raise ValueError(f"{attribute_str} is empty or missing from env_definition: {env_definition}")
-    logger.info(f"Artifact version in {attribute_str}: {appver}", attribute_str, appver)
+    logger.info(f"Artifact version in {attribute_str}: {appver}")
     return appver.split(":")
 
 
@@ -181,7 +181,7 @@ def process_env_template() -> dict:
         else:
             template_dest = f'{project_dir}/tmp/{template_type}'
 
-        if len(appver) >= 2 and bool(appver[0]) and bool(appver[1]):
+        if not (len(appver) >= 2 and bool(appver[0]) and bool(appver[1])):
             if template_type != "common":
                 continue
             registry_dict = openYaml(Path(f"{project_dir}/configuration/registry.yml"))
