@@ -3,22 +3,23 @@ from os import environ
 import pytest
 from envgenehelper import *
 
-from main import render_environment, cleanup_resulting_dir
+from main import render_environment
 from envgenehelper.test_helpers import TestHelpers
 
 from tests.base_test import BaseTest
 
 test_data = [
     # (cluster_name, environment_name, template)
-    ("cluster-01", "env-01", "composite-prod"),
-    ("cluster-01", "env-02", "composite-dev"),
-    ("cluster-01", "env-03", "composite-dev"),
-    ("cluster-01", "env-04", "simple"),
-    ("cluster01", "env01", "test-01"),
-    ("cluster01", "env03", "test-template-1"),
-    ("cluster01", "env04", "test-template-2"),
-    ("bgd-cluster", "bgd-env", "bgd"),
-    ("cluster03", "rpo-replacement-mode", "simple"),
+    ("cluster-01", "env-01", "composite-prod", {}),
+    ("cluster-01", "env-02", "composite-dev", {}),
+    ("cluster-01", "env-03", "composite-dev", {}),
+    ("cluster-01", "env-04", "simple", {}),
+    ("cluster01", "env01", "test-01", {}),
+    ("cluster01", "env03", "test-template-1", {}),
+    ("cluster01", "env04", "test-template-2", {}),
+    ("bgd-cluster", "bgd-env", "bgd", {}),
+    ("bgd-cluster", "bgd-ns-artifacts-env", "bgd-ns-artifacts", {"peer": "test_data/test_templates_peer", "origin": "test_data/test_templates_origin"}),
+    ("cluster03", "rpo-replacement-mode", "simple", {}),
 ]
 
 
@@ -27,11 +28,13 @@ class TestEnvBuild(BaseTest):
     def change_test_dir(self, monkeypatch):
         monkeypatch.chdir(self.base_dir)
 
-    @pytest.mark.parametrize("cluster_name, env_name, version", test_data)
-    def test_render_envs(self, cluster_name, env_name, version):
+    @pytest.mark.parametrize("cluster_name, env_name, version, extra_templates", test_data)
+    def test_render_envs(self, cluster_name, env_name, version, extra_templates):
         g_templates_dirs = {
             'common': str((self.test_data_dir / "test_templates").resolve())
         }
+        g_templates_dirs.update(extra_templates)
+
         g_inventory_dir = str((self.test_data_dir / "test_environments").resolve())
         g_output_dir = str((self.base_dir / "/tmp/test_environments").resolve())
 
