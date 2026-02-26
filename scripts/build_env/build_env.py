@@ -1,14 +1,12 @@
 import os
-import sys
 import copy
-import json
 import yaml
 import re
 import pathlib
 from pathlib import Path
 
 from envgenehelper import *
-from envgenehelper.business_helper import get_namespace_role, get_namespaces, NamespaceRole
+from envgenehelper.business_helper import get_namespaces, NamespaceRole
 from resource_profiles import processResourceProfiles
 from schema_validation import checkEnvSpecificParametersBySchema
 from cloud_passport import process_cloud_passport
