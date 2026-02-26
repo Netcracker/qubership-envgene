@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Template Descriptor",
   "description": "Configuration for environment templates including tenant, cloud, namespaces, and parametersets",
   "type": "object",
