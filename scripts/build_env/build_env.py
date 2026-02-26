@@ -485,11 +485,6 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
         logger.info(f"No shared templates variables are defined in: {envDefinitionPath}")
 
 
-def getTemplateNameFromNamespacePath(namespacePath):
-    path = pathlib.Path(namespacePath)
-    return path.parent.name
-
-
 def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, resource_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None):
     paramset_map = createParamsetsMap(parameters_dir)

@@ -28,14 +28,14 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     # clearing instances dir
     cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
-    for k, v in templates_dirs.items():
-        if not (v and check_dir_exists(f'{v}/parameters')):
+    for template_type, template_path in templates_dirs.items():
+        if not (template_path and check_dir_exists(f'{template_path}/parameters')):
             continue
-        if k == 'common':
+        if template_type == 'common':
             param_dir_name = 'from_template'
         else:
-            param_dir_name = f'from_{k}_template'
-        copy_path(f'{v}/parameters', f'{render_parameters_dir}/{param_dir_name}')
+            param_dir_name = f'from_{template_type}_template'
+        copy_path(f'{template_path}/parameters', f'{render_parameters_dir}/{param_dir_name}')
     cluster_path = getDirName(source_env_dir)
     instances_dir = getDirName(cluster_path)
     check_dir_exist_and_create(f'{render_parameters_dir}/from_instance')
