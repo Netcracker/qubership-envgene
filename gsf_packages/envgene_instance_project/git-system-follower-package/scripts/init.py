@@ -3,7 +3,8 @@ from git_system_follower.develop.api.types import Parameters
 from git_system_follower.develop.api.templates import create_template, get_template_names
 
 # Protected files that should never be deleted
-PROTECTED_FILES = {'history.log', '.gitlab-ci.yml', '.gitignore'}
+# pipeline_vars: preserve if exists in repo (user customizations)
+PROTECTED_FILES = {'history.log', '.gitlab-ci.yml', '.gitignore', 'gitlab-ci/pipeline_vars.yaml', 'gitlab-ci/pipeline_vars.yml'}
 
 
 def _delete_files_from_history(parameters: Parameters):

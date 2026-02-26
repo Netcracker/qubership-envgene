@@ -34,7 +34,8 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
     script = [
         # cert handling for java
-        'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/ && cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/default_cert.pem"',
+        'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/',
+        'if [ -f /default_cert.pem ]; then cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/"; fi',
         'for cert in "${CI_PROJECT_DIR}/configuration/certs/*" ; do [ -f "$cert" ] && keytool -import -trustcacerts -alias "$(basename "$cert")" -file "$cert" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done',
         'python3 /module/scripts/main.py decrypt_cred_files',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p {app_defs_path} && cp -rf {artifact_app_defs_path}/* {app_defs_path}',
@@ -43,7 +44,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     ]
 
     cmdb_cli_cmd_call = [
-        f"/deployments/run-java.sh --env-id={full_env_name}",
+        f"/module/scripts/utils/entrypoint.sh --env-id={full_env_name}",
         "--envs-path=$CI_PROJECT_DIR/environments",
         f"--output=$CI_PROJECT_DIR/environments/{full_env_name}/effective-set"
     ]
