@@ -54,7 +54,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         effective_set_config_dict = json.loads(effective_set_config)
 
     effective_set_version = effective_set_config_dict.get("version") or "v2.0"
-    full_sd_exists = sd_path.parent.is_dir() and sd_path.is_file()
+    full_sd_exists = sd_path.is_file()
     sd_data = bool(sd_data) or bool(sd_version)
     
     if not (full_sd_exists and sd_data) and effective_set_version.lower() == "v1.0":
