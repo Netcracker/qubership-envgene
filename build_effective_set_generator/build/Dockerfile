@@ -1,3 +1,6 @@
+#########################################
+# Stage 1: Build
+# Multi-stage build to reduce final image size
 FROM python:3.12-alpine3.19 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
@@ -35,6 +38,7 @@ RUN /module/venv/bin/pip install --no-cache-dir \
     /python/envgene \
     /python/artifact-searcher
 
+# Download and install SOPS for secrets management
 RUN curl -fsSL \
     https://github.com/mozilla/sops/releases/download/v${SOPS_VERSION}/sops-v${SOPS_VERSION}.linux.amd64 \
     -o /usr/local/bin/sops && \
@@ -47,6 +51,9 @@ RUN mkdir -p /deployments && \
 COPY build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
 
 
+#########################################
+# Stage 2: Runtime
+# Lightweight runtime image with only essential dependencies
 FROM python:3.12-alpine3.19 AS runtime
 
 ARG JAVA_PACKAGE=openjdk17-jre-headless
@@ -81,12 +88,8 @@ COPY --from=build /usr/local/bin/sops /usr/local/bin/sops
 COPY --from=build /deployments /deployments
 
 COPY scripts/build_env/ /build_env/scripts/build_env/
-COPY scripts/build_env/process_sd.py /module/scripts/
 COPY build_effective_set_generator/scripts/ /module/scripts/
 COPY scripts/utils/ /module/scripts/utils/
-
-# cert script should be moved to scripts/utils/
-COPY build_envgene/scripts/handle_certs.sh /module/scripts/
 
 # User creation + permissions
 RUN addgroup ci && \
