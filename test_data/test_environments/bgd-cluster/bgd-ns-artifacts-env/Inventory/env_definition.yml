@@ -8,13 +8,13 @@ inventory:
 envTemplate:
   name: "bgd-ns-artifacts"
   bgNsArtifacts:
-    origin: "bgd-ns-artifacts"
-    peer: "bgd-ns-artifacts"
+    origin: "bgd-ns-artifacts:bgd-ns-artifacts"
+    peer: "bgd-ns-artifacts:bgd-ns-artifacts"
   additionalTemplateVariables: {}
   sharedTemplateVariables: []
   envSpecificParamsets: {}
   envSpecificTechnicalParamsets: {}
   sharedMasterCredentialFiles: []
-  artifact: "bgd-ns-artifacts"
+  artifact: "bgd-ns-artifacts:bgd-ns-artifacts"
 generatedVersions:
   generateEnvironmentLatestVersion: "bgd-ns-artifacts:bgd-ns-artifacts"
