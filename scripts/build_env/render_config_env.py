@@ -145,7 +145,7 @@ class EnvGenerator:
             remains_files = list(set(all_files) - set(suitable_files))
             raise ValueError(
                 f"Template descriptor not found: {env_template_basename}."
-                f" Expected location in template repository: {env_template_basename}.[yml, yaml, yml.j2, yaml.j2]"
+                f" Expected location in template repository: {env_template_basename}"
                 f" Allowed extensions: 'yml', 'yaml', 'yml.j2', 'yaml.j2'."
                 f" Found templates: {remains_files}")
         logger.info(f"env_template = {env_template}")
