@@ -13,9 +13,13 @@ class BaseSchema(BaseModel):
         alias_generator=to_camel,
         populate_by_name=True,
         from_attributes=True,
-        extra="ignore",
-        exclude_none=True
+        extra="ignore"
     )
+
+    def model_dump(self, **kwargs):
+        kwargs.setdefault('exclude_none', True)
+        kwargs.setdefault('by_alias', True)
+        return super().model_dump(**kwargs)
 
 
 class MavenConfig(BaseSchema):
