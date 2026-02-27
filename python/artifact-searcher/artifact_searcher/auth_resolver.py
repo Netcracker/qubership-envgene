@@ -26,13 +26,13 @@ CRED_FIELD_DATA = "data"
 def resolve_v2_auth_headers(registry: RegistryV2, env_creds: dict) -> Optional[dict]:
     """Resolve V2 registry authConfig into HTTP Authorization headers.
     Returns None for anonymous access."""
-    auth_config_ref = registry.maven_config.auth_config
-    if auth_config_ref not in registry.auth_config:
+    auth_config = registry.maven_config.auth_config
+    if auth_config not in registry.auth_config:
         raise ValueError(
-            f"AuthConfig '{auth_config_ref}' not found in registry '{registry.name}'. "
+            f"AuthConfig '{auth_config}' not found in registry '{registry.name}'. "
             f"Available: {list(registry.auth_config.keys())}")
 
-    auth_cfg = registry.auth_config[auth_config_ref]
+    auth_cfg = registry.auth_config[auth_config]
     
     if auth_cfg.auth_method == AUTH_METHOD_ANONYMOUS:
         logger.info(f"Anonymous access for registry '{registry.name}'")
@@ -85,32 +85,23 @@ def _get_cred_data(cred_id: str, env_creds: dict) -> dict:
     return env_creds[cred_id].get(CRED_FIELD_DATA, {})
 
 
-
-
 def _aws_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
-    """Get ECR authorization token and return as Bearer token header."""
     if not auth_cfg.aws_region:
         raise ValueError("AWS authConfig must specify 'awsRegion'")
 
     username = cred_data.get(CRED_FIELD_USERNAME)
     password = cred_data.get(CRED_FIELD_PASSWORD)
     if not username or not password:
-        raise ValueError("AWS ECR auth requires both username (access key) and password (secret key)")
+        raise ValueError(f"AWS {auth_cfg.auth_method} auth requires both username (access key) and password (secret key)")
 
-    try:
-        from qubership_pipelines_common_library.v2.artifacts_finder.auth.aws_credentials import AwsCredentialsProvider
-    except ImportError as e:
-        raise ValueError(f"AWS dependencies not available: {e}")
-
+    from qubership_pipelines_common_library.v2.artifacts_finder.auth.aws_credentials import AwsCredentialsProvider
     provider = AwsCredentialsProvider().with_direct_credentials(
         access_key=username,
         secret_key=password,
         region_name=auth_cfg.aws_region,
     )
-    
     token = provider.get_ecr_authorization_token()
-    
-    logger.info(f"AWS ECR token obtained for region '{auth_cfg.aws_region}'")
+    logger.debug(f"AWS ECR token obtained for region '{auth_cfg.aws_region}'")
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -139,19 +130,19 @@ def _gcp_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
 def _aws_assume_role(auth_cfg: AuthConfig, cred_data: dict) -> dict:
     if not auth_cfg.aws_role_arn:
         raise ValueError("AWS assume_role requires awsRoleARN to be specified")
-    
+
     username = cred_data.get(CRED_FIELD_USERNAME)
     password = cred_data.get(CRED_FIELD_PASSWORD)
     if not username or not password:
         raise ValueError("AWS assume_role requires both username (access key) and password (secret key)")
-    
+
     raise NotImplementedError("AWS assume_role auth is not yet implemented")
 
 
 def _gcp_federation(auth_cfg: AuthConfig, cred_data: dict) -> dict:
     if not auth_cfg.gcp_oidc:
         raise ValueError("GCP federation requires gcpOIDC configuration")
-    
+
     raise NotImplementedError("GCP federation (OIDC) auth is not yet implemented")
 
 

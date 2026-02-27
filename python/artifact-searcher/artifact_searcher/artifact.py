@@ -134,17 +134,17 @@ def clean_temp_dir():
     os.makedirs(WORKSPACE, exist_ok=True)
 
 
+def _build_session_auth(cred: Credentials | None, auth_headers: dict | None) -> tuple:
+    if auth_headers:
+        return None, auth_headers
+    if cred:
+        return BasicAuth(login=cred.username, password=cred.password), None
+    return None, None
+
+
 async def download_all_async(artifacts_info: list[ArtifactInfo], cred: Credentials | None = None,
                               auth_headers: dict | None = None):
-    if auth_headers:
-        auth = None
-        session_headers = auth_headers
-    elif cred:
-        auth = BasicAuth(login=cred.username, password=cred.password)
-        session_headers = None
-    else:
-        auth = None
-        session_headers = None
+    auth, session_headers = _build_session_auth(cred, auth_headers)
     connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
     timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
     async with aiohttp.ClientSession(connector=connector, timeout=timeout, auth=auth, headers=session_headers) as session:
@@ -217,14 +217,10 @@ async def check_artifact_by_full_url_async(
         snapshot_info = await resolve_snapshot_version_async(session, app, version, repo_value, task_id,
                                                              stop_artifact_event, stop_snapshot_event_for_others,
                                                              artifact_extension, classifier)
-        if snapshot_info:
-            # Successfully resolved SNAPSHOT via maven-metadata.xml (Nexus/Artifactory)
-            snapshot_version, id_main_task = snapshot_info
-            resolved_version = snapshot_version
-        else:
-            # SNAPSHOT resolution failed - fall back to direct -SNAPSHOT URL (AWS/GCP flat repos)
-            logger.info(f"[Task {task_id}] [Application: {app.name}: {version}] - SNAPSHOT metadata not available, will try direct -SNAPSHOT URL")
-            resolved_version = version
+        if not snapshot_info:
+            return None
+        snapshot_version, id_main_task = snapshot_info
+        resolved_version = snapshot_version
 
     if stop_artifact_event.is_set() or (stop_snapshot_event_for_others.is_set() and task_id != id_main_task):
         return None
@@ -273,8 +269,7 @@ async def _attempt_check(
     if registry_url:
         app.registry.maven_config.repository_domain_name = registry_url
 
-    auth = BasicAuth(login=cred.username, password=cred.password) if cred and not auth_headers else None
-    session_headers = auth_headers if auth_headers else None
+    auth, session_headers = _build_session_auth(cred, auth_headers)
     
     timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
     stop_snapshot_event_for_others = asyncio.Event()
@@ -432,12 +427,9 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     if "SNAPSHOT" in version:
         base_path = urljoin(base, f"{group_id}/{artifact_id}/{version}/")
         resolved_version = resolve_snapshot_version(base_path, artifact_extension, cred, auth_headers, classifier)
-        if resolved_version:
-            # Successfully resolved SNAPSHOT via maven-metadata.xml (Nexus/Artifactory)
-            version = resolved_version
-        else:
-            # SNAPSHOT resolution failed - fall back to direct -SNAPSHOT URL (AWS/GCP flat repos)
-            logger.info(f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - SNAPSHOT metadata not available, will try direct -SNAPSHOT URL")
+        if not resolved_version:
+            return None
+        version = resolved_version
 
     folder = version_to_folder_name(version)
     filename = create_artifact_name(artifact_id, artifact_extension, version, classifier)

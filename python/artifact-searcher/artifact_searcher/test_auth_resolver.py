@@ -111,7 +111,7 @@ class TestAWSAuthentication:
 
     def test_aws_invalid_auth_method(self, base_registry_v2, env_creds):
         from pydantic import ValidationError
-        
+
         with pytest.raises(ValidationError, match="AWS provider requires authMethod to be"):
             AuthConfig(
                 credentials_id="aws-cred",
@@ -121,7 +121,6 @@ class TestAWSAuthentication:
             )
 
     def test_aws_missing_region(self, base_registry_v2, env_creds):
-        # aws_region is optional, so this test verifies AWS auth works without region
         base_registry_v2.auth_config = {
             "aws-auth": AuthConfig(
                 credentials_id="aws-cred",
@@ -131,8 +130,7 @@ class TestAWSAuthentication:
             )
         }
         base_registry_v2.maven_config.auth_config = "aws-auth"
-        
-        # Should not raise ValidationError, aws_region is optional
+
         assert base_registry_v2.auth_config["aws-auth"].provider == Provider.AWS
 
 
@@ -187,8 +185,7 @@ class TestGCPAuthentication:
 
     def test_gcp_federation_not_implemented(self, base_registry_v2, env_creds):
         from pydantic import ValidationError
-        
-        # This now raises ValidationError during model creation because gcpOIDC is required
+
         with pytest.raises(ValidationError, match="gcpOIDC is required"):
             base_registry_v2.auth_config = {
                 "gcp-auth": AuthConfig(
@@ -200,8 +197,7 @@ class TestGCPAuthentication:
 
     def test_gcp_invalid_auth_method(self, base_registry_v2, env_creds):
         from pydantic import ValidationError
-        
-        # This now raises ValidationError during model creation
+
         with pytest.raises(ValidationError, match="GCP provider requires authMethod to be 'federation', 'service_account', or 'anonymous'"):
             base_registry_v2.auth_config = {
                 "gcp-auth": AuthConfig(
