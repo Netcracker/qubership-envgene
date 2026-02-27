@@ -19,13 +19,21 @@ class BaseSchema(BaseModel):
 
 class MavenConfig(BaseSchema):
     target_snapshot: str
+    target_staging: str
+    target_release: str
+    full_repository_url: Optional[str] = ""
     repository_domain_name: str = Field(json_schema_extra={"error_message": "Application registry does not define URL"})
     snapshot_group: Optional[str] = ""
     release_group: Optional[str] = ""
-
     is_nexus: bool = False
 
     @field_validator('full_repository_url')
+    def check_full_repository_url(cls, full_repository_url):
+        if full_repository_url:
+            raise ValueError(f"Full URL {full_repository_url} is not supported, please use domain URL")
+        return full_repository_url
+
+    @field_validator('repository_domain_name')
     def ensure_trailing_slash(cls, value):
         return value.rstrip("/") + "/"
 
@@ -44,55 +52,66 @@ class MavenConfig(BaseSchema):
         return self
 
 class DockerConfig(BaseSchema):
-    auth_config: Optional[str] = None
-    snapshot_uri: str
-    staging_uri: str
-    release_uri: str
-    group_uri: str
-    snapshot_repo_name: str
-    staging_repo_name: str
-    release_repo_name: str
-    group_name: str
+    snapshot_uri: Optional[str] = ""
+    staging_uri: Optional[str] = ""
+    release_uri: Optional[str] = ""
+    group_uri: Optional[str] = ""
+    snapshot_repo_name: Optional[str] = ""
+    staging_repo_name: Optional[str] = ""
+    release_repo_name: Optional[str] = ""
+    group_name: Optional[str] = ""
 
 
 class GoConfig(BaseSchema):
-    auth_config: Optional[str] = None
-    repository_domain_name: Optional[str] = None
-    go_target_snapshot: str
-    go_target_release: str
-    go_proxy_repository: str
+    go_target_snapshot: Optional[str] = ""
+    go_target_release: Optional[str] = ""
+    go_proxy_repository: Optional[str] = ""
 
 
 class RawConfig(BaseSchema):
-    auth_config: Optional[str] = None
-    repository_domain_name: Optional[str] = None
-    raw_target_snapshot: str
-    raw_target_release: str
-    raw_target_staging: str
-    raw_target_proxy: str
+    raw_target_snapshot: Optional[str] = ""
+    raw_target_release: Optional[str] = ""
+    raw_target_staging: Optional[str] = ""
+    raw_target_proxy: Optional[str] = ""
 
 
 class NpmConfig(BaseSchema):
-    auth_config: Optional[str] = None
-    repository_domain_name: Optional[str] = None
-    npm_target_snapshot: str
-    npm_target_release: str
+    npm_target_snapshot: Optional[str] = ""
+    npm_target_release: Optional[str] = ""
 
 
 class HelmConfig(BaseSchema):
-    auth_config: Optional[str] = None
-    repository_domain_name: Optional[str] = None
-    helm_target_staging: str
-    helm_target_release: str
+    helm_target_staging: Optional[str] = ""
+    helm_target_release: Optional[str] = ""
 
 
 class HelmAppConfig(BaseSchema):
-    auth_config: Optional[str] = None
-    repository_domain_name: Optional[str] = None
-    helm_staging_repo_name: str
-    helm_release_repo_name: str
-    helm_group_repo_name: str
-    helm_dev_repo_name: str
+    helm_staging_repo_name: Optional[str] = ""
+    helm_release_repo_name: Optional[str] = ""
+    helm_group_repo_name: Optional[str] = ""
+    helm_dev_repo_name: Optional[str] = ""
+
+
+class ArtifactInfo(BaseSchema):
+    url: Optional[str]
+    app_name: Optional[str] = ""
+    app_version: Optional[str] = ""
+    repo: Optional[str] = ""
+    path: Optional[str] = ""
+    local_path: Optional[str] = ""
+    name: Optional[str] = ""
+
+
+class Registry(BaseSchema):
+    credentials_id: Optional[str] = ""
+    name: str
+    maven_config: MavenConfig
+    docker_config: Optional[DockerConfig] = None
+    go_config: Optional[GoConfig] = None
+    raw_config: Optional[RawConfig] = None
+    npm_config: Optional[NpmConfig] = None
+    helm_config: Optional[HelmConfig] = None
+    helm_app_config: Optional[HelmAppConfig] = None
 
 
 REGDEF_V2_VERSION = "2.0"
@@ -174,52 +193,73 @@ class MavenConfigV2(BaseSchema):
         return value.rstrip("/") + "/"
 
 
-class BaseRegistry(BaseSchema):
+class DockerConfigV2(BaseSchema):
+    auth_config: str
+    snapshot_uri: str
+    staging_uri: str
+    release_uri: str
+    group_uri: str
+    snapshot_repo_name: str
+    staging_repo_name: str
+    release_repo_name: str
+    group_name: str
+
+
+class GoConfigV2(BaseSchema):
+    auth_config: str
+    repository_domain_name: str
+    go_target_snapshot: str
+    go_target_release: str
+    go_proxy_repository: str
+
+
+class RawConfigV2(BaseSchema):
+    auth_config: str
+    repository_domain_name: str
+    raw_target_snapshot: str
+    raw_target_release: str
+    raw_target_staging: str
+    raw_target_proxy: str
+
+
+class NpmConfigV2(BaseSchema):
+    auth_config: str
+    repository_domain_name: str
+    npm_target_snapshot: str
+    npm_target_release: str
+
+
+class HelmConfigV2(BaseSchema):
+    auth_config: str
+    repository_domain_name: str
+    helm_target_staging: str
+    helm_target_release: str
+
+
+class HelmAppConfigV2(BaseSchema):
+    auth_config: str
+    repository_domain_name: str
+    helm_staging_repo_name: str
+    helm_release_repo_name: str
+    helm_group_repo_name: str
+    helm_dev_repo_name: str
+
+
+class RegistryV2(BaseSchema):
     name: str
-    maven_config: MavenConfig | MavenConfigV2
-    
-    def resolve_auth_headers(self, env_creds: Optional[dict] = None) -> Optional[dict]:
-        raise NotImplementedError("Subclasses must implement resolve_auth_headers()")
-
-
-class RegistryV2(BaseRegistry):
     version: str = REGDEF_V2_VERSION
     auth_config: dict[str, AuthConfig] = {}
     maven_config: MavenConfigV2
-    docker_config: Optional[DockerConfig] = None
-    go_config: Optional[GoConfig] = None
-    raw_config: Optional[RawConfig] = None
-    npm_config: Optional[NpmConfig] = None
-    helm_config: Optional[HelmConfig] = None
-    helm_app_config: Optional[HelmAppConfig] = None
+    docker_config: Optional[DockerConfigV2] = None
+    go_config: Optional[GoConfigV2] = None
+    raw_config: Optional[RawConfigV2] = None
+    npm_config: Optional[NpmConfigV2] = None
+    helm_config: Optional[HelmConfigV2] = None
+    helm_app_config: Optional[HelmAppConfigV2] = None
     
     def resolve_auth_headers(self, env_creds: Optional[dict] = None) -> Optional[dict]:
         from artifact_searcher.auth_resolver import resolve_v2_auth_headers
         return resolve_v2_auth_headers(self, env_creds or {})
-
-
-class ArtifactInfo(BaseSchema):
-    url: Optional[str]
-    app_name: Optional[str] = ""
-    app_version: Optional[str] = ""
-    repo: Optional[str] = ""
-    path: Optional[str] = ""
-    local_path: Optional[str] = ""
-    name: Optional[str] = ""
-
-
-class Registry(BaseRegistry):
-    credentials_id: Optional[str] = ""
-    maven_config: MavenConfig
-    docker_config: Optional[DockerConfig] = None
-    go_config: Optional[GoConfig] = None
-    raw_config: Optional[RawConfig] = None
-    npm_config: Optional[NpmConfig] = None
-    helm_config: Optional[HelmConfig] = None
-    helm_app_config: Optional[HelmAppConfig] = None
-    
-    def resolve_auth_headers(self, env_creds: Optional[dict] = None) -> Optional[dict]:
-        return None
 
 
 def parse_registry(data: dict) -> Registry | RegistryV2:

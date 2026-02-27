@@ -71,10 +71,9 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
         target_snapshot="repo",
         target_staging="repo",
         target_release="repo",
-        repository_domain_name=base_url,
+        repository_domain_name=base_url
     )
     dcr_cfg = models.DockerConfig(
-        auth_config="test-auth",
         snapshot_uri="https://docker.example.com/snapshot",
         staging_uri="https://docker.example.com/staging",
         release_uri="https://docker.example.com/release",
