@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     output_dir = f"{base_dir}/environments"
     render_dir = f"/tmp/render/{env_name}"
-    templates_dirs = {'common': f"{base_dir}/tmp/templates"}
+    templates_dirs = get_template_dirs()
 
     env_dir = get_env_instances_dir(env_name, cluster_name, instances_dir)
     cloud_passport_file_path = find_cloud_passport_definition(env_dir, instances_dir)

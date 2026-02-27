@@ -296,15 +296,7 @@ if __name__ == "__main__":
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
-    g_template_dirs = {
-        'common': f"{base_dir}/tmp/templates",
-    }
-    origin_template_path = f"{base_dir}/tmp/origin/templates"
-    if check_dir_exists(origin_template_path):
-        g_template_dirs['origin'] = origin_template_path
-    peer_template_path = f"{base_dir}/tmp/peer/templates"
-    if check_dir_exists(peer_template_path):
-        g_template_dirs['peer'] = peer_template_path
+    g_template_dirs = get_template_dirs()
     g_all_instances_dir = f"{base_dir}/environments"
     g_output_dir = f"{base_dir}/environments"
     g_work_dir = get_parent_dir_for_dir(g_all_instances_dir)

@@ -6,19 +6,12 @@ import pathlib
 from pathlib import Path
 
 from envgenehelper import *
-from envgenehelper.business_helper import get_namespaces, NamespaceRole
 from resource_profiles import processResourceProfiles
 from schema_validation import checkEnvSpecificParametersBySchema
 from cloud_passport import process_cloud_passport
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
-
-TEMPLATE_DIR_PATTERN = re.compile(r'/from_(\w+_)?template/')
-
-
-def is_from_template_dir(file_path: str) -> bool:
-    return bool(TEMPLATE_DIR_PATTERN.search(file_path))
 
 
 def find_namespaces(dir):
@@ -32,47 +25,39 @@ def find_namespaces(dir):
     return result
 
 
-def processFileList(mask, dict, dirPointer):
-    fileList = list(dirPointer.rglob(mask))
-    for f in fileList:
-        filePath = str(f)
-        # envSpecific = false will be update later during templates parsing
-        key = extractNameFromFile(filePath)
-        if key in dict:
-            dict[extractNameFromFile(filePath)].append({"filePath": filePath, "envSpecific": False})
-        else:
-            dict[extractNameFromFile(filePath)] = [{"filePath": filePath, "envSpecific": False}]
-    return dict
-
-def create_role_specific_paramset_map(base_paramset_map: dict, role: NamespaceRole,
-                                      origin_template_exists: bool, peer_template_exists: bool) -> dict:
+def _get_excluded_dirs_for_role(role: NamespaceRole, origin_template_exists: bool, peer_template_exists: bool) -> list:
+    common_dir = 'from_template'
+    origin_dir = 'from_origin_template'
+    peer_dir = 'from_peer_template'
     if role == NamespaceRole.ORIGIN and origin_template_exists:
-        excluded_dirs = ['from_template', 'from_peer_template']
+        return [common_dir, peer_dir]
     elif role == NamespaceRole.PEER and peer_template_exists:
-        excluded_dirs = ['from_template', 'from_origin_template']
+        return [common_dir, origin_dir]
     else:
-        excluded_dirs = ['from_origin_template', 'from_peer_template']
+        return [origin_dir, peer_dir]
 
+
+def create_paramset_map(dir: str, role: NamespaceRole,
+                        origin_template_exists: bool, peer_template_exists: bool) -> dict:
+    excluded_dirs = _get_excluded_dirs_for_role(role, origin_template_exists, peer_template_exists)
     result = {}
+    dir_pointer = pathlib.Path(dir)
+    masks = ["*.json", "*.yml", "*.yaml", "*.j2"]
 
-    for paramset_name, entries in base_paramset_map.items():
-        kept = [
-            e for e in entries
-            if not any(excluded_dir in e['filePath'] for excluded_dir in excluded_dirs)
-        ]
-        if kept:
-            result[paramset_name] = kept
+    for mask in masks:
+        for f in dir_pointer.rglob(mask):
+            file_path = str(f)
+            if any(excluded_dir in file_path for excluded_dir in excluded_dirs):
+                continue
+            key = extractNameFromFile(file_path)
+            entry = {"filePath": file_path, "envSpecific": False}
+            if key in result:
+                result[key].append(entry)
+            else:
+                result[key] = [entry]
 
     logger.info(f"Created {role.name}-specific paramset map: excluded dirs {excluded_dirs}, "
                 f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
-    return result
-
-def createParamsetsMap(dir):
-    result = {}
-    dirPointer = pathlib.Path(dir)
-    masks = ["*.json", "*.yml", "*.yaml", "*.j2"]
-    for mask in masks:
-        result = processFileList(mask, result, dirPointer)
     logger.debug(f'List of {dir} paramsets: \n %s', dump_as_yaml_format(result))
     return result
 
@@ -487,13 +472,21 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
 
 def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, resource_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None):
-    paramset_map = createParamsetsMap(parameters_dir)
     # Check which role-specific templates were downloaded
     templates_dirs = templates_dirs or {}
     origin_template_exists = 'origin' in templates_dirs
     peer_template_exists = 'peer' in templates_dirs
     logger.info(f"Templates dirs: {list(templates_dirs.keys())}, "
                 f"origin_exists={origin_template_exists}, peer_exists={peer_template_exists}")
+
+    # Create role-specific paramset maps
+    origin_paramset_map = create_paramset_map(parameters_dir, NamespaceRole.ORIGIN,
+                                              origin_template_exists, peer_template_exists)
+    peer_paramset_map = create_paramset_map(parameters_dir, NamespaceRole.PEER,
+                                            origin_template_exists, peer_template_exists)
+    common_paramset_map = create_paramset_map(parameters_dir, NamespaceRole.COMMON,
+                                              origin_template_exists, peer_template_exists)
+
     env_dir = env_template_dir + "/" + env_name
     logger.info(f"Env name: {env_name}")
     logger.info(f"Env dir: {env_dir}")
@@ -531,7 +524,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
         "cloud",
         env_instances_dir,
         cloud_schema,
-        paramset_map,
+        common_paramset_map,
         env_specific_parameters_map["cloud"],
         resource_profiles_map=needed_resource_profiles_map,
         header_text=generated_header_text,
@@ -544,7 +537,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
         "cloud",
         env_instances_dir,
         cloud_schema,
-        paramset_map,
+        common_paramset_map,
         env_specific_parameters_map["cloud"],
         resource_profiles_map=needed_resource_profiles_map,
         header_text=generated_header_text,
@@ -552,12 +545,6 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
 
     # process namespaces
     template_namespace_names = []
-    origin_paramset_map = create_role_specific_paramset_map(paramset_map, NamespaceRole.ORIGIN,
-                                                            origin_template_exists, peer_template_exists)
-    peer_paramset_map = create_role_specific_paramset_map(paramset_map, NamespaceRole.PEER,
-                                                          origin_template_exists, peer_template_exists)
-    common_paramset_map = create_role_specific_paramset_map(paramset_map, NamespaceRole.COMMON,
-                                                            origin_template_exists, peer_template_exists)
     for ns in namespaces:
         logger.info(f"Processing namespace: {ns.definition_path}")
         template_namespace_names.append(ns.postfix)

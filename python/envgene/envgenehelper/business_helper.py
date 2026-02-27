@@ -28,6 +28,8 @@ DEFAULT_PASSPORT_NAME = "passport"
 DEFAULT_PASSPORT_DIR_NAME = "cloud-passport"
 INV_GEN_CREDS_PATH = "Inventory/credentials/inventory_generation_creds.yml"
 
+TEMPLATE_DIR_PATTERN = re.compile(r'/from_(\w+_)?template/')
+
 
 def find_env_instances_dir(env_name, instances_dir):
     logger.debug(f"Searching for directory {env_name} in {instances_dir}")
@@ -430,3 +432,17 @@ def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     logger.debug(namespaces)
     return namespaces
 
+def get_template_dirs(base_dir: str | None = None) -> dict[str,str]:
+    base_dir = base_dir if base_dir else getenv_with_error('CI_PROJECT_DIR')
+    result = {}
+    result['common'] = f"{base_dir}/tmp/templates"
+    origin_template_path = f"{base_dir}/tmp/origin/templates"
+    if check_dir_exists(origin_template_path):
+        result['origin'] = origin_template_path
+    peer_template_path = f"{base_dir}/tmp/peer/templates"
+    if check_dir_exists(peer_template_path):
+        result['peer'] = peer_template_path
+    return result
+
+def is_from_template_dir(file_path: str) -> bool:
+    return bool(TEMPLATE_DIR_PATTERN.search(file_path))
