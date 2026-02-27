@@ -50,7 +50,7 @@ RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /bu
 RUN /module/venv/bin/pip install /python/jschon-sort && \
     /module/venv/bin/pip install /python/envgene && \
     /module/venv/bin/pip install /python/integration && \
-    /module/venv/bin/pip install /python/artifact-searcher && \
+    /module/venv/bin/pip install "/python/artifact-searcher[cloud-auth]" && \
     /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
 
 # Download and install SOPS for secrets management
