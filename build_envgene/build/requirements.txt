@@ -25,3 +25,8 @@ platformdirs>=3.0.0
 
 google-auth~=2.34.0
 qubership-pipelines-common-library==2.0.3
+
+# Removed heavy packages:
+# - shyaml, yamale, prettytable (not essential)
+# - ruyaml (duplicate of ruamel.yaml)
+# - diagrams (heavy with typed-ast dependency)

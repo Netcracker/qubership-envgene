@@ -16,32 +16,32 @@ class BaseSchema(BaseModel):
         extra="ignore"
     )
 
-    def model_dump(self, **kwargs):
-        kwargs.setdefault('exclude_none', True)
-        kwargs.setdefault('by_alias', True)
-        return super().model_dump(**kwargs)
-
 
 class MavenConfig(BaseSchema):
     target_snapshot: str
-    target_staging: str
-    target_release: str
-    full_repository_url: Optional[str] = ""
     repository_domain_name: str = Field(json_schema_extra={"error_message": "Application registry does not define URL"})
     snapshot_group: Optional[str] = ""
     release_group: Optional[str] = ""
+
     is_nexus: bool = False
 
     @field_validator('full_repository_url')
-    def check_full_repository_url(cls, full_repository_url):
-        if full_repository_url:
-            raise ValueError(f"Full URL {full_repository_url} is not supported, please use domain URL")
-        return full_repository_url
-
-    @field_validator('repository_domain_name')
     def ensure_trailing_slash(cls, value):
         return value.rstrip("/") + "/"
 
+    @model_validator(mode="after")
+    def detect_nexus(self):
+        if not self.repository_domain_name.endswith("/repository/"):
+            return self
+        base = self.repository_domain_name[: -len("repository/")]
+        status_url = f"{base}service/rest/v1/status"
+        try:
+            resp = requests.get(status_url, timeout=DEFAULT_REQUEST_TIMEOUT)
+            self.is_nexus = resp.status_code == 200
+        except Exception:
+            self.is_nexus = False
+
+        return self
 
 class DockerConfig(BaseSchema):
     auth_config: Optional[str] = None
