@@ -30,6 +30,7 @@ class MavenConfig(BaseSchema):
     repository_domain_name: str = Field(json_schema_extra={"error_message": "Application registry does not define URL"})
     snapshot_group: Optional[str] = ""
     release_group: Optional[str] = ""
+    is_nexus: bool = False
 
     @field_validator('full_repository_url')
     def check_full_repository_url(cls, full_repository_url):

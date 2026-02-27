@@ -16,7 +16,6 @@ RUN apk add --no-cache \
     libxml2-dev \
     libxslt-dev \
     zlib-dev \
-    git \
     curl \
     jq \
     openssh-client \
