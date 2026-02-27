@@ -1,4 +1,4 @@
-import pytest
+from envgenehelper.business_helper import is_from_template_dir
 
 
 class TestSortParamsetsWithSameName:
@@ -7,11 +7,12 @@ class TestSortParamsetsWithSameName:
     def sort_paramsets_with_same_name(entries: list[dict]) -> list[dict]:
         def sort_key(e):
             path = e["filePath"]
-            if "from_template" in path:
-                return 0, path
-            elif "from_instance" in path:
+            if "from_instance" in path:
                 return 2, path
+            elif is_from_template_dir(path):
+                return 0, path
             return 1, path
+
         return sorted(entries, key=sort_key)
 
     def test_all_three_levels(self):
@@ -33,6 +34,19 @@ class TestSortParamsetsWithSameName:
         sorted_entries = self.sort_paramsets_with_same_name(entries)
         assert "from_template" in sorted_entries[0]["filePath"]
         assert "from_instance" in sorted_entries[1]["filePath"]
+
+    def test_origin_peer_templates(self):
+        entries = [
+            {"filePath": "/tmp/render/parameters/from_instance/test.yml", "envSpecific": True},
+            {"filePath": "/tmp/render/parameters/from_template/test.yml", "envSpecific": False},
+            {"filePath": "/tmp/render/parameters/from_peer_template/test.yml", "envSpecific": False},
+            {"filePath": "/tmp/render/parameters/from_origin_template/test.yml", "envSpecific": False},
+        ]
+        sorted_entries = self.sort_paramsets_with_same_name(entries)
+        assert "from_origin_template" in sorted_entries[0]["filePath"]
+        assert "from_peer_template" in sorted_entries[1]["filePath"]
+        assert "from_template" in sorted_entries[2]["filePath"]
+        assert "from_instance" in sorted_entries[3]["filePath"]
 
     def test_multiple_files_sorted_alphabetically(self):
         entries = [
