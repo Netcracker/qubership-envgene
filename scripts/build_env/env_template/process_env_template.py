@@ -9,6 +9,7 @@ from env_template.template_testing import run_env_test_setup
 from envgenehelper import getEnvDefinition, fetch_cred_value, getAppDefinitionPath
 from envgenehelper import openYaml, getenv_with_error, logger, get_or_create_nested_yaml_attribute
 from envgenehelper import unpack_archive, get_cred_config, check_dir_exist_and_create
+from envgenehelper.business_helper import NamespaceRole
 from envgenehelper.yaml_helper import get_nested_yaml_attribute_or_fail
 from render_config_env import render_obj_by_context, Context
 
@@ -166,9 +167,9 @@ def process_env_template() -> dict:
     env_definition = getEnvDefinition()
 
     appvers = {
-        'common': parse_artifact_appver(env_definition, 'envTemplate.artifact'),
-        'origin': parse_artifact_appver(env_definition, 'envTemplate.bgNsArtifacts.origin'),
-        'peer': parse_artifact_appver(env_definition, 'envTemplate.bgNsArtifacts.peer'),
+        NamespaceRole.COMMON: parse_artifact_appver(env_definition, 'envTemplate.artifact'),
+        NamespaceRole.ORIGIN: parse_artifact_appver(env_definition, 'envTemplate.bgNsArtifacts.origin'),
+        NamespaceRole.PEER: parse_artifact_appver(env_definition, 'envTemplate.bgNsArtifacts.peer'),
     }
 
     tasks = {}
@@ -176,13 +177,13 @@ def process_env_template() -> dict:
     cred_config = render_creds()
 
     for template_type, appver in appvers.items():
-        if template_type == 'common':
+        if template_type == NamespaceRole.COMMON:
             template_dest = f'{project_dir}/tmp'
         else:
             template_dest = f'{project_dir}/tmp/{template_type}'
 
         if not (len(appver) >= 2 and bool(appver[0]) and bool(appver[1])):
-            if template_type != "common":
+            if template_type != NamespaceRole.COMMON:
                 continue
             registry_dict = openYaml(Path(f"{project_dir}/configuration/registry.yml"))
 

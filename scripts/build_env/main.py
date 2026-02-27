@@ -31,7 +31,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     for template_type, template_path in templates_dirs.items():
         if not (template_path and check_dir_exists(f'{template_path}/parameters')):
             continue
-        if template_type == 'common':
+        if template_type == NamespaceRole.COMMON:
             param_dir_name = 'from_template'
         else:
             param_dir_name = f'from_{template_type}_template'
@@ -43,7 +43,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     copy_path(f'{cluster_path}/parameters', render_parameters_dir)
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/parameters', f'{render_parameters_dir}/from_instance')
     # copying all template resource profiles
-    copy_path(f'{templates_dirs['common']}/resource_profiles', render_profiles_dir)
+    copy_path(f'{templates_dirs[NamespaceRole.COMMON]}/resource_profiles', render_profiles_dir)
     return render_env_dir
 
 
@@ -167,7 +167,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     envvars["current_env"] = current_env  # Object for Jinja2 templates that need current_env.environmentName
     envvars["cluster_name"] = cluster_name
     envvars["templates_dirs"] = templates_dirs
-    envvars["templates_dir"] = templates_dirs.get('common', '')
+    envvars["templates_dir"] = templates_dirs.get(NamespaceRole.COMMON, '')
     envvars["env_instances_dir"] = getAbsPath(render_env_dir)
     envvars["render_dir"] = getAbsPath(render_dir)
     envvars["render_parameters_dir"] = getAbsPath(render_parameters_dir)

@@ -2,6 +2,7 @@ from os import environ
 
 import pytest
 from envgenehelper import *
+from envgenehelper.business_helper import NamespaceRole
 
 from main import render_environment
 from envgenehelper.test_helpers import TestHelpers
@@ -18,7 +19,7 @@ test_data = [
     ("cluster01", "env03", "test-template-1", {}),
     ("cluster01", "env04", "test-template-2", {}),
     ("bgd-cluster", "bgd-env", "bgd", {}),
-    ("bgd-cluster", "bgd-ns-artifacts-env", "bgd-ns-artifacts", {"peer": "test_data/test_templates_peer", "origin": "test_data/test_templates_origin"}),
+    ("bgd-cluster", "bgd-ns-artifacts-env", "bgd-ns-artifacts", {NamespaceRole.PEER: "test_data/test_templates_peer", NamespaceRole.ORIGIN: "test_data/test_templates_origin"}),
     ("cluster03", "rpo-replacement-mode", "simple", {}),
 ]
 
@@ -31,7 +32,7 @@ class TestEnvBuild(BaseTest):
     @pytest.mark.parametrize("cluster_name, env_name, version, extra_templates", test_data)
     def test_render_envs(self, cluster_name, env_name, version, extra_templates):
         g_templates_dirs = {
-            'common': str((self.test_data_dir / "test_templates").resolve())
+            NamespaceRole.COMMON: str((self.test_data_dir / "test_templates").resolve())
         }
         g_templates_dirs.update(extra_templates)
 

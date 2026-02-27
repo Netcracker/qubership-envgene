@@ -474,8 +474,8 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None):
     # Check which role-specific templates were downloaded
     templates_dirs = templates_dirs or {}
-    origin_template_exists = 'origin' in templates_dirs
-    peer_template_exists = 'peer' in templates_dirs
+    origin_template_exists = NamespaceRole.ORIGIN in templates_dirs
+    peer_template_exists = NamespaceRole.PEER in templates_dirs
     logger.info(f"Templates dirs: {list(templates_dirs.keys())}, "
                 f"origin_exists={origin_template_exists}, peer_exists={peer_template_exists}")
 

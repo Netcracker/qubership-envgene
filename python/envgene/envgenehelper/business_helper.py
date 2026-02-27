@@ -432,16 +432,16 @@ def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     logger.debug(namespaces)
     return namespaces
 
-def get_template_dirs(base_dir: str | None = None) -> dict[str,str]:
+def get_template_dirs(base_dir: str | None = None) -> dict[NamespaceRole, str]:
     base_dir = base_dir if base_dir else getenv_with_error('CI_PROJECT_DIR')
     result = {}
-    result['common'] = f"{base_dir}/tmp/templates"
+    result[NamespaceRole.COMMON] = f"{base_dir}/tmp/templates"
     origin_template_path = f"{base_dir}/tmp/origin/templates"
     if check_dir_exists(origin_template_path):
-        result['origin'] = origin_template_path
+        result[NamespaceRole.ORIGIN] = origin_template_path
     peer_template_path = f"{base_dir}/tmp/peer/templates"
     if check_dir_exists(peer_template_path):
-        result['peer'] = peer_template_path
+        result[NamespaceRole.PEER] = peer_template_path
     return result
 
 def is_from_template_dir(file_path: str) -> bool:

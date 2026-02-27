@@ -7,6 +7,7 @@ import yaml
 
 from render_config_env import EnvGenerator
 from envgenehelper.test_helpers import TestHelpers
+from envgenehelper.business_helper import NamespaceRole
 
 
 class TestAppRegDefRendering:
