@@ -239,7 +239,7 @@ async def check_artifact_by_full_url_async(
             f"[Task {task_id}] [Application: {app.name}: {version}] - Error checking artifact URL {full_url}: {e}")
 
 
-def get_repo_value_pointer_dict(registry: Registry):
+def get_repo_value_pointer_dict(registry):
     """Permanent set of repositories for searching of artifacts"""
     maven = registry.maven_config
     repos = {
@@ -251,7 +251,7 @@ def get_repo_value_pointer_dict(registry: Registry):
     return repos
 
 
-def get_repo_pointer(repo_value: str, registry: Registry):
+def get_repo_pointer(repo_value: str, registry):
     repos_dict = get_repo_value_pointer_dict(registry)
     return repos_dict.get(repo_value)
 
