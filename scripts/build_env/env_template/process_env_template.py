@@ -67,10 +67,15 @@ def resolve_artifact_new_logic(env_definition: dict, template_dest: str) -> str:
     app_def = Application.model_validate(openYaml(artifact_path))
 
     env_creds = render_creds()
-    auth_headers = app_def.registry.resolve_auth_headers(env_creds)
     
+    # V2 registries have resolve_auth_headers method, V1 don't
+    auth_headers = None
+    if hasattr(app_def.registry, 'resolve_auth_headers'):
+        auth_headers = app_def.registry.resolve_auth_headers(env_creds)
+    
+    # V1 registries use credentials-based auth
     cred = None
-    if isinstance(app_def.registry, Registry) and auth_headers is None:
+    if auth_headers is None and hasattr(app_def.registry, 'credentials_id'):
         cred = get_registry_creds(app_def.registry)
 
     template_url = None

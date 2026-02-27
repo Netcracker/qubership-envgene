@@ -17,6 +17,7 @@ RUN apk add --no-cache \
     libxslt-dev \
     zlib-dev \
     curl \
+    git \
     jq \
     openssh-client \
     sudo \

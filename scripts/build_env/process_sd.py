@@ -299,7 +299,11 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
     env_creds = helper.get_cred_config()
-    auth_headers = app_def.registry.resolve_auth_headers(env_creds)
+    
+    # V2 registries have resolve_auth_headers method, V1 don't
+    auth_headers = None
+    if hasattr(app_def.registry, 'resolve_auth_headers'):
+        auth_headers = app_def.registry.resolve_auth_headers(env_creds)
 
     artifact_info = asyncio.run(
         artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,
