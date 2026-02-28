@@ -6,6 +6,7 @@
   - [Overview](#overview)
   - [Installation](#installation)
   - [Quick Start](#quick-start)
+  - [Use Case Scenarios](#use-case-scenarios)
   - [Workflow Structure](#workflow-structure)
     - [Pipeline Steps](#pipeline-steps)
   - [Workflow Dispatch Inputs](#workflow-dispatch-inputs)
@@ -113,6 +114,143 @@ For initializing a new instance repository from scratch, see [Environment Instan
 1. Go to **Actions** → **EnvGene Execution** → **Run workflow**.
 1. Fill in **ENV_NAMES** (e.g. `cluster-01/env-01`) and any other parameters.
 1. Click **Run workflow**.
+
+## Use Case Scenarios
+
+This section shows typical scenarios with example parameters and what happens when you run the workflow.
+
+### Scenario 1: Full Deployment (Environment Build + Effective Set)
+
+**Goal:** Build the environment and generate the Effective Set for deployment.
+
+| Parameter             | Value                    |
+|-----------------------|--------------------------|
+| `ENV_NAMES`           | `prod-cluster/prod-01`   |
+| `ENV_BUILDER`         | `true`                   |
+| `GENERATE_EFFECTIVE_SET` | `true`                |
+| `DEPLOYMENT_TICKET_ID`| `QBSHP-1234`             |
+
+**Steps that run:** APP_REG_DEF_PROCESS → ENV_BUILD → GENERATE_EFFECTIVE_SET → GIT_COMMIT
+
+**Result:** Environment Instance is generated, Effective Set is created in `environments/prod-cluster/prod-01/effective-set/`, changes are committed to the repository.
+
+---
+
+### Scenario 2: Environment Build Only (No Effective Set)
+
+**Goal:** Regenerate the Environment Instance without generating the Effective Set (e.g. for validation or template updates).
+
+| Parameter   | Value                  |
+|-------------|------------------------|
+| `ENV_NAMES` | `dev-cluster/dev-01`   |
+| `ENV_BUILDER` | `true`              |
+
+**Steps that run:** APP_REG_DEF_PROCESS → ENV_BUILD → GIT_COMMIT
+
+**Result:** Environment Instance is regenerated and committed. GENERATE_EFFECTIVE_SET is skipped.
+
+---
+
+### Scenario 3: Update Template Version and Rebuild
+
+**Goal:** Switch to a new template version and rebuild the environment.
+
+| Parameter             | Value                         |
+|-----------------------|-------------------------------|
+| `ENV_NAMES`           | `prod-cluster/prod-01`        |
+| `ENV_BUILDER`         | `true`                        |
+| `ENV_TEMPLATE_VERSION`| `env-template:v2.1.0`         |
+
+**Steps that run:** APP_REG_DEF_PROCESS (updates template version) → ENV_BUILD → GIT_COMMIT
+
+**Result:** `env_definition.yml` is updated with the new template version, environment is rebuilt with the new template, changes are committed.
+
+---
+
+### Scenario 4: Blue-Green Operation
+
+**Goal:** Perform a Blue-Green operation (e.g. warmup, state change).
+
+| Parameter             | Value                  |
+|-----------------------|------------------------|
+| `ENV_NAMES`           | `prod-cluster/prod-01` |
+| `GH_ADDITIONAL_PARAMS` | `BG_MANAGE=true,BG_STATE={...}` (see below) |
+
+**Example `GH_ADDITIONAL_PARAMS` value:**
+
+```text
+BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"bss-ctrl\",\"originNamespace\":{\"name\":\"bss-origin\",\"state\":\"ACTIVE\",\"version\":\"v1.0\"},\"peerNamespace\":{\"name\":\"bss-peer\",\"state\":\"CANDIDATE\",\"version\":\"v1.1\"},\"updateTime\":\"2024-01-15T10:00:00Z\"}
+```
+
+**Steps that run:** BG_MANAGE → GIT_COMMIT
+
+**Result:** BG state is validated, state files are updated in the repository, namespace objects are copied if warmup. No ENV_BUILD or Effective Set.
+
+---
+
+### Scenario 5: Credential Rotation
+
+**Goal:** Rotate credentials for an environment without rebuilding.
+
+| Parameter              | Value                                      |
+|------------------------|--------------------------------------------|
+| `ENV_NAMES`            | `prod-cluster/prod-01`                     |
+| `GH_ADDITIONAL_PARAMS` | `CRED_ROTATION_PAYLOAD={...}` (see below)  |
+
+**Example `GH_ADDITIONAL_PARAMS` value:**
+
+```text
+CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\"<new-secret>\"}]}
+```
+
+**Steps that run:** CREDENTIAL_ROTATION → GIT_COMMIT
+
+**Result:** Credentials are updated per payload, changes are committed. See [Credential Rotation](/docs/features/cred-rotation.md) for full payload format.
+
+---
+
+### Scenario 6: Process Solution Descriptor from Artifact
+
+**Goal:** Fetch SD from an artifact and merge it into the repository.
+
+| Parameter             | Value                                                                 |
+|-----------------------|-----------------------------------------------------------------------|
+| `ENV_NAMES`           | `prod-cluster/prod-01`                                                |
+| `GH_ADDITIONAL_PARAMS` | `SD_SOURCE_TYPE=artifact,SD_VERSION=my-solution:v1.2.3,SD_REPO_MERGE_MODE=replace` |
+
+**Steps that run:** PROCESS_SD → GIT_COMMIT
+
+**Result:** SD is downloaded from the artifact registry, merged (or replaced) into `environments/prod-cluster/prod-01/Inventory/solution-descriptor/sd.yaml`, committed.
+
+---
+
+### Scenario 7: Generate New Environment Inventory
+
+**Goal:** Create a new Environment Inventory (`env_definition.yml`) for a new environment.
+
+| Parameter             | Value                                                                 |
+|-----------------------|-----------------------------------------------------------------------|
+| `ENV_NAMES`           | `new-cluster/new-env`                                                 |
+| `GH_ADDITIONAL_PARAMS` | `ENV_INVENTORY_INIT=true,ENV_TEMPLATE_NAME=my-env-template`         |
+
+**Steps that run:** ENV_INVENTORY_GENERATION → GIT_COMMIT
+
+**Result:** New `env_definition.yml` is created at `environments/new-cluster/new-env/Inventory/`, committed. See [Environment Inventory Generation](/docs/features/env-inventory-generation.md).
+
+---
+
+### Scenario 8: Multiple Environments in One Run
+
+**Goal:** Process several environments with the same parameters.
+
+| Parameter   | Value                                |
+|-------------|--------------------------------------|
+| `ENV_NAMES` | `cluster-01/env-01,cluster-01/env-02,cluster-02/env-01` |
+| `ENV_BUILDER` | `true`                            |
+
+**Steps that run:** For each environment in the matrix: APP_REG_DEF_PROCESS → ENV_BUILD → GIT_COMMIT (parallel jobs)
+
+**Result:** Three separate `envgene_execution` jobs run in parallel, each processes one environment. All changes are committed in a single workflow run.
 
 ## Workflow Structure
 
