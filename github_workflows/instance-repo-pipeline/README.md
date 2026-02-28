@@ -4,6 +4,7 @@
 
 - [EnvGene GitHub Workflow — User Guide](#envgene-github-workflow--user-guide)
   - [Overview](#overview)
+  - [Installation](#installation)
   - [Quick Start](#quick-start)
   - [Workflow Structure](#workflow-structure)
     - [Pipeline Steps](#pipeline-steps)
@@ -48,10 +49,67 @@ The workflow is **manually triggered only** (`workflow_dispatch`) and supports:
 - Credential rotation
 - Git commit of generated artifacts
 
+## Installation
+
+This section describes what you need to set up the EnvGene workflow in your instance repository.
+
+### Prerequisites
+
+- A GitHub repository (instance repository) with the [EnvGene instance structure](/docs/samples/instance-repository/)
+- GitHub Actions enabled for the repository
+- GitHub-hosted runners (or self-hosted runners with Docker available)
+
+### Step 1: Copy the Pipeline
+
+Copy the `.github` directory from this folder to the root of your instance repository:
+
+```bash
+cp -r github_workflows/instance-repo-pipeline/.github /path/to/your/instance-repo/
+```
+
+The copied structure includes the workflow, scripts, configuration files, and the `load-env-files` action.
+
+### Step 2: Configure Required Secrets
+
+Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets**, and add:
+
+| Secret                    | Required          | Description                                                           |
+|---------------------------|-------------------|-----------------------------------------------------------------------|
+| `SECRET_KEY`              | When using Fernet | Fernet key for credential encryption                                 |
+| `ENVGENE_AGE_PUBLIC_KEY`  | When using SOPS   | Public key from EnvGene AGE key pair (SOPS encryption)               |
+| `ENVGENE_AGE_PRIVATE_KEY` | When using SOPS   | Private key from EnvGene AGE key pair (SOPS decryption)                |
+| `GH_ACCESS_TOKEN`         | Yes               | GitHub token with `contents: write` to commit changes to repository  |
+
+At least one encryption method (Fernet or SOPS) must be configured if your repository uses encrypted credentials. See [Credential Encryption](/docs/how-to/credential-encryption.md) for details.
+
+### Step 3: Optional — Repository Variables
+
+Configure variables in **Settings** → **Secrets and variables** → **Actions** → **Variables** to override defaults:
+
+| Variable                   | Default              | Purpose                                           |
+|----------------------------|----------------------|---------------------------------------------------|
+| `DOCKER_REGISTRY`          | `ghcr.io/netcracker` | Docker registry for EnvGene images                 |
+| `GH_RUNNER_TAG_NAME`       | `ubuntu-22.04`       | Runner label for workflow jobs                     |
+| `GH_RUNNER_SCRIPT_TIMEOUT` | `10`                 | Job timeout in minutes                             |
+
+See [Repository Variables (vars)](#repository-variables-vars) for details.
+
+### Step 4: Optional — Customize Configuration
+
+- **`.github/configuration/config.env`** — Base pipeline configuration (e.g. `CI_PROJECT_DIR`, `GITHUB_USER_*`). Edit if you need different defaults.
+- **`.github/pipeline_vars.env`** — Override pipeline parameters for debugging or recurring runs. Leave empty or add variables as needed.
+
+### Verifying the Setup
+
+1. Ensure the workflow file is at `.github/workflows/Envgene.yml`.
+1. Ensure required secrets are set.
+1. Trigger the workflow manually (see [Quick Start](#quick-start)) with a valid `ENV_NAMES` value.
+
+For initializing a new instance repository from scratch, see [Environment Instance Repository Installation Guide](/docs/how-to/envgene-maitanance.md).
+
 ## Quick Start
 
-1. Copy the `.github` directory from this folder to the root of your instance repository.
-1. Configure required secrets in your repository: `SECRET_KEY`, `ENVGENE_AGE_PUBLIC_KEY`, `ENVGENE_AGE_PRIVATE_KEY`, `GH_ACCESS_TOKEN`.
+1. Ensure the pipeline is installed (see [Installation](#installation)).
 1. Go to **Actions** → **EnvGene Execution** → **Run workflow**.
 1. Fill in **ENV_NAMES** (e.g. `cluster-01/env-01`) and any other parameters.
 1. Click **Run workflow**.
