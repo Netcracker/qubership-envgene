@@ -117,6 +117,44 @@ public class ParameterUtils {
         bgDomainParamsMap.put(CONTROLLER_NAMESPACE, controller);
         bgDomainSecureMap.put(CONTROLLER_NAMESPACE, Map.of(USERNAME, userName, PASSWORD, password));
     }
+
+    public static void wrapPlainMapWithOrigin(Map<String, Object> map, String origin) {
+        if (map == null || map.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof Parameter) {
+                // Keep the existing parameter as is
+            } else if (value instanceof Map) {
+                wrapPlainMapWithOrigin((Map<String, Object>) value, origin);
+            } else if (value instanceof List) {
+                wrapPlainListWithOrigin((List<Object>) value, origin);
+            } else {
+                entry.setValue(new Parameter(value, origin, false));
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<Object> wrapPlainListWithOrigin(List<Object> list, String origin) {
+        if (list == null || list.isEmpty()) {
+            return list;
+        }
+        for (int i = 0; i < list.size(); i++) {
+            Object item = list.get(i);
+            if (item instanceof Parameter) {
+                // Keep existing Parameter as is
+            } else if (item instanceof Map) {
+                wrapPlainMapWithOrigin((Map<String, Object>) item, origin);
+            } else if (item instanceof List) {
+                list.set(i, wrapPlainListWithOrigin((List<Object>) item, origin));
+            } else {
+                list.set(i, new Parameter(item, origin, false));
+            }
+        }
+        return list;
+    }
 }
 
 
