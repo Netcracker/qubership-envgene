@@ -23,6 +23,7 @@
     - [Step 3: Add the Job Step with an if Condition](#step-3-add-the-job-step-with-an-if-condition)
     - [Complete Example: Adding a Custom Job](#complete-example-adding-a-custom-job)
   - [Parameter Priority](#parameter-priority)
+  - [Repository Variables (vars)](#repository-variables-vars)
   - [How to Trigger the Workflow](#how-to-trigger-the-workflow)
     - [Via GitHub Actions UI](#via-github-actions-ui)
     - [Via GitHub API](#via-github-api)
@@ -47,10 +48,10 @@ The workflow is **manually triggered only** (`workflow_dispatch`) and supports:
 ## Quick Start
 
 1. Copy the `.github` directory from this folder to the root of your instance repository.
-2. Configure required secrets in your repository: `SECRET_KEY`, `ENVGENE_AGE_PUBLIC_KEY`, `ENVGENE_AGE_PRIVATE_KEY`, `GH_ACCESS_TOKEN`.
-3. Go to **Actions** → **EnvGene Execution** → **Run workflow**.
-4. Fill in **ENV_NAMES** (e.g. `cluster-01/env-01`) and any other parameters.
-5. Click **Run workflow**.
+1. Configure required secrets in your repository: `SECRET_KEY`, `ENVGENE_AGE_PUBLIC_KEY`, `ENVGENE_AGE_PRIVATE_KEY`, `GH_ACCESS_TOKEN`.
+1. Go to **Actions** → **EnvGene Execution** → **Run workflow**.
+1. Fill in **ENV_NAMES** (e.g. `cluster-01/env-01`) and any other parameters.
+1. Click **Run workflow**.
 
 ## Workflow Structure
 
@@ -143,7 +144,7 @@ BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"bss-controller\",\"originName
 For JSON values:
 
 1. Escape internal double quotes: `\"` instead of `"`.
-2. Be aware that commas inside JSON are used as pair separators. If your JSON contains commas, the parser may split it incorrectly.
+1. Be aware that commas inside JSON are used as pair separators. If your JSON contains commas, the parser may split it incorrectly.
 
 **Workaround for complex JSON:** Use `pipeline_vars.env` (see below) or pass the parameter via the GitHub API with proper escaping.
 
@@ -177,19 +178,19 @@ on:
         description: "Description of the parameter"
 ```
 
-2. Add a line in the "Process Input Parameters" step to export it:
+1. Add a line in the "Process Input Parameters" step to export it:
 
 ```yaml
 echo "MY_NEW_PARAM=${{ github.event.inputs.MY_NEW_PARAM }}" >> $GITHUB_ENV
 ```
 
-3. If the parameter controls job execution, add it to `process_environment_variables.outputs` (see [Adding New Jobs](#adding-new-jobs-and-conditional-execution)).
+1. If the parameter controls job execution, add it to `process_environment_variables.outputs` (see [Adding New Jobs](#adding-new-jobs-and-conditional-execution)).
 
 ### Option B: Use GH_ADDITIONAL_PARAMS
 
 1. Pass the parameter in `GH_ADDITIONAL_PARAMS`, e.g. `MY_NEW_PARAM=value`.
-2. It will be parsed and added to `GITHUB_ENV` automatically.
-3. If you need it for conditional steps, add it to the job outputs (see below).
+1. It will be parsed and added to `GITHUB_ENV` automatically.
+1. If you need it for conditional steps, add it to the job outputs (see below).
 
 ### Option C: Use pipeline_vars.env
 
@@ -199,8 +200,8 @@ echo "MY_NEW_PARAM=${{ github.event.inputs.MY_NEW_PARAM }}" >> $GITHUB_ENV
 MY_NEW_PARAM=my_value
 ```
 
-2. It will be loaded by the `load-env-files` action.
-3. If you need it for conditional steps, add it to the job outputs.
+1. It will be loaded by the `load-env-files` action.
+1. If you need it for conditional steps, add it to the job outputs.
 
 ## Adding New Jobs and Conditional Execution
 
@@ -284,18 +285,66 @@ process_environment_variables:
 When the same parameter is set in multiple places, the effective value is chosen by this order (highest first):
 
 1. Workflow input parameters (UI or API)
-2. `pipeline_vars.env`
-3. Repository or organization variables
+1. `pipeline_vars.env`
+1. Repository variables (`vars`)
+1. Organization variables
+
+## Repository Variables (vars)
+
+Repository variables are configured in **Settings → Secrets and variables → Actions → Variables** (repository-level) or at the organization level. They are referenced in the workflow as `vars.VARIABLE_NAME` and are available to all workflow runs.
+
+### Variables Used by the Workflow
+
+| Variable                   | Purpose                                  | Default when empty   |
+|----------------------------|------------------------------------------|----------------------|
+| `DOCKER_REGISTRY`          | Docker registry base for EnvGene images  | `ghcr.io/netcracker` |
+| `GH_RUNNER_TAG_NAME`       | Runner label for jobs (e.g. ubuntu-22.04)| `ubuntu-22.04`       |
+| `GH_RUNNER_SCRIPT_TIMEOUT` | Job timeout in minutes                   | `10`                 |
+
+### How to Add Repository Variables
+
+1. Go to your repository on GitHub.
+1. Open **Settings** → **Secrets and variables** → **Actions**.
+1. Open the **Variables** tab.
+1. Click **New repository variable**.
+1. Enter the name (e.g. `DOCKER_REGISTRY`) and value.
+1. Click **Add variable**.
+
+### When Variables Are Empty or Missing
+
+The workflow uses fallback values when a variable is not set or is empty. For example:
+
+```yaml
+runs-on: ${{ vars.GH_RUNNER_TAG_NAME || 'ubuntu-22.04' }}
+DOCKER_IMAGE_NAME_ENVGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-envgene"
+timeout-minutes: ${{ fromJSON(vars.GH_RUNNER_SCRIPT_TIMEOUT || '10') }}
+```
+
+- If `vars.GH_RUNNER_TAG_NAME` is empty or missing → `ubuntu-22.04` is used.
+- If `vars.DOCKER_REGISTRY` is empty or missing → `ghcr.io/netcracker` is used.
+- If `vars.GH_RUNNER_SCRIPT_TIMEOUT` is empty or missing → `10` is used.
+
+You do not need to define these variables for the workflow to run; defaults are applied automatically.
+
+### Adding Custom Variables
+
+To use your own variables in the workflow:
+
+1. Add the variable in **Settings → Secrets and variables → Actions → Variables**.
+1. Reference it in `Envgene.yml` as `${{ vars.MY_CUSTOM_VAR }}`.
+1. For optional variables with a default, use: `${{ vars.MY_CUSTOM_VAR || 'default_value' }}`.
+
+For a full list of supported repository variables, see [EnvGene Repository Variables](/docs/envgene-repository-variables.md).
 
 ## How to Trigger the Workflow
 
 ### Via GitHub Actions UI
 
 1. Open your repository on GitHub.
-2. Go to **Actions**.
-3. Select **EnvGene Execution**.
-4. Click **Run workflow**.
-5. Choose the branch, fill in parameters, and run.
+1. Go to **Actions**.
+1. Select **EnvGene Execution**.
+1. Click **Run workflow**.
+1. Choose the branch, fill in parameters, and run.
 
 ### Via GitHub API
 
