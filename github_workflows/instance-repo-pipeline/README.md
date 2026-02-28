@@ -6,6 +6,7 @@
   - [Overview](#overview)
   - [Quick Start](#quick-start)
   - [Workflow Structure](#workflow-structure)
+    - [Pipeline Steps](#pipeline-steps)
   - [Workflow Dispatch Inputs](#workflow-dispatch-inputs)
     - [Understanding the 10-Input Limit](#understanding-the-10-input-limit)
     - [Input Reference](#input-reference)
@@ -65,6 +66,43 @@ The workflow consists of two main jobs:
 | `envgene_execution`              | Runs EnvGene steps per environment (matrix job)                         |
 
 The first job prepares all parameters and passes them to the second job via a shared `.env` artifact and job outputs. The second job runs once per environment in the matrix.
+
+### Pipeline Steps
+
+The following sections describe each step in the pipeline as defined in `Envgene.yml`. Steps marked as *conditional* run only when their condition is met.
+
+#### Job: `process_environment_variables`
+
+| Step                         | Description                                                                 |
+|------------------------------|-----------------------------------------------------------------------------|
+| Repository Checkout          | Checks out the repository (without persisting credentials)                  |
+| Load environment variables   | Loads `config.env` and `pipeline_vars.env` into `GITHUB_ENV`               |
+| Process Input Parameters     | Exports workflow inputs (ENV_NAMES, ENV_BUILDER, etc.) to environment       |
+| Process additional variables | Parses `GH_ADDITIONAL_PARAMS` and adds each `KEY=VALUE` to environment     |
+| Create env_generation_params  | Builds `ENV_GENERATION_PARAMS` JSON from SD/ENV_SPECIFIC_PARAMS variables   |
+| Multiple Environment Processing | Generates environment matrix from `ENV_NAMES` (comma/semicolon/space)     |
+| Create .env file             | Dumps all environment variables to `.env`                                   |
+| Upload .env as artifact      | Uploads `.env` for use by `envgene_execution` job                           |
+
+#### Job: `envgene_execution` (runs per environment in matrix)
+
+| Step                    | Condition                                      | Description                                                                 |
+|-------------------------|------------------------------------------------|-----------------------------------------------------------------------------|
+| Repository Checkout     | Always                                         | Checks out repository with full history                                    |
+| Download environment-file| Always                                         | Downloads `.env` artifact from previous job                                |
+| Prepare environment     | Always                                         | Restores env vars, sets `PACKAGE_NAME`, extracts `CLUSTER_NAME`/`ENV_NAME`  |
+| Create name for dynamic secret | Always                                   | Sets `SECRET_NAME` for cluster-specific secrets                            |
+| Create env file for container | Always                                    | Exports env to `.env.container` for Docker steps                           |
+| **BG_MANAGE**           | `BG_MANAGE == 'true'`                          | Blue-Green operations: state management, Origin/Peer config, validation     |
+| **ENV_INVENTORY_GENERATION** | `ENV_INVENTORY_CONTENT` / `ENV_SPECIFIC_PARAMS` / `ENV_TEMPLATE_NAME` set | Generates Environment Inventory at `env_definition.yml` |
+| **CREDENTIAL_ROTATION**  | `CRED_ROTATION_PAYLOAD` not empty              | Rotates credentials per payload                                            |
+| **APP_REG_DEF_PROCESS**  | `ENV_BUILDER == 'true'`                        | Sets template version, renders App/Reg definitions, handles certs            |
+| **PROCESS_SD**           | `SD_SOURCE_TYPE=json` + `SD_DATA` or `artifact` + `SD_VERSION`              | Processes Solution Descriptor (JSON or artifact)   |
+| **ENV_BUILD**            | `ENV_BUILDER == 'true'`                        | Main environment build: generates Environment Instance from templates      |
+| **GENERATE_EFFECTIVE_SET** | `GENERATE_EFFECTIVE_SET == 'true'`           | Generates Effective Set (SBOMs, validation, deployment artifacts)           |
+| **GIT_COMMIT**           | Always                                         | Commits changes to repository, prepares artifacts for downstream use        |
+
+Each conditional step (in **bold**) also uploads its output as an artifact. The `GIT_COMMIT` step always runs at the end of the pipeline.
 
 ## Workflow Dispatch Inputs
 
