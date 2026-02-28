@@ -1,5 +1,7 @@
 # EnvGene GitHub Workflow — User Guide
 
+![EnvGene Workflow](assets/envgene-workflow-diagram.png)
+
 - [EnvGene GitHub Workflow — User Guide](#envgene-github-workflow--user-guide)
   - [Overview](#overview)
   - [Quick Start](#quick-start)
