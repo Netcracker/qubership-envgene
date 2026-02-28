@@ -1,4 +1,13 @@
-# EnvGene GitHub Workflow — User Guide
+<div align="center">
+
+# EnvGene GitHub Workflow
+
+**User Guide**
+
+[![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-workflow_dispatch-2088FF?style=flat-square&logo=github-actions&logoColor=white)](https://docs.github.com/en/actions)
+[![Manual Trigger](https://img.shields.io/badge/trigger-manual-orange?style=flat-square)](#how-to-trigger-the-workflow)
+
+</div>
 
 ![EnvGene Workflow](assets/envgene-workflow-diagram.png)
 
@@ -39,7 +48,10 @@
 
 The **EnvGene** workflow (`Envgene.yml`) is a GitHub Actions pipeline that automates environment generation, configuration, and deployment for the EnvGene platform. It provides the same functionality as the GitLab-based instance pipeline, adapted for GitHub Actions.
 
-The workflow is **manually triggered only** (`workflow_dispatch`) and supports:
+> [!NOTE]
+> The workflow is **manually triggered only** (`workflow_dispatch`). There is no automatic trigger on push or pull request.
+
+The workflow supports:
 
 - Environment inventory generation
 - Application and registry definition processing
@@ -49,6 +61,8 @@ The workflow is **manually triggered only** (`workflow_dispatch`) and supports:
 - Blue-Green management
 - Credential rotation
 - Git commit of generated artifacts
+
+---
 
 ## Installation
 
@@ -81,7 +95,8 @@ Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets**
 | `ENVGENE_AGE_PRIVATE_KEY` | When using SOPS   | Private key from EnvGene AGE key pair (SOPS decryption)                |
 | `GH_ACCESS_TOKEN`         | Yes               | GitHub token with `contents: write` to commit changes to repository  |
 
-At least one encryption method (Fernet or SOPS) must be configured if your repository uses encrypted credentials. See [Credential Encryption](/docs/how-to/credential-encryption.md) for details.
+> [!NOTE]
+> At least one encryption method (Fernet or SOPS) must be configured if your repository uses encrypted credentials. See [Credential Encryption](/docs/how-to/credential-encryption.md) for details.
 
 ### Step 3: Optional — Repository Variables
 
@@ -109,6 +124,9 @@ See [Repository Variables (vars)](#repository-variables-vars) for details.
 For initializing a new instance repository from scratch, see [Environment Instance Repository Installation Guide](/docs/how-to/envgene-maitanance.md).
 
 ## Quick Start
+
+> [!TIP]
+> New to EnvGene? Start with [Installation](#installation), then come back here.
 
 1. Ensure the pipeline is installed (see [Installation](#installation)).
 1. Go to **Actions** → **EnvGene Execution** → **Run workflow**.
@@ -167,7 +185,8 @@ Each conditional step (in **bold**) also uploads its output as an artifact. The 
 
 ### Understanding the 10-Input Limit
 
-GitHub Actions limits `workflow_dispatch` to **10 input parameters**. The EnvGene pipeline uses 9 of them for the most common parameters. The 10th slot is reserved for `GH_ADDITIONAL_PARAMS`, which acts as a container for all other parameters.
+> [!IMPORTANT]
+> GitHub Actions limits `workflow_dispatch` to **10 input parameters**. The EnvGene pipeline uses 9 of them for the most common parameters. The 10th slot is reserved for `GH_ADDITIONAL_PARAMS`, which acts as a container for all other parameters.
 
 This design lets you pass any number of additional parameters without hitting the limit.
 
@@ -245,7 +264,8 @@ For JSON values:
 1. Escape internal double quotes: `\"` instead of `"`.
 1. Be aware that commas inside JSON are used as pair separators. If your JSON contains commas, the parser may split it incorrectly.
 
-**Workaround for complex JSON:** Use `pipeline_vars.env` (see below) or pass the parameter via the GitHub API with proper escaping.
+> [!CAUTION]
+> **Workaround for complex JSON:** Use `pipeline_vars.env` (see below) or pass the parameter via the GitHub API with proper escaping. Commas inside JSON values may cause incorrect parsing.
 
 ### When to Use pipeline_vars.env Instead
 
@@ -423,7 +443,8 @@ timeout-minutes: ${{ fromJSON(vars.GH_RUNNER_SCRIPT_TIMEOUT || '10') }}
 - If `vars.DOCKER_REGISTRY` is empty or missing → `ghcr.io/netcracker` is used.
 - If `vars.GH_RUNNER_SCRIPT_TIMEOUT` is empty or missing → `10` is used.
 
-You do not need to define these variables for the workflow to run; defaults are applied automatically.
+> [!TIP]
+> You do not need to define these variables for the workflow to run; defaults are applied automatically.
 
 ### Adding Custom Variables
 
@@ -447,6 +468,9 @@ For a full list of supported repository variables, see [EnvGene Repository Varia
 
 ### Via GitHub API
 
+<details>
+<summary>Click to expand API example</summary>
+
 ```bash
 curl -X POST \
   -H "Authorization: token <YOUR_GITHUB_TOKEN>" \
@@ -465,6 +489,8 @@ curl -X POST \
 ```
 
 Replace `<YOUR_GITHUB_TOKEN>`, `<OWNER>`, `<REPO>`, and `main` as needed.
+
+</details>
 
 ## Directory Structure
 
@@ -487,6 +513,8 @@ instance-repo-pipeline/
     │   └── Envgene.yml          # Main workflow definition
     └── pipeline_vars.env       # Optional overrides (template, often empty)
 ```
+
+---
 
 ## Use Case Scenarios
 
@@ -625,9 +653,21 @@ CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\
 
 **Result:** Three separate `envgene_execution` jobs run in parallel, each processes one environment. All changes are committed in a single workflow run.
 
+---
+
 ## Further Reading
 
-- [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md) — Full parameter reference
-- [EnvGene Pipelines](/docs/envgene-pipelines.md) — Pipeline flow and job descriptions
-- [Blue-Green Deployment](/docs/features/blue-green-deployment.md) — BG-related parameters
-- [SD Processing](/docs/use-cases/sd-processing.md) — Solution Descriptor use cases
+| Document | Description |
+|----------|--------------|
+| [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md) | Full parameter reference |
+| [EnvGene Pipelines](/docs/envgene-pipelines.md) | Pipeline flow and job descriptions |
+| [Blue-Green Deployment](/docs/features/blue-green-deployment.md) | BG-related parameters |
+| [SD Processing](/docs/use-cases/sd-processing.md) | Solution Descriptor use cases |
+
+---
+
+<div align="center">
+
+*EnvGene GitHub Workflow — Part of the Qubership EnvGene platform*
+
+</div>
