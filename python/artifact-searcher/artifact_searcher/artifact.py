@@ -13,7 +13,7 @@ import aiohttp
 import requests
 from aiohttp import BasicAuth
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT, METADATA_XML
-from artifact_searcher.utils.models import Registry, RegistryV2, Application, FileExtension, Credentials, ArtifactInfo
+from artifact_searcher.utils.models import Registry, RegistryV2, Application, FileExtension, Credentials, ArtifactInfo, Provider
 from envgenehelper import logger
 from requests.auth import HTTPBasicAuth
 
@@ -239,16 +239,44 @@ async def check_artifact_by_full_url_async(
             f"[Task {task_id}] [Application: {app.name}: {version}] - Error checking artifact URL {full_url}: {e}")
 
 
+def _extract_repo_name_from_url(url: str) -> str:
+    """Extract repository name from URL (last path segment before trailing slash)"""
+    if not url:
+        return ""
+    parsed = urlparse(url)
+    path = parsed.path.rstrip("/")
+    if "/" in path:
+        return path.split("/")[-1]
+    return ""
+
+
+def _is_cloud_provider(registry) -> bool:
+    """Check if registry uses AWS or GCP provider"""
+    if hasattr(registry, 'auth_config') and registry.auth_config:
+        auth_configs = registry.auth_config if isinstance(registry.auth_config, dict) else {}
+        for auth_cfg in auth_configs.values():
+            if hasattr(auth_cfg, 'provider') and auth_cfg.provider in [Provider.AWS, Provider.GCP]:
+                return True
+    return False
+
+
 def get_repo_value_pointer_dict(registry):
-    """Permanent set of repositories for searching of artifacts"""
+    """AWS/GCP: use repo name from URL. Nexus/Artifactory: use target fields."""
     maven = registry.maven_config
-    repos = {
+    is_cloud = _is_cloud_provider(registry)
+    
+    if is_cloud and maven.repository_domain_name:
+        repo_from_url = _extract_repo_name_from_url(maven.repository_domain_name)
+        if repo_from_url:
+            logger.info(f"Auto-extracted repository '{repo_from_url}' from URL: {maven.repository_domain_name}")
+            return {repo_from_url: "repositoryName"}
+    
+    return {
         maven.target_snapshot: "targetSnapshot",
         maven.target_staging: "targetStaging",
         maven.target_release: "targetRelease",
         maven.snapshot_group: "snapshotGroup",
     }
-    return repos
 
 
 def get_repo_pointer(repo_value: str, registry):
