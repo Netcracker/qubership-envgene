@@ -39,7 +39,14 @@ def create_artifact_path(app: Application, version: str, repo: str) -> str:
     registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
-    return urljoin(registry_url, f"{repo}/{group_id}/{app.artifact_id}/{folder}/")
+    
+    # For cloud providers (AWS/GCP), repo is empty since repositoryDomainName already contains full path
+    if repo:
+        path = f"{repo}/{group_id}/{app.artifact_id}/{folder}/"
+    else:
+        path = f"{group_id}/{app.artifact_id}/{folder}/"
+    
+    return urljoin(registry_url, path)
 
 
 def create_full_url(app: Application, version: str, repo: str, artifact_extension: FileExtension,
@@ -207,7 +214,8 @@ async def check_artifact_by_full_url_async(
         classifier: str = ""
 ) -> tuple[str, tuple[str, str]] | None:
     repo_value, repo_pointer = repo
-    if not repo_value:
+    # Allow empty repo_value for cloud providers (repositoryName), but not for Nexus/Artifactory
+    if not repo_value and repo_pointer != "repositoryName":
         logger.warning(f"[Task {task_id}] [Registry: {app.registry.name}] - {repo_pointer} is not configured")
         return None
 
