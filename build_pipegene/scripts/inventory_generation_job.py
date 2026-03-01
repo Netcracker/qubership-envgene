@@ -36,7 +36,6 @@ def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, 
         "image": "${envgen_image}",
         "stage": "env_inventory_generation",
         "script": [
-            '/module/scripts/handle_certs.sh',
             "python3 /build_env/scripts/build_env/env_inventory_generation.py",
         ],
     }

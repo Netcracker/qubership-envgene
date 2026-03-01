@@ -33,6 +33,7 @@ def get_pipeline_parameters() -> dict:
         'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
         'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", "") or str(uuid.uuid4()),
         'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL"),
+        'CALCULATOR_CLI_JAVA_OPTIONS' : getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
         "BG_STATE": getenv("BG_STATE"),
         "BG_MANAGE": getenv("BG_MANAGE") == "true",
         "APP_DEFS_PATH": getenv("APP_DEFS_PATH"),
