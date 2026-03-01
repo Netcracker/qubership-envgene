@@ -269,7 +269,9 @@ def get_repo_value_pointer_dict(registry):
         repo_from_url = _extract_repo_name_from_url(maven.repository_domain_name)
         if repo_from_url:
             logger.info(f"Auto-extracted repository '{repo_from_url}' from URL: {maven.repository_domain_name}")
-            return {repo_from_url: "repositoryName"}
+            # Return empty string for repo since repositoryDomainName already contains full path
+            # This prevents duplicate path segments (e.g., envgene-test/envgene-test)
+            return {"": "repositoryName"}
     
     return {
         maven.target_snapshot: "targetSnapshot",
