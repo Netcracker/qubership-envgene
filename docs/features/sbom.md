@@ -8,6 +8,7 @@
     - [SBOM types](#sbom-types)
       - [Application SBOM](#application-sbom)
       - [Environment Template SBOM](#environment-template-sbom)
+  - [SBOM Storage and Retention](#sbom-storage-and-retention)
   - [Use Cases](#use-cases)
   - [Affection map](#affection-map)
   - [Links](#links)
@@ -52,6 +53,12 @@ A JSON file compliant with the CycloneDX specification, describing the following
 1. Coordinates of the environment template artifact
 
 [Example](/examples/env-template.sbom.json)
+
+## SBOM Storage and Retention
+
+Generated SBOM files are cached in the `/sboms/` directory of the Instance Repository to avoid expensive regeneration.
+
+To manage repository size and prevent reaching the 1500 GB limit, EnvGene provides automatic SBOM retention. See [SBOM Retention](/docs/features/sbom-retention.md) for configuration details.
 
 ## Use Cases
 
