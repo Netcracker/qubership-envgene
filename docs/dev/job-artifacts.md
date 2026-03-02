@@ -2,7 +2,7 @@
 
 ## Overview
 
-GitLab pipeline jobs pass state between each other through artifacts without repeated git checkouts. This document explains the mechanism and requirements.
+GitLab pipeline jobs pass state between each other through artifacts without repeated GIT checkouts. This document explains the mechanism and requirements.
 
 Artifact size limit: **1500 MB**
 
@@ -48,4 +48,4 @@ These paths are:
 
 1. Modified by various jobs during pipeline execution
 2. Needed by downstream jobs
-3. Committed to git by `git_commit_job`
+3. Committed to GIT by `git_commit_job`
