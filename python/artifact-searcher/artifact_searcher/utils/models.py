@@ -157,6 +157,9 @@ class AuthConfig(BaseSchema):
         if self.auth_method != "anonymous" and not self.credentials_id:
             raise ValueError("credentialsId is required when authMethod is not 'anonymous'")
         
+        if self.provider == Provider.AWS and self.auth_method == "secret" and not self.aws_region:
+            raise ValueError("awsRegion is required when provider is 'aws' and authMethod is 'secret'")
+        
         if self.provider == Provider.AWS and self.auth_method == "assume_role" and not self.aws_role_arn:
             raise ValueError("awsRoleARN is required when provider is 'aws' and authMethod is 'assume_role'")
         

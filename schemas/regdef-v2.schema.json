@@ -170,6 +170,22 @@
                 "const": "aws"
               },
               "authMethod": {
+                "const": "secret"
+              }
+            },
+            "required": ["provider", "authMethod"]
+          },
+          "then": {
+            "required": ["awsRegion"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "aws"
+              },
+              "authMethod": {
                 "const": "assume_role"
               }
             },

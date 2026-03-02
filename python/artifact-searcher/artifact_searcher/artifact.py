@@ -356,15 +356,19 @@ async def check_artifact_async(
     if result is not None:
         return result
 
-    if isinstance(app.registry, Registry):
-        original_domain = app.registry.maven_config.repository_domain_name
-        if original_domain.endswith("/repository/"):
-            fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
-            if fixed_domain != original_domain:
-                logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
-                result = await _attempt_check(app, version, artifact_extension, fixed_domain, cred, auth_headers, classifier)
-                if result is not None:
-                    return result
+    if not app.registry.maven_config.is_nexus:
+        return result
+
+    # trying to edit url for nexus and repeat
+    original_domain = app.registry.maven_config.repository_domain_name
+    fixed_domain = convert_nexus_repo_url_to_index_view(original_domain)
+    if fixed_domain != original_domain:
+        logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
+        result = await _attempt_check(app, version, artifact_extension, fixed_domain, cred, auth_headers, classifier)
+        if result is not None:
+            return result
+    else:
+        logger.debug("Domain is same after editing, skipping retry")
 
     logger.warning("Artifact not found")
 

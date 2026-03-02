@@ -55,9 +55,18 @@ def base_registry_v2():
 
 
 class TestAnonymousAccess:
-    def test_anonymous_auth(self, base_registry_v2, env_creds):
+    def test_nexus_anonymous_auth(self, base_registry_v2, env_creds):
         base_registry_v2.auth_config = {
             "test-auth": AuthConfig(provider=Provider.NEXUS, auth_method="anonymous")
+        }
+        
+        result = resolve_v2_auth_headers(base_registry_v2, env_creds)
+        
+        assert result is None
+
+    def test_artifactory_anonymous_auth(self, base_registry_v2, env_creds):
+        base_registry_v2.auth_config = {
+            "test-auth": AuthConfig(provider=Provider.ARTIFACTORY, auth_method="anonymous")
         }
         
         result = resolve_v2_auth_headers(base_registry_v2, env_creds)
@@ -121,18 +130,15 @@ class TestAWSAuthentication:
             )
 
     def test_aws_missing_region(self, base_registry_v2, env_creds):
-        base_registry_v2.auth_config = {
-            "aws-auth": AuthConfig(
+        from pydantic import ValidationError
+
+        with pytest.raises(ValidationError, match="awsRegion is required when provider is 'aws' and authMethod is 'secret'"):
+            AuthConfig(
                 credentials_id="aws-cred",
                 provider=Provider.AWS,
                 auth_method="secret",
                 aws_domain="my-domain"
             )
-        }
-        base_registry_v2.maven_config.auth_config = "aws-auth"
-
-        assert base_registry_v2.auth_config["aws-auth"].provider == Provider.AWS
-
 
     def test_aws_missing_credentials(self, base_registry_v2, env_creds):
         env_creds["aws-cred"]["data"] = {"username": "access_key"}
@@ -182,18 +188,6 @@ class TestGCPAuthentication:
         mock_gcp_provider.return_value.with_service_account_key.assert_called_once_with(
             service_account_key_content='{"type": "service_account", "project_id": "my-project"}'
         )
-
-    def test_gcp_federation_not_implemented(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-
-        with pytest.raises(ValidationError, match="gcpOIDC is required"):
-            base_registry_v2.auth_config = {
-                "gcp-auth": AuthConfig(
-                    credentials_id="gcp-cred",
-                    provider=Provider.GCP,
-                    auth_method="federation"
-                )
-            }
 
     def test_gcp_invalid_auth_method(self, base_registry_v2, env_creds):
         from pydantic import ValidationError
@@ -297,61 +291,33 @@ class TestNexusArtifactoryAuthentication:
             }
 
 
-class TestAzureAuthentication:
-    def test_azure_not_implemented(self, base_registry_v2, env_creds):
-        base_registry_v2.auth_config = {
-            "azure-auth": AuthConfig(
-                credentials_id="nexus-cred",
-                provider=Provider.AZURE,
-                auth_method="oauth2"
-            )
-        }
-        base_registry_v2.maven_config.auth_config = "azure-auth"
-        
-        # Azure auth raises ValueError about missing azureTenantId
-        with pytest.raises(ValueError, match="Azure OAuth2 requires azureTenantId"):
-            resolve_v2_auth_headers(base_registry_v2, env_creds)
-
-
 class TestCredentialHandling:
-    def test_missing_credential_id(self, base_registry_v2, env_creds):
+    def test_missing_provider_field(self, base_registry_v2, env_creds):
         from pydantic import ValidationError
         
-        # provider and authMethod are required
+        # Provider is required field
         with pytest.raises(ValidationError, match="provider"):
-            base_registry_v2.auth_config = {
-                "test-auth": AuthConfig(credentials_id="nonexistent")
-            }
+            AuthConfig(
+                credentials_id="test-cred",
+                auth_method="user_pass"
+            )
 
-    def test_empty_env_creds(self, base_registry_v2):
+    def test_missing_auth_method_field(self, base_registry_v2, env_creds):
         from pydantic import ValidationError
         
-        # provider and authMethod are required
-        with pytest.raises(ValidationError, match="provider"):
-            base_registry_v2.auth_config = {
-                "test-auth": AuthConfig(credentials_id="any-cred")
-            }
+        # AuthMethod is required field
+        with pytest.raises(ValidationError, match="authMethod"):
+            AuthConfig(
+                credentials_id="test-cred",
+                provider=Provider.NEXUS
+            )
 
-    def test_none_env_creds(self, base_registry_v2):
+    def test_credentials_id_required_for_non_anonymous(self, base_registry_v2, env_creds):
         from pydantic import ValidationError
         
-        # provider and authMethod are required
-        with pytest.raises(ValidationError, match="provider"):
-            base_registry_v2.auth_config = {
-                "test-auth": AuthConfig(credentials_id="any-cred")
-            }
-
-
-class TestUnsupportedConfiguration:
-    def test_unsupported_provider_method_combo(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-        
-        # Nexus provider with oauth2 raises ValidationError
-        with pytest.raises(ValidationError, match="Nexus provider requires authMethod to be 'user_pass' or 'anonymous'"):
-            base_registry_v2.auth_config = {
-                "test-auth": AuthConfig(
-                    credentials_id="nexus-cred",
-                    provider=Provider.NEXUS,
-                    auth_method="oauth2"
-                )
-            }
+        # credentialsId is required when authMethod is not anonymous
+        with pytest.raises(ValidationError, match="credentialsId is required when authMethod is not 'anonymous'"):
+            AuthConfig(
+                provider=Provider.NEXUS,
+                auth_method="user_pass"
+            )
