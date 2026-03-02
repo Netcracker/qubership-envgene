@@ -408,3 +408,7 @@ def get_bgd_object(env_dir: Path | None = None) -> CommentedMap:
     bgd_object = openYaml(bgd_path, allow_default=True)
     logger.debug(bgd_object)
     return bgd_object
+
+
+def get_sboms_dir(work_dir) -> Path:
+    return Path(work_dir) / "sboms"
