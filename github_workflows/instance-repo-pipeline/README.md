@@ -9,7 +9,7 @@
 
 </div>
 
-![EnvGene Workflow](assets/envgene-workflow-diagram.png)
+![EnvGene Workflow](assets/envgene-workflow-header.png)
 
 - [EnvGene GitHub Workflow — User Guide](#envgene-github-workflow--user-guide)
   - [Overview](#overview)
