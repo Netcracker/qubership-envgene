@@ -11,7 +11,7 @@
 
 ![EnvGene Workflow](assets/envgene-workflow-header.png)
 
-- [EnvGene GitHub Workflow — User Guide](#envgene-github-workflow--user-guide)
+- [EnvGene GitHub Workflow — User Guide](#envgene-github-workflow)
   - [Overview](#overview)
   - [Installation](#installation)
   - [Quick Start](#quick-start)
