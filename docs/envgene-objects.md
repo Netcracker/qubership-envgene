@@ -1511,7 +1511,7 @@ registry:
       # `gcp`: `federation` or `service_account`
       # `azure`: `oauth2`
       authMethod: enum [ secret, assume_role, federation, service_account, oauth2, user_pass ]
-      # Optional
+      # Mandatory
       # Region of the AWS cloud
       # Used with `provider: aws` only
       awsRegion: string
@@ -1909,7 +1909,7 @@ authConfig:
     # `gcp`: `federation` or `service_account`
     # `azure`: `oauth2`
     authMethod: enum [ secret, assume_role, federation, service_account, oauth2, user_pass ]
-    # Optional
+    # Mandatory
     # Region of the AWS cloud
     # Used with `provider: aws` only
     awsRegion: string
