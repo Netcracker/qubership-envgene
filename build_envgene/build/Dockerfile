@@ -13,8 +13,8 @@ RUN apk add --no-cache \
     libxml2-dev \
     libxslt-dev \
     zlib-dev \
-    curl \
     git \
+    curl \
     jq \
     openssh-client \
     sudo \
