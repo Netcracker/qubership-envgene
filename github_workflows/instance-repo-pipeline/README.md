@@ -1,8 +1,8 @@
-<div align="center">
-
 # EnvGene GitHub Workflow
 
-**User Guide**
+<div align="center">
+
+User Guide
 
 [![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-workflow_dispatch-2088FF?style=flat-square&logo=github-actions&logoColor=white)](https://docs.github.com/en/actions)
 [![Manual Trigger](https://img.shields.io/badge/trigger-manual-orange?style=flat-square)](#how-to-trigger-the-workflow)
@@ -668,6 +668,6 @@ CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\
 
 <div align="center">
 
-*EnvGene GitHub Workflow — Part of the Qubership EnvGene platform*
+EnvGene GitHub Workflow — Part of the Qubership EnvGene platform
 
 </div>
