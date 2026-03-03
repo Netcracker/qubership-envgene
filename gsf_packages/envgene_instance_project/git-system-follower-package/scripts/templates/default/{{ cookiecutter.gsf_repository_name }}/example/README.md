@@ -18,6 +18,8 @@ This guide walks you through creating your first environment using EnvGene from 
     - [What Just Happened?](#what-just-happened)
   - [Part 2: Creating Your First Environment Instance](#part-2-creating-your-first-environment-instance)
     - [Step 5: Set Up Instance Repository](#step-5-set-up-instance-repository)
+      - [Step 5.1: Add Configuration folder](#step-51-add-configuration-folder)
+      - [Step 5.2: Add environments folder](#step-52-add-environments-folder)
     - [Step 6: Configure Platform Environment](#step-6-configure-platform-environment)
     - [Step 7: Configure Shared Credentials](#step-7-configure-shared-credentials)
     - [Step 8: Run Your First Pipeline](#step-8-run-your-first-pipeline)
@@ -120,7 +122,27 @@ ls -la
 You should see:
 
 ```plaintext
-TBD
+templates/
+├── env_templates/
+│   ├── Namespaces/
+│   │   ├── platform/
+│   │   │   ├── arangodb.yml.j2
+│   │   │   ├── consul.yml.j2
+│   │   │   └── opensearch.yml.j2
+│   │   ├── solution/
+│   │   │   ├── bss.yml.j2
+│   │   │   ├── oss.yml.j2
+│   │   │   └── core.yml.j2
+│   │   ├── tenant.yml.j2
+│   │   └── cloud.yml.j2
+│   │
+│   ├── platform.yml
+│   └── solution.yml
+│
+├── appdefs/
+├── regdefs/
+├── parameters/
+└── resource_profile/
 ```
 
 ### Step 3: Understand Template Structure
@@ -128,17 +150,39 @@ TBD
 Let's look at a key file - `env_templates/platform.yml`:
 
 ```yaml
-TBD
+
+tenant: "{{ templates_dir }}/env_templates/Namespaces/tenant.yml.j2"
+cloud: "{{ templates_dir }}/env_templates/Namespaces/cloud.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/Namespaces/platform/arangodb.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/Namespaces/platform/consul.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/Namespaces/platform/dbaas.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/Namespaces/platform/jaeger.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/Namespaces/platform/kafka.yml.j2"
+  - template_path: "{{ templates_dir }}/env_templates/Namespaces/platform/opensearch.yml.j2"
 ```
 
 **Why this matters:**
 
-TBD
+This file defines the structure of an environment by linking all required component templates. It determines what gets deployed, ensures consistency across environments, and serves as the blueprint referenced by the Environment Inventory.
 
 Now look at `env_templates/Namespaces/platform/consul.yml.j2`:
 
 ```yaml
-TBD
+
+name: "consul"
+credentialsId: ""
+isServerSideMerge: false
+labels: []
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: true
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets:
+  - "consul"
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
 ```
 
 **What's happening:**
@@ -163,7 +207,12 @@ git push
 2. You should see a pipeline running with these jobs:
    - `dp_build` - Building and validating templates
    - `report_artifacts` - Recording what was built
-   - `semantic_release` - Publishing the artifact TBD
+   - `semantic_release` - Publishing the artifact
+
+```mermaid
+flowchart LR
+    A[dp_build] --> B[report_artifacts] --> C[semantic_release]
+```
 
 Wait for the pipeline to complete (usually 2-5 minutes).
 
@@ -172,7 +221,7 @@ Wait for the pipeline to complete (usually 2-5 minutes).
 Your pipeline created a template artifact with a version like:
 
 ```plaintext
-TBD
+  artifact: template-project:feature-template-sample-20260303.022442-18
 ```
 
 This artifact now contains all your template files in a packaged format, ready to be used by instances.
@@ -190,6 +239,34 @@ git clone <your-instance-repo-url>
 cd <instance-repo>
 ```
 
+#### Step 5.1: Add Configuration folder
+
+Copy the configuration folder:
+
+```bash
+cp -r example/configuration configuration/
+```
+
+The folder structure should look like this:
+
+``` text
+configuration/
+├── artifact_definitions/
+│   └── <artifact-definition-name>.yaml
+├── credentials/
+│   └── credentials.yml
+└── config.yml
+```
+
+- `<artifact-definition-name>.yaml` : Describes where the Environment Template artifact is stored in the registry. It converts the `application:version` format into the registry and Maven artifact parameters required to download it.
+**Important:**
+  - The file name must match the repository name.
+  - All fields inside this file must be replaced with actual project-specific values.
+- `credentials.yml` : Stores credential definitions.
+- `config.yml` : Defines encryption-related configuration and security attributes.
+
+#### Step 5.2: Add environments folder
+
 Copy the sample environment:
 
 ```bash
@@ -201,12 +278,34 @@ cp -r example/environments/cluster-01 environments/
 Open `environments/cluster-01/platform-env/Inventory/env_definition.yml`:
 
 ```yaml
-TBD
+inventory: {}
+envTemplate:
+  name: "platform"
+  artifact: "template-project:feature-template-sample-20260303.022442-18"
+  additionalTemplateVariables:
+    use_env_prefix: true
+  sharedTemplateVariables: []
+  envSpecificParamsets: {}
+  envSpecificE2EParamsets: {}
+  envSpecificTechnicalParamsets: {}
+  envSpecificResourceProfiles: {}
+  sharedMasterCredentialFiles:
+    - "share-creds"
+
 ```
 
 **What each field means:**
 
-TBD
+- `inventory`: Defines environment metadata and configuration (tenant, cloud, credentials, etc.). Acts as the recipe for creating the environment.
+- `envTemplate.name`: Name of the Environment Template to use. Must match the Template Descriptor name inside the referenced artifact.
+- `envTemplate.artifact`: Template artifact in application:version format used to render the environment.
+- `additionalTemplateVariables`: Extra variables passed to templates during rendering.
+- `sharedTemplateVariables`: Common variable files merged into template variables.
+- `envSpecificParamsets`: Environment-specific deployment parameter overrides.
+- `envSpecificE2EParamsets`: Environment-specific CI/CD or pipeline parameters.
+- `envSpecificTechnicalParamsets`: Runtime/technical parameter overrides.
+- `envSpecificResourceProfiles`: Resource (CPU/memory) overrides for this environment.
+
 
 **Important:** The `envTemplate.artifact` value must match what your template pipeline produced.
 
@@ -215,7 +314,30 @@ TBD
 Open `environments/cluster-01/credentials/share-creds.yml`:
 
 ```yaml
-TBD
+registry-cred:
+  type: "usernamePassword"
+  data:
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
+sso-idp-admin-login:
+  type: "secret"
+  data:
+    secret: "token-placeholder-123"
+streaming:
+  type: "usernamePassword"
+  data:
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
+postgres-dba-cred:
+  type: "usernamePassword"
+  data:
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
+kafka-monitoring-creds:
+  type: "usernamePassword"
+  data:
+    username: "user-placeholder-123"
+    password: "pass-placeholder-123"
 ```
 
 **Why this matters:**
@@ -243,7 +365,7 @@ Trigger the instance pipeline manually:
     ENV_NAMES: cluster-01/platform-env
     ENV_BUILDER: true
     GENERATE_EFFECTIVE_SET: true
-    SD... TBD
+    EFFECTIVE_SET_CONFIG: {}
     ```
 
 3. Click "Run Pipeline"
@@ -282,7 +404,25 @@ ls -la environments/cluster-01/platform-env/
 You should see:
 
 ```plaintext
-TBD
+environments/
+└── cluster-01/
+    ├── platform-env/
+    │   ├── AppDefs/
+    │   ├── RegDefs/
+    │   ├── Credentials/
+    │   │   └── credentials.yml
+    │   ├── Inventory/
+    │   │   ├── env_definition.yml
+    │   │   └── solution-descriptor/
+    │   │       └── sd.yml
+    │   ├── Namespaces/
+    │   ├── Profiles/
+    │   ├── effective-set/
+    │   ├── cloud.yml
+    │   └── tenant.yml
+    │
+    └── Credentials/
+        └── shared-creds.yml
 ```
 
 ---
@@ -296,7 +436,22 @@ Now let's add business applications on top of the platform.
 Open `environments/cluster-01/solution-env/Inventory/env_definition.yml`:
 
 ```yaml
-TBD
+inventory: {}
+envTemplate:
+  name: "solution"
+  artifact: "template-project:feature-template-sample-20260303.022442-18"
+  additionalTemplateVariables:
+    use_env_prefix: true
+  sharedTemplateVariables: []
+  envSpecificParamsets:
+    bss:
+      - "env-specific-bss"
+    oss:
+      - "oss-env-specific"
+  envSpecificE2EParamsets: {}
+  envSpecificTechnicalParamsets: {}
+  envSpecificResourceProfiles: {}
+  sharedMasterCredentialFiles: []
 ```
 
 **What's different:**
@@ -310,7 +465,12 @@ TBD
 Open `environments/cluster-01/solution-env/Inventory/parameters/cloud-env-specific.yml`:
 
 ```yaml
-TBD
+name: cloud-env-specific
+parameters:
+  PAAS_PLATFORM: KUBERNETES
+  PAAS_VERSION: v1.32
+  INGRESS_CLASS: nginx
+applications: []
 ```
 
 **Why this is powerful:**
@@ -324,13 +484,60 @@ TBD
 Trigger the pipeline with a solution descriptor:
 
 ```yaml
-TBD
+    ENV_NAMES: cluster-01/platform-env
+    ENV_BUILDER: true
+    GENERATE_EFFECTIVE_SET: true
+    EFFECTIVE_SET_CONFIG: {}
+    SD_SOURCE_TYPE: json
+    SD_DATA: [{
+         "version": 2.1,
+         "type": "solutionDeploy",
+         "deployMode": "composite",
+         "applications": [
+             {
+              "version": "Core-Extensions:release-2025.3-9.16.0-20250617.073656-1-RELEASE",
+              "deployPostfix": "core"
+             },
+             {
+              "version": "CRM-CIM:release-2024.4-20250425.130326-83-RELEASE",
+              "deployPostfix": "bss"
+             },
+             {
+              "version": "cloudbss-om:release-2024.4-20250516.055833-222-RELEASE",
+              "deployPostfix": "bss"
+             },
+             {
+              "version": "resource-inventory:release-2025.4-20251218.142332-78-RELEASE",
+              "deployPostfix": "oss"
+             }
+         ],
+         "userData": {
+         "useDeployPostfixAsNamespace": false},
+         "cmdbConfigs": [
+         ]
+         }]
 ```
 
 **What's the Solution Descriptor?**
 
 - Lists specific application versions to deploy
 - `deployPostfix` maps to namespace (bss, oss, core)
+
+Click "Run Pipeline"
+
+**What's happening:**
+
+```mermaid
+flowchart LR
+    A[generate_pipeline] --> B[run_generated_pipeline]
+    B --> C[app_reg_def_render]
+    C --> D[process_sd]
+    D --> E[env_builder]
+    E --> F[generate_effective_set]
+    F --> G[git_commit]
+```
+
+- `process_sd` - Processes Solution Descriptor (SD) to apply specific version
 
 ---
 
@@ -357,7 +564,24 @@ flowchart TB
 You now has:
 
 ```plaintext
-TBD
+environments/
+└── cluster-01/
+    ├── solution-env/
+    │   ├── AppDefs/
+    │   ├── RegDefs/
+    │   ├── Credentials/
+    │   │   └── credentials.yml
+    │   ├── Inventory/
+    │   │   ├── env_definition.yml
+    │   │   ├── parameters/
+    │   │   └── solution-descriptor/
+    │   │       └── sd.yml
+    │   ├── Namespaces/
+    │   ├── Profiles/
+    │   └── effective-set/
+    │
+    └── Credentials/
+        └── shared-creds.yml
 ```
 
 ---

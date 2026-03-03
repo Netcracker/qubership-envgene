@@ -1,0 +1,10 @@
+name: "template-project"
+groupId: "mvn.group"
+artifactId: "template-project"
+registry:
+  name: "ghcr.io"
+  mavenConfig:
+    repositoryDomainName: "https://artifactory.qubership.org/"
+    targetSnapshot: "maven-target-snapshot"
+    targetStaging: "maven-target-staging"
+    targetRelease: "maven-target-release"

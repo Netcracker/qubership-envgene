@@ -1,7 +1,7 @@
-# See detailed description in https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml
+inventory: {}
 envTemplate:
   name: platform
-  artifact: template-project:feature-sample-template-SNAPSHOT
+  artifact: "template-project:feature-template-sample-SNAPSHOT"
   additionalTemplateVariables:
     use_env_prefix: true
   sharedTemplateVariables: []
