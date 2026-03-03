@@ -291,7 +291,6 @@ envTemplate:
   envSpecificResourceProfiles: {}
   sharedMasterCredentialFiles:
     - "share-creds"
-
 ```
 
 **What each field means:**
