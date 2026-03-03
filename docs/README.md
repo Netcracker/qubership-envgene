@@ -2,6 +2,7 @@
 
 - [EnvGene Documentation](#envgene-documentation)
   - [Getting Started](#getting-started)
+  - [Tutorials](#tutorials)
   - [Core Concepts](#core-concepts)
   - [How-To Guides](#how-to-guides)
   - [Advanced Features](#advanced-features)
@@ -11,6 +12,10 @@
 ## Getting Started
 
 - [**Quick Start Guide**](/README.md#getting-started) - Create your first Environment
+
+## Tutorials
+
+- [**Managing Resource Profiles**](/docs/tutorials/resource-profiles.md) - End-to-end walkthrough: from Baseline to Template Override to Environment-Specific Override, including `template_override`, `overrides-parent`, and result verification
 
 ## Core Concepts
 

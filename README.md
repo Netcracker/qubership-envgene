@@ -16,12 +16,13 @@
     - [System Requirements](#system-requirements)
     - [Basic Usage](#basic-usage)
   - [📚 Documentation](#-documentation)
-    - [Getting Started](#getting-started)
-    - [Core Concepts](#core-concepts)
-    - [How-To Guides](#how-to-guides)
-    - [Advanced Features](#advanced-features)
-    - [Examples \& Samples](#examples--samples)
-    - [Development](#development)
+  - [Getting Started](#getting-started)
+  - [Tutorials](#tutorials)
+  - [Core Concepts](#core-concepts)
+  - [How-To Guides](#how-to-guides)
+  - [Advanced Features](#advanced-features)
+  - [Examples \& Samples](#examples--samples)
+  - [Development](#development)
   - [🤝 Contributing](#-contributing)
   - [📄 License](#-license)
 
@@ -111,6 +112,10 @@ After the pipeline finishes, the Environment configuration will be generated and
 ### Getting Started
 
 - [**Quick Start Guide**](#-quick-start) - Create your first Environment
+
+### Tutorials
+
+- [**Managing Resource Profiles**](/docs/tutorials/resource-profiles.md) - End-to-end walkthrough: from Baseline to Template Override to Environment-Specific Override, including `template_override`, `overrides-parent`, and result verification
 
 ### Core Concepts
 
