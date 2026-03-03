@@ -260,7 +260,7 @@ configuration/
 
 - `<artifact-definition-name>.yaml` : Describes where the Environment Template artifact is stored in the registry. It converts the `application:version` format into the registry and Maven artifact parameters required to download it.
 **Important:**
-  - The file name must match the repository name.
+  - The filename must match the repository name.
   - All fields inside this file must be replaced with actual project-specific values.
 - `credentials.yml` : Stores credential definitions.
 - `config.yml` : Defines encryption-related configuration and security attributes.
@@ -385,7 +385,7 @@ flowchart LR
 - `app_reg_def_render` - Resolves application definitions
 - `env_builder` - Merges template + your overrides
 - `generate_effective_set` - Produces final configuration
-- `git_commit` - Commits results back to repo
+- `git_commit` - Commits results back to repository
 
 ### Step 9: Verify the Results
 
@@ -597,4 +597,4 @@ For detailed documentation on EnvGene objects and configuration:
 - [Pipeline Parameters](https://github.com/Netcracker/qubership-envgene/blob/main/docs/instance-pipeline-parameters.md)
 - [How-to Guides](https://github.com/Netcracker/qubership-envgene/tree/main/docs/how-to)
 - [All Documentation](https://github.com/Netcracker/qubership-envgene/tree/main/docs)
-- [EnvGene Main README](https://github.com/Netcracker/qubership-envgene/blob/main/README.md)
+- [EnvGene Main readme](https://github.com/Netcracker/qubership-envgene/blob/main/README.md)
