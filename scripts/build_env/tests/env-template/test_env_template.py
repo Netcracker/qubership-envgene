@@ -1,4 +1,4 @@
-from os import environ
+from os import environ, getenv
 from pathlib import Path
 
 import pytest
@@ -97,6 +97,7 @@ dd_json = {
 
 def set_env(name: str):
     environ["ENVIRONMENT_NAME"] = name
+    environ["FULL_ENV_NAME"] = f"{getenv("CLUSTER_NAME")}/{getenv("ENVIRONMENT_NAME")}"
 
 
 def mock_metadata(aio_mock, url=METADATA_URL, repeat=1):
@@ -147,6 +148,7 @@ class TestEnvTemplate:
         environ.pop("CI_PROJECT_DIR", None)
         environ.pop("CLUSTER_NAME", None)
         environ.pop("ENVIRONMENT_NAME", None)
+        environ.pop("FULL_ENV_NAME", None)
 
     @responses.activate
     def test_new_logic_with_dd(self, mock_aio_response):
