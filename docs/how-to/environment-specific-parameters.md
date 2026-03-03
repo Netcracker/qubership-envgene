@@ -41,7 +41,7 @@ When you need environment-specific values, you create **Environment Specific Par
 2. Template Repository defines base parameters
 3. You know:
    - Which namespace or cloud needs parameter overrides
-   - Which parameter context to override (deployment, pipeline/e2e, or runtime/technical configuration)
+   - Which parameter context to override (deployment, pipeline/end-to-end, or runtime/technical configuration)
    - The namespace identifier (defined by `deploy_postfix` in the [Template Descriptor](/docs/envgene-objects.md#template-descriptor), or by the Namespace template filename without extension)
 
 ---

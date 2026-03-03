@@ -255,7 +255,7 @@ Place the override file in the location that matches the desired scope:
 |-----------------------------------------------------------------|-----------------|------------------------------|
 | `/environments/<cluster>/<env>/Inventory/resource_profiles/`    | One environment | Env-specific tuning          |
 | `/environments/<cluster>/resource_profiles/`                    | Cluster-wide    | All envs in cluster          |
-| `/environments/resource_profiles/`                              | Global          | All envs in the repo         |
+| `/environments/resource_profiles/`                              | Global          | All envs in the repository   |
 
 When an environment references a file by name (via `envSpecificResourceProfiles`), EnvGene searches these three locations **from most specific to most general** and uses the first file it finds with that name.
 
@@ -376,7 +376,7 @@ After committing your changes, trigger environment generation and inspect two ar
 
 The name of the resulting file in `Profiles/` depends on the combination mode:
 
-| `mergeEnvSpecificResourceProfiles` | Resulting file name in `Profiles/`          |
+| `mergeEnvSpecificResourceProfiles` | Resulting filename in `Profiles/`           |
 |------------------------------------|---------------------------------------------|
 | `true` (default)                   | Name of the **template** override           |
 | `false`                            | Name of the **env-specific** override       |
