@@ -192,12 +192,12 @@ def build_pipeline(params: dict) -> None:
     # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
     for job in sorted_pipeline.find_jobs(JobFilter()):
-        job.artifacts.add_paths([
+        job.artifacts.add_paths(
             'environments/',
             'configuration/',
             'sboms/',
             'templates/'
-        ])
+        )
 
         is_first_job = job.needs is None or len(job.needs) == 0
         if not is_first_job:
