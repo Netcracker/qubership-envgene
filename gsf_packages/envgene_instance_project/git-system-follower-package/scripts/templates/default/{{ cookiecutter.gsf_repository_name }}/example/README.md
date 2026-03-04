@@ -214,6 +214,29 @@ flowchart LR
     A[dp_build] --> B[report_artifacts] --> C[semantic_release]
 ```
 
+**Promote / Release Pipeline:**
+
+Once the `semantic_release` job completes successfully, it automatically triggers a new pipeline responsible for promoting the published template artifact to the release stage.
+
+```mermaid
+flowchart LR
+    A[prepromote] --> B[promote]
+    B --> C[update_dependent_versions]
+    C --> D[get_release_notes]
+    D --> E[update_release_notes]
+    E --> F[Release Completed]
+```
+
+**Jobs:**
+
+- `prepromote` → Validates promotion conditions.
+- `promote` → Promotes to release branch.
+- `update_dependent_versions` → Updates dependent modules.
+- `get_release_notes` → Extracts commit-based release notes.
+- `update_release_notes` → Publishes release documentation.
+
+> [!NOTE] `semantic_release` job typically runs for **master** or **release branches** to ensure stable artifact publication.
+
 Wait for the pipeline to complete (usually 2-5 minutes).
 
 ### What Just Happened?
