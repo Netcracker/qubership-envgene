@@ -233,7 +233,7 @@ parameters:
         memory: 1Gi
 ```
 
-Anti-pattern (embedded JSON):
+Antipattern (embedded JSON):
 
 ```yaml
 parameters:
