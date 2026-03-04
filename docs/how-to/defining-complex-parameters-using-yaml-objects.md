@@ -25,7 +25,7 @@
     - [8.2 Preserve Type Integrity](#82-preserve-type-integrity)
     - [8.3 Avoid Embedded JSON Inside YAML](#83-avoid-embedded-json-inside-yaml)
     - [8.4 Keep Structure Logical](#84-keep-structure-logical)
-  - [9. Common Anti-Patterns](#9-common-anti-patterns)
+  - [9. Common Antipatterns](#9-common-antipatterns)
   - [10. Migration Strategy for Existing Multiline Strings](#10-migration-strategy-for-existing-multiline-strings)
   - [11. Operational Impact](#11-operational-impact)
   - [12. Final Recommendation](#12-final-recommendation)
@@ -400,9 +400,9 @@ Prefer readable, domain-aligned structure.
 
 ---
 
-## 9. Common Anti-Patterns
+## 9. Common Antipatterns
 
-| Anti-Pattern                 | Risk Introduced                      |
+| Antipattern                 | Risk Introduced                      |
 | ---------------------------- | ------------------------------------ |
 | Multiline YAML as string     | No validation, diff noise, type loss |
 | Escaped JSON string          | Manual escaping, readability issues  |
