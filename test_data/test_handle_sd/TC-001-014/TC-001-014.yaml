@@ -1,0 +1,4 @@
+SD_DATA: '{"version": 2.1, "type": "solutionDeploy", "deployMode": "composite", "applications": [{"version": "postgres-services:1.32.6", "deployPostfix": "postgresql"}, {"version": "postgres:1.32.6", "deployPostfix": "postgresql-dbaas"}]}'
+SD_SOURCE_TYPE: 'json'
+SD_VERSION: ''
+SD_REPO_MERGE_MODE: 'basic-exclusion-merge'

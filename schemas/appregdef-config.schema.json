@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "AppRegDef Config",
+  "description": "Parameters context for rendering only Application Definition and Registry Definition templates",
+  "additionalProperties": false,
+  "properties": {
+    "appdefs": {
+      "type": "object",
+      "title": "Application Definitions Context",
+      "description": "Defines parameters for rendering Application Definition templates",
+      "additionalProperties": true,
+      "properties": {
+        "overrides": {
+          "type": "object",
+          "title": "Application Definition Overrides",
+          "description": "Key-value map used by appdefs.overrides macro during template rendering",
+          "additionalProperties": true,
+          "examples": [
+            {
+              "registryName": "sandbox"
+            }
+          ]
+        }
+      },
+      "required": [
+        "overrides"
+      ]
+    },
+    "regdefs": {
+      "type": "object",
+      "title": "Registry Definitions Context",
+      "description": "Defines parameters for rendering Registry Definition templates",
+      "additionalProperties": true,
+      "properties": {
+        "overrides": {
+          "type": "object",
+          "title": "Registry Definition Overrides",
+          "description": "Key-value map used by regdefs.overrides macro during template rendering",
+          "additionalProperties": true,
+          "examples": [
+            {
+              "hostName": "registry.qubership.org"
+            }
+          ]
+        }
+      },
+      "required": [
+        "overrides"
+      ]
+    }
+  }
+} 

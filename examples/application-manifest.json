@@ -1,0 +1,92 @@
+{
+  "serialNumber": "urn:uuid:c7eb7c5f-b8da-4c05-9c48-678a11c00a35",
+  "$schema": "../schemas/application-manifest.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-01-21T12:00:00Z",
+    "component": {
+      "bom-ref": "a-application:03d26d59-0405-45a1-a259-bc09032351bf",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "name": "a-application",
+      "version": "release-2023.3-8.4.0-20230908.094348-15-RELEASE"
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "am-build-cli",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "a-standalone-runnable:61439aff-c00d-43f5-9bae-fe6db05db2d5",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.standalone-runnable",
+      "name": "a-standalone-runnable",
+      "version": "1.2.3",
+      "properties": [],
+      "components": []
+    },
+    {
+      "bom-ref": "a-helm-chart:13dac210-3424-4799-9631-667d7b2b0ed8",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.helm.chart",
+      "name": "a-helm-chart",
+      "version": "1.2.3",
+      "purl": "pkg:helm/example-repo/a-helm-chart@1.2.3?registry_name=sandbox",
+      "properties": [
+        {
+          "name": "isLibrary",
+          "value": false
+        },
+        {
+          "name": "qubership:helm.values.artifactMappings",
+          "value": {
+            "a-docker-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f": {
+              "valuesPathPrefix": "."
+            }
+          }
+        }
+      ],
+      "components": []
+    },
+    {
+      "bom-ref": "a-docker-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "a-docker-image",
+      "group": "core",
+      "version": "build22",
+      "purl": "pkg:docker/core/a-docker-image@build22?registry_name=sandbox",
+      "hashes": []
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "a-application:03d26d59-0405-45a1-a259-bc09032351bf",
+      "dependsOn": [
+        "a-standalone-runnable:61439aff-c00d-43f5-9bae-fe6db05db2d5",
+        "a-helm-chart:13dac210-3424-4799-9631-667d7b2b0ed8",
+        "a-docker-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f"
+      ]
+    },
+    {
+      "ref": "a-standalone-runnable:61439aff-c00d-43f5-9bae-fe6db05db2d5",
+      "dependsOn": [
+        "a-helm-chart:13dac210-3424-4799-9631-667d7b2b0ed8"
+      ]
+    },
+    {
+      "ref": "a-helm-chart:13dac210-3424-4799-9631-667d7b2b0ed8",
+      "dependsOn": [
+        "a-docker-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f"
+      ]
+    }
+  ]
+}
