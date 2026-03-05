@@ -6,4 +6,4 @@ COPY gsf_packages/envgene_instance_project/git-system-follower-package /git-syst
 
 WORKDIR /git-system-follower-package
 
-COPY schemas/config.schema.json scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks/
+COPY schemas/config.schema.json "scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/git_hooks/"
