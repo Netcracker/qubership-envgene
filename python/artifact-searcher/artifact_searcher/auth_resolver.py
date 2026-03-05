@@ -95,13 +95,35 @@ def _aws_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
         raise ValueError(f"AWS {auth_cfg.auth_method} auth requires both username (access key) and password (secret key)")
 
     from qubership_pipelines_common_library.v2.artifacts_finder.auth.aws_credentials import AwsCredentialsProvider
-    provider = AwsCredentialsProvider().with_direct_credentials(
-        access_key=username,
-        secret_key=password,
-        region_name=auth_cfg.aws_region,
-    )
-    token = provider.get_ecr_authorization_token()
-    logger.debug(f"AWS ECR token obtained for region '{auth_cfg.aws_region}'")
+    
+    # CodeArtifact (Maven/npm/pypi) vs ECR (Docker)
+    if auth_cfg.aws_domain:
+        # CodeArtifact requires direct boto3 call - not available in AwsCredentialsProvider
+        import boto3
+        from botocore.config import Config
+        
+        client = boto3.client(
+            service_name=AWS_SERVICE_CODEARTIFACT,
+            config=Config(region_name=auth_cfg.aws_region),
+            aws_access_key_id=username,
+            aws_secret_access_key=password,
+        )
+        response = client.get_authorization_token(
+            domain=auth_cfg.aws_domain,
+            durationSeconds=43200  # 12 hours max
+        )
+        token = response[AWS_TOKEN_KEY]
+        logger.debug(f"AWS CodeArtifact token obtained for domain '{auth_cfg.aws_domain}' in region '{auth_cfg.aws_region}'")
+    else:
+        # ECR uses the library's helper method
+        provider = AwsCredentialsProvider().with_direct_credentials(
+            access_key=username,
+            secret_key=password,
+            region_name=auth_cfg.aws_region,
+        )
+        token = provider.get_ecr_authorization_token()
+        logger.debug(f"AWS ECR token obtained for region '{auth_cfg.aws_region}'")
+    
     return {"Authorization": f"Bearer {token}"}
 
 
