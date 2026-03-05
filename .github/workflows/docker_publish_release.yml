@@ -125,7 +125,7 @@ jobs:
             # Run Python script to update history.log
             python3 ./.github/scripts/update_history.py \
               "$COOKIECUTTER_DIR_DISCOVERY" \
-              "$HISTORY_FILE_DISCOVERY"  
+              "$HISTORY_FILE_DISCOVERY"
 
             CHANGES_MADE=false
             if ! git diff --quiet "$TARGET_FILE"; then
