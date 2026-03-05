@@ -92,7 +92,7 @@ The generated Environment Inventory must be reused by other jobs in the same pip
 | `credentials[].action` | enum [`create_or_replace`, `delete`] | yes | Operation mode for the Shared Credentials file. See [Actions](#actions) | `create_or_replace` |
 | `credentials[].place` | enum[`site`,`cluster`,`env`] | yes | Defines where the Shared Credentials file is stored. See [Paths by place](#paths-by-place) | `site` |
 | `credentials[].content` | hashmap | no | Shared Credential as file content. Must be valid according [schema](/schemas/credential.schema.json) | See [example below](#full-env_inventory_content-example) |
-| `credentials[].name` | string | yes | Name of the Shared Credentials file. The file will be saved as `<name>.yml`.|
+| `credentials[].name` | string | yes | Name of the shared credentials file. The file will be saved as `<name>.yml`. |
 | `resourceProfiles` | array | no | List of Resource Profile Override operations | See [example below](#full-env_inventory_content-example) |
 | `resourceProfiles[].action` | enum [`create_or_replace`, `delete`] | yes | Operation mode for the Resource Profile Override file. See [Actions](#actions) | `create_or_replace` |
 | `resourceProfiles[].place` | enum[`site`,`cluster`,`env`] | yes | Defines where the Resource Profile Override file is stored. See [Paths by place](#paths-by-place) | `cluster` |
