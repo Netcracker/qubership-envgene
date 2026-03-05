@@ -356,8 +356,16 @@ async def check_artifact_async(
     if result is not None:
         return result
 
-    if not app.registry.maven_config.is_nexus:
-        return result
+    # V2: Skip Nexus URL conversion for cloud providers only
+    # V1: Use is_nexus flag
+    if isinstance(app.registry, RegistryV2):
+        # Cloud providers don't need Nexus-style URL conversion
+        if _is_cloud_provider(app.registry):
+            return result
+    else:
+        # V1 logic: skip if not Nexus
+        if not app.registry.maven_config.is_nexus:
+            return result
 
     # trying to edit url for nexus and repeat
     original_domain = app.registry.maven_config.repository_domain_name
