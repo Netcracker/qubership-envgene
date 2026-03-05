@@ -142,7 +142,7 @@ jobs:
             else
               echo "No changes to commit - working tree clean"
             fi
-            
+
   tag:
     needs: [update_image_tags]
     uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@v1.0.3
