@@ -20,8 +20,9 @@ def sboms_retention_policy():
 
     logger.info("SBOMs retention policy is enabled")
     for sbom_path in sboms_dir.iterdir():
-        logger.info(f"Removing file: {sbom_path}")
-        deleteFileIfExists(sbom_path)
+        if sbom_path.is_file():
+            logger.info(f"Removing outdated format file: {sbom_path}")
+            deleteFileIfExists(sbom_path)
 
     for app_sbom_dir in sboms_dir.iterdir():
         cleanup_dir_by_age(app_sbom_dir, sbom_retention.keep_versions_per_app)
