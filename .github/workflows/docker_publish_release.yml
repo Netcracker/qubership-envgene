@@ -136,9 +136,12 @@ jobs:
             git config --global user.name "qubership-actions[bot]"
             git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
             git add .
-            git commit -m "chore: Update docker image tags and envgene_version for branch ${{ github.ref_name }} [skip ci]"
-
-            git push origin HEAD:${{ github.ref_name }} || echo "Failed to push changes"
+            if ! git diff --quiet --cached; then
+              git commit -m "chore: Update docker image tags and envgene_version for branch ${{ github.ref_name }} [skip ci]"
+              git push origin HEAD:${{ github.ref_name }} || echo "Failed to push changes"
+            else
+              echo "No changes to commit - working tree clean"
+            fi
             
   tag:
     needs: [update_image_tags]
