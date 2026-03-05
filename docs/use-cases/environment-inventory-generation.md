@@ -336,6 +336,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 - `action: create_or_replace`
 - `place: env | cluster | site`
+- `name: <credentials-file-name-without-extension>`
 - `content` is a credentials map (one or multiple credentials)
 
 **Steps:**
@@ -346,6 +347,7 @@ Instance pipeline (GitLab or GitHub) is started with:
       - [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
       - `action == create_or_replace`
       - `place ∈ { env, cluster, site }`
+      - `name` is present
       - `content` is present
    3. Resolves target path by `place`:
       - `place=env` → `/environments/<cluster-name>/<env-name>/Inventory/credentials/inventory_generation_creds.yml`
@@ -382,6 +384,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 - `action: create_or_replace`
 - `place: env | cluster | site`
+- `name: <credentials-file-name-without-extension>`
 - `content` is a credentials map (one or multiple credentials)
 
 **Steps:**
@@ -392,6 +395,7 @@ Instance pipeline (GitLab or GitHub) is started with:
       - [`/docs/features/env-inventory-generation.md`](/docs/features/env-inventory-generation.md)
       - `action == create_or_replace`
       - `place ∈ { env, cluster, site }`
+      - `name` is present
       - `content` is present
    3. Resolves target path by `place`.
    4. Replaces the credentials file using `content` (fully overwrites the file).
@@ -424,6 +428,7 @@ Instance pipeline (GitLab or GitHub) is started with:
 
 - `action: delete`
 - `place: env | cluster | site`
+- `name: <credentials-file-name-without-extension>`
 - `content` is present
 
 **Steps:**
@@ -433,6 +438,7 @@ Instance pipeline (GitLab or GitHub) is started with:
    2. Validates the `credentials[]` item against the request schema:
       - `action == delete`
       - `place ∈ { env, cluster, site }`
+      - `name` is present
       - `content` is present
    3. Resolves target credentials file path by `place`.
    4. Deletes the target credentials file if it exists.
