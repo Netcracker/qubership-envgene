@@ -15,6 +15,7 @@
 
 ## Tutorials
 
+- [**Understanding the Effective Set**](/docs/tutorials/effective-set.md) - Trace how parameters from Tenant, Cloud, Namespace, Application, and SBOM sources are merged into the final Effective Set; learn to read traceability comments and debug wrong values
 - [**Managing Resource Profiles**](/docs/tutorials/resource-profiles.md) - End-to-end walkthrough: from Baseline to Template Override to Environment-Specific Override, including `template_override`, `overrides-parent`, and result verification
 
 ## Core Concepts
@@ -40,6 +41,10 @@
 - [**Update Template Version**](/docs/how-to/update-template-version.md) - Update environment template version
 - [**Override Template Parameters**](/docs/how-to/environment-specific-parameters.md) - Override template parameters for specific environments
 - [**Configure Resource Profiles**](/docs/how-to/configure-resource-profiles.md) - Configure performance parameters for different environment types
+
+**Effective Set:**
+
+- [**Generate an Effective Set**](/docs/how-to/generate-effective-set.md) - Trigger Effective Set generation from a Solution Descriptor artifact and template version
 
 **Advanced Configuration:**
 
