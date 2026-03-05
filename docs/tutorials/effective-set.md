@@ -307,7 +307,7 @@ bss-processor:
 `#rp-override: prod-bss-override` - the SBOM baseline was overridden by `Profiles/prod-bss-override.yml` in the Instance.
 
 > [!NOTE]
-> If the application is not an app chart (its Helm chart is a flat chart, not an umbrella chart with nested sub-charts), the structure differs: each microservice gets its own subfolder with a flat (non-nested) `deployment-parameters.yaml`. See [Calculator CLI Reference](/docs/features/calculator-cli.md#per-service-parameters) for details.
+> If the application is not an app chart (its Helm chart is a flat chart, not an umbrella chart with nested sub-charts), the structure differs: each microservice gets its own subfolder with a flat (non-nested) `deployment-parameters.yaml`. See [Calculator CLI Reference](/docs/features/calculator-cli.md) for details.
 
 ## Step 5: Read the Topology Context
 
