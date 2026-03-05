@@ -252,7 +252,7 @@ per-service-parameters/<app-name>/deployment-parameters.yaml ← per-microservic
 custom-params.yaml                                           ← CUSTOM_PARAMS pipeline variable; highest priority
 ```
 
-`deploy-descriptor.yaml` is generated entirely from the Application SBOM. It contains artifact metadata - Docker image names and tags, Helm chart coordinates, git revision. It is read-only; users cannot override its values.
+`deploy-descriptor.yaml` is generated entirely from the Application SBOM. It contains artifact metadata - Docker image names and tags, Helm chart coordinates, Git revision. It is read-only; users cannot override its values.
 
 With `enable_traceability: true`, every parameter in `deployment-parameters.yaml` carries an inline comment identifying its source object type. [Step 4](#step-4-trace-how-parameters-flow-into-the-effective-set) traces these in detail.
 
@@ -307,7 +307,7 @@ bss-processor:
 `#rp-override: prod-bss-override` - the SBOM baseline was overridden by `Profiles/prod-bss-override.yml` in the Instance.
 
 > [!NOTE]
-> If the application is not an app chart (its Helm chart is a flat chart, not an umbrella chart with nested sub-charts), the structure differs: each microservice gets its own subfolder with a flat (non-nested) `deployment-parameters.yaml`. See [Calculator CLI Reference](../features/calculator-cli.md#per-service-parameters) for details.
+> If the application is not an app chart (its Helm chart is a flat chart, not an umbrella chart with nested sub-charts), the structure differs: each microservice gets its own subfolder with a flat (non-nested) `deployment-parameters.yaml`. See [Calculator CLI Reference](/docs/features/calculator-cli.md#per-service-parameters) for details.
 
 ## Step 5: Read the Topology Context
 
@@ -450,7 +450,7 @@ The Effective Set becomes stale whenever any of its inputs change. You must rege
 In this tutorial you traced the full Effective Set lifecycle for the BSS solution:
 
 - **What it is** - the final merged parameter tree for one environment, written to `effective-set/` and read by ArgoCD and other consumers.
-- **Five contexts** - `deployment` (application parameters and artifacts), `pipeline` (E2E and CI/CD parameters), `topology` (cluster layout and structure), `runtime` (runtime management parameters), `cleanup` (teardown parameters).
+- **Five contexts** - `deployment` (application parameters and artifacts), `pipeline` (CI/CD parameters), `topology` (cluster layout and structure), `runtime` (runtime management parameters), `cleanup` (teardown parameters).
 - **Parameter flow** - Tenant → Cloud → Namespace → Application → SBOM → Resource Profile Override, with each level overriding the previous one.
 - **deployment-parameters.yaml** - the merged application parameters; traceability comments show which object type (Cloud, Namespace, Application, etc.) contributed each value.
 - **deploy-descriptor.yaml** - SBOM-derived artifact metadata consumed by the deployer to know which Docker images and charts to install.
