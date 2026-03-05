@@ -86,7 +86,7 @@ jobs:
             fetch-depth: 0
             token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
-        - name: Update Docker Image Tags in Pipeline
+        - name: Add the Envgene version to pipeline and GSF
           run: |
             # Paths to files
             TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml"
@@ -109,6 +109,23 @@ jobs:
 
             # Update version in GSF Discovery package.yaml
             sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_DISCOVERY_PACKAGE_FILE"
+
+            # Update the history.log in Instance GSF
+            COOKIECUTTER_DIR_INSTANCE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}"
+            HISTORY_FILE_INSTANCE="gsf_packages/envgene_instance_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.log"
+
+            python3 ./.github/scripts/update_history.py \
+              "$COOKIECUTTER_DIR_INSTANCE" \
+              "$HISTORY_FILE_INSTANCE"
+
+            #Update the history.log in Discovery GSF
+            COOKIECUTTER_DIR_DISCOVERY="gsf_packages/envgene_discovery_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}"
+            HISTORY_FILE_DISCOVERY="gsf_packages/envgene_discovery_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.log"
+
+            # Run Python script to update history.log
+            python3 ./.github/scripts/update_history.py \
+              "$COOKIECUTTER_DIR_DISCOVERY" \
+              "$HISTORY_FILE_DISCOVERY"  
 
             CHANGES_MADE=false
             if ! git diff --quiet "$TARGET_FILE"; then

@@ -73,33 +73,6 @@ runs:
       id: tags
       uses: ./.github/actions/generate-docker-tags
 
-    - name: Update history.log
-      shell: bash
-      run: |
-        COOKIECUTTER_DIR="gsf_packages/envgene_discovery_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}"
-        HISTORY_FILE="gsf_packages/envgene_discovery_project/git-system-follower-package/scripts/templates/default/{{ cookiecutter.gsf_repository_name }}/history.log"
-
-        # Run Python script to update history.log
-        python3 ./.github/scripts/update_history.py \
-          "$COOKIECUTTER_DIR" \
-          "$HISTORY_FILE"
-
-    - name: Commit and push changes
-      shell: bash
-      run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "github-actions[bot]@users.noreply.github.com"
-        git remote set-url origin https://x-access-token:${{ inputs.github-token }}@github.com/${GITHUB_REPOSITORY}.git
-
-        BRANCH_NAME=${GITHUB_REF#refs/heads/}
-        BRANCH_NAME=${BRANCH_NAME#refs/tags/}
-
-        git add -A
-        if ! git diff --quiet --cached; then
-          git commit -m "chore: Update GSF Discovery instance package files [skip ci]"
-          git push origin HEAD:"${BRANCH_NAME}" || echo "Failed to push changes"
-        fi
-
     - name: Extract metadata (tags, labels) for Docker
       id: meta
       uses: docker/metadata-action@v5
