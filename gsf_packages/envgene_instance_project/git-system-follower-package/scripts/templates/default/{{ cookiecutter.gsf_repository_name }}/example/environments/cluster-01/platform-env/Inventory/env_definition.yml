@@ -1,0 +1,13 @@
+inventory: {}
+envTemplate:
+  name: platform
+  artifact: "template-project:feature-template-sample-SNAPSHOT"
+  additionalTemplateVariables:
+    use_env_prefix: true
+  sharedTemplateVariables: []
+  envSpecificParamsets: {}
+  envSpecificE2EParamsets: {}
+  envSpecificTechnicalParamsets: {}
+  envSpecificResourceProfiles: {}
+  sharedMasterCredentialFiles:
+    - "share-creds"
