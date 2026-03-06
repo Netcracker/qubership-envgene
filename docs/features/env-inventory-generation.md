@@ -1,5 +1,3 @@
-<a id="environment-inventory-generation"></a>
-
 # Environment Inventory Generation
 
 ## Table of Contents
