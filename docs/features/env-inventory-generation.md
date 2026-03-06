@@ -2,7 +2,7 @@
 
 ## Table of Contents
 
-- [Environment Inventory Generation](#environment-inventory-generation)
+- [Environment Inventory Generation](#table-of-contents)
   - [Table of Contents](#table-of-contents)
   - [Problem Statements](#problem-statements)
     - [Goals](#goals)
