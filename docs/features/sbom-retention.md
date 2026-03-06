@@ -22,7 +22,7 @@ SBOM (Software Bill of Materials) files are cached in the Instance Repository to
 
 - SBOM generation is a computationally expensive operation
 - SBOM files are cached in `/sboms/` directory for reuse
-- [Job artifacts](/docs/dev/job-artifacts.md) size limit is 1500 GB
+- [Job artifacts](/docs/dev/job-artifacts.md) size limit is 1500 MB
 - Without cleanup, the cache grows indefinitely and may reach the size limit
 
 ## Solution
@@ -31,7 +31,7 @@ Automatic SBOM retention policy that:
 
 - Runs during effective set generation when [GENERATE_EFFECTIVE_SET: true](/docs/instance-pipeline-parameters.md#generate_effective_set)
 - Monitors repository size
-- Triggers cleanup when size threshold is reached (1200 GB)
+- Triggers cleanup when size threshold is reached (1200 MB)
 - Keeps N most recent versions per application
 - Prevents cache growth beyond acceptable limits
 
@@ -52,7 +52,7 @@ Cleanup runs **only** when:
 
 1. `GENERATE_EFFECTIVE_SET: true`
 2. `sbom_retention.enabled: true` in configuration
-3. Repository size reaches 1200 GB threshold
+3. Repository size reaches 1200 MB threshold
 
 ## Configuration
 
@@ -62,7 +62,7 @@ SBOM retention is configured in `/configuration/config.yml`.
 
 ```yaml
 # Optional
-# Triggers only when repository reaches 1200 GB
+# Triggers only when repository reaches 1200 MB
 sbom_retention:
   # Optional
   # Default value: false
