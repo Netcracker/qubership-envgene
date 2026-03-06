@@ -72,7 +72,9 @@ deployParameters:
   ZOOKEEPER_URL: "${ZOOKEEPER_ADDRESS}" # cloud passport: cluster-01 version: 1.5
 e2eParameters:
   CLOUD_LEVEL_PARAM_1: "cloud-level-value-1" # paramset: cloud-level-params version: 25.1 source: instance
-technicalConfigurationParameters: {}
+technicalConfigurationParameters:
+  integrations.ndo-api-gw.url: "http://api-test:8080"
+  artifact: "org.snakeyaml"
 deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []

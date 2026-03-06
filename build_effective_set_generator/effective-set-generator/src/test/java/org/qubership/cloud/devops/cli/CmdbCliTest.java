@@ -40,7 +40,8 @@ public class CmdbCliTest {
                 "--output", outputPath.toString(),
                 "--effective-set-version", "v2.0",
                 "--extra_params", "DEPLOYMENT_SESSION_ID=6d5a6ce9-0b55-429d-8877-f7a88dae3d9c",
-                "--app_chart_validation", "false"
+                "--app_chart_validation", "false",
+                "--custom-params", "@config.json"
         );
 
         assertEquals(0, exitCode);
