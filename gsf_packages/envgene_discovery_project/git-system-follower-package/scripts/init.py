@@ -3,8 +3,41 @@ from git_system_follower.develop.api.types import Parameters
 from git_system_follower.develop.api.templates import create_template, get_template_names
 
 # Protected files that should never be deleted
-# pipeline_vars: preserve if exists in repo (user customizations)
-PROTECTED_FILES = {'history.log', '.gitlab-ci.yml', '.gitignore', 'gitlab-ci/pipeline_vars.yaml', 'gitlab-ci/pipeline_vars.yml'}
+PROTECTED_FILES = {'history.log', '.gitlab-ci.yml', '.gitignore'}
+
+# Files to preserve during GSF upgrade (not overwritten by create_template)
+KEEP_ON_UPGRADE = {'gitlab-ci/pipeline_vars.yaml', 'gitlab-ci/pipeline_vars.yml'}
+
+
+def _migrate_pipeline_vars_format(content: bytes) -> bytes:
+    """Migrate old .pipeline_vars: wrapper format to new format."""
+    text = content.decode('utf-8')
+    lines = text.splitlines()
+
+    if not lines:
+        return content
+
+    first_line = lines[0].strip()
+    if first_line != '.pipeline_vars:':
+        return content  # Not old format
+
+    rest = lines[1:]
+    non_empty = [line for line in rest if line.strip()]
+    if not non_empty:
+        return b'---\n'
+
+    min_indent = min(len(line) - len(line.lstrip()) for line in non_empty)
+    dedented = []
+    for line in rest:
+        if line.strip() and len(line) - len(line.lstrip()) >= min_indent:
+            dedented.append(line[min_indent:])
+        else:
+            dedented.append(line)
+
+    result = '\n'.join(dedented)
+    if not result.strip().startswith('---'):
+        result = '---\n' + result
+    return result.encode('utf-8')
 
 
 def _delete_files_from_history(parameters: Parameters):
@@ -85,10 +118,26 @@ def main(parameters: Parameters):
 
     variables = parameters.extras.copy()
     variables.pop('TEMPLATE', None)
+
+    # Backup KEEP_ON_UPGRADE files before create_template overwrites them
+    repo_root = Path.cwd()
+    protected_backups = {}
+    for f in KEEP_ON_UPGRADE:
+        path = repo_root / f
+        if path.exists() and path.is_file():
+            protected_backups[f] = path.read_bytes()
+
     create_template(parameters, template, variables)
 
-    # Use current working directory as repository root
-    repo_root = Path.cwd()
+    # Restore KEEP_ON_UPGRADE files (ignored during upgrade)
+    for f, content in protected_backups.items():
+        path = repo_root / f
+        path.parent.mkdir(parents=True, exist_ok=True)
+        if f in KEEP_ON_UPGRADE:
+            content = _migrate_pipeline_vars_format(content)
+        path.write_bytes(content)
+        print(f'Kept on upgrade: {f}')
+
     internal_files_to_remove = ['history.log']
     
     for file_name in internal_files_to_remove:
