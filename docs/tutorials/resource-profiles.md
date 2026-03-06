@@ -9,7 +9,7 @@
     - [2.1 Create the override file](#21-create-the-override-file)
     - [2.2 Reference the profile in a Namespace template](#22-reference-the-profile-in-a-namespace-template)
   - [Step 3: Use `template_override` to Differentiate Template Profiles](#step-3-use-template_override-to-differentiate-template-profiles)
-  - [Step 4: Use `overrides-parent` in an Inherited Template](#step-4-use-overrides-parent-in-an-inherited-template)
+  - [Step 4: Use `overrides-parent` in a Composed Template](#step-4-use-overrides-parent-in-a-composed-template)
   - [Step 5: Add an Environment-Specific Override in the Instance Repository](#step-5-add-an-environment-specific-override-in-the-instance-repository)
     - [5.1 Choose the right scope](#51-choose-the-right-scope)
     - [5.2 Create the env-specific override file](#52-create-the-env-specific-override-file)
@@ -205,7 +205,7 @@ When EnvGene generates an Environment Instance it renders `bss.yml.j2`, then mer
 
 `template_override` supports Jinja expressions, so you can also compute profile names dynamically from environment variables.
 
-## Step 4: Use `overrides-parent` in an Inherited Template
+## Step 4: Use `overrides-parent` in a Composed Template
 
 A different situation arises when you consume a component from an **external artifact** - a parent template referenced via `parent-templates` that you cannot edit directly. `overrides-parent` is the right mechanism for this case: it lets a child Template Descriptor swap or augment the parent's profile without touching the parent artifact.
 
@@ -459,5 +459,5 @@ In this tutorial you walked through the full resource profile management workflo
 - [Template Resource Profile Override Schema](/docs/envgene-objects.md#template-resource-profile-override)
 - [Environment Specific Resource Profile Override Schema](/docs/envgene-objects.md#environment-specific-resource-profile-override)
 - [Template Override Feature](/docs/features/template-override.md)
-- [Template Inheritance Feature](/docs/features/template-inheritance.md)
+- [Template Composition Feature](/docs/features/template-composition.md)
 - [Environment Inventory Reference](/docs/envgene-configs.md#env_definitionyml)
