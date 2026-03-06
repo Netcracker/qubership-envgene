@@ -140,6 +140,21 @@
       },
       "required": [
         "credentialsId"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "aws"
+              }
+            },
+            "required": ["provider"]
+          },
+          "then": {
+            "required": ["awsRegion"]
+          }
+        }
       ]
     },
     "DockerConfig": {

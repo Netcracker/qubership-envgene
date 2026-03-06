@@ -2,6 +2,7 @@
 
 - [EnvGene Documentation](#envgene-documentation)
   - [Getting Started](#getting-started)
+  - [Tutorials](#tutorials)
   - [Core Concepts](#core-concepts)
   - [How-To Guides](#how-to-guides)
   - [Advanced Features](#advanced-features)
@@ -11,6 +12,11 @@
 ## Getting Started
 
 - [**Quick Start Guide**](/README.md#getting-started) - Create your first Environment
+
+## Tutorials
+
+- [**Understanding the Effective Set**](/docs/tutorials/effective-set.md) - Trace how parameters from Tenant, Cloud, Namespace, Application, and SBOM sources are merged into the final Effective Set; learn to read traceability comments and debug wrong values
+- [**Managing Resource Profiles**](/docs/tutorials/resource-profiles.md) - End-to-end walkthrough: from Baseline to Template Override to Environment-Specific Override, including `template_override`, `overrides-parent`, and result verification
 
 ## Core Concepts
 
@@ -36,6 +42,10 @@
 - [**Override Template Parameters**](/docs/how-to/environment-specific-parameters.md) - Override template parameters for specific environments
 - [**Configure Resource Profiles**](/docs/how-to/configure-resource-profiles.md) - Configure performance parameters for different environment types
 
+**Effective Set:**
+
+- [**Generate an Effective Set**](/docs/how-to/generate-effective-set.md) - Trigger Effective Set generation from a Solution Descriptor artifact and template version
+
 **Advanced Configuration:**
 
 - [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
@@ -59,6 +69,7 @@
 - [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - BG domains, state management, and `bg_manage` pipeline job
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
+- [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
 
 ## Examples & Samples
 
