@@ -1,4 +1,4 @@
-# git checkout -b  docs: fix  Environment Inventory Generation
+# Environment Inventory Generation
 
 ## Table of Contents
 
