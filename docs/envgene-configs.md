@@ -227,7 +227,7 @@ artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 app_reg_def_mode: enum [`auto`, `cmdb`, `local`]
 # Optional
 # SBOM retention configuration
-# Triggers during Effective Set generation when repository reaches 1200 GB size threshold
+# Triggers during Effective Set generation when repository reaches 1200 MB size threshold
 sbom_retention:
   # Optional. Default value - `false`
   # Enable/disable SBOM retention cleanup

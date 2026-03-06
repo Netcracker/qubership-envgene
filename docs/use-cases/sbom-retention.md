@@ -37,7 +37,7 @@ The cleanup logic is triggered during effective set generation and depends on co
      enabled: false
    ```
 
-4. Repository size is 1300 GB (above 1200 GB threshold)
+4. Repository size is 1300 MB (above 1200 MB threshold)
 
 **Trigger:**
 
@@ -66,7 +66,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Pre-requisites:**
 
 1. Instance Repository exists with `/sboms/` directory
-2. SBOM files exist in `/sboms/` directory with total size 800 GB
+2. SBOM files exist in `/sboms/` directory with total size 800 MB
 3. SBOM retention is **enabled** in `/configuration/config.yml`:
 
    ```yaml
@@ -75,7 +75,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
      keep_versions_per_app: 10
    ```
 
-4. Repository size is 800 GB (below 1200 GB threshold)
+4. Repository size is 800 MB (below 1200 MB threshold)
 
 **Trigger:**
 
@@ -90,8 +90,8 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
    1. Generates effective set for the environment
    2. Checks SBOM retention configuration
    3. Finds `sbom_retention.enabled: true`
-   4. Checks repository size: 800 GB
-   5. Compares with threshold: 800 GB < 1200 GB
+   4. Checks repository size: 800 MB
+   5. Compares with threshold: 800 MB < 1200 MB
    6. Skips SBOM cleanup (threshold not reached)
    7. Completes effective set generation
 
@@ -99,7 +99,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. Effective set is generated successfully
 2. No SBOM files are deleted
-3. Pipeline log shows: "Repository size (800 GB) below threshold (1200 GB), skipping cleanup"
+3. Pipeline log shows: "Repository size (800 MB) below threshold (1200 MB), skipping cleanup"
 
 ### UC-SBOM-3: Repository Above Threshold - Cleanup with Default Settings
 
@@ -118,7 +118,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
      keep_versions_per_app: 10  # default value
    ```
 
-4. Repository size is 1300 GB (above 1200 GB threshold)
+4. Repository size is 1300 MB (above 1200 MB threshold)
 
 **Trigger:**
 
@@ -132,7 +132,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 1. The `generate_effective_set` job runs in the pipeline:
    1. Generates effective set for the environment
    2. Checks SBOM retention configuration: enabled with `keep_versions_per_app: 10`
-   3. Checks repository size: 1300 GB > 1200 GB threshold
+   3. Checks repository size: 1300 MB > 1200 MB threshold
    4. Triggers SBOM cleanup process:
       1. Scans `/sboms/` directory
       2. Groups SBOM files by application name
@@ -151,7 +151,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
    - **app-c**: Keeps all 8 versions (no deletion needed)
 3. Total files deleted: 7 SBOM files
 4. Pipeline log shows:
-   - "Repository size (1300 GB) above threshold (1200 GB), starting cleanup"
+   - "Repository size (1300 MB) above threshold (1200 MB), starting cleanup"
    - "Cleaned up 7 SBOM files"
    - "Kept 10 versions per application"
 
@@ -170,7 +170,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
      keep_versions_per_app: 3  # only keep 3 most recent versions
    ```
 
-4. Repository size is 1350 GB (above 1200 GB threshold)
+4. Repository size is 1350 MB (above 1200 MB threshold)
 
 **Trigger:**
 
@@ -184,7 +184,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 1. The `generate_effective_set` job runs in the pipeline:
    1. Generates effective set for the environment
    2. Checks SBOM retention configuration: enabled with `keep_versions_per_app: 3`
-   3. Checks repository size: 1350 GB > 1200 GB threshold
+   3. Checks repository size: 1350 MB > 1200 MB threshold
    4. Triggers SBOM cleanup process:
       1. Scans `/sboms/` directory
       2. Groups SBOM files by application name (finds `postgres`)
@@ -201,6 +201,6 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
    - **Deleted**: `postgres-pg16-2.10.7.sbom.json` through `postgres-pg16-2.10.1.sbom.json` (7 files)
 3. Total files deleted: 7 SBOM files
 4. Pipeline log shows:
-   - "Repository size (1350 GB) above threshold (1200 GB), starting cleanup"
+   - "Repository size (1350 MB) above threshold (1200 MB), starting cleanup"
    - "Cleaned up 7 SBOM files for postgres"
    - "Kept 3 versions per application"
