@@ -83,19 +83,16 @@ class TestAnonymousAccess:
 
 class TestAWSAuthentication:
     def test_aws_secret_success(self, base_registry_v2, env_creds, monkeypatch):
-        # Create fake module
-        fake_aws_creds = MagicMock()
+        # Mock v1 library module for AWSCodeArtifactHelper
+        fake_utils_aws = MagicMock()
         
-        monkeypatch.setitem(sys.modules, 'qubership_pipelines_common_library.v2.artifacts_finder.auth.aws_credentials', fake_aws_creds)
+        monkeypatch.setitem(sys.modules, 'qubership_pipelines_common_library.v1.utils.utils_aws', fake_utils_aws)
         
-        # Setup mocks - mock the actual method chain used in source
-        mock_provider_instance = MagicMock()
-        mock_provider_instance.get_ecr_authorization_token.return_value = "aws_token_123"
+        # Mock AWSCodeArtifactHelper.get_authorization_token static method
+        mock_helper_class = MagicMock()
+        mock_helper_class.get_authorization_token.return_value = "aws_token_123"
         
-        mock_aws_provider_class = MagicMock()
-        mock_aws_provider_class.return_value.with_direct_credentials.return_value = mock_provider_instance
-        
-        fake_aws_creds.AwsCredentialsProvider = mock_aws_provider_class
+        fake_utils_aws.AWSCodeArtifactHelper = mock_helper_class
         
         base_registry_v2.auth_config = {
             "aws-auth": AuthConfig(
@@ -111,12 +108,12 @@ class TestAWSAuthentication:
         result = resolve_v2_auth_headers(base_registry_v2, env_creds)
         
         assert result == {"Authorization": "Bearer aws_token_123"}
-        mock_aws_provider_class.return_value.with_direct_credentials.assert_called_once_with(
+        mock_helper_class.get_authorization_token.assert_called_once_with(
             access_key="AKIA_ACCESS_KEY",
             secret_key="secret_key_value",
+            domain="my-domain",
             region_name="us-east-1"
         )
-        mock_provider_instance.get_ecr_authorization_token.assert_called_once()
 
     def test_aws_invalid_auth_method(self, base_registry_v2, env_creds):
         from pydantic import ValidationError

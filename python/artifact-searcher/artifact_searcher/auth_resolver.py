@@ -93,7 +93,7 @@ def _aws_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
     password = cred_data.get(CRED_FIELD_PASSWORD)
     if not username or not password:
         raise ValueError(f"AWS {auth_cfg.auth_method} auth requires both username (access key) and password (secret key)")
-    # Use v1 library helper for CodeArtifact tokens
+    
     from qubership_pipelines_common_library.v1.utils.utils_aws import AWSCodeArtifactHelper
     
     token = AWSCodeArtifactHelper.get_authorization_token(
