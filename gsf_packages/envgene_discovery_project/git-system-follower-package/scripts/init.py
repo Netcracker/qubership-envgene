@@ -3,10 +3,13 @@ from git_system_follower.develop.api.types import Parameters
 from git_system_follower.develop.api.templates import create_template, get_template_names
 
 # Protected files that should never be deleted
-PROTECTED_FILES = {'history.log', '.gitlab-ci.yml', '.gitignore'}
-
-# Files to preserve during GSF upgrade (not overwritten by create_template)
-KEEP_ON_UPGRADE = {'gitlab-ci/pipeline_vars.yaml', 'gitlab-ci/pipeline_vars.yml'}
+PROTECTED_FILES = {
+    'history.log',
+    '.gitlab-ci.yml',
+    '.gitignore',
+    'gitlab-ci/pipeline_vars.yaml',
+    'gitlab-ci/pipeline_vars.yml',
+}
 
 
 def _migrate_pipeline_vars_format(content: bytes) -> bytes:
@@ -119,24 +122,37 @@ def main(parameters: Parameters):
     variables = parameters.extras.copy()
     variables.pop('TEMPLATE', None)
 
-    # Backup KEEP_ON_UPGRADE files before create_template overwrites them
+    # Backup pipeline_vars before create_template - never overwrite user's file
     repo_root = Path.cwd()
-    protected_backups = {}
-    for f in KEEP_ON_UPGRADE:
+    print(f'[GSF init] repo_root (cwd): {repo_root}')
+    pipeline_vars_paths = ['gitlab-ci/pipeline_vars.yaml', 'gitlab-ci/pipeline_vars.yml']
+    pipeline_vars_backup = {}
+    for f in pipeline_vars_paths:
         path = repo_root / f
         if path.exists() and path.is_file():
-            protected_backups[f] = path.read_bytes()
+            pipeline_vars_backup[f] = path.read_bytes()
+            print(f'[GSF init] Backed up (will preserve): {f}')
+        else:
+            print(f'[GSF init] Not found (will create from template): {f}')
 
+    print(f'[GSF init] Running create_template...')
     create_template(parameters, template, variables)
 
-    # Restore KEEP_ON_UPGRADE files (ignored during upgrade)
-    for f, content in protected_backups.items():
-        path = repo_root / f
-        path.parent.mkdir(parents=True, exist_ok=True)
-        if f in KEEP_ON_UPGRADE:
-            content = _migrate_pipeline_vars_format(content)
-        path.write_bytes(content)
-        print(f'Kept on upgrade: {f}')
+    # Restore pipeline_vars if it existed - never overwrite user's file
+    for f in pipeline_vars_paths:
+        if f in pipeline_vars_backup:
+            path = repo_root / f
+            content = pipeline_vars_backup[f]
+            migrated = _migrate_pipeline_vars_format(content)
+            if migrated != content:
+                print(f'[GSF init] Migrated old format to new: {f}')
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(migrated)
+            print(f'[GSF init] Preserved (not overwritten): {f}')
+        else:
+            path = repo_root / f
+            if path.exists():
+                print(f'[GSF init] Created from template: {f}')
 
     internal_files_to_remove = ['history.log']
     
