@@ -18,10 +18,13 @@ package org.qubership.cloud.devops.cli.pojo.dto.shared;
 
 
 import jakarta.enterprise.context.ApplicationScoped;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Getter
@@ -48,5 +51,10 @@ public class SharedData {
     private String deploymentSessionId;
 
     private boolean appChartValidation;
+
+    @Builder.Default
+    private Map<String, Object> customDeployParamMap = Collections.emptyMap();
+    @Builder.Default
+    private Map<String, Object> customRuntimeParamMap = Collections.emptyMap();
 
 }

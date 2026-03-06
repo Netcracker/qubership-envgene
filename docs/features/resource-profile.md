@@ -1,7 +1,7 @@
 # Resource Profiles
 
 - [Resource Profiles](#resource-profiles)
-  - [Proposed Approach](#proposed-approach)
+  - [Overview](#overview)
   - [Resource Profile Processing During Environment Generation](#resource-profile-processing-during-environment-generation)
     - [Combination Logic](#combination-logic)
     - [Naming Rules for Resource Profile Override](#naming-rules-for-resource-profile-override)
@@ -9,7 +9,7 @@
     - [Merging Logic](#merging-logic)
     - [Resolving Dot Notation](#resolving-dot-notation)
 
-## Proposed Approach
+## Overview
 
 Performance deployment parameters like `CPU_LIMIT` and `MEMORY_REQUEST` are grouped separately into Resource Profiles. This makes it manage separately these parameters apart from all other deployment parameters.
 
@@ -97,7 +97,7 @@ Which mode is used is controlled by the `inventory.config.mergeEnvSpecificResour
 inventory:
   config:
     # Optional. Default value - `true`
-    # If `true`, environment-specific Resource Profile Overrides defined in envTemplate.envSpecificParamsets
+    # If `true`, environment-specific Resource Profile Overrides defined in envTemplate.envSpecificResourceProfiles
     # are merged with Resource Profile Overrides from the Environment Template
     # If `false`, they completely replace the Environment Template's Resource Profile Overrides
     mergeEnvSpecificResourceProfiles: boolean
@@ -121,7 +121,7 @@ The Environment-Specific Resource Profile Override is merged **into** the Templa
     - If the service exists in both:
         - For each `parameter` in the template's service, check for a parameter with the same `name` in the target.
         - If the parameter is missing in the target, add the entire parameter from the template.
-        - If the parameter exists in both, update the parameter in the target by overwriting its `value` with the one from the template.
+        - If the parameter exists in both, keep the parameter value from the environment-specific override (env-specific has higher priority).
 
 In this mode, the resulting [Resource Profile Override](/docs/envgene-objects.md#resource-profile-override) will have the same name as the [Template Resource Profile Override](/docs/envgene-objects.md#template-resource-profile-override).
 

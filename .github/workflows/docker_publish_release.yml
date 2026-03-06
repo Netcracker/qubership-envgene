@@ -86,7 +86,7 @@ jobs:
             fetch-depth: 0
             token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
 
-        - name: Update Docker Image Tags in Pipeline
+        - name: Add the Envgene version to pipeline and GSF
           run: |
             # Paths to files
             TARGET_FILE="github_workflows/instance-repo-pipeline/.github/workflows/Envgene.yml"
@@ -110,46 +110,18 @@ jobs:
             # Update version in GSF Discovery package.yaml
             sed -i "/version:/c\\version: ${NEW_TAG}" "$GSF_DISCOVERY_PACKAGE_FILE"
 
-            CHANGES_MADE=false
-            if ! git diff --quiet "$TARGET_FILE"; then
-              echo "Updated Envgene.yml with docker tags from job outputs"
-              CHANGES_MADE=true
-            fi
+            git diff
 
-            if ! git diff --quiet "$ENVGENE_COOKIECUTTER_JSON_FILE"; then
-              echo "Updated cookiecutter.json with envgene_version"
-              CHANGES_MADE=true
-            fi
-
-            if ! git diff --quiet "$GSF_INSTANCE_PACKAGE_FILE"; then
-              echo "Updated package.yaml with version"
-              CHANGES_MADE=true
-            fi
-
-            if ! git diff --quiet "$GSF_DISCOVERY_PACKAGE_FILE"; then
-              echo "Updated package.yaml with version"
-              CHANGES_MADE=true
-            fi
-
-            if [ "$CHANGES_MADE" = false ]; then
-              echo "No changes to commit - no images were built or tags were already up to date"
-            fi
-
-            git diff "$TARGET_FILE" || true
-            git diff "$ENVGENE_COOKIECUTTER_JSON_FILE" || true
-            git diff "$GSF_INSTANCE_PACKAGE_FILE" || true
-            git diff "$GSF_DISCOVERY_PACKAGE_FILE" || true
-
-            if [ "$CHANGES_MADE" = true ]; then
-              git config --global user.name "qubership-actions[bot]"
-              git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
-              git add "$TARGET_FILE" "$ENVGENE_COOKIECUTTER_JSON_FILE" "$GSF_INSTANCE_PACKAGE_FILE" "$GSF_DISCOVERY_PACKAGE_FILE"
+            git config --global user.name "qubership-actions[bot]"
+            git config --global user.email "qubership-actions[bot]@users.noreply.github.com"
+            git add .
+            if ! git diff --quiet --cached; then
               git commit -m "chore: Update docker image tags and envgene_version for branch ${{ github.ref_name }} [skip ci]"
-
               git push origin HEAD:${{ github.ref_name }} || echo "Failed to push changes"
             else
-              echo "No changes to commit - skipping git operations"
+              echo "No changes to commit - working tree clean"
             fi
+
   tag:
     needs: [update_image_tags]
     uses: netcracker/qubership-workflow-hub/.github/workflows/tag-creator.yml@v1.0.3

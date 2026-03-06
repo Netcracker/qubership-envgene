@@ -36,6 +36,8 @@ public class ParameterBundle {
     Map<String, Object> collisionSecureParameters;
     Map<String, Object> cleanupParameters;
     Map<String, Object> cleanupSecureParameters;
+    Map<String, Object> customDeployParameters;
+    Map<String, Object> customTechParameters;
     boolean processPerServiceParams;
     String appChartName;
 }

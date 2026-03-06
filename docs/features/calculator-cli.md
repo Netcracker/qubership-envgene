@@ -543,34 +543,34 @@ The CLI flag [`--enable-traceability`](#calculator-command-line-tool-execution-a
 
 ##### Parameter Source to Comment Mapping
 
-| Parameter Source                                   | Comment                                    | Example                                                                                      |
-|----------------------------------------------------|--------------------------------------------|----------------------------------------------------------------------------------------------|
-| Custom Params (`--custom-params`)                  | `# custom params`                          | `OVERRIDE_KEY: "value" # custom params`                                                      |
-| Environment Instance, Tenant                       | `# tenant`                                 | `GITLAB_URL: "https://git.qibership.org" # tenant`                                           |
-| Environment Instance, Cloud                        | `# cloud`                                  | `CLOUD_API_HOST: "https://api.example.com" # cloud`                                          |
-| Environment Instance, Namespace                    | `# namespace: <name>`                      | `NAMESPACE_NAME: "env-1-core" # namespace: env-1-core`                                       |
-| Environment Instance, Application                  | `# application: <name>`                    | `APP_FEATURE_FLAG: true # application: my-app`                                               |
-| Environment Instance, Resource Profile Override    | `# resource-profile-override: <name>`      | `CPU_LIMIT: "500m" # resource-profile-override: perf-small`                                  |
-| Environment Instance, Composite Structure          | `# composite-structure`                    | `composite_structure: # composite-structure`                                                 |
-| Environment Instance, BG Domain                    | `# bg-domain`                              | `bg_domain: # bg-domain`                                                                     |
-| Application SBOM                                   | `# sbom`                                   | `deploy_param: '' # sbom`                                                                    |
-| Application SBOM, Resource Profile Baseline        | `# sbom, resource-profile-baseline: <name>`| `PROFILE_BASELINE: "dev" # sbom, resource-profile-baseline: dev`                             |
-| Calculated by calculator                           | `# envgene calculated`                     | `PUBLIC_GATEWAY_URL: "https://public-gateway-bss.qubership.org" # envgene calculated`        |
-| Calculator `--extra_params`                        | `# envgene pipeline parameter`             | `DEPLOYMENT_SESSION_ID: "7e9f5f54-4be2-4fbd-a267-19e78d09810d" # envgene pipeline parameter` |
-| Default value by calculator                        | `# envgene default`                        | `MANAGED_BY: "argocd" # envgene default`                                                     |
+| Parameter Source                                | Comment                       | Example                                                                                     |
+|-------------------------------------------------|-------------------------------|---------------------------------------------------------------------------------------------|
+| Custom Params (`--custom-params`)               | `#custom params`              | `OVERRIDE_KEY: "value" #custom params`                                                      |
+| Environment Instance, Tenant                    | `#tenant`                     | `GITLAB_URL: "https://git.qibership.org" #tenant`                                           |
+| Environment Instance, Cloud                     | `#cloud`                      | `CLOUD_API_HOST: "https://api.example.com" #cloud`                                          |
+| Environment Instance, Namespace                 | `#namespace`                  | `NAMESPACE_NAME: "env-1-core" #namespace`                                                   |
+| Environment Instance, Application               | `#application`                | `APP_FEATURE_FLAG: true #application`                                                       |
+| Environment Instance, Resource Profile Override | `#rp-override: <name>`        | `CPU_LIMIT: "500m" #rp-override: perf-small`                                                |
+| Environment Instance, Composite Structure       | `#composite-structure`        | `composite_structure: {} #composite-structure`                                              |
+| Environment Instance, BG Domain                 | `#bg-domain`                  | `bg_domain: {} #bg-domain`                                                                  |
+| Application SBOM (component properties)         | `#sbom`                       | `git_revision: "a71c5988" #sbom`                                                            |
+| Application SBOM, Resource Profile Baseline     | `#rp-baseline: <name>`        | `CPU_LIMIT: "500m" #rp-baseline: dev`                                                       |
+| Calculated by calculator                        | `#envgene calculated`         | `PUBLIC_GATEWAY_URL: "https://public-gateway-bss.qubership.org" #envgene calculated`        |
+| Calculator `--extra_params`                     | `#envgene pipeline parameter` | `DEPLOYMENT_SESSION_ID: "7e9f5f54-4be2-4fbd-a267-19e78d09810d" #envgene pipeline parameter` |
+| Default value by calculator                     | `#envgene default`            | `MANAGED_BY: "argocd" #envgene default`                                                     |
 
 ##### Rules for Adding Comments
 
-1. The comment is added after a single space following the parameter value on the same line for non-multiline values.
+1. The comment is added immediately after the parameter value (no space between value and `#`) on the same line for non-multiline values.
 
     ```yaml
-    SECURITY_POLICY: strict # cloud
+    SECURITY_POLICY: strict #cloud
     ```
 
 2. The comment is added on the previous line above the parameter for multiline values (using `|` or `>`).
 
     ```yaml
-    # cloud
+    #cloud
     CS_CONTENT_SECURITY_POLICY: |
       {"CONTENT_SECURITY_POLICY":"default-src..."}
     ```
@@ -589,24 +589,42 @@ The CLI flag [`--enable-traceability`](#calculator-command-line-tool-execution-a
 
     ```yaml
     servers:
-      - "server1.example.com" # cloud
-      - "server2.example.com" # namespace: env-1
+      - "server1.example.com" #cloud
+      - "server2.example.com" #namespace
 
     servers:
-      name: "server1" # cloud
-      host: "host1" # cloud
-      port: 8080 # namespace: env-1
+      name: "server1" #cloud
+      host: "host1" #cloud
+      port: 8080 #namespace
     ```
 
 9. Comments are not added to YAML anchors/aliases (`&id001`, `*id001`, `<<: *id001`). But for regular keys/values filled in via anchors/aliases, still show their source as a comment:
 
     ```yaml
     global: &id001
-      key1: value1 # cloud
-      key2: value2 # cloud
+      key1: value1 #cloud
+      key2: value2 #cloud
     service1:
       <<: *id001
-      key3: value3 # namespace: env-1-core
+      key3: value3 #namespace
+    ```
+
+10. **Exception for `deploy-descriptor.yaml`** — this file is almost entirely generated from the Application SBOM. As an exception to Rule 8, per-line comments are **not** added. Instead, a single file-level header comment is placed at the top of the file describing the source for all parameters. Parameters whose source differs from the header (e.g. predefined parameters with `#rp-baseline: <name>` or `#rp-override: <name>`) are still marked inline.
+
+    Example:
+
+    ```yaml
+    #Source of parameters not marked inline: `#sbom`
+    global:
+      deployDescriptor:
+        my-service:
+          git_revision: a71c5988fc92de5f9698434bfe43d513245969aa
+          build_id_dtrust: 3d28937a-c7ce-4600-b454-6c08ae61f557
+          service_name: my-service
+          version: release-2025.3-9.16.0
+          type: cr
+          REPLICAS: 1 #rp-override: dev-override
+          CPU_LIMIT: 500m #rp-baseline: dev
     ```
 
 #### [Version 2.0] Deployment Parameter Context

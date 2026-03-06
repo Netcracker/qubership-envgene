@@ -18,6 +18,7 @@ package org.qubership.cloud.devops.commons.utils;
 
 import lombok.experimental.UtilityClass;
 import org.apache.commons.collections4.MapUtils;
+import org.qubership.cloud.devops.commons.pojo.parameterset.CustomParameterDTO;
 
 import java.util.*;
 
@@ -117,6 +118,23 @@ public class ParameterUtils {
         bgDomainParamsMap.put(CONTROLLER_NAMESPACE, controller);
         bgDomainSecureMap.put(CONTROLLER_NAMESPACE, Map.of(USERNAME, userName, PASSWORD, password));
     }
+
+    public static void prepareCustomParams(CustomParameterDTO customParameterDTO,
+                                           Map<String, Parameter> deployParams, Map<String, Parameter> technicalParams) {
+        updateParameter(customParameterDTO.getAllParams(), deployParams);
+        updateParameter(customParameterDTO.getAllParams(), technicalParams);
+    }
+
+    private static void updateParameter(Map<String, Parameter> customParams, Map<String, Parameter> params) {
+        for (Map.Entry<String, Parameter> entry : customParams.entrySet()) {
+            String key = entry.getKey();
+            Parameter customParam = entry.getValue();
+
+            if (params.containsKey(key)) {
+                Parameter deployParam = params.get(key);
+                customParam.setValue(deployParam.getValue());
+            }
+            params.remove(key);
+        }
+    }
 }
-
-
