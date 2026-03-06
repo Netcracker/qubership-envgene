@@ -135,8 +135,6 @@ def main(parameters: Parameters):
         if path.exists() and path.is_file():
             pipeline_vars_backup[f] = path.read_bytes()
             print(f'\t\tFile {f} exists. Backed up for preserve')
-        else:
-            print(f'\t\tFile {f} does not exist. Will create from template')
 
     create_template(parameters, template, variables)
 
