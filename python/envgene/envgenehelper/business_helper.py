@@ -446,3 +446,7 @@ def get_template_dirs(base_dir: str | None = None) -> dict[NamespaceRole, str]:
 
 def is_from_template_dir(file_path: str) -> bool:
     return bool(TEMPLATE_DIR_PATTERN.search(file_path))
+
+
+def get_sboms_dir(work_dir) -> Path:
+    return Path(work_dir) / "sboms"
