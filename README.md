@@ -16,13 +16,13 @@
     - [System Requirements](#system-requirements)
     - [Basic Usage](#basic-usage)
   - [📚 Documentation](#-documentation)
-  - [Getting Started](#getting-started)
-  - [Tutorials](#tutorials)
-  - [Core Concepts](#core-concepts)
-  - [How-To Guides](#how-to-guides)
-  - [Advanced Features](#advanced-features)
-  - [Examples \& Samples](#examples--samples)
-  - [Development](#development)
+    - [Getting Started](#getting-started)
+    - [Tutorials](#tutorials)
+    - [Core Concepts](#core-concepts)
+    - [How-To Guides](#how-to-guides)
+    - [Advanced Features](#advanced-features)
+    - [Examples \& Samples](#examples--samples)
+    - [Development](#development)
   - [🤝 Contributing](#-contributing)
   - [📄 License](#-license)
 
@@ -164,7 +164,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
 - [**Template Override**](/docs/features/template-override.md) - Use a base Environment template and override parts as needed
 - [**Automatic Environment Name Derivation**](/docs/features/auto-env-name-derivation.md) - Auto-detect Environment name from folder structure
-- [**Template Inheritance**](/docs/features/template-inheritance.md) - Advanced Environment template patterns
+- [**Template Composition**](/docs/features/template-composition.md) - Advanced Environment template patterns
 - [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - BG domains, state management, and `bg_manage` pipeline job
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
 

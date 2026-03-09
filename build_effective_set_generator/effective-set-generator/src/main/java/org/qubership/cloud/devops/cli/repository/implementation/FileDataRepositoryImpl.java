@@ -412,7 +412,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         String namespace = applicationDTO.getDeployPostfix();
         String appName = applicationDTO.getVersion().split(":")[0];
         String appVersion = applicationDTO.getVersion().replace(":", "-");
-        String appFileRef = String.format("%s/%s", sharedData.getSbomsPath().get(), appVersion + ".sbom.json");
+        String appFileRef = String.format("%s/%s/%s", sharedData.getSbomsPath().get(), appName, appVersion + ".sbom.json");
         SBApplicationDTO dto = SBApplicationDTO.builder()
                 .appName(appName)
                 .appVersion(appVersion)

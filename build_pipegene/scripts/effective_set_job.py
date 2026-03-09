@@ -4,7 +4,7 @@ from pathlib import Path
 
 from gcip import WhenStatement, Need
 
-from envgenehelper import logger
+from envgenehelper import logger, get_sboms_dir
 from envgenehelper import cleanup_targets
 from pipeline_helper import job_instance
 
@@ -30,7 +30,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     base_env_path = f"{base_dir}/environments/{full_env_name}"
     app_defs_path = f"{base_env_path}/AppDefs"
     reg_defs_path = f"{base_env_path}/RegDefs"
-    sboms_path = f"{base_dir}/sboms"
+    sboms_path = get_sboms_dir(base_dir)
 
     sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
@@ -43,6 +43,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p {app_defs_path} && cp -rf {artifact_app_defs_path}/* {app_defs_path}',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p {reg_defs_path} && cp -fr {artifact_reg_defs_path}/* {reg_defs_path}',
         'python3 /module/scripts/main.py validate_creds',
+        'python3 /module/scripts/sboms_retention_policy.py'
     ]
 
     cmdb_cli_cmd_call = [
@@ -65,7 +66,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     if full_sd_exists or sd_data:
         cmdb_cli_cmd_call.extend([
             "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
-            f"--sboms-path={sboms_path}",
+            f"--sboms-path={str(sboms_path)}",
             f"--sd-path={sd_path}",
         ])
 

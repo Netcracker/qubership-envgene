@@ -1,13 +1,13 @@
-# Template Inheritance
+# Template Composition
 
-- [Template Inheritance](#template-inheritance)
+- [Template Composition](#template-composition)
   - [Problem Statement](#problem-statement)
   - [Proposed Approach](#proposed-approach)
     - [Key Capabilities](#key-capabilities)
     - [Use Cases](#use-cases)
       - [Case 1](#case-1)
       - [Case 2](#case-2)
-    - [Template Inheritance Configuration](#template-inheritance-configuration)
+    - [Template Composition Configuration](#template-composition-configuration)
       - [Template Descriptor](#template-descriptor)
         - [Examples](#examples)
           - [Child Template Descriptor for One Namespace](#child-template-descriptor-for-one-namespace)
@@ -31,7 +31,7 @@ This creates inefficiencies in configuration management, increases error potenti
 
 ## Proposed Approach
 
-Introduce **Template Inheritance** - a feature that enables the creation of child templates by inheriting some or all components from one or more parent templates. Supported inheritable components include:
+Introduce **Template Composition** - a feature that enables the creation of child templates by composing some or all components from one or more parent templates. Supported components include:
 
 - Tenant template
 - Cloud template
@@ -39,17 +39,17 @@ Introduce **Template Inheritance** - a feature that enables the creation of chil
 
 This diagram shows parent and child templates with their components. The color of component indicates its source:
 
-![template-inheritance-1.png](/docs/images/template-inheritance-1.png)
+![template-composition-1.png](/docs/images/template-composition-1.png)
 
 ### Key Capabilities
 
-1. **Selective Inheritance**:
-   - Inherit some or all components from parents
+1. **Selective Composition**:
+   - Compose some or all components from parents
    - Optionally override specific parameters of inherited components
    - Define new components in child template
 
-2. **Component Inheritance Rules**:
-   - **Inheritable Components**:
+2. **Component Composition Rules**:
+   - **Composable Components**:
      - Tenant template (cannot be overridden)
      - Cloud template (override allowed)
      - Namespace template (override allowed)
@@ -62,7 +62,7 @@ This diagram shows parent and child templates with their components. The color o
      - `e2eParameterSets`
      - `technicalConfigurationParameterSets`
 
-3. **Inheritance Processing**:
+3. **Composition Processing**:
    - Occurs during child template build in template repository pipeline
    - Process flow:
      1. Download parent template artifacts specified in `parent-templates` section
@@ -75,7 +75,7 @@ This diagram shows parent and child templates with their components. The color o
 4. **Key Characteristics**:
    - Built child templates are regular EnvGene artifacts requiring no special handling
    - Parent templates are regular EnvGene templates needing no special configuration
-   - Supports multi-level inheritance chains
+   - Supports multi-level composition chains
 
 ### Use Cases
 
@@ -85,27 +85,27 @@ This feature can be used in scenarios where EnvGene manages configuration parame
 
 A solution comprises multiple applications, where application's teams develop and provide their respective templates. The team responsible for the overall solution collects these templates, combines them into a product-level template, and adds necessary customizations.
 
-![template-inheritance-2.png](/docs/images/template-inheritance-2.png)
+![template-composition-2.png](/docs/images/template-composition-2.png)
 
 #### Case 2
 
 A solution consists of application groups (domains). Domain teams develop and provide their templates. The product team aggregates these into a product-level template, adding for example integration parameters. Then, a project team customizes this product template for specific project needs. Here, the product template acts as both a parent and child template.
 
-![template-inheritance-3.png](/docs/images/template-inheritance-3.png)
+![template-composition-3.png](/docs/images/template-composition-3.png)
 
-### Template Inheritance Configuration
+### Template Composition Configuration
 
-Template inheritance is configured in the [Template Descriptor](/docs/envgene-objects.md#template-descriptor) in the child template repository. Below is a description of such a Template Descriptor
+Template composition is configured in the [Template Descriptor](/docs/envgene-objects.md#template-descriptor) in the child template repository. Below is a description of such a Template Descriptor
 
 #### Template Descriptor
 
 ```yaml
 ---
 # Optional
-# If not set than no Templates Inheritance is assumed
+# If not set than no Template Composition is assumed
 parent-templates:
   # Key is a parent template name
-  # Value is a parent template artifact is a in app:ver notation. SNAPSHOT version is not supported
+  # Value is a parent template artifact in app:ver notation. SNAPSHOT version is not supported
   default-bss: bss-product-template:2.0.0
   basic-template: basic-product-template:10.1.3
 # Optional
@@ -113,7 +113,7 @@ parent-templates:
 composite_structure: "{{ templates_dir }}/env_templates/composite/composite_structure.yml.j2"
 # Optional
 # If not set, the most recent Tenant found in the parent templates referenced by the `namespaces` attribute will be used
-# It can be string or dict, if string is provide that means that no inheritance is needed and the exact template will be used
+# It can be string or dict, if string is provide that means that no composition is needed and the exact template will be used
 # example of string value
 tenant: "{{ templates_dir }}/env_templates/default/tenant.yml.j2"
 # example of dict value
@@ -121,7 +121,7 @@ tenant:
   parent: basic-template
 # Optional
 # If not set, the most recent Cloud found in the parent templates referenced by the `namespaces` attribute will be used
-# It can be string or dict, if string is provide that means that no inheritance is needed and the exact template will be used
+# It can be string or dict, if string is provide that means that no composition is needed and the exact template will be used
 # example of string value
 cloud: "{{ templates_dir }}/env_templates/default/cloud.yml.j2"
 # example of dict value
@@ -130,6 +130,9 @@ cloud:
   # Optional
   # Section with parameters that should override parent
   overrides-parent:
+    # Optional
+    # Override the name of the cloud in rendering result
+    name: "override-cloud"
     # Optional
     # Section to override resource profile
     profile:
@@ -144,6 +147,7 @@ cloud:
       baseline-profile-name: dev
       # Optional. Default value is `false`
       # Whether to merge parameters from override-profile-name to parent-profile-name
+      # This mode does not support merging of Jinja template based resource profiles.
       merge-with-parent: true
     # Optional
     # Parameters that extend/override the parent template's values
@@ -178,6 +182,9 @@ namespaces:
     # Optional
     # Section with parameters that override the parent template's values
     overrides-parent:
+      # Optional
+      # Override the name of the namespace in rendering result
+      name: "override-ns"
       # Optional
       # Section to override resource profile
       profile:
