@@ -186,7 +186,7 @@ jobs:
       java-version: 17
       upload-artifact: true
       artifact-id: effective_set_jar
-      ref: ${{ github.ref }}
+      ref: v${{ github.event.inputs.version }}
     secrets:
       maven-token: ${{ secrets.GITHUB_TOKEN }}
 
