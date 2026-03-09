@@ -82,6 +82,9 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
         super.put("tenant", new Parameter(new TenantMap(tenant, cloud, namespace, application, this, originalNamespace).init()));
         super.put("application", new Parameter(new ApplicationMap(application, this, namespace).init()));
         super.put("creds", new Parameter(new CredentialsMap(this).init()));
+        EscapeMap credentials = new EscapeMap(null, this, "");
+        credentials.put("creds", new CredentialsMap(this).init());
+        super.put("cmdb",new Parameter(credentials));
 
         Map<String, Parameter> processed = calculateCredentialsAndPrepareStructuredParams(this);
 
