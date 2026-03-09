@@ -1,0 +1,649 @@
+from collections.abc import Iterable
+from contextlib import contextmanager
+from datetime import datetime
+from typing import Optional
+
+from deepmerge import always_merger
+from envgenehelper import *
+from envgenehelper.business_helper import get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole
+from envgenehelper.validation import ensure_valid_fields, ensure_required_keys
+from jinja2 import Template, TemplateError
+from pydantic import BaseModel, Field
+
+from jinja.jinja import create_jinja_env
+from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
+
+SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
+TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
+
+yml = create_yaml_processor()
+
+
+class Context(BaseModel):
+    env: Optional[str] = ''
+    render_dir: Optional[str] = ''
+    cloud_passport: OrderedDict = Field(default_factory=OrderedDict)
+    templates_dirs: dict = Field(default_factory=dict)
+    output_dir: Optional[str] = ''
+    cluster_name: Optional[str] = ''
+    env_definition: OrderedDict = Field(default_factory=OrderedDict)
+    current_env: OrderedDict = Field(default_factory=OrderedDict)
+    current_env_dir: Optional[str] = ''
+    current_env_template: OrderedDict = Field(default_factory=OrderedDict)
+    peer_env_template: OrderedDict = Field(default_factory=OrderedDict)
+    origin_env_template: OrderedDict = Field(default_factory=OrderedDict)
+    tenant: Optional[str] = ''
+    env_template: OrderedDict = Field(default_factory=OrderedDict)
+    env_instances_dir: Optional[str] = ''
+    cloud_passport_file_path: Optional[str] = ''
+    sd_config: OrderedDict = Field(default_factory=OrderedDict)
+    sd_file_path: Optional[str] = ''
+    regdefs: OrderedDict = Field(default_factory=OrderedDict)
+    appdefs: OrderedDict = Field(default_factory=OrderedDict)
+    regdef_templates: list = Field(default_factory=list)
+    appdef_templates: list = Field(default_factory=list)
+    cloud: Optional[str] = ''
+    deployer: Optional[str] = ''
+    bgd: Optional[str] = ''
+    render_parameters_dir: Optional[str] = ''
+    env_vars: OrderedDict = Field(default_factory=OrderedDict)
+    render_profiles_dir: Optional[str] = ''
+
+    start_time: datetime | None = Field(default=None, exclude=True)
+    end_time: datetime | None = Field(default=None, exclude=True)
+
+    class Config:
+        extra = "allow"
+        validate_assignment = True
+
+    def update(self, data: dict | None = None, **kwargs):
+        if data:
+            for key, value in data.items():
+                setattr(self, key, value)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        logger.debug(f"Context updated: {data or kwargs}")
+
+    @contextmanager
+    def use(self):
+        self.start_time = datetime.now()
+        logger.debug(f"Enter context at {self.start_time}")
+        try:
+            yield self
+        finally:
+            self.end_time = datetime.now()
+            logger.debug(
+                f"Exit context at {self.end_time}. Duration: {self.end_time - self.start_time}. "
+                f"Final state: {self.dict(exclude_none=True)}"
+            )
+
+    def as_dict(self, include_none: bool = False) -> dict:
+        return self.model_dump(exclude_none=not include_none)
+
+
+def render_obj_by_context(template: dict, context: Context) -> dict:
+    template_str = replace_ansible_stuff(template_str=dumpYamlToStr(template))
+    rendered_str = create_jinja_env().from_string(template_str).render(context.as_dict())
+    return yml.load(rendered_str)
+
+
+class EnvGenerator:
+    def __init__(self):
+        self.ctx = Context()
+        logger.debug("EnvGenerator initialized with context: %s",
+                     self.ctx.dict(exclude_none=True, exclude={"env_vars"}))
+
+    def set_inventory(self):
+        env_definition = getEnvDefinition(self.ctx.env_instances_dir)
+        logger.info(f"env_definition = {env_definition}")
+        self.ctx.env_definition = env_definition
+
+    def set_cloud_passport(self):
+        cloud_passport_file_path = self.ctx.cloud_passport_file_path.strip()
+        if cloud_passport_file_path:
+            cloud_passport = openYaml(filePath=cloud_passport_file_path, safe_load=True)
+            logger.info(f"cloud_passport = {cloud_passport}")
+            self.ctx.cloud_passport = cloud_passport
+
+    def generate_config(self):
+        templates_dir = Path(__file__).parent / "templates"
+        template = create_jinja_env(str(templates_dir)).get_template("env_config.yml.j2")
+        config = readYaml(text=template.render(self.ctx.as_dict()), safe_load=True)
+        logger.info(f"config = {config}")
+        self.ctx.config = config
+
+    def find_env_template_in_dir(self, template_dir, env_template_name):
+        if not template_dir:
+            return None, []
+        extensions = ("yml.j2", "yaml.j2", "yml", "yaml")
+        env_templates_dir = Path(f'{template_dir}/env_templates')
+        env_template_basename = env_templates_dir / env_template_name
+        suitable_files = find_files_by_basename(env_template_basename, extensions)
+        env_template_path = suitable_files[0] if suitable_files else None
+        if not env_template_path:
+            return None, suitable_files
+
+        env_tmpl_final_path = env_template_path
+        if env_template_path.suffix.endswith("j2"):
+            logger.info(f"Template descriptor is {env_template_path}, rendering required")
+            env_tmpl_final_path = str(env_template_path).removesuffix(".j2")
+            self.render_from_file_to_file(env_template_path, env_tmpl_final_path)
+
+        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, TD_SCHEMA)
+        env_template = openYaml(filePath=env_tmpl_final_path, safe_load=True)
+        logger.info(f"Loaded env_template from {env_tmpl_final_path}")
+        return env_template, suitable_files
+
+    def set_env_templates(self):
+        env_template_name = self.ctx.current_env["env_template"]
+
+        env_templates_dir = Path(f'{self.ctx.templates_dirs.get(NamespaceRole.COMMON)}/env_templates')
+        env_template_basename = env_templates_dir / env_template_name
+        env_template, suitable_files = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.COMMON), env_template_name)
+        if not env_template:
+            all_files = [f for f in env_templates_dir.iterdir() if f.is_file()]
+            remains_files = list(set(all_files) - set(suitable_files))
+            raise ValueError(
+                f"Template descriptor not found: {env_template_basename}."
+                f" Expected location in template repository: {env_template_basename}"
+                f" Allowed extensions: 'yml', 'yaml', 'yml.j2', 'yaml.j2'."
+                f" Found templates: {remains_files}")
+        logger.info(f"env_template = {env_template}")
+        self.ctx.current_env_template = env_template
+
+        if self.ctx.templates_dirs:
+            peer_template, _ = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.PEER), env_template_name)
+            if peer_template:
+                self.ctx.peer_env_template = peer_template
+
+            origin_template, _ = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.ORIGIN), env_template_name)
+            if origin_template:
+                self.ctx.origin_env_template = origin_template
+
+    def setup_base_context(self, extra_env: dict):
+        all_vars = dict(os.environ)
+        self.ctx.update(extra_env)
+        self.ctx.env_vars.update(all_vars)
+
+        self.set_inventory()
+        self.set_cloud_passport()
+        self.generate_config()
+
+        current_env = self.ctx.config["environment"]
+        self.ctx.current_env = current_env
+
+    def validate_applications(self):
+        applications = self.ctx.sd_config.get("applications", [])
+
+        for app in applications:
+            version = app.get("version")
+            deploy_postfix = app.get("deployPostfix")
+
+            if "version" not in app:
+                raise ValueError(f"Missing 'version' in application: {app}")
+            if "deployPostfix" not in app:
+                raise ValueError(f"Missing 'deployPostfix' in application: {app}")
+            if not isinstance(version, str):
+                raise ValueError(f"'version' must be string in application: {app}")
+            if not isinstance(deploy_postfix, str):
+                raise ValueError(f"'deployPostfix' must be string in application: {app}")
+
+            logger.info(f"Valid application: {app}")
+
+    def validate_bgd(self):
+        logger.info('Validating that all namespaces mentioned in BG domain object are available in namespaces')
+        namespace_names = [ns.name for ns in get_namespaces()]
+        bgd = get_bgd_object()
+        mismatch = ""
+        for k, v in bgd.items():
+            if 'Namespace' not in k:
+                continue
+            if v['name'] not in namespace_names:
+                mismatch += f"\n{v['name']} from {k}"
+        if mismatch:
+            logger.info(f'Available namespaces: {namespace_names}')
+            raise ValueError(f'Next namespaces were not found in available namespaces: {mismatch}')
+        logger.info('Validation was successful')
+
+    def _get_bgd_suffix(self, ns_name: str | None) -> str:
+        if not ns_name:
+            return ""
+        bgd = get_bgd_object(Path(self.ctx.current_env_dir))
+        role = get_namespace_role(ns_name, bgd)
+        return {NamespaceRole.ORIGIN: "-origin", NamespaceRole.PEER: "-peer"}.get(role, "")
+
+    def _get_ns_name_for_bgd(self, ns: dict, ns_template_path: str) -> str | None:
+        override_name = self._fetch_template_override_name(ns)
+        if override_name:
+            return override_name
+        if ns_template_path:
+            return self.render_from_file_to_obj(ns_template_path).get("name")
+        return None
+
+    def _get_template_dir_for_role(self, role: NamespaceRole) -> Path:
+        if role == NamespaceRole.ORIGIN and self.ctx.templates_dirs.get(NamespaceRole.ORIGIN):
+            return Path(self.ctx.templates_dirs[NamespaceRole.ORIGIN])
+        if role == NamespaceRole.PEER and self.ctx.templates_dirs.get(NamespaceRole.PEER):
+            return Path(self.ctx.templates_dirs[NamespaceRole.PEER])
+        return self.ctx.templates_dirs[NamespaceRole.COMMON]
+
+    def _get_env_template_for_role(self, role: NamespaceRole) -> dict:
+        if role == NamespaceRole.ORIGIN and self.ctx.origin_env_template:
+            return self.ctx.origin_env_template
+        if role == NamespaceRole.PEER and self.ctx.peer_env_template:
+            return self.ctx.peer_env_template
+        return self.ctx.current_env_template
+
+    def _resolve_template_path(self, template_path_expr: str, templates_dir: Path = None) -> str:
+        ctx = self.ctx.as_dict()
+        if templates_dir is not None:
+            ctx["templates_dir"] = str(templates_dir)
+        return Template(template_path_expr).render(ctx)
+
+    def _find_ns_config_by_name(self, env_template: dict, ns_name: str, templates_dir: Path = None) -> dict | None:
+        for ns in env_template.get("namespaces", []):
+            override_name = self._fetch_template_override_name(ns)
+            if override_name == ns_name:
+                return ns
+            ns_template_path = self._resolve_template_path(ns["template_path"], templates_dir)
+            if ns_template_path:
+                rendered = self.render_from_file_to_obj(ns_template_path)
+                if rendered.get("name") == ns_name:
+                    return ns
+        return None
+
+    def generate_ns_postfix(self, ns: dict, ns_template_path: str) -> str:
+        base_name = ns.get("deploy_postfix") or self.get_template_name(ns_template_path)
+        ns_name = self._get_ns_name_for_bgd(ns, ns_template_path)
+        return base_name + self._get_bgd_suffix(ns_name)
+
+    def generate_solution_structure(self):
+        sd_basename = f'{self.ctx.current_env_dir}/Inventory/solution-descriptor/sd'
+        sd_path = next(iter(find_files_by_basename(sd_basename)), None)
+        solution_structure = {}
+        if sd_path:
+            self.ctx.sd_file_path = str(sd_path)
+            sd_config = openYaml(filePath=sd_path, safe_load=True)
+            self.ctx.sd_config = sd_config
+            if "applications" not in sd_config:
+                raise ValueError("Missing 'applications' key in root")
+            self.validate_applications()
+
+            namespaces = self.ctx.current_env_template.get("namespaces", [])
+            postfix_template_map = {}
+            for ns in namespaces:
+                namespace_template_path = Template(ns["template_path"]).render(self.ctx.as_dict())
+                postfix = self.generate_ns_postfix(ns, namespace_template_path)
+                postfix_template_map[postfix] = namespace_template_path
+
+            for app in sd_config["applications"]:
+                app_version = app["version"]
+                app_name, version = app_version.split(":", 1)
+                postfix = app["deployPostfix"]
+
+                ns_template_path = postfix_template_map.get(postfix)
+                ns_name = None
+                if ns_template_path:
+                    rendered_ns = self.render_from_file_to_obj(ns_template_path)
+                    ns_name = rendered_ns.get("name")
+
+                small_dict = {
+                    app_name: {
+                        postfix: {
+                            "version": version,
+                            "namespace": ns_name
+                        }
+                    }
+                }
+                always_merger.merge(solution_structure, small_dict)
+
+            always_merger.merge(self.ctx.current_env, {"solution_structure": solution_structure})
+        logger.info(f"Rendered solution_structure: {solution_structure}")
+
+    def render_from_file_to_file(self, src_template_path: str, target_file_path: str):
+        template = openFileAsString(src_template_path)
+        template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
+        rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
+        logger.debug(f"Rendered entity: \n{rendered}")
+        writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
+
+    def render_from_file_to_obj(self, src_template_path) -> dict:
+        template = openFileAsString(src_template_path)
+        template = replace_ansible_stuff(template_str=template, template_path=src_template_path)
+        rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
+        logger.debug(f"Rendered entity: \n{rendered}")
+        return readYaml(escaping_quotation(rendered))
+
+    def render_from_obj_to_file(self, template, target_file_path):
+        template = replace_ansible_stuff(template_str=dumpYamlToStr(template))
+        rendered = create_jinja_env().from_string(template).render(self.ctx.as_dict())
+        logger.debug(f"Rendered entity: \n{rendered}")
+        writeYamlToFile(target_file_path, readYaml(escaping_quotation(rendered)))
+
+    def generate_tenant_file(self):
+        logger.info(f"Generate Tenant yaml for {self.ctx.tenant}")
+        tenant_file = f'{self.ctx.current_env_dir}/tenant.yml'
+        tenant_tmpl_path = self.ctx.current_env_template["tenant"]
+        self.render_from_file_to_file(Template(tenant_tmpl_path).render(self.ctx.as_dict()), tenant_file)
+
+    def generate_override_template(self, template_override, template_path: Path, name):
+        if template_override:
+            logger.info(f"Generate override {template_path.stem} yaml for {name}")
+            self.render_from_obj_to_file(template_override, template_path)
+
+    def generate_cloud_file(self):
+        cloud = self.calculate_cloud_name()
+        cloud_template = self.ctx.current_env_template["cloud"]
+        current_env_dir = self.ctx.current_env_dir
+        cloud_file = f'{current_env_dir}/cloud.yml'
+        context = self.ctx.as_dict()
+        is_template_override = isinstance(cloud_template, dict)
+        if is_template_override:
+            logger.info(f"Generate Cloud yaml for cloud {cloud} using cloud.template_path value")
+            cloud_tmpl_path = cloud_template["template_path"]
+            self.render_from_file_to_file(Template(cloud_tmpl_path).render(context), cloud_file)
+
+            template_override = cloud_template.get("template_override")
+            self.generate_override_template(template_override, Path(f'{current_env_dir}/cloud.yml_override'), cloud)
+        else:
+            logger.info(f"Generate Cloud yaml for cloud {cloud}")
+            self.render_from_file_to_file(Template(cloud_template).render(context), cloud_file)
+
+    def generate_bgd_file(self):
+        logger.info(f"Generate bg domain yaml for {self.ctx.bgd}")
+        target_path = f'{self.ctx.current_env_dir}/bg_domain.yml'
+        template = self.ctx.current_env_template.get("bg_domain", None)
+        if not template:
+            logger.info("'bg_domain' key not found in template descriptor, skipping bg domain rendering")
+            return
+        self.render_from_file_to_file(Template(template).render(self.ctx.as_dict()), target_path)
+
+    def _fetch_template_override_name(self, ns: dict) -> str:
+        template_override = ns.get("template_override")
+        if not template_override:
+            return ""
+        rendered = create_jinja_env().from_string(str(template_override)).render(self.ctx.as_dict())
+        if not rendered:
+            return ""
+        return readYaml(rendered).get("name", "")
+
+    def generate_namespace_files(self):
+        context = self.ctx.as_dict()
+        bgd = get_bgd_object(Path(self.ctx.current_env_dir))
+
+        for ns in self.ctx.current_env_template["namespaces"]:
+            ns_template_path = Template(ns["template_path"]).render(context)
+            postfix = self.generate_ns_postfix(ns, ns_template_path)
+
+            ns_name = self._get_ns_name_for_bgd(ns, ns_template_path)
+            role = get_namespace_role(ns_name, bgd) if ns_name else NamespaceRole.COMMON
+
+            role_templates_dir = self._get_template_dir_for_role(role)
+            role_env_template = self._get_env_template_for_role(role)
+
+            effective_ns = ns
+            effective_template_path = ns_template_path
+
+            if role != NamespaceRole.COMMON and role_env_template is not self.ctx.current_env_template:
+                role_ns_config = self._find_ns_config_by_name(role_env_template, ns_name, role_templates_dir)
+                if role_ns_config:
+                    effective_ns = role_ns_config
+                    effective_template_path = self._resolve_template_path(role_ns_config["template_path"], role_templates_dir)
+                    logger.info(f"Using {role.name} template for namespace {ns_name}")
+
+            logger.info(f"Generate Namespace yaml for {postfix}")
+            ns_dir = Path(self.ctx.current_env_dir) / "Namespaces" / postfix
+            self.render_from_file_to_file(effective_template_path, str(ns_dir / "namespace.yml"))
+            self.generate_override_template(effective_ns.get("template_override"), ns_dir / "namespace.yml_override", postfix)
+
+    def calculate_cloud_name(self) -> str:
+        inv = self.ctx.env_definition["inventory"]
+        cluster_name = self.ctx.cluster_name
+        candidates = [
+            inv.get("cloudName"),
+            inv.get("passportCloudName", "").replace("-", "_") if inv.get("passportCloudName") else "",
+            inv.get("cloudPassport", "").replace("-", "_") if inv.get("cloudPassport") else "",
+            inv.get("environmentName", "").replace("-", "_"),
+            f"{cluster_name}_{inv.get('environmentName', '')}".replace("-", "_")
+            if cluster_name and inv.get("environmentName") else ""
+        ]
+
+        return next((c for c in candidates if c), "")
+
+    def get_template_name(self, template_path: str) -> str:
+        template_path = Path(template_path)
+        return (
+            template_path.name
+            .replace(".yml.j2", "")
+            .replace(".yaml.j2", "")
+        )
+
+    def generate_composite_structure(self):
+        composite_structure = self.ctx.current_env_template.get("composite_structure")
+        if composite_structure:
+            logger.info(f"Generate Composite Structure yaml for {composite_structure}")
+            current_env_dir = self.ctx.current_env_dir
+            cs_file = Path(current_env_dir) / "composite_structure.yml"
+            cs_file.parent.mkdir(parents=True, exist_ok=True)
+            self.render_from_file_to_file(Template(composite_structure).render(self.ctx.as_dict()), str(cs_file))
+
+    def get_rendered_target_path(self, template_path: Path) -> Path:
+        path_str = str(template_path)
+        path_str = path_str.replace(".yml.j2", ".yml").replace(".yaml.j2", ".yml")
+        return Path(path_str)
+
+    def generate_paramset_templates(self):
+        render_dir = Path(self.ctx.render_parameters_dir).resolve()
+        paramset_templates = self.find_templates(render_dir, ["*.yml.j2", "*.yaml.j2"])
+        for template_path in paramset_templates:
+            template_name = self.get_template_name(template_path)
+            target_path = self.get_rendered_target_path(template_path)
+            try:
+                logger.info(f"Try to render paramset {template_name}")
+                self.render_from_file_to_file(Template(str(template_path)).render(self.ctx.as_dict()), target_path)
+                logger.info(f"Successfully generated paramset: {template_name}")
+                if template_path.exists():
+                    template_path.unlink()
+            except TemplateError as e:
+                logger.warning(f"Skipped paramset {template_name}. Error details: {e}")
+                if target_path.exists():
+                    target_path.unlink()
+
+    def find_templates(self, path: str, patterns) -> list[Path]:
+        path = Path(path)
+        if not path.exists():
+            logger.warning(f"Templates directory not found: {path}")
+            return []
+        templates = []
+        for pattern in patterns:
+            for f in path.rglob(pattern):
+                if f.is_file():
+                    templates.append(f)
+
+        logger.info(f"Found templates: {templates}")
+        return templates
+
+    def render_app_defs(self):
+        for def_tmpl_path in self.ctx.appdef_templates:
+            app_def_str = openFileAsString(def_tmpl_path)
+            matches = re.findall(
+                r'^\s*(name|artifactId|groupId):\s*"([^"]+)"',
+                app_def_str,
+                flags=re.MULTILINE,
+            )
+            appdef_meta = dict(matches)
+            ensure_valid_fields(appdef_meta, ["artifactId", "groupId", "name"])
+            group_id = appdef_meta["groupId"]
+            artifact_id = appdef_meta["artifactId"]
+            self.ctx.update({
+                "app_lookup_key": f"{group_id}:{artifact_id}",
+                "groupId": group_id,
+                "artifactId": artifact_id,
+            })
+            app_def_trg_path = f"{self.ctx.current_env_dir}/AppDefs/{appdef_meta.get("name")}.yml"
+            self.render_from_file_to_file(def_tmpl_path, app_def_trg_path)
+
+    def render_reg_defs(self):
+        for def_tmpl_path in self.ctx.regdef_templates:
+            reg_def_str = openFileAsString(def_tmpl_path)
+            matches = re.findall(
+                r'^\s*(name):\s*"([^"]+)"',
+                reg_def_str,
+                flags=re.MULTILINE,
+            )
+            regdef_meta = dict(matches)
+            ensure_valid_fields(regdef_meta, ["name"])
+            reg_def_trg_path = f"{self.ctx.current_env_dir}/RegDefs/{regdef_meta['name']}.yml"
+            self.render_from_file_to_file(def_tmpl_path, reg_def_trg_path)
+
+    def set_appreg_def_overrides(self):
+        output_dir = Path(self.ctx.output_dir)
+        cluster_name = self.ctx.cluster_name
+        config_file_name = Path("configuration") / "appregdef_config"
+
+        potential_global_config_files = [
+            output_dir / f"{config_file_name}.yaml",
+            output_dir / f"{config_file_name}.yml",
+        ]
+
+        potential_cluster_config_files = [
+            output_dir / cluster_name / f"{config_file_name}.yaml",
+            output_dir / cluster_name / f"{config_file_name}.yml",
+        ]
+
+        global_config_paths = [f for f in potential_global_config_files if f.exists()]
+        cluster_config_paths = [f for f in potential_cluster_config_files if f.exists()]
+
+        if not global_config_paths and not cluster_config_paths:
+            logger.info("No appregdef_config file found, skipping overrides")
+            return
+
+        global_appdefs, global_regdefs = {}, {}
+        cluster_appdefs, cluster_regdefs = {}, {}
+
+        if len(global_config_paths) > 0:
+            global_path = global_config_paths[0]
+            try:
+                cfg = openYaml(global_path)
+                global_appdefs = cfg.get("appdefs", {}).get("overrides", {})
+                global_regdefs = cfg.get("regdefs", {}).get("overrides", {})
+                logger.info(f"Loaded global config from {global_path}")
+            except Exception as e:
+                logger.warning(f"Failed to load global config: {e}")
+
+        if len(cluster_config_paths) > 0:
+            cluster_path = cluster_config_paths[0]
+            try:
+                cfg = openYaml(cluster_path)
+                cluster_appdefs = cfg.get("appdefs", {}).get("overrides", {})
+                cluster_regdefs = cfg.get("regdefs", {}).get("overrides", {})
+                logger.info(f"Loaded cluster config from {cluster_path}")
+            except Exception as e:
+                logger.warning(f"Failed to load cluster config: {e}")
+
+        self.ctx.appdefs["overrides"] = always_merger.merge(global_appdefs, cluster_appdefs)
+        self.ctx.regdefs["overrides"] = always_merger.merge(global_regdefs, cluster_regdefs)
+
+    def generate_profiles(self, profile_names: Iterable[str]):
+        logger.info(f"Start rendering profiles from list: {profile_names}")
+        render_profiles_dir = self.ctx.render_profiles_dir
+        profile_templates = self.find_templates(render_profiles_dir, ["*.yaml.j2", "*.yml.j2"])
+        for template_path in profile_templates:
+            template_name = self.get_template_name(template_path)
+            if template_name in profile_names:
+                self.render_from_file_to_file(template_path, self.get_rendered_target_path(template_path))
+
+    def validate_appregdefs(self):
+        render_dir = self.ctx.current_env_dir
+
+        appdef_dir = f"{render_dir}/AppDefs"
+        regdef_dir = f"{render_dir}/RegDefs"
+
+        if os.path.exists(appdef_dir):
+            appdef_files = findAllYamlsInDir(appdef_dir)
+            if not appdef_files:
+                logger.warning(f"No AppDef YAMLs found in {appdef_dir}")
+            for file in appdef_files:
+                logger.info(f"AppDef file: {file}")
+                validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "appdef.schema.json"))
+
+        if os.path.exists(regdef_dir):
+            regdef_files = findAllYamlsInDir(regdef_dir)
+            if not regdef_files:
+                logger.warning(f"No RegDef YAMLs found in {regdef_dir}")
+            for file in regdef_files:
+                logger.info(f"RegDef file: {file}")
+                validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "regdef.schema.json"))
+
+    def process_app_reg_defs(self, env_name: str, extra_env: dict):
+        logger.info(
+            f"Starting rendering app_reg_defs for {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
+        with self.ctx.use():
+            self.setup_base_context(extra_env)
+
+            current_env_dir = self.ctx.current_env_dir
+            templates_dir = self.ctx.templates_dirs[NamespaceRole.COMMON]
+            patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
+            appdef_templates = self.find_templates(f"{templates_dir}/appdefs", patterns)
+            regdef_templates = self.find_templates(f"{templates_dir}/regdefs", patterns)
+            self.ctx.appdef_templates = appdef_templates
+            self.ctx.regdef_templates = regdef_templates
+
+            ensure_directory(Path(current_env_dir).joinpath("AppDefs"), 0o755)
+            ensure_directory(Path(current_env_dir).joinpath("RegDefs"), 0o755)
+            self.set_appreg_def_overrides()
+            self.render_app_defs()
+            self.render_reg_defs()
+
+            self.validate_appregdefs()
+
+    def render_config_env(self, env_name: str, extra_env: dict):
+        logger.info(f"Starting rendering environment {env_name}. Input params are:\n{dump_as_yaml_format(extra_env)}")
+        with self.ctx.use():
+            self.setup_base_context(extra_env)
+            all_vars = self.ctx.env_vars
+            current_env = self.ctx.current_env
+
+            self.ctx.cloud = self.calculate_cloud_name()
+            self.ctx.tenant = current_env.get("tenant", '')
+            self.ctx.deployer = current_env.get('deployer', '')
+            self.ctx.bgd = current_env.get('bg_domain', '')
+            logger.info(f"current_env = {current_env}")
+
+            self.ctx.update({
+                "ND_CMDB_CONFIG_REF": all_vars.get("CI_COMMIT_SHORT_SHA", "No SHA"),
+                "ND_CMDB_CONFIG_REF_NAME": all_vars.get("CI_COMMIT_REF_NAME", "No Ref Name"),
+                "ND_CMDB_CONFIG_TAG": all_vars.get("CI_COMMIT_TAG", "No Ref tag"),
+                "ND_CDMB_REPOSITORY_URL": all_vars.get("CI_REPOSITORY_URL", "No Ref URL"),
+            })
+            env_template = self.ctx.env_template
+            if env_template:
+                self.ctx.update({
+                    "ND_CMDB_ENV_TEMPLATE": env_template
+                })
+            else:
+                self.ctx.update({
+                    "ND_CMDB_ENV_TEMPLATE": self.ctx.current_env["env_template"]
+                })
+
+            current_env_dir = f'{self.ctx.render_dir}/{self.ctx.env}'
+            self.ctx.current_env_dir = current_env_dir
+            self.set_env_templates()
+
+            self.generate_bgd_file()
+            self.generate_solution_structure()
+            self.generate_tenant_file()
+            self.generate_cloud_file()
+            self.generate_namespace_files()
+            self.generate_composite_structure()
+
+            env_specific_schema = self.ctx.current_env_template.get("envSpecificSchema")
+            if env_specific_schema:
+                copy_path(source_path=env_specific_schema, target_dir=current_env_dir)
+            self.generate_paramset_templates()
+
+            ensure_required_keys(self.ctx.as_dict(),
+                                 required=["templates_dir", "env_instances_dir", "cluster_name", "current_env_dir"])
+            logger.info(f"Rendering of templates for environment {env_name} generation was successful")
+
+            self.validate_bgd()

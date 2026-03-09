@@ -1,0 +1,367 @@
+{
+  "serialNumber": "urn:uuid:c7eb7c5f-b8da-4c05-9c48-678a11c00a35",
+  "$schema": "../schemas/application-manifest.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-01-21T12:00:00Z",
+    "component": {
+      "bom-ref": "qubership-integration-platform:03d26d59-0405-45a1-a259-bc09032351bf",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "name": "qubership-integration-platform",
+      "version": "1.2.3"
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "am-build-cli",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "qubership-integration-platform:6dde3587-76a0-4369-8a9b-36c5c7b468be",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.standalone-runnable",
+      "name": "qubership-integration-platform",
+      "properties": [],
+      "components": []
+    },
+    {
+      "bom-ref": "qubership-integration-platform:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
+      "type": "application",
+      "mime-type": "application/vnd.qubership.helm.chart",
+      "name": "qubership-integration-platform",
+      "version": "1.2.3",
+      "properties": [
+        {
+          "name": "isLibrary",
+          "value": false
+        }
+      ],
+      "purl": "pkg:helm/example-repo/qubership-integration-platform@1.2.3?registry_name=sandbox",
+      "components": [
+        {
+          "bom-ref": "qubership-integration-platform:7f17a6dc-b973-438f-abb7-e0c57a32afc12",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.helm.values.schema",
+          "name": "values.schema.json",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "values.schema.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "ewogICIkc2NoZW1hIjogImh0dHA6Ly9qc29uLXNjaGVtYS5vcmcvZHJhZnQtMDcvc2NoZW1hIyIsCiAgInR5cGUiOiAib2JqZWN0IiwKICAicHJvcGVydGllcyI6IHsKICAgICJpbWFnZXMiOiB7CiAgICAgICJ0eXBlIjogIm9iamVjdCIsCiAgICAgICJwcm9wZXJ0aWVzIjogewogICAgICAgICJqYWVnZXIiOiB7CiAgICAgICAgICAidHlwZSI6ICJvYmplY3QiLAogICAgICAgICAgInByb3BlcnRpZXMiOiB7CiAgICAgICAgICAgICJyZXBvc2l0b3J5IjogeyAidHlwZSI6ICJzdHJpbmciIH0sCiAgICAgICAgICAgICJ0YWciOiB7ICJ0eXBlIjogInN0cmluZyIgfSwKICAgICAgICAgICAgInB1bGxQb2xpY3kiOiB7ICJ0eXBlIjogInN0cmluZyIgfQogICAgICAgICAgfQogICAgICAgIH0sCiAgICAgICAgImVudm95IjogewogICAgICAgICAgInR5cGUiOiAib2JqZWN0IiwKICAgICAgICAgICJwcm9wZXJ0aWVzIjogewogICAgICAgICAgICAicmVwb3NpdG9yeSI6IHsgInR5cGUiOiAic3RyaW5nIiB9LAogICAgICAgICAgICAidGFnIjogeyAidHlwZSI6ICJzdHJpbmciIH0KICAgICAgICAgIH0KICAgICAgICB9CiAgICAgIH0KICAgIH0KICB9Cn0="
+                }
+              }
+            }
+          ]
+        },
+        {
+          "bom-ref": "qip-engine:9010ea35-42e7-4a6f-93e4-2d63e7f9abf1",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "qip-engine",
+          "components": [],
+          "properties": [
+            {
+              "name": "isLibrary",
+              "value": false
+            },
+            {
+              "name": "qubership:helm.values.artifactMapping",
+              "value": {
+                "qubership-integration-engine:80f031da-024c-4748-a1b9-d548a3dd030f": {
+                  "valuesPathPrefix": ""
+                }
+              }
+            }
+          ]
+        },
+        {
+          "bom-ref": "qip-runtime-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf2",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "qip-runtime-catalog",
+          "components": [],
+          "properties": [
+            {
+              "name": "isLibrary",
+              "value": false
+            },
+            {
+              "name": "qubership:helm.values.artifactMapping",
+              "value": {
+                "qubership-integration-runtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f": {
+                  "valuesPathPrefix": ""
+                }
+              }
+            }
+          ]
+        },
+        {
+          "bom-ref": "qip-design-time-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "qip-design-time-catalog",
+          "components": [],
+          "properties": [
+            {
+              "name": "isLibrary",
+              "value": false
+            },
+            {
+              "name": "qubership:helm.values.artifactMapping",
+              "value": {
+                "qubership-integration-designtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f": {
+                  "valuesPathPrefix": ""
+                }
+              }
+            }
+          ]
+        },
+        {
+          "bom-ref": "qip-variables-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf4",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "qip-variables-management",
+          "components": [],
+          "properties": [
+            {
+              "name": "isLibrary",
+              "value": false
+            },
+            {
+              "name": "qubership:helm.values.artifactMapping",
+              "value": {
+                "qubership-integration-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f": {
+                  "valuesPathPrefix": ""
+                }
+              }
+            }
+          ]
+        },
+        {
+          "bom-ref": "qip-sessions-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf5",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "qip-sessions-management",
+          "components": [],
+          "properties": [
+            {
+              "name": "isLibrary",
+              "value": false
+            },
+            {
+              "name": "qubership:helm.values.artifactMapping",
+              "value": {
+                "qubership-integration-sessions-management:80f031da-024c-4748-a1b9-d548a3dd030f": {
+                  "valuesPathPrefix": ""
+                }
+              }
+            }
+          ]
+        },
+        {
+          "bom-ref": "qubership-integration-ui:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "qubership-integration-ui",
+          "components": [],
+          "properties": [
+            {
+              "name": "isLibrary",
+              "value": false
+            },
+            {
+              "name": "qubership:helm.values.artifactMapping",
+              "value": {
+                "qubership-integration-ui:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f": {
+                  "valuesPathPrefix": ""
+                }
+              }
+            }
+          ]
+        },
+        {
+          "bom-ref": "coretpl:13dac210-3424-4799-9631-667d7b2b0ed8",
+          "type": "application",
+          "mime-type": "application/vnd.qubership.helm.chart",
+          "name": "coretpl",
+          "components": [],
+          "properties": [
+            {
+              "name": "isLibrary",
+              "value": true
+            }
+          ]
+        },
+        {
+          "bom-ref": "resource-profile-baselines:61439a11-c00d-43f5-9bae-fe6db05db2d1",
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            },
+            {
+              "type": "configuration",
+              "name": "prod.yaml",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/yaml",
+                  "encoding": "base64",
+                  "content": "0YMg0LzQtdC90Y8g0L3QtSDQsdGL0LvQviDQv9GA0LjQvNC10YDQsCwg0L/QvtGN0YLQvtC80YMg0YLRg9GCINGN0YLQvtGCINGC0LXQutGB0YIuCtGC0YPRgiDQtNC+0LvQttC10L0g0LHRi9GC0Ywg0L/Qu9C+0YHQutC40Lkg0LTQttGB0L7QvSDQuNC3IH4gMTAg0LrQuC/QstGN0LvRjNGO"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bom-ref": "qubership-integration-engine:80f031da-024c-4748-a1b9-d548a3dd030f",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "qubership-integration-engine",
+      "group": "core",
+      "version": "build3",
+      "purl": "pkg:docker/core/qubership-integration-engine@build3?registry_name=sandbox"
+    },
+    {
+      "bom-ref": "qubership-integration-runtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "qubership-integration-runtime-catalog",
+      "group": "core",
+      "version": "build3",
+      "purl": "pkg:docker/core/qubership-integration-runtime-catalog@build3?registry_name=sandbox"
+    },
+    {
+      "bom-ref": "qubership-integration-designtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "qubership-integration-designtime-catalog",
+      "group": "core",
+      "version": "build3",
+      "purl": "pkg:docker/core/qubership-integration-designtime-catalog@build3?registry_name=sandbox"
+    },
+    {
+      "bom-ref": "qubership-integration-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "qubership-integration-variables-management",
+      "group": "core",
+      "version": "build3",
+      "purl": "pkg:docker/core/qubership-integration-variables-management@build3?registry_name=sandbox"
+    },
+    {
+      "bom-ref": "qubership-integration-sessions-management:80f031da-024c-4748-a1b9-d548a3dd030f",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "qubership-integration-sessions-management",
+      "group": "core",
+      "version": "build3",
+      "purl": "pkg:docker/core/qubership-integration-sessions-management@build3?registry_name=sandbox"
+    },
+    {
+      "bom-ref": "qubership-integration-ui:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "qubership-integration-ui",
+      "group": "core",
+      "version": "build22",
+      "purl": "pkg:docker/core/qubership-integration-ui@build22?registry_name=sandbox"
+    },
+    {
+      "bom-ref": "cr-synchonizer:80f031da-024c-4748-a1b9-d548a3dd030f",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "cr-synchonizer",
+      "group": "core",
+      "version": "build3",
+      "purl": "pkg:docker/core/cr-synchonizer@build3?registry_name=sandbox"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "qubership-integration-platform:03d26d59-0405-45a1-a259-bc09032351bf",
+      "dependsOn": [
+        "qubership-integration-platform:6dde3587-76a0-4369-8a9b-36c5c7b468be",
+        "qubership-integration-platform:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
+        "qubership-integration-engine:80f031da-024c-4748-a1b9-d548a3dd030f",
+        "qubership-integration-runtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
+        "qubership-integration-designtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
+        "qubership-integration-sessions-management:80f031da-024c-4748-a1b9-d548a3dd030f",
+        "qubership-integration-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f",
+        "qubership-integration-ui:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
+        "cr-synchonizer:80f031da-024c-4748-a1b9-d548a3dd030f"
+      ]
+    },
+    {
+      "ref": "qubership-integration-platform:6dde3587-76a0-4369-8a9b-36c5c7b468be",
+      "dependsOn": [
+        "qubership-integration-platform:7f17a6dc-b973-438f-abb7-e0c57a32afc5"
+      ]
+    },
+    {
+      "ref": "qubership-integration-engine:9010ea35-42e7-4a6f-93e4-2d63e7f9abf1",
+      "dependsOn": [
+        "qubership-integration-engine:80f031da-024c-4748-a1b9-d548a3dd030f"
+      ]
+    },
+    {
+      "ref": "qip-runtime-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf2",
+      "dependsOn": [
+        "qubership-integration-runtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f"
+      ]
+    },
+    {
+      "ref": "qip-design-time-catalog:9010ea35-42e7-4a6f-93e4-2d63e7f9abf3",
+      "dependsOn": [
+        "qubership-integration-designtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f"
+      ]
+    },
+    {
+      "ref": "qip-variables-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf4",
+      "dependsOn": [
+        "qubership-integration-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f"
+      ]
+    },
+    {
+      "ref": "qip-sessions-management:9010ea35-42e7-4a6f-93e4-2d63e7f9abf5",
+      "dependsOn": [
+        "qubership-integration-sessions-management:80f031da-024c-4748-a1b9-d548a3dd030f"
+      ]
+    },
+    {
+      "ref": "qubership-integration-ui:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
+      "dependsOn": [
+        "qubership-integration-ui:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f"
+      ]
+    },
+    {
+      "ref": "cr-synchonizer:7f17a6dc-b973-438f-abb7-e0c57a32afc5",
+      "dependsOn": [
+        "cr-synchonizer:80f031da-024c-4748-a1b9-d548a3dd030f"
+      ]
+    }
+  ]
+}

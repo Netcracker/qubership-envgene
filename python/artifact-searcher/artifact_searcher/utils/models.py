@@ -51,6 +51,8 @@ class MavenConfig(BaseSchema):
             self.is_nexus = False
 
         return self
+
+
 class DockerConfig(BaseSchema):
     snapshot_uri: Optional[str] = ""
     staging_uri: Optional[str] = ""
@@ -106,7 +108,7 @@ class Registry(BaseSchema):
     credentials_id: Optional[str] = ""
     name: str
     maven_config: MavenConfig
-    docker_config: DockerConfig
+    docker_config: Optional[DockerConfig] = None
     go_config: Optional[GoConfig] = None
     raw_config: Optional[RawConfig] = None
     npm_config: Optional[NpmConfig] = None
@@ -114,12 +116,13 @@ class Registry(BaseSchema):
     helm_app_config: Optional[HelmAppConfig] = None
 
 
+# artifact definition
 class Application(BaseSchema):
     name: str
     artifact_id: str
     group_id: str
     registry: Registry
-    solution_descriptor: bool
+    solution_descriptor: bool = False
 
 
 class FileExtension(str, Enum):

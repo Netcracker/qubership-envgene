@@ -1,0 +1,35 @@
+inventory:
+  environmentName: "env-01"
+  tenantName: "Applications"
+  cloudName: "cluster-01"
+  description: "Full sample"
+  owners: "Qubership team"
+  config:
+    updateRPOverrideNameWithEnvName: false
+    updateCredIdsWithEnvName: true
+envTemplate:
+  name: "composite-prod"
+  artifact: "project-env-template:master_20231024-080204"
+  additionalTemplateVariables:
+    ci:
+      CI_PARAM_1: "ci-param-val-1"
+      CI_PARAM_2: "ci-param-val-2"
+    e2eParameters:
+      E2E_PARAM_1: "e2e-param-val-1"
+      E2E_PARAM_2: "e2e-param-val-2"
+  sharedTemplateVariables:
+    - "prod-template-variables"
+    - "sample-cloud-template-variables"
+  envSpecificParamsets:
+    bss:
+      - "env-specific-bss"
+  envSpecificTechnicalParamsets:
+    bss:
+      - "env-specific-tech"
+  envSpecificE2EParamsets:
+    cloud:
+      - "cloud-level-params"
+  sharedMasterCredentialFiles:
+    - "prod-integration-creds"
+  envSpecificResourceProfiles:
+    cloud: "cloud-specific-profile"

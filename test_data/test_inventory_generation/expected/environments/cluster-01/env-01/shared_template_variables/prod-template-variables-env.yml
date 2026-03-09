@@ -1,0 +1,5 @@
+TEMPLATE_VAR_1: "prod-value-1"
+TEMPLATE_VAR_2: "prod-value-2"
+nested:
+  key1: "nested-prod-value-1"
+  key2: "nested-prod-value-2"

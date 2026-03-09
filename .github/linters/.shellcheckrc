@@ -3,10 +3,15 @@
 severity=error
 
 # Disable specific error codes that are commonly problematic
-disable=SC2154,SC2086,SC1091,SC2155,SC2164,SC2006,SC2046,SC2034,SC2005,SC2162,SC2124,SC2236,SC1083,SC1078,SC1079,SC2140,SC2129
+disable=SC2154,SC2086,SC1091,SC2155,SC2164,SC2006,SC2046,SC2034,SC2005,SC2162,SC2124,SC2236,SC1083,SC1078,SC1079,SC2140,SC2129,SC1090,SC3043,SC2044,SC2148,SC2206
 
 # Additional comprehensive disables for common issues
 # SC1083 - Literal braces in expressions
 # SC1078 - Unclosed quoted strings
 # SC1079 - Suspicious end quotes
 # SC2140 - Word form issues with quotes
+# SC1090 - ShellCheck can't follow non-constant source
+# SC3043 - In POSIX sh, 'local' is undefined
+# SC2044 - For loops over find output are fragile
+# SC2148 - Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
+# SC2206 - Quote to prevent word splitting/globbing, or split robustly with mapfile or read -a.

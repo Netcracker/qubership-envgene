@@ -1,7 +1,0 @@
----
-- name: Set template artifact version in env_definition
-  hosts: localhost
-  connection: local
-  gather_facts: false
-  roles:
-    - role: set_template_version

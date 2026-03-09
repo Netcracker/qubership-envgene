@@ -22,6 +22,11 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
 
 ### [Instance pipeline] Job sequence
 
+```mermaid
+flowchart LR
+    A[trigger_passport] --> B[get_passport] --> C[process_decryption_mode] --> D[env_inventory_generation] --> E[credential_rotation] --> F[app_reg_def_process] --> G[process_sd] --> H[env_build] --> I[generate_effective_set] --> J[git_commit]
+```
+
 1. **bg_manage**
    - **Condition**: Runs if [`BG_MANAGE: true`](/docs/instance-pipeline-parameters.md#bg_manage).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
@@ -34,16 +39,23 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
    - **Condition**: Runs if [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-4. **process_decryption_mode**:
-   - **Condition**: Runs if [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport) AND [`IS_OFFSITE: true`](/docs/instance-pipeline-parameters.md#is_offsite)
+4. **env_inventory_generation**:
+   - **Condition**: Runs if [`ENV_TEMPLATE_TEST: false`](/docs/envgene-repository-variables.md#env_template_test) AND ([`ENV_SPECIFIC_PARAMS`](/docs/instance-pipeline-parameters.md#env_specific_params) OR [`ENV_TEMPLATE_NAME`](/docs/instance-pipeline-parameters.md#env_template_name))
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-5. **env_inventory_generation**:
-   - **Condition**: Runs if [`ENV_TEMPLATE_TEST: false`](/docs/instance-pipeline-parameters.md#env_template_test) AND ([`ENV_SPECIFIC_PARAMETERS`](/docs/instance-pipeline-parameters.md#env_specific_params) OR [`ENV_TEMPLATE_NAME`](/docs/instance-pipeline-parameters.md#env_template_name))
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
-
-6. **credential_rotation**:
+5. **credential_rotation**:
    - **Condition**: Runs if [`CRED_ROTATION_PAYLOAD`](/docs/instance-pipeline-parameters.md#cred_rotation_payload) is provided
+   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+
+6. **app_reg_def_process**:
+   - **What happens in this job**:
+       1. Handles certificate updates from the configuration directory.
+       2. Downloads the Environment Template artifact.
+       3. Renders [Application Definitions](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition) from:
+          1. Templates, as described in [User Defined by Template](/docs/features/app-reg-defs.md#user-defined-by-template)
+          2. External Job, as described in [External Job](/docs/features/app-reg-defs.md#external-job)
+       4. Runs [Application and Registry Definitions Transformation](/docs/features/app-reg-defs.md#application-and-registry-definitions-transformation)
+   - **Condition**: Runs if ( [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder) )
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 7. **process_sd**:
@@ -51,6 +63,15 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 8. **env_build**:
+   - **What happens in this job**:
+       1. Handles certificate updates from the configuration directory.
+       2. Downloads the Environment Template artifact from the `app_reg_def_process` job artifacts, **not from the registry**
+       3. Updates the Environment Template version if [`ENV_TEMPLATE_VERSION`](/docs/instance-pipeline-parameters.md#env_template_version) is provided.
+       4. Renders the environment using Jinja2 templates (renders Namespaces, Clouds, and other environment components, but not Application and Registry Definitions).
+       5. Handles template overrides
+       6. Handles template Parameter Set and Resource profiles.
+       7. Handles environment-specific Parameter Set and Resource profiles.
+       8. Creates Credentials including shared Credentials
    - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
@@ -59,5 +80,5 @@ If multiple [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) are s
    - **Docker image**: [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
 
 10. **git_commit**:
-    - **Condition**: Runs if there are jobs requiring changes to the repository AND [`ENV_TEMPLATE_TEST: false`](/docs/instance-pipeline-parameters.md#env_template_test)
+    - **Condition**: Runs if there are jobs requiring changes to the repository AND [`ENV_TEMPLATE_TEST: false`](/docs/envgene-repository-variables.md#env_template_test)
     - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)

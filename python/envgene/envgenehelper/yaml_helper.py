@@ -1,18 +1,20 @@
+import copy
 import json
 import pathlib
-import os
+from io import StringIO
+from typing import OrderedDict
+
 import jschon
 import jschon_tools
-import ruyaml
 import jsonschema
-import copy
-from io import StringIO
-from .file_helper import *
-from .logger import logger
-from .json_helper import openJson
-from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
+import ruyaml
+from jsonschema import RefResolver
 from ruyaml import CommentedMap, CommentedSeq
-from typing import Callable, OrderedDict
+from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
+
+from .file_helper import *
+from .json_helper import openJson
+from .logger import logger
 
 
 def create_yaml_processor(is_safe=False) -> ruyaml.main.YAML:
@@ -45,7 +47,7 @@ def openYaml(filePath, safe_load=False, default_yaml: Callable = get_empty_yaml,
     return resultYaml
 
 
-def readYaml(text, safe_load=False, context=None):
+def readYaml(text, safe_load=False, context=None) -> CommentedMap:
     if text is None:
         resultYaml = None
     elif safe_load:
@@ -230,7 +232,7 @@ def merge_yaml_into_target(yaml_content, target_attribute_str, source_yaml, over
             merge_yaml_into_target(target_yaml[k], "", v, overwrite_existing_values, overwrite_existing_comments)
         elif isinstance(target_yaml[k], list) and isinstance(v, list):
             target_yaml[k].extend(v_el for v_el in v if v_el not in target_yaml[k] and (
-                        isinstance(v_el, primitiveTypes) or isinstance(v_el, list)))
+                    isinstance(v_el, primitiveTypes) or isinstance(v_el, list)))
             src_dicts = {}
             for v_k, v_el in enumerate(v):
                 if isinstance(v_el, dict):
@@ -377,16 +379,25 @@ def yaml_from_string(yaml_str):
     return result
 
 
-def validate_yaml_by_scheme_or_fail(yaml_file_path: str, schema_file_path: str) -> None:
-    yaml_content = openYaml(yaml_file_path)
-    schema_content = openJson(schema_file_path)
-    errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
+def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
+                                    input_yaml_content: dict = None, input_schema_content: dict = None,
+                                    schemas_dir=None):
+    yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
+    schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
+
+    if schemas_dir:
+        base_uri = Path(schemas_dir).absolute().as_uri() + "/"
+        resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
+        errors = validate_yaml_data_by_scheme(yaml_content, schema_content, resolver=resolver)
+    else:
+        errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
     if len(errors) > 0:
-        rel_path = getRelPath(yaml_file_path)
-        logger.error(f"Validation of {rel_path} file has failed")
+        if yaml_file_path:
+            rel_path = getRelPath(yaml_file_path)
+            logger.error(f"Validation of {rel_path} file has failed")
         for err in errors:
             log_jsonschema_validation_error(err)
-        raise ValueError(f"Validation failed") from None
+        raise ValueError("Validation failed") from None
 
 
 def validate_yaml_data_by_scheme(data, schema, cls=None, *args, **kwargs):
@@ -422,13 +433,15 @@ def convert_ordereddict_to_dict(obj):
         return obj
 
 
-def find_all_yaml_files_by_stem(path: str):
-    file_paths = []
-    for ext in ["yaml", "yml"]:
-        file_path = Path(f"{path}.{ext}")
-        if file_path.exists():
-            file_paths.append(file_path)
-    return file_paths
+def find_files_by_basename(path: str, extensions_priority: tuple[str] = ("yml", "yaml")) -> list[Path]:
+    base_path = Path(path)
+    found_files: list[Path] = []
+
+    for ext in extensions_priority:
+        candidate = base_path.with_suffix(f".{ext}")
+        if candidate.exists():
+            found_files.append(candidate)
+    return found_files
 
 
 jschon.create_catalog('2020-12')

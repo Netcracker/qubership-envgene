@@ -1,0 +1,9 @@
+envTemplate:
+  templateArtifact:
+    registry: "artifactory"
+    repository: "snapshotRepository"
+    templateRepository: "snapshotTemplateRepository"
+    artifact:
+      group_id: "org.qubership"
+      artifact_id: "qubership_envgene_templates"
+      version: "master-SNAPSHOT"

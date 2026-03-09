@@ -2,6 +2,8 @@ from io import StringIO
 from pprint import pformat
 from .yaml_helper import yaml
 import copy
+from .logger import logger
+from enum import Enum
 
 def merge_lists(list1, list2) :
     if len(list2) > 0 :
@@ -13,14 +15,30 @@ primitives = (bool, str, int, float, type(None))
 def is_primitive(obj):
     return isinstance(obj, primitives)
 
-def dump_as_yaml_format(collection) :
-    if collection and isinstance(collection, dict):
-        tmp = copy.deepcopy(collection)
+def _convert_enums(obj):
+    if isinstance(obj, Enum):
+        return obj.value
+    if isinstance(obj, dict):
+        return {
+            _convert_enums(k): _convert_enums(v)
+            for k, v in obj.items()
+        }
+    if isinstance(obj, list):
+        return [_convert_enums(v) for v in obj]
+    if isinstance(obj, tuple):
+        return tuple(_convert_enums(v) for v in obj)
+    if isinstance(obj, set):
+        return {_convert_enums(v) for v in obj}
+    return obj
+
+
+def dump_as_yaml_format(collection):
+    converted = _convert_enums(collection)
+    if converted and isinstance(converted, dict):
         stream = StringIO()
-        yaml.dump(tmp, stream)
+        yaml.dump(converted, stream)
         return stream.getvalue()
-    else:
-        return pformat(collection)
+    return pformat(converted)
 
 def get_merged_param_value(key, source_dict, override_dict):
     if isinstance(override_dict[key], dict):
@@ -94,4 +112,42 @@ def _compare_dicts_recurse(source: object, target: object, path: DictPath, diff_
             _compare_dicts_recurse(source[k], target[k], new_path, diff_paths, removed_paths)
     elif source != target:
         diff_paths.append(path.copy())
+
+def split_multi_value_param(param: str)-> list[str]:
+
+    if not param:
+        return []
+
+    param = param.strip()
+    if not param:
+        return []
+
+    has_comma = ',' in param
+    has_semicolon = ';' in param
+    has_space = ' ' in param
+    has_newline = '\n' in param
+
+    delimiter_count = sum([has_comma, has_semicolon, has_space, has_newline])
+
+    if delimiter_count > 1:
+        raise ValueError(
+            "Invalid input: use only ONE delimiter type (comma, semicolon, space, or newline)"
+        )
+
+    if has_comma:
+        logger.info(f"env names {param} has comma as delimiter. splitting it")
+        parts = param.split(',')
+    elif has_semicolon:
+        logger.info(f"env names {param} has semicolon as delimiter. splitting it")
+        parts = param.split(';')
+    elif has_space:
+        logger.info(f"env names {param} has space as delimiter. splitting it")
+        parts = param.split()
+    elif has_newline:
+        logger.info(f"env names {param} has newline as delimiter. splitting it")
+        parts = param.splitlines()
+    else:
+        return [param]
+
+    return [p.strip() for p in parts if p.strip()]
 

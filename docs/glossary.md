@@ -1,6 +1,7 @@
 # Glossary
 
 - [Glossary](#glossary)
+  - [Custom Params](#custom-params)
   - [Deploy Postfix](#deploy-postfix)
   - [Environment](#environment)
   - [Environment Inventory](#environment-inventory)
@@ -10,6 +11,10 @@
   - [Template Artifact](#template-artifact)
 
 This glossary provides definitions of key terms used in the EnvGene documentation.
+
+## Custom Params
+
+Session-scoped parameters passed via the Instance pipeline parameter [`CUSTOM_PARAMS`](/docs/instance-pipeline-parameters.md#custom_params) and applied to the [Effective Set](/docs/features/calculator-cli.md#version-20-effective-set-structure) with the highest priority. Custom Params are not persisted between parameter calculation sessions and are treated as sensitive. See [Calculator CLI](/docs/features/calculator-cli.md) for details.
 
 ## Deploy Postfix
 

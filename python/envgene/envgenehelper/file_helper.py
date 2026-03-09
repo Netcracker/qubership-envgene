@@ -2,6 +2,9 @@ import os
 import glob
 import re
 import shutil
+import tarfile
+import time
+import zipfile
 from typing import Callable
 from pathlib import Path
 
@@ -55,7 +58,7 @@ def delete_dir(path):
     try:
         shutil.rmtree(path)
     except:
-        logger.info(f'{path} directory does not exist')
+        logger.warning(f'{path} directory does not exist')
 
 
 def is_glob(path: str) -> bool:
@@ -135,6 +138,11 @@ def openFileAsString(filePath):
 
 def deleteFile(filePath):
     os.remove(filePath)
+
+
+def deleteFileIfExists(filePath):
+    if check_file_exists(filePath):
+        os.remove(filePath)
 
 
 def writeToFile(filePath, contents):
@@ -223,3 +231,71 @@ def ensure_directory(path: Path, mode: int):
         logger.info(f"Directory already exists: {path}")
     path.chmod(mode)
 
+
+def unpack_archive(src: str, dest: str):
+    os.makedirs(dest, exist_ok=True)
+    if src.endswith(".zip"):
+        with zipfile.ZipFile(src, "r") as z:
+            z.extractall(dest)
+        logger.info(f"Unpacked zip archive {src} to {dest}")
+    elif src.endswith((".tar.gz", ".tgz", ".tar")):
+        with tarfile.open(src, "r:*") as t:
+            t.extractall(dest)
+        logger.info(f"Unpacked tar archive {src} to {dest}")
+    else:
+        raise ValueError(f"Unsupported archive format: {src}")
+
+
+def cleanup_dir(path: str):
+    dir_path = Path(path)
+
+    if dir_path.exists() and dir_path.is_dir():
+        shutil.rmtree(dir_path)
+
+    dir_path.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Directory has been recreated: {path}")
+
+
+def is_dir_empty(dir_path):
+    dir_path = Path(dir_path)
+    return dir_path.exists() and dir_path.is_dir() and not any(dir_path.iterdir())
+
+
+def cleanup_dir_by_size(dir_path, max_size_mb):
+    dir_path = Path(dir_path)
+    if not dir_path.exists():
+        logger.warning(f"Path does not exist: {dir_path}")
+        return
+
+    mb = 1024 * 1024
+    max_size = max_size_mb * mb
+
+    files = [Path(f) for f in findAllFilesInDir(dir_path, "")]
+    total = sum(f.stat().st_size for f in files)
+    total_mb = total / mb
+
+    if total <= max_size:
+        logger.info(f"Directory size {total_mb:.2f} mb within limit {max_size_mb} mb")
+        return
+
+    logger.info(f"Directory size {total_mb:.2f} mb exceeds limit {max_size_mb} mb, deleting all files in {dir_path}")
+    for file in files:
+        logger.info(f"Removing file: {file}")
+        deleteFileIfExists(file)
+
+
+def cleanup_dir_by_age(dir_path, keep_last: int):
+    dir_path = Path(dir_path)
+
+    if not dir_path.exists():
+        logger.warning(f"Path does not exist: {dir_path}")
+        return
+
+    files = [f for f in dir_path.iterdir() if f.is_file()]
+    files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+
+    if len(files) > keep_last:
+        logger.info(f"Only {keep_last} files will remain in {dir_path}")
+        for old_file in files[keep_last:]:
+            logger.info(f"Removing file: {old_file}")
+            deleteFileIfExists(old_file)

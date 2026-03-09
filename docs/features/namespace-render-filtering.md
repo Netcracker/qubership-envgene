@@ -80,4 +80,3 @@ Mixed use of aliases and names is not allowed
 
 - Invalid/non-existent namespace names: Pipeline fails
 - Missing BG Domain: Pipeline fails when using aliases without BG Domain
-- Mixed aliases and names: Pipeline fails with validation error
