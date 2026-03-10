@@ -14,7 +14,8 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
         'echo "==== Workspace contents ===="',
         'ls -al $CI_PROJECT_DIR',
         'echo "==== TMP contents ===="',
-        'ls -al $CI_PROJECT_DIR/tmp || echo "tmp missing"'
+        'ls -al $CI_PROJECT_DIR/tmp || echo "tmp missing"',
+        'if [ -d "$CI_PROJECT_DIR/tmp/templates/parameters" ]; then echo "==== TMP/templates/parameters contents ===="; ls -al $CI_PROJECT_DIR/tmp/templates/parameters; else echo "tmp/templates/parameters missing"; fi',
         'cd /build_env; python3 /build_env/scripts/build_env/main.py'
     ]
 
