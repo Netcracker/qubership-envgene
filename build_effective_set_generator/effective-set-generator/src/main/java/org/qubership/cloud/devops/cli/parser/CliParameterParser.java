@@ -47,6 +47,7 @@ import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
+import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
@@ -105,12 +106,19 @@ public class CliParameterParser {
         Map<String, Object> cleanupMappingFileData = new ConcurrentHashMap<>();
         Map<String, String> errorList = new ConcurrentHashMap<>();
         Map<String, Object> k8TokenMap = new ConcurrentHashMap<>();
+        Map<String, Object> k8TokenMap = new ConcurrentHashMap<>();
         namespaceDTOMap.keySet().parallelStream().forEach(namespaceName -> {
             String credentialsId = findDefaultCredentialsId(namespaceName);
             if (StringUtils.isNotEmpty(credentialsId)) {
                 CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
                 if (credentialDTO != null) {
                     SecretCredentialsDTO secCred = (SecretCredentialsDTO) credentialDTO.getData();
+                    if(!StringUtils.isEmpty(inputData.getNamespaceDTOMap().get(namespaceName).getCredentialsId()) ){
+                        k8TokenMap.put(namespaceName, new Parameter(secCred.getSecret(),"namespace: " + namespaceName,false) );
+                    }
+                    else {
+                        k8TokenMap.put(namespaceName, new Parameter(secCred.getSecret(),"cloud: " + cloudName,false) );
+                    }
                     if(!StringUtils.isEmpty(inputData.getNamespaceDTOMap().get(namespaceName).getCredentialsId()) ){
                         k8TokenMap.put(namespaceName, new Parameter(secCred.getSecret(),"namespace: " + namespaceName,false) );
                     }
@@ -258,6 +266,7 @@ public class CliParameterParser {
                 }
                 if (obj == null && StringUtils.isNotEmpty(k.getValue())) {
                     consumerParamsMap.put(k.getName(), new Parameter(k.getValue(), String.join(",",sharedData.getPcsspPaths()),false));
+                    consumerParamsMap.put(k.getName(), new Parameter(k.getValue(), String.join(",",sharedData.getPcsspPaths()),false));
                 }
                 if (obj == null && StringUtils.isEmpty(k.getValue()) && k.isRequired()) {
                     throw new ConsumerFileProcessingException("Property " + k + " is required and no value is defined in E2E configurations");
@@ -287,6 +296,11 @@ public class CliParameterParser {
             CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
             if (credentialDTO != null) {
                 SecretCredentialsDTO secCred = (SecretCredentialsDTO) credentialDTO.getData();
+                if (!StringUtils.isEmpty(inputData.getNamespaceDTOMap().get(namespaceName).getCredentialsId())) {
+                    k8TokenMap.put(originalNamespace, new Parameter(secCred.getSecret(), "namespace: " + namespaceName, false));
+                } else {
+                    k8TokenMap.put(originalNamespace, new Parameter(secCred.getSecret(), "cloud: " + cloudName, false));
+                }
                 if (!StringUtils.isEmpty(inputData.getNamespaceDTOMap().get(namespaceName).getCredentialsId())) {
                     k8TokenMap.put(originalNamespace, new Parameter(secCred.getSecret(), "namespace: " + namespaceName, false));
                 } else {
@@ -374,7 +388,8 @@ public class CliParameterParser {
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
             if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
-                fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
+                Map<String, Object> perServiceParams = parameterBundle.getPerServiceParams();
+                fileDataConverter.writeToFile(perServiceParams, appChartPath.toString(), "deployment-parameters.yaml");
             }
             fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), deploymentDir, "collision-deployment-parameters.yaml");

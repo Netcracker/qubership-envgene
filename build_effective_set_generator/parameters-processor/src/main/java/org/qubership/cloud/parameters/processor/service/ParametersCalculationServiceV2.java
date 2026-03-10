@@ -25,6 +25,7 @@ import org.qubership.cloud.devops.commons.pojo.parameterset.CustomParameterDTO;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
+import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
 import org.qubership.cloud.parameters.processor.ParametersProcessor;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
@@ -65,6 +66,7 @@ public class ParametersCalculationServiceV2 {
 
     public ParameterBundle getCleanupParameterBundle(String tenantName, String cloudName, String namespaceName,
                                                      DeployerInputs deployerInputs, String originalNamespace,
+                                                     Map<String, Object> k8TokenMap) {
                                                      Map<String, Object> k8TokenMap) {
         Params parameters = parametersProcessor.processNamespaceParameters(tenantName,
                 cloudName,
@@ -110,10 +112,20 @@ public class ParametersCalculationServiceV2 {
     public Map<String, Object> getProcessedParameters(Map<String, String> parameters) {
         Map<String, Parameter> processedParameters = parametersProcessor.processParameters(parameters);
         return new TreeMap<>(processedParameters);
+        return new TreeMap<>(processedParameters);
     }
 
     private static void processPerServiceParams(Params parameters, ParameterBundle parameterBundle) {
         Parameter parameter = parameters.getDeployParams().get(PER_SERVICE_DEPLOY_PARAMS);
+        if (parameter == null || parameter.getValue() == null) {
+            if (parameter != null) {
+                parameters.getDeployParams().remove(PER_SERVICE_DEPLOY_PARAMS);
+            }
+            parameterBundle.setPerServiceParams(new HashMap<>());
+            return;
+        }
+        Object paramValue = parameter.getValue();
+        if (!(paramValue instanceof Map)) {
         if (parameter == null || parameter.getValue() == null) {
             if (parameter != null) {
                 parameters.getDeployParams().remove(PER_SERVICE_DEPLOY_PARAMS);
@@ -129,6 +141,8 @@ public class ParametersCalculationServiceV2 {
         parameterBundle.setProcessPerServiceParams(true);
         @SuppressWarnings("unchecked")
         Map<String, Object> perServiceParams = new TreeMap<>((Map<String, Object>) paramValue);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> perServiceParams = new TreeMap<>((Map<String, Object>) paramValue);
 
         parameterBundle.setPerServiceParams(perServiceParams);
         parameters.getDeployParams().remove(PER_SERVICE_DEPLOY_PARAMS);
@@ -140,23 +154,57 @@ public class ParametersCalculationServiceV2 {
             if (commParameter != null) {
                 parameters.getDeployParams().remove(COMMON_DEPLOY_DESC);
             }
+        if (commParameter == null || commParameter.getValue() == null) {
+            if (commParameter != null) {
+                parameters.getDeployParams().remove(COMMON_DEPLOY_DESC);
+            }
             parameters.getDeployParams().remove(DEPLOY_DESC);
             parameterBundle.setDeployDescParams(new HashMap<>());
             return;
         }
 
+
         Parameter parameter = parameters.getDeployParams().get(DEPLOY_DESC);
+        Object paramValue = parameter != null ? parameter.getValue() : null;
+        if (paramValue == null) {
         Object paramValue = parameter != null ? parameter.getValue() : null;
         if (paramValue == null) {
             parameters.getDeployParams().remove(DEPLOY_DESC);
         }
 
+
         Map<String, Object> finalDeployDescMap = new LinkedHashMap<>();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> deployDescParams = (paramValue instanceof Map) ?
+            new TreeMap<>((Map<String, Object>) paramValue) : new LinkedHashMap<>();
         @SuppressWarnings("unchecked")
         Map<String, Object> deployDescParams = (paramValue instanceof Map) ?
             new TreeMap<>((Map<String, Object>) paramValue) : new LinkedHashMap<>();
 
         Map<String, Object> commonParamMap = new LinkedHashMap<>();
+        Object commParamValue = commParameter.getValue();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> commonDepDescMap = (commParamValue instanceof Map) ?
+            new TreeMap<>((Map<String, Object>) commParamValue) : new LinkedHashMap<>();
+        commonDepDescMap.entrySet().stream().forEach(entry -> {
+            Object value = entry.getValue();
+            Map<String, Object> valueMap = null;
+            if (value instanceof Parameter) {
+                Object innerValue = ((Parameter) value).getValue();
+                if (innerValue instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> map = (Map<String, Object>) innerValue;
+                    valueMap = map;
+                }
+            } else if (value instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> map = (Map<String, Object>) value;
+                valueMap = map;
+            }
+            if (valueMap != null) {
+                commonParamMap.putAll(valueMap);
+            }
+        });
         Object commParamValue = commParameter.getValue();
         @SuppressWarnings("unchecked")
         Map<String, Object> commonDepDescMap = (commParamValue instanceof Map) ?
@@ -212,6 +260,7 @@ public class ParametersCalculationServiceV2 {
 
     public void prepareSecureInsecureParams(Map<String, Parameter> parameters, ParameterBundle parameterBundle
             , ParameterType parameterType, Map<String,Object> k8TokenMap, String originalNamespace) {
+            , ParameterType parameterType, Map<String,Object> k8TokenMap, String originalNamespace) {
         Map<String, Parameter> securedParams = new TreeMap<>();
         Map<String, Parameter> inSecuredParams = new TreeMap<>();
         if (MapUtils.isEmpty(parameters) && MapUtils.isEmpty(parameterBundle.getCustomTechParameters())) {
@@ -220,6 +269,8 @@ public class ParametersCalculationServiceV2 {
         }
         filterSecuredParams(parameters, securedParams, inSecuredParams, parameterType);
 
+        Map<String, Object> finalSecuredParams = new TreeMap<>(securedParams);
+        Map<String, Object> inSecuredParamsAsObject = new TreeMap<>(inSecuredParams);
         Map<String, Object> finalSecuredParams = new TreeMap<>(securedParams);
         Map<String, Object> inSecuredParamsAsObject = new TreeMap<>(inSecuredParams);
         if (parameterType == ParameterType.E2E) {
@@ -262,6 +313,8 @@ public class ParametersCalculationServiceV2 {
         parameterBundle.setCollisionSecureParameters(securedCollisionParams);
         copyParams(parameterBundle, finalSecuredParams, inSecuredParamsAsObject, k8TokenMap, originalNamespace);
         prepareBundleParameters(parameterBundle, finalSecuredParams, inSecuredParamsAsObject);
+        copyParams(parameterBundle, finalSecuredParams, inSecuredParamsAsObject, k8TokenMap, originalNamespace);
+        prepareBundleParameters(parameterBundle, finalSecuredParams, inSecuredParamsAsObject);
         Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject, parameterBundle.isProcessPerServiceParams(),
                 deployCollisionParams);
         Map<String, Object> finalSecParams = prepareFinalParams(finalSecuredParams, true, securedCollisionParams);
@@ -269,6 +322,7 @@ public class ParametersCalculationServiceV2 {
         parameterBundle.setDeployParams(finalInsecureParams);
     }
 
+    private void prepareBundleParameters(ParameterBundle parameterBundle, Map<String, Object> finalSecParams, Map<String, Object> finalInsecureParams) {
     private void prepareBundleParameters(ParameterBundle parameterBundle, Map<String, Object> finalSecParams, Map<String, Object> finalInsecureParams) {
         if (finalInsecureParams.containsKey(DEFAULT_SSL_CERTIFICATES_BUNDLE)) {
             Object defaultSslCertificatesBundle = finalInsecureParams.get(DEFAULT_SSL_CERTIFICATES_BUNDLE);
@@ -281,9 +335,12 @@ public class ParametersCalculationServiceV2 {
         }
         if (!finalInsecureParams.containsKey(SSL_SECRET)) {
             finalInsecureParams.put(SSL_SECRET, new Parameter("defaultsslcertificate", ParametersConstants.ENVGENE_DEFAULT, false));
+            finalInsecureParams.put(SSL_SECRET, new Parameter("defaultsslcertificate", ParametersConstants.ENVGENE_DEFAULT, false));
         }
     }
 
+    private void copyParams(ParameterBundle parameterBundle, Map<String, Object> finalSecParams, Map<String, Object> finalInsecureParams,
+                            Map<String,Object> k8TokenMap, String originalNamespace) {
     private void copyParams(ParameterBundle parameterBundle, Map<String, Object> finalSecParams, Map<String, Object> finalInsecureParams,
                             Map<String,Object> k8TokenMap, String originalNamespace) {
         SECURED_KEYS.stream()
@@ -292,6 +349,10 @@ public class ParametersCalculationServiceV2 {
                     finalSecParams.put(key, finalInsecureParams.get(key));
                     finalInsecureParams.remove(key);
                 });
+        Object k8Token = k8TokenMap.get(originalNamespace);
+        if (k8Token != null) {
+            finalSecParams.put(K8S_TOKEN, k8Token);
+        }
         Object k8Token = k8TokenMap.get(originalNamespace);
         if (k8Token != null) {
             finalSecParams.put(K8S_TOKEN, k8Token);
@@ -312,12 +373,22 @@ public class ParametersCalculationServiceV2 {
                 Map<String, Object> servicesMap = (Map<String, Object>) servicesObj;
                 serviceMap = servicesMap;
             }
+            Object servicesObj = parameters.get(SERVICES);
+            if (servicesObj instanceof Parameter) {
+                servicesObj = ((Parameter) servicesObj).getValue();
+            }
+            if (servicesObj instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> servicesMap = (Map<String, Object>) servicesObj;
+                serviceMap = servicesMap;
+            }
         }
         Set<String> services = serviceMap.keySet();
         Set<String> keysToRemove = new HashSet<>();
         parameters.forEach((key, value) -> {
             if (services.contains(key) && !entities.contains(key)) {
                 collisionParams.put(key, value);
+                keysToRemove.add(key);
                 keysToRemove.add(key);
             }
         });
@@ -333,7 +404,26 @@ public class ParametersCalculationServiceV2 {
 
         entities.stream()
                 .map(parameters::remove)
+                .map(parameters::remove)
                 .filter(Objects::nonNull)
+                .forEach(value -> {
+                    Map<String, Object> mapValue = null;
+                    if (value instanceof Parameter) {
+                        Object paramValue = ((Parameter) value).getValue();
+                        if (paramValue instanceof Map) {
+                            @SuppressWarnings("unchecked")
+                            Map<String, Object> map = (Map<String, Object>) paramValue;
+                            mapValue = map;
+                        }
+                    } else if (value instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> map = (Map<String, Object>) value;
+                        mapValue = map;
+                    }
+                    if (mapValue != null) {
+                        finalMap.putAll(mapValue);
+                    }
+                });
                 .forEach(value -> {
                     Map<String, Object> mapValue = null;
                     if (value instanceof Parameter) {
@@ -364,11 +454,30 @@ public class ParametersCalculationServiceV2 {
             finalMap.forEach((key, value) -> {
                 Object mapValue = value instanceof Parameter ? ((Parameter) value).getValue() : value;
                 if (mapValue instanceof Map) {
+                Object mapValue = value instanceof Parameter ? ((Parameter) value).getValue() : value;
+                if (mapValue instanceof Map) {
                     finalMap.put(key, sortedMap);
                 }
             });
         } else {
             finalMap.forEach((key, value) -> {
+                Map<String, Object> valueMap = null;
+                if (value instanceof Parameter) {
+                    Object paramValue = ((Parameter) value).getValue();
+                    if (paramValue instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> map = (Map<String, Object>) paramValue;
+                        valueMap = map;
+                    }
+                } else if (value instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> map = (Map<String, Object>) value;
+                    valueMap = map;
+                }
+                if (valueMap != null) {
+                    Map<String, Object> modifiedMap = new TreeMap<>(valueMap);
+                    modifiedMap.put("!merge", sortedMap);
+                    finalMap.put(key, modifiedMap);
                 Map<String, Object> valueMap = null;
                 if (value instanceof Parameter) {
                     Object paramValue = ((Parameter) value).getValue();
