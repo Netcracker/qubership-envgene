@@ -37,6 +37,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.qubership.cloud.devops.commons.utils.ParameterUtils.wrapPlainMapWithOrigin;
+
 @Slf4j
 @ApplicationScoped
 public class ProfileServiceCliImpl implements ProfileService {
@@ -96,24 +98,8 @@ public class ProfileServiceCliImpl implements ProfileService {
     }
 
     public void setOverrideProfilesWithOrigin(String appName, String serviceName, Profile overrideProfile, Map<String, Object> profileValues, String origin) {
-        expandDottedKeys(profileValues);
-        if (overrideProfile != null) {
-            ApplicationProfile override = overrideProfile.getApplications().stream()
-                    .filter(app -> appName.equals(app.getName()))
-                    .findFirst()
-                    .orElse(null);
-
-            if (override != null) {
-                ServiceProfile serviceOverride = override.getServices().stream()
-                        .filter(serviceProfileEntity -> serviceName.equals(serviceProfileEntity.getName()))
-                        .findFirst().orElse(null);
-                if (serviceOverride != null) {
-                    for (ParameterProfile param : serviceOverride.getParameters()) {
-                        putNestedValue(profileValues, param.getName(), new Parameter(param.getValue(),origin,false) );
-                    }
-                }
-            }
-        }
+        setOverrideProfiles(appName,serviceName,overrideProfile,profileValues);
+        wrapPlainMapWithOrigin(profileValues,origin);
     }
 
     @SuppressWarnings("unchecked")

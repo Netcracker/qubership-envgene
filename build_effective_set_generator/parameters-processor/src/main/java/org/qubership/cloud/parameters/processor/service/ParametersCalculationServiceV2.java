@@ -99,8 +99,8 @@ public class ParametersCalculationServiceV2 {
         }
         if (MapUtils.isNotEmpty(customParams.getAllParams())) {
             prepareCustomParams(customParams, parameters.getDeployParams(), parameters.getTechParams());
-            parameterBundle.setCustomDeployParameters(ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams()));
-            parameterBundle.setCustomTechParameters(ParametersProcessor.convertParameterMapToObject(customParams.getTechnicalParams()));
+            parameterBundle.setCustomDeployParameters(new TreeMap<>(customParams.getDeployParams()));
+            parameterBundle.setCustomTechParameters(new TreeMap<>(customParams.getTechnicalParams()));
         }
         prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, k8TokenMap, originalNamespace);
         prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL, k8TokenMap, originalNamespace);
@@ -109,7 +109,7 @@ public class ParametersCalculationServiceV2 {
 
     public Map<String, Object> getProcessedParameters(Map<String, String> parameters) {
         Map<String, Parameter> processedParameters = parametersProcessor.processParameters(parameters);
-        return ParametersProcessor.convertParameterMapToObject(processedParameters);
+        return new TreeMap<>(processedParameters);
     }
 
     private static void processPerServiceParams(Params parameters, ParameterBundle parameterBundle) {
@@ -136,24 +136,49 @@ public class ParametersCalculationServiceV2 {
 
     private static void processDeploymentDescriptorParams(Params parameters, ParameterBundle parameterBundle) {
         Parameter commParameter = parameters.getDeployParams().get(COMMON_DEPLOY_DESC);
-        if (commParameter.getValue() == null) {
+        if (commParameter == null || commParameter.getValue() == null) {
+            if (commParameter != null) {
+                parameters.getDeployParams().remove(COMMON_DEPLOY_DESC);
+            }
             parameters.getDeployParams().remove(COMMON_DEPLOY_DESC);
             parameters.getDeployParams().remove(DEPLOY_DESC);
             parameterBundle.setDeployDescParams(new HashMap<>());
             return;
         }
         Parameter parameter = parameters.getDeployParams().get(DEPLOY_DESC);
-        if (parameter.getValue() == null) {
+        Object paramValue = parameter != null ? parameter.getValue() : null;
+        if (paramValue == null) {
             parameters.getDeployParams().remove(DEPLOY_DESC);
         }
         Map<String, Object> finalDeployDescMap = new LinkedHashMap<>();
-        Map<String, Object> deployDescParams = ParametersProcessor.convertParameterMapToObject((Map<String, Object>) parameter.getValue());
-
+        @SuppressWarnings("unchecked")
+        Map<String, Object> deployDescParams = (paramValue instanceof Map) ?
+                new TreeMap<>((Map<String, Object>) paramValue) : new LinkedHashMap<>();
 
         Map<String, Object> commonParamMap = new LinkedHashMap<>();
-        Map<String, Object> commonDepDescMap = ParametersProcessor.convertParameterMapToObject((Map<String, Object>) commParameter.getValue());
-        commonDepDescMap.entrySet().stream().forEach(entry -> commonParamMap.putAll((Map<String, Object>) entry.getValue()));
-
+        Object commParamValue = commParameter.getValue();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> commonDepDescMap = (commParamValue instanceof Map) ?
+                new TreeMap<>((Map<String, Object>) commParamValue) : new LinkedHashMap<>();
+        commonDepDescMap.entrySet().stream().forEach(entry -> {
+            Object value = entry.getValue();
+            Map<String, Object> valueMap = null;
+            if (value instanceof Parameter) {
+                Object innerValue = ((Parameter) value).getValue();
+                if (innerValue instanceof Map) {
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> map = (Map<String, Object>) innerValue;
+                    valueMap = map;
+                }
+            } else if (value instanceof Map) {
+                @SuppressWarnings("unchecked")
+                Map<String, Object> map = (Map<String, Object>) value;
+                valueMap = map;
+            }
+            if (valueMap != null) {
+                commonParamMap.putAll(valueMap);
+            }
+        });
         Map<String, Object> deployDescParamMap = new LinkedHashMap<>();
         deployDescParamMap.put("deployDescriptor", deployDescParams);
 
@@ -193,8 +218,8 @@ public class ParametersCalculationServiceV2 {
         }
         filterSecuredParams(parameters, securedParams, inSecuredParams, parameterType);
 
-        Map<String, Object> finalSecuredParams = ParametersProcessor.convertParameterMapToObject(securedParams);
-        Map<String, Object> inSecuredParamsAsObject = ParametersProcessor.convertParameterMapToObject(inSecuredParams);
+        Map<String, Object> finalSecuredParams = new TreeMap<>(securedParams);
+        Map<String, Object> inSecuredParamsAsObject = new TreeMap<>(inSecuredParams);
         if (parameterType == ParameterType.E2E) {
             parameterBundle.setSecuredE2eParams(finalSecuredParams);
             parameterBundle.setE2eParams(inSecuredParamsAsObject);
@@ -214,7 +239,7 @@ public class ParametersCalculationServiceV2 {
         if (MapUtils.isEmpty(parameterBundle.getCustomTechParameters())) {
             return;
         }
-        Map<String, Object> customTechParams = ParametersProcessor.convertParameterMapToObject(parameterBundle.getCustomTechParameters());
+        Map<String, Object> customTechParams = new TreeMap<>(parameterBundle.getCustomTechParameters());
         if (MapUtils.isEmpty(finalSecuredParams)) {
             parameterBundle.setSecuredConfigParams(new TreeMap<>(customTechParams));
         } else {

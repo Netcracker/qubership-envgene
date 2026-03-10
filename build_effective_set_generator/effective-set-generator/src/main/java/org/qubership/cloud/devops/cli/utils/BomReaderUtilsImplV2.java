@@ -46,6 +46,7 @@ import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static org.qubership.cloud.devops.commons.utils.ParameterUtils.wrapPlainMapWithOrigin;
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
 import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.*;
 
@@ -61,8 +62,8 @@ public class BomReaderUtilsImplV2 {
     private final RegistryConfigurationService registryConfigurationService;
     private final SharedData sharedData;
     private final BomCommonUtils bomCommonUtils;
-    private String baselineOrigin = "sbom, resource-profile-baseline: ";
-    String overrideOrigin ="resource-profile-override: ";
+    private String baselineOrigin = "rp-baseline: ";
+    String overrideOrigin ="rp-override: ";
     boolean isBaselineOriginSet = false;
     boolean isOverrideOriginSet= false;
 
@@ -403,45 +404,4 @@ public class BomReaderUtilsImplV2 {
         }
         return profileValues;
     }
-
-
-    @SuppressWarnings("unchecked")
-    private void wrapPlainMapWithOrigin(Map<String, Object> map, String origin) {
-        if (map == null || map.isEmpty()) {
-            return;
-        }
-        for (Map.Entry<String, Object> entry : map.entrySet()) {
-            Object value = entry.getValue();
-            if (value instanceof Parameter) {
-                // Keep the existing parameter as is
-            } else if (value instanceof Map) {
-                wrapPlainMapWithOrigin((Map<String, Object>) value, origin);
-            } else if (value instanceof List) {
-                wrapPlainListWithOrigin((List<Object>) value, origin);
-            } else {
-                entry.setValue(new Parameter(value, origin, false));
-            }
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private List<Object> wrapPlainListWithOrigin(List<Object> list, String origin) {
-        if (list == null || list.isEmpty()) {
-            return list;
-        }
-        for (int i = 0; i < list.size(); i++) {
-            Object item = list.get(i);
-            if (item instanceof Parameter) {
-                // Keep existing Parameter as is
-            } else if (item instanceof Map) {
-                wrapPlainMapWithOrigin((Map<String, Object>) item, origin);
-            } else if (item instanceof List) {
-                list.set(i, wrapPlainListWithOrigin((List<Object>) item, origin));
-            } else {
-                list.set(i, new Parameter(item, origin, false));
-            }
-        }
-        return list;
-    }
-
 }
