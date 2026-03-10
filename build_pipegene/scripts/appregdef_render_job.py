@@ -11,7 +11,15 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
     is_template_test = params.get('IS_TEMPLATE_TEST')
     env_tmp_ver_update_mode = params.get('ENV_TEMPLATE_VERSION_UPDATE_MODE')
     
-    script = []
+    script = [
+        'echo "PIPELINE=$CI_PIPELINE_ID JOB=$CI_JOB_NAME"',
+        'echo "CI_PROJECT_DIR=$CI_PROJECT_DIR"',
+        'echo "Job start time: $(date)"',
+        'echo "==== Workspace contents ===="',
+        'ls -al --time-style=long-iso $CI_PROJECT_DIR',
+        'echo "==== TMP contents ===="',
+        'ls -al --time-style=long-iso $CI_PROJECT_DIR/tmp || echo "tmp missing"'
+    ]
     if env_template_version and not is_template_test:
         script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
 
