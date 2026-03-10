@@ -12,6 +12,8 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
     env_tmp_ver_update_mode = params.get('ENV_TEMPLATE_VERSION_UPDATE_MODE')
     
     script = [
+        'echo "GIT_STRATEGY=$GIT_STRATEGY"',
+        'echo "GIT_CHECKOUT=$GIT_CHECKOUT"',
         'echo "PIPELINE=$CI_PIPELINE_ID JOB=$CI_JOB_NAME"',
         'echo "CI_PROJECT_DIR=$CI_PROJECT_DIR"',
         'echo "Job start time: $(date)"',
