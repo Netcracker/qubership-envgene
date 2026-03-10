@@ -48,8 +48,6 @@ import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
-import org.qubership.cloud.devops.commons.utils.Parameter;
-import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1;
@@ -203,7 +201,7 @@ public class CliParameterParser {
         }
     }
 
-    private void createTopologyFiles(Map<String, String> k8TokenMap) throws IOException {
+    private void createTopologyFiles(String tenantName, String cloudName, Map<String, Object> k8TokenMap) throws IOException {
         Map<String, Object> topologyParams = new TreeMap<>();
         Map<String, Object> topologySecuredParams = new TreeMap<>();
         Map<String, Object> clusterParameterMap = getClusterMap();
@@ -281,7 +279,7 @@ public class CliParameterParser {
     }
 
     public void generateOutput(String tenantName, String cloudName, String namespaceName, String appName,
-                               String appVersion, String appFileRef, Map<String,Object> k8TokenMap) throws IOException {
+                               String appVersion, String appFileRef, Map<String, Object> k8TokenMap) throws IOException {
         DeployerInputs deployerInputs = DeployerInputs.builder().appVersion(appVersion).appFileRef(appFileRef).build();
         String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
         String credentialsId = findDefaultCredentialsId(namespaceName);
@@ -376,8 +374,7 @@ public class CliParameterParser {
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
             if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
-                Map<String, Object> perServiceParams = parameterBundle.getPerServiceParams();
-                fileDataConverter.writeToFile(perServiceParams, appChartPath.toString(), "deployment-parameters.yaml");
+                fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
             }
             fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), deploymentDir, "collision-deployment-parameters.yaml");
