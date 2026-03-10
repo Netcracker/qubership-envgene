@@ -327,10 +327,8 @@ public class FileDataConverterImpl implements FileDataConverter {
             return;
         }
 
-        // Overwrite key comments completely
         keyNode.setBlockComments(valueComments);
 
-        // Remove from value
         scalar.setBlockComments(null);
     }
 
