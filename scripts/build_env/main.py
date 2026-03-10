@@ -1,5 +1,6 @@
 from envgenehelper import *
 from envgenehelper.deployer import *
+from collections import Counter
 
 from build_env import build_env, process_additional_template_parameters
 from cloud_passport import update_env_definition_with_cloud_name
@@ -192,12 +193,20 @@ def get_duplicate_names(param_files):
     file_names = list(map(extractNameFromFile, param_files))
     return set([x for x in file_names if file_names.count(x) > 1])
 
+def get_duplicate_paths(param_files):
+    stems = [Path(p).stem for p in param_files]
+    counts = Counter(stems)
+
+    dup_stems = {s for s, c in counts.items() if c > 1}
+
+    return [p for p in param_files if Path(p).stem in dup_stems]
 
 def validate_parameters(templates_dir, all_instances_dir, cluster_name=None, env_name=None):
     errors = []
     logger.info(f'Validate {templates_dir}/parameters dir')
     param_files = findAllYamlsInDir(f'{templates_dir}/parameters')
-
+    file_paths = get_duplicate_paths(param_files)
+    logger.info(f'Duplicate file paths are  {file_paths}')
     names = get_duplicate_names(param_files)
 
     if len(names) > 0:
