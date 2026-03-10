@@ -225,6 +225,17 @@ artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 # `cmdb` - Application and Registry Definitions are discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository
 # `auto` - Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
 app_reg_def_mode: enum [`auto`, `cmdb`, `local`]
+# Optional
+# SBOM retention configuration
+# Triggers during Effective Set generation when repository reaches 1200 MB size threshold
+sbom_retention:
+  # Optional. Default value - `false`
+  # Enable/disable SBOM retention cleanup
+  enabled: boolean
+  # Optional. Default value - `10`
+  # Number of latest versions to keep per application
+  # Used only when enabled is true
+  keep_versions_per_app: integer
 ```
 
 ## `integration.yml`

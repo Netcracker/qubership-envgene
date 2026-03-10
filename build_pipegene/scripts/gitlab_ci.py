@@ -155,6 +155,11 @@ def build_pipeline(params: dict) -> None:
                                                                                         params)
         else:
             logger.info(f'Preparing of generate_effective_set job for {full_env_name} is skipped.')
+            if "CUSTOM_PARAMS" in params and params["CUSTOM_PARAMS"]:
+                logger.warning(
+                    "'CUSTOM_PARAMS' is only applied when ['GENERATE_EFFECTIVE_SET'](#generate_effective_set) "
+                    "is 'true'. If 'GENERATE_EFFECTIVE_SET' is 'false', the 'generate_effective_set' job does not run "
+                    "and 'CUSTOM_PARAMS' has no effect.")
 
         jobs_requiring_git_commit = ["appregdef_render_job", "process_sd_job", "env_build_job",
                                      "generate_effective_set_job", "env_inventory_generation_job",
@@ -191,8 +196,14 @@ def build_pipeline(params: dict) -> None:
 
     # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
-    for job in sorted_pipeline.find_jobs(JobFilter()):  # gets all jobs in pipeline
-        job.artifacts.add_paths('./')
+    for job in sorted_pipeline.find_jobs(JobFilter()):
+        job.artifacts.add_paths(
+            'environments/',
+            'configuration/',
+            'sboms/',
+            'templates/'
+        )
+
         is_first_job = job.needs is None or len(job.needs) == 0
         if not is_first_job:
             job.add_variables(GIT_CHECKOUT="false")

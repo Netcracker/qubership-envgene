@@ -253,10 +253,10 @@ How-to guides are **task-oriented** recipes that guide users through steps to so
     - Common use cases
     - Best practices
 
-- ❌ **How to use Template Inheritance**
+- ❌ **How to use Template Composition**
   - Create parent template
   - Create child template
-  - Configure inheritance
+  - Configure composition
   - Override parent elements
 
 ---
@@ -293,7 +293,7 @@ How-to guides are **task-oriented** recipes that guide users through steps to so
 ##### Advanced Scenarios (0% coverage)
 
 - ❌ **How to use Template Override**
-  - When to use override vs inheritance
+  - When to use override vs composition
   - Configure override
   - Override specific sections
   - Test overrides
@@ -581,11 +581,11 @@ why things are the way they are.
   - Data flow between repositories
   - Why this architecture
 
-- ❌ **How Template Inheritance works and when to use it**
-  - Inheritance concept
+- ❌ **How Template Composition works and when to use it**
+  - Composition concept
   - Use cases
   - Design patterns
-  - When NOT to use inheritance
+  - When NOT to use composition
 
 - ❌ **EnvGene Data Model: From Template to Effective Set**
   - Complete data flow
@@ -610,7 +610,7 @@ why things are the way they are.
   - Consumers of Effective Set
 
 - ❌ **ParameterSets concept and parameter hierarchy**
-  - Parameter inheritance model
+  - Parameter composition model
   - Merge strategies
   - Precedence rules
   - Design rationale
@@ -682,7 +682,7 @@ why things are the way they are.
   - Complementary use
   - Choosing between them
 
-- ❌ **Template Inheritance vs Template Override**
+- ❌ **Template Composition vs Template Override**
   - When to use each
   - Pros and cons
   - Can they be combined?
@@ -975,7 +975,7 @@ Troubleshooting guides reduce support load.
 │   ├── comparisons/                   # 🆕 NEW section
 │   │   ├── envgene-vs-helm.md
 │   │   ├── envgene-vs-kustomize.md
-│   │   └── inheritance-vs-override.md
+│   │   └── composition-vs-override.md
 │   └── advanced-topics/               # 🆕 NEW section
 │       ├── scaling-to-100-environments.md
 │       ├── security-best-practices.md
@@ -1243,7 +1243,7 @@ Create documentation for each primary user journey:
 3. 📕 `reference/templates/jinja-filters.md` - REFERENCE
 4. 📕 `reference/objects/template-descriptor.md` - REFERENCE (exists as part of envgene-objects.md)
 5. 📙 `explanation/patterns/template-repository-organization.md` - EXPLANATION
-6. 📗 `how-to/advanced/template-inheritance.md` - HOW-TO
+6. 📗 `how-to/advanced/template-composition.md` - HOW-TO
 
 **Current gaps:** Steps 1, 3, 5, 6 missing
 

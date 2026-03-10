@@ -16,7 +16,6 @@
     - [Use Case 1: Development vs Production Profiles](#use-case-1-development-vs-production-profiles)
     - [Use Case 2: Cluster-Wide Resource Scaling](#use-case-2-cluster-wide-resource-scaling)
     - [Use Case 3: Single Environment Hot Fix](#use-case-3-single-environment-hot-fix)
-  - [Best Practices](#best-practices)
   - [Verification](#verification)
   - [Related Documentation](#related-documentation)
 
@@ -93,13 +92,13 @@ Update your Cloud or Namespace template to reference the profile:
 **Example:** `/templates/namespaces/core.yaml`
 
 ```yaml
-name: "{{ current_env.name }}-core"
-type: namespace
+---
+name: "{{ current_env.environmentName }}-core"
+# ... other required fields ...
 profile:
   name: "dev-core-profile"
-applications:
-  - name: "Cloud-Core"
-    # ... application configuration ...
+  baseline: "dev"
+# ... other required fields ...
 ```
 
 ### Step 3: Commit and Publish Template
@@ -288,7 +287,7 @@ applications:
             value: "3000m"
 ```
 
-All environments in `prod-cluster-eu` will inherit this profile automatically via **file location priority** (cluster-level overrides apply to all environments within that cluster unless overridden at environment level).
+Each environment in `prod-cluster-eu` that references `eu-prod-scaling` via `envTemplate.envSpecificResourceProfiles` in its `env_definition.yml` will use this file. EnvGene finds it automatically via location priority - no need to copy the file per environment, but the reference in `env_definition.yml` is still required.
 
 ### Use Case 3: Single Environment Hot Fix
 
@@ -316,37 +315,6 @@ Update `env_definition.yml` for `prod-env-03` only.
 
 ---
 
-## Best Practices
-
-1. **Use Template Profiles for Defaults**
-   - Define baseline profiles in Template Repository
-   - Reference appropriate profiles for environment types (dev, staging, prod)
-
-2. **Use Environment Specific Overrides for Exceptions**
-   - Only override when environment needs differ from template defaults
-   - Document why specific values are needed
-
-3. **Organize by Scope**
-
-   - **Environment-specific**: High-traffic environments, special requirements
-   - **Cluster-wide**: Regional or infrastructure-based differences
-   - **Global**: Cross-cluster standards
-
-4. **Use Descriptive Names**
-   - Include environment type, purpose, or special notes
-   - Examples: `prod-high-traffic`, `eu-cluster-baseline`, `hotfix-temp-scaling`
-
-5. **Document Decisions**
-   - Add `description` field explaining why values were chosen
-   - Link to performance test results or incidents if applicable
-
-6. **Version Control Best Practices**
-   - Keep resource profiles in version control
-   - Review changes carefully (resource changes affect costs and stability)
-   - Test in lower environments first
-
----
-
 ## Verification
 
 After configuring resource profiles, verify they are applied correctly:
@@ -360,7 +328,7 @@ After configuring resource profiles, verify they are applied correctly:
    Look for the Resource Profile Override in the generated output:
 
    ```text
-   Namespaces/<namespace-name>/resource_profiles/<profile-name>.yml
+   environments/<cluster-name>/<environment-name>/Profiles/<profile-name>.yml
    ```
 
 3. **Verify Merge Result:**

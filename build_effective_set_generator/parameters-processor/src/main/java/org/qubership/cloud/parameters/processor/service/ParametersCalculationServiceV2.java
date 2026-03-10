@@ -21,6 +21,7 @@ import jakarta.inject.Inject;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.qubership.cloud.devops.commons.pojo.parameterset.CustomParameterDTO;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.parameters.processor.ParametersProcessor;
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static org.qubership.cloud.devops.commons.utils.ParameterUtils.prepareCustomParams;
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
 import static org.qubership.cloud.devops.commons.utils.constant.NamespaceConstants.SSL_SECRET;
 
@@ -49,8 +51,11 @@ public class ParametersCalculationServiceV2 {
     }
 
     public ParameterBundle getCliParameter(String tenantName, String cloudName, String namespaceName, String applicationName,
-                                           DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap) {
-        return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace, k8TokenMap);
+                                           DeployerInputs deployerInputs, String originalNamespace,
+                                           Map<String, String> k8TokenMap, CustomParameterDTO customParams) {
+        return getParameterBundle(tenantName, cloudName, namespaceName,
+                applicationName, deployerInputs, originalNamespace,
+                k8TokenMap, customParams);
     }
 
     public ParameterBundle getCliE2EParameter(String tenantName, String cloudName) {
@@ -73,13 +78,15 @@ public class ParametersCalculationServiceV2 {
     }
 
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName,
-                                               DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap) {
+                                               DeployerInputs deployerInputs, String originalNamespace,
+                                               Map<String, String> k8TokenMap, CustomParameterDTO customParams) {
         Params parameters = parametersProcessor.processAllParameters(tenantName,
                 cloudName,
                 namespaceName,
                 applicationName,
                 deployerInputs,
-                originalNamespace);
+                originalNamespace,
+                customParams.getAllParams());
 
 
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
@@ -88,6 +95,11 @@ public class ParametersCalculationServiceV2 {
         }
         if (MapUtils.isNotEmpty(parameters.getDeployParams()) && parameters.getDeployParams().containsKey(DEPLOY_DESC)) {
             processDeploymentDescriptorParams(parameters, parameterBundle);
+        }
+        if (MapUtils.isNotEmpty(customParams.getAllParams())) {
+            prepareCustomParams(customParams, parameters.getDeployParams(), parameters.getTechParams());
+            parameterBundle.setCustomDeployParameters(ParametersProcessor.convertParameterMapToObject(customParams.getDeployParams()));
+            parameterBundle.setCustomTechParameters(ParametersProcessor.convertParameterMapToObject(customParams.getTechnicalParams()));
         }
         prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY, k8TokenMap, originalNamespace);
         prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL, k8TokenMap, originalNamespace);
@@ -166,7 +178,7 @@ public class ParametersCalculationServiceV2 {
             , ParameterType parameterType, Map<String, String> k8TokenMap, String originalNamespace) {
         Map<String, Parameter> securedParams = new TreeMap<>();
         Map<String, Parameter> inSecuredParams = new TreeMap<>();
-        if (parameters == null || parameters.isEmpty()) {
+        if (MapUtils.isEmpty(parameters) && MapUtils.isEmpty(parameterBundle.getCustomTechParameters())) {
             LOGGER.debug("No Parameters found. Check if the input values are correct");
             return;
         }
@@ -180,12 +192,24 @@ public class ParametersCalculationServiceV2 {
         } else if (parameterType == ParameterType.DEPLOY) {
             handleDeployParameters(parameterBundle, k8TokenMap, originalNamespace, finalSecuredParams, inSecuredParamsAsObject);
         } else if (parameterType == ParameterType.TECHNICAL) {
-            parameterBundle.setSecuredConfigParams(finalSecuredParams);
+            prepareCustomTechSecureParams(parameterBundle, finalSecuredParams);
             parameterBundle.setConfigServerParams(inSecuredParamsAsObject);
         } else if (parameterType == ParameterType.CLEANUP) {
             finalSecuredParams.put(K8S_TOKEN, k8TokenMap.get(originalNamespace));
             parameterBundle.setCleanupSecureParameters(finalSecuredParams);
             parameterBundle.setCleanupParameters(inSecuredParamsAsObject);
+        }
+    }
+
+    private static void prepareCustomTechSecureParams(ParameterBundle parameterBundle, Map<String, Object> finalSecuredParams) {
+        if (MapUtils.isEmpty(parameterBundle.getCustomTechParameters())) {
+            return;
+        }
+        Map<String, Object> customTechParams = ParametersProcessor.convertParameterMapToObject(parameterBundle.getCustomTechParameters());
+        if (MapUtils.isEmpty(finalSecuredParams)) {
+            parameterBundle.setSecuredConfigParams(new TreeMap<>(customTechParams));
+        } else {
+            parameterBundle.getSecuredConfigParams().putAll(customTechParams);
         }
     }
 
