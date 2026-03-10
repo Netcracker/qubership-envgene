@@ -8,6 +8,8 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
     logger.info(f'prepare env_build job for {full_env}')
 
     script = [
+        'echo "GIT_STRATEGY=$GIT_STRATEGY"',
+        'echo "GIT_CHECKOUT=$GIT_CHECKOUT"',
         'echo "PIPELINE=$CI_PIPELINE_ID JOB=$CI_JOB_NAME"',
         'echo "CI_PROJECT_DIR=$CI_PROJECT_DIR"',
         'echo "Job start time: $(date)"',
