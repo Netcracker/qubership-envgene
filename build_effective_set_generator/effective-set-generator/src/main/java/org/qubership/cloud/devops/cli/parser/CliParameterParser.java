@@ -106,7 +106,6 @@ public class CliParameterParser {
         Map<String, Object> cleanupMappingFileData = new ConcurrentHashMap<>();
         Map<String, String> errorList = new ConcurrentHashMap<>();
         Map<String, Object> k8TokenMap = new ConcurrentHashMap<>();
-        Map<String, Object> k8TokenMap = new ConcurrentHashMap<>();
         namespaceDTOMap.keySet().parallelStream().forEach(namespaceName -> {
             String credentialsId = findDefaultCredentialsId(namespaceName);
             if (StringUtils.isNotEmpty(credentialsId)) {
