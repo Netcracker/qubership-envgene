@@ -207,5 +207,6 @@ def build_pipeline(params: dict) -> None:
         is_first_job = job.needs is None or len(job.needs) == 0
         if not is_first_job:
             job.add_variables(GIT_CHECKOUT="false")
+            job.add_variables(GIT_CLEAN_FLAGS="-ffdx")
 
     sorted_pipeline.write_yaml()
