@@ -22,6 +22,8 @@ def print_workspace_debug():
     print(f"PIPELINE={os.getenv('CI_PIPELINE_ID')}")
     print(f"JOB={os.getenv('CI_JOB_NAME')}")
     print(f"CI_PROJECT_DIR={project_dir}")
+    print(f"GIT_STRATEGY={os.getenv('GIT_STRATEGY')}")
+    print(f"GIT_CHECKOUT={os.getenv('GIT_CHECKOUT')}")
     print(f"Job start time: {datetime.now()}")
 
     print("==== Workspace contents ====")
