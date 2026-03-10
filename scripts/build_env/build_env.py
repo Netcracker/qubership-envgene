@@ -1,14 +1,10 @@
-import os
-import copy
 import yaml
-import re
-import pathlib
-from pathlib import Path
-
 from envgenehelper import *
-from resource_profiles import processResourceProfiles
-from schema_validation import checkEnvSpecificParametersBySchema
+
 from cloud_passport import process_cloud_passport
+from resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, safe_set_profile_name, \
+    has_valid_profile_name
+from schema_validation import checkEnvSpecificParametersBySchema
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
@@ -421,8 +417,7 @@ def processTemplate(templatePath, templateName, env_instances_dir, schema_path, 
                                                                                            env_instances_dir)
     templateContent["technicalConfigurationParameterSets"] = []
     # preparing map for needed resource profiles
-    if "profile" in templateContent and templateContent["profile"] and "name" in templateContent["profile"] and \
-            templateContent["profile"]["name"]:
+    if has_valid_profile_name(templateContent):
         rpName = templateContent["profile"]["name"]
         resource_profiles_map[templateName] = rpName
     writeYamlToFile(templatePath, templateContent)
@@ -570,5 +565,26 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     checkEnvSpecificParametersBySchema(env_dir, env_specific_parameters_map, template_namespace_names)
 
     # process resource profiles
-    processResourceProfiles(env_dir, resource_profiles_dir, profiles_schema, needed_resource_profiles_map,
-                            env_specific_resource_profile_map, render_context, header_text=generated_header_text)
+    result_profiles_dir = f"{env_dir}/Profiles"
+    all_profiles = collect_resource_profiles(result_profiles_dir, resource_profiles_dir, profiles_schema,
+                                             needed_resource_profiles_map, render_context)
+    override_profile_map = override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map,
+                                                             render_context)
+
+    if override_profile_map:
+        for profile_key, profile_file_path in override_profile_map.items():
+            profile_name = openYaml(profile_file_path, {}).get("name")
+
+            if profile_key == 'cloud':
+                safe_set_profile_name(openYaml(cloudTemlatePath), profile_name)
+
+            for ns in namespaces:
+                if profile_key == ns.postfix:
+                    safe_set_profile_name(ns.definition_path, profile_name)
+            all_profiles[profile_key] = profile_file_path
+
+    for profile_key, profile_file_path in all_profiles.items():
+        logger.info(f"Copying '{profile_key}' to resulting directory '{result_profiles_dir}'")
+        copy_path(profile_file_path, f"{result_profiles_dir}/")
+        resulting_profile_path = f"{result_profiles_dir}/{profile_file_path}"
+        beautifyYaml(resulting_profile_path, profiles_schema, generated_header_text)
