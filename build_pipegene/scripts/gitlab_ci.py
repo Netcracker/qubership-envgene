@@ -203,19 +203,7 @@ def build_pipeline(params: dict) -> None:
             'sboms/',
             'templates/'
         )
-
-        debug_block = [
-        'echo "PIPELINE=$CI_PIPELINE_ID JOB=$CI_JOB_NAME"',
-        'echo "CI_PROJECT_DIR=$CI_PROJECT_DIR"',
-        'echo "Job start time: $(date)"',
-        'echo "==== Workspace contents ===="',
-        'ls -al --time-style=long-iso $CI_PROJECT_DIR',
-        'echo "==== TMP contents ===="',
-        'ls -al --time-style=long-iso $CI_PROJECT_DIR/tmp || echo "tmp missing"'
-        ]
-
-        job.script = debug_block + job.script
-
+        
         is_first_job = job.needs is None or len(job.needs) == 0
         if not is_first_job:
             job.add_variables(GIT_CHECKOUT="false")

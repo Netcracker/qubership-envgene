@@ -8,6 +8,13 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
     logger.info(f'prepare env_build job for {full_env}')
 
     script = [
+        'echo "PIPELINE=$CI_PIPELINE_ID JOB=$CI_JOB_NAME"',
+        'echo "CI_PROJECT_DIR=$CI_PROJECT_DIR"',
+        'echo "Job start time: $(date)"',
+        'echo "==== Workspace contents ===="',
+        'ls -al --time-style=long-iso $CI_PROJECT_DIR',
+        'echo "==== TMP contents ===="',
+        'ls -al --time-style=long-iso $CI_PROJECT_DIR/tmp || echo "tmp missing"'
         'cd /build_env; python3 /build_env/scripts/build_env/main.py'
     ]
 
