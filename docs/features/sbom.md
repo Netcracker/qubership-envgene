@@ -9,6 +9,7 @@
       - [Application SBOM](#application-sbom)
       - [Environment Template SBOM](#environment-template-sbom)
   - [SBOM Storage and Retention](#sbom-storage-and-retention)
+    - [SBOM directory layout](#sbom-directory-layout)
   - [Use Cases](#use-cases)
   - [Affection map](#affection-map)
   - [Links](#links)
@@ -56,13 +57,36 @@ A JSON file compliant with the CycloneDX specification, describing the following
 
 ## SBOM Storage and Retention
 
-Generated SBOM files are cached in the `/sboms/` directory of the Instance Repository to avoid expensive regeneration.
+Generated SBOM files are cached in the `/sboms/` directory of the Instance Repository to avoid expensive regeneration. Each application's SBOMs are stored in a subdirectory named after the application.
 
 To manage repository size and prevent reaching the 1500 MB limit, EnvGene provides automatic SBOM retention. See [SBOM Retention](/docs/features/sbom-retention.md) for configuration details.
 
+### SBOM directory layout
+
+SBOM files are stored under `/sboms/<application-name>/`. Each file is named `<application-name>-<application-version>.sbom.json`.
+
+- **Root:** `/sboms/` in the Instance Repository
+- **Per application:** one subdirectory `/sboms/<application-name>/`
+- **Filename:** `<application-name>-<application-version>.sbom.json`
+
+**Example:**
+
+```text
+...
+/sboms
+├── Cloud-BSS
+|   ├── Cloud-BSS-1.2.3.sbom.json
+|   └── Cloud-BSS-1.2.4.sbom.json
+└── cloud-oss
+    └── cloud-oss-2.0.1.sbom.json
+```
+
+Full path to a single SBOM: `/sboms/<application-name>/<application-name>-<application-version>.sbom.json`. This layout keeps all versions of an application together and simplifies retention cleanup per application.
+
 ## Use Cases
 
-1. TBD
+- [SBOM Retention](/docs/use-cases/sbom-retention.md) - Cleanup of old SBOM versions when retention threshold is reached
+- [SBOM storage migration](/docs/use-cases/sbom-storage-migration.md) - Automatic migration to per-application layout on first run after upgrading EnvGene
 
 ## Affection map
 

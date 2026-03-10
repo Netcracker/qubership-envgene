@@ -5,6 +5,7 @@
   - [Tutorials](#tutorials)
   - [Core Concepts](#core-concepts)
   - [How-To Guides](#how-to-guides)
+  - [Migrations](#migrations)
   - [Advanced Features](#advanced-features)
   - [Examples \& Samples](#examples--samples)
   - [Development](#development)
@@ -50,7 +51,11 @@
 
 - [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
+
+## Migrations
+
 - [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
+- [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
 
 ## Advanced Features
 

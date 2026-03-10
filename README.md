@@ -20,6 +20,7 @@
     - [Tutorials](#tutorials)
     - [Core Concepts](#core-concepts)
     - [How-To Guides](#how-to-guides)
+    - [Migrations](#migrations)
     - [Advanced Features](#advanced-features)
     - [Examples \& Samples](#examples--samples)
     - [Development](#development)
@@ -150,7 +151,11 @@ After the pipeline finishes, the Environment configuration will be generated and
 
 - [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
+
+### Migrations
+
 - [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
+- [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
 
 ### Advanced Features
 
@@ -167,6 +172,8 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Template Composition**](/docs/features/template-composition.md) - Advanced Environment template patterns
 - [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - BG domains, state management, and `bg_manage` pipeline job
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
+- [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
+- [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
 
 ### Examples & Samples
 
