@@ -18,7 +18,8 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
         'echo "==== Workspace contents ===="',
         'ls -al  $CI_PROJECT_DIR',
         'echo "==== TMP contents ===="',
-        'ls -al $CI_PROJECT_DIR/tmp || echo "tmp missing"'
+        'ls -al $CI_PROJECT_DIR/tmp || echo "tmp missing"',
+        'if [ -d "$CI_PROJECT_DIR/tmp/templates/parameters" ]; then echo "==== TMP/templates/parameters contents ===="; ls -al $CI_PROJECT_DIR/tmp/templates/parameters; else echo "tmp/templates/parameters missing"; fi'
     ]
     if env_template_version and not is_template_test:
         script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
