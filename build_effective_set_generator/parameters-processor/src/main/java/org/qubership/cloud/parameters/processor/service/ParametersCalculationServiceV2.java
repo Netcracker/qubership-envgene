@@ -202,6 +202,9 @@ public class ParametersCalculationServiceV2 {
     }
 
     private static void prepareCustomTechSecureParams(ParameterBundle parameterBundle, Map<String, Object> finalSecuredParams) {
+        if (MapUtils.isEmpty(parameterBundle.getCustomTechParameters())) {
+            return;
+        }
         Map<String, Object> customTechParams = ParametersProcessor.convertParameterMapToObject(parameterBundle.getCustomTechParameters());
         if (MapUtils.isEmpty(finalSecuredParams)) {
             parameterBundle.setSecuredConfigParams(new TreeMap<>(customTechParams));
