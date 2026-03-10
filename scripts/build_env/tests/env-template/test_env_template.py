@@ -43,6 +43,12 @@ STAGING_ZIP_URL = (
     f"{ARTIFACT_ZIP_ID}-{ZIP_VERSION}.zip"
 )
 
+SNAPSHOT_ZIP_URL = (
+    f"{SNAPSHOT_BASE}/{PROJECT_GROUP_PATH}/"
+    f"{ARTIFACT_ZIP_ID}/{ZIP_VERSION}/"
+    f"{ARTIFACT_ZIP_ID}-{ZIP_VERSION}.zip"
+)
+
 TMPL_ZIP_URL = (
     f"{TMPL_SNAPSHOT_BASE}/{PROJECT_GROUP_PATH}/"
     f"{ARTIFACT_ZIP_ID}/{ZIP_VERSION}/"
@@ -94,6 +100,15 @@ dd_json = {
     }]
 }
 
+dd_json_without_mvn_repo = {
+    "configurations": [{
+        "artifacts": [{
+            "id": f"{PROJECT_GROUP_ID}:{ARTIFACT_ZIP_ID}:{ZIP_VERSION}",
+            "type": "zip",
+            "classifier": ""
+        }]
+    }]
+}
 
 def set_env(name: str):
     environ["ENVIRONMENT_NAME"] = name
@@ -116,6 +131,8 @@ def mock_dd_exists(aio_mock=None, exists=True):
 def mock_dd_response():
     responses.add(responses.GET, DD_URL, json=dd_json, status=200)
 
+def mock_dd_response_without_mvn_repo():
+    responses.add(responses.GET, DD_URL, json=dd_json_without_mvn_repo, status=200)
 
 def mock_zip(url):
     responses.add(
@@ -164,6 +181,21 @@ class TestEnvTemplate:
         assert len(responses.calls) == 3
         assert responses.calls[0].request.url == DD_URL
         assert responses.calls[1].request.url == STAGING_ZIP_URL
+
+    @responses.activate
+    def test_new_logic_with_dd_without_mvn_repo(self, mock_aio_response):
+        set_env("env-01")
+
+        mock_metadata(mock_aio_response)
+        mock_dd_exists(mock_aio_response, exists=True)
+        mock_dd_response_without_mvn_repo()
+        mock_zip(SNAPSHOT_ZIP_URL)
+
+        process_env_template()
+
+        assert len(responses.calls) == 3
+        assert responses.calls[0].request.url == DD_URL
+        assert responses.calls[1].request.url == SNAPSHOT_ZIP_URL
 
     @responses.activate
     def test_new_logic_with_zip(self, mock_aio_response):

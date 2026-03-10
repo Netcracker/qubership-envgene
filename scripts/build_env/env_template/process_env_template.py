@@ -2,6 +2,7 @@ import asyncio
 import os
 import tempfile
 from pathlib import Path
+from urllib.parse import urlparse
 
 from artifact_searcher import artifact
 from artifact_searcher.utils.models import FileExtension, Credentials, Registry, Application
@@ -70,7 +71,7 @@ async def resolve_artifact_new_logic(app_def: Application, app_version: str, tem
     dd_artifact_info = await artifact.check_artifact_async(app_def, FileExtension.JSON, app_version, cred)
     if dd_artifact_info:
         logger.info("Loading environment template artifact info from deployment descriptor...")
-        dd_url, dd_repo = dd_artifact_info
+        dd_url, (repo_name, _) = dd_artifact_info
         logger.info(f"Resolved deployment descriptor URL: {dd_url}")
         if "-SNAPSHOT" in app_version:
             resolved_version = extract_snapshot_version(dd_url, app_version)
@@ -82,7 +83,12 @@ async def resolve_artifact_new_logic(app_def: Application, app_version: str, tem
         if not all([group_id, artifact_id, version]):
             raise ValueError(f"Invalid maven coordinates from deployment descriptor {dd_url}")
 
-        repo_url = dd_config.get("configurations", [{}])[0].get("maven_repository") or dd_repo
+        repo_url = dd_config.get("configurations", [{}])[0].get("maven_repository")
+        
+        if not repo_url:
+            parsed = urlparse(dd_url)
+            repo_url = f"{parsed.scheme}://{parsed.netloc}/{repo_name}"
+            logger.info(f"building repo url from the repo name : {repo_url}")
         template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP, cred)
         validate_url(template_url, group_id, artifact_id, version)
     else:
