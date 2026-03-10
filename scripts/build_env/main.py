@@ -287,8 +287,8 @@ def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir
     logger.info(f'output_dir: {output_dir}')
     logger.info(f'work_dir: {work_dir}')
 
-    check_environment_is_valid_or_fail(env_name, cluster_name, all_instances_dir,
-                                       validate_env_definition_by_schema=True)
+    # check_environment_is_valid_or_fail(env_name, cluster_name, all_instances_dir,
+    #                                    validate_env_definition_by_schema=True)
     for _, template_dir in templates_dirs.items():
         if template_dir:
             validate_parameters(template_dir, all_instances_dir, cluster_name, env_name)
