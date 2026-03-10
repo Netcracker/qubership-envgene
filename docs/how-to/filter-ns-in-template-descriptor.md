@@ -1,12 +1,25 @@
 # How to filter namespaces in an Environment Template
 
+- [How to filter namespaces in an Environment Template](#how-to-filter-namespaces-in-an-environment-template)
+  - [Overview](#overview)
+  - [Step 1. Convert Template Descriptor to a Jinja Template](#step-1-convert-template-descriptor-to-a-jinja-template)
+  - [Step 2. Wrap namespaces in Jinja conditions](#step-2-wrap-namespaces-in-jinja-conditions)
+    - [Generic pattern](#generic-pattern)
+    - [Example](#example)
+  - [Step 3. Create the namespace list file](#step-3-create-the-namespace-list-file)
+    - [Example ns-list.yaml](#example-ns-listyaml)
+  - [Step 4. Reference the file in env\_definition.yml](#step-4-reference-the-file-in-env_definitionyml)
+  - [Step 5. Run Environment Instance generation](#step-5-run-environment-instance-generation)
+  - [Step 6. Verify the result](#step-6-verify-the-result)
+  - [See also](#see-also)
+
 ## Overview
 
-This guide explains how to generate an Environment that includes only a selected subset of namespaces from a unified Environment Template.
+This guide explains how to generate an Environment that includes only a selected subset of namespaces from a unified Environment Template. It follows the feature described in [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md).
 
 Use this approach if:
 
-- You use a unified Environment Template with multiple namespaces  
+- You use a unified Environment Template with multiple namespaces
 - You need to include or exclude namespaces depending on specific environment need
 
 ---
@@ -42,9 +55,10 @@ namespaces:
 ```
 
 **Parameters**:
-  namespace-key — key in ns_list used to enable or disable the namespace
-  template_path — path to the Namespace Template file
-  deploy_postfix — folder name in Instance Repository (/Namespaces/<deploy_postfix>/)
+
+- namespace-key - key in `ns_list` used to enable or disable the namespace
+- template_path - path to the Namespace Template file
+- deploy_postfix - folder name in Instance Repository (`/Namespaces/<deploy_postfix>/`)
 
 ### Example
 
@@ -75,19 +89,22 @@ If the key is missing or set to false, the namespace will not be generated.
 
 ---
 
-## Step 3. Create ns_list.yaml
+## Step 3. Create the namespace list file
 
-Create the following file:
+Create a YAML file that defines which namespaces are enabled. The file must be in a location where EnvGene resolves [shared template variable files](/docs/envgene-configs.md#env_definitionyml) (for example, under `/environments/` or per-cluster/per-environment, depending on your Instance Repository layout). The filename (without extension) is what you will reference in `env_definition.yml` in Step 4.
+
+Example: if the file is named `ns-list.yaml`, use the name `ns-list` in `sharedTemplateVariables`.
 
 ```yaml
-# /environments/shared-template-variables/ns-list.yaml
+# Example path: /environments/shared-template-variables/ns-list.yaml
+# The top-level key (ns_list) becomes available as current_env.additionalTemplateVariables.ns_list
 
 ns_list:
   <namespace-name>: <boolean>
   <another-namespace-name>: <boolean>
 ```
 
-### Example ns_list.yaml
+### Example ns-list.yaml
 
 ```yaml
 # /environments/shared-template-variables/ns-list.yaml
@@ -99,19 +116,19 @@ ns_list:
   kafka: false
 ```
 
-Set true for namespaces that must be generated.
+Set `true` for namespaces that must be generated.
 
-## Step 4. Reference ns_list in env_definition.yml
+## Step 4. Reference the file in env_definition.yml
 
-Add the shared template variable:
+In the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) for the environment, add the shared template variable by **filename without extension** (e.g. `ns-list` for `ns-list.yaml`):
 
 ```yaml
 envTemplate:
   sharedTemplateVariables:
-    - ns_list
+    - ns-list
 ```
 
-This makes the ns_list variable available during Template Descriptor rendering.
+The content of the file is merged into `additionalTemplateVariables`, so `ns_list` from the YAML is available during Template Descriptor rendering as `current_env.additionalTemplateVariables.ns_list`.
 
 ## Step 5. Run Environment Instance generation
 
@@ -133,3 +150,11 @@ If a condition evaluates to `false`:
 After generation, verify the directory: `/environments/<cluster>/<env-name>/Namespaces/`
 
 Only namespaces that passed the Jinja conditions should be present.
+
+---
+
+## See also
+
+- [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md) - Feature overview, file resolution priority, and behavior when a condition is `false`
+- [env_definition.yml](/docs/envgene-configs.md#env_definitionyml) - Environment Inventory and `sharedTemplateVariables`
+- [Template Descriptor](/docs/envgene-objects.md#template-descriptor) - Location and Jinja extensions
