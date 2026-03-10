@@ -233,6 +233,20 @@ def ensure_directory(path: Path, mode: int):
 
 
 def unpack_archive(src: str, dest: str):
+    if os.path.exists(dest):
+        print(f"[DEBUG] Destination already exists: {dest}")
+        try:
+            contents = os.listdir(dest)
+            if contents:
+                print(f"[DEBUG] Existing contents in {dest}:")
+                for item in contents:
+                    print(f"  - {item}")
+            else:
+                print(f"[DEBUG] {dest} exists but is empty")
+        except Exception as e:
+            print(f"[DEBUG] Could not list contents of {dest}: {e}")
+    else:
+        print(f"[DEBUG] Destination does not exist, creating: {dest}")
     os.makedirs(dest, exist_ok=True)
     if src.endswith(".zip"):
         with zipfile.ZipFile(src, "r") as z:
