@@ -572,7 +572,7 @@ public class ExpressionLanguageTest extends BindingBaseTest {
 
     @Test
     void testTypePreservationForIntegerReference() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Binding binding = new Binding("true");
+        Binding binding = new Binding();
         
         Parameter intParam = new Parameter(27017);
         binding.put("MONGO_DB_PORT", intParam);
@@ -592,7 +592,7 @@ public class ExpressionLanguageTest extends BindingBaseTest {
 
     @Test
     void testTypePreservationForBooleanWithBraceSyntax() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Binding binding = new Binding("true");
+        Binding binding = new Binding();
         
         Parameter boolParam = new Parameter(true);
         binding.put("ENABLE_SSL", boolParam);
@@ -611,7 +611,7 @@ public class ExpressionLanguageTest extends BindingBaseTest {
 
     @Test
     void testTypePreservationForBooleanWithDollarSyntax() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Binding binding = new Binding("true");
+        Binding binding = new Binding();
         
         Parameter boolParam = new Parameter(true);
         binding.put("ENABLE_SSL", boolParam);
@@ -630,7 +630,7 @@ public class ExpressionLanguageTest extends BindingBaseTest {
 
     @Test
     void testTypePreservationForGroovyStyleReference() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Binding binding = new Binding("true");
+        Binding binding = new Binding();
         
         Parameter intParam = new Parameter(8080);
         binding.put("BASE_PORT", intParam);
@@ -650,7 +650,7 @@ public class ExpressionLanguageTest extends BindingBaseTest {
 
     @Test
     void testTypePreservationForLongReference() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Binding binding = new Binding("true");
+        Binding binding = new Binding();
         
         Parameter longParam = new Parameter(604800000L); 
         binding.put("CDC_TOPIC_STREAMING_RETENTION_MS", longParam);
@@ -670,7 +670,7 @@ public class ExpressionLanguageTest extends BindingBaseTest {
 
     @Test
     void testStringReferenceShouldNotPreserveType() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Binding binding = new Binding("true");
+        Binding binding = new Binding();
         
         Parameter strParam = new Parameter("myhost.local");
         binding.put("TEST_HOST", strParam);
