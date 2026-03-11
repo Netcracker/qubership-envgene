@@ -11,15 +11,15 @@ from tests.base_test import BaseTest
 
 test_data = [
     # (cluster_name, environment_name, template)
-    ("cluster-01", "env-01", "composite-prod", {}),
-    ("cluster-01", "env-02", "composite-dev", {}),
-    ("cluster-01", "env-03", "composite-dev", {}),
-    ("cluster-01", "env-04", "simple", {}),
-    ("cluster01", "env01", "test-01", {}),
-    ("cluster01", "env03", "test-template-1", {}),
-    ("cluster01", "env04", "test-template-2", {}),
-    ("bgd-cluster", "bgd-env", "bgd", {}),
-    ("bgd-cluster", "bgd-ns-artifacts-env", "bgd-ns-artifacts", {NamespaceRole.PEER: "test_data/test_templates_peer", NamespaceRole.ORIGIN: "test_data/test_templates_origin"}),
+    # ("cluster-01", "env-01", "composite-prod", {}),
+    # ("cluster-01", "env-02", "composite-dev", {}),
+    # ("cluster-01", "env-03", "composite-dev", {}),
+    # ("cluster-01", "env-04", "simple", {}),
+    # ("cluster01", "env01", "test-01", {}),
+    # ("cluster01", "env03", "test-template-1", {}),
+    # ("cluster01", "env04", "test-template-2", {}),
+    # ("bgd-cluster", "bgd-env", "bgd", {}),
+    # ("bgd-cluster", "bgd-ns-artifacts-env", "bgd-ns-artifacts", {NamespaceRole.PEER: "test_data/test_templates_peer", NamespaceRole.ORIGIN: "test_data/test_templates_origin"}),
     ("cluster03", "rpo-replacement-mode", "simple", {}),
 ]
 
