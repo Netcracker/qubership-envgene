@@ -41,9 +41,9 @@ Automatic SBOM retention policy that:
 
 The version-based strategy keeps the N most recent versions for each application:
 
-- Groups SBOM files by application name
+- Each application's SBOMs are stored in `/sboms/<application-name>/`; cleanup processes each such subdirectory
 - Sorts versions by file creation time (newest first)
-- Keeps the latest N versions
+- Keeps the latest N versions per application directory
 - Deletes all older versions
 
 ### When Cleanup is Triggered

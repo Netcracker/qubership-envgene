@@ -32,7 +32,6 @@ By the end of this tutorial you will know how to:
 
 - A working Instance Repository with at least one environment that has been through `env_build`
 - A Solution Descriptor present at `environments/<cluster>/<env>/Inventory/solution-descriptor/sd.yaml`
-- At least one Application SBOM available in `sboms/`
 - Basic familiarity with EnvGene Environment Instance structure (Tenant, Cloud, Namespace objects)
 
 ## Scenario
@@ -66,7 +65,7 @@ To understand why it exists, consider the problem it solves. Configuration for o
 
   This tells EnvGene that `Cloud-BSS v1.2.3` deploys to the `bss` namespace and `cloud-oss v2.0.1` to the `oss` namespace. Without an SD, EnvGene does not know what applications exist and cannot generate the `deployment`, `cleanup`, or `runtime` contexts.
 
-- **Application SBOMs** - for each application version listed in the SD, EnvGene reads the corresponding SBOM from `sboms/`. The SBOM is an EnvGene-internal artifact generated automatically per application version. Examples of what it includes:
+- **Application SBOMs** - for each application version listed in the SD, EnvGene reads the corresponding SBOM from `sboms/<application-name>/` (filename: `<application-name>-<application-version>.sbom.json`). The SBOM is an EnvGene-internal artifact generated automatically per application version. Examples of what it includes:
   - The list of microservices the application consists of (determines the structure of `per-service-parameters/`)
   - Docker image coordinates for each microservice (written to `deploy-descriptor.yaml`)
   - Resource Profile Baselines - named sets of CPU/memory/replica values that serve as the starting point before any overrides are applied.
