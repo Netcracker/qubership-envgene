@@ -187,7 +187,7 @@ jobs:
       - name: Create env file for container
         run: env > .env.container
 
-      ### BG MANAGE ###
+      ### BG MANAGE - START ###
       - name: BG_MANAGE
         if: needs.process_environment_variables.outputs.BG_MANAGE == 'true'
         env:
@@ -212,10 +212,10 @@ jobs:
           name: bg_manage_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
-      ##########################
+      ### BG MANAGE - END ###
 
 
-      ### ENV_INVENTORY_GENERATION ###
+      ### ENV_INVENTORY_GENERATION - START ###
       - name: ENV_INVENTORY_GENERATION
         if: (needs.process_environment_variables.outputs.ENV_INVENTORY_CONTENT != '') || (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         run: |
@@ -238,10 +238,10 @@ jobs:
           name: env_inventory_generation_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
-      ##########################
+      ### ENV_INVENTORY_GENERATION - END ###
 
 
-      ### CREDENTIAL ROTATION ###
+      ### CREDENTIAL ROTATION - START ###
       - name: CREDENTIAL_ROTATION
         if: needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         run: |
@@ -264,10 +264,10 @@ jobs:
           name: credential_rotation_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
-      ##########################
+      ### CREDENTIAL ROTATION - END ###
 
 
-      ### APP_REG_DEF_PROCESS ###
+      ### APP_REG_DEF_PROCESS - START ###
       - name: APP_REG_DEF_PROCESS
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         run: |
@@ -292,10 +292,10 @@ jobs:
             configuration
             tmp
           include-hidden-files: true
-      ##########################
+      ### APP_REG_DEF_PROCESS - END ###
 
 
-      ### PROCESS_SD ###
+      ### PROCESS_SD - START ###
       - name: PROCESS_SD
         if: (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'json' && needs.process_environment_variables.outputs.SD_DATA != '') || (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'artifact' && needs.process_environment_variables.outputs.SD_VERSION != '')
         run: |
@@ -324,10 +324,10 @@ jobs:
           name: process_sd_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
-      ##################
+      ### PROCESS_SD - END ###
 
 
-      ### ENV_BUILD ###
+      ### ENV_BUILD - START ###
       - name: ENV_BUILD
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         run: |
@@ -351,10 +351,10 @@ jobs:
             configuration
             tmp
           include-hidden-files: true
-      ##########################
+      ### ENV_BUILD - END ###
 
 
-      ### GENERATE EFFECTIVE SET ###
+      ### GENERATE EFFECTIVE SET - START###
       - name: GENERATE_EFFECTIVE_SET
         if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         run: |
@@ -401,10 +401,10 @@ jobs:
             sboms
             configuration
           include-hidden-files: true
-      ##########################
+      ### GENERATE EFFECTIVE SET - END ###
 
 
-      ### GIT COMMIT ###
+      ### GIT COMMIT - START ###
       - name: GIT_COMMIT
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
@@ -437,4 +437,4 @@ jobs:
             git_envs
             sboms
           include-hidden-files: true
-      ##########################
+      ### GIT COMMIT - END ###
