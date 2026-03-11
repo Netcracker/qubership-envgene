@@ -49,11 +49,23 @@ def get_pipeline_parameters() -> dict:
 
 class PipelineParametersHandler:
     def __init__(self, **kwargs):
-        plugins_dir='/module/scripts/pipegene_plugins/pipe_parameters'
+        plugins_dir = '/module/scripts/pipegene_plugins/pipe_parameters'
         self.params = get_pipeline_parameters()
         pipe_param_plugin = PluginEngine(plugins_dir=plugins_dir)
+
         if pipe_param_plugin.modules:
-           pipe_param_plugin.run(pipeline_params=self.params)
+            pipe_param_plugin.run(pipeline_params=self.params)
+
+    def hide_secrets(self, data):
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k.lower() in {"username", "password", "secret"}:
+                    data[k] = "***"
+                else:
+                    self.hide_secrets(v)
+        elif isinstance(data, list):
+            for item in data:
+                self.hide_secrets(item)
 
     def log_pipeline_params(self):
         params_str = "Input parameters are: "
@@ -63,12 +75,17 @@ class PipelineParametersHandler:
             params["CRED_ROTATION_PAYLOAD"] = "***"
 
         for k, v in params.items():
-                try:
-                    parsed = json.loads(v)
-                    params[k] = json.dumps(parsed, separators=(",", ":"))
-                except (TypeError, ValueError):
-                    pass
+            try:
+                parsed = json.loads(v)
 
-                params_str += f"\n{k.upper()}: {params[k]}"
+                if k == "ENV_INVENTORY_CONTENT":
+                    self.hide_secrets(parsed)
+
+                params[k] = json.dumps(parsed, separators=(",", ":"))
+
+            except (TypeError, ValueError):
+                pass
+
+            params_str += f"\n{k.upper()}: {params[k]}"
 
         logger.info(params_str)
