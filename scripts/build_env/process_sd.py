@@ -296,17 +296,23 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
 
 
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
-    if 'SNAPSHOT' in version:
-        raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
-    # TODO: check if job would fail without plugins
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
-    artifact_info = asyncio.run(artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version))
+    env_creds = helper.get_cred_config()
+    
+    # V2 registries have resolve_auth_headers method, V1 don't
+    auth_headers = None
+    if hasattr(app_def.registry, 'resolve_auth_headers'):
+        auth_headers = app_def.registry.resolve_auth_headers(env_creds)
+
+    artifact_info = asyncio.run(
+        artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,
+                                       auth_headers=auth_headers))
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')
     sd_url, _ = artifact_info
-    return artifact.download_json_content(sd_url)
+    return artifact.download_json_content(sd_url, auth_headers=auth_headers)
 
 
 def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> artifact_models.Application:
@@ -317,7 +323,7 @@ def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> art
     app_def_path = identify_yaml_extension(f"{APP_DEFS_PATH}/{app_name}")
     app_dict = helper.openYaml(app_def_path)
     reg_def_path = identify_yaml_extension(f"{REG_DEFS_PATH}/{app_dict['registryName']}")
-    app_dict['registry'] = artifact_models.Registry.model_validate(helper.openYaml(reg_def_path))
+    app_dict['registry'] = artifact_models.parse_registry(helper.openYaml(reg_def_path))
     app_def = artifact_models.Application.model_validate(app_dict)
     return app_def
 
