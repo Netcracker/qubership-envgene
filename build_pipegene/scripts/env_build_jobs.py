@@ -8,9 +8,18 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
     logger.info(f'prepare env_build job for {full_env}')
 
     script = [
+        'echo "PIPELINE=$CI_PIPELINE_ID JOB=$CI_JOB_NAME"',
+        'if [ -d "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp" ] && [ -d "$CI_PROJECT_DIR/tmp" ]; then '
+        'echo "Both pipeline tmp and project tmp exist"; '
+        'echo "Freshly copying artifacts to $CI_PROJECT_DIR/tmp"; '
+        'rm -rf "$CI_PROJECT_DIR/tmp/"* 2>/dev/null || true; '
+        'echo "Moving $CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp -> $CI_PROJECT_DIR/tmp"; '
+        'mv "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp/." "$CI_PROJECT_DIR/tmp/"; '
+        'echo "Deleting $CI_PROJECT_DIR/$CI_PIPELINE_ID"; '
+        'rm -rf "$CI_PROJECT_DIR/$CI_PIPELINE_ID"; '
+        'fi',
         'echo "GIT_STRATEGY=$GIT_STRATEGY"',
         'echo "GIT_CHECKOUT=$GIT_CHECKOUT"',
-        'echo "PIPELINE=$CI_PIPELINE_ID JOB=$CI_JOB_NAME"',
         'echo "CI_PROJECT_DIR=$CI_PROJECT_DIR"',
         'echo "Job start time: $(date)"',
         'echo "==== Workspace contents ===="',
