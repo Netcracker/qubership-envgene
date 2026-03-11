@@ -8,6 +8,13 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
     logger.info(f'prepare env_build job for {full_env}')
 
     script = [
+        'echo "PIPELINE=$CI_PIPELINE_ID JOB=$CI_JOB_NAME"',
+        'if [ -d "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp" ] && [ -d "$CI_PROJECT_DIR/tmp" ]; then',
+        'echo "Copying $CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp -> $CI_PROJECT_DIR/tmp";',
+        'rm -rf "$CI_PROJECT_DIR/tmp/"* 2>/dev/null || echo "Warning: Failed to remove some files in tmp"',
+        'cp -r "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp/." "$CI_PROJECT_DIR/tmp/" || echo "Warning: Failed to copy tmp contents"',
+        'rm -rf "$CI_PROJECT_DIR/$CI_PIPELINE_ID" || echo "Warning: Failed to delete pipeline directory"',
+        'fi',
         'cd /build_env; python3 /build_env/scripts/build_env/main.py'
     ]
 
