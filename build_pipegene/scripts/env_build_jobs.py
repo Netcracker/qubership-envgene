@@ -9,14 +9,15 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
 
     script = [
         'echo "PIPELINE=$CI_PIPELINE_ID JOB=$CI_JOB_NAME"',
-        'if [ -d "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp" ] && [ -d "$CI_PROJECT_DIR/tmp" ]; then '
-        'echo "Both pipeline tmp and project tmp exist"; '
-        'echo "Freshly copying artifacts to $CI_PROJECT_DIR/tmp"; '
-        'rm -rf "$CI_PROJECT_DIR/tmp/"* 2>/dev/null || true; '
-        'echo "Moving $CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp -> $CI_PROJECT_DIR/tmp"; '
-        'mv "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp/." "$CI_PROJECT_DIR/tmp/"; '
-        'echo "Deleting $CI_PROJECT_DIR/$CI_PIPELINE_ID"; '
-        'rm -rf "$CI_PROJECT_DIR/$CI_PIPELINE_ID"; '
+        'if [ -d "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp" ] && [ -d "$CI_PROJECT_DIR/tmp" ]; then',
+        'echo "Both pipeline tmp and project tmp exist";',
+        'echo "Removing contents of $CI_PROJECT_DIR/tmp";',
+        'rm -rf "$CI_PROJECT_DIR/tmp/"* 2>/dev/null || true;',
+        'echo "Copying $CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp -> $CI_PROJECT_DIR/tmp";',
+        'ps aux | grep "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp" | grep -v grep || echo "No process seems to be using tmp"',
+        'cp -r "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp/." "$CI_PROJECT_DIR/tmp/"', 
+        'echo "Deleting pipeline directory"', 
+        'rm -rf "$CI_PROJECT_DIR/$CI_PIPELINE_ID"',
         'fi',
         'echo "GIT_STRATEGY=$GIT_STRATEGY"',
         'echo "GIT_CHECKOUT=$GIT_CHECKOUT"',
