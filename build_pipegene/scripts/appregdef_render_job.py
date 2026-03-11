@@ -10,7 +10,7 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
     env_template_version = params.get('ENV_TEMPLATE_VERSION')
     is_template_test = params.get('IS_TEMPLATE_TEST')
     env_tmp_ver_update_mode = params.get('ENV_TEMPLATE_VERSION_UPDATE_MODE')
-    
+
     script = []
     if env_template_version and not is_template_test:
         script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
@@ -43,7 +43,6 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
 
     appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env)
     appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
-    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
     appregdef_render_job.artifacts.when = WhenStatement.ALWAYS
 
     pipeline.add_children(appregdef_render_job)
