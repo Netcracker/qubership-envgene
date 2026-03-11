@@ -565,7 +565,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     checkEnvSpecificParametersBySchema(env_dir, env_specific_parameters_map, template_namespace_names)
 
     # process resource profiles
-    result_profiles_dir = f"{env_dir}/Profiles"
+    result_profiles_dir = Path(f"{env_dir}/Profiles")
     all_profiles = collect_resource_profiles(result_profiles_dir, resource_profiles_dir, profiles_schema,
                                              needed_resource_profiles_map, render_context)
     override_profile_map = override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map,
@@ -586,5 +586,5 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     for profile_key, profile_file_path in all_profiles.items():
         logger.info(f"Copying '{profile_key}' to resulting directory '{result_profiles_dir}'")
         copy_path(profile_file_path, f"{result_profiles_dir}/")
-        resulting_profile_path = f"{result_profiles_dir}/{profile_file_path}"
+        resulting_profile_path = result_profiles_dir / Path(profile_file_path).name
         beautifyYaml(resulting_profile_path, profiles_schema, generated_header_text)
