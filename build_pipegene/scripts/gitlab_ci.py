@@ -9,10 +9,11 @@ import pipeline_helper
 from appregdef_render_job import prepare_appregdef_render_job
 from bg_manage_job import prepare_bg_manage_job
 from credential_rotation_job import prepare_credential_rotation_job
-from env_build_jobs import prepare_env_build_job, prepare_generate_effective_set_job, prepare_git_commit_job
+from env_build_jobs import prepare_env_build_job, prepare_git_commit_job
 from inventory_generation_job import prepare_inventory_generation_job, is_inventory_generation_needed
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from process_sd_job import prepare_process_sd
+from effective_set_job import prepare_generate_effective_set_job
 from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
 from envgenehelper.collections_helper import split_multi_value_param
 
@@ -149,10 +150,16 @@ def build_pipeline(params: dict) -> None:
             logger.info(f'Preparing of env_build job for {full_env_name} is skipped.')
 
         if params['GENERATE_EFFECTIVE_SET']:
-            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, environment_name,
-                                                                                        cluster_name, tags)
+            jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, full_env_name,
+                                                                                        environment_name, cluster_name,
+                                                                                        params)
         else:
             logger.info(f'Preparing of generate_effective_set job for {full_env_name} is skipped.')
+            if "CUSTOM_PARAMS" in params and params["CUSTOM_PARAMS"]:
+                logger.warning(
+                    "'CUSTOM_PARAMS' is only applied when ['GENERATE_EFFECTIVE_SET'](#generate_effective_set) "
+                    "is 'true'. If 'GENERATE_EFFECTIVE_SET' is 'false', the 'generate_effective_set' job does not run "
+                    "and 'CUSTOM_PARAMS' has no effect.")
 
         jobs_requiring_git_commit = ["appregdef_render_job", "process_sd_job", "env_build_job",
                                      "generate_effective_set_job", "env_inventory_generation_job",
@@ -189,8 +196,14 @@ def build_pipeline(params: dict) -> None:
 
     # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
-    for job in sorted_pipeline.find_jobs(JobFilter()):  # gets all jobs in pipeline
-        job.artifacts.add_paths('./')
+    for job in sorted_pipeline.find_jobs(JobFilter()):
+        job.artifacts.add_paths(
+            'environments/',
+            'configuration/',
+            'sboms/',
+            'templates/'
+        )
+
         is_first_job = job.needs is None or len(job.needs) == 0
         if not is_first_job:
             job.add_variables(GIT_CHECKOUT="false")

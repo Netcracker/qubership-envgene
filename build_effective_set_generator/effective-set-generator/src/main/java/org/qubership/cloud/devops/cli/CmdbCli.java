@@ -16,6 +16,10 @@
 
 package org.qubership.cloud.devops.cli;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.qubership.cloud.devops.cli.parser.CliParameterParser;
@@ -26,12 +30,12 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage.EFFECTIVE_SET_FAILED;
@@ -49,6 +53,7 @@ public class CmdbCli implements Callable<Integer> {
 
     @Inject
     FileDataRepositoryImpl fileDataRepository;
+
     @Inject
     CliParameterParser parser;
 
@@ -102,6 +107,7 @@ public class CmdbCli implements Callable<Integer> {
         }
     }
 
+    @SneakyThrows
     private void setSharedData() {
         EffectiveSetVersion effectiveVersion = EffectiveSetVersion.fromString(envParams.version);
         sharedData.setEffectiveSetVersion(effectiveVersion);
@@ -114,7 +120,38 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setOutputDir(envParams.outputDir);
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
         sharedData.setAppChartValidation(envParams.appChartValidation);
+        prepareCustomParameters(getCustomParams(envParams.customParams));
         populateDeploymentSessionId(envParams.extraParams);
+    }
+
+    @SneakyThrows
+    private String getCustomParams(String customParams) {
+        if (StringUtils.isNotEmpty(customParams) &&
+                customParams.startsWith("@")) {
+            String fileName = customParams.substring(1);
+            Path projectRoot = Paths.get(System.getProperty("user.dir"));
+            Path path = projectRoot
+                    .resolve("src/test/resources")
+                    .resolve(fileName)
+                    .normalize();
+            customParams = Files.readString(path);
+        }
+        return customParams;
+    }
+
+    private void prepareCustomParameters(String customParams) throws JsonProcessingException {
+        if (StringUtils.isEmpty(customParams)) {
+            return;
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Map<String, Object>> map = mapper.readValue(customParams, new TypeReference<>() {
+        });
+        if (map.containsKey("deployment")) {
+            sharedData.setCustomDeployParamMap(map.get("deployment"));
+        }
+        if (map.containsKey("runtime")) {
+            sharedData.setCustomRuntimeParamMap(map.get("runtime"));
+        }
     }
 
 
@@ -160,6 +197,9 @@ public class CmdbCli implements Callable<Integer> {
 
         @CommandLine.Option(names = {"-acv", "--app_chart_validation"}, description = "App chart validation parameter on sbom", arity = "1")
         boolean appChartValidation = true;
+
+        @CommandLine.Option(names = {"-cp", "--custom-params"}, description = "Custom Parameters")
+        String customParams;
 
     }
 

@@ -35,6 +35,8 @@ runs:
   steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.version != '' && format('v{0}', inputs.version) || github.ref }}
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3

@@ -18,7 +18,7 @@ inputs:
   dockerfile-path:
     description: 'Path to Dockerfile'
     required: false
-    default: './build_effective_set_generator/Dockerfile'
+    default: './build_effective_set_generator/build/Dockerfile'
   git-user:
     description: 'Git username for build args'
     required: false
@@ -52,6 +52,8 @@ runs:
   steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        ref: ${{ inputs.version != '' && format('v{0}', inputs.version) || github.ref }}
 
     - name: Download JAR artifact
       uses: actions/download-artifact@v4

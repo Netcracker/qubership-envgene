@@ -225,8 +225,10 @@ if [ -e /tmp/configuration ]; then
 fi
 
 if [ -e /tmp/sboms ]; then
-  echo "Restoring config folder"
-  cp -r /tmp/sboms .
+    echo "Restoring sboms folder"
+    rm -rf sboms
+    mkdir -p sboms
+    cp -r /tmp/sboms/. sboms/
 fi
 
 if [ -e /tmp/gitlab-ci ]; then

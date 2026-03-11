@@ -1,0 +1,11 @@
+---
+tenant: {{ templates_dir }}/env_templates/test-template-2/tenant.yml.j2
+cloud:
+  template_path: {{ templates_dir }}/env_templates/test-template-2/cloud.yml.j2
+namespaces:
+{% if current_env.additionalTemplateVariables.namespaces["app"].enabled | default(False, True) %}
+  - template_path: {{ templates_dir }}/env_templates/test-template-2/Namespaces/app.yml.j2
+    deploy_postfix: "app"
+{% else %}
+  []
+{% endif %}

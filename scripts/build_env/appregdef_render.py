@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
     output_dir = f"{base_dir}/environments"
     render_dir = f"/tmp/render/{env_name}"
-    templates_dir = f"{base_dir}/tmp/templates"
+    templates_dirs = get_template_dirs()
 
     env_dir = get_env_instances_dir(env_name, cluster_name, instances_dir)
     cloud_passport_file_path = find_cloud_passport_definition(env_dir, instances_dir)
@@ -23,7 +23,7 @@ if __name__ == '__main__':
         "cluster_name": cluster_name,
         "output_dir": output_dir,
         "current_env_dir": render_dir,
-        "templates_dir": templates_dir,
+        "templates_dirs": templates_dirs,
         "cloud_passport_file_path": cloud_passport_file_path,
         "env_instances_dir": env_dir
     }
@@ -40,4 +40,4 @@ if __name__ == '__main__':
         if src.exists():
             shutil.move(src, dst)
 
-    update_generated_versions(env_dir, BUILD_ENV_TAG, template_version)
+    update_generated_versions(env_dir, BUILD_ENV_TAG, template_version[NamespaceRole.COMMON])
