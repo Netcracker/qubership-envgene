@@ -1,55 +1,36 @@
 # Defining and Managing Complex Parameters in EnvGene Using YAML Objects
 
 - [Defining and Managing Complex Parameters in EnvGene Using YAML Objects](#defining-and-managing-complex-parameters-in-envgene-using-yaml-objects)
-  - [1. Purpose of This Guide](#1-purpose-of-this-guide)
-  - [2. When to Use This Guide](#2-when-to-use-this-guide)
-  - [3. Core Rule](#3-core-rule)
-  - [4. Why YAML Objects Are Required](#4-why-yaml-objects-are-required)
-    - [4.1 Structural Integrity](#41-structural-integrity)
-    - [4.2 Clean and Meaningful Git Diffs](#42-clean-and-meaningful-git-diffs)
-    - [4.3 No Manual Escaping](#43-no-manual-escaping)
-    - [4.4 Predictable CMDB Transformation](#44-predictable-cmdb-transformation)
-  - [5. How to Define Complex Parameters Correctly](#5-how-to-define-complex-parameters-correctly)
-    - [5.1 Defining a Map (Object)](#51-defining-a-map-object)
-    - [5.2 Defining a List](#52-defining-a-list)
-    - [5.3 Defining Nested Structures](#53-defining-nested-structures)
-  - [6. How EnvGene Processes Complex Parameters](#6-how-envgene-processes-complex-parameters)
-    - [6.1 During Environment Instance Generation](#61-during-environment-instance-generation)
-    - [6.2 During CMDB Import](#62-during-cmdb-import)
-  - [7. End-to-End Example](#7-end-to-end-example)
-    - [7.1 YAML Definition](#71-yaml-definition)
-    - [7.2 Effective Set Output](#72-effective-set-output)
-    - [7.3 CMDB Imported Representation](#73-cmdb-imported-representation)
-  - [8. Design Principles for YAML](#8-design-principles-for-yaml)
-    - [8.1 Treat YAML as Structured Data](#81-treat-yaml-as-structured-data)
-    - [8.2 Preserve Type Integrity](#82-preserve-type-integrity)
-    - [8.3 Avoid Embedded JSON Inside YAML](#83-avoid-embedded-json-inside-yaml)
-    - [8.4 Keep Structure Logical](#84-keep-structure-logical)
-  - [9. Common Antipatterns](#9-common-antipatterns)
-  - [10. Migration Strategy for Existing Multiline Strings](#10-migration-strategy-for-existing-multiline-strings)
-  - [11. Operational Impact](#11-operational-impact)
-  - [12. Final Recommendation](#12-final-recommendation)
+  - [Overview](#overview)
+    - [When to Use This Guide](#when-to-use-this-guide)
+    - [Core Rule](#core-rule)
+  - [Why YAML Objects Are Required](#why-yaml-objects-are-required)
+    - [Structural Integrity](#structural-integrity)
+    - [Clean and Meaningful Git Diffs](#clean-and-meaningful-git-diffs)
+    - [No Manual Escaping](#no-manual-escaping)
+  - [How to Define Complex Parameters Correctly](#how-to-define-complex-parameters-correctly)
+    - [Defining a Map (Object)](#defining-a-map-object)
+    - [Defining a List](#defining-a-list)
+  - [How EnvGene Processes Complex Parameters](#how-envgene-processes-complex-parameters)
+    - [During Environment Instance Generation](#during-environment-instance-generation)
+    - [During CMDB Import](#during-cmdb-import)
+  - [End-to-End Example](#end-to-end-example)
+    - [YAML Definition in Template or Environment-specific parameters](#yaml-definition-in-template-or-environment-specific-parameters)
+    - [Effective Set Output](#effective-set-output)
+    - [CMDB Imported Representation](#cmdb-imported-representation)
+  - [Design Principles for YAML](#design-principles-for-yaml)
+    - [Treat YAML as Structured Data](#treat-yaml-as-structured-data)
+    - [Preserve Type Integrity](#preserve-type-integrity)
+    - [Avoid Embedded JSON Inside YAML](#avoid-embedded-json-inside-yaml)
+  - [Migration Strategy for Existing Multiline or JSON Strings](#migration-strategy-for-existing-multiline-or-json-strings)
+  - [Operational Impact](#operational-impact)
+  - [Final Recommendation](#final-recommendation)
 
-## 1. Purpose of This Guide
+## Overview
 
-This guide explains how to correctly define complex parameters (maps, lists, and nested structures) in EnvGene using native YAML objects instead of multiline strings.
+This guide explains how to define complex parameters (maps and lists) in EnvGene using native YAML objects instead of multiline or JSON strings. It is intended for engineers working with Git-managed EnvGene instance or template repositories.
 
-It provides:
-
-- Clear best practices
-- Correct vs incorrect examples
-- Explanation of EnvGene behavior during:
-
-  - Environment instance generation
-  - Effective set generation
-  - CMDB import transformation
-- End-to-end example of structure preservation and CMDB conversion
-
-This is a practical how-to guide intended for engineers defining configuration in Git-managed EnvGene repositories.
-
----
-
-## 2. When to Use This Guide
+### When to Use This Guide
 
 Use this guide when:
 
@@ -59,23 +40,17 @@ Use this guide when:
 - Reviewing pull requests involving complex configuration
 - Establishing configuration standards across teams
 
----
+### Core Rule
 
-## 3. Core Rule
+> Always define complex parameters as structured YAML objects. Never use multiline strings or JSON strings for structured configuration.
 
-> Always define complex parameters as structured YAML objects. Never use multiline strings for structured configuration.
-
-Complex parameters include:
-
-- Maps (objects)
-- Lists (arrays)
-- Nested structures combining maps and lists
+Complex parameters are maps (objects) and lists (arrays). Maps can contain other maps or lists as values.
 
 ---
 
-## 4. Why YAML Objects Are Required
+## Why YAML Objects Are Required
 
-### 4.1 Structural Integrity
+### Structural Integrity
 
 When defined as YAML objects:
 
@@ -93,26 +68,31 @@ When defined as multiline strings:
 
 ---
 
-### 4.2 Clean and Meaningful Git Diffs
+### Clean and Meaningful Git Diffs
 
-Structured YAML enables semantic diffs:
+Structured YAML enables semantic diffs; only the changed keys appear in the diff:
 
 ```diff
-resources:
-  limits:
--    memory: 512Mi
-+    memory: 1Gi
+ deploymentConfig:
+   replicas: 2
+   strategy:
+     type: RollingUpdate
+     maxUnavailable: 0
+   resources:
+     limits:
+-      memory: 512Mi
++      memory: 1Gi
+       cpu: 500m
+     requests:
+       memory: 256Mi
+       cpu: 250m
 ```
 
-Multiline strings create noisy diffs:
+Escaped JSON in a string shows the entire value as one long line; a single field change (e.g. `memory`) is buried in escaped quotes and hard to review:
 
 ```diff
-- config: |
--   limits:
--     memory: 512Mi
-+ config: |
-+   limits:
-+     memory: 1Gi
+- deploymentConfig: "{ \"replicas\":2,\"strategy\":{\"type\":\"RollingUpdate\",\"maxUnavailable\":0},\"resources\":{\"limits\":{\"memory\":\"512Mi\",\"cpu\":\"500m\"},\"requests\":{\"memory\":\"256Mi\",\"cpu\":\"250m\"}} }"
++ deploymentConfig: "{ \"replicas\":2,\"strategy\":{\"type\":\"RollingUpdate\",\"maxUnavailable\":0},\"resources\":{\"limits\":{\"memory\":\"1Gi\",\"cpu\":\"500m\"},\"requests\":{\"memory\":\"256Mi\",\"cpu\":\"250m\"}} }"
 ```
 
 Structured YAML improves:
@@ -123,9 +103,9 @@ Structured YAML improves:
 
 ---
 
-### 4.3 No Manual Escaping
+### No Manual Escaping
 
-Multiline or escaped JSON string:
+Multiline or escaped JSON string (e.g. a small map):
 
 ```yaml
 config: "{ \"limits\": { \"cpu\": \"500m\" } }"
@@ -147,28 +127,9 @@ Manual escaping:
 
 ---
 
-### 4.4 Predictable CMDB Transformation
+## How to Define Complex Parameters Correctly
 
-EnvGene behavior:
-
-1. Preserves structure during:
-
-   - Environment instance generation
-   - Effective set generation
-2. Converts complex parameters into escaped string representations only during CMDB import
-
-When YAML is structured correctly:
-
-- Transformation is deterministic
-- JSON structure is valid
-- No manual formatting is required
-- Debugging is straightforward
-
----
-
-## 5. How to Define Complex Parameters Correctly
-
-### 5.1 Defining a Map (Object)
+### Defining a Map (Object)
 
 Correct:
 
@@ -179,7 +140,7 @@ parameters:
     memory: 1Gi
 ```
 
-Incorrect:
+Incorrect (multiline string - map is stored as text):
 
 ```yaml
 parameters:
@@ -188,9 +149,16 @@ parameters:
     memory: 1Gi
 ```
 
+Incorrect (JSON string):
+
+```yaml
+parameters:
+  resourceLimits: '{"cpu":"500m","memory":"1Gi"}'
+```
+
 ---
 
-### 5.2 Defining a List
+### Defining a List
 
 Correct:
 
@@ -202,7 +170,7 @@ parameters:
     - 10.10.0.3
 ```
 
-Incorrect:
+Incorrect (multiline string - list is stored as text):
 
 ```yaml
 parameters:
@@ -211,52 +179,20 @@ parameters:
     - 10.10.0.2
 ```
 
----
-
-### 5.3 Defining Nested Structures
-
-Recommended pattern:
+Incorrect (JSON string):
 
 ```yaml
 parameters:
-  deploymentConfig:
-    replicas: 3
-    strategy:
-      type: RollingUpdate
-      maxUnavailable: 1
-    resources:
-      limits:
-        cpu: 1
-        memory: 2Gi
-      requests:
-        cpu: 500m
-        memory: 1Gi
-```
-
-Antipattern (embedded JSON):
-
-```yaml
-parameters:
-  deploymentConfig: '{"replicas":3,"strategy":{"type":"RollingUpdate"}}'
+  allowedIPs: '["10.10.0.1","10.10.0.2","10.10.0.3"]'
 ```
 
 ---
 
-## 6. How EnvGene Processes Complex Parameters
+## How EnvGene Processes Complex Parameters
 
-### 6.1 During Environment Instance Generation
+### During Environment Instance Generation
 
-EnvGene:
-
-- Preserves nested structure
-- Maintains original types:
-
-  - Map
-  - List
-  - Boolean
-  - Number
-  - String
-- Produces a structured effective set
+EnvGene preserves structure and types (map, list, boolean, number, string) and produces a structured effective set. No flattening or string conversion occurs at this stage.
 
 Example effective set output:
 
@@ -272,11 +208,9 @@ deploymentConfig:
       memory: 2Gi
 ```
 
-No flattening or string conversion occurs at this stage.
-
 ---
 
-### 6.2 During CMDB Import
+### During CMDB Import
 
 CMDB requires complex parameters to be stored as escaped string representations.
 
@@ -294,7 +228,7 @@ deploymentConfig:
 CMDB representation:
 
 ```json
-"{\"replicas\":3,\"strategy\":{\"type\":\"RollingUpdate\"}}"
+deploymentConfig: "{\"replicas\":3,\"strategy\":{\"type\":\"RollingUpdate\"}}"
 ```
 
 Key points:
@@ -306,9 +240,9 @@ Key points:
 
 ---
 
-## 7. End-to-End Example
+## End-to-End Example
 
-### 7.1 YAML Definition
+### YAML Definition in Template or Environment-specific parameters
 
 ```yaml
 parameters:
@@ -325,7 +259,7 @@ parameters:
 
 ---
 
-### 7.2 Effective Set Output
+### Effective Set Output
 
 ```yaml
 serviceConfig:
@@ -341,7 +275,7 @@ serviceConfig:
 
 ---
 
-### 7.3 CMDB Imported Representation
+### CMDB Imported Representation
 
 ```json
 "{\"service\":{\"name\":\"payment-api\",\"port\":8080},\"monitoring\":{\"enabled\":true,\"endpoints\":[\"/health\",\"/metrics\"]}}"
@@ -355,15 +289,15 @@ Result:
 
 ---
 
-## 8. Design Principles for YAML
+## Design Principles for YAML
 
-### 8.1 Treat YAML as Structured Data
+### Treat YAML as Structured Data
 
-If the parameter represents structured configuration, it must be a YAML object, not text.
+If the parameter represents structured configuration, it must be a YAML object, not multiline string, not JSON string
 
 ---
 
-### 8.2 Preserve Type Integrity
+### Preserve Type Integrity
 
 Avoid:
 
@@ -381,7 +315,7 @@ enabled: true
 
 ---
 
-### 8.3 Avoid Embedded JSON Inside YAML
+### Avoid Embedded JSON Inside YAML
 
 Do not use:
 
@@ -393,42 +327,24 @@ If you see JSON inside YAML, it is almost always incorrect.
 
 ---
 
-### 8.4 Keep Structure Logical
+## Migration Strategy for Existing Multiline or JSON Strings
 
-Avoid excessive nesting unless required by design.
-Prefer readable, domain-aligned structure.
+If complex parameters already exist as multiline strings or JSON in a string:
 
----
-
-## 9. Common Antipatterns
-
-| Antipattern                 | Risk Introduced                      |
-| ---------------------------- | ------------------------------------ |
-| Multiline YAML as string     | No validation, diff noise, type loss |
-| Escaped JSON string          | Manual escaping, readability issues  |
-| Stringified booleans/numbers | Type corruption                      |
-| Mixed data types in lists    | Runtime inconsistency                |
-| Deep arbitrary nesting       | Difficult overrides and maintenance  |
-
----
-
-## 10. Migration Strategy for Existing Multiline Strings
-
-If complex parameters already exist as multiline strings:
-
-1. Identify parameters using `|`.
-2. Convert content into structured YAML.
+1. Identify parameters to migrate:
+   - **Multiline:** look for keys whose value uses `|` (or `>-` / `|`) with YAML-like or list-like content underneath.
+   - **JSON in string:** look for values that are single-quoted or double-quoted JSON (e.g. `'{"key":...}'` or `"{ \"key\": ... }"`).
+2. Convert content into structured YAML (native map or list).
 3. Validate:
-
    - Instance generation
    - Effective set output
    - CMDB import result
-4. Remove manual escaping.
+4. Remove manual escaping where it was used for JSON.
 5. Add YAML linting to CI pipelines.
 
 ---
 
-## 11. Operational Impact
+## Operational Impact
 
 Adopting YAML objects improves:
 
@@ -441,7 +357,7 @@ Adopting YAML objects improves:
 
 ---
 
-## 12. Final Recommendation
+## Final Recommendation
 
 For all complex parameters:
 
@@ -451,4 +367,4 @@ For all complex parameters:
 - Enforce YAML linting in CI/CD.
 - Never use multiline strings for structured configuration.
 
-Configuration should be declarative, structured, and type-safe. YAML objects enable that. Multiline strings undermine it.
+Configuration should be declarative, structured, and type-safe. YAML objects enable that. Multiline and JSON strings undermine it.
