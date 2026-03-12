@@ -1,4 +1,4 @@
-import os
+from os import getenv
 
 from gcip import WhenStatement
 
@@ -9,7 +9,7 @@ from pipeline_helper import job_instance
 def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, artifact_app_defs_path, artifact_reg_defs_path, tags):
     logger.info(f'Prepare process_sd job for {full_env}')
     
-    base_dir = os.getenv('CI_PROJECT_DIR')
+    base_dir = getenv('CI_PROJECT_DIR')
     base_env_path = f"{base_dir}/environments/{full_env}"
     app_defs_path = f"{base_env_path}/AppDefs"
     reg_defs_path = f"{base_env_path}/RegDefs"
@@ -40,13 +40,9 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, artif
     }
 
     process_sd_job = job_instance(params=process_sd_set_params, vars=process_sd_set_vars)
-
-    tmp_path = os.path.join(os.environ["CI_PROJECT_DIR"], os.environ["CI_PIPELINE_ID"], "tmp")
-    if os.path.isdir(tmp_path):
-        process_sd_job.artifacts.add_paths(tmp_path)  
-
     
     process_sd_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env)
+    process_sd_job.artifacts.add_paths("${CI_PROJECT_DIR}/${CI_PIPELINE_ID}/tmp")
     process_sd_job.artifacts.when = WhenStatement.ALWAYS
     
     pipeline.add_children(process_sd_job)
