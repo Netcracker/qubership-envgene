@@ -1,4 +1,4 @@
-from os
+import os
 
 from gcip import WhenStatement
 
