@@ -180,3 +180,10 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
 def has_valid_profile_name(content: dict) -> bool:
     profile = content.get("profile")
     return isinstance(profile, dict) and bool(profile.get("name"))
+
+
+def update_profile_name(file_path, profile_name):
+    data = openYaml(file_path, {})
+    if has_valid_profile_name(data):
+        set_nested_yaml_attribute(data, "profile.name", profile_name)
+        writeYamlToFile(file_path, data)
