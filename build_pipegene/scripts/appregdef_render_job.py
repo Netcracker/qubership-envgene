@@ -17,6 +17,16 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
 
     script.append('python3 /build_env/scripts/build_env/appregdef_render.py')
 
+    script.append(
+    'if [ -d "$CI_PROJECT_DIR/tmp" ]; then '
+    'DEST="$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp"; '
+    'echo "Copying tmp in $CI_PROJECT_DIR to $DEST"; '
+    'mkdir -p "$DEST"; '
+    'cp -r "$CI_PROJECT_DIR/tmp/." "$DEST/"; '
+    'else echo "tmp directory does not exist in $CI_PROJECT_DIR, skipping copy"; '
+    'fi'
+    )
+
     appregdef_render_params = {
         "name": f'app_reg_def_render.{full_env}',
         "image": '${envgen_image}',
@@ -43,7 +53,8 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
 
     appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env)
     appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
-    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
+    #appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
+    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/${CI_PIPELINE_ID}/tmp")
     appregdef_render_job.artifacts.when = WhenStatement.ALWAYS
 
     pipeline.add_children(appregdef_render_job)
