@@ -165,7 +165,6 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
             combination_mode = 'true'
         common_msg = f"profile overrides, because {combination_mode_key} is set to {combination_mode}"
 
-        override_profile_map[profile_key] = template_profile_file_path
         if str(combination_mode).lower() == 'true':
             logger.info(f"Joining {common_msg}")
             merge_resource_profiles(template_profile_yaml, env_specific_profile_yaml,
