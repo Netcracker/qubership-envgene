@@ -46,27 +46,19 @@ Use this guide when:
 
 Complex parameters are maps (objects) and lists (arrays). Maps can contain other maps or lists as values.
 
----
-
 ## Why YAML Objects Are Required
 
 ### Structural Integrity
 
 When defined as YAML objects:
 
-- Types are preserved (map, list, boolean, number, string)
-- Nested attributes retain structure
 - YAML schema validation works
 - Linters and IDE tooling function correctly
 
 When defined as multiline strings:
 
-- Everything becomes a string
-- Structure is lost
 - No validation is applied
 - Type safety is broken
-
----
 
 ### Clean and Meaningful Git Diffs
 
@@ -101,8 +93,6 @@ Structured YAML improves:
 - Drift detection
 - Merge conflict resolution
 
----
-
 ### No Manual Escaping
 
 Multiline or escaped JSON string (e.g. a small map):
@@ -124,8 +114,6 @@ Manual escaping:
 - Is error-prone
 - Breaks readability
 - Causes CMDB import issues
-
----
 
 ## How to Define Complex Parameters Correctly
 
@@ -156,8 +144,6 @@ parameters:
   resourceLimits: '{"cpu":"500m","memory":"1Gi"}'
 ```
 
----
-
 ### Defining a List
 
 Correct:
@@ -186,8 +172,6 @@ parameters:
   allowedIPs: '["10.10.0.1","10.10.0.2","10.10.0.3"]'
 ```
 
----
-
 ## How EnvGene Processes Complex Parameters
 
 ### During Environment Instance Generation
@@ -208,8 +192,6 @@ deploymentConfig:
       memory: 2Gi
 ```
 
----
-
 ### During CMDB Import
 
 CMDB requires complex parameters to be stored as escaped string representations.
@@ -225,10 +207,10 @@ deploymentConfig:
     type: RollingUpdate
 ```
 
-CMDB representation:
+CMDB stores the parameter key separately; the value is the escaped JSON string. Example value:
 
 ```json
-deploymentConfig: "{\"replicas\":3,\"strategy\":{\"type\":\"RollingUpdate\"}}"
+"{\"replicas\":3,\"strategy\":{\"type\":\"RollingUpdate\"}}"
 ```
 
 Key points:
@@ -237,8 +219,6 @@ Key points:
 - No manual escaping required
 - Original structure drives transformation
 - Type fidelity is preserved before serialization
-
----
 
 ## End-to-End Example
 
@@ -257,8 +237,6 @@ parameters:
         - /metrics
 ```
 
----
-
 ### Effective Set Output
 
 ```yaml
@@ -273,8 +251,6 @@ serviceConfig:
       - /metrics
 ```
 
----
-
 ### CMDB Imported Representation
 
 ```json
@@ -287,15 +263,11 @@ Result:
 - Types preserved
 - Converted into CMDB-compatible format automatically
 
----
-
 ## Design Principles for YAML
 
 ### Treat YAML as Structured Data
 
-If the parameter represents structured configuration, it must be a YAML object, not multiline string, not JSON string
-
----
+If the parameter represents structured configuration, it must be a YAML object, not a multiline string or a JSON string.
 
 ### Preserve Type Integrity
 
@@ -313,26 +285,16 @@ replicas: 3
 enabled: true
 ```
 
----
-
 ### Avoid Embedded JSON Inside YAML
 
-Do not use:
-
-```yaml
-config: '{"limits":{"cpu":"1"}}'
-```
-
-If you see JSON inside YAML, it is almost always incorrect.
-
----
+Do not embed JSON in YAML values (e.g. `config: '{"limits":{"cpu":"1"}}'`). See [No Manual Escaping](#no-manual-escaping).
 
 ## Migration Strategy for Existing Multiline or JSON Strings
 
 If complex parameters already exist as multiline strings or JSON in a string:
 
 1. Identify parameters to migrate:
-   - **Multiline:** look for keys whose value uses `|` (or `>-` / `|`) with YAML-like or list-like content underneath.
+   - **Multiline:** look for keys whose value uses `|` or `>` (block scalars) with YAML-like or list-like content underneath.
    - **JSON in string:** look for values that are single-quoted or double-quoted JSON (e.g. `'{"key":...}'` or `"{ \"key\": ... }"`).
 2. Convert content into structured YAML (native map or list).
 3. Validate:
@@ -341,8 +303,6 @@ If complex parameters already exist as multiline strings or JSON in a string:
    - CMDB import result
 4. Remove manual escaping where it was used for JSON.
 5. Add YAML linting to CI pipelines.
-
----
 
 ## Operational Impact
 
@@ -355,16 +315,10 @@ Adopting YAML objects improves:
 - Reduction of CMDB import failures
 - Long-term configuration scalability
 
----
-
 ## Final Recommendation
 
-For all complex parameters:
+- Use native YAML objects only for maps and lists (see [Core Rule](#core-rule)).
+- Rely on automatic CMDB transformation and enforce YAML linting in CI/CD.
+- Keep configuration declarative and type-safe.
 
-- Define maps and lists as native YAML objects.
-- Allow automatic transformation during CMDB import.
-- Preserve structural and type integrity.
-- Enforce YAML linting in CI/CD.
-- Never use multiline strings for structured configuration.
-
-Configuration should be declarative, structured, and type-safe. YAML objects enable that. Multiline and JSON strings undermine it.
+YAML objects enable that; multiline and JSON strings undermine it.
