@@ -202,7 +202,8 @@ def build_pipeline(params: dict) -> None:
             'configuration/',
             'sboms/',
             'templates/',
-            'tmp/'
+            'tmp/',
+            '$CI_PIPELINE_ID/tmp'
         )
 
         is_first_job = job.needs is None or len(job.needs) == 0
