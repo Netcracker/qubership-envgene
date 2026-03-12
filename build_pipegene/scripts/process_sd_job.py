@@ -9,7 +9,7 @@ from pipeline_helper import job_instance
 def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, artifact_app_defs_path, artifact_reg_defs_path, tags):
     logger.info(f'Prepare process_sd job for {full_env}')
     
-    base_dir = getenv('CI_PROJECT_DIR')
+    base_dir = os.getenv('CI_PROJECT_DIR')
     base_env_path = f"{base_dir}/environments/{full_env}"
     app_defs_path = f"{base_env_path}/AppDefs"
     reg_defs_path = f"{base_env_path}/RegDefs"
