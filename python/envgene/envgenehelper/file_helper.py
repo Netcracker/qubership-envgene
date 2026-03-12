@@ -199,8 +199,8 @@ def findFiles(fileList: list[Path], pattern, notPattern="", additionalRegexpPatt
     for filePath in fileList:
         # this ensures that pattern matching works correctly on both Windows (\) and Unix (/)
         file_path_posix = Path(filePath).as_posix()
-        pattern_posix = Path(pattern).as_posix()
-        not_pattern_posix = Path(notPattern).as_posix()
+        pattern_posix = Path(pattern).as_posix() if pattern else ""
+        not_pattern_posix = Path(notPattern).as_posix() if notPattern else ""
         if (
                 pattern_posix in file_path_posix
                 and (not_pattern_posix == "" or not_pattern_posix not in file_path_posix)
