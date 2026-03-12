@@ -2,8 +2,7 @@ import yaml
 from envgenehelper import *
 
 from cloud_passport import process_cloud_passport
-from resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, safe_set_profile_name, \
-    has_valid_profile_name
+from resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name
 from schema_validation import checkEnvSpecificParametersBySchema
 
 # const
@@ -576,11 +575,15 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
             profile_name = openYaml(profile_file_path, {}).get("name")
 
             if profile_key == 'cloud':
-                safe_set_profile_name(openYaml(cloudTemlatePath), profile_name)
+                cloud_def = openYaml(cloudTemlatePath)
+                set_nested_yaml_attribute(cloud_def, "profile.name", profile_name)
+                writeYamlToFile(cloudTemlatePath, cloud_def)
 
             for ns in namespaces:
                 if profile_key == ns.postfix:
-                    safe_set_profile_name(ns.definition_path, profile_name)
+                    ns_def = openYaml(ns.definition_path)
+                    set_nested_yaml_attribute(ns_def,"profile.name", profile_name)
+                    writeYamlToFile(ns.definition_path, ns_def)
             all_profiles[profile_key] = profile_file_path
 
     for profile_key, profile_file_path in all_profiles.items():

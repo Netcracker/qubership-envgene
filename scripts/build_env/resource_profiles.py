@@ -174,11 +174,7 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
         else:
             logger.info(f"Replacing {common_msg}")
             override_profile_map[profile_key] = env_specific_profile_path
-
-
-def safe_set_profile_name(content: dict, name: str):
-    if has_valid_profile_name(content):
-        content["profile"]["name"] = name
+    return override_profile_map
 
 
 def has_valid_profile_name(content: dict) -> bool:

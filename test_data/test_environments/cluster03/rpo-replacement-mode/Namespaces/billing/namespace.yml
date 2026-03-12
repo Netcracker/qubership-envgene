@@ -10,8 +10,8 @@ labels:
 cleanInstallApprovalRequired: true
 mergeDeployParametersAndE2EParameters: false
 profile:
-  name: "medium_billing_override"
   baseline: "dev"
+  name: "medium_billing_override"
 deployParameters:
   ENVGENE_CONFIG_REF_NAME: "branch_name"
   ENVGENE_CONFIG_TAG: "No Ref tag"
