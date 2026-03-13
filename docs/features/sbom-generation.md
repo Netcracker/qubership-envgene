@@ -12,14 +12,11 @@ This section describes when EnvGene (re)generates Application SBOMs and how the 
   - the structure or semantics of the generated SBOM change
   - new mandatory attributes are introduced
 
-- Changes that do not affect the SBOM contract (e.g. performance improvements, refactoring, non-breaking bug fixes) must **not** change the generator version.
+- Changes that do not affect the SBOM contract (e.g. performance improvements, refactoring, non-breaking bugfixes) must **not** change the generator version.
 
 ## Per-application regeneration logic (EnvGene)
 
 EnvGene must decide for **each** application in the Solution Descriptor independently whether to generate or skip SBOM. Processing each application (each `app:ver`) is independent.
-
-- **File name pattern** for Application SBOM: `<application>:<version>.sbom.json`
-  - Paths: `/configuration/sboms/<application>:<version>.sbom.json` and `/environments/<ENV_NAME>/Inventory/sboms/<application>:<version>.sbom.json`
 
 - For each application:
   1. **If the SBOM file exists:**
