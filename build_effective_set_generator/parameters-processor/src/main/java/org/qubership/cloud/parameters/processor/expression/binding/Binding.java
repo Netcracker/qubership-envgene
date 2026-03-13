@@ -44,8 +44,7 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
     @Getter
     private String tenant;
     private ParametersParser escapeParser;
-    @Getter
-    private Map<Object, Class<?>> typeCollector = new HashMap<>();
+    private ParametersParser oldParser;
 
     public Binding() {
         this.tenant = "";
@@ -204,9 +203,6 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
         }
         if (result == null || result.getValue() == null) {
             return null;
-        }
-        if (result != null && result.getValue() != null) {
-            typeCollector.put(result.getValue().toString(), result.getValue().getClass());
         }
         return result;
     }
