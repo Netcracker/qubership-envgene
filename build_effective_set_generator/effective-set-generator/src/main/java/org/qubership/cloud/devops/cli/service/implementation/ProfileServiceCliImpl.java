@@ -26,6 +26,7 @@ import org.qubership.cloud.devops.commons.pojo.tenants.model.Tenant;
 import org.qubership.cloud.devops.commons.service.interfaces.TenantConfigurationService;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
+import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.mapper.ProfileMapper;
 import org.qubership.cloud.devops.commons.service.interfaces.ProfileService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -35,6 +36,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static org.qubership.cloud.devops.commons.utils.ParameterUtils.wrapPlainMapWithOrigin;
 
 @Slf4j
 @ApplicationScoped
@@ -92,6 +95,11 @@ public class ProfileServiceCliImpl implements ProfileService {
                 }
             }
         }
+    }
+
+    public void setOverrideProfilesWithOrigin(String appName, String serviceName, Profile overrideProfile, Map<String, Object> profileValues, String origin) {
+        setOverrideProfiles(appName,serviceName,overrideProfile,profileValues);
+        wrapPlainMapWithOrigin(profileValues,origin);
     }
 
     @SuppressWarnings("unchecked")
