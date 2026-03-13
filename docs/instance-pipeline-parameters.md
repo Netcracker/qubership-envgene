@@ -129,7 +129,7 @@ This parameter serves as a configuration for an extension point. Integration wit
 **Allowed values**:
 
 - `PERSISTENT` (default)  
-  Applies the standard behavior: the pipeline updates the template version in Environment Inventory by modifying `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`, and records the template artifact version actually applied during the run in `generatedVersions.generateEnvironmentLatestVersion` in the same file.
+  Applies the standard behavior: the pipeline updates the template version in Environment Inventory by modifying `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
 
 - `TEMPORARY`  
   Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.  
@@ -294,6 +294,8 @@ Consumer-specific pipeline context components registered in EnvGene:
 
 **Description**: Session-scoped parameters injected into the Effective Set during parameter calculation. Custom Params are not persisted across parameter calculation sessions, have the highest priority in the parameter resolution hierarchy, and are treated as sensitive.
 
+`CUSTOM_PARAMS` is only applied when [`GENERATE_EFFECTIVE_SET`](#generate_effective_set) is `true`. If `GENERATE_EFFECTIVE_SET` is `false`, the `generate_effective_set` job does not run and `CUSTOM_PARAMS` has no effect.
+
 EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. See [Calculator CLI](/docs/features/calculator-cli.md) for how Custom Params are applied to the Effective Set.
 
 **Format**: A string containing a JSON object (JSON-in-string). The JSON object must conform to the [schema](/schemas/custom-params.schema.json).
@@ -310,6 +312,11 @@ EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. 
   }
 }
 ```
+
+> [!NOTE]
+>
+> 1. `<value>` can be complex, i.e. a map or a list
+> 2. All keys are optional
 
 **Default Value**: None
 
@@ -494,13 +501,13 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 }
 ```
 
-| Attribute         | Mandatory | Description                                                                                                                                                                                                 | Default | Example |
-|-------------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|---------|
-| `namespace`       | Mandatory | The name of the Namespace where the parameter to be modified is defined                                                                                               | None    | `env-1-platform-monitoring` |
-| `application`     | Optional  | The name of the Application (sub-resource under `namespace`) where the parameter to be modified is defined. Cannot be used with `pipeline` context                   | None    | `MONITORING` |
-| `context`         | Mandatory | The context of the parameter being modified. Valid values: `pipeline`, `deployment`, `runtime`                                                                       | None    | `deployment` |
-| `parameter_key`   | Mandatory | The name (key) of the parameter to be modified | None    | `login` or `db.connection.password` |
-| `parameter_value` | Mandatory | New value (plaintext or encrypted). Envgene, depending on the value of the [`crypt`](/docs/envgene-configs.md#configyml) attribute, will either decrypt, encrypt, or leave the value unchanged. If an encrypted value is passed, it must be encrypted with a key that Envgene can decrypt. | None    | `admin` |
+| Attribute         | Mandatory | Description                                                                                                                                                                                                                                                                               | Default | Example                             |
+|-------------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|-------------------------------------|
+| `namespace`       | Mandatory | The name of the Namespace where the parameter to be modified is defined                                                                                                                                                                                                                   | None    | `env-1-platform-monitoring`         |
+| `application`     | Optional  | The name of the Application (sub-resource under `namespace`) where the parameter to be modified is defined. Cannot be used with `pipeline` context                                                                                                                                        | None    | `MONITORING`                        |
+| `context`         | Mandatory | The context of the parameter being modified. Valid values: `pipeline`, `deployment`, `runtime`                                                                                                                                                                                            | None    | `deployment`                        |
+| `parameter_key`   | Mandatory | The name (key) of the parameter to be modified                                                                                                                                                                                                                                            | None    | `login` or `db.connection.password` |
+| `parameter_value` | Mandatory | New value (plaintext or encrypted). Envgene, depending on the value of the [`crypt`](/docs/envgene-configs.md#configyml) attribute, will either decrypt, encrypt, or leave the value unchanged. If an encrypted value is passed, it must be encrypted with a key that Envgene can decrypt | None    | `admin`                             |
 
 **Default Value**: None
 

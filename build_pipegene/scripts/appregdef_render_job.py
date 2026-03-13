@@ -10,14 +10,22 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
     env_template_version = params.get('ENV_TEMPLATE_VERSION')
     is_template_test = params.get('IS_TEMPLATE_TEST')
     env_tmp_ver_update_mode = params.get('ENV_TEMPLATE_VERSION_UPDATE_MODE')
-    script = [
-        '/module/scripts/handle_certs.sh',
-    ]
-
+    
+    script = []
     if env_template_version and not is_template_test:
         script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
 
-    script.append('cd /build_env; python3 /build_env/scripts/build_env/appregdef_render.py')
+    script.append('python3 /build_env/scripts/build_env/appregdef_render.py')
+
+    script.append(
+    'if [ -d "$CI_PROJECT_DIR/tmp" ]; then '
+    'DEST="$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp"; '
+    'echo "Copying tmp in $CI_PROJECT_DIR to $DEST"; '
+    'mkdir -p "$DEST"; '
+    'cp -r "$CI_PROJECT_DIR/tmp/." "$DEST/"; '
+    'else echo "tmp directory does not exist in $CI_PROJECT_DIR, skipping copy"; '
+    'fi'
+    )
 
     appregdef_render_params = {
         "name": f'app_reg_def_render.{full_env}',
@@ -44,8 +52,7 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
     appregdef_render_job = job_instance(params=appregdef_render_params, vars=appregdef_render_vars)
 
     appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env)
-    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
-    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
+    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")    
     appregdef_render_job.artifacts.when = WhenStatement.ALWAYS
 
     pipeline.add_children(appregdef_render_job)

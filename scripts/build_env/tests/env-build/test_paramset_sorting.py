@@ -1,18 +1,7 @@
-import pytest
-
+from envgenehelper.business_helper import is_from_template_dir
+from build_env import sort_paramsets_with_same_name
 
 class TestSortParamsetsWithSameName:
-
-    @staticmethod
-    def sort_paramsets_with_same_name(entries: list[dict]) -> list[dict]:
-        def sort_key(e):
-            path = e["filePath"]
-            if "from_template" in path:
-                return 0, path
-            elif "from_instance" in path:
-                return 2, path
-            return 1, path
-        return sorted(entries, key=sort_key)
 
     def test_all_three_levels(self):
         entries = [
@@ -20,7 +9,7 @@ class TestSortParamsetsWithSameName:
             {"filePath": "/tmp/render/parameters/test.yml", "envSpecific": False},
             {"filePath": "/tmp/render/parameters/from_template/test.yml", "envSpecific": False},
         ]
-        sorted_entries = self.sort_paramsets_with_same_name(entries)
+        sorted_entries = sort_paramsets_with_same_name(entries)
         assert "from_template" in sorted_entries[0]["filePath"]
         assert "from_instance" not in sorted_entries[1]["filePath"]
         assert "from_instance" in sorted_entries[2]["filePath"]
@@ -30,9 +19,22 @@ class TestSortParamsetsWithSameName:
             {"filePath": "/tmp/render/parameters/from_instance/test.yml", "envSpecific": True},
             {"filePath": "/tmp/render/parameters/from_template/test.yml", "envSpecific": False},
         ]
-        sorted_entries = self.sort_paramsets_with_same_name(entries)
+        sorted_entries = sort_paramsets_with_same_name(entries)
         assert "from_template" in sorted_entries[0]["filePath"]
         assert "from_instance" in sorted_entries[1]["filePath"]
+
+    def test_origin_peer_templates(self):
+        entries = [
+            {"filePath": "/tmp/render/parameters/from_instance/test.yml", "envSpecific": True},
+            {"filePath": "/tmp/render/parameters/from_template/test.yml", "envSpecific": False},
+            {"filePath": "/tmp/render/parameters/from_peer_template/test.yml", "envSpecific": False},
+            {"filePath": "/tmp/render/parameters/from_origin_template/test.yml", "envSpecific": False},
+        ]
+        sorted_entries = sort_paramsets_with_same_name(entries)
+        assert "from_origin_template" in sorted_entries[0]["filePath"]
+        assert "from_peer_template" in sorted_entries[1]["filePath"]
+        assert "from_template" in sorted_entries[2]["filePath"]
+        assert "from_instance" in sorted_entries[3]["filePath"]
 
     def test_multiple_files_sorted_alphabetically(self):
         entries = [
@@ -40,7 +42,7 @@ class TestSortParamsetsWithSameName:
             {"filePath": "/tmp/render/parameters/from_template/a_params.yml", "envSpecific": False},
             {"filePath": "/tmp/render/parameters/from_template/m_params.yml", "envSpecific": False},
         ]
-        sorted_entries = self.sort_paramsets_with_same_name(entries)
+        sorted_entries = sort_paramsets_with_same_name(entries)
         paths = [e["filePath"] for e in sorted_entries]
         assert paths == sorted(paths)
 
@@ -49,9 +51,9 @@ class TestSortParamsetsWithSameName:
             {"filePath": "/tmp/render/parameters/from_instance/DCL_E2E_parameters.yaml", "envSpecific": True},
             {"filePath": "/tmp/render/parameters/from_template/e2e/dcl.yaml", "envSpecific": False},
         ]
-        sorted_entries = self.sort_paramsets_with_same_name(entries)
+        sorted_entries = sort_paramsets_with_same_name(entries)
         assert "from_template" in sorted_entries[0]["filePath"]
         assert "from_instance" in sorted_entries[1]["filePath"]
 
     def test_empty_list(self):
-        assert len(self.sort_paramsets_with_same_name([])) == 0
+        assert len(sort_paramsets_with_same_name([])) == 0

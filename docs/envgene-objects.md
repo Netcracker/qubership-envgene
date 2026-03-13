@@ -65,14 +65,21 @@ This object is a describes the structure of a solution, links to solution's comp
 
 The name of this file serves as the name of the Environment Template. In the Environment Inventory, this name is used to specify which Environment Template from the artifact should be used.
 
-**Location:** Any YAML file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
+**Location:** Any YAML or Jinja file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
+
+**Supported file extensions:**
+
+- `.yml` / `.yaml` — Static Template Descriptor
+- `.yml.j2` / `.yaml.j2` — Jinja Template Descriptor (rendered before Environment Instance generation)
+
+When multiple Template Descriptors with the same base name but different extensions exist, EnvGene selects them in descending priority order: `yml.j2` > `yaml.j2` > `yml` > `yaml`. Jinja Template Descriptors enable conditional namespace inclusion. See [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md) for details.
 
 It has the following structure:
 
 ```yaml
 # Optional
-# Template Inheritance configuration
-# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
+# Template Composition configuration
+# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
 parent-templates:
   # Optional
   # Value must be in `application:version` notation
@@ -82,8 +89,8 @@ parent-templates:
 tenant: string
 # or
 tenant:
-  # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
+  # Template Composition configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
   parent: string
 # Mandatory
 # Can be specified either as direct template path (string) or as an object
@@ -95,17 +102,19 @@ cloud:
   # Optional
   # Template Override configuration
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
-  template_override:     
   template_override:
     <yaml or jinja expression>
   # Optional
-  # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
+  # Template Composition configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
   parent: string
   # Optional
-  # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
+  # Template Composition configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
   overrides-parent:
+    # Optional
+    # Override the name of the cloud in rendering result
+    name: string
     profile:
       override-profile-name: <resource-profile-override-name>
       parent-profile-name: <resource-profile-override-name>
@@ -137,16 +146,19 @@ namespaces:
       <yaml or jinja expression>
     # Optional
     # Name of Namespace in Parent Template
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
     name: string
     # Optional
     # Parent template name
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
     parent: string
     # Optional
-    # Template Inheritance configuration
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-inheritance.md
+    # Template Composition configuration
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
     overrides-parent:
+      # Optional
+      # Override the name of the namespace in rendering result
+      name: string
       profile:
         override-profile-name: string
         parent-profile-name: string
@@ -1511,7 +1523,7 @@ registry:
       # `gcp`: `federation` or `service_account`
       # `azure`: `oauth2`
       authMethod: enum [ secret, assume_role, federation, service_account, oauth2, user_pass ]
-      # Optional
+      # Mandatory
       # Region of the AWS cloud
       # Used with `provider: aws` only
       awsRegion: string
