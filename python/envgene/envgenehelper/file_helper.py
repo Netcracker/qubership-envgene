@@ -199,18 +199,22 @@ def findFiles(fileList: list[Path], pattern, notPattern="", additionalRegexpPatt
     for filePath in fileList:
         # this ensures that pattern matching works correctly on both Windows (\) and Unix (/)
         file_path_posix = Path(filePath).as_posix()
+        pattern_posix = Path(pattern).as_posix() if pattern else ""
+        not_pattern_posix = Path(notPattern).as_posix() if notPattern else ""
         if (
-                pattern in file_path_posix
-                and (notPattern == "" or notPattern not in file_path_posix)
+                pattern_posix in file_path_posix
+                and (not_pattern_posix == "" or not_pattern_posix not in file_path_posix)
                 and (additionalRegexpPattern == "" or re.match(additionalRegexpPattern, file_path_posix))
                 and (additionalRegexpNotPattern == "" or not re.match(additionalRegexpNotPattern, file_path_posix))
         ):
             result.append(filePath)
             logger.debug(
-                f"Path {filePath} match pattern: {pattern} or notPattern: {notPattern} or additionalPattern: {additionalRegexpPattern}")
+                f"Path {filePath} match pattern: {pattern_posix} or notPattern: {not_pattern_posix} "
+                f"or additionalPattern: {additionalRegexpPattern}")
         else:
             logger.debug(
-                f"Path {filePath} doesn't match pattern: {pattern} or notPattern: {notPattern} or additionalPattern: {additionalRegexpPattern}")
+                f"Path {filePath} doesn't match pattern: {pattern_posix} or notPattern: {not_pattern_posix} "
+                f"or additionalPattern: {additionalRegexpPattern}")
     return result
 
 
