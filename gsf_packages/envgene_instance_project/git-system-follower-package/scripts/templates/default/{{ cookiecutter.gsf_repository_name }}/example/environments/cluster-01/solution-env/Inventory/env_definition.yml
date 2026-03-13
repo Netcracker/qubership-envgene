@@ -1,0 +1,17 @@
+inventory: {}
+envTemplate:
+  name: solution
+  artifact: "template-project:feature-template-sample-SNAPSHOT"
+  additionalTemplateVariables:
+    use_env_prefix: true
+  sharedTemplateVariables: []
+  envSpecificParamsets:
+    bss:
+      - "env-specific-bss"
+    oss:
+      - "oss-env-specific"
+  envSpecificE2EParamsets: {}
+  envSpecificTechnicalParamsets: {}
+  envSpecificResourceProfiles: {}
+  sharedMasterCredentialFiles:
+    - "share-creds"
