@@ -1,17 +1,119 @@
+# See full reference at https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#integrationyml
+#
+# Mandatory
 inventory: {}
+  # Optional
+  # Name of the Environment
+  # environmentName: string
+  # Optional
+  # Name of the Tenant for the Environment
+  # tenantName: string
+  # Optional
+  # Name of the Cloud for the Environment
+  # cloudName: string
+  # Optional
+  # URL of the Cluster as specified in kubeconfig
+  # clusterUrl: string
+  # Optional
+  # Reference to Cloud Passport
+  # cloudPassport: string
+  # Optional
+  # Reference to external CMDB system where the Environment Instance can be imported
+  # deployer: string
+  # Optional
+  # Environment description
+  # description: string
+  # Optional
+  # Environment owners
+  # owners: string
+  # Optional
+  # config:
+    # Optional. Default value - `false`
+    # If `true`, during CMDB import credentials IDs will be unique for each environment
+    # updateCredIdsWithEnvName: boolean
+    # Optional. Default value - `false`
+    # If `true`, during CMDB import resource profile override names will be unique for each environment
+    # updateRPOverrideNameWithEnvName: boolean
+    # Optional. Default value - `true`
+    # If `true`, environment-specific Resource Profile Overrides defined in envTemplate.envSpecificParamsets
+    # are merged with Resource Profile Overrides from the Environment Template
+    # If `false`, they completely replace the Environment Template's Resource Profile Overrides
+    # mergeEnvSpecificResourceProfiles: boolean
 envTemplate:
+  # Mandatory
+  # Name of the template in the Environment Template artifact
   name: solution
+  # Mandatory
+  # Template artifact in application:version notation
   artifact: "template-project:feature-template-sample-SNAPSHOT"
+  # Optional
+  # bgNsArtifacts:
+    # Mandatory
+    # Template artifact in application:version notation for origin namespace
+    # origin: string
+    # Mandatory
+    # Template artifact in application:version notation for peer namespace
+    # peer: string
+  # Optional
+  # Additional variables that will be available during template rendering
+  # Value is a key-value hashmap
   additionalTemplateVariables:
     use_env_prefix: true
+  # Optional
+  # Array of filenames containing parameters that will be merged with `additionalTemplateVariables`
+  # Files must contain key-value hashmap
+  # Example:
+  #   sharedTemplateVariables:
+  #     - prod-template-variables
+  #     - sample-cloud-template-variables
   sharedTemplateVariables: []
+  # Optional
+  # Set of environment-specific deployment parameters
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
+  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Example:
+  #   envSpecificParamsets:
+  #     bss:
+  #       - env-specific-bss
+  #       - prod-shared
   envSpecificParamsets:
     bss:
       - "env-specific-bss"
     oss:
       - "oss-env-specific"
+  # Optional
+  # Environment specific pipeline (e2e) parameters set
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
+  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Example:
+  #   envSpecificE2EParamsets:
+  #     cloud:
+  #       - cloud-level-params
   envSpecificE2EParamsets: {}
+  # Optional
+  # Environment specific technical parameters set
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
+  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Example:
+  #   envSpecificTechnicalParamsets:
+  #     bss:
+  #       - env-specific-tech
   envSpecificTechnicalParamsets: {}
+  # Optional
+  # Environment specific resource profile overrides
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
+  # in the Template Descriptor, or by the Namespace template filename without extension)
+  # Example:
+  #   envSpecificResourceProfiles:
+  #     bss:
+  #       - bss-override
   envSpecificResourceProfiles: {}
+  # Optional
+  # Array of filenames containing credentials that will be merged with `additionalTemplateVariables`
+  # File must contain key-value hashmap
+  # Example:
+  #   sharedMasterCredentialFiles:
+  #     - prod-integration-creds
+  #     - share-creds
   sharedMasterCredentialFiles:
     - "share-creds"

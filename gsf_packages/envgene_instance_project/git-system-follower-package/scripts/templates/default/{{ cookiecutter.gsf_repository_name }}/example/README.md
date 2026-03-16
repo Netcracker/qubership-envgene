@@ -1,37 +1,42 @@
 # Getting Started with EnvGene: Your First Environment
 
-This guide walks you through creating your first environment using EnvGene from scratch. By the end, you'll understand the core concepts and have a working environment deployed using the sample configurations in this directory.
-
 - [Getting Started with EnvGene: Your First Environment](#getting-started-with-envgene-your-first-environment)
   - [What You'll Learn](#what-youll-learn)
-  - [What You'll Build](#what-youll-build)
   - [Prerequisites](#prerequisites)
-  - [Understanding the Basics](#understanding-the-basics)
+  - [Scenario](#scenario)
     - [What is a Template?](#what-is-a-template)
     - [What is an Instance?](#what-is-an-instance)
     - [How They Work Together](#how-they-work-together)
   - [Part 1: Creating Your First Template](#part-1-creating-your-first-template)
-    - [Step 1: Set Up Template Repository](#step-1-set-up-template-repository)
-    - [Step 2: Explore the Sample Template](#step-2-explore-the-sample-template)
-    - [Step 3: Understand Template Structure](#step-3-understand-template-structure)
-    - [Step 4: Build Your First Template Artifact](#step-4-build-your-first-template-artifact)
-    - [What Just Happened?](#what-just-happened)
+    - [Step 1: Explore the Sample Template](#step-1-explore-the-sample-template)
+    - [Step 2: Understand Template Structure](#step-2-understand-template-structure)
+    - [Step 3: Build Your First Template Artifact](#step-3-build-your-first-template-artifact)
+    - [Understanding the Template Artifact](#understanding-the-template-artifact)
   - [Part 2: Creating Your First Environment Instance](#part-2-creating-your-first-environment-instance)
-    - [Step 5: Set Up Instance Repository](#step-5-set-up-instance-repository)
-      - [Step 5.1: Add Configuration folder](#step-51-add-configuration-folder)
-      - [Step 5.2: Add environments folder](#step-52-add-environments-folder)
-    - [Step 6: Configure Platform Environment](#step-6-configure-platform-environment)
-    - [Step 7: Configure Shared Credentials](#step-7-configure-shared-credentials)
-    - [Step 8: Run Your First Pipeline](#step-8-run-your-first-pipeline)
+    - [Step 4: Set Up Configuration Folder](#step-4-set-up-configuration-folder)
+    - [Step 5: Set Up environments Folder](#step-5-set-up-environments-folder)
+    - [Step 6: Review Platform Environment Configuration](#step-6-review-platform-environment-configuration)
+    - [Step 7: Review Shared Credentials](#step-7-review-shared-credentials)
+    - [Step 8: Build the Platform Environment](#step-8-build-the-platform-environment)
     - [Step 9: Verify the Results](#step-9-verify-the-results)
-  - [Part 3: Adding a Business Environment](#part-3-adding-a-business-environment)
-    - [Step 10: Configure Environment Inventory](#step-10-configure-environment-inventory)
-    - [Step 11: Add Environment-Specific Parameters](#step-11-add-environment-specific-parameters)
-    - [Step 12: Run Pipeline to Generate Effective Set](#step-12-run-pipeline-to-generate-effective-set)
-  - [Understanding What You Built](#understanding-what-you-built)
+  - [Part 3: Building a Business Environment](#part-3-building-a-business-environment)
+    - [Step 10: Review Solution Environment Configuration](#step-10-review-solution-environment-configuration)
+    - [Step 11: Review Environment-Specific Parameters](#step-11-review-environment-specific-parameters)
+    - [Step 12: Build the Solution Environment](#step-12-build-the-solution-environment)
+  - [The Complete Flow](#the-complete-flow)
     - [The Flow](#the-flow)
-    - [Generated Structure](#generated-structure)
+  - [Summary](#summary)
   - [Reference Documentation](#reference-documentation)
+
+> [!NOTE]
+> **You are in an Instance Repository.** This guide covers both template creation (Part 1, done in a Template Repository) and instance configuration (Parts 2-3, done here).
+
+**Repository Context:** This README can be used in both Template and Instance repositories. The instructions will guide you based on where you are.
+
+- **Part 1** - Creating a Template (done in a Template Repository)
+- **Part 2–3** - Creating an Instance (done in an Instance Repository)
+
+By the end, you will have a working environment and understand how the pipeline uses your configuration.
 
 ## What You'll Learn
 
@@ -40,47 +45,34 @@ This guide walks you through creating your first environment using EnvGene from 
 - How to configure an environment
 - How the pipeline processes your configuration
 
-## What You'll Build
-
-You'll create two environments in a single cluster:
-
-1. **platform-env** - Infrastructure services (databases, messaging)
-2. **solution-env** - Business applications (BSS, OSS components)
-
 ## Prerequisites
 
 - Access to GitLab with CI/CD enabled
 - Basic understanding of YAML syntax
 - Git command-line knowledge
-- Access to artifact registry
 
-> **Time estimate:** 45-60 minutes
+> [!NOTE]
+> **Choose your path based on where you are:**
+>
+> - **In a Template Repository?** Follow Part 1 to create and publish templates (requires write access to registry)
+> - **In an Instance Repository?** Skip to Part 2 to configure environments (requires read access to registry)
 
----
+## Scenario
 
-## Understanding the Basics
+You are setting up your first EnvGene environment in `cluster-01`. You will create two environments:
 
-Before we start building, let's understand the key concepts.
+- **platform-env** - Infrastructure services (ArangoDB, Consul, OpenSearch)
+- **solution-env** - Business applications (BSS, OSS, Core)
+
+By the end, you will have generated the Effective Set and understand how template + instance work together.
 
 ### What is a Template?
 
-A **Template** is a reusable blueprint that defines:
-
-- Solution structure - what namespaces exist (e.g., `platform`, `bss`, `oss`)
-- Default configuration parameters
-
-Think of it as a cookie cutter - it defines the shape, but doesn't create the actual cookie yet.
+A **Template** is a reusable blueprint that defines solution structure (what namespaces exist) and default configuration parameters.
 
 ### What is an Instance?
 
-An **Instance** is a specific environment created from a template:
-
-- Uses a template as its base
-- Adds environment-specific values
-- Overrides default parameters
-- Produces deployable configuration
-
-This is the actual cookie - made from the cookie cutter, but with your specific ingredients.
+An **Instance** is a specific environment created from a template. It adds environment-specific values and overrides default parameters to produce deployable configuration.
 
 ### How They Work Together
 
@@ -97,20 +89,14 @@ flowchart LR
 3. Pipeline merges template + overrides = effective set
 4. Effective set is used to deploy to cluster
 
----
-
 ## Part 1: Creating Your First Template
 
-### Step 1: Set Up Template Repository
+> [!NOTE]
+> Part 1 requires access to a Template Repository (a separate repo) with CI/CD enabled. If you already have a published template artifact, skip to Part 2.
 
-Clone your template repository:
+Part 1 is done in a **template repository**, not in this instance repo. Do Part 1 only if you need to create and publish a template artifact.
 
-```bash
-git clone <your-template-repo-url>
-cd <template-repo>
-```
-
-### Step 2: Explore the Sample Template
+### Step 1: Explore the Sample Template
 
 Navigate to the example folder:
 
@@ -121,7 +107,7 @@ ls -la
 
 You should see:
 
-```plaintext
+```text
 templates/
 ├── env_templates/
 │   ├── Namespaces/
@@ -145,12 +131,11 @@ templates/
 └── resource_profile/
 ```
 
-### Step 3: Understand Template Structure
+### Step 2: Understand Template Structure
 
-Let's look at a key file - `env_templates/platform.yml`:
+Let's look at a key file, a Template Descriptor - `env_templates/platform.yml`:
 
 ```yaml
-
 tenant: "{{ templates_dir }}/env_templates/Namespaces/tenant.yml.j2"
 cloud: "{{ templates_dir }}/env_templates/Namespaces/cloud.yml.j2"
 namespaces:
@@ -162,14 +147,11 @@ namespaces:
   - template_path: "{{ templates_dir }}/env_templates/Namespaces/platform/opensearch.yml.j2"
 ```
 
-**Why this matters:**
-
 This file defines the structure of an environment by linking all required component templates. It determines what gets deployed, ensures consistency across environments, and serves as the blueprint referenced by the Environment Inventory.
 
-Now look at `env_templates/Namespaces/platform/consul.yml.j2`:
+Now look at Namespace template `env_templates/Namespaces/platform/consul.yml.j2`:
 
 ```yaml
-
 name: "consul"
 credentialsId: ""
 isServerSideMerge: false
@@ -185,12 +167,10 @@ e2eParameterSets: []
 technicalConfigurationParameterSets: []
 ```
 
-**What's happening:**
-
 - `.j2` extension means it's a Jinja2 template
-- It will be rendered with variables you provide
+- It will be rendered with variables you provide (this example omits Jinja syntax for simplicity)
 
-### Step 4: Build Your First Template Artifact
+### Step 3: Build Your First Template Artifact
 
 Copy the sample template to your templates directory:
 
@@ -235,36 +215,28 @@ flowchart LR
 - `get_release_notes` → Extracts commit-based release notes.
 - `update_release_notes` → Publishes release documentation.
 
-> [!NOTE] `semantic_release` job typically runs for **master** or **release branches** to ensure stable artifact publication.
-
 Wait for the pipeline to complete (usually 2-5 minutes).
 
-### What Just Happened?
+### Understanding the Template Artifact
 
 Your pipeline created a template artifact with a version like:
 
-```plaintext
-  artifact: template-project:feature-template-sample-20260303.022442-18
+```text
+artifact: template-project:feature-template-sample-20260303.022442-18
 ```
+
+> [!NOTE]
+> Your actual version will differ - it's based on your commit timestamp and build number.
 
 This artifact now contains all your template files in a packaged format, ready to be used by instances.
 
----
-
 ## Part 2: Creating Your First Environment Instance
 
-### Step 5: Set Up Instance Repository
+From here on, all steps are done **in this repository**. Copy the sample configuration and environments from the `example/` folder in this repo.
 
-Clone your instance repository:
+### Step 4: Set Up Configuration Folder
 
-```bash
-git clone <your-instance-repo-url>
-cd <instance-repo>
-```
-
-#### Step 5.1: Add Configuration folder
-
-Copy the configuration folder:
+Copy the configuration folder from `example/`:
 
 ```bash
 cp -r example/configuration configuration/
@@ -281,14 +253,16 @@ configuration/
 └── config.yml
 ```
 
-- `<artifact-definition-name>.yaml` : Describes where the Environment Template artifact is stored in the registry. It converts the `application:version` format into the registry and Maven artifact parameters required to download it.
-**Important:**
-  - The filename must match the repository name.
-  - All fields inside this file must be replaced with actual project-specific values.
-- `credentials.yml` : Stores credential definitions.
-- `config.yml` : Defines encryption-related configuration and security attributes.
+- `<artifact-definition-name>.yaml` - Describes where the Environment Template artifact is stored in the registry. It is used to resolve the `application:version` format into the registry and Maven artifact parameters required to download it.
 
-#### Step 5.2: Add environments folder
+> [!IMPORTANT]
+>
+> - All fields inside this file must be replaced with actual project-specific values.
+
+- `credentials.yml` - Stores credential definitions.
+- `config.yml` - Defines EnvGene configuration.
+
+### Step 5: Set Up environments Folder
 
 Copy the sample environment:
 
@@ -296,7 +270,9 @@ Copy the sample environment:
 cp -r example/environments/cluster-01 environments/
 ```
 
-### Step 6: Configure Platform Environment
+### Step 6: Review Platform Environment Configuration
+
+The `env_definition.yml` defines which template to use, which artifact version, and what parameters to override. Review its structure:
 
 Open `environments/cluster-01/platform-env/Inventory/env_definition.yml`:
 
@@ -316,6 +292,8 @@ envTemplate:
     - "share-creds"
 ```
 
+Comments from the real file are not shown here for simplicity.
+
 **What each field means:**
 
 - `inventory`: Defines environment metadata and configuration (tenant, cloud, credentials, etc.). Acts as the recipe for creating the environment.
@@ -328,10 +306,12 @@ envTemplate:
 - `envSpecificTechnicalParamsets`: Runtime/technical parameter overrides.
 - `envSpecificResourceProfiles`: Resource (CPU/memory) overrides for this environment.
 
+> [!IMPORTANT]
+> The `envTemplate.artifact` value must match what your template pipeline produced.
 
-**Important:** The `envTemplate.artifact` value must match what your template pipeline produced.
+### Step 7: Review Shared Credentials
 
-### Step 7: Configure Shared Credentials
+Shared credentials are referenced in `env_definition.yml` (via `sharedMasterCredentialFiles`) and used across all environments in this cluster. Let's look at the format:
 
 Open `environments/cluster-01/credentials/share-creds.yml`:
 
@@ -365,10 +345,10 @@ kafka-monitoring-creds:
 **Why this matters:**
 
 - Credentials are shared across environments in the same cluster
-- In real scenarios, these would be encrypted
+- In production scenarios, these would be encrypted
 - For learning, we're using plain text
 
-### Step 8: Run Your First Pipeline
+### Step 8: Build the Platform Environment
 
 Commit and push your changes:
 
@@ -381,14 +361,28 @@ git push
 Trigger the instance pipeline manually:
 
 1. Go to GitLab → CI/CD → Pipelines → Run Pipeline
-2. Set these variables:
+2. To generate the Effective Set for the platform environment, EnvGene needs to know which applications (and versions) are deployed. You provide this via the Solution Descriptor (SD). For platform-env, we pass SD inline via pipeline variables (`SD_SOURCE_TYPE: json` and `SD_DATA`). Later (Step 12) you'll do the same for solution-env with BSS/OSS apps.
+
+   Set these variables:
 
     ```yaml
     ENV_NAMES: cluster-01/platform-env
     ENV_BUILDER: true
     GENERATE_EFFECTIVE_SET: true
-    EFFECTIVE_SET_CONFIG: {}
+    SD_SOURCE_TYPE: json
+    SD_DATA: <see below>
     ```
+
+    ```text
+    '{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"<replace-with-arangodb-app:ver>","deployPostfix":"arangodb"},{"version":"<replace-with-consul-app:ver>","deployPostfix":"consul"},{"version":"<replace-with-opensearch-app:ver>","deployPostfix":"opensearch"}]}'
+    ```
+
+    Replace each `<replace-with-...-app:ver>` with your real `application:version` (e.g. `consul:0.11.8`).
+
+    **What's the Solution Descriptor?**
+
+    - Lists specific application versions to deploy
+    - `deployPostfix` maps to namespace (bss, oss, core)
 
 3. Click "Run Pipeline"
 
@@ -398,15 +392,17 @@ Trigger the instance pipeline manually:
 flowchart LR
     A[generate_pipeline] --> B[run_generated_pipeline]
     B --> C[app_reg_def_render]
-    C --> D[env_builder]
-    D --> E[generate_effective_set]
-    E --> F[git_commit]
+    C --> D[process_sd]
+    D --> E[env_builder]
+    E --> F[generate_effective_set]
+    F --> G[git_commit]
 ```
 
-- `generate_pipeline` - Creates a temporary pipeline config
-- `app_reg_def_render` - Resolves application definitions
-- `env_builder` - Merges template + your overrides
-- `generate_effective_set` - Produces final configuration
+- `generate_pipeline` - Generates EnvGene pipeline config
+- `app_reg_def_render` - Downloads EnvGene Environment template, renders application and registry definitions
+- `process_sd` - Processes Solution Descriptor (SD) from pipeline variables
+- `env_builder` - Generates Environment Instance - renders template and merges environment-specific overrides
+- `generate_effective_set` - Generates Effective Set - final output
 - `git_commit` - Commits results back to repository
 
 ### Step 9: Verify the Results
@@ -425,7 +421,7 @@ ls -la environments/cluster-01/platform-env/
 
 You should see:
 
-```plaintext
+```text
 environments/
 └── cluster-01/
     ├── platform-env/
@@ -440,20 +436,27 @@ environments/
     │   ├── Namespaces/
     │   ├── Profiles/
     │   ├── effective-set/
+    │   │   ├── deployment/
+    │   │   ├── topology/
+    │   │   ├── pipeline/
+    │   │   ├── runtime/
+    │   │   └── cleanup/
     │   ├── cloud.yml
     │   └── tenant.yml
     │
-    └── Credentials/
-        └── shared-creds.yml
+    └── credentials/
+        └── share-creds.yml
 ```
 
----
+The `effective-set/` folder contains five contexts (deployment, topology, pipeline, runtime, cleanup). For example, open `effective-set/deployment/<namespace>/<app>/values/deployment-parameters.yaml` to see the final merged parameters that Helm will use. For details on each context, see [Tutorial: Understanding the Effective Set](https://github.com/Netcracker/qubership-envgene/blob/main/docs/tutorials/effective-set.md).
 
-## Part 3: Adding a Business Environment
+## Part 3: Building a Business Environment
 
-Now let's add business applications on top of the platform.
+Now let's add a second environment with business applications.
 
-### Step 10: Configure Environment Inventory
+### Step 10: Review Solution Environment Configuration
+
+The solution-env uses the "solution" template and references parameter sets for BSS and OSS namespaces. Review its `env_definition.yml`:
 
 Open `environments/cluster-01/solution-env/Inventory/env_definition.yml`:
 
@@ -476,22 +479,24 @@ envTemplate:
   sharedMasterCredentialFiles: []
 ```
 
-**What's different:**
+Like before, comments are omitted for clarity.
 
-- `envTemplate.name: "solution"` - Uses the other template
-- `envSpecificParamsets` - Overrides parameters per namespace
-- `cloudPassport` - Cloud-specific configuration
+**What's different from the previous environment:**
 
-### Step 11: Add Environment-Specific Parameters
+- `envTemplate.name: solution` - Uses the solution template
+- `envSpecificParamsets` - Overrides parameters per namespace (e.g. `bss`, `oss`)
+- `sharedMasterCredentialFiles: []` - Solution-env in this example does not use shared credentials
 
-Open `environments/cluster-01/solution-env/Inventory/parameters/cloud-env-specific.yml`:
+### Step 11: Review Environment-Specific Parameters
+
+The solution-env `env_definition.yml` references parameter sets `env-specific-bss` and `oss-env-specific`. The `oss-env-specific.yml` file overrides parameters just for the OSS namespace in this environment.
+
+Open one of these files `environments/cluster-01/solution-env/Inventory/parameters/oss-env-specific.yml`:
 
 ```yaml
-name: cloud-env-specific
+name: oss-env-specific
 parameters:
-  PAAS_PLATFORM: KUBERNETES
-  PAAS_VERSION: v1.32
-  INGRESS_CLASS: nginx
+  LISTENER_NODE_IP: 10.10.10.10
 applications: []
 ```
 
@@ -501,69 +506,81 @@ applications: []
 - You override only what's different
 - Same template, different values per environment
 
-### Step 12: Run Pipeline to Generate Effective Set
+### Step 12: Build the Solution Environment
 
-Trigger the pipeline with a solution descriptor:
+Now that you understand how solution-env uses template + overrides, let's generate its Effective Set.
+
+In this step, we build the **solution-env** environment. Set these variables:
 
 ```yaml
-    ENV_NAMES: cluster-01/platform-env
+    ENV_NAMES: cluster-01/solution-env
     ENV_BUILDER: true
     GENERATE_EFFECTIVE_SET: true
-    EFFECTIVE_SET_CONFIG: {}
     SD_SOURCE_TYPE: json
-    SD_DATA: [{
-         "version": 2.1,
-         "type": "solutionDeploy",
-         "deployMode": "composite",
-         "applications": [
-             {
-              "version": "Core-Extensions:release-2025.3-9.16.0-20250617.073656-1-RELEASE",
-              "deployPostfix": "core"
-             },
-             {
-              "version": "CRM-CIM:release-2024.4-20250425.130326-83-RELEASE",
-              "deployPostfix": "bss"
-             },
-             {
-              "version": "cloudbss-om:release-2024.4-20250516.055833-222-RELEASE",
-              "deployPostfix": "bss"
-             },
-             {
-              "version": "resource-inventory:release-2025.4-20251218.142332-78-RELEASE",
-              "deployPostfix": "oss"
-             }
-         ],
-         "userData": {
-         "useDeployPostfixAsNamespace": false},
-         "cmdbConfigs": [
-         ]
-         }]
+    SD_DATA: <see below>
 ```
 
-**What's the Solution Descriptor?**
+```text
+'{"version":2.1,"type":"solutionDeploy","deployMode":"composite","applications":[{"version":"<replace-with-core-app:ver>","deployPostfix":"core"},{"version":"<replace-with-bss-app:ver>","deployPostfix":"bss"},{"version":"<replace-with-oss-app:ver>","deployPostfix":"oss"}]}'
+```
 
-- Lists specific application versions to deploy
-- `deployPostfix` maps to namespace (bss, oss, core)
+Replace each `<replace-with-...-app:ver>` with your real `application:version` (e.g. `core:release-9.16.0`).
 
 Click "Run Pipeline"
 
-**What's happening:**
+**What You Now Have:**
 
-```mermaid
-flowchart LR
-    A[generate_pipeline] --> B[run_generated_pipeline]
-    B --> C[app_reg_def_render]
-    C --> D[process_sd]
-    D --> E[env_builder]
-    E --> F[generate_effective_set]
-    F --> G[git_commit]
+After running pipelines for both environments (Steps 8 and 12), your repository structure looks like this:
+
+```text
+environments/
+└── cluster-01/
+    ├── platform-env/
+    │   ├── AppDefs/
+    │   ├── RegDefs/
+    │   ├── Credentials/
+    │   ├── Inventory/
+    │   │   ├── env_definition.yml
+    │   │   └── solution-descriptor/
+    │   │       └── sd.yml
+    │   ├── Namespaces/
+    │   ├── Profiles/
+    │   ├── effective-set/
+    │   │   ├── deployment/
+    │   │   ├── topology/
+    │   │   ├── pipeline/
+    │   │   ├── runtime/
+    │   │   └── cleanup/
+    │   ├── cloud.yml
+    │   └── tenant.yml
+    │
+    ├── solution-env/
+    │   ├── AppDefs/
+    │   ├── RegDefs/
+    │   ├── Credentials/
+    │   ├── Inventory/
+    │   │   ├── env_definition.yml
+    │   │   ├── parameters/
+    │   │   └── solution-descriptor/
+    │   │       └── sd.yml
+    │   ├── Namespaces/
+    │   ├── Profiles/
+    │   ├── effective-set/
+    │   │   ├── deployment/
+    │   │   ├── topology/
+    │   │   ├── pipeline/
+    │   │   ├── runtime/
+    │   │   └── cleanup/
+    │   ├── cloud.yml
+    │   └── tenant.yml
+    │
+    └── credentials/
+        └── share-creds.yml
 ```
 
-- `process_sd` - Processes Solution Descriptor (SD) to apply specific version
+For the meaning of Effective Set contexts (deployment, topology, pipeline, runtime, cleanup), see [Tutorial: Understanding the Effective Set](https://github.com/Netcracker/qubership-envgene/blob/main/docs/tutorials/effective-set.md).
 
----
-
-## Understanding What You Built
+## The Complete Flow
 
 ### The Flow
 
@@ -581,34 +598,19 @@ flowchart TB
     H -->|7. Ready for| I[Deployment]
 ```
 
-### Generated Structure
-
-You now has:
-
-```plaintext
-environments/
-└── cluster-01/
-    ├── solution-env/
-    │   ├── AppDefs/
-    │   ├── RegDefs/
-    │   ├── Credentials/
-    │   │   └── credentials.yml
-    │   ├── Inventory/
-    │   │   ├── env_definition.yml
-    │   │   ├── parameters/
-    │   │   └── solution-descriptor/
-    │   │       └── sd.yml
-    │   ├── Namespaces/
-    │   ├── Profiles/
-    │   └── effective-set/
-    │
-    └── Credentials/
-        └── shared-creds.yml
-```
-
----
-
 **Congratulations!** You've successfully created your first EnvGene environment from scratch. You now understand the core workflow and are ready to build more complex environments.
+
+## Summary
+
+By following this tutorial, you:
+
+- Created a template artifact in a Template Repository (Part 1) or used an existing one
+- Configured an Instance Repository with two environments: `platform-env` and `solution-env` (Part 2-3)
+- Passed a Solution Descriptor via pipeline variables to map applications to namespaces
+- Generated the Effective Set for both environments and reviewed the file structure
+- Understand the flow: Template Artifact → env_definition.yml → parameters → SD → Effective Set → Deployment
+
+You are now ready to add more environments, customize parameters, and explore advanced features like Resource Profile Overrides ([Tutorial: Managing Resource Profiles](https://github.com/Netcracker/qubership-envgene/blob/main/docs/tutorials/resource-profiles.md)) and Effective Set contexts ([Tutorial: Understanding the Effective Set](https://github.com/Netcracker/qubership-envgene/blob/main/docs/tutorials/effective-set.md)).
 
 ## Reference Documentation
 
