@@ -31,7 +31,7 @@
 > [!NOTE]
 > **You are in an Instance Repository.** This guide covers both template creation (Part 1, done in a Template Repository) and instance configuration (Parts 2-3, done here).
 
-**Repository Context:** This README can be used in both Template and Instance repositories. The instructions will guide you based on where you are.
+**Repository Context:** This readme can be used in both Template and Instance repositories. The instructions will guide you based on where you are.
 
 - **Part 1** - Creating a Template (done in a Template Repository)
 - **Part 2–3** - Creating an Instance (done in an Instance Repository)
@@ -92,9 +92,9 @@ flowchart LR
 ## Part 1: Creating Your First Template
 
 > [!NOTE]
-> Part 1 requires access to a Template Repository (a separate repo) with CI/CD enabled. If you already have a published template artifact, skip to Part 2.
+> Part 1 requires access to a Template Repository (a separate repository) with CI/CD enabled. If you already have a published template artifact, skip to Part 2.
 
-Part 1 is done in a **template repository**, not in this instance repo. Do Part 1 only if you need to create and publish a template artifact.
+Part 1 is done in a **template repository**, not in this instance repository. Do Part 1 only if you need to create and publish a template artifact.
 
 ### Step 1: Explore the Sample Template
 
@@ -232,7 +232,7 @@ This artifact now contains all your template files in a packaged format, ready t
 
 ## Part 2: Creating Your First Environment Instance
 
-From here on, all steps are done **in this repository**. Copy the sample configuration and environments from the `example/` folder in this repo.
+From here on, all steps are done **in this repository**. Copy the sample configuration and environments from the `example/` folder in this repository.
 
 ### Step 4: Set Up Configuration Folder
 

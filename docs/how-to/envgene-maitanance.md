@@ -61,7 +61,7 @@ git-system-follower install <path_to_instance_package_image> \
 - `<path_to_instance_package_image>`: Docker image path from Step 1
 - `<project_instance_repository_path>`: Project instance repository URL (format: `https://git.com/project.git`)
 - `<project_instance_repository_branch>`: Branch of project instance repository
-- `<gitlab_token>`: Project instance repository token from Initial Setup Step 2 (used both for GSF git operations and for EnvGene to commit changes)
+- `<gitlab_token>`: Project instance repository token from Initial Setup Step 2 (used both for GSF Git operations and for EnvGene to commit changes)
 
 > [!NOTE]
 > The same token is used twice: `-t` for GSF to authenticate git operations, and `-e self_token=` to configure EnvGene's repository access.
