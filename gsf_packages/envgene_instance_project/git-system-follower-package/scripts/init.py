@@ -138,18 +138,26 @@ def main(parameters: Parameters):
 
     create_template(parameters, template, variables)
 
-    # Restore pipeline_vars if it existed - never overwrite user's file
-    for f in pipeline_vars_paths:
-        if f in pipeline_vars_backup:
-            path = repo_root / f
-            content = pipeline_vars_backup[f]
-            migrated = _migrate_pipeline_vars_format(content)
-            if migrated != content:
-                print(f'\t\tFile {f} migrated to new format. Preserved')
-            else:
-                print(f'\t\tFile {f} preserved. Skip overwrite')
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(migrated)
+    # Restore pipeline_vars if it existed - never overwrite, keep only user's format
+    if pipeline_vars_backup:
+        for f in pipeline_vars_paths:
+            if f in pipeline_vars_backup:
+                path = repo_root / f
+                content = pipeline_vars_backup[f]
+                migrated = _migrate_pipeline_vars_format(content)
+                if migrated != content:
+                    print(f'\t\tFile {f} migrated to new format. Preserved')
+                else:
+                    print(f'\t\tFile {f} preserved. Skip overwrite')
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(migrated)
+        # Remove the other format - template creates yaml, user may have yml
+        for f in pipeline_vars_paths:
+            if f not in pipeline_vars_backup:
+                path = repo_root / f
+                if path.exists():
+                    path.unlink()
+                    print(f'\t\tRemoved {f} (user uses different format)')
 
     internal_files_to_remove = ['history.log']
     for file_name in internal_files_to_remove:
