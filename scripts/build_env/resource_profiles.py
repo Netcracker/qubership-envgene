@@ -148,9 +148,9 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
         if profile_key not in all_profiles:
             raise ReferenceError(
                 f"Environment specific profile '{env_specific_profile_path}' cannot be applied "
-                f"for namespace '{profile_key}', because no base template profile was found"
+                f"for profile key '{profile_key}', because no base template profile was found"
             )
-        logger.info(f"Found template override profile for namespace '{profile_key}'"
+        logger.info(f"Found template override profile for profile key '{profile_key}'"
                     f" with environment specific profile {env_specific_profile_path}")
         template_profile_file_path = all_profiles[profile_key]
         template_profile_yaml = openYaml(template_profile_file_path)
