@@ -194,19 +194,6 @@ def build_pipeline(params: dict) -> None:
 
         logger.info(f'----------------end processing for {full_env_name}---------------------')
 
-
-    # Inject workspace printing for all jobs
-    for job_name, job_instance in jobs_map.items():
-        job_instance.before_script = job_instance.before_script or []
-        job_instance.before_script.insert(
-            0, f"echo '--- {job_name} workspace start ---'; ls -lrth $CI_PROJECT_DIR"
-        )
-
-        job_instance.after_script = job_instance.after_script or []
-        job_instance.after_script.append(
-            f"echo '--- {job_name} workspace end ---'; ls -lrth $CI_PROJECT_DIR"
-        )
-
     sorted_pipeline.add_variables(
         GIT_CLONE_PATH="$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID/$CI_JOB_ID"
     )# check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
