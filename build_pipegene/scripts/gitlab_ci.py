@@ -211,6 +211,6 @@ def build_pipeline(params: dict) -> None:
             job.add_variables(GIT_CHECKOUT="false")
 
     sorted_pipeline.add_variables(
-        GIT_CLONE_PATH: "$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_JOB_ID"
+        GIT_CLONE_PATH="$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_JOB_ID"
     )
     sorted_pipeline.write_yaml()
