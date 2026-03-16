@@ -82,8 +82,7 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
         "envgen_image": "$envgen_image",
         "envgen_args": " -vv",
         "envgen_debug": "true",
-        "module_config_default": "/module/templates/defaults.yaml",
-        "GIT_STRATEGY": "none",
+        "module_config_default": "/module/templates/defaults.yaml",        
         "COMMIT_ENV": "true",
         "GITLAB_RUNNER_TAG_NAME": tags,
         "DEPLOY_SESSION_ID": deployment_session_id
