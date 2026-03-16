@@ -194,7 +194,22 @@ def build_pipeline(params: dict) -> None:
 
         logger.info(f'----------------end processing for {full_env_name}---------------------')
 
-    # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
+
+    # Inject workspace printing for all jobs
+    for job_name, job_instance in jobs_map.items():
+        job_instance.before_script = job_instance.before_script or []
+        job_instance.before_script.insert(
+            0, f"echo '--- {job_name} workspace start ---'; ls -lrth $CI_PROJECT_DIR"
+        )
+
+        job_instance.after_script = job_instance.after_script or []
+        job_instance.after_script.append(
+            f"echo '--- {job_name} workspace end ---'; ls -lrth $CI_PROJECT_DIR"
+        )
+
+    sorted_pipeline.add_variables(
+        GIT_CLONE_PATH="$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID/$CI_JOB_ID"
+    )# check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
     for job in sorted_pipeline.find_jobs(JobFilter()):
         job.artifacts.add_paths(
@@ -208,9 +223,7 @@ def build_pipeline(params: dict) -> None:
 
         is_first_job = job.needs is None or len(job.needs) == 0
         if not is_first_job:
-            job.add_variables(GIT_CHECKOUT="false")
+            job.add_variables(GIT_STRATEGY="none")
 
-    sorted_pipeline.add_variables(
-        GIT_CLONE_PATH="$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_JOB_ID"
-    )
+    
     sorted_pipeline.write_yaml()
