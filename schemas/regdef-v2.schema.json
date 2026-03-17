@@ -43,8 +43,7 @@
   "required": [
     "version",
     "name",
-    "mavenConfig",
-    "dockerConfig"
+    "mavenConfig"
   ],
   "definitions": {
     "AuthConfig": {
