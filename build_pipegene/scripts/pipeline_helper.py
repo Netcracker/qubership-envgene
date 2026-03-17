@@ -45,6 +45,17 @@ def job_instance(params, vars, needs=None, rules=None):
         job.prepend_scripts(params['before_script'])
 
     global_before = [
+        'echo "===== directory content START ====="; '
+        'echo "current workdir="; pwd; '
+        'echo "CI_PROJECT_DIR=$CI_PROJECT_DIR"; '
+        'echo "content of CI_PIPELINE_ID directory:"; '
+        'ls -lrtha "$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID/"; '
+        'echo "content of job id directory:"; '
+        'for dir in "$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID"/*; do '
+        '  echo "---- CONTENT OF $dir ----"; '
+        '  ls -lrtha "$dir"; '
+        '  echo "-------------------------"; '
+        'done;'
         'python /module/scripts/utils/log_pipe_params.py',
         '/module/scripts/utils/handle_certs.sh',
     ]
