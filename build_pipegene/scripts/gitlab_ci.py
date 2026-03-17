@@ -211,7 +211,7 @@ def build_pipeline(params: dict) -> None:
     
     sorted_pipeline.add_variables(
         GIT_CLONE_PATH="$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID/$CI_JOB_ID",
-        FF_ENABLE_JOB_CLEANUP="true"
+        #FF_ENABLE_JOB_CLEANUP="true"
     )
     
     sorted_pipeline.write_yaml()
