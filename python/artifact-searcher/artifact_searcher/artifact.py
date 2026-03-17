@@ -13,7 +13,7 @@ from zipfile import ZipFile
 import aiohttp
 import requests
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNECTION_LIMIT, METADATA_XML
-from artifact_searcher.utils.models import Registry, RegistryV2, Application, FileExtension, Credentials, ArtifactInfo, Provider
+from artifact_searcher.utils.models import Registry, RegistryV2, Application, FileExtension, Credentials, ArtifactInfo, Provider, MavenConfig
 from envgenehelper import logger
 
 WORKSPACE = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
@@ -324,7 +324,7 @@ def _should_retry_nexus_url(registry) -> bool:
     """Check whether the registry needs Nexus-style URL retry."""
     if isinstance(registry, RegistryV2):
         return any(cfg.provider == Provider.NEXUS for cfg in registry.auth_config.values())
-    return getattr(registry.maven_config, 'is_nexus', False)
+    return MavenConfig.is_nexus(registry.maven_config.repository_domain_name)
 
 
 async def _retry_with_nexus_url(
@@ -345,7 +345,6 @@ async def _retry_with_nexus_url(
             return result
     else:
         logger.debug("Domain is same after editing, skipping retry")
-    logger.warning("Artifact not found")
     return None
 
 
@@ -474,6 +473,9 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
                    cred: Credentials | None = None,
                    auth_headers: dict | None = None,
                    classifier: str = "") -> str | None:
+    if MavenConfig.is_nexus(repo_url):
+        repo_url = convert_nexus_repo_url_to_index_view(repo_url)
+
     base = repo_url.rstrip("/") + "/"
     group_id = group_id.replace(".", "/")
 
