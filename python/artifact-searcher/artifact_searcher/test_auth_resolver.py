@@ -116,9 +116,8 @@ class TestAWSAuthentication:
         )
 
     def test_aws_invalid_auth_method(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-
-        with pytest.raises(ValidationError, match="AWS provider requires authMethod to be"):
+        # JSON schema validation should catch invalid authMethod enum value
+        with pytest.raises(ValueError, match="AuthConfig validation failed.*'invalid_method' is not one of"):
             AuthConfig(
                 credentials_id="aws-cred",
                 provider=Provider.AWS,
@@ -127,9 +126,8 @@ class TestAWSAuthentication:
             )
 
     def test_aws_missing_region(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-
-        with pytest.raises(ValidationError, match="awsRegion is required when provider is 'aws' and authMethod is 'secret'"):
+        # JSON schema validation should catch missing awsRegion for AWS secret auth
+        with pytest.raises(ValueError, match="AuthConfig validation failed.*'awsRegion' is a required property"):
             AuthConfig(
                 credentials_id="aws-cred",
                 provider=Provider.AWS,
@@ -151,7 +149,7 @@ class TestAWSAuthentication:
         }
         base_registry_v2.maven_config.auth_config = "aws-auth"
         
-        with pytest.raises(ValueError, match="AWS .* auth requires both username .* and password"):
+        with pytest.raises(ValueError, match="AWS secret auth requires both username and password in credentials"):
             resolve_v2_auth_headers(base_registry_v2, env_creds)
 
 
@@ -187,9 +185,8 @@ class TestGCPAuthentication:
         )
 
     def test_gcp_invalid_auth_method(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-
-        with pytest.raises(ValidationError, match="GCP provider requires authMethod to be 'federation', 'service_account', or 'anonymous'"):
+        # JSON schema validation should catch invalid authMethod enum value
+        with pytest.raises(ValueError, match="AuthConfig validation failed.*'invalid' is not one of"):
             base_registry_v2.auth_config = {
                 "gcp-auth": AuthConfig(
                     credentials_id="gcp-cred",
@@ -251,10 +248,8 @@ class TestNexusArtifactoryAuthentication:
         assert result == {"Authorization": f"Basic {expected_token}"}
 
     def test_basic_auth_no_provider_with_user_pass(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-        
-        # Provider is now required, so this raises ValidationError
-        with pytest.raises(ValidationError, match="provider"):
+        # JSON schema validation should catch missing provider (required field)
+        with pytest.raises(ValueError, match="AuthConfig validation failed.*'provider' is a required property"):
             base_registry_v2.auth_config = {
                 "basic-auth": AuthConfig(
                     credentials_id="nexus-cred",
@@ -263,10 +258,8 @@ class TestNexusArtifactoryAuthentication:
             }
 
     def test_basic_auth_no_provider_no_method(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-        
-        # Both provider and authMethod are required
-        with pytest.raises(ValidationError, match="provider"):
+        # JSON schema validation should catch missing provider and authMethod (both required)
+        with pytest.raises(ValueError, match="AuthConfig validation failed.*'provider' is a required property"):
             base_registry_v2.auth_config = {
                 "basic-auth": AuthConfig(
                     credentials_id="nexus-cred"
@@ -274,12 +267,10 @@ class TestNexusArtifactoryAuthentication:
             }
 
     def test_basic_auth_missing_password(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-        
         env_creds["nexus-cred"]["data"] = {"username": "user"}
         
-        # authMethod is required, so this raises ValidationError
-        with pytest.raises(ValidationError, match="authMethod"):
+        # JSON schema validation should catch missing authMethod (required field)
+        with pytest.raises(ValueError, match="AuthConfig validation failed.*'authMethod' is a required property"):
             base_registry_v2.auth_config = {
                 "basic-auth": AuthConfig(
                     credentials_id="nexus-cred",
@@ -290,30 +281,24 @@ class TestNexusArtifactoryAuthentication:
 
 class TestCredentialHandling:
     def test_missing_provider_field(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-        
-        # Provider is required field
-        with pytest.raises(ValidationError, match="provider"):
+        # JSON schema validation should catch missing provider (required field)
+        with pytest.raises(ValueError, match="AuthConfig validation failed.*'provider' is a required property"):
             AuthConfig(
                 credentials_id="test-cred",
                 auth_method="user_pass"
             )
 
     def test_missing_auth_method_field(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-        
-        # AuthMethod is required field
-        with pytest.raises(ValidationError, match="authMethod"):
+        # JSON schema validation should catch missing authMethod (required field)
+        with pytest.raises(ValueError, match="AuthConfig validation failed.*'authMethod' is a required property"):
             AuthConfig(
                 credentials_id="test-cred",
                 provider=Provider.NEXUS
             )
 
     def test_credentials_id_required_for_non_anonymous(self, base_registry_v2, env_creds):
-        from pydantic import ValidationError
-        
-        # credentialsId is required when authMethod is not anonymous
-        with pytest.raises(ValidationError, match="credentialsId is required when authMethod is not 'anonymous'"):
+        # JSON schema validation should catch missing credentialsId for non-anonymous auth
+        with pytest.raises(ValueError, match="AuthConfig validation failed.*'credentialsId' is a required property"):
             AuthConfig(
                 provider=Provider.NEXUS,
                 auth_method="user_pass"

@@ -1,9 +1,13 @@
 from enum import Enum
 from typing import Optional
+import json
+import os
+from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, field_validator, Field, model_validator
 from pydantic.alias_generators import to_camel
 import requests
+import jsonschema
 
 from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT
 
@@ -162,6 +166,32 @@ class AuthConfig(BaseSchema):
     azure_acr_resource: Optional[str] = Field(default=None, alias="azureACRResource")
     azure_acr_name: Optional[str] = Field(default=None, alias="azureACRName")
     azure_artifacts_resource: Optional[str] = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_with_schema(cls, data):
+        """Validate AuthConfig against JSON schema before Pydantic validation."""
+        if not isinstance(data, dict):
+            return data
+        
+        # Find schema file relative to this module
+        schema_path = Path(__file__).parent.parent.parent.parent.parent / "schemas" / "regdef-v2.schema.json"
+        
+        # Only validate if schema exists (allows tests without schema)
+        if schema_path.exists():
+            with open(schema_path, 'r') as f:
+                schema_data = json.load(f)
+            
+            # Extract AuthConfig definition from schema
+            auth_config_schema = schema_data.get("definitions", {}).get("AuthConfig", {})
+            
+            if auth_config_schema:
+                try:
+                    jsonschema.validate(data, auth_config_schema)
+                except jsonschema.ValidationError as e:
+                    raise ValueError(f"AuthConfig validation failed: {e.message}")
+        
+        return data
 
 
 class MavenConfigV2(BaseSchema):
