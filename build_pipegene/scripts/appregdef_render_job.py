@@ -25,6 +25,14 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
     'cp -r "$CI_PROJECT_DIR/tmp/." "$DEST/"; '
     'else echo "tmp directory does not exist in $CI_PROJECT_DIR, skipping copy"; '
     'fi'
+    'echo "===== directory content START ====="; '
+    'ls -1 "$CI_PROJECT_DIR"; '
+    'ls -lrth "$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID/"; '
+    'for dir in "$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID"/*; do '
+    '  echo "---- CONTENT OF $dir ----"; '
+    '  ls -la "$dir"; '
+    '  echo "-------------------------"; '
+    'done'
     )
 
     appregdef_render_params = {

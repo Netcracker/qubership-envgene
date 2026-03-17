@@ -8,6 +8,14 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
     logger.info(f'prepare env_build job for {full_env}')
 
     script = [
+        'echo "===== directory content START ====="; '
+        'ls -1 "$CI_PROJECT_DIR"; '
+        'ls -lrth "$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID/"; '
+        'for dir in "$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID"/*; do '
+        '  echo "---- CONTENT OF $dir ----"; '
+        '  ls -la "$dir"; '
+        '  echo "-------------------------"; '
+        'done'
         'echo "PIPELINE=$CI_PIPELINE_ID JOB=$CI_JOB_NAME"',        
         'if [ -d "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp" ] && [ -d "$CI_PROJECT_DIR/tmp" ]; then',
         'echo "Copying $CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp -> $CI_PROJECT_DIR/tmp";',

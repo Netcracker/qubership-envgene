@@ -15,6 +15,14 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, artif
     reg_defs_path = f"{base_env_path}/RegDefs"
     
     script = [
+        'echo "===== directory content START ====="; '
+        'ls -1 "$CI_PROJECT_DIR"; '
+        'ls -lrth "$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID/"; '
+        'for dir in "$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID"/*; do '
+        '  echo "---- CONTENT OF $dir ----"; '
+        '  ls -la "$dir"; '
+        '  echo "-------------------------"; '
+        'done'
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p {app_defs_path} && cp -rf {artifact_app_defs_path}/* {app_defs_path}',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p {reg_defs_path} && cp -fr {artifact_reg_defs_path}/* {reg_defs_path}',
         'python3 /build_env/scripts/build_env/process_sd.py',
