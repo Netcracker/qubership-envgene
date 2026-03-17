@@ -195,7 +195,9 @@ def build_pipeline(params: dict) -> None:
         logger.info(f'----------------end processing for {full_env_name}---------------------')
 
     sorted_pipeline.add_variables(
+        #GIT_CLONE_PATH="$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID/$CI_JOB_ID",
         GIT_CLONE_PATH="$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID/$CI_JOB_ID"
+        FF_ENABLE_JOB_CLEANUP="true"
     )# check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
     for job in sorted_pipeline.find_jobs(JobFilter()):
@@ -210,7 +212,7 @@ def build_pipeline(params: dict) -> None:
 
         is_first_job = job.needs is None or len(job.needs) == 0
         if not is_first_job:
-            job.add_variables(GIT_STRATEGY="none")
+            job.add_variables(GIT_CHECKOUT="false")
 
     
     sorted_pipeline.write_yaml()
