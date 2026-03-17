@@ -204,13 +204,7 @@ def process_env_template() -> dict:
             raise FileNotFoundError(f"No artifact definition file found for {app_name}")
         app_def = Application.model_validate(openYaml(artifact_path))
         
-        # V2 registries have resolve_auth_headers method, V1 use credentials
-        auth_headers = None
-        if hasattr(app_def.registry, 'resolve_auth_headers'):
-            auth_headers = app_def.registry.resolve_auth_headers(cred_config)
-            cred = None
-        else:
-            cred = get_registry_creds(app_def.registry, cred_config)
+        cred, auth_headers = app_def.registry.resolve_auth(cred_config)
 
         logger.info(f'Use template resolving new logic for {appver}')
         tasks[template_type] = resolve_artifact_new_logic(app_def, app_version, template_dest, cred, auth_headers)

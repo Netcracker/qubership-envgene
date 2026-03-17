@@ -115,6 +115,17 @@ class Registry(BaseSchema):
     helm_config: Optional[HelmConfig] = None
     helm_app_config: Optional[HelmAppConfig] = None
 
+    def resolve_auth(self, env_creds: Optional[dict] = None) -> tuple:
+        """Returns (cred, None) for V1 registries."""
+        if not self.credentials_id or not env_creds:
+            return None, None
+        cred_data = env_creds.get(self.credentials_id, {}).get("data", {})
+        username = cred_data.get("username")
+        password = cred_data.get("password")
+        if username and password:
+            return Credentials(username=username, password=password), None
+        return None, None
+
 
 REGDEF_V2_VERSION = "2.0"
 
@@ -151,37 +162,6 @@ class AuthConfig(BaseSchema):
     azure_acr_resource: Optional[str] = Field(default=None, alias="azureACRResource")
     azure_acr_name: Optional[str] = Field(default=None, alias="azureACRName")
     azure_artifacts_resource: Optional[str] = None
-    
-    @model_validator(mode='after')
-    def validate_conditional_fields(self):
-        if self.auth_method != "anonymous" and not self.credentials_id:
-            raise ValueError("credentialsId is required when authMethod is not 'anonymous'")
-        
-        if self.provider == Provider.AWS and self.auth_method == "secret" and not self.aws_region:
-            raise ValueError("awsRegion is required when provider is 'aws' and authMethod is 'secret'")
-        
-        if self.provider == Provider.AWS and self.auth_method == "assume_role" and not self.aws_role_arn:
-            raise ValueError("awsRoleARN is required when provider is 'aws' and authMethod is 'assume_role'")
-        
-        if self.provider == Provider.GCP and self.auth_method == "federation" and not self.gcp_oidc:
-            raise ValueError("gcpOIDC is required when provider is 'gcp' and authMethod is 'federation'")
-        
-        if self.provider == Provider.NEXUS and self.auth_method not in ["user_pass", "anonymous"]:
-            raise ValueError(f"Nexus provider requires authMethod to be 'user_pass' or 'anonymous', got '{self.auth_method}'")
-        
-        if self.provider == Provider.ARTIFACTORY and self.auth_method not in ["user_pass", "anonymous"]:
-            raise ValueError(f"Artifactory provider requires authMethod to be 'user_pass' or 'anonymous', got '{self.auth_method}'")
-        
-        if self.provider == Provider.AWS and self.auth_method not in ["secret", "assume_role", "anonymous"]:
-            raise ValueError(f"AWS provider requires authMethod to be 'secret', 'assume_role', or 'anonymous', got '{self.auth_method}'")
-        
-        if self.provider == Provider.GCP and self.auth_method not in ["federation", "service_account", "anonymous"]:
-            raise ValueError(f"GCP provider requires authMethod to be 'federation', 'service_account', or 'anonymous', got '{self.auth_method}'")
-        
-        if self.provider == Provider.AZURE and self.auth_method not in ["oauth2", "anonymous"]:
-            raise ValueError(f"Azure provider requires authMethod to be 'oauth2' or 'anonymous', got '{self.auth_method}'")
-        
-        return self
 
 
 class MavenConfigV2(BaseSchema):
@@ -265,6 +245,12 @@ class RegistryV2(BaseSchema):
     def resolve_auth_headers(self, env_creds: Optional[dict] = None) -> Optional[dict]:
         from artifact_searcher.auth_resolver import resolve_v2_auth_headers
         return resolve_v2_auth_headers(self, env_creds or {})
+
+    def resolve_auth(self, env_creds: Optional[dict] = None) -> tuple:
+        """Returns (None, auth_headers) for V2 registries."""
+        from artifact_searcher.auth_resolver import resolve_v2_auth_headers
+        auth_headers = resolve_v2_auth_headers(self, env_creds or {})
+        return None, auth_headers
 
 
 def parse_registry(data: dict) -> Registry | RegistryV2:
