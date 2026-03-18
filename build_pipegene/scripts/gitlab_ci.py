@@ -100,7 +100,7 @@ def build_pipeline(params: dict) -> None:
 
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
-            jobs_map["trigger_passport_job"] = prepare_trigger_passport_job(pipeline, full_env_name)
+            #jobs_map["trigger_passport_job"] = prepare_trigger_passport_job(pipeline, full_env_name)
             jobs_map["get_passport_job"] = prepare_passport_job(pipeline, full_env_name,
                                                                 environment_name, cluster_name, tags)
             get_passport_jobs[cluster_name] = True
