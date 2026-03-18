@@ -141,8 +141,7 @@ def clean_temp_dir():
 
 
 def credentials_to_headers(cred: Credentials) -> dict:
-    """Convert Credentials object to Authorization headers dict.
-    Public helper for external callers who have Credentials objects."""
+    # Convert Credentials object to Authorization headers dict.
     token = base64.b64encode(f"{cred.username}:{cred.password}".encode()).decode()
     return {"Authorization": f"Basic {token}"}
 
@@ -358,7 +357,7 @@ async def check_artifact_async(
     """
     repos_dict = get_repo_value_pointer_dict(app.registry)
 
-    # Single repo: no parallelism benefit, use sync check directly
+    # Single repo: no parallelism
     if len(repos_dict) == 1:
         repo_value, repo_pointer = next(iter(repos_dict.items()))
         if not repo_value and repo_pointer != "repositoryName":
