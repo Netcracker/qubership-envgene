@@ -13,7 +13,7 @@ if __name__ == '__main__':
             timeout=10
         )
         response.raise_for_status()
-        print("Response OK")
+        print("Response-OK")
 
     except requests.exceptions.RequestException as e:
         print("Request failed:", str(e))
