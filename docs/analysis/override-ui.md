@@ -234,9 +234,7 @@
             ```
 
       2. Во время `env_build` происходит валидация:
-         - UI override парамсеты (с `type: "ui-override"`) должны быть в конце списка - если нет, падает
-         - UI override парамсеты должны иметь `type: "ui-override"` и имя файла должно соответствовать паттерну UI override - если нет, падает
-         - Парамсеты с `type: "ui-override"` должны иметь имя файла, соответствующее паттерну UI override - если нет, падает
+         - UI override парамсеты (с именем файла соответствующим паттерну `*-ui-override.yaml`) должны быть в конце списка - если нет, падает
       3. Во время `env_inventory_generation` (или в первой джобе?) происходит валидация, что создаются или изменяются ui-override парамсеты - если да, падает
 
    3. парамсеты имеют следующую структуру:
@@ -244,7 +242,6 @@
 
             ```yaml
             name: string
-            type: "ui-override"  # Обязательно для UI override парамсетов
             parameters: <>
             applications:
                - appName: string
@@ -255,7 +252,6 @@
 
             ```yaml
             name: string
-            type: "ui-override"  # Обязательно для UI override парамсетов
             parameters: map
             applications: []
             ```
@@ -315,13 +311,10 @@
                   <deploy-postfix>:
                      - ...
                      - <deploy-postfix>-pipeline-ui-override
-                     - <deploy-postfix>-<application-name>-pipeline-ui-override
             ```
 
       2. Во время `env_build` происходит валидация:
-         - UI override парамсеты (с `type: "ui-override"`) должны быть в конце списка - если нет, падает
-         - UI override парамсеты должны иметь `type: "ui-override"` и имя файла должно соответствовать паттерну UI override - если нет, падает
-         - Парамсеты с `type: "ui-override"` должны иметь имя файла, соответствующее паттерну UI override - если нет, падает
+         - UI override парамсеты (с именем файла соответствующим паттерну `*-ui-override.yaml`) должны быть в конце списка - если нет, падает
       3. Во время `env_inventory_generation` (или в первой джобе?) происходит валидация, что создаются или изменяются ui-override парамсеты - если да, падает
 
    3. парамсеты имеют следующую структуру в зависимости от уровня:
@@ -331,7 +324,6 @@
 
                ```yaml
                name: deploy-ui-override  # или runtime-ui-override
-               type: "ui-override"  # Обязательно для UI override парамсетов
                parameters: map  # Параметры уровня Environment
                applications: []  # Пусто, т.к. параметры на уровне Environment
                ```
@@ -340,7 +332,6 @@
 
                ```yaml
                name: <deploy-postfix>-deploy-ui-override  # или <deploy-postfix>-runtime-ui-override
-               type: "ui-override"  # Обязательно для UI override парамсетов
                parameters: map  # Параметры уровня Namespace
                applications: []  # Пусто, т.к. параметры на уровне Namespace
                ```
@@ -348,9 +339,8 @@
          3. На уровне Application:
 
                ```yaml
-               name: <deploy-postfix>-deploy-ui-override  # или <deploy-postfix>-runtime-ui-override
-               type: "ui-override"  # Обязательно для UI override парамсетов
-               parameters: <>  # Пусто, т.к. параметры на уровне Application
+               name: <deploy-postfix>-<application-name>-deploy-ui-override  # или <deploy-postfix>-<application-name>-runtime-ui-override
+               parameters: {}  # Пусто, т.к. параметры на уровне Application
                applications:
                   - appName: string
                     parameters: map  # Параметры уровня Application
@@ -362,7 +352,6 @@
 
                ```yaml
                name: pipeline-ui-override
-               type: "ui-override"  # Обязательно для UI override парамсетов
                parameters: map  # Параметры уровня Environment
                applications: []  # Пусто
                ```
@@ -371,7 +360,6 @@
 
                ```yaml
                name: <deploy-postfix>-pipeline-ui-override
-               type: "ui-override"  # Обязательно для UI override парамсетов
                parameters: map  # Параметры уровня Namespace
                applications: []  # Пусто
                ```
@@ -462,7 +450,7 @@ Colly предоставляет convenience endpoints для работы с UI
    - Возврат `409 Conflict` с текущей версией
 
 3. **UI обработка конфликтов:**
-   - При получении `412` или `409`:
+   - При получении `409`:
      - Показать ошибку пользователю
      - Отобразить текущее содержимое из ответа
      - Предложить разрешить конфликт (merge или overwrite)
@@ -474,25 +462,17 @@ Colly предоставляет convenience endpoints для работы с UI
 1. Colly определяет путь к файлу ParamSet
 2. Colly проверяет, существует ли файл в Git
 3. Если файл не существует:
-   1. Возвращает 404 Not Found
-   2. Включает информацию об ошибке в ответ
+   1. Возвращает 200 OK с пустыми параметрами `{}` для всех контекстов
+   2. Включает warning в логи
 4. Если файл существует:
    1. Получает SHA-1 hash последнего коммита, изменившего файл
    2. Читает и парсит содержимое файла
    3. Возвращает ParamSet в теле ответа
-   4. Устанавливает ETag в заголовке ответа (hash в кавычках)
 
 Успешный ответ:
 
 - Статус: 200 OK
-- Заголовок ETag: commit hash в кавычках
-- Заголовок Cache-Control: no-cache
-- Тело: JSON с содержимым ParamSet
-
-Ответ если ParamSet не существует:
-
-- Статус: 404 Not Found
-- Тело: описание ошибки, информация о том, что ParamSet не найден
+- Тело: JSON с содержимым ParamSet или пустыми параметрами `{}` если ParamSet не существует
 
 #### POST `/environments/<envId>/ui-parameters`
 
@@ -504,30 +484,27 @@ Colly предоставляет convenience endpoints для работы с UI
    1. Обновляет параметры (merge)
    2. Коммитит изменения в Git
    3. Получает новый commit hash
-   4. Возвращает успех с новым ETag
+   4. Возвращает успех
 4. Если ParamSet не существует:
    1. Создает файл ParamSet в Git
    2. Добавляет ассоциацию в `env_definition.yml`
    3. Коммитит изменения в Git
    4. Получает новый commit hash
-   5. Возвращает успех с новым ETag
+   5. Возвращает успех
 
 Запрос:
 
-- Тело: JSON с данными для создания ParamSet:
+- Тело: JSON с данными для создания ParamSet
 
 Успешный ответ (ParamSet создан):
 
 - Статус: 201 Created
-- Заголовок Location: `/environments/{environmentId}/ui-parameters`
-- Заголовок ETag: новый commit hash
-- Тело: `map` (созданные параметры)
+- Тело: полный запрос (`commitMessage`, `commitUser`, `commitUserEmail`, `parameters`)
 
 Успешный ответ (ParamSet обновлен):
 
 - Статус: 200 OK
-- Заголовок ETag: новый commit hash
-- Тело: `map` (обновленные параметры)
+- Тело: полный запрос (`commitMessage`, `commitUser`, `commitUserEmail`, `parameters`)
 
 Ответ при ошибке валидации:
 
@@ -540,13 +517,6 @@ Colly предоставляет convenience endpoints для работы с UI
 
 - POST поддерживает создание и обновление (upsert)
 - Если ParamSet существует, параметры мержатся
-- Оптимистичная блокировка через `If-Match` не используется для POST (upsert операция)
-
-**Для PUT запросов (если будут реализованы):**
-
-- PUT требует обязательный заголовок `If-Match` с ожидаемой версией
-- При несовпадении версий возвращается `412 Precondition Failed`
-- В теле ответа включается текущая версия и содержимое
 
 **Конфликт при Git push:**
 
@@ -557,24 +527,14 @@ Colly предоставляет convenience endpoints для работы с UI
 
 **UI обработка конфликтов:**
 
-- При получении `412` или `409`:
+- При получении `409`:
   - Показать ошибку пользователю
   - Отобразить текущее содержимое из ответа
   - Предложить разрешить конфликт (merge или overwrite)
 
 ## План реализации
 
-1. Ввести типизацию парамсетов:
-
-      ```yaml
-      name: string
-      type: enum[ "standard" | "ui-override" ]  # default: "standard"
-      parameters: map
-      applications: list
-      ```
-
-   - Поддержка в Colly API
+1. UI override парамсеты идентифицируются по контрактному имени файла (паттерн `*-ui-override.yaml`)
+   - Поддержка в Colly API для работы с UI override парамсетами через контрактный нейминг
    - Поддержка в EnvGene:
-     - Валидация `type: "ui-override"` в `env_build` (проверка, что UI override парамсеты в конце списка)
-     - Валидация соответствия `type` и имени файла
-     - Удаление `type` аттрибута на cmdb_import
+     - Валидация в `env_build`: проверка, что UI override парамсеты (по паттерну имени файла) в конце списка
