@@ -46,6 +46,7 @@ def job_instance(params, vars, needs=None, rules=None):
 
     global_before = [
         'echo "===== directory content START ====="; '
+        'echo "Job start time: $(date)";'
         'echo "current workdir="; pwd; '
         'echo "CI_PROJECT_DIR=$CI_PROJECT_DIR"; '
         'echo "GIT_STRATEGY=$GIT_STRATEGY"; '
@@ -53,7 +54,7 @@ def job_instance(params, vars, needs=None, rules=None):
         'echo "==== Workspace contents ===="; '
         'ls -lrtha "$CI_PROJECT_DIR"; '
         'echo "==== TMP contents ===="; '
-        'ls -lrtha "$CI_PROJECT_DIR/tmp"; '
+        'ls -al $CI_PROJECT_DIR/tmp || echo "tmp missing";'
         'if [ -d "$CI_PROJECT_DIR/tmp/templates/parameters" ]; then '
         '  echo "==== TMP/templates/parameters contents ===="; '
         '  ls -al "$CI_PROJECT_DIR/tmp/templates/parameters"; '
