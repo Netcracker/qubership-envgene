@@ -19,14 +19,17 @@ SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 def generate_env_new_approach():
     env_name = getenv_with_error('ENV_NAME')
     cluster = getenv_with_error('CLUSTER_NAME')
+
     logger.info(f"Starting env inventory generation for env: {env_name} in cluster: {cluster}")
 
     env_inventory_content = json.loads(getenv_with_error('ENV_INVENTORY_CONTENT'))
     env_inv_content_schema_path = path.join(SCHEMAS_DIR, "env-inventory-content.schema.json")
 
-    validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
-                                    schema_file_path=env_inv_content_schema_path,
-                                    schemas_dir=SCHEMAS_DIR)
+    validate_yaml_by_scheme_or_fail(
+        input_yaml_content=env_inventory_content,
+        schema_file_path=env_inv_content_schema_path,
+        schemas_dir=SCHEMAS_DIR
+    )
 
     handle_env_inv_content(env_inventory_content)
 
