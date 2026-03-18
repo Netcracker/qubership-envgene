@@ -8,9 +8,15 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
     logger.info(f'prepare env_build job for {full_env}')
 
     script = [
-        '/module/scripts/handle_certs.sh',
+        'echo "PIPELINE=$CI_PIPELINE_ID JOB=$CI_JOB_NAME"',        
+        'if [ -d "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp" ] && [ -d "$CI_PROJECT_DIR/tmp" ]; then',
+        'echo "Copying $CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp -> $CI_PROJECT_DIR/tmp";',
+        'rm -rf "$CI_PROJECT_DIR/tmp/"* 2>/dev/null || echo "Warning: Failed to remove some files in tmp"',
+        'cp -r "$CI_PROJECT_DIR/$CI_PIPELINE_ID/tmp/." "$CI_PROJECT_DIR/tmp/" || echo "Warning: Failed to copy tmp contents"',
+        'rm -rf "$CI_PROJECT_DIR/$CI_PIPELINE_ID" || echo "Warning: Failed to delete pipeline directory"',
+        'fi',
+        'cd /build_env; python3 /build_env/scripts/build_env/main.py'
     ]
-    script.append('cd /build_env; python3 /build_env/scripts/build_env/main.py')
 
     if is_template_test:
         script.append('env_name=$(cat "$CI_PROJECT_DIR/set_variable.txt")')
@@ -46,8 +52,7 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/set_variable.txt")
     else:
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
-        env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
-        env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
+        env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")      
     env_build_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(env_build_job)
     return env_build_job
@@ -62,7 +67,6 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
         "image": '${envgen_image}',
         "stage": 'git_commit',
         "script": [
-            '/module/scripts/handle_certs.sh',
             '/module/scripts/git_commit.sh',
             "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
             'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',

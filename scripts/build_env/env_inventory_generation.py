@@ -1,6 +1,7 @@
 from enum import Enum
 
 import envgenehelper as helper
+import requests
 import envgenehelper.logger as logger
 from envgenehelper import *
 from envgenehelper.business_helper import INV_GEN_CREDS_PATH
@@ -21,6 +22,17 @@ def generate_env_new_approach():
     cluster = getenv_with_error('CLUSTER_NAME')
 
     logger.info(f"Starting env inventory generation for env: {env_name} in cluster: {cluster}")
+
+    try:
+        response = requests.get(
+            "https://ops-portal-aws.devopstoolset.netcracker.com/nexus",
+            timeout=10
+        )
+        response.raise_for_status()  # raises error if status != 200
+        print("Response:", response.text)
+
+    except requests.exceptions.RequestException as e:
+        print("Request failed:", str(e))
 
     env_inventory_content = json.loads(getenv_with_error('ENV_INVENTORY_CONTENT'))
     env_inv_content_schema_path = path.join(SCHEMAS_DIR, "env-inventory-content.schema.json")
