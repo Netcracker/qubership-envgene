@@ -7,25 +7,21 @@
     - [Факты о ParamSet в EnvGene](#факты-о-paramset-в-envgene)
     - [Структура ParamSet (YAML)](#структура-paramset-yaml)
     - [Ассоциация в Inventory](#ассоциация-в-inventory)
-  - [Архитектура и объектная модель](#архитектура-и-объектная-модель)
-    - [Объектная модель](#объектная-модель)
     - [API Endpoints](#api-endpoints)
-      - [ParamSet](#paramset)
-      - [Effective Set](#effective-set)
-      - [Convenience endpoints](#convenience-endpoints)
+  - [Общие правила API](#общие-правила-api)
+    - [Определение уровня (level)](#определение-уровня-level)
+    - [Поддержка контекстов по уровням](#поддержка-контекстов-по-уровням)
   - [Детальное описание API](#детальное-описание-api)
     - [1. GET /api/v1/environments/{environmentId}/ui-parameters](#1-get-apiv1environmentsenvironmentidui-parameters)
     - [2. POST /api/v1/environments/{environmentId}/ui-parameters](#2-post-apiv1environmentsenvironmentidui-parameters)
     - [3. DELETE /api/v1/environments/{environmentId}/ui-parameters](#3-delete-apiv1environmentsenvironmentidui-parameters)
-  - [Управление версиями и конфликтами **TBD**](#управление-версиями-и-конфликтами-tbd)
   - [Маппинг в Git репозиторий](#маппинг-в-git-репозиторий)
-    - [Путь к файлу ParamSet](#путь-к-файлу-paramset)
+    - [Расположение ParamSet файлов](#расположение-paramset-файлов)
+    - [Контракты именования UI override ParamSet](#контракты-именования-ui-override-paramset)
     - [Маппинг ассоциаций в Inventory](#маппинг-ассоциаций-в-inventory)
-  - [Чтение UI override ParamSet](#чтение-ui-override-paramset)
-    - [Чтения UI override ParamSet с учетом ассоциаций окружения](#чтения-ui-override-paramset-с-учетом-ассоциаций-окружения)
-      - [Определение `path`](#определение-path)
-      - [Чтение одного UI override ParamSet файла](#чтение-одного-ui-override-paramset-файла)
-  - [Валидация **TBD**](#валидация-tbd)
+  - [Валидация](#валидация)
+  - [Управление версиями и конфликтами](#управление-версиями-и-конфликтами)
+    - [Версионирование через Git](#версионирование-через-git)
 
 ## Введение
 
@@ -45,38 +41,46 @@
 
 1. **Расположение в репозитории:**
    - `/environments/parameters` - глобальный уровень (site-wide)
-   - `/environments/parameters/<cluster-name>` - уровень кластера (cluster-wide)
-   - `/environments/parameters/<cluster-name>/<env-name>/Inventory/parameters` - уровень окружения (environment-wide)
+   - `/environments/<cluster-name>/parameters` - уровень кластера (cluster-wide)
+   - `/environments/<cluster-name>/<env-name>/Inventory/parameters` - уровень окружения (environment-wide)
 
 2. **Ассоциация к объектам:**
    - К Cloud - по зарезервированному слову `cloud`
    - К Namespace - по атрибуту `deployPostfix` неймспейса
 
 3. **Контексты параметров:**
-   - `deployment` - параметры для деплоя
-   - `runtime` (technical) - параметры для рантайма
-   - `pipeline` (e2e) - параметры для пайплайнов
+   - `deployment`
+   - `runtime`
+   - `pipeline`
 
-4. **Множественная ассоциация:**
+4. **Маппинг контекстов на секции в env_definition.yml:**
+   - `deployment` → `envSpecificParamsets`
+   - `runtime` → `envSpecificTechnicalParamsets`
+   - `pipeline` → `envSpecificE2EParamsets`
+
+5. **Множественная ассоциация:**
    - Один ParamSet может быть ассоциирован к нескольким окружениям/объектам/контекстам
+   - При чтении параметры из нескольких ParamSet merge'атся в порядке перечисления в `env_definition.yml`
+   - Последующие ParamSet перезаписывают значения предыдущих
 
-5. **Идентификация окружения:**
-   - `environmentId = <clusterName>/<environmentName>`
+6. **Идентификация окружения:**
+   - `environmentId` - Environment uuid (используется в API)
+   - `environmentPath` - `<cluster-name>/<env-name>` (используется в Git путях)
+
+7. **Расширения файлов:**
+   - ParamSet файлы могут иметь расширение `.yaml` или `.yml`
+   - При чтении приоритет отдается `.yaml` - если существует файл с расширением `.yaml`, файл с `.yml` игнорируется
 
 ### Структура ParamSet (YAML)
 
 ```yaml
 # Optional, deprecated
 version: string
-# Mandatory - имя парамсета, должно совпадать с именем файла
+# Mandatory - имя парамсета, должно совпадать с именем файла без расширения
 name: string
-# Optional - тип парамсета (default: "standard")
-# "standard" - обычный парамсет
-# "ui-override" - UI override парамсет (параметры, измененные через UI)
-type: enum[standard, ui-override]
-# Mandatory - ключ-значение параметры
+# Mandatory для Environment/Namespace level, Empty для Application level
 parameters: hashmap
-# Optional - параметры уровня приложения
+# Optional для Environment/Namespace level, Mandatory для Application level
 applications:
   - appName: string
     parameters: hashmap
@@ -100,64 +104,12 @@ envTemplate:
       - "paramset-name-1"
 ```
 
-## Архитектура и объектная модель
-
-Colly управляет как файлами ParamSet, так и их ассоциациями в Inventory.
-
-- В Колли вводится объект ParamSet. Colly предоставляет CRUD операции над ParamSet.
-- В Колли расширяется объект Environment - вводится атрибут `metadata.ParamSetAssociations`. Colly предоставляет CRUD операции над ParamSetAssociations в инвентори.
-- Все атрибуты на верхнем уровне объекта ParamSet идентичны структуре YAML файла в Git репозитории. Метаданные, генерируемые/вычисляемые Colly (`id`, `commitHash`, `path`), вынесены в секцию `metadata`
-- В EnvGene расширяется модель ParamSet - вводится опциональный аттрибут `type: enum[ standard, ui-override]` для явного разделения ParamSet созданных вручную и через Colly.
-
-### Объектная модель
-
-```yaml
-## ParamSet
-name: string                                    # Имя парамсета (из YAML)
-type: enum[ standard, ui-override]              # optional. default: "standard" (из YAML)
-parameters: map                                 # Параметры из YAML (ключ-значение)
-applications:                                   # Параметры приложений
-  - appName: string                             # Имя приложения
-    parameters: map                             # Параметры приложения (ключ-значение)
-metadata:                                       # Метаданные, генерируемые/вычисляемые Colly
-  id: string                                    # UUID, генерируется Colly
-  commitHash: string                            # Git commit hash последнего коммита файла (используется для ETag)
-  path: string                                  # Путь к файлу в Git репозитории
-
-## Environment
-...
-metadata:
-  ...
-  paramSetAssociations:                            # Список ассоциаций ParamSet с Environment
-    - id: string                                   # UUID ассоциации, генерируется Colly
-      associatedObjectType: string                 # "cloud" | deployPostfix
-      context: enum[deployment, runtime, pipeline] #
-      paramSetName: string                         # Имя парамсета для ассоциации
-```
-
 ### API Endpoints
 
 > [!NOTE]
-> Endpoints для работы с ParamSet (`/api/v1/paramset/`) и ассоциациями (`/api/v1/environments/{environmentId}/paramset-associations`) в текущей версии реализовывать не планируется. Для работы с UI override параметрами используются convenience endpoints.
-
-#### ParamSet
-
-```text
-GET    /api/v1/paramset/{paramsetId}
-POST   /api/v1/paramset
-PUT    /api/v1/paramset/{paramsetId}
-DELETE /api/v1/paramset/{paramsetId}
-```
-
-#### Effective Set
-
-```text
-GET    /api/v1/environments/{environmentId}/paramset-associations
-POST   /api/v1/environments/{environmentId}/paramset-associations
-DELETE /api/v1/environments/{environmentId}/paramset-associations/{associationId}
-```
-
-#### Convenience endpoints
+> Endpoints для работы с ParamSet (`/api/v1/paramset/`) и ассоциациями (`/api/v1/environments/{environmentId}/paramset-associations`) в текущей версии реализовывать **не планируется**.
+>
+> Для работы с UI override параметрами используются convenience endpoints:
 
 ```text
 GET      /api/v1/environments/{environmentId}/ui-parameters
@@ -165,60 +117,70 @@ POST     /api/v1/environments/{environmentId}/ui-parameters
 DELETE   /api/v1/environments/{environmentId}/ui-parameters
 ```
 
----
+## Общие правила API
+
+### Определение уровня (level)
+
+Уровень определяется на основе переданных параметров:
+
+- Если не переданы `namespaceName` и `applicationName` → **Environment level**
+- Если передан только `namespaceName` → **Namespace level**
+- Если переданы оба параметра → **Application level**
+
+### Поддержка контекстов по уровням
+
+- **Environment Level:** `deployment`, `runtime`, `pipeline`
+- **Namespace Level:** `deployment`, `runtime` (pipeline не поддерживается)
+- **Application Level:** `deployment`, `runtime` (pipeline не поддерживается)
 
 ## Детальное описание API
 
 ### 1. GET /api/v1/environments/{environmentId}/ui-parameters
 
-Получить UI override параметры для окружения
+Получить UI override параметры для окружения.
 
-> [!WARNING]
-> время ответа должно быть менее 300 мс
+> [!IMPORTANT]
+> API работает с кэшированными данными. Colly не обращается к Git репозиторию напрямую при каждом GET запросе. Кэш создается и обновляется по расписанию.
 
-**Параметры:**
+**Параметры запроса:**
 
-- `environmentId` (path) - `cluster/env`
+- `environmentId` (path, mandatory) - Environment uuid
 - `namespaceName` (query, optional) - Имя namespace (для Namespace/Application уровня)
 - `applicationName` (query, optional) - Имя приложения (для Application уровня)
-
-**Ответы:**
-
-- `200 OK` - Параметры найдены
-  - Headers: `ETag: "<commit-hash>"`
-  - Body: `map`
-- `404 Not Found` - ParamSet не найден или ассоциация отсутствует
 
 **Примеры запросов:**
 
 ```text
-## Environment Level
-GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment
+# Environment Level
+GET /api/v1/environments/550e8400-e29b-41d4-a716-446655440000/ui-parameters
 
-## Namespace Level
-GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&namespaceName=env-01-core
+# Namespace Level
+GET /api/v1/environments/550e8400-e29b-41d4-a716-446655440000/ui-parameters?namespaceName=env-01-core
 
-## Application Level
-GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&namespaceName=env-01-core&applicationName=my-app
+# Application Level
+GET /api/v1/environments/550e8400-e29b-41d4-a716-446655440000/ui-parameters?namespaceName=env-01-core&applicationName=my-app
 ```
 
-**Пример ответа:**
+**Ответы:**
 
-Общий для Environment, Namespace, Application Levels
+- `200 OK` - Успешный запрос (всегда возвращается, даже если ParamSet не существует)
+  - Body: `map` (структура зависит от уровня, см. ниже)
+- `404 Not Found` - Environment, Namespace или Application не найден
+
+**Пример успешного ответа для Environment Level:**
 
 ```json
 {
-  
   "parameters": {
-    "deployment": { // mandatory, default - {}
+    "deployment": {
       "KEY1": "value1",
       "KEY2": "value2"
     },
-    "runtime": { // mandatory, default - {}
+    "runtime": {
       "KEY1": "value1",
       "KEY2": "value2"
     },
-    "pipeline": { // mandatory, default - {}
+    "pipeline": {
       "KEY1": "value1",
       "KEY2": "value2"
     }
@@ -226,60 +188,102 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 }
 ```
 
-<!-- **Алгоритм:**
+**Пример успешного ответа для Namespace/Application Level:**
 
-1. **Environment Level:**
-   - Определить имя файла ParamSet: `<context>-ui-override.yaml`
-   - Определить имя ParamSet (name в YAML): `<context>-ui-override`
-   - Найти ParamSet по пути: `/environments/<environmentId>/Inventory/parameters/<context>-ui-override.yaml`
-   - Проверить ассоциацию в `env_definition.yml` для `cloud`
-   - Вернуть `parameters` из ParamSet
+```json
+{
+  "parameters": {
+    "deployment": {
+      "KEY1": "value1",
+      "KEY2": "value2"
+    },
+    "runtime": {
+      "KEY1": "value1",
+      "KEY2": "value2"
+    }
+  }
+}
+```
 
-2. **Namespace Level:**
-   - Найти `Namespace` по `environmentId` и `namespaceName`, получить `deployPostfix`
-   - Определить имя файла ParamSet: `<deployPostfix>-<context>-ui-override.yaml`
-   - Определить имя ParamSet (name в YAML): `<deployPostfix>-<context>-ui-override`
-   - Найти ParamSet по пути: `/environments/<environmentId>/Inventory/parameters/<deployPostfix>-<context>-ui-override.yaml`
-   - Проверить ассоциацию в `env_definition.yml` для `deployPostfix`
-   - Вернуть `parameters` из ParamSet
+**Логика обработки:**
 
-3. **Application Level:**
-   - Найти `Namespace` по `environmentId` и `namespaceName`, получить `deployPostfix`
-   - Определить имя файла ParamSet: `<deployPostfix>-<applicationName>-<context>-ui-override.yaml`
-   - Определить имя ParamSet (name в YAML): `<deployPostfix>-<applicationName>-<context>-ui-override`
-   - Найти ParamSet по пути: `/environments/<environmentId>/Inventory/parameters/<deployPostfix>-<applicationName>-<context>-ui-override.yaml`
-   - Проверить ассоциацию в `env_definition.yml` для `deployPostfix`
-   - Найти в `applications` запись с `appName=<applicationName>`
-   - Вернуть `applications[?appName=<applicationName>].parameters` из ParamSet -->
+API работает с кэшированными данными ParamSet. Кэш создается и обновляется по расписанию.
 
----
+При получении запроса:
+
+1. **Определить уровень (level)** (см. раздел ["Определение уровня"](#определение-уровня-level))
+
+2. **Для Namespace/Application level - получить `deployPostfix`:**
+   - Найти `Namespace` объект по `namespaceName` и `environmentId`
+   - Получить значение поля `deployPostfix` из `Namespace` объекта
+   - Если `deployPostfix` не найден → `404 Not Found`
+
+3. **Получить параметры из кэша:**
+   - Прочитать ассоциации
+   - Для каждого контекста получить список ассоциированных ParamSet
+   - Прочитать параметры из кэшированных ParamSet файлов
+   - Вернуть результат
+   - Если кэш отсутствует → возврат пустых параметров `{}` для всех контекстов с warning в логах
+
+**Кэширование:**
+
+Colly кэширует информацию из Git репозитория. API работает исключительно с кэшированными данными, не читает файлы из репозитория напрямую.
+
+**Создание и обновление кэша:**
+
+- **По расписанию:**
+  - Кэш обновляется автоматически каждые n минут для всех окружений
+  - Процесс выполняется в фоне, независимо от API запросов
+
+- **Процесс создания кэша:**
+  1. Прочитать `env_definition.yml` для окружения
+  2. Найти все UI override ParamSet файлы по путям (попытка `.yaml`, затем `.yml`)
+  3. Если файл не найден → warning в логах, кэш для этого ParamSet не создается
+  4. Валидация структуры ParamSet:
+     - Проверить соответствие `name` имени файла
+     - Проверить наличие обязательных секций
+  5. Если валидация успешна → создать/обновить кэш
+
+**Инвалидация кэша:**
+
+- **При кэшировании по расписанию:**
+  - При ошибках валидации ParamSet файлов
+  - При отсутствии обязательных полей
+  - Действие: кэш для данного ParamSet удаляется, warning в логах
+  - При следующем periodic sync ParamSet будет прочитан и провалидирован заново
+  - При GET запросе невалидный ParamSet рассматривается как отсутствующий → возврат пустого объекта `{}` для соответствующего контекста
+
+**Примечания:**
+
+- `deployment` - обязательный в ответе, по умолчанию `{}`
+- `runtime` - обязательный в ответе, по умолчанию `{}`
+- `pipeline`
+  - обязательный в ответе только для Environment Level, по умолчанию `{}`
+  - не включается в ответ для Namespace и Application Level
+- `404 Not Found` возвращается только если не найден сам Environment, Namespace или Application (не ParamSet)
+- Если ParamSet файл не существует или ассоциация отсутствует, соответствующий контекст возвращается с пустой мапой `{}`
 
 ### 2. POST /api/v1/environments/{environmentId}/ui-parameters
 
-Создать или обновить UI override параметры
+Создать или обновить UI override параметры.
 
-**Параметры:**
+**Параметры запроса:**
 
-- `environmentId` (path) - `cluster/env`
+- `environmentId` (path) - Environment uuid
 - `namespaceName` (query, optional) - Имя namespace (для Namespace/Application уровня)
 - `applicationName` (query, optional) - Имя приложения (для Application уровня)
-- `commitMessage` (body) - Коммит мессадж для коммита в энвген рпеозиторий
-- `commitUser` (body) - Имя пользователя под которым происходит коммит
-- `commitUserEmail` (body) - email пользователя под которым происходит коммит
-- `parameters` (body)
-
-> [!WARNING]
-> создание парамсетов и ассоциаций должно быть транзакционной операцией
-
-Когда в колли приходит пустой `parameters: {}` это является для Колли признаком что такой парамсет должен быть удален. В этом случае происходит как удаление соответствующего парамсета, так и удаление ассоциации
-
-<!-- колли коммитит из под своего пользователя но "притворяясь  пользователем UI, тем которй передан в commitUser
-проверить позволяет ли гит это и какой аттрибут нужно передать - только юзер нэйм или еще емэйл
-добавить примеры комплексных вэлью - передавать в json ли yaml - Егор скажет как ему удобнее -->
+- `commitMessage` (body, mandatory) - Коммит мессадж для коммита в энвген репозиторий
+- `commitUser` (body, mandatory) - Имя пользователя под которым происходит коммит
+- `commitUserEmail` (body, mandatory) - email пользователя под которым происходит коммит
+- `parameters` (body, mandatory)
 
 **Пример запросов:**
 
 **Environment Level:**
+
+```http
+POST /api/v1/environments/550e8400-e29b-41d4-a716-446655440000/ui-parameters
+```
 
 ```json
 {
@@ -287,15 +291,15 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
   "commitUser": "Vasya A. Pupkin",
   "commitUserEmail": "Vasya@mail.com",
   "parameters": {
-    "deployment": { // optional
+    "deployment": {
       "KEY1": "value1",
       "KEY2": "value2"
     },
-    "runtime": { // optional
+    "runtime": {
       "KEY1": "value1",
       "KEY2": "value2"
     },
-    "pipeline": { // optional
+    "pipeline": {
       "KEY1": "value1",
       "KEY2": "value2"
     }
@@ -305,22 +309,21 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 
 **Namespace Level:**
 
+```http
+POST /api/v1/environments/550e8400-e29b-41d4-a716-446655440000/ui-parameters?namespaceName=env-01-core
+```
+
 ```json
 {
   "commitMessage": "FAKE-0000",
   "commitUser": "Vasya A. Pupkin",
   "commitUserEmail": "Vasya@mail.com",
-  "namespaceName": "env-01-core",
   "parameters": {
-    "deployment": { // optional
+    "deployment": {
       "KEY1": "value1",
       "KEY2": "value2"
     },
-    "runtime": { // optional
-      "KEY1": "value1",
-      "KEY2": "value2"
-    },
-    "pipeline": { // optional
+    "runtime": {
       "KEY1": "value1",
       "KEY2": "value2"
     }
@@ -330,23 +333,21 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 
 **Application Level:**
 
+```http
+POST /api/v1/environments/550e8400-e29b-41d4-a716-446655440000/ui-parameters?namespaceName=env-01-core&applicationName=my-app
+```
+
 ```json
 {
   "commitMessage": "FAKE-0000",
   "commitUser": "Vasya A. Pupkin",
   "commitUserEmail": "Vasya@mail.com",
-  "namespaceName": "env-01-core",
-  "applicationName": "my-app",
   "parameters": {
-    "deployment": { // optional
+    "deployment": {
       "KEY1": "value1",
       "KEY2": "value2"
     },
-    "runtime": { // optional
-      "KEY1": "value1",
-      "KEY2": "value2"
-    },
-    "pipeline": { // optional
+    "runtime": {
       "KEY1": "value1",
       "KEY2": "value2"
     }
@@ -354,104 +355,323 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
 }
 ```
 
-<!-- **Логика определения уровня:**
-
-- Если указаны `namespaceName` и `applicationName` → Application level
-- Если указан только `namespaceName` → Namespace level
-- Если не указаны → Environment level
-
-**Примечания:**
-
-- Имя ParamSet вычисляется автоматически на основе уровня и контекста
-- Path вычисляется автоматически: `/environments/<environmentId>/Inventory/parameters/`
-- Ассоциация добавляется автоматически в `env_definition.yml`
-- Если ParamSet уже существует, параметры обновляются (merge)
-- Операция транзакционная: либо создаются/обновляются ParamSet и ассоциация, либо откат -->
-
 **Ответы:**
 
 - `200 OK` - Параметры обновлены (если ParamSet существовал)
-  - Headers: `ETag: "<commit-hash>"`
-  - Body: `map` (запрос)
+  - Body: полный запрос (см. ниже)
 - `201 Created` - Параметры созданы (если ParamSet не существовал)
-  - Headers: `ETag: "<commit-hash>"`
-  - Body: `map` (запрос)
-- `400 Bad Request` - Ошибка валидации
+  - Body: полный запрос (см. ниже)
+- `400 Bad Request` - Ошибка валидации (например, передан `pipeline` для Namespace/Application Level)
 - `404 Not Found` - Environment, Namespace или Application не найден
 
-<!-- **Пример ответа:**
+**Примеры ответов:**
+
+**Пример успешного ответа Environment Level:**
 
 ```json
 {
-  "KEY1": "value1",
-  "KEY2": "value2"
+  "commitMessage": "FAKE-0000",
+  "commitUser": "Vasya A. Pupkin",
+  "commitUserEmail": "Vasya@mail.com",
+  "parameters": {
+    "deployment": {
+      "KEY1": "value1",
+      "KEY2": "value2"
+    },
+    "runtime": {
+      "KEY3": "value3"
+    },
+    "pipeline": {
+      "KEY4": "value4"
+    }
+  }
 }
-``` -->
+```
 
-<!-- **Алгоритм:**
+**Пример успешного ответа Namespace/Application Level:**
 
-1. **Environment Level:**
-   - Определить имя файла ParamSet: `<context>-ui-override.yaml`
-   - Определить имя ParamSet (name в YAML): `<context>-ui-override`
-   - Создать/обновить ParamSet:
-     - Path: `/environments/<environmentId>/Inventory/parameters/<context>-ui-override.yaml`
-     - Content:
+```json
+{
+  "commitMessage": "FAKE-0000",
+  "commitUser": "Vasya A. Pupkin",
+  "commitUserEmail": "Vasya@mail.com",
+  "parameters": {
+    "deployment": {
+      "NAMESPACE_PARAM": "namespace-value"
+    },
+    "runtime": {
+      "RUNTIME_PARAM": "runtime-value"
+    }
+  }
+}
+```
 
-       ```yaml
-       name: <context>-ui-override
-       type: "ui-override"
-       parameters: <parameters>
-       applications: []
-       ```
+**Логика обработки:**
 
-   - Добавить/обновить ассоциацию в `env_definition.yml` для `cloud`
-   - Вернуть `parameters`
+1. **Валидация запроса:**
+   - Проверить наличие обязательных полей: `commitMessage`, `commitUser`, `commitUserEmail`, `parameters`
+   - Проверить существование Environment по `environmentId`
+   - Если указан `namespaceName` → проверить существование Namespace и получить `deployPostfix`
+   - Если указан `applicationName` → проверить, что указан `namespaceName` и проверить существование Application
 
-2. **Namespace Level:**
-   - Найти `Namespace` по `environmentId` и `namespaceName`, получить `deployPostfix`
-   - Определить имя файла ParamSet: `<deployPostfix>-<context>-ui-override.yaml`
-   - Определить имя ParamSet (name в YAML): `<deployPostfix>-<context>-ui-override`
-   - Создать/обновить ParamSet:
-     - Path: `/environments/<environmentId>/Inventory/parameters/<deploy-postfix>-<context>-ui-override.yaml`
-     - Content:
+2. **Определить уровень (level)** (см. раздел ["Определение уровня"](#определение-уровня-level))
 
-       ```yaml
-       name: <deploy-postfix>-<context>-ui-override
-       type: "ui-override"
-       parameters: <parameters>
-       applications: []
-       ```
+3. **Валидация контекстов по уровню:**
+   - Для Namespace/Application level: если передан `pipeline` с непустым значением → `400 Bad Request`
 
-   - Добавить/обновить ассоциацию в `env_definition.yml` для `deployPostfix`
-   - Вернуть `parameters`
+4. **Обработать каждую секцию контекста (`deployment`, `runtime`, `pipeline`):**
 
-3. **Application Level:**
-   - Найти `Namespace` по `environmentId` и `namespaceName`, получить `deployPostfix`
-   - Определить имя файла ParamSet: `<deployPostfix>-<applicationName>-<context>-ui-override.yaml`
-   - Определить имя ParamSet (name в YAML): `<deployPostfix>-<applicationName>-<context>-ui-override`
-   - Создать/обновить ParamSet:
-     - Path: `/environments/<environmentId>/Inventory/parameters/<deploy-postfix>-<application-name>-<context>-ui-override.yaml`
-     - Content:
+   **Для каждого контекста:**
 
-       ```yaml
-       name: <deploy-postfix>-<application-name>-<context>-ui-override
-       type: "ui-override"
-       parameters: {}
-       applications:
-         - appName: <applicationName>
-           parameters: <parameters>
-       ```
+   1. Если секция **не передана** → пропустить этот контекст (не изменять)
 
-   - Добавить/обновить ассоциацию в `env_definition.yml` для `deployPostfix`
-   - Вернуть `applications[?appName=<applicationName>].parameters` -->
+   2. Если секция передана с **пустым объектом** `{}`:
+      - Определить имя и путь ParamSet файла для этого контекста
+      - Удалить ParamSet файл из Git репозитория
+      - Удалить ассоциацию из `env_definition.yml`
+
+   3. Если секция передана с **параметрами**:
+      - Определить имя и путь ParamSet файла для этого контекста (см. раздел ["Контракты именования UI override ParamSet"](#контракты-именования-ui-override-paramset))
+      - Создать/обновить ParamSet файл:
+        - Для Environment/Namespace level: записать параметры в секцию `parameters` YAML
+        - Для Application level: записать параметры в секцию `applications[appName].parameters` YAML
+      - Добавить/обновить ассоциацию в `env_definition.yml`:
+        - Определить `associatedObjectType`: `cloud` для Environment level, `<deployPostfix>` для Namespace/Application level
+        - Определить секцию ассоциаций (см. раздел ["Маппинг ассоциаций в Inventory"](#маппинг-ассоциаций-в-inventory))
+        - Добавить имя ParamSet в список, если его там нет
+
+5. **Транзакционная запись в Git:**
+   - Выполнить все изменения (создание/обновление/удаление ParamSet + обновление ассоциаций) в одном Git коммите
+   - Использовать переданные `commitMessage`, `commitUser`, `commitUserEmail` для коммита
+   - Если любая операция не удалась → откат всех изменений, возврат ошибки
+
+6. **Вернуть результат:**
+   - Status: `200 OK` (если ParamSet существовал) или `201 Created` (если ParamSet новый)
+   - Body: полный запрос (`commitMessage`, `commitUser`, `commitUserEmail`, `parameters`)
 
 ### 3. DELETE /api/v1/environments/{environmentId}/ui-parameters
 
-Решить будем ли использовать это в revert кэйсе
+Удалить UI override параметры для окружения. Используется в reset кейсе.
 
----
+Удаляются как ParamSet файлы, так и ассоциации в `env_definition.yml`. Удаление является транзакционной операцией.
 
-## Управление версиями и конфликтами **TBD**
+**Параметры:**
+
+- `environmentId` (path, mandatory) - Environment uuid
+- `namespaceName` (query, optional) - Имя namespace (для Namespace/Application уровня)
+- `applicationName` (query, optional) - Имя приложения (для Application уровня)
+- `commitMessage` (body, mandatory) - Коммит мессадж для коммита в энвген репозиторий
+- `commitUser` (body, mandatory) - Имя пользователя под которым происходит коммит
+- `commitUserEmail` (body, mandatory) - email пользователя под которым происходит коммит
+
+**Примеры запросов:**
+
+**Environment Level:**
+
+```http
+DELETE /api/v1/environments/550e8400-e29b-41d4-a716-446655440000/ui-parameters
+```
+
+```json
+{
+  "commitMessage": "Reset UI overrides for environment",
+  "commitUser": "Vasya A. Pupkin",
+  "commitUserEmail": "Vasya@mail.com"
+}
+```
+
+**Namespace Level:**
+
+```http
+DELETE /api/v1/environments/550e8400-e29b-41d4-a716-446655440000/ui-parameters?namespaceName=env-01-core
+```
+
+```json
+{
+  "commitMessage": "Reset UI overrides for namespace env-01-core",
+  "commitUser": "Vasya A. Pupkin",
+  "commitUserEmail": "Vasya@mail.com"
+}
+```
+
+**Application Level:**
+
+```http
+DELETE /api/v1/environments/550e8400-e29b-41d4-a716-446655440000/ui-parameters?namespaceName=env-01-core&applicationName=my-app
+```
+
+```json
+{
+  "commitMessage": "Reset UI overrides for application my-app",
+  "commitUser": "Vasya A. Pupkin",
+  "commitUserEmail": "Vasya@mail.com"
+}
+```
+
+**Ответы:**
+
+- `204 No Content` - Параметры успешно удалены (ParamSet файлы и ассоциации удалены)
+- `404 Not Found` - Environment, Namespace или Application не найден
+- `400 Bad Request` - Ошибка валидации параметров запроса
+
+**Логика обработки:**
+
+1. **Валидация запроса:**
+   - Проверить наличие обязательных полей: `commitMessage`, `commitUser`, `commitUserEmail`
+   - Проверить существование Environment по `environmentId`
+   - Если указан `namespaceName` → проверить существование Namespace и получить `deployPostfix`
+   - Если указан `applicationName` → проверить, что указан `namespaceName` и проверить существование Application
+
+2. **Определить уровень (level)** (см. раздел ["Определение уровня"](#определение-уровня-level))
+
+3. **Определить список контекстов для удаления** (см. раздел ["Поддержка контекстов по уровням"](#поддержка-контекстов-по-уровням))
+
+4. **Удалить ParamSet для каждого контекста:**
+
+   **Для каждого контекста из списка:**
+
+   - Определить имя и путь ParamSet файла для этого контекста (см. раздел ["Контракты именования UI override ParamSet"](#контракты-именования-ui-override-paramset))
+
+   - Проверить существование ParamSet файла:
+      - Попытка найти файл с расширением `.yaml`
+      - Если не найден, попытка найти файл с расширением `.yml`
+
+   - Если ParamSet файл существует:
+      - Удалить ParamSet файл из Git репозитория
+
+   - Удалить ассоциацию из `env_definition.yml`:
+      - Определить `associatedObjectType`: `cloud` для Environment level, `<deployPostfix>` для Namespace/Application level
+      - Определить секцию ассоциаций (см. раздел ["Маппинг ассоциаций в Inventory"](#маппинг-ассоциаций-в-inventory))
+      - Удалить имя ParamSet из списка ассоциаций, если оно там есть
+      - Если список ассоциаций для `associatedObjectType` стал пустым → удалить ключ `associatedObjectType` из секции
+
+5. **Запись в Git:**
+   - Выполнить все удаления (ParamSet файлов + обновление ассоциаций в `env_definition.yml`) в одном Git коммите
+   - Использовать переданные `commitMessage`, `commitUser`, `commitUserEmail` для коммита
+   - Если коммит успешен → возврат `204 No Content`
+
+6. **Обработка несуществующих ParamSet:**
+   - Если ни один ParamSet файл не существовал → всё равно обновить `env_definition.yml` (удалить ассоциации)
+   - Операция считается успешной → возврат `204 No Content`
+
+## Маппинг в Git репозиторий
+
+### Расположение ParamSet файлов
+
+Все UI override ParamSet файлы расположены в:
+
+```text
+/environments/<cluster-name>/<env-name>/Inventory/parameters/
+```
+
+### Контракты именования UI override ParamSet
+
+**Environment Level:**
+
+- `deploy-ui-override.yaml` - deployment context
+- `runtime-ui-override.yaml` - runtime context
+- `pipeline-ui-override.yaml` - pipeline context
+
+**Namespace Level:**
+
+- `<deployPostfix>-deploy-ui-override.yaml` - deployment context
+- `<deployPostfix>-runtime-ui-override.yaml` - runtime context
+- Pipeline context не поддерживается
+
+**Application Level:**
+
+- `<deployPostfix>-<applicationName>-deploy-ui-override.yaml` - deployment context
+- `<deployPostfix>-<applicationName>-runtime-ui-override.yaml` - runtime context
+- Pipeline context не поддерживается
+
+Где:
+
+- `<deployPostfix>` — значение из объекта Namespace
+- `<applicationName>` — имя приложения
+
+### Маппинг ассоциаций в Inventory
+
+Ассоциации ParamSet хранятся в файле:
+
+```text
+/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml
+```
+
+Структура:
+
+```yaml
+envTemplate:
+  envSpecificParamsets:          # context: deployment
+    <associatedObjectType>:
+      - <paramSetName>
+  envSpecificTechnicalParamsets: # context: runtime
+    <associatedObjectType>:
+      - <paramSetName>
+  envSpecificE2EParamsets:        # context: pipeline
+    <associatedObjectType>:
+      - <paramSetName>
+```
+
+Где:
+
+- `<associatedObjectType>` - `cloud` для Environment level, `<deployPostfix>` для Namespace/Application level
+- `<paramSetName>` - имя ParamSet файла без расширения
+
+## Валидация
+
+TBD
+<!-- ругаться при post когда передан app-level pipeline context -->
+
+<!-- 
+### Валидация структуры ParamSet
+
+1. **Валидация атрибута `type`:**
+   - `type` опционален, по умолчанию `"standard"`
+   - Если указан, должен быть одним из: `"standard"` или `"ui-override"`
+   - Если `type: "ui-override"`, имя файла должно соответствовать паттерну UI override парамсетов:
+     - **Environment Level:**
+       - Для deployment: `deploy-ui-override.yaml`
+       - Для runtime: `runtime-ui-override.yaml`
+       - Для pipeline: `pipeline-ui-override.yaml`
+     - **Namespace Level:**
+       - Для deployment: `<deployPostfix>-deploy-ui-override.yaml`
+       - Для runtime: `<deployPostfix>-runtime-ui-override.yaml`
+       - Pipeline context не поддерживается
+     - **Application Level:**
+       - Для deployment: `<deployPostfix>-<applicationName>-deploy-ui-override.yaml`
+       - Для runtime: `<deployPostfix>-<applicationName>-runtime-ui-override.yaml`
+       - Pipeline context не поддерживается
+   - Имя ParamSet (поле `name` в YAML) должно совпадать с именем файла без расширения `.yaml`
+   - Если `type: "standard"`, имя файла не должно соответствовать паттерну UI override парамсетов
+   - Если имя файла соответствует паттерну UI override, но `type` не указан или `type: "standard"` - ошибка валидации
+   - Если имя файла не соответствует паттерну UI override, но `type: "ui-override"` - ошибка валидации
+
+2. **Для `level: environment` и `context: deployment|runtime|pipeline`:**
+   - `parameters` обязателен и не пустой
+   - `applications` должен быть пустым
+
+3. **Для `level: namespace` и `context: deployment|runtime`:**
+   - `parameters` обязателен и не пустой
+   - `applications` должен быть пустым
+
+4. **Для `level: application` и `context: deployment|runtime`:**
+   - `parameters` должен быть пустым
+   - `applications` обязателен и не пустой
+
+### Валидация ассоциаций
+
+1. `environmentId` должен существовать в репозитории
+2. `associatedObjectType` должен быть валидным:
+   - `"cloud"` - для Environment level
+   - Существующий `deployPostfix` - для Namespace/Application level
+3. `context` должен быть одним из: `deployment`, `runtime`, `pipeline`
+4. Для Namespace/Application level context `pipeline` не поддерживается
+
+добавить валидацию при удаление парамсета, что он проассоциирован "куда то еще" -->
+
+## Управление версиями и конфликтами
+
+TBD
 
 <!-- ### Версионирование через Git
 
@@ -477,164 +697,8 @@ GET /api/v1/environments/cluster-01/env-01/ui-parameters?context=deployment&name
      - Показать ошибку пользователю
      - Отобразить текущее содержимое из ответа
      - Предложить разрешить конфликт (merge или overwrite) -->
+<!-- ругаться при post когда передан app-level pipeline context -->
 
----
-
-## Маппинг в Git репозиторий
-
-### Путь к файлу ParamSet
-
-`path` - это атрибут в `metadata`, который содержит полный путь к файлу ParamSet в Git репозитории.
-
-**Примеры путей:**
-
-- **Стандартные ParamSet:**
-  - Site wide: `/environments/parameters/common-params.yaml`
-  - Cluster wide: `/environments/cluster-01/parameters/cluster-params.yaml`
-  - Environment wide: `/environments/cluster-01/env-01/Inventory/parameters/env-params.yaml`
-
-- **UI Override ParamSet:**
-  - Environment level: `/environments/cluster-01/env-01/Inventory/parameters/deploy-ui-override.yaml`
-  - Namespace level: `/environments/cluster-01/env-01/Inventory/parameters/bss-deploy-ui-override.yaml`
-  - Application level: `/environments/cluster-01/env-01/Inventory/parameters/bss-my-app-deploy-ui-override.yaml`
-
-**Примечания:**
-
-- Путь вычисляется Colly на основе расположения файла в Git репозитории
-- Для стандартных ParamSet путь определяется по структуре `/environments/parameters/` с учетом уровня (site/cluster/environment)
-- Для UI Override ParamSet путь всегда в `/environments/<environmentId>/Inventory/parameters/`
-- Уникальность ParamSet определяется по полному пути, а не только по имени файла
-
-### Маппинг ассоциаций в Inventory
-
-Ассоциации хранятся в файле:
-
-```text
-environments/<cluster-name>/<env-name>/Inventory/env_definition.yml
-```
-
-Структура:
-
-```yaml
-envTemplate:
-  envSpecificParamsets:          # context: deployment
-    <associatedObjectType>:
-      - <paramSetName>
-  envSpecificTechnicalParamsets: # context: runtime
-    <associatedObjectType>:
-      - <paramSetName>
-  envSpecificE2EParamsets:        # context: pipeline
-    <associatedObjectType>:
-      - <paramSetName>
-```
-
-**Порядок важен!** ParamSet применяются в порядке списка.
-
----
-
-## Чтение UI override ParamSet
-
-Эта операция используется во всех местах, где Colly читает UI override ParamSet (включая Effective Set API и UI-parameters API). Она включает как чтение ассоциаций окружения, так и чтение самих файлов ParamSet.
-
-Идентификация UI override ParamSet выполняется по двум критериям:
-
-1. **Имя файла** — используется для построения пути к файлу в Git репозитории. Контрактный нейминг обязателен
-2. **Атрибут `type: "ui-override"`** — используется для валидации и подтверждения, что это действительно UI override парамсет
-
-### Чтения UI override ParamSet с учетом ассоциаций окружения
-
-Входные данные:
-
-- `environmentId`
-- `context` (`deployment`, `runtime`, `pipeline`)
-- `namespaceName` (optional)
-- `applicationName` (optional)
-
-Шаги:
-
-1. Определить `level`:
-   1. Если не переданы ни `namespaceName`, ни `applicationName` -> Environment уровень
-   2. Если передан `namespaceName`, но не `applicationName` -> Namespace уровень
-   3. Если переданы `namespaceName` и `applicationName` -> Application уровень
-2. Прочитать ассоциации ParamSet для окружения:
-   - Прочитать файл `env_definition.yml` (см. раздел ["Маппинг ассоциаций в Inventory"](#маппинг-ассоциаций-в-inventory))
-   - Для заданного `context` определить соответствующую секцию:
-     - `envSpecificParamsets` — для `deployment`
-     - `envSpecificTechnicalParamsets` — для `runtime`
-     - `envSpecificE2EParamsets` — для `pipeline`
-   - Для выбранного `level` определить `associatedObjectType`:
-     - `cloud` — для Environment уровня
-     - `<deployPostfix>` — для Namespace/Application уровней
-   - Получить список ассоциированных ParamSet по этому `associatedObjectType` и `context`
-3. Для каждого ассоциированного UI override ParamSet (в порядке перечисления в `env_definition.yml`):
-   - Определить имя файла и [`path`](#определение-path)
-   - Выполнить [Чтения одного UI override ParamSet файла](#чтение-одного-ui-override-paramset-файла)
-
-Результат:
-
-```yaml
-parameters: map
-commitHash: string
-```
-
-#### Определение `path`
-
-Путь к файлу формируется по правилу `/environments/<environmentId>/Inventory/parameters/<имя-файла>`
-
-Имя файла определяется как:
-
-```text
-контекст = deployment
-  level = environment → deploy-ui-override.yaml
-  level = namespace   → <deployPostfix>-deploy-ui-override.yaml
-  level = application → <deployPostfix>-<applicationName>-deploy-ui-override.yaml
-
-контекст = runtime
-  level = environment → runtime-ui-override.yaml
-  level = namespace   → <deployPostfix>-runtime-ui-override.yaml
-  level = application → <deployPostfix>-<applicationName>-runtime-ui-override.yaml
-
-контекст = pipeline
-  level = environment → pipeline-ui-override.yaml
-  level = namespace   → <deployPostfix>-pipeline-ui-override.yaml
-  level = application → не поддерживается
-```
-
-Где:
-
-- `<deployPostfix>` — значение из объекта Namespace (определяется по `namespaceName` и `environmentId`)
-- `<applicationName>` — имя приложения из запроса
-
-#### Чтение одного UI override ParamSet файла
-
-Входные данные:
-
-- `environmentId`
-- `context` (`deployment`, `runtime`, `pipeline`)
-- `level` (Environment, Namespace, Application)
-- `namespaceName` (для `namespace`/`application` уровней)
-- `applicationName` (для `application` уровня)
-- `path`
-
-Шаги:
-
-1. Получить `commitHash` и содержимое файла
-2. Если файл существует:
-   - Проверить, что `type: "ui-override"` (если `type` не указан или `type: "standard"` — ошибка валидации)
-   - Извлечь параметры:
-     - Для Environment/Namespace уровней: из секции `parameters`
-     - Для Application уровня: из секции `applications[?appName=<applicationName>].parameters`
-   - Вернуть:
-
-   ```yaml
-   parameters: map       # Параметры UI override
-   commitHash: string    # Git commit hash файла
-   ```
-
-3. Если файл не существует:
-   - Вернуть «пустой» результат (параметры отсутствуют для данного уровня)
-
-## Валидация **TBD**
 <!-- 
 ### Валидация структуры ParamSet
 
@@ -649,46 +713,62 @@ commitHash: string
      - **Namespace Level:**
        - Для deployment: `<deployPostfix>-deploy-ui-override.yaml`
        - Для runtime: `<deployPostfix>-runtime-ui-override.yaml`
-       - Для pipeline: `<deployPostfix>-pipeline-ui-override.yaml`
+       - Pipeline context не поддерживается
      - **Application Level:**
        - Для deployment: `<deployPostfix>-<applicationName>-deploy-ui-override.yaml`
        - Для runtime: `<deployPostfix>-<applicationName>-runtime-ui-override.yaml`
-       - Для pipeline: не поддерживается (pipeline параметры не могут быть на уровне application)
+       - Pipeline context не поддерживается
    - Имя ParamSet (поле `name` в YAML) должно совпадать с именем файла без расширения `.yaml`
    - Если `type: "standard"`, имя файла не должно соответствовать паттерну UI override парамсетов
    - Если имя файла соответствует паттерну UI override, но `type` не указан или `type: "standard"` - ошибка валидации
    - Если имя файла не соответствует паттерну UI override, но `type: "ui-override"` - ошибка валидации
 
-2. **Для `level: environment` и `context: deployment|runtime`:**
+2. **Для `level: environment` и `context: deployment|runtime|pipeline`:**
    - `parameters` обязателен и не пустой
    - `applications` должен быть пустым
 
-3. **Для `level: environment` и `context: pipeline`:**
+3. **Для `level: namespace` и `context: deployment|runtime`:**
    - `parameters` обязателен и не пустой
    - `applications` должен быть пустым
 
-4. **Для `level: namespace` и `context: deployment|runtime`:**
-   - `parameters` обязателен и не пустой
-   - `applications` должен быть пустым
-
-5. **Для `level: namespace` и `context: pipeline`:**
-   - `parameters` обязателен и не пустой
-   - `applications` должен быть пустым
-
-6. **Для `level: application` и `context: deployment|runtime`:**
+4. **Для `level: application` и `context: deployment|runtime`:**
    - `parameters` должен быть пустым
    - `applications` обязателен и не пустой
-
-7. **Для `level: application` и `context: pipeline`:**
-   - Недопустимо (pipeline параметры не могут быть на уровне application)
 
 ### Валидация ассоциаций
 
 1. `environmentId` должен существовать в репозитории
 2. `associatedObjectType` должен быть валидным:
-   - `"cloud"` - для Cloud объекта
-   - Существующий `deployPostfix` - для Namespace
+   - `"cloud"` - для Environment level
+   - Существующий `deployPostfix` - для Namespace/Application level
 3. `context` должен быть одним из: `deployment`, `runtime`, `pipeline`
-4. `level` должен соответствовать `context` (см. правила выше)
+4. Для Namespace/Application level context `pipeline` не поддерживается
 
 добавить валидацию при удаление парамсета, что он проассоциирован "куда то еще" -->
+
+### Версионирование через Git
+
+TBD
+
+<!-- - `commitHash` ParamSet = Git commit hash последнего коммита файла
+- Используется HTTP ETag для оптимистичной блокировки
+- При каждом изменении создается новый коммит в Git
+
+### Обработка конфликтов
+
+1. **Оптимистичная блокировка:**
+   - Клиент отправляет `If-Match` с ожидаемой версией
+   - Сервер проверяет совпадение версий
+   - При несовпадении возвращается `412 Precondition Failed`
+
+2. **Конфликт при Git push:**
+   - Если локальный коммит успешен, но push не удался (кто-то запушил раньше)
+   - Откат локального коммита
+   - Pull последних изменений
+   - Возврат `409 Conflict` с текущей версией
+
+3. **UI обработка конфликтов:**
+   - При получении `412` или `409`:
+     - Показать ошибку пользователю
+     - Отобразить текущее содержимое из ответа
+     - Предложить разрешить конфликт (merge или overwrite) -->
