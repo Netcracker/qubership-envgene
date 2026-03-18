@@ -134,32 +134,33 @@ async def resolve_artifact_old_logic(env_definition: dict, template_dest: str, c
     repository_username = fetch_cred_value(registry.get("username"), cred_config)
     repository_password = fetch_cred_value(registry.get("password"), cred_config)
     cred = Credentials(username=repository_username, password=repository_password)
+    auth_headers = artifact.credentials_to_headers(cred) if cred.username and cred.password else None
 
     template_url = None
     resolved_version = dd_version
-    dd_url = artifact.check_artifact(dd_repo_url, group_id, artifact_id, dd_version, FileExtension.JSON, cred)
+    dd_url = artifact.check_artifact(dd_repo_url, group_id, artifact_id, dd_version, FileExtension.JSON, auth_headers=auth_headers)
     if dd_url:
         logger.info(f"Deployment descriptor url for environment template has been resolved: {dd_url}")
         if "-SNAPSHOT" in dd_version:
             resolved_version = extract_snapshot_version(dd_url, dd_version)
-        dd_config = artifact.download_json_content(dd_url, cred)
+        dd_config = artifact.download_json_content(dd_url, auth_headers=auth_headers)
         group_id, artifact_id, version = parse_maven_coord_from_dd(dd_config)
         logger.info(
             f"Parsed maven coordinates from dd: group_id={group_id}, artifact_id={artifact_id}, version={version}")
         if not all([group_id, artifact_id, version]):
             raise ValueError(f"Invalid maven coordinates from deployment descriptor {dd_url}")
 
-        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP, cred)
+        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP, auth_headers=auth_headers)
         validate_url(template_url, group_id, artifact_id, version)
     else:
         logger.info("Loading environment template artifact from zip directly...")
-        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, dd_version, FileExtension.ZIP, cred)
+        template_url = artifact.check_artifact(repo_url, group_id, artifact_id, dd_version, FileExtension.ZIP, auth_headers=auth_headers)
         validate_url(template_url, group_id, artifact_id, dd_version)
         if "-SNAPSHOT" in dd_version:
             resolved_version = extract_snapshot_version(template_url, dd_version)
     logger.info(f"Environment template url has been resolved: {template_url}")
     artifact_dest = tempfile.mkstemp(suffix='.zip')[1]
-    artifact.download(template_url, artifact_dest, cred)
+    artifact.download(template_url, artifact_dest, auth_headers=auth_headers)
     unpack_archive(artifact_dest, template_dest)
     return resolved_version
 
