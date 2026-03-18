@@ -93,7 +93,7 @@
         "credentialsId": {
           "type": "string",
           "title": "Credentials ID",
-          "description": "Pointer to the EnvGene Credential object. Depending on authType, it can be access key (username) + secret (password) for longLived. Credential with this ID must be located in /configuration/credentials/credentials.yml"
+          "description": "Not used in case of authMethod: anonymous. Pointer to the EnvGene Credential object. Depending on authType, it can be access key (username) + secret (password) for longLived. Credential with this ID must be located in /configuration/credentials/credentials.yml"
         },
         "authType": {
           "type": "string",
@@ -109,10 +109,12 @@
           "enum": [
             "aws",
             "azure",
-            "gcp"
+            "gcp",
+            "nexus",
+            "artifactory"
           ],
           "title": "Provider",
-          "description": "Public cloud registry type. Used in case of public cloud registries"
+          "description": "Registry type"
         },
         "authMethod": {
           "type": "string",
@@ -122,10 +124,11 @@
             "federation",
             "service_account",
             "oauth2",
-            "user_pass"
+            "user_pass",
+            "anonymous"
           ],
           "title": "Authentication Method",
-          "description": "In case of non-cloud public registries, user_pass is used. In case of public cloud registries valid values depend on provider: aws: secret or assume_role, gcp: federation or service_account, azure: oauth2"
+          "description": "In case of non-cloud public registries, user_pass is used. In case of public cloud registries valid values depend on provider: nexus: user_pass or anonymous, artifactory: user_pass or anonymous, aws: secret, assume_role or anonymous, gcp: federation, service_account or anonymous, azure: oauth2 or anonymous"
         },
         "awsRegion": {
           "type": "string",
@@ -216,20 +219,134 @@
         }
       },
       "required": [
-        "credentialsId"
+        "provider",
+        "authMethod"
       ],
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "authMethod": {
+                "not": {
+                  "const": "anonymous"
+                }
+              }
+            }
+          },
+          "then": {
+            "required": ["credentialsId"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "aws"
+              },
+              "authMethod": {
+                "const": "assume_role"
+              }
+            },
+            "required": ["provider", "authMethod"]
+          },
+          "then": {
+            "required": ["awsRoleARN"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "gcp"
+              },
+              "authMethod": {
+                "const": "federation"
+              }
+            },
+            "required": ["provider", "authMethod"]
+          },
+          "then": {
+            "required": ["gcpOIDC"]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "nexus"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authMethod": {
+                "enum": ["user_pass", "anonymous"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "artifactory"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authMethod": {
+                "enum": ["user_pass", "anonymous"]
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
               "provider": {
                 "const": "aws"
               }
-            },
-            "required": ["provider"]
+            }
           },
           "then": {
-            "required": ["awsRegion"]
+            "properties": {
+              "authMethod": {
+                "enum": ["secret", "assume_role", "anonymous"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "gcp"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authMethod": {
+                "enum": ["federation", "service_account", "anonymous"]
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "provider": {
+                "const": "azure"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "authMethod": {
+                "enum": ["oauth2", "anonymous"]
+              }
+            }
           }
         }
       ]
@@ -243,7 +360,7 @@
         "authConfig": {
           "type": "string",
           "title": "Authentication Config Reference",
-          "description": "Pointer to authentication config described in authConfig section. Cannot be set if anonymous access is used"
+          "description": "Pointer to authentication config described in authConfig section"
         },
         "repositoryDomainName": {
           "type": "string",
@@ -301,12 +418,8 @@
         }
       },
       "required": [
-        "repositoryDomainName",
-        "targetSnapshot",
-        "targetStaging",
-        "targetRelease",
-        "snapshotGroup",
-        "releaseGroup"
+        "authConfig",
+        "repositoryDomainName"
       ]
     }
   }

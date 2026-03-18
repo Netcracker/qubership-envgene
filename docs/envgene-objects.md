@@ -1502,7 +1502,8 @@ registry:
   # Supports advanced authentication methods including public cloud registries
   authConfig:
     <auth-config-name>:
-      # Mandatory
+      # Optional
+      # Not used in case of `authMethod: anonymous`
       # Pointer to the EnvGene Credential object.
       # Depending on `authType`, it can be:
       # access key (username) + secret (password) for longLived
@@ -1512,18 +1513,19 @@ registry:
       # Public cloud registry authentication strategy
       # Used in case of public cloud registries
       authType: enum [ shortLived, longLived ]
-      # Optional
-      # Public cloud registry type
-      # Used in case of public cloud registries
-      provider: enum [ aws, azure, gcp ]
-      # Optional
+      # Mandatory
+      # Registry type
+      provider: enum [ aws, azure, gcp, nexus, artifactory ]
+      # Mandatory
       # In case of non-cloud public registries, `user_pass` is used
       # In case of public cloud registries valid values, depends on `provider`:
-      # `aws`: `secret` or `assume_role`
-      # `gcp`: `federation` or `service_account`
-      # `azure`: `oauth2`
-      authMethod: enum [ secret, assume_role, federation, service_account, oauth2, user_pass ]
-      # Mandatory
+      # `nexus`: `user_pass` or `anonymous`
+      # `artifactory`: `user_pass` or `anonymous`
+      # `aws`: `secret`, `assume_role` or `anonymous`
+      # `gcp`: `federation`, `service_account` or `anonymous`
+      # `azure`: `oauth2` or `anonymous`
+      authMethod: enum [ secret, assume_role, federation, service_account, oauth2, user_pass, anonymous ]
+      # Optional
       # Region of the AWS cloud
       # Used with `provider: aws` only
       awsRegion: string
@@ -1587,28 +1589,31 @@ registry:
       azureArtifactsResource: string
   # Mandatory
   mavenConfig:
-    # Optional
+    # Mandatory
     # Pointer to authentication config described in `authConfig` section
-    # Cannot be set if anonymous access is used
     authConfig: string
     # Mandatory
     # Domain name of the registry
     repositoryDomainName: string
-    # Mandatory
+    # Optional
+    # Used in case of provider nexus or artifactory only
     # Snapshot repository name
     # EnvGene checks repositories in this order: release -> staging -> snapshot
     # It stops when it finds the artifact
     targetSnapshot: string
-    # Mandatory
+    # Optional
+    # Used in case of provider nexus or artifactory only
     # Staging repository name
     targetStaging: string
-    # Mandatory
+    # Optional
+    # Used in case of provider nexus or artifactory only
     # Release repository name
     targetRelease: string
-    # Mandatory
+    # Optional
+    # Used in case of provider nexus or artifactory only
     # Snapshot Maven repository group name
     snapshotGroup: string
-    # Mandatory
+    # Optional
     # Release Maven repository group name
     releaseGroup: string
 ```
@@ -1625,6 +1630,7 @@ registry:
   authConfig:
     maven-auth:
       authType: longLived
+      provider: nexus
       authMethod: user_pass
       credentialsId: "artifactory-cred"
   mavenConfig:
@@ -1728,6 +1734,42 @@ registry:
     snapshotGroup: "maven-snapshots-group"
     releaseGroup: "maven-releases-group"
 ```
+
+**Authentication Configuration Dependencies:**
+
+The `authConfig` section has complex dependencies between attributes. The following table shows which fields are required based on `provider` and `authMethod` values:
+
+| Field                    | Condition                                           | Required      |
+|--------------------------|-----------------------------------------------------|---------------|
+| `provider`               | Always                                              | **REQUIRED**  |
+| `authMethod`             | Always                                              | **REQUIRED**  |
+| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED**  |
+| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL      |
+| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL      |
+| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED**  |
+| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED**  |
+| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL      |
+| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED**  |
+| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED**  |
+| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL      |
+| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
+| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
+| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
+| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
+| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL      |
+| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL      |
+| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED**  |
+| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL      |
+
+**Valid `authMethod` values per `provider`:**
+
+| Provider      | Valid authMethod values                      |
+|---------------|----------------------------------------------|
+| `nexus`       | `user_pass`, `anonymous`                     |
+| `artifactory` | `user_pass`, `anonymous`                     |
+| `aws`         | `secret`, `assume_role`, `anonymous`         |
+| `gcp`         | `federation`, `service_account`, `anonymous` |
+| `azure`       | `oauth2`, `anonymous`                        |
 
 [Artifact Definition v2.0 JSON schema](/schemas/artifact-definition-v2.schema.json)
 
@@ -1900,7 +1942,8 @@ name: string
 # Authentication configs
 authConfig:
   <auth-config-name>:
-    # Mandatory
+    # Optional
+    # Not used in case of `authMethod: anonymous`
     # Pointer to the EnvGene Credential object.
     # Depending on `authType`, it can be:
     # access key (username) + secret (password) for longLived
@@ -1910,18 +1953,19 @@ authConfig:
     # Public cloud registry authentication strategy
     # Used in case of public cloud registries
     authType: enum [ shortLived, longLived ]
-    # Optional
-    # Public cloud registry type
-    # Used in case of public cloud registries
-    provider: enum [ aws, azure, gcp ]
-    # Optional
+    # Mandatory
+    # Registry type
+    provider: enum [ aws, azure, gcp, nexus, artifactory ]
+    # Mandatory
     # In case of non-cloud public registries, `user_pass` is used
     # In case of public cloud registries valid values, depends on `provider`:
-    # `aws`: `secret` or `assume_role`
-    # `gcp`: `federation` or `service_account`
-    # `azure`: `oauth2`
-    authMethod: enum [ secret, assume_role, federation, service_account, oauth2, user_pass ]
-    # Mandatory
+    # `nexus`: `user_pass` or `anonymous`
+    # `artifactory`: `user_pass` or `anonymous`
+    # `aws`: `secret`, `assume_role` or `anonymous`
+    # `gcp`: `federation`, `service_account` or `anonymous`
+    # `azure`: `oauth2` or `anonymous`
+    authMethod: enum [ secret, assume_role, federation, service_account, oauth2, user_pass, anonymous ]
+    # Optional
     # Region of the AWS cloud
     # Used with `provider: aws` only
     awsRegion: string
@@ -1971,6 +2015,10 @@ authConfig:
     # Used with `provider: azure` only
     azureTenantId: string
     # Optional
+    # Region of the GCP cloud
+    # Used with `provider: gcp` only
+    gcpRegion: string
+    # Optional
     # Target resource for ACR
     # Used with `provider: azure` only
     azureACRResource: string
@@ -1987,31 +2035,33 @@ authConfig:
 mavenConfig:
   # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
   repositoryDomainName: string
-  # Mandatory
+  # Optional
+  # Used in case of authMethod nexus or artifactory only
   # Snapshot Maven repository name
   targetSnapshot: string
-  # Mandatory
+  # Optional
+  # Used in case of authMethod nexus or artifactory only
   # Staging Maven repository name
   targetStaging: string
-  # Mandatory
+  # Optional
+  # Used in case of authMethod nexus or artifactory only
   # Release Maven repository name
   targetRelease: string
-  # Mandatory
+  # Optional
+  # Used in case of authMethod nexus or artifactory only
   # Snapshot Maven repository name
   snapshotGroup: string
-  # Mandatory
+  # Optional
   # Release Maven repository name
   releaseGroup: string
-# Mandatory
+# Optional
 dockerConfig:
   # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # URI for Docker snapshot registry
@@ -2041,7 +2091,6 @@ dockerConfig:
 helmConfig:
   # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
@@ -2076,14 +2125,12 @@ helmAppConfig:
 goConfig:
   # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
   repositoryDomainName: string
   # Mandatory
-  # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
+  # Go snapshot repository name
   goTargetSnapshot: string
   # Mandatory
   # Go release repository name
@@ -2095,7 +2142,6 @@ goConfig:
 npmConfig:
   # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
@@ -2110,14 +2156,12 @@ npmConfig:
 rawConfig:
   # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
   repositoryDomainName: string
   # Mandatory
-  # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
+  # Raw snapshot repository name
   rawTargetSnapshot: string
   # Mandatory
   # Raw release repository name
@@ -2129,6 +2173,43 @@ rawConfig:
   # Raw proxy repository name
   rawTargetProxy: string
 ```
+
+**Authentication Configuration Dependencies:**
+
+The `authConfig` section has complex dependencies between attributes. The following table shows which fields are required based on `provider` and `authMethod` values:
+
+| Field                    | Condition                                           | Required      |
+|--------------------------|-----------------------------------------------------|---------------|
+| `provider`               | Always                                              | **REQUIRED**  |
+| `authMethod`             | Always                                              | **REQUIRED**  |
+| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED**  |
+| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL      |
+| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL      |
+| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED**  |
+| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED**  |
+| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL      |
+| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED**  |
+| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED**  |
+| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL      |
+| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
+| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
+| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
+| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
+| `gcpRegion`              | `provider == "gcp"`                                 | OPTIONAL      |
+| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL      |
+| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL      |
+| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED**  |
+| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL      |
+
+**Valid `authMethod` values per `provider`:**
+
+| Provider      | Valid authMethod values                      |
+|---------------|----------------------------------------------|
+| `nexus`       | `user_pass`, `anonymous`                     |
+| `artifactory` | `user_pass`, `anonymous`                     |
+| `aws`         | `secret`, `assume_role`, `anonymous`         |
+| `gcp`         | `federation`, `service_account`, `anonymous` |
+| `azure`       | `oauth2`, `anonymous`                        |
 
 **Examples of different auth sections**:
 
@@ -2185,8 +2266,13 @@ authConfig:
 
   helm-nexus:
     authType: longLived
+    provider: nexus
     authMethod: user_pass
     credentialsId: cred-nexus
+
+  docker-anonymous:
+    provider: nexus
+    authMethod: anonymous
 ```
 
 **Example:**
@@ -2205,8 +2291,12 @@ authConfig:
     awsRoleARN: arn:aws:iam::123456789012:role/YourRole
   helm:
     authType: longLived
+    provider: nexus
     authMethod: user_pass
     credentialsId: cred-nexus
+  public-repo:
+    provider: nexus
+    authMethod: anonymous
 mavenConfig:
   authConfig: aws
   repositoryDomainName: https://codeartifact.eu-west-1.amazonaws.com/maven/app
@@ -2238,15 +2328,18 @@ helmAppConfig:
   helmReleaseRepoName: helm-releases
   helmGroupRepoName: helm-group
 goConfig:
+  authConfig: public-repo
   repositoryDomainName: https://nexus.mycompany.internal/repository/go
   goTargetSnapshot: go-snapshots
   goTargetRelease: go-releases
   goProxyRepository: https://goproxy.internal/go/
 npmConfig:
+  authConfig: public-repo
   repositoryDomainName: https://mycompany.internal
   npmTargetSnapshot: npm-snapshots
   npmTargetRelease: npm-releases
 rawConfig:
+  authConfig: public-repo
   repositoryDomainName: https://proxy.raw.local/raw
   rawTargetSnapshot: raw/snapshots
   rawTargetRelease: raw/releases
