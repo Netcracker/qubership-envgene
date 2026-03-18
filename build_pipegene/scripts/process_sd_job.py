@@ -35,8 +35,7 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, artif
         "envgen_image": "$envgen_image",
         "envgen_args": " -vv",
         "envgen_debug": "true",
-        "GITLAB_RUNNER_TAG_NAME": tags,
-        "GIT_STRATEGY": "clone"
+        "GITLAB_RUNNER_TAG_NAME": tags
     }
 
     process_sd_job = job_instance(params=process_sd_set_params, vars=process_sd_set_vars)
