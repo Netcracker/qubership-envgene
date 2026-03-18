@@ -207,11 +207,6 @@ def build_pipeline(params: dict) -> None:
 
         is_first_job = job.needs is None or len(job.needs) == 0
         if not is_first_job:
-            job.add_variables(GIT_CHECKOUT="false")
-    
-    sorted_pipeline.add_variables(
-        GIT_CLONE_PATH="$CI_BUILDS_DIR/$CI_PROJECT_PATH/$CI_PIPELINE_ID/$CI_JOB_ID",
-        #FF_ENABLE_JOB_CLEANUP="true"
-    )
-    
+            job.add_variables(GIT_STRATEGY="empty")    
+        
     sorted_pipeline.write_yaml()
