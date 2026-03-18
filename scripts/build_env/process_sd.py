@@ -299,16 +299,16 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
     env_creds = helper.get_cred_config()
-    cred, auth_headers = app_def.registry.resolve_auth(env_creds)
+    auth_headers = app_def.registry.resolve_auth(env_creds)
 
     artifact_info = asyncio.run(
         artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,
-                                       cred=cred, auth_headers=auth_headers))
+                                       auth_headers=auth_headers))
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')
     sd_url, _ = artifact_info
-    return artifact.download_json_content(sd_url, cred=cred, auth_headers=auth_headers)
+    return artifact.download_json_content(sd_url, auth_headers=auth_headers)
 
 
 def get_appdef_for_app(appver: str, app_name: str, plugins: PluginEngine) -> artifact_models.Application:

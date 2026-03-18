@@ -112,16 +112,19 @@ class Registry(BaseSchema):
     helm_config: Optional[HelmConfig] = None
     helm_app_config: Optional[HelmAppConfig] = None
 
-    def resolve_auth(self, env_creds: Optional[dict] = None) -> tuple:
-        """Returns (cred, None) for V1 registries."""
+    def resolve_auth(self, env_creds: Optional[dict] = None) -> Optional[dict]:
+        """Returns auth headers dict for V1 registries (basic auth).
+        Returns None if no credentials configured."""
         if not self.credentials_id or not env_creds:
-            return None, None
+            return None
         cred_data = env_creds.get(self.credentials_id, {}).get("data", {})
         username = cred_data.get("username")
         password = cred_data.get("password")
         if username and password:
-            return Credentials(username=username, password=password), None
-        return None, None
+            import base64
+            token = base64.b64encode(f"{username}:{password}".encode()).decode()
+            return {"Authorization": f"Basic {token}"}
+        return None
 
 
 REGDEF_V2_VERSION = "2.0"
@@ -243,11 +246,11 @@ class RegistryV2(BaseSchema):
         from artifact_searcher.auth_resolver import resolve_v2_auth_headers
         return resolve_v2_auth_headers(self, env_creds or {})
 
-    def resolve_auth(self, env_creds: Optional[dict] = None) -> tuple:
-        """Returns (None, auth_headers) for V2 registries."""
+    def resolve_auth(self, env_creds: Optional[dict] = None) -> Optional[dict]:
+        """Returns auth headers dict for V2 registries (unified API with V1).
+        Returns None if anonymous or no credentials configured."""
         from artifact_searcher.auth_resolver import resolve_v2_auth_headers
-        auth_headers = resolve_v2_auth_headers(self, env_creds or {})
-        return None, auth_headers
+        return resolve_v2_auth_headers(self, env_creds or {})
 
 
 def parse_registry(data: dict) -> Registry | RegistryV2:
