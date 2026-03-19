@@ -33,6 +33,13 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     sboms_path = get_sboms_dir(base_dir)
 
     sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
+    logger.info(f'--- sd.yaml contents ---')
+    if sd_path.exists():
+        logger.info(f"File found: {sd_path}")
+        logger.info(sd_path.read_text())
+    else:
+        logger.info(f"File not found: {sd_path}")
+    logger.info(f'--- sd.yaml contents end ---')
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
     script = [
         # cert handling for java
