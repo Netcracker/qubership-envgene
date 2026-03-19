@@ -43,10 +43,10 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
     script = [
         'echo "current workdir="; pwd;',
-        'echo "CI_PROJECT_DIR="; echo "$CI_PROJECT_DIR";',
-        'echo "base_dir="; echo "$base_dir";',
-        'echo "full_env_name="; echo "$full_env_name";',
-        'echo "sd_path="; echo "$sd_path";',
+        'echo "CI_PROJECT_DIR=$CI_PROJECT_DIR"; ',
+        'echo "base_dir={base_dir}";',
+        'echo "full_env_name={full_env_name}";',
+        'echo "sd_path={sd_path}";',
         'echo "==== Workspace contents ====";',
         'ls -lrtha "$CI_PROJECT_DIR";',
         'echo "==== environments contents ====";',
