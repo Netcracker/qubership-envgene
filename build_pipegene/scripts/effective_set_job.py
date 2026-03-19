@@ -26,13 +26,13 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
 
     is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
 
-    # base_dir = getenv('CI_PROJECT_DIR')
+    base_dir = getenv('CI_PROJECT_DIR')
     # base_env_path = f"{base_dir}/environments/{full_env_name}"
     # app_defs_path = f"{base_env_path}/AppDefs"
     # reg_defs_path = f"{base_env_path}/RegDefs"
     # sboms_path = get_sboms_dir(base_dir)
 
-    # sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
+    sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
     # logger.info(f'--- sd.yaml contents ---')
     # if sd_path.exists():
     #     logger.info(f"File found: {sd_path}")
