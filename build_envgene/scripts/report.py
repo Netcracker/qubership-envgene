@@ -8,8 +8,6 @@ from termcolor import colored
 from os import getenv
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
 requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
-import logging
-logging.basicConfig(format = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s', level = logging.INFO)
 
 with open('archive.yaml', 'r') as file_save:
     archive=yaml.load(file_save, Loader=yaml.SafeLoader)
@@ -79,4 +77,14 @@ if is_not_release:
     print_artifact_info(art_appver, 'Concrete version')
 
 print_green("NOTE: The applicationDefinition with the name <env-template-atifact-id> must be created in the cloud CMDB (cloud-deployer) for using app:ver notation\n \n")
-print_with_bars("{}/{}/{}/{}/{}".format(maven_repository, '/'.join(array_id[0].split('.')), array_id[1], array_id[2], artifacts_name), "Link to download zip part of the artifact")
+
+artifact_url = "{}/{}/{}/{}/{}".format(
+    maven_repository,
+    '/'.join(array_id[0].split('.')),
+    array_id[1],
+    array_id[2],
+    artifacts_name
+)
+
+print_with_bars(artifact_url, "Link to download zip part of the artifact")
+open("build.env", "a").write(f"artifact_url={artifact_url}\n")

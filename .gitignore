@@ -3,8 +3,9 @@ venv
 .idea
 /.project
 /environments
-/tmp
+tmp/
 /env-builder/deployers
 __pycache__
 .vscode
 .DS_Store
+pyrightconfig.json

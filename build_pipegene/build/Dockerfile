@@ -33,11 +33,12 @@ COPY python /python
 COPY schemas /module/schemas
 COPY base_modules/scripts /module/scripts
 COPY build_pipegene/scripts /module/scripts
+COPY scripts/utils /module/scripts/scripts/utils/
 COPY build_pipegene/pipegene_plugins /module/scripts/pipegene_plugins
 
 # Create virtual environment and install Python packages
 RUN python -m venv /module/venv && \
-    /module/venv/bin/pip install --upgrade pip setuptools wheel && \
+    /module/venv/bin/pip install --upgrade pip "setuptools<82" wheel && \
     /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt && \
     /module/venv/bin/pip install /python/integration /python/jschon-sort /python/envgene && \
     /module/venv/bin/pip install PyYAML

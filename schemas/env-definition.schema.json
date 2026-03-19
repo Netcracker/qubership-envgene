@@ -5,6 +5,12 @@
   "description": "Configuration for the environment, Environment Inventory",
   "additionalProperties": true,
   "properties": {
+    "metadata": {
+      "type": "object",
+      "title": "Metadata",
+      "description": "Optional metadata map for the environment definition. Structure is not specified. Used only by Colly.",
+      "additionalProperties": true
+    },
     "inventory": {
       "type": "object",
       "title": "Environment definition for Inventory",
@@ -143,7 +149,7 @@
         "sharedTemplateVariables": {
           "type": "array",
           "title": "Shared Template Variables",
-          "description": "Array of file names in 'shared-template-variables' folders",
+          "description": "Array of file names in 'shared_template_variables' folders",
           "items": {
             "type": "string"
           },

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from envgenehelper import openYaml, writeYamlToFile
-from tests.test_helpers import TestHelpers
+from envgenehelper.test_helpers import TestHelpers
 
 def load_test_pipeline_sd_data(test_sd_dir, test_case_name):
     file_path = Path(test_sd_dir, test_case_name, f"{test_case_name}.yaml")
@@ -26,7 +26,7 @@ def do_prerequisites(sd, test_sd_dir, output_dir, test_case_name, env, test_suit
         writeYamlToFile(target_sd_dir.joinpath(sd), openYaml(pr_dir.joinpath("exclude").joinpath(sd)))
     elif test_case_name in test_suits_map["extended"]:
         writeYamlToFile(target_sd_dir.joinpath(sd), openYaml(pr_dir.joinpath("extended").joinpath(sd)))
-        
+
 def assert_sd_contents(test_sd_dir, output_dir, test_case_name, actual_dir, test_suits_map):
     er_dir = test_sd_dir.joinpath("ER")
 
