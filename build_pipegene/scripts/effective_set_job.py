@@ -57,13 +57,13 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         f'ls -al "$CI_PROJECT_DIR/environments/{full_env_name}/Inventory" || echo "Inventory missing";',
         'echo "==== solution-descriptor contents ====";',
         f'ls -al "$CI_PROJECT_DIR/environments/{full_env_name}/Inventory/solution-descriptor" || echo "solution-descriptor missing";',
+        'echo "constructing path inside";',
+        f'sd_path="$CI_PROJECT_DIR/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml";',
+        'sboms_path = $CI_PROJECT_DIR/sboms";'
+        'echo "overriden sd path = $sd_path";',
         f'echo "--- sd.yaml contents ---";',
         f'if [ -f "{sd_path}" ]; then echo "File found: {sd_path}"; cat "{sd_path}"; else echo "File not found: {sd_path}"; fi;',
         f'echo "--- sd.yaml contents end ---";',
-        'echo "constructing path inside";',
-        'sd_path="$CI_PROJECT_DIR/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml";',
-        'sboms_path = $CI_PROJECT_DIR/sboms";'
-        'echo "overriden sd path = $sd_path";',
         # cert handling for java
         'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/',
         'if [ -f /default_cert.pem ]; then cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/"; fi',
