@@ -39,6 +39,25 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
         "image": '${envgen_image}',
         "stage": 'process_passport',
         "script": [
+
+                    'echo "===== GIT CONFIG ====="',
+                    'echo "GIT_STRATEGY=$GIT_STRATEGY"',
+                    'echo "GIT_CHECKOUT=$GIT_CHECKOUT"',
+                    'echo "CI_COMMIT_REF_NAME=$CI_COMMIT_REF_NAME"',
+                    'echo "CI_COMMIT_SHA=$CI_COMMIT_SHA"',
+                    # 🔍 DEBUG: Git info
+                    'echo "===== GIT DEBUG ====="',
+                    'pwd',
+                    'echo "CI_PROJECT_DIR=$CI_PROJECT_DIR"',
+                    'git status || echo "git status failed"',
+                    'git branch || echo "no branch"',
+                    'git rev-parse HEAD || echo "no HEAD"',
+
+                    # 🔍 Files before
+                    'echo "===== FILES BEFORE ====="',
+                    'ls -la',
+                    'ls -R $CI_PROJECT_DIR | head -100',
+
                     'python3 /cloud_passport/scripts/main.py --env_name "$ENV_NAME",',
                     "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
                     'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
