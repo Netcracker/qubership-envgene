@@ -4,7 +4,7 @@
 
 UI Override - это механизм переопределения параметров Effective Set через UI, который:
 
-- Применяется Calculator CLI при генерации Effective Set
+- Применяется Calculator при генерации Effective Set
 - Имеет приоритет выше ParamSet'ов и Predefined parameters, но ниже Custom Params
 - Поддерживает контексты ES (deployment/runtime/pipeline)
 - Хранится в трех файлах (по одному на контекст)
@@ -81,7 +81,7 @@ environment:
 
 ---
 
-### Calculator CLI
+### Calculator
 
 **Инпуты:**
 
@@ -108,7 +108,7 @@ environment:
 10. Custom Params (--custom-params)     ← highest priority
 ```
 
-**Аутпут в GIT:**
+**Аутпут в Git:**
 
 ```text
 effective-set/
@@ -145,7 +145,7 @@ pipeline:
     originalValue: old_value
 ```
 
-**Новый параметр Calculator CLI:**
+**Новый параметр Calculator:**
 
 ```bash
 calculator --env-id cluster/env \
@@ -158,7 +158,7 @@ calculator --env-id cluster/env \
 
 ### Colly
 
-**Читает из GIT:**
+**Читает из Git:**
 
 1. `ES` - Effective Set
 2. `UI_METADATA` - метафайл
@@ -179,7 +179,7 @@ calculator --env-id cluster/env \
 Состояние параметра относительно UI Override:
 
 - `ui_override_uncommitted` - параметр изменен в UI, но не закоммичен (есть в `request.parameters`, но отличается от `ui-overrides/*.yaml`)
-- `ui_override_committed` - параметр закоммичен в GIT (есть в `ui-overrides/*.yaml`, или был удален из UI после коммита)
+- `ui_override_committed` - параметр закоммичен в Git (есть в `ui-overrides/*.yaml`, или был удален из UI после коммита)
 - `ui_override_untouched` - параметр отсутствует в `request.parameters` и в `ui-overrides/*.yaml`
 
 #### 3. `value`
@@ -200,7 +200,7 @@ calculator --env-id cluster/env \
 
 ## Реализация
 
-Calculator CLI
+Calculator
 
 1. Добавить параметр `--ui-overrides-path`
 2. Реализовать чтение UI Override файлов:
@@ -213,15 +213,14 @@ Calculator CLI
 
 Colly
 
-1. Читать UI Override файлы из GIT (deployment.yaml, runtime.yaml, pipeline.yaml)
+1. Читать UI Override файлы из Git (deployment.yaml, runtime.yaml, pipeline.yaml)
    1. Парсить структуру `environment / namespaces / applications`
 2. Читать `effective-set/ui-metadata.yaml`
 3. Вычислять state на основе request.parameters, UI Override, UI Metadata
 4. Вычислять value и originalValue
-5. API для коммита request.parameters → UI Override файлы в GIT
+5. API для коммита request.parameters → UI Override файлы в Git
 
 UI
 
 1. Отправлять все параметры (включая закоммиченные) в request.parameters
 2. Отображать state, value, originalValue для пользователя
-3. Триггерить пайплайн генерации ES после коммита
