@@ -363,11 +363,12 @@ API работает с кэшированными данными Effective Set 
     Прочитать UI override ParamSet из кэша и Применить рекурсивный мерж от низкого к высокому приоритету [детальное описание](#2-чтение-ui-override-paramsetов-из-кэша-и-их-мерж)
 
 5. **Определение состояний параметров:**
-   - Для каждого параметра определить состояние на основе источников (parameters из запроса, UI override ParamSet, Effective Set)
+
+    TBD
 
 6. **Формирование финального Effective Set:**
-   - Применить мерж: Effective Set → UI override → parameters из запроса
-   - Обернуть каждый параметр в структуру `EffectiveSetParameter` (_type + _data с value, state, originalValue)
+
+    TBD
 
 7. **Возврат ответа:**
    - Вернуть сформированный Effective Set с контекстной информацией
@@ -486,44 +487,10 @@ API работает с кэшированными данными Effective Set 
 
 ### 3. Определение `state` параметра
 
-1. `ui_override_untouched`:
-   - key/value нет в `parameters` запроса
-   - key/value нет в замерженном UI override ParamSet из кэша
-   - key/value есть в замерженном Effective Set из кэша
-
-2. `ui_override_uncommitted`:
-   1. изменение значение и добавление нового параметра:
-      - key/value есть в `parameters` запроса
-      - key/value нет в замерженном UI override ParamSet из кэша
-      - key/value нет в замерженном Effective Set из кэша
-   2. удаление параметра:  
-      - key/value нет в `parameters` запроса
-      - key/value есть в замерженном UI override ParamSet из кэша
-      - key/value есть в замерженном Effective Set из кэша
-3. `ui_override_committed`:
-   1. изменение значение и добавление нового параметра:
-      <!-- - key/value есть или нет в `parameters` запроса -->
-      - key/value есть в замерженном UI override ParamSet из кэша
-      <!-- - key/value есть или нет в замерженном Effective Set из кэша -->
-   2. удаление параметра:  
-      <!-- - key/value есть или нет в `parameters` запроса -->
-      - key/value нет в замерженном UI override ParamSet из кэша
-      <!-- - key/value есть или нет в замерженном Effective Set из кэша -->
+TBD
 
 ### 4. Определение `value` параметра
 
-1. Инициализировать `finalParams` = `effectiveSetParams` (копия)
-
-2. Для параметров в состоянии 3 (`ui_override_committed`):
-   - Взять значение напрямую из `uiOverrideParams` (по `paramPath`)
-   - Заменить значение в `finalParams` (рекурсивный мерж)
-   - **Примечание:** Значение может быть приблизительным, так как не учитывается полный мерж с другими paramset'ами. Для получения точного значения потребовалась бы полная симуляция pipeline (env_build), что замедлило бы работу API.
-
-3. Для параметров в состоянии 1 (`ui_override_untouched`):
-   - Значение уже присутствует в `finalParams` (из Effective Set)
-   - Оставить значение как есть
-
-4. Для параметров в состоянии 2 (`ui_override_uncommitted`):
-   - Значение будет применено на следующем шаге (из `parameters`)
+TBD
 
 ### 5. Определение `originalValue` параметра
