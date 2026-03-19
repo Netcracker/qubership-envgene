@@ -40,7 +40,7 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
         "stage": 'process_passport',
         "script": [
 
-                    'echo "===== GIT CONFIG ====="',
+                    'echo "===== GIT CONFIG ===== "',
                     'echo "GIT_STRATEGY=$GIT_STRATEGY"',
                     'echo "GIT_CHECKOUT=$GIT_CHECKOUT"',
                     'echo "CI_COMMIT_REF_NAME=$CI_COMMIT_REF_NAME"',
