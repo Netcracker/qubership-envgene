@@ -7,14 +7,6 @@
 # ═══════════════════════════════════════════════════════════════════════════════════
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:feature_add_all_deps AS build
 
-# hadolint ignore=DL3018
-# RUN apk add --no-cache \
-#     libffi-dev \
-#     openssl-dev \
-#     libxml2-dev \
-#     libxslt-dev \
-#     zlib-dev
-
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
@@ -31,12 +23,14 @@ COPY scripts/cloud_passport/ /cloud_passport/scripts/
 COPY schemas /build_env/schemas
 COPY scripts/utils /module/scripts/utils
 
-RUN /module/venv/bin/pip install --no-cache-dir --retries 10 --timeout 60 -r /build/requirements.txt && \
-    /module/venv/bin/pip install /python/jschon-sort && \
-    /module/venv/bin/pip install /python/envgene && \
-    /module/venv/bin/pip install /python/integration && \
-    /module/venv/bin/pip install /python/artifact-searcher && \
-    /module/venv/bin/pip install --no-cache-dir --no-deps -r /build/creds_rotation_requirements.txt
+RUN pip install --no-cache-dir --retries 10 --timeout 60 \
+    -r /build/requirements.txt \
+    /python/jschon-sort \
+    /python/envgene \
+    /python/integration \
+    /python/artifact-searcher && \
+    pip install --no-cache-dir --no-deps \
+    -r /build/creds_rotation_requirements.txt
 
 # Cleanup to reduce image size
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
