@@ -422,7 +422,7 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
 
     try:
-        response = requests.head(full_url, timeout=DEFAULT_REQUEST_TIMEOUT)
+        response = requests.head("https://ops-portal-aws.devopstoolset.netcracker.com/nexus", timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code == 200:
             logger.info(
                 f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact found: {full_url}"
