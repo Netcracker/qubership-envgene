@@ -42,6 +42,21 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     logger.info(f'--- sd.yaml contents end ---')
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
     script = [
+        'echo "current workdir="; pwd;',
+        'echo "CI_PROJECT_DIR="; echo "$CI_PROJECT_DIR";',
+        'echo "base_dir="; echo "$base_dir";',
+        'echo "full_env_name="; echo "$full_env_name";',
+        'echo "sd_path="; echo "$sd_path";',
+        'echo "==== Workspace contents ====";',
+        'ls -lrtha "$CI_PROJECT_DIR";',
+        'echo "==== environments contents ====";',
+        'ls -al "$CI_PROJECT_DIR/environments" || echo "environments missing";',
+        'echo "==== full_env_name contents ====";',
+        'ls -al "$CI_PROJECT_DIR/environments/$full_env_name" || echo "full_env_name missing";',
+        'echo "==== Inventory contents ====";',
+        'ls -al "$CI_PROJECT_DIR/environments/$full_env_name/Inventory" || echo "Inventory missing";',
+        'echo "==== solution-descriptor contents ====";',
+        'ls -al "$CI_PROJECT_DIR/environments/$full_env_name/Inventory/solution-descriptor" || echo "solution-descriptor missing";',
         f'echo "--- sd.yaml contents ---";',
         f'if [ -f "{sd_path}" ]; then echo "File found: {sd_path}"; cat "{sd_path}"; else echo "File not found: {sd_path}"; fi;',
         f'echo "--- sd.yaml contents end ---";',
