@@ -109,6 +109,22 @@ public class CmdbCli implements Callable<Integer> {
 
     @SneakyThrows
     private void setSharedData() {
+        if (envParams.sdPath != null) {
+            Path sdFilePath = Paths.get(envParams.sdPath);
+
+            logInfo("SD Path: " + sdFilePath.toAbsolutePath());
+
+            if (Files.exists(sdFilePath)) {
+                try {
+                    String content = Files.readString(sdFilePath);
+                    logInfo("--- sd.yaml contents ---\n" + content + "\n------------------------");
+                } catch (Exception e) {
+                    logError("Failed to read sd.yaml: " + e.getMessage());
+                }
+            } else {
+                logError("sd.yaml file not found at: " + sdFilePath.toAbsolutePath());
+            }
+        }
         EffectiveSetVersion effectiveVersion = EffectiveSetVersion.fromString(envParams.version);
         sharedData.setEffectiveSetVersion(effectiveVersion);
         validateVersionDependentParams(effectiveVersion);
