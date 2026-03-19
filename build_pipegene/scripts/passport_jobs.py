@@ -55,8 +55,7 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
                     # 🔍 Files before
                     'echo "===== FILES BEFORE ====="',
                     'ls -la',
-                    'ls -R $CI_PROJECT_DIR | head -100',
-                    
+
                     'python3 /cloud_passport/scripts/main.py --env_name "$ENV_NAME",',
                     "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
                     'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',

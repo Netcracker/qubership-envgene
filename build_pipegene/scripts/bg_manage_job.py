@@ -9,7 +9,7 @@ def prepare_bg_manage_job(pipeline, full_env, tags):
         "name": f'bg_manage.{full_env}',
         "image": '${envgen_image}',
         "stage": 'bg_manage',
-        "script": ['python /scripts/bg_manage/bg_manage.py',]
+        "script": ['echo "Nothing to be done"',]
     }
     job_vars = {
         "FULL_ENV_NAME": full_env,
