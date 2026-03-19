@@ -37,7 +37,7 @@ COPY build_effective_set_generator/effective-set-generator/target/*.jar /deploym
 
 
 # ═══════════════════════════════════════════════════════════════════════════════════
-# Stage 1: Runtime
+# Stage 2: Runtime
 # ═══════════════════════════════════════════════════════════════════════════════════
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:feature_add_all_deps AS runtime
 
@@ -45,9 +45,6 @@ ARG JAVA_PACKAGE=openjdk17-jre-headless
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en'
-
-COPY build_effective_set_generator/build/pip.conf /etc/pip.conf
-COPY build_effective_set_generator/build/sources.list /etc/apk/repositories
 
 # Install ONLY runtime dependencies (NO dev packages)
 # hadolint ignore=DL3018

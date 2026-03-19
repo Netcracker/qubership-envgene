@@ -40,7 +40,7 @@ RUN apk del gcc musl-dev libffi-dev openssl-dev && \
 RUN chmod 754 /module/scripts/*
 
 # ═══════════════════════════════════════════════════════════════════════════════════
-# Stage 1: Runtime
+# Stage 2: Runtime
 # ═══════════════════════════════════════════════════════════════════════════════════
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:feature_add_all_deps AS runtime
 
