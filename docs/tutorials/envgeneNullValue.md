@@ -15,8 +15,8 @@
   - [How to Resolve Credentials](#how-to-resolve-credentials)
     - [Option 1: Cloud Passport](#option-1-cloud-passport)
     - [Option 2: Shared Credentials](#option-2-shared-credentials)
-      - [usernamePassword example:](#usernamepassword-example)
-      - [secret example:](#secret-example)
+      - [usernamePassword example](#usernamepassword-example)
+      - [secret example](#secret-example)
   - [Verification Step (Required)](#verification-step-required)
   - [Before / After Example](#before--after-example)
   - [Summary](#summary)
@@ -65,7 +65,7 @@ Instead, it generates placeholders using `envgeneNullValue`.
 
 ### Generated `credentials.yml` (username/password)
 
-```yaml id="m0t7r2"
+```yaml
 dbaas-cluster-dba-cred:
   type: "usernamePassword"
   data:
@@ -82,7 +82,7 @@ If credentials are not resolved:
 
 Example error:
 
-```text id="nq2v8k"
+```text
 envgenehelper.errors.ValidationError: Error while validating credentials:
  credId: dbaas-cluster-dba-cred - username or password is not set
 ```
@@ -91,7 +91,7 @@ envgenehelper.errors.ValidationError: Error while validating credentials:
 
 ### Generated `credentials.yml` (secret)
 
-```yaml id="8y1vdp"
+```yaml
 consul-admin-cred:
   type: "secret"
   data:
@@ -107,7 +107,7 @@ If the secret is not resolved:
 
 Example error:
 
-```text id="k6z1ut"
+```text
 Error while validating credentials:
   credId: consul-admin-cred - secret is not set
 ```
@@ -122,9 +122,9 @@ Provide credential values via Cloud Passport configuration.
 
 ### Option 2: Shared Credentials
 
-#### usernamePassword example:
+#### usernamePassword example
 
-```yaml id="s4xv9c"
+```yaml
 dbaas-cluster-dba-cred:
   type: usernamePassword
   data:
@@ -132,9 +132,9 @@ dbaas-cluster-dba-cred:
     password: "secure_password"
 ```
 
-#### secret example:
+#### secret example
 
-```yaml id="p2k7fd"
+```yaml
 consul-admin-cred:
   type: "secret"
   data:
@@ -147,7 +147,7 @@ Before deployment, ensure no placeholders remain.
 
 PowerShell example:
 
-```powershell id="z8v2qd"
+```powershell
 Get-ChildItem -Recurse -Include *.yml,*.yaml |
   Select-String -Pattern 'envgeneNullValue'
 ```
@@ -160,7 +160,7 @@ If any matches are found:
 
 **Before resolution:**
 
-```yaml id="a3n9wp"
+```yaml
 username: envgeneNullValue
 password: envgeneNullValue
 secret: envgeneNullValue
@@ -168,7 +168,7 @@ secret: envgeneNullValue
 
 **After resolution:**
 
-```yaml id="b7x2lm"
+```yaml
 username: prod_user
 password: secure_password
 secret: secret-123
