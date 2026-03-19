@@ -3,6 +3,7 @@
 
 - [EnvGene Repository Variables](#envgene-repository-variables)
   - [Instance EnvGene Repository](#instance-envgene-repository)
+    - [`ENVGENE_LOG_LEVEL`](#envgene_log_level)
     - [`SECRET_KEY`](#secret_key)
     - [`GITLAB_TOKEN`](#gitlab_token)
     - [`ENVGENE_AGE_PRIVATE_KEY`](#envgene_age_private_key)
@@ -11,9 +12,12 @@
     - [`GITLAB_RUNNER_TAG_NAME`](#gitlab_runner_tag_name)
     - [`GH_RUNNER_TAG_NAME`](#gh_runner_tag_name)
     - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
+    - [`GH_RUNNER_SCRIPT_TIMEOUT`](#gh_runner_script_timeout)
+    - [`CALCULATOR_CLI_JAVA_OPTIONS`](#calculator_cli_java_options)
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
+    - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
     - [`DOCKER_REGISTRY` (in template repository)](#docker_registry-in-template-repository)
 
 The following are parameters that are set in GitLab CI/CD variables or GitHub environment variables.
@@ -21,6 +25,24 @@ The following are parameters that are set in GitLab CI/CD variables or GitHub en
 All parameters are of string data type.
 
 ## Instance EnvGene Repository
+
+### `ENVGENE_LOG_LEVEL`
+
+**Description**: Defines the logging level for EnvGene components executed in the Instance EnvGene pipeline.
+This variable is passed to the pipeline and is supported by EnvGene Python and Java based components.
+
+**Logging Level Mapping (Java vs Python):**
+
+| ENVGENE_LOG_LEVEL | Python Logging Level | Java Logging Level |
+|-------------------|----------------------|--------------------|
+| DEBUG             | DEBUG                | DEBUG              |
+| INFO              | INFO                 | INFO               |
+| WARNING           | WARNING              | WARN               |
+| ERROR             | ERROR                | ERROR              |
+
+**Default Value**: INFO
+
+**Mandatory**: No
 
 ### `SECRET_KEY`
 
@@ -108,6 +130,32 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 
 **Example**: `15m`
 
+### `GH_RUNNER_SCRIPT_TIMEOUT`
+
+**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner in GitHub pipeline. This value is passed to the `timeout-minutes` attribute of the pipeline job. This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running processes. The parameter value must be specified as a number in minutes.
+
+This parameter is only available in the GitHub version of the pipeline. For more information about `timeout-minutes`, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idtimeout-minutes).
+
+**Default Value**: `10`
+
+**Mandatory**: No
+
+**Example**: `15`
+
+### `CALCULATOR_CLI_JAVA_OPTIONS`
+
+**Description**: Java options passed to the Calculator CLI to override default settings. Used to control heap size and ForkJoinPool thread count (number of applications processed in parallel during effective set generation).
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**:
+
+```text
+CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallelism=4 -Xmx2g -Xms2g"
+```
+
 ### `DOCKER_REGISTRY` (in instance repository)
 
 **Description**: Specifies the registry where the EnvGene Docker images are located
@@ -129,6 +177,10 @@ Used by EnvGene at runtime. When using pre-commit hooks, the same value must be 
 **Mandatory**: No
 
 **Example**: `true`
+
+### `ENVGENE_LOG_LEVEL` (in template repository)
+
+The same as [`ENVGENE_LOG_LEVEL` in instance repository](#envgene_log_level)
 
 ### `DOCKER_REGISTRY` (in template repository)
 

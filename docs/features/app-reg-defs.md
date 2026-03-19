@@ -46,9 +46,12 @@ There are two sources for obtaining Application and Registry Definitions in EnvG
 
 #### External Job
 
+> [!WARNING]
+> The External Job–based mechanism is **deprecated**, is not recommended for use in new or actively maintained environments, and is planned to be removed in a future EnvGene release. Consumers should migrate to template-based Application and Registry Definitions as soon as reasonably possible.
+
 An external job (not implemented in EnvGene itself, but serves as an extension point) that somehow creates/discovers/generates Application and Registry Definitions as YAML files and saves them in its artifact with the contract name `definitions.zip`.
 
-During the generation of an Environment Instance (as part of `env_build_job`), EnvGene retrieves the Application and Registry Definitions from this artifact and saves them as part of the environment instance.
+During the [`app_reg_def_process`](/docs/envgene-pipelines.md#instance-pipeline) job execution, EnvGene retrieves the Application and Registry Definitions from this artifact and saves them as part of the Environment instance.
 
 EnvGene uses the following instance repository pipeline parameters:
 
@@ -79,7 +82,7 @@ These files can be either Jinja templates of the object or plain objects without
 
 Each Application and Registry Definition is created as a separate file.
 
-During Environment Instance generation (as part of `env_build_job`), EnvGene renders these templates and saves them as part of the Environment Instance.
+During the [`app_reg_def_process`](/docs/envgene-pipelines.md#instance-pipeline) job execution, EnvGene renders these templates and saves them as part of the Environment Instance.
 
 ### Using Application and Registry Definitions
 

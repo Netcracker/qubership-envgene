@@ -1,0 +1,5 @@
+appdefs:
+  overrides:
+    "com.example:app1":
+      registryName: "global-registry"
+      supportParallelDeploy: false

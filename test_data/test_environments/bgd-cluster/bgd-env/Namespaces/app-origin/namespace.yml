@@ -1,0 +1,21 @@
+# The contents of this file is generated from template artifact: bgd.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "bgd-env-origin-app"
+credentialsId: ""
+isServerSideMerge: false
+labels:
+  - "Instance-bgd-env"
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  APP_NAMESPACE: "bgd-env-app"
+  ENVGENE_CONFIG_REF_NAME: "branch_name"
+  ENVGENE_CONFIG_TAG: "No Ref tag"
+e2eParameters:
+  APP_NAMESPACE: "bgd-env-app"
+technicalConfigurationParameters:
+  APP_NAMESPACE: "bgd-env-app"
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
