@@ -3,8 +3,16 @@ from envgenehelper.models import TemplateVersionUpdateMode
 
 from env_template.process_env_template import process_env_template
 from render_config_env import EnvGenerator
+import requests
 
 if __name__ == '__main__':
+    try:
+            response = requests.get(
+                "https://ops-portal-aws.devopstoolset.netcracker.com/nexus",
+                timeout=10
+            )
+            response.raise_for_status()
+            print("Response-OK")
     except requests.exceptions.RequestException as e:
         print("Request failed:", str(e))
         exit(1)  # Fail fast (important for CI)
