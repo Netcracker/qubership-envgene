@@ -196,7 +196,7 @@ jobs:
           REGISTRY_HOST=$(echo "${{ vars.DOCKER_REGISTRY }}" | cut -d'/' -f1)
           echo '${{ secrets.GCP_SA_KEY }}' | docker login -u _json_key --password-stdin "$REGISTRY_HOST"
       ### ENV VARS PROCESSING - END ###
-      
+
 
       ### BG MANAGE ###
       - name: BG_MANAGE
