@@ -37,6 +37,9 @@ User Guide
     - [Complete Example: Adding a Custom Job](#complete-example-adding-a-custom-job)
   - [Parameter Priority](#parameter-priority)
   - [Repository Variables (vars)](#repository-variables-vars)
+  - [Using Different Docker Registries](#using-different-docker-registries)
+    - [GitHub Container Registry (GHCR)](#github-container-registry-ghcr)
+    - [Google Artifact Registry (GAR)](#google-artifact-registry-gar)
   - [How to Trigger the Workflow](#how-to-trigger-the-workflow)
     - [Via GitHub Actions UI](#via-github-actions-ui)
     - [Via GitHub API](#via-github-api)
@@ -91,9 +94,10 @@ Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets**
 | Secret                    | Required          | Description                                                           |
 |---------------------------|-------------------|-----------------------------------------------------------------------|
 | `SECRET_KEY`              | When using Fernet | Fernet key for credential encryption                                 |
-| `ENVGENE_AGE_PUBLIC_KEY`  | When using SOPS   | Public key from EnvGene AGE key pair (SOPS encryption)               |
+| `ENVGENE_AGE_PUBLIC_KEY`  | When using SOPS   | Public key from EnvGene AGE key pair (SOPS encryption)                |
 | `ENVGENE_AGE_PRIVATE_KEY` | When using SOPS   | Private key from EnvGene AGE key pair (SOPS decryption)                |
-| `GH_ACCESS_TOKEN`         | Yes               | GitHub token with `contents: write` to commit changes to repository  |
+| `GH_ACCESS_TOKEN`         | Yes               | GitHub token with `contents: write` to commit changes to repository   |
+| `GCP_SA_KEY`              | When using GAR    | Full JSON key of GCP service account for Artifact Registry access     |
 
 > [!NOTE]
 > At least one encryption method (Fernet or SOPS) must be configured if your repository uses encrypted credentials. See [Credential Encryption](/docs/how-to/credential-encryption.md) for details.
@@ -108,7 +112,7 @@ Configure variables in **Settings** → **Secrets and variables** → **Actions*
 | `GH_RUNNER_TAG_NAME`       | `ubuntu-22.04`       | Runner label for workflow jobs                     |
 | `GH_RUNNER_SCRIPT_TIMEOUT` | `10`                 | Job timeout in minutes                             |
 
-See [Repository Variables (vars)](#repository-variables-vars) for details.
+See [Repository Variables (vars)](#repository-variables-vars) for details. For a step-by-step guide on GHCR and GAR, see [Using Different Docker Registries in Envgene.yml](/docs/how-to/docker-registry-configuration.md).
 
 ### Step 4: Optional — Customize Configuration
 
@@ -414,11 +418,12 @@ Repository variables are configured in **Settings → Secrets and variables → 
 
 ### Variables Used by the Workflow
 
-| Variable                   | Purpose                                  | Default when empty   |
-|----------------------------|------------------------------------------|----------------------|
-| `DOCKER_REGISTRY`          | Docker registry base for EnvGene images  | `ghcr.io/netcracker` |
-| `GH_RUNNER_TAG_NAME`       | Runner label for jobs (e.g. ubuntu-22.04)| `ubuntu-22.04`       |
-| `GH_RUNNER_SCRIPT_TIMEOUT` | Job timeout in minutes                   | `10`                 |
+| Variable                        | Purpose                                   | Default when empty   |
+|---------------------------------|-------------------------------------------|----------------------|
+| `DOCKER_REGISTRY`                | Docker registry base for EnvGene images   | `ghcr.io/netcracker` |
+| `DOCKER_CLOUD_REGISTRY_PROVIDER` | Cloud provider for registry auth (GCP for GAR) | (empty)          |
+| `GH_RUNNER_TAG_NAME`             | Runner label for jobs (e.g. ubuntu-22.04)  | `ubuntu-22.04`       |
+| `GH_RUNNER_SCRIPT_TIMEOUT`       | Job timeout in minutes                    | `10`                 |
 
 ### How to Add Repository Variables
 
@@ -455,6 +460,59 @@ To use your own variables in the workflow:
 1. For optional variables with a default, use: `${{ vars.MY_CUSTOM_VAR || 'default_value' }}`.
 
 For a full list of supported repository variables, see [EnvGene Repository Variables](/docs/envgene-repository-variables.md).
+
+## Using Different Docker Registries
+
+The workflow pulls EnvGene Docker images (envgene, pipegene, effective-set-generator) from a registry. By default, images are pulled from GitHub Container Registry (GHCR). You can switch to another registry such as Google Artifact Registry (GAR) by configuring the appropriate variables and secrets.
+
+### GitHub Container Registry (GHCR)
+
+GHCR is the default registry. No additional configuration is required.
+
+| Where to configure | Parameter | Value |
+|-------------------|-----------|-------|
+| **Settings → Variables** | `DOCKER_REGISTRY` | `ghcr.io/netcracker` (default) |
+
+**Authentication:** GitHub Actions automatically authenticates to `ghcr.io` using `GITHUB_TOKEN` when pulling images. No extra secrets are needed.
+
+**Image names:** The workflow builds image paths as `$DOCKER_REGISTRY/qubership-envgene`, `$DOCKER_REGISTRY/qubership-pipegene`, etc. For GHCR, the full path is `ghcr.io/netcracker/qubership-envgene:1.31.9`.
+
+### Google Artifact Registry (GAR)
+
+To use Google Artifact Registry, configure the registry URL and GCP authentication.
+
+| Where to configure | Parameter | Value |
+|-------------------|-----------|-------|
+| **Settings → Variables** | `DOCKER_REGISTRY` | `REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME` |
+| **Settings → Variables** | `DOCKER_CLOUD_REGISTRY_PROVIDER` | `GCP` |
+| **Settings → Secrets** | `GCP_SA_KEY` | Full JSON key of the GCP service account |
+
+**Example `DOCKER_REGISTRY` for GAR:**
+
+```text
+europe-west1-docker.pkg.dev/my-gcp-project/envgene-images
+```
+
+**Authentication:** When `DOCKER_CLOUD_REGISTRY_PROVIDER` is set to `GCP`, the workflow runs a step that authenticates to GAR using `docker login` with the `_json_key` method. The `GCP_SA_KEY` secret must contain the full JSON key of a GCP service account that has `Artifact Registry Reader` (or equivalent) permissions.
+
+**How to set up GCP_SA_KEY:**
+
+1. Create a GCP service account with access to your Artifact Registry repository.
+1. Create a JSON key for the service account (IAM → Service Accounts → Keys → Add Key).
+1. Copy the entire JSON content.
+1. In GitHub: **Settings → Secrets and variables → Actions → Secrets** → **New repository secret**.
+1. Name: `GCP_SA_KEY`, Value: paste the full JSON.
+
+> [!IMPORTANT]
+> The service account must have at least `Artifact Registry Reader` role on the repository. For private images, ensure the key is not expired and has the correct permissions.
+
+**Summary:**
+
+| Parameter | Location | Required for GAR |
+|-----------|----------|-------------------|
+| `DOCKER_REGISTRY` | Variables | Yes - full GAR path |
+| `DOCKER_CLOUD_REGISTRY_PROVIDER` | Variables | Yes - set to `GCP` |
+| `GCP_SA_KEY` | Secrets | Yes - JSON key content |
 
 ## How to Trigger the Workflow
 
@@ -661,6 +719,7 @@ CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\
 |----------|--------------|
 | [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md) | Full parameter reference |
 | [EnvGene Pipelines](/docs/envgene-pipelines.md) | Pipeline flow and job descriptions |
+| [Using Different Docker Registries](/docs/how-to/docker-registry-configuration.md) | GHCR and GAR configuration for Envgene.yml |
 | [Blue-Green Deployment](/docs/features/blue-green-deployment.md) | BG-related parameters |
 | [SD Processing](/docs/use-cases/sd-processing.md) | Solution Descriptor use cases |
 
