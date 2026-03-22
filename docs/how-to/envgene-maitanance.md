@@ -53,7 +53,7 @@ git-system-follower install <path_to_instance_package_image> \
    -r <project_instance_repository_path> \
    -b <project_instance_repository_branch> \
    -t <gitlab_token> \
-   -e self_token=<gitlab_token>
+   --extra self_token <gitlab_token> no-masked
 ```
 
 **Parameter Details:**
@@ -64,7 +64,7 @@ git-system-follower install <path_to_instance_package_image> \
 - `<gitlab_token>`: Project instance repository token from Initial Setup Step 2 (used both for GSF Git operations and for EnvGene to commit changes)
 
 > [!NOTE]
-> The same token is used twice: `-t` for GSF to authenticate git operations, and `-e self_token=` to configure EnvGene's repository access.
+> The same token is used twice: `-t` for GSF to authenticate git operations, and `--extra self_token` to configure EnvGene's repository access.
 
 **Example:**
 
@@ -74,5 +74,5 @@ git-system-follower install \
    -r https://git.qubership.org/configuration-management/env-instance.git \
    -b master \
    -t token-placeholder-123 \
-   -e self_token=token-placeholder-123
+   --extra self_token token-placeholder-123 no-masked
 ```
