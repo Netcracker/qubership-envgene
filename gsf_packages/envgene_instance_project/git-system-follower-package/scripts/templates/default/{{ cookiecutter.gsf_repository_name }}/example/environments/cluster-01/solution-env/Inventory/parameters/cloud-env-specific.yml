@@ -1,0 +1,6 @@
+name: cloud-env-specific
+parameters:
+  PAAS_PLATFORM: KUBERNETES
+  PAAS_VERSION: v1.32
+  INGRESS_CLASS: nginx
+applications: []

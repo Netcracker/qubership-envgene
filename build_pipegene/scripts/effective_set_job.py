@@ -26,22 +26,24 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
 
     is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
 
-    base_dir = getenv('CI_PROJECT_DIR')
-    base_env_path = f"{base_dir}/environments/{full_env_name}"
-    app_defs_path = f"{base_env_path}/AppDefs"
-    reg_defs_path = f"{base_env_path}/RegDefs"
-    sboms_path = get_sboms_dir(base_dir)
+    base_dir = getenv('CI_PROJECT_DIR')   
 
     sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
     script = [
+        #Overriding sd_path to pick the correct value for CI_PROJECT_DIR
+        f'base_env_path="$CI_PROJECT_DIR/environments/{full_env_name}";',
+        'app_defs_path="$base_env_path/AppDefs";',
+        'reg_defs_path="$base_env_path/RegDefs";',
+        'sboms_path="$CI_PROJECT_DIR/sboms";',
+        'sd_path="$base_env_path/Inventory/solution-descriptor/sd.yaml";',
         # cert handling for java
         'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/',
         'if [ -f /default_cert.pem ]; then cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/"; fi',
         'for cert in "${CI_PROJECT_DIR}/configuration/certs/*" ; do [ -f "$cert" ] && keytool -import -trustcacerts -alias "$(basename "$cert")" -file "$cert" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done',
         'python3 /module/scripts/main.py decrypt_cred_files',
-        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p {app_defs_path} && cp -rf {artifact_app_defs_path}/* {app_defs_path}',
-        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p {reg_defs_path} && cp -fr {artifact_reg_defs_path}/* {reg_defs_path}',
+        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p $app_defs_path && cp -rf {artifact_app_defs_path}/* $app_defs_path',
+        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p $reg_defs_path && cp -fr {artifact_reg_defs_path}/* $reg_defs_path',
         'python3 /module/scripts/main.py validate_creds',
         'python3 /module/scripts/sboms_retention_policy.py'
     ]
@@ -66,8 +68,8 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     if full_sd_exists or sd_data:
         cmdb_cli_cmd_call.extend([
             "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
-            f"--sboms-path={str(sboms_path)}",
-            f"--sd-path={sd_path}",
+            "--sboms-path=$sboms_path",
+            "--sd-path=$sd_path",
         ])
 
     logger.info(f'Prepare generate_effective_set job for {full_env_name}.')
