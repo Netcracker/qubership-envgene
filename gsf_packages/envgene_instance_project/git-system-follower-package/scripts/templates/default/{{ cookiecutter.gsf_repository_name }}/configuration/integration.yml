@@ -1,0 +1,22 @@
+# See full reference at https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#integrationyml
+#
+# Optional
+# Configuration for Cloud Passport discovery integration
+# cp_discovery:
+  # Optional
+  # Parameters for GitLab-based discovery repository
+  # gitlab:
+    # Mandatory
+    # Full project path of the discovery repository
+    # project: string
+    # Mandatory
+    # Branch name of the discovery repository
+    # branch: master
+    # Mandatory
+    # Authentication token for the discovery repository
+    # token: string
+
+# Mandatory
+# Authentication token for EnvGene to access this instance repository
+# Required for EnvGene to commit changes
+self_token: "${creds.get('self-token-cred').secret}"
