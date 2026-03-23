@@ -91,58 +91,46 @@ environment:
 **Что делает:**
 
 1. Генерирует ES (как и сейчас)
-2. Сохраняет метафайл для UI override параметров
+2. Сохраняет файл `ui-override-original-values.yaml` для UI override параметров
 
 **Приоритет мержа (низкий → высокий):**
 
 ```text
-1. Template defaults
-2. ParamSet (environment level)
-3. ParamSet (namespace level)
-4. ParamSet (application level)
-5. SBOM parameters
-6. Predefined parameters
-7. UI Override (environment level)      ← НОВОЕ
-8. UI Override (namespace level)        ← НОВОЕ
-9. UI Override (application level)      ← НОВОЕ
-10. Custom Params (--custom-params)     ← highest priority
+...
+- UI Override (environment level)      ← НОВОЕ
+- UI Override (namespace level)        ← НОВОЕ
+- UI Override (application level)      ← НОВОЕ
+- Custom Params (--custom-params)     ← highest priority
 ```
 
 **Аутпут в Git:**
 
 ```text
 effective-set/
-  ui-metadata.yaml                    # Метаданные для всех контекстов (новое)
+  ui-override-original-values.yaml                    # originalValue для всех контекстов (новое)
 ```
 
-**Формат метафайла:**
+**Формат файла:**
 
 ```yaml
-# ui-metadata.yaml
+# ui-override-original-values.yaml
 deployment:
   namespace-01:
     app-01:
-      param1:
-        originalValue: value1       # Значение до UI override
-      param3:
-        originalValue: null         # Новый параметр (не было в ES)
-      param4:
-        originalValue: value4       # Параметр удален через UI override
+      param1: value1       # Значение до UI override
+      param3: null         # Новый параметр (не было в ES)
+      param4: value4       # Параметр удален через UI override
     app-02:
-      param5:
-        originalValue: null
+      param5: null
 
 runtime:
   namespace-01:
     app-01:
-      runtime_param1:
-        originalValue: old_value1
-      runtime_param2:
-        originalValue: old_value2
+      runtime_param1: old_value1
+      runtime_param2: old_value2
 
 pipeline:
-  pipeline_param1:
-    originalValue: old_value
+  pipeline_param1: old_value
 ```
 
 **Новый параметр Calculator:**
@@ -161,7 +149,7 @@ calculator --env-id cluster/env \
 **Читает из Git:**
 
 1. `ES` - Effective Set
-2. `UI_METADATA` - метафайл
+2. `UI_OVERRIDE_ORIGINAL_VALUES` - файл original values до UI override
 3. `UI_OVERRIDE` - UI Override файлы
 4. `request.parameters` - незакоммиченные изменения из UI (HTTP request body)
 
@@ -171,7 +159,7 @@ calculator --env-id cluster/env \
 
 Значение параметра до применения UI Override:
 
-- Если параметр есть в `ui-metadata.yaml` → берем `originalValue` из метафайла
+- Если параметр есть в `ui-override-original-values.yaml` → берем значение из этого файла
 - Иначе → берем значение из текущего ES (параметр не был переопределен через UI)
 
 #### 2. `state`
@@ -207,16 +195,15 @@ Calculator
    - `deployment.yaml` для deployment контекста
    - `runtime.yaml` для runtime контекста
    - `pipeline.yaml` для pipeline контекста
-3. Запоминать originalValue перед применением UI Override
-4. Применять UI Override с приоритетом выше Predefined parameters
-5. Генерировать единый метафайл `effective-set/ui-metadata.yaml` для всех контекстов
+3. Генерировать единый файл `effective-set/ui-override-original-values.yaml` для deploy, pipeline, runtime контекстов (Запоминать originalValue перед применением UI Override)
+4. Применять UI Override с приоритетом ниже --custom-params
 
 Colly
 
 1. Читать UI Override файлы из Git (deployment.yaml, runtime.yaml, pipeline.yaml)
    1. Парсить структуру `environment / namespaces / applications`
-2. Читать `effective-set/ui-metadata.yaml`
-3. Вычислять state на основе request.parameters, UI Override, UI Metadata
+2. Читать `effective-set/ui-override-original-values.yaml`
+3. Вычислять state на основе request.parameters, UI Override, UI_OVERRIDE_ORIGINAL_VALUES
 4. Вычислять value и originalValue
 5. API для коммита request.parameters → UI Override файлы в Git
 
