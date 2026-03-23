@@ -3,7 +3,7 @@ from os import listdir
 
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name
 from envgenehelper.plugin_engine import PluginEngine
-from gcip import JobFilter, Pipeline
+from gcip import JobFilter, Pipeline, TriggerJob
 
 import pipeline_helper
 from appregdef_render_job import prepare_appregdef_render_job
@@ -216,6 +216,9 @@ def is_trigger_job(job):
         logger.info(f"inside trigger_job method {job.name}")
         if job.trigger is not None:
             logger.info(f"inside trigger_job none method {job.name}")
+    if isinstance(job, TriggerJob):
+        logger.info(f"inside isinstance trigger_job  method {job.name}")
+        return True
     return hasattr(job, "trigger") and job.trigger is not None
 
 def should_do_checkout(job):
