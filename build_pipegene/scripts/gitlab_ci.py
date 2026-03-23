@@ -221,8 +221,7 @@ def should_do_checkout(job, jobs_map):
         return True
 
     for need in job.needs:
-        parent = jobs_map.get(need)
-        if parent and is_trigger_job(parent):
+        if is_trigger_job(need):
             logger.info(f"trigger job is {job.name} Stage: {job.stage}, Needs: {job.needs}")
             return True
 
