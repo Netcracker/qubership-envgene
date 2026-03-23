@@ -48,18 +48,16 @@ It is intentionally used to:
 
 Common use case:
 
-- **Credentials placeholder**
-
-If a value remains `envgeneNullValue`, validation fails and deployment is blocked.
+If a required value remains `envgeneNullValue` where a real value is mandatory, validation fails and deployment is blocked.
 
 ## Scenario: Credentials Placeholder
 
 ### Problem
 
-When EnvGene generates a `credentials.yml` file (for example from Cloud Passport),
-it may not have access to actual secret values.
+When EnvGene fills the [Environment Credentials File](/docs/envgene-objects.md#environment-credentials-file) (`Credentials/credentials.yml`),
+it not have access to actual secret values.
 
-Instead, it generates placeholders using `envgeneNullValue`.
+Instead, credential fields can be set to `envgeneNullValue` until you resolve them.
 
 ## Credential Type 1: usernamePassword
 
@@ -122,11 +120,13 @@ Provide credential values via Cloud Passport configuration.
 
 ### Option 2: Shared Credentials
 
+See [Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file) in `envgene-objects.md` for locations and merge behavior.
+
 #### usernamePassword example
 
 ```yaml
 dbaas-cluster-dba-cred:
-  type: usernamePassword
+  type: "usernamePassword"
   data:
     username: "real_user"
     password: "secure_password"
@@ -158,20 +158,34 @@ If any matches are found:
 
 ## Before / After Example
 
-**Before resolution:**
+**Before resolution** (same structure as the generated `credentials.yml` examples above):
 
 ```yaml
-username: envgeneNullValue
-password: envgeneNullValue
-secret: envgeneNullValue
+dbaas-cluster-dba-cred:
+  type: "usernamePassword"
+  data:
+    username: "envgeneNullValue" # FillMe
+    password: "envgeneNullValue" # FillMe
+
+consul-admin-cred:
+  type: "secret"
+  data:
+    secret: "envgeneNullValue" # FillMe
 ```
 
 **After resolution:**
 
 ```yaml
-username: prod_user
-password: secure_password
-secret: secret-123
+dbaas-cluster-dba-cred:
+  type: "usernamePassword"
+  data:
+    username: "prod_user"
+    password: "secure_password"
+
+consul-admin-cred:
+  type: "secret"
+  data:
+    secret: "secret-123"
 ```
 
 ## Summary
@@ -181,5 +195,6 @@ secret: secret-123
 
   - `usernamePassword`
   - `secret` types
-- Prevents incomplete or insecure deployments
-- Must always be resolved before deployment
+
+- Prevents incomplete or insecure deployments when validation requires real values
+- Must be replaced with real values before deployment wherever your pipeline enforces it
