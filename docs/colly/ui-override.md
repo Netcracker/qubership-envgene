@@ -35,21 +35,21 @@ environment:
 
 # Namespace уровень (применяется ко всем application в namespace)
 namespaces:
-  namespace-01:
+  namespace-01:  # deployPostfix из Namespace объекта
     param_ns1: value1
     param_ns2: value2
-  namespace-02:
+  namespace-02:  # deployPostfix из Namespace объекта
     param_ns3: value3
 
 # Application уровень (применяется к конкретному application)
 applications:
-  namespace-01:
-    app-01:
+  namespace-01:  # deployPostfix из Namespace объекта
+    app-01:      # applicationName
       param1: value2
       param4: null        # Удаление параметра
     app-02:
       param5: value5
-  namespace-02:
+  namespace-02:  # deployPostfix из Namespace объекта
     app-03:
       param6: value6
 ```
@@ -61,12 +61,12 @@ environment:
   runtime_env_param1: value1
 
 namespaces:
-  namespace-01:
+  namespace-01:  # deployPostfix из Namespace объекта
     runtime_ns_param1: value2
 
 applications:
-  namespace-01:
-    app-01:
+  namespace-01:  # deployPostfix из Namespace объекта
+    app-01:      # applicationName
       runtime_param1: value1
       runtime_param2: value2
 ```
@@ -77,7 +77,16 @@ applications:
 environment:
   pipeline_param1: value1
   pipeline_param2: value2
+
+namespaces:
+  namespace-01:  # deployPostfix из Namespace объекта (если нужны namespace-specific параметры для pipeline)
+    pipeline_ns_param1: value3
 ```
+
+> [!NOTE]
+> В качестве ключей в секциях `namespaces` и `applications` используется `deployPostfix` 
+> из соответствующего Namespace объекта, а не `namespaceName`. Это обеспечивает 
+> уникальность и консистентность с Effective Set структурой.
 
 ---
 
@@ -86,20 +95,20 @@ environment:
 **Инпуты:**
 
 1. те что сейчас
-2. **UI Override Object** (новый параметр `--ui-overrides-path`)
+2. **UI Override Object** - Calculator ищет UI Override файлы по контрактному пути `<envs-path>/ui-overrides/` (опционально, если директория не существует - пропускается)
 
 **Что делает:**
 
 1. Генерирует ES (как и сейчас)
-2. Сохраняет файл `ui-override-original-values.yaml` для UI override параметров
+2. Если UI Override Object существует - применяет оверрайды и сохраняет файл `ui-override-original-values.yaml` для UI override параметров
 
 **Приоритет мержа (низкий → высокий):**
 
 ```text
 ...
-- UI Override (environment level)      ← НОВОЕ
-- UI Override (namespace level)        ← НОВОЕ
-- UI Override (application level)      ← НОВОЕ
+- UI Override (environment level)      ← НОВОЕ (опционально)
+- UI Override (namespace level)        ← НОВОЕ (опционально)
+- UI Override (application level)      ← НОВОЕ (опционально)
 - Custom Params (--custom-params)     ← highest priority
 ```
 
@@ -133,14 +142,15 @@ pipeline:
   pipeline_param1: old_value
 ```
 
-**Новый параметр Calculator:**
+**Пример вызова Calculator:**
 
 ```bash
 calculator --env-id cluster/env \
            --envs-path /environments/cluster/env \
-           --ui-overrides-path /environments/cluster/env/ui-overrides \
            --output /environments/cluster/env/effective-set
 ```
+
+Calculator автоматически ищет UI Override файлы по пути `<envs-path>/ui-overrides/`. Если директория существует - применяет оверрайды, если нет - пропускает этот шаг.
 
 ---
 
@@ -190,13 +200,14 @@ calculator --env-id cluster/env \
 
 Calculator
 
-1. Добавить параметр `--ui-overrides-path`
-2. Реализовать чтение UI Override файлов:
+1. Реализовать поиск UI Override файлов по контрактному пути `<envs-path>/ui-overrides/`:
    - `deployment.yaml` для deployment контекста
    - `runtime.yaml` для runtime контекста
    - `pipeline.yaml` для pipeline контекста
-3. Генерировать единый файл `effective-set/ui-override-original-values.yaml` для deploy, pipeline, runtime контекстов (Запоминать originalValue перед применением UI Override)
-4. Применять UI Override с приоритетом ниже --custom-params
+2. Если директория `ui-overrides/` не существует - пропустить этот шаг (UI Override опционален)
+3. Если UI Override файлы найдены:
+   1. Применять UI Override с приоритетом ниже --custom-params
+   2. Генерировать единый файл `effective-set/ui-override-original-values.yaml` для deploy, pipeline, runtime контекстов (запоминать originalValue перед применением UI Override)
 
 Colly
 
@@ -206,6 +217,12 @@ Colly
 3. Вычислять state на основе request.parameters, UI Override, UI_OVERRIDE_ORIGINAL_VALUES
 4. Вычислять value и originalValue
 5. API для коммита request.parameters → UI Override файлы в Git
+
+Подробнее см.:
+
+- [colly-effective-set-api.md](./colly-effective-set-api.md) - API для работы с Effective Set
+- [colly-ui-parameters-api.md](./colly-ui-parameters-api.md) - API для работы с UI override файлами
+- [colly-versioning-conflicts.md](./colly-versioning-conflicts.md) - Версионирование и конфликты
 
 UI
 

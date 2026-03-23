@@ -12,18 +12,9 @@
         - [Option 1B. Расширенный вариант](#option-1b-расширенный-вариант)
       - [Option 2. Env Instance Override](#option-2-env-instance-override)
       - [Option 3. Effective Set Override](#option-3-effective-set-override)
+      - [Option 4. UI Override Files (Simplified Approach)](#option-4-ui-override-files-simplified-approach)
       - [Сравнение Опций](#сравнение-опций)
-    - [Colly](#colly)
-      - [ParamSet API](#paramset-api)
-      - [Override UI API](#override-ui-api)
-      - [Effective Set API](#effective-set-api)
-    - [Обработка конфликтов при параллельных изменениях через UI разными пользователями и одновременном изменении через UI и Git](#обработка-конфликтов-при-параллельных-изменениях-через-ui-разными-пользователями-и-одновременном-изменении-через-ui-и-git)
-      - [Версионирование через Git](#версионирование-через-git)
-      - [Обработка конфликтов](#обработка-конфликтов)
-      - [GET `/environments/<envId>/ui-parameters`](#get-environmentsenvidui-parameters)
-      - [POST `/environments/<envId>/ui-parameters`](#post-environmentsenvidui-parameters)
-      - [Детали обработки конфликтов](#детали-обработки-конфликтов)
-  - [План реализации](#план-реализации)
+  - [API документация](#api-документация)
 
 ## Problem Statement
 
@@ -393,148 +384,151 @@
    2. для `runtime` в `effective-set/runtime/<ns>/<app>/parameters.yaml`
    3. для `pipeline` в `effective-set/pipeline/parameters.yaml`
 
+#### Option 4. UI Override Files (Simplified Approach)
+
+Оверрайды Effective Set хранятся в отдельной директории `ui-overrides/` в трех файлах (по одному на контекст). Файлы UI override создаются и управляются исключительно Colly через API. Calculator применяет UI override напрямую при генерации ES с приоритетом ниже Custom Params. Генерируется файл `ui-override-original-values.yaml` для отслеживания оригинальных значений параметров до применения UI override.
+
+**Структура хранения:**
+
+```text
+environments/
+  <cluster>/
+    <environment>/
+      ui-overrides/
+        deployment.yaml       # Deployment контекст
+        runtime.yaml          # Runtime контекст
+        pipeline.yaml         # Pipeline контекст
+```
+
+**Уровни оверрайдов:**
+
+- **Environment Level** - параметры применяются ко всем namespace и application в окружении
+- **Namespace Level** - параметры применяются ко всем application в namespace
+- **Application Level** - параметры применяются к конкретному application
+
+**Пример: `ui-overrides/deployment.yaml`**
+
+```yaml
+# Environment уровень (применяется ко всем namespace и application)
+environment:
+  param_env1: value1
+  param_env2: value2
+# Namespace уровень (применяется ко всем application в namespace)
+namespaces:
+  namespace-01:
+    param_ns1: value1
+    param_ns2: value2
+  namespace-02:
+    param_ns3: value3
+# Application уровень (применяется к конкретному application)
+applications:
+  namespace-01:
+    app-01:
+      param1: value2
+      param4: null        # Удаление параметра
+    app-02:
+      param5: value5
+  namespace-02:
+    app-03:
+      param6: value6
+```
+
+**Calculator изменения:**
+
+1. Calculator читает UI Override файлы, расположенные в контрактном пути:
+   - `deployment.yaml` для deployment контекста
+   - `runtime.yaml` для runtime контекста
+   - `pipeline.yaml` для pipeline контекста
+
+2. Calculator мержит их в Effective Set при каждой генерации с приоритетом ниже чем Custom Params
+
+3. Calculator генерирует файл `ui-override-original-values.yaml` с оригинальными значениями параметров до применения UI override:
+
+   ```text
+   effective-set/
+     ui-override-original-values.yaml    # originalValue для всех контекстов
+   ```
+
+   **Формат файла:**
+
+   ```yaml
+   # ui-override-original-values.yaml
+   deployment:
+     namespace-01:
+       app-01:
+         param1: value1       # Значение до UI override
+         param3: null         # Новый параметр (не было в ES)
+         param4: value4       # Параметр удален через UI override
+       app-02:
+         param5: null
+   runtime:
+     namespace-01:
+       app-01:
+         runtime_param1: old_value1
+         runtime_param2: old_value2
+   pipeline:
+     pipeline_param1: old_value
+   ```
+
+**Colly изменения:**
+
+Colly предоставляет REST API для работы с UI override параметрами и Effective Set.
+
+1. **UI Parameters API** - управление UI override файлами:
+   - `GET /api/v1/environments/{environmentId}/ui-parameters` - получение UI override параметров
+   - `POST /api/v1/environments/{environmentId}/ui-parameters` - создание/обновление UI override параметров (коммит в Git)
+   - Детали: [colly-ui-parameters-api.md](./colly-ui-parameters-api.md)
+
+2. **Effective Set API** - получение ES с метаданными:
+   - Colly вычисляет для каждого параметра три атрибута:
+     - `originalValue` - значение до применения UI Override
+     - `state` - состояние параметра (uncommitted/committed/untouched)
+     - `value` - целевое значение параметра
+   - Детали: [colly-effective-set-api.md](./colly-effective-set-api.md)
+
+3. **Версионирование и конфликты**:
+   - Использование Git commit hash и HTTP ETag
+   - Оптимистичная блокировка (412 Precondition Failed)
+   - Обработка конфликтов при Git push (409 Conflict)
+   - Детали: [colly-versioning-conflicts.md](./colly-versioning-conflicts.md)
+
+**Особенности Option 4:**
+
+- Не использует ParamSet механизм
+- Не требует ассоциаций ParamSet в `env_definition.yml`
+- Упрощенная структура хранения (3 файла вместо множества ParamSet)
+- UI отправляет все параметры (включая закоммиченные) в `request.parameters`
+- Colly отображает `state`, `value`, `originalValue` для пользователя
+
 #### Сравнение Опций
 
-| Критерий | Option 1. Env Specific Parameters Override | Option 2. Env Instance Override | Option 3. Effective Set Override |
-| :-------- | :------------------------------------------ | :------------------------------- | :-------------------------------- |
-| **Время применения изменений** | Дольше - требуется `env_build` + `generate_effective_set` | Среднее - требуется `generate_effective_set` | Мгновенно - изменения применяются сразу |
-| **Сложность реализации** | Ниже | Выше | Выше |
-| **Риск рассинхронизации** | Низкий - оверрайды в одном месте (ParamSet) | Средний - оверрайды в двух местах (ParamSet + Application/Namespace) | Высокий - оверрайды в трех местах (ParamSet + Application/Namespace + ES) |
+| Критерий                                   | Option 1. Env Specific Parameters Override                | Option 2. Env Instance Override                                                      | Option 3. Effective Set Override                                                                | Option 4. UI Override Files                      |
+|:-------------------------------------------|:----------------------------------------------------------|:-------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------|:-------------------------------------------------|
+| **Время применения изменений**             | Дольше - требуется `env_build` + `generate_effective_set` | Среднее - требуется `generate_effective_set`                                         | Мгновенно - изменения применяются сразу                                                         | Среднее - требуется `generate_effective_set`     |
+| **Сложность реализации**                   | Средняя                                                   | Высокая                                                                              | Высокая                                                                                         | Низкая                                           |
+| **Риск рассинхронизации**                  | Низкий - оверрайды в одном месте (ParamSet)               | Средний - оверрайды в двух местах (ParamSet + Application/Namespace)                 | Высокий - оверрайды в трех местах (ParamSet + Application/Namespace + ES)                       | Низкий - оверрайды в одном месте (ui-overrides/) |
+| **Использование ParamSet**                 | Да                                                        | Да                                                                                   | Да                                                                                              | Нет                                              |
+| **Изменения в Inventory**                  | Да - ассоциация ParamSet                                  | Да - ассоциация ParamSet + мерж в Application/Namespace                              | Да - ассоциация ParamSet + мерж в Application/Namespace + мерж в ES                             | Нет                                              |
+| **Изменения в EnvGene**                    | Calculator + валидация в env_build                        | Calculator + валидация в env_build + мерж в объекты                                  | Calculator + валидация в env_build + мерж в объекты + мерж в ES                                 | Только Calculator                                |
+| **Tracking оригинальных значений**         | Нет                                                       | Нет                                                                                  | Нет                                                                                             | Да - через ui-override-original-values.yaml      |
+| **Поддержка uncommitted изменений в UI**   | Нет                                                       | Нет                                                                                  | Нет                                                                                             | Да - через request.parameters                    |
 
-### Colly
+## API документация
 
-#### ParamSet API
+Детальное описание API для работы с UI override (Option 4) см. в следующих документах:
 
-Детальное описание ParamSet API, объектной модели и endpoints см. в [colly-paramset-api.md](./colly-paramset-api.md).
+1. **[colly-ui-parameters-api.md](./colly-ui-parameters-api.md)** - UI Parameters API
+   - GET/POST endpoints для управления UI override файлами
+   - Структура запросов и ответов
+   - Примеры использования
+   - Логика обработки по уровням (Environment/Namespace/Application)
 
-Endpoints для работы с ParamSet (`/api/v1/paramset/`) в текущей версии реализовывать не планируется. Для работы с UI override параметрами используются convenience endpoints.
+2. **[colly-effective-set-api.md](./colly-effective-set-api.md)** - Effective Set API
+   - POST endpoint для получения Effective Set с метаданными
+   - Объектная модель (originalValue, state, value)
+   - Алгоритмы вычисления состояний параметров
+   - Примеры ответов
 
-#### Override UI API
-
-Colly предоставляет convenience endpoints для работы с UI override параметрами:
-
-- `GET /api/v1/environments/{environmentId}/ui-parameters` - получение UI override параметров
-- `POST /api/v1/environments/{environmentId}/ui-parameters` - создание/обновление UI override параметров
-
-Поддерживаются три уровня:
-
-- **Environment Level** - параметры применяются ко всем namespace в окружении
-- **Namespace Level** - параметры применяются ко всем приложениям в namespace
-- **Application Level** - параметры применяются к конкретному приложению
-
-Детальное описание API endpoints, алгоритмов, примеров запросов/ответов и обработки ошибок см. в [colly-paramset-api.md](./colly-paramset-api.md#api-endpoints).
-
-#### Effective Set API
-
-Детальное описание Effective Set API, объектной модели, вариантов реализации и алгоритмов формирования параметров см. в [colly-effective-set-api.md](./colly-effective-set-api.md).
-
-### Обработка конфликтов при параллельных изменениях через UI разными пользователями и одновременном изменении через UI и Git
-
-#### Версионирование через Git
-
-- `commitHash` ParamSet = Git commit hash последнего коммита файла
-- Используется [HTTP ETag](https://datatracker.ietf.org/doc/html/rfc7232#section-2.3) для оптимистичной блокировки
-- При каждом изменении создается новый коммит в Git
-
-#### Обработка конфликтов
-
-1. **Оптимистичная блокировка:**
-   - Клиент отправляет `If-Match` с ожидаемой версией
-   - Сервер проверяет совпадение версий
-   - При несовпадении возвращается `412 Precondition Failed`
-
-2. **Конфликт при Git push:**
-   - Если локальный коммит успешен, но push не удался (кто-то запушил раньше)
-   - Откат локального коммита
-   - Pull последних изменений
-   - Возврат `409 Conflict` с текущей версией
-
-3. **UI обработка конфликтов:**
-   - При получении `409`:
-     - Показать ошибку пользователю
-     - Отобразить текущее содержимое из ответа
-     - Предложить разрешить конфликт (merge или overwrite)
-
-#### GET `/environments/<envId>/ui-parameters`
-
-Процесс:
-
-1. Colly определяет путь к файлу ParamSet
-2. Colly проверяет, существует ли файл в Git
-3. Если файл не существует:
-   1. Возвращает 200 OK с пустыми параметрами `{}` для всех контекстов
-   2. Включает warning в логи
-4. Если файл существует:
-   1. Получает SHA-1 hash последнего коммита, изменившего файл
-   2. Читает и парсит содержимое файла
-   3. Возвращает ParamSet в теле ответа
-
-Успешный ответ:
-
-- Статус: 200 OK
-- Тело: JSON с содержимым ParamSet или пустыми параметрами `{}` если ParamSet не существует
-
-#### POST `/environments/<envId>/ui-parameters`
-
-Процесс:
-
-1. Colly валидирует входные данные (context, parameters, namespaceName, applicationName)
-2. Colly определяет путь к файлу ParamSet на основе уровня и контекста
-3. Если ParamSet уже существует:
-   1. Обновляет параметры (merge)
-   2. Коммитит изменения в Git
-   3. Получает новый commit hash
-   4. Возвращает успех
-4. Если ParamSet не существует:
-   1. Создает файл ParamSet в Git
-   2. Добавляет ассоциацию в `env_definition.yml`
-   3. Коммитит изменения в Git
-   4. Получает новый commit hash
-   5. Возвращает успех
-
-Запрос:
-
-- Тело: JSON с данными для создания ParamSet
-
-Успешный ответ (ParamSet создан):
-
-- Статус: 201 Created
-- Тело: полный запрос (`commitMessage`, `commitUser`, `commitUserEmail`, `parameters`)
-
-Успешный ответ (ParamSet обновлен):
-
-- Статус: 200 OK
-- Тело: полный запрос (`commitMessage`, `commitUser`, `commitUserEmail`, `parameters`)
-
-Ответ при ошибке валидации:
-
-- Статус: 400 Bad Request или 422 Unprocessable Entity
-- Тело: описание ошибок валидации
-
-#### Детали обработки конфликтов
-
-**Для POST запросов:**
-
-- POST поддерживает создание и обновление (upsert)
-- Если ParamSet существует, параметры мержатся
-
-**Конфликт при Git push:**
-
-- Если локальный коммит успешен, но push не удался (кто-то запушил раньше)
-- Откат локального коммита
-- Pull последних изменений
-- Возврат `409 Conflict` с текущей версией
-
-**UI обработка конфликтов:**
-
-- При получении `409`:
-  - Показать ошибку пользователю
-  - Отобразить текущее содержимое из ответа
-  - Предложить разрешить конфликт (merge или overwrite)
-
-## План реализации
-
-1. UI override парамсеты идентифицируются по контрактному имени файла (паттерн `*-ui-override.yaml`)
-   - Поддержка в Colly API для работы с UI override парамсетами через контрактный нейминг
-   - Поддержка в EnvGene:
-     - Валидация в `env_build`: проверка, что UI override парамсеты (по паттерну имени файла) в конце списка
+3. **[colly-applications-api.md](./colly-applications-api.md)** - Applications API
+   - GET endpoint для получения списка приложений в namespace
+   - Используется UI для отображения выпадающего списка приложений
