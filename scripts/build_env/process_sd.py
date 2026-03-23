@@ -296,8 +296,9 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
 
 
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
-    if 'SNAPSHOT' in version:
-        raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
+    # if 'SNAPSHOT' in version:
+    #     raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
+    #removed blocker
     # TODO: check if job would fail without plugins
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
