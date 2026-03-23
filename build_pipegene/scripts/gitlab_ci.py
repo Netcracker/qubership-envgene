@@ -205,15 +205,20 @@ def build_pipeline(params: dict) -> None:
             'tmp/'
         )
 
-        if not should_do_checkout(job, jobs_map):
+        if not should_do_checkout(job):
             job.add_variables(GIT_STRATEGY="empty")
 
     sorted_pipeline.write_yaml()
 
 def is_trigger_job(job):
+    logger.info(f"inside trigger_job method {job.name} Stage: {job.stage}, Needs: {job.needs}")
+    if hasattr(job, "trigger"):
+        logger.info(f"inside trigger_job method {job.name}")
+        if job.trigger is not None:
+            logger.info(f"inside trigger_job none method {job.name}")
     return hasattr(job, "trigger") and job.trigger is not None
 
-def should_do_checkout(job, jobs_map):
+def should_do_checkout(job):
     logger.info(f"inside should_do_checkout method {job.name} Stage: {job.stage}, Needs: {job.needs}")
     is_first_job = job.needs is None or len(job.needs) == 0
     if  is_first_job:
