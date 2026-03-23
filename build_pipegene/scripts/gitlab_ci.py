@@ -214,7 +214,7 @@ def is_trigger_job(job):
     return hasattr(job, "trigger") and job.trigger is not None
 
 def should_do_checkout(job, jobs_map):
-    logger.info(f"inside should_do_checkout {job.name} Stage: {job.stage}, Needs: {job.needs}")
+    logger.info(f"inside should_do_checkout method {job.name} Stage: {job.stage}, Needs: {job.needs}")
     is_first_job = job.needs is None or len(job.needs) == 0
     if  is_first_job:
         logger.info(f"first job is {job.name}")
