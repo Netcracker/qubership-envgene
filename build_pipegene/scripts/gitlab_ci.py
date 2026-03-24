@@ -205,33 +205,23 @@ def build_pipeline(params: dict) -> None:
             'tmp/'
         )
 
-        if not should_do_checkout(job):
+        if not do_checkout(job):
             job.add_variables(GIT_STRATEGY="empty")
 
     sorted_pipeline.write_yaml()
 
 def is_trigger_job(job):
-    logger.info(f"inside trigger_job method {job.name} Stage: {job.stage}, Needs: {job.needs}")
-    if hasattr(job, "trigger"):
-        logger.info(f"inside trigger_job method {job.name}")
-        if job.trigger is not None:
-            logger.info(f"inside trigger_job none method {job.name}")
-    if isinstance(job, TriggerJob):
-        logger.info(f"inside isinstance trigger_job  method {job.name}")
-        return True
-    return hasattr(job, "trigger") and job.trigger is not None
+    return isinstance(job, TriggerJob)
 
-def should_do_checkout(job):
-    logger.info(f"inside should_do_checkout method {job.name} Stage: {job.stage}, Needs: {job.needs}")
+
+def do_checkout(job):
     is_first_job = job.needs is None or len(job.needs) == 0
-    if  is_first_job:
-        logger.info(f"first job is {job.name}")
+    if is_first_job or any(is_trigger_job(need) for need in job.needs):
+        logger.info(
+            f"Enabling checkout for {job.name} "
+            f"Stage: {job.stage}, Needs: {job.needs}"
+        )
         return True
-
-    for need in job.needs:
-        if is_trigger_job(need):
-            logger.info(f"trigger job is {job.name} Stage: {job.stage}, Needs: {job.needs}")
-            return True
 
     return False
 	
