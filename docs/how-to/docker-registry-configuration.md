@@ -1,7 +1,8 @@
-# Using Different Docker Registries in Envgene.yml
+# Using Docker Registries in EnvGene GitHub Workflow
 
-- [Using Different Docker Registries in Envgene.yml](#using-different-docker-registries-in-envgeneyml)
+- [Using Docker Registries in EnvGene GitHub Workflow](#using-docker-registries-in-envgene-github-workflow)
   - [Description](#description)
+  - [Supported Registries](#supported-registries)
   - [Prerequisites](#prerequisites)
   - [How the Workflow Uses the Registry](#how-the-workflow-uses-the-registry)
   - [Option 1: GitHub Container Registry (GHCR)](#option-1-github-container-registry-ghcr)
@@ -10,7 +11,7 @@
   - [Option 2: Google Artifact Registry (GAR)](#option-2-google-artifact-registry-gar)
     - [GAR Prerequisites](#gar-prerequisites)
     - [Step 1: Configure GitHub Repository Variables](#step-1-configure-github-repository-variables)
-    - [Step 2: Add GCP_SA_KEY Secret](#step-2-add-gcp_sa_key-secret)
+    - [Step 2: Add GCP\_SA\_KEY Secret](#step-2-add-gcp_sa_key-secret)
     - [GAR Authentication Flow](#gar-authentication-flow)
   - [Parameter Reference](#parameter-reference)
   - [Switching Between Registries](#switching-between-registries)
@@ -18,11 +19,21 @@
 
 ## Description
 
-This guide explains how to configure the EnvGene GitHub workflow (`Envgene.yml`) to pull Docker images from different registries. The workflow uses three EnvGene images: `qubership-envgene`, `qubership-pipegene`, and `qubership-effective-set-generator`. By default, these images are pulled from GitHub Container Registry (GHCR). You can switch to Google Artifact Registry (GAR) or keep using GHCR by configuring the appropriate variables and secrets.
+This guide explains how to configure the EnvGene GitHub workflow to pull Docker images from different registries. The workflow uses three EnvGene images: `qubership-envgene`, `qubership-pipegene`, and `qubership-effective-set-generator`. By default, these images are pulled from GitHub Container Registry (GHCR). You can switch to Google Artifact Registry (GAR) by configuring the appropriate variables and secrets.
+
+## Supported Registries
+
+The EnvGene GitHub workflow currently supports two Docker registries:
+
+- **GitHub Container Registry (GHCR)** - Default option, no additional configuration required
+- **Google Artifact Registry (GAR)** - Requires GCP service account configuration
+
+> [!NOTE]
+> For other registry types (AWS ECR, Azure ACR, custom registries), custom authentication steps need to be added to the workflow.
 
 ## Prerequisites
 
-- Instance repository with the EnvGene GitHub workflow installed (`.github/workflows/Envgene.yml`)
+- Instance repository with the EnvGene GitHub workflow installed
 - Access to **Settings → Secrets and variables → Actions** in your GitHub repository
 
 ## How the Workflow Uses the Registry
@@ -44,9 +55,9 @@ GHCR is the default registry. No additional configuration is required if your im
 
 ### GHCR Configuration
 
-| Where to configure | Parameter           | Value                 |
-|--------------------|---------------------|-----------------------|
-| **Settings → Variables** | `DOCKER_REGISTRY` | `ghcr.io/netcracker`  |
+| Where to configure       | Parameter         | Value                |
+|--------------------------|-------------------|----------------------|
+| **Settings → Variables** | `DOCKER_REGISTRY` | `ghcr.io/netcracker` |
 
 If you omit `DOCKER_REGISTRY`, the workflow uses `ghcr.io/netcracker` by default.
 
@@ -70,10 +81,10 @@ To use Google Artifact Registry, you must configure the registry URL, set the cl
 3. Open the **Variables** tab.
 4. Add or edit the following variables:
 
-| Variable                        | Value                                              |
-|---------------------------------|----------------------------------------------------|
-| `DOCKER_REGISTRY`                | `REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME`       |
-| `DOCKER_CLOUD_REGISTRY_PROVIDER` | `GCP`                                              |
+| Variable                         | Value                                        |
+|----------------------------------|----------------------------------------------|
+| `DOCKER_REGISTRY`                | `REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME` |
+| `DOCKER_CLOUD_REGISTRY_PROVIDER` | `GCP`                                        |
 
 **Example for `DOCKER_REGISTRY`:**
 
@@ -114,11 +125,14 @@ The step extracts the registry host (e.g. `europe-west1-docker.pkg.dev`) from `D
 
 ## Parameter Reference
 
-| Parameter                        | Location   | Required for GHCR | Required for GAR |
-|---------------------------------|------------|-------------------|------------------|
-| `DOCKER_REGISTRY`                | Variables  | No (default used) | Yes              |
-| `DOCKER_CLOUD_REGISTRY_PROVIDER` | Variables  | No                | Yes - set to `GCP` |
-| `GCP_SA_KEY`                     | Secrets    | No                | Yes              |
+| Parameter                        | Location  | Required for GHCR     | Required for GAR       |
+|----------------------------------|-----------|-----------------------|------------------------|
+| `DOCKER_REGISTRY`                | Variables | No (uses default)     | Yes                    |
+| `DOCKER_CLOUD_REGISTRY_PROVIDER` | Variables | No                    | Yes - set to `GCP`     |
+| `GCP_SA_KEY`                     | Secrets   | No                    | Yes                    |
+
+> [!NOTE]
+> For GHCR: If you omit `DOCKER_REGISTRY`, the workflow uses the default value `ghcr.io/netcracker`. Set `DOCKER_REGISTRY` only if your images are in a different GHCR organization or path.
 
 ## Switching Between Registries
 

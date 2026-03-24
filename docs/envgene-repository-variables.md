@@ -170,11 +170,13 @@ CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallel
 
 ### `DOCKER_CLOUD_REGISTRY_PROVIDER`
 
-**Description**: Cloud provider for Docker registry authentication. When set to `GCP`, the GitHub workflow runs an authentication step before pulling images from Google Artifact Registry (GAR). Used together with [`DOCKER_REGISTRY`](#docker_registry-in-instance-repository) and [`GCP_SA_KEY`](#gcp_sa_key).
+**Description**: Cloud provider for Docker registry authentication when pulling EnvGene Docker images. Currently, the only supported value is `GCP`. When set to `GCP`, the GitHub workflow authenticates to Google Artifact Registry (GAR) before pulling EnvGene images. Used together with [`DOCKER_REGISTRY`](#docker_registry-in-instance-repository) and [`GCP_SA_KEY`](#gcp_sa_key).
 
 **Default Value**: None
 
-**Mandatory**: No. Required only when using GAR instead of GHCR
+**Mandatory**: No
+
+**Allowed Values**: `GCP` (only)
 
 **Example**: `GCP`
 
@@ -182,11 +184,11 @@ CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallel
 
 ### `GCP_SA_KEY`
 
-**Description**: Full JSON content of the GCP service account key. Used for Docker registry authentication when [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider) is set to `GCP`. The workflow passes this to `docker login -u _json_key --password-stdin` to authenticate to Google Artifact Registry.
+**Description**: Full JSON content of the GCP service account key. Used for authenticating to Google Artifact Registry (GAR) when pulling EnvGene Docker images. Required only when [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider) is set to `GCP`.
 
 **Default Value**: None
 
-**Mandatory**: No. Required only when using GAR
+**Mandatory**: No (required only for GAR authentication)
 
 **Example**: `{"type":"service_account","project_id":"...",...}`
 
