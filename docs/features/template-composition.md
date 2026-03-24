@@ -4,6 +4,7 @@
   - [Problem Statement](#problem-statement)
   - [Proposed Approach](#proposed-approach)
     - [Key Capabilities](#key-capabilities)
+    - [Detailed Composition Algorithm](#detailed-composition-algorithm)
     - [Use Cases](#use-cases)
       - [Case 1](#case-1)
       - [Case 2](#case-2)
@@ -77,6 +78,84 @@ This diagram shows parent and child templates with their components. The color o
    - Parent templates are regular EnvGene templates needing no special configuration
    - Supports multi-level composition chains
 
+### Detailed Composition Algorithm
+
+The sequence below describes how composition is executed during template build.
+
+1. **Discover descriptors**
+
+   Read all `*.yml|*.yaml` files from `templates/env_templates` (top-level only, non-recursive).  
+   Each discovered file is processed as an independent child Template Descriptor.
+
+2. **Check whether composition is needed**
+
+   If a descriptor does not contain `parent-templates`, composition is skipped for that descriptor.
+
+3. **Validate parent references**
+
+   - `parent-templates` cannot be empty when declared.
+   - If multiple parents are declared, each inheriting namespace must explicitly set `parent`.
+
+4. **Resolve parent artifacts**
+
+   - For each `app:version` in `parent-templates`, find matching Artifact Definition in `configuration/artifact_definitions`.
+   - Download and unpack the parent template artifact into temporary storage.
+
+5. **Prepare resource files (`templates/*`)**
+
+   Copy resources in this order:
+
+   - `templates/*` from parents referenced by `namespaces[].parent`
+   - `templates/*` from `tenant.parent` (if used)
+   - `templates/*` from `cloud.parent` (if used)
+   - child `templates/*` (always last)
+
+   > [!IMPORTANT]
+   > The `templates/*` step is file-based and recursive. It includes all files and directories under `templates/`, including:
+   >
+   > - `env_templates`
+   > - `resource_profiles`
+   > - `parameters`
+   > - `appdefs`
+   > - `regdefs`
+   >
+   > If the same relative path exists in multiple sources, the later copy overwrites the earlier one.
+
+6. **Build resulting Template Descriptor**
+
+   - Create the resulting descriptor as a copy of the child descriptor, then remove `parent-templates` from that resulting descriptor.
+   - If `tenant: { parent: <parent-key> }` is used, replace child `tenant` with the `tenant` value from the parent template descriptor referenced by `<parent-key>`.
+   - If `cloud: { parent: <parent-key> }` is used, replace child `cloud` with the `cloud` value from the parent template descriptor referenced by `<parent-key>`.
+   - If top-level `tenant`, `cloud` or `composite_structure` are missing in child, they are inherited from the first matching parent in namespace iteration order (`first parent wins`) and are not overwritten later.
+
+7. **Process namespaces**
+
+   - For each namespace with `parent`, find the parent namespace by exact `name` and use it as the base namespace entry in the resulting descriptor.
+   - Then, if the child namespace defines `template_path`, overwrite the inherited `template_path` with the child value.
+
+8. **Apply `overrides-parent` (Cloud and Namespace only)**
+
+   - Parameter maps (`deployParameters`, `e2eParameters`, `technicalConfigurationParameters`) are merged into `template_override`.
+   - Parameter set lists (`deployParameterSets`, `e2eParameterSets`, `technicalConfigurationParameterSets`) are appended into `template_override`.
+   - `profile` override has two modes:
+     - default mode (`merge-with-parent` is false or not set): use the override profile as the resulting profile reference;
+     - merge mode (`merge-with-parent: true`): merge override profile content into the selected parent profile and use the merged result.
+   - `tenant` does not support `overrides-parent` in template composition (inherit-only behavior).
+
+9. **Persist output**
+
+   - Save composed descriptor to output `env_templates`.
+   - Save generated/merged resource profiles to output `resource_profiles`.
+
+10. **Resulting artifact**
+
+   The output is a regular EnvGene template artifact and does not require special runtime handling.
+
+> [!IMPORTANT]
+> File precedence is copy-order based. If the same file path exists in multiple sources, the last copied file wins.
+> Effective precedence is:
+> **namespace parents** - **tenant parent** - **cloud parent** - **child template files**.
+
 ### Use Cases
 
 This feature can be used in scenarios where EnvGene manages configuration parameters for complex solutions consisting of multiple applications or application groups, with parameters developed and tested by different teams.
@@ -109,10 +188,10 @@ parent-templates:
   default-bss: bss-product-template:2.0.0
   basic-template: basic-product-template:10.1.3
 # Optional
-# If not set, the most recent Composite Structure found in the parent templates referenced by the `namespaces` attribute will be used
+# If not set, inherit from the first matching parent encountered during namespace processing (`first parent wins`)
 composite_structure: "{{ templates_dir }}/env_templates/composite/composite_structure.yml.j2"
 # Optional
-# If not set, the most recent Tenant found in the parent templates referenced by the `namespaces` attribute will be used
+# If not set, inherit from the first matching parent encountered during namespace processing (`first parent wins`)
 # It can be string or dict, if string is provide that means that no composition is needed and the exact template will be used
 # example of string value
 tenant: "{{ templates_dir }}/env_templates/default/tenant.yml.j2"
@@ -120,7 +199,7 @@ tenant: "{{ templates_dir }}/env_templates/default/tenant.yml.j2"
 tenant:
   parent: basic-template
 # Optional
-# If not set, the most recent Cloud found in the parent templates referenced by the `namespaces` attribute will be used
+# If not set, inherit from the first matching parent encountered during namespace processing (`first parent wins`)
 # It can be string or dict, if string is provide that means that no composition is needed and the exact template will be used
 # example of string value
 cloud: "{{ templates_dir }}/env_templates/default/cloud.yml.j2"
