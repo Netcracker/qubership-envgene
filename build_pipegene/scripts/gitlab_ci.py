@@ -81,9 +81,9 @@ def build_pipeline(params: dict) -> None:
             environment_name = get_environment_name_from_full_name(full_env_name)
 
         job_sequence = [
+            "bg_manage_job",
             "trigger_passport_job",
             "get_passport_job",
-            "bg_manage_job",
             "env_inventory_generation_job",
             "credential_rotation_job",
             "appregdef_render_job",
@@ -93,6 +93,11 @@ def build_pipeline(params: dict) -> None:
             "git_commit_job"
         ]
 
+        if not params.get('BG_MANAGE', None):
+            logger.info(f'Preparing of bg_manage job for environment {full_env_name} is skipped.')
+        else:
+            jobs_map['bg_manage_job'] = prepare_bg_manage_job(pipeline, full_env_name, tags)
+
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
             jobs_map["trigger_passport_job"] = prepare_trigger_passport_job(pipeline, full_env_name)
@@ -101,11 +106,6 @@ def build_pipeline(params: dict) -> None:
             get_passport_jobs[cluster_name] = True
         else:
             logger.info(f"Generation of cloud passport for environment '{full_env_name}' is skipped")
-
-        if not params.get('BG_MANAGE', None):
-            logger.info(f'Preparing of bg_manage job for environment {full_env_name} is skipped.')
-        else:
-            jobs_map['bg_manage_job'] = prepare_bg_manage_job(pipeline, full_env_name, tags)
 
         if is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params):
             jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, full_env_name,
