@@ -5,7 +5,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 1: Build
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:feature_add_all_deps AS build
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
 
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
@@ -16,7 +16,6 @@ COPY python /python
 COPY build_envgene/scripts /module/scripts
 COPY scripts/bg_manage /scripts/bg_manage
 COPY creds_rotation/scripts /module/creds_rotation_scripts
-COPY build_* create_* produce_* sort* /build_env/
 COPY scripts/build_env /build_env/scripts/build_env/
 COPY scripts/build_template /build_env/scripts/build_template/
 COPY scripts/cloud_passport/ /cloud_passport/scripts/
@@ -32,7 +31,6 @@ RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     pip install --no-cache-dir --no-deps \
     -r /build/creds_rotation_requirements.txt
 
-# Cleanup to reduce image size
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyo' -delete && \
@@ -47,7 +45,7 @@ RUN chmod 754 /module/scripts/* && \
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 2: Runtime
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:feature_add_all_deps AS runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
 
 COPY --from=build /module /module
 COPY --from=build /scripts/bg_manage /scripts/bg_manage
@@ -56,12 +54,10 @@ COPY --from=build /cloud_passport /cloud_passport
 COPY --from=build /python /python
 COPY --from=build /etc/pip.conf /etc/pip.conf
 
-# Final cleanup
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     /module/venv/bin/pip cache purge
 
-# Ensure ci user can read all copied files (COPY creates files as root)
 RUN chown -R ci:ci /module /build_env /cloud_passport /scripts
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
