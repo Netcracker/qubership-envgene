@@ -103,6 +103,13 @@ def handle_template_override(render_dir):
 
 def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, output_dir, work_dir):
     # defining folders that will be used during generation
+    logger.info(f"env_name is {env_name}")
+    logger.info(f"cluster_name is {cluster_name}")
+    logger.info(f"templates_dirs is {templates_dirs}")
+    logger.info(f"source_env_dir is {source_env_dir}")
+    logger.info(f"all_instances_dir is {all_instances_dir}")
+    logger.info(f"output_dir is {output_dir}")
+    logger.info(f"work_dir is {work_dir}")
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     render_dir = f"{base_dir}/tmp/render"
     render_parameters_dir = f"{base_dir}/tmp/parameters_templates"
