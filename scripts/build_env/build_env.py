@@ -258,6 +258,7 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
                     "current_env": current_env
                 }
                 paramSetValues = openParamset(paramSetFile, template_context)
+                logger.info(f"paramSetValues for DEBUG is {paramSetValues}")
             except Exception as e:
                 logger.warning(f"Failed to render template for paramset {pset}: {str(e)}")
                 # Fall back to direct YAML loading if template rendering fails
@@ -269,6 +270,7 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
                 paramSetParameters = paramSetValues["parameters"]
             else:
                 paramSetParameters = {}
+            logger.info(f"paramSetParameters for DEBUG is {paramSetParameters}")
             if "applications" in paramSetValues:
                 paramSetAppParams = list(paramSetValues["applications"])
             else:
@@ -279,6 +281,7 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
             for k in paramSetParameters:
                 # get value with potential merge of dicts
                 val = get_merged_param_value(k, params, paramSetParameters)
+                logger.info(f"inside paramSetParameters for DEBUG is {k}====={val}")
                 store_value_to_yaml(params, k, val, paramsetDefinitionComment)
                 # fill env specific parameters map for env specific paramset
                 if isEnvSpecificParamset:
@@ -294,6 +297,7 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
 def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, applicationsParamSets, paramsetName,
                                       parametersTag, isEnvSpecificParamset, env_specific_params_map, header_text=""):
     application_schema = "schemas/application.schema.json"
+    logger.info(f"inside convertParameterSetsToApplicationfor DEBUG {applicationsParamSets}")
     for appParams in applicationsParamSets:
         appName = appParams["appName"] if "appName" in appParams else appParams["name"]
         applicationParametersFile = os.path.dirname(templatePath) + "/Applications/" + appName + ".yml"
@@ -301,6 +305,7 @@ def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, a
         for j in appParams["parameters"]:
             # get value with potential merge of dicts
             val = get_merged_param_value(j, appDefinition[parametersTag], appParams["parameters"])
+            logger.info(f"inside appParams for DEBUG is {j}====={val}")
             store_value_to_yaml(appDefinition[parametersTag], j, val, paramsetDefinitionComment)
             if isEnvSpecificParamset:
                 storeToEnvSpecificParametersMap(env_specific_params_map, appName, parametersTag, j, val, paramsetName)
