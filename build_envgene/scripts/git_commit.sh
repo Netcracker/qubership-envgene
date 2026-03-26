@@ -1,10 +1,8 @@
 #!/bin/bash
 set -e
-job=$1
+
 retries=0
 exit_code=0
-
-pattern="^[A-Z]+-[0-9]+$"
 
 if [ -n "${GITHUB_ACTIONS}" ]; then
       # Logic for GitHub
@@ -28,6 +26,10 @@ elif [ -n "${GITLAB_CI}" ]; then
       TOKEN="${GITLAB_TOKEN}"
 fi
 
+if [ -z "${TOKEN}" ]; then
+      echo "No auth token was found. Please check!"
+      exit 1
+fi
 
 echo "Platform: ${PLATFORM}"
 echo "Server Protocol: ${SERVER_PROTOCOL}"
@@ -36,11 +38,6 @@ echo "Project Path: ${PROJECT_PATH}"
 echo "Branch/Ref Name: ${REF_NAME}"
 echo "User Email: ${USER_EMAIL}"
 echo "User Name: ${USER_NAME}"
-
-if [ -z "${TOKEN}" ]; then
-      echo "No auth token was found. Please check!"
-      exit 1
-fi
 
 echo "ENV_NAME=${ENV_NAME}"
 echo "CLUSTER_NAME=${CLUSTER_NAME}"
@@ -52,7 +49,6 @@ echo "DEPLOYMENT_SESSION_ID=${DEPLOY_SESSION_ID}"
 
 export ticket_id=${DEPLOYMENT_TICKET_ID}
 
-# commit message
 if [ -z "${COMMIT_MESSAGE}" ]; then
       message="${ticket_id} [ci_skip] Update \"${CLUSTER_NAME}/${ENVIRONMENT_NAME}\" environment"
 else
@@ -122,7 +118,7 @@ if [ -d environments ]; then
     done
 fi
 
-#Copying cred files modified as part of cred rotation job.
+# Copying cred files modified as part of cred rotation job.
 CREDS_FILE="environments/credfilestoupdate.yml"
 if [ -f "$CREDS_FILE" ]; then
   echo "Processing $CREDS_FILE for copying filtered creds..."
@@ -175,7 +171,8 @@ git remote add origin "${REMOTE_URL}"
 
 
 echo "Pulling contents from GIT (branch: ${REF_NAME})"
-git pull origin "${REF_NAME}"
+git fetch --depth=1 origin "${REF_NAME}"
+git checkout -b "${REF_NAME}" FETCH_HEAD
 
 # moving back environments folder and committing
 
@@ -302,7 +299,8 @@ if [ "$exit_code" -ne 0 ]; then
           sleep $sleep_time
 
           echo "Pulling latest changes from origin/${REF_NAME}..."
-          git pull origin "${REF_NAME}"
+          git fetch --depth=1 origin "${REF_NAME}"
+          git checkout -b "${REF_NAME}" FETCH_HEAD
           pull_exit_code=$?
 
           if [ "$pull_exit_code" -ne 0 ]; then
