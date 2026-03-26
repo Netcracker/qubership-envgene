@@ -5,6 +5,13 @@ from env_template.process_env_template import process_env_template
 from render_config_env import EnvGenerator
 
 if __name__ == '__main__':
+    try:
+                response = requests.get(
+                    "https://ops-portal-aws.devopstoolset.netcracker.com/nexus",
+                    timeout=10
+                )
+                response.raise_for_status()
+                print("Response-OK")
     template_version = process_env_template()
 
     cluster_name = getenv_with_error("CLUSTER_NAME")
