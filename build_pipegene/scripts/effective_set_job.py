@@ -82,6 +82,8 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         cmdb_cli_cmd_call.extend(["$extra_args"])
     if deployment_id:
         cmdb_cli_cmd_call.extend([f"--extra_params=DEPLOYMENT_SESSION_ID={deployment_id}"])
+    if params.get("ES_TRACE_ENABLED").lower() == "true":
+        cmdb_cli_cmd_call.extend(["--enable-traceability=true"])
 
     if custom_params:
         logger.info(f"custom_params : {custom_params}")

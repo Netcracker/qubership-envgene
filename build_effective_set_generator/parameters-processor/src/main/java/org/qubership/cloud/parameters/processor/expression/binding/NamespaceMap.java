@@ -90,7 +90,7 @@ public class NamespaceMap extends DynamicMap {
                 String customHost = StringUtils.isNotBlank(privateDNS) ? privateDNS : StringUtils.isNotBlank(publicDNS) ? publicDNS : cloudHostname;
 
                 // Deprecated deployer parameters
-                map.putIfAbsent(GATEWAY_URL, "http://internal-gateway-service:8080");
+                map.putIfAbsent(GATEWAY_URL,  new Parameter("http://internal-gateway-service:8080", ParametersConstants.ENVGENE_DEFAULT, false));
                 map.putIfAbsent(STATIC_CACHE_SERVICE_ROUTE_HOST, String.format("static-cache-service-%s.%s", originalNamespace, cloudHostname));
 
                 CredentialUtils credentialUtils = Injector.getInstance().getDi().get(CredentialUtils.class);
@@ -104,14 +104,14 @@ public class NamespaceMap extends DynamicMap {
 
                     //Primary Namespace & Secondary Namespace
                     if (origin.getName().equalsIgnoreCase(originalNamespace)) {
-                        map.put(ORIGIN_NAMESPACE, originalNamespace);
+                        map.put(ORIGIN_NAMESPACE,  new Parameter(originalNamespace, ParametersConstants.ENVGENE_DEFAULT, false));
                         map.put(PEER_NAMESPACE, peer.getName());
                         map.put(CONTROLLER_NAMESPACE, controller.getName());
                     } else if (controller.getName().equalsIgnoreCase(originalNamespace)) { //Controller Namespace
                         if (origin != null) {
-                            map.put(ORIGIN_NAMESPACE, origin.getName());
+                            map.put(ORIGIN_NAMESPACE,  new Parameter(origin.getName(), ParametersConstants.ENVGENE_DEFAULT, false));
                         } else {
-                            map.put(ORIGIN_NAMESPACE, originalNamespace);
+                            map.put(ORIGIN_NAMESPACE, new Parameter(originalNamespace, ParametersConstants.ENVGENE_DEFAULT, false));
                         }
                         map.put(PEER_NAMESPACE, peer.getName());
                         map.put(CONTROLLER_NAMESPACE, controller.getName());
@@ -146,7 +146,7 @@ public class NamespaceMap extends DynamicMap {
 //                                rootUrl, tenant, cloud));
                     }
                 } else {
-                    map.put(ORIGIN_NAMESPACE, originalNamespace);
+                    map.put(ORIGIN_NAMESPACE,  new Parameter(originalNamespace, ParametersConstants.ENVGENE_DEFAULT, false));
                 }
 
                 if (compositeStructureDTO != null) {
@@ -159,7 +159,7 @@ public class NamespaceMap extends DynamicMap {
                 }
 
                 // Deprecated deployer parameters
-                map.putIfAbsent(GATEWAY_URL, "http://internal-gateway-service:8080");
+                map.putIfAbsent(GATEWAY_URL,  new Parameter("http://internal-gateway-service:8080", ParametersConstants.ENVGENE_DEFAULT, false));
                 map.putIfAbsent(STATIC_CACHE_SERVICE_ROUTE_HOST, String.format("static-cache-service-%s.%s", originalNamespace, cloudHostname));
 
                 String gatewayNamespace = "";
@@ -192,7 +192,7 @@ public class NamespaceMap extends DynamicMap {
                 addGatewayIdentityUrls(config.getCustomParameters(), map, false, protocol.toLowerCase(), customHost, gatewayNamespace, idpUrlNamespace);
                 addGatewayIdentityUrls(config.getCustomParameters(), map, true, protocol.toLowerCase(), cloudHostname, gatewayNamespace, idpUrlNamespace);
 //                map.putIfAbsent(SSL_SECRET, "defaultsslcertificate"); setting this value after being validated finally
-                map.putIfAbsent(BUILD_TAG_NEW, "keycloak-database");
+                map.putIfAbsent(BUILD_TAG_NEW, new Parameter("keycloak-database", ParametersConstants.ENVGENE_DEFAULT, false));
                 if (binding.getDeployerInputs() != null) {
                     map.put("CLIENT_PREFIX", originalNamespace);
                     if (binding.getDeployerInputs().getSecretId() != null) {
