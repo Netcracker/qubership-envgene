@@ -7,7 +7,7 @@
     - [VALS](#vals)
     - [ESO](#eso)
     - [Detailed description of objects](#detailed-description-of-objects)
-      - [`credRef` Credential Macro in Environment Template](#credref-credential-macro-in-environment-template)
+      - [Credential Reference](#credential-reference)
       - [Credential Template](#credential-template)
       - [Credential](#credential)
       - [Secret Store](#secret-store)
@@ -22,10 +22,10 @@
         - [Azure Key Vault](#azure-key-vault)
         - [AWS Secrets Manager](#aws-secrets-manager)
         - [GCP Secret Manager](#gcp-secret-manager)
-      - [Handling the `property` field on `credRef` Credential Macros](#handling-the-property-field-on-credref-credential-macros)
+      - [Handling the `property` field on Credential References](#handling-the-property-field-on-credential-references)
         - [Parameters with VALS reference in deployment context](#parameters-with-vals-reference-in-deployment-context)
-        - [Deployment context `externalSecrets` for ESO](#deployment-context-externalsecrets-for-eso)
-        - [External credential Context `credentials`](#external-credential-context-credentials)
+        - [Deployment context `externalSecrets` for ESO TO CHANGE](#deployment-context-externalsecrets-for-eso-to-change)
+        - [External credential Context `credentials` TO CHANGE](#external-credential-context-credentials-to-change)
       - [Shared E2E inputs (Environment Template)](#shared-e2e-inputs-environment-template)
       - [Group 1: Deployment context](#group-1-deployment-context)
         - [Case D1: VALS and Vault](#case-d1-vals-and-vault)
@@ -54,24 +54,11 @@ In the current implementation, EnvGene only supports Credentials that are stored
 
 It is necessary to extend EnvGene to support management of Credentials that reside in external secret stores.
 
-Success criteria:
-
-- EnvGene is able to use external secret stores for storing and retrieving its Credentials (for example, Credentials for accessing a registry when loading templates).
-- Integration with external Credentials is implemented in a way that does not break existing handling of local Credentials.
-- In the Effective Set, links to external Credentials are properly generated, sufficient for:
-  - automatic generation of ExternalSecret CR;
-  - enabling integration with the Argo Vault Plugin.
-- Support for the following secret stores is implemented:
-  - Vault
-  - AWS Secrets Manager
-  - Azure Key Vault
-
 ## Assumption
 
 1. When migrating to an external secret store, it is necessary to update the EnvGene Environment template
 2. Within a given `secretStore`, the remote secret is addressed by `normalizedSecretName`, derived from `remoteRefPath`, `credId`, and store type (see [Normalization to normalizedSecretName](#normalization-to-normalizedsecretname))
 3. Credential uniqueness within EnvGene repository is determined by `credId`
-4. Secret store type is a global configuration at the repository level in EnvGene
 
 ## Proposed Approach
 
@@ -86,19 +73,19 @@ SECRET_MACRO_HANDLER: enum [vals, eso]
 ```
 
 > [!IMPORTANT]
-> The deployment context content therefore differs from one application to another. In other words, VALS vs ESO is chosen at the **application** level (via the deployment descriptor), not on the [Credential](#credential) or any other EnvGene object.
+> The deployment context content therefore differs from one application to another. In other words, VALS vs ESO is chosen at the **application** level (via the Deployment Descriptor), not on the [Credential](#credential) or any other EnvGene object.
 
 ### VALS
 
 In the EnvGene template, the user:
 
-1. Defines sensitive parameters via `credRef` [Credential Macro](#credref-credential-macro-in-environment-template) in Cloud, Namespace, and ParamSet templates
-2. Creates a [Credential Template](#credential-template) referenced by the `credRef` Credential Macro
+1. Defines sensitive parameters via [Credential Reference](#credential-reference) in Cloud, Namespace templates or ParamSet
+2. Creates a [Credential Template](#credential-template) referenced by the Credential Reference
 
 In the instance repository:
 
-1. The same sensitive parameters with the `credRef` [Credential Macro](#credref-credential-macro-in-environment-template) value, which end up on rendered Cloud, Namespace, and Application
-2. Credential rendered from the [Credential Template](#credential-template)
+1. The same sensitive parameters with the [Credential Reference](#credential-reference) value, which end up on rendered Cloud, Namespace or Application
+2. [Credential](#credential) rendered from the [Credential Template](#credential-template)
 3. [Secret Store](#secret-store) object
 
 Items 1 and 2 are generated during environment instance generation, 3 is created manually by the user.
@@ -109,8 +96,8 @@ When generating the Effective Set, the deployment context contains:
 
 In the [External credential Context](#external-credential-context):
 
-1. [Secret Store](#secret-store) object
-2. [External credential Context `credentials` entry](#external-credential-context-credentials-entry) for each `credId` with `create: true`
+1. [External credential Context `credentials` entry](#external-credential-context-credentials-entry) for each [Credential](#credential) with `create: true`
+2. [Secret Store](#secret-store) object
 
 ### ESO
 
@@ -125,7 +112,7 @@ In the instance repository:
 1. Credential rendered from the [Credential Template](#credential-template)
 2. [Secret Store](#secret-store) object
 
-As with VALS, 1 is generated during environment instance generation; 2 is created manually by the user.
+As with VALS, item 1 is generated during environment instance generation. Item 2 is created manually by the user.
 
 When generating the Effective Set, the deployment context contains:
 
@@ -140,21 +127,23 @@ For both VALS and ESO, credential generation follows the same rules.
 
 ### Detailed description of objects
 
-#### `credRef` Credential Macro in Environment Template
+#### Credential Reference
 
-The `credRef` Credential macro (`$type: credRef`) links any parameter in an EnvGene object to a [Credential](#credential).
+The Credential Reference (`$type: credRef`) points a parameter in an EnvGene object at an external [Credential](#credential) by `credId`. Optional `property` selects `username` or `password` when the remote secret is modeled with multiple fields. Omit `property` when the Credential has no `properties` list (single-value secret).
 
-This macro is used for all types of Credentials (`usernamePassword`, `secret`, `external`).
+This reference is used only for `external` Credentials type.
 
 For backward compatibility, `creds.get()` is still fully supported for working with local Credentials.
 
+The same macro is valid in the environment template and in the instance repository after rendering.
+
 ```yaml
-# AS IS Credential macro
+# AS IS Credential reference
 <parameter-key>: "${creds.get('<cred-id>').secret|username|password}"
 ```
 
 ```yaml
-# TO BE Credential macro.
+# TO BE Credential Reference
 <parameter-key>:
   # Mandatory
   # Macro type
@@ -176,6 +165,7 @@ global.secrets.streamingPlatform.password:
   credId: cdc-streaming-cred
   property: password
 
+# Single-value secret (Credential has no `properties`)
 TOKEN:
   $type: credRef
   credId: app-cred
@@ -190,6 +180,7 @@ DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD:
   credId: dbaas-creds
   property: password
 
+# Single-value secret (registry token or similar)
 DCL_CONFIG_REGISTRY:
   $type: credRef
   credId: artfactoryqs-admin
@@ -211,6 +202,11 @@ cdc-streaming-cred:
   create: true
   secretStore: default-store
   remoteRefPath: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc
+  properties:
+    - name: username
+      type: string
+    - name: password
+      type: string
 
 app-cred:
   type: external
@@ -237,23 +233,25 @@ The existing [Credential](/docs/envgene-objects.md#credential) is extended by in
    1. Which external secret store it is located in
    2. Its location in the external secret stores
    3. The creation flag – whether the credential should be idempotently created or not
-2. Is generated by EnvGene during Environment Instance generation based on the [Credential Template](#credential-template)
+2. Is generated by EnvGene during Environment Instance generation based on the [Credential Template](#credential-template) (only Jinja rendering without additional processing)
 3. Is stored in the Instance repository in the [Credential file](/docs/envgene-objects.md#credential-file) as part of the Environment Instance
 4. When generated, the Credential ID does not get a uniqueness prefix - [`inventory.config.updateCredIdsWithEnvName`](/docs/envgene-configs.md#env_definitionyml) is not applied
-5. If the [Credential Template](#credential-template) does not include the `remoteRefPath` attribute, a default value is used for rendering as:
+5. The `properties` attribute describes the structure of the remote secret:
+   - Absence of `properties` means the secret has a simple single value structure
+   - When `properties` is present, each item `name` may only be `username` or `password`
+6. If the [Credential Template](#credential-template) does not include the `remoteRefPath` attribute, a default value is used for rendering as:
 
     ```yaml
     {{ current_env.cloud }}/{{ current_env.name }}/{{ current_namespace.name }}
     ```
-
-6. **As a possible option** – if `remoteRefPath` is not specified by the user in the Credential Template and the value generated by EnvGene can be represented not as a string, but as an object.
+<!-- 7. **As a possible option** – if `remoteRefPath` is not specified by the user in the Credential Template and the value generated by EnvGene can be represented not as a string, but as an object.
 
     ```yaml
     remoteRefPath:
       cluster: {{ current_env.cloud }}
       env: {{ current_env.name }}
       namespace: {{ current_env.name }}-data-management
-    ```
+    ``` -->
 
 ```yaml
 # AS IS Credential
@@ -270,21 +268,16 @@ The existing [Credential](/docs/envgene-objects.md#credential) is extended by in
 <cred-id>:
   # Mandatory
   type: enum[ usernamePassword, secret, external ]
-  # Optional
-  # Used only for type: external
-  # Mandatory for type: external
+  # Required when type is external
   secretStore: string
-  # Optional
-  # Used only for type: external
-  # Mandatory for type: external
+  # Required when type is external (a default may be applied at render time if omitted in the template)
   remoteRefPath: string
-  # Optional
-  # Used only for type: external
-  # Optional for type: external
+  # Optional; only for type: external
   create: boolean
-  # Optional
-  # Used only for type: usernamePassword, secret
-  # Mandatory for type: usernamePassword, secret
+  # Required when type is external and the secret has multiple fields; omit when the secret is single-value
+  properties:
+    - name: enum[ username, password ]
+  # Required when type is usernamePassword or secret
   data:
     username: string
     password: string
@@ -324,13 +317,13 @@ It may contain several secret store objects:
 <secret-store-name>:
   type: enum [vault, azure, aws, gcp]
   url: URL
-  # For `vault` only 
+  # Required when type is vault
   mountPath: string
-  # For `azure` only
+  # Required when type is azure
   vaultName: string
-  # For `aws` only
+  # Required when type is aws
   region: string
-  # For `gcp` only
+  # Required when type is gcp
   projectId: string
 ```
 
@@ -339,11 +332,11 @@ It may contain several secret store objects:
 
 #### Parameter with VALS reference
 
-A **parameter with VALS reference** is the deployment-side representation of a sensitive parameter after Effective Set calculation when `SECRET_MACRO_HANDLER` is `vals`. Parameters that were defined with the [`credRef` Credential Macro](#credref-credential-macro-in-environment-template) and resolve to an [external Credential](#credential) are emitted as plain YAML string values - `ref+...` URIs. Those URIs are resolved at deploy time to secret material.
+A **parameter with VALS reference** is the deployment-side representation of a sensitive parameter after Effective Set calculation when `SECRET_MACRO_HANDLER` is `vals`. Parameters that were defined with the [`credRef` Credential Macro](#credential-reference) and resolve to an [external Credential](#credential) are emitted as plain YAML string values - `ref+...` URIs. Those URIs are resolved at deploy time to secret material by Effective Set consumer.
 
 This is not a separate object file in the instance repository. It is the shape of entries inside the Effective Set deployment context.
 
-Effective Set v2.0 path:
+Parameters that resolve to VALS references are written under:
 
 ```text
 └── environments
@@ -359,17 +352,17 @@ Effective Set v2.0 path:
 
 The Effective Set calculator builds each VALS reference from:
 
-1. [Secret Store](#secret-store) metadata for the Credential's `secretStore`
+1. [Credential Reference](#credential-reference)
 2. [Credential](#credential)
-3. [Credential Macro](#credref-credential-macro-in-environment-template)
+3. [Secret Store](#secret-store) metadata for the Credential's `secretStore`
 
 ```yaml
-# one scalar per sensitive parameter; <vals-uri> is store-specific.
+# The <vals-uri> form is store-specific.
 <parameter-key>: <vals-uri>
 ```
 
 ```yaml
-# Example (GCP Secret Manager; username field inside JSON secret payload)
+# Example
 global.secrets.streamingPlatform.username: ref+gcpsecrets://468649328578/ocp-05--env-1--env-1-data-management--cdc--cdc-streaming-cred#/username
 ```
 
@@ -377,7 +370,7 @@ global.secrets.streamingPlatform.username: ref+gcpsecrets://468649328578/ocp-05-
 
 A **Deployment context `externalSecrets` entry** is the deployment-side shape of external credentials when `SECRET_MACRO_HANDLER` is `eso`. The calculator places a top-level `externalSecrets` map in the Effective Set deployment context. The Helm chart consumes that map (for example `range .Values.externalSecrets`) to render `ExternalSecret` CRs.
 
-Effective Set v2.0 path:
+The `externalSecrets` map is written under:
 
 ```text
 └── environments
@@ -388,7 +381,7 @@ Effective Set v2.0 path:
                     └── <namespace-folder>
                         └── <application-name>
                             └── values
-                                └── deployment-parameters.yaml # top-level key `externalSecrets`
+                                └── deployment-parameters.yaml # includes top-level key `externalSecrets`
 ```
 
 The Effective Set calculator builds each `externalSecrets` entry from:
@@ -397,19 +390,19 @@ The Effective Set calculator builds each `externalSecrets` entry from:
 2. [Secret Store](#secret-store)
 
 ```yaml
-# One map entry per credId. Repeat the list item for each credRef property.
 externalSecrets:
   <cred-id>:
     # Mandatory
+    # id of the Secret Store
     secretStoreId: <secret-store-id>
     # Mandatory
+    # Remote secret name after normalization
     normalizedSecretName: <secret-name>
     # Mandatory
+    # Which fields to fetch (one list item per field)
     secretKeys:
       - # Mandatory
-        secretKeyName: string
-        # Optional
-        remoteKeyName: string
+        remoteKeyName: enum[ username, password ]
 ```
 
 ```yaml
@@ -419,17 +412,17 @@ externalSecrets:
     secretStoreId: default-store
     normalizedSecretName: ocp-05/env-1/env-1-data-management/cdc/cdc-streaming-cred
     secretKeys:
-      - secretKeyName: username
-        remoteKeyName: username
-      - secretKeyName: password
-        remoteKeyName: password
+      - remoteKeyName: username
+      - remoteKeyName: password
 ```
 
 #### External credential Context
 
 **External credential Context** is a separate Effective Set context consisting of a single YAML file that the Effective Set calculator emits for Credentials with `create: true` and for the [Secret Store](#secret-store) objects referenced by those Credentials.
 
-Effective Set v2.0 path:
+The file name `external-credential.yaml` is a fixed path in the Effective Set layout. The payload is built from external [Credential](#credential) objects with `create: true` and from the [Secret Store](#secret-store) objects they use.
+
+This context is located at:
 
 ```text
 └── environments
@@ -437,14 +430,19 @@ Effective Set v2.0 path:
         └── <environment-name-01>
             └── effective-set
                 └── external-credential
-                    └── external-credential.yaml # top-level key `externalSecrets`
+                    └── external-credential.yaml # top-level keys `secretStores`, `credentials`
 ```
 
-This context, like the others, is produced by the Effective Set calculator from Credentials in the EnvGene instance and Secret Stores in the instance repository.
+This context, like the others, is produced by the Effective Set calculator.
 
 #### External credential Context `credentials` entry
 
-An **External credential Context `credentials` entry** is one map entry under `credentials` in the External credential Context (one per `credId` with `create: true`). The Effective Set calculator sets `secretStoreId`, `normalizedSecretName`, and `properties` when it emits that entry.
+An **External credential Context `credentials` entry** is one map entry under `credentials` in the External credential Context.
+
+The Effective Set calculator builds each `credentials` entry from:
+
+1. [Credential](#credential) (`type: external`, `create: true`)
+2. [Secret Store](#secret-store)
 
 ```yaml
 # Only Secret Stores that are referenced
@@ -452,22 +450,22 @@ secretStores:
   <secret-store-name>:
     type: enum [vault, azure, aws, gcp]
     url: URL
-    # For `vault` only 
+    # Required when type is vault
     mountPath: string
-    # For `azure` only
+    # Required when type is azure
     vaultName: string
-    # For `aws` only
+    # Required when type is aws
     region: string
-    # For `gcp` only
+    # Required when type is gcp
     projectId: string
 # Only Credential entries with create: true
 credentials:
   <cred-id>:
     secretStoreId: string
     normalizedSecretName: string
+    # Omit when the Credential is single-value (no `properties` in the Credential)
     properties:
-      - name: string
-        type: string
+      - name: enum[ username, password ]
 ```
 
 #### EnvGene System Credentials
@@ -493,7 +491,7 @@ This section defines normalization, property handling for external Credentials
 
 ##### Vault
 
-**Constraints:** Long paths allowed; allowed characters `a-zA-Z0-9-/_`; hierarchical `/` is native.
+**Constraints:** Long paths are allowed. Allowed characters are `a-zA-Z0-9-/_`. Hierarchical `/` is native.
 
 **Algorithm:**
 
@@ -552,9 +550,9 @@ This section defines normalization, property handling for external Credentials
 4. `<normalizedSecretName> = <normalized-path>--<credId>`
 5. Validate total length
 
-#### Handling the `property` field on `credRef` Credential Macros
+#### Handling the `property` field on Credential References
 
-For the same [`credRef` Credential Macros](#credref-credential-macro-in-environment-template) and [Secret Store](#secret-store), the Effective Set calculator can emit up to three kinds of output:
+For the same [Credential References](#credential-reference) and [Secret Store](#secret-store), the Effective Set calculator can emit up to three kinds of output:
 
 1. [Parameters with VALS reference](#parameter-with-vals-reference) when `SECRET_MACRO_HANDLER` is `vals`.
 2. [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) when `SECRET_MACRO_HANDLER` is `eso`.
@@ -567,29 +565,29 @@ How `property` on the macro is interpreted:
 
 ##### Parameters with VALS reference in deployment context
 
-This subsection describes how `property` on [`credRef` Credential Macros](#credref-credential-macro-in-environment-template) affects generation of [parameters with VALS reference](#parameter-with-vals-reference) per `credId` and per [Secret Store](#secret-store) type.
+This subsection describes how `property` on [Credential References](#credential-reference) affects generation of [parameters with VALS reference](#parameter-with-vals-reference) per `credId` and per [Secret Store](#secret-store) type.
 
 - **Vault**
 
   - When `property` is set: URI fragment `#/<property>` (for example `#/username`, `#/password`).
-  - When `property` is omitted: KV JSON contract key `value`; use fragment `#/value` on the [parameter with VALS reference](#parameter-with-vals-reference).
+  - When `property` is omitted: KV JSON contract key `value`. Use fragment `#/value` on the [parameter with VALS reference](#parameter-with-vals-reference).
 
 - **AWS**
 
   - When `property` is set: URI fragment `#/<property>` (JSON key in the secret payload).
-  - When `property` is omitted: plain text secret; VALS URI has no `#/…` fragment.
+  - When `property` is omitted: plain text secret. The VALS URI has no `#/…` fragment.
 
 - **Azure**
 
   - When `property` is set: URI fragment `#/<property>` (JSON key inside the Key Vault secret).
-  - When `property` is omitted: plain text secret; VALS URI has no `#/…` fragment.
+  - When `property` is omitted: plain text secret. The VALS URI has no `#/…` fragment.
 
 - **GCP**
 
   - When `property` is set: URI fragment `#/<property>` (JSON key in the secret payload).
-  - When `property` is omitted: plain text secret; VALS URI has no `#/…` fragment.
+  - When `property` is omitted: plain text secret. The VALS URI has no `#/…` fragment.
 
-##### Deployment context `externalSecrets` for ESO
+##### Deployment context `externalSecrets` for ESO TO CHANGE
 
 This subsection describes how `property` on [Credential](#credential) affects generation of the [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) per `credId` and per [Secret Store](#secret-store) type.
 
@@ -601,7 +599,7 @@ This subsection describes how `property` on [Credential](#credential) affects ge
 - **AWS**
 
   - When `property` is set: for each `property` value on the [Credential](#credential) for that `credId`, append one `secretKeys` item and set `remoteKeyName` to that `property`.
-  - When `property` is omitted: append one `secretKeys` item with `secretKeyName` only; omit `remoteKeyName`.
+  - When `property` is omitted: append one `secretKeys` item with `secretKeyName` only. Omit `remoteKeyName`.
 
 - **Azure**
 
@@ -610,10 +608,10 @@ This subsection describes how `property` on [Credential](#credential) affects ge
 
 - **GCP**
 
-  - When `property` is set: same as Azure; for each `property` value on the [Credential](#credential) for that `credId`, append one `secretKeys` item and set `remoteKeyName` to that `property`.
-  - When `property` is omitted: same as Azure; append `secretKeys` items without `remoteKeyName`.
+  - When `property` is set: same as Azure. For each `property` value on the [Credential](#credential) for that `credId`, append one `secretKeys` item and set `remoteKeyName` to that `property`.
+  - When `property` is omitted: same as Azure. Append `secretKeys` items without `remoteKeyName`.
 
-##### External credential Context `credentials`
+##### External credential Context `credentials` TO CHANGE
 
 This subsection describes how `property` on the [Credential](#credential) affects generation of the `properties` list in the [External credential Context `credentials` entry](#external-credential-context-credentials-entry) per `credId`.
 
@@ -622,10 +620,10 @@ This subsection describes how `property` on the [Credential](#credential) affect
 
 #### Shared E2E inputs (Environment Template)
 
-The following [Credential Macro](#credref-credential-macro-in-environment-template) and [Credential Template](#credential-template) fragments are used across the examples below.
+The following [Credential Reference](#credential-reference) and [Credential Template](#credential-template) fragments are used across the examples below.
 
 ```yaml
-# cdc-streaming-cred: Credential Macros with property + Credential Template
+# cdc-streaming-cred: Credential References with property + Credential Template
 global.secrets.streamingPlatform.username:
   $type: credRef
   credId: cdc-streaming-cred
@@ -643,7 +641,7 @@ cdc-streaming-cred:
 ```
 
 ```yaml
-# postgresql-cred: Credential Macro without property + Credential Template
+# postgresql-cred: Credential Reference without property + Credential Template
 postgresPassword:
   $type: credRef
   credId: postgresql-cred
@@ -657,19 +655,19 @@ postgresql-cred:
 
 #### Group 1: Deployment context
 
-Deployment context is the Effective Set output consumed at deploy time: either [parameters with VALS reference](#parameter-with-vals-reference) (`vals`) or [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) (`eso`). Inputs are always [Credential Macro](#credref-credential-macro-in-environment-template), rendered [Credential](#credential), and [Secret Store](#secret-store).
+Deployment context is the Effective Set output consumed at deploy time: either [parameters with VALS reference](#parameter-with-vals-reference) (`vals`) or [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) (`eso`). Inputs are always [Credential Reference](#credential-reference), rendered [Credential](#credential), and [Secret Store](#secret-store).
 
 ##### Case D1: VALS and Vault
 
-**Description:** Each sensitive parameter becomes a [parameter with VALS reference](#parameter-with-vals-reference): a `ref+vault://…` string. Vault KV v2 path uses `<mountPath>/data/<normalizedSecretName>`; JSON keys are selected with URI fragment `#/<property>` (or `#/value` when the [Credential Macro](#credref-credential-macro-in-environment-template) omits `property`).
+**Description:** Each sensitive parameter becomes a [parameter with VALS reference](#parameter-with-vals-reference): a `ref+vault://…` string. Vault KV v2 path uses `<mountPath>/data/<normalizedSecretName>`. JSON keys are selected with URI fragment `#/<property>` (or `#/value` when the [Credential Macro](#credential-reference) omits `property`).
 
 **Effective Set calculation:**
 
 1. Resolve `secretStore` on the [Credential](#credential) to `secretStores[storeId]` with `type: vault` and read `mountPath`.
 2. Compute `normalizedSecretName` from rendered `remoteRefPath`, `credId`, and store type (see [Normalization to normalizedSecretName](#normalization-to-normalizedsecretname)).
-3. For each [`credRef` Credential Macro](#credref-credential-macro-in-environment-template) row, emit `<parameter-key>: ref+vault://<mountPath>/data/<normalizedSecretName>#/<property>` where `<property>` is the macro's `property` field or `value` when omitted.
+3. For each [Credential Reference](#credential-reference) row, emit `<parameter-key>: ref+vault://<mountPath>/data/<normalizedSecretName>#/<property>` where `<property>` is the reference's `property` field or `value` when omitted.
 
-**E2E example:** [Shared E2E inputs (Environment Template)](#shared-e2e-inputs-environment-template); `SECRET_MACRO_HANDLER: vals`.
+**E2E example:** [Shared E2E inputs (Environment Template)](#shared-e2e-inputs-environment-template) with `SECRET_MACRO_HANDLER: vals`.
 
 ```yaml
 # Secret Store (instance repo) and handler
@@ -690,15 +688,15 @@ postgresPassword: ref+vault://secret/data/ocp-05/platform-00/platform-00-postgre
 
 ##### Case D2: VALS and Azure Key Vault
 
-**Description:** Sensitive parameters become [parameters with VALS reference](#parameter-with-vals-reference). URIs are `ref+azurekeyvault://<vaultName>/<normalizedSecretName>`. Secrets with several `property` fields are JSON in Key Vault; fragment `#/<property>` selects a key. When the [Credential Macro](#credref-credential-macro-in-environment-template) has no `property`, the secret is plain text and the URI has no fragment (see [Parameters with VALS reference in deployment context](#parameters-with-vals-reference-in-deployment-context)).
+**Description:** Sensitive parameters become [parameters with VALS reference](#parameter-with-vals-reference). URIs are `ref+azurekeyvault://<vaultName>/<normalizedSecretName>`. Secrets with several `property` fields are JSON in Key Vault. Fragment `#/<property>` selects a key. When the [Credential Macro](#credential-reference) has no `property`, the secret is plain text and the URI has no fragment (see [Parameters with VALS reference in deployment context](#parameters-with-vals-reference-in-deployment-context)).
 
 **Effective Set calculation:**
 
 1. Read `vaultName` from `secretStores[storeId]` for `type: azure`.
-2. Compute `normalizedSecretName` (Azure rules: `/` to `--`, segment limits; see [Azure Key Vault](#azure-key-vault) under Normalization).
+2. Compute `normalizedSecretName` (Azure rules: `/` to `--`, segment limits - see [Azure Key Vault](#azure-key-vault) under Normalization).
 3. Emit `ref+azurekeyvault://<vaultName>/<normalizedSecretName>#/<property>` when `property` is set, or the same URI with no `#/<key>` fragment when it is not.
 
-**E2E example:** same credential shapes as Case D1; [Shared E2E inputs](#shared-e2e-inputs-environment-template).
+**E2E example:** same credential shapes as Case D1. [Shared E2E inputs](#shared-e2e-inputs-environment-template).
 
 ```yaml
 secretStores:
@@ -717,13 +715,13 @@ postgresPassword: ref+azurekeyvault://vaulttests24270/ocp-05--platform-00--platf
 
 ##### Case D3: VALS and AWS Secrets Manager
 
-**Description:** Sensitive parameters become [parameters with VALS reference](#parameter-with-vals-reference): `ref+awssecrets://<normalizedSecretName>?region=<region>`. JSON payloads with multiple keys use fragment `#/<jsonKey>`; when the [Credential Macro](#credref-credential-macro-in-environment-template) has no `property`, the fragment is omitted.
+**Description:** Sensitive parameters become [parameters with VALS reference](#parameter-with-vals-reference): `ref+awssecrets://<normalizedSecretName>?region=<region>`. JSON payloads with multiple keys use fragment `#/<jsonKey>`. When the [Credential Macro](#credential-reference) has no `property`, the fragment is omitted.
 
 **Effective Set calculation:**
 
 1. Read `region` from `secretStores[storeId]` for `type: aws`.
-2. Compute `normalizedSecretName` (AWS path rules; see [AWS Secrets Manager](#aws-secrets-manager) under Normalization).
-3. Append `?region=<region>` to the VALS URI; add `#/<jsonKey>` only when multiple JSON keys apply.
+2. Compute `normalizedSecretName` (AWS path rules - see [AWS Secrets Manager](#aws-secrets-manager) under Normalization).
+3. Append `?region=<region>` to the VALS URI. Add `#/<jsonKey>` only when multiple JSON keys apply.
 
 **E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template).
 
@@ -744,12 +742,12 @@ postgresPassword: ref+awssecrets://ocp-05/platform-00/platform-00-postgresql/pos
 
 ##### Case D4: VALS and GCP Secret Manager
 
-**Description:** Sensitive parameters become [parameters with VALS reference](#parameter-with-vals-reference): `ref+gcpsecrets://<projectId>/<normalizedSecretName>`. Multiple `property` fields use a JSON payload and `#/<property>`; when the [Credential Macro](#credref-credential-macro-in-environment-template) has no `property`, the fragment is omitted.
+**Description:** Sensitive parameters become [parameters with VALS reference](#parameter-with-vals-reference): `ref+gcpsecrets://<projectId>/<normalizedSecretName>`. Multiple `property` fields use a JSON payload and `#/<property>`. When the [Credential Macro](#credential-reference) has no `property`, the fragment is omitted.
 
 **Effective Set calculation:**
 
 1. Read `projectId` from `secretStores[storeId]` for `type: gcp`.
-2. Compute `normalizedSecretName` (GCP flat name rules; see [GCP Secret Manager](#gcp-secret-manager) under Normalization).
+2. Compute `normalizedSecretName` (GCP flat name rules - see [GCP Secret Manager](#gcp-secret-manager) under Normalization).
 3. Build `ref+gcpsecrets://<projectId>/<normalizedSecretName>` and add `#/<property>` only when required for JSON with multiple keys.
 
 **E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template).
@@ -776,9 +774,9 @@ postgresPassword: ref+gcpsecrets://468649328578/ocp-05--platform-00--platform-00
 **Effective Set calculation:**
 
 1. Set `SECRET_MACRO_HANDLER: eso`.
-2. For each `credId`, group [`credRef` Credential Macros](#credref-credential-macro-in-environment-template) and emit one [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) with `secretStoreId`, `normalizedSecretName`, and `secretKeys` (`secretKeyName`, `remoteKeyName` when the backend needs a property path).
+2. For each `credId`, group [Credential References](#credential-reference) and emit one [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) with `secretStoreId`, `normalizedSecretName`, and `secretKeys` (`secretKeyName`, `remoteKeyName` when the backend needs a property path).
 
-**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template); `externalSecrets` Helm values and rendered `ExternalSecret` fragment (`postgresql-cred` without `property`).
+**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template), `externalSecrets` Helm values, and rendered `ExternalSecret` fragment (`postgresql-cred` without `property`).
 
 ```yaml
 secretStores:
@@ -790,7 +788,7 @@ SECRET_MACRO_HANDLER: eso
 ```
 
 ```yaml
-# Deployment context externalSecrets (Credential Macros with property)
+# Deployment context externalSecrets (Credential References with property)
 externalSecrets:
   cdc-streaming-cred:
     secretStoreId: default-store
@@ -803,7 +801,7 @@ externalSecrets:
 ```
 
 ```yaml
-# Deployment context externalSecrets (Credential Macro without property)
+# Deployment context externalSecrets (Credential Reference without property)
 externalSecrets:
   postgresql-cred:
     secretStoreId: default-store
@@ -825,11 +823,11 @@ spec:
 
 ##### Case D6: ESO and Azure Key Vault
 
-**Description:** Same [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) shape as Case D5; `normalizedSecretName` follows Azure limits and delimiter rules (may differ from the VALS URI for the same logical path). When the [Credential Macro](#credref-credential-macro-in-environment-template) has no `property`, Helm items omit `remoteKeyName` for plain text (see [Deployment context externalSecrets for ESO](#deployment-context-externalsecrets-for-eso)).
+**Description:** Same [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) shape as Case D5. `normalizedSecretName` follows Azure limits and delimiter rules (may differ from the VALS URI for the same logical path). When the [Credential Macro](#credential-reference) has no `property`, Helm items omit `remoteKeyName` for plain text (see [Deployment context externalSecrets for ESO](#deployment-context-externalsecrets-for-eso-to-change)).
 
 **Effective Set calculation:** Same as Case D5 with Azure normalization for `normalizedSecretName` (see [Azure Key Vault](#azure-key-vault) under Normalization).
 
-**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template); YAML below.
+**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template). YAML below.
 
 ```yaml
 secretStores:
@@ -859,11 +857,11 @@ externalSecrets:
 
 ##### Case D7: ESO and AWS Secrets Manager
 
-**Description:** Same [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) shape; AWS uses hierarchical `normalizedSecretName` with `/` (Azure uses `--` and flat names; see [AWS Secrets Manager](#aws-secrets-manager) vs [Azure Key Vault](#azure-key-vault) under Normalization).
+**Description:** Same [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) shape. AWS uses hierarchical `normalizedSecretName` with `/` (Azure uses `--` and flat names - see [AWS Secrets Manager](#aws-secrets-manager) vs [Azure Key Vault](#azure-key-vault) under Normalization).
 
 **Effective Set calculation:** Same as Case D5 with AWS normalization (see [AWS Secrets Manager](#aws-secrets-manager) under Normalization).
 
-**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template); YAML below.
+**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template). YAML below.
 
 ```yaml
 secretStores:
@@ -893,11 +891,11 @@ externalSecrets:
 
 ##### Case D8: ESO and GCP Secret Manager
 
-**Description:** Same [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) shape; `normalizedSecretName` follows GCP flat naming and segment truncation rules.
+**Description:** Same [Deployment context `externalSecrets` entry](#deployment-context-externalsecrets-entry) shape. `normalizedSecretName` follows GCP flat naming and segment truncation rules.
 
 **Effective Set calculation:** Same as Case D5 with GCP normalization (see [GCP Secret Manager](#gcp-secret-manager) under Normalization).
 
-**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template); YAML below.
+**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template). YAML below.
 
 ```yaml
 secretStores:
@@ -931,16 +929,16 @@ The Effective Set calculator emits [External credential Context](#external-crede
 
 ##### Case G1: External credential Context (Vault)
 
-**Description:** The calculator emits **External credential Context** YAML: [Secret Store](#secret-store) configuration and an [External credential Context `credentials` entry](#external-credential-context-credentials-entry) per `credId` with `normalizedSecretName` and `properties` (see [External credential Context `credentials`](#external-credential-context-credentials)).
+**Description:** The calculator emits **External credential Context** YAML: [Secret Store](#secret-store) configuration and an [External credential Context `credentials` entry](#external-credential-context-credentials-entry) per `credId` with `normalizedSecretName` and `properties` (see [External credential Context `credentials`](#external-credential-context-credentials-entry)).
 
 **Effective Set calculation:**
 
 1. Select [Credentials](#credential) rendered from the [Credential Template](#credential-template) with `create: true`.
-2. Group all [`credRef` Credential Macros](#credref-credential-macro-in-environment-template) by `credId`; map each `property` to `properties[].name` / `type` (when `property` is omitted, use `name: value`).
-3. Copy store config into `secretStores`; set `credentials[credId].secretStoreId` from the Credential's `secretStore`.
+2. Group all [Credential References](#credential-reference) by `credId`. Map each `property` to `properties[].name` / `type` (when `property` is omitted, use `name: value`).
+3. Copy store config into `secretStores`. Set `credentials[credId].secretStoreId` from the Credential's `secretStore`.
 4. Compute `normalizedSecretName` = `normalize(remoteRefPath, credId, vault)` (see [Vault](#vault) under Normalization).
 
-**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template); [External credential Context `credentials` entry](#external-credential-context-credentials-entry) below (`cdc-streaming-cred`, `postgresql-cred`).
+**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template). [External credential Context `credentials` entry](#external-credential-context-credentials-entry) below (`cdc-streaming-cred`, `postgresql-cred`).
 
 ```yaml
 secretStores:
@@ -968,11 +966,11 @@ credentials:
 
 ##### Case G2: External credential Context (Azure Key Vault)
 
-**Description:** Same [External credential Context `credentials` entry](#external-credential-context-credentials-entry) shape as Case G1. `normalizedSecretName` follows Azure normalization (flattened path; see [Azure Key Vault](#azure-key-vault) under Normalization).
+**Description:** Same [External credential Context `credentials` entry](#external-credential-context-credentials-entry) shape as Case G1. `normalizedSecretName` follows Azure normalization (flattened path - see [Azure Key Vault](#azure-key-vault) under Normalization).
 
-**Effective Set calculation:** Steps 1 to 3 as Case G1; step 4 uses Azure normalization for `normalizedSecretName`.
+**Effective Set calculation:** Steps 1 to 3 as Case G1. Step 4 uses Azure normalization for `normalizedSecretName`.
 
-**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template); [External credential Context `credentials` entry](#external-credential-context-credentials-entry) below.
+**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template). [External credential Context `credentials` entry](#external-credential-context-credentials-entry) below.
 
 ```yaml
 secretStores:
@@ -1002,9 +1000,9 @@ credentials:
 
 **Description:** Same [External credential Context `credentials` entry](#external-credential-context-credentials-entry) shape as Case G1. `normalizedSecretName` follows AWS normalization (see [AWS Secrets Manager](#aws-secrets-manager) under Normalization).
 
-**Effective Set calculation:** Steps 1 to 3 as Case G1; step 4 uses AWS normalization for `normalizedSecretName`.
+**Effective Set calculation:** Steps 1 to 3 as Case G1. Step 4 uses AWS normalization for `normalizedSecretName`.
 
-**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template); [External credential Context `credentials` entry](#external-credential-context-credentials-entry) below.
+**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template). [External credential Context `credentials` entry](#external-credential-context-credentials-entry) below.
 
 ```yaml
 secretStores:
@@ -1034,9 +1032,9 @@ credentials:
 
 **Description:** Same [External credential Context `credentials` entry](#external-credential-context-credentials-entry) shape as Case G1. `normalizedSecretName` follows GCP normalization (see [GCP Secret Manager](#gcp-secret-manager) under Normalization).
 
-**Effective Set calculation:** Steps 1 to 3 as Case G1; step 4 uses GCP normalization for `normalizedSecretName`.
+**Effective Set calculation:** Steps 1 to 3 as Case G1. Step 4 uses GCP normalization for `normalizedSecretName`.
 
-**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template); [External credential Context `credentials` entry](#external-credential-context-credentials-entry) below.
+**E2E example:** [Shared E2E inputs](#shared-e2e-inputs-environment-template). [External credential Context `credentials` entry](#external-credential-context-credentials-entry) below.
 
 ```yaml
 secretStores:

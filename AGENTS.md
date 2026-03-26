@@ -93,6 +93,41 @@ EnvGene searches these locations - from bottom to top - and uses the first match
 
 **Why:** Em dashes are a typographic convention that varies by locale and style guide. A plain hyphen-minus is universally readable, renders consistently across all Markdown renderers, and avoids accidental character encoding issues.
 
+#### Semicolons in prose
+
+**Guideline:** Semicolons (`;`) are **not** forbidden, but avoid dense "clause; clause" chains in documentation when separate sentences or lists would read more clearly.
+
+**Prefer:**
+
+- One main idea per sentence, separated by a period.
+- Bullet or numbered lists for parallel steps, outcomes, or options.
+- A comma plus a coordinating conjunction (`and`, `or`) when the second part is short.
+
+**When a semicolon is still appropriate:**
+
+- **Complex list items** where each item already contains commas (the usual US-style role of `;` inside lists).
+- **Literal syntax** in code, paths, or URIs where `;` is required - leave unchanged.
+- **Rare compact one-line definitions** where brevity is more important than flow - use sparingly.
+
+**Avoid:**
+
+- Joining two independent statements in prose only to keep one long line - split into two sentences instead.
+- Using `;` between fragments inside bullets as a substitute for a period or a new bullet.
+
+❌ **HARDER TO READ:**
+
+```markdown
+Item 1 is generated automatically; item 2 is created manually by the user.
+```
+
+✅ **CLEARER:**
+
+```markdown
+Item 1 is generated automatically. Item 2 is created manually by the user.
+```
+
+**Why:** Semicolons are easy to overuse in technical English. Dense use can make specs feel monotonous and is often harder for readers whose first language is not English. Periods and lists align with the rest of these documentation rules.
+
 ---
 
 #### Callouts (Notes, Warnings, Tips)
