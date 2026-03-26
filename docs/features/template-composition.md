@@ -5,6 +5,8 @@
   - [Proposed Approach](#proposed-approach)
     - [Key Capabilities](#key-capabilities)
     - [Detailed Composition Algorithm](#detailed-composition-algorithm)
+    - [Nested Application and Registry Definitions (appdefs / regdefs)](#nested-application-and-registry-definitions-appdefs--regdefs)
+      - [Examples (app-reg-defs)](#examples-app-reg-defs)
     - [Use Cases](#use-cases)
       - [Case 1](#case-1)
       - [Case 2](#case-2)
@@ -78,13 +80,17 @@ This diagram shows parent and child templates with their components. The color o
    - Parent templates are regular EnvGene templates needing no special configuration
    - Supports multi-level composition chains
 
+5. **Application & Registry Definitions composition**:
+   - `appdefs` and `regdefs` live under `templates/` like other resources. Template composition does not merge YAML across files: if the same path appears in more than one source, the file from the later source in copy order replaces the earlier file entirely.
+   - See [Nested Application and Registry Definitions (appdefs / regdefs)](#nested-application-and-registry-definitions-appdefs--regdefs) below for precedence and how this differs from field-level merge.
+
 ### Detailed Composition Algorithm
 
 The sequence below describes how composition is executed during template build.
 
 1. **Discover descriptors**
 
-   Read all `*.yml|*.yaml` files from `templates/env_templates` (top-level only, non-recursive).  
+   Read all `*.yml|*.yaml` files from `templates/env_templates` (top-level only, non-recursive).
    Each discovered file is processed as an independent child Template Descriptor.
 
 2. **Check whether composition is needed**
@@ -155,6 +161,27 @@ The sequence below describes how composition is executed during template build.
 > File precedence is copy-order based. If the same file path exists in multiple sources, the last copied file wins.
 > Effective precedence is:
 > **namespace parents** - **tenant parent** - **cloud parent** - **child template files**.
+
+### Nested Application and Registry Definitions (appdefs / regdefs)
+
+Application Definitions (`appdefs`) and Registry Definitions (`regdefs`) can be shipped in parent templates, child templates, or both. Bringing them together during template composition is file-based, not a content merge: overlapping paths are resolved by replacement (last copy wins).
+
+- **Different relative paths** (for example parent `.../billing-app.yml` and child `.../oss-app.yml`) all remain in the composed artifact; each file is kept as authored.
+
+- **Same relative path** in more than one source (for example parent and child both ship `templates/appdefs/my-app.yml`): the whole file from the winning source replaces the other. There is **no** field-by-field merge of two YAML documents into one definition. To customize a parent's app or registry file in the child, provide the complete desired file at that path in a source that copies after the parent.
+
+- Copy order matches template composition precedence: **namespace parents** → **tenant parent** → **cloud parent** → **child template files**. The last source in that order for a given path is what ends up in the built template artifact.
+
+> [!NOTE]
+> After composition, the instance pipeline still runs `app_reg_def_process` on the resulting definition files.
+> That pipeline behavior is documented in [app-reg-defs](/docs/features/app-reg-defs.md).
+> It does not reintroduce a cross-parent merge for two files that shared the same path.
+
+#### Examples (app-reg-defs)
+
+1. Parent ships `templates/appdefs/my-app.yml` and the child adds `templates/appdefs/my-app.yml` with the same relative path. The child's file replaces the parent's. If you only need a small change, duplicate the parent content into the child file and edit the full document there - partial overlays are not applied automatically.
+
+2. Parent defines one application in `templates/appdefs/app-a.yml` and the child adds `templates/appdefs/app-b.yml`. Both paths are distinct, so both files appear in the composed template.
 
 ### Use Cases
 
