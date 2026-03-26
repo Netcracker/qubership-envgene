@@ -423,6 +423,17 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
     
     try:
+        ca_bundle_path = os.environ.get("REQUESTS_CA_BUNDLE")
+
+        if ca_bundle_path and os.path.isfile(ca_bundle_path):
+            print(f"REQUESTS_CA_BUNDLE is set to: {ca_bundle_path}")
+            
+            tmp_path = "/tmp/python_crt.crt"
+            shutil.copyfile(ca_bundle_path, tmp_path)
+            print(f"Contents copied to {tmp_path}")	
+        else:
+            print("REQUESTS_CA_BUNDLE is not set or file does not exist!")
+
         response = requests.head(full_url, auth=auth, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code == 200:
             logger.info(
