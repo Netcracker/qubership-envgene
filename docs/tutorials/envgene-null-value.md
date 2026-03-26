@@ -4,8 +4,15 @@
   - [What You Will Learn](#what-you-will-learn)
   - [Prerequisites](#prerequisites)
   - [Overview](#overview)
-  - [Scenario: Credentials Placeholder](#scenario-credentials-placeholder)
-    - [Problem](#problem)
+  - [Scenario 1: Mandatory parameters in templates](#scenario-1-mandatory-parameters-in-templates)
+    - [Problem (mandatory parameters)](#problem-mandatory-parameters)
+    - [Example in template (ParameterSet)](#example-in-template-parameterset)
+    - [Behavior when not overridden](#behavior-when-not-overridden)
+    - [How to resolve](#how-to-resolve)
+    - [Key point](#key-point)
+  - [Where to put parameter overrides](#where-to-put-parameter-overrides)
+  - [Scenario 2: Credentials placeholder](#scenario-2-credentials-placeholder)
+    - [Problem (credentials)](#problem-credentials)
   - [Credential Type 1: usernamePassword](#credential-type-1-usernamepassword)
     - [Generated `credentials.yml` (username/password)](#generated-credentialsyml-usernamepassword)
     - [Behavior When Values Are Missing](#behavior-when-values-are-missing)
@@ -25,12 +32,11 @@
 
 By the end of this tutorial you will understand:
 
-- What `envgeneNullValue` is
+- What `envgeneNullValue` represents
 - Why EnvGene uses it
-- A **practical scenario: credentials placeholder** covering:
-
-  - `usernamePassword` credentials
-  - `secret` credentials
+- **two practical scenarios** where it appears:
+  - mandatory template parameters
+  - credentials placeholders for `usernamePassword` and `secret` types
 
 ## Prerequisites
 
@@ -48,16 +54,91 @@ It is intentionally used to:
 
 Common use case:
 
-If a required value remains `envgeneNullValue` where a real value is mandatory, validation fails and deployment is blocked.
+- **mandatory template parameters**
+- **Credentials placeholder**
 
-## Scenario: Credentials Placeholder
+If a value remains `envgeneNullValue`, validation will fail and deployment will be blocked.
 
-### Problem
+## Scenario 1: Mandatory parameters in templates
 
-When EnvGene fills the [Environment Credentials File](/docs/envgene-objects.md#environment-credentials-file) (`Credentials/credentials.yml`),
-it not have access to actual secret values.
+### Problem (mandatory parameters)
 
-Instead, credential fields can be set to `envgeneNullValue` until you resolve them.
+Some template values cannot be decided at template-authoring time because they depend on the target environment. To make the requirement explicit, templates set such parameters to `envgeneNullValue`.
+
+---
+
+### Example in template (ParameterSet)
+
+```yaml
+API_URL: envgeneNullValue
+```
+
+This signals that the value is required and must be provided by the instance repository (environment-level override).
+
+---
+
+### Behavior when not overridden
+
+If the value is not provided during environment generation:
+
+- the parameter remains `envgeneNullValue`
+- validation fails
+- deployment is blocked
+
+---
+
+### How to resolve
+
+Provide the value in the instance repository, for example:
+
+```yaml
+API_URL: https://api.dev.example.com
+```
+
+You can supply this via environment-specific parameter files or overrides in the instance repository.
+
+---
+
+### Key point
+
+- templates remain reusable
+- environments supply environment-specific values
+- missing values are explicitly detected and rejected
+
+---
+
+## Where to put parameter overrides
+
+When you resolve `envgeneNullValue` for template parameters, place the values in the instance repository under one of the following top-level sections depending on their purpose:
+
+- `deployParameters`
+- `e2eParameters`
+- `technicalConfigurationParameters`
+
+Keep an empty mapping if you have no values for a section in a given environment (that's valid). Example:
+
+```yaml
+deployParameters:
+  API_URL: "https://api.dev.example.com"
+
+e2eParameters: {}
+
+technicalConfigurationParameters:
+  max_retries: 5
+```
+
+Place required keys (the ones set to `envgeneNullValue` in templates) under the appropriate section so validation can succeed.
+
+---
+
+## Scenario 2: Credentials placeholder
+
+### Problem (credentials)
+
+When EnvGene generates a `credentials.yml` file (for example from Cloud Passport),
+it may not have access to actual secret values.
+
+Instead, it generates placeholders using `envgeneNullValue`.
 
 ## Credential Type 1: usernamePassword
 
@@ -120,13 +201,11 @@ Provide credential values via Cloud Passport configuration.
 
 ### Option 2: Shared Credentials
 
-See [Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file) in `envgene-objects.md` for locations and merge behavior.
-
 #### usernamePassword example
 
 ```yaml
 dbaas-cluster-dba-cred:
-  type: "usernamePassword"
+  type: usernamePassword
   data:
     username: "real_user"
     password: "secure_password"
@@ -158,43 +237,25 @@ If any matches are found:
 
 ## Before / After Example
 
-**Before resolution** (same structure as the generated `credentials.yml` examples above):
+**Before resolution:**
 
 ```yaml
-dbaas-cluster-dba-cred:
-  type: "usernamePassword"
-  data:
-    username: "envgeneNullValue" # FillMe
-    password: "envgeneNullValue" # FillMe
-
-consul-admin-cred:
-  type: "secret"
-  data:
-    secret: "envgeneNullValue" # FillMe
+username: envgeneNullValue
+password: envgeneNullValue
+secret: envgeneNullValue
 ```
 
 **After resolution:**
 
 ```yaml
-dbaas-cluster-dba-cred:
-  type: "usernamePassword"
-  data:
-    username: "prod_user"
-    password: "secure_password"
-
-consul-admin-cred:
-  type: "secret"
-  data:
-    secret: "secret-123"
+username: prod_user
+password: secure_password
+secret: secret-123
 ```
 
 ## Summary
 
-- `envgeneNullValue` is an **intentional placeholder**
-- Used in **credentials generation** for:
-
-  - `usernamePassword`
-  - `secret` types
-
-- Prevents incomplete or insecure deployments when validation requires real values
-- Must be replaced with real values before deployment wherever your pipeline enforces it
+- `envgeneNullValue` is an intentional placeholder used to mark missing or unresolved values.
+- It appears in both mandatory template parameters and generated credentials.
+- It prevents incomplete or insecure deployments by failing validation until values are provided.
+- Always resolve `envgeneNullValue` before deployment.
