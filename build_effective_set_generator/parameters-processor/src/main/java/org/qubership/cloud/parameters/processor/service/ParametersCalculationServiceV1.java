@@ -19,6 +19,7 @@ package org.qubership.cloud.parameters.processor.service;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.qubership.cloud.devops.commons.utils.Parameter;
+import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.parameters.processor.ParametersProcessor;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
@@ -43,7 +44,7 @@ public class ParametersCalculationServiceV1 {
     }
 
     public ParameterBundle getCliParameter(String tenantName, String cloudName, String namespaceName, String applicationName,
-                                           DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap) {
+                                           DeployerInputs deployerInputs, String originalNamespace, Map<String, Object> k8TokenMap) {
         return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace, k8TokenMap);
     }
 
@@ -52,7 +53,7 @@ public class ParametersCalculationServiceV1 {
     }
 
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName, DeployerInputs deployerInputs
-            , String originalNamespace, Map<String, String> k8TokenMap) {
+            , String originalNamespace, Map<String, Object> k8TokenMap) {
         Params parameters = parametersProcessor.processAllParameters(tenantName,
                 cloudName,
                 namespaceName,
@@ -115,7 +116,7 @@ public class ParametersCalculationServiceV1 {
                 .map(key -> (Map<String, Object>) parameters.remove(key))
                 .filter(Objects::nonNull)
                 .forEach(finalMap::putAll);
-        Map<String, Object> sortedMap = new TreeMap<>(parameters);
+        Map<String, Object> sortedMap = ParameterUtils.deepSortMapKeysPreservingParameters(parameters);
         orderedMap.putAll(sortedMap);
         if (parameters != null && !parameters.isEmpty()) {
             orderedMap.put("global", sortedMap);
@@ -124,8 +125,7 @@ public class ParametersCalculationServiceV1 {
             if (value instanceof Map) {
                 Map<String, Object> valueMap = (Map<String, Object>) value;
                 valueMap.put("!merge", sortedMap);
-                Map<String, Object> sortedValueMap = new TreeMap<>(valueMap);
-                finalMap.put(key, sortedValueMap);
+                finalMap.put(key, ParameterUtils.deepSortMapKeysPreservingParameters(valueMap));
             }
         });
         orderedMap.putAll(finalMap);

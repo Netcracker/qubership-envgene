@@ -105,6 +105,55 @@ public class ParameterUtils {
                 .build();
     }
 
+    /**
+     * Recursively copies maps into {@link TreeMap} key order (same stable ordering as
+     * {@code convertParameterMapToObject}), but keeps {@link Parameter} wrappers and their metadata.
+     * Nested map/list values inside a {@link Parameter} are sorted and reassigned via {@link #copyOldValues(Parameter, Object)}.
+     */
+    public static Map<String, Object> deepSortMapKeysPreservingParameters(Map<?, ?> source) {
+        if (source == null || source.isEmpty()) {
+            return new TreeMap<>();
+        }
+        List<Map.Entry<?, ?>> entries = new ArrayList<>(source.entrySet());
+        entries.sort(Comparator.comparing(e -> String.valueOf(e.getKey())));
+        Map<String, Object> out = new TreeMap<>();
+        for (Map.Entry<?, ?> e : entries) {
+            out.put(String.valueOf(e.getKey()), deepSortValuePreservingParameters(e.getValue()));
+        }
+        return out;
+    }
+
+    private static Object deepSortValuePreservingParameters(Object value) {
+        if (value instanceof Parameter p) {
+            Object inner = p.getValue();
+            if (inner instanceof Map<?, ?>) {
+                return copyOldValues(p, deepSortMapKeysPreservingParameters((Map<?, ?>) inner));
+            }
+            if (inner instanceof List<?>) {
+                return copyOldValues(p, deepSortListPreservingParameters((List<?>) inner));
+            }
+            return p;
+        }
+        if (value instanceof Map<?, ?>) {
+            return deepSortMapKeysPreservingParameters((Map<?, ?>) value);
+        }
+        if (value instanceof List<?>) {
+            return deepSortListPreservingParameters((List<?>) value);
+        }
+        return value;
+    }
+
+    private static List<Object> deepSortListPreservingParameters(List<?> list) {
+        if (list == null) {
+            return null;
+        }
+        List<Object> out = new ArrayList<>(list.size());
+        for (Object item : list) {
+            out.add(deepSortValuePreservingParameters(item));
+        }
+        return out;
+    }
+
     public static void splitBgDomainParams(Map<String, Object> bgDomainMap,
                                            Map<String, Object> bgDomainSecureMap,
                                            Map<String, Object> bgDomainParamsMap) {
@@ -137,4 +186,45 @@ public class ParameterUtils {
             params.remove(key);
         }
     }
+
+    @SuppressWarnings("unchecked")
+    public static void wrapPlainMapWithOrigin(Map<String, Object> map, String origin) {
+        if (map == null || map.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof Parameter) {
+                // Keep the existing parameter as is
+            } else if (value instanceof Map) {
+                wrapPlainMapWithOrigin((Map<String, Object>) value, origin);
+            } else if (value instanceof List) {
+                wrapPlainListWithOrigin((List<Object>) value, origin);
+            } else {
+                entry.setValue(new Parameter(value, origin, false));
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<Object> wrapPlainListWithOrigin(List<Object> list, String origin) {
+        if (list == null || list.isEmpty()) {
+            return list;
+        }
+        for (int i = 0; i < list.size(); i++) {
+            Object item = list.get(i);
+            if (item instanceof Parameter) {
+                // Keep existing Parameter as is
+            } else if (item instanceof Map) {
+                wrapPlainMapWithOrigin((Map<String, Object>) item, origin);
+            } else if (item instanceof List) {
+                list.set(i, wrapPlainListWithOrigin((List<Object>) item, origin));
+            } else {
+                list.set(i, new Parameter(item, origin, false));
+            }
+        }
+        return list;
+    }
+
+
 }

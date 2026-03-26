@@ -74,7 +74,8 @@ public class CloudMap extends DynamicMap {
             return null; // return empty map instead?
         }
         mergeE2E = config.isMergeCloudAndE2EParameters();
-        EscapeMap map = new EscapeMap(config.getCloudParams(), binding, String.format(ParametersConstants.CLOUD_ORIGIN, tenant, cloudName));
+        String cloudOrigin = String.format(ParametersConstants.CLOUD_ORIGIN, tenant, cloudName);
+        EscapeMap map = new EscapeMap(config.getCloudParams(), binding, cloudOrigin);
         EscapeMap e2e = new EscapeMap(config.getE2eParams(), binding, String.format(ParametersConstants.CLOUD_E2E_ORIGIN, tenant, cloudName));
         EscapeMap configServer = new EscapeMap(config.getConfigServerParams(), binding, String.format(ParametersConstants.CLOUD_CONFIG_SERVER_ORIGIN, tenant, cloudName));
 
@@ -105,12 +106,12 @@ public class CloudMap extends DynamicMap {
                 map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", DEFAULT_DBAAS_AGGREGATOR_LOGIN);
                 map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", DEFAULT_DBAAS_AGGREGATOR_PASSWORD);
             }
-            map.putIfAbsent("DBAAS_ENABLED", new Parameter(dbaas.isEnable()));
+            map.putIfAbsent("DBAAS_ENABLED", new Parameter(dbaas.isEnable(), cloudOrigin, false));
         }
 
         MaaS maas = config.getMaas();
         if (maas != null) {
-            map.putIfAbsent("MAAS_ENABLED", new Parameter(maas.isEnable()));
+            map.putIfAbsent("MAAS_ENABLED", new Parameter(maas.isEnable(), cloudOrigin, false));
             if (maas.isEnable()) {
                 //Deprecated. For backward compatibility. New name MAAS_EXTERNAL_ROUTE
                 map.put("MAAS_SERVICE_ADDRESS", maas.getMaasUrl());
@@ -127,7 +128,7 @@ public class CloudMap extends DynamicMap {
                 }
             }
         } else {
-            map.putIfAbsent("MAAS_ENABLED", new Parameter(false));
+            map.putIfAbsent("MAAS_ENABLED", new Parameter(false, cloudOrigin, false));
         }
 
         Vault vaultConfig = config.getVault();
@@ -172,7 +173,7 @@ public class CloudMap extends DynamicMap {
             }
         }
 
-        map.put("PRODUCTION_MODE", new Parameter(config.isProductionMode()));
+        map.put("PRODUCTION_MODE", new Parameter(config.isProductionMode(), cloudOrigin, false));
         map.put("namespace", new Parameter(new NamespaceMap(tenant, cloudName, defaultNamespace, defaultApp, binding, originalNamespace).init()));
         map.put("CLOUDNAME", cloudName);
         map.put("e2e", new Parameter(e2e));

@@ -121,6 +121,7 @@ public class CmdbCli implements Callable<Integer> {
         sharedData.setPcsspPaths(envParams.pcssp != null ? List.of(envParams.pcssp) : new ArrayList<>());
         sharedData.setAppChartValidation(envParams.appChartValidation);
         prepareCustomParameters(getCustomParams(envParams.customParams));
+        sharedData.setEnableTraceability(envParams.enableTraceability);
         populateDeploymentSessionId(envParams.extraParams);
     }
 
@@ -200,6 +201,9 @@ public class CmdbCli implements Callable<Integer> {
 
         @CommandLine.Option(names = {"-cp", "--custom-params"}, description = "Custom Parameters")
         String customParams;
+
+        @CommandLine.Option(names = {"-etr", "--enable-traceability"}, description = "Enable traceability by including parameter origin information in output files (true/false)", arity = "1", defaultValue = "false")
+        boolean enableTraceability = false;
 
     }
 
