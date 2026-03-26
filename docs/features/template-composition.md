@@ -7,7 +7,6 @@
     - [Detailed Composition Algorithm](#detailed-composition-algorithm)
     - [Nested Application and Registry Definitions (appdefs / regdefs)](#nested-application-and-registry-definitions-appdefs--regdefs)
       - [Examples (app-reg-defs)](#examples-app-reg-defs)
-      - [Caveats and Recommendations](#caveats-and-recommendations)
     - [Use Cases](#use-cases)
       - [Case 1](#case-1)
       - [Case 2](#case-2)
@@ -82,9 +81,8 @@ This diagram shows parent and child templates with their components. The color o
    - Supports multi-level composition chains
 
 5. **Application & Registry Definitions composition**:
-   - Support placing `appdefs` and `regdefs` in both parent and child templates; definitions are collected and merged during the instance pipeline (`app_reg_def_process`).
-   - Merge summary: definitions are rendered then deep-merged; child values take highest precedence. For exact replacement, put the file in the child template with the same relative path (file-copy precedence).
-   - See the "[Nested Application and Registry Definitions (appdefs / regdefs)](#nested-application-and-registry-definitions-appdefs--regdefs)" subsection below for full details and examples.
+   - `appdefs` and `regdefs` live under `templates/` like other resources. Template composition does not merge YAML across files: if the same path appears in more than one source, the file from the later source in copy order replaces the earlier file entirely.
+   - See [Nested Application and Registry Definitions (appdefs / regdefs)](#nested-application-and-registry-definitions-appdefs--regdefs) below for precedence and how this differs from field-level merge.
 
 ### Detailed Composition Algorithm
 
@@ -166,38 +164,24 @@ The sequence below describes how composition is executed during template build.
 
 ### Nested Application and Registry Definitions (appdefs / regdefs)
 
-EnvGene supports placing Application Definitions (`appdefs`) and Registry Definitions (`regdefs`) in both parent and child templates. When templates are composed and the instance pipeline runs, these definitions are combined so that the final environment has a single coherent set of definitions.
+Application Definitions (`appdefs`) and Registry Definitions (`regdefs`) can be shipped in parent templates, child templates, or both. Bringing them together during template composition is file-based, not a content merge: overlapping paths are resolved by replacement (last copy wins).
 
-- Definitions may exist for different applications or registries across parent and child templates; all unique entries are preserved.
+- **Different relative paths** (for example parent `.../billing-app.yml` and child `.../oss-app.yml`) all remain in the composed artifact; each file is kept as authored.
 
-- When the same application or registry is defined in multiple sources (parent and child, or multiple parents), EnvGene merges the definitions during the instance pipeline step responsible for processing application and registry definitions (see `app_reg_def_process`). The merge rules are:
+- **Same relative path** in more than one source (for example parent and child both ship `templates/appdefs/my-app.yml`): the whole file from the winning source replaces the other. There is **no** field-by-field merge of two YAML documents into one definition. To customize a parent's app or registry file in the child, provide the complete desired file at that path in a source that copies after the parent.
 
-  - Source order for merge collection follows the template composition file precedence: namespace parents → tenant parent → cloud parent → child template files. This is the order in which definitions are discovered and collected.
-
-  - For a given `application` or `registry` name, EnvGene performs a deep merge of the YAML objects after rendering. Scalar values and keys from later sources (closer to the child) override earlier ones. Mapping/object fields are merged recursively; lists are appended unless explicitly documented otherwise for a particular field in the schema.
-
-  - If a child provides an entry for the same application/registry as a parent, the child's values take highest precedence. Typical use-cases include overriding registry URL, credentials, or default artifact coordinates while inheriting other attributes from the parent definition.
-
-  - If conflicting fields cannot be safely merged (for example, when both sides include different Jinja constructs or incompatible structural types), the instance pipeline will prefer the child's rendered output. The pipeline logs such conflicts for operator review.
+- Copy order matches template composition precedence: **namespace parents** → **tenant parent** → **cloud parent** → **child template files**. The last source in that order for a given path is what ends up in the built template artifact.
 
 > [!NOTE]
-> The actual processing and persistence of Application and Registry Definitions is implemented by the instance pipeline job `app_reg_def_process` - see `docs/features/app-reg-defs.md` for full details and configuration options.
+> After composition, the instance pipeline still runs `app_reg_def_process` on the resulting definition files.
+> That pipeline behavior is documented in [app-reg-defs](/docs/features/app-reg-defs.md).
+> It does not reintroduce a cross-parent merge for two files that shared the same path.
 
 #### Examples (app-reg-defs)
 
-1. Parent defines `app-a` with artifact coordinates and a default registry. The child defines `app-a` too but overrides only the `registry` and `credentials` fields. The merged result uses the parent's artifact coordinates and the child's registry access parameters.
+1. Parent ships `templates/appdefs/my-app.yml` and the child adds `templates/appdefs/my-app.yml` with the same relative path. The child's file replaces the parent's. If you only need a small change, duplicate the parent content into the child file and edit the full document there - partial overlays are not applied automatically.
 
-2. Parent and child define different application names (for example, `app-a` in parent and `app-b` in child). Both entries are preserved in the resulting instance repository and used independently by EnvGene.
-
-#### Caveats and Recommendations
-
-- Merging happens after templates are rendered. Avoid expecting Jinja templates themselves to be merged; prefer rendering to concrete YAML structures for reliable merges.
-
-- If you need an exact replacement rather than a merge for a particular appdef/regdef file, put the replacement file in the child template with the same relative path - file-copy precedence will cause it to overwrite parent files during composition.
-
-- Always validate the resulting instance repository (for example by running the instance pipeline in a dry-run mode or inspecting pipeline logs) when introducing parent/child definitions to ensure merges produce the intended configuration.
-
-See [features/app-reg-defs.md](/docs/features/app-reg-defs.md) for the schema and the instance pipeline parameters that control how definitions are discovered and processed.
+2. Parent defines one application in `templates/appdefs/app-a.yml` and the child adds `templates/appdefs/app-b.yml`. Both paths are distinct, so both files appear in the composed template.
 
 ### Use Cases
 
