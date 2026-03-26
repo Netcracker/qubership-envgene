@@ -1,0 +1,294 @@
+name: "Dev: Build or Test Qubership EnvGene docker images"
+
+run-name: ${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.tests-only == 'true') && format('Test EnvGene for commit {0}', github.sha) || ((github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE'))) || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build-pipegene == 'true' || github.event.inputs.build-envgene == 'true' || github.event.inputs.build-pipeline == 'true' || github.event.inputs.build-effective-set == 'true') && github.event.inputs.tests-only == 'false')) && format('Build EnvGene for commit {0}', github.sha) || format('Test EnvGene for commit {0}', github.sha) }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      tests-only:
+        description: 'Run tests only'
+        required: false
+        default: false
+        type: boolean
+      build-envgene:
+        description: 'Build Qubership Envgene image'
+        required: false
+        default: true
+        type: boolean
+      build-pipegene:
+        description: 'Build Qubership PipeGene image'
+        required: false
+        default: true
+        type: boolean
+      build-effective-set:
+        description: 'Build Effective Set Generator image'
+        required: false
+        default: true
+        type: boolean
+      build-pipeline:
+        description: 'Build Instance Repo Pipeline image'
+        required: false
+        default: true
+        type: boolean
+      build-gsf-instance:
+        description: 'Build GSF Instance image'
+        required: false
+        default: true
+        type: boolean
+      build-gsf-discovery:
+        description: 'Build GSF Discovery image'
+        required: false
+        default: true
+        type: boolean
+  push: null
+
+env:
+  REGISTRY: ghcr.io
+  CI_PROJECT_DIR: ${{ github.workspace }}
+
+permissions:
+  contents: read
+  packages: write
+  attestations: write
+  id-token: write
+
+jobs:
+  conventional-commits:
+    permissions:
+      contents: read
+      packages: write
+      statuses: write
+      pull-requests: read
+    uses: ./.github/workflows/pr-conventional-commits.yaml
+
+  link-check:
+    needs: [conventional-commits]
+    permissions:
+      contents: read
+      packages: write
+      statuses: write
+    uses: ./.github/workflows/link-checker.yaml
+
+  linters:
+    needs: [conventional-commits]
+    permissions:
+      contents: read
+      packages: write
+      statuses: write
+    uses: ./.github/workflows/super-linter.yaml
+    with:
+      full_scan: false
+
+  tests:
+    needs: [conventional-commits]
+    runs-on: ubuntu-latest
+    container:
+      image: python:3.12-slim-bookworm
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Tests
+        uses: ./.github/actions/run-tests
+
+  build-qubership-pipegene:
+    needs: [linters, tests, link-check]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipegene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    outputs:
+      custom_tag: ${{ steps.build-pipegene.outputs.custom_tag }}
+      branch_tag: ${{ steps.build-pipegene.outputs.branch_tag }}
+      timestamp: ${{ steps.build-pipegene.outputs.timestamp }}
+      branch_latest_tag: ${{ steps.build-pipegene.outputs.branch_latest_tag }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build Qubership PipeGene Docker Image
+      uses: ./.github/actions/build-pipegene
+      id: build-pipegene
+      with:
+        registry: ${{ env.REGISTRY }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-qubership-envgene:
+    needs: [linters, tests, link-check]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-envgene == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    outputs:
+      custom_tag: ${{ steps.build-envgene.outputs.custom_tag }}
+      branch_tag: ${{ steps.build-envgene.outputs.branch_tag }}
+      timestamp: ${{ steps.build-envgene.outputs.timestamp }}
+      branch_latest_tag: ${{ steps.build-envgene.outputs.branch_latest_tag }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build Qubership Envgene Docker Image
+      uses: ./.github/actions/build-envgene
+      id: build-envgene
+      with:
+        registry: ${{ env.REGISTRY }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-effective-set-jar:
+    needs: [linters, tests, link-check]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    uses: netcracker/qubership-workflow-hub/.github/workflows/maven-publish.yml@v1.0.3
+    with:
+      maven-command: "--batch-mode package -Dgpg.skip=true -f build_effective_set_generator/pom.xml"
+      java-version: 17
+      upload-artifact: true
+      artifact-id: effective_set_jar
+      ref: ${{ github.ref }}
+    secrets:
+      maven-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-effective-set-generator:
+    needs: [build-effective-set-jar]
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.build-effective-set == 'true' && github.event.inputs.tests-only == 'false') || (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    outputs:
+      custom_tag: ${{ steps.build-effective-set-generator.outputs.custom_tag }}
+      branch_tag: ${{ steps.build-effective-set-generator.outputs.branch_tag }}
+      timestamp: ${{ steps.build-effective-set-generator.outputs.timestamp }}
+      branch_latest_tag: ${{ steps.build-effective-set-generator.outputs.branch_latest_tag }}
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Build Effective Set Generator Docker Image
+      uses: ./.github/actions/build-effective-set
+      id: build-effective-set-generator
+      with:
+        registry: ${{ env.REGISTRY }}
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-instance-repo-pipeline:
+    needs:
+      - linters
+      - tests
+      - link-check
+      - build-qubership-pipegene
+      - build-qubership-envgene
+      - build-effective-set-generator
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-pipeline == 'true') ||
+      (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: "Prepare app token"
+        if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
+          private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+      - name: Build Instance Repo Pipeline Docker Image
+        uses: ./.github/actions/build-pipeline
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-gsf-instance:
+    needs:
+      - linters
+      - tests
+      - link-check
+      - build-qubership-pipegene
+      - build-qubership-envgene
+      - build-effective-set-generator
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gsf-instance == 'true') ||
+      (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: "Prepare app token"
+        if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
+          private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+      - name: Build GSF Instance Docker Image
+        uses: ./.github/actions/build-gsf-instance
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  build-gsf-discovery:
+    needs:
+      - linters
+      - tests
+      - link-check
+      - build-qubership-pipegene
+      - build-qubership-envgene
+      - build-effective-set-generator
+    if: |
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.build-gsf-discovery == 'true') ||
+      (github.event_name == 'push' && (contains(github.event.head_commit.message, 'feat:') || contains(github.event.head_commit.message, 'fix:') || contains(github.event.head_commit.message, 'BREAKING CHANGE')))
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      attestations: write
+      id-token: write
+    steps:
+      - name: "Prepare app token"
+        if: ${{ vars.GH_BUMP_VERSION_APP_ID != '' }}
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ vars.GH_BUMP_VERSION_APP_ID }}
+          private-key: ${{ secrets.GH_BUMP_VERSION_APP_KEY }}
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token || secrets.GITHUB_TOKEN }}
+
+      - name: Build GSF Discovery Docker Image
+        uses: ./.github/actions/build-gsf-discovery
+        with:
+          registry: ${{ env.REGISTRY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}

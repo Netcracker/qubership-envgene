@@ -1,0 +1,34 @@
+---
+registry-1:
+  username: envgen.creds.get('artifactory-cred').username
+  password: envgen.creds.get('artifactory-cred').password
+  releaseTemplateRepository: "https://artifactory.qubership.org/mvn.release"
+  snapshotTemplateRepository: "https://artifactory.qubership.org/mvn.staging"
+  stagingTemplateRepository: "https://artifactory.qubership.org/mvn.proxy"
+registry-2:
+  username: envgen.creds.get('nexus-cred').username
+  password: envgen.creds.get('nexus-cred').password
+  releaseRepository: "https://nexus.qubership.org/mvn.release"
+  snapshotRepository: "https://nexus.qubership.org/mvn.snapshot"
+  stagingRepository: "https://nexus.qubership.org/mvn.staging"
+  proxyRepository: "https://nexus.qubership.org/mvn.proxy"
+sandbox:
+  username: envgen.creds.get('nexus-cred').username
+  password: envgen.creds.get('nexus-cred').password
+  DockerConfig:
+    snapshotUri: ""
+    stagingUri: ""
+    releaseUri: ""
+    groupUri: ""
+    snapshotRepoName: ""
+    stagingRepoName: ""
+    releaseRepoName: ""
+    groupName: ""
+  MavenConfig:
+    repositoryDomainName: ""
+    fullRepositoryUrl: ""
+    targetSnapshot: ""
+    targetStaging: ""
+    targetRelease: ""
+    snapshotGroup: ""
+    releaseGroup: ""

@@ -1,0 +1,9 @@
+name: "cluster_01_env_02-composite-structure"
+baseline:
+  name: "env-02-core"
+  type: "namespace"
+satellites:
+  - name: "env-02-bss"
+    type: "namespace"
+  - name: "env-02-oss"
+    type: "namespace"
