@@ -16,7 +16,7 @@ jobs:
       - name: Build java
         uses: netcracker/qubership-workflow-hub/actions/maven-snapshot-deploy@main
         with:
-          java-version: 21
+          java-version: 17
           pom-file: build_effective_set_generator/pom.xml
           # Default target-store is "central"; the action then adds -Pcentral and GPG runs. Sonar only needs -Pgithub.
           target-store: github
