@@ -13,11 +13,18 @@
 
 ## Overview
 
-This document describes use cases for [Template Inheritance](/docs/features/template-inheritance.md) - composing a child Environment Template from parent templates and optionally overriding selected parameters in child descriptor.
+This document describes use cases for [Template Inheritance](/docs/features/template-inheritance.md).
+The child template can inherit data from one or more parent templates.
+The child template can also override selected parent values.
+
+Important:
+
+- `overrides-parent` is part of Template Inheritance logic.
+- `template_override` is a different feature and is described in [Template Override](/docs/features/template-override.md).
 
 ## Parent Templates Download and Selection
 
-This section covers how `parent-templates` and `parent` references are resolved during child template build.
+This section explains how `parent-templates` and `parent` links are resolved when the child template is built.
 
 ### UC-TI-PT-1: Build child template using a single parent template
 
@@ -52,9 +59,7 @@ Template repository pipeline is started to build the child template artifact.
 
 1. Child template artifact is created successfully.
 2. Inherited components are taken from `basic-cloud` according to descriptor references.
-дОБАВИТЬ ЧТО РОДИТЕЛЬСКИЕ ШАБЛОНЫ БУДЕТ В РЕПОЗИТОРИИ, БЕЗ ССЫЛОК НА АРТИФАКТ 
-
-
+3. Parent templates are resolved from `parent-templates` entries (`application:version`).
 
 ### UC-TI-PT-2: Build child template composed from multiple parent templates
 
@@ -102,7 +107,7 @@ Template repository pipeline is started to build the child template artifact.
 
 ## Composite Structure Selection
 
-This section covers how explicit `composite_structure` path is selected and used.
+This section explains how explicit `composite_structure` is selected and used.
 
 ### UC-TI-CS-1: Use explicit `composite_structure` from child Template Descriptor
 
@@ -128,11 +133,14 @@ Template repository pipeline is started to build the child template artifact.
 **Results:**
 
 1. Built artifact contains the explicit child `composite_structure` reference.
-2. QA can verify generated instance contains `composite_structure.yml` rendered from that path.
+2. User can verify generated instance contains `composite_structure.yml` rendered from that path.
 
 ## Overrides in Child Template
 
-This section covers `overrides-parent` for Cloud and Namespace templates.
+This section explains override logic in Template Inheritance.
+
+- Use `overrides-parent` when a child template inherits from a parent and changes selected fields.
+- Do not mix this with `template_override`. `template_override` is applied in instance generation and is documented separately.
 
 ### UC-TI-OV-1: Override parent parameters for Cloud template
 
@@ -164,8 +172,8 @@ Template repository pipeline is started to build the child template artifact.
 
 **Results:**
 
-1. Child Cloud template is inherited from parent and overridden by child `cloud.overrides-parent`.
-2. QA can verify only supported override sections are used (`profile`, parameter maps, parameter sets).
+1. Child Cloud template is inherited from parent and then updated by `cloud.overrides-parent`.
+2. User can verify only supported override sections are used: `profile`, parameter maps, and parameter sets.
 
 ### UC-TI-OV-2: Override parent parameters for Namespace template
 
@@ -198,5 +206,5 @@ Template repository pipeline is started to build the child template artifact.
 
 **Results:**
 
-1. Child namespace template is inherited from parent and overridden by `namespaces[].overrides-parent`.
-2. QA can verify overridden parameter maps and parameter sets are present in produced template.
+1. Child Namespace template is inherited from parent and then updated by `namespaces[].overrides-parent`.
+2. User can verify overridden parameter maps and parameter sets are present in the produced template.
