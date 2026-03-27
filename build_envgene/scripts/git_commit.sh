@@ -299,7 +299,6 @@ if [ "$exit_code" -ne 0 ]; then
           sleep $sleep_time
 
           echo "Fetching latest changes from origin/${REF_NAME}..."
-        #   git pull --update-shallow origin "${REF_NAME}"
           git fetch --depth=1 origin "${REF_NAME}"
           fetch_exit_code=$?
 
