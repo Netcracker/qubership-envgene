@@ -171,8 +171,8 @@ git remote add origin "${REMOTE_URL}"
 
 
 echo "Pulling contents from GIT (branch: ${REF_NAME})"
-git fetch --depth=1 origin "${REF_NAME}"
-git checkout -b "${REF_NAME}" FETCH_HEAD
+git fetch --depth=1 origin ${REF_NAME}
+git switch -C ${REF_NAME} origin/${REF_NAME}
 
 # moving back environments folder and committing
 
@@ -299,8 +299,7 @@ if [ "$exit_code" -ne 0 ]; then
           sleep $sleep_time
 
           echo "Pulling latest changes from origin/${REF_NAME}..."
-          git fetch --depth=1 origin "${REF_NAME}"
-          git checkout -b "${REF_NAME}" FETCH_HEAD
+          git pull --update-shallow origin "${REF_NAME}"
           pull_exit_code=$?
 
           if [ "$pull_exit_code" -ne 0 ]; then
