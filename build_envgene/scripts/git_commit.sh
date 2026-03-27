@@ -170,7 +170,7 @@ echo "Adding remote: ${REMOTE_URL}"
 git remote add origin "${REMOTE_URL}"
 
 
-echo "Pulling contents from GIT (branch: ${REF_NAME})"
+echo "Fetching contents from GIT (branch: ${REF_NAME})"
 git fetch --depth=1 origin ${REF_NAME}
 git switch -C ${REF_NAME} origin/${REF_NAME}
 
