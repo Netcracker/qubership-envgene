@@ -298,17 +298,18 @@ if [ "$exit_code" -ne 0 ]; then
           echo "Waiting ${sleep_time} seconds before retry..."
           sleep $sleep_time
 
-          echo "Pulling latest changes from origin/${REF_NAME}..."
-          git pull --update-shallow origin "${REF_NAME}"
-          pull_exit_code=$?
+          echo "Fetching latest changes from origin/${REF_NAME}..."
+        #   git pull --update-shallow origin "${REF_NAME}"
+          git fetch --depth=1 origin "${REF_NAME}"
+          fetch_exit_code=$?
 
-          if [ "$pull_exit_code" -ne 0 ]; then
-              echo "⚠ Pull failed with exit code: $pull_exit_code, continuing to next retry..."
-              continue
+          if [ "$fetch_exit_code" -ne 0 ]; then
+              echo "⚠ Fetch failed with exit code: $fetch_exit_code"
+              break
           fi
 
-          echo "Successfully pulled changes. Remote is now at: $(git rev-parse origin/${REF_NAME})"
-          echo "Local HEAD is at: $(git rev-parse HEAD)"
+          git reset --soft origin/"${REF_NAME}"
+          git commit -m "${message}"
 
           echo "Attempting push (retry $retries)..."
           git push origin HEAD:"${REF_NAME}"
