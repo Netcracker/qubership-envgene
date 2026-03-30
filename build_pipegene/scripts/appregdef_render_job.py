@@ -12,6 +12,7 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
     env_tmp_ver_update_mode = params.get('ENV_TEMPLATE_VERSION_UPDATE_MODE')
     
     script = []
+    script.append('echo "inside prepare_appregdef_render_job REQUESTS_CA_BUNDLE=$REQUESTS_CA_BUNDLE"')
     if env_template_version and not is_template_test:
         script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
 
