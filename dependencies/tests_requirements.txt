@@ -16,7 +16,7 @@ ruamel.yaml==0.18.5
 ruamel.yaml.clib==0.2.8
 ruyaml==0.91.0
 jschon==0.11.0
-jsonschema==4.23.0
+jsonschema==4.24.1
 diagrams==0.23.3
 attrs==23.2.0
 referencing==0.33.0
