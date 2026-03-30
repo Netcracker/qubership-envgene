@@ -1,7 +1,9 @@
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, field_validator, Field, model_validator
+import jsonschema
+from envgenehelper import get_regdef_v2_schema
+from pydantic import BaseModel, ConfigDict, field_validator, Field
 from pydantic.alias_generators import to_camel
 import requests
 
@@ -242,10 +244,6 @@ class RegistryV2(BaseSchema):
     helm_config: Optional[HelmConfigV2] = None
     helm_app_config: Optional[HelmAppConfigV2] = None
     
-    def resolve_auth_headers(self, env_creds: Optional[dict] = None) -> Optional[dict]:
-        from artifact_searcher.auth_resolver import resolve_v2_auth_headers
-        return resolve_v2_auth_headers(self, env_creds or {})
-
     def resolve_auth(self, env_creds: Optional[dict] = None) -> Optional[dict]:
         """Returns auth headers dict for V2 registries (unified API with V1).
         Returns None if anonymous or no credentials configured."""
@@ -253,8 +251,12 @@ class RegistryV2(BaseSchema):
         return resolve_v2_auth_headers(self, env_creds or {})
 
 
+_REGDEF_V2_SCHEMA = get_regdef_v2_schema()
+
+
 def parse_registry(data: dict) -> Registry | RegistryV2:
     if data.get("version") == REGDEF_V2_VERSION or "authConfig" in data:
+        jsonschema.validate(instance=data, schema=_REGDEF_V2_SCHEMA)
         return RegistryV2.model_validate(data)
     return Registry.model_validate(data)
 

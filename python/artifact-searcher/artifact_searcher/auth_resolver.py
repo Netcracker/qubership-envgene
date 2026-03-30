@@ -38,9 +38,6 @@ def _validate_user_pass_creds(cred_data: dict, context: str) -> tuple[str, str]:
 
 
 def _aws_bearer(auth_cfg: AuthConfig, cred_data: dict) -> dict:
-    if not auth_cfg.aws_region:
-        raise ValueError("AWS authConfig must specify 'awsRegion'")
-
     username, password = _validate_user_pass_creds(cred_data, "AWS secret auth")
 
     from qubership_pipelines_common_library.v1.utils.utils_aws import AWSCodeArtifactHelper
