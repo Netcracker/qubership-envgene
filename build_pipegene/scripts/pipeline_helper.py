@@ -47,6 +47,7 @@ def job_instance(params, vars, needs=None, rules=None):
     global_before = [
         'python /module/scripts/utils/log_pipe_params.py',
         '/module/scripts/utils/handle_certs.sh',
+        'echo "in before script REQUESTS_CA_BUNDLE=$REQUESTS_CA_BUNDLE"',
     ]
     job.prepend_scripts(*global_before)
 

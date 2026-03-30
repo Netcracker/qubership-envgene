@@ -164,6 +164,7 @@ async def resolve_artifact_old_logic(env_definition: dict, template_dest: str, c
 
 
 def process_env_template() -> dict:
+    logger.info("Python sees inside process_env_template REQUESTS_CA_BUNDLE:", os.environ.get("REQUESTS_CA_BUNDLE"))
     env_template_test = os.getenv("ENV_TEMPLATE_TEST", "").lower() == "true"
     if env_template_test:
         run_env_test_setup()
