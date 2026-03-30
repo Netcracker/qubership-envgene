@@ -9,14 +9,12 @@ from pipeline_helper import job_instance
 def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, artifact_app_defs_path, artifact_reg_defs_path, tags):
     logger.info(f'Prepare process_sd job for {full_env}')
     
-    base_dir = getenv('CI_PROJECT_DIR')
-    base_env_path = f"{base_dir}/environments/{full_env}"
-    app_defs_path = f"{base_env_path}/AppDefs"
-    reg_defs_path = f"{base_env_path}/RegDefs"
-    
     script = [
-        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p {app_defs_path} && cp -rf {artifact_app_defs_path}/* {app_defs_path}',
-        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p {reg_defs_path} && cp -fr {artifact_reg_defs_path}/* {reg_defs_path}',
+        f'base_env_path="$CI_PROJECT_DIR/environments/{full_env}";',
+        'app_defs_path="$base_env_path/AppDefs";',
+        'reg_defs_path="$base_env_path/RegDefs";',
+        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p $app_defs_path && cp -rf {artifact_app_defs_path}/* $app_defs_path',
+        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p $reg_defs_path && cp -fr {artifact_reg_defs_path}/* $reg_defs_path',
         'python3 /build_env/scripts/build_env/process_sd.py',
     ]
 
@@ -35,8 +33,7 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, artif
         "envgen_image": "$envgen_image",
         "envgen_args": " -vv",
         "envgen_debug": "true",
-        "GITLAB_RUNNER_TAG_NAME": tags,
-        "GIT_STRATEGY": "clone"
+        "GITLAB_RUNNER_TAG_NAME": tags
     }
 
     process_sd_job = job_instance(params=process_sd_set_params, vars=process_sd_set_vars)

@@ -2,7 +2,6 @@ import asyncio
 import os
 import tempfile
 from pathlib import Path
-from urllib.parse import urlparse
 
 from artifact_searcher import artifact
 from artifact_searcher.utils.models import FileExtension, Credentials, Registry, Application
@@ -84,10 +83,9 @@ async def resolve_artifact_new_logic(app_def: Application, app_version: str, tem
             raise ValueError(f"Invalid maven coordinates from deployment descriptor {dd_url}")
 
         repo_url = dd_config.get("configurations", [{}])[0].get("maven_repository")
-        
+
         if not repo_url:
-            parsed = urlparse(dd_url)
-            repo_url = f"{parsed.scheme}://{parsed.netloc}/{repo_name}"
+            repo_url = f"{app_def.registry.maven_config.repository_domain_name}{repo_name}"
             logger.info(f"building repo url from the repo name : {repo_url}")
         template_url = artifact.check_artifact(repo_url, group_id, artifact_id, version, FileExtension.ZIP, cred)
         validate_url(template_url, group_id, artifact_id, version)
