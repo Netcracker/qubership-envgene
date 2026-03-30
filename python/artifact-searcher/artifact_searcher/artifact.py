@@ -34,8 +34,8 @@ def convert_nexus_repo_url_to_index_view(url: str) -> str:
     return urlunparse(parsed._replace(path=new_path))
 
 
-def create_artifact_path(app: Application, version: str, repo: str) -> str:
-    registry_url = app.registry.maven_config.repository_domain_name.rstrip("/") + "/"
+def create_artifact_path(app: Application, version: str, repo: str = "") -> str:
+    registry_url = app.registry.maven_config.repository_domain_name
     group_id = app.group_id.replace(".", "/")
     folder = version_to_folder_name(version)
     
@@ -253,6 +253,7 @@ def _is_cloud_provider(registry) -> bool:
     return False
 
 
+# TODO: delete after models are refactored to use polymorphism
 def get_repo_value_pointer_dict(registry):
     """V2 cloud providers: use empty repo (domain already contains full path).
     V1/Nexus/Artifactory: use target fields."""
@@ -364,7 +365,7 @@ async def check_artifact_async(
             logger.warning(f"[Registry: {app.registry.name}] - {repo_pointer} is not configured")
             return None
         domain = app.registry.maven_config.repository_domain_name
-        repo_url = domain if not repo_value else domain.rstrip("/") + "/" + repo_value
+        repo_url = domain if not repo_value else domain + repo_value
         url = check_artifact(repo_url, app.group_id, app.artifact_id, version,
                              artifact_extension, auth_headers=auth_headers, classifier=classifier)
         if url:
