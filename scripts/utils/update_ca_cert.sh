@@ -96,8 +96,9 @@ function updateCertificates {
         export REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt #https://www.redhat.com/en/blog/configure-ca-trust-list
       fi
       if [[ -n "$REQUESTS_CA_BUNDLE" && -r "$REQUESTS_CA_BUNDLE" ]]; then
-        cp "$REQUESTS_CA_BUNDLE" /tmp/crt.crt
-        echo "Copied contents of $REQUESTS_CA_BUNDLE → /tmp/crt.crt"
+        mkdir -p "$CI_PROJECT_DIR/tmp"
+        cp "$REQUESTS_CA_BUNDLE" "$CI_PROJECT_DIR/tmp/crt.crt"
+        echo "Copied contents of $REQUESTS_CA_BUNDLE → $CI_PROJECT_DIR/tmp/crt.crt"
       else
         echo "REQUESTS_CA_BUNDLE is not set or file is not readable"
       fi
