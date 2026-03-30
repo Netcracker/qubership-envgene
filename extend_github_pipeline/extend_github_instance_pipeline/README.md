@@ -350,14 +350,14 @@ The base workflow uses these extension points:
 ## Adding New Patch Files
 
 1. Create a YAML file in `components/` (e.g. `components/my-feature.yaml`)
-2. Add operations following the format above
-3. Register the file in `.gitlab-ci.yml`:
+1. Add operations following the format above
+1. Register the file in `.gitlab-ci.yml`:
 
 ```yaml
 - python3 scripts/apply_envgene_patch.py components/component-a.yaml components/variables.yaml components/my-feature.yaml
 ```
 
-4. Patches are applied in order; later patches can override or extend earlier ones.
+1. Patches are applied in order; later patches can override or extend earlier ones.
 
 ---
 
@@ -370,4 +370,4 @@ The base workflow uses these extension points:
 | `Marker '### X - END ###' not found` | Section markers missing | Add `### SECTION - START ###` and `### SECTION - END ###` |
 | `Step 'X' not found` | Step name doesn't match | Use exact or partial step name (case-insensitive) |
 | `Block 'path' not found` | Dotted path invalid | Verify YAML structure (jobs → job_name → outputs) |
-| `File not found` | Wrong target path or output-dir missing | Use path relative to repo root; run with init or `--no-init` on existing dir |
+| `File not found` | Wrong target path or output-dir missing | Use path relative to repository root; run with init or `--no-init` on existing dir |
