@@ -17,7 +17,7 @@ CLOUD_PRIVATE_HOST: cluster-01.qubership.org
 CLOUD_PROTOCOL: https
 CLOUD_PUBLIC_HOST: cluster-01.qubership.org
 CMDB_URL: https://cluster-01.qubership.org
-CONSUL_ENABLED: 'true'
+CONSUL_ENABLED: true
 CONSUL_PUBLIC_URL: http://consul.consul:8080
 CONSUL_URL: http://consul.consul:8080
 CONTROLLER_NAMESPACE: env-1-bg-controller
@@ -100,7 +100,7 @@ global: &id002
   CLOUD_PROTOCOL: https
   CLOUD_PUBLIC_HOST: cluster-01.qubership.org
   CMDB_URL: https://cluster-01.qubership.org
-  CONSUL_ENABLED: 'true'
+  CONSUL_ENABLED: true
   CONSUL_PUBLIC_URL: http://consul.consul:8080
   CONSUL_URL: http://consul.consul:8080
   CONTROLLER_NAMESPACE: env-1-bg-controller

@@ -12,7 +12,7 @@ CLOUD_PROTOCOL: https
 CLOUD_PUBLIC_HOST: cluster-01.qubership.org
 CMDB_URL: https://cluster-01.qubership.org
 CONSUL_ADMIN_TOKEN: token-placeholder-123
-CONSUL_ENABLED: 'true'
+CONSUL_ENABLED: true
 CONSUL_PUBLIC_URL: http://consul.consul:8080
 CONSUL_URL: http://consul.consul:8080
 CUSTOM_HOST: cluster-01.qubership.org

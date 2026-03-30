@@ -480,7 +480,6 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     folder = version_to_folder_name(version)
     filename = create_artifact_name(artifact_id, artifact_extension, version, classifier)
     full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
-
     try:
         response = requests.head(full_url, headers=auth_headers, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code == 200:
