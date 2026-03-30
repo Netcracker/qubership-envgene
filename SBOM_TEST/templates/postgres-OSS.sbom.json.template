@@ -1,0 +1,147 @@
+{
+  "$schema": "../../schemas/application.sbom.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "{{ SBOM_SERIAL_NUMBER_URN_UUID }}",
+  "version": 1,
+  "metadata": {
+    "timestamp": "{{ ISO_8601_TIMESTAMP }}",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "{{ BOM_REF_METADATA }}",
+      "name": "{{ APPLICATION_NAME }}",
+      "version": "{{ APPLICATION_VERSION }}",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "bom-ref": "{{ BOM_REF_DEPLOYMENT_DESCRIPTOR }}",
+          "group": "{{ MAVEN_STYLE_GROUP_ID }}",
+          "name": "{{ DEPLOYMENT_DESCRIPTOR_NAME }}",
+          "version": "{{ APPLICATION_VERSION }}",
+          "purl": "pkg:maven/{{ MAVEN_STYLE_GROUP_ID }}/{{ DEPLOYMENT_DESCRIPTOR_NAME }}@{{ APPLICATION_VERSION }}?registry_id={{ REGISTRY_ID }}&repository_id={{ MAVEN_REPOSITORY_ID }}"
+        }
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "{{ SBOM_GENERATOR_TOOL_VERSION }}"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "bom-ref": "{{ BOM_REF_SERVICE }}",
+      "name": "{{ SERVICE_NAME }}",
+      "version": "{{ APPLICATION_VERSION }}",
+      "properties": [
+        {
+          "name": "image_type",
+          "value": "service"
+        },
+        {
+          "name": "docker_registry",
+          "value": "{{ DOCKER_REGISTRY_HOST }}"
+        },
+        {
+          "name": "full_image_name",
+          "value": "{{ FULL_IMAGE_NAME }}"
+        },
+        {
+          "name": "git_url",
+          "value": "{{ SOURCE_REPO_URL }}"
+        },
+        {
+          "name": "git_branch",
+          "value": "{{ GIT_BRANCH }}"
+        },
+        {
+          "name": "git_revision",
+          "value": "{{ GIT_REVISION }}"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": "false"
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        },
+        {
+          "name": "deploy_param",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "{{ BOM_REF_CONTAINER }}",
+          "group": "{{ IMAGE_GROUP }}",
+          "name": "{{ IMAGE_NAME }}",
+          "version": "{{ IMAGE_TAG }}",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "{{ IMAGE_DIGEST_SHA256_HEX_64 }}"
+            }
+          ],
+          "purl": "pkg:docker/{{ IMAGE_GROUP }}/{{ IMAGE_NAME }}@{{ IMAGE_TAG }}?registry_id={{ REGISTRY_ID }}&repository_id={{ DOCKER_REPOSITORY_ID }}"
+        },
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "bom-ref": "{{ BOM_REF_RESOURCE_PROFILE }}",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "{{ RESOURCE_PROFILE_DEV_JSON_BASE64 }}"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.app.chart",
+      "bom-ref": "{{ BOM_REF_HELM_CHART }}",
+      "name": "{{ APPLICATION_NAME }}",
+      "version": "{{ APPLICATION_VERSION }}"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "{{ BOM_REF_METADATA }}"
+    },
+    {
+      "ref": "{{ BOM_REF_DEPLOYMENT_DESCRIPTOR }}"
+    },
+    {
+      "ref": "{{ BOM_REF_SERVICE }}"
+    },
+    {
+      "ref": "{{ BOM_REF_CONTAINER }}"
+    },
+    {
+      "ref": "{{ BOM_REF_RESOURCE_PROFILE }}"
+    },
+    {
+      "ref": "{{ BOM_REF_HELM_CHART }}"
+    }
+  ]
+}

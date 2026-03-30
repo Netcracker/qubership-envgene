@@ -1,0 +1,65 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:7e3b1a90-5c2d-4e8f-9a0b-1c2d3e4f5060",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-03-30T12:00:00Z",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.solution",
+      "bom-ref": "BomRef.oss.solution.root.0001",
+      "name": "Solution",
+      "version": "",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.solution-descriptor",
+          "bom-ref": "BomRef.oss.solution.sd.0002",
+          "group": "",
+          "name": "",
+          "version": ""
+        }
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "BomRef.oss.solution.app.postgres.0003",
+      "name": "postgres",
+      "version": "16.4-oss-1",
+      "properties": [
+        {
+          "name": "deployPostfix",
+          "value": "pg"
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "file://postgres-16.4-oss-1.sbom.json"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "BomRef.oss.solution.root.0001"
+    },
+    {
+      "ref": "BomRef.oss.solution.app.postgres.0003"
+    }
+  ]
+}

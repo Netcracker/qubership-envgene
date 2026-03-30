@@ -1,0 +1,5 @@
+version: 2.1
+type: deploy
+applications:
+  - version: "{{ APPLICATION_NAME }}:{{ APPLICATION_VERSION }}"
+    deployPostfix: "{{ DEPLOY_POSTFIX }}"

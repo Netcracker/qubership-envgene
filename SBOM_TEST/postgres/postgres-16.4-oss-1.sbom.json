@@ -1,0 +1,147 @@
+{
+  "$schema": "../../schemas/application.sbom.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:8f4c2e10-9a3b-4d1e-8c7f-0a1b2c3d4e50",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2026-03-30T12:00:00Z",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "BomRef.oss.meta.postgres.0001",
+      "name": "postgres",
+      "version": "16.4-oss-1",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "bom-ref": "BomRef.oss.dd.postgres.0002",
+          "group": "org.example.oss",
+          "name": "postgres-application",
+          "version": "16.4-oss-1",
+          "purl": "pkg:maven/org.example.oss/postgres-application@16.4-oss-1?registry_id=registry-1&repository_id=targetRelease"
+        }
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.service",
+      "bom-ref": "BomRef.oss.svc.postgres.0003",
+      "name": "postgres",
+      "version": "16.4-oss-1",
+      "properties": [
+        {
+          "name": "image_type",
+          "value": "service"
+        },
+        {
+          "name": "docker_registry",
+          "value": "docker.io"
+        },
+        {
+          "name": "full_image_name",
+          "value": "docker.io/library/postgres:16-alpine"
+        },
+        {
+          "name": "git_url",
+          "value": "https://github.com/docker-library/postgres"
+        },
+        {
+          "name": "git_branch",
+          "value": "16"
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "promote_artifacts",
+          "value": "false"
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        },
+        {
+          "name": "deploy_param",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.oss.img.postgres.0004",
+          "group": "library",
+          "name": "postgres",
+          "version": "16-alpine",
+          "hashes": [
+            {
+              "alg": "SHA-256",
+              "content": "60b180625695e90b6e450405d5f0bcb74bc8c52c65d1cd11aeb3da46cac06dd8"
+            }
+          ],
+          "purl": "pkg:docker/library/postgres@16-alpine?registry_id=registry-1&repository_id=releaseUri"
+        },
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.resource-profile-baseline",
+          "bom-ref": "BomRef.oss.rp.postgres.0005",
+          "name": "resource-profile-baselines",
+          "data": [
+            {
+              "type": "configuration",
+              "name": "dev.json",
+              "contents": {
+                "attachment": {
+                  "contentType": "application/json",
+                  "encoding": "base64",
+                  "content": "e30="
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.app.chart",
+      "bom-ref": "BomRef.oss.chart.postgres.0006",
+      "name": "postgres",
+      "version": "16.4-oss-1"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "BomRef.oss.meta.postgres.0001"
+    },
+    {
+      "ref": "BomRef.oss.dd.postgres.0002"
+    },
+    {
+      "ref": "BomRef.oss.svc.postgres.0003"
+    },
+    {
+      "ref": "BomRef.oss.img.postgres.0004"
+    },
+    {
+      "ref": "BomRef.oss.rp.postgres.0005"
+    },
+    {
+      "ref": "BomRef.oss.chart.postgres.0006"
+    }
+  ]
+}

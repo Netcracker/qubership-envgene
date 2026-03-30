@@ -1,0 +1,23 @@
+# Minimal registry map for Effective Set Generator (must define `registry-1` if SBOM purls use it).
+# Copy to `<instance-repo>/configuration/registry.yml` or merge with your existing file.
+
+registry-1:
+  credentials_id: "registry-cred"
+  name: registry-1
+  mavenConfig:
+    repositoryDomainName: "maven.example.org"
+    fullRepositoryUrl: "https://maven.example.org/repository"
+    targetSnapshot: "snapshot"
+    targetStaging: "staging"
+    targetRelease: "release"
+    releaseGroup: ""
+    snapshotGroup: ""
+  dockerConfig:
+    snapshotUri: "docker.example.org/snapshot"
+    stagingUri: "docker.example.org/staging"
+    releaseUri: "docker.example.org/release"
+    groupUri: "docker.example.org/group"
+    snapshotRepoName: "docker-snapshot"
+    stagingRepoName: "docker-staging"
+    releaseRepoName: "docker-release"
+    groupName: "docker-group"
