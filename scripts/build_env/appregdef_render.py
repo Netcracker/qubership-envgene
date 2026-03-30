@@ -5,6 +5,7 @@ from env_template.process_env_template import process_env_template
 from render_config_env import EnvGenerator
 
 if __name__ == '__main__':
+    print(f"Python sees REQUESTS_CA_BUNDLE: {os.environ.get('REQUESTS_CA_BUNDLE')}")
     template_version = process_env_template()
 
     cluster_name = getenv_with_error("CLUSTER_NAME")
