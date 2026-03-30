@@ -1,0 +1,5 @@
+version: 2.1
+type: deploy
+applications:
+  - version: "postgres:16.4-oss-1"
+    deployPostfix: "pg"

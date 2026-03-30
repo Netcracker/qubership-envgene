@@ -1,0 +1,20 @@
+---
+name: "dev_postgres_oss"
+version: 1
+baseline: "dev"
+description: "Minimal resource profile override for OSS postgres template (SBOM_TEST)"
+applications:
+  - name: "postgres"
+    version: ""
+    sd: ""
+    services:
+      - name: "postgres"
+        parameters:
+          - name: "CPU_REQUEST"
+            value: "100m"
+          - name: "CPU_LIMIT"
+            value: "1"
+          - name: "MEMORY_REQUEST"
+            value: "256Mi"
+          - name: "MEMORY_LIMIT"
+            value: "1Gi"

@@ -1,0 +1,65 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "{{ SOLUTION_SBOM_SERIAL_NUMBER_URN_UUID }}",
+  "version": 1,
+  "metadata": {
+    "timestamp": "{{ ISO_8601_TIMESTAMP }}",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.solution",
+      "bom-ref": "{{ BOM_REF_SOLUTION_ROOT }}",
+      "name": "Solution",
+      "version": "",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.solution-descriptor",
+          "bom-ref": "{{ BOM_REF_SOLUTION_SD }}",
+          "group": "",
+          "name": "",
+          "version": ""
+        }
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "{{ SBOM_GENERATOR_TOOL_VERSION }}"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "{{ BOM_REF_SOLUTION_APP }}",
+      "name": "{{ APPLICATION_NAME }}",
+      "version": "{{ APPLICATION_VERSION }}",
+      "properties": [
+        {
+          "name": "deployPostfix",
+          "value": "{{ DEPLOY_POSTFIX }}"
+        }
+      ],
+      "externalReferences": [
+        {
+          "type": "bom",
+          "url": "file://{{ APPLICATION_SBOM_FILENAME }}"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "{{ BOM_REF_SOLUTION_ROOT }}"
+    },
+    {
+      "ref": "{{ BOM_REF_SOLUTION_APP }}"
+    }
+  ]
+}
