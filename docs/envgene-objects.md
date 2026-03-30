@@ -177,11 +177,73 @@ namespaces:
 
 #### Tenant Template
 
-TBD
+This is a Jinja template file used to render the [Tenant](#tenant) object. It defines tenant-level parameters for Environment Instance generation.
+
+The Tenant template must be developed so that after Jinja rendering, the result is a valid Tenant object according to the [schema](/schemas/tenant.schema.json).
+
+[Macros](/docs/template-macros.md) are available for use when developing the template.
+
+**Location:** The Tenant template is located at `/templates/env_templates/*/`
+
+**Example:**
+
+```yaml
+name: "Applications"
+registryName: ""
+description: "For development"
+owners: "{{ current_env.owners }}"
+credential: ""
+labels: []
+```
 
 #### Cloud Template
 
-TBD
+This is a Jinja template file used to render the [Cloud](#cloud) object. It defines cluster-level parameters for Environment Instance generation.
+
+The Cloud template must be developed so that after Jinja rendering, the result is a valid Cloud object according to the [schema](/schemas/cloud.schema.json).
+
+[Macros](/docs/template-macros.md) are available for use when developing the template.
+
+**Location:** The Cloud template is located at `/templates/env_templates/*/`
+
+**Example:**
+
+```yaml
+name: "{{ current_env.cloudNameWithCluster }}"
+apiUrl: "{{ current_env.cluster.cloud_api_url }}"
+apiPort: "{{ current_env.cluster.cloud_api_port }}"
+privateUrl: ""
+publicUrl: "{{ current_env.cluster.cloud_public_url }}"
+dashboardUrl: "https://dashboard.{{ current_env.cluster.cloud_public_url }}"
+labels: []
+defaultCredentialsId: "token"
+protocol: "{{ current_env.cluster.cloud_api_protocol }}"
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+maasConfig:
+  credentialsId: "maas"
+  maasUrl: "http://maas-service-maas.{{ current_env.cluster.cloud_public_url }}"
+  maasInternalAddress: "http://maas-service.maas:8080"
+  enable: true
+vaultConfig:
+  url: ""
+  credentialsId: ""
+  enable: false
+dbaasConfigs:
+  - credentialsId: "dbaas"
+    apiUrl: 'http://dbaas-aggregator.dbaas:8080'
+    aggregatorUrl: 'https://aggregator-dbaas.{{ current_env.cluster.cloud_public_url }}'
+    enable: true
+consulConfig:
+  tokenSecret: "consul-token"
+  publicUrl: 'https://consul.{{ current_env.cluster.cloud_public_url }}'
+  enabled: true
+  internalUrl: 'http://consul-server.consul:8500'
+```
 
 #### Namespace Template
 
@@ -548,11 +610,319 @@ EnvGene validates each Environment Instance object against the corresponding [JS
 
 #### Tenant
 
-TBD
+The Tenant object holds tenant-level parameters describing the tenancy, including registry configuration, ownership information, and pipeline parameters. These parameters are common to all environments within the tenant.
+
+The Tenant object is used to generate Effective Set.
+
+The Tenant object is generated during Environment Instance generation based on:
+
+- [Tenant Template](#tenant-template)
+- [Template ParamSet](#template-parameterset)
+- [Instance ParamSet](#environment-specific-parameterset)
+
+For each parameter in the Tenant, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
+
+**Location:** `/environments/<cluster-name>/<environment-name>/tenant.yml`.
+
+```yaml
+# Mandatory
+# Field is used to uniquely identify the Tenant
+# The name of the tenant
+name: string
+# Mandatory
+# Deprecated
+# Not processed by EnvGene
+registryName: string
+# Optional
+# Description of the tenant
+# Used for documentation and identification purposes
+description: string
+# Optional
+# Tenant owners
+# Used to identify responsible parties for the tenant
+owners: string
+# Optional
+# Deprecated
+# Not processed by EnvGene
+gitRepository: string
+# Optional
+# Deprecated
+# Not processed by EnvGene
+defaultBranch: string
+# Optional
+# The identifier for credentials used by the deployment
+# Used for authentication when performing deployment operations
+credential: string
+# Optional
+# List of labels for Tenant
+# A list of labels that should be applied to the tenant
+# Used for filtering, organization, and grouping
+labels: list
+# Optional
+# Deprecated
+# Not processed by EnvGene
+globalE2EParameters:
+  # Optional
+  # Deprecated
+  # Not processed by EnvGene
+  pipelineDefaultRecipients: string
+  # Optional
+  # Deprecated
+  # Not processed by EnvGene
+  recipientsStrategy: string
+  # Optional
+  # Deprecated
+  # Not processed by EnvGene
+  mergeTenantsAndE2EParameters: boolean
+  # Optional
+  # Deprecated
+  # Not processed by EnvGene
+  environmentParameters: hashmap
+# Optional
+# Deprecated
+# Not processed by EnvGene
+deployParameters: hashmap
+```
+
+**Example:**
+
+```yaml
+# The contents of this file is generated from template artifact: sample-template:v1.2.3.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "tenant"
+registryName: ""
+description: "Composite Full Sample"
+owners: "Qubership team"
+credential: ""
+labels: []
+```
+
+[Tenant JSON schema](/schemas/tenant.schema.json)
 
 #### Cloud
 
-TBD
+The Cloud object holds cluster-level parameters describing the cluster and platform applications installed in it. These parameters are common to all namespaces in the environment.
+
+The Cloud object is used to generate Effective Set.
+
+The Cloud object is generated during Environment Instance generation based on:
+
+- [Cloud Template](#cloud-template)
+- [Template ParamSet](#template-parameterset)
+- [Instance ParamSet](#environment-specific-parameterset)
+- [Cloud Passport](/docs/envgene-objects.md#cloud-passport) data (when used)
+
+For each parameter in the Cloud, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
+
+**Location:** `/environments/<cluster-name>/<environment-name>/cloud.yml`.
+
+```yaml
+# Mandatory
+# The name of the cloud configuration
+# Typically combines cluster and environment name
+name: string
+# Mandatory
+# The URL of the API endpoint of the cloud
+# Used to connect to the Kubernetes cluster API server
+apiUrl: string
+# Mandatory
+# The port on which the API runs
+# Used to connect to the Kubernetes cluster API server
+apiPort: integer|string
+# Optional
+# The private-facing URL for internal access
+# Used to form service URLs accessible from within the cluster
+privateUrl: string
+# Optional
+# The public-facing URL for external access
+# Used to form service URLs accessible from outside the cluster
+# Calculator macros are generated based on this URL
+publicUrl: string
+# Mandatory
+# The URL for accessing the cloud's k8s dashboard
+# Used for monitoring and management
+dashboardUrl: string
+# Mandatory
+# A list of labels for categorizing or tagging the cloud
+# Used for filtering, organization, and grouping
+labels: list
+# Mandatory
+# The identifier for credentials used by the deployment
+# Used for authentication when performing deployment
+defaultCredentialsId: string
+# Mandatory
+# The communication protocol used
+# HTTP or HTTPS
+protocol: string
+# Optional
+# Deprecated
+# Not processed by EnvGene
+version: number
+# Optional
+# Deprecated
+# Not processed by EnvGene
+dbMode: string
+# Optional
+# Deprecated
+# Not processed by EnvGene
+databases: array
+# Optional
+# Deprecated
+# Not processed by EnvGene
+mergeDeployParametersAndE2EParameters: boolean
+# Mandatory
+# Configuration for the monitoring-as-a-service (MaaS)
+maasConfig:
+  # Optional
+  # Credentials identifier for MaaS
+  # Used for authentication when accessing MaaS
+  credentialsId: string
+  # Mandatory
+  # Flag to enable or disable MaaS
+  # Controls whether MaaS-related parameters appear in the Effective Set
+  enable: boolean
+  # Optional
+  # URL for accessing MaaS
+  # Used to configure external access to MaaS
+  maasUrl: string
+  # Optional
+  # Internal address for MaaS
+  # Used to configure internal cluster access to MaaS
+  maasInternalAddress: string
+# Mandatory
+# Configuration for the vault service
+vaultConfig:
+  # Optional
+  # Credentials identifier for the vault
+  # Used for authentication when accessing Vault
+  credentialsId: string
+  # Mandatory
+  # Flag to enable or disable vault integration
+  # Controls whether Vault-related parameters appear in the Effective Set
+  enable: boolean
+  # Optional
+  # The vault service URL
+  # Used to configure access to Vault
+  url: string
+# Optional
+# Database-as-a-service (DBaaS) configurations
+# Multiple DBaaS instances can be configured
+dbaasConfigs:
+  - # Optional
+    # Credentials identifier for DBaaS
+    # Used for authentication when accessing DBaaS
+    credentialsId: string
+    # Mandatory
+    # Flag to enable or disable DBaaS
+    # Controls whether DBaaS-related parameters appear in the Effective Set
+    enable: boolean
+    # Optional
+    # API URL for DBaaS
+    # Used to configure internal cluster access to DBaaS
+    apiUrl: string
+    # Optional
+    # URL for the DBaaS aggregator
+    # Used to configure external access to DBaaS
+    aggregatorUrl: string
+# Mandatory
+# Configuration for Consul service integration
+consulConfig:
+  # Optional
+  # Secret token for Consul authentication
+  # Used for authentication when accessing Consul
+  tokenSecret: string
+  # Mandatory
+  # Flag to enable or disable Consul integration
+  # Controls whether Consul-related parameters appear in the Effective Set
+  enabled: boolean
+  # Optional
+  # The public URL for accessing Consul
+  # Used to configure external access to Consul
+  publicUrl: string
+  # Optional
+  # The internal URL for accessing Consul
+  # Used to configure internal cluster access to Consul
+  internalUrl: string
+# Optional
+# Key-value pairs of deployment parameters at the cloud level
+# Used to set parameters that will be used for rendering Helm charts of applications in this cloud
+deployParameters: hashmap
+# Optional
+# Key-value pairs of e2e parameters at the cloud level
+# Used to configure the systems/pipelines managing the Environment lifecycle for this cloud
+e2eParameters: hashmap
+# Optional
+# Key-value pairs of technical configuration parameters at the cloud level
+# Used to set parameters that can be applied to the application at runtime
+# without redeployment for this cloud
+technicalConfigurationParameters: hashmap
+# Optional
+# List of deployment Parameter Set names to include at the cloud level
+# Used to set parameters that will be used for rendering Helm charts of applications in this cloud
+deployParameterSets: list
+# Optional
+# List of e2e Parameter Set names to include at the cloud level
+# Used to configure the systems/pipelines managing the Environment lifecycle for this cloud
+e2eParameterSets: list
+# Optional
+# List of technical configuration Parameter Set names to include at the cloud level
+# Used to include predefined sets of parameters that can be applied to the application at runtime
+# without redeployment for this cloud
+technicalConfigurationParameterSets: list
+```
+
+**Example:**
+
+```yaml
+# The contents of this file is generated from template artifact: sample-template:v1.2.3.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "cluster_01_env_01"
+apiUrl: "api.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+apiPort: "6443" # cloud passport: cluster-01 version: 1.5
+privateUrl: "cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+publicUrl: "cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+dashboardUrl: "https://dashboard.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+labels: []
+defaultCredentialsId: "cloud-deploy-sa-token" # cloud passport: cluster-01 version: 1.5
+protocol: "https" # cloud passport: cluster-01 version: 1.5
+maasConfig:
+  credentialsId: "maas-cred" # cloud passport: cluster-01 version: 1.5
+  enable: true  # cloud passport: cluster-01 version: 1.5
+  maasUrl: "http://maas.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+  maasInternalAddress: "http://maas.maas:8080" # cloud passport: cluster-01 version: 1.5
+vaultConfig:
+  credentialsId: ""
+  enable: false
+  url: ""
+dbaasConfigs:
+  - credentialsId: "dbaas-cred" # cloud passport: cluster-01 version: 1.5
+    enable: true # cloud passport: cluster-01 version: 1.5
+    apiUrl: "http://dbaas.dbaas:8080" # cloud passport: cluster-01 version: 1.5
+    aggregatorUrl: "https://dbaas.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+consulConfig:
+  tokenSecret: "consul-cred" # cloud passport: cluster-01 version: 1.5
+  enabled: true # cloud passport: cluster-01 version: 1.5
+  publicUrl: "http://consul.consul:8080" # cloud passport: cluster-01 version: 1.5
+  internalUrl: "http://consul.consul:8080" # cloud passport: cluster-01 version: 1.5
+deployParameters:
+  CLOUD_DASHBOARD_URL: "https://dashboard.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+  CMDB_URL: "https://cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+  CONSUL_ENABLED: "true" # cloud passport: cluster-01 version: 1.5
+  MAVEN_REPO_URL: "https://artifactory.qubership.org" # cloud passport: cluster-01 version: 1.5
+  MONITORING_ENABLED: "true" # cloud passport: cluster-01 version: 1.5
+  STORAGE_RWO_CLASS: "standard" # cloud passport: cluster-01 version: 1.5
+  ZOOKEEPER_ADDRESS: "zookeeper.zookeeper:2181" # cloud passport: cluster-01 version: 1.5
+e2eParameters:
+  CLOUD_LEVEL_PARAM_1: "cloud-level-value-1" # paramset: cloud-level-params version: 25.1 source: instance
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+```
+
+[Cloud JSON schema](/schemas/cloud.schema.json)
 
 #### Namespace
 
