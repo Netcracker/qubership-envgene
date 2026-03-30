@@ -404,7 +404,22 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
                    artifact_extension: FileExtension,
                    cred: Credentials | None = None,
                    classifier: str = "") -> str | None:
+    ca_bundle_path = os.environ.get("REQUESTS_CA_BUNDLE")
+
+    if ca_bundle_path and os.path.isfile(ca_bundle_path):
+        logger.info(f"REQUESTS_CA_BUNDLE is set to: {ca_bundle_path}")
+
+        tmp_dir = Path(os.environ["CI_PROJECT_DIR"]) / "tmp"
+        tmp_dir.mkdir(parents=True, exist_ok=True)  
+        tmp_path = tmp_dir / "python_crt.crt"
+        shutil.copyfile(ca_bundle_path, tmp_path)
+        logger.info(f"Contents copied to {tmp_path}")	
+    else:
+        logger.info("REQUESTS_CA_BUNDLE is not set or file does not exist!")
+
     if MavenConfig.is_nexus(repo_url):
+        print("nexus url found")
+        logger.info("nexus url found")
         repo_url = convert_nexus_repo_url_to_index_view(repo_url)
 
     base = repo_url.rstrip("/") + "/"
@@ -422,17 +437,7 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
     auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
     
-    try:
-        ca_bundle_path = os.environ.get("REQUESTS_CA_BUNDLE")
-
-        if ca_bundle_path and os.path.isfile(ca_bundle_path):
-            print(f"REQUESTS_CA_BUNDLE is set to: {ca_bundle_path}")
-            
-            tmp_path = "/tmp/python_crt.crt"
-            shutil.copyfile(ca_bundle_path, tmp_path)
-            print(f"Contents copied to {tmp_path}")	
-        else:
-            print("REQUESTS_CA_BUNDLE is not set or file does not exist!")
+    try:        
 
         response = requests.head(full_url, auth=auth, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code == 200:
