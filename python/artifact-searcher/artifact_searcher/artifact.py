@@ -405,7 +405,7 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
                    cred: Credentials | None = None,
                    classifier: str = "") -> str | None:
     if MavenConfig.is_nexus(repo_url):
-            repo_url = convert_nexus_repo_url_to_index_view(repo_url)
+        repo_url = convert_nexus_repo_url_to_index_view(repo_url)
     base = repo_url.rstrip("/") + "/"
     group_id = group_id.replace(".", "/")
 
