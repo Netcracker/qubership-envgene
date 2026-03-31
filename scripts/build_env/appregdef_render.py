@@ -3,6 +3,7 @@ from envgenehelper.models import TemplateVersionUpdateMode
 
 from env_template.process_env_template import process_env_template
 from render_config_env import EnvGenerator
+import requests
 
 if __name__ == '__main__':
     print("REQUESTS_CA_BUNDLE:", os.environ.get("REQUESTS_CA_BUNDLE"))
