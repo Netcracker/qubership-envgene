@@ -260,12 +260,12 @@ cp_discovery:
     # Mandatory
     # Authentication token for the discovery repository
     # Recommended to set via cred macro:
-    # envgen.creds.get(<cred-id>).secret
+    # ${creds.get('<cred-id>').secret}
     token: string
 # Authentication token for EnvGene to access the instance repository
 # Required for EnvGene to commit changes to the instance repository
 # Recommended to set via cred macro:
-# envgen.creds.get(<cred-id>).secret
+# ${creds.get('<cred-id>').secret}
 self_token: string
 ```
 
