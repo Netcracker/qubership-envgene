@@ -16,7 +16,13 @@ FERNET_ID = "Fernet"
 SOPS_ID = "SOPS"
 
 
+def get_regdef_schema() -> dict:
+    """Load RegDef V1 schema from package resources"""
+    return json.loads(files("envgenehelper").joinpath("schemas/regdef.schema.json").read_text(encoding="utf-8"))
+
+
 def get_regdef_v2_schema() -> dict:
+    """Load RegDef V2 schema from package resources"""
     return json.loads(files("envgenehelper").joinpath("schemas/regdef-v2.schema.json").read_text(encoding="utf-8"))
 
 
