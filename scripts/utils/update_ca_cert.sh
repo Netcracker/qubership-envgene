@@ -2,7 +2,7 @@
 
 CA_FILE="$1"
 # Default log level to INFO if not set; normalize to uppercase for comparison
-ENVGENE_LOG_LEVEL="${ENVGENE_LOG_LEVEL:-INFO}"
+ENVGENE_LOG_LEVEL="${ENVGENE_LOG_LEVEL:-DEBUG}"
 ENVGENE_LOG_LEVEL="$(printf '%s' "${ENVGENE_LOG_LEVEL}" | tr '[:lower:]' '[:upper:]')"
 
 function getLinuxDisto {
@@ -109,6 +109,7 @@ function updateCertificates {
       echo "CA file ${CA_FILE} not found or empty"
       exit 1
     fi
+    echo "REQUESTS_CA_BUNDLE=${REQUESTS_CA_BUNDLE}"
     echo "export REQUESTS_CA_BUNDLE=${REQUESTS_CA_BUNDLE}" >> ~/.bashrc
 }
 
