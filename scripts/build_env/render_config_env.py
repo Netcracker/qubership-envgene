@@ -15,7 +15,6 @@ from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotatio
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 APPDEF_SCHEMA = str(SCHEMAS_DIR / "appdef.schema.json")
-REGDEF_V2_VERSION = "2.0"
 TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
 
 yml = create_yaml_processor()
@@ -575,9 +574,7 @@ class EnvGenerator:
                 logger.warning(f"No RegDef YAMLs found in {regdef_dir}")
             for file in regdef_files:
                 logger.info(f"RegDef file: {file}")
-                content = openYaml(file)
-                schema = get_regdef_v2_schema() if content.get("version") == REGDEF_V2_VERSION else get_regdef_schema()
-                validate_yaml_by_scheme_or_fail(yaml_file_path=file, input_schema_content=schema)
+                validate_regdef_or_fail(file)
 
     def process_app_reg_defs(self, env_name: str, extra_env: dict):
         logger.info(
