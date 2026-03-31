@@ -83,7 +83,7 @@ def process_cloud_definition(cloudPassportYaml, env_dir, comment) :
           process_and_update_key("publicUrl", consulConfigYaml, "CONSUL_PUBLIC_URL", consulPassportYaml, comment)
           process_and_update_key("internalUrl", consulConfigYaml, "CONSUL_URL", consulPassportYaml, comment)
           # CONSUL_ENABLED variable should be both in consul section and in deploy parameters
-          store_value_to_yaml(cloudYaml["deployParameters"], "CONSUL_ENABLED", f"{consulConfigYaml['enabled']}".lower(), comment)
+          store_value_to_yaml(cloudYaml["deployParameters"], "CONSUL_ENABLED", consulConfigYaml['enabled'], comment)
           del cloudPassportYaml["consul"]
     else:
         store_value_to_yaml(cloudYaml["consulConfig"], "enabled", False)

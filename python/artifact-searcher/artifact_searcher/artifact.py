@@ -419,9 +419,10 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     folder = version_to_folder_name(version)
     filename = create_artifact_name(artifact_id, artifact_extension, version, classifier)
     full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
-
+    auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
+    
     try:
-        response = requests.head(full_url, timeout=DEFAULT_REQUEST_TIMEOUT)
+        response = requests.head(full_url, auth=auth, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code == 200:
             logger.info(
                 f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact found: {full_url}"
