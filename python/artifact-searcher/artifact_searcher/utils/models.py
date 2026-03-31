@@ -1,5 +1,6 @@
 from enum import Enum
 from typing import Optional
+import base64
 
 import jsonschema
 from envgenehelper.config_helper import get_regdef_v2_schema
@@ -123,7 +124,6 @@ class Registry(BaseSchema):
         username = cred_data.get("username")
         password = cred_data.get("password")
         if username and password:
-            import base64
             token = base64.b64encode(f"{username}:{password}".encode()).decode()
             return {"Authorization": f"Basic {token}"}
         return None
