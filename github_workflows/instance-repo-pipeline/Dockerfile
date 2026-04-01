@@ -1,5 +1,5 @@
 #-----------Stage 1-----------
-FROM alpine:3.19 AS initial
+FROM python:3.12-alpine3.19 AS initial
 WORKDIR /workspace
 COPY github_workflows/instance-repo-pipeline/.github /opt/github
 
@@ -7,7 +7,8 @@ COPY github_workflows/instance-repo-pipeline/.github /opt/github
 RUN find /opt/github/scripts -type f -name "*.sh" -exec chmod +x {} \;
 
 #-----------Stage 2-----------
-FROM alpine:3.19
+FROM python:3.12-alpine3.19
+RUN pip install --no-cache-dir ruamel.yaml
 COPY --from=initial /opt/github /opt/github
 USER 1000
 CMD ["sh", "-c", "sleep infinity"]
