@@ -40,6 +40,8 @@
 
 This document specifies external credentials for EnvGene: the `credRef` Credential Reference, `external` [Credential](#credential) objects, [Secret Store](#secret-store) configuration, Effective Set outputs (VALS, ESO, External Credential Context), and per-store normalization of remote secret names.
 
+A minimal end-to-end sample (template, instance repository, Effective Set deployment `values/credentials.yaml` and `values/external-credentials.yaml` for VALS vs ESO) lives under [/docs/samples/external-credentials/](/docs/samples/external-credentials/).
+
 ## Problem Statement
 
 In the current implementation, EnvGene only supports Credentials that are stored inside files within the repository itself. Integration with external secret stores is not available. Because of this:

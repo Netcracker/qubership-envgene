@@ -1,0 +1,15 @@
+---
+name: "sample-tenant"
+registryName: "default"
+description: "External cred sample"
+owners: "sample"
+deployParameters: {}
+globalE2EParameters:
+  pipelineDefaultRecipients: ""
+  recipientsStrategy: "merge"
+  mergeTenantsAndE2EParameters: false
+  environmentParameters: {}
+gitRepository: ""
+defaultBranch: ""
+credential: ""
+labels: []
