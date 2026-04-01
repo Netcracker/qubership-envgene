@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any, Optional
 from urllib.parse import urljoin, urlparse, urlunparse
 from zipfile import ZipFile
+from collections import defaultdict
 
 import aiohttp
 import requests
@@ -146,27 +147,37 @@ def credentials_to_headers(cred: Credentials) -> dict:
     return {"Authorization": f"Basic {token}"}
 
 
-async def download_all_async(artifacts_info: list[ArtifactInfo], auth_headers: dict | None = None):
-    session_headers = auth_headers
-    connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
-    timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
-    async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=session_headers) as session:
-        async with asyncio.TaskGroup() as tg:
-            tasks = [tg.create_task(download_async(session, artifact_info)) for artifact_info in artifacts_info]
-        results = []
-        errors = []
+async def download_all_async(artifacts_info: list[ArtifactInfo]):
+    auth_groups = defaultdict(list)
+    for artifact in artifacts_info:
+        # Use sorted tuple of auth items as key, or "none" for None
+        auth_key = tuple(sorted(artifact.auth_headers.items())) if artifact.auth_headers else "none"
+        auth_groups[auth_key].append(artifact)
+    
+    all_results = []
+    for auth_key, artifacts in auth_groups.items():
+        headers = artifacts[0].auth_headers
+        connector = aiohttp.TCPConnector(limit=TCP_CONNECTION_LIMIT)
+        timeout = aiohttp.ClientTimeout(total=DEFAULT_REQUEST_TIMEOUT)
+        async with aiohttp.ClientSession(connector=connector, timeout=timeout, headers=headers) as session:
+            async with asyncio.TaskGroup() as tg:
+                tasks = [tg.create_task(download_async(session, artifact)) for artifact in artifacts]
+            results = []
+            errors = []
 
-        for i, task in enumerate(tasks):
-            result = task.result()
-            if not result or result.local_path is None:
-                errors.append(f"Task {i}: artifact was not downloaded")
-            else:
-                results.append(result)
+            for i, task in enumerate(tasks):
+                result = task.result()
+                if not result or result.local_path is None:
+                    errors.append(f"Task {i}: artifact was not downloaded")
+                else:
+                    results.append(result)
 
-        if errors:
-            raise ValueError("Some tasks failed:\n" + "\n".join(errors))
-
-        return results
+            if errors:
+                raise ValueError("Some tasks failed:\n" + "\n".join(errors))
+            
+            all_results.extend(results)
+    
+    return all_results
 
 
 def create_app_artifacts_local_path(app_name, app_version):
@@ -431,7 +442,7 @@ def check_artifacts_by_aql(aql: str, url: str = "",
         path = result.get("path")
         name = result.get("name")
         url = f"{url}/{repo}/{path}/{name}"
-        artifact = ArtifactInfo(repo=repo, path=path, name=name, url=url)
+        artifact = ArtifactInfo(repo=repo, path=path, name=name, url=url, auth_headers=auth_headers)
         artifacts.append(artifact)
     return artifacts
 
