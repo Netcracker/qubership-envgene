@@ -1,17 +1,14 @@
 ---
-#Variables
 variables:
   INSTANCE_REPO_PIPELINE_IMAGE: DOCKER_IMAGE_NAME
   INSTANCE_REPO_PIPELINE_IMAGE_TAG: DOCKER_IMAGE_TAG
 
-#Rules
 workflow:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'
       when: never
     - when: always
 
-#Stages
 stages:
   - extend-pipeline
 
