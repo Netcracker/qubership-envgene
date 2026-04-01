@@ -59,6 +59,7 @@ EnvGene simplifies Environment management by providing:
 
 - **Encrypted Credentials Management**: Secure credential storage in Git using encryption
 - **Credential Rotation**: Automated credential rotation capabilities
+- **External Credentials**: Integration with external secret stores (see [External Credentials Management](/docs/features/external-creds.md))
 
 ## 🚀 Quick Start
 
@@ -166,6 +167,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Environment Inventory Generation**](/docs/features/env-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
 - [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
+- [**External Credentials Management**](/docs/features/external-creds.md) - External secret stores, VALS/ESO, and External Credential Context
 - [**Namespace Render Filter**](/docs/features/namespace-render-filtering.md) - Render only selected [Namespaces](/docs/envgene-objects.md#namespace)
 - [**Namespace Filtering in Template Descriptor**](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter namespaces during Template Descriptor rendering
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services

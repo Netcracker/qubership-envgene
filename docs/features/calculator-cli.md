@@ -22,7 +22,11 @@
       - [\[Version 2.0\] deployPostfix Matching Logic](#version-20-deploypostfix-matching-logic)
       - [\[Version 2.0\] Handling Missing Attributes in SBOM](#version-20-handling-missing-attributes-in-sbom)
       - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
-      - [\[Version 2.0\] Sensitive parameters processing](#version-20-sensitive-parameters-processing)
+      - [\[Version 2.0\] Sensitive parameter processing](#version-20-sensitive-parameter-processing)
+        - [\[Version 2.0\] Local Sensitive parameters](#version-20-local-sensitive-parameters)
+        - [\[Version 2.0\] External Sensitive parameters](#version-20-external-sensitive-parameters)
+        - [\[Version 2.0\] Splitting sensitive/non sensitive parameters](#version-20-splitting-sensitivenon-sensitive-parameters)
+        - [External credential algorithms](#external-credential-algorithms)
       - [\[Version 2.0\] No SBOMs Mode](#version-20-no-sboms-mode)
       - [\[Version 2.0\] Parameters Priority](#version-20-parameters-priority)
       - [\[Version 2.0\] Traceability Comments](#version-20-traceability-comments)
@@ -34,6 +38,7 @@
           - [\[Version 2.0\] Image parameters derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `credentials.yaml`](#version-20deployment-parameter-context-credentialsyaml)
           - [\[Version 2.0\] Predefined `credentials.yaml` parameters](#version-20-predefined-credentialsyaml-parameters)
+        - [\[Version 2.0\]\[Deployment Parameter Context\] `external-credentials.yaml`](#version-20deployment-parameter-context-external-credentialsyaml)
         - [\[Version 2.0\]\[Deployment Parameter Context\] Collision Parameters](#version-20deployment-parameter-context-collision-parameters)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `custom-params.yaml`](#version-20deployment-parameter-context-custom-paramsyaml)
         - [\[Version 2.0\]\[Deployment Parameter Context\] `deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml)
@@ -64,6 +69,8 @@
         - [\[Version 2.0\]\[Cleanup Context\] `parameters.yaml`](#version-20cleanup-context-parametersyaml)
         - [\[Version 2.0\]\[Cleanup Context\] `credentials.yaml`](#version-20cleanup-context-credentialsyaml)
         - [\[Version 2.0\]\[Cleanup Context\] `mapping.yml`](#version-20cleanup-context-mappingyml)
+      - [\[Version 2.0\] External Credential Context](#version-20-external-credential-context)
+        - [External Credential Context generation](#external-credential-context-generation)
 
 ## Requirements
 
@@ -279,6 +286,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   |   |       ├── deployment-parameters.yaml
                 |   |   |       ├── collision-deployment-parameters.yaml
                 |   |   |       ├── credentials.yaml
+                |   |   |       ├── external-credentials.yaml
                 |   |   |       ├── collision-credentials.yaml
                 |   |   |       ├── deploy-descriptor.yaml
                 |   |   |       └── custom-params.yaml
@@ -294,6 +302,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   |           ├── deployment-parameters.yaml
                 |   |           ├── collision-deployment-parameters.yaml
                 |   |           ├── credentials.yaml
+                |   |           ├── external-credentials.yaml
                 |   |           ├── collision-credentials.yaml
                 |   |           ├── deploy-descriptor.yaml
                 |   |           └── custom-params.yaml
@@ -310,6 +319,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |       |       ├── deployment-parameters.yaml
                 |       |       ├── collision-deployment-parameters.yaml
                 |       |       ├── credentials.yaml
+                |       |       ├── external-credentials.yaml
                 |       |       ├── collision-credentials.yaml
                 |       |       ├── deploy-descriptor.yaml
                 |       |       └── custom-params.yaml
@@ -325,7 +335,8 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |               ├── deployment-parameters.yaml
                 |               ├── collision-deployment-parameters.yaml
                 |               ├── credentials.yaml
-                |               ├── collision-credentials.yaml
+                |               ├── external-credentials.yaml
+                |               ├── collision-credentials.yaml              
                 |               ├── deploy-descriptor.yaml
                 |               └── custom-params.yaml
                 ├── runtime
@@ -344,14 +355,16 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |       └── <application-name-02>
                 |           ├── parameters.yaml
                 |           └── credentials.yaml
-                └── cleanup
-                    ├── mapping.yml
-                    ├── <namespace-folder-01>
-                    |   ├── parameters.yaml
-                    |   └── credentials.yaml
-                    └── <namespace-folder-02>
-                        ├── parameters.yaml
-                        └── credentials.yaml
+                ├── cleanup
+                |   ├── mapping.yml
+                |   ├── <namespace-folder-01>
+                |   |   ├── parameters.yaml
+                |   |   └── credentials.yaml
+                |   └── <namespace-folder-02>
+                |       ├── parameters.yaml
+                |       └── credentials.yaml
+                └── external-credential
+                    └── external-credentials.yaml
 ```
 
 The namespace folder names in Effective Set v2.0 (e.g., `<namespace-folder-01>`, `<namespace-folder-02>`) must match exactly the namespace folder names from the Environment Instance (the folder name is a child of `Namespaces` and parent of `namespace.yml`). These folder names are used consistently across all Effective Set contexts (deployment, runtime, cleanup) and in `mapping.yml` files.
@@ -424,9 +437,19 @@ The Calculator command-line tool performs validation to check for the presence o
      - If `true`: Validation is performed
      - If `false`: Validation is skipped
 
-#### [Version 2.0] Sensitive parameters processing
+#### [Version 2.0] Sensitive parameter processing
 
-Sensitive parameters in the Effective Set are grouped into dedicated credentials files for encryption and secure handling. The following files contains sensitive parameters:
+Effective Set version 2.0 handles sensitive parameters along two paths:
+
+- **Local:** Value is set through the [`creds.get`](/docs/template-macros.md#credential-macro-and-credential-reference) macro which points to a [Credential](/docs/envgene-objects.md#credential) with `type: usernamePassword` or `secret`. These values are resolved in the deployment context as plaintext.
+
+- **External:** Value is set through a [credRef Credential Reference](/docs/features/external-creds.md#credential-reference) which points to a [Credential](/docs/envgene-objects.md#credential) with `type: external`. Such values are not written as plaintext in the deployment context. The Calculator emits VALS- or ESO-shaped values **and**, when applicable, contributes to the aggregated output under [External Credential Context](#version-20-external-credential-context).
+
+For a given application, into Deployment Descriptor is set `SECRET_MACRO_HANDLER` to `vals` or `eso` for how external references are emitted. That setting applies only to the external path above, not to local credential macro splitting.
+
+##### [Version 2.0] Local Sensitive parameters
+
+Sensitive parameters specified via the `creds.get` macro and local Credentials in the Effective Set are grouped into dedicated **local** credentials files for encryption and secure handling:
 
 1. `effective-set/topology/credentials.yaml`
 2. `effective-set/pipeline/credentials.yaml`
@@ -436,15 +459,86 @@ Sensitive parameters in the Effective Set are grouped into dedicated credentials
 6. `effective-set/runtime/<namespace-folder>/<application-name>/credentials.yaml`
 7. `effective-set/deployment/<namespace-folder>/<application-name>/values/custom-params.yaml`
 
-**Splitting principle:**
+##### [Version 2.0] External Sensitive parameters
 
-- If a parameter is defined in the Environment Instance using the [credential macro](/docs/template-macros.md#credential-macro), it is considered sensitive.
-- If a parameter is part of a complex (nested) structure, only the sensitive subfields (those defined via the credential macro) are extracted and placed in the credentials file. The non-sensitive subfields remain in the non-sensitive parameters file.
+Sensitive parameters specified via a `credRef` Credential Reference and external Credentials in the Effective Set are grouped into dedicated **external** credentials files. Encryption of these files is **not** required:
+
+1. `effective-set/deployment/<namespace-folder>/<application-name>/values/external-credentials.yaml`
+
+**Parameter with VALS reference:**
+
+A **parameter with VALS reference** is the deployment-side representation of a sensitive parameter after Effective Set calculation when `SECRET_MACRO_HANDLER` is `vals`. Parameters that were defined with a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`) and resolve to an external [Credential](/docs/envgene-objects.md#credential) are emitted as plain YAML string values - `ref+...` URIs.
+
+Those references are resolved at deploy time to secret material by the Effective Set consumer. VALS Argo resolves them to plain text values.
+
+Parameters that resolve to VALS references are written to `effective-set/deployment/<namespace-folder>/<application-name>/values/external-credentials.yaml`.
+
+Output format:
+
+```yaml
+<parameter-key>: <vals-uri>
+```
+
+Example:
+
+```yaml
+global.secrets.streamingPlatform.username: ref+gcpsecrets://468649328578/ocp-05--env-1--env-1-data-management--cdc--cdc-streaming-cred#/username
+
+global.secrets.streamingPlatform.password: ref+gcpsecrets://468649328578/ocp-05--env-1--env-1-data-management--cdc--cdc-streaming-cred#/password
+
+CONSUL_ADMIN_TOKEN: ref+gcpsecrets://468649328578/ocp-05--postgres-password
+```
+
+**Parameter with ESO reference:**
+
+A **parameter with ESO reference** is the deployment-side representation of a sensitive parameter after Effective Set calculation when `SECRET_MACRO_HANDLER` is `eso`. Parameters that were defined with a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`) and resolve to an external [Credential](/docs/envgene-objects.md#credential).
+
+Those references are resolved at deploy time to secret material by the Effective Set consumer. The Helm chart consumes them (one object per parameter path) to render `ExternalSecret` CRs.
+
+Parameters that resolve to ESO references are written to `effective-set/deployment/<namespace-folder>/<application-name>/values/external-credentials.yaml`.
+
+Output format:
+
+```yaml
+<parameter-key>:
+  secretStoreId: <secret-store-id>
+  normalizedSecretName: <secret-name>
+  secretKeys:
+    - remoteKeyName: enum [ username, password ]
+```
+
+Example (multi-field credential):
+
+```yaml
+global.secrets.streamingPlatform.username:
+  secretStoreId: default-store
+  normalizedSecretName: ocp-05/env-1/env-1-data-management/cdc/cdc-streaming-cred
+  secretKeys:
+    - remoteKeyName: username
+
+global.secrets.streamingPlatform.password:
+  secretStoreId: default-store
+  normalizedSecretName: ocp-05/env-1/env-1-data-management/cdc/cdc-streaming-cred
+  secretKeys:
+    - remoteKeyName: password
+
+CONSUL_ADMIN_TOKEN:
+  secretStoreId: default-store
+  normalizedSecretName: ocp-05/postgres-password
+```
+
+> [!IMPORTANT]
+> For conceptual overview, use cases, and object definitions, see [External Credentials Management](/docs/features/external-creds.md).
+
+##### [Version 2.0] Splitting sensitive/non sensitive parameters
+
+- If a parameter is defined in the Environment Instance using the [`creds.get`](/docs/template-macros.md#credential-macro-and-credential-reference) macro which points to a [Credential](/docs/envgene-objects.md#credential) with `type: usernamePassword` or `secret`, it is considered sensitive.
+- If a parameter is part of a complex (nested) structure, only the sensitive subfields (those defined via the `creds.get` macro) are extracted and placed in the local credentials file. The non-sensitive subfields remain in the non-sensitive parameters file.
 - The split is performed recursively for all nested objects.
 
 **Formal rule:**
 
-- For any YAML object, if a key or subkey is defined via the credential macro, that key and its value are moved to the corresponding credentials file, preserving the nested structure. All other keys remain in the non-sensitive parameters file.
+- For any YAML object, if a key or subkey is defined via the `creds.get` macro, that key and its value are moved to the corresponding local credentials file, preserving the nested structure. All other keys remain in the non-sensitive parameters file.
 
 **Example:**
 
@@ -474,6 +568,17 @@ complex_key:
     username: username
     password: password
 ```
+
+> [!NOTE]
+> The same rules applies to Credential References: nested maps are split recursively - only keys resolved from a credRef Credential Reference move to `external-credentials.yaml`, the rest stay in `deployment-parameters.yaml`.
+
+##### External credential algorithms
+
+Normative algorithms for normalization to `normalizedSecretName`, VALS reference generation, and ESO reference generation are specified under [Effective Set external credential behavior](/docs/features/external-creds.md#effective-set-external-credential-behavior) in [External Credentials Management](/docs/features/external-creds.md):
+
+- [Normalization to `normalizedSecretName`](/docs/features/external-creds.md#normalization-to-normalizedsecretname)
+- [VALS reference generation](/docs/features/external-creds.md#vals-reference-generation)
+- [ESO reference generation](/docs/features/external-creds.md#eso-reference-generation)
 
 #### [Version 2.0] No SBOMs Mode
 
@@ -734,9 +839,9 @@ All such parameters are added to `deployment-parameters.yaml` as `<image-params-
 
 ##### \[Version 2.0][Deployment Parameter Context] `credentials.yaml`
 
-This file contains sensitive parameters defined in the `deployParameters` section of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects.
+This file contains **local** sensitive parameters defined in the `deployParameters` section of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects.
 
-For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
+For more information, refer to [Local Sensitive parameters](#version-20-local-sensitive-parameters).
 
 It also includes a [predefined set of parameters](#version-20-predefined-credentialsyaml-parameters) common to all application services.
 
@@ -776,6 +881,31 @@ global: &id001
 > Parameters whose keys match the name of one of the services must be excluded from this file
 > and placed in [`collision-credentials.yaml`](#version-20deployment-parameter-context-collision-parameters) instead
 
+##### \[Version 2.0][Deployment Parameter Context] `external-credentials.yaml`
+
+This file contains **external** sensitive parameters defined in the `deployParameters` section of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects.
+
+For more information, refer to [External Sensitive parameters](#version-20-external-sensitive-parameters).
+
+The structure of this file is as follows:
+
+```yaml
+<key-1>: <value-1>
+<key-N>: <value-N>
+<application-predefined-key-1>: <application-predefined-value-1>
+<application-predefined-key-N>: <application-predefined-value-N>
+global: &id001
+  <key-1>: <value-1>
+  <key-N>: <value-N>
+  <application-predefined-key-1>: <application-predefined-value-1>
+  <application-predefined-key-N>: <application-predefined-value-N>
+<service-name-1>: *id001
+<service-name-2>: *id001
+```
+
+> [!WARNING]
+> The list of `application-predefined-key` values is the same as in [Predefined `credentials.yaml` parameters](#version-20-predefined-credentialsyaml-parameters).
+
 ##### \[Version 2.0][Deployment Parameter Context] Collision Parameters
 
 Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` are moved to collision files if they meet **both** conditions:
@@ -783,10 +913,12 @@ Root-level parameters from `deployment-parameters.yaml` or `credentials.yaml` ar
 1. The parameter key matches the name of one of the [services](#version-20-service-inclusion-criteria-and-naming-convention)
 2. The parameter is **not** an [Image parameter derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
 
+Parameters from `external-credentials.yaml` are **not** inputs to this logic: they never move to `collision-credentials.yaml` or `collision-deployment-parameters.yaml`.
+
 **Destination files:**
 
-- `collision-deployment-parameters.yaml` — for non-sensitive parameters (not defined via a credential macro)
-- `collision-credentials.yaml` — for sensitive parameters (defined via a credential macro)
+- `collision-deployment-parameters.yaml` — for non-sensitive parameters
+- `collision-credentials.yaml` — for **local** sensitive parameters (defined via `${creds.get(...)}` only)
 
 > [!NOTE]
 > Only root-level parameters are processed by this collision logic. If a parameter with a service name as its key is nested under a service section, it is not moved to the collision files and remains in its original location.
@@ -1150,9 +1282,7 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ##### \[Version 2.0][Pipeline Parameter Context] `credentials.yaml`
 
-This file contains sensitive parameters defined in the `e2eParameters` section of the `Cloud` Environment Instance object.
-
-For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
+This file contains **local** sensitive parameters defined in the `e2eParameters` section of the `Cloud` Environment Instance object.
 
 The structure of this file is as follows:
 
@@ -1197,9 +1327,7 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ###### \[Version 2.0][Pipeline Parameter Context] `<consumer>-credentials.yaml`
 
-This file contains consumer-specific sensitive parameters.
-
-For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
+This file contains consumer-specific **local** sensitive parameters.
 
 The structure of this file is as follows:
 
@@ -1215,9 +1343,9 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 The Topology Context contains information about the relationships between systems and their components. It includes two files:
 
 - `parameters.yaml` for non-sensitive data
-- `credentials.yaml` for sensitive data
+- `credentials.yaml` for **local** sensitive data
 
-For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing).
+For more information, refer to [Sensitive parameter processing](#version-20-sensitive-parameter-processing).
 
 This context only contains parameters generated by EnvGene:
 
@@ -1372,7 +1500,7 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 This file contains:
 
-1. Sensitive parameters defined in the `technicalConfigurationParameters` section. For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing)
+1. **Local** sensitive parameters defined in the `technicalConfigurationParameters` section. For more information, refer to [Sensitive parameter processing](#version-20-sensitive-parameter-processing)
 
 2. Parameters from the `runtime` section of the object passed to `--custom-params`
 
@@ -1412,7 +1540,7 @@ The structure of this file is as follows:
 
 This file contains
 
-1. Sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects. For more information, refer to [Sensitive parameters processing](#version-20-sensitive-parameters-processing)
+1. Sensitive parameters defined in the `deployParameters` sections of the `Tenant`, `Cloud`, and `Namespace` Environment Instance objects. For more information, refer to [Sensitive parameter processing](#version-20-sensitive-parameter-processing)
 
 2. Parameters from the `runtime` section of the object passed to `--custom-params`
 
@@ -1428,3 +1556,39 @@ The structure of this file is as follows:
 ##### \[Version 2.0][Cleanup Context] `mapping.yml`
 
 The contents of this file are identical to [mapping.yml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyml).
+
+#### [Version 2.0] External Credential Context
+
+Downstream tooling outside EnvGene consumes this file to **provision secrets in external secret stores** (for example Vault, Azure Key Vault, AWS Secrets Manager, or GCP Secret Manager).
+
+This context aggregates all [Credential](/docs/envgene-objects.md#credential) objects in the environment with `type: external` and `create: true`, and the [Secret Store](/docs/envgene-objects.md#secret-store) definitions they reference.
+
+The output format is:
+
+```yaml
+secretStores:
+  <secret-store-name>:
+    type: enum [ vault, azure, aws, gcp ]
+    url: URL
+    mountPath: string
+    vaultName: string
+    region: string
+    projectId: string
+
+credentials:
+  <cred-id>:
+    secretStoreId: string
+    normalizedSecretName: string
+    properties:
+      - name: enum [ username, password ]
+```
+
+The `secretStores` section contains only stores referenced by the Credentials. The `credentials` section contains only entries with `type: external` and `create: true`.
+
+**Location:** `effective-set/external-credential/external-credentials.yaml`.
+
+For object definitions and conceptual overview, see [External Credentials Management](/docs/features/external-creds.md).
+
+##### External Credential Context generation
+
+Normative step-by-step algorithm for building this context (including top-level `secretStores`, `credentials` entries, and the output path) is specified in [External Credential Context `credentials` entry generation](/docs/features/external-creds.md#external-credential-context-credentials-entry-generation) under [Effective Set external credential behavior](/docs/features/external-creds.md#effective-set-external-credential-behavior).
