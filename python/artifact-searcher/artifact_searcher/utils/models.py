@@ -102,6 +102,7 @@ class ArtifactInfo(BaseSchema):
     path: Optional[str] = ""
     local_path: Optional[str] = ""
     name: Optional[str] = ""
+    auth_headers: Optional[dict] = None
 
 
 class Registry(BaseSchema):
