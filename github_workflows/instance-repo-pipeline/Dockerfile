@@ -8,6 +8,10 @@ RUN find /opt/github/scripts -type f -name "*.sh" -exec chmod +x {} \;
 
 #-----------Stage 2-----------
 FROM python:3.12-alpine3.19
+
+# hadolint ignore=DL3018
+RUN apk add --no-cache git
+
 RUN pip install --no-cache-dir ruamel.yaml==0.18.5
 COPY --from=initial /opt/github /opt/github
 USER 1000
