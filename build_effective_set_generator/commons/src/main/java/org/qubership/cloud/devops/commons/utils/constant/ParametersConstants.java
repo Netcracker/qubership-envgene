@@ -46,5 +46,6 @@ public class ParametersConstants {
             ENVGENE_DEFAULT = "envgene default",
             ENVGENE_PIPELINE_PARAMETER =  "envgene pipeline parameter",
             ENVGENE_CALCULATED = "envgene calculated",
+            SBOM_ORIGIN ="sbom",
             COMPOSITE_STRUCTURE = "composite-structure";
 }

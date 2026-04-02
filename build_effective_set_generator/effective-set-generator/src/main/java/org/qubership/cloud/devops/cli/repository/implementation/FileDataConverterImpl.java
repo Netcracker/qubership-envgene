@@ -414,11 +414,19 @@ public class FileDataConverterImpl implements FileDataConverter {
     }
 
     private String extractLastOrigin(String origin) {
+        if (origin == null || origin.isEmpty()) {
+            return origin;
+        }
+        String lower = origin.toLowerCase();
+        if (lower.contains("rp-")) {
+            return lower;
+        }
         int colon = origin.indexOf(':');
-        if (colon < 0) return origin.toLowerCase();
-
-        String key = origin.substring(origin.lastIndexOf('/', colon - 1) + 1, colon).trim();
-        return key.toLowerCase();
+        if (colon < 0) {
+            return lower;
+        }
+        int slash = origin.lastIndexOf('/', colon - 1);
+        return origin.substring(slash + 1, colon).trim().toLowerCase();
     }
 
     private ScalarNode attachInline(ScalarNode node, String origin) {

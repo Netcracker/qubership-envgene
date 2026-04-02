@@ -309,10 +309,10 @@ public class BomReaderUtilsImplV2 {
         Map<String, Object> serviceParams = new TreeMap<>();
         String entity = "service:" + component.getName();
 
-        serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", new Parameter(checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity), baselineOrigin, false));
-        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity) + "-v1", baselineOrigin, false));
+        serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", new Parameter(checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity), SBOM_ORIGIN, false));
+        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity) + "-v1", SBOM_ORIGIN, false));
         serviceParams.put("DEPLOYMENT_VERSION", new Parameter("v1", ENVGENE_DEFAULT, false));
-        serviceParams.put("SERVICE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity), baselineOrigin, false));
+        serviceParams.put("SERVICE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity), SBOM_ORIGIN, false));
         if (CollectionUtils.isNotEmpty(component.getComponents())) {
             for (Component subComponent : component.getComponents()) {
                 if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.qubership.resource-profile-baseline")) {
@@ -336,13 +336,13 @@ public class BomReaderUtilsImplV2 {
         String dockerTag = getPropertyValue(component, "full_image_name", null, true, entity);
         Object imageRepository = getImageRepository(dockerTag);
 
-        serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", new Parameter(checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity), baselineOrigin, false));
-        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity) + "-v1", baselineOrigin, false));
-        serviceParams.put("DEPLOYMENT_VERSION", new Parameter("v1", baselineOrigin, false));
-        serviceParams.put("SERVICE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity), baselineOrigin, false));
-        serviceParams.put("DOCKER_TAG", new Parameter(dockerTag, baselineOrigin, false));
+        serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", new Parameter(checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity), SBOM_ORIGIN, false));
+        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity) + "-v1", SBOM_ORIGIN, false));
+        serviceParams.put("DEPLOYMENT_VERSION", new Parameter("v1", SBOM_ORIGIN, false));
+        serviceParams.put("SERVICE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity), SBOM_ORIGIN, false));
+        serviceParams.put("DOCKER_TAG", new Parameter(dockerTag, SBOM_ORIGIN, false));
         if (imageRepository != null) {
-            serviceParams.put("IMAGE_REPOSITORY", new Parameter(imageRepository, baselineOrigin, false));
+            serviceParams.put("IMAGE_REPOSITORY", new Parameter(imageRepository, SBOM_ORIGIN, false));
         }
         addImageParameters(component, entitiesMap.getDeployParams());
 
@@ -354,7 +354,7 @@ public class BomReaderUtilsImplV2 {
                     profileValues = extractProfileValues(subComponent, appName, component.getName(), override, baseline);
                 }
             }
-            serviceParams.put("TAG", new Parameter(checkIfMandatory(tag, "TAG", entity), baselineOrigin, false));
+            serviceParams.put("TAG", new Parameter(checkIfMandatory(tag, "TAG", entity), SBOM_ORIGIN, false));
         }
         if (MapUtils.isNotEmpty(profileValues)) {
             serviceParams.putAll(profileValues);
@@ -362,12 +362,12 @@ public class BomReaderUtilsImplV2 {
         perServiceMap.put(component.getName(), serviceParams);
     }
 
-    private void addImageParameters(Component component, Map<String, String> serviceParams) {
+    private void addImageParameters(Component component, Map<String, Object> serviceParams) {
         if (component.getMimeType().equalsIgnoreCase(APPLICATION_OCTET_STREAM)) {
             String key = getPropertyValue(component, "deploy_param", null, false, component.getName());
             if (StringUtils.isNotEmpty(key)) {
                 String value = getPropertyValue(component, "full_image_name", null, false, component.getName());
-                serviceParams.put(key, value);
+                serviceParams.put(key, new Parameter(value, SBOM_ORIGIN, false));
             }
         }
     }
@@ -388,7 +388,6 @@ public class BomReaderUtilsImplV2 {
         }
         if (baseline == null) {
             profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
-            wrapPlainMapWithOrigin(profileValues,overrideOrigin);
         }
         for (ComponentData data : dataComponent.getData()) {
             if (baseline != null && baseline.equals(data.getName().split("\\.")[0])) {
@@ -400,7 +399,6 @@ public class BomReaderUtilsImplV2 {
                     wrapPlainMapWithOrigin(profileValues, baselineOrigin);
                 }
                 profileService.setOverrideProfiles(appName, serviceName, overrideProfile, profileValues);
-                wrapPlainMapWithOrigin(profileValues,overrideOrigin);
                 break;
             }
         }
