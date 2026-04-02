@@ -195,7 +195,7 @@ public class ParameterUtils {
         for (Map.Entry<String, Object> entry : map.entrySet()) {
             Object value = entry.getValue();
             if (value instanceof Parameter) {
-                // Keep the existing parameter as is
+                ((Parameter) value).setOrigin(origin);
             } else if (value instanceof Map) {
                 wrapPlainMapWithOrigin((Map<String, Object>) value, origin);
             } else if (value instanceof List) {

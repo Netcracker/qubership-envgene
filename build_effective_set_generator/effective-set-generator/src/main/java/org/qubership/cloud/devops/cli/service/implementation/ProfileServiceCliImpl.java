@@ -90,7 +90,7 @@ public class ProfileServiceCliImpl implements ProfileService {
                         .findFirst().orElse(null);
                 if (serviceOverride != null) {
                     for (ParameterProfile param : serviceOverride.getParameters()) {
-                        putNestedValue(profileValues, param.getName(), param.getValue());
+                        putNestedValue(profileValues, param.getName(), new Parameter(param.getValue(),"rp-override: " + overrideProfile.getName(),false));
                     }
                 }
             }
