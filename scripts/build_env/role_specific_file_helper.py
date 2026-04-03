@@ -14,8 +14,8 @@ def get_excluded_dirs_for_namespace_role(role: NamespaceRole, origin_template_ex
     return [origin_dir, peer_dir]
 
 
-PARAMSET_LAYER_FILE_MASKS = ["*.json", "*.yml", "*.yaml", "*.j2"]
-RESOURCE_PROFILE_LAYER_FILE_MASKS = ["*.yml", "*.yaml"]
+PARAMSET_FILE_MASKS = ["*.json", "*.yml", "*.yaml", "*.j2"]
+RESOURCE_PROFILE_FILE_MASKS = ["*.yml", "*.yaml"]
 
 
 def iter_role_template_files(base_dir: str, masks: list[str], excluded_dirs: list[str]):

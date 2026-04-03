@@ -2,7 +2,7 @@ from envgenehelper import *
 from render_config_env import EnvGenerator
 
 from role_specific_file_helper import (
-    RESOURCE_PROFILE_LAYER_FILE_MASKS,
+    RESOURCE_PROFILE_FILE_MASKS,
     get_excluded_dirs_for_namespace_role,
     iter_role_template_files,
 )
@@ -12,7 +12,7 @@ def create_resource_profile_map(dir: str, role: NamespaceRole,
                                 origin_template_exists: bool, peer_template_exists: bool) -> dict[str, str]:
     excluded_dirs = get_excluded_dirs_for_namespace_role(role, origin_template_exists, peer_template_exists)
     result: dict[str, str] = {}
-    for key, file_path in iter_role_template_files(dir, RESOURCE_PROFILE_LAYER_FILE_MASKS, excluded_dirs):
+    for key, file_path in iter_role_template_files(dir, RESOURCE_PROFILE_FILE_MASKS, excluded_dirs):
         result[key] = file_path
     logger.info(
         f"Created {role.name}-specific resource profile map: excluded dirs {excluded_dirs}, "
