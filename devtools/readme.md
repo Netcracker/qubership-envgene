@@ -22,16 +22,19 @@ make <command>-<service>
 
 Where `service` matches the service name from docker-compose.yml.
 
-| Command | What it does                              | Example              |
-| ------- | ----------------------------------------- | -------------------- |
-| `build` | Build service image                       | `make build-tests` |
-| `up`    | Start service (runs `up.sh` if present)   | `make up-tests`    |
-| `bash`  | Open shell in running service             | `make bash-tests`  |
-| `down`  | Stop all services                         | `make down`          |
-| `stop`  | Stop one service                          | `make stop-tests`  |
-| `rm`    | Remove service container                  | `make rm-tests`    |
-| `run`   | Run service’s `run.sh` script (if exists) | `make run-tests`   |
-| `edit`  | Edit Makefile in Vim                      | `make edit`          |
+The **`tests-run`** target is an exception: it lives only in the root `Makefile`, is fixed to the `tests` service, and takes `CMD='…'` (see that file).
+
+| Command     | What it does                                                | Example                                      |
+| ----------- | ----------------------------------------------------------- | -------------------------------------------- |
+| `build`     | Build service image                                         | `make build-tests`                           |
+| `up`        | Start service (runs `up.sh` if present)                     | `make up-tests`                              |
+| `bash`      | Open shell in running service                               | `make bash-tests`                            |
+| `tests-run` | Non-interactive command in `tests` service (root Makefile)  | `make tests-run CMD='pytest scripts/… -v'`   |
+| `down`      | Stop all services                                           | `make down`                                  |
+| `stop`      | Stop one service                                            | `make stop-tests`                            |
+| `rm`        | Remove service container                                    | `make rm-tests`                              |
+| `run`       | Run service’s `run.sh` script (if exists)                   | `make run-tests`                             |
+| `edit`      | Edit Makefile in Vim                                        | `make edit`                                  |
 
 **Notes:**
 
