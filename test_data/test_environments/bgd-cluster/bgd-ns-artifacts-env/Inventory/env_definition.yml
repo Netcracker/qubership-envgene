@@ -11,6 +11,8 @@ envTemplate:
     origin: "bgd-ns-artifacts:bgd-ns-artifacts"
     peer: "bgd-ns-artifacts:bgd-ns-artifacts"
   additionalTemplateVariables: {}
+  envSpecificResourceProfiles:
+    app-origin: app_origin_override
   sharedTemplateVariables: []
   envSpecificParamsets: {}
   envSpecificTechnicalParamsets: {}
