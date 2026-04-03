@@ -42,8 +42,15 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     copy_path(f'{instances_dir}/parameters', render_parameters_dir)
     copy_path(f'{cluster_path}/parameters', render_parameters_dir)
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/parameters', f'{render_parameters_dir}/from_instance')
-    # copying all template resource profiles
-    copy_path(f'{templates_dirs[NamespaceRole.COMMON]}/resource_profiles', render_profiles_dir)
+    # copying template resource profiles
+    for template_type, template_path in templates_dirs.items():
+        if not (template_path and check_dir_exists(f'{template_path}/resource_profiles')):
+            continue
+        if template_type == NamespaceRole.COMMON:
+            profile_dir_name = 'from_template'
+        else:
+            profile_dir_name = f'from_{template_type}_template'
+        copy_path(f'{template_path}/resource_profiles', f'{render_profiles_dir}/{profile_dir_name}')
     return render_env_dir
 
 

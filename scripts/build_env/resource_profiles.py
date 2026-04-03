@@ -1,5 +1,39 @@
+import pathlib
+
 from envgenehelper import *
 from render_config_env import EnvGenerator
+
+
+def get_excluded_dirs_for_namespace_role(role: NamespaceRole, origin_template_exists: bool,
+                                         peer_template_exists: bool) -> list:
+    common_dir = 'from_template'
+    origin_dir = 'from_origin_template'
+    peer_dir = 'from_peer_template'
+    if role == NamespaceRole.ORIGIN and origin_template_exists:
+        return [common_dir, peer_dir]
+    if role == NamespaceRole.PEER and peer_template_exists:
+        return [common_dir, origin_dir]
+    return [origin_dir, peer_dir]
+
+
+def create_resource_profile_map(dir: str, role: NamespaceRole,
+                                origin_template_exists: bool, peer_template_exists: bool) -> dict[str, str]:
+    excluded_dirs = get_excluded_dirs_for_namespace_role(role, origin_template_exists, peer_template_exists)
+    result: dict[str, str] = {}
+    dir_pointer = pathlib.Path(dir)
+    masks = ["*.yml", "*.yaml"]
+    for mask in masks:
+        for f in dir_pointer.rglob(mask):
+            file_path = str(f)
+            if any(excluded_dir in file_path for excluded_dir in excluded_dirs):
+                continue
+            key = extractNameFromFile(file_path)
+            result[key] = file_path
+    logger.info(
+        f"Created {role.name}-specific resource profile map: excluded dirs {excluded_dirs}, "
+        f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
+    logger.debug(f"List of {dir} resource profiles (role view): \n %s", dump_as_yaml_format(result))
+    return result
 
 
 # TODO unit tests
@@ -132,12 +166,69 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
 
 
 def collect_resource_profiles(result_profiles_dir, render_profiles_dir, profiles_schema,
-                              required_resource_profiles_map, render_context: EnvGenerator):
+                              required_resource_profiles_map, render_context: EnvGenerator,
+                              template_roles: dict | None = None,
+                              origin_template_exists: bool = False,
+                              peer_template_exists: bool = False):
     logger.info(f"Required profiles map:\n{dump_as_yaml_format(required_resource_profiles_map)}")
     render_context.generate_profiles(set(required_resource_profiles_map.values()))
-    all_profiles = getResourceProfilesFromDir(render_profiles_dir) | getResourceProfilesFromDir(result_profiles_dir)
-    logger.info(f"All existing resource profiles map is:\n{dump_as_yaml_format(all_profiles)}")
-    profiles_map = validate_resource_profiles(required_resource_profiles_map, all_profiles, profiles_schema)
+    env_profiles = getResourceProfilesFromDir(result_profiles_dir)
+
+    if not template_roles:
+        all_profiles = getResourceProfilesFromDir(render_profiles_dir) | env_profiles
+        logger.info(f"All existing resource profiles map is:\n{dump_as_yaml_format(all_profiles)}")
+        return validate_resource_profiles(required_resource_profiles_map, all_profiles, profiles_schema)
+
+    common_rp_map = create_resource_profile_map(render_profiles_dir, NamespaceRole.COMMON,
+                                                origin_template_exists, peer_template_exists)
+    peer_rp_map = create_resource_profile_map(render_profiles_dir, NamespaceRole.PEER,
+                                              origin_template_exists, peer_template_exists)
+    origin_rp_map = create_resource_profile_map(render_profiles_dir, NamespaceRole.ORIGIN,
+                                                origin_template_exists, peer_template_exists)
+    role_maps = {
+        NamespaceRole.COMMON: common_rp_map,
+        NamespaceRole.PEER: peer_rp_map,
+        NamespaceRole.ORIGIN: origin_rp_map,
+    }
+
+    def resolve_profile_path(template_key: str, profile_name: str) -> str | None:
+        if profile_name in env_profiles:
+            return env_profiles[profile_name]
+        role = template_roles.get(template_key, NamespaceRole.COMMON)
+        return role_maps[role].get(profile_name)
+
+    merged_for_log = common_rp_map | peer_rp_map | origin_rp_map | env_profiles
+    logger.info(f"All existing resource profiles map (layered resolution) is:\n{dump_as_yaml_format(merged_for_log)}")
+
+    profiles_map: dict[str, str] = {}
+    not_found = ''
+    not_valid = ''
+    rp_data_template = "\n\t profile: {} for namespace {}"
+    if not required_resource_profiles_map:
+        return profiles_map
+    for template_name, needed_profile in required_resource_profiles_map.items():
+        profile_path = resolve_profile_path(template_name, needed_profile)
+        if not profile_path:
+            not_found += rp_data_template.format(needed_profile, template_name)
+            continue
+        logger.info(f"Found resource profile {needed_profile} for template {template_name} in path: {profile_path}")
+        try:
+            validate_yaml_by_scheme_or_fail(profile_path, profiles_schema)
+        except ValueError:
+            not_valid += rp_data_template.format(needed_profile, template_name)
+            continue
+        profiles_map[template_name] = profile_path
+
+    err_msg = ''
+    if len(not_valid) > 0:
+        err_msg += "These resource profiles are invalid, look for details above:"
+        err_msg += not_valid
+    if len(not_found) > 0:
+        err_msg += "Can't find resource profiles:"
+        err_msg += not_found
+    if len(err_msg) > 0:
+        logger.error(err_msg)
+        raise ReferenceError("Not all needed resource profiles found or valid. See logs above.")
     return profiles_map
 
 
