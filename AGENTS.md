@@ -2,6 +2,12 @@
 
 This document contains guidelines and rules for AI coding assistants working with this repository.
 
+## Local Python, pytest, and pip
+
+**CRITICAL:** Do not run `python`, `python3`, `python -m pytest`, `pytest`, or `pip` on the **host** for this repository unless the user explicitly asks for the host interpreter.
+
+Use **Make targets from the repository root** (`make up-tests`, `make bash-tests`, `make tests-run CMD='…'`, `make run-tests`, etc.). Do **not** invoke `docker compose` (or `docker-compose`) directly for routine work - that bypasses the same entry points humans and CI use. Follow `.cursor/skills/local-tests/SKILL.md` for details.
+
 ## Documentation Standards
 
 ### Markdown Formatting Rules
