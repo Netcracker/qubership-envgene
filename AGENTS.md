@@ -272,7 +272,7 @@ profile:
 
 ## Documentation Structure (Diátaxis Framework)
 
-This repository follows the [Diátaxis documentation framework](https://diataxis.fr/).
+This repository follows the [Diátaxis documentation framework](https://github.com/evildmp/diataxis-documentation-framework).
 
 ### Documentation Types
 
