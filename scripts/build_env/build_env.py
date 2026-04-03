@@ -3,8 +3,9 @@ from envgenehelper import *
 
 from cloud_passport import process_cloud_passport
 from resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
-    get_excluded_dirs_for_namespace_role, update_profile_name
+    update_profile_name
 from schema_validation import checkEnvSpecificParametersBySchema
+from template_layers import get_excluded_dirs_for_namespace_role, iter_role_template_files, PARAMSET_LAYER_FILE_MASKS
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
@@ -25,20 +26,12 @@ def create_paramset_map(dir: str, role: NamespaceRole,
                         origin_template_exists: bool, peer_template_exists: bool) -> dict:
     excluded_dirs = get_excluded_dirs_for_namespace_role(role, origin_template_exists, peer_template_exists)
     result = {}
-    dir_pointer = pathlib.Path(dir)
-    masks = ["*.json", "*.yml", "*.yaml", "*.j2"]
-
-    for mask in masks:
-        for f in dir_pointer.rglob(mask):
-            file_path = str(f)
-            if any(excluded_dir in file_path for excluded_dir in excluded_dirs):
-                continue
-            key = extractNameFromFile(file_path)
-            entry = {"filePath": file_path, "envSpecific": False}
-            if key in result:
-                result[key].append(entry)
-            else:
-                result[key] = [entry]
+    for key, file_path in iter_role_template_files(dir, PARAMSET_LAYER_FILE_MASKS, excluded_dirs):
+        entry = {"filePath": file_path, "envSpecific": False}
+        if key in result:
+            result[key].append(entry)
+        else:
+            result[key] = [entry]
 
     logger.info(f"Created {role.name}-specific paramset map: excluded dirs {excluded_dirs}, "
                 f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
