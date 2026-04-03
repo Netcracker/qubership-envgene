@@ -50,7 +50,7 @@ function debugPrintCertsFromFile {
         if [[ "$line" == "-----END CERTIFICATE-----" ]]; then
           cert_num=$((cert_num + 1))
           echo "[DEBUG] --- Certificate #${cert_num} in ${file} ---"
-          echo "$block" | openssl x509 -noout -subject -issuer -dates 2>/dev/null || echo "[DEBUG] (openssl could not decode this block)"
+          printf "%s\n" "$block" | openssl x509 -noout -subject -issuer -dates 2>/dev/null || echo "[DEBUG] (openssl could not decode this block)"
           block=""
         fi
       fi
