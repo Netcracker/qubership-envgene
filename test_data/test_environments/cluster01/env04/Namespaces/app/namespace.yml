@@ -1,0 +1,19 @@
+# The contents of this file is generated from template artifact: test-template-1.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "test-environment-app"
+credentialsId: ""
+isServerSideMerge: false
+labels:
+  - "Instance-test-environment"
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  APP_NAMESPACE: "test-environment-app" # paramset: test-parameters-1 version: n/a source: template
+e2eParameters:
+  APP_NAMESPACE: "test-environment-app" # paramset: test-parameters-1 version: n/a source: template
+technicalConfigurationParameters:
+  APP_NAMESPACE: "test-environment-app" # paramset: test-parameters-1 version: n/a source: template
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
