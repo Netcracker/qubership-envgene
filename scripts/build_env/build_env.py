@@ -5,7 +5,7 @@ from cloud_passport import process_cloud_passport
 from resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
     update_profile_name
 from schema_validation import checkEnvSpecificParametersBySchema
-from template_layers import get_excluded_dirs_for_namespace_role, iter_role_template_files, PARAMSET_LAYER_FILE_MASKS
+from role_specific_file_helper import get_excluded_dirs_for_namespace_role, iter_role_template_files, PARAMSET_LAYER_FILE_MASKS
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."

@@ -1,7 +1,7 @@
 from envgenehelper import *
 from render_config_env import EnvGenerator
 
-from template_layers import (
+from role_specific_file_helper import (
     RESOURCE_PROFILE_LAYER_FILE_MASKS,
     get_excluded_dirs_for_namespace_role,
     iter_role_template_files,
