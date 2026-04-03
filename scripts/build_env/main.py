@@ -17,6 +17,17 @@ NAMESPACE_SCHEMA = "schemas/namespace.schema.json"
 ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
 
 
+def copy_content_to_role_based_dest(templates_dirs, subfolder, destination_base):
+    for template_type, template_path in templates_dirs.items():
+        if not (template_path and check_dir_exists(f'{template_path}/{subfolder}')):
+            continue
+        if template_type == NamespaceRole.COMMON:
+            dest_name = 'from_template'
+        else:
+            dest_name = f'from_{template_type}_template'
+        copy_path(f'{template_path}/{subfolder}', f'{destination_base}/{dest_name}')
+
+
 def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,
                                   render_parameters_dir, render_profiles_dir, output_dir):
     # clearing folders
@@ -28,14 +39,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     # clearing instances dir
     cleanup_resulting_dir(Path(output_dir) / cluster_name / env_name)
     # copying parameters from templates and instances
-    for template_type, template_path in templates_dirs.items():
-        if not (template_path and check_dir_exists(f'{template_path}/parameters')):
-            continue
-        if template_type == NamespaceRole.COMMON:
-            param_dir_name = 'from_template'
-        else:
-            param_dir_name = f'from_{template_type}_template'
-        copy_path(f'{template_path}/parameters', f'{render_parameters_dir}/{param_dir_name}')
+    copy_content_to_role_based_dest(templates_dirs, 'parameters', render_parameters_dir)
     cluster_path = getDirName(source_env_dir)
     instances_dir = getDirName(cluster_path)
     check_dir_exist_and_create(f'{render_parameters_dir}/from_instance')
@@ -43,14 +47,7 @@ def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templa
     copy_path(f'{cluster_path}/parameters', render_parameters_dir)
     copy_path(f'{source_env_dir}/{INVENTORY_DIR_NAME}/parameters', f'{render_parameters_dir}/from_instance')
     # copying template resource profiles
-    for template_type, template_path in templates_dirs.items():
-        if not (template_path and check_dir_exists(f'{template_path}/resource_profiles')):
-            continue
-        if template_type == NamespaceRole.COMMON:
-            profile_dir_name = 'from_template'
-        else:
-            profile_dir_name = f'from_{template_type}_template'
-        copy_path(f'{template_path}/resource_profiles', f'{render_profiles_dir}/{profile_dir_name}')
+    copy_content_to_role_based_dest(templates_dirs, 'resource_profiles', render_profiles_dir)
     return render_env_dir
 
 
