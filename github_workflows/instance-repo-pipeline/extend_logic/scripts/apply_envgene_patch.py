@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import sys
+import zipfile
 from pathlib import Path
 
 try:
@@ -13,7 +14,7 @@ except ImportError:
 
 
 def resolve_version_tag():
-    """Tag used as a subdirectory under --output-dir (matches pipeline image version)."""
+    """Tag used in the output path (folder or zip name; matches pipeline image version)."""
     tag = (
         os.environ.get("DOCKER_IMAGE_TAG")
         or os.environ.get("INSTANCE_REPO_PIPELINE_IMAGE_TAG")
@@ -493,16 +494,44 @@ def init_output_dir(output_root, source_dir):
     print(f"Initialized {output_root} from {source_dir}")
 
 
+def make_zip_archive(source_dir: Path, zip_path: Path) -> None:
+    """Pack contents of source_dir into zip_path (files at archive root, no tag prefix)."""
+    source_dir = source_dir.resolve()
+    if not source_dir.is_dir():
+        raise FileNotFoundError(f"Not a directory: {source_dir}")
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    if zip_path.exists():
+        zip_path.unlink()
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for path in sorted(source_dir.rglob("*")):
+            if path.is_file():
+                arcname = path.relative_to(source_dir)
+                zf.write(path, arcname)
+
+
+def finalize_zip_output(base: Path, zip_path: Path, suffix: str = "") -> None:
+    """Create zip from staging dir and remove staging dir."""
+    make_zip_archive(base, zip_path)
+    shutil.rmtree(base)
+    print(f"Created {zip_path}{suffix}", flush=True)
+
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="Apply YAML patch to Envgene.yml")
     parser.add_argument(
         "--output-dir",
         default="extended_github_instance_pipeline",
-        help="Parent directory for artifacts. Snapshot is written under "
-        "<output-dir>/<tag>/ where tag is from DOCKER_IMAGE_TAG or "
-        "INSTANCE_REPO_PIPELINE_IMAGE_TAG (default: latest). "
-        "Default parent: extended_github_instance_pipeline.",
+        help="Parent directory for artifacts. Default: extended_github_instance_pipeline. "
+        "With --output-format zip (default), writes <output-dir>/<tag>.zip; with dir, "
+        "<output-dir>/<tag>/. Tag from DOCKER_IMAGE_TAG or INSTANCE_REPO_PIPELINE_IMAGE_TAG.",
+    )
+    parser.add_argument(
+        "--output-format",
+        choices=("zip", "dir"),
+        default="zip",
+        help="zip: stage under <output-dir>/<tag>/ then pack to <output-dir>/<tag>.zip "
+        "and remove the folder. dir: keep the versioned directory (no zip).",
     )
     parser.add_argument(
         "--init-from",
@@ -524,20 +553,38 @@ def main():
     args = parser.parse_args()
 
     version_tag = sanitize_tag(resolve_version_tag())
-    base = Path(args.output_dir) / version_tag
+    parent = Path(args.output_dir)
+    base = parent / version_tag
+    zip_path = parent / f"{version_tag}.zip"
     all_results = []
 
     try:
         if not args.patch:
             if not args.no_init:
+                if args.output_format == "zip" and zip_path.exists():
+                    zip_path.unlink()
                 init_output_dir(base, args.init_from)
-            print(
-                f"Initialized {base} (no component patches to apply).",
-                flush=True,
-            )
+            if args.output_format == "zip" and base.exists():
+                finalize_zip_output(
+                    base,
+                    zip_path,
+                    " (no component patches to apply)",
+                )
+            elif base.exists():
+                print(
+                    f"Initialized {base} (no component patches to apply).",
+                    flush=True,
+                )
+            else:
+                print(
+                    "No work done (--no-init and staging directory missing).",
+                    flush=True,
+                )
             return
 
         if not args.no_init:
+            if args.output_format == "zip" and zip_path.exists():
+                zip_path.unlink()
             init_output_dir(base, args.init_from)
 
         for patch_path in args.patch:
@@ -549,6 +596,8 @@ def main():
             print("Applied:")
             for r in all_results:
                 print(f"  - {r}")
+        if args.output_format == "zip" and base.exists():
+            finalize_zip_output(base, zip_path)
     except (FileNotFoundError, ValueError, KeyError) as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
