@@ -2,6 +2,8 @@
 
 This document describes the GitLab CI extension pipeline and the `apply_envgene_patch` script used to customize the EnvGene GitHub Actions workflow for your instance.
 
+In the [qubership-envgene](https://github.com/Netcracker/qubership-envgene) repository, the Python scripts (`apply_envgene_patch.py`, `git_commit.py`) live under **`github_workflows/instance-repo-pipeline/extend_logic/scripts/`**. The `qubership-instance-repo-pipeline` Docker image copies that folder into the container at **`/opt/github/extend_logic/scripts/`**.
+
 ---
 
 ## Table of Contents
@@ -31,9 +33,9 @@ This allows instance repositories to extend the base EnvGene workflow with custo
 
 ## Pipeline Flow
 
-The pipeline is defined in `.gitlab-ci.yml` in your instance repository and runs in the `qubership-instance-repo-pipeline` Docker image (from [qubership-envgene](https://github.com/Netcracker/qubership-envgene)). Scripts are executed from paths inside the image: `/opt/github/extend_logic/scripts/`.
+The pipeline is defined in `.gitlab-ci.yml` in your instance repository and runs in the `qubership-instance-repo-pipeline` Docker image (from [qubership-envgene](https://github.com/Netcracker/qubership-envgene)). Scripts are executed from paths inside the image: `/opt/github/extend_logic/scripts/` (same files as in the repo under `github_workflows/instance-repo-pipeline/extend_logic/scripts/`).
 
-A complete copy-paste example for `.gitlab-ci.yml` is in [GitLab CI configuration](#gitlab-ci-configuration).
+A complete copypaste example for `.gitlab-ci.yml` is in [GitLab CI configuration](#gitlab-ci-configuration).
 
 **Steps:**
 
@@ -51,7 +53,7 @@ A complete copy-paste example for `.gitlab-ci.yml` is in [GitLab CI configuratio
 
 ## GitLab CI configuration
 
-Copy the following into the root of your instance repository as `.gitlab-ci.yml`, or merge the `extend-the-gh-pipeline` job into an existing file. The image must be a build of [instance-repo-pipeline](https://github.com/Netcracker/qubership-envgene/tree/main/github_workflows/instance-repo-pipeline) that includes `extend_logic` scripts under `/opt/github/extend_logic/scripts/`.
+Copy the following into the root of your instance repository as `.gitlab-ci.yml`, or merge the `extend-the-gh-pipeline` job into an existing file. The image must be a build of [instance-repo-pipeline](https://github.com/Netcracker/qubership-envgene/tree/main/github_workflows/instance-repo-pipeline) whose Dockerfile copies **`extend_logic/scripts/`** from that directory into **`/opt/github/extend_logic/scripts/`** in the image.
 
 **Placeholders:**
 
@@ -59,7 +61,7 @@ Copy the following into the root of your instance repository as `.gitlab-ci.yml`
 |-------------|-------------|
 | `DOCKER_IMAGE_NAME` | Container image name without tag (for example `registry.example.com/org/qubership-instance-repo-pipeline`) |
 | `DOCKER_IMAGE_TAG` | Image tag (for example `1.2.3` or `latest`) |
-| `PATH_TO_COMPONENT` | One or more patch YAML files in your repo (for example `components/component-a.yaml` or several paths separated as extra arguments to the script) |
+| `PATH_TO_COMPONENT` | One or more patch YAML files in your repository (for example `components/component-a.yaml` or several paths separated as extra arguments to the script) |
 
 ```yaml
 ---
@@ -95,20 +97,25 @@ extend-the-gh-pipeline:
 
 ## apply_envgene_patch Script
 
-**Location:** in your repository clone, use `scripts/apply_envgene_patch.py` if you keep scripts next to the pipeline; in the `qubership-instance-repo-pipeline` image, use `/opt/github/extend_logic/scripts/apply_envgene_patch.py`.
+**Location:** `git_commit.py` is in the same directory as `apply_envgene_patch.py`.
+
+- **qubership-envgene tree:** `github_workflows/instance-repo-pipeline/extend_logic/scripts/`
+- **`qubership-instance-repo-pipeline` image:** `/opt/github/extend_logic/scripts/`
 
 **Usage:**
 
 ```bash
-# CI / full run (init from /opt/github + apply patches)
-python3 scripts/apply_envgene_patch.py components/component-a.yaml components/variables.yaml
+# From the root of a qubership-envgene clone - CI / full run (init from /opt/github + apply patches)
+python3 github_workflows/instance-repo-pipeline/extend_logic/scripts/apply_envgene_patch.py components/component-a.yaml components/variables.yaml
 
 # Local run (skip init, apply patches to existing output dir)
-python3 scripts/apply_envgene_patch.py --no-init components/component-a.yaml components/variables.yaml
+python3 github_workflows/instance-repo-pipeline/extend_logic/scripts/apply_envgene_patch.py --no-init components/component-a.yaml components/variables.yaml
 
 # Custom output dir
-python3 scripts/apply_envgene_patch.py --output-dir my_pipeline components/component-a.yaml
+python3 github_workflows/instance-repo-pipeline/extend_logic/scripts/apply_envgene_patch.py --output-dir my_pipeline components/component-a.yaml
 ```
+
+Adjust the path to the script if your working directory is not the repository root.
 
 **Options:**
 
