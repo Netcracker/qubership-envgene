@@ -175,7 +175,7 @@ Patch files are YAML documents containing a list of operations. Use `target_file
   content:
     DOCKER_IMAGE_NAME_DEPLOYTOOL: "my-registry/my-image"
 
-- target_file: .github/configuration/config.env
+- target_file: .github/pipeline_vars.env
   action: merge
   content:
     MY_VAR: "value"
@@ -261,19 +261,15 @@ Add outputs to a specific job:
 
 ### Example 3: Merge .env variables
 
-Add or update variables in configuration files:
+Add or update variables in `.github/pipeline_vars.env`:
 
 ```yaml
 ---
-- target_file: .github/configuration/config.env
+- target_file: .github/pipeline_vars.env
   action: merge
   content:
     CONFIG_VAR_1: "value1"
     CONFIG_VAR_2: "value2"
-
-- target_file: .github/pipeline_vars.env
-  action: merge
-  content:
     PIPELINE_VAR: "my_value"
 ```
 
