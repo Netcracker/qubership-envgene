@@ -11,12 +11,11 @@ from role_specific_file_helper import (
 def create_resource_profile_map(dir: str, role: NamespaceRole,
                                 origin_template_exists: bool, peer_template_exists: bool) -> dict[str, str]:
     excluded_dirs = get_excluded_dirs_for_namespace_role(role, origin_template_exists, peer_template_exists)
-    result: dict[str, str] = {}
+    result = {}
     for key, file_path in iter_role_template_files(dir, RESOURCE_PROFILE_FILE_MASKS, excluded_dirs):
         result[key] = file_path
-    logger.info(
-        f"Created {role.name}-specific resource profile map: excluded dirs {excluded_dirs}, "
-        f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
+    logger.info( f"Created {role.name}-specific resource profile map: excluded dirs {excluded_dirs}")
+    logger.debug(f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
     logger.debug(f"List of {dir} resource profiles (role view): \n %s", dump_as_yaml_format(result))
     return result
 
@@ -122,7 +121,6 @@ def validate_resource_profiles(
     env_profiles: dict[str, str],
     role_maps: dict,
 ) -> dict[str, str]:
-    """Resolve profile paths per template key (env ``Profiles/`` first, then role layer maps), validate schema."""
     profiles_map: dict[str, str] = {}
     not_found = ''
     not_valid = ''
