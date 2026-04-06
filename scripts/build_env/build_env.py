@@ -33,8 +33,8 @@ def create_paramset_map(dir: str, role: NamespaceRole,
         else:
             result[key] = [entry]
 
-    logger.info(f"Created {role.name}-specific paramset map: excluded dirs {excluded_dirs}, "
-                f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
+    logger.info(f"Created {role.name}-specific paramset map: excluded dirs {excluded_dirs}")
+    logger.debug(f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
     logger.debug(f'List of {dir} paramsets: \n %s', dump_as_yaml_format(result))
     return result
 
