@@ -33,7 +33,7 @@ This allows instance repositories to extend the base EnvGene workflow with custo
 
 ## Pipeline Flow
 
-The pipeline is defined in `.gitlab-ci.yml` in your instance repository and runs in the `qubership-instance-repo-pipeline` Docker image (from [qubership-envgene](https://github.com/Netcracker/qubership-envgene)). Scripts are executed from paths inside the image: `/opt/github/extend_logic/scripts/` (same files as in the repo under `github_workflows/instance-repo-pipeline/extend_logic/scripts/`).
+The pipeline is defined in `.gitlab-ci.yml` in your instance repository and runs in the `qubership-instance-repo-pipeline` Docker image (from [qubership-envgene](https://github.com/Netcracker/qubership-envgene)). Scripts are executed from paths inside the image: `/opt/github/extend_logic/scripts/` (same files as in the repository under `github_workflows/instance-repo-pipeline/extend_logic/scripts/`).
 
 A complete copypaste example for `.gitlab-ci.yml` is in [GitLab CI configuration](#gitlab-ci-configuration).
 
