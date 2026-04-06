@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 import re
 import shutil
 import sys
@@ -9,6 +10,31 @@ try:
 except ImportError:
     print("Error: ruamel.yaml required. Add to Dockerfile: pip install ruamel.yaml", file=sys.stderr)
     sys.exit(1)
+
+
+def resolve_version_tag():
+    """Tag used as a subdirectory under --output-dir (matches pipeline image version)."""
+    tag = (
+        os.environ.get("DOCKER_IMAGE_TAG")
+        or os.environ.get("INSTANCE_REPO_PIPELINE_IMAGE_TAG")
+        or "latest"
+    ).strip()
+    return tag or "latest"
+
+
+def sanitize_tag(tag: str) -> str:
+    """Filesystem-safe directory name; rejects path separators."""
+    tag = (tag or "").strip()
+    if not tag:
+        return "latest"
+    if ".." in tag or "/" in tag or "\\" in tag:
+        raise ValueError(
+            f"Invalid DOCKER_IMAGE_TAG: {tag!r} (must not contain path separators)"
+        )
+    safe = re.sub(r"[^a-zA-Z0-9._-]", "_", tag)
+    if not safe or not re.search(r"[0-9a-zA-Z]", safe):
+        return "latest"
+    return safe
 
 
 # ========== MERGE ENV: add or replace variables in .env files ==========
@@ -336,29 +362,6 @@ def do_insert(target_file, content, after_section=None, before_section=None,
     return "inserted"
 
 
-def print_no_components_warning(detail=None):
-    """Emit a highly visible stderr warning when there is nothing to apply."""
-    lines = [
-        "",
-        "=" * 78,
-        "",
-        "   ***  WARNING  ***   NO COMPONENTS TO ADD   ***  WARNING  ***",
-        "",
-    ]
-    if detail:
-        lines.append(f"   {detail}")
-        lines.append("")
-    lines.extend(
-        [
-            "   No YAML patch operations will be applied.",
-            "",
-            "=" * 78,
-            "",
-        ]
-    )
-    print("\n".join(lines), file=sys.stderr)
-
-
 # ========== MAIN LOGIC ==========
 
 def apply_patch(patch_path, base_dir):
@@ -375,9 +378,6 @@ def apply_patch(patch_path, base_dir):
         operations = [operations]
 
     if not operations:
-        print_no_components_warning(
-            f"Patch file has no operations (empty or null): {patch_path}"
-        )
         return []
 
     def resolve_target(target_file_str):
@@ -480,9 +480,9 @@ def apply_patch(patch_path, base_dir):
     return result
 
 
-def init_output_dir(output_dir, source_dir):
-    """Remove output_dir and .github, then copy source_dir into output_dir."""
-    output_path = Path(output_dir)
+def init_output_dir(output_root, source_dir):
+    """Remove output_root and .github, then copy source_dir into output_root."""
+    output_path = Path(output_root)
     source_path = Path(source_dir)
     if not source_path.is_dir():
         raise FileNotFoundError(f"Source directory not found: {source_path}")
@@ -490,7 +490,7 @@ def init_output_dir(output_dir, source_dir):
         if path.exists():
             shutil.rmtree(path)
     shutil.copytree(source_path, output_path)
-    print(f"Initialized {output_dir} from {source_dir}")
+    print(f"Initialized {output_root} from {source_dir}")
 
 
 def main():
@@ -499,14 +499,16 @@ def main():
     parser.add_argument(
         "--output-dir",
         default="extended_github_instance_pipeline",
-        help="Output directory. Maps .github/ paths to this directory. "
-        "Default: extended_github_instance_pipeline.",
+        help="Parent directory for artifacts. Snapshot is written under "
+        "<output-dir>/<tag>/ where tag is from DOCKER_IMAGE_TAG or "
+        "INSTANCE_REPO_PIPELINE_IMAGE_TAG (default: latest). "
+        "Default parent: extended_github_instance_pipeline.",
     )
     parser.add_argument(
         "--init-from",
         default="/opt/github",
-        help="Before applying patches, remove output-dir and copy this source into it. "
-        "Default: /opt/github. Use --no-init to skip.",
+        help="Before applying patches, remove <output-dir>/<tag>/ and .github, copy this "
+        "source into the versioned output directory. Default: /opt/github. Use --no-init to skip.",
     )
     parser.add_argument(
         "--no-init",
@@ -517,22 +519,26 @@ def main():
         "patch",
         nargs="*",
         help="Patch file(s) (e.g. components/component-a.yaml components/variables.yaml). "
-        "If omitted, a warning is printed and the script exits without changes.",
+        "If omitted, only the base workflow is copied (no patches).",
     )
     args = parser.parse_args()
 
-    base = Path(args.output_dir)
+    version_tag = sanitize_tag(resolve_version_tag())
+    base = Path(args.output_dir) / version_tag
     all_results = []
 
     try:
         if not args.patch:
-            print_no_components_warning(
-                "No patch file paths were passed on the command line."
+            if not args.no_init:
+                init_output_dir(base, args.init_from)
+            print(
+                f"Initialized {base} (no component patches to apply).",
+                flush=True,
             )
             return
 
         if not args.no_init:
-            init_output_dir(args.output_dir, args.init_from)
+            init_output_dir(base, args.init_from)
 
         for patch_path in args.patch:
             patch_path = Path(patch_path)

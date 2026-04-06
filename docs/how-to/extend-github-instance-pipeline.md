@@ -24,8 +24,8 @@ The pipeline uses the Docker image `qubership-instance-repo-pipeline` from [Netc
 
 **Flow:**
 
-1. **Init & apply** — `apply_envgene_patch.py` removes old output, copies base workflow from `/opt/github` to `extended_github_instance_pipeline/`, then applies YAML patch files (components) that add variables and workflow steps/jobs
-2. **Commit & push** — `git_commit.py` commits and pushes the modified `extended_github_instance_pipeline/` directory
+1. **Init & apply** — `apply_envgene_patch.py` copies the base workflow from `/opt/github` into **`extended_github_instance_pipeline/<tag>/`**, where `<tag>` is the image version (from `DOCKER_IMAGE_TAG` or `INSTANCE_REPO_PIPELINE_IMAGE_TAG`, default `latest`). It then applies YAML patch files (components) that add variables and workflow steps/jobs. If you pass **no patch files**, only the base snapshot is created under that versioned folder (nothing is merged or inserted).
+2. **Commit & push** — `git_commit.py` commits and pushes the modified `extended_github_instance_pipeline/` tree (including all version subfolders)
 
 This allows instance repositories to extend the base EnvGene workflow with custom variables, steps, and configuration without forking the entire workflow.
 
@@ -41,12 +41,13 @@ A complete copypaste example for `.gitlab-ci.yml` is in [GitLab CI configuration
 
 | Step | Description |
 |------|-------------|
-| Init & apply | Runs `apply_envgene_patch.py`: removes `extended_github_instance_pipeline/` and `.github/`, copies `/opt/github` to output dir, applies patches (adds variables and steps/jobs to `Envgene.yml`) |
+| Init & apply | Runs `apply_envgene_patch.py`: removes `extended_github_instance_pipeline/<tag>/` and `.github/`, copies `/opt/github` into the versioned directory, then applies patches (adds variables and steps/jobs to `Envgene.yml`) |
 | Commit & push | Commits changes and pushes to the current branch |
 
 **Requirements:**
 
 - `GITLAB_TOKEN` with `write_repository` scope (for `git_commit.py`)
+- `DOCKER_IMAGE_TAG` or `INSTANCE_REPO_PIPELINE_IMAGE_TAG` set so the snapshot path matches the pipeline image tag (see [GitLab CI configuration](#gitlab-ci-configuration))
 - Pipeline runs on schedule or manual trigger (not on push/MR by default)
 
 ---
@@ -60,8 +61,10 @@ Copy the following into the root of your instance repository as `.gitlab-ci.yml`
 | Placeholder | Description |
 |-------------|-------------|
 | `DOCKER_IMAGE_NAME` | Container image name without tag (for example `registry.example.com/org/qubership-instance-repo-pipeline`) |
-| `DOCKER_IMAGE_TAG` | Image tag (for example `1.2.3` or `latest`) |
-| `PATH_TO_COMPONENT` | One or more patch YAML files in your repository (for example `components/component-a.yaml` or several paths separated as extra arguments to the script) |
+| `DOCKER_IMAGE_TAG` | Image tag (for example `1.2.3` or `latest`). Must match the tag used for the pipeline image so artifacts land under `extended_github_instance_pipeline/<tag>/`. |
+| `PATH_TO_COMPONENT` | Zero or more patch YAML files in your repository (for example `components/component-a.yaml`). Omit all arguments to only materialize the base workflow under the versioned folder. |
+
+GitLab artifacts should still publish **`extended_github_instance_pipeline/`** as a whole. Inside it, each run writes to **`extended_github_instance_pipeline/<DOCKER_IMAGE_TAG>/`** (for example `extended_github_instance_pipeline/1.2.3/workflows/Envgene.yml`).
 
 ```yaml
 ---
@@ -69,6 +72,7 @@ Copy the following into the root of your instance repository as `.gitlab-ci.yml`
 variables:
   INSTANCE_REPO_PIPELINE_IMAGE: DOCKER_IMAGE_NAME
   INSTANCE_REPO_PIPELINE_IMAGE_TAG: DOCKER_IMAGE_TAG
+  DOCKER_IMAGE_TAG: "${INSTANCE_REPO_PIPELINE_IMAGE_TAG}"
 
 #Rules
 workflow:
@@ -91,6 +95,12 @@ extend-the-gh-pipeline:
   artifacts:
     paths:
       - extended_github_instance_pipeline/
+```
+
+To run **without component patches** (only copy the base workflow into `extended_github_instance_pipeline/<tag>/`), use a script line with no patch arguments:
+
+```yaml
+    - python3 /opt/github/extend_logic/scripts/apply_envgene_patch.py
 ```
 
 ---
@@ -117,25 +127,35 @@ python3 github_workflows/instance-repo-pipeline/extend_logic/scripts/apply_envge
 
 Adjust the path to the script if your working directory is not the repository root.
 
+**Environment variables (versioned output path):**
+
+| Variable | Description |
+|----------|-------------|
+| `DOCKER_IMAGE_TAG` | Preferred. Directory name under `--output-dir` (for example `1.2.3`). |
+| `INSTANCE_REPO_PIPELINE_IMAGE_TAG` | Used if `DOCKER_IMAGE_TAG` is unset (same value as the pipeline image tag in CI). |
+| (none) | Defaults to `latest`. |
+
+The effective snapshot root is **`<output-dir>/<tag>/`** (for example `extended_github_instance_pipeline/1.2.3/`).
+
 **Options:**
 
 | Option | Description |
 |--------|-------------|
-| `--output-dir DIR` | Output directory. Maps `target_file` paths starting with `.github/` to this directory. Default: `extended_github_instance_pipeline`. |
-| `--init-from DIR` | Before applying patches: remove output-dir and `.github`, copy DIR to output-dir. Default: `/opt/github`. |
-| `--no-init` | Skip init step. Use when output-dir already exists (e.g. local runs without `/opt/github`). |
+| `--output-dir DIR` | Parent directory for artifacts. Maps `target_file` paths starting with `.github/` to this directory. Default: `extended_github_instance_pipeline`. |
+| `--init-from DIR` | Before applying patches: remove `<output-dir>/<tag>/` and `.github`, copy DIR into the versioned directory. Default: `/opt/github`. |
+| `--no-init` | Skip init step. Use when the versioned output directory already exists (e.g. local runs without `/opt/github`). |
 
-**Default behavior:** The script first initializes the output directory (removes `extended_github_instance_pipeline/` and `.github/`, copies `/opt/github` to output-dir), then applies patches. Use `--no-init` for local runs.
+**Default behavior:** The script first initializes **`<output-dir>/<tag>/`** (removes that subtree and `.github/`, copies `/opt/github` into the versioned path), then applies patches. If you pass **no patch file paths**, it only performs the init step and exits. Use `--no-init` for local runs when the tree already exists.
 
 **Dependencies:** `ruamel.yaml` (install via `pip install ruamel.yaml`)
 
-The script reads patch files and applies a sequence of operations to target files. Each operation has an `action` and optional `target_file` (defaults to the first operation's target). Paths like `.github/workflows/Envgene.yml` are resolved to `output_dir/workflows/Envgene.yml`.
+The script reads patch files and applies a sequence of operations to target files. Each operation has an `action` and optional `target_file` (defaults to the first operation's target). Paths like `.github/workflows/Envgene.yml` are resolved to **`<output-dir>/<tag>/workflows/Envgene.yml`**.
 
 ---
 
 ## Patch File Format
 
-Patch files are YAML documents containing a list of operations. Use `target_file` paths starting with `.github/` — they are resolved to the output directory (e.g. `.github/workflows/Envgene.yml` → `extended_github_instance_pipeline/workflows/Envgene.yml`):
+Patch files are YAML documents containing a list of operations. Use `target_file` paths starting with `.github/` — they are resolved under the versioned snapshot root (e.g. `.github/workflows/Envgene.yml` → `extended_github_instance_pipeline/<tag>/workflows/Envgene.yml`):
 
 ```yaml
 ---
@@ -412,3 +432,4 @@ The base workflow uses these extension points:
 | `Step 'X' not found` | Step name doesn't match | Use exact or partial step name (case-insensitive) |
 | `Block 'path' not found` | Dotted path invalid | Verify YAML structure (jobs → job_name → outputs) |
 | `File not found` | Wrong target path or output-dir missing | Use path relative to repository root; run with init or `--no-init` on existing dir |
+| `Invalid DOCKER_IMAGE_TAG` | Tag contains path separators | Use a plain tag only (for example `1.2.3`), not a path |
