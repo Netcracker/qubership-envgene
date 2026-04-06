@@ -2,7 +2,7 @@
 
 CA_FILE="$1"
 # Default log level to INFO if not set; normalize to uppercase for comparison
-ENVGENE_LOG_LEVEL="${ENVGENE_LOG_LEVEL:-INFO}"
+ENVGENE_LOG_LEVEL="${ENVGENE_LOG_LEVEL:-DEBUG}"
 ENVGENE_LOG_LEVEL="$(printf '%s' "${ENVGENE_LOG_LEVEL}" | tr '[:lower:]' '[:upper:]')"
 
 function getLinuxDisto {
@@ -41,6 +41,7 @@ function debugPrintCertsFromFile {
     local cert_num=0
     local block=""
     while IFS= read -r line; do
+      line="${line%$'\r'}"
       if [[ "$line" == "-----BEGIN CERTIFICATE-----" ]]; then
         block="$line"
         continue
