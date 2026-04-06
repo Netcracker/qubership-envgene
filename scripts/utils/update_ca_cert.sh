@@ -40,7 +40,7 @@ function debugPrintCertsFromFile {
     fi
     local cert_num=0
     local block=""
-    while IFS= read -r line; do
+    while IFS= read -r line || [[ -n "$line" ]]; do
       line="${line%$'\r'}"
       if [[ "$line" == "-----BEGIN CERTIFICATE-----" ]]; then
         block="$line"
