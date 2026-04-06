@@ -336,6 +336,29 @@ def do_insert(target_file, content, after_section=None, before_section=None,
     return "inserted"
 
 
+def print_no_components_warning(detail=None):
+    """Emit a highly visible stderr warning when there is nothing to apply."""
+    lines = [
+        "",
+        "=" * 78,
+        "",
+        "   ***  WARNING  ***   NO COMPONENTS TO ADD   ***  WARNING  ***",
+        "",
+    ]
+    if detail:
+        lines.append(f"   {detail}")
+        lines.append("")
+    lines.extend(
+        [
+            "   No YAML patch operations will be applied.",
+            "",
+            "=" * 78,
+            "",
+        ]
+    )
+    print("\n".join(lines), file=sys.stderr)
+
+
 # ========== MAIN LOGIC ==========
 
 def apply_patch(patch_path, base_dir):
@@ -346,8 +369,16 @@ def apply_patch(patch_path, base_dir):
     with open(patch_path, encoding="utf-8") as f:
         operations = yaml.load(f)
 
-    if not isinstance(operations, list):
+    if operations is None:
+        operations = []
+    elif not isinstance(operations, list):
         operations = [operations]
+
+    if not operations:
+        print_no_components_warning(
+            f"Patch file has no operations (empty or null): {patch_path}"
+        )
+        return []
 
     def resolve_target(target_file_str):
         """Resolve target file path. If base_dir is output dir, map .github/ -> output_dir/."""
@@ -484,8 +515,9 @@ def main():
     )
     parser.add_argument(
         "patch",
-        nargs="+",
-        help="Patch file(s) (e.g. components/component-a.yaml components/variables.yaml)",
+        nargs="*",
+        help="Patch file(s) (e.g. components/component-a.yaml components/variables.yaml). "
+        "If omitted, a warning is printed and the script exits without changes.",
     )
     args = parser.parse_args()
 
@@ -493,6 +525,12 @@ def main():
     all_results = []
 
     try:
+        if not args.patch:
+            print_no_components_warning(
+                "No patch file paths were passed on the command line."
+            )
+            return
+
         if not args.no_init:
             init_output_dir(args.output_dir, args.init_from)
 
@@ -501,9 +539,10 @@ def main():
             if not patch_path.is_file():
                 raise FileNotFoundError(f"File not found: {patch_path}")
             all_results.extend(apply_patch(patch_path, base))
-        print("Applied:")
-        for r in all_results:
-            print(f"  - {r}")
+        if all_results:
+            print("Applied:")
+            for r in all_results:
+                print(f"  - {r}")
     except (FileNotFoundError, ValueError, KeyError) as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

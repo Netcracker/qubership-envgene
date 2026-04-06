@@ -8,10 +8,11 @@ This document describes the GitLab CI extension pipeline and the `apply_envgene_
 
 1. [Overview](#overview)
 2. [Pipeline Flow](#pipeline-flow)
-3. [apply_envgene_patch Script](#apply_envgene_patch-script)
-4. [Patch File Format](#patch-file-format)
-5. [Operations Reference](#operations-reference)
-6. [Examples](#examples)
+3. [GitLab CI configuration](#gitlab-ci-configuration)
+4. [apply_envgene_patch Script](#apply_envgene_patch-script)
+5. [Patch File Format](#patch-file-format)
+6. [Operations Reference](#operations-reference)
+7. [Examples](#examples)
 
 ---
 
@@ -30,20 +31,9 @@ This allows instance repositories to extend the base EnvGene workflow with custo
 
 ## Pipeline Flow
 
-The pipeline is defined in `.gitlab-ci.yml` and runs in the `qubership-instance-repo-pipeline` Docker image (from [qubership-envgene](https://github.com/Netcracker/qubership-envgene)):
+The pipeline is defined in `.gitlab-ci.yml` in your instance repository and runs in the `qubership-instance-repo-pipeline` Docker image (from [qubership-envgene](https://github.com/Netcracker/qubership-envgene)). Scripts are executed from paths inside the image: `/opt/github/extend_logic/scripts/`.
 
-```yaml
-extend-the-gh-pipeline:
-  stage: extend-pipeline
-  image:
-    name: ${INSTANCE_REPO_PIPELINE_IMAGE}:${INSTANCE_REPO_PIPELINE_IMAGE_TAG}
-  script:
-    - python3 scripts/apply_envgene_patch.py components/component-a.yaml components/variables.yaml
-    - python3 scripts/git_commit.py
-  artifacts:
-    paths:
-      - extended_github_instance_pipeline/
-```
+A complete copy-paste example for `.gitlab-ci.yml` is in [GitLab CI configuration](#gitlab-ci-configuration).
 
 **Steps:**
 
@@ -59,9 +49,53 @@ extend-the-gh-pipeline:
 
 ---
 
+## GitLab CI configuration
+
+Copy the following into the root of your instance repository as `.gitlab-ci.yml`, or merge the `extend-the-gh-pipeline` job into an existing file. The image must be a build of [instance-repo-pipeline](https://github.com/Netcracker/qubership-envgene/tree/main/github_workflows/instance-repo-pipeline) that includes `extend_logic` scripts under `/opt/github/extend_logic/scripts/`.
+
+**Placeholders:**
+
+| Placeholder | Description |
+|-------------|-------------|
+| `DOCKER_IMAGE_NAME` | Container image name without tag (for example `registry.example.com/org/qubership-instance-repo-pipeline`) |
+| `DOCKER_IMAGE_TAG` | Image tag (for example `1.2.3` or `latest`) |
+| `PATH_TO_COMPONENT` | One or more patch YAML files in your repo (for example `components/component-a.yaml` or several paths separated as extra arguments to the script) |
+
+```yaml
+---
+#Variables
+variables:
+  INSTANCE_REPO_PIPELINE_IMAGE: DOCKER_IMAGE_NAME
+  INSTANCE_REPO_PIPELINE_IMAGE_TAG: DOCKER_IMAGE_TAG
+
+#Rules
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: always
+
+#Stages
+stages:
+  - extend-pipeline
+
+extend-the-gh-pipeline:
+  stage: extend-pipeline
+  image:
+    name: ${INSTANCE_REPO_PIPELINE_IMAGE}:${INSTANCE_REPO_PIPELINE_IMAGE_TAG}
+  script:
+    - python3 /opt/github/extend_logic/scripts/apply_envgene_patch.py PATH_TO_COMPONENT
+    - python3 /opt/github/extend_logic/scripts/git_commit.py
+  artifacts:
+    paths:
+      - extended_github_instance_pipeline/
+```
+
+---
+
 ## apply_envgene_patch Script
 
-**Location:** `scripts/apply_envgene_patch.py`
+**Location:** in your repository clone, use `scripts/apply_envgene_patch.py` if you keep scripts next to the pipeline; in the `qubership-instance-repo-pipeline` image, use `/opt/github/extend_logic/scripts/apply_envgene_patch.py`.
 
 **Usage:**
 
@@ -351,10 +385,10 @@ The base workflow uses these extension points:
 
 1. Create a YAML file in `components/` (e.g. `components/my-feature.yaml`)
 1. Add operations following the format above
-1. Register the file in `.gitlab-ci.yml`:
+1. Register the file in `.gitlab-ci.yml` (paths below match scripts inside the pipeline image):
 
 ```yaml
-- python3 scripts/apply_envgene_patch.py components/component-a.yaml components/variables.yaml components/my-feature.yaml
+- python3 /opt/github/extend_logic/scripts/apply_envgene_patch.py components/component-a.yaml components/variables.yaml components/my-feature.yaml
 ```
 
 1. Patches are applied in order; later patches can override or extend earlier ones.
