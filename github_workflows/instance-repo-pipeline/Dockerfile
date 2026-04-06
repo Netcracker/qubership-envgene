@@ -5,6 +5,8 @@ WORKDIR /workspace
 
 COPY github_workflows/instance-repo-pipeline/.github /opt/github
 
+COPY github_workflows/instance-repo-pipeline/extend_logic/scripts/ /opt/github/scripts/
+
 RUN find /opt/github/scripts -type f -name "*.sh" -exec chmod +x {} \;
 
 #-----------Stage 2-----------

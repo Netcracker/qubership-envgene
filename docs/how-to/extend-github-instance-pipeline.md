@@ -17,7 +17,7 @@ This document describes the GitLab CI extension pipeline and the `apply_envgene_
 
 ## Overview
 
-The pipeline uses the Docker image `qubership-instance-repo-pipeline` from [Netcracker/qubership-envgene](https://github.com/Netcracker/qubership-envgene) and extends the base EnvGene workflow by adding new variables and components to `Envgene.yml` — as **steps** or **jobs** depending on the project.
+The pipeline uses the Docker image `qubership-instance-repo-pipeline` from [Netcracker/qubership-envgene](https://github.com/Netcracker/qubership-envgene) and extends the base EnvGene workflow by adding new variables and components to `Envgene.yml` - as **steps** or **jobs** depending on the project.
 
 **Flow:**
 
