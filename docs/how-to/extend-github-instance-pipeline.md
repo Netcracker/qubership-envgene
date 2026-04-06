@@ -24,8 +24,8 @@ The pipeline uses the Docker image `qubership-instance-repo-pipeline` from [Netc
 
 **Flow:**
 
-1. **Init & apply** — `apply_envgene_patch.py` copies the base workflow from `/opt/github` into a **staging directory** `extended_github_instance_pipeline/<tag>/`, applies YAML patch files (components), then by default **packs the result into** **`extended_github_instance_pipeline/<tag>.zip`** and deletes the staging folder. `<tag>` comes from `DOCKER_IMAGE_TAG` or `INSTANCE_REPO_PIPELINE_IMAGE_TAG` (default `latest`). If you pass **no patch files**, only the base snapshot is zipped (nothing merged or inserted). Use **`--output-format dir`** to keep the versioned folder instead of a zip.
-2. **Commit & push** — `git_commit.py` commits and pushes changes under `extended_github_instance_pipeline/` (zip files and, if used, leftover directories)
+1. **Init & apply** — `apply_envgene_patch.py` copies the base workflow from `/opt/github` into a **staging directory** `extended_github_instance_pipeline/<tag>/`, applies YAML patch files (components), then by default **packs the result into** **`extended_github_instance_pipeline/<tag>.zip`** and deletes the staging folder. `<tag>` comes from `DOCKER_IMAGE_TAG` or `INSTANCE_REPO_PIPELINE_IMAGE_TAG` (default `latest`). If you pass **no patch files**, only the base snapshot is written as a ZIP (nothing merged or inserted). Use **`--output-format dir`** to keep the versioned folder instead of a ZIP.
+2. **Commit & push** — `git_commit.py` commits and pushes changes under `extended_github_instance_pipeline/` (ZIP files and, if used, leftover directories)
 
 This allows instance repositories to extend the base EnvGene workflow with custom variables, steps, and configuration without forking the entire workflow.
 
@@ -62,9 +62,9 @@ Copy the following into the root of your instance repository as `.gitlab-ci.yml`
 |-------------|-------------|
 | `DOCKER_IMAGE_NAME` | Container image name without tag (for example `registry.example.com/org/qubership-instance-repo-pipeline`) |
 | `DOCKER_IMAGE_TAG` | Image tag (for example `1.2.3` or `latest`). Must match the pipeline image tag; the artifact file is **`extended_github_instance_pipeline/<tag>.zip`**. |
-| `PATH_TO_COMPONENT` | Zero or more patch YAML files in your repository (for example `components/component-a.yaml`). Omit all arguments to only materialize the base workflow as a zip (no merges). |
+| `PATH_TO_COMPONENT` | Zero or more patch YAML files in your repository (for example `components/component-a.yaml`). Omit all arguments to only materialize the base workflow as a ZIP (no merges). |
 
-GitLab artifacts should still publish **`extended_github_instance_pipeline/`** as a whole. By default each run produces **`extended_github_instance_pipeline/<DOCKER_IMAGE_TAG>.zip`** (for example `extended_github_instance_pipeline/1.2.3.zip`). Unzip to get `workflows/`, `configuration/`, and so on at the archive root.
+GitLab artifacts should still publish **`extended_github_instance_pipeline/`** as a whole. By default each run produces **`extended_github_instance_pipeline/<DOCKER_IMAGE_TAG>.zip`** (for example `extended_github_instance_pipeline/1.2.3.zip`). Extract the ZIP to get `workflows/`, `configuration/`, and so on at the archive root.
 
 ```yaml
 ---
@@ -103,7 +103,7 @@ To run **without component patches** (only pack the base workflow into **`extend
     - python3 /opt/github/extend_logic/scripts/apply_envgene_patch.py
 ```
 
-To **keep a directory** instead of a zip (for example for debugging), add **`--output-format dir`**:
+To **keep a directory** instead of a ZIP (for example for debugging), add **`--output-format dir`**:
 
 ```yaml
     - python3 /opt/github/extend_logic/scripts/apply_envgene_patch.py --output-format dir PATH_TO_COMPONENT
@@ -130,7 +130,7 @@ python3 github_workflows/instance-repo-pipeline/extend_logic/scripts/apply_envge
 # Custom output dir
 python3 github_workflows/instance-repo-pipeline/extend_logic/scripts/apply_envgene_patch.py --output-dir my_pipeline components/component-a.yaml
 
-# Keep a versioned directory instead of a zip (no packaging step)
+# Keep a versioned directory instead of a ZIP (no packaging step)
 python3 github_workflows/instance-repo-pipeline/extend_logic/scripts/apply_envgene_patch.py --output-format dir components/component-a.yaml
 ```
 
@@ -144,28 +144,28 @@ Adjust the path to the script if your working directory is not the repository ro
 | `INSTANCE_REPO_PIPELINE_IMAGE_TAG` | Used if `DOCKER_IMAGE_TAG` is unset (same value as the pipeline image tag in CI). |
 | (none) | Defaults to `latest`. |
 
-Patches are applied against the **staging tree** **`<output-dir>/<tag>/`**. With the default **`--output-format zip`**, that directory is removed after **`extended_github_instance_pipeline/<tag>.zip`** is written.
+Patches are applied against the **staging tree** **`<output-dir>/<tag>/`**. Unless **`--output-format dir`** is used, that directory is removed after **`extended_github_instance_pipeline/<tag>.zip`** is written.
 
 **Options:**
 
 | Option | Description |
 |--------|-------------|
 | `--output-dir DIR` | Parent directory for artifacts and staging. Maps `target_file` paths starting with `.github/` into the staging directory. Default: `extended_github_instance_pipeline`. |
-| `--output-format` | `zip` (default): after patching, create **`<output-dir>/<tag>.zip`** and delete staging. `dir`: keep **`<output-dir>/<tag>/`** and do not create a zip. |
+| `--output-format` | **ZIP** (default): after patching, create **`<output-dir>/<tag>.zip`** and delete staging. **Directory** (`dir`): keep **`<output-dir>/<tag>/`** and do not create a ZIP file. |
 | `--init-from DIR` | Before applying patches: remove `<output-dir>/<tag>/` and `.github`, copy DIR into the staging directory. Default: `/opt/github`. |
 | `--no-init` | Skip init step. Use when the staging directory already exists (e.g. local runs without `/opt/github`). |
 
-**Default behavior:** The script initializes **`<output-dir>/<tag>/`**, applies patches (if any), then **zips** it unless **`--output-format dir`**. If you pass **no patch file paths**, it only initializes and zips the base snapshot. Use `--no-init` for local runs when the staging tree already exists.
+**Default behavior:** The script initializes **`<output-dir>/<tag>/`**, applies patches (if any), then **writes a ZIP archive** unless **`--output-format dir`**. If you pass **no patch file paths**, it only initializes and writes the base snapshot as a ZIP. Use `--no-init` for local runs when the staging tree already exists.
 
 **Dependencies:** `ruamel.yaml` (install via `pip install ruamel.yaml`)
 
-The script reads patch files and applies a sequence of operations to target files. Each operation has an `action` and optional `target_file` (defaults to the first operation's target). Paths like `.github/workflows/Envgene.yml` are resolved to **`<output-dir>/<tag>/workflows/Envgene.yml`** during processing (that path exists only until the zip step when using the default format).
+The script reads patch files and applies a sequence of operations to target files. Each operation has an `action` and optional `target_file` (defaults to the first operation's target). Paths like `.github/workflows/Envgene.yml` are resolved to **`<output-dir>/<tag>/workflows/Envgene.yml`** during processing (that path exists only until the ZIP packaging step when using the default format).
 
 ---
 
 ## Patch File Format
 
-Patch files are YAML documents containing a list of operations. Use `target_file` paths starting with `.github/` — they are resolved under the **staging** snapshot root (e.g. `.github/workflows/Envgene.yml` → `extended_github_instance_pipeline/<tag>/workflows/Envgene.yml` before the result is zipped):
+Patch files are YAML documents containing a list of operations. Use `target_file` paths starting with `.github/` — they are resolved under the **staging** snapshot root (e.g. `.github/workflows/Envgene.yml` → `extended_github_instance_pipeline/<tag>/workflows/Envgene.yml` before the result is packaged as a ZIP):
 
 ```yaml
 ---
