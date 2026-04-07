@@ -163,7 +163,7 @@ def findSharedCredentials(cred_name, env_dir, instances_dir):
     
     env_level = Path(env_dir) / "Inventory" / "credentials"
     cluster_level = Path(env_dir).parent / "credentials"
-    site_level = Path(instances_dir) / "environments" / "credentials"
+    site_level = Path(instances_dir) / "credentials"
     
     shared_cred_paths = [env_level, cluster_level, site_level]
     
