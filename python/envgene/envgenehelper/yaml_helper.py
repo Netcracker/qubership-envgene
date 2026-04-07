@@ -294,19 +294,23 @@ def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=Fals
         alignYamlFileComments(file_path)
 
 
-def findYamls(dir, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern=""):
-    fileList = findAllYamlsInDir(dir)
+def findYamls(dir, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern="", recursively=True):
+    fileList = findAllYamlsInDir(dir, recursively)
     return findFiles(fileList, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
 
 
-def findAllYamlsInDir(dir):
+def findAllYamlsInDir(dir, recursively=True):
     result = []
-    dirPointer = pathlib.Path(dir)
-    fileList = list(dirPointer.rglob("*.yml"))
-    fileListYaml = list(dirPointer.rglob("*.yaml"))
-    if len(fileListYaml) > 0:
-        fileList = fileList + fileListYaml
-    for f in fileList:
+    dir_pointer = pathlib.Path(dir)
+    if recursively:
+        file_list_yml = list(dir_pointer.rglob("*.yml"))
+        file_list_yaml = list(dir_pointer.rglob("*.yaml"))
+    else:
+        file_list_yml = list(dir_pointer.glob("*.yml"))
+        file_list_yaml = list(dir_pointer.glob("*.yaml"))
+
+    file_list = file_list_yml + file_list_yaml
+    for f in file_list:
         result.append(str(f))
     return result
 
