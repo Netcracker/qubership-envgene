@@ -172,6 +172,7 @@ def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
         for ext in exts:
             f = cred_path / f"{cred_name}{ext}"
             if f.is_file():
+                logger.info(f"Shared credentials for {cred_name} found in: {f}")
                 return f
     
     raise ReferenceError(f"Shared credentials with key {cred_name} not found in {instances_dir}")
