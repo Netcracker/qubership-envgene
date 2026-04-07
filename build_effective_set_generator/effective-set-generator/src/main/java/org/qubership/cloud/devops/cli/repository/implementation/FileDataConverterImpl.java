@@ -278,11 +278,17 @@ public class FileDataConverterImpl implements FileDataConverter {
         }
 
         if (value instanceof List<?> list) {
+            if (list.isEmpty()) {
+                return createEmptyListNode(origin, addComment);
+            }
             return buildSequenceNode(
                     list, origin, addComment, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
         }
 
         if (value instanceof Map<?, ?> map) {
+            if (map.isEmpty()) {
+                return createEmptyMapNode(origin, addComment);
+            }
             return buildMappingNode(
                     map, origin, addComment, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
         }
@@ -440,6 +446,39 @@ public class FileDataConverterImpl implements FileDataConverter {
         origin = extractLastOrigin(origin);
         node.setBlockComments(
                 List.of(new CommentLine(Optional.empty(), Optional.empty(), origin, CommentType.BLOCK)));
+        return node;
+    }
+    private Node createEmptyMapNode(String origin, boolean addComment) {
+        MappingNode node = new MappingNode(
+                Tag.MAP,
+                Collections.emptyList(),
+                FlowStyle.FLOW
+        );
+
+        return addComment ? attachInlineToCollection(node, origin) : node;
+    }
+
+    private Node createEmptyListNode(String origin, boolean addComment) {
+        SequenceNode node = new SequenceNode(
+                Tag.SEQ,
+                Collections.emptyList(),
+                FlowStyle.FLOW
+        );
+
+        return addComment ? attachInlineToCollection(node, origin) : node;
+    }
+
+    private <T extends Node> T attachInlineToCollection(T node, String origin) {
+        origin = extractLastOrigin(origin);
+
+        node.setInLineComments(
+                List.of(new CommentLine(
+                        Optional.empty(),
+                        Optional.empty(),
+                        origin,
+                        CommentType.IN_LINE
+                ))
+        );
         return node;
     }
 }
