@@ -125,7 +125,7 @@ public class BomReaderUtilsImplV2 {
     private void populateEntityDeployDescParams(EntitiesMap entitiesMap, List<Component> components, Bom bomContent) {
         Map<String, Object> commonParamsMap = new TreeMap<>();
         String appName = bomContent.getMetadata().getComponent().getName();
-        commonParamsMap.put("APPLICATION_NAME", new Parameter(appName, baselineOrigin, false));
+        commonParamsMap.put("APPLICATION_NAME", new Parameter(appName, SBOM_ORIGIN, false));
         commonParamsMap.put("MANAGED_BY", new Parameter("argocd", ENVGENE_DEFAULT, false));
         if (StringUtils.isNotEmpty(sharedData.getDeploymentSessionId())) {
             commonParamsMap.put("DEPLOYMENT_SESSION_ID", new Parameter(sharedData.getDeploymentSessionId(), ENVGENE_PIPELINE_PARAMETER, false));
@@ -157,31 +157,31 @@ public class BomReaderUtilsImplV2 {
             for (Component subComponent : component.getComponents()) {
                 entity = "sub component '" + subComponent.getName() + "' of service:" + component.getName();
                 if (subComponent.getMimeType().equalsIgnoreCase(serviceArtifactType.getArtifactMimeType())) {
-                    primaryArtifactMap.put("artifactId", new Parameter(subComponent.getName(), baselineOrigin, false));
-                    primaryArtifactMap.put("groupId", new Parameter(subComponent.getGroup(), baselineOrigin, false));
-                    primaryArtifactMap.put("version", new Parameter(subComponent.getVersion(), baselineOrigin, false));
+                    primaryArtifactMap.put("artifactId", new Parameter(subComponent.getName(), SBOM_ORIGIN, false));
+                    primaryArtifactMap.put("groupId", new Parameter(subComponent.getGroup(), SBOM_ORIGIN, false));
+                    primaryArtifactMap.put("version", new Parameter(subComponent.getVersion(), SBOM_ORIGIN, false));
                 }
                 if (SUB_SERVICE_ARTIFACT_MIME_TYPES.contains(subComponent.getMimeType())) {
                     String name = checkIfMandatory(subComponent.getName(), "name", entity);
                     String version = checkIfMandatory(subComponent.getVersion(), "version", entity);
                     Map<String, Object> artifactMap = new TreeMap<>();
-                    artifactMap.put("artifact_id", new Parameter("", baselineOrigin, false));
-                    artifactMap.put("artifact_path", new Parameter("", baselineOrigin, false));
-                    artifactMap.put("artifact_type", new Parameter("", baselineOrigin, false));
-                    Parameter classifierParam = getPropertyValueAsParameter(subComponent, "classifier", null, true, entity, baselineOrigin);
+                    artifactMap.put("artifact_id", new Parameter("", ENVGENE_DEFAULT, false));
+                    artifactMap.put("artifact_path", new Parameter("", ENVGENE_DEFAULT, false));
+                    artifactMap.put("artifact_type", new Parameter("", ENVGENE_DEFAULT, false));
+                    Parameter classifierParam = getPropertyValueAsParameter(subComponent, "classifier", null, true, entity, SBOM_ORIGIN);
                     if (classifierParam != null) {
                         artifactMap.put("classifier", classifierParam);
                     }
-                    artifactMap.put("deploy_params", new Parameter("", baselineOrigin, false));
-                    artifactMap.put("gav", new Parameter("", baselineOrigin, false));
-                    artifactMap.put("group_id", new Parameter("", baselineOrigin, false));
-                    artifactMap.put("id", new Parameter(checkIfMandatory(subComponent.getGroup(), "group", entity) + ":" + name + ":" + version, baselineOrigin, false));
+                    artifactMap.put("deploy_params", new Parameter("", ENVGENE_DEFAULT, false));
+                    artifactMap.put("gav", new Parameter("", ENVGENE_DEFAULT, false));
+                    artifactMap.put("group_id", new Parameter("", ENVGENE_DEFAULT, false));
+                    artifactMap.put("id", new Parameter(checkIfMandatory(subComponent.getGroup(), "group", entity) + ":" + name + ":" + version, ENVGENE_CALCULATED, false));
                     String typeValue = getPropertyValue(subComponent, "type", null, true, entity);
-                    artifactMap.put("name", new Parameter(name + "-" + version + "." + typeValue, baselineOrigin, false));
-                    artifactMap.put("repository", new Parameter("", baselineOrigin, false));
-                    artifactMap.put("type", new Parameter(typeValue, baselineOrigin, false));
-                    artifactMap.put("url", new Parameter("", baselineOrigin, false));
-                    artifactMap.put("version", new Parameter("", baselineOrigin, false));
+                    artifactMap.put("name", new Parameter(name + "-" + version + "." + typeValue, ENVGENE_CALCULATED, false));
+                    artifactMap.put("repository", new Parameter("", ENVGENE_DEFAULT, false));
+                    artifactMap.put("type", new Parameter(typeValue, SBOM_ORIGIN, false));
+                    artifactMap.put("url", new Parameter("", ENVGENE_DEFAULT, false));
+                    artifactMap.put("version", new Parameter("", ENVGENE_DEFAULT, false));
                     artifacts.add(artifactMap);
                 }
                 if (APPLICATION_ZIP.equalsIgnoreCase(subComponent.getMimeType())) {
@@ -189,9 +189,9 @@ public class BomReaderUtilsImplV2 {
                     String name = subComponent.getName();
                     String version = subComponent.getVersion();
                     if (StringUtils.isNotBlank(classifier)) {
-                        tArtifactMap.put(classifier, new Parameter(name + "-" + version + "-" + classifier + ".zip", baselineOrigin, false));
+                        tArtifactMap.put(classifier, new Parameter(name + "-" + version + "-" + classifier + ".zip", ENVGENE_CALCULATED, false));
                     } else {
-                        tArtifactMap.put("ecl", new Parameter(name + "-" + version + ".zip", baselineOrigin, false));
+                        tArtifactMap.put("ecl", new Parameter(name + "-" + version + ".zip", ENVGENE_CALCULATED, false));
                     }
                 }
             }
@@ -199,17 +199,17 @@ public class BomReaderUtilsImplV2 {
         deployDescParams.put("tArtifactNames", tArtifactMap);
         deployDescParams.put("artifact", primaryArtifactMap);
         deployDescParams.put("artifacts", artifacts);
-        deployDescParams.put("build_id_dtrust", getPropertyValueAsParameter(component, "build_id_dtrust", null, true, entity, baselineOrigin));
-        deployDescParams.put("git_branch", getPropertyValueAsParameter(component, "git_branch", null, true, entity, baselineOrigin));
-        deployDescParams.put("git_revision", getPropertyValueAsParameter(component, "git_revision", null, true, entity, baselineOrigin));
-        deployDescParams.put("git_url", getPropertyValueAsParameter(component, "git_url", null, true, entity, baselineOrigin));
-        deployDescParams.put("maven_repository", getPropertyValueAsParameter(component, "maven_repository", null, true, entity, baselineOrigin));
-        deployDescParams.put("name", checkIfMandatoryAsParameter(component.getName(), "name", entity, baselineOrigin));
-        deployDescParams.put("service_name", checkIfMandatoryAsParameter(component.getName(), "name", entity, baselineOrigin));
-        deployDescParams.put("version", checkIfMandatoryAsParameter(component.getVersion(), "version", entity, baselineOrigin));
+        deployDescParams.put("build_id_dtrust", getPropertyValueAsParameter(component, "build_id_dtrust", null, true, entity, SBOM_ORIGIN));
+        deployDescParams.put("git_branch", getPropertyValueAsParameter(component, "git_branch", null, true, entity, SBOM_ORIGIN));
+        deployDescParams.put("git_revision", getPropertyValueAsParameter(component, "git_revision", null, true, entity, SBOM_ORIGIN));
+        deployDescParams.put("git_url", getPropertyValueAsParameter(component, "git_url", null, true, entity, SBOM_ORIGIN));
+        deployDescParams.put("maven_repository", getPropertyValueAsParameter(component, "maven_repository", null, true, entity, SBOM_ORIGIN));
+        deployDescParams.put("name", checkIfMandatoryAsParameter(component.getName(), "name", entity, SBOM_ORIGIN));
+        deployDescParams.put("service_name", checkIfMandatoryAsParameter(component.getName(), "name", entity, SBOM_ORIGIN));
+        deployDescParams.put("version", checkIfMandatoryAsParameter(component.getVersion(), "version", entity, SBOM_ORIGIN));
         String typeValue = getPropertyValue(component, "type", null, false, entity);
         if (typeValue != null) {
-            deployDescParams.put("type", new Parameter(typeValue, baselineOrigin, false));
+            deployDescParams.put("type", new Parameter(typeValue, SBOM_ORIGIN, false));
         }
 
         deployParamsMap.put(component.getName(), deployDescParams);
@@ -229,27 +229,28 @@ public class BomReaderUtilsImplV2 {
                 entity = "sub component '" + subComponent.getName() + "' of service:" + component.getName();
                 if (subComponent.getMimeType().equalsIgnoreCase("application/vnd.docker.image")) {
                     String hashValue = CollectionUtils.isNotEmpty(subComponent.getHashes()) ? subComponent.getHashes().get(0).getValue() : "";
-                    deployDescParams.put("docker_digest", checkIfMandatoryAsParameter(hashValue, "hashes", entity, baselineOrigin));
-                    deployDescParams.put("docker_repository_name", checkIfMandatoryAsParameter(subComponent.getGroup(), "group", entity, baselineOrigin));
-                    deployDescParams.put("docker_tag", checkIfMandatoryAsParameter(subComponent.getVersion(), "version", entity, baselineOrigin));
-                    deployDescParams.put("image_name", checkIfMandatoryAsParameter(subComponent.getName(), "name", entity, baselineOrigin));
+                    String hashOrigin = CollectionUtils.isNotEmpty(subComponent.getHashes()) ? SBOM_ORIGIN : ENVGENE_DEFAULT;
+                    deployDescParams.put("docker_digest", checkIfMandatoryAsParameter(hashValue, "hashes", entity, hashOrigin));
+                    deployDescParams.put("docker_repository_name", checkIfMandatoryAsParameter(subComponent.getGroup(), "group", entity, SBOM_ORIGIN));
+                    deployDescParams.put("docker_tag", checkIfMandatoryAsParameter(subComponent.getVersion(), "version", entity, SBOM_ORIGIN));
+                    deployDescParams.put("image_name", checkIfMandatoryAsParameter(subComponent.getName(), "name", entity, SBOM_ORIGIN));
                 }
             }
         }
-        deployDescParams.put("deploy_param", getPropertyValueAsParameter(component, "deploy_param", "", true, entity, baselineOrigin));
-        deployDescParams.put("artifacts", new ArrayList<>());
-        deployDescParams.put("docker_registry", getPropertyValueAsParameter(component, "docker_registry", null, true, entity, baselineOrigin));
-        Parameter fullImageNameParam = getPropertyValueAsParameter(component, "full_image_name", null, true, entity, baselineOrigin);
+        deployDescParams.put("deploy_param", getPropertyValueAsParameter(component, "deploy_param", "", true, entity, SBOM_ORIGIN));
+        deployDescParams.put("artifacts", new Parameter(new ArrayList<>(),ENVGENE_DEFAULT,false));
+        deployDescParams.put("docker_registry", getPropertyValueAsParameter(component, "docker_registry", null, true, entity, SBOM_ORIGIN));
+        Parameter fullImageNameParam = getPropertyValueAsParameter(component, "full_image_name", null, true, entity, SBOM_ORIGIN);
         deployDescParams.put("full_image_name", fullImageNameParam);
         deployDescParams.put("image", fullImageNameParam);
-        deployDescParams.put("git_branch", getPropertyValueAsParameter(component, "git_branch", null, true, entity, baselineOrigin));
-        deployDescParams.put("git_revision", getPropertyValueAsParameter(component, "git_revision", null, true, entity, baselineOrigin));
-        deployDescParams.put("git_url", getPropertyValueAsParameter(component, "git_url", null, true, entity, baselineOrigin));
-        deployDescParams.put("image_type", getPropertyValueAsParameter(component, "image_type", null, true, entity, baselineOrigin));
-        deployDescParams.put("name", checkIfMandatoryAsParameter(component.getName(), "name", entity, baselineOrigin));
-        deployDescParams.put("promote_artifacts", getPropertyValueAsParameter(component, "promote_artifacts", null, true, entity, baselineOrigin));
-        deployDescParams.put("qualifier", getPropertyValueAsParameter(component, "qualifier", null, true, entity, baselineOrigin));
-        deployDescParams.put("version", checkIfMandatoryAsParameter(component.getVersion(), "version", entity, baselineOrigin));
+        deployDescParams.put("git_branch", getPropertyValueAsParameter(component, "git_branch", null, true, entity, SBOM_ORIGIN));
+        deployDescParams.put("git_revision", getPropertyValueAsParameter(component, "git_revision", null, true, entity, SBOM_ORIGIN));
+        deployDescParams.put("git_url", getPropertyValueAsParameter(component, "git_url", null, true, entity, SBOM_ORIGIN));
+        deployDescParams.put("image_type", getPropertyValueAsParameter(component, "image_type", null, true, entity, SBOM_ORIGIN));
+        deployDescParams.put("name", checkIfMandatoryAsParameter(component.getName(), "name", entity, SBOM_ORIGIN));
+        deployDescParams.put("promote_artifacts", getPropertyValueAsParameter(component, "promote_artifacts", null, true, entity, SBOM_ORIGIN));
+        deployDescParams.put("qualifier", getPropertyValueAsParameter(component, "qualifier", null, true, entity, SBOM_ORIGIN));
+        deployDescParams.put("version", checkIfMandatoryAsParameter(component.getVersion(), "version", entity, SBOM_ORIGIN));
 
         deployParamsMap.put(component.getName(), deployDescParams);
     }
@@ -268,8 +269,19 @@ public class BomReaderUtilsImplV2 {
     }
 
     private Parameter getPropertyValueAsParameter(Component component, String propertyName, String defaultValue, boolean mandatory, String entity, String origin) {
-        String value = getPropertyValue(component, propertyName, defaultValue, mandatory, entity);
-        return value != null ? new Parameter(value, origin, false) : null;
+        String value = component.getProperties().stream()
+                .filter(p -> propertyName.equals(p.getName()))
+                .map(Property::getValue)
+                .findFirst()
+                .orElse(null);
+        if (value != null) {
+            return new Parameter(value, origin, false);
+        }
+        if (mandatory) {
+            String fallback = checkIfMandatory(defaultValue, propertyName, entity);
+            return new Parameter(fallback, ENVGENE_DEFAULT, false);
+        }
+        return null;
     }
 
     private String checkIfMandatory(String value, String propertyName, String entity) {
@@ -310,7 +322,7 @@ public class BomReaderUtilsImplV2 {
         String entity = "service:" + component.getName();
 
         serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", new Parameter(checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity), SBOM_ORIGIN, false));
-        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity) + "-v1", SBOM_ORIGIN, false));
+        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity) + "-v1", ENVGENE_CALCULATED, false));
         serviceParams.put("DEPLOYMENT_VERSION", new Parameter("v1", ENVGENE_DEFAULT, false));
         serviceParams.put("SERVICE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity), SBOM_ORIGIN, false));
         if (CollectionUtils.isNotEmpty(component.getComponents())) {
@@ -337,8 +349,8 @@ public class BomReaderUtilsImplV2 {
         Object imageRepository = getImageRepository(dockerTag);
 
         serviceParams.put("ARTIFACT_DESCRIPTOR_VERSION", new Parameter(checkIfMandatory(bomContent.getMetadata().getComponent().getVersion(), "version in metadata", entity), SBOM_ORIGIN, false));
-        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity) + "-v1", SBOM_ORIGIN, false));
-        serviceParams.put("DEPLOYMENT_VERSION", new Parameter("v1", SBOM_ORIGIN, false));
+        serviceParams.put("DEPLOYMENT_RESOURCE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity) + "-v1", ENVGENE_CALCULATED, false));
+        serviceParams.put("DEPLOYMENT_VERSION", new Parameter("v1", ENVGENE_DEFAULT, false));
         serviceParams.put("SERVICE_NAME", new Parameter(checkIfMandatory(component.getName(), "name", entity), SBOM_ORIGIN, false));
         serviceParams.put("DOCKER_TAG", new Parameter(dockerTag, SBOM_ORIGIN, false));
         if (imageRepository != null) {

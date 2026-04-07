@@ -217,8 +217,7 @@ public class CliParameterParser {
         String cloudOrigin = String.format(ParametersConstants.CLOUD_ORIGIN, tenantName, cloudName);
         wrapPlainMapWithOrigin(clusterParameterMap,cloudOrigin);
         Map<String, Object> compositeStructure = getObjectMap(inputData.getCompositeStructureDTO());
-        wrapPlainMapWithOrigin(compositeStructure,ParametersConstants.COMPOSITE_STRUCTURE);
-        topologyParams.put("composite_structure", compositeStructure);
+        topologyParams.put("composite_structure", new Parameter(compositeStructure,ParametersConstants.COMPOSITE_STRUCTURE,false));
         Map<String, Object>  environments = inputData.getClusterMap();
         wrapPlainMapWithOrigin(environments,cloudOrigin);
         topologyParams.put("environments", environments);
@@ -229,10 +228,8 @@ public class CliParameterParser {
         Map<String, Object> bgDomainSecureMap = new LinkedHashMap<>();
         Map<String, Object> bgDomainParamsMap = new LinkedHashMap<>();
         ParameterUtils.splitBgDomainParams(bgDomainMap, bgDomainSecureMap, bgDomainParamsMap);
-        wrapPlainMapWithOrigin(bgDomainSecureMap,BG_DOMAIN);
-        topologySecuredParams.put("bg_domain", bgDomainSecureMap);
-        wrapPlainMapWithOrigin(bgDomainParamsMap,BG_DOMAIN);
-        topologyParams.put("bg_domain", bgDomainParamsMap);
+        topologySecuredParams.put("bg_domain", new Parameter(bgDomainSecureMap,BG_DOMAIN,false));
+        topologyParams.put("bg_domain", new Parameter(bgDomainParamsMap,BG_DOMAIN,false));
         String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
         fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
         fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
