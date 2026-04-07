@@ -1,6 +1,6 @@
 ---
 name: local-tests
-description: Runs qubership-envgene tests and Python tooling in the tests Docker service via the root Makefile (make run-tests, make bash-tests, make tests-run CMD=..., make up-tests). Forbids host python/pytest/pip unless the user asks. Use when running tests, pytest, python -m pytest, single test files, debugging failures, CI parity, validating changes, or any proposal to use docker compose or CI_PROJECT_DIR with python. Triggers include make run-tests, bash-tests, tests-run, env-build tests, scripts/build_env tests, local verification.
+description: Runs qubership-envgene tests and Python tooling in the tests Docker service via the root Makefile (make run-tests, make bash-tests, make tests-run CMD=..., make up-tests). Forbids host python/pytest/pip unless the user asks. Prefer make run-tests for validation; targeted pytest is only for iterative debugging. Use when running tests, pytest, CI parity, validating changes, or docker compose vs Make for tests. Triggers include make run-tests, bash-tests, tests-run, env-build tests, scripts/build_env tests, local verification.
 ---
 
 # Local tests (Docker + Make)
@@ -21,15 +21,27 @@ Single workflow: **repository root**, **`tests` service** in `devtools/docker-co
 
 | Goal | Command |
 |------|---------|
-| Full suite via project script | `make run-tests` |
+| Validate changes (authoritative, CI-like) | `make run-tests` |
 | Interactive shell in `tests` container | `make bash-tests` (after `make up-tests`) |
-| One non-interactive command (pytest, `python3`, etc.) | `make tests-run CMD='…'` |
+| Ad hoc command (pytest subset, `python3`, etc.) | `make tests-run CMD='…'` |
 | Image missing or Dockerfile changed | `make build-tests` |
 | Service not running | `make up-tests` |
 
 **`bash-%` in the Makefile:** `make bash-tests` runs `docker compose … exec tests bash` (interactive). **`tests-run`** runs `exec -T tests bash -lc 'cd /workspace && $(CMD)'` (non-interactive). See root `Makefile` for exact definitions.
 
-## Targeted pytest or Python
+## Default full run (use this to confirm a change)
+
+```sh
+make run-tests
+```
+
+Runs `devtools/tests/run.sh` inside the `tests` service. Treat this as the **source of truth** for whether tests pass.
+
+## Targeted pytest or Python (debugging only)
+
+Many tests in this repo **depend on shared state, order, or fixtures** that only the full runner sets up reliably. Running **pytest subsets or single files** can pass while `make run-tests` fails, or the opposite. Do **not** report "all tests pass" based only on a subset.
+
+Use targeted commands only to **iterate on a known failing test** or a tight loop while fixing something; finish with **`make run-tests`**.
 
 **Interactive:** `make up-tests` → `make bash-tests` → run `pytest` or `python3` in that shell.
 
@@ -45,21 +57,13 @@ make tests-run CMD='python3 -m some.module'
 
 Paths in `CMD` are relative to repo root (`/workspace` in the container). Omitting `CMD` fails with usage text.
 
-## Default full run
-
-```sh
-make run-tests
-```
-
-Runs `devtools/tests/run.sh` inside the `tests` service.
-
 ## When `run-tests` fails or first-time setup
 
 Use **in order** as needed:
 
 1. **Image missing or Dockerfile/dependencies changed** → `make build-tests`
 2. **Container not running** (down after reboot, never started, after `make down`) → `make up-tests`
-3. Run again → `make run-tests`
+3. Run again → `make run-tests` (not a pytest subset alone)
 
 **Typical cold start:** `make build-tests` → `make up-tests` → `make run-tests`.
 
