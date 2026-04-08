@@ -10,7 +10,7 @@ def is_inventory_generation_needed(is_template_test, inventory_params):
     if is_template_test:
         return False
 
-    env_inventory_init = inventory_params.get('ENV_INVENTORY_INIT') == 'true'
+    env_inventory_init = inventory_params.get('ENV_INVENTORY_INIT')
     env_specific_parameters = inventory_params.get('ENV_SPECIFIC_PARAMS')
     env_template_name = inventory_params.get('ENV_TEMPLATE_NAME')
     env_inventory_content = inventory_params.get('ENV_INVENTORY_CONTENT')

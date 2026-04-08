@@ -10,12 +10,12 @@ from envgenehelper.models import TemplateVersionUpdateMode
 def get_pipeline_parameters() -> dict:
     return {
         'ENV_NAMES': getenv("ENV_NAMES", ""),
-        'ENV_BUILD': getenv("ENV_BUILDER") == "true",
-        'GET_PASSPORT': getenv("GET_PASSPORT") == "true",
-        'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false") == "true",
+        'ENV_BUILD': getenv("ENV_BUILDER", "false").lower() == "true",
+        'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
+        'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false").lower() == "true",
         'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
-        'ENV_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST") == "true",
-        'IS_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST") == "true",
+        'ENV_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST", "false").lower() == "true",
+        'IS_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST", "false").lower() == "true",
         'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
         'JSON_SCHEMAS_DIR': getenv("JSON_SCHEMAS_DIR", "/module/schemas"),
         "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE", "artifact"),
@@ -23,7 +23,7 @@ def get_pipeline_parameters() -> dict:
         "SD_DATA": getenv("SD_DATA"),
         "SD_DELTA": getenv("SD_DELTA"),
         "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE"),
-        "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT"),
+        "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT", "false").lower()  == "true",
         "ENV_SPECIFIC_PARAMS": getenv("ENV_SPECIFIC_PARAMS"),
         "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
         'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
@@ -32,7 +32,7 @@ def get_pipeline_parameters() -> dict:
         'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
         'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT", "10m"),
         'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", "") or str(uuid.uuid4()),
-        'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL"),
+        'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL", "INFO"),
         'CALCULATOR_CLI_JAVA_OPTIONS' : getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
         "BG_STATE": getenv("BG_STATE"),
         "BG_MANAGE": getenv("BG_MANAGE") == "true",
@@ -55,6 +55,14 @@ class PipelineParametersHandler:
 
         if pipe_param_plugin.modules:
             pipe_param_plugin.run(pipeline_params=self.params)
+        
+        for k, v in self.params.items():
+            try:
+                parsed = json.loads(v)
+                self.params[k] = json.dumps(parsed, separators=(",", ":"))
+
+            except (TypeError, ValueError):
+                pass
 
     def hide_secrets(self, data):
         if isinstance(data, dict):
@@ -74,18 +82,11 @@ class PipelineParametersHandler:
         if params.get("CRED_ROTATION_PAYLOAD"):
             params["CRED_ROTATION_PAYLOAD"] = "***"
 
+        env_inventory_content = params.get("ENV_INVENTORY_CONTENT")
+        if env_inventory_content:
+            self.hide_secrets(env_inventory_content)
+            
         for k, v in params.items():
-            try:
-                parsed = json.loads(v)
-
-                if k == "ENV_INVENTORY_CONTENT":
-                    self.hide_secrets(parsed)
-
-                params[k] = json.dumps(parsed, separators=(",", ":"))
-
-            except (TypeError, ValueError):
-                pass
-
-            params_str += f"\n{k.upper()}: {params[k]}"
+            params_str += f"\n{k.upper()}: {v}"
 
         logger.info(params_str)
