@@ -194,7 +194,9 @@ def build_pipeline(params: dict) -> None:
 
         logger.info(f'----------------end processing for {full_env_name}---------------------')
     
-    sorted_pipeline.add_variables(**params)
+    for key, value in params.items():
+        if value is not None and value != '':
+            sorted_pipeline.add_variables(**{key: value})
 
     # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
