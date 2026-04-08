@@ -175,7 +175,7 @@ def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
                 logger.info(f"Shared credentials for {cred_name} found in: {f}")
                 return f
     
-    raise ReferenceError(f"Shared credentials with key {cred_name} not found in {instances_dir}")
+    raise ReferenceError(f"Shared credentials with key {cred_name} not found.")
 
 def mergeSharedCreds(credYamlPath, envDir, instancesDir) :
     inventoryYaml = getEnvDefinition(envDir)
