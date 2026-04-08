@@ -1,7 +1,9 @@
+from os import getenv
+
 from pathlib import Path
 import shutil
 
-from envgenehelper.business_helper import NamespaceFile, get_bgd_object, get_namespaces, get_namespaces_path, getenv_and_log, getenv_with_error
+from envgenehelper.business_helper import NamespaceFile, get_bgd_object, get_namespaces, getenv_with_error
 from envgenehelper import logger
 
 def filter_namespaces(namespaces: list[str], filter: str, bgd_object: dict) -> list[str]:
@@ -29,7 +31,7 @@ def filter_namespaces(namespaces: list[str], filter: str, bgd_object: dict) -> l
     return filtered_namespaces
 
 def apply_ns_build_filter():
-    filter = getenv_and_log('NS_BUILD_FILTER')
+    filter = getenv('NS_BUILD_FILTER')
     if not filter:
         logger.info('NS_BUILD_FILTER is empty, skipping filtering')
         return
