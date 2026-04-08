@@ -16,6 +16,7 @@ from artifact_searcher.utils.constants import DEFAULT_REQUEST_TIMEOUT, TCP_CONNE
 from artifact_searcher.utils.models import Registry, Application, FileExtension, Credentials, ArtifactInfo
 from envgenehelper import logger
 from requests.auth import HTTPBasicAuth
+from artifact_searcher.utils.models import MavenConfig
 
 WORKSPACE = os.getenv("WORKSPACE", Path(tempfile.gettempdir()) / "zips")
 
@@ -306,7 +307,7 @@ async def check_artifact_async(
     if result is not None:
         return result
 
-    if not app.registry.maven_config.is_nexus:
+    if not MavenConfig.is_nexus(app.registry.maven_config.repository_domain_name):
         return result
 
     # trying to edit url for nexus and repeat
@@ -403,6 +404,9 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
                    artifact_extension: FileExtension,
                    cred: Credentials | None = None,
                    classifier: str = "") -> str | None:
+    if MavenConfig.is_nexus(repo_url):
+        repo_url = convert_nexus_repo_url_to_index_view(repo_url)
+
     base = repo_url.rstrip("/") + "/"
     group_id = group_id.replace(".", "/")
 
@@ -416,9 +420,10 @@ def check_artifact(repo_url: str, group_id: str, artifact_id: str, version: str,
     folder = version_to_folder_name(version)
     filename = create_artifact_name(artifact_id, artifact_extension, version, classifier)
     full_url = urljoin(base, f"{group_id}/{artifact_id}/{folder}/{filename}")
-
+    auth = HTTPBasicAuth(cred.username, cred.password) if cred else None
+    
     try:
-        response = requests.head(full_url, timeout=DEFAULT_REQUEST_TIMEOUT)
+        response = requests.head(full_url, auth=auth, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code == 200:
             logger.info(
                 f"[Repository: {repo_url}] [Artifact: {group_id}:{artifact_id}:{version}] - Artifact found: {full_url}"

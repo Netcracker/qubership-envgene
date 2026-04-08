@@ -52,7 +52,8 @@ Run the GSF package manager on your local machine with the following command:
 git-system-follower install <path_to_instance_package_image> \
    -r <project_instance_repository_path> \
    -b <project_instance_repository_branch> \
-   -t <gitlab_token>
+   -t <gitlab_token> \
+   --extra self_token <gitlab_token> no-masked
 ```
 
 **Parameter Details:**
@@ -60,7 +61,10 @@ git-system-follower install <path_to_instance_package_image> \
 - `<path_to_instance_package_image>`: Docker image path from Step 1
 - `<project_instance_repository_path>`: Project instance repository URL (format: `https://git.com/project.git`)
 - `<project_instance_repository_branch>`: Branch of project instance repository
-- `<gitlab_token>`: Project instance repository token from Initial Setup Step 2
+- `<gitlab_token>`: Project instance repository token from Initial Setup Step 2 (used both for GSF Git operations and for EnvGene to commit changes)
+
+> [!NOTE]
+> The same token is used twice: `-t` for GSF to authenticate git operations, and `--extra self_token` to configure EnvGene's repository access.
 
 **Example:**
 
@@ -69,5 +73,6 @@ git-system-follower install \
    docker.io/envgene/instance:1.2.3 \
    -r https://git.qubership.org/configuration-management/env-instance.git \
    -b master \
-   -t token-placeholder-123
+   -t token-placeholder-123 \
+   --extra self_token token-placeholder-123 no-masked
 ```

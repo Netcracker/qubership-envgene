@@ -70,7 +70,8 @@
       - [`cloud`](#cloud)
       - [`deployer`](#deployer)
     - [Deprecated Credential Macros](#deprecated-credential-macros)
-      - [`${envgene.creds.get('<cred-id>').username|password|secret}`](#envgenecredsgetcred-idusernamepasswordsecret)
+      - [`${envgen.creds.get('<cred-id>').username|password|secret}`](#envgencredsgetcred-idusernamepasswordsecret)
+      - [`${cmdb.creds.get('<cred-id>').username|password|secret}`](#cmdbcredsgetcred-idusernamepasswordsecret)
     - [Deprecated Calculator CLI macros](#deprecated-calculator-cli-macros)
       - [`BASELINE_PROJ`](#baseline_proj)
 
@@ -1256,9 +1257,11 @@ k8s_token: ${creds.get('k8s-cred').secret}
 
 ### Deprecated Credential Macros
 
-#### `${envgene.creds.get('<cred-id>').username|password|secret}`
+#### `${envgen.creds.get('<cred-id>').username|password|secret}`
 
-**Description:** This macro was used for processing system sensitive parameters—parameters that EnvGene uses to integrate itself with external systems, such as the login and password for a registry or a token for a GitLab instance.
+**Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro)
+
+#### `${cmdb.creds.get('<cred-id>').username|password|secret}`
 
 **Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro)
 

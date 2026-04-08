@@ -543,34 +543,34 @@ The CLI flag [`--enable-traceability`](#calculator-command-line-tool-execution-a
 
 ##### Parameter Source to Comment Mapping
 
-| Parameter Source                                   | Comment                                    | Example                                                                                      |
-|----------------------------------------------------|--------------------------------------------|----------------------------------------------------------------------------------------------|
-| Custom Params (`--custom-params`)                  | `# custom params`                          | `OVERRIDE_KEY: "value" # custom params`                                                      |
-| Environment Instance, Tenant                       | `# tenant`                                 | `GITLAB_URL: "https://git.qibership.org" # tenant`                                           |
-| Environment Instance, Cloud                        | `# cloud`                                  | `CLOUD_API_HOST: "https://api.example.com" # cloud`                                          |
-| Environment Instance, Namespace                    | `# namespace: <name>`                      | `NAMESPACE_NAME: "env-1-core" # namespace: env-1-core`                                       |
-| Environment Instance, Application                  | `# application: <name>`                    | `APP_FEATURE_FLAG: true # application: my-app`                                               |
-| Environment Instance, Resource Profile Override    | `# resource-profile-override: <name>`      | `CPU_LIMIT: "500m" # resource-profile-override: perf-small`                                  |
-| Environment Instance, Composite Structure          | `# composite-structure`                    | `composite_structure: # composite-structure`                                                 |
-| Environment Instance, BG Domain                    | `# bg-domain`                              | `bg_domain: # bg-domain`                                                                     |
-| Application SBOM                                   | `# sbom`                                   | `deploy_param: '' # sbom`                                                                    |
-| Application SBOM, Resource Profile Baseline        | `# sbom, resource-profile-baseline: <name>`| `PROFILE_BASELINE: "dev" # sbom, resource-profile-baseline: dev`                             |
-| Calculated by calculator                           | `# envgene calculated`                     | `PUBLIC_GATEWAY_URL: "https://public-gateway-bss.qubership.org" # envgene calculated`        |
-| Calculator `--extra_params`                        | `# envgene pipeline parameter`             | `DEPLOYMENT_SESSION_ID: "7e9f5f54-4be2-4fbd-a267-19e78d09810d" # envgene pipeline parameter` |
-| Default value by calculator                        | `# envgene default`                        | `MANAGED_BY: "argocd" # envgene default`                                                     |
+| Parameter Source                                | Comment                       | Example                                                                                     |
+|-------------------------------------------------|-------------------------------|---------------------------------------------------------------------------------------------|
+| Custom Params (`--custom-params`)               | `#custom params`              | `OVERRIDE_KEY: "value" #custom params`                                                      |
+| Environment Instance, Tenant                    | `#tenant`                     | `GITLAB_URL: "https://git.qibership.org" #tenant`                                           |
+| Environment Instance, Cloud                     | `#cloud`                      | `CLOUD_API_HOST: "https://api.example.com" #cloud`                                          |
+| Environment Instance, Namespace                 | `#namespace`                  | `NAMESPACE_NAME: "env-1-core" #namespace`                                                   |
+| Environment Instance, Application               | `#application`                | `APP_FEATURE_FLAG: true #application`                                                       |
+| Environment Instance, Resource Profile Override | `#rp-override: <name>`        | `CPU_LIMIT: "500m" #rp-override: perf-small`                                                |
+| Environment Instance, Composite Structure       | `#composite-structure`        | `composite_structure: {} #composite-structure`                                              |
+| Environment Instance, BG Domain                 | `#bg-domain`                  | `bg_domain: {} #bg-domain`                                                                  |
+| Application SBOM (component properties)         | `#sbom`                       | `git_revision: "a71c5988" #sbom`                                                            |
+| Application SBOM, Resource Profile Baseline     | `#rp-baseline: <name>`        | `CPU_LIMIT: "500m" #rp-baseline: dev`                                                       |
+| Calculated by calculator                        | `#envgene calculated`         | `PUBLIC_GATEWAY_URL: "https://public-gateway-bss.qubership.org" #envgene calculated`        |
+| Calculator `--extra_params`                     | `#envgene pipeline parameter` | `DEPLOYMENT_SESSION_ID: "7e9f5f54-4be2-4fbd-a267-19e78d09810d" #envgene pipeline parameter` |
+| Default value by calculator                     | `#envgene default`            | `MANAGED_BY: "argocd" #envgene default`                                                     |
 
 ##### Rules for Adding Comments
 
-1. The comment is added after a single space following the parameter value on the same line for non-multiline values.
+1. The comment is added immediately after the parameter value (no space between value and `#`) on the same line for non-multiline values.
 
     ```yaml
-    SECURITY_POLICY: strict # cloud
+    SECURITY_POLICY: strict #cloud
     ```
 
 2. The comment is added on the previous line above the parameter for multiline values (using `|` or `>`).
 
     ```yaml
-    # cloud
+    #cloud
     CS_CONTENT_SECURITY_POLICY: |
       {"CONTENT_SECURITY_POLICY":"default-src..."}
     ```
@@ -589,24 +589,42 @@ The CLI flag [`--enable-traceability`](#calculator-command-line-tool-execution-a
 
     ```yaml
     servers:
-      - "server1.example.com" # cloud
-      - "server2.example.com" # namespace: env-1
+      - "server1.example.com" #cloud
+      - "server2.example.com" #namespace
 
     servers:
-      name: "server1" # cloud
-      host: "host1" # cloud
-      port: 8080 # namespace: env-1
+      name: "server1" #cloud
+      host: "host1" #cloud
+      port: 8080 #namespace
     ```
 
 9. Comments are not added to YAML anchors/aliases (`&id001`, `*id001`, `<<: *id001`). But for regular keys/values filled in via anchors/aliases, still show their source as a comment:
 
     ```yaml
     global: &id001
-      key1: value1 # cloud
-      key2: value2 # cloud
+      key1: value1 #cloud
+      key2: value2 #cloud
     service1:
       <<: *id001
-      key3: value3 # namespace: env-1-core
+      key3: value3 #namespace
+    ```
+
+10. **Exception for `deploy-descriptor.yaml`** — this file is almost entirely generated from the Application SBOM. As an exception to Rule 8, per-line comments are **not** added. Instead, a single file-level header comment is placed at the top of the file describing the source for all parameters. Parameters whose source differs from the header (e.g. predefined parameters with `#rp-baseline: <name>` or `#rp-override: <name>`) are still marked inline.
+
+    Example:
+
+    ```yaml
+    #Source of parameters not marked inline: `#sbom`
+    global:
+      deployDescriptor:
+        my-service:
+          git_revision: a71c5988fc92de5f9698434bfe43d513245969aa
+          build_id_dtrust: 3d28937a-c7ce-4600-b454-6c08ae61f557
+          service_name: my-service
+          version: release-2025.3-9.16.0
+          type: cr
+          REPLICAS: 1 #rp-override: dev-override
+          CPU_LIMIT: 500m #rp-baseline: dev
     ```
 
 #### [Version 2.0] Deployment Parameter Context
@@ -663,19 +681,19 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 | `SERVER_HOSTNAME`                 | yes       | string  | **Deprecated**. Uses `CLOUD_PUBLIC_HOST` if set, otherwise falls back to `CLOUD_API_HOST`                                                                              | None                                           | N/A                                                                                          |
 | `CUSTOM_HOST`                     | yes       | string  | **Deprecated**. Uses `CLOUD_PRIVATE_HOST` if set, otherwise falls back to `SERVER_HOSTNAME`                                                                            | None                                           | N/A                                                                                          |
 | `OPENSHIFT_SERVER`                | yes       | string  | **Deprecated**. Constructed as `CLOUD_PROTOCOL`://`CLOUD_PUBLIC_HOST`:`CLOUD_API_PORT`                                                                                 | None                                           | N/A                                                                                          |
-| `DBAAS_ENABLED`                   | yes       | boolean | Feature toggle indicating whether DBaaS is used                                                                                                                        | `false`                                        | `dbaasConfigs[0].enable` in the `Cloud`                                                      |
-| `API_DBAAS_ADDRESS`               | no        | string  | DBaaS API endpoint accessible within a cluster network. Provided if `DBAAS_ENABLED: true` only                                                                         | None                                           | `dbaasConfigs[0].apiUrl` in the `Cloud`                                                      |
-| `DBAAS_AGGREGATOR_ADDRESS`        | no        | string  | DBaaS API endpoint accessible outside the cluster network. Provided if `DBAAS_ENABLED: true` only                                                                      | None                                           | `dbaasConfigs[0].aggregatorUrl` in the `Cloud`                                               |
-| `MAAS_ENABLED`                    | yes       | boolean | Feature toggle indicating whether MaaS is used                                                                                                                         | `false`                                        | `maasConfig.enable` in the `Cloud`                                                           |
-| `MAAS_INTERNAL_ADDRESS`           | no        | string  | MaaS API endpoint accessible within a cluster network. Provided if `MAAS_ENABLED: true` only                                                                           | None                                           | `maasConfig.maasInternalAddress` in the `Cloud`                                              |
-| `MAAS_EXTERNAL_ROUTE`             | no        | string  | Maas API endpoint accessible outside the cluster network. Provided if `MAAS_ENABLED: true` only                                                                        | None                                           | `maasConfig.maasUrl` in the `Cloud`                                                          |
-| `MAAS_SERVICE_ADDRESS`            | no        | string  | **Deprecated**. The same as `MAAS_EXTERNAL_ROUTE`. Provided if `MAAS_ENABLED: true` only                                                                               | None                                           | `maasConfig.maasUrl` in the `Cloud`                                                          |
-| `VAULT_ENABLED`                   | yes       | boolean | Feature toggle indicating whether Vault is used                                                                                                                        | `false`                                        | `vaultConfig.enable` in the `Cloud`                                                          |
-| `VAULT_ADDR`                      | no        | string  | Vault API endpoint accessible within a cluster network. Provided if `VAULT_ENABLED: true` only                                                                         | None                                           | `vaultConfig.enable` in the `Cloud`                                                          |
-| `PUBLIC_VAULT_URL`                | no        | string  | Vault API endpoint accessible outside the cluster network. Provided if `VAULT_ENABLED: true` only                                                                      | None                                           | `vaultConfig.url` in the `Cloud`                                                             |
-| `CONSUL_ENABLED`                  | yes       | boolean | Feature toggle indicating whether Consul is used                                                                                                                       | `false`                                        | `consulConfig.enabled` in the `Cloud`                                                        |
-| `CONSUL_URL`                      | no        | string  | Consul API endpoint accessible within a cluster network. Provided if `CONSUL_ENABLED: true` only                                                                       | None                                           | `consulConfig.internalUrl` in the `Cloud`                                                    |
-| `CONSUL_PUBLIC_URL`               | no        | string  | Consul API endpoint accessible within a cluster network. Provided if `CONSUL_ENABLED: true` only                                                                       | None                                           | `consulConfig.internalUrl` in the `Cloud`                                                    |
+| `DBAAS_ENABLED`                   | no        | boolean | Feature toggle indicating whether DBaaS is used                                                                                                                        | `false`                                        | `dbaasConfigs[0].enable` in the `Cloud`                                                      |
+| `API_DBAAS_ADDRESS`               | no        | string  | DBaaS API endpoint accessible within a cluster network. Omitted if `dbaasConfigs[0].enable: false`                                                                     | None                                           | `dbaasConfigs[0].apiUrl` in the `Cloud`                                                      |
+| `DBAAS_AGGREGATOR_ADDRESS`        | no        | string  | DBaaS API endpoint accessible outside the cluster network. Omitted if `dbaasConfigs[0].enable: false`                                                                  | None                                           | `dbaasConfigs[0].aggregatorUrl` in the `Cloud`                                               |
+| `MAAS_ENABLED`                    | no        | boolean | Feature toggle indicating whether MaaS is used                                                                                                                         | `false`                                        | `maasConfig.enable` in the `Cloud`                                                           |
+| `MAAS_INTERNAL_ADDRESS`           | no        | string  | MaaS API endpoint accessible within a cluster network. Omitted if `maasConfig.enable: false`                                                                           | None                                           | `maasConfig.maasInternalAddress` in the `Cloud`                                              |
+| `MAAS_EXTERNAL_ROUTE`             | no        | string  | Maas API endpoint accessible outside the cluster network. Omitted if `maasConfig.enable: false`                                                                        | None                                           | `maasConfig.maasUrl` in the `Cloud`                                                          |
+| `MAAS_SERVICE_ADDRESS`            | no        | string  | **Deprecated**. The same as `MAAS_EXTERNAL_ROUTE`. Omitted if `maasConfig.enable: false`                                                                               | None                                           | `maasConfig.maasUrl` in the `Cloud`                                                          |
+| `VAULT_ENABLED`                   | no        | boolean | Feature toggle indicating whether Vault is used                                                                                                                        | `false`                                        | `vaultConfig.enable` in the `Cloud`                                                          |
+| `VAULT_ADDR`                      | no        | string  | Vault API endpoint accessible within a cluster network. Omitted if `vaultConfig.enable: false`                                                                         | None                                           | `vaultConfig.enable` in the `Cloud`                                                          |
+| `PUBLIC_VAULT_URL`                | no        | string  | Vault API endpoint accessible outside the cluster network. Omitted if `vaultConfig.enable: false`                                                                      | None                                           | `vaultConfig.url` in the `Cloud`                                                             |
+| `CONSUL_ENABLED`                  | no        | boolean | Feature toggle indicating whether Consul is used                                                                                                                       | `false`                                        | `consulConfig.enabled` in the `Cloud`                                                        |
+| `CONSUL_URL`                      | no        | string  | Consul API endpoint accessible within a cluster network. Omitted if `consulConfig.enabled: false`                                                                      | None                                           | `consulConfig.internalUrl` in the `Cloud`                                                    |
+| `CONSUL_PUBLIC_URL`               | no        | string  | Consul API endpoint accessible within a cluster network. Omitted if `consulConfig.enabled: false`                                                                      | None                                           | `consulConfig.internalUrl` in the `Cloud`                                                    |
 | `PRODUCTION_MODE`                 | no        | boolean | Defines the deployment environment (non-production/production) type for restricting Helm chart content                                                                 | `false`                                        | `deployParameters.PRODUCTION_MODE` in the `Cloud`                                            |
 | `TENANTNAME`                      | yes       | string  | Tenant name                                                                                                                                                            | None                                           | `name` in the `Tenant`                                                                       |
 | `CLOUDNAME`                       | yes       | string  | Cloud name                                                                                                                                                             | None                                           | `name` in the `Cloud`                                                                        |
@@ -743,14 +761,14 @@ global: &id001
 | Attribute                                | Mandatory | Type   | Description                         | Default | Source Environment Instance                                                                                                                                                                                           |
 |------------------------------------------|-----------|--------|-------------------------------------|---------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `K8S_TOKEN`                              | yes       | string | Cluster's API token                 | None    | Taken from `data.secret` in the `Credential` set by `defaultCredentialsId` in the related `Namespace` or parent `Cloud`. If not set in `Namespace`, inherited from `Cloud`. `Namespace` has priority if both are set. |
-| `DBAAS_AGGREGATOR_USERNAME`              | no        | string | DBaaS username                      | None    | Taken from `data.username` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.username` in the `Cloud`                                                                                         |
-| `DBAAS_AGGREGATOR_PASSWORD`              | no        | string | DBaaS password                      | None    | Taken from `data.password` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.password` in the `Cloud`                                                                                         |
-| `DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME` | no        | string | same as `DBAAS_AGGREGATOR_USERNAME` | None    | Taken from `data.username` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.username` in the `Cloud`                                                                                         |
-| `DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD` | no        | string | same as `DBAAS_AGGREGATOR_PASSWORD` | None    | Taken from `data.password` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.password` in the `Cloud`                                                                                         |
-| `MAAS_CREDENTIALS_USERNAME`              | no        | string | MaaS username                       | None    | Taken from `data.username` property of the `Credential` specified via `maasConfig.credentialsId.username` in the `Cloud`                                                                                              |
-| `MAAS_CREDENTIALS_PASSWORD`              | no        | string | MaaS password                       | None    | Taken from `data.password` property of the `Credential` specified via `maasConfig.credentialsId.password` in the `Cloud`                                                                                              |
-| `VAULT_TOKEN`                            | no        | string | Vault token                         | None    | Taken from `data.secret` property of the `Credential` specified via `vaultConfig.credentialsId.secret` in the `Cloud`                                                                                                 |
-| `CONSUL_ADMIN_TOKEN`                     | no        | string | Consul admin token                  | None    | Taken from `data.secret` property of the `Credential` specified via `consulConfig.internalUrl` in the `Cloud`                                                                                                         |
+| `DBAAS_AGGREGATOR_USERNAME`              | no        | string | DBaaS username. Omitted if `dbaasConfigs[0].enable: false` or `dbaasConfigs[0].credentialsId: ""`                      | None    | Taken from `data.username` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.username` in the `Cloud`                                                                                         |
+| `DBAAS_AGGREGATOR_PASSWORD`              | no        | string | DBaaS password. Omitted if `dbaasConfigs[0].enable: false` or `dbaasConfigs[0].credentialsId: ""`                      | None    | Taken from `data.password` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.password` in the `Cloud`                                                                                         |
+| `DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME` | no        | string | same as `DBAAS_AGGREGATOR_USERNAME`. Omitted if `dbaasConfigs[0].enable: false` or `dbaasConfigs[0].credentialsId: ""` | None    | Taken from `data.username` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.username` in the `Cloud`                                                                                         |
+| `DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD` | no        | string | same as `DBAAS_AGGREGATOR_PASSWORD`. Omitted if `dbaasConfigs[0].enable: false` or `dbaasConfigs[0].credentialsId: ""` | None    | Taken from `data.password` property of the `Credential` specified via `dbaasConfigs[0].credentialsId.password` in the `Cloud`                                                                                         |
+| `MAAS_CREDENTIALS_USERNAME`              | no        | string | MaaS username. Omitted if `maasConfig.enable: false` or `maasConfig.credentialsId: ""`                                 | None    | Taken from `data.username` property of the `Credential` specified via `maasConfig.credentialsId.username` in the `Cloud`                                                                                              |
+| `MAAS_CREDENTIALS_PASSWORD`              | no        | string | MaaS password. Omitted if `maasConfig.enable: false` or `maasConfig.credentialsId: ""`                                 | None    | Taken from `data.password` property of the `Credential` specified via `maasConfig.credentialsId.password` in the `Cloud`                                                                                              |
+| `VAULT_TOKEN`                            | no        | string | Vault token. Omitted if `vaultConfig.enable: false` or `vaultConfig.credentialsId: ""`                                 | None    | Taken from `data.secret` property of the `Credential` specified via `vaultConfig.credentialsId.secret` in the `Cloud`                                                                                                 |
+| `CONSUL_ADMIN_TOKEN`                     | no        | string | Consul admin token. Omitted if `consulConfig.enabled: false` or `consulConfig.tokenSecret: ""`                         | None    | Taken from `data.secret` property of the `Credential` specified via `consulConfig.tokenSecret` in the `Cloud`                                                                                                         |
 | `SSL_SECRET_VALUE`                       | no        | string | SSL Certificate bundle              | None    | The value is taken from the deployment parameter `DEFAULT_SSL_CERTIFICATES_BUNDLE`, which can be set at the `Tenant`, `Cloud`, `Namespace`, or `Application`                                                          |
 | `CA_BUNDLE_CERTIFICATE`                  | no        | string | SSL Certificate bundle              | None    | The value is taken from the deployment parameter `DEFAULT_SSL_CERTIFICATES_BUNDLE`, which can be set at the `Tenant`, `Cloud`, `Namespace`, or `Application`                                                          |
 

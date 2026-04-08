@@ -8,9 +8,8 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
     logger.info(f'prepare env_build job for {full_env}')
 
     script = [
-        '/module/scripts/handle_certs.sh',
+        'cd /build_env; python3 /build_env/scripts/build_env/main.py'
     ]
-    script.append('cd /build_env; python3 /build_env/scripts/build_env/main.py')
 
     if is_template_test:
         script.append('env_name=$(cat "$CI_PROJECT_DIR/set_variable.txt")')
@@ -46,8 +45,7 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/set_variable.txt")
     else:
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
-        env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
-        env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
+        env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")      
     env_build_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(env_build_job)
     return env_build_job
@@ -62,7 +60,6 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
         "image": '${envgen_image}',
         "stage": 'git_commit',
         "script": [
-            '/module/scripts/handle_certs.sh',
             '/module/scripts/git_commit.sh',
             "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
             'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
@@ -79,7 +76,6 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
         "envgen_args": " -vv",
         "envgen_debug": "true",
         "module_config_default": "/module/templates/defaults.yaml",
-        "GIT_STRATEGY": "none",
         "COMMIT_ENV": "true",
         "GITLAB_RUNNER_TAG_NAME": tags,
         "DEPLOY_SESSION_ID": deployment_session_id
