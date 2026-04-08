@@ -165,7 +165,7 @@ def build_pipeline(params: dict) -> None:
                                      "generate_effective_set_job", "env_inventory_generation_job",
                                      "credential_rotation_job", "bg_manage_job"]
 
-        plugin_params = params
+        plugin_params = params.copy()
         plugin_params['jobs_map'] = jobs_map
         plugin_params['job_sequence'] = job_sequence
         plugin_params['jobs_requiring_git_commit'] = jobs_requiring_git_commit
