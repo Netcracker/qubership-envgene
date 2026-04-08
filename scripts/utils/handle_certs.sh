@@ -1,4 +1,25 @@
 #!/bin/bash
+
+echo "$PATH"
+
+echo "===== USER ====="
+whoami
+
+echo "===== SHELL ====="
+echo "${SHELL:-not set}"
+
+echo "===== update-ca-certificates (command -v) ====="
+command -v update-ca-certificates || echo "NOT FOUND (command -v)"
+
+echo "===== update-ca-certificates (which) ====="
+which update-ca-certificates || echo "NOT FOUND (which)"
+
+echo "===== update-ca-certificates (filesystem) ====="
+ls -l /usr/sbin/update-ca-certificates || echo "NO FILE /usr/sbin/update-ca-certificates"
+
+echo "===== update-ca-certificates (exec test) ====="
+/usr/sbin/update-ca-certificates --help >/dev/null 2>&1 && echo "EXEC OK" || echo "EXEC FAIL"
+
 set -euo pipefail
 
 certs_dir="${CI_PROJECT_DIR:-}/configuration/certs"

@@ -1,18 +1,18 @@
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 1: Build
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:bugfix_security_issues_base_image AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libffi-dev \
-    openssl-dev \
-    python3-dev \
-    cargo \
-    rust \
-    build-base
+    libffi-dev=3.5.2-r0 \
+    openssl-dev=3.5.6-r0 \
+    python3-dev=3.12.13-r0 \
+    cargo=1.91.1-r1 \
+    rust=1.91.1-r1 \
+    build-base=0.5-r3
 
 COPY build_effective_set_generator/build/pip.conf /etc/pip.conf
 COPY build_effective_set_generator/build/requirements.txt /build/requirements.txt
@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir \
     --no-binary cffi \
     --no-binary cryptography \
     -r /build/requirements.txt
-    
+
 RUN pip install --no-cache-dir \
     /python/integration \
     /python/jschon-sort \
@@ -39,7 +39,7 @@ COPY build_effective_set_generator/effective-set-generator/target/*.jar /deploym
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 2: Runtime
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:bugfix_security_issues_base_image AS runtime
 
 ARG JAVA_PACKAGE=openjdk17-jre-headless
 
@@ -49,7 +49,7 @@ ENV LANG='en_US.UTF-8' \
 # Install ONLY runtime dependencies (NO dev packages)
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libgcc \
+    libgcc=15.2.0-r2 \
     ${JAVA_PACKAGE}
 
 COPY --from=build /python /python
