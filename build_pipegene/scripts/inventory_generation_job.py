@@ -28,8 +28,7 @@ def is_inventory_generation_needed(is_template_test, inventory_params):
     return env_inventory_content or env_inventory_init or bool(env_specific_parameters) or bool(env_template_name)
 
 
-def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, cluster_name, env_generation_params,
-                                     tags):
+def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, cluster_name, tags):
     logger.info(f"prepare env_generation job for {full_env_name}")
     params = {
         "name": f"env_inventory_generation.{full_env_name}",
@@ -48,7 +47,6 @@ def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, 
         "envgen_debug": "true",
         "module_config_default": "/module/templates/defaults.yaml",
         "GITLAB_RUNNER_TAG_NAME": tags,
-        **env_generation_params
     }
     job = job_instance(params=params, vars=vars)
     job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/")

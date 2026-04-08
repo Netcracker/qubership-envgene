@@ -110,7 +110,7 @@ def build_pipeline(params: dict) -> None:
         if is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params):
             jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, full_env_name,
                                                                                         environment_name, cluster_name,
-                                                                                        params, tags)
+                                                                                        tags)
         else:
             logger.info(
                 f'Preparing of full_env_name inventory generation job for {full_env_name} '
@@ -193,6 +193,8 @@ def build_pipeline(params: dict) -> None:
             job_instance.add_needs(*find_predecessor_job(job, jobs_map, job_sequence))
 
         logger.info(f'----------------end processing for {full_env_name}---------------------')
+    
+    sorted_pipeline.add_variables(**params)
 
     # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
