@@ -29,8 +29,8 @@ def filter_namespaces(namespaces: list[str], filter: str, bgd_object: dict) -> l
     return filtered_namespaces
 
 def apply_ns_build_filter():
-    filter = getenv_and_log('NS_BUILD_FILTER', default='')
-    if filter == '':
+    filter = getenv_and_log('NS_BUILD_FILTER')
+    if not filter:
         logger.info('NS_BUILD_FILTER is empty, skipping filtering')
         return
     logger.info(f"Filtering namespaces with NS_BUILD_FILTER: {filter}")
