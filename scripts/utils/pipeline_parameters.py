@@ -1,5 +1,6 @@
 import json
 import uuid
+import copy
 from os import getenv
 
 from envgenehelper import logger
@@ -78,13 +79,18 @@ class PipelineParametersHandler:
     def log_pipeline_params(self):
         params_str = "Input parameters are: "
 
-        params = self.params.copy()
+        params = copy.deepcopy(self.params)
         if params.get("CRED_ROTATION_PAYLOAD"):
             params["CRED_ROTATION_PAYLOAD"] = "***"
 
         env_inventory_content = params.get("ENV_INVENTORY_CONTENT")
         if env_inventory_content:
-            self.hide_secrets(env_inventory_content)
+            try:
+                parsed = json.loads(env_inventory_content)
+                self.hide_secrets(parsed)
+                params["ENV_INVENTORY_CONTENT"] = json.dumps(parsed, separators=(",", ":"))
+            except json.JSONDecodeError:
+                logger.warning("ENV_INVENTORY_CONTENT is not valid JSON, skipping masking")
             
         for k, v in params.items():
             params_str += f"\n{k.upper()}: {v}"
