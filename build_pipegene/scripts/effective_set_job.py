@@ -20,7 +20,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     sd_data = params["SD_DATA"]
     deployment_id = params["DEPLOYMENT_SESSION_ID"]
     effective_set_config = params["EFFECTIVE_SET_CONFIG"]
-    tags = params['GITLAB_RUNNER_TAG_NAME']
     if "CUSTOM_PARAMS" in params:
         custom_params = params["CUSTOM_PARAMS"]
 
@@ -105,7 +104,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         "envgen_args": " -vv",
         "envgen_debug": "true",
         "module_config_default": "/module/templates/defaults.yaml",
-        "GITLAB_RUNNER_TAG_NAME": tags,
         "EXCLUDE_CLEANUP_TARGETS": " ".join(cleanup_targets)
     }
 
