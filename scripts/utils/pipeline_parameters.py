@@ -31,7 +31,7 @@ def get_pipeline_parameters() -> dict:
         'NS_BUILD_FILTER': getenv("NS_BUILD_FILTER", ""),
         'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
         'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT", "10m"),
-        'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", "") or str(uuid.uuid4()),
+        'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", str(uuid.uuid4())),
         'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL", "INFO"),
         'CALCULATOR_CLI_JAVA_OPTIONS' : getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
         "BG_STATE": getenv("BG_STATE"),
@@ -43,7 +43,7 @@ def get_pipeline_parameters() -> dict:
         "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
         "CUSTOM_PARAMS" : getenv("CUSTOM_PARAMS"),
         "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
-            "ENV_TEMPLATE_VERSION_UPDATE_MODE") or TemplateVersionUpdateMode.PERSISTENT.value,
+            "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
     }
 
 
