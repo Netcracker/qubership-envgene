@@ -118,9 +118,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         environ['CI_PIPELINE_ID'] = real_ci_pipe_id
     generate_effective_set_job = job_instance(params=generate_effective_set_params, needs=needs,
                                                               vars=generate_effective_set_vars)
-    generate_effective_set_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env_name}")
-    generate_effective_set_job.artifacts.add_paths('${CI_PROJECT_DIR}/sboms')
-    generate_effective_set_job.artifacts.add_paths('${CI_PROJECT_DIR}/configuration/registry.y*ml')
 
     effective_set_expiry = effective_set_config_dict.get("effective_set_expiry") or "1 hour"
     logger.info(f"effective set expiry value '{effective_set_expiry}'")
