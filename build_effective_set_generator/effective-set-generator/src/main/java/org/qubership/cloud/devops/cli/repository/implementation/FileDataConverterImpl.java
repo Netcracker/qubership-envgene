@@ -183,40 +183,32 @@ public class FileDataConverterImpl implements FileDataConverter {
     // ================= FIRST PASS: count references =================
 
     private void countReferences(Object obj, Map<Object, Integer> refCount) {
-
         if (obj == null) return;
 
-        Object value = obj;
-
-        if (obj instanceof Parameter p) {
-            value = p.getValue();
-        }
+        // Unwrap Parameter once
+        Object value = (obj instanceof Parameter p) ? p.getValue() : obj;
 
         if (value instanceof Map<?, ?> map) {
-
-            int count = refCount.getOrDefault(map, 0);
-            refCount.put(map, count + 1);
-
-            // IMPORTANT: stop recursion if already seen
-            if (count > 0) return;
-
-            for (Map.Entry<?, ?> e : map.entrySet()) {
-                countReferences(e.getValue(), refCount);
+            if (incrementAndCheckVisited(map, refCount)) {
+                return;
             }
-        }
-
-        if (value instanceof List<?> list) {
-
-            int count = refCount.getOrDefault(list, 0);
-            refCount.put(list, count + 1);
-
-            // IMPORTANT: stop recursion if already seen
-            if (count > 0) return;
-
+            for (Object v : map.values()) {
+                countReferences(v, refCount);
+            }
+        } else if (value instanceof List<?> list) {
+            if (incrementAndCheckVisited(list, refCount)) {
+                return;
+            }
             for (Object item : list) {
                 countReferences(item, refCount);
             }
         }
+    }
+
+    boolean incrementAndCheckVisited(Object obj, Map<Object, Integer> refCount) {
+        int count = refCount.getOrDefault(obj, 0);
+        refCount.put(obj, count + 1);
+        return count > 0;
     }
 
     // ================= SECOND PASS: build nodes =================
@@ -240,76 +232,87 @@ public class FileDataConverterImpl implements FileDataConverter {
         boolean addComment = shouldAddComment(enableTraceability, origin, deployDescriptorYaml);
 
         if (value == null) {
-            return attachScalar(new ScalarNode(Tag.NULL, "null", ScalarStyle.PLAIN), origin, addComment, false);
+            return scalarNode("null", Tag.NULL, origin, addComment, false);
         }
 
         if (value instanceof String str) {
-            if ("!merge".equals(str)) {
-                return new ScalarNode(Tag.STR, "<<", ScalarStyle.PLAIN);
-            }
-
-            boolean multiline = str.contains("\n");
-            ScalarNode node = new ScalarNode(
-                    Tag.STR,
-                    str,
-                    multiline ? ScalarStyle.LITERAL : ScalarStyle.PLAIN
-            );
-
-            return attachScalar(node, origin, addComment, multiline);
+            return handleString(str, origin, addComment);
         }
 
         if (value instanceof Number num) {
-            Tag tag = (num instanceof Float || num instanceof Double) ? Tag.FLOAT : Tag.INT;
-            return attachScalar(
-                    new ScalarNode(tag, num.toString(), ScalarStyle.PLAIN),
-                    origin,
-                    addComment,
-                    false
-            );
+            return handleNumber(num, origin, addComment);
         }
 
         if (value instanceof Boolean bool) {
-            return attachScalar(
-                    new ScalarNode(Tag.BOOL, bool.toString(), ScalarStyle.PLAIN),
-                    origin,
-                    addComment,
-                    false
-            );
+            return scalarNode(bool.toString(), Tag.BOOL, origin, addComment, false);
         }
 
         if (value instanceof List<?> list) {
-            if (list.isEmpty()) {
-                return createEmptyListNode(origin, addComment);
-            }
-            return buildSequenceNode(
-                    list, origin, addComment, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
+            return handleList(list, origin, addComment,
+                    enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
         }
 
         if (value instanceof Map<?, ?> map) {
-            if (map.isEmpty()) {
-                return createEmptyMapNode(origin, addComment);
-            }
-            return buildMappingNode(
-                    map, origin, addComment, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
+            return handleMap(map, origin, addComment,
+                    enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
         }
 
-        return attachScalar(
-                new ScalarNode(Tag.STR, value.toString(), ScalarStyle.PLAIN),
+        return scalarNode(value.toString(), Tag.STR, origin, addComment, false);
+    }
+
+    private Node handleString(String str, String origin, boolean addComment) {
+        if ("!merge".equals(str)) {
+            return new ScalarNode(Tag.STR, "<<", ScalarStyle.PLAIN);
+        }
+        boolean multiline = str.contains("\n");
+        return attachComment(
+                new ScalarNode(Tag.STR, str,
+                        multiline ? ScalarStyle.LITERAL : ScalarStyle.PLAIN),
                 origin,
                 addComment,
-                false
+                multiline
         );
     }
 
-    private Node buildSequenceNode(
-            List<?> list,
-            String origin,
-            boolean addComment,
-            boolean enableTraceability,
-            boolean deployDescriptorYaml,
-            Map<Object, Integer> refCount,
-            Map<Object, Node> builtNodes,
-            AtomicInteger nextAnchorId) {
+    private Node handleNumber(Number num, String origin, boolean addComment) {
+        Tag tag = (num instanceof Float || num instanceof Double)
+                ? Tag.FLOAT
+                : Tag.INT;
+
+        return scalarNode(num.toString(), tag, origin, addComment, false);
+    }
+
+    private Node handleList(List<?> list, String origin, boolean addComment, boolean enableTraceability, boolean deployDescriptorYaml,
+            Map<Object, Integer> refCount, Map<Object, Node> builtNodes, AtomicInteger nextAnchorId) {
+
+        if (list.isEmpty()) {
+            return createEmptyListNode(origin, addComment);
+        }
+
+        return buildSequenceNode(list, origin, addComment, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId
+        );
+    }
+
+    private Node handleMap(Map<?, ?> map, String origin, boolean addComment, boolean enableTraceability,
+            boolean deployDescriptorYaml, Map<Object, Integer> refCount, Map<Object, Node> builtNodes, AtomicInteger nextAnchorId) {
+
+        if (map.isEmpty()) {
+            return createEmptyMapNode(origin, addComment);
+        }
+
+        return buildMappingNode(map, origin, addComment, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
+    }
+
+    private Node scalarNode(String value, Tag tag, String origin, boolean addComment, boolean multiline) {
+
+        return attachComment(
+                new ScalarNode(tag, value, ScalarStyle.PLAIN), origin, addComment, multiline
+        );
+    }
+
+    private Node buildSequenceNode(List<?> list,
+            String origin, boolean addComment, boolean enableTraceability, boolean deployDescriptorYaml, Map<Object, Integer> refCount,
+            Map<Object, Node> builtNodes, AtomicInteger nextAnchorId) {
 
         boolean anchorable = shouldAnchor(list, refCount);
         if (anchorable && builtNodes.containsKey(list)) {
@@ -329,18 +332,11 @@ public class FileDataConverterImpl implements FileDataConverter {
             children.add(toNode(elem, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId));
         }
 
-        return addComment ? attachBlock(seqNode, origin) : seqNode;
+        return attachComment(seqNode, origin, addComment, true);
     }
 
-    private Node buildMappingNode(
-            Map<?, ?> map,
-            String origin,
-            boolean addComment,
-            boolean enableTraceability,
-            boolean deployDescriptorYaml,
-            Map<Object, Integer> refCount,
-            Map<Object, Node> builtNodes,
-            AtomicInteger nextAnchorId) {
+    private Node buildMappingNode(Map<?, ?> map, String origin, boolean addComment, boolean enableTraceability,
+            boolean deployDescriptorYaml, Map<Object, Integer> refCount, Map<Object, Node> builtNodes, AtomicInteger nextAnchorId) {
 
         boolean anchorable = shouldAnchor(map, refCount);
         Node existing = anchorable ? builtNodes.get(map) : null;
@@ -367,7 +363,7 @@ public class FileDataConverterImpl implements FileDataConverter {
             tuples.add(new NodeTuple(keyNode, valueNode));
         }
 
-        return addComment ? attachBlock(mapping, origin) : mapping;
+        return attachComment(mapping, origin, addComment, true);
     }
 
     private boolean shouldAnchor(Object obj, Map<Object, Integer> refCount) {
@@ -380,15 +376,6 @@ public class FileDataConverterImpl implements FileDataConverter {
         return String.format("id%03d", counter.getAndIncrement());
     }
 
-    private ScalarNode attachScalar(
-            ScalarNode node,
-            String origin,
-            boolean enabled,
-            boolean block) {
-
-        if (!enabled) return node;
-        return block ? attachBlock(node, origin) : attachInline(node, origin);
-    }
 
     private static boolean shouldAddComment(
             boolean enableTraceability, String origin, boolean deployDescriptorYaml) {
@@ -400,7 +387,6 @@ public class FileDataConverterImpl implements FileDataConverter {
         }
         return true;
     }
-
     private void moveBlockCommentFromValueToKey(
             org.snakeyaml.engine.v2.nodes.Node valueNode,
             org.snakeyaml.engine.v2.nodes.Node keyNode) {
@@ -408,13 +394,10 @@ public class FileDataConverterImpl implements FileDataConverter {
         if (!(valueNode instanceof ScalarNode scalar)) {
             return;
         }
-
         List<CommentLine> valueComments = scalar.getBlockComments();
-
         if (valueComments == null || valueComments.isEmpty()) {
             return;
         }
-
         keyNode.setBlockComments(valueComments);
         scalar.setBlockComments(null);
     }
@@ -435,27 +418,13 @@ public class FileDataConverterImpl implements FileDataConverter {
         return origin.substring(slash + 1, colon).trim().toLowerCase();
     }
 
-    private ScalarNode attachInline(ScalarNode node, String origin) {
-        origin = extractLastOrigin(origin);
-        node.setInLineComments(
-                List.of(new CommentLine(Optional.empty(), Optional.empty(), origin, CommentType.IN_LINE)));
-        return node;
-    }
-
-    private <T extends org.snakeyaml.engine.v2.nodes.Node> T attachBlock(T node, String origin) {
-        origin = extractLastOrigin(origin);
-        node.setBlockComments(
-                List.of(new CommentLine(Optional.empty(), Optional.empty(), origin, CommentType.BLOCK)));
-        return node;
-    }
     private Node createEmptyMapNode(String origin, boolean addComment) {
         MappingNode node = new MappingNode(
                 Tag.MAP,
                 Collections.emptyList(),
                 FlowStyle.FLOW
         );
-
-        return addComment ? attachInlineToCollection(node, origin) : node;
+        return attachComment(node, origin, addComment, false);
     }
 
     private Node createEmptyListNode(String origin, boolean addComment) {
@@ -464,21 +433,18 @@ public class FileDataConverterImpl implements FileDataConverter {
                 Collections.emptyList(),
                 FlowStyle.FLOW
         );
-
-        return addComment ? attachInlineToCollection(node, origin) : node;
+        return attachComment(node, origin, addComment, false);
     }
 
-    private <T extends Node> T attachInlineToCollection(T node, String origin) {
+    private <T extends Node> T attachComment(T node, String origin, boolean enabled, boolean blockStyle) {
+        if (!enabled) return node;
         origin = extractLastOrigin(origin);
-
-        node.setInLineComments(
-                List.of(new CommentLine(
-                        Optional.empty(),
-                        Optional.empty(),
-                        origin,
-                        CommentType.IN_LINE
-                ))
-        );
+        CommentLine comment = new CommentLine(Optional.empty(), Optional.empty(), origin, blockStyle ? CommentType.BLOCK : CommentType.IN_LINE);
+        if (blockStyle) {
+            node.setBlockComments(List.of(comment));
+        } else {
+            node.setInLineComments(List.of(comment));
+        }
         return node;
     }
 }
