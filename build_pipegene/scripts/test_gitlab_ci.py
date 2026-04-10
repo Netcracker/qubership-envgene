@@ -7,6 +7,7 @@ import pytest
 # validations / gitlab_ci capture CI_PROJECT_DIR at import time; set it before loading main.
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 os.environ["CI_PROJECT_DIR"] = str(_REPO_ROOT / "test_data" / "pipegene_ci_instance")
+os.environ["CI_JOB_NAME"] = 'JOB_NAME_PLACEHOLDER'
 os.environ.setdefault("JSON_SCHEMAS_DIR", str(_REPO_ROOT / "schemas"))
 
 from main import perform_generation
