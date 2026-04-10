@@ -190,6 +190,7 @@ def build_pipeline(params: dict) -> None:
     for key, value in params.items():
         if value is not None and value != '':
             sorted_pipeline.add_variables(**{key: value})
+    sorted_pipeline.add_tags(params["GITLAB_RUNNER_TAG_NAME"])
 
     # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
     # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
