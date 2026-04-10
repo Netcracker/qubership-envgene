@@ -36,7 +36,7 @@ def convert_keys_to_uppercase(pairs):
     return {k.upper(): v for k, v in pairs}
 
 build_pipeline_test_data = [
-    (   # with all jobs
+    (
         PipelineVars(env_specific_params='{"params": "value"}'),
         [
             "trigger",
@@ -48,7 +48,7 @@ build_pipeline_test_data = [
             "git_commit",
         ],
     ),
-    (   # new version template test
+    (
         PipelineVars(env_template_test="true", env_inventory_init="true"),
         [
             "trigger",
@@ -58,21 +58,25 @@ build_pipeline_test_data = [
             "generate_effective_set",
         ],
     ),
-    (   # wihtout passport discovery
+    (
         PipelineVars(get_passport="false"),
         ["app_reg_def_render", "env_builder", "generate_effective_set", "git_commit"],
     ),
-    (   # effective set only
+    (
         PipelineVars(get_passport="false", env_builder="false", cmdb_import="false"),
         ["generate_effective_set", "git_commit"]
     ),
-    (   # without passport and effective set
+    (
         PipelineVars(get_passport="false", generate_effective_set="false"),
         ["app_reg_def_render", "env_builder", "git_commit"],
     ),
-    (   # custom_params with env_builder and effective set
-        PipelineVars(get_passport="false", generate_effective_set="true", custom_params='{"params": "value"}'),
+    (
+        PipelineVars(get_passport="false", custom_params='{"params": "value"}'),
         ["app_reg_def_render", "env_builder", "generate_effective_set", "git_commit"],
+    ),
+    (
+        PipelineVars(get_passport="false", generate_effective_set="false", custom_params='{"params": "value"}'),
+        ["app_reg_def_render", "env_builder", "git_commit"],
     ),
 ]
 

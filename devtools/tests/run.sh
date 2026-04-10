@@ -9,39 +9,22 @@ export BG_STATE=""
 
 rm -f junit.xml junit_*.xml
 
-cd python/envgene/envgenehelper
-pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit.xml
-cd ../../..
-mv junit.xml junit_envgenehelper.xml
+run_pytest_suite() {
+  local name="$1"
+  local dir="$2"
+  (
+    cd "${CI_PROJECT_DIR}/${dir}"
+    pytest --capture=no -W ignore::DeprecationWarning --junitxml="${CI_PROJECT_DIR}/junit.xml"
+  )
+  mv "${CI_PROJECT_DIR}/junit.xml" "${CI_PROJECT_DIR}/junit_${name}.xml"
+}
 
-cd build_pipegene/scripts
-pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-cd ../..
-mv junit.xml junit_pipegene.xml
-
-cd python/artifact-searcher/artifact_searcher
-pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit.xml
-cd ../../..
-mv junit.xml junit_artifact_searcher.xml
-
-cd scripts/bg_manage
-pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-cd ../..
-mv junit.xml junit_bg_manage.xml
-
-cd scripts/build_env
-pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-cd ../..
-mv junit.xml junit_build_env.xml
-
-cd creds_rotation/scripts
-pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-cd ../..
-mv junit.xml junit_cred_rotation.xml
-
-cd build_effective_set_generator/scripts
-pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-cd ../..
-mv junit.xml junit_sbom_retention.xml
+# run_pytest_suite envgenehelper python/envgene/envgenehelper
+run_pytest_suite pipegene build_pipegene/scripts
+# run_pytest_suite artifact_searcher python/artifact-searcher/artifact_searcher
+# run_pytest_suite bg_manage scripts/bg_manage
+# run_pytest_suite build_env scripts/build_env
+# run_pytest_suite cred_rotation creds_rotation/scripts
+# run_pytest_suite sbom_retention build_effective_set_generator/scripts
 
 junitparser merge junit_*.xml junit.xml
