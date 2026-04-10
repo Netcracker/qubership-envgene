@@ -3,6 +3,7 @@ set -euxo pipefail
 
 cd "${CI_PROJECT_DIR}"
 
+export PYTHONPATH=${CI_PROJECT_DIR}
 export FULL_ENV_NAME="sdp-dev/env-1"
 export BG_STATE=""
 

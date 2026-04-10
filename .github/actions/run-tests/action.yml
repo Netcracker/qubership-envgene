@@ -44,6 +44,12 @@ runs:
         mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops
         chmod +x /usr/local/bin/sops
 
+    - name: Configure test environment
+      shell: bash
+      run: |
+        # Match devtools/tests/run.sh: PYTHONPATH so imports (e.g. scripts.* for pipegene) resolve from repo root.
+        echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> "${GITHUB_ENV}"
+
     - name: ENVGENE HELPER test
       shell: bash
       run: |
@@ -73,7 +79,7 @@ runs:
       env:
         FULL_ENV_NAME: "sdp-dev/env-1"
         BG_STATE: ""
-        CI_PROJECT_DIR: ${GITHUB_WORKSPACE}
+        CI_PROJECT_DIR: ${{ github.workspace }}
       run: |
         cd scripts/bg_manage
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
