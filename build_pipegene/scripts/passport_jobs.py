@@ -50,9 +50,6 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name):
         "ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,
-        "envgen_image": "$envgen_image",
-        "COMMIT_ENV": "false",
-        "COMMIT_MESSAGE": f"[ci_skip] update cloud passport for {cluster_name}"
     }
     get_passport_job = job_instance(params=get_passport_params, vars=get_passport_vars)
     base = "${CI_PROJECT_DIR}/environments"
