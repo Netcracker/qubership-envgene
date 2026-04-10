@@ -94,7 +94,7 @@ public class ExpressionLanguage extends AbstractLanguage {
             if (value instanceof Parameter) {
                 Parameter oldParameter = (Parameter) value;
                 return new Parameter(
-                        strVal,                      
+                        strVal,               
                         origin,
                         oldParameter.isParsed(),
                         oldParameter.isSecured(),
@@ -105,11 +105,10 @@ public class ExpressionLanguage extends AbstractLanguage {
         } else if (val instanceof List) {
             return translateList((List) val, origin);
         } else if (val instanceof Map) {
-            return translateMap((Map) val , origin);
+            return translateMap((Map) val, origin);
         }
 
         if (value instanceof Parameter) {
-
             ((Parameter) value).setOrigin(origin);
             return (Parameter) value;
         }
