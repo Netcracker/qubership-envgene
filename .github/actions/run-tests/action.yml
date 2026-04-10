@@ -52,6 +52,14 @@ runs:
         cd ../../..
         mv junit.xml junit_envgenehelper.xml
 
+    - name: PIPEGENE test
+      shell: bash
+      run: |
+        cd build_pipegene/scripts
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
+        cd ../..
+        mv junit.xml junit_pipegene.xml
+
     - name: ARTIFACT SEARCHER test
       shell: bash
       run: |
@@ -88,10 +96,18 @@ runs:
         cd ../..
         mv junit.xml junit_cred_rotation.xml
 
+    - name: SBOMS RETENTION POLICY test
+      shell: bash
+      run: |
+        cd build_effective_set_generator/scripts
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
+        cd ../..
+        mv junit.xml junit_sbom_retention.xml
+
     - name: Merge test results
       shell: bash
       run: |
-        junitparser merge junit_build_env.xml junit_envgenehelper.xml junit.xml
+        junitparser merge junit_*.xml junit.xml
 
     - name: Upload test results
       if: always()
@@ -106,11 +122,3 @@ runs:
       with:
         name: test_artifact
         path: tmp/
-
-    - name: SBOMS RETENTION POLICY test
-      shell: bash
-      run: |
-        cd build_effective_set_generator/scripts
-        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-        cd ../..
-        mv junit.xml junit_build_env.xml

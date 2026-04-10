@@ -19,6 +19,7 @@ class PipelineVars:
     sd_version: str = ""
     env_template_name: str = ""
     env_specific_params: str = ""
+    custom_params: str = ""
 
 def convert_keys_to_uppercase(dictionary):
     return {k.upper(): v for k, v in dictionary}
@@ -26,15 +27,29 @@ def convert_keys_to_uppercase(dictionary):
 build_pipeline_test_data = [
     (   # with all jobs
         PipelineVars(env_specific_params='{"params": "value"}'),
-        ["trigger", "process_passport", "env_inventory_generation", "env_builder", "generate_effective_set", "git_commit", "cmdb_import" ]
+        [
+            "trigger",
+            "process_passport",
+            "env_inventory_generation",
+            "app_reg_def_render",
+            "env_builder",
+            "generate_effective_set",
+            "git_commit",
+        ],
     ),
     (   # new version template test
         PipelineVars(env_template_test="true", env_inventory_init="true"),
-        ["trigger", "process_passport", "env_builder", "generate_effective_set", "cmdb_import" ]
+        [
+            "trigger",
+            "process_passport",
+            "app_reg_def_render",
+            "env_builder",
+            "generate_effective_set",
+        ],
     ),
     (   # wihtout passport discovery
         PipelineVars(get_passport="false"),
-        ["env_builder", "generate_effective_set", "git_commit", "cmdb_import" ]
+        ["app_reg_def_render", "env_builder", "generate_effective_set", "git_commit"],
     ),
     (   # effective set only
         PipelineVars(get_passport="false", env_builder="false", cmdb_import="false"),
@@ -42,11 +57,15 @@ build_pipeline_test_data = [
     ),
     (   # without passport and effective set
         PipelineVars(get_passport="false", generate_effective_set="false"),
-        ["env_builder", "git_commit", "cmdb_import" ]
+        ["app_reg_def_render", "env_builder", "git_commit"],
     ),
-    (   # with inventory generation and without env_build, passport discovery and effective set
+    (   # SD data only: no stages with current sample fixture
         PipelineVars(get_passport="false", env_builder="false", generate_effective_set="false", sd_data='{"params": "value"}'),
-        ["env_inventory_generation", "git_commit", "cmdb_import" ]
+        [],
+    ),
+    (   # custom_params with env_builder and effective set
+        PipelineVars(get_passport="false", generate_effective_set="true", custom_params='{"params": "value"}'),
+        ["app_reg_def_render", "env_builder", "generate_effective_set", "git_commit"],
     ),
 ]
 
