@@ -82,8 +82,10 @@ public class ExpressionLanguage extends AbstractLanguage {
                 this.binding.put(key1, translateParameter(value.getValue())));
     }
 
-    private Parameter translateParameter(Object value) {
+    private Parameter translateParameter(Object value, String parentOrigin) {
         Object val = getValue(value);
+
+        String origin = resolveOrigin(value, parentOrigin);
 
         if (val instanceof String) {
             String strVal = (String) val;
@@ -92,40 +94,50 @@ public class ExpressionLanguage extends AbstractLanguage {
             if (value instanceof Parameter) {
                 Parameter oldParameter = (Parameter) value;
                 return new Parameter(
-                        strVal,
-                        oldParameter.getOrigin(),
+                        strVal,                      
+                        origin,
                         oldParameter.isParsed(),
                         oldParameter.isSecured(),
                         gStringToJinJavaTranslator.translate(strVal));
-            } else {
-                return new Parameter(
-                        strVal,
-                        gStringToJinJavaTranslator.translate(strVal));
+            } else {;
+                return new Parameter(strVal, origin, false, false, gStringToJinJavaTranslator.translate(strVal));
             }
         } else if (val instanceof List) {
-            return translateList((List) val);
+            return translateList((List) val, origin);
         } else if (val instanceof Map) {
-            return translateMap((Map) val);
+            return translateMap((Map) val , origin);
         }
 
         if (value instanceof Parameter) {
+
+            ((Parameter) value).setOrigin(origin);
             return (Parameter) value;
         }
 
-        return new Parameter(value);
+        return new Parameter(value, origin, false);
     }
 
-    private Parameter translateMap(Map<String, Object> map) {
-        map.replaceAll((k, v) -> translateParameter(v));
+    private Parameter translateMap(Map<String, Object> map, String parentOrigin) {
+        map.replaceAll((k, v) -> translateParameter(v, parentOrigin));
         return new Parameter(map);
     }
 
-    private Parameter translateList(List<Object> list) {
+    private Parameter translateList(List<Object> list, String parentOrigin) {
         for (final ListIterator<Object> it = list.listIterator(); it.hasNext(); ) {
             Object element = it.next();
-            it.set(translateParameter(element));
+            it.set(translateParameter(element, parentOrigin));
         }
         return new Parameter(list);
+    }
+
+    private String resolveOrigin(Object value, String parentOrigin) {
+        if (value instanceof Parameter) {
+            String origin = ((Parameter) value).getOrigin();
+            if (origin != null && !origin.isEmpty()) {
+                return origin;
+            }
+        }
+        return parentOrigin;
     }
 
     private void setUpJinJava() {
