@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
+import os
 import re
 import shutil
 import sys
+import zipfile
 from pathlib import Path
 
 try:
@@ -9,6 +11,31 @@ try:
 except ImportError:
     print("Error: ruamel.yaml required. Add to Dockerfile: pip install ruamel.yaml", file=sys.stderr)
     sys.exit(1)
+
+
+def resolve_version_tag():
+    """Tag used in the output path (folder or zip name; matches pipeline image version)."""
+    tag = (
+        os.environ.get("DOCKER_IMAGE_TAG")
+        or os.environ.get("INSTANCE_REPO_PIPELINE_IMAGE_TAG")
+        or "latest"
+    ).strip()
+    return tag or "latest"
+
+
+def sanitize_tag(tag: str) -> str:
+    """Filesystem-safe directory name; rejects path separators."""
+    tag = (tag or "").strip()
+    if not tag:
+        return "latest"
+    if ".." in tag or "/" in tag or "\\" in tag:
+        raise ValueError(
+            f"Invalid DOCKER_IMAGE_TAG: {tag!r} (must not contain path separators)"
+        )
+    safe = re.sub(r"[^a-zA-Z0-9._-]", "_", tag)
+    if not safe or not re.search(r"[0-9a-zA-Z]", safe):
+        return "latest"
+    return safe
 
 
 # ========== MERGE ENV: add or replace variables in .env files ==========
@@ -346,8 +373,13 @@ def apply_patch(patch_path, base_dir):
     with open(patch_path, encoding="utf-8") as f:
         operations = yaml.load(f)
 
-    if not isinstance(operations, list):
+    if operations is None:
+        operations = []
+    elif not isinstance(operations, list):
         operations = [operations]
+
+    if not operations:
+        return []
 
     def resolve_target(target_file_str):
         """Resolve target file path. If base_dir is output dir, map .github/ -> output_dir/."""
@@ -449,9 +481,9 @@ def apply_patch(patch_path, base_dir):
     return result
 
 
-def init_output_dir(output_dir, source_dir):
-    """Remove output_dir and .github, then copy source_dir into output_dir."""
-    output_path = Path(output_dir)
+def init_output_dir(output_root, source_dir):
+    """Remove output_root and .github, then copy source_dir into output_root."""
+    output_path = Path(output_root)
     source_path = Path(source_dir)
     if not source_path.is_dir():
         raise FileNotFoundError(f"Source directory not found: {source_path}")
@@ -459,7 +491,29 @@ def init_output_dir(output_dir, source_dir):
         if path.exists():
             shutil.rmtree(path)
     shutil.copytree(source_path, output_path)
-    print(f"Initialized {output_dir} from {source_dir}")
+    print(f"Initialized {output_root} from {source_dir}")
+
+
+def make_zip_archive(source_dir: Path, zip_path: Path) -> None:
+    """Pack contents of source_dir into zip_path (files at archive root, no tag prefix)."""
+    source_dir = source_dir.resolve()
+    if not source_dir.is_dir():
+        raise FileNotFoundError(f"Not a directory: {source_dir}")
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    if zip_path.exists():
+        zip_path.unlink()
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        for path in sorted(source_dir.rglob("*")):
+            if path.is_file():
+                arcname = path.relative_to(source_dir)
+                zf.write(path, arcname)
+
+
+def finalize_zip_output(base: Path, zip_path: Path, suffix: str = "") -> None:
+    """Create zip from staging dir and remove staging dir."""
+    make_zip_archive(base, zip_path)
+    shutil.rmtree(base)
+    print(f"Created {zip_path}{suffix}", flush=True)
 
 
 def main():
@@ -468,14 +522,22 @@ def main():
     parser.add_argument(
         "--output-dir",
         default="extended_github_instance_pipeline",
-        help="Output directory. Maps .github/ paths to this directory. "
-        "Default: extended_github_instance_pipeline.",
+        help="Parent directory for artifacts. Default: extended_github_instance_pipeline. "
+        "With --output-format zip (default), writes <output-dir>/<tag>.zip; with dir, "
+        "<output-dir>/<tag>/. Tag from DOCKER_IMAGE_TAG or INSTANCE_REPO_PIPELINE_IMAGE_TAG.",
+    )
+    parser.add_argument(
+        "--output-format",
+        choices=("zip", "dir"),
+        default="zip",
+        help="zip: stage under <output-dir>/<tag>/ then pack to <output-dir>/<tag>.zip "
+        "and remove the folder. dir: keep the versioned directory (no zip).",
     )
     parser.add_argument(
         "--init-from",
         default="/opt/github",
-        help="Before applying patches, remove output-dir and copy this source into it. "
-        "Default: /opt/github. Use --no-init to skip.",
+        help="Before applying patches, remove <output-dir>/<tag>/ and .github, copy this "
+        "source into the versioned output directory. Default: /opt/github. Use --no-init to skip.",
     )
     parser.add_argument(
         "--no-init",
@@ -484,26 +546,58 @@ def main():
     )
     parser.add_argument(
         "patch",
-        nargs="+",
-        help="Patch file(s) (e.g. components/component-a.yaml components/variables.yaml)",
+        nargs="*",
+        help="Patch file(s) (e.g. components/component-a.yaml components/variables.yaml). "
+        "If omitted, only the base workflow is copied (no patches).",
     )
     args = parser.parse_args()
 
-    base = Path(args.output_dir)
+    version_tag = sanitize_tag(resolve_version_tag())
+    parent = Path(args.output_dir)
+    base = parent / version_tag
+    zip_path = parent / f"{version_tag}.zip"
     all_results = []
 
     try:
+        if not args.patch:
+            if not args.no_init:
+                if args.output_format == "zip" and zip_path.exists():
+                    zip_path.unlink()
+                init_output_dir(base, args.init_from)
+            if args.output_format == "zip" and base.exists():
+                finalize_zip_output(
+                    base,
+                    zip_path,
+                    " (no component patches to apply)",
+                )
+            elif base.exists():
+                print(
+                    f"Initialized {base} (no component patches to apply).",
+                    flush=True,
+                )
+            else:
+                print(
+                    "No work done (--no-init and staging directory missing).",
+                    flush=True,
+                )
+            return
+
         if not args.no_init:
-            init_output_dir(args.output_dir, args.init_from)
+            if args.output_format == "zip" and zip_path.exists():
+                zip_path.unlink()
+            init_output_dir(base, args.init_from)
 
         for patch_path in args.patch:
             patch_path = Path(patch_path)
             if not patch_path.is_file():
                 raise FileNotFoundError(f"File not found: {patch_path}")
             all_results.extend(apply_patch(patch_path, base))
-        print("Applied:")
-        for r in all_results:
-            print(f"  - {r}")
+        if all_results:
+            print("Applied:")
+            for r in all_results:
+                print(f"  - {r}")
+        if args.output_format == "zip" and base.exists():
+            finalize_zip_output(base, zip_path)
     except (FileNotFoundError, ValueError, KeyError) as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
