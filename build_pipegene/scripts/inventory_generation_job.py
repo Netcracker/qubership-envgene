@@ -42,10 +42,7 @@ def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, 
         "ENV_NAME": environment_name,
         "CLUSTER_NAME": cluster_name,
         "FULL_ENV_NAME": full_env_name,
-        "envgen_image": "$envgen_image",
-        "envgen_args": " -vv",
-        "envgen_debug": "true",
-        "module_config_default": "/module/templates/defaults.yaml"
+        "envgen_image": "$envgen_image"
     }
     job = job_instance(params=params, vars=vars)
     job.artifacts.when = WhenStatement.ALWAYS

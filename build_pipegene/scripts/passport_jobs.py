@@ -51,9 +51,6 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name):
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,
         "envgen_image": "$envgen_image",
-        "envgen_args": " -vv",
-        "envgen_debug": "true",
-        "module_config_default": "/module/templates/defaults.yaml",
         "COMMIT_ENV": "false",
         "COMMIT_MESSAGE": f"[ci_skip] update cloud passport for {cluster_name}"
     }

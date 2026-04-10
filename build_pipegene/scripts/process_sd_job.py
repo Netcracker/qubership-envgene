@@ -31,8 +31,6 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name):
         "ENV_NAME": environment_name,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
         "envgen_image": "$envgen_image",
-        "envgen_args": " -vv",
-        "envgen_debug": "true",
     }
 
     process_sd_job = job_instance(params=process_sd_set_params, vars=process_sd_set_vars)

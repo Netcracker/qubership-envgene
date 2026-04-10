@@ -29,12 +29,7 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
         "ENVIRONMENT_NAME": enviroment_name,
         "GROUP_ID": group_id,
         "ARTIFACT_ID": artifact_id,
-        "ENV_TEMPLATE_TEST": "true" if is_template_test else "false",
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
-        "envgen_image": "$envgen_image",
-        "envgen_args": " -vvv",
-        "envgen_debug": "true",
-        "module_config_default": "/module/templates/defaults.yaml",
     }
 
     env_build_job = job_instance(params=env_build_params, vars=env_build_vars)
@@ -65,10 +60,6 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, cr
         "ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,
-        "envgen_image": "$envgen_image",
-        "envgen_args": " -vv",
-        "envgen_debug": "true",
-        "module_config_default": "/module/templates/defaults.yaml",
         "COMMIT_ENV": "true",
     }
     git_commit_job = job_instance(params=git_commit_params, vars=git_commit_vars)
