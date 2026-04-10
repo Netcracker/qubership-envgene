@@ -5,7 +5,10 @@ WORKDIR /workspace
 
 COPY github_workflows/instance-repo-pipeline/.github /opt/github
 
-RUN find /opt/github/scripts -type f -name "*.sh" -exec chmod +x {} \;
+COPY github_workflows/instance-repo-pipeline/extend_logic/scripts/ /opt/github/extend_logic/scripts/
+
+RUN find /opt/github/scripts -type f -name "*.sh" -exec chmod +x {} \; \
+    && find /opt/github/extend_logic/scripts -type f -name "*.py" -exec chmod +x {} \;
 
 #-----------Stage 2-----------
 FROM alpine:3.21
