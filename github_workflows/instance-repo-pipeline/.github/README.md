@@ -9,7 +9,7 @@ User Guide
 
 </div>
 
-![EnvGene Workflow](assets/envgene-workflow-header.png)
+![EnvGene Workflow](docs/assets/envgene-workflow-header.png)
 
 - [EnvGene GitHub Workflow](#envgene-github-workflow)
   - [Overview](#overview)
@@ -494,7 +494,7 @@ GHCR is the default registry. No additional configuration is required.
 
 **Authentication:** GitHub Actions automatically authenticates to `ghcr.io` using `GITHUB_TOKEN` when pulling images. No extra secrets are needed.
 
-**Image names:** The workflow builds image paths as `$DOCKER_REGISTRY/qubership-envgene`, `$DOCKER_REGISTRY/qubership-pipegene`, etc. For GHCR, the full path is `ghcr.io/netcracker/qubership-envgene:1.31.9`.
+**Image names:** The workflow builds image paths as `$DOCKER_REGISTRY/qubership-envgene`, `$DOCKER_REGISTRY/qubership-pipegene`, etc. For GHCR, the full path is `ghcr.io/netcracker/qubership-envgene:1.31.18` (see `DOCKER_IMAGE_TAG_*` in `.github/workflows/Envgene.yml`).
 
 ### Google Artifact Registry (GAR)
 
@@ -573,12 +573,13 @@ Replace `<YOUR_GITHUB_TOKEN>`, `<OWNER>`, `<REPO>`, and `main` as needed.
 
 ```text
 instance-repo-pipeline/
-├── README.md                    # This file
 └── .github/
+    ├── README.md                # This guide (EnvGene GitHub workflow)
+    ├── docs/
+    │   └── assets/
+    │       └── envgene-workflow-header.png
     ├── actions/
     │   └── load-env-files/      # Loads .env files into GITHUB_ENV
-    ├── docs/
-    │   └── README.md            # Additional usage notes
     ├── scripts/
     │   ├── generate_env_matrix.sh           # Builds environment matrix from ENV_NAMES
     │   ├── process_additional_variables.sh  # Parses GH_ADDITIONAL_PARAMS
