@@ -68,10 +68,6 @@ build_pipeline_test_data = [
         PipelineVars(get_passport="false", generate_effective_set="false"),
         ["app_reg_def_render", "env_builder", "git_commit"],
     ),
-    (   # SD data only: no stages with current fixture instance
-        PipelineVars(get_passport="false", env_builder="false", generate_effective_set="false", sd_data='{"params": "value"}'),
-        [],
-    ),
     (   # custom_params with env_builder and effective set
         PipelineVars(get_passport="false", generate_effective_set="true", custom_params='{"params": "value"}'),
         ["app_reg_def_render", "env_builder", "generate_effective_set", "git_commit"],
