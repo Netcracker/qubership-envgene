@@ -29,11 +29,6 @@ include:
 default:
   tags: [ $GITLAB_RUNNER_TAG_NAME ]
 
-
-.common_module.variables:
-  variables:
-    module_config_default: "/module/templates/defaults.yaml"
-
 .images.variables:
   variables:
     envgen_image: "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${ENVGENE_IMAGE}:${ENVGENE_VERSION}"
@@ -45,7 +40,6 @@ default:
 # Jobs
 generate_pipeline:
   extends:
-    - .common_module.variables
     - .images.variables
   stage: generate
   image:
@@ -61,7 +55,6 @@ generate_pipeline:
 
 run_generated_pipeline:
   extends:
-    - .common_module.variables
     - .images.variables
   stage: run_generated_pipe
   needs:
