@@ -376,7 +376,7 @@ async def check_artifact_async(
             logger.warning(f"[Registry: {app.registry.name}] - {repo_pointer} is not configured")
             return None
         domain = app.registry.maven_config.repository_domain_name
-        repo_url = domain if not repo_value else domain + repo_value
+        repo_url = domain if not repo_value else domain.rstrip('/') + '/' + repo_value
         url = check_artifact(repo_url, app.group_id, app.artifact_id, version,
                              artifact_extension, auth_headers=auth_headers, classifier=classifier)
         if url:
@@ -434,15 +434,14 @@ def create_aql_artifact(app: Application, artifact_extension: FileExtension, ver
 def check_artifacts_by_aql(aql: str, url: str = "",
                             auth_headers: dict | None = None) -> list[ArtifactInfo]:
     artifacts = []
-    headers = auth_headers
-    response = requests.post(f"{url}/api/search/aql", data=aql, headers=headers)
+    response = requests.post(f"{url}/api/search/aql", data=aql, headers=auth_headers)
     results = response.json()
     for result in results.get("results"):
         repo = result.get("repo")
         path = result.get("path")
         name = result.get("name")
-        url = f"{url}/{repo}/{path}/{name}"
-        artifact = ArtifactInfo(repo=repo, path=path, name=name, url=url, auth_headers=auth_headers)
+        artifact_url = f"{url}/{repo}/{path}/{name}"
+        artifact = ArtifactInfo(repo=repo, path=path, name=name, url=artifact_url, auth_headers=auth_headers)
         artifacts.append(artifact)
     return artifacts
 
