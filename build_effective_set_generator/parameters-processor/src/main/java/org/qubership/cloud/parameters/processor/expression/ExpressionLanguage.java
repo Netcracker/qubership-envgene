@@ -99,7 +99,7 @@ public class ExpressionLanguage extends AbstractLanguage {
                         oldParameter.isParsed(),
                         oldParameter.isSecured(),
                         gStringToJinJavaTranslator.translate(strVal));
-            } else {;
+            } else {
                 return new Parameter(strVal, origin, false, false, gStringToJinJavaTranslator.translate(strVal));
             }
         } else if (val instanceof List) {
