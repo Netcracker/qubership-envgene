@@ -1,0 +1,11 @@
+name: "peer_app_resources"
+version: 0
+baseline: "dev"
+description: "Resource profile supplied only from peer template artifact"
+applications:
+  - name: "peer-workload"
+    services:
+      - name: "peer-service"
+        parameters:
+          - name: "REPLICAS"
+            value: "2"
