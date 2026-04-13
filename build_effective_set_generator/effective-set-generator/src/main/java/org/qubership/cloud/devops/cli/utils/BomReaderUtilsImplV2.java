@@ -394,7 +394,7 @@ public class BomReaderUtilsImplV2 {
     private Map<String, Object> extractProfileValues(Component dataComponent, String appName, String serviceName,
                                                      Profile overrideProfile, String baseline) {
         Map<String, Object> profileValues = new TreeMap<>();
-        if (!isOverrideOriginSet) {
+        if (!isOverrideOriginSet && overrideProfile != null) {
             overrideOrigin = overrideOrigin + overrideProfile.getName();
             isOverrideOriginSet = true;
         }
