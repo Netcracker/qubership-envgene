@@ -79,7 +79,7 @@ public class ExpressionLanguage extends AbstractLanguage {
         this.gStringToJinJavaTranslator = new GStringToJinJavaTranslator();
 
         this.binding.forEach((key1, value) ->
-                this.binding.put(key1, translateParameter(value.getValue())));
+                this.binding.put(key1, translateParameter(value.getValue(), "")));
     }
 
     private Parameter translateParameter(Object value, String parentOrigin) {
