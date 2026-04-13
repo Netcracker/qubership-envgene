@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 
 from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-print("🔥 DEBUG FILE LOADED:", __file__)
+print("FILE LOADED:", __file__)
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
@@ -427,7 +427,7 @@ class EnvGenerator:
             current_env_dir = self.ctx.current_env_dir
             cs_file = Path(current_env_dir) / "composite_structure.yml"
             cs_file.parent.mkdir(parents=True, exist_ok=True)
-            print("🔥 DEBUG FILE LOADED 🔥")
+            print("validation file loaded")
             self.render_from_file_to_file(Template(composite_structure).render(self.ctx.as_dict()), str(cs_file))
             validate_yaml_by_scheme_or_fail(cs_file, composite_SCHEMA)
 
