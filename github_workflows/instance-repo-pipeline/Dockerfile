@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #-----------Stage 1-----------
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:feature_add_ruamel AS initial
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.1 AS initial
 
 WORKDIR /workspace
 
@@ -12,7 +12,7 @@ RUN find /opt/github/scripts -type f -name "*.sh" -exec chmod +x {} \; \
     && find /opt/github/extend_logic/scripts -type f -name "*.py" -exec chmod +x {} \;
 
 #-----------Stage 2-----------
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:feature_add_ruamel
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.1
 
 LABEL org.opencontainers.image.description="Github Workflows - Envgene Instance pipeline"
 
