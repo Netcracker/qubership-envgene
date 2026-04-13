@@ -159,15 +159,13 @@ def mergeAndSaveYaml(yamlPath, newCreds) :
     writeYamlToFile(yamlPath, credsYaml)
 
 def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
-    logger.debug(f"Searching for cred file {cred_name} from {env_dir} to {instances_dir}")
-    
     env_level = Path(env_dir) / "Inventory" / "credentials"
     cluster_level = Path(env_dir).parent / "credentials"
     site_level = Path(instances_dir) / "credentials"
     
     shared_cred_paths = [env_level, cluster_level, site_level]
     
-    logger.info(f"Searching for '{cred_name}' in paths: {shared_cred_paths}")
+    logger.debug(f"Searching for '{cred_name}' in paths: {shared_cred_paths}")
     for p in shared_cred_paths:
         found_path = find_yaml_file(p, cred_name)
         if found_path:
