@@ -171,7 +171,7 @@ def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
         if found_path:
             return found_path         
 
-    raise FileNotFoundError(f"Shared credentials with key {cred_name} not found.")
+    raise FileNotFoundError(f"Shared credentials with key '{cred_name}' not found.")
 
 
 def mergeSharedCreds(credYamlPath, envDir, instancesDir) :
