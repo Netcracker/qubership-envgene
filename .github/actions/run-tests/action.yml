@@ -47,7 +47,6 @@ runs:
     - name: Configure test environment
       shell: bash
       run: |
-        # Match devtools/tests/run.sh: PYTHONPATH so imports (e.g. scripts.* for pipegene) resolve from repo root.
         echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> "${GITHUB_ENV}"
 
     - name: ENVGENE HELPER test
