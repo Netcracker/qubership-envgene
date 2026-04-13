@@ -147,7 +147,7 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
                     if (param.getValue() instanceof Map) {
                         return new HashMap<String, Parameter>() {
                             {
-                                put(entry.getKey(), new Parameter(calculateCredentialsAndPrepareStructuredParams((Map<String, Parameter>) param.getValue()), param.getOrigin, false));
+                                put(entry.getKey(), new Parameter(calculateCredentialsAndPrepareStructuredParams((Map<String, Parameter>) param.getValue()), param.getOrigin(), false));
                             }
                         };
                     }
