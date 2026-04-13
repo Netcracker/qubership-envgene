@@ -166,16 +166,15 @@ def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
     site_level = Path(instances_dir) / "credentials"
     
     shared_cred_paths = [env_level, cluster_level, site_level]
-    exts = [".yml", ".yaml"]
     
-    for cred_path in shared_cred_paths:
-        for ext in exts:
-            f = cred_path / f"{cred_name}{ext}"
-            if f.is_file():
-                logger.info(f"Shared credentials for {cred_name} found in: {f}")
-                return f
-    
-    raise ReferenceError(f"Shared credentials with key {cred_name} not found.")
+    logger.info(f"Searching for '{cred_name}' in paths: {shared_cred_paths}")
+    for p in shared_cred_paths:
+        found_path = find_yaml_file(p, cred_name)
+        if found_path:
+            return found_path         
+
+    raise FileNotFoundError(f"Shared credentials with key {cred_name} not found.")
+
 
 def mergeSharedCreds(credYamlPath, envDir, instancesDir) :
     inventoryYaml = getEnvDefinition(envDir)
