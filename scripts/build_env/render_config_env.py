@@ -427,9 +427,9 @@ class EnvGenerator:
             current_env_dir = self.ctx.current_env_dir
             cs_file = Path(current_env_dir) / "composite_structure.yml"
             cs_file.parent.mkdir(parents=True, exist_ok=True)
-            validate_yaml_by_scheme_or_fail(cs_file, composite_SCHEMA)
             print("🔥 DEBUG FILE LOADED 🔥")
             self.render_from_file_to_file(Template(composite_structure).render(self.ctx.as_dict()), str(cs_file))
+            validate_yaml_by_scheme_or_fail(cs_file, composite_SCHEMA)
 
     def get_rendered_target_path(self, template_path: Path) -> Path:
         path_str = str(template_path)
