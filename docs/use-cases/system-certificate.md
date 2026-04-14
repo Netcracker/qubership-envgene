@@ -1,96 +1,177 @@
-# System Certificate Configuration Use Cases
+# SSL Certificate Processing Use Cases
 
-- [System Certificate Configuration Use Cases](#system-certificate-configuration-use-cases)
+- [SSL Certificate Processing Use Cases](#ssl-certificate-processing-use-cases)
   - [Overview](#overview)
-  - [Certificate Loading and Fallback](#certificate-loading-and-fallback)
-    - [UC-CERT-LF-1: Load certificates from `configuration/certs/`](#uc-cert-lf-1-load-certificates-from-configurationcerts)
-    - [UC-CERT-LF-2: Fall back to `/default_cert.pem` when `configuration/certs/` is missing or empty](#uc-cert-lf-2-fall-back-to-default_certpem-when-configurationcerts-is-missing-or-empty)
-  - [Java Truststore Import](#java-truststore-import)
-    - [UC-CERT-JTS-1: Import repository certificates into Java truststore for Effective Set generation](#uc-cert-jts-1-import-repository-certificates-into-java-truststore-for-effective-set-generation)
+  - [Use Cases](#use-cases)
+    - [UC-SC-NEX-1: Download template artifact from Nexus with custom CA certificate](#uc-sc-nex-1-download-template-artifact-from-nexus-with-custom-ca-certificate)
+    - [UC-SC-NEX-2: Download template artifact from Nexus with client certificate authentication](#uc-sc-nex-2-download-template-artifact-from-nexus-with-client-certificate-authentication)
+    - [UC-SC-INT-1: Connect to internal service with self-signed certificate](#uc-sc-int-1-connect-to-internal-service-with-self-signed-certificate)
+    - [UC-SC-ERR-1 (Negative): Reject connection with invalid or incomplete certificate chain](#uc-sc-err-1-negative-reject-connection-with-invalid-or-incomplete-certificate-chain)
+    - [UC-SC-ERR-2 (Negative): Fail secure connection when required certificate is missing](#uc-sc-err-2-negative-fail-secure-connection-when-required-certificate-is-missing)
+    - [UC-SC-ERR-3 (Negative): Continue GENERATE_EFFECTIVE_SET when default runtime certificate is unavailable](#uc-sc-err-3-negative-continue-generate_effective_set-when-default-runtime-certificate-is-unavailable)
 
 ## Overview
 
-This document describes practical use cases for System Certificate Configuration in EnvGene instance pipelines. It focuses on how certificates from configuration/certs/ are applied during pipeline execution for secure connectivity.
+This document covers use cases for [System Certificate Configuration](/docs/features/system-certificate.md) focusing on secure endpoint access in instance pipelines.
 
-## Certificate Loading and Fallback
+EnvGene loads certificates from `configuration/certs/` and applies them during job execution for TLS trust and repository access.
 
-This section covers how EnvGene loads certificates from the Instance repository at `configuration/certs/` and how it behaves when the directory is missing or empty.
+These use cases describe certificate-driven flows for:
 
-### UC-CERT-LF-1: Load certificates from `configuration/certs/`
+- Nexus template artifact download
+- Internal HTTPS service access
+- TLS error handling for invalid or missing certificates
 
-**Pre-requisites:**
+## Use Cases
 
-1. Instance repository contains at least one certificate file under `/configuration/certs/`.
-2. The pipeline is executed in a container/runner where the system CA trust store can be updated.
-
-**Trigger:**
-
-Instance pipeline (GitLab or GitHub) runs any job that executes certificate handling, for example `env_builder`, `process_sd`, or `generate_effective_set`.
-
-**Steps:**
-
-1. The job executes the certificate handling script.
-2. The script checks `${CI_PROJECT_DIR}/configuration/certs` and finds one or more certificate files.
-3. For each certificate file, the script:
-   1. Copies it to the OS-specific CA trust location.
-   2. Updates the system CA trust store.
-   3. Sets `REQUESTS_CA_BUNDLE` to point to the system CA bundle file used by Python tools.
-
-**Results:**
-
-1. All certificate files from `/configuration/certs/` are imported into the runner trusted root store.
-2. `REQUESTS_CA_BUNDLE` is set so Python-based tools use the updated CA store.
-
-### UC-CERT-LF-2: Fall back to `/default_cert.pem` when `configuration/certs/` is missing or empty
+### UC-SC-NEX-1: Download template artifact from Nexus with custom CA certificate
 
 **Pre-requisites:**
 
-1. Instance repository does not contain any certificate files under `configuration/certs/` (the directory is missing or empty).
-2. Default certificate file `/default_cert.pem` exists in the runner/container image.
+1. Template artifact is uploaded to Nexus and available for download.
+2. Pipeline uses Registry Definition pointing to this Nexus endpoint for template artifact download.
+3. Nexus endpoint uses certificate chain signed by private or internal CA.
+4. Instance repository contains CA certificate chain file in `configuration/certs/`.
 
 **Trigger:**
 
-Instance pipeline (GitLab or GitHub) runs a job that executes certificate handling.
+Instance pipeline (GitLab or GitHub) is started with template artifact source configured to Nexus.
 
 **Steps:**
 
-1. The job executes the certificate handling script.
-2. The script detects that `${CI_PROJECT_DIR}/configuration/certs/` is missing or empty.
-3. The script detects that `/default_cert.pem` exists and imports it into the system CA trust store.
-4. The script sets `REQUESTS_CA_BUNDLE` to point to the system CA bundle file.
+1. Jobs run in the pipeline:
+
+   1. Resolves template artifact source and Nexus endpoint from pipeline configuration.
+   2. Loads CA certificates from `configuration/certs/` into runner trust.
+   3. Connects to Nexus over TLS and downloads template artifact.
 
 **Results:**
 
-1. The runner trusted root store is updated using `/default_cert.pem`.
-2. `REQUESTS_CA_BUNDLE` is set so Python-based tools use the updated CA store.
+1. TLS connection to Nexus is established successfully.
+2. Template artifact is downloaded successfully.
+3. No `CERTIFICATE_VERIFY_FAILED` or trust errors appear in logs.
 
-## Java Truststore Import
-
-This section covers the Java truststore import that is performed for jobs that run Java-based tools (for example, Effective Set generator / Calculator CLI).
-
-### UC-CERT-JTS-1: Import repository certificates into Java truststore for Effective Set generation
+### UC-SC-NEX-2: Download template artifact from Nexus with client certificate authentication
 
 **Pre-requisites:**
 
-1. Instance repository contains at least one certificate file under `/configuration/certs/`.
-2. Instance pipeline is started with Effective Set generation enabled (`GENERATE_EFFECTIVE_SET: true`).
+1. Nexus endpoint is configured to require client certificate authentication.
+2. Pipeline is configured to download template artifact from Nexus.
+3. Template artifact is uploaded to Nexus and available for download.
+4. Instance repository contains CA certificate chain and client certificate files in `configuration/certs/`.
 
 **Trigger:**
 
-Instance pipeline (GitLab or GitHub) is started with parameters:
-
-1. `ENV_NAMES: <env_name>`
-2. `GENERATE_EFFECTIVE_SET: true`
+Instance pipeline (GitLab or GitHub) is started with template artifact source configured to Nexus endpoint that requires client authentication.
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
-   1. Ensures `${CI_PROJECT_DIR}/configuration/certs/` exists and copies `/default_cert.pem` there if it exists in the job container.
-   2. Iterates certificate files in `${CI_PROJECT_DIR}/configuration/certs/` and imports each into the Java truststore using `keytool`.
-   3. Executes the Java-based Effective Set generator (Calculator CLI) after the truststore import completes.
+1. Jobs run in the pipeline:
+
+   1. Loads CA and client certificate files from `configuration/certs/`.
+   2. Resolves target Nexus endpoint and template coordinates.
+   3. Authenticates with client certificate and downloads template artifact.
 
 **Results:**
 
-1. Java truststore contains all certificates from `${CI_PROJECT_DIR}/configuration/certs/` that were present at job start (including `default_cert.pem` if it was copied).
-2. Java-based tools executed by the job (Effective Set generator) can establish TLS connections to systems that require these certificates.
+1. Client certificate is used for repository authentication.
+2. Nexus access is authorized.
+3. Template artifact is downloaded successfully.
 
+### UC-SC-INT-1: Connect to internal service with self-signed certificate
+
+**Pre-requisites:**
+
+1. Internal HTTPS service uses self-signed certificate.
+2. Self-signed CA certificate is available in `configuration/certs/`.
+3. Pipeline contains step that calls this internal service.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started for environment that includes call to the internal HTTPS service.
+
+**Steps:**
+
+1. Jobs run in the pipeline:
+   1. Loads self-signed CA certificate from `configuration/certs/`.
+   2. Executes HTTPS call to internal service.
+   3. Produces logs for TLS and service call result validation.
+
+**Results:**
+
+1. Internal HTTPS handshake succeeds.
+2. Service call completes successfully.
+3. No SSL verification error appears in logs.
+
+### UC-SC-ERR-1 (Negative): Reject connection with invalid or incomplete certificate chain
+
+**Pre-requisites:**
+
+1. Target endpoint requires valid full certificate chain.
+2. `configuration/certs/` contains invalid chain (wrong order, missing intermediate, or malformed PEM boundaries).
+3. Control run with valid chain is available.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started for secure endpoint access that requires full certificate chain.
+
+**Steps:**
+
+1. First run (negative dataset):
+   1. Provide invalid chain file in `configuration/certs/`.
+   2. Run pipeline and execute secure endpoint call.
+   3. Capture TLS logs and job status.
+2. Second run (control dataset):
+   1. Replace invalid chain with valid chain.
+   2. Run the same flow with unchanged settings.
+
+**Results:**
+
+1. Run with invalid chain fails TLS validation.
+2. Logs contain certificate verification or chain validation error.
+3. Control run with valid chain succeeds.
+
+### UC-SC-ERR-2 (Negative): Fail secure connection when required certificate is missing
+
+**Pre-requisites:**
+
+1. Target repository or internal endpoint requires custom CA and/or client certificate.
+2. Required file is not present in `configuration/certs/`.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started for flow that must access protected endpoint.
+
+**Steps:**
+
+1. Start pipeline with required CA or client certificate file removed from `configuration/certs/`.
+2. Execute the protected endpoint call in the same flow.
+3. Capture failure logs and job status.
+
+**Results:**
+
+1. Secure connection or authentication fails in expected step.
+2. Logs contain clear reason related to missing trust or missing client certificate.
+3. Failure is diagnosable and reproducible.
+
+### UC-SC-ERR-3 (Negative): Continue GENERATE_EFFECTIVE_SET when default runtime certificate is unavailable
+
+**Pre-requisites:**
+
+1. `GENERATE_EFFECTIVE_SET` is enabled in pipeline configuration.
+2. Instance repository does not contain certificate files in `configuration/certs/`.
+3. Runtime image does not provide default certificate file.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with `GENERATE_EFFECTIVE_SET` enabled.
+
+**Steps:**
+
+1. Start pipeline with empty or missing `configuration/certs/`.
+2. Run `GENERATE_EFFECTIVE_SET` flow in runtime without default certificate file.
+3. Capture logs and job status.
+
+**Results:**
+
+1. `GENERATE_EFFECTIVE_SET` does not fail only because default runtime certificate is unavailable.
