@@ -5,7 +5,6 @@
   - [Use Cases](#use-cases)
     - [UC-SC-NEX-1: Download template artifact from Nexus with custom CA certificate](#uc-sc-nex-1-download-template-artifact-from-nexus-with-custom-ca-certificate)
     - [UC-SC-NEX-2: Download template artifact from Nexus with client certificate authentication](#uc-sc-nex-2-download-template-artifact-from-nexus-with-client-certificate-authentication)
-    - [UC-SC-INT-1: Connect to internal service with self-signed certificate](#uc-sc-int-1-connect-to-internal-service-with-self-signed-certificate)
     - [UC-SC-ERR-1 (Negative): Reject connection with invalid or incomplete certificate chain](#uc-sc-err-1-negative-reject-connection-with-invalid-or-incomplete-certificate-chain)
     - [UC-SC-ERR-2 (Negative): Fail secure connection when required certificate is missing](#uc-sc-err-2-negative-fail-secure-connection-when-required-certificate-is-missing)
     - [UC-SC-ERR-3 (Negative): Continue GENERATE_EFFECTIVE_SET when default runtime certificate is unavailable](#uc-sc-err-3-negative-continue-generate_effective_set-when-default-runtime-certificate-is-unavailable)
@@ -19,7 +18,6 @@ EnvGene loads certificates from `configuration/certs/` and applies them during j
 These use cases describe certificate-driven flows for:
 
 - Nexus template artifact download
-- Internal HTTPS service access
 - TLS error handling for invalid or missing certificates
 
 ## Use Cases
@@ -77,31 +75,6 @@ Instance pipeline (GitLab or GitHub) is started with template artifact source co
 1. Client certificate is used for repository authentication.
 2. Nexus access is authorized.
 3. Template artifact is downloaded successfully.
-
-### UC-SC-INT-1: Connect to internal service with self-signed certificate
-
-**Pre-requisites:**
-
-1. Internal HTTPS service uses self-signed certificate.
-2. Self-signed CA certificate is available in `configuration/certs/`.
-3. Pipeline contains step that calls this internal service.
-
-**Trigger:**
-
-Instance pipeline (GitLab or GitHub) is started for environment that includes call to the internal HTTPS service.
-
-**Steps:**
-
-1. Jobs run in the pipeline:
-   1. Loads self-signed CA certificate from `configuration/certs/`.
-   2. Executes HTTPS call to internal service.
-   3. Produces logs for TLS and service call result validation.
-
-**Results:**
-
-1. Internal HTTPS handshake succeeds.
-2. Service call completes successfully.
-3. No SSL verification error appears in logs.
 
 ### UC-SC-ERR-1 (Negative): Reject connection with invalid or incomplete certificate chain
 
