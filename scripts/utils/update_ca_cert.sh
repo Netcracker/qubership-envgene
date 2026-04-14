@@ -40,7 +40,8 @@ function debugPrintCertsFromFile {
     fi
     local cert_num=0
     local block=""
-    while IFS= read -r line; do
+    while IFS= read -r line || [[ -n "$line" ]]; do
+      line="${line%$'\r'}"
       if [[ "$line" == "-----BEGIN CERTIFICATE-----" ]]; then
         block="$line"
         continue
@@ -50,7 +51,7 @@ function debugPrintCertsFromFile {
         if [[ "$line" == "-----END CERTIFICATE-----" ]]; then
           cert_num=$((cert_num + 1))
           echo "[DEBUG] --- Certificate #${cert_num} in ${file} ---"
-          echo "$block" | openssl x509 -noout -subject -issuer -dates 2>/dev/null || echo "[DEBUG] (openssl could not decode this block)"
+          printf "%s\n" "$block" | openssl x509 -noout -subject -issuer -dates 2>/dev/null || echo "[DEBUG] (openssl could not decode this block)"
           block=""
         fi
       fi
