@@ -10,7 +10,7 @@
 
 ## Overview
 
-This document covers use cases for [System Certificate Configuration](/docs/features/system-certificate.md) - how EnvGene loads certificates from the Instance repository and configures them during pipeline execution.
+This document describes practical use cases for System Certificate Configuration in EnvGene instance pipelines. It focuses on how certificates from configuration/certs/ are applied during pipeline execution for secure connectivity.
 
 ## Certificate Loading and Fallback
 
