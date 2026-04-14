@@ -13,14 +13,15 @@
 
 ## Overview
 
-This document describes use cases for maintaining EnvGene Template and Instance repositories using the Git-System-Follower (GSF) package manager.  
-It focuses on three main scenarios for each repository type:
+This document defines use cases for maintaining EnvGene Template and Instance repositories with the Git-System-Follower (GSF) package manager.
+
+For each repository type, it covers three maintenance scenarios:
 
 - Initial installation (init)
 - Upgrade to a new EnvGene package version
 - Downgrade to an older EnvGene package version
 
-In both cases, the repository contents after GSF execution must be compared against a reference structure (the "golden" or etalon state) to ensure a correct installation or upgrade.
+For every scenario, repository contents after GSF execution are validated against a reference structure (golden state) to confirm that managed files are correctly added, updated, or removed.
 
 For detailed installation and maintenance steps, see:
 
@@ -91,11 +92,22 @@ git-system-follower install <path_to_template_package_image> \
 1. Run GSF with repository URL, branch, token, and target package image.
 2. GSF updates the Template Repository to the target version.
 3. GSF updates changed files, adds new files, and removes outdated managed files.
+4. Verify restricted files for Template Repository:
+   - `pipeline_vars.yml` or `pipeline_vars.yaml`
+   - `build_vars.sh`
+   - `description_template.yml` or `description_template.yaml`
+5. Verify restricted file behavior:
+   - `build_vars.sh` and `description_template.*` preserve user-defined values after upgrade
+   - `pipeline_vars.*` preserves user-defined values, except allowed structural alignment with current package structure
 
 **Results:**
 
 1. Template Repository is upgraded to the target version.
 2. Repository matches the reference structure.
+3. Restricted files are preserved according to policy:
+   - `build_vars.sh` and `description_template.*` are not replaced with package defaults
+   - `pipeline_vars.*` is preserved, with structural alignment allowed when required
+4. No regressions related to repository upgrade are observed.
 
 ### UC-GSF-TMP-3: Downgrade Template Repository via GSF
 
@@ -193,11 +205,23 @@ git-system-follower install <path_to_instance_package_image> \
 1. Run GSF with repository URL, branch, token, and target package image.
 2. GSF updates the Instance Repository to the target version.
 3. GSF updates changed files, adds new files, and removes outdated managed files.
+4. Verify `configuration/credentials/credentials.yml` contains `self-token-cred`:
+   - `type: secret`
+   - `data.secret` is present.
+5. Verify `configuration/integration.yml` contains:
+   - `self_token: "${creds.get('self-token-cred').secret}"`.
+6. Verify legacy `self_token` definition is absent in `configuration/config.yml` or ignored by the target version.
+7. Verify placeholder file `configuration/.gitkeep` is present.
 
 **Results:**
 
 1. Instance Repository is upgraded to the target version.
 2. Repository matches the reference structure.
+3. Token configuration is migrated and valid:
+   - `configuration/credentials/credentials.yml` contains `self-token-cred` with non-empty secret data,
+   - `configuration/integration.yml` references `${creds.get('self-token-cred').secret}` in `self_token`,
+   - runtime execution does not fail with missing `self_token` or missing `self-token-cred`.
+4. Legacy token definition in `configuration/config.yml` is absent or ignored by the target version, and does not affect runtime behavior.
 
 ### UC-GSF-INST-3: Downgrade Instance Repository via GSF
 
