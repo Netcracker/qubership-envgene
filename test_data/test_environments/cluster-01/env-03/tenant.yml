@@ -1,0 +1,18 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "tenant"
+registryName: "default"
+description: "Sample template for composite environment with credentials in parameters"
+owners: "qubership team"
+gitRepository: ""
+defaultBranch: ""
+credential: ""
+labels: []
+globalE2EParameters:
+  pipelineDefaultRecipients: ""
+  recipientsStrategy: "merge"
+  mergeTenantsAndE2EParameters: false
+  environmentParameters: {}
+deployParameters:
+  ESCAPE_SEQUENCE: "true"
