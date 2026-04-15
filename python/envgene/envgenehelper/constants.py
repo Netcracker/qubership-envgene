@@ -10,4 +10,4 @@ cleanup_targets = [
     "composite_structure.yml",
 ]
 
-CI_JOB_ARTIFACT_MAX_SIZE_MB = 5  # 80% from limit 1.5
+CI_JOB_ARTIFACT_MAX_SIZE_MB = 1200  # 80% from limit 1.5
