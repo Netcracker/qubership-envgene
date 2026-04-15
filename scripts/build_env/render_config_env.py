@@ -15,6 +15,7 @@ from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotatio
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
+Composite_SCHEMA = str(SCHEMAS_DIR / "composite-structure.schema.json")
 
 yml = create_yaml_processor()
 
@@ -426,6 +427,7 @@ class EnvGenerator:
             cs_file = Path(current_env_dir) / "composite_structure.yml"
             cs_file.parent.mkdir(parents=True, exist_ok=True)
             self.render_from_file_to_file(Template(composite_structure).render(self.ctx.as_dict()), str(cs_file))
+            validate_yaml_by_scheme_or_fail(cs_file, Composite_SCHEMA)
 
     def get_rendered_target_path(self, template_path: Path) -> Path:
         path_str = str(template_path)
