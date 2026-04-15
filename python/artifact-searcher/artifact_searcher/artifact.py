@@ -434,13 +434,15 @@ def create_aql_artifact(app: Application, artifact_extension: FileExtension, ver
 def check_artifacts_by_aql(aql: str, url: str = "",
                             auth_headers: dict | None = None) -> list[ArtifactInfo]:
     artifacts = []
-    response = requests.post(f"{url}/api/search/aql", data=aql, headers=auth_headers)
+    base_url = url.rstrip('/')
+    response = requests.post(f"{base_url}/api/search/aql", data=aql, headers=auth_headers)
+    response.raise_for_status()
     results = response.json()
-    for result in results.get("results"):
+    for result in (results.get("results") or []):
         repo = result.get("repo")
         path = result.get("path")
         name = result.get("name")
-        artifact_url = f"{url}/{repo}/{path}/{name}"
+        artifact_url = f"{base_url}/{repo}/{path}/{name}"
         artifact = ArtifactInfo(repo=repo, path=path, name=name, url=artifact_url, auth_headers=auth_headers)
         artifacts.append(artifact)
     return artifacts
