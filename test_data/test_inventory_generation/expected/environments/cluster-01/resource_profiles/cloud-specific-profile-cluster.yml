@@ -1,0 +1,15 @@
+name: "cloud-specific-profile-cluster"
+baseline: "dev"
+description: ""
+applications:
+  - name: "core"
+    version: "release-20241103.225817"
+    sd: ""
+    services:
+      - name: "operator"
+        parameters:
+          - name: "GATEWAY_MEMORY_LIMIT"
+            value: "96Mi"
+          - name: "GATEWAY_CPU_REQUEST"
+            value: "50m"
+version: 0
