@@ -28,7 +28,7 @@ def get_pipeline_parameters() -> dict:
         "ENV_SPECIFIC_PARAMS": getenv("ENV_SPECIFIC_PARAMS"),
         "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
         'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
-        'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", ""),
+        'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "false"),
         'NS_BUILD_FILTER': getenv("NS_BUILD_FILTER", ""),
         'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
         'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT", "10m"),
