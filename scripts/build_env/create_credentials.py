@@ -2,11 +2,14 @@ import re
 import sys
 import os
 from envgenehelper import *
+from typing import Optional, List
 
 #const
 CRED_TYPE_SECRET="secret"
 CRED_TYPE_USERPASS="usernamePassword"
 CRED_TYPE_VAULT="vaultAppRole"
+CRED_TYPE_EXTERNAL="external"
+EXTERNAL_CRED_COMMENT="external credential"
 
 def createCredDefinition(credId, credType) :
     cred = {}
@@ -14,28 +17,44 @@ def createCredDefinition(credId, credType) :
     cred["type"] = credType
     return cred
 
-def processParametersAndAppend(paramTypeKey, paramsDict, credsList, tenantName, cloudName="", namespaceName="", comment="") :
+def createExternalCredDefinition(credId, credData):
+    cred = {}
+    cred["credentialsId"] = credId.strip("\"")
+    for key, value in credData.items():
+        cred[key] = value
+    return cred
+
+def processParametersAndAppend(paramTypeKey, paramsDict, credsList, tenantName, cloudName="", namespaceName="", comment="", extCredsMap=None, extCredsErrors=None) :
     if paramTypeKey not in paramsDict.keys():
         return
-    processDictAndAppend(paramsDict[paramTypeKey], credsList, tenantName, cloudName, namespaceName, comment)
+    processDictAndAppend(paramsDict[paramTypeKey], credsList, tenantName, cloudName, namespaceName, comment, extCredsMap, extCredsErrors)
 
-def processDictAndAppend(params, credsList, tenantName, cloudName, namespaceName, comment):
+def processDictAndAppend(params, credsList, tenantName, cloudName, namespaceName, comment,  extCredsMap=None, extCredsErrors=None):
     for key, value in params.items():
-        processSingleParam(key, value, credsList, tenantName, cloudName, namespaceName, comment)
+        processSingleParam(key, value, credsList, tenantName, cloudName, namespaceName, comment, extCredsMap, extCredsErrors)
 
-def processSingleParam(key, value, credsList, tenantName, cloudName, namespaceName, comment):
+def processSingleParam(key, value, credsList, tenantName, cloudName, namespaceName, comment, extCredsMap=None, extCredsErrors: Optional[List[str]] = None):
     if isinstance(value, dict):
-        processDictAndAppend(value, credsList, tenantName, cloudName, namespaceName, comment)
+        if value.get("$type") == "credRef":
+            cred_id = value.get("credId")
+            if extCredsMap is not None and cred_id not in extCredsMap:
+                    if extCredsErrors is not None:
+                        extCredsErrors.append(f"{cred_id}")
+                    return 
+        processDictAndAppend(value, credsList, tenantName, cloudName, namespaceName, comment, extCredsMap, extCredsErrors)
     elif isinstance(value, list): # if is array, than iterate
         for idx, item in enumerate(value):
-            value[idx] = processSingleParam(idx, item, credsList, tenantName, cloudName, namespaceName, comment)
+            value[idx] = processSingleParam(idx, item, credsList, tenantName, cloudName, namespaceName, comment, extCredsMap, extCredsErrors)
     elif isinstance(value, str):
         if check_is_cred(key, value):
             appendCredList(get_cred_list_from_param(key, value, True, tenantName, cloudName, namespaceName), credsList, comment)
 
-def checkCredAndAppend(credName, credsList, secretType, comment=""):
+def checkCredAndAppend(credName, credsList, secretType, comment="", externalCredData=None):
     if (credName):
-        appendCredList([createCredDefinition(credName, secretType)], credsList, comment)
+        if secretType == CRED_TYPE_EXTERNAL:
+            appendCredList([createExternalCredDefinition(credName, externalCredData)], credsList, comment)
+        else:
+            appendCredList([createCredDefinition(credName, secretType)], credsList, comment)
     return credsList
 
 def appendCredList(additionalCreds, wholeCredsList, comment=""):
@@ -45,16 +64,23 @@ def appendCredList(additionalCreds, wholeCredsList, comment=""):
         credMeta["comment"] = comment
         wholeCredsList.append(credMeta)
 
-def getTenantCreds(tenantContent, tenantName):
+def getTenantCreds(tenantContent, tenantName, extCredsMap=None, extCredsErrors=None):
     creds = []
     tenantComment = f"tenant {tenantName}"
     checkCredAndAppend(tenantContent["credential"], creds, CRED_TYPE_SECRET, tenantComment)
     #process deployParameters
-    processParametersAndAppend("deployParameters", tenantContent, creds, tenantName, comment=tenantComment)
-    processParametersAndAppend("environmentParameters", tenantContent["globalE2EParameters"], creds, tenantName, comment=tenantComment)
+    processParametersAndAppend("deployParameters", tenantContent, creds, tenantName, comment=tenantComment, extCredsMap=extCredsMap, extCredsErrors=extCredsErrors)
+    processParametersAndAppend("environmentParameters", tenantContent["globalE2EParameters"], creds, tenantName, comment=tenantComment, extCredsMap=extCredsMap, extCredsErrors=extCredsErrors)
     return creds
 
-def getCloudCreds(cloudContent, tenantName, cloudName):
+def getExternalCreds(extCredsMap):
+    creds = []
+    logger.info(f"extCredsMap is {extCredsMap}")
+    for credName, credData in extCredsMap.items():
+        checkCredAndAppend(credName, creds, CRED_TYPE_EXTERNAL, EXTERNAL_CRED_COMMENT, credData)
+    return creds
+
+def getCloudCreds(cloudContent, tenantName, cloudName, extCredsMap=None, extCredsErrors=None):
     creds = []
     cloudComment = f"cloud {cloudName}"
     checkCredAndAppend(cloudContent["defaultCredentialsId"], creds, CRED_TYPE_SECRET, cloudComment)
@@ -65,11 +91,11 @@ def getCloudCreds(cloudContent, tenantName, cloudName):
         checkCredAndAppend(i["credentialsId"], creds, CRED_TYPE_USERPASS, cloudComment)
 
     #process deployParameters
-    processParametersAndAppend("deployParameters", cloudContent, creds, tenantName, cloudName, comment=cloudComment)
+    processParametersAndAppend("deployParameters", cloudContent, creds, tenantName, cloudName, comment=cloudComment, extCredsMap=extCredsMap, extCredsErrors=extCredsErrors)
     #process e2eParameters
-    processParametersAndAppend("e2eParameters", cloudContent, creds, tenantName, cloudName, comment=cloudComment)
+    processParametersAndAppend("e2eParameters", cloudContent, creds, tenantName, cloudName, comment=cloudComment, extCredsMap=extCredsMap, extCredsErrors=extCredsErrors)
     #process technicalConfigurationParameters
-    processParametersAndAppend("technicalConfigurationParameters", cloudContent, creds, tenantName, cloudName, comment=cloudComment)
+    processParametersAndAppend("technicalConfigurationParameters", cloudContent, creds, tenantName, cloudName, comment=cloudComment, extCredsMap=extCredsMap, extCredsErrors=extCredsErrors)
 
     return creds
 
@@ -79,19 +105,19 @@ def get_bg_domain_creds(content, name):
     checkCredAndAppend(content["controllerNamespace"]["credentials"], creds, CRED_TYPE_SECRET, bg_domain_comment)
     return creds
 
-def getNamespaceCreds(namespaceContent, tenantName, cloudName, namespaceName):
+def getNamespaceCreds(namespaceContent, tenantName, cloudName, namespaceName, extCredsMap, extCredsErrors):
     creds = []
     namespaceComment = f"namespace {namespaceName}"
     checkCredAndAppend(namespaceContent["credentialsId"], creds, CRED_TYPE_SECRET, namespaceComment)
     #process deployParameters
-    processParametersAndAppend("deployParameters", namespaceContent, creds, tenantName, cloudName, namespaceName, comment=namespaceComment)
+    processParametersAndAppend("deployParameters", namespaceContent, creds, tenantName, cloudName, namespaceName, comment=namespaceComment, extCredsMap=extCredsMap, extCredsErrors=extCredsErrors)
     #process e2eParameters
-    processParametersAndAppend("e2eParameters", namespaceContent, creds, tenantName, cloudName, namespaceName, comment=namespaceComment)
+    processParametersAndAppend("e2eParameters", namespaceContent, creds, tenantName, cloudName, namespaceName, comment=namespaceComment, extCredsMap=extCredsMap, extCredsErrors=extCredsErrors)
     #process technicalConfigurationParameters
-    processParametersAndAppend("technicalConfigurationParameters", namespaceContent, creds, tenantName, cloudName, namespaceName, comment=namespaceComment)
+    processParametersAndAppend("technicalConfigurationParameters", namespaceContent, creds, tenantName, cloudName, namespaceName, comment=namespaceComment, extCredsMap=extCredsMap, extCredsErrors=extCredsErrors)
     return creds
 
-def getApplicationCreds(appPath, tenantName, cloudName, namespaceName=""):
+def getApplicationCreds(appPath, tenantName, cloudName, namespaceName="", extCredsMap=None, extCredsErrors=None):
     creds = []
     appContent = openYaml(appPath)
     appName = appContent["name"]
@@ -100,9 +126,9 @@ def getApplicationCreds(appPath, tenantName, cloudName, namespaceName=""):
     else:
         comment = f"cloud {cloudName} application {appName}"
     #process deployParameters
-    processParametersAndAppend("deployParameters", appContent, creds, tenantName, cloudName, namespaceName, comment=comment)
+    processParametersAndAppend("deployParameters", appContent, creds, tenantName, cloudName, namespaceName, comment=comment, extCredsMap=extCredsMap, extCredsErrors=extCredsErrors)
     #process technicalConfigurationParameters
-    processParametersAndAppend("technicalConfigurationParameters", appContent, creds, tenantName, cloudName, namespaceName, comment=comment)
+    processParametersAndAppend("technicalConfigurationParameters", appContent, creds, tenantName, cloudName, namespaceName, comment=comment, extCredsMap=extCredsMap, extCredsErrors=extCredsErrors)
     return creds
 
 def mergeCreds(newCreds, allCreds) :
@@ -142,6 +168,10 @@ def writeCredToYaml(credItem, credsYaml) :
         data.insert(1, "path", "envgeneNullValue", "FillMe")
         data.insert(1, "namespace", "envgeneNullValue", "FillMe")
         newCred["data"] = data
+    elif (cred["type"] == CRED_TYPE_EXTERNAL):
+        for key, value in cred.items():
+            if key not in ["credentialsId", "type"]:
+                newCred.insert(len(newCred), key, value)
     if (comment):
         store_value_to_yaml(credsYaml, cred["credentialsId"], newCred, comment)
     else:
@@ -156,7 +186,7 @@ def mergeAndSaveYaml(yamlPath, newCreds) :
         if not cred["cred"]["credentialsId"] in credsYaml:
             count = count + 1
             credsYaml = writeCredToYaml(cred, credsYaml)
-    logger.info("%s credentials created" % count)
+    logger.info("%s credentials created" % credsYaml)
     writeYamlToFile(yamlPath, credsYaml)
 
 def findSharedCredentials(cred_name, env_dir, instances_dir):
@@ -195,10 +225,14 @@ def create_credentials(envDir, envInstancesDir, instancesDir) :
     resultingCreds = []
     #tenant
     tenantFileName = envDir+"/tenant.yml"
+    externalCredsFile = envDir+"/Credentials/rendered-external-creds.yml"
+    extCredsMap = openYaml(externalCredsFile, allow_default=True)
+    logger.info(f"Rendered external creds if any: {extCredsMap}")
+    extCredsErrors = []
     logger.info(f"Processing tenant")
     tenantYaml = openYaml(tenantFileName)
     tenantName = tenantYaml["name"]
-    mergeResult = mergeCreds(getTenantCreds(tenantYaml, tenantName), resultingCreds)
+    mergeResult = mergeCreds(getTenantCreds(tenantYaml, tenantName, extCredsMap, extCredsErrors), resultingCreds)
     logger.info(f'{mergeResult["countAdded"]} creds added from tenant {tenantFileName}')
     resultingCreds = mergeResult["mergedCreds"]
     #cloud
@@ -206,7 +240,7 @@ def create_credentials(envDir, envInstancesDir, instancesDir) :
     logger.info(f"Processing cloud")
     cloudYaml = openYaml(cloudFileName)
     cloudName = cloudYaml["name"]
-    mergeResult = mergeCreds(getCloudCreds(cloudYaml, tenantName, cloudName), resultingCreds)
+    mergeResult = mergeCreds(getCloudCreds(cloudYaml, tenantName, cloudName, extCredsMap, extCredsErrors), resultingCreds)
     logger.info(f'{mergeResult["countAdded"]} creds added from cloud {cloudFileName}')
     resultingCreds = mergeResult["mergedCreds"]
     #bgd object
@@ -223,7 +257,7 @@ def create_credentials(envDir, envInstancesDir, instancesDir) :
     # iterate through cloud applications and create cred definitions
     applications = findAllYamlsInDir(f"{envDir}/Applications")
     for appPath in applications :
-        mergeResult = mergeCreds(getApplicationCreds(appPath, tenantName, cloudName), resultingCreds)
+        mergeResult = mergeCreds(getApplicationCreds(appPath, tenantName, cloudName, extCredsMap, extCredsErrors), resultingCreds)
         logger.info(f'{mergeResult["countAdded"]} creds added for cloud application {appPath}')
         resultingCreds = mergeResult["mergedCreds"]
     # iterate through namespaces and create cred definitions
@@ -235,7 +269,7 @@ def create_credentials(envDir, envInstancesDir, instancesDir) :
         namespaceKey = extract_namespace_from_namespace_path(namespacePath)
         namespaceName = namespaceYaml["name"]
         namespaceNameMap[namespaceKey] = namespaceName
-        mergeResult = mergeCreds(getNamespaceCreds(namespaceYaml, tenantName, cloudName, namespaceName), resultingCreds)
+        mergeResult = mergeCreds(getNamespaceCreds(namespaceYaml, tenantName, cloudName, namespaceName, extCredsMap, extCredsErrors), resultingCreds)
         logger.info(f'{mergeResult["countAdded"]} creds added for namespace {namespacePath}')
         resultingCreds = mergeResult["mergedCreds"]
     # iterate through namespace applications and create cred definitions
@@ -244,13 +278,27 @@ def create_credentials(envDir, envInstancesDir, instancesDir) :
     for appPath in applications :
         namespaceKey = extract_namespace_from_application_path(appPath)
         namespaceName = namespaceNameMap[namespaceKey]
-        mergeResult = mergeCreds(getApplicationCreds(appPath, tenantName, cloudName, namespaceName), resultingCreds)
+        mergeResult = mergeCreds(getApplicationCreds(appPath, tenantName, cloudName, namespaceName, extCredsMap, extCredsErrors), resultingCreds)
         logger.info(f'{mergeResult["countAdded"]} creds added for namespace application {appPath}')
         resultingCreds = mergeResult["mergedCreds"]
-    # store credentials
+    #raise external cred error before saving credentails to file
+    if extCredsErrors:
+        raise ValueError(
+        f"Following external credentials "
+        f"{', '.join(map(str, extCredsErrors))} "
+        f"referred in parameters are not found in external credential template"
+        )
+    #iterate through rendered External Credentials and create cred definition
+    logger.info(f"Processing external credentials")
+    mergeResult = mergeCreds(getExternalCreds(extCredsMap), resultingCreds)
+    logger.info(f'{mergeResult["countAdded"]} creds added for external credentials {externalCredsFile}')
+    resultingCreds = mergeResult["mergedCreds"]
+    #store credentials
     credYamlPath = envDir + "/Credentials/credentials.yml"
     mergeAndSaveYaml(credYamlPath, resultingCreds)
     # process shared credentials
     mergeSharedCreds(credYamlPath, envInstancesDir, instancesDir)
     beautifyYaml(credYamlPath, credsSchema)
+    logger.debug(f"Removing rendered external credential file")
+    deleteFileIfExists(externalCredsFile)
 
