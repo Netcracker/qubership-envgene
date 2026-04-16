@@ -45,7 +45,7 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/set_variable.txt")
     else:
         env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env}")
-        env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")      
+        env_build_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
     env_build_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(env_build_job)
     return env_build_job
@@ -66,6 +66,9 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, de
             'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done',
             'cp -rf $CI_PROJECT_DIR/environments $CI_PROJECT_DIR/git_envs',
         ],
+        "after_script": [
+            "du -sh *"
+        ]
     }
 
     git_commit_vars = {
