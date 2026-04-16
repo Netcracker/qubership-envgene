@@ -89,7 +89,7 @@ def main():
 
     if result.returncode != 0:
         output_dir = os.environ.get("PIPELINE_OUTPUT_DIR", "extended_github_instance_pipeline")
-        run(["git", "commit", "-m", f"chore: update {output_dir} from pipeline"], env=env)
+        run(["git", "commit", "-m", f"chore: update {output_dir} from pipeline [ci skip]"], env=env)
         result = subprocess.run(
             ["git", "push", "origin", f"HEAD:{ref_name}"],
             env=env,
