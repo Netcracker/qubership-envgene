@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+echo "Started at: $(date)"
+
 retries=0
 exit_code=0
 
@@ -330,5 +332,7 @@ if [ "$exit_code" -ne 0 ]; then
           echo "Final exit code: $exit_code"
       fi
 fi
+
+echo "Finished at: $(date)"
 
 exit $exit_code
