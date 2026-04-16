@@ -30,10 +30,11 @@ def sboms_retention_policy():
             logger.info(f"Removing legacy SBOM file: {sbom_path}")
             deleteFileIfExists(sbom_path)
 
-    if sbom_retention.keep_versions_per_app:
+    keep_versions_per_app = sbom_retention.keep_versions_per_app
+    if keep_versions_per_app:
+        logger.info(f"SBOM retention policy keep_versions_per_app={keep_versions_per_app},"
+                    f" starting cleanup: {sboms_dir}")
         for app_sbom_dir in sboms_dir.iterdir():
-            logger.info(f"SBOM retention policy: keep_versions_per_app={sbom_retention.keep_versions_per_app}, "
-                        f"target_dir={app_sbom_dir}")
             cleanup_dir_by_age(app_sbom_dir, sbom_retention.keep_versions_per_app)
 
     if is_over_size_limit(sboms_dir, CI_JOB_ARTIFACT_MAX_SIZE_MB):
