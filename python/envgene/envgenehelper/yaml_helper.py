@@ -141,10 +141,7 @@ def alignYamlComments(yamlContent, extra_indent=0):
 
 
 def sortYaml(yaml_data, schema_path, remove_additional_props):
-    with open(schema_path, 'r') as f:
-        schema_data = json.load(f)
-    logger.debug(f'Checking yaml with schema: {schema_path}')
-    jsonschema.validate(yaml_data, schema_data)
+    schema_data = validateSchema(yaml_data, schema_path)
     sort_data = jschon_tools.process_json_doc(
         schema_data=schema_data,
         doc_data=yaml_data,
@@ -152,6 +149,13 @@ def sortYaml(yaml_data, schema_path, remove_additional_props):
         remove_additional_props=remove_additional_props
     )
     return sort_data
+
+def validateSchema(yaml_data, schema_path):
+    with open(schema_path, 'r') as f:
+        schema_data = json.load(f)
+    logger.debug(f'Checking yaml with schema: {schema_path}')
+    jsonschema.validate(yaml_data, schema_data)
+    return schema_data
 
 
 def get_nested_yaml_attribute_or_fail(yaml_content, attribute_str):
