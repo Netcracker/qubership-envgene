@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "Started at: $(date)"
+echo "===== SCRIPT START: $(date '+%H:%M:%S') ====="
 
 retries=0
 exit_code=0
@@ -333,6 +333,6 @@ if [ "$exit_code" -ne 0 ]; then
       fi
 fi
 
-echo "Finished at: $(date)"
+echo "===== SCRIPT END: $(date '+%H:%M:%S') ====="
 
 exit $exit_code
