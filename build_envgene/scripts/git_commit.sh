@@ -31,11 +31,6 @@ if [ -z "${TOKEN}" ]; then
       exit 1
 fi
 
-########### debug
-export PS4='+ $(date "+%H:%M:%S") '
-set -x
-###########
-
 echo "Platform: ${PLATFORM}"
 echo "Server Protocol: ${SERVER_PROTOCOL}"
 echo "Server Host: ${SERVER_HOST}"
@@ -165,15 +160,11 @@ git config pull.rebase true
 
 # pulling into empty git repo
 
-set +x
-
 if [ -n "${GITHUB_ACTIONS}" ]; then
       REMOTE_URL="${SERVER_PROTOCOL}://${TOKEN}@${SERVER_HOST}/${PROJECT_PATH}.git"
 elif [ -n "${GITLAB_CI}" ]; then
       REMOTE_URL="${SERVER_PROTOCOL}://project_22172_bot:${TOKEN}@${SERVER_HOST}/${PROJECT_PATH}.git"
 fi
-
-set -x
 
 echo "Adding remote: ${REMOTE_URL}"
 git remote add origin "${REMOTE_URL}"
