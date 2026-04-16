@@ -44,6 +44,7 @@ deployParameters:
   TEST_ENVGENE_CREDS_GET_VAULT_SECRET_ID: "${creds.get( \"envgen-creds-get-vault-cred-secret-id\").secretId}" # paramset: test-deploy-creds version: 1 source: template
   TEST_SHARED_CREDS: "${creds.get('integration-cred').username}" # paramset: test-deploy-creds version: 1 source: template
   TEST_SHARED_CREDS_ACTIVATOR: "${creds.get('service-integration-cred').password}" # paramset: test-deploy-creds version: 1 source: template
+  TEST_CMDB_CREDS_USERNAME: "${cmdb.creds.get('creds-get-username-cred').username}" #added manually for cmdb.creds macro validation
   bss-app-exist: false
   core: # paramset: paramset-B version: 23.4 source: instance
     apps:

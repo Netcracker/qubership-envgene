@@ -1,7 +1,10 @@
 from enum import Enum
 from typing import Optional
+import base64
 
-from pydantic import BaseModel, ConfigDict, field_validator, Field, model_validator
+import jsonschema
+from envgenehelper.config_helper import get_regdef_v2_schema
+from pydantic import BaseModel, ConfigDict, field_validator, Field
 from pydantic.alias_generators import to_camel
 import requests
 
@@ -26,8 +29,6 @@ class MavenConfig(BaseSchema):
     snapshot_group: Optional[str] = ""
     release_group: Optional[str] = ""
 
-    is_nexus: bool = False
-
     @field_validator('full_repository_url')
     def check_full_repository_url(cls, full_repository_url):
         if full_repository_url:
@@ -38,20 +39,19 @@ class MavenConfig(BaseSchema):
     def ensure_trailing_slash(cls, value):
         return value.rstrip("/") + "/"
 
-    @model_validator(mode="after")
-    def detect_nexus(self):
-        if not self.repository_domain_name.endswith("/repository/"):
-            return self
-        base = self.repository_domain_name[: -len("repository/")]
+    @staticmethod
+    def is_nexus(repository_domain_name: str) -> bool:
+        if not repository_domain_name.endswith("/repository/"):
+            return False
+
+        base = repository_domain_name[: -len("repository/")]
         status_url = f"{base}service/rest/v1/status"
+
         try:
             resp = requests.get(status_url, timeout=DEFAULT_REQUEST_TIMEOUT)
-            self.is_nexus = resp.status_code == 200
+            return resp.status_code == 200
         except Exception:
-            self.is_nexus = False
-
-        return self
-
+            return False
 
 class DockerConfig(BaseSchema):
     snapshot_uri: Optional[str] = ""
@@ -102,6 +102,7 @@ class ArtifactInfo(BaseSchema):
     path: Optional[str] = ""
     local_path: Optional[str] = ""
     name: Optional[str] = ""
+    auth_headers: Optional[dict] = None
 
 
 class Registry(BaseSchema):
@@ -115,14 +116,164 @@ class Registry(BaseSchema):
     helm_config: Optional[HelmConfig] = None
     helm_app_config: Optional[HelmAppConfig] = None
 
+    def resolve_auth(self, env_creds: Optional[dict] = None) -> Optional[dict]:
+        """Returns auth headers dict for V1 registries (basic auth).
+        Returns None if no credentials configured."""
+        if not self.credentials_id or not env_creds:
+            return None
+        cred_data = env_creds.get(self.credentials_id, {}).get("data", {})
+        username = cred_data.get("username")
+        password = cred_data.get("password")
+        if username and password:
+            token = base64.b64encode(f"{username}:{password}".encode()).decode()
+            return {"Authorization": f"Basic {token}"}
+        return None
+
+
+REGDEF_V2_VERSION = "2.0"
+
+
+class Provider(str, Enum):
+    NEXUS = "nexus"
+    ARTIFACTORY = "artifactory"
+    AWS = "aws"
+    GCP = "gcp"
+    AZURE = "azure"
+
+
+class GcpOIDC(BaseSchema):
+    url: str = Field(alias="URL")
+    custom_params: Optional[list[dict[str, str]]] = None
+
+
+class AuthConfig(BaseSchema):
+    credentials_id: Optional[str] = None
+    auth_type: Optional[str] = None
+    provider: Provider
+    auth_method: str
+    aws_region: Optional[str] = None
+    aws_domain: Optional[str] = None
+    aws_role_arn: Optional[str] = Field(default=None, alias="awsRoleARN")
+    aws_role_session_prefix: Optional[str] = None
+    gcp_oidc: Optional[GcpOIDC] = Field(default=None, alias="gcpOIDC")
+    gcp_reg_project: Optional[str] = None
+    gcp_reg_pool_id: Optional[str] = None
+    gcp_reg_provider_id: Optional[str] = None
+    gcp_reg_sa_email: Optional[str] = Field(default=None, alias="gcpRegSAEmail")
+    gcp_region: Optional[str] = None
+    azure_tenant_id: Optional[str] = None
+    azure_acr_resource: Optional[str] = Field(default=None, alias="azureACRResource")
+    azure_acr_name: Optional[str] = Field(default=None, alias="azureACRName")
+    azure_artifacts_resource: Optional[str] = None
+
+
+class MavenConfigV2(BaseSchema):
+    auth_config: str
+    repository_domain_name: str
+    target_snapshot: Optional[str] = ""
+    target_staging: Optional[str] = ""
+    target_release: Optional[str] = ""
+    snapshot_group: Optional[str] = ""
+    release_group: Optional[str] = ""
+
+    @field_validator('repository_domain_name')
+    def ensure_trailing_slash(cls, value):
+        return value.rstrip("/") + "/"
+
+
+class DockerConfigV2(BaseSchema):
+    auth_config: str
+    snapshot_uri: str
+    staging_uri: str
+    release_uri: str
+    group_uri: str
+    snapshot_repo_name: str
+    staging_repo_name: str
+    release_repo_name: str
+    group_name: str
+
+
+class GoConfigV2(BaseSchema):
+    auth_config: str
+    repository_domain_name: str
+    go_target_snapshot: str
+    go_target_release: str
+    go_proxy_repository: str
+
+
+class RawConfigV2(BaseSchema):
+    auth_config: str
+    repository_domain_name: str
+    raw_target_snapshot: str
+    raw_target_release: str
+    raw_target_staging: str
+    raw_target_proxy: str
+
+
+class NpmConfigV2(BaseSchema):
+    auth_config: str
+    repository_domain_name: str
+    npm_target_snapshot: str
+    npm_target_release: str
+
+
+class HelmConfigV2(BaseSchema):
+    auth_config: str
+    repository_domain_name: str
+    helm_target_staging: str
+    helm_target_release: str
+
+
+class HelmAppConfigV2(BaseSchema):
+    auth_config: str
+    repository_domain_name: str
+    helm_staging_repo_name: str
+    helm_release_repo_name: str
+    helm_group_repo_name: str
+    helm_dev_repo_name: str
+
+
+class RegistryV2(BaseSchema):
+    name: str
+    version: str = REGDEF_V2_VERSION
+    auth_config: dict[str, AuthConfig] = {}
+    maven_config: MavenConfigV2
+    docker_config: Optional[DockerConfigV2] = None
+    go_config: Optional[GoConfigV2] = None
+    raw_config: Optional[RawConfigV2] = None
+    npm_config: Optional[NpmConfigV2] = None
+    helm_config: Optional[HelmConfigV2] = None
+    helm_app_config: Optional[HelmAppConfigV2] = None
+    
+    def resolve_auth(self, env_creds: Optional[dict] = None) -> Optional[dict]:
+        """Returns auth headers dict for V2 registries (unified API with V1).
+        Returns None if anonymous or no credentials configured."""
+        from artifact_searcher.auth_resolver import resolve_v2_auth_headers
+        return resolve_v2_auth_headers(self, env_creds or {})
+
+
+def parse_registry(data: dict) -> Registry | RegistryV2:
+    if data.get("version") == REGDEF_V2_VERSION or "authConfig" in data:
+        schema = get_regdef_v2_schema()
+        jsonschema.validate(instance=data, schema=schema)
+        return RegistryV2.model_validate(data)
+    return Registry.model_validate(data)
+
 
 # artifact definition
 class Application(BaseSchema):
     name: str
     artifact_id: str
     group_id: str
-    registry: Registry
+    registry: Registry | RegistryV2
     solution_descriptor: bool = False
+
+    @field_validator('registry', mode='before')
+    @classmethod
+    def parse_registry_field(cls, v):
+        if isinstance(v, dict):
+            return parse_registry(v)
+        return v
 
 
 class FileExtension(str, Enum):

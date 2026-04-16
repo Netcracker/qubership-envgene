@@ -2,11 +2,18 @@ import os
 
 import pytest
 from aiohttp import web
+from unittest.mock import patch, Mock
 
 os.environ["DEFAULT_REQUEST_TIMEOUT"] = "0.2"  # for test cases to run quicker
 from artifact_searcher.utils import models
 from artifact_searcher.artifact import check_artifact_async
+from artifact_searcher.artifact import check_artifact
+from artifact_searcher.utils.models import FileExtension
 
+TEST_REPO = "https://repo.example.com/repository/"
+GROUP_ID = "com.example"
+ARTIFACT_ID = "demo"
+VERSION = "1.0.0"
 
 class MockResponse:
     def __init__(self, status_code):
@@ -71,9 +78,18 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
         target_snapshot="repo",
         target_staging="repo",
         target_release="repo",
-        repository_domain_name=base_url,
+        repository_domain_name=base_url
     )
-    dcr_cfg = models.DockerConfig()
+    dcr_cfg = models.DockerConfig(
+        snapshot_uri="https://docker.example.com/snapshot",
+        staging_uri="https://docker.example.com/staging",
+        release_uri="https://docker.example.com/release",
+        group_uri="https://docker.example.com/group",
+        snapshot_repo_name="snapshot-repo",
+        staging_repo_name="staging-repo",
+        release_repo_name="release-repo",
+        group_name="test-group"
+    )
     reg = models.Registry(
         name="registry",
         maven_config=mvn_cfg,
@@ -93,3 +109,72 @@ async def test_resolve_snapshot_version(aiohttp_server, index_path, monkeypatch)
 
     sample_url = f"{base_url.rstrip('/repository/')}{index_path}repo/com/example/app/1.0.0-SNAPSHOT/app-1.0.0-20240702.123456-1.json"
     assert full_url == sample_url, f"expected: {sample_url}, received: {full_url}"
+
+@patch("artifact_searcher.artifact.requests.head")
+@patch("artifact_searcher.artifact.create_artifact_name")
+@patch("artifact_searcher.artifact.version_to_folder_name")
+@patch("artifact_searcher.artifact.MavenConfig.is_nexus")
+def test_artifact_found(mock_nexus, mock_folder, mock_name, mock_head):
+
+    mock_nexus.return_value = False
+    mock_folder.return_value = VERSION
+    mock_name.return_value = "demo-1.0.0.zip"
+
+    response = Mock()
+    response.status_code = 200
+    mock_head.return_value = response
+
+    result = check_artifact(
+        TEST_REPO,
+        GROUP_ID,
+        ARTIFACT_ID,
+        VERSION,
+        FileExtension.ZIP
+    )
+
+    assert result == (
+        "https://repo.example.com/repository/com/example/demo/1.0.0/demo-1.0.0.zip"
+    )
+
+
+@patch("artifact_searcher.artifact.requests.head")
+@patch("artifact_searcher.artifact.create_artifact_name")
+@patch("artifact_searcher.artifact.version_to_folder_name")
+@patch("artifact_searcher.artifact.MavenConfig.is_nexus")
+def test_artifact_not_found(mock_nexus, mock_folder, mock_name, mock_head):
+
+    mock_nexus.return_value = False
+    mock_folder.return_value = VERSION
+    mock_name.return_value = "demo-1.0.0.zip"
+
+    response = Mock()
+    response.status_code = 404
+    mock_head.return_value = response
+
+    result = check_artifact(
+        TEST_REPO,
+        GROUP_ID,
+        ARTIFACT_ID,
+        VERSION,
+        FileExtension.ZIP
+    )
+
+    assert result is None
+
+
+@patch("artifact_searcher.artifact.MavenConfig.is_nexus")
+@patch("artifact_searcher.artifact.convert_nexus_repo_url_to_index_view")
+def test_nexus_repo_conversion(mock_convert, mock_detect):
+
+    mock_detect.return_value = True
+    mock_convert.return_value = "https://nexus.example.com/service/rest/repository/browse/"
+
+    check_artifact(
+        TEST_REPO,
+        GROUP_ID,
+        ARTIFACT_ID,
+        VERSION,
+        FileExtension.ZIP
+    )
+
+    mock_convert.assert_called_once()

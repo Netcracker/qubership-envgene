@@ -13,7 +13,10 @@
     - [`GH_RUNNER_TAG_NAME`](#gh_runner_tag_name)
     - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
     - [`GH_RUNNER_SCRIPT_TIMEOUT`](#gh_runner_script_timeout)
+    - [`CALCULATOR_CLI_JAVA_OPTIONS`](#calculator_cli_java_options)
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
+    - [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider)
+    - [`GCP_SA_KEY`](#gcp_sa_key)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
     - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
@@ -141,6 +144,20 @@ This parameter is only available in the GitHub version of the pipeline. For more
 
 **Example**: `15`
 
+### `CALCULATOR_CLI_JAVA_OPTIONS`
+
+**Description**: Java options passed to the Calculator CLI to override default settings. Used to control heap size and ForkJoinPool thread count (number of applications processed in parallel during effective set generation).
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**:
+
+```text
+CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallelism=4 -Xmx2g -Xms2g"
+```
+
 ### `DOCKER_REGISTRY` (in instance repository)
 
 **Description**: Specifies the registry where the EnvGene Docker images are located
@@ -150,6 +167,32 @@ This parameter is only available in the GitHub version of the pipeline. For more
 **Mandatory**: No
 
 **Example**: `registry.example.com/docker`
+
+### `DOCKER_CLOUD_REGISTRY_PROVIDER`
+
+**Description**: Cloud provider for Docker registry authentication when pulling EnvGene Docker images. Currently, the only supported value is `GCP`. When set to `GCP`, the GitHub workflow authenticates to Google Artifact Registry (GAR) before pulling EnvGene images. Used together with [`DOCKER_REGISTRY`](#docker_registry-in-instance-repository) and [`GCP_SA_KEY`](#gcp_sa_key).
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Allowed Values**: `GCP` (only)
+
+**Example**: `GCP`
+
+**Note**: This parameter is used only in the GitHub EnvGene pipeline. For GitLab, use runner-level configuration. See [Docker Registry Configuration](/docs/how-to/docker-registry-configuration.md) for details.
+
+### `GCP_SA_KEY`
+
+**Description**: Full JSON content of the GCP service account key. Used for authenticating to Google Artifact Registry (GAR) when pulling EnvGene Docker images. Required only when [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider) is set to `GCP`.
+
+**Default Value**: None
+
+**Mandatory**: No (required only for GAR authentication)
+
+**Example**: `{"type":"service_account","project_id":"...",...}`
+
+**Note**: Store as a secret (GitHub Actions Secrets) or masked variable. Never commit to the repository. Use a service account with at least `Artifact Registry Reader` role. See [Docker Registry Configuration](/docs/how-to/docker-registry-configuration.md) for details.
 
 ## Template EnvGene Repository
 

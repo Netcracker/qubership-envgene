@@ -4,17 +4,18 @@ from envgenehelper import logger
 from pipeline_helper import job_instance
 
 
-def prepare_appregdef_render_job(pipeline, is_template_test, env_template_version, full_env, environment_name, 
-                                 cluster_name, group_id, artifact_id, artifact_url, tags):
+def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, cluster_name, group_id, artifact_id,
+                                 artifact_url, tags):
     logger.info(f'Prepare appregdef render job for {full_env}')
-    script = [
-       '/module/scripts/handle_certs.sh',
-    ]
+    env_template_version = params.get('ENV_TEMPLATE_VERSION')
+    is_template_test = params.get('IS_TEMPLATE_TEST')
+    env_tmp_ver_update_mode = params.get('ENV_TEMPLATE_VERSION_UPDATE_MODE')
     
+    script = []
     if env_template_version and not is_template_test:
         script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
-    
-    script.append('cd /build_env; python3 /build_env/scripts/build_env/appregdef_render.py')
+
+    script.append('python3 /build_env/scripts/build_env/appregdef_render.py')
 
     appregdef_render_params = {
         "name": f'app_reg_def_render.{full_env}',
@@ -35,15 +36,15 @@ def prepare_appregdef_render_job(pipeline, is_template_test, env_template_versio
         "ARTIFACT_ID": artifact_id,
         "ARTIFACT_URL": artifact_url,
         "GITLAB_RUNNER_TAG_NAME": tags,
+        "ENV_TEMPLATE_VERSION_UPDATE_MODE": env_tmp_ver_update_mode
     }
 
     appregdef_render_job = job_instance(params=appregdef_render_params, vars=appregdef_render_vars)
-    
+
     appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env)
-    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")
-    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/tmp")
+    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")    
     appregdef_render_job.artifacts.when = WhenStatement.ALWAYS
-    
+
     pipeline.add_children(appregdef_render_job)
-    
+
     return appregdef_render_job

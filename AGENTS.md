@@ -75,6 +75,63 @@ Content...
 - Remove special characters
 - Example: `### Step 1: Install Tools` → `#step-1-install-tools`
 
+#### Dashes
+
+**CRITICAL: Always use a regular hyphen-minus (`-`) as a dash in prose. Never use em dashes (`—`) or en dashes (`–`).**
+
+❌ **INCORRECT:**
+
+```markdown
+EnvGene searches these locations — from bottom to top — and uses the first match.
+```
+
+✅ **CORRECT:**
+
+```markdown
+EnvGene searches these locations - from bottom to top - and uses the first match.
+```
+
+**Why:** Em dashes are a typographic convention that varies by locale and style guide. A plain hyphen-minus is universally readable, renders consistently across all Markdown renderers, and avoids accidental character encoding issues.
+
+---
+
+#### Callouts (Notes, Warnings, Tips)
+
+**CRITICAL: Always use GitHub-flavored Markdown native callout syntax, not bold-text workarounds.**
+
+Available types: `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, `CAUTION`.
+
+❌ **INCORRECT:**
+
+```markdown
+> **Note:** EnvGene also supports dot-notation keys.
+
+> **Warning:** This will overwrite existing values.
+```
+
+✅ **CORRECT:**
+
+```markdown
+> [!NOTE]
+> EnvGene also supports dot-notation keys.
+
+> [!WARNING]
+> This will overwrite existing values.
+
+> [!TIP]
+> Use cluster-wide scope to avoid repetition across environments.
+
+> [!IMPORTANT]
+> The `name` field must exactly match the filename without the extension.
+
+> [!CAUTION]
+> Setting `mergeEnvSpecificResourceProfiles: false` replaces the template override entirely.
+```
+
+**Why:** Native callouts render with icons and colour highlighting on GitHub and other renderers; bold-text variants are plain blockquotes.
+
+---
+
 #### Tables
 
 **CRITICAL: All Markdown tables MUST have vertically aligned pipe characters (`|`).**
@@ -108,10 +165,10 @@ Content...
 
 **How to achieve alignment:**
 
-1. **Keep cell content concise** — Long text makes alignment difficult
-2. **Simplify when possible** — Remove examples from cells if they make text too long
-3. **Uniform width per column** — Each cell in a column should have the same width (add trailing spaces)
-4. **Don't add spaces endlessly** — If alignment fails repeatedly, the problem is content length, not spacing
+1. **Keep cell content concise** - Long text makes alignment difficult
+2. **Simplify when possible** - Remove examples from cells if they make text too long
+3. **Uniform width per column** - Each cell in a column should have the same width (add trailing spaces)
+4. **Don't add spaces endlessly** - If alignment fails repeatedly, the problem is content length, not spacing
 
 ##### Common Mistake
 
@@ -151,9 +208,71 @@ Content...
 
 ---
 
+## Object Examples in Documentation
+
+### Source of Truth for Object Schemas
+
+**CRITICAL: Never invent object structures. Always derive examples from authoritative sources.**
+
+The two authoritative sources are:
+
+- **`docs/envgene-objects.md`** - human-readable descriptions, field explanations, and canonical examples for all EnvGene objects
+- **`schemas/`** - JSON Schema files that define required fields, allowed values, and types
+
+#### Rules
+
+1. **Before writing any YAML/JSON example** for an EnvGene object, read the corresponding entry in `docs/envgene-objects.md` AND the matching schema file under `schemas/`.
+2. **Validate every example against the schema**: all fields marked `"required"` in the schema must be present; no fields may be included that do not exist in the schema (unless `additionalProperties: true`).
+3. **Do not guess**: if an object is not described in `docs/envgene-objects.md` and has no schema file, write explicitly:
+
+   > No schema or description found for this object in `docs/envgene-objects.md` or `schemas/`. Cannot provide a validated example.
+
+4. **Do not add fictional fields** such as `type:` or `applications:` to objects that have no such fields in their schema.
+5. **Use real field names**: cross-check field names and allowed enum values against the schema. Do not invent field names based on intuition.
+
+#### How much of the object to show
+
+In tutorials and how-to guides, show only the **relevant part** of the object, not the full structure. Use `# ...` comments to signal omitted fields so the reader knows the snippet is intentionally incomplete.
+
+- **Reference docs** → show the full object.
+- **Tutorials / how-to guides** → show only the fields being explained; collapse the rest with `# ...`.
+
+This keeps examples focused on the concept being taught and avoids becoming outdated when unrelated fields change.
+
+#### ❌ INCORRECT - invented fields and unnecessary noise
+
+```yaml
+# Namespace template - WRONG: invented fields, full object shown in tutorial context
+name: "{{ current_env.name }}-bss"
+type: namespace          # does not exist in namespace.schema.json
+applications:            # does not exist in namespace.schema.json
+  - name: "Cloud-BSS"
+credentialsId: ""
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameterSets:
+  - "bss"
+```
+
+#### ✅ CORRECT - focused snippet, validated field names, omissions annotated
+
+```yaml
+# Namespace template - only the relevant section is shown
+---
+name: "{{ current_env.environmentName }}-bss"
+# ... other required fields (see schemas/namespace.schema.json) ...
+profile:
+  name: dev-bss-override
+  baseline: dev
+# ... deployParameterSets, e2eParameters, etc. ...
+```
+
+---
+
 ## Documentation Structure (Diátaxis Framework)
 
-This repository follows the [Diátaxis documentation framework](https://diataxis.fr/).
+This repository follows the [Diátaxis documentation framework](https://github.com/evildmp/diataxis-documentation-framework).
 
 ### Documentation Types
 

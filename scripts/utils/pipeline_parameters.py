@@ -1,7 +1,10 @@
 import json
+import uuid
 from os import getenv
+
 from envgenehelper import logger
 from envgenehelper.plugin_engine import PluginEngine
+from envgenehelper.models import TemplateVersionUpdateMode
 
 
 def get_pipeline_parameters() -> dict:
@@ -26,24 +29,43 @@ def get_pipeline_parameters() -> dict:
         'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
         'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", ""),
         'NS_BUILD_FILTER': getenv("NS_BUILD_FILTER", ""),
-        'GITLAB_RUNNER_TAG_NAME' : getenv("GITLAB_RUNNER_TAG_NAME", ""),
-        'RUNNER_SCRIPT_TIMEOUT' : getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
-        'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", ""),
+        'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
+        'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT") or "10m",
+        'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", "") or str(uuid.uuid4()),
         'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL"),
+        'CALCULATOR_CLI_JAVA_OPTIONS' : getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
         "BG_STATE": getenv("BG_STATE"),
         "BG_MANAGE": getenv("BG_MANAGE") == "true",
         "APP_DEFS_PATH": getenv("APP_DEFS_PATH"),
         "REG_DEFS_PATH": getenv("REG_DEFS_PATH"),
+        "APP_REG_DEFS_JOB": getenv("APP_REG_DEFS_JOB"),
+        "EFFECTIVE_SET_CONFIG" : getenv("EFFECTIVE_SET_CONFIG"),
         "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
+        "CUSTOM_PARAMS" : getenv("CUSTOM_PARAMS"),
+        "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
+            "ENV_TEMPLATE_VERSION_UPDATE_MODE") or TemplateVersionUpdateMode.PERSISTENT.value,
     }
+
 
 class PipelineParametersHandler:
     def __init__(self, **kwargs):
-        plugins_dir='/module/scripts/pipegene_plugins/pipe_parameters'
+        plugins_dir = '/module/scripts/pipegene_plugins/pipe_parameters'
         self.params = get_pipeline_parameters()
         pipe_param_plugin = PluginEngine(plugins_dir=plugins_dir)
+
         if pipe_param_plugin.modules:
-           pipe_param_plugin.run(pipeline_params=self.params)
+            pipe_param_plugin.run(pipeline_params=self.params)
+
+    def hide_secrets(self, data):
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k.lower() in {"username", "password", "secret"}:
+                    data[k] = "***"
+                else:
+                    self.hide_secrets(v)
+        elif isinstance(data, list):
+            for item in data:
+                self.hide_secrets(item)
 
     def log_pipeline_params(self):
         params_str = "Input parameters are: "
@@ -53,12 +75,17 @@ class PipelineParametersHandler:
             params["CRED_ROTATION_PAYLOAD"] = "***"
 
         for k, v in params.items():
-                try:
-                    parsed = json.loads(v)
-                    params[k] = json.dumps(parsed, separators=(",", ":"))
-                except (TypeError, ValueError):
-                    pass
+            try:
+                parsed = json.loads(v)
 
-                params_str += f"\n{k.upper()}: {params[k]}"
+                if k == "ENV_INVENTORY_CONTENT":
+                    self.hide_secrets(parsed)
+
+                params[k] = json.dumps(parsed, separators=(",", ":"))
+
+            except (TypeError, ValueError):
+                pass
+
+            params_str += f"\n{k.upper()}: {params[k]}"
 
         logger.info(params_str)

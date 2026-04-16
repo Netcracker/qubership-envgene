@@ -43,35 +43,24 @@ public class ParametersCalculationServiceV1 {
     }
 
     public ParameterBundle getCliParameter(String tenantName, String cloudName, String namespaceName, String applicationName,
-                                           DeployerInputs deployerInputs, String originalNamespace, Map<String, String> k8TokenMap) {
-        return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace, k8TokenMap);
-    }
-
-    public ParameterBundle getCliE2EParameter(String tenantName, String cloudName) {
-        return getE2EParameterBundle(tenantName, cloudName);
+                                           DeployerInputs deployerInputs, String originalNamespace) {
+        return getParameterBundle(tenantName, cloudName, namespaceName, applicationName, deployerInputs, originalNamespace);
     }
 
     private ParameterBundle getParameterBundle(String tenantName, String cloudName, String namespaceName, String applicationName, DeployerInputs deployerInputs
-            , String originalNamespace, Map<String, String> k8TokenMap) {
+            , String originalNamespace) {
         Params parameters = parametersProcessor.processAllParameters(tenantName,
                 cloudName,
                 namespaceName,
                 applicationName,
-                "false",
                 deployerInputs,
-                originalNamespace);
+                originalNamespace,
+                new HashMap<>());
 
 
         ParameterBundle parameterBundle = ParameterBundle.builder().build();
         prepareSecureInsecureParams(parameters.getDeployParams(), parameterBundle, ParameterType.DEPLOY);
         prepareSecureInsecureParams(parameters.getTechParams(), parameterBundle, ParameterType.TECHNICAL);
-        return parameterBundle;
-    }
-
-    private ParameterBundle getE2EParameterBundle(String tenantName, String cloudName) {
-        Params parameters = parametersProcessor.processE2EParameters(tenantName, cloudName, null, null, "false", null, null);
-        ParameterBundle parameterBundle = ParameterBundle.builder().build();
-        prepareSecureInsecureParams(parameters.getE2eParams(), parameterBundle, ParameterType.E2E);
         return parameterBundle;
     }
 

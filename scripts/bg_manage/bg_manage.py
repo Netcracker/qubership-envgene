@@ -4,7 +4,7 @@ import json
 from enum import auto, Enum
 from pathlib import Path
 
-from envgenehelper.business_helper import get_current_env_dir_from_env_vars, getenv_with_error, get_namespaces, get_bgd_object
+from envgenehelper.business_helper import get_current_env_dir_from_env_vars, getenv_with_error, get_namespaces, get_bgd_object, NamespaceRole
 from envgenehelper.file_helper import deleteFileIfExists
 from envgenehelper.yaml_helper import openYaml
 from envgenehelper import logger, writeYamlToFile
@@ -106,10 +106,10 @@ def get_current_state() -> Pair:
             continue
         multiple_state_files_err_msg = f"Multiple state files found in {ENV_PATH}"
 
-        if role == "origin":
+        if role == NamespaceRole.ORIGIN:
             if origin_state != S.NONE: raise ValueError(multiple_state_files_err_msg + " for 'origin'")
             origin_state = state_enum
-        elif role == "peer":
+        elif role == NamespaceRole.PEER:
             if peer_state != S.NONE: raise ValueError(multiple_state_files_err_msg + " for 'peer'")
             peer_state = state_enum
 
