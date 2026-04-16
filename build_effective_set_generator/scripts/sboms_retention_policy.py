@@ -1,4 +1,4 @@
-from envgenehelper import getenv_with_error, get_envgene_config_yaml, logger, cleanup_dir_by_size, deleteFileIfExists, \
+from envgenehelper import getenv_with_error, get_envgene_config_yaml, logger, deleteFileIfExists, \
     cleanup_dir_by_age, get_sboms_dir, is_over_size_limit
 from envgenehelper.constants import CI_JOB_ARTIFACT_MAX_SIZE_MB
 from envgenehelper.models import SbomRetentionConfig
