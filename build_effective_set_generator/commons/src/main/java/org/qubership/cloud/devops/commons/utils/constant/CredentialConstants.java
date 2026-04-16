@@ -17,11 +17,12 @@
 package org.qubership.cloud.devops.commons.utils.constant;
 
 public class CredentialConstants {
+    public static final String DEFAULT_EMPTY_STRING = "";
     public static final String CALCULABLE_CREDS_FIELD = "#creds";
     public static final String CALCULABLE_CLOUD_CREDS_FIELD = "#credscl";
     public static final String CALCULABLE_NS_CREDS_FIELD = "#credsns";
-    public static final String DEFAULT_DBAAS_AGGREGATOR_LOGIN = "";
-    public static final String DEFAULT_DBAAS_AGGREGATOR_PASSWORD = "";
-    public static final String DEFAULT_MAAS_LOGIN = "";
-    public static final String DEFAULT_MAAS_PASSWORD = "";
+    public static final String DEFAULT_DBAAS_AGGREGATOR_LOGIN = DEFAULT_EMPTY_STRING;
+    public static final String DEFAULT_DBAAS_AGGREGATOR_PASSWORD = DEFAULT_EMPTY_STRING;
+    public static final String DEFAULT_MAAS_LOGIN = DEFAULT_EMPTY_STRING;
+    public static final String DEFAULT_MAAS_PASSWORD = DEFAULT_EMPTY_STRING;
 }
