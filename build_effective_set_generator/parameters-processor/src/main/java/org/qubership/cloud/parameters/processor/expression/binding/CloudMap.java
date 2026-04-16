@@ -35,6 +35,8 @@ import java.util.Map;
 
 import static org.qubership.cloud.devops.commons.utils.constant.CredentialConstants.*;
 import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.CLOUD_ORIGIN;
+import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.ENVGENE_CALCULATED;
+import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.ENVGENE_DEFAULT;
 
 public class CloudMap extends DynamicMap {
 
@@ -73,7 +75,7 @@ public class CloudMap extends DynamicMap {
         }
         String cloudOrigin = String.format(CLOUD_ORIGIN, tenant, cloudName);
         mergeE2E = config.isMergeCloudAndE2EParameters();
-        EscapeMap map = new EscapeMap(config.getCloudParams(), binding, String.format(CLOUD_ORIGIN, tenant, cloudName));
+        EscapeMap map = new EscapeMap(config.getCloudParams(), binding, cloudOrigin);
         EscapeMap e2e = new EscapeMap(config.getE2eParams(), binding, String.format(ParametersConstants.CLOUD_E2E_ORIGIN, tenant, cloudName));
         EscapeMap configServer = new EscapeMap(config.getConfigServerParams(), binding, String.format(ParametersConstants.CLOUD_CONFIG_SERVER_ORIGIN, tenant, cloudName));
 
@@ -114,12 +116,12 @@ public class CloudMap extends DynamicMap {
                     }
                 }
             }
-            map.putIfAbsent("DBAAS_ENABLED", new Parameter(dbaas.isEnable()));
+            map.putIfAbsent("DBAAS_ENABLED", new Parameter(dbaas.isEnable(), cloudOrigin, false));
         }
 
         MaaS maas = config.getMaas();
         if (maas != null) {
-            map.putIfAbsent("MAAS_ENABLED", new Parameter(maas.isEnable()));
+            map.putIfAbsent("MAAS_ENABLED", new Parameter(maas.isEnable(), cloudOrigin, false));
             if (maas.isEnable()) {
                 //Deprecated. For backward compatibility. New name MAAS_EXTERNAL_ROUTE
                 map.put("MAAS_SERVICE_ADDRESS", maas.getMaasUrl());
@@ -142,7 +144,7 @@ public class CloudMap extends DynamicMap {
                 }
             }
         } else {
-            map.putIfAbsent("MAAS_ENABLED", new Parameter(false));
+            map.putIfAbsent("MAAS_ENABLED", new Parameter(false, cloudOrigin, false));
         }
 
         Vault vaultConfig = config.getVault();
@@ -195,7 +197,7 @@ public class CloudMap extends DynamicMap {
             }
         }
 
-        map.put("PRODUCTION_MODE", new Parameter(config.isProductionMode()));
+        map.put("PRODUCTION_MODE", new Parameter(config.isProductionMode(), cloudOrigin, false));
         map.put("namespace", new Parameter(new NamespaceMap(tenant, cloudName, defaultNamespace, defaultApp, binding, originalNamespace).init()));
         map.put("CLOUDNAME", cloudName);
         map.put("e2e", new Parameter(e2e));
@@ -210,11 +212,12 @@ public class CloudMap extends DynamicMap {
         // Deprecated deployer parameters
         map.putIfAbsent("CUSTOM_HOST", customHost);
         map.putIfAbsent("SERVER_HOSTNAME", cloudHostname);
-        map.putIfAbsent("OPENSHIFT_SERVER", api);
+        map.putIfAbsent("OPENSHIFT_SERVER", api,ENVGENE_CALCULATED);
 
         // Deployer parameters
         String protocol = StringUtils.isNotBlank(config.getClProtocol()) ? config.getClProtocol() : "https";
-        map.putIfAbsent("CLOUD_PROTOCOL", protocol.toLowerCase());
+        String protocolOrigin = "https".equalsIgnoreCase(protocol) ? ENVGENE_CALCULATED : cloudOrigin;
+        map.putIfAbsent("CLOUD_PROTOCOL", protocol.toLowerCase(),protocolOrigin);
         map.putIfAbsent("CLOUD_API_HOST", config.getCloudApiUrl());
         if (StringUtils.isBlank(config.getCloudUrlPrv())) {
             map.putIfAbsent("CLOUD_PRIVATE_HOST", config.getCloudUrlPub());
@@ -224,7 +227,8 @@ public class CloudMap extends DynamicMap {
         map.putIfAbsent("CLOUD_PUBLIC_HOST", config.getCloudUrlPub());
 
         String port = StringUtils.isNotBlank(config.getCloudApiPort()) ? config.getCloudApiPort() : "8443";
-        map.putIfAbsent("CLOUD_API_PORT ", port);
+        String portOrigin = "8443".equalsIgnoreCase(port) ? ENVGENE_CALCULATED : cloudOrigin;
+        map.putIfAbsent("CLOUD_API_PORT ", port, portOrigin);
 
         maps.put(cloudName, map);
 

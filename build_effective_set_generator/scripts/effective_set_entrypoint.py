@@ -158,6 +158,11 @@ def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
     custom_params = getenv("CUSTOM_PARAMS")
     if custom_params:
         cmd.append(f"--custom-params={shlex.quote(custom_params)}")
+
+    es_trace_enabled = getenv("ES_TRACE_ENABLED")
+    if es_trace_enabled and es_trace_enabled.lower() == "true":
+        cmd.append("--enable-traceability=true")
+
     return " ".join(cmd)
 
 

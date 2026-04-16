@@ -37,6 +37,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         'python3 /module/scripts/crypt_manager.py encrypt_cred_files',
     ]
 
+
     generate_effective_set_params = {
         "name": f'generate_effective_set.{full_env_name}',
         "image": '${effective_set_generator_image}',
