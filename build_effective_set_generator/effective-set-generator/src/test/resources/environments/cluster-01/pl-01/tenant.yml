@@ -16,3 +16,15 @@ globalE2EParameters:
   environmentParameters: {}
 deployParameters:
   ESCAPE_SEQUENCE: "true"
+  api_config: ${database_config}
+  database_config:
+    connection:
+      host: db.example.com
+      port: 5432
+  yaml_template: |
+    services:
+      api:
+        image: api:latest
+        ports:
+          - 8080:8080
+  rendered_template: ${yaml_template}
