@@ -176,6 +176,7 @@ def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
     for p in shared_cred_paths:
         found_path = find_yaml_file(p, cred_name, recursively=True)
         if found_path:
+            logger.info(f"Shared credentials with key '{cred_name}' found in '{found_path}'")
             return found_path
 
     raise FileNotFoundError(f"Shared credentials with key '{cred_name}' not found.")
