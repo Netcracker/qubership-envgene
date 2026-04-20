@@ -20,7 +20,13 @@
           "name": "Cloud-Core",
           "group": "org.qubership.cloud.core.deployment-descriptor.platform",
           "version": "release-2023.3-8.4.0-20230908.094348-15-RELEASE",
-          "purl": "pkg:maven/org.qubership.cloud.core.deployment-descriptor.platform/Cloud-Core@release-2023.3-8.4.0-20230908.094348-15-RELEASE?registry_id=sandbox?repository_id=targetSnapshot"
+          "purl": "pkg:maven/org.qubership.cloud.core.deployment-descriptor.platform/Cloud-Core@release-2023.3-8.4.0-20230908.094348-15-RELEASE?registry_id=sandbox?repository_id=targetSnapshot",
+          "properties": [
+            {
+              "name": "eso_support",
+              "value": "false"
+            }
+          ]
         }
       ]
     },

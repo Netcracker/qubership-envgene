@@ -445,7 +445,7 @@ Effective Set version 2.0 handles sensitive parameters along two paths:
 
 - **External:** Value is set through a [credRef Credential Reference](/docs/features/external-creds.md#credential-reference) which points to a [Credential](/docs/envgene-objects.md#credential) with `type: external`. Such values are not written as plaintext in the deployment context. The Calculator emits VALS- or ESO-shaped values **and**, when applicable, contributes to the aggregated output under [External Credential Context](#version-20-external-credential-context).
 
-For a given application, into Deployment Descriptor is set `SECRET_MACRO_HANDLER` to `vals` or `eso` for how external references are emitted. That setting applies only to the external path above, not to local credential macro splitting.
+For a given application, the shape of external references (VALS vs ESO) is determined by the effective [`SECRET_FLOW`](/docs/features/external-creds.md#secret_flow-attribute) attribute combined with the application's [`eso_support`](/docs/features/external-creds.md#eso_support-attribute) capability marker from the Application SBOM. See [Deciding between VALS and ESO references](/docs/features/external-creds.md#deciding-between-vals-and-eso-references). That setting applies only to the external path above, not to local credential macro splitting.
 
 ##### [Version 2.0] Local Sensitive parameters
 
@@ -467,7 +467,7 @@ Sensitive parameters specified via a `credRef` Credential Reference and external
 
 **Parameter with VALS reference:**
 
-A **parameter with VALS reference** is the deployment-side representation of a sensitive parameter after Effective Set calculation when `SECRET_MACRO_HANDLER` is `vals`. Parameters that were defined with a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`) and resolve to an external [Credential](/docs/envgene-objects.md#credential) are emitted as plain YAML string values - `ref+...` URIs.
+A **parameter with VALS reference** is the deployment-side representation of a sensitive parameter after Effective Set calculation when the effective [`SECRET_FLOW`](/docs/features/external-creds.md#secret_flow-attribute) for the application is `helm-values`. Parameters that were defined with a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`) and resolve to an external [Credential](/docs/envgene-objects.md#credential) are emitted as plain YAML string values - `ref+...` URIs.
 
 Those references are resolved at deploy time to secret material by the Effective Set consumer. VALS Argo resolves them to plain text values.
 
@@ -491,7 +491,7 @@ CONSUL_ADMIN_TOKEN: ref+gcpsecrets://468649328578/ocp-05--postgres-password
 
 **Parameter with ESO reference:**
 
-A **parameter with ESO reference** is the deployment-side representation of a sensitive parameter after Effective Set calculation when `SECRET_MACRO_HANDLER` is `eso`. Parameters that were defined with a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`) and resolve to an external [Credential](/docs/envgene-objects.md#credential).
+A **parameter with ESO reference** is the deployment-side representation of a sensitive parameter after Effective Set calculation when the effective [`SECRET_FLOW`](/docs/features/external-creds.md#secret_flow-attribute) for the application is `external-values` and the application's [`eso_support`](/docs/features/external-creds.md#eso_support-attribute) is `true`. Parameters that were defined with a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`) and resolve to an external [Credential](/docs/envgene-objects.md#credential).
 
 Those references are resolved at deploy time to secret material by the Effective Set consumer. The Helm chart consumes them (one object per parameter path) to render `ExternalSecret` CRs.
 
