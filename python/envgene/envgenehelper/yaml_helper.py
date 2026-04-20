@@ -305,12 +305,12 @@ def find_yaml_file(dir_path: Path, search_name: str, recursively: bool = False) 
         for root, _, files in os.walk(dir_path):
             for f in files:
                 if f.endswith((".yml", ".yaml")):
-                    if Path(f).stem == search_name:
+                    if Path(f).stem.lower() == search_name:
                         return Path(root) / f
     else:
         for entry in os.scandir(dir_path):
             if entry.is_file() and entry.name.endswith((".yml", ".yaml")):
-                if Path(entry.name).stem == search_name:
+                if Path(entry.name).stem.lower() == search_name:
                     return Path(entry.path)
 
     return None
