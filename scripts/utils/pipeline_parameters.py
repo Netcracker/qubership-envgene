@@ -24,7 +24,7 @@ def get_pipeline_parameters() -> dict:
         "SD_DATA": getenv("SD_DATA"),
         "SD_DELTA": getenv("SD_DELTA"),
         "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE"),
-        "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT", "false").lower()  == "true",
+        "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT", "false").lower() == "true",
         "ENV_SPECIFIC_PARAMS": getenv("ENV_SPECIFIC_PARAMS"),
         "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
         'CRED_ROTATION_PAYLOAD': getenv("CRED_ROTATION_PAYLOAD", ""),
@@ -46,12 +46,19 @@ def get_pipeline_parameters() -> dict:
         "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
             "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
     }
+    
+def get_sensitive_param_names() -> list:
+    return [
+        "CRED_ROTATION_PAYLOAD",
+        "ENV_INVENTORY_CONTENT",
+    ]
 
 
 class PipelineParametersHandler:
     def __init__(self, **kwargs):
         plugins_dir = '/module/scripts/pipegene_plugins/pipe_parameters'
         self.params = get_pipeline_parameters()
+        self.sensitive_params = get_sensitive_param_names()
         pipe_param_plugin = PluginEngine(plugins_dir=plugins_dir)
 
         if pipe_param_plugin.modules:

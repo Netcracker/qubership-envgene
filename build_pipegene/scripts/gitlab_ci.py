@@ -25,7 +25,7 @@ IS_GITHUB = bool(os.getenv('GITHUB_WORKSPACE')) or bool(os.getenv('GITHUB_ACTION
 logger.info(f"Detected environment - GitLab: {IS_GITLAB}, GitHub: {IS_GITHUB}")
 
 
-def build_pipeline(params: dict) -> None:
+def build_pipeline(params: dict, sensitive_params: list) -> None:
     artifact_url = None
     if params['IS_TEMPLATE_TEST']:
         logger.info("Generating jobs in template test mode.")
@@ -188,7 +188,7 @@ def build_pipeline(params: dict) -> None:
         logger.info(f'----------------end processing for {full_env_name}---------------------')
     
     for key, value in params.items():
-        if value is not None and value != '':
+        if key not in sensitive_params and value is not None and value != '':
             sorted_pipeline.add_variables(**{key: value})
     sorted_pipeline.add_tags(params["GITLAB_RUNNER_TAG_NAME"])
 
