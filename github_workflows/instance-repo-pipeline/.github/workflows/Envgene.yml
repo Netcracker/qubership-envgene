@@ -56,6 +56,10 @@ on:
         default: ""
 
 env:
+  #CONFIGURATION
+  GITHUB_USER_EMAIL: envgene@qubership.org
+  GITHUB_USER_NAME: envgene
+  SECRET_POSTFIX: custom_secret
   CI_COMMIT_REF_NAME: ${{ github.ref_name }}
   CI_PROJECT_DIR: /workspace
   INSTANCES_DIR: /workspace/environments
@@ -71,9 +75,9 @@ env:
   DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator"
 
   #DOCKER_IMAGE_TAGS
-  DOCKER_IMAGE_TAG_PIPEGENE: "1.31.20"
-  DOCKER_IMAGE_TAG_ENVGENE: "1.31.20"
-  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.31.20"
+  DOCKER_IMAGE_TAG_PIPEGENE: "1.32.1"
+  DOCKER_IMAGE_TAG_ENVGENE: "1.32.1"
+  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.32.1"
 
 jobs:
   process_environment_variables:
@@ -104,7 +108,6 @@ jobs:
         uses: ./.github/actions/load-env-files
         with:
           paths: |
-            .github/configuration/config.env
             .github/pipeline_vars.env
 
       - name: Process Input Parameters
@@ -193,9 +196,11 @@ jobs:
 
       - name: Authenticate to GAR (Google Artifact Registry)
         if: needs.process_environment_variables.outputs.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP'
-        run: |
-          REGISTRY_HOST=$(echo "${{ vars.DOCKER_REGISTRY }}" | cut -d'/' -f1)
-          echo '${{ secrets.GCP_SA_KEY }}' | docker login -u _json_key --password-stdin "$REGISTRY_HOST"
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ vars.DOCKER_REGISTRY }}
+          username: _json_key
+          password: ${{ secrets.GCP_SA_KEY }}
       ### ENV VARS PROCESSING - END ###
 
 

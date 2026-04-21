@@ -14,6 +14,7 @@ from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
+APPDEF_SCHEMA = str(SCHEMAS_DIR / "appdef.schema.json")
 TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
 
 yml = create_yaml_processor()
@@ -556,7 +557,7 @@ class EnvGenerator:
                 logger.warning(f"No AppDef YAMLs found in {appdef_dir}")
             for file in appdef_files:
                 logger.info(f"AppDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "appdef.schema.json"))
+                validate_yaml_by_scheme_or_fail(file, APPDEF_SCHEMA)
 
         if os.path.exists(regdef_dir):
             regdef_files = findAllYamlsInDir(regdef_dir)
@@ -564,7 +565,7 @@ class EnvGenerator:
                 logger.warning(f"No RegDef YAMLs found in {regdef_dir}")
             for file in regdef_files:
                 logger.info(f"RegDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "regdef.schema.json"))
+                validate_regdef_or_fail(file)
 
     def process_app_reg_defs(self, env_name: str, extra_env: dict):
         logger.info(

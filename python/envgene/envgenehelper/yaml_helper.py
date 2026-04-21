@@ -294,6 +294,15 @@ def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=Fals
         alignYamlFileComments(file_path)
 
 
+def find_yaml_file(dir_path: Path, search_name: str) -> Path | None:
+    for ext in (".yml", ".yaml"):
+        f = dir_path / f"{search_name}{ext}"
+        if f.is_file():
+            logger.info(f"Found {search_name} in: {f}")
+            return f
+    return None
+
+
 def findYamls(dir, pattern, notPattern="", additionalRegexpPattern="", additionalRegexpNotPattern=""):
     fileList = findAllYamlsInDir(dir)
     return findFiles(fileList, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)

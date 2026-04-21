@@ -52,7 +52,6 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, cr
             "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
             'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
             'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done',
-            'cp -rf $CI_PROJECT_DIR/environments $CI_PROJECT_DIR/git_envs',
         ],
     }
 
@@ -63,7 +62,6 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, cr
         "COMMIT_ENV": "true",
     }
     git_commit_job = job_instance(params=git_commit_params, vars=git_commit_vars)
-    git_commit_job.artifacts.add_paths("${CI_PROJECT_DIR}/git_envs")
     git_commit_job.artifacts.when = WhenStatement.ALWAYS
     if (credential_rotation_job is not None):
         git_commit_job.add_needs(credential_rotation_job)

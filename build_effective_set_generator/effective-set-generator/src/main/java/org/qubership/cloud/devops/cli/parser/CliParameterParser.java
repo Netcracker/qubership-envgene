@@ -106,12 +106,13 @@ public class CliParameterParser {
         Map<String, String> errorList = new ConcurrentHashMap<>();
         Map<String, String> k8TokenMap = new ConcurrentHashMap<>();
         namespaceDTOMap.keySet().parallelStream().forEach(namespaceName -> {
+            String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
             String credentialsId = findDefaultCredentialsId(namespaceName);
             if (StringUtils.isNotEmpty(credentialsId)) {
                 CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
                 if (credentialDTO != null) {
                     SecretCredentialsDTO secCred = (SecretCredentialsDTO) credentialDTO.getData();
-                    k8TokenMap.put(namespaceName, secCred.getSecret());
+                    k8TokenMap.put(originalNamespace, secCred.getSecret());
                 }
             }
         });
@@ -273,15 +274,7 @@ public class CliParameterParser {
                                String appVersion, String appFileRef, Map<String, String> k8TokenMap) throws IOException {
         DeployerInputs deployerInputs = DeployerInputs.builder().appVersion(appVersion).appFileRef(appFileRef).build();
         String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
-        String credentialsId = findDefaultCredentialsId(namespaceName);
-        if (StringUtils.isNotEmpty(credentialsId)) {
-            CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
-            if (credentialDTO != null) {
-                SecretCredentialsDTO secCred = (SecretCredentialsDTO) credentialDTO.getData();
-                k8TokenMap.put(originalNamespace, secCred.getSecret());
-            }
-        }
-        ParameterBundle parameterBundle = null;
+        ParameterBundle parameterBundle;
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             CustomParameterDTO customParams = getCustomParameters();
             parameterBundle = parametersServiceV2.getCliParameter(tenantName,
@@ -300,8 +293,7 @@ public class CliParameterParser {
                     namespaceName,
                     appName,
                     deployerInputs,
-                    originalNamespace,
-                    k8TokenMap);
+                    originalNamespace);
 
         }
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
