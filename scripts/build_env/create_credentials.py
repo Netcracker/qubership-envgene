@@ -160,18 +160,15 @@ def mergeAndSaveYaml(yamlPath, newCreds) :
 
 
 def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
-    env_level = Path(env_dir) / "Inventory"
-    cluster_level = Path(env_dir).parent
-    site_level = Path(instances_dir)
-
-    shared_cred_paths = [
-        env_level / "credentials",
-        env_level / "Credentials",
-        cluster_level / "credentials",
-        cluster_level / "Credentials",
-        site_level / "credentials",
-        site_level / "Credentials",
+    levels = [
+        Path(env_dir) / "Inventory",
+        Path(env_dir).parent,
+        Path(instances_dir),
     ]
+    
+    cred_dir_names = ["credentials", "Credentials", "shared-credentials"]
+
+    shared_cred_paths = [level / name for level in levels for name in cred_dir_names]
 
     for p in shared_cred_paths:
         found_path = find_yaml_file(p, cred_name, recursively=True)
