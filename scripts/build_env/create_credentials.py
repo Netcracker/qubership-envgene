@@ -185,7 +185,7 @@ def mergeAndSaveYaml(yamlPath, newCreds) :
         if not cred["cred"]["credentialsId"] in credsYaml:
             count = count + 1
             credsYaml = writeCredToYaml(cred, credsYaml)
-    logger.info("%s credentials created" % credsYaml)
+    logger.info("%s credentials created" % count)
     writeYamlToFile(yamlPath, credsYaml)
 
 def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
