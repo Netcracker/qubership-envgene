@@ -260,7 +260,7 @@ if [ -d /tmp/updated_creds ]; then
 fi
 
 echo "Checking changes..."
-git add ./*
+git add . ":(exclude)environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/effective-set"
 git status
 diff_status=0
 
