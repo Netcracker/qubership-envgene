@@ -20,6 +20,7 @@ package org.qubership.cloud.devops.cli.repository.implementation;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
@@ -39,8 +40,9 @@ public class YamlFileWriter {
     private static final Set<String> EXCLUDED_FILES = Set.of("mapping.yaml");
     private static final String DEPLOY_DESCRIPTOR_FILE_NAME = "deploy-descriptor.yaml";
 
-    private static final String HEADER =
+    private static final String SBOM_HEADER =
             "#Source of parameters not marked inline: `#sbom`\n";
+    public static final String SBOM = "sbom";
 
     private final FileSystemUtils fileSystemUtils;
     private final SharedData sharedData;
@@ -70,7 +72,7 @@ public class YamlFileWriter {
             }
 
             if (isDeployDescriptor && enableTraceability) {
-                writer.write(HEADER);
+                writer.write(SBOM_HEADER);
             }
 
             writer.write(dump(params, enableTraceability, isDeployDescriptor));
@@ -163,7 +165,7 @@ public class YamlFileWriter {
         boolean addComment = shouldAddComment(enableTraceability, origin, deployDescriptorYaml);
 
         if (value == null) {
-            return scalarNode("null", Tag.NULL, origin, addComment, false);
+            return scalarNode("null", Tag.NULL, origin, addComment);
         }
 
         if (value instanceof String str) {
@@ -175,7 +177,7 @@ public class YamlFileWriter {
         }
 
         if (value instanceof Boolean bool) {
-            return scalarNode(bool.toString(), Tag.BOOL, origin, addComment, false);
+            return scalarNode(bool.toString(), Tag.BOOL, origin, addComment);
         }
 
         if (value instanceof List<?> list) {
@@ -188,7 +190,7 @@ public class YamlFileWriter {
                     enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
         }
 
-        return scalarNode(value.toString(), Tag.STR, origin, addComment, false);
+        return scalarNode(value.toString(), Tag.STR, origin, addComment);
     }
 
     private Node handleString(String str, String origin, boolean addComment) {
@@ -196,13 +198,9 @@ public class YamlFileWriter {
             return new ScalarNode(Tag.STR, "<<", ScalarStyle.PLAIN);
         }
         boolean multiline = str.contains("\n");
-        return attachComment(
-                new ScalarNode(Tag.STR, str,
-                        multiline ? ScalarStyle.LITERAL : ScalarStyle.PLAIN),
-                origin,
-                addComment,
-                multiline
-        );
+        ScalarStyle scalarStyle = multiline ? ScalarStyle.LITERAL : ScalarStyle.PLAIN;
+        CommentType commentType = multiline ? CommentType.BLOCK : CommentType.IN_LINE;
+        return attachComment(new ScalarNode(Tag.STR, str, scalarStyle), origin, addComment, commentType);
     }
 
     private Node handleNumber(Number num, String origin, boolean addComment) {
@@ -210,7 +208,7 @@ public class YamlFileWriter {
                 ? Tag.FLOAT
                 : Tag.INT;
 
-        return scalarNode(num.toString(), tag, origin, addComment, false);
+        return scalarNode(num.toString(), tag, origin, addComment);
     }
 
     private Node handleList(List<?> list, String origin, boolean addComment, boolean enableTraceability, boolean deployDescriptorYaml,
@@ -234,10 +232,10 @@ public class YamlFileWriter {
         return buildMappingNode(map, origin, addComment, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
     }
 
-    private Node scalarNode(String value, Tag tag, String origin, boolean addComment, boolean multiline) {
+    private Node scalarNode(String value, Tag tag, String origin, boolean addComment) {
 
         return attachComment(
-                new ScalarNode(tag, value, ScalarStyle.PLAIN), origin, addComment, multiline
+                new ScalarNode(tag, value, ScalarStyle.PLAIN), origin, addComment, CommentType.IN_LINE
         );
     }
 
@@ -263,7 +261,7 @@ public class YamlFileWriter {
             children.add(toNode(elem, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId));
         }
 
-        return attachComment(seqNode, origin, addComment, true);
+        return attachComment(seqNode, origin, addComment,  CommentType.BLOCK);
     }
 
     private Node buildMappingNode(Map<?, ?> map, String origin, boolean addComment, boolean enableTraceability,
@@ -294,12 +292,14 @@ public class YamlFileWriter {
             tuples.add(new NodeTuple(keyNode, valueNode));
         }
 
-        return attachComment(mapping, origin, addComment, true);
+        return attachComment(mapping, origin, addComment, CommentType.BLOCK);
     }
 
     private boolean shouldAnchor(Object obj, Map<Object, Integer> refCount) {
-        if (obj instanceof Collection<?> c && c.isEmpty()) return false;
-        if (obj instanceof Map<?, ?> m && m.isEmpty()) return false;
+        if ((obj instanceof Collection<?> c && c.isEmpty()) || (obj instanceof Map<?, ?> m && m.isEmpty()))
+        {
+            return false;
+        }
         return refCount.getOrDefault(obj, 0) > 1;
     }
 
@@ -310,13 +310,10 @@ public class YamlFileWriter {
 
     private static boolean shouldAddComment(
             boolean enableTraceability, String origin, boolean deployDescriptorYaml) {
-        if (!enableTraceability || origin == null || origin.isBlank()) {
+        if (!enableTraceability || StringUtils.isBlank(origin)) {
             return false;
         }
-        if (deployDescriptorYaml && origin.toLowerCase(Locale.ROOT).contains("sbom")) {
-            return false;
-        }
-        return true;
+        return !deployDescriptorYaml || !origin.toLowerCase(Locale.ROOT).contains(SBOM);
     }
     private void moveBlockCommentFromValueToKey(
             org.snakeyaml.engine.v2.nodes.Node valueNode,
@@ -352,7 +349,7 @@ public class YamlFileWriter {
                 Collections.emptyList(),
                 FlowStyle.FLOW
         );
-        return attachComment(node, origin, addComment, false);
+        return attachComment(node, origin, addComment, CommentType.IN_LINE);
     }
 
     private Node createEmptyListNode(String origin, boolean addComment) {
@@ -361,17 +358,20 @@ public class YamlFileWriter {
                 Collections.emptyList(),
                 FlowStyle.FLOW
         );
-        return attachComment(node, origin, addComment, false);
+        return attachComment(node, origin, addComment, CommentType.IN_LINE);
     }
 
-    private <T extends Node> T attachComment(T node, String origin, boolean enabled, boolean blockStyle) {
-        if (!enabled) return node;
-        origin = extractLastOrigin(origin);
-        CommentLine comment = new CommentLine(Optional.empty(), Optional.empty(), origin, blockStyle ? CommentType.BLOCK : CommentType.IN_LINE);
-        if (blockStyle) {
-            node.setBlockComments(List.of(comment));
+    private <T extends Node> T attachComment(T node, String origin, boolean addComment, CommentType commentType) {
+        if (!addComment) {
+            return node;
+        }
+        String commentText = extractLastOrigin(origin);
+        CommentLine comment = new CommentLine(Optional.empty(), Optional.empty(), commentText, commentType);
+        List<CommentLine> comments = List.of(comment);
+        if (commentType == CommentType.BLOCK) {
+            node.setBlockComments(comments);
         } else {
-            node.setInLineComments(List.of(comment));
+            node.setInLineComments(comments);
         }
         return node;
     }
