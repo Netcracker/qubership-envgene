@@ -1,5 +1,5 @@
-global: &id002
-  deployDescriptor: &id001
+global: &id001
+  deployDescriptor: &id002
     alertmanager:
       artifacts: []
       deploy_param: ''
@@ -69,7 +69,7 @@ global: &id002
       image_name: cloud-events-exporter
       image_type: service
       name: cloud-events-exporter
-      promote_artifacts: 'False'
+      promote_artifacts: False
       qualifier: prod.platform.system.monitoring_monitoring
       version: 0.91.0-SNAPSHOT
     cloud-events-reader:
@@ -123,7 +123,7 @@ global: &id002
       image_name: common-dashboards
       image_type: service
       name: common-dashboards
-      promote_artifacts: 'False'
+      promote_artifacts: False
       qualifier: prod.platform.system.monitoring_monitoring
       version: 0.91.0-SNAPSHOT
     configmap-reload:
@@ -321,7 +321,7 @@ global: &id002
       image_name: monitoring-operator
       image_type: service
       name: monitoring-operator
-      promote_artifacts: 'False'
+      promote_artifacts: False
       qualifier: prod.platform.system.monitoring_monitoring
       version: 0.91.0-SNAPSHOT
     network-latency-exporter:
@@ -627,7 +627,7 @@ global: &id002
       image_name: victoriametrics-operator
       image_type: service
       name: victoriametrics-operator
-      promote_artifacts: 'False'
+      promote_artifacts: False
       qualifier: prod.platform.system.monitoring_monitoring
       version: 0.91.0-SNAPSHOT
     vmagent:
@@ -810,13 +810,13 @@ global: &id002
       promote_artifacts: ''
       qualifier: ''
       version: ''
-deployDescriptor: *id001
+deployDescriptor: *id002
 alertmanager: &id003
   APPLICATION_NAME: MONITORING
   DEPLOYMENT_SESSION_ID: 6d5a6ce9-0b55-429d-8877-f7a88dae3d9c
   MANAGED_BY: argocd
-  deployDescriptor: *id001
-  global: *id002
+  deployDescriptor: *id002
+  global: *id001
 blackbox-exporter: *id003
 cert-exporter: *id003
 cloud-events-exporter: *id003

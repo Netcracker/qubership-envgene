@@ -47,6 +47,6 @@ public class CmdbCliTest {
 
         Path expected = FileTestUtils.resource("environments/cluster-01/pl-01/effective-set");
 
-        //FileTestUtils.compareFolders(expected, outputPath);
+        FileTestUtils.compareFolders(expected, outputPath);
     }
 }
