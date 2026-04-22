@@ -261,7 +261,7 @@ fi
 
 echo "Checking changes..."
 git add ./*
-git restore --staged environments/**/effective-set
+git status
 diff_status=0
 
 git diff --cached --name-only
