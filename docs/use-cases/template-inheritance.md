@@ -13,7 +13,7 @@
 
 ## Overview
 
-This document describes use cases for [Template Inheritance](/docs/features/template-inheritance.md).
+This document describes use cases for [Template Inheritance]
 The child template can inherit data from one or more parent templates.
 The child template can also override selected parent values.
 

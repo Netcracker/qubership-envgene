@@ -25,7 +25,7 @@ For every scenario, repository contents after GSF execution are validated agains
 
 For detailed installation and maintenance steps, see:
 
-- Template Repository: [Maintain Template Repository via GSF](/docs/how-to/template-repository-maintenance.md)
+- Template Repository: [Maintain Template Repository via GSF]
 - Instance Repository: [Environment Instance Repository Installation Guide](/docs/how-to/envgene-maitanance.md)
 
 ## Template Repository Maintenance via GSF
