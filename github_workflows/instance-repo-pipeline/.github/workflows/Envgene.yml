@@ -464,8 +464,6 @@ jobs:
                   chmod ugo+rw \"\$path/Credentials/\"*
                 fi
               done
-
-              cp -rf \${CI_PROJECT_DIR}/environments \${CI_PROJECT_DIR}/git_envs
             "
             env > .env.container
 
@@ -475,7 +473,6 @@ jobs:
           name: git_commit_${{ env.PACKAGE_NAME }}
           path: |
             environments/${{ matrix.environment }}
-            git_envs
             sboms
           include-hidden-files: true
       ### GIT COMMIT - END ###
