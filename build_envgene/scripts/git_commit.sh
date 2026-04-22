@@ -261,7 +261,6 @@ fi
 
 echo "Checking changes..."
 git add . ":(exclude)environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/effective-set"
-git status
 diff_status=0
 
 git diff --cached --name-only
