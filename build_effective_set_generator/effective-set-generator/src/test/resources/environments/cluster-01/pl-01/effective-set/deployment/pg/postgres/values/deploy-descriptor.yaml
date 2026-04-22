@@ -1,5 +1,5 @@
-global: &id002
-  deployDescriptor: &id001
+global: &id001
+  deployDescriptor: &id002
     patroni-core:
       artifacts: []
       deploy_param: ''
@@ -15,7 +15,7 @@ global: &id002
       image_name: patroni-core
       image_type: service
       name: patroni-core
-      promote_artifacts: 'False'
+      promote_artifacts: False
       qualifier: prod.platform.ha_postgres
       version: 2.10.5-patroni-core-operator-SNAPSHOT
     pg_patroni:
@@ -126,13 +126,13 @@ global: &id002
       promote_artifacts: ''
       qualifier: ''
       version: ''
-deployDescriptor: *id001
+deployDescriptor: *id002
 patroni-core: &id003
   APPLICATION_NAME: postgres
   DEPLOYMENT_SESSION_ID: 6d5a6ce9-0b55-429d-8877-f7a88dae3d9c
   MANAGED_BY: argocd
-  deployDescriptor: *id001
-  global: *id002
+  deployDescriptor: *id002
+  global: *id001
 pg_patroni: *id003
 pg_upgrade: *id003
 pgbackrest_sidecar: *id003
