@@ -1,69 +1,72 @@
 # Calculator CLI
 
-- [Calculator CLI](#calculator-cli)
-  - [Requirements](#requirements)
-    - [\[Requirements\] Calculator CLI](#requirements-calculator-cli)
-    - [\[Requirements\] EnvGene](#requirements-envgene)
-  - [Proposed Approach](#proposed-approach)
-    - [Calculator command-line tool execution attributes](#calculator-command-line-tool-execution-attributes)
-    - [Registry Configuration](#registry-configuration)
-    - [Solution Descriptor](#solution-descriptor)
-    - [Effective Set v1.0](#effective-set-v10)
-      - [\[Version 1.0\] Effective Set Structure](#version-10-effective-set-structure)
-      - [\[Version 1.0\] deployment-parameters.yaml](#version-10-deployment-parametersyaml)
-      - [\[Version 1.0\] credentials.yaml](#version-10-credentialsyaml)
-      - [\[Version 1.0\] technical-configuration-parameters.yaml](#version-10-technical-configuration-parametersyaml)
-      - [\[Version 1.0\] mapping.yml](#version-10-mappingyml)
-      - [\[Version 1.0\] No SBOMs Mode](#version-10-no-sboms-mode)
-    - [Effective Set v2.0](#effective-set-v20)
-      - [\[Version 2.0\] Effective Set Structure](#version-20-effective-set-structure)
-      - [\[Version 2.0\] Parameter type conversion](#version-20-parameter-type-conversion)
-      - [\[Version 2.0\] Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention)
-      - [\[Version 2.0\] deployPostfix Matching Logic](#version-20-deploypostfix-matching-logic)
-      - [\[Version 2.0\] Handling Missing Attributes in SBOM](#version-20-handling-missing-attributes-in-sbom)
-      - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
-      - [\[Version 2.0\] Sensitive parameters processing](#version-20-sensitive-parameters-processing)
-      - [\[Version 2.0\] No SBOMs Mode](#version-20-no-sboms-mode)
-      - [\[Version 2.0\] Parameters Priority](#version-20-parameters-priority)
-      - [\[Version 2.0\] Traceability Comments](#version-20-traceability-comments)
-        - [Parameter Source to Comment Mapping](#parameter-source-to-comment-mapping)
-        - [Rules for Adding Comments](#rules-for-adding-comments)
-      - [\[Version 2.0\] Deployment Parameter Context](#version-20-deployment-parameter-context)
-        - [\[Version 2.0\]\[Deployment Parameter Context\] `deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml)
-          - [\[Version 2.0\] Predefined `deployment-parameters.yaml` parameters](#version-20-predefined-deployment-parametersyaml-parameters)
-          - [\[Version 2.0\] Image parameters derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
-        - [\[Version 2.0\]\[Deployment Parameter Context\] `credentials.yaml`](#version-20deployment-parameter-context-credentialsyaml)
-          - [\[Version 2.0\] Predefined `credentials.yaml` parameters](#version-20-predefined-credentialsyaml-parameters)
-        - [\[Version 2.0\]\[Deployment Parameter Context\] Collision Parameters](#version-20deployment-parameter-context-collision-parameters)
-        - [\[Version 2.0\]\[Deployment Parameter Context\] `custom-params.yaml`](#version-20deployment-parameter-context-custom-paramsyaml)
-        - [\[Version 2.0\]\[Deployment Parameter Context\] `deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml)
-          - [\[Version 2.0\] Predefined `deploy-descriptor.yaml` parameters](#version-20-predefined-deploy-descriptoryaml-parameters)
-          - [\[Version 2.0\] Service Artifacts](#version-20-service-artifacts)
-          - [\[Version 2.0\] Primary Service Artifact](#version-20-primary-service-artifact)
-          - [\[Version 2.0\] `tArtifactNames`](#version-20-tartifactnames)
-        - [\[Version 2.0\]\[Deployment Parameter Context\] Per Service parameters](#version-20deployment-parameter-context-per-service-parameters)
-          - [\[Version 2.0\]\[Deployment Parameter Context\] Resource Profile Processing](#version-20deployment-parameter-context-resource-profile-processing)
-        - [\[Version 2.0\]\[Deployment Parameter Context\] `mapping.yml`](#version-20deployment-parameter-context-mappingyml)
-      - [\[Version 2.0\] Pipeline Parameter Context](#version-20-pipeline-parameter-context)
-        - [\[Version 2.0\]\[Pipeline Parameter Context\] `parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml)
-        - [\[Version 2.0\]\[Pipeline Parameter Context\] `credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml)
-        - [Consumer Specific Context of Pipeline Context](#consumer-specific-context-of-pipeline-context)
-          - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-parameters.yaml`](#version-20pipeline-parameter-context-consumer-parametersyaml)
-          - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-credentials.yaml`](#version-20pipeline-parameter-context-consumer-credentialsyaml)
-      - [\[Version 2.0\] Topology Context](#version-20-topology-context)
-        - [\[Version 2.0\]\[Topology Context\] `composite_structure` Example](#version-20topology-context-composite_structure-example)
-        - [\[Version 2.0\]\[Topology Context\] `k8s_tokens` Example](#version-20topology-context-k8s_tokens-example)
-        - [\[Version 2.0\]\[Topology Context\] `environments` Example](#version-20topology-context-environments-example)
-        - [\[Version 2.0\]\[Topology Context\] `cluster` Example](#version-20topology-context-cluster-example)
-        - [\[Version 2.0\]\[Topology Context\] `bg_domain` Example](#version-20topology-context-bg_domain-example)
-      - [\[Version 2.0\] Runtime Parameter Context](#version-20-runtime-parameter-context)
-        - [\[Version 2.0\]\[Runtime Parameter Context\] `parameters.yaml`](#version-20runtime-parameter-context-parametersyaml)
-        - [\[Version 2.0\]\[Runtime Parameter Context\] `credentials.yaml`](#version-20runtime-parameter-context-credentialsyaml)
-        - [\[Version 2.0\]\[Runtime Parameter Context\] `mapping.yml`](#version-20runtime-parameter-context-mappingyml)
-      - [\[Version 2.0\] Cleanup Context](#version-20-cleanup-context)
-        - [\[Version 2.0\]\[Cleanup Context\] `parameters.yaml`](#version-20cleanup-context-parametersyaml)
-        - [\[Version 2.0\]\[Cleanup Context\] `credentials.yaml`](#version-20cleanup-context-credentialsyaml)
-        - [\[Version 2.0\]\[Cleanup Context\] `mapping.yml`](#version-20cleanup-context-mappingyml)
+- [Requirements](#requirements)
+  - [\[Requirements\] Calculator CLI](#requirements-calculator-cli)
+  - [\[Requirements\] EnvGene](#requirements-envgene)
+- [Proposed Approach](#proposed-approach)
+  - [Calculator command-line tool execution attributes](#calculator-command-line-tool-execution-attributes)
+  - [Registry Configuration](#registry-configuration)
+  - [Solution Descriptor](#solution-descriptor)
+  - [Effective Set v1.0](#effective-set-v10)
+    - [\[Version 1.0\] Effective Set Structure](#version-10-effective-set-structure)
+    - [\[Version 1.0\] deployment-parameters.yaml](#version-10-deployment-parametersyaml)
+    - [\[Version 1.0\] credentials.yaml](#version-10-credentialsyaml)
+    - [\[Version 1.0\] technical-configuration-parameters.yaml](#version-10-technical-configuration-parametersyaml)
+    - [\[Version 1.0\] mapping.yml](#version-10-mappingyml)
+    - [\[Version 1.0\] No SBOMs Mode](#version-10-no-sboms-mode)
+  - [Effective Set v2.0](#effective-set-v20)
+    - [\[Version 2.0\] Effective Set Structure](#version-20-effective-set-structure)
+    - [\[Version 2.1\] Metadata file](#version-21-metadata-file)
+    - [\[Version 2.0\] Parameter type conversion](#version-20-parameter-type-conversion)
+    - [\[Version 2.0\] Service Inclusion Criteria and Naming Convention](#version-20-service-inclusion-criteria-and-naming-convention)
+    - [\[Version 2.0\] deployPostfix Matching Logic](#version-20-deploypostfix-matching-logic)
+    - [\[Version 2.0\] Handling Missing Attributes in SBOM](#version-20-handling-missing-attributes-in-sbom)
+    - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
+    - [\[Version 2.0\] Sensitive parameters processing](#version-20-sensitive-parameters-processing)
+    - [\[Version 2.0\] No SBOMs Mode](#version-20-no-sboms-mode)
+    - [\[Version 2.0\] Parameters Priority](#version-20-parameters-priority)
+    - [\[Version 2.0\] Traceability Comments](#version-20-traceability-comments)
+      - [Parameter Source to Comment Mapping](#parameter-source-to-comment-mapping)
+      - [Rules for Adding Comments](#rules-for-adding-comments)
+    - [\[Version 2.0\] Deployment Parameter Context](#version-20-deployment-parameter-context)
+      - [\[Version 2.0\]\[Deployment Parameter Context\] `deployment-parameters.yaml`](#version-20deployment-parameter-context-deployment-parametersyaml)
+        - [\[Version 2.0\] Predefined `deployment-parameters.yaml` parameters](#version-20-predefined-deployment-parametersyaml-parameters)
+        - [\[Version 2.0\] Image parameters derived from `deploy_param`](#version-20-image-parameters-derived-from-deploy_param)
+      - [\[Version 2.0\]\[Deployment Parameter Context\] `credentials.yaml`](#version-20deployment-parameter-context-credentialsyaml)
+        - [\[Version 2.0\] Predefined `credentials.yaml` parameters](#version-20-predefined-credentialsyaml-parameters)
+      - [\[Version 2.0\]\[Deployment Parameter Context\] Collision Parameters](#version-20deployment-parameter-context-collision-parameters)
+      - [\[Version 2.0\]\[Deployment Parameter Context\] `custom-params.yaml`](#version-20deployment-parameter-context-custom-paramsyaml)
+      - [\[Version 2.0\]\[Deployment Parameter Context\] `deploy-descriptor.yaml`](#version-20deployment-parameter-context-deploy-descriptoryaml)
+        - [\[Version 2.0\] Predefined `deploy-descriptor.yaml` parameters](#version-20-predefined-deploy-descriptoryaml-parameters)
+        - [\[Version 2.0\] Service Artifacts](#version-20-service-artifacts)
+        - [\[Version 2.0\] Primary Service Artifact](#version-20-primary-service-artifact)
+        - [\[Version 2.0\] `tArtifactNames`](#version-20-tartifactnames)
+      - [\[Version 2.0\]\[Deployment Parameter Context\] Per Service parameters](#version-20deployment-parameter-context-per-service-parameters)
+        - [\[Version 2.0\]\[Deployment Parameter Context\] Resource Profile Processing](#version-20deployment-parameter-context-resource-profile-processing)
+      - [\[Version 2.0\]\[Deployment Parameter Context\] `mapping.yml`](#version-20deployment-parameter-context-mappingyml)
+    - [\[Version 2.0\] Pipeline Parameter Context](#version-20-pipeline-parameter-context)
+      - [\[Version 2.0\]\[Pipeline Parameter Context\] `parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml)
+      - [\[Version 2.0\]\[Pipeline Parameter Context\] `credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml)
+      - [Consumer Specific Context of Pipeline Context](#consumer-specific-context-of-pipeline-context)
+        - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-parameters.yaml`](#version-20pipeline-parameter-context-consumer-parametersyaml)
+        - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-credentials.yaml`](#version-20pipeline-parameter-context-consumer-credentialsyaml)
+    - [\[Version 2.0\] Topology Context](#version-20-topology-context)
+      - [\[Version 2.0\]\[Topology Context\] `composite_structure` Example](#version-20topology-context-composite_structure-example)
+      - [\[Version 2.0\]\[Topology Context\] `k8s_tokens` Example](#version-20topology-context-k8s_tokens-example)
+      - [\[Version 2.0\]\[Topology Context\] `environments` Example](#version-20topology-context-environments-example)
+      - [\[Version 2.0\]\[Topology Context\] `cluster` Example](#version-20topology-context-cluster-example)
+      - [\[Version 2.0\]\[Topology Context\] `bg_domain` Example](#version-20topology-context-bg_domain-example)
+    - [\[Version 2.0\] Runtime Parameter Context](#version-20-runtime-parameter-context)
+      - [\[Version 2.0\]\[Runtime Parameter Context\] `parameters.yaml`](#version-20runtime-parameter-context-parametersyaml)
+      - [\[Version 2.0\]\[Runtime Parameter Context\] `credentials.yaml`](#version-20runtime-parameter-context-credentialsyaml)
+      - [\[Version 2.0\]\[Runtime Parameter Context\] `mapping.yml`](#version-20runtime-parameter-context-mappingyml)
+    - [\[Version 2.0\] Cleanup Context](#version-20-cleanup-context)
+      - [\[Version 2.0\]\[Cleanup Context\] `parameters.yaml`](#version-20cleanup-context-parametersyaml)
+      - [\[Version 2.0\]\[Cleanup Context\] `credentials.yaml`](#version-20cleanup-context-credentialsyaml)
+      - [\[Version 2.0\]\[Cleanup Context\] `mapping.yml`](#version-20cleanup-context-mappingyml)
+- [Effective Set Changelog](#effective-set-changelog)
+  - [Version mapping](#version-mapping)
+  - [Changes by version](#changes-by-version)
 
 ## Requirements
 
@@ -107,7 +110,7 @@ Below is a **complete** list of attributes
 | `--sd-path`/`-sdp`                                  | string  | yes       | Path to the Solution Descriptor                                                                                                                                                                                                                                                                               | N/A     | `/environments/cluster/platform-00/Inventory/solution-descriptor/sd.yaml` |
 | `--registries`/`-r`                                 | string  | no        | Required when `--sd-path` and `--sboms-path` are provided. Optional for [No SBOMs Mode](#version-20-no-sboms-mode)                                                                                                                                                                                            | N/A     | `/configuration/registry.yml`                                             |
 | `--output`/`-o`                                     | string  | yes       | Folder where the result will be put by Calculator command-line tool                                                                                                                                                                                                                                           | N/A     | `/environments/cluster/platform-00/effective-set`                         |
-| `--effective-set-version`/`-esv`                    | string  | no        | The version of the effective set to be generated. Available options are `v1.0` and `v2.0`                                                                                                                                                                                                                     | `v2.0`  | `v1.0`                                                                    |
+| `--effective-set-version`/`-esv`                    | string  | no        | Effective Set contract version to generate (for example, `v1`, `v2`, `v2.1`).                                                                                                                                                                                                                                 | `v2`    | `v2`, `v2.1`                                                               |
 | `--pipeline-consumer-specific-schema-path`/`-pcssp` | string  | no        | Path to a JSON schema defining a consumer-specific pipeline context component. Multiple attributes of this type can be provided                                                                                                                                                                               | N/A     |                                                                           |
 | `--extra_params`/`-ex`                              | string  | no        | Additional parameters used by the Calculator for effective set generation. Multiple instances of this attribute can be provided                                                                                                                                                                               | N/A     | `DEPLOYMENT_SESSION_ID=550e8400-e29b-41d4-a716-446655440000`              |
 | `--app_chart_validation`/`-acv`                     | boolean | no        | Determines whether [app chart validation](#version-20-app-chart-validation) should be performed. If `true` validation is enabled (checks for `application/vnd.qubership.app.chart` in SBOM). If `false` validation is skipped                                                                                 | `true`  | `false`                                                                   |
@@ -254,6 +257,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
     └── <cluster-name-01>
         └── <environment-name-01>
             └── effective-set
+                ├── metadata.yaml
                 ├── topology
                 |   ├── parameters.yaml
                 |   └── credentials.yaml
@@ -355,6 +359,29 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
 ```
 
 The namespace folder names in Effective Set v2.0 (e.g., `<namespace-folder-01>`, `<namespace-folder-02>`) must match exactly the namespace folder names from the Environment Instance (the folder name is a child of `Namespaces` and parent of `namespace.yml`). These folder names are used consistently across all Effective Set contexts (deployment, runtime, cleanup) and in `mapping.yml` files.
+
+#### [Version 2.1] Metadata file
+
+The metadata file describes the Effective Set contract version and generation context (e.g. Calculator CLI and EnvGene versions, timestamp). Consumers can use it to detect the format and decide how to process the artifact.
+
+Starting from Effective Set contract version `2.1`, the Calculator CLI generates this file in the root of the Effective Set.
+
+- **Filename**: `metadata.yaml`
+- **Location**: `<effective-set-root>/metadata.yaml`
+
+**Attributes:**
+
+- `effective_set_contract_version` — the version of the Effective Set contract (e.g. `2.1`).
+- `generated_at` — timestamp when the Effective Set was generated (e.g. ISO 8601).
+- `envgene_version` — version of EnvGene that invoked the Calculator (if provided).
+
+Example:
+
+```yaml
+effective_set_contract_version: "2.1"
+generated_at: "2025-03-03T12:00:00Z"
+envgene_version: "2.94.1"
+```
 
 #### [Version 2.0] Parameter type conversion
 
@@ -1428,3 +1455,27 @@ The structure of this file is as follows:
 ##### \[Version 2.0][Cleanup Context] `mapping.yml`
 
 The contents of this file are identical to [mapping.yml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyml).
+
+---
+
+## Effective Set Changelog
+
+*Version history of the Effective Set contract (structure and metadata).*
+
+- [Version mapping](#version-mapping)
+- [Changes by version](#changes-by-version)
+
+### Version mapping
+
+| Effective Set contract version | Type of change              | Short description                               |
+|--------------------------------|-----------------------------|-------------------------------------------------|
+| 2.1                            | Backward-compatible         | Added `metadata.yaml` with contract version     |
+
+### Changes by version
+
+> **2.1** · *Backward-compatible*
+>
+> - Added file `metadata.yaml` in the root of the Effective Set.
+> - Change is additive; consumers that do not read `metadata.yaml` are unaffected.
+
+---
