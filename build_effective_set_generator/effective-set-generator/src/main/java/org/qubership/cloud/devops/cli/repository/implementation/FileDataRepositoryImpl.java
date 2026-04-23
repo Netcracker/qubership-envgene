@@ -44,6 +44,7 @@ import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.consumer.Property;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
+import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespacePrefixDTO;
 import org.qubership.cloud.devops.commons.pojo.profile.dto.ProfileFullDto;
@@ -457,6 +458,15 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             }
             inputData.setRegistryDTOMap(registryMap);
         }
+    }
+
+    private void loadSecretStores() {
+        String secretStorePath = sharedData.getEnvsPath().replace("/environments", "/configuration/secret-stores.yml");
+        TypeReference<Map<String, SecretStoreDTO>> typeRef =
+                new TypeReference<>() {};
+        File secretFilePath = new File(secretStorePath);
+        inputData.setSecretStoreDTOMap(fileDataConverter.parseInputFile(typeRef, secretFilePath));
+
     }
 
 }
