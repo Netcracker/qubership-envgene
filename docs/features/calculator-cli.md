@@ -682,7 +682,7 @@ The CLI flag [`--enable-traceability`](#calculator-command-line-tool-execution-a
 
 3. Comments are added in all Effective Set contexts.
 
-4. Comments are not added in `mapping.yaml` files.
+4. Comments are not added in `mapping.yaml` files or in the [External Credential Context](/docs/features/external-creds.md#external-credential-context) (`effective-set/external-credential/external-credentials.yaml`).
 
 5. The source is determined by [priority](#version-20-parameters-priority): if a parameter is defined in multiple sources, the source with the highest priority is used.
 

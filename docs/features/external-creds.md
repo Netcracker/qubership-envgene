@@ -8,6 +8,7 @@
     - [Overview](#overview)
     - [Detailed description of objects](#detailed-description-of-objects)
       - [Credential Reference](#credential-reference)
+      - [Built-in credential references](#built-in-credential-references)
       - [Credential Template](#credential-template)
       - [Credential](#credential)
       - [Secret Store](#secret-store)
@@ -37,6 +38,7 @@
     - [Validation](#validation)
       - [During Environment Instance generation](#during-environment-instance-generation)
       - [During Effective Set generation](#during-effective-set-generation)
+      - [During CMDB import](#during-cmdb-import)
     - [To Do](#to-do)
 
 ## Description
@@ -60,6 +62,7 @@ It is necessary to extend EnvGene to support management of Credentials that resi
 2. Within a given `secretStore`, the remote secret is addressed by `normalizedSecretName`, derived from `remoteRefPath`, `credId`, and store type (see [Normalization to normalizedSecretName](#normalization-to-normalizedsecretname))
 3. Credential uniqueness within EnvGene repository is determined by `credId`
 4. A single EnvGene instance repository uses **either** local Credentials (`usernamePassword`, `secret`) **or** external Credentials (`type: external`) - mixing local and external Credentials in the same repository is not a supported case
+5. CMDB import is not supported for Environment Instances that contain external Credentials. CMDB integration currently expects resolved credential values or local Credentials only.
 
 ## Proposed Approach
 
@@ -147,14 +150,39 @@ CONSUL_ADMIN_TOKEN:
   credId: postgres-password
 ```
 
+#### Built-in credential references
+
+Built-in credential references are `credId` string pointers in predefined schema fields of [Cloud](/docs/envgene-objects.md#cloud) and [Namespace](/docs/envgene-objects.md#namespace) objects, as opposed to free-form [Credential References](#credential-reference) in parameter values. They are part of the Cloud/Namespace schemas and are consumed by downstream systems (CMDB, deployer) that import these objects by their model.
+
+The complete list:
+
+- `Cloud.defaultCredentialsId`
+- `Cloud.maasConfig.credentialsId`
+- `Cloud.dbaasConfigs[].credentialsId`
+- `Cloud.vaultConfig.credentialsId`
+- `Cloud.consulConfig.tokenSecret`
+- `Namespace.credentialsId`
+
+Each is a plain string holding a `credId` that resolves to a [Credential](#credential) in the rendered instance repository.
+
+**Local mode behavior (unchanged):**
+
+- If Cloud Passport is present, its credentials file supplies the Credential values (`type: usernamePassword` / `secret` with `data`), merged into the Environment Credentials File.
+- If Cloud Passport is absent, EnvGene auto-generates Credential entries with placeholder values (`envgeneNullValue`) for every `credId` discovered via a built-in credential reference. Users fill values externally.
+
+**External mode behavior:**
+
+- If Cloud Passport is present, its credentials file declares the corresponding Credentials as `type: external`.
+- If Cloud Passport is absent, the [Credential Template](#credential-template) is the sole source of external Credentials for all built-in credential references. Placeholder auto-generation does not apply — external Credentials require `secretStore` and `remoteRefPath`, which cannot be defaulted.
+
 #### Credential Template
 
 A Credential Template is part of the EnvGene template, a Jinja template used for rendering external [Credentials](#credential). The following applies:
 
-1. It must render to a valid [Credential](#credential).
-2. It is created manually.
-3. It is only used for external Credentials.
-4. There is typically one template per external Credential.
+1. There is a **single** Credential Template file per EnvGene template. Its rendered output is a map of `<cred-id>` entries, one entry per external [Credential](#credential).
+2. Each rendered entry must conform to the [Credential](#credential) object for `type: external`.
+3. It is created manually.
+4. It is only used for external Credentials.
 5. The path to the Credential Template file is set in the [Template Descriptor](/docs/envgene-objects.md#template-descriptor) as `external_credential_template`. See [Credential Template](/docs/envgene-objects.md#credential-template) in EnvGene Objects.
 
 ```yaml
@@ -224,6 +252,7 @@ The existing [Credential](/docs/envgene-objects.md#credential) is extended by in
   remoteRefPath: string
   # Optional
   # Only for `type: external`
+  # Default: false
   create: boolean
   # Required when type is `external` and has multiple fields
   # Omit when single-value
@@ -473,8 +502,6 @@ Values:
 
 - `helm-values` - sensitive parameters are emitted as **VALS references**
 - `external-values` - sensitive parameters are emitted as **ESO references**
-
-Resolution order (highest precedence wins):
 
 > [!NOTE]
 > The effective `SECRET_FLOW` is computed per application. Different applications in the same environment may end up with different effective values, so a single Effective Set can mix VALS-shaped and ESO-shaped external parameters across applications.
@@ -773,23 +800,44 @@ Example:
 
 ### Validation
 
+> [!NOTE]
+> Schema validation of [Credential](#credential), [Secret Store](#secret-store), and [Credential Reference](#credential-reference) objects is assumed. The rules below are semantic checks applied on top of schema validation.
+>
+> Violations of any rule below fail the corresponding generation stage, unless the rule is explicitly marked as a warning.
+>
+> When a rule fails, EnvGene emits a human-readable error identifying the offending object(s), the violated rule, and enough context to act on it. This is implied for every rule below and is not repeated per rule.
+
 #### During Environment Instance generation
 
-1. Every external [Credential](#credential) referenced by a Credential Reference is defined in a [Credential Template](#credential-template) and present in the instance repository after Environment Instance generation.
+1. Every [Credential Reference](#credential-reference) resolves to an external [Credential](#credential) in the rendered instance repository.
 
-2. The instance repository must not contain both local Credentials (`type: usernamePassword` / `secret`) and external Credentials (`type: external`) at the same time. A repository is either fully local or fully external.
+2. Every Environment Instance contains [Credentials](#credential) of only one category: either local (`type: usernamePassword` / `secret`) or external (`type: external`). Different Environment Instances in the same repository may differ.
+
+3. Every rendered external [Credential](#credential) is referenced by at least one [Credential Reference](#credential-reference) or [Built-in credential reference](#built-in-credential-references).
+
+4. Every `credId` is unique across all rendered [Credentials](#credential).
+
+5. Every rendered external [Credential](#credential) whose [Secret Store](#secret-store) has `type ∈ { azure, aws, gcp }` has `len(credId) ≤ 32`.
+
+6. Every external [Credential](#credential) has [`properties`](#credential) either absent (single-value secret) or equal to `[{ name: username }, { name: password }]`.
+
+7. Every [Built-in credential reference](#built-in-credential-references) resolves to an existing [Credential](#credential) in the rendered instance repository.
 
 #### During Effective Set generation
 
-1. Every `credId` referenced by a [Credential Reference](#credential-reference) resolves to an existing [Credential](#credential).
+1. Every [Credential Reference](#credential-reference) with `property` has a value matching a `name` in `Credential.properties`; every [Credential Reference](#credential-reference) to a single-value Credential omits `property`.
 
-2. When a reference includes `property`, that `property` matches a `name` in `Credential.properties` for that Credential (and single-value Credentials must not use `property`).
+2. Every `Credential.secretStore` matches an entry in `/configuration/secret-stores.yml`.
 
-3. Every [Credential Reference](#credential-reference) (`credRef`) resolves to a [Credential](#credential) with `type: external`.
+3. Normalization to `normalizedSecretName` succeeds for every used [Credential](#credential) under the character-set, per-segment, and total-length constraints of the target [Secret Store](#secret-store) type.
 
-4. The effective [`SECRET_FLOW`](#secret_flow-attribute) for every application resolves to a value from `[ helm-values, external-values ]`. An unset value is treated as the default `helm-values`.
+4. The effective [`SECRET_FLOW`](#secret_flow-attribute) of every application is a value from `[ helm-values, external-values ]` (defaulting to `helm-values` when unset).
 
-5. If the effective `SECRET_FLOW` for an application is `external-values`, the application's [`eso_support`](#eso_support-attribute) must be `true`. Otherwise the Effective Set generation fails (see [Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references)).
+5. Every application with effective `SECRET_FLOW = external-values` has [`eso_support`](#eso_support-attribute) set to `true` (see [Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references)).
+
+#### During CMDB import
+
+1. The Environment Instance being imported contains no [Credentials](#credential) with `type: external`.
 
 ### To Do
 
