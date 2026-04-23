@@ -13,6 +13,7 @@
       - [BG Domain Template](#bg-domain-template)
       - [Registry Definition Template](#registry-definition-template)
       - [Application Definition Template](#application-definition-template)
+      - [Credential Template](#credential-template)
     - [System Credentials File (in Template repository)](#system-credentials-file-in-template-repository)
   - [Instance Repository Objects](#instance-repository-objects)
     - [Environment Instance Objects](#environment-instance-objects)
@@ -28,6 +29,8 @@
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
       - [`secret`](#secret)
+      - [`external`](#external)
+    - [Secret Store](#secret-store)
     - [Environment Credentials File](#environment-credentials-file)
     - [Shared Credentials File](#shared-credentials-file)
     - [System Credentials File (in Instance repository)](#system-credentials-file-in-instance-repository)
@@ -51,9 +54,9 @@
 
 ### Environment Template Objects
 
-An Environment Template is a file structure within the Envgene Template Repository that describes the structure of a solution — such as which namespaces are part of the solution, as well as environment-agnostic parameters, which are common to a specific type of solution.
+An Environment Template is a file structure within the EnvGene Template Repository that describes the structure of a solution - such as which namespaces are part of the solution, as well as environment-agnostic parameters, which are common to a specific type of solution.
 
-The objects that make up the Environment Template extensively use the Jinja template engine. During the generation of an Environment Instance, Envgene renders these templates with environment-specific parameters, allowing a single template to be used for preparing configurations for similar but not entirely identical environment/solution instances.
+The objects that make up the Environment Template extensively use the Jinja template engine. During the generation of an Environment Instance, EnvGene renders these templates with environment-specific parameters, allowing a single template to be used for preparing configurations for similar but not entirely identical environment/solution instances.
 
 The template repository can contain multiple Environment Templates describing configurations for different types of environments/solution instances, such as DEV, PROD, and SVT.
 
@@ -130,6 +133,9 @@ cloud:
 composite_structure: <path-to-the-composite-structure-template-file>
 # Optional
 bg_domain: <path-to-the-bg-domain-template-file>
+# Optional
+# Path to the external Credential Template file (Jinja, single file).
+external_credential_template: string
 # Optional
 namespaces:
   - # Optional
@@ -407,7 +413,7 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by EnvGene 
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -424,11 +430,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene 
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene 
   sd: string
   # Optional
   services:
@@ -561,6 +567,39 @@ artifactId: "application-1"
 groupId: "org.qubership"
 ```
 
+#### Credential Template
+
+This is a Jinja file in the Template Repository used to render [Credential](#credential) objects with `type: external`.
+
+The rendered document must be a map of `<cred-id>` entries that each conform to the [Credential](#credential) object for `external` as defined in [Credential JSON schema](/schemas/credential.schema.json).
+
+During Environment Instance generation, the result is merged into the instance [Environment Credentials File](#environment-credentials-file) together with Credentials created for local types from `${creds.get(...)}`.
+
+Parameters in Cloud, Namespace, and ParameterSet templates then reference those external Credentials via [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`).
+
+For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 External Sensitive parameters](/docs/features/calculator-cli.md#version-20-external-sensitive-parameters).
+
+Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `current_namespace`) are available when this file is rendered.
+
+**Location:** The path to the Credential Template is set in the [Template Descriptor](#template-descriptor) as `external_credential_template`: a string path to a **single** Jinja file (for example `.yml`, `.yaml`, `.yml.j2`, or `.yaml.j2`).
+
+**Example:**
+
+```yaml
+streaming-cred:
+  type: external
+  create: true
+  secretStore: default-store
+  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc"
+  properties:
+    - name: username
+    - name: password
+consul-creds:
+  type: external
+  secretStore: default-store
+  remoteRefPath: "{{ current_env.cloud }}"
+```
+
 ### System Credentials File (in Template repository)
 
 This file contains [Credential](#credential) objects used by EnvGene to integrate with external systems like artifact registries, GitLab, GitHub, and others.
@@ -585,7 +624,7 @@ gitlab-token-cred:
 
 ### Environment Instance Objects
 
-An Environment Instance is a file structure within the Envgene Instance Repository that describes the configuration for a specific environment/solution instance.
+An Environment Instance is a file structure within the EnvGene Instance Repository that describes the configuration for a specific environment/solution instance.
 
 It is generated during the rendering process of an Environment Template. During this rendering process, environment-agnostic parameters from the Environment Template are combined with environment-specific parameters, such as Cloud Passport, environment-specific ParameterSet, environment-specific Resource Profile Overrides, to produce a set of parameters specific to a particular environment/solution instance.
 
@@ -1105,7 +1144,7 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by EnvGene 
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -1122,11 +1161,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene 
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene 
   sd: string
   # Optional
   services:
@@ -1407,9 +1446,13 @@ applications:
 
 ### Credential
 
-This object is used by EnvGene to manage sensitive parameters. It is generated during environment instance creation for each `<cred-id>` specified in [Credential macros](/docs/template-macros.md#credential-macro)
+This object is used by EnvGene to manage sensitive parameters. How it is produced depends on the `type`:
 
-There are two Credential types with different structures:
+- **`usernamePassword` and `secret`:** For each `<cred-id>` referenced by the credential macro `${creds.get(...)}`, EnvGene creates a Credential during Environment Instance generation. See [Credential Macro and Credential Reference](/docs/template-macros.md#credential-macro-and-credential-reference).
+
+- **`external`:** These Credentials are **not** created from `${creds.get(...)}`. They are rendered from a [Credential Template](#credential-template) in the Template repository and written to the instance repository [Environment Credentials File](#environment-credentials-file). Sensitive parameters then reference them with a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`). See [External Credentials Management](/docs/features/external-creds.md).
+
+The following sections summarize each type:
 
 #### `usernamePassword`
 
@@ -1436,7 +1479,50 @@ Used for single-secret credentials. Contains one mandatory credentials field(`se
 
 After generation, `<value>` is set to `envgeneNullValue`. The user must manually set the actual value.
 
+#### `external`
+
+Used when secret material lives in an external store (Vault, Azure Key Vault, AWS Secrets Manager, or GCP Secret Manager) rather than in the repository. The instance repository holds the [Credential](#credential) definition produced from a [Credential Template](#credential-template).
+
+```yaml
+<cred-id>:
+  type: external
+  secretStore: string
+  # Optional; when omitted, normalization uses credId and store rules (see External Credentials Management)
+  remoteRefPath: string
+  # Optional: idempotent create in the remote store
+  create: boolean
+  # Optional: multi-field remote secret (username / password)
+  properties:
+    - name: enum [ username, password ]
+```
+
+`data` is not used for `type: external`.
+
 [Credential JSON schema](/schemas/credential.schema.json)
+
+### Secret Store
+
+A **Secret Store** is a named entry in the instance repository configuration that describes how to reach an external secret backend. [External Credentials Management](/docs/features/external-creds.md) defines fields, normalization of remote secret names, and how stores are copied into the Effective Set.
+
+**Location:** `/configuration/secret-stores.yml`
+
+```yaml
+<secret-store-name>:
+  # Mandatory
+  type: enum [ vault, azure, aws, gcp ]
+  # Mandatory
+  url: URL
+  # Required when type is vault
+  mountPath: string
+  # Required when type is azure
+  vaultName: string
+  # Required when type is aws
+  region: string
+  # Required when type is gcp
+  projectId: string
+```
+
+[Secret Stores JSON schema](/schemas/secret-stores.schema.json)
 
 ### Environment Credentials File
 
@@ -1685,7 +1771,7 @@ The first match found is used as the environment-specific override for the given
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by EnvGene 
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -1702,11 +1788,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene 
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene 
   sd: string
   # Optional
   services:
