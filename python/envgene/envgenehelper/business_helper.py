@@ -174,7 +174,11 @@ def getEnvDefinition(env_dir = None):
     env_definition_path = getEnvDefinitionPath(env_dir)
     if not check_file_exists(env_definition_path):
         raise ReferenceError(f"Environment definition for env {env_dir} is not found in {env_definition_path}")
-    return openYaml(env_definition_path)
+    env_definition_yaml = openYaml(env_definition_path)
+    if 'inventory' not in env_definition_yaml:
+        logger.warning(f"'inventory' section is not found in env_definition.yml for env {env_dir}. Adding empty 'inventory' section to avoid errors in plugins.")
+        env_definition_yaml['inventory'] = {}
+    return env_definition_yaml
 
 
 def getEnvDefinitionPath(env_dir) -> str:
