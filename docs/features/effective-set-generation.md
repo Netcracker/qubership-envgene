@@ -134,6 +134,6 @@ See [Instance pipeline parameters](/docs/instance-pipeline-parameters.md) for th
 
 - [Calculator CLI](/docs/features/calculator-cli.md) — the underlying tool and the detailed ES file-structure reference.
 - [How to generate an Effective Set](/docs/how-to/generate-effective-set.md) — operational guide.
-- [Tutorial: Understanding the Effective Set](/docs/tutorials/effective-set.md) — walk-through of ES contents and parameter flow.
+- [Tutorial: Understanding the Effective Set](/docs/tutorials/effective-set.md) — walkthrough of ES contents and parameter flow.
 - [SD processing](/docs/features/sd-processing.md) — how the Solution Descriptor is merged and stored.
 - [SBOM](/docs/features/sbom.md) — how Application SBOMs are produced and cached.
