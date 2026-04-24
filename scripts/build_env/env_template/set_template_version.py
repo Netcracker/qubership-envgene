@@ -21,7 +21,7 @@ def update_version(env_definition_dir, version_to_add, update_mode: TemplateVers
                 del data['envTemplate']['templateArtifact']
             data['envTemplate']['artifact'] = version_to_add
         else:
-            logger.error(f"Bad env_definition structure in file {env_definition_path}.")
+            logger.error(f"Invalid ENV_TEMPLATE_VERSION '{version_to_add}': missing or incorrect envTemplate.artifact structure in {env_definition_path}.")
             raise ReferenceError(f"Can't update version in {env_definition_path}. See logs above.")
     else:
         if 'envTemplate' in data and 'templateArtifact' in data['envTemplate'] and 'artifact' in data['envTemplate'][
@@ -32,7 +32,7 @@ def update_version(env_definition_dir, version_to_add, update_mode: TemplateVers
             data['envTemplate']['templateArtifact']['artifact']['version'] = version_to_add
             logger.info(f"Succesfully updated version from {oldVersion} to {version_to_add} in {env_definition_path}")
         else:
-            logger.error(f"Bad env_definition structure in file {env_definition_path}.")
+            logger.error(f"Invalid ENV_TEMPLATE_VERSION: version-only input expects 'envTemplate.templateArtifact.artifact' structure, but it is not present {env_definition_path}.")
             raise ReferenceError(f"Can't update version in {env_definition_path}. See logs above.")
     writeYamlToFile(env_definition_path, data)
     beautifyYaml(env_definition_path)
