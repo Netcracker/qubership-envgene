@@ -117,7 +117,7 @@ public class FileDataConverterImpl implements FileDataConverter {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
         options.setPrettyFlow(false);
-        if (AdaptiveYamlPython.shouldExpand(params)) {
+        if (AdaptiveYaml.shouldExpand(params)) {
             System.out.println("removing anchors");
             options.setDereferenceAliases(true);
         }

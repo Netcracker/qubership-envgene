@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 
-public class AdaptiveYamlPython {
+public class AdaptiveYaml {
     private static final int ALIAS_RATIO_RANGE_LOW = 400000;
     private static final int ALIAS_RATIO_RANGE_HIGH = 4000000;
     private static final double ALIAS_RATIO_RANGE =
