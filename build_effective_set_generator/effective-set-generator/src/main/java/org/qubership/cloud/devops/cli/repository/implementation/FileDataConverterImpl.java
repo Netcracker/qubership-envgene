@@ -99,7 +99,7 @@ public class FileDataConverterImpl implements FileDataConverter {
         File file = fileSystemUtils.getFileFromGivenPath(args);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             if (params != null && !params.isEmpty()) {
-                getYamlObject().dump(params, writer);
+                getYamlObject(params).dump(params, writer);
             }
         }
     }
@@ -113,7 +113,7 @@ public class FileDataConverterImpl implements FileDataConverter {
     }
 
 
-    private static Yaml getYamlObject() {
+    private static Yaml getYamlObject(Map<String, Object> params) {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
