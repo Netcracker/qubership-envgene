@@ -34,6 +34,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
+import org.qubership.cloud.devops.cli.utils.yaml.AdaptiveYaml;
 
 import java.io.*;
 import java.util.Base64;
