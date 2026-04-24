@@ -45,7 +45,7 @@ To support the deployment of individual applications, the use of Delta SDs is su
 ### Requirements
 
 1. SD processing should take place in the [`process_sd`](/docs/envgene-pipelines.md#instance-pipeline)
-2. The Full and Delta SDs files should be stored in repository and job artifacts
+2. The Full SD is stored in the repository. The Delta SD is produced only as a transient pipeline artifact and is not persisted to the repository
 3. SD merge must occur according to [SD Merge](#sd-merge)
 
 ### SD Types
@@ -58,9 +58,11 @@ Defines the complete application composition of a solution. There can be only on
 
 #### Delta SD
 
-A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. There can be only one Delta SD per environment, located at the path `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yml`.
+A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement.
 
-The Delta SD is saved (created or modified) in the repository only when a [Repository Merge](#sd-merge)occurs, meaning when a Full SD is already present in the repository and `SD_REPO_MERGE_MODE` is NOT set to `replace`.
+The Delta SD is produced as a transient pipeline artifact when a [Repository Merge](#sd-merge) occurs, meaning when a Full SD is already present in the repository and `SD_REPO_MERGE_MODE` is NOT set to `replace`. It is passed between pipeline jobs of the same run and discarded afterwards. The Delta SD is **not** persisted to the repository.
+
+The Delta SD drives the [partial Effective Set generation](/docs/features/effective-set-generation.md#partial-generation) path in downstream jobs.
 
 ### Instance Repository Pipeline Parameters
 
