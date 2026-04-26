@@ -73,10 +73,9 @@ public class NamespaceMap extends DynamicMap {
         InputDataService inputDataService = Injector.getInstance().getInputDataService();
         CompositeStructureDTO compositeStructureDTO = inputDataService.getCompositeData();
         BgDomainEntityDTO bgDomainEntityDTO = inputDataService.getBGDomainData();
-        String namespaceOrigin = String.format(ParametersConstants.NS_ORIGIN, tenant, this.cloud, namespaceName);
         if (config != null) {
             mergeE2E = config.isMergeCustomPramsAndE2EParams();
-            EscapeMap map = new EscapeMap(config.getCustomParameters(), binding, namespaceOrigin);
+            EscapeMap map = new EscapeMap(config.getCustomParameters(), binding, ParametersConstants.NS_ORIGIN);
             map.putIfAbsent(NAMESPACE, originalNamespace);
 
             map.put(APP, new Parameter(new NamespaceApplicationMap(config, defaultApp, binding).init()));
@@ -202,8 +201,8 @@ public class NamespaceMap extends DynamicMap {
                 }
             }
 
-            EscapeMap e2e = new EscapeMap(config.getE2eParameters(), binding, String.format(ParametersConstants.NS_E2E_ORIGIN, tenant, this.cloud, namespaceName));
-            EscapeMap configServer = new EscapeMap(config.getConfigServerParameters(), binding, String.format(ParametersConstants.NS_CONFIG_SERVER_ORIGIN, tenant, this.cloud, namespaceName));
+            EscapeMap e2e = new EscapeMap(config.getE2eParameters(), binding,ParametersConstants.NS_ORIGIN);
+            EscapeMap configServer = new EscapeMap(config.getConfigServerParameters(), binding, ParametersConstants.NS_ORIGIN);
 
             map.put(E2E, new Parameter(e2e));
             map.put(CONFIG_SERVER, new Parameter(configServer));

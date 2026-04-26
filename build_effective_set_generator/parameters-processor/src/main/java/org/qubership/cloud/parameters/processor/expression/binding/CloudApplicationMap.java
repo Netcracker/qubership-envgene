@@ -16,7 +16,6 @@
 
 package org.qubership.cloud.parameters.processor.expression.binding;
 
-import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
 import org.qubership.cloud.devops.commons.pojo.applications.model.ApplicationParams;
 import org.qubership.cloud.devops.commons.pojo.clouds.model.Cloud;
 import org.qubership.cloud.devops.commons.utils.Parameter;
@@ -24,6 +23,8 @@ import org.qubership.cloud.devops.commons.utils.Parameter;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
+
+import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.CLOUD_ORIGIN;
 
 public class CloudApplicationMap extends DynamicMap {
 
@@ -43,27 +44,21 @@ public class CloudApplicationMap extends DynamicMap {
 
         Map<String, Object> appParams = applicationParams != null ? applicationParams.getAppParams() : new HashMap<>();
         Map<String, Object> configServerParams = applicationParams != null ? applicationParams.getConfigServerParams() : new HashMap<>();
-        EscapeMap map = new EscapeMap(appParams, binding,
-                String.format(ParametersConstants.CLOUD_APP_ORIGIN, cloud.getTenant().getName(), cloud.getName(), appName));
-        EscapeMap configServerMap = new EscapeMap(configServerParams, binding,
-                String.format(ParametersConstants.CLOUD_APP_CONFIG_SERVER_ORIGIN, cloud.getTenant().getName(), cloud.getName(), appName));
+        EscapeMap map = new EscapeMap(appParams, binding, CLOUD_ORIGIN);
+        EscapeMap configServerMap = new EscapeMap(configServerParams, binding, CLOUD_ORIGIN);
 
         EscapeMap parameterSetMap = new EscapeMap(null, binding, "");
         map.put("parameterSet", parameterSetMap);
         if (cloud.getDeploymentParameterSets() != null) {
             new ArrayDeque<>(cloud.getDeploymentParameterSets()).descendingIterator().forEachRemaining(set -> {
-                String origin = String.format(ParametersConstants.CLOUD_PARAMETER_SET_APP_ORIGIN,
-                        cloud.getTenant().getName(), cloud.getName(), set, appName);
-                processApplicationSet(cloud.getTenant().getName(), set, appName, origin, parameterSetMap);
+                processApplicationSet(cloud.getTenant().getName(), set, appName, CLOUD_ORIGIN, parameterSetMap);
             });
         }
         EscapeMap parameterSetConfigServerMap = new EscapeMap(null, binding, "");
         configServerMap.put("parameterSet", parameterSetConfigServerMap);
         if (cloud.getTechnicalParameterSets() != null) {
             new ArrayDeque<>(cloud.getTechnicalParameterSets()).descendingIterator().forEachRemaining(set -> {
-                String origin = String.format(ParametersConstants.CLOUD_PARAMETER_SET_APP_ORIGIN,
-                        cloud.getTenant().getName(), cloud.getName(), set, appName);
-                processApplicationSet(cloud.getTenant().getName(), set, appName, origin, configServerMap);
+                processApplicationSet(cloud.getTenant().getName(), set, appName, CLOUD_ORIGIN, configServerMap);
             });
         }
 

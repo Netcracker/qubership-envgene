@@ -26,13 +26,12 @@ import org.qubership.cloud.devops.commons.pojo.namespaces.model.Namespace;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 import org.qubership.cloud.devops.commons.utils.BomReaderUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
-import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
 
 
 import java.util.*;
 
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
-import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.ENVGENE_PIPELINE_PARAMETER;
+import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.*;
 
 
 @Slf4j
@@ -56,12 +55,8 @@ public class NamespaceApplicationMap extends DynamicMap {
 
         Map<String, Object> appParams = applicationParams != null ? applicationParams.getAppParams() : new HashMap<>();
         Map<String, Object> configServerParams = applicationParams != null ? applicationParams.getConfigServerParams() : new HashMap<>();
-        EscapeMap map = new EscapeMap(appParams, binding,
-                String.format(ParametersConstants.NS_APP_ORIGIN, namespace.getCloud().getTenant().getName(), namespace.getCloud().getName(),
-                        namespace.getName(), appName));
-        EscapeMap configServerMap = new EscapeMap(configServerParams, binding,
-                String.format(ParametersConstants.NS_APP_CONFIG_SERVER_ORIGIN, namespace.getCloud().getTenant().getName(), namespace.getCloud().getName(),
-                        namespace.getName(), appName));
+        EscapeMap map = new EscapeMap(appParams, binding, NS_ORIGIN );
+        EscapeMap configServerMap = new EscapeMap(configServerParams, binding, NS_ORIGIN);
 
 
         map.put("APPLICATION_NAME", appName);
