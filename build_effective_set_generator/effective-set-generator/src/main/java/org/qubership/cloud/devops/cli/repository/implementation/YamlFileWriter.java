@@ -327,22 +327,6 @@ public class YamlFileWriter {
         valueNode.setBlockComments(null);
     }
 
-    private String extractLastOrigin(String origin) {
-        if (origin == null || origin.isEmpty()) {
-            return origin;
-        }
-        String lower = origin.toLowerCase();
-        if (lower.contains("rp-")) {
-            return lower;
-        }
-        int colon = origin.indexOf(':');
-        if (colon < 0) {
-            return lower;
-        }
-        int slash = origin.lastIndexOf('/', colon - 1);
-        return origin.substring(slash + 1, colon).trim().toLowerCase();
-    }
-
     private Node createEmptyMapNode(String origin, boolean addComment) {
         MappingNode node = new MappingNode(
                 Tag.MAP,
@@ -365,8 +349,7 @@ public class YamlFileWriter {
         if (!addComment) {
             return node;
         }
-        String commentText = extractLastOrigin(origin);
-        CommentLine comment = new CommentLine(Optional.empty(), Optional.empty(), commentText, commentType);
+        CommentLine comment = new CommentLine(Optional.empty(), Optional.empty(), origin, commentType);
         List<CommentLine> comments = List.of(comment);
         if (commentType == CommentType.BLOCK) {
             node.setBlockComments(comments);

@@ -111,7 +111,7 @@ public class CliParameterParser {
             String originalNamespace = inputData.getNamespaceDTOMap().get(namespaceName).getName();
             String credentialsId = findDefaultCredentialsId(namespaceName);
             String credentialsIdOrigin = !StringUtils.isEmpty(inputData.getNamespaceDTOMap().get(namespaceName).getCredentialsId()) ?
-                        "namespace" : "cloud";
+                        NS_ORIGIN : CLOUD_ORIGIN;
             if (StringUtils.isNotEmpty(credentialsId)) {
                 CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
                 if (credentialDTO != null) {
