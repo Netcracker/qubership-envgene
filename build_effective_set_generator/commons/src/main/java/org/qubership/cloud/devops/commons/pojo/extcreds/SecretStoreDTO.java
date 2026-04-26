@@ -13,5 +13,5 @@ public class SecretStoreDTO {
     private String mountPath; // Required when type is VAULT
     private String vaultName; // Required when type is AZURE
     private String region; // Required when type is AWS
-    private String projectId;
+    private String projectId;// Required when type is GCP
 }

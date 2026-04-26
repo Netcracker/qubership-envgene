@@ -44,10 +44,12 @@ public class ParameterUtils {
             Object value = param.getValue();
             if (value instanceof Map<?, ?>) {
                 Map<String, Parameter> valueMap = (Map<String, Parameter>) value;
-                Object finalVal = ExternalCredUtils.getFinalParam(valueMap, extCredEntities.getRefShape(), extCredEntities.getExtCredentials(), extCredEntities.getSecretStores());
-                if (finalVal != null) {
-                    paramsWithExtCredsOut.put(key, copyOldValues(param, finalVal));
-                    return; // skip further processing for this branch
+                if (paramsWithExtCredsOut != null) {
+                    Object finalVal = ExternalCredUtils.getFinalParam(valueMap, extCredEntities.getRefShape(), extCredEntities.getExtCredentials(), extCredEntities.getSecretStores());
+                    if (finalVal != null) {
+                        paramsWithExtCredsOut.put(key, copyOldValues(param, finalVal));
+                        return; // skip further processing for this branch
+                    }
                 }
                 Map<String, Parameter> secureChild = new LinkedHashMap<>();
                 Map<String, Parameter> insecureChild = new LinkedHashMap<>();
@@ -75,10 +77,12 @@ public class ParameterUtils {
                             Map<String, Parameter> insecureNested = new LinkedHashMap<>();
                             Map<String, Parameter> externalNested = new LinkedHashMap<>();
                             Map<String, Parameter> valueMap = (Map<String, Parameter>) itemVal;
-                            Object finalVal = ExternalCredUtils.getFinalParam(valueMap, extCredEntities.getRefShape(), extCredEntities.getExtCredentials(), extCredEntities.getSecretStores());
-                            if (finalVal != null) {
-                                paramsWithExtCredsOut.put(key, copyOldValues(param, finalVal));
-                                continue; // skip further processing for this branch
+                            if (paramsWithExtCredsOut != null) {
+                                Object finalVal = ExternalCredUtils.getFinalParam(valueMap, extCredEntities.getRefShape(), extCredEntities.getExtCredentials(), extCredEntities.getSecretStores());
+                                if (finalVal != null) {
+                                    paramsWithExtCredsOut.put(key, copyOldValues(param, finalVal));
+                                    continue; // skip further processing for this branch
+                                }
                             }
                             splitBySecure((Map<String, Parameter>) itemVal, secureNested, insecureNested, externalNested, extCredEntities);
                             if (!secureNested.isEmpty()) {

@@ -198,16 +198,11 @@ public class ParametersCalculationServiceV2 {
         }
         Map<String, Parameter> externalCredParams = null;
         String refShape;
-        boolean hasExternal = false;
         if (ParameterType.DEPLOY.equals(parameterType)) {
-             hasExternal = extCredEntities.getExtCredentials().values().stream()
-                    .anyMatch(c -> c.getType() == CredentialsTypeEnum.external);
-            if (hasExternal) {
+            if (extCredEntities.isExternalOnly) {
                 externalCredParams = new TreeMap<>();
                 refShape = ExternalCredUtils.resolveReferenceShape(parameters.get(ExternalCredConstants.SECRET_FLOW), parameters.get(ESO_SUPPORT));
                 extCredEntities.setRefShape(refShape);
-                extCredEntities.setExternalOnly(hasExternal);
-
             }
         }
         filterSecuredParams(parameters, securedParams, inSecuredParams, externalCredParams, parameterType, extCredEntities);

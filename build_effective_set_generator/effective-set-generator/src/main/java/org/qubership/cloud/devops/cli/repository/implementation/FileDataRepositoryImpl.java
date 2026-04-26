@@ -43,6 +43,7 @@ import org.qubership.cloud.devops.commons.pojo.clouds.dto.CloudDTO;
 import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.consumer.Property;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum;
 import org.qubership.cloud.devops.commons.pojo.cs.CompositeStructureDTO;
 import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
@@ -339,6 +340,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 };
                 Map<String, CredentialDTO> credentialDTOMap = fileDataConverter.parseInputFile(typeReference, file.toFile());
                 if (credentialDTOMap != null) {
+                    validateUniformCredentialTypes(credentialDTOMap);
                     credentialDTOMap.replaceAll((id, cred) ->
                             CredentialDTO.builder().credentialsId(id)
                                     .data(cred.getData()).description(cred.getDescription()).build());
@@ -467,6 +469,21 @@ public class FileDataRepositoryImpl implements FileDataRepository {
         File secretFilePath = new File(secretStorePath);
         inputData.setSecretStoreDTOMap(fileDataConverter.parseInputFile(typeRef, secretFilePath));
 
+    }
+    private void validateUniformCredentialTypes(Map<String , CredentialDTO> credentials) {
+        boolean hasExternal = false;
+        boolean hasNonExternal = false;
+        for (CredentialDTO c : credentials.values()) {
+            if (c.getType() == CredentialsTypeEnum.external) {
+                hasExternal = true;
+            } else {
+                hasNonExternal = true;
+            }
+            if (hasExternal && hasNonExternal) {
+                throw new IllegalArgumentException("Exiting as mixture of external and non-external credentials is not allowed");
+            }
+        }
+        inputData.setExternalOnly(hasExternal);
     }
 
 }

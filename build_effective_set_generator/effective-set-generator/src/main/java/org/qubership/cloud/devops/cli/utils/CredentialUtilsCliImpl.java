@@ -47,6 +47,9 @@ public class CredentialUtilsCliImpl implements CredentialUtils {
         if (credentialDTO == null) {
             return null;
         }
+        if (credentialDTO.getType().equals(CredentialsTypeEnum.external)) {
+            return new ExternalCredentials(credentialDTO.getCreate(), credentialDTO.getSecretStore(), credentialDTO.getProperties(), credentialDTO.getRemoteRefPath());
+        }
         if (credentialDTO.getData() instanceof UsernamePasswordCredentialsDTO) {
             UsernamePasswordCredentialsDTO usernamePwdDTO = (UsernamePasswordCredentialsDTO)credentialDTO.getData();
             return new UsernamePasswordCredentials(usernamePwdDTO.getUsername(), usernamePwdDTO.getPassword());

@@ -42,6 +42,7 @@ import java.util.Optional;
 @ApplicationScoped
 public class InputData {
 
+    private boolean isExternalOnly;
     private TenantDTO tenantDTO;
     private CloudDTO cloudDTO;
     private CompositeStructureDTO compositeStructureDTO;

@@ -321,6 +321,7 @@ public class CliParameterParser {
         ExtCredEntities extCredEntities = ExtCredEntities.builder().build();
         extCredEntities.setExtCredentials(inputData.getCredentialDTOMap());
         extCredEntities.setSecretStores(inputData.getSecretStoreDTOMap());
+        extCredEntities.setExternalOnly(inputData.isExternalOnly());
         return extCredEntities;
     }
 
