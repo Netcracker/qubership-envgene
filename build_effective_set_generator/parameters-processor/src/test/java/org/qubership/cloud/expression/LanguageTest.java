@@ -17,6 +17,7 @@
 package org.qubership.cloud.expression;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.*;
 
 import org.qubership.cloud.BindingBaseTest;
 import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
@@ -153,32 +154,32 @@ public class LanguageTest extends BindingBaseTest {
 
         assertEquals(checkMap, map);
 
-        String tenantOrigin = String.format(ParametersConstants.TENANT_ORIGIN, "tenant");
+        String tenantOrigin = ParametersConstants.TENANT_ORIGIN;
         assertEquals(tenantOrigin, map.get("TENANT_PARAM").getOrigin());
 
-        String appOrigin = String.format(ParametersConstants.APP_ORIGIN, "application");
+        String appOrigin = APP_ORIGIN;
         assertEquals(appOrigin, map.get("APP_PARAM").getOrigin());
         assertEquals(appOrigin, map.get("TENANT_PARAM_OVERRIDE_BY_APP").getOrigin());
 
-        String cloudOrigin = String.format(ParametersConstants.CLOUD_ORIGIN, "tenant", "cloud");
+        String cloudOrigin = ParametersConstants.CLOUD_ORIGIN;
         assertEquals(cloudOrigin, map.get("CLOUD_PARAM").getOrigin());
         assertEquals(cloudOrigin, map.get("APP_PARAM_OVERRIDE_BY_CLOUD").getOrigin());
         assertEquals(cloudOrigin, map.get("TENANT_PARAM_OVERRIDE_BY_CLOUD").getOrigin());
 
-        String cloudAppOrigin = String.format(ParametersConstants.CLOUD_APP_ORIGIN, "tenant", "cloud", "application");
+        String cloudAppOrigin = CLOUD_ORIGIN;
         assertEquals(cloudAppOrigin, map.get("CLOUD_APP_PARAM").getOrigin());
         assertEquals(cloudAppOrigin, map.get("TENANT_PARAM_OVERRIDE_BY_CLOUD_APP").getOrigin());
         assertEquals(cloudAppOrigin, map.get("APP_PARAM_OVERRIDE_BY_CLOUD_APP").getOrigin());
         assertEquals(cloudAppOrigin, map.get("CLOUD_PARAM_OVERRIDE_BY_CLOUD_APP").getOrigin());
 
-        String nsOrigin = String.format(ParametersConstants.NS_ORIGIN, "tenant", "cloud", "namespace");
+        String nsOrigin = ParametersConstants.NS_ORIGIN;
         assertEquals(nsOrigin, map.get("NS_PARAM").getOrigin());
         assertEquals(nsOrigin, map.get("CLOUD_APP_PARAM_OVERRIDE_BY_NS").getOrigin());
         assertEquals(nsOrigin, map.get("CLOUD_PARAM_OVERRIDE_BY_NS").getOrigin());
         assertEquals(nsOrigin, map.get("APP_PARAM_OVERRIDE_BY_NS").getOrigin());
         assertEquals(nsOrigin, map.get("TENANT_PARAM_OVERRIDE_BY_NS").getOrigin());
 
-        String nsAppOrigin = String.format(ParametersConstants.NS_APP_ORIGIN, "tenant", "cloud", "namespace", "application");
+        String nsAppOrigin = NS_ORIGIN;
         assertEquals(nsAppOrigin, map.get("NS_APP_PARAM").getOrigin());
         assertEquals(nsAppOrigin, map.get("NS_PARAM_OVERRIDE_BY_NS_APP").getOrigin());
         assertEquals(nsAppOrigin, map.get("CLOUD_APP_PARAM_OVERRIDE_BY_NS_APP").getOrigin());

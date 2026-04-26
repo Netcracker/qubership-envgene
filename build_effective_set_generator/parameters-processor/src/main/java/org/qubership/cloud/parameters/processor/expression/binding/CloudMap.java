@@ -116,12 +116,12 @@ public class CloudMap extends DynamicMap {
                     }
                 }
             }
-            map.putIfAbsent("DBAAS_ENABLED", new Parameter(dbaas.isEnable(), cloudOrigin, false));
+            map.putIfAbsent("DBAAS_ENABLED", new Parameter(dbaas.isEnable(), ParametersConstants.CLOUD_ORIGIN, false));
         }
 
         MaaS maas = config.getMaas();
         if (maas != null) {
-            map.putIfAbsent("MAAS_ENABLED", new Parameter(maas.isEnable(), cloudOrigin, false));
+            map.putIfAbsent("MAAS_ENABLED", new Parameter(maas.isEnable(), ParametersConstants.CLOUD_ORIGIN, false));
             if (maas.isEnable()) {
                 //Deprecated. For backward compatibility. New name MAAS_EXTERNAL_ROUTE
                 map.put("MAAS_SERVICE_ADDRESS", maas.getMaasUrl());
@@ -144,7 +144,7 @@ public class CloudMap extends DynamicMap {
                 }
             }
         } else {
-            map.putIfAbsent("MAAS_ENABLED", new Parameter(false, cloudOrigin, false));
+            map.putIfAbsent("MAAS_ENABLED", new Parameter(false, ParametersConstants.CLOUD_ORIGIN, false));
         }
 
         Vault vaultConfig = config.getVault();
@@ -197,7 +197,7 @@ public class CloudMap extends DynamicMap {
             }
         }
 
-        map.put("PRODUCTION_MODE", new Parameter(config.isProductionMode(), cloudOrigin, false));
+        map.put("PRODUCTION_MODE", new Parameter(config.isProductionMode(), ParametersConstants.CLOUD_ORIGIN, false));
         map.put("namespace", new Parameter(new NamespaceMap(tenant, cloudName, defaultNamespace, defaultApp, binding, originalNamespace).init()));
         map.put("CLOUDNAME", cloudName);
         map.put("e2e", new Parameter(e2e));
@@ -216,7 +216,7 @@ public class CloudMap extends DynamicMap {
 
         // Deployer parameters
         String protocol = StringUtils.isNotBlank(config.getClProtocol()) ? config.getClProtocol() : "https";
-        String protocolOrigin = "https".equalsIgnoreCase(protocol) ? ENVGENE_CALCULATED : cloudOrigin;
+        String protocolOrigin = "https".equalsIgnoreCase(protocol) ? ENVGENE_CALCULATED : ParametersConstants.CLOUD_ORIGIN;
         map.putIfAbsent("CLOUD_PROTOCOL", protocol.toLowerCase(),protocolOrigin);
         map.putIfAbsent("CLOUD_API_HOST", config.getCloudApiUrl());
         if (StringUtils.isBlank(config.getCloudUrlPrv())) {
@@ -227,7 +227,7 @@ public class CloudMap extends DynamicMap {
         map.putIfAbsent("CLOUD_PUBLIC_HOST", config.getCloudUrlPub());
 
         String port = StringUtils.isNotBlank(config.getCloudApiPort()) ? config.getCloudApiPort() : "8443";
-        String portOrigin = "8443".equalsIgnoreCase(port) ? ENVGENE_CALCULATED : cloudOrigin;
+        String portOrigin = "8443".equalsIgnoreCase(port) ? ENVGENE_CALCULATED : ParametersConstants.CLOUD_ORIGIN;
         map.putIfAbsent("CLOUD_API_PORT ", port, portOrigin);
 
         maps.put(cloudName, map);
