@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+echo "===== SCRIPT START: $(date '+%H:%M:%S') ====="
+
 retries=0
 exit_code=0
 
@@ -330,5 +332,7 @@ if [ "$exit_code" -ne 0 ]; then
           echo "Final exit code: $exit_code"
       fi
 fi
+
+echo "===== SCRIPT END: $(date '+%H:%M:%S') ====="
 
 exit $exit_code
