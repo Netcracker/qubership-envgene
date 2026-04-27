@@ -3,20 +3,21 @@ package org.qubership.cloud.devops.cli.utils.yaml;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 
 public class AdaptiveYaml {
     private static final int ALIAS_RATIO_RANGE_LOW = 400000;
     private static final int ALIAS_RATIO_RANGE_HIGH = 4000000;
     private static final double ALIAS_RATIO_RANGE =
-            (double) ALIAS_RATIO_RANGE_HIGH - ALIAS_RATIO_RANGE_LOW;
+            (double) (ALIAS_RATIO_RANGE_HIGH - ALIAS_RATIO_RANGE_LOW);
 
-    static class Statistic {
+    private static class Statistic {
         int repeats = 0;
         int complexity = 0;
     }
 
-    static class Decoder {
+    private static class Decoder {
+        // For more code details, check https://github.com/go-yaml/yaml/blob/v3/decode.go
+        
         private final IdentityHashMap<Object, Statistic> unique = new IdentityHashMap<>();
         private int decodeCount = 0;
         private int aliasCount = 0;
@@ -28,8 +29,7 @@ public class AdaptiveYaml {
             }
 
 
-            if (unique.containsKey(node)) {
-                logInfo("inside unique="+System.identityHashCode(node));
+            if (unique.containsKey(node)) {                
                 return alias(node);
             }
 
@@ -70,8 +70,7 @@ public class AdaptiveYaml {
 
         private boolean isLimitExceeded(int alias, int decode, Object node ) {
             double rt = allowedAliasRatio(decode);
-            double ad = ((double) alias / decode);
-            logInfo("alias="+alias+" decode="+decode+" allowedAliasRatio="+rt + " alias/decode="+ad + " node="+System.identityHashCode(node));
+            double ad = ((double) alias / decode);            
 
             return alias > 100 &&
                     decode > 1000 &&
