@@ -97,9 +97,16 @@ public class FileDataConverterImpl implements FileDataConverter {
     @Override
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
         File file = fileSystemUtils.getFileFromGivenPath(args);
+
+        boolean expand = params != null && !params.isEmpty()
+                && AdaptiveYaml.shouldExpand(params);
+        if (expand) {
+            logInfo("removing anchors and aliases for file: " + file.getAbsolutePath());
+        }
+
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             if (params != null && !params.isEmpty()) {
-                getYamlObject(params).dump(params, writer);
+                getYamlObject(expand).dump(params, writer);
             }
         }
     }
@@ -113,13 +120,12 @@ public class FileDataConverterImpl implements FileDataConverter {
     }
 
 
-    private static Yaml getYamlObject(Map<String, Object> params) {
+    private static Yaml getYamlObject(boolean expand) {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
         options.setPrettyFlow(false);
-        if (AdaptiveYaml.shouldExpand(params)) {
-            System.out.println("removing anchors");
+        if (expand) {            
             options.setDereferenceAliases(true);
         }
         Representer representer = new Representer(options) {
