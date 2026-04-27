@@ -5,7 +5,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 1: Build
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:bugfix_security_issues_base_image AS build
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
 
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
@@ -45,7 +45,7 @@ RUN chmod 754 /module/scripts/* && \
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 2: Runtime
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:bugfix_security_issues_base_image AS runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
 
 COPY --from=build /module /module
 COPY --from=build /scripts/bg_manage /scripts/bg_manage
@@ -68,4 +68,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 USER root
 WORKDIR /module/scripts
 CMD ["bash"]
-
