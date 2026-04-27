@@ -1,4 +1,4 @@
-package org.qubership.cloud.devops.cli.repository.implementation;
+package org.qubership.cloud.devops.cli.utils.yaml;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
