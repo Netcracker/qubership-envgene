@@ -101,7 +101,7 @@ EnvGene simplifies Environment management by providing:
    ```
 
    > [!NOTE] For special instructions on the GitHub pipeline, see [GH_ADDITIONAL_PARAMS docs](/docs/instance-pipeline-parameters.md)
-   > and the [pipeline description](/github_workflows/instance-repo-pipeline/.github/docs/README.md)
+   > and the [pipeline description](/github_workflows/instance-repo-pipeline/.github/README.md)
 
 After the pipeline finishes, the Environment configuration will be generated and committed to your instance repository:
 

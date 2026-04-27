@@ -165,4 +165,4 @@ To switch back to GHCR:
 **GAR authentication step does not run:**
 
 - Confirm `DOCKER_CLOUD_REGISTRY_PROVIDER` is set to `GCP` (case-sensitive).
-- Variables are passed via `process_environment_variables` job outputs. Ensure the variable is not overridden in `config.env` or `pipeline_vars.env` with an empty value.
+- Variables are passed via `process_environment_variables` job outputs. Ensure the variable is not overridden in `pipeline_vars.env` with an empty value.

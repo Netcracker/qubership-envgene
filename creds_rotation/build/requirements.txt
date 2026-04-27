@@ -1,6 +1,6 @@
 pytest==7.4.3
 PyYAML==6.0.1
-jsonschema==4.19.1
+jsonschema==4.24.1
 attrs==23.2.0
 referencing==0.33.0
 rpds-py==0.17.1
