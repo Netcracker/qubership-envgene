@@ -69,7 +69,7 @@ global: &id001
       image_name: cloud-events-exporter
       image_type: service
       name: cloud-events-exporter
-      promote_artifacts: False
+      promote_artifacts: 'False'
       qualifier: prod.platform.system.monitoring_monitoring
       version: 0.91.0-SNAPSHOT
     cloud-events-reader:
@@ -123,7 +123,7 @@ global: &id001
       image_name: common-dashboards
       image_type: service
       name: common-dashboards
-      promote_artifacts: False
+      promote_artifacts: 'False'
       qualifier: prod.platform.system.monitoring_monitoring
       version: 0.91.0-SNAPSHOT
     configmap-reload:
@@ -321,7 +321,7 @@ global: &id001
       image_name: monitoring-operator
       image_type: service
       name: monitoring-operator
-      promote_artifacts: False
+      promote_artifacts: 'False'
       qualifier: prod.platform.system.monitoring_monitoring
       version: 0.91.0-SNAPSHOT
     network-latency-exporter:
@@ -627,7 +627,7 @@ global: &id001
       image_name: victoriametrics-operator
       image_type: service
       name: victoriametrics-operator
-      promote_artifacts: False
+      promote_artifacts: 'False'
       qualifier: prod.platform.system.monitoring_monitoring
       version: 0.91.0-SNAPSHOT
     vmagent:

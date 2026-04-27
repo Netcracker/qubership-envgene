@@ -15,7 +15,7 @@ global: &id001
       image_name: patroni-core
       image_type: service
       name: patroni-core
-      promote_artifacts: False
+      promote_artifacts: 'False'
       qualifier: prod.platform.ha_postgres
       version: 2.10.5-patroni-core-operator-SNAPSHOT
     pg_patroni:
