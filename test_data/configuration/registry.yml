@@ -1,0 +1,10 @@
+maven-central:
+  username: envgen.creds.get('maven-central').username
+  password: envgen.creds.get('maven-central').password
+  releaseRepository: "https://repo.maven.apache.org/maven2"
+  snapshotRepository: "https://oss.sonatype.org/content/repositories/snapshots"
+  stagingRepository: "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+  proxyRepository: "https://repo.maven.apache.org/maven2"
+  releaseTemplateRepository: "https://repo.maven.apache.org/maven2"
+  snapshotTemplateRepository: "https://oss.sonatype.org/content/repositories/snapshots"
+  stagingTemplateRepository: "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
