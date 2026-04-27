@@ -22,6 +22,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.cyclonedx.model.Bom;
 import org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage;
 import org.qubership.cloud.devops.cli.utils.deserializer.BomMixin;
+import org.qubership.cloud.devops.cli.utils.yaml.YamlFileWriter;
 import org.qubership.cloud.devops.commons.exceptions.FileParseException;
 import org.qubership.cloud.devops.commons.exceptions.JsonParseException;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
@@ -37,7 +38,6 @@ import org.yaml.snakeyaml.representer.Representer;
 import java.io.*;
 import java.util.Base64;
 import java.util.Map;
-import java.util.TreeMap;
 
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 
