@@ -41,7 +41,7 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 
 
 @ApplicationScoped
