@@ -15,7 +15,7 @@
  */
 
 
-package org.qubership.cloud.devops.cli.repository.implementation;
+package org.qubership.cloud.devops.cli.utils.yaml;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -101,6 +101,7 @@ public class YamlFileWriter {
         DumpSettings settings = DumpSettings.builder()
                 .setDumpComments(true)
                 .setDefaultFlowStyle(FlowStyle.BLOCK)
+                .setDereferenceAliases(AdaptiveYamlPython.shouldExpand(data))
                 .build();
 
         Dump dump = new Dump(settings);
