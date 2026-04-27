@@ -1,4 +1,4 @@
-# Getting Started with EnvGene: Your First Environment
+z# Getting Started with EnvGene: Your First Environment
 
 - [Getting Started with EnvGene: Your First Environment](#getting-started-with-envgene-your-first-environment)
   - [What You'll Learn](#what-youll-learn)
