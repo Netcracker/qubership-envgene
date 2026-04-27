@@ -15,6 +15,11 @@
     - [UC-EIG-TA-1: Environment Instance Generation with `artifact` only](#uc-eig-ta-1-environment-instance-generation-with-artifact-only)
     - [UC-EIG-TA-2: Environment Instance Generation with `artifact` and `bgNsArtifacts` and BG Domain](#uc-eig-ta-2-environment-instance-generation-with-artifact-and-bgnsartifacts-and-bg-domain)
     - [UC-EIG-TA-3: Environment Instance Generation with `artifact` and `bgNsArtifacts` and without BG Domain](#uc-eig-ta-3-environment-instance-generation-with-artifact-and-bgnsartifacts-and-without-bg-domain)
+  - [Effective Set Generation in Instance Pipeline](#effective-set-generation-in-instance-pipeline)
+    - [UC-EIG-ES-1: Generate Effective Set without `SD_DATA` or `SD_VERSION`](#uc-eig-es-1-generate-effective-set-without-sd_data-or-sd_version)
+    - [UC-EIG-ES-2: Generate Effective Set with `SD_DATA` or `SD_VERSION`](#uc-eig-es-2-generate-effective-set-with-sd_data-or-sd_version)
+    - [UC-EIG-ES-3: Apply `CUSTOM_PARAMS` when `GENERATE_EFFECTIVE_SET` is true](#uc-eig-es-3-apply-custom_params-when-generate_effective_set-is-true)
+    - [UC-EIG-ES-4: Ignore `CUSTOM_PARAMS` when `GENERATE_EFFECTIVE_SET` is false](#uc-eig-es-4-ignore-custom_params-when-generate_effective_set-is-false)
   - [Multiple Environments Processing](#multiple-environments-processing)
     - [UC-EIG-ME-1: Parallel Environment Instance Generation for Multiple Environments](#uc-eig-me-1-parallel-environment-instance-generation-for-multiple-environments)
 
@@ -449,6 +454,122 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 1. All Namespaces are rendered using `project-env-template:v1.2.3`
 2. All other objects (Tenant, Cloud, Applications, etc.) are rendered using `project-env-template:v1.2.3`
 3. `bgNsArtifacts` are ignored since BG Domain is absent
+
+## Effective Set Generation in Instance Pipeline
+
+This section describes Effective Set generation scenarios executed from the Instance pipeline.
+
+### UC-EIG-ES-1: Generate Effective Set without `SD_DATA` or `SD_VERSION`
+
+**Pre-requisites:**
+
+1. Environment Inventory exists and can be processed by the Instance pipeline.
+2. Pipeline parameters include:
+   1. `ENV_BUILDER: true`
+   2. `GENERATE_EFFECTIVE_SET: true`
+   3. `SD_DATA` is empty or not set
+   4. `SD_VERSION` is empty or not set
+
+**Trigger:**
+
+Instance build pipeline with Effective Set enabled is started for one or more environments.
+
+**Steps:**
+
+1. The `env_builder` job runs and generates Environment Instance objects.
+2. The `process_sd` job is skipped because neither `SD_DATA` nor `SD_VERSION` is provided.
+3. The `generate_effective_set` job runs without SD input parameters.
+
+**Results:**
+
+1. `env_builder` job finishes successfully.
+2. `generate_effective_set` job finishes successfully.
+3. Generated Effective Set does not include data merged from SD input.
+
+### UC-EIG-ES-2: Generate Effective Set with `SD_DATA` or `SD_VERSION`
+
+**Pre-requisites:**
+
+1. Environment Inventory exists and can be processed by the Instance pipeline.
+2. Pipeline parameters include:
+   1. `ENV_BUILDER: true`
+   2. `GENERATE_EFFECTIVE_SET: true`
+   3. At least one SD input is set:
+      - `SD_DATA`, or
+      - `SD_VERSION`
+
+**Trigger:**
+
+Instance build pipeline with Effective Set enabled is started for one or more environments.
+
+**Steps:**
+
+1. The `env_builder` job runs and generates Environment Instance objects.
+2. The `process_sd` job runs when SD input matches `SD_SOURCE_TYPE`:
+   1. `SD_SOURCE_TYPE=json` and `SD_DATA` is provided, or
+   2. `SD_SOURCE_TYPE=artifact` and `SD_VERSION` is provided.
+3. The `generate_effective_set` job runs with processed SD input.
+
+**Results:**
+
+1. `env_builder` job finishes successfully.
+2. `process_sd` job runs and finishes successfully.
+3. `generate_effective_set` job finishes successfully.
+4. Generated Effective Set includes data resolved from provided SD input.
+
+### UC-EIG-ES-3: Apply `CUSTOM_PARAMS` when `GENERATE_EFFECTIVE_SET` is true
+
+**Pre-requisites:**
+
+1. Environment Inventory exists and can be processed by the Instance pipeline.
+2. Pipeline parameters include:
+   1. `ENV_BUILDER: true`
+   2. `GENERATE_EFFECTIVE_SET: true`
+   3. `CUSTOM_PARAMS` contains one or more key-value pairs
+
+**Trigger:**
+
+Instance build pipeline with Effective Set enabled is started for one or more environments.
+
+**Steps:**
+
+1. The `env_builder` job runs and generates Environment Instance objects.
+2. The `generate_effective_set` job runs.
+3. The `generate_effective_set` job applies values from `CUSTOM_PARAMS`.
+
+**Results:**
+
+1. `env_builder` job finishes successfully.
+2. `generate_effective_set` job finishes successfully.
+3. Values from `CUSTOM_PARAMS` are applied in generated Effective Set according to merge rules.
+
+### UC-EIG-ES-4: Ignore `CUSTOM_PARAMS` when `GENERATE_EFFECTIVE_SET` is false
+
+**Pre-requisites:**
+
+1. Environment Inventory exists and can be processed by the Instance pipeline.
+2. Pipeline parameters include:
+   1. `ENV_BUILDER: true`
+   2. `GENERATE_EFFECTIVE_SET: false`
+   3. `CUSTOM_PARAMS` contains one or more key-value pairs
+
+**Trigger:**
+
+Instance build pipeline is started for one or more environments with:
+
+1. `GENERATE_EFFECTIVE_SET: false`
+
+**Steps:**
+
+1. The `env_builder` job runs and generates Environment Instance objects.
+2. The `generate_effective_set` job is skipped because `GENERATE_EFFECTIVE_SET` is false.
+
+**Results:**
+
+1. `env_builder` job finishes successfully.
+2. `generate_effective_set` job is not created.
+3. Environment Instance generation completes without Effective Set output.
+4. `CUSTOM_PARAMS` are ignored.
 
 ## Multiple Environments Processing
 

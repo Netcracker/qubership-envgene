@@ -9,7 +9,7 @@ User Guide
 
 </div>
 
-![EnvGene Workflow](assets/envgene-workflow-header.png)
+![EnvGene Workflow](docs/assets/envgene-workflow-header.png)
 
 - [EnvGene GitHub Workflow](#envgene-github-workflow)
   - [Overview](#overview)
@@ -136,8 +136,7 @@ See [Repository Variables (vars)](#repository-variables-vars) for details. For a
 
 ### Step 4: Optional — Customize Configuration
 
-- **`.github/configuration/config.env`** — Base pipeline configuration (e.g. `CI_PROJECT_DIR`, `GITHUB_USER_*`). Edit if you need different defaults.
-- **`.github/pipeline_vars.env`** — Override pipeline parameters for debugging or recurring runs. Leave empty or add variables as needed.
+- **`.github/pipeline_vars.env`** — Optional overrides loaded by the workflow (for example debugging or recurring runs). Leave empty or add variables as needed. Default pipeline settings live in the `env:` block of `.github/workflows/Envgene.yml`.
 
 ### Verifying the Setup
 
@@ -177,7 +176,7 @@ The following sections describe each step in the pipeline as defined in `Envgene
 | Step                            | Description                                                  |
 |---------------------------------|--------------------------------------------------------------|
 | Repository Checkout             | Checks out the repository (without persisting credentials)   |
-| Load environment variables      | Loads `config.env` and `pipeline_vars.env` into `GITHUB_ENV` |
+| Load environment variables      | Loads `pipeline_vars.env` into `GITHUB_ENV` |
 | Process Input Parameters        | Exports workflow inputs to environment                       |
 | Process additional variables    | Parses `GH_ADDITIONAL_PARAMS` and adds to environment        |
 | Create env_generation_params    | Builds `ENV_GENERATION_PARAMS` JSON from SD/ENV variables    |
@@ -356,7 +355,7 @@ The variable must be present in `GITHUB_ENV` after the `process_environment_vari
 
 - A workflow input (and the "Process Input Parameters" step)
 - `GH_ADDITIONAL_PARAMS` (parsed by `process_additional_variables.sh`)
-- `pipeline_vars.env` or `config.env` (loaded by `load-env-files`)
+- `pipeline_vars.env` (loaded by `load-env-files`)
 
 ### Step 2: Expose the Variable as a Job Output
 
@@ -495,7 +494,7 @@ GHCR is the default registry. No additional configuration is required.
 
 **Authentication:** GitHub Actions automatically authenticates to `ghcr.io` using `GITHUB_TOKEN` when pulling images. No extra secrets are needed.
 
-**Image names:** The workflow builds image paths as `$DOCKER_REGISTRY/qubership-envgene`, `$DOCKER_REGISTRY/qubership-pipegene`, etc. For GHCR, the full path is `ghcr.io/netcracker/qubership-envgene:1.31.9`.
+**Image names:** The workflow builds image paths as `$DOCKER_REGISTRY/qubership-envgene`, `$DOCKER_REGISTRY/qubership-pipegene`, etc. For GHCR, the full path is `ghcr.io/netcracker/qubership-envgene:1.31.18` (see `DOCKER_IMAGE_TAG_*` in `.github/workflows/Envgene.yml`).
 
 ### Google Artifact Registry (GAR)
 
@@ -574,14 +573,13 @@ Replace `<YOUR_GITHUB_TOKEN>`, `<OWNER>`, `<REPO>`, and `main` as needed.
 
 ```text
 instance-repo-pipeline/
-├── README.md                    # This file
 └── .github/
+    ├── README.md                # This guide (EnvGene GitHub workflow)
+    ├── docs/
+    │   └── assets/
+    │       └── envgene-workflow-header.png
     ├── actions/
     │   └── load-env-files/      # Loads .env files into GITHUB_ENV
-    ├── configuration/
-    │   └── config.env           # Base pipeline configuration
-    ├── docs/
-    │   └── README.md            # Additional usage notes
     ├── scripts/
     │   ├── generate_env_matrix.sh           # Builds environment matrix from ENV_NAMES
     │   ├── process_additional_variables.sh  # Parses GH_ADDITIONAL_PARAMS
