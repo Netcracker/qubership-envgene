@@ -18,7 +18,9 @@ package org.qubership.cloud.devops.commons.utils;
 
 import lombok.experimental.UtilityClass;
 import org.apache.commons.collections4.MapUtils;
+import org.qubership.cloud.devops.commons.pojo.extcreds.ExtCredEntities;
 import org.qubership.cloud.devops.commons.pojo.parameterset.CustomParameterDTO;
+import org.qubership.cloud.devops.commons.utils.extcreds.ExternalCredUtils;
 
 import java.util.*;
 
@@ -32,25 +34,40 @@ public class ParameterUtils {
     public static void splitBySecure(
             Map<String, Parameter> input,
             Map<String, Parameter> secureOut,
-            Map<String, Parameter> insecureOut
+            Map<String, Parameter> insecureOut,
+            Map<String, Parameter> paramsWithExtCredsOut,
+            ExtCredEntities extCredEntities
     ) {
         input.entrySet().forEach(entry -> {
             String key = entry.getKey();
             Parameter param = entry.getValue();
             Object value = param.getValue();
             if (value instanceof Map<?, ?>) {
+                Map<String, Parameter> valueMap = (Map<String, Parameter>) value;
+                if (paramsWithExtCredsOut != null) {
+                    Object finalVal = ExternalCredUtils.getFinalParam(valueMap, extCredEntities.getRefShape(), extCredEntities.getExtCredentials(), extCredEntities.getSecretStores());
+                    if (finalVal != null) {
+                        paramsWithExtCredsOut.put(key, copyOldValues(param, finalVal));
+                        return; // skip further processing for this branch
+                    }
+                }
                 Map<String, Parameter> secureChild = new LinkedHashMap<>();
                 Map<String, Parameter> insecureChild = new LinkedHashMap<>();
-                splitBySecure((Map<String, Parameter>) value, secureChild, insecureChild);
+                Map<String, Parameter> externalChild = new LinkedHashMap<>();
+                splitBySecure((Map<String, Parameter>) value, secureChild, insecureChild, externalChild, extCredEntities);
                 if (!secureChild.isEmpty()) {
                     secureOut.put(key, copyOldValues(param, secureChild));
                 }
                 if (!insecureChild.isEmpty()) {
                     insecureOut.put(key, copyOldValues(param, insecureChild));
                 }
+                if (!externalChild.isEmpty()) {
+                    paramsWithExtCredsOut.put(key, copyOldValues(param, externalChild));
+                }
             } else if (value instanceof List<?>) {
                 List<Object> secureList = new ArrayList<>();
                 List<Object> insecureList = new ArrayList<>();
+                List<Object> externalList = new ArrayList<>();
                 for (Object item : (List<?>) value) {
                     if (item instanceof Parameter) {
                         Parameter itemParam = (Parameter) item;
@@ -58,12 +75,24 @@ public class ParameterUtils {
                         if (itemVal instanceof Map<?, ?>) {
                             Map<String, Parameter> secureNested = new LinkedHashMap<>();
                             Map<String, Parameter> insecureNested = new LinkedHashMap<>();
-                            splitBySecure((Map<String, Parameter>) itemVal, secureNested, insecureNested);
+                            Map<String, Parameter> externalNested = new LinkedHashMap<>();
+                            Map<String, Parameter> valueMap = (Map<String, Parameter>) itemVal;
+                            if (paramsWithExtCredsOut != null) {
+                                Object finalVal = ExternalCredUtils.getFinalParam(valueMap, extCredEntities.getRefShape(), extCredEntities.getExtCredentials(), extCredEntities.getSecretStores());
+                                if (finalVal != null) {
+                                    paramsWithExtCredsOut.put(key, copyOldValues(param, finalVal));
+                                    continue; // skip further processing for this branch
+                                }
+                            }
+                            splitBySecure((Map<String, Parameter>) itemVal, secureNested, insecureNested, externalNested, extCredEntities);
                             if (!secureNested.isEmpty()) {
                                 secureList.add(copyOldValues(itemParam, secureNested));
                             }
                             if (!insecureNested.isEmpty()) {
                                 insecureList.add(copyOldValues(itemParam, insecureNested));
+                            }
+                            if (!externalNested.isEmpty()) {
+                                externalList.add(copyOldValues(itemParam, externalNested));
                             }
                         } else {
                             if (itemParam.isSecured()) {
@@ -82,6 +111,9 @@ public class ParameterUtils {
                 if (!insecureList.isEmpty()) {
                     insecureOut.put(key, copyOldValues(param, insecureList));
                 }
+                if (!externalList.isEmpty()) {
+                    paramsWithExtCredsOut.put(key, copyOldValues(param, externalList));
+                }
 
             } else {
                 if (param.isSecured()) {
@@ -91,6 +123,14 @@ public class ParameterUtils {
                 }
             }
         });
+    }
+
+    private static boolean isExternalCred(Map<String, Parameter> map) {
+        Parameter typeParam = map.get("$type");
+        if (typeParam != null && typeParam.getValue() instanceof String) {
+            return "credRef".equals(typeParam.getValue());
+        }
+        return false;
     }
 
     private static Parameter copyOldValues(Parameter original, Object newValue) {
