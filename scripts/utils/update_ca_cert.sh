@@ -84,12 +84,7 @@ function updateCertificates {
         echo "certs from ${CA_FILE} added to trusted root"
         export REQUESTS_CA_BUNDLE=/etc/pki/tls/certs/ca-bundle.crt #https://techjourney.net/update-add-ca-certificates-bundle-in-redhat-centos/
       elif [[ "${DIST}" == *"alpine"* ]]; then
-        mkdir -p /usr/local/share/ca-certificates
         cp "${CA_FILE}" "/usr/local/share/ca-certificates/${LOCAL_NAME}"
-        ls -l /usr/local/share/ca-certificates/
-        echo "PATH=$PATH"
-        which update-ca-certificates || true
-        ls -l /usr/sbin/update-ca-certificates
         update-ca-certificates
         echo "certs from ${CA_FILE} added to trusted root"
         export REQUESTS_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
