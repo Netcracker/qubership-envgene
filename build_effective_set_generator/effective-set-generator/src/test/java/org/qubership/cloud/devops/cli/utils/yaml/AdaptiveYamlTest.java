@@ -17,7 +17,7 @@ public class AdaptiveYamlTest {
         root.put("a", Map.of("x", 1));
         root.put("b", Map.of("y", 2));
 
-        boolean result = AdaptiveYamlPython.shouldExpand(root);
+        boolean result = AdaptiveYaml.shouldExpand(root);
 
         assertFalse(result);
     }
@@ -31,7 +31,7 @@ public class AdaptiveYamlTest {
         root.put("a", shared);
         root.put("b", shared);
 
-        boolean result = AdaptiveYamlPython.shouldExpand(root);
+        boolean result = AdaptiveYaml.shouldExpand(root);
 
         assertFalse(result);
     }
@@ -47,7 +47,7 @@ public class AdaptiveYamlTest {
             list.add(shared);
         }
 
-        boolean result = AdaptiveYamlPython.shouldExpand(list);
+        boolean result = AdaptiveYaml.shouldExpand(list);
 
         assertTrue(result);
     }
