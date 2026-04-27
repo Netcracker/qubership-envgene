@@ -198,8 +198,21 @@ public class YamlFileWriter {
             return new ScalarNode(Tag.STR, "<<", ScalarStyle.PLAIN);
         }
         boolean multiline = str.contains("\n");
-        ScalarStyle scalarStyle = multiline ? ScalarStyle.LITERAL : ScalarStyle.PLAIN;
-        CommentType commentType = multiline ? CommentType.BLOCK : CommentType.IN_LINE;
+        // Force quoting for boolean-like strings
+        boolean looksLikeBoolean = "True".equals(str) || "False".equals(str);
+        ScalarStyle scalarStyle;
+        CommentType commentType;
+
+        if (multiline) {
+            scalarStyle = ScalarStyle.LITERAL;
+            commentType = CommentType.BLOCK;
+        } else if (looksLikeBoolean) {
+            scalarStyle = ScalarStyle.SINGLE_QUOTED;
+            commentType = CommentType.IN_LINE;
+        } else {
+            scalarStyle = ScalarStyle.PLAIN;
+            commentType = CommentType.IN_LINE;
+        }
         return attachComment(new ScalarNode(Tag.STR, str, scalarStyle), origin, addComment, commentType);
     }
 
