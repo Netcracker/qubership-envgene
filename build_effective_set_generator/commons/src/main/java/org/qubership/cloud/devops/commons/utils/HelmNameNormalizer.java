@@ -44,7 +44,7 @@ public class HelmNameNormalizer {
         }
 
         // Convert binary mask to decimal
-        int decimalMask = Integer.parseInt(mask.toString(), 2);
+        long decimalMask = Long.parseLong(mask.toString(), 2);
 
         // Encode decimal mask in base-36 using custom symbols
         List<Integer> base36Digits = numberToBase(decimalMask, 36);
@@ -62,14 +62,14 @@ public class HelmNameNormalizer {
         return finalName;
     }
 
-    private static List<Integer> numberToBase(int number, int base) {
+    private static List<Integer> numberToBase(long number, int base) {
         List<Integer> digits = new ArrayList<>();
         if (number == 0) {
             digits.add(0);
             return digits;
         }
         while (number > 0) {
-            digits.add(0, number % base);
+            digits.add(0, (int)(number % base));
             number /= base;
         }
         return digits;

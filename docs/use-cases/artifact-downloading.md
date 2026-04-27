@@ -21,6 +21,7 @@
     - [UC-AD-ENV-9: Download Template from Artifactory with GAV notation](#uc-ad-env-9-download-template-from-artifactory-with-gav-notation)
     - [UC-AD-ENV-10: Download Template from Artifactory with GAV notation and Anonymous Access](#uc-ad-env-10-download-template-from-artifactory-with-gav-notation-and-anonymous-access)
     - [UC-AD-ENV-11: Download Template from Nexus with GAV notation](#uc-ad-env-11-download-template-from-nexus-with-gav-notation)
+    - [UC-SC-NEX-1: Download template artifact from Nexus with custom CA certificate](#uc-sc-nex-1-download-template-artifact-from-nexus-with-custom-ca-certificate)
     - [UC-AD-ENV-12: Download Template from Nexus with GAV notation and Anonymous Access](#uc-ad-env-12-download-template-from-nexus-with-gav-notation-and-anonymous-access)
     - [UC-AD-ENV-13: Download Template with app ver notation from Artifactory (ArtDef v1)](#uc-ad-env-13-download-template-with-app-ver-notation-from-artifactory-artdef-v1)
     - [UC-AD-ENV-14: Download Template with app ver notation from Artifactory and Anonymous Access (ArtDef v1)](#uc-ad-env-14-download-template-with-app-ver-notation-from-artifactory-and-anonymous-access-artdef-v1)
@@ -592,6 +593,39 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. Template artifact is downloaded successfully
 2. Template is available for Environment Instance generation
+
+### UC-SC-NEX-1: Download template artifact from Nexus with custom CA certificate
+
+**Pre-requisites:**
+
+1. Template artifact is uploaded to Nexus and available for download.
+2. Environment Inventory exists and specifies template with GAV notation.
+3. `registry.yml` exists with Nexus configuration and credentials.
+4. Nexus endpoint uses certificate chain signed by private or internal CA.
+5. Instance repository contains CA certificate chain file in `configuration/certs/`.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `ENV_BUILDER: true`
+
+**Steps:**
+
+1. The `app_reg_def_process` job runs in the pipeline:
+   1. Reads Environment Inventory.
+   2. Parses GAV coordinates from `templateArtifact` section.
+   3. Resolves registry from `registry.yml`.
+   4. Loads CA certificates from `configuration/certs/` into runner trust.
+   5. Authenticates using credentials.
+   6. Connects to Nexus over TLS and downloads template artifact.
+
+**Results:**
+
+1. TLS connection to Nexus is established successfully.
+2. Template artifact is downloaded successfully.
+3. No `CERTIFICATE_VERIFY_FAILED` or trust errors appear in logs.
 
 ### UC-AD-ENV-12: Download Template from Nexus with GAV notation and Anonymous Access
 
