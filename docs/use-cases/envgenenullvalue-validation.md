@@ -38,8 +38,7 @@ description.
 Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. `ENV_NAMES: <cluster-name>/<env-name>`
-2. `ENV_BUILDER: false`
-3. `GENERATE_EFFECTIVE_SET: true`
+2. `GENERATE_EFFECTIVE_SET: true`
 
 **Steps:**
 
@@ -85,8 +84,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. `ENV_NAMES: <cluster-name>/<env-name>`
-2. `ENV_BUILDER: false`
-3. `GENERATE_EFFECTIVE_SET: true`
+2. `GENERATE_EFFECTIVE_SET: true`
 
 **Steps:**
 
@@ -122,8 +120,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. `ENV_NAMES: <cluster-name>/<env-name>`
-2. `ENV_BUILDER: false`
-3. `CMDB_IMPORT: true`
+2. `CMDB_IMPORT: true`
 
 **Steps:**
 
@@ -159,8 +156,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. `ENV_NAMES: <cluster-name>/<env-name>`
-2. `ENV_BUILDER: false`
-3. `CMDB_IMPORT: true`
+2. `CMDB_IMPORT: true`
 
 **Steps:**
 
@@ -197,12 +193,10 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. Instance pipeline (GitLab or GitHub) is started with parameters:
     1. `ENV_NAMES: <cluster-name>/<env-name>`
-    2. `ENV_BUILDER: false`
-    3. `GENERATE_EFFECTIVE_SET: true`
+    2. `GENERATE_EFFECTIVE_SET: true`
 2. Instance pipeline (GitLab or GitHub) is started with parameters:
     1. `ENV_NAMES: <cluster-name>/<env-name>`
-    2. `ENV_BUILDER: false`
-    3. `CMDB_IMPORT: true`
+    2. `CMDB_IMPORT: true`
 
 **Steps:**
 
