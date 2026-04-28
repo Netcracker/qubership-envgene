@@ -30,6 +30,11 @@ Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipelin
 [`env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
 
 ```yaml
+# Optional
+# Free-form metadata map. Structure is not specified.
+# NOT set manually by users and NOT processed by EnvGene.
+# Used exclusively by Colly, which saves and reads these values for its own use cases.
+metadata: hashmap
 # Mandatory
 inventory:
   # Optional
@@ -144,6 +149,19 @@ envTemplate:
   # Following parameters are automatically generated during job and display that application:version artifact
   # of template was used for last Environment generation
   generatedVersions: hashmap
+# Optional
+# Security-related parameters of the Environment.
+# NOT set manually by users and NOT processed by EnvGene.
+# Used exclusively by Colly, which saves and reads these values for its own use cases.
+security:
+  # Optional
+  # List of access groups directly assigned to the Environment
+  accessGroups:
+    - string
+  # Optional
+  # List of effective access groups (assigned plus inherited/derived)
+  effectiveAccessGroups:
+    - string
 ```
 
 Basic example with minimal set of fields:
