@@ -1,0 +1,13 @@
+name: "env-1-bg-domain"
+type: bgdomain
+originNamespace:
+  name: "pl-01-monitoring"
+  type: namespace
+peerNamespace:
+  name: "pl-01-pg-test"
+  type: namespace
+controllerNamespace:
+  name: "env-1-bg-controller"
+  type: namespace
+  credentials: creds-get-password-cred
+  url: https://controller-env-1-controller.qubership.org
