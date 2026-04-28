@@ -107,7 +107,8 @@ class AdaptiveYamlPythonTest {
         Map<String, Object> root = new LinkedHashMap<>();
         root.put("refs", manyRefs);
 
-        YamlFileWriter yamlFileWriter = new YamlFileWriter(fs, sharedData, new YamlNodeBuilder());
+        YamlFileWriter yamlFileWriter = new YamlFileWriter(
+                fs, sharedData, new YamlNodeBuilder(new YamlNodeCommentHelper(), new YamlReferenceCounter()));
         yamlFileWriter.write(root, "ignored");
 
         String content = Files.readString(outputFile.toPath());
