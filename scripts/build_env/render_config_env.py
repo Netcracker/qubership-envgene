@@ -334,7 +334,6 @@ class EnvGenerator:
             self.render_from_obj_to_file(template_override, template_path)
 
     def generate_cloud_file(self):
-
         cloud = self.calculate_cloud_name()
         cloud_template = self.ctx.current_env_template["cloud"]
         current_env_dir = self.ctx.current_env_dir
@@ -406,14 +405,13 @@ class EnvGenerator:
             inv.get("cloudName"),
             inv.get("passportCloudName", "").replace("-", "_") if inv.get("passportCloudName") else "",
             inv.get("cloudPassport", "").replace("-", "_") if inv.get("cloudPassport") else "",
-            # cluster_name.replace("-", "_") if cluster_name else "",
             inv.get("environmentName", "").replace("-", "_"),
             f"{cluster_name}_{inv.get('environmentName', '')}".replace("-", "_")
             if cluster_name and inv.get("environmentName") else ""
         ]
-    
+
         return next((c for c in candidates if c), "")
-      
+
     def get_template_name(self, template_path: str) -> str:
         template_path = Path(template_path)
         return (
@@ -599,10 +597,8 @@ class EnvGenerator:
             self.setup_base_context(extra_env)
             all_vars = self.ctx.env_vars
             current_env = self.ctx.current_env
-          
 
             self.ctx.cloud = self.calculate_cloud_name()
-        
             self.ctx.tenant = current_env.get("tenant", '')
             self.ctx.deployer = current_env.get('deployer', '')
             self.ctx.bgd = current_env.get('bg_domain', '')
