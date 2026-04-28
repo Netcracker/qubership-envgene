@@ -21,7 +21,6 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
-import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.snakeyaml.engine.v2.api.Dump;
 import org.snakeyaml.engine.v2.api.DumpSettings;
 import org.snakeyaml.engine.v2.api.StreamDataWriter;
@@ -33,11 +32,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @ApplicationScoped
 @Slf4j
@@ -81,20 +77,7 @@ public class YamlFileWriter {
     }
 
     public String dump(Map<String, Object> data, boolean enableTraceability, boolean deployDescriptorYaml) {
-        Map<Object, Integer> refCount = new HashMap<>();
-        countReferences(data, refCount);
-
-        Map<Object, Node> builtNodes = new HashMap<>();
-        AtomicInteger nextAnchorId = new AtomicInteger(1);
-
-        Node root = yamlNodeBuilder.build(
-                data,
-                enableTraceability,
-                deployDescriptorYaml,
-                refCount,
-                builtNodes,
-                nextAnchorId
-        );
+        Node root = yamlNodeBuilder.build(data, enableTraceability, deployDescriptorYaml);
 
         DumpSettings settings = DumpSettings.builder()
                 .setDumpComments(true)
@@ -109,34 +92,5 @@ public class YamlFileWriter {
     }
 
     private static final class StringStreamWriter extends StringWriter implements StreamDataWriter {
-    }
-
-    private void countReferences(Object obj, Map<Object, Integer> refCount) {
-        if (obj == null) {
-            return;
-        }
-
-        Object value = (obj instanceof Parameter p) ? p.getValue() : obj;
-        if (value instanceof Map<?, ?> map) {
-            if (incrementAndCheckVisited(map, refCount)) {
-                return;
-            }
-            for (Object v : map.values()) {
-                countReferences(v, refCount);
-            }
-        } else if (value instanceof List<?> list) {
-            if (incrementAndCheckVisited(list, refCount)) {
-                return;
-            }
-            for (Object item : list) {
-                countReferences(item, refCount);
-            }
-        }
-    }
-
-    boolean incrementAndCheckVisited(Object obj, Map<Object, Integer> refCount) {
-        int count = refCount.getOrDefault(obj, 0);
-        refCount.put(obj, count + 1);
-        return count > 0;
     }
 }

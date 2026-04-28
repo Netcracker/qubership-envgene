@@ -17,14 +17,11 @@
 package org.qubership.cloud.devops.cli.utils.yaml;
 
 import jakarta.enterprise.context.ApplicationScoped;
-import org.apache.commons.lang3.StringUtils;
+import jakarta.inject.Inject;
 import org.qubership.cloud.devops.commons.utils.Parameter;
-import org.snakeyaml.engine.v2.comments.CommentLine;
 import org.snakeyaml.engine.v2.comments.CommentType;
-import org.snakeyaml.engine.v2.common.Anchor;
 import org.snakeyaml.engine.v2.common.FlowStyle;
 import org.snakeyaml.engine.v2.common.ScalarStyle;
-import org.snakeyaml.engine.v2.nodes.AnchorNode;
 import org.snakeyaml.engine.v2.nodes.MappingNode;
 import org.snakeyaml.engine.v2.nodes.Node;
 import org.snakeyaml.engine.v2.nodes.NodeTuple;
@@ -33,21 +30,28 @@ import org.snakeyaml.engine.v2.nodes.SequenceNode;
 import org.snakeyaml.engine.v2.nodes.Tag;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.SBOM_ORIGIN;
 
 @ApplicationScoped
 public class YamlNodeBuilder {
+    private final YamlNodeCommentHelper commentHelper;
+    private final YamlReferenceCounter referenceCounter;
 
-    public Node build(Object input, boolean enableTraceability, boolean deployDescriptorYaml,
-                      Map<Object, Integer> refCount, Map<Object, Node> builtNodes, AtomicInteger nextAnchorId) {
+    @Inject
+    public YamlNodeBuilder(YamlNodeCommentHelper commentHelper, YamlReferenceCounter referenceCounter) {
+        this.commentHelper = commentHelper;
+        this.referenceCounter = referenceCounter;
+    }
+
+    public Node build(Object input, boolean enableTraceability, boolean deployDescriptorYaml) {
+        YamlAnchorRegistry anchorRegistry = new YamlAnchorRegistry(referenceCounter.countReferences(input));
+        return build(input, enableTraceability, deployDescriptorYaml, anchorRegistry);
+    }
+
+    private Node build(Object input, boolean enableTraceability, boolean deployDescriptorYaml,
+                       YamlAnchorRegistry anchorRegistry) {
 
         String origin = null;
         Object value = input;
@@ -57,7 +61,7 @@ public class YamlNodeBuilder {
             value = p.getValue();
         }
 
-        boolean addComment = shouldAddComment(enableTraceability, origin, deployDescriptorYaml);
+        boolean addComment = commentHelper.shouldAddComment(enableTraceability, origin, deployDescriptorYaml);
 
         if (value == null) {
             return scalarNode("null", Tag.NULL, origin, addComment);
@@ -76,11 +80,11 @@ public class YamlNodeBuilder {
         }
 
         if (value instanceof List<?> list) {
-            return handleList(list, origin, addComment, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
+            return handleList(list, origin, addComment, enableTraceability, deployDescriptorYaml, anchorRegistry);
         }
 
         if (value instanceof Map<?, ?> map) {
-            return handleMap(map, origin, addComment, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
+            return handleMap(map, origin, addComment, enableTraceability, deployDescriptorYaml, anchorRegistry);
         }
 
         return scalarNode(value.toString(), Tag.STR, origin, addComment);
@@ -105,7 +109,7 @@ public class YamlNodeBuilder {
             scalarStyle = ScalarStyle.PLAIN;
             commentType = CommentType.IN_LINE;
         }
-        return attachComment(new ScalarNode(Tag.STR, str, scalarStyle), origin, addComment, commentType);
+        return commentHelper.attachComment(new ScalarNode(Tag.STR, str, scalarStyle), origin, addComment, commentType);
     }
 
     private Node handleNumber(Number num, String origin, boolean addComment) {
@@ -114,131 +118,77 @@ public class YamlNodeBuilder {
     }
 
     private Node handleList(List<?> list, String origin, boolean addComment, boolean enableTraceability,
-                            boolean deployDescriptorYaml, Map<Object, Integer> refCount, Map<Object, Node> builtNodes,
-                            AtomicInteger nextAnchorId) {
+                            boolean deployDescriptorYaml, YamlAnchorRegistry anchorRegistry) {
 
         if (list.isEmpty()) {
             return createEmptyListNode(origin, addComment);
         }
 
-        return buildSequenceNode(list, origin, addComment, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
+        return buildSequenceNode(list, origin, addComment, enableTraceability, deployDescriptorYaml, anchorRegistry);
     }
 
     private Node handleMap(Map<?, ?> map, String origin, boolean addComment, boolean enableTraceability,
-                           boolean deployDescriptorYaml, Map<Object, Integer> refCount, Map<Object, Node> builtNodes,
-                           AtomicInteger nextAnchorId) {
+                           boolean deployDescriptorYaml, YamlAnchorRegistry anchorRegistry) {
 
         if (map.isEmpty()) {
             return createEmptyMapNode(origin, addComment);
         }
 
-        return buildMappingNode(map, origin, addComment, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
+        return buildMappingNode(map, origin, addComment, enableTraceability, deployDescriptorYaml, anchorRegistry);
     }
 
     private Node scalarNode(String value, Tag tag, String origin, boolean addComment) {
-        return attachComment(new ScalarNode(tag, value, ScalarStyle.PLAIN), origin, addComment, CommentType.IN_LINE);
+        return commentHelper.attachComment(new ScalarNode(tag, value, ScalarStyle.PLAIN), origin, addComment, CommentType.IN_LINE);
     }
 
     private Node buildSequenceNode(List<?> list, String origin, boolean addComment, boolean enableTraceability,
-                                   boolean deployDescriptorYaml, Map<Object, Integer> refCount, Map<Object, Node> builtNodes,
-                                   AtomicInteger nextAnchorId) {
-
-        boolean anchorable = shouldAnchor(list, refCount);
-        if (anchorable && builtNodes.containsKey(list)) {
-            return new AnchorNode(builtNodes.get(list));
+                                   boolean deployDescriptorYaml, YamlAnchorRegistry anchorRegistry) {
+        Node aliasNode = anchorRegistry.getAliasNodeIfExists(list);
+        if (aliasNode != null) {
+            return aliasNode;
         }
 
         List<Node> children = new ArrayList<>();
         SequenceNode seqNode = new SequenceNode(Tag.SEQ, children, FlowStyle.BLOCK);
 
-        if (anchorable) {
-            builtNodes.put(list, seqNode);
-            seqNode.setAnchor(Optional.of(new Anchor(nextAnchorId(nextAnchorId))));
-        }
+        anchorRegistry.registerAnchorIfNeeded(list, seqNode);
 
         for (Object elem : list) {
-            children.add(this.build(elem, enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId));
+            children.add(this.build(elem, enableTraceability, deployDescriptorYaml, anchorRegistry));
         }
 
-        return attachComment(seqNode, origin, addComment, CommentType.BLOCK);
+        return commentHelper.attachComment(seqNode, origin, addComment, CommentType.BLOCK);
     }
 
     private Node buildMappingNode(Map<?, ?> map, String origin, boolean addComment, boolean enableTraceability,
-                                  boolean deployDescriptorYaml, Map<Object, Integer> refCount, Map<Object, Node> builtNodes,
-                                  AtomicInteger nextAnchorId) {
-
-        boolean anchorable = shouldAnchor(map, refCount);
-        Node existing = anchorable ? builtNodes.get(map) : null;
-        if (existing != null) {
-            return new AnchorNode(existing);
+                                  boolean deployDescriptorYaml, YamlAnchorRegistry anchorRegistry) {
+        Node aliasNode = anchorRegistry.getAliasNodeIfExists(map);
+        if (aliasNode != null) {
+            return aliasNode;
         }
 
         List<NodeTuple> tuples = new ArrayList<>();
         MappingNode mapping = new MappingNode(Tag.MAP, tuples, FlowStyle.BLOCK);
 
-        if (anchorable) {
-            builtNodes.put(map, mapping);
-            mapping.setAnchor(Optional.of(new Anchor(nextAnchorId(nextAnchorId))));
-        }
+        anchorRegistry.registerAnchorIfNeeded(map, mapping);
 
         for (Map.Entry<?, ?> entry : map.entrySet()) {
-            Node keyNode = this.build(entry.getKey(), enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
-            Node valueNode = this.build(entry.getValue(), enableTraceability, deployDescriptorYaml, refCount, builtNodes, nextAnchorId);
-            moveBlockCommentFromValueToKey(valueNode, keyNode);
+            Node keyNode = this.build(entry.getKey(), enableTraceability, deployDescriptorYaml, anchorRegistry);
+            Node valueNode = this.build(entry.getValue(), enableTraceability, deployDescriptorYaml, anchorRegistry);
+            commentHelper.moveBlockCommentFromValueToKey(valueNode, keyNode);
             tuples.add(new NodeTuple(keyNode, valueNode));
         }
 
-        return attachComment(mapping, origin, addComment, CommentType.BLOCK);
-    }
-
-    private boolean shouldAnchor(Object obj, Map<Object, Integer> refCount) {
-        if ((obj instanceof Collection<?> c && c.isEmpty()) || (obj instanceof Map<?, ?> m && m.isEmpty())) {
-            return false;
-        }
-        return refCount.getOrDefault(obj, 0) > 1;
-    }
-
-    private String nextAnchorId(AtomicInteger counter) {
-        return String.format("id%03d", counter.getAndIncrement());
-    }
-
-    private static boolean shouldAddComment(boolean enableTraceability, String origin, boolean deployDescriptorYaml) {
-        if (!enableTraceability || StringUtils.isBlank(origin)) {
-            return false;
-        }
-        return !deployDescriptorYaml || !origin.toLowerCase(Locale.ROOT).contains(SBOM_ORIGIN);
-    }
-
-    private void moveBlockCommentFromValueToKey(Node valueNode, Node keyNode) {
-        List<CommentLine> valueComments = valueNode.getBlockComments();
-        if (valueComments == null || valueComments.isEmpty()) {
-            return;
-        }
-        keyNode.setBlockComments(valueComments);
-        valueNode.setBlockComments(null);
+        return commentHelper.attachComment(mapping, origin, addComment, CommentType.BLOCK);
     }
 
     private Node createEmptyMapNode(String origin, boolean addComment) {
         MappingNode node = new MappingNode(Tag.MAP, Collections.emptyList(), FlowStyle.FLOW);
-        return attachComment(node, origin, addComment, CommentType.IN_LINE);
+        return commentHelper.attachComment(node, origin, addComment, CommentType.IN_LINE);
     }
 
     private Node createEmptyListNode(String origin, boolean addComment) {
         SequenceNode node = new SequenceNode(Tag.SEQ, Collections.emptyList(), FlowStyle.FLOW);
-        return attachComment(node, origin, addComment, CommentType.IN_LINE);
-    }
-
-    private <T extends Node> T attachComment(T node, String origin, boolean addComment, CommentType commentType) {
-        if (!addComment) {
-            return node;
-        }
-        CommentLine comment = new CommentLine(Optional.empty(), Optional.empty(), origin, commentType);
-        List<CommentLine> comments = List.of(comment);
-        if (commentType == CommentType.BLOCK) {
-            node.setBlockComments(comments);
-        } else {
-            node.setInLineComments(comments);
-        }
-        return node;
+        return commentHelper.attachComment(node, origin, addComment, CommentType.IN_LINE);
     }
 }

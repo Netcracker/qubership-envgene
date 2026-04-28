@@ -29,7 +29,8 @@ class YamlFileWriterTest {
        SharedData sharedData = Mockito.mock(SharedData.class);
        Mockito.when(sharedData.isEnableTraceability()).thenReturn(true);
 
-       YamlFileWriter yamlFileWriter = new YamlFileWriter(fs, sharedData, new YamlNodeBuilder());
+       YamlFileWriter yamlFileWriter = new YamlFileWriter(
+               fs, sharedData, new YamlNodeBuilder(new YamlNodeCommentHelper(), new YamlReferenceCounter()));
        Map<String, Object> data = buildFullCombinationTestData();
 
        yamlFileWriter.write(data, "ignored");
@@ -56,7 +57,8 @@ class YamlFileWriterTest {
        SharedData sharedData = Mockito.mock(SharedData.class);
        Mockito.when(sharedData.isEnableTraceability()).thenReturn(true);
 
-       YamlFileWriter yamlFileWriter = new YamlFileWriter(fs, sharedData, new YamlNodeBuilder());
+       YamlFileWriter yamlFileWriter = new YamlFileWriter(
+               fs, sharedData, new YamlNodeBuilder(new YamlNodeCommentHelper(), new YamlReferenceCounter()));
        Map<String, Object> root = new LinkedHashMap<>();
        root.put(
                "fromSbom",
@@ -83,7 +85,8 @@ class YamlFileWriterTest {
        SharedData sharedData = Mockito.mock(SharedData.class);
        Mockito.when(sharedData.isEnableTraceability()).thenReturn(false);
 
-       YamlFileWriter yamlFileWriter = new YamlFileWriter(fs, sharedData, new YamlNodeBuilder());
+       YamlFileWriter yamlFileWriter = new YamlFileWriter(
+               fs, sharedData, new YamlNodeBuilder(new YamlNodeCommentHelper(), new YamlReferenceCounter()));
        Map<String, Object> data = buildFullCombinationTestData();
 
        yamlFileWriter.write(data, "ignored");
