@@ -8,7 +8,7 @@
     "metadata": {
       "type": "object",
       "title": "Metadata",
-      "description": "Optional metadata map for the environment definition. Structure is not specified. Used only by Colly.",
+      "description": "Optional free-form metadata map. Structure is not specified. NOT set manually by users and NOT processed by EnvGene. Used exclusively by Colly, which saves and reads these values for its own use cases.",
       "additionalProperties": true
     },
     "inventory": {
@@ -337,6 +337,30 @@
       "properties": {
         "generateEnvironmentLatestVersion": {
           "type": "string"
+        }
+      }
+    },
+    "security": {
+      "type": ["object", "null"],
+      "title": "Security",
+      "description": "Security-related parameters of the Environment. NOT set manually by users and NOT processed by EnvGene. Used exclusively by Colly, which saves and reads these values for its own use cases.",
+      "additionalProperties": false,
+      "properties": {
+        "accessGroups": {
+          "type": "array",
+          "title": "Access Groups",
+          "description": "List of access groups directly assigned to the Environment",
+          "items": {
+            "type": "string"
+          }
+        },
+        "effectiveAccessGroups": {
+          "type": "array",
+          "title": "Effective Access Groups",
+          "description": "List of effective access groups (assigned plus inherited/derived)",
+          "items": {
+            "type": "string"
+          }
         }
       }
     }
