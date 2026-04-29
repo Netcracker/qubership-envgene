@@ -82,7 +82,7 @@ Changes to any input are reflected. SBOMs for every application in the Full SD m
 
 ### Partial Generation
 
-Only the slices of the persistent ES affected by the current SD change are updated. Applications unchanged in the current run keep their existing slices and their SBOMs are not requested.
+All five contexts (`topology`, `pipeline`, `deployment`, `runtime`, `cleanup`) remain present in the persistent ES, exactly as in full regeneration. The difference is in *how* they are produced: the calculator is invoked with the Delta SD instead of the Full SD, and its output is recursively merged into the persistent ES — only slices affected by the SD change are recomputed. Applications unchanged in the current run keep their existing slices and their SBOMs are not requested.
 
 Applied when SD processing produces a Delta SD — that is, `SD_REPO_MERGE_MODE` is `basic-merge`, `extended-merge`, or `basic-exclusion-merge`, and a Full SD already exists.
 
@@ -92,8 +92,8 @@ If the Delta SD is absent at the start of the stage, the pipeline falls back to 
 
 Applies to `SD_REPO_MERGE_MODE` values `basic-merge` and `extended-merge`. The Delta SD lists the applications being added or updated.
 
-- The calculator is invoked with the Delta SD as input.
-- Its output is merged into the persistent ES recursively: per-application slices under `deployment/` and `runtime/` are overwritten for the applications in the Delta SD; `topology/`, `pipeline/`, and per-namespace `cleanup/` are regenerated; `mapping.yml` entries are upserted (added or updated, without removing entries for namespaces outside the Delta SD).
+- The calculator is invoked with the Delta SD as input. It produces output across all five contexts, scoped to the Delta SD.
+- The output is merged into the persistent ES recursively: per-application slices under `deployment/` and `runtime/` are overwritten for the applications in the Delta SD; `topology/`, `pipeline/`, and per-namespace `cleanup/` are regenerated; `mapping.yml` entries are upserted (added or updated, without removing entries for namespaces outside the Delta SD).
 - Applications not in the Delta SD keep their existing slices; their SBOMs are not requested.
 
 #### Reverse merge

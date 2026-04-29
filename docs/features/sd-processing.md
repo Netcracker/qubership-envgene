@@ -8,6 +8,7 @@
     - [SD Types](#sd-types)
       - [Full SD](#full-sd)
       - [Delta SD](#delta-sd)
+    - [Legacy Delta SD Cleanup](#legacy-delta-sd-cleanup)
     - [Instance Repository Pipeline Parameters](#instance-repository-pipeline-parameters)
       - [`SD_DATA` Example](#sd_data-example)
     - [SD merge](#sd-merge)
@@ -47,6 +48,7 @@ To support the deployment of individual applications, the use of Delta SDs is su
 1. SD processing should take place in the [`process_sd`](/docs/envgene-pipelines.md#instance-pipeline)
 2. The Full SD is stored in the repository. The Delta SD is produced only as a transient pipeline artifact and is not persisted to the repository
 3. SD merge must occur according to [SD Merge](#sd-merge)
+4. `process_sd` must remove any legacy `delta_sd.yaml` left in the repository by previous EnvGene versions. See [Legacy Delta SD Cleanup](#legacy-delta-sd-cleanup)
 
 ### SD Types
 
@@ -63,6 +65,19 @@ A partial Solution Descriptor that contains incremental changes to be applied to
 The Delta SD is produced as a transient pipeline artifact when a [Repository Merge](#sd-merge) occurs, meaning when a Full SD is already present in the repository and `SD_REPO_MERGE_MODE` is NOT set to `replace`. It is passed between pipeline jobs of the same run and discarded afterwards. The Delta SD is **not** persisted to the repository.
 
 The Delta SD drives the [partial Effective Set generation](/docs/features/effective-set-generation.md#partial-generation) path in downstream jobs.
+
+### Legacy Delta SD Cleanup
+
+Earlier EnvGene versions persisted Delta SDs to the repository at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`. After the switch to the transient model, these files become stale and must be removed.
+
+`process_sd` deletes any existing `delta_sd.yaml` from the target environment at the start of every run. The deletion is unconditional and idempotent — repos that never had legacy files are unaffected.
+
+For environments whose `process_sd` is not expected to run in the foreseeable future, perform a one-time manual cleanup:
+
+```bash
+find environments -name 'delta_sd.yaml' -delete
+git add -A && git commit -m "Remove legacy Delta SD files"
+```
 
 ### Instance Repository Pipeline Parameters
 
