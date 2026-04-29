@@ -1,0 +1,13 @@
+name: "app_origin_override"
+version: 0
+baseline: "dev"
+description: "Override for dev-profile"
+applications:
+  - name: "billing-app"
+    services:
+      - name: "billing-service"
+        parameters:
+          - name: "CPU_LIMIT"
+            value: "4"
+          - name: "REPLICAS"
+            value: "4"

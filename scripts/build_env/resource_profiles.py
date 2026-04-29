@@ -1,6 +1,24 @@
 from envgenehelper import *
 from render_config_env import EnvGenerator
 
+from role_specific_file_helper import (
+    RESOURCE_PROFILE_FILE_MASKS,
+    get_excluded_dirs_for_namespace_role,
+    iter_role_template_files,
+)
+
+
+def create_resource_profile_map(dir: str, role: NamespaceRole,
+                                origin_template_exists: bool, peer_template_exists: bool) -> dict[str, str]:
+    excluded_dirs = get_excluded_dirs_for_namespace_role(role, origin_template_exists, peer_template_exists)
+    result = {}
+    for key, file_path in iter_role_template_files(dir, RESOURCE_PROFILE_FILE_MASKS, excluded_dirs):
+        result[key] = file_path
+    logger.info( f"Created {role.name}-specific resource profile map: excluded dirs {excluded_dirs}")
+    logger.debug(f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
+    logger.debug(f"List of {dir} resource profiles (role view): \n %s", dump_as_yaml_format(result))
+    return result
+
 
 # TODO unit tests
 def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
@@ -96,22 +114,31 @@ def merge_resource_profiles(sourceProfileYaml, overrideProfileYaml, overrideProf
                     merge_dict_key_with_comment("value", sourceParam, "value", param, commentText)
 
 
-def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_profiles: dict[str, str],
-                               profiles_schema: str) -> dict[str, str]:
-    profiles_map = {}
+def validate_resource_profiles(
+    needed_resource_profiles: dict[str, str],
+    profiles_schema: str,
+    template_roles: dict,
+    env_profiles: dict[str, str],
+    role_maps: dict,
+) -> dict[str, str]:
+    profiles_map: dict[str, str] = {}
     not_found = ''
     not_valid = ''
-    err_msg = ''
     rp_data_template = "\n\t profile: {} for namespace {}"
 
     if not needed_resource_profiles:
         return profiles_map
     for template_name, needed_profile in needed_resource_profiles.items():
-        if needed_profile not in source_profiles:
+        if needed_profile in env_profiles:
+            profile_path = env_profiles[needed_profile]
+        else:
+            role = template_roles.get(template_name, NamespaceRole.COMMON)
+            profile_path = role_maps[role].get(needed_profile)
+        if not profile_path:
             not_found += rp_data_template.format(needed_profile, template_name)
             continue
-        profile_path = source_profiles[needed_profile]
-        logger.info(f"Found resource profile {needed_profile} in path: {profile_path}")
+        logger.info(
+            f"Found resource profile {needed_profile} for template {template_name} in path: {profile_path}")
         try:
             validate_yaml_by_scheme_or_fail(profile_path, profiles_schema)
         except ValueError:
@@ -119,6 +146,7 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
             continue
         profiles_map[template_name] = profile_path
 
+    err_msg = ''
     if len(not_valid) > 0:
         err_msg += "These resource profiles are invalid, look for details above:"
         err_msg += not_valid
@@ -132,13 +160,36 @@ def validate_resource_profiles(needed_resource_profiles: dict[str, str], source_
 
 
 def collect_resource_profiles(result_profiles_dir, render_profiles_dir, profiles_schema,
-                              required_resource_profiles_map, render_context: EnvGenerator):
+                              required_resource_profiles_map, render_context: EnvGenerator,
+                              template_roles: dict,
+                              origin_template_exists: bool,
+                              peer_template_exists: bool):
     logger.info(f"Required profiles map:\n{dump_as_yaml_format(required_resource_profiles_map)}")
     render_context.generate_profiles(set(required_resource_profiles_map.values()))
-    all_profiles = getResourceProfilesFromDir(render_profiles_dir) | getResourceProfilesFromDir(result_profiles_dir)
-    logger.info(f"All existing resource profiles map is:\n{dump_as_yaml_format(all_profiles)}")
-    profiles_map = validate_resource_profiles(required_resource_profiles_map, all_profiles, profiles_schema)
-    return profiles_map
+    env_profiles = getResourceProfilesFromDir(result_profiles_dir)
+
+    common_rp_map = create_resource_profile_map(render_profiles_dir, NamespaceRole.COMMON,
+                                                origin_template_exists, peer_template_exists)
+    peer_rp_map = create_resource_profile_map(render_profiles_dir, NamespaceRole.PEER,
+                                              origin_template_exists, peer_template_exists)
+    origin_rp_map = create_resource_profile_map(render_profiles_dir, NamespaceRole.ORIGIN,
+                                                origin_template_exists, peer_template_exists)
+    role_maps = {
+        NamespaceRole.COMMON: common_rp_map,
+        NamespaceRole.PEER: peer_rp_map,
+        NamespaceRole.ORIGIN: origin_rp_map,
+    }
+
+    merged_for_log = common_rp_map | peer_rp_map | origin_rp_map | env_profiles
+    logger.info(f"All existing resource profiles map is:\n{dump_as_yaml_format(merged_for_log)}")
+
+    return validate_resource_profiles(
+        required_resource_profiles_map,
+        profiles_schema,
+        template_roles,
+        env_profiles,
+        role_maps,
+    )
 
 
 def override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map, render_context: EnvGenerator):

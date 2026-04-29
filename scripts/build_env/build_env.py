@@ -5,6 +5,7 @@ from cloud_passport import process_cloud_passport
 from resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
     update_profile_name
 from schema_validation import checkEnvSpecificParametersBySchema
+from role_specific_file_helper import get_excluded_dirs_for_namespace_role, iter_role_template_files, PARAMSET_FILE_MASKS
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
@@ -21,39 +22,19 @@ def find_namespaces(dir):
     return result
 
 
-def _get_excluded_dirs_for_role(role: NamespaceRole, origin_template_exists: bool, peer_template_exists: bool) -> list:
-    common_dir = 'from_template'
-    origin_dir = 'from_origin_template'
-    peer_dir = 'from_peer_template'
-    if role == NamespaceRole.ORIGIN and origin_template_exists:
-        return [common_dir, peer_dir]
-    elif role == NamespaceRole.PEER and peer_template_exists:
-        return [common_dir, origin_dir]
-    else:
-        return [origin_dir, peer_dir]
-
-
 def create_paramset_map(dir: str, role: NamespaceRole,
                         origin_template_exists: bool, peer_template_exists: bool) -> dict:
-    excluded_dirs = _get_excluded_dirs_for_role(role, origin_template_exists, peer_template_exists)
+    excluded_dirs = get_excluded_dirs_for_namespace_role(role, origin_template_exists, peer_template_exists)
     result = {}
-    dir_pointer = pathlib.Path(dir)
-    masks = ["*.json", "*.yml", "*.yaml", "*.j2"]
+    for key, file_path in iter_role_template_files(dir, PARAMSET_FILE_MASKS, excluded_dirs):
+        entry = {"filePath": file_path, "envSpecific": False}
+        if key in result:
+            result[key].append(entry)
+        else:
+            result[key] = [entry]
 
-    for mask in masks:
-        for f in dir_pointer.rglob(mask):
-            file_path = str(f)
-            if any(excluded_dir in file_path for excluded_dir in excluded_dirs):
-                continue
-            key = extractNameFromFile(file_path)
-            entry = {"filePath": file_path, "envSpecific": False}
-            if key in result:
-                result[key].append(entry)
-            else:
-                result[key] = [entry]
-
-    logger.info(f"Created {role.name}-specific paramset map: excluded dirs {excluded_dirs}, "
-                f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
+    logger.info(f"Created {role.name}-specific paramset map: excluded dirs {excluded_dirs}")
+    logger.debug(f"origin_template_exists={origin_template_exists}, peer_template_exists={peer_template_exists}")
     logger.debug(f'List of {dir} paramsets: \n %s', dump_as_yaml_format(result))
     return result
 
@@ -566,8 +547,19 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
 
     # process resource profiles
     result_profiles_dir = Path(f"{env_dir}/Profiles")
-    all_profiles = collect_resource_profiles(result_profiles_dir, resource_profiles_dir, profiles_schema,
-                                             needed_resource_profiles_map, render_context)
+    template_roles = {"cloud": NamespaceRole.COMMON}
+    for ns in namespaces:
+        template_roles[ns.postfix] = ns.role
+    all_profiles = collect_resource_profiles(
+        result_profiles_dir,
+        resource_profiles_dir,
+        profiles_schema,
+        needed_resource_profiles_map,
+        render_context,
+        template_roles=template_roles,
+        origin_template_exists=origin_template_exists,
+        peer_template_exists=peer_template_exists,
+    )
     override_profile_map = override_by_env_specific_profiles(all_profiles, env_specific_resource_profile_map,
                                                              render_context)
 
