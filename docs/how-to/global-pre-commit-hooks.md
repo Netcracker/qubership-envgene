@@ -12,7 +12,7 @@
 
 ## Description
 
-This guide shows how to register [pre-commit-global](https://github.com/exadmin/pre-commit-global) hooks globally on your machine so every Git repository can use shared hook logic before your normal pre-commit runs. Hook scripts live in this repository under `hooks-global/`. Full install details and upstream updates are documented in the [pre-commit-global README](https://github.com/exadmin/pre-commit-global/blob/main/README.md).
+This guide shows how to register [pre-commit-global](https://github.com/exadmin/pre-commit-global) hooks globally on your machine so every Git repository can use shared hook logic before your normal pre-commit runs. Hook scripts live in this repository under `hooks-global/`. Full install details and upstream updates are documented in the [pre-commit-global readme](https://github.com/exadmin/pre-commit-global).
 
 ## Prerequisites
 
@@ -77,11 +77,11 @@ The second command prints the value Git stored so you can confirm the path.
 
 You **do not** need `.pre-commit-config.yaml` or any other file from this step for global hooks to run. Registration in [Step 2](#step-2-point-git-at-the-global-hooks-directory) applies to **every** repository on your machine. See [What runs on commit](#what-runs-on-commit) below for the branching logic.
 
-Optional, depending on what you want in **this** repo:
+Optional, depending on what you want in **this** repository:
 
 1. **`[pre-commit](https://pre-commit.com/)` checks** - Add `.pre-commit-config.yaml` only if this repository should run the Python `pre-commit` CLI with that config. Without this file that step is skipped; global hooks still run their other behavior.
 2. **Install the `pre-commit` CLI** - Only needed if you added `.pre-commit-config.yaml` (for example `pip install pre-commit`, or whatever your team uses).
-3. **CyberFerret** - Add **`.qubership/grand-report.json`** only if you want CyberFerret invoked on commits in this repo (an empty JSON object is valid as a marker; exclusions live there later). Needs `CYBER_FERRET_PASSWORD` from [Prerequisites](#prerequisites).
+3. **CyberFerret** - Add **`.qubership/grand-report.json`** only if you want CyberFerret invoked on commits in this repository (an empty JSON object is valid as a marker; exclusions live there later). Needs `CYBER_FERRET_PASSWORD` from [Prerequisites](#prerequisites).
 
 ## What runs on commit
 
@@ -105,5 +105,5 @@ git config --global --unset core.hooksPath
 
 | Resource                                | Link                                                                                                                   |
 |-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| pre-commit-global overview and README   | [github.com/exadmin/pre-commit-global](https://github.com/exadmin/pre-commit-global)                                    |
+| pre-commit-global overview and readme   | [github.com/exadmin/pre-commit-global](https://github.com/exadmin/pre-commit-global)                                    |
 | pre-commit framework                    | [pre-commit.com](https://pre-commit.com/)                                                                              |
