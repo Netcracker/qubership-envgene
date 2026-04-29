@@ -2,8 +2,14 @@ from .business_helper import getEnvDefinition
 import pytest
 import logging
 
+
+# Enable logging ONLY for this file
+@pytest.fixture(autouse=True)
+def enable_logging():
+    logging.basicConfig(level=logging.INFO, force=True)
+
+
 test_logger = logging.getLogger("test_logger")
-logging.basicConfig(level=logging.INFO)
 
 
 # ===================== TEST 1 =====================
@@ -25,13 +31,13 @@ def test_inventory_added_when_missing(monkeypatch):
 
     test_logger.info("\n===== TEST 1: Inventory Missing =====")
     test_logger.info("BEFORE: %s", input_yaml)
-    test_logger.info("Inventory present BEFORE? %s", "inventory" in input_yaml)
+    test_logger.info("Inventory BEFORE? %s", "inventory" in input_yaml)
 
     result = getEnvDefinition("test_env")
 
     test_logger.info("AFTER: %s", result)
-    test_logger.info("Inventory present AFTER? %s", "inventory" in result)
-    test_logger.info("Inventory content AFTER: %s", result.get("inventory"))
+    test_logger.info("Inventory AFTER? %s", "inventory" in result)
+    test_logger.info("Inventory content: %s", result.get("inventory"))
 
     assert "inventory" in result
     assert result["inventory"] == {}
@@ -82,7 +88,7 @@ def test_file_not_found(monkeypatch):
     with pytest.raises(ReferenceError) as exc:
         getEnvDefinition("test_env")
 
-    test_logger.info("Exception caught: %s", str(exc.value))
+    test_logger.info("Exception: %s", str(exc.value))
 
 
 # ===================== TEST 4 =====================
@@ -107,12 +113,12 @@ def test_env_dir_fallback(monkeypatch):
     )
 
     test_logger.info("\n===== TEST 4: env_dir Fallback =====")
-    test_logger.info("env_dir BEFORE: None → fallback expected")
+    test_logger.info("env_dir BEFORE: None")
 
     result = getEnvDefinition(None)
 
     test_logger.info("AFTER: %s", result)
-    test_logger.info("Inventory added after fallback? %s", "inventory" in result)
+    test_logger.info("Inventory added? %s", "inventory" in result)
 
     assert "inventory" in result
 
