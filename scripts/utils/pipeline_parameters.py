@@ -92,12 +92,9 @@ class PipelineParametersHandler:
 
         env_inventory_content = params.get("ENV_INVENTORY_CONTENT")
         if env_inventory_content:
-            try:
-                parsed = json.loads(env_inventory_content)
-                self.hide_secrets(parsed)
-                params["ENV_INVENTORY_CONTENT"] = json.dumps(parsed, separators=(",", ":"))
-            except json.JSONDecodeError:
-                logger.warning("ENV_INVENTORY_CONTENT is not valid JSON, skipping masking")
+            parsed = json.loads(env_inventory_content)
+            self.hide_secrets(parsed)
+            params["ENV_INVENTORY_CONTENT"] = json.dumps(parsed, separators=(",", ":"))
             
         for k, v in params.items():
             params_str += f"\n{k.upper()}: {v}"
