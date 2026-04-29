@@ -3,7 +3,7 @@ import pytest
 import logging
 
 
-# 🔹 Enable logging ONLY for this file
+# Enable logging ONLY for this file
 @pytest.fixture(autouse=True)
 def enable_logging():
     logging.basicConfig(level=logging.INFO, force=True)
