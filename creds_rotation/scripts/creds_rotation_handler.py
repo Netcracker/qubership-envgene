@@ -121,9 +121,9 @@ def cred_rotation():
     start = time.time()
     encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
     config = validate_env_vars(is_encrypted, encrypt_type)
-    
+
     logger.info(f"Starting rotation for: CLUSTER={config.cluster_name}, WORKDIR={config.work_dir}")
- 
+
     logger.info(f"Detected encryption={is_encrypted}, type={encrypt_type}")
 
     base_env_path = f"{config.work_dir}/environments/{config.cluster_name}/{config.env_name}"
@@ -132,7 +132,7 @@ def cred_rotation():
 
     logger.info(f"base env path is {base_env_path}")
 
-   
+
     fileread = time.time()
     # Scan and read all required files
     entity_files_map, env_files_map, env_creds_files = scan_and_get_yaml_files(
@@ -172,12 +172,8 @@ def cred_rotation():
             raise RuntimeError(f"Failed to process the payload {entry} due to {e}")
     if final_result:
         write_yaml_to_file(output_path, [r.to_dict() for r in final_result])
-    else:
-        raise ValidationError(
-            ErrorMessages.EMPTY_PARAM, error_code=ErrorCodes.INVALID_STATE_CODE
-        )
 
-    if not config.creds_rotation_enabled:
+    if final_result and not config.creds_rotation_enabled:
         logger.info(
             f"✅ Cred Rotation without file updation completed in {round(time.time() - start, 2)} seconds."
         )
@@ -198,6 +194,9 @@ def cred_rotation():
     else:
         logger.error(
             "Credential IDs are not found in environment and shared credential files. Please check the files"
+        )
+        raise ValidationError(
+            ErrorMessages.EMPTY_PARAM, error_code=ErrorCodes.INVALID_STATE_CODE
         )
 
     logger.info(
