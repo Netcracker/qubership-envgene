@@ -1,0 +1,176 @@
+#!/bin/sh
+
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+VENV_NAME=".git_hook_venv"
+change_file=0
+
+activate_venv() {
+  BIN_DIR_NAME=$1
+  VENV_PATH="$VENV_NAME/$BIN_DIR_NAME/activate"
+
+  if [ -f $VENV_PATH ]; then
+    echo "Using $VENV_PATH"
+    . $VENV_PATH
+  else
+    echo "Virtual environment $VENV_NAME not found. Running hook without it"
+  fi
+}
+
+case "$(uname -s)" in
+  CYGWIN*|MINGW*|MSYS*)
+    activate_venv "Scripts"
+    ;;
+  *)
+    activate_venv "bin"
+    ;;
+esac
+
+crypt ()
+{
+  local file="$1"
+  local crypt_backend="$2"
+  
+  echo "Processing encryption for $file with backend $crypt_backend"
+  
+  case "$crypt_backend" in
+    Fernet)
+      encrypt_fernet "$file"
+      ;;
+    SOPS)
+      encrypt_sops "$file"
+      ;;
+    *)
+      echo "❌ ERROR: Unknown crypt_backend '$crypt_backend' in $file" >&2
+      return 1
+      ;;
+  esac
+  
+ 
+}
+
+# Encrypt file with Fernet backend using python script
+encrypt_fernet() {
+  local file="$1"
+
+  if grep -q '\[encrypted:AES256_Fernet\]' "$file"; then
+    echo "Skipping $file — as already encrypted with Fernet"
+    echo "${YELLOW}Warning: File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key. ${NC} " >&2
+    return 0
+  fi
+
+  if [ -z "$SECRET_KEY" ]; then
+    echo "❌ ERROR: SECRET_KEY is required for Fernet encryption in $file" >&2
+    return 1
+  fi
+
+   m1=$(md5sum "$file")
+   echo "md5 sum check $m1"
+  if python git_hooks/crypt.py encrypt_cred_file -f "$file"; then
+    m2=$(md5sum "$file")
+         echo "m2 md5checksum $m2"
+    if [ "$m1" != "$m2" ] ; then
+      echo "INFO: ${file} has changed!" >&2
+      change_file=$((change_file+1))
+    fi
+  else
+    echo "Check SECRET_KEY for crypt.py script" >&2
+    exit 1
+  fi
+
+  return 0
+}
+
+# Encrypt file with SOPS backend using sops CLI
+encrypt_sops() {
+  local file="$1"
+
+  if grep -q '^sops:' "$file"; then
+    echo "Skipping $file — already encrypted with SOPS"
+    echo "${YELLOW}Warning: File already encrypted; encryption skipped. Please ensure the existing file was encrypted with the same key. ${NC}" >&2
+    return 0
+  fi
+
+  if [ -z "$ENVGENE_AGE_PUBLIC_KEY" ]; then
+    echo "❌ ERROR: ENVGENE_AGE_PUBLIC_KEY is required for SOPS encryption in $file" >&2
+    return 1
+  fi
+ # if [ -z "$SOPS_AGE_KEY_FILE" ]; then
+ #   echo "❌ ERROR: SOPS_AGE_KEY_FILE is required for SOPS encryption in $file" >&2
+ #   return 1
+ # fi
+
+   m1=$(md5sum "$file")
+   echo "md5 sum check $m1"
+  if python git_hooks/crypt.py encrypt_cred_file -f "$file"; then
+    m2=$(md5sum "$file")
+         echo "m2 md5checksum $m2"
+    if [ "$m1" != "$m2" ] ; then
+      echo "INFO: ${file} has changed!" >&2
+      change_file=$((change_file+1))
+    fi
+  else
+    echo "Check  prerequistes for crypt.py script" >&2
+    exit 1
+  fi
+
+  echo "INFO: $file was encrypted with SOPS."
+  change_file=$((change_file + 1))
+
+  return 0
+}
+
+# --- Load secrets from environment or fallback to .git files ---
+[ -z "$SECRET_KEY" ] && [ -s "$(pwd)/.git/secret_key.txt" ] && export SECRET_KEY=$(cat "$(pwd)/.git/secret_key.txt")
+[ -z "$ENVGENE_AGE_PUBLIC_KEY" ] && [ -s "$(pwd)/.git/age_public_key.txt" ] && export ENVGENE_AGE_PUBLIC_KEY=$(cat "$(pwd)/.git/age_public_key.txt")
+#[ -z "$SOPS_AGE_KEY_FILE" ] && [ -s "$(pwd)/.git/private-age-key.txt" ] && export SOPS_AGE_KEY_FILE=$(cat "$(pwd)/.git/private-age-key.txt")
+
+config_file="$(pwd)/configuration/config.yml"
+
+#crypt_enabled=$(yq '.crypt' "$config_file" 2>/dev/null)
+#crypt_backend=$(yq '.crypt_backend' "$config_file" 2>/dev/null)
+
+crypt_enabled=$(python3 -c "
+import ruyaml as yaml
+try:
+    with open('$config_file') as f:
+        cfg = yaml.YAML().load(f)
+    print('true' if cfg.get('crypt', true) else 'false')
+except Exception:
+    print('true')
+")
+
+crypt_backend=$(python3 -c "
+import ruyaml as yaml
+try:
+    with open('$config_file') as f:
+        cfg = yaml.YAML().load(f)
+    print(cfg.get('crypt_backend', 'Fernet'))
+except:
+    print('Fernet')
+")
+ 
+echo "crypt_enabled :  $crypt_enabled"
+echo "crypt_backend :  $crypt_backend"
+
+for cred_file in $(find . -type f \( -path "./*/*redentials/*.y*ml" -o -path "./*/app-deployer/*creds*.y*ml" -o -path "./*/cloud-passport/*creds*.y*ml" \)); do
+echo "encrypting file :  $cred_file"
+
+   if [ "$crypt_enabled" != "true" ]; then
+    echo "Skipping $cred_file — encryption not enabled"
+    continue
+  fi
+
+  if ! crypt "$cred_file" "$crypt_backend"; then
+    echo "Skipping $cred_file due to failed encryption validation." >&2
+    exit 1
+  fi
+   
+done
+
+# --- Git add if changes were made ---
+if [ "$change_file" -gt 0 ]; then
+  echo "✅ Create a new commit with encrypted cred files"
+  git add ./*
+fi

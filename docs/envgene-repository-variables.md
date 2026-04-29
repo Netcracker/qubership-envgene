@@ -1,0 +1,215 @@
+
+# EnvGene Repository Variables
+
+- [EnvGene Repository Variables](#envgene-repository-variables)
+  - [Instance EnvGene Repository](#instance-envgene-repository)
+    - [`ENVGENE_LOG_LEVEL`](#envgene_log_level)
+    - [`SECRET_KEY`](#secret_key)
+    - [`GITLAB_TOKEN`](#gitlab_token)
+    - [`ENVGENE_AGE_PRIVATE_KEY`](#envgene_age_private_key)
+    - [`ENVGENE_AGE_PUBLIC_KEY`](#envgene_age_public_key)
+    - [`PUBLIC_AGE_KEYS`](#public_age_keys)
+    - [`GITLAB_RUNNER_TAG_NAME`](#gitlab_runner_tag_name)
+    - [`GH_RUNNER_TAG_NAME`](#gh_runner_tag_name)
+    - [`RUNNER_SCRIPT_TIMEOUT`](#runner_script_timeout)
+    - [`GH_RUNNER_SCRIPT_TIMEOUT`](#gh_runner_script_timeout)
+    - [`CALCULATOR_CLI_JAVA_OPTIONS`](#calculator_cli_java_options)
+    - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
+    - [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider)
+    - [`GCP_SA_KEY`](#gcp_sa_key)
+  - [Template EnvGene Repository](#template-envgene-repository)
+    - [`ENV_TEMPLATE_TEST`](#env_template_test)
+    - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
+    - [`DOCKER_REGISTRY` (in template repository)](#docker_registry-in-template-repository)
+
+The following are parameters that are set in GitLab CI/CD variables or GitHub environment variables.
+
+All parameters are of string data type.
+
+## Instance EnvGene Repository
+
+### `ENVGENE_LOG_LEVEL`
+
+**Description**: Defines the logging level for EnvGene components executed in the Instance EnvGene pipeline.
+This variable is passed to the pipeline and is supported by EnvGene Python and Java based components.
+
+**Logging Level Mapping (Java vs Python):**
+
+| ENVGENE_LOG_LEVEL | Python Logging Level | Java Logging Level |
+|-------------------|----------------------|--------------------|
+| DEBUG             | DEBUG                | DEBUG              |
+| INFO              | INFO                 | INFO               |
+| WARNING           | WARNING              | WARN               |
+| ERROR             | ERROR                | ERROR              |
+
+**Default Value**: INFO
+
+**Mandatory**: No
+
+### `SECRET_KEY`
+
+**Description**: Fernet key. Used to encrypt/decrypt credentials when [`crypt_backend`](/docs/envgene-configs.md#configyml) is set to `Fernet`
+
+Used by EnvGene at runtime, when using pre-commit hooks, the same value must be specified in `.git/secret_key.txt`.
+
+**Default Value**: None
+
+**Mandatory**: Yes, if repository encryption is enabled with `Fernet` crypt backend
+
+**Example**: `key-placeholder-123`
+
+### `GITLAB_TOKEN`
+
+**Description**: Access token used to authenticate with GitLab for accessing repository.
+
+Used by EnvGene to commit changes to the GitLab repository where the EnvGene pipeline is executed during the execution of the [git_commit](/docs/envgene-pipelines.md) job in GitLab
+
+**Default Value**: None
+
+**Mandatory**: No. Required for GitLab EnvGene pipeline, not used in GitHub EnvGene pipeline
+
+**Example**: `token-placeholder-123`
+
+### `ENVGENE_AGE_PRIVATE_KEY`
+
+**Description**: Private key from EnvGene's AGE key pair. Used to decrypt credentials when [`crypt_backend`](/docs/envgene-configs.md#configyml) is set to `SOPS`
+
+Used by EnvGene at runtime. When using pre-commit hooks, the same value must be specified in `.git/private-age-key.txt`.
+
+**Default Value**: None
+
+**Mandatory**: Yes, if repository encryption is enabled with `SOPS` crypt backend
+
+**Example**: `key-placeholder-123`
+
+### `ENVGENE_AGE_PUBLIC_KEY`
+
+**Description**: Public key from EnvGene's AGE key pair. Added for logical completeness (not currently used in operations). **For encryption, `PUBLIC_AGE_KEYS` is used instead.**
+
+**Example**: `key-placeholder-123`
+
+### `PUBLIC_AGE_KEYS`
+
+**Description**: Contains a comma-separated list of public AGE keys from EnvGene and external systems (`<key_1>,<key_2>,...,<key_N>`). Used for credential encryption when [`crypt_backend`](/docs/envgene-configs.md#configyml) is `SOPS`
+
+Must include at least one key: EnvGene's own AGE public key.
+If an external system provides encrypted parameters, its public AGE key must also be included.
+Used by EnvGene at runtime. When using pre-commit hooks, the same value must be specified in `.git/public-age-key.txt`.
+
+**Default Value**: None
+
+**Mandatory**: Yes, if repository encryption is enabled with `SOPS` crypt backend
+
+**Example**: `key-placeholder-123,key-placeholder-124`
+
+### `GITLAB_RUNNER_TAG_NAME`
+
+**Description**: The tag that identifies the GitLab runner used for executing CI jobs. This tag is used to specify which runner will pick up and execute the job in the CI pipeline.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `ubuntu-latest`
+
+### `GH_RUNNER_TAG_NAME`
+
+**Description**: The tag that identifies the GitHub runner used for executing CI jobs. This tag is used to specify which runner will pick up and execute the job in the CI pipeline.
+
+**Default Value**: `ubuntu-22.04`
+
+**Mandatory**: No
+
+**Example**: `ubuntu-latest`
+
+### `RUNNER_SCRIPT_TIMEOUT`
+
+**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner. This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running processes.The parameter value must be specified in [Go's duration format](https://pkg.go.dev/time#ParseDuration).
+
+**Default Value**: 10m
+
+**Mandatory**: No
+
+**Example**: `15m`
+
+### `GH_RUNNER_SCRIPT_TIMEOUT`
+
+**Description**: Specifies the maximum duration allowed for a job to run before being forcibly terminated by the runner in GitHub pipeline. This value is passed to the `timeout-minutes` attribute of the pipeline job. This value is typically used to control job timeouts in automation pipelines to avoid hanging or long-running processes. The parameter value must be specified as a number in minutes.
+
+This parameter is only available in the GitHub version of the pipeline. For more information about `timeout-minutes`, see the [official GitHub Actions documentation](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idtimeout-minutes).
+
+**Default Value**: `10`
+
+**Mandatory**: No
+
+**Example**: `15`
+
+### `CALCULATOR_CLI_JAVA_OPTIONS`
+
+**Description**: Java options passed to the Calculator CLI to override default settings. Used to control heap size and ForkJoinPool thread count (number of applications processed in parallel during effective set generation).
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**:
+
+```text
+CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallelism=4 -Xmx2g -Xms2g"
+```
+
+### `DOCKER_REGISTRY` (in instance repository)
+
+**Description**: Specifies the registry where the EnvGene Docker images are located
+
+**Default Value**: `ghcr.io/netcracker`
+
+**Mandatory**: No
+
+**Example**: `registry.example.com/docker`
+
+### `DOCKER_CLOUD_REGISTRY_PROVIDER`
+
+**Description**: Cloud provider for Docker registry authentication when pulling EnvGene Docker images. Currently, the only supported value is `GCP`. When set to `GCP`, the GitHub workflow authenticates to Google Artifact Registry (GAR) before pulling EnvGene images. Used together with [`DOCKER_REGISTRY`](#docker_registry-in-instance-repository) and [`GCP_SA_KEY`](#gcp_sa_key).
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Allowed Values**: `GCP` (only)
+
+**Example**: `GCP`
+
+**Note**: This parameter is used only in the GitHub EnvGene pipeline. For GitLab, use runner-level configuration. See [Docker Registry Configuration](/docs/how-to/docker-registry-configuration.md) for details.
+
+### `GCP_SA_KEY`
+
+**Description**: Full JSON content of the GCP service account key. Used for authenticating to Google Artifact Registry (GAR) when pulling EnvGene Docker images. Required only when [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider) is set to `GCP`.
+
+**Default Value**: None
+
+**Mandatory**: No (required only for GAR authentication)
+
+**Example**: `{"type":"service_account","project_id":"...",...}`
+
+**Note**: Store as a secret (GitHub Actions Secrets) or masked variable. Never commit to the repository. Use a service account with at least `Artifact Registry Reader` role. See [Docker Registry Configuration](/docs/how-to/docker-registry-configuration.md) for details.
+
+## Template EnvGene Repository
+
+### `ENV_TEMPLATE_TEST`
+
+**Description**: Determines whether the generation of the Environment Instance is running in Template Testing mode.
+
+**Default Value**: `false`
+
+**Mandatory**: No
+
+**Example**: `true`
+
+### `ENVGENE_LOG_LEVEL` (in template repository)
+
+The same as [`ENVGENE_LOG_LEVEL` in instance repository](#envgene_log_level)
+
+### `DOCKER_REGISTRY` (in template repository)
+
+The same as [`DOCKER_REGISTRY` in instance repository](#docker_registry-in-instance-repository)
