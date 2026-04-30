@@ -5,7 +5,7 @@ build-%:
 
 up-%:
 	$(compose) up -d $*
-	@if [ -f devtools/$*/up.sh ]; then $(compose) exec $* sh /workspace/devtools/$*/up.sh; fi
+	@if [ -f devtools/$*/up.sh ]; then $(compose) exec $* bash /workspace/devtools/$*/up.sh; fi
 
 bash-%:
 	$(compose) exec $* bash
@@ -20,7 +20,7 @@ rm-%:
 	$(compose) rm $*
 
 run-%:
-	@if [ -f devtools/$*/run.sh ]; then $(compose) exec $* sh /workspace/devtools/$*/run.sh; \
+	@if [ -f devtools/$*/run.sh ]; then $(compose) exec $* bash /workspace/devtools/$*/run.sh; \
 	else echo "No run script for $*"; fi
 
 edit:

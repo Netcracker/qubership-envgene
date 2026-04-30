@@ -1,12 +1,23 @@
-import pytest
-from main import perform_generation
-from envgenehelper import getAbsPath, openYaml, dump_as_yaml_format
 import os
 from dataclasses import dataclass, asdict
+from pathlib import Path
+
+import pytest
+
+# validations / gitlab_ci capture CI_PROJECT_DIR at import time; set it before loading main.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+os.environ["CI_PROJECT_DIR"] = str(_REPO_ROOT / "test_data" / "pipegene_ci_instance")
+os.environ["CI_JOB_NAME"] = 'JOB_NAME_PLACEHOLDER'
+os.environ["CI_COMMIT_REF_SLUG"] = 'PLACEHOLDER'
+os.environ.setdefault("JSON_SCHEMAS_DIR", str(_REPO_ROOT / "schemas"))
+
+from main import perform_generation
+from envgenehelper import openYaml, dump_as_yaml_format
+
 
 @dataclass
 class PipelineVars:
-    env_names: str = "sample-cloud-name/composite-full"
+    env_names: str = "cluster-01/env-01"
     env_template_version: str = "new-version:app_def"
     get_passport: str = "true"
     env_builder: str = "true"
@@ -19,34 +30,53 @@ class PipelineVars:
     sd_version: str = ""
     env_template_name: str = ""
     env_specific_params: str = ""
+    custom_params: str = ""
 
-def convert_keys_to_uppercase(dictionary):
-    return {k.upper(): v for k, v in dictionary}
+def convert_keys_to_uppercase(pairs):
+    return {k.upper(): v for k, v in pairs}
 
 build_pipeline_test_data = [
-    (   # with all jobs
+    (
         PipelineVars(env_specific_params='{"params": "value"}'),
-        ["trigger", "process_passport", "env_inventory_generation", "env_builder", "generate_effective_set", "git_commit", "cmdb_import" ]
+        [
+            "trigger",
+            "process_passport",
+            "env_inventory_generation",
+            "app_reg_def_render",
+            "env_builder",
+            "generate_effective_set",
+            "git_commit",
+        ],
     ),
-    (   # new version template test
+    (
         PipelineVars(env_template_test="true", env_inventory_init="true"),
-        ["trigger", "process_passport", "env_builder", "generate_effective_set", "cmdb_import" ]
+        [
+            "trigger",
+            "process_passport",
+            "app_reg_def_render",
+            "env_builder",
+            "generate_effective_set",
+        ],
     ),
-    (   # wihtout passport discovery
+    (
         PipelineVars(get_passport="false"),
-        ["env_builder", "generate_effective_set", "git_commit", "cmdb_import" ]
+        ["app_reg_def_render", "env_builder", "generate_effective_set", "git_commit"],
     ),
-    (   # effective set only
+    (
         PipelineVars(get_passport="false", env_builder="false", cmdb_import="false"),
         ["generate_effective_set", "git_commit"]
     ),
-    (   # without passport and effective set
+    (
         PipelineVars(get_passport="false", generate_effective_set="false"),
-        ["env_builder", "git_commit", "cmdb_import" ]
+        ["app_reg_def_render", "env_builder", "git_commit"],
     ),
-    (   # with inventory generation and without env_build, passport discovery and effective set
-        PipelineVars(get_passport="false", env_builder="false", generate_effective_set="false", sd_data='{"params": "value"}'),
-        ["env_inventory_generation", "git_commit", "cmdb_import" ]
+    (
+        PipelineVars(get_passport="false", custom_params='{"params": "value"}'),
+        ["app_reg_def_render", "env_builder", "generate_effective_set", "git_commit"],
+    ),
+    (
+        PipelineVars(get_passport="false", generate_effective_set="false", custom_params='{"params": "value"}'),
+        ["app_reg_def_render", "env_builder", "git_commit"],
     ),
 ]
 
@@ -56,9 +86,6 @@ def change_test_dir(request, monkeypatch):
 
 @pytest.mark.parametrize("pipeline_vars, expected_sequence", build_pipeline_test_data)
 def test_build_pipeline(pipeline_vars, expected_sequence):
-    os.environ["CI_PROJECT_DIR"] = getAbsPath("samples")
-    os.environ["JSON_SCHEMAS_DIR"] = getAbsPath("schemas")
-
     ci_commit_ref_name = "feature/test-generate"
     os.environ["CI_COMMIT_REF_NAME"] = ci_commit_ref_name
     pipeline_vars = asdict(pipeline_vars, dict_factory=convert_keys_to_uppercase)

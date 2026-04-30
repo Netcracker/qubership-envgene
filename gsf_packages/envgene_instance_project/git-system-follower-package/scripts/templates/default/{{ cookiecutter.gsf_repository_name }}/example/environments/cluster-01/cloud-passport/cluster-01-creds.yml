@@ -6,11 +6,6 @@ consul-admin-cred:
   type: "secret"
   data:
     secret: "token-placeholder-123"
-cse-graylog-cred:
-  type: "usernamePassword"
-  data:
-    username: "user-placeholder-123"
-    password: "pass-placeholder-123"
 dbaas-cluster-dba-cred:
   type: "usernamePassword"
   data:
@@ -22,16 +17,6 @@ maas-cred:
     username: "user-placeholder-123"
     password: "pass-placeholder-123"
 minio-storage-cred:
-  type: "usernamePassword"
-  data:
-    username: "user-placeholder-123"
-    password: "pass-placeholder-123"
-oss-streaming-cred:
-  type: "usernamePassword"
-  data:
-    username: "user-placeholder-123"
-    password: "pass-placeholder-123"
-ssm-cmdb-cred:
   type: "usernamePassword"
   data:
     username: "user-placeholder-123"
