@@ -164,7 +164,7 @@ The following set of terms is used to describe the rules and assumptions of SD m
 
 A variation of basic merge that supports application removal. This mode:
 
-- Additionally all  ows removal of duplicate applications
+- Additionally allows removal of duplicate applications
 - Rejects new applications not present in original SD (throws warning)
 - Maintains the same minimal SD structure as `basic-merge`
 - Typical use case: Creating reduced solution configurations by removing unnecessary components
