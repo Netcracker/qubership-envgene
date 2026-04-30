@@ -21,9 +21,9 @@ pydantic==2.10.6
 Jinja2==3.1.6
 
 # Additional required packages
-platformdirs>=3.0.0
+platformdirs==3.0.0
 
-google-auth~=2.34.0
+google-auth==2.34.0
 qubership-pipelines-common-library==2.0.3
 
 # Removed heavy packages:
