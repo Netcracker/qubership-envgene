@@ -1,0 +1,12 @@
+name: "bgd-ns-artifacts-env-bg-domain"
+type: bgdomain
+originNamespace:
+  name: "bgd-ns-artifacts-env-origin-app"
+  type: namespace
+peerNamespace:
+  name: "bgd-ns-artifacts-env-peer-app"
+  type: namespace
+controllerNamespace:
+  name: "bgd-ns-artifacts-env-bg-controller"
+  type: namespace
+  credentials: bgdomaincred

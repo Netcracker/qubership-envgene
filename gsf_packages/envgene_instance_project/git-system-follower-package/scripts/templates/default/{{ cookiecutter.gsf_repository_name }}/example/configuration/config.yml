@@ -1,0 +1,17 @@
+# See full reference at https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#configyml
+#
+# Optional
+# Parameter defines the encryption mode. Default - `true`
+crypt: false
+# Optional
+# Defines the encryption technology. Default - `Fernet`
+# crypt_backend: enum [Fernet, SOPS]
+# Optional
+# SBOM retention configuration
+# sbom_retention:
+  # Optional, default value - false
+  # If `true`, SBOM retention will be enabled
+  # enabled: false
+  # Optional, default value - 10
+  # Number of latest versions to keep per application when enabled
+  # keep_versions_per_app: 10

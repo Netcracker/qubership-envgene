@@ -8,7 +8,7 @@
 
 ## Description
 
-This guide outlines the steps to create and register a simple environment template within the Template repository. It covers the creation of the template descriptor, associated Jinja files, and the process to build and publish the template artifact to the registry for use in environment provisioning.
+This guide outlines the steps to create and publish a simple environment template within the Template repository. It covers the creation of the template descriptor, associated Jinja files, and the process to build and publish the template artifact to the registry for use in environment provisioning.
 
 ## Prerequisites
 

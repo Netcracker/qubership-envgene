@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
-job=$1
+
+echo "===== SCRIPT START: $(date '+%H:%M:%S') ====="
+
 retries=0
 exit_code=0
-
-pattern="^[A-Z]+-[0-9]+$"
 
 if [ -n "${GITHUB_ACTIONS}" ]; then
       # Logic for GitHub
@@ -28,6 +28,10 @@ elif [ -n "${GITLAB_CI}" ]; then
       TOKEN="${GITLAB_TOKEN}"
 fi
 
+if [ -z "${TOKEN}" ]; then
+      echo "No auth token was found. Please check!"
+      exit 1
+fi
 
 echo "Platform: ${PLATFORM}"
 echo "Server Protocol: ${SERVER_PROTOCOL}"
@@ -36,11 +40,6 @@ echo "Project Path: ${PROJECT_PATH}"
 echo "Branch/Ref Name: ${REF_NAME}"
 echo "User Email: ${USER_EMAIL}"
 echo "User Name: ${USER_NAME}"
-
-if [ -z "${TOKEN}" ]; then
-      echo "No auth token was found. Please check!"
-      exit 1
-fi
 
 echo "ENV_NAME=${ENV_NAME}"
 echo "CLUSTER_NAME=${CLUSTER_NAME}"
@@ -52,7 +51,6 @@ echo "DEPLOYMENT_SESSION_ID=${DEPLOY_SESSION_ID}"
 
 export ticket_id=${DEPLOYMENT_TICKET_ID}
 
-# commit message
 if [ -z "${COMMIT_MESSAGE}" ]; then
       message="${ticket_id} [ci_skip] Update \"${CLUSTER_NAME}/${ENVIRONMENT_NAME}\" environment"
 else
@@ -67,7 +65,7 @@ echo "Commit message: ${message}"
 echo "Moving env environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME} artifacts to temporary location"
 mkdir -p /tmp/artifact_environments/${CLUSTER_NAME}
 
-if [ "${COMMIT_ENV}" = "true" ]; then
+if [ "${COMMIT_ENV}" = "true" ] && [ -d "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}" ]; then
     cp -r environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME} /tmp/artifact_environments/${CLUSTER_NAME}/
 fi
 
@@ -97,7 +95,32 @@ if [ -e gitlab-ci/prefix_build ]; then
     cp -r templates /tmp
 fi
 
-#Copying cred files modified as part of cred rotation job.
+echo "Saving cluster and site shared folders"
+mkdir -p /tmp/artifact_shared
+
+if [ -d environments/${CLUSTER_NAME} ]; then
+    for dir in parameters credentials resource_profiles shared_template_variables; do
+        SRC="environments/${CLUSTER_NAME}/$dir"
+        if [ -d "$SRC" ]; then
+            echo "Saving $SRC"
+            mkdir -p "/tmp/artifact_shared/environments/${CLUSTER_NAME}"
+            cp -r "$SRC" "/tmp/artifact_shared/environments/${CLUSTER_NAME}/"
+        fi
+    done
+fi
+
+if [ -d environments ]; then
+    for dir in parameters credentials resource_profiles shared_template_variables; do
+        SRC="environments/$dir"
+        if [ -d "$SRC" ]; then
+            echo "Saving $SRC"
+            mkdir -p "/tmp/artifact_shared/environments"
+            cp -r "$SRC" "/tmp/artifact_shared/environments/"
+        fi
+    done
+fi
+
+# Copying cred files modified as part of cred rotation job.
 CREDS_FILE="environments/credfilestoupdate.yml"
 if [ -f "$CREDS_FILE" ]; then
   echo "Processing $CREDS_FILE for copying filtered creds..."
@@ -149,15 +172,44 @@ echo "Adding remote: ${REMOTE_URL}"
 git remote add origin "${REMOTE_URL}"
 
 
-echo "Pulling contents from GIT (branch: ${REF_NAME})"
-git pull origin "${REF_NAME}"
+echo "Fetching contents from GIT (branch: ${REF_NAME})"
+git fetch --depth=1 origin ${REF_NAME}
+git switch -C ${REF_NAME} origin/${REF_NAME}
 
 # moving back environments folder and committing
+
+echo "Restoring cluster and site shared folders"
+
+for dir in parameters credentials resource_profiles shared_template_variables; do
+    if [ -d /tmp/artifact_shared/environments/$dir ]; then
+        rm -rf environments/$dir
+        mkdir -p environments/$dir
+        cp -r /tmp/artifact_shared/environments/$dir/. environments/$dir/
+    fi
+done
+
+for dir in parameters credentials resource_profiles shared_template_variables; do
+    if [ -d /tmp/artifact_shared/environments/${CLUSTER_NAME}/$dir ]; then
+        rm -rf environments/${CLUSTER_NAME}/$dir
+        mkdir -p environments/${CLUSTER_NAME}/$dir
+        cp -r /tmp/artifact_shared/environments/${CLUSTER_NAME}/$dir/. environments/${CLUSTER_NAME}/$dir/
+    fi
+done
+
+
 echo "Restoring environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
+
 if [ "${COMMIT_ENV}" = "true" ]; then
-    rm -rf "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
-    mkdir -p "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
-    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/. "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"
+    if [ -d "/tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}" ]; then
+        rm -rf "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
+        mkdir -p "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
+        cp -r "/tmp/artifact_environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/." "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"
+    else
+        if [ -d "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}" ]; then
+            echo "Folder environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME} no longer exists, deleting from repo"
+            rm -rf "environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
+        fi
+    fi
 fi
 
 if [ -e /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport ]; then
@@ -172,8 +224,10 @@ if [ -e /tmp/configuration ]; then
 fi
 
 if [ -e /tmp/sboms ]; then
-  echo "Restoring config folder"
-  cp -r /tmp/sboms .
+    echo "Restoring sboms folder"
+    rm -rf sboms
+    mkdir -p sboms
+    cp -r /tmp/sboms/. sboms/
 fi
 
 if [ -e /tmp/gitlab-ci ]; then
@@ -246,17 +300,17 @@ if [ "$exit_code" -ne 0 ]; then
           echo "Waiting ${sleep_time} seconds before retry..."
           sleep $sleep_time
 
-          echo "Pulling latest changes from origin/${REF_NAME}..."
-          git pull origin "${REF_NAME}"
-          pull_exit_code=$?
+          echo "Fetching latest changes from origin/${REF_NAME}..."
+          git fetch --depth=1 origin "${REF_NAME}"
+          fetch_exit_code=$?
 
-          if [ "$pull_exit_code" -ne 0 ]; then
-              echo "⚠ Pull failed with exit code: $pull_exit_code, continuing to next retry..."
-              continue
+          if [ "$fetch_exit_code" -ne 0 ]; then
+              echo "⚠ Fetch failed with exit code: $fetch_exit_code"
+              break
           fi
 
-          echo "Successfully pulled changes. Remote is now at: $(git rev-parse origin/${REF_NAME})"
-          echo "Local HEAD is at: $(git rev-parse HEAD)"
+          git reset --soft origin/"${REF_NAME}"
+          git commit -m "${message}"
 
           echo "Attempting push (retry $retries)..."
           git push origin HEAD:"${REF_NAME}"
@@ -278,5 +332,7 @@ if [ "$exit_code" -ne 0 ]; then
           echo "Final exit code: $exit_code"
       fi
 fi
+
+echo "===== SCRIPT END: $(date '+%H:%M:%S') ====="
 
 exit $exit_code

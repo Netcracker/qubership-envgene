@@ -3,6 +3,7 @@ import glob
 import re
 import shutil
 import tarfile
+import time
 import zipfile
 from typing import Callable
 from pathlib import Path
@@ -57,7 +58,7 @@ def delete_dir(path):
     try:
         shutil.rmtree(path)
     except:
-        logger.info(f'{path} directory does not exist')
+        logger.warning(f'{path} directory does not exist')
 
 
 def is_glob(path: str) -> bool:
@@ -138,9 +139,11 @@ def openFileAsString(filePath):
 def deleteFile(filePath):
     os.remove(filePath)
 
+
 def deleteFileIfExists(filePath):
     if check_file_exists(filePath):
         os.remove(filePath)
+
 
 def writeToFile(filePath, contents):
     os.makedirs(os.path.dirname(filePath), exist_ok=True)
@@ -196,18 +199,22 @@ def findFiles(fileList: list[Path], pattern, notPattern="", additionalRegexpPatt
     for filePath in fileList:
         # this ensures that pattern matching works correctly on both Windows (\) and Unix (/)
         file_path_posix = Path(filePath).as_posix()
+        pattern_posix = Path(pattern).as_posix() if pattern else ""
+        not_pattern_posix = Path(notPattern).as_posix() if notPattern else ""
         if (
-                pattern in file_path_posix
-                and (notPattern == "" or notPattern not in file_path_posix)
+                pattern_posix in file_path_posix
+                and (not_pattern_posix == "" or not_pattern_posix not in file_path_posix)
                 and (additionalRegexpPattern == "" or re.match(additionalRegexpPattern, file_path_posix))
                 and (additionalRegexpNotPattern == "" or not re.match(additionalRegexpNotPattern, file_path_posix))
         ):
             result.append(filePath)
             logger.debug(
-                f"Path {filePath} match pattern: {pattern} or notPattern: {notPattern} or additionalPattern: {additionalRegexpPattern}")
+                f"Path {filePath} match pattern: {pattern_posix} or notPattern: {not_pattern_posix} "
+                f"or additionalPattern: {additionalRegexpPattern}")
         else:
             logger.debug(
-                f"Path {filePath} doesn't match pattern: {pattern} or notPattern: {notPattern} or additionalPattern: {additionalRegexpPattern}")
+                f"Path {filePath} doesn't match pattern: {pattern_posix} or notPattern: {not_pattern_posix} "
+                f"or additionalPattern: {additionalRegexpPattern}")
     return result
 
 
@@ -251,3 +258,48 @@ def cleanup_dir(path: str):
 
     dir_path.mkdir(parents=True, exist_ok=True)
     logger.info(f"Directory has been recreated: {path}")
+
+
+def is_dir_empty(dir_path):
+    dir_path = Path(dir_path)
+    return dir_path.exists() and dir_path.is_dir() and not any(dir_path.iterdir())
+
+
+def cleanup_dir_by_size(dir_path, max_size_mb):
+    dir_path = Path(dir_path)
+    if not dir_path.exists():
+        logger.warning(f"Path does not exist: {dir_path}")
+        return
+
+    mb = 1024 * 1024
+    max_size = max_size_mb * mb
+
+    files = [Path(f) for f in findAllFilesInDir(dir_path, "")]
+    total = sum(f.stat().st_size for f in files)
+    total_mb = total / mb
+
+    if total <= max_size:
+        logger.info(f"Directory size {total_mb:.2f} mb within limit {max_size_mb} mb")
+        return
+
+    logger.info(f"Directory size {total_mb:.2f} mb exceeds limit {max_size_mb} mb, deleting all files in {dir_path}")
+    for file in files:
+        logger.info(f"Removing file: {file}")
+        deleteFileIfExists(file)
+
+
+def cleanup_dir_by_age(dir_path, keep_last: int):
+    dir_path = Path(dir_path)
+
+    if not dir_path.exists():
+        logger.warning(f"Path does not exist: {dir_path}")
+        return
+
+    files = [f for f in dir_path.iterdir() if f.is_file()]
+    files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
+
+    if len(files) > keep_last:
+        logger.info(f"Only {keep_last} files will remain in {dir_path}")
+        for old_file in files[keep_last:]:
+            logger.info(f"Removing file: {old_file}")
+            deleteFileIfExists(old_file)

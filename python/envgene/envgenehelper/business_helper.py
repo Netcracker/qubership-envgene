@@ -1,21 +1,21 @@
-from dataclasses import dataclass, field
+from enum import auto, StrEnum
 import re
+from dataclasses import InitVar, dataclass, field
 from os import getenv
 from pathlib import Path
 from typing import overload
 
 from ruyaml import CommentedMap
+from ruyaml.scalarstring import DoubleQuotedScalarString
 
+from .collections_helper import dump_as_yaml_format
 from .collections_helper import merge_lists
-from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
-    validate_yaml_by_scheme_or_fail
-from .json_helper import findJsons
 from .file_helper import getAbsPath, extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
-from .collections_helper import dump_as_yaml_format
+from .json_helper import findJsons
 from .logger import logger
-from ruyaml.scalarstring import DoubleQuotedScalarString
-from pathlib import Path
+from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
+    validate_yaml_by_scheme_or_fail
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -27,6 +27,8 @@ CMDB_IMPORT_TAG = "CMDB_IMPORT"
 DEFAULT_PASSPORT_NAME = "passport"
 DEFAULT_PASSPORT_DIR_NAME = "cloud-passport"
 INV_GEN_CREDS_PATH = "Inventory/credentials/inventory_generation_creds.yml"
+
+TEMPLATE_DIR_PATTERN = re.compile(r'/from_(\w+_)?template/')
 
 
 def find_env_instances_dir(env_name, instances_dir):
@@ -45,15 +47,20 @@ def find_env_instances_dir(env_name, instances_dir):
     logger.error(f"Directory for {env_name} is not found in {instances_dir}")
     raise ReferenceError(f"Can't find directory for {env_name}")
 
+
 @overload
 def getenv_and_log(name: str) -> None | str: ...
+
+
 @overload
 def getenv_and_log(name: str, default: str) -> str: ...
+
 
 def getenv_and_log(name, *args, **kwargs):
     var = getenv(name, *args, **kwargs)
     logger.info(f"{name}: {var}")
     return var
+
 
 def getenv_with_error(var_name):
     var = getenv(var_name)
@@ -62,8 +69,10 @@ def getenv_with_error(var_name):
     logger.debug(f"{var_name}: {var}")
     return var
 
+
 def get_env_instances_dir(environment_name, cluster_name, instances_dir):
     return f"{instances_dir}/{cluster_name}/{environment_name}"
+
 
 def get_current_env_dir_from_env_vars() -> Path:
     instances_dir = getenv_with_error('CI_PROJECT_DIR')
@@ -71,6 +80,7 @@ def get_current_env_dir_from_env_vars() -> Path:
     env_dir_path = Path(f"{instances_dir}/environments/{env_name}")
     logger.debug(env_dir_path)
     return env_dir_path
+
 
 def check_environment_is_valid_or_fail(environment_name, cluster_name, instances_dir, skip_env_definition_check=False,
                                        validate_env_definition_by_schema=False, schemas_dir=""):
@@ -159,7 +169,8 @@ def getTemplateArtifactName(env_definition_yaml):
         return gav["artifact_id"]
 
 
-def getEnvDefinition(env_dir):
+def getEnvDefinition(env_dir = None):
+    env_dir = env_dir or get_current_env_dir_from_env_vars()
     env_definition_path = getEnvDefinitionPath(env_dir)
     if not check_file_exists(env_definition_path):
         raise ReferenceError(f"Environment definition for env {env_dir} is not found in {env_definition_path}")
@@ -360,15 +371,37 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
     else:
         return ""
 
+class NamespaceRole(StrEnum):
+    COMMON = auto()
+    ORIGIN = auto()
+    PEER = auto()
+
+def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> NamespaceRole:
+    if not bgd_object:
+        bgd_object = get_bgd_object()
+    if not bgd_object:
+        return NamespaceRole.COMMON
+    if bgd_object['originNamespace']['name'] == ns_name:
+        return NamespaceRole.ORIGIN
+    if bgd_object['peerNamespace']['name'] == ns_name:
+        return NamespaceRole.PEER
+    return NamespaceRole.COMMON
+
 @dataclass
 class NamespaceFile:
     path: Path
     name: str = field(init=False)
+    postfix: str = field(init=False)
     definition_path: Path = field(init=False)
+    role: NamespaceRole = field(init=False)
+    bgd: InitVar[dict | None] = None
 
-    def __post_init__(self):
+    def __post_init__(self, bgd: dict | None):
         self.definition_path = self.path.joinpath('namespace.yml')
         self.name = openYaml(self.definition_path)['name']
+        self.postfix = self.path.name
+        self.role = get_namespace_role(self.name, bgd)
+
 
 def get_namespaces_path(env_dir: Path | None = None) -> Path:
     env_dir = env_dir or get_current_env_dir_from_env_vars()
@@ -376,24 +409,44 @@ def get_namespaces_path(env_dir: Path | None = None) -> Path:
     logger.debug(namespaces_path)
     return namespaces_path
 
+def get_bgd_path(env_dir: Path | None = None) -> Path:
+    env_dir = env_dir or get_current_env_dir_from_env_vars()
+    bgd_path = env_dir.joinpath('bg_domain.yml')
+    logger.debug(bgd_path)
+    return bgd_path
+
+
+def get_bgd_object(env_dir: Path | None = None) -> CommentedMap:
+    bgd_path = get_bgd_path(env_dir)
+    bgd_object = openYaml(bgd_path, allow_default=True)
+    logger.debug(bgd_object)
+    return bgd_object
+
 def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     namespaces_path = get_namespaces_path(env_dir)
     if not check_dir_exists(str(namespaces_path)):
         return []
     namespace_paths = [p for p in namespaces_path.iterdir() if p.is_dir()]
-    namespaces = [NamespaceFile(path=p) for p in namespace_paths]
+    bgd = get_bgd_object(env_dir)
+    namespaces = [NamespaceFile(path=p, bgd=bgd) for p in namespace_paths]
     logger.debug(namespaces)
     return namespaces
 
-def get_bgd_path() -> Path:
-    env_dir = get_current_env_dir_from_env_vars()
-    bgd_path = env_dir.joinpath('bg_domain.yml')
-    logger.debug(bgd_path)
-    return bgd_path
+def get_template_dirs(base_dir: str | None = None) -> dict[NamespaceRole, str]:
+    base_dir = base_dir if base_dir else getenv_with_error('CI_PROJECT_DIR')
+    result = {}
+    result[NamespaceRole.COMMON] = f"{base_dir}/tmp/templates"
+    origin_template_path = f"{base_dir}/tmp/origin/templates"
+    if check_dir_exists(origin_template_path):
+        result[NamespaceRole.ORIGIN] = origin_template_path
+    peer_template_path = f"{base_dir}/tmp/peer/templates"
+    if check_dir_exists(peer_template_path):
+        result[NamespaceRole.PEER] = peer_template_path
+    return result
 
-def get_bgd_object() -> CommentedMap:
-    bgd_path = get_bgd_path()
-    bgd_object = openYaml(bgd_path, allow_default=True)
-    logger.debug(bgd_object)
-    return bgd_object
+def is_from_template_dir(file_path: str) -> bool:
+    return bool(TEMPLATE_DIR_PATTERN.search(file_path))
 
+
+def get_sboms_dir(work_dir) -> Path:
+    return Path(work_dir) / "sboms"

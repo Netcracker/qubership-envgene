@@ -17,7 +17,10 @@
     - [Basic Usage](#basic-usage)
   - [📚 Documentation](#-documentation)
     - [Getting Started](#getting-started)
+    - [Tutorials](#tutorials)
     - [Core Concepts](#core-concepts)
+    - [How-To Guides](#how-to-guides)
+    - [Migrations](#migrations)
     - [Advanced Features](#advanced-features)
     - [Examples \& Samples](#examples--samples)
     - [Development](#development)
@@ -98,7 +101,7 @@ EnvGene simplifies Environment management by providing:
    ```
 
    > [!NOTE] For special instructions on the GitHub pipeline, see [GH_ADDITIONAL_PARAMS docs](/docs/instance-pipeline-parameters.md)
-   > and the [pipeline description](/github_workflows/instance-repo-pipeline/.github/docs/README.md)
+   > and the [pipeline description](/github_workflows/instance-repo-pipeline/.github/README.md)
 
 After the pipeline finishes, the Environment configuration will be generated and committed to your instance repository:
 
@@ -111,6 +114,11 @@ After the pipeline finishes, the Environment configuration will be generated and
 
 - [**Quick Start Guide**](#-quick-start) - Create your first Environment
 
+### Tutorials
+
+- [**Understanding the Effective Set**](/docs/tutorials/effective-set.md) - Trace how parameters from Tenant, Cloud, Namespace, Application, and SBOM sources are merged into the final Effective Set; learn to read traceability comments and debug wrong values
+- [**Managing Resource Profiles**](/docs/tutorials/resource-profiles.md) - End-to-end walkthrough: from Baseline to Template Override to Environment-Specific Override, including `template_override`, `overrides-parent`, and result verification
+
 ### Core Concepts
 
 - [**EnvGene Objects**](/docs/envgene-objects.md) - What are EnvGene objects and how they work
@@ -119,6 +127,36 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Repository Variables**](/docs/envgene-repository-variables.md) - CI/CD variables used in EnvGene repositories
 - [**Template Macros**](/docs/template-macros.md) - How to use EnvGene macros in templates
 - [**Instance Pipeline Parameters**](/docs/instance-pipeline-parameters.md) - Reference for Instance pipeline inputs
+
+### How-To Guides
+
+**Repository Setup:**
+
+- [**Create Simple Template**](/docs/how-to/create-simple-template.md) - Create your first environment template
+- [**Create Cluster**](/docs/how-to/create-cluster.md) - Set up a new cluster
+- [**Create Environment Inventory**](/docs/how-to/create-environment-inventory.md) - Define environment inventory
+- [**Initialize and Upgrade Instance Repository**](/docs/how-to/envgene-maitanance.md) - Set up or upgrade Instance Repository using GSF
+
+**Configuration Management:**
+
+- [**Update Template Version**](/docs/how-to/update-template-version.md) - Update environment template version
+- [**Override Template Parameters**](/docs/how-to/environment-specific-parameters.md) - Override template parameters for specific environments
+- [**Configure Resource Profiles**](/docs/how-to/configure-resource-profiles.md) - Configure performance parameters for different environment types
+
+**Effective Set:**
+
+- [**Generate an Effective Set**](/docs/how-to/generate-effective-set.md) - Trigger Effective Set generation from a Solution Descriptor artifact and template version
+
+**Advanced Configuration:**
+
+- [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
+- [**Filter Namespaces in Template Descriptor**](/docs/how-to/filter-ns-in-template-descriptor.md) - Generate Environments with selected namespaces only
+- [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
+
+### Migrations
+
+- [**Migrate to Dot-Notated Parameters**](/docs/how-to/dot-notated-parameter-migration.md) - Parameter format migration
+- [**Migrate SBOM Storage to Per-Application Layout**](/docs/how-to/sbom-storage-migration.md) - Transition to per-application SBOM directory layout when upgrading EnvGene
 
 ### Advanced Features
 
@@ -129,13 +167,15 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Environment Instance Generation**](/docs/features/environment-instance-generation.md) - Generate Environment Instances from templates and inventories
 - [**Credential Rotation**](/docs/features/cred-rotation.md) - Automate [Credential](/docs/envgene-objects.md#credential) rotation
 - [**Namespace Render Filter**](/docs/features/namespace-render-filtering.md) - Render only selected [Namespaces](/docs/envgene-objects.md#namespace)
+- [**Namespace Filtering in Template Descriptor**](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter namespaces during Template Descriptor rendering
 - [**System Certificate Configuration**](/docs/features/system-certificate.md) - Auto-config system certs for internal registries or TLS services
 - [**Template Override**](/docs/features/template-override.md) - Use a base Environment template and override parts as needed
 - [**Automatic Environment Name Derivation**](/docs/features/auto-env-name-derivation.md) - Auto-detect Environment name from folder structure
-- [**Template Inheritance**](/docs/features/template-inheritance.md) - Advanced Environment template patterns
-- [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure [Credential](/docs/envgene-objects.md#credential) rotation
+- [**Template Composition**](/docs/features/template-composition.md) - Advanced Environment template patterns
 - [**Blue-Green Deployment**](/docs/features/blue-green-deployment.md) - BG domains, state management, and `bg_manage` pipeline job
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
+- [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
+- [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
 
 ### Examples & Samples
 

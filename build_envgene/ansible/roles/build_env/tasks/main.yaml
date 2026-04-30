@@ -1,4 +1,0 @@
----
-- name: 01. prepare template testing
-  include_tasks: 01_prepare_template_testing.yaml
-  when: env_template_test == 'true'

@@ -1,13 +1,13 @@
 name: "{{current_env.name}}-bg-domain"
 type: bgdomain
 originNamespace:
-  name: "{{current_env.name}}-origin-bss" 
+  name: "{{current_env.name}}-origin-app"
   type: namespace
 peerNamespace:
-  name: "{{current_env.name}}-peer-bss" 
+  name: "{{current_env.name}}-peer-app"
   type: namespace
 controllerNamespace:
   name: "{{current_env.name}}-bg-controller"
   type: namespace
   credentials: bgdomaincred
- 
+

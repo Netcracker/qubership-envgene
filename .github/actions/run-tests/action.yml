@@ -30,7 +30,7 @@ runs:
             cp dependencies/sources.list /etc/apt/sources.list
         fi
 
-        pip install --upgrade pip setuptools wheel
+        pip install --upgrade pip "setuptools<82" wheel
         pip install --no-cache-dir -r dependencies/tests_requirements.txt
 
         if [ -f python/build_modules.sh ]; then
@@ -44,6 +44,11 @@ runs:
         mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops
         chmod +x /usr/local/bin/sops
 
+    - name: Configure test environment
+      shell: bash
+      run: |
+        echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> "${GITHUB_ENV}"
+
     - name: ENVGENE HELPER test
       shell: bash
       run: |
@@ -52,6 +57,14 @@ runs:
         cd ../../..
         mv junit.xml junit_envgenehelper.xml
 
+    - name: PIPEGENE test
+      shell: bash
+      run: |
+        cd build_pipegene/scripts
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
+        cd ../..
+        mv junit.xml junit_pipegene.xml
+
     - name: ARTIFACT SEARCHER test
       shell: bash
       run: |
@@ -59,6 +72,18 @@ runs:
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit.xml
         cd ../../..
         mv junit.xml junit_artifact_searcher.xml
+
+    - name: BG MANAGE test
+      shell: bash
+      env:
+        FULL_ENV_NAME: "sdp-dev/env-1"
+        BG_STATE: ""
+        CI_PROJECT_DIR: ${GITHUB_WORKSPACE}
+      run: |
+        cd scripts/bg_manage
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
+        cd ../..
+        mv junit.xml junit_bg_manage.xml
 
     - name: BUILD ENV test
       shell: bash
@@ -76,10 +101,18 @@ runs:
         cd ../..
         mv junit.xml junit_cred_rotation.xml
 
+    - name: SBOMS RETENTION POLICY test
+      shell: bash
+      run: |
+        cd build_effective_set_generator/scripts
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
+        cd ../..
+        mv junit.xml junit_sbom_retention.xml
+
     - name: Merge test results
       shell: bash
       run: |
-        junitparser merge junit_build_env.xml junit_envgenehelper.xml junit.xml
+        junitparser merge junit_*.xml junit.xml
 
     - name: Upload test results
       if: always()

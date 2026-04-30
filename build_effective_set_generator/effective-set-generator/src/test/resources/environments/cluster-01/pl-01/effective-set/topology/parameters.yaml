@@ -1,0 +1,29 @@
+bg_domain:
+  name: env-1-bg-domain
+  type: bgdomain
+  originNamespace:
+    name: pl-01-monitoring
+    type: namespace
+    credentials: null
+  peerNamespace:
+    name: pl-01-pg-test
+    type: namespace
+    credentials: null
+  controllerNamespace:
+    name: env-1-bg-controller
+    type: namespace
+    credentials: creds-get-password-cred
+    url: https://controller-env-1-controller.qubership.org
+cluster:
+  api_port: '6443'
+  api_url: api.cluster-01.qubership.org
+  protocol: https
+  public_url: cluster-01.qubership.org
+composite_structure: {}
+environments:
+  cluster-01/pl-01:
+    namespaces:
+      pl-01-monitoring:
+        deployPostfix: monitoring-origin
+      pl-01-pg:
+        deployPostfix: pg

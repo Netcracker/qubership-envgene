@@ -20,7 +20,7 @@ class TestHelpers:
         return path
 
     @staticmethod
-    def compare_dirs_content(source_dir, target_dir) -> tuple[list[str], list[str], dict[str,str] | list, list]:
+    def compare_dirs_content(source_dir, target_dir) -> tuple[list[str], list[str], dict[str, str] | list, list]:
         source_map = {Path(f).name: f for f in get_all_files_in_dir(source_dir)}
         target_map = {Path(f).name: f for f in get_all_files_in_dir(target_dir)}
 
@@ -40,10 +40,12 @@ class TestHelpers:
                 file1 = os.path.join(source_dir, file)
                 file2 = os.path.join(target_dir, file)
                 with open(file1, 'r') as f1, open(file2, 'r') as f2:
-                    verbose_diff_list = difflib.unified_diff(f1.readlines(), f2.readlines(), fromfile=file1, tofile=file2, lineterm='')
+                    verbose_diff_list = difflib.unified_diff(f1.readlines(), f2.readlines(), fromfile=file1,
+                                                             tofile=file2, lineterm='')
                     diff_list = []
                     for line in verbose_diff_list:
-                        if (line.startswith('+') and not line.startswith('+++')) or (line.startswith('-') and not line.startswith('---')):
+                        if (line.startswith('+') and not line.startswith('+++')) or (
+                                line.startswith('-') and not line.startswith('---')):
                             diff_list.append(line)
                     mismach_dict[file] = ''.join(diff_list)
                     logger.error(f"Diff for {file}:\n{''.join(verbose_diff_list)}")
@@ -52,7 +54,8 @@ class TestHelpers:
         return extra_files, missing_files, mismatch, errors
 
     @staticmethod
-    def assert_dirs_content(source_dir, target_dir, check_for_missing_files=False, check_for_extra_files=False, expected_mismatch:dict[str, str] | None=None):
+    def assert_dirs_content(source_dir, target_dir, check_for_missing_files=False, check_for_extra_files=False,
+                            expected_mismatch: dict[str, str] | None = None):
         extra_files, missing_files, mismatch, errors = TestHelpers.compare_dirs_content(source_dir, target_dir)
 
         if check_for_extra_files:
@@ -77,3 +80,8 @@ class TestHelpers:
                 zf.writestr(filename, content)
         return zip_buffer.getvalue()
 
+    @staticmethod
+    def create_file(path: Path, size=1024, mtime=None):
+        path.write_bytes(b"x" * size)
+        if mtime is not None:
+            os.utime(path, (mtime, mtime))

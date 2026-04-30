@@ -649,7 +649,7 @@ Each individual registry is described by a separate `yaml` file in the `/configu
 
 The `name` attribute must match the filename without the extension.
 
-[Registry Definition v2.0](/schemas/regdef-v2.schema.json)
+[Registry Definition v2.0](/python/envgene/envgenehelper/schemas/regdef-v2.schema.json) (see envgene-objects.md for schema details)
 
 [Example](/examples/sandbox.yml)
 
