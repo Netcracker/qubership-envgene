@@ -21,8 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.cyclonedx.model.Bom;
 import org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage;
-import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
 import org.qubership.cloud.devops.cli.utils.deserializer.BomMixin;
+import org.qubership.cloud.devops.cli.utils.yaml.YamlFileWriter;
 import org.qubership.cloud.devops.commons.exceptions.FileParseException;
 import org.qubership.cloud.devops.commons.exceptions.JsonParseException;
 import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverter;
@@ -34,12 +34,10 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
-import org.qubership.cloud.devops.cli.utils.yaml.AdaptiveYaml;
 
 import java.io.*;
 import java.util.Base64;
 import java.util.Map;
-import java.util.TreeMap;
 
 import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 
@@ -49,11 +47,11 @@ import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 public class FileDataConverterImpl implements FileDataConverter {
     public static final String CLEANUPER = "cleanuper";
     private final ObjectMapper objectMapper;
-    private final FileSystemUtils fileSystemUtils;
+    private final YamlFileWriter yamlFileWriter;
 
     @Inject
-    public FileDataConverterImpl(FileSystemUtils fileSystemUtils) {
-        this.fileSystemUtils = fileSystemUtils;
+    public FileDataConverterImpl(YamlFileWriter yamlFileWriter) {
+        this.yamlFileWriter = yamlFileWriter;
         this.objectMapper = new ObjectMapper(new YAMLFactory());
     }
 
@@ -96,19 +94,7 @@ public class FileDataConverterImpl implements FileDataConverter {
 
     @Override
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
-        File file = fileSystemUtils.getFileFromGivenPath(args);
-
-        boolean expand = params != null && !params.isEmpty()
-                && AdaptiveYaml.shouldExpand(params);
-        if (expand) {
-            logInfo("removing anchors and aliases for file: " + file.getAbsolutePath());
-        }
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            if (params != null && !params.isEmpty()) {
-                getYamlObject(expand).dump(params, writer);
-            }
-        }
+        yamlFileWriter.write(params, args);
     }
 
 
@@ -125,7 +111,7 @@ public class FileDataConverterImpl implements FileDataConverter {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
         options.setPrettyFlow(false);
-        if (expand) {            
+        if (expand) {
             options.setDereferenceAliases(true);
         }
         Representer representer = new Representer(options) {

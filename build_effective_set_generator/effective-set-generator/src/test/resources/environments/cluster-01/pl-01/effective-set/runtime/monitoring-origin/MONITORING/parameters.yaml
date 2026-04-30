@@ -1,5 +1,5 @@
 PARAM_2: value-2
 PARAM_6: value-6
 TECHNICAL_PARAM_1: VALUE_TP_1
-integrations.ndo-api-gw.url: "http://api-test:8080"
-artifact: "org.snakeyaml"
+artifact: org.snakeyaml
+integrations.ndo-api-gw.url: http://api-test:8080
