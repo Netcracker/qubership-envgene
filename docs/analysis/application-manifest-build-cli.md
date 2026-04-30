@@ -321,12 +321,13 @@ components:
     mimeType: application/vnd.nc.helm.chart
 
   # application/vnd.docker.image
+  # External image: attributes resolved from `reference`
   - name: service-a
     mimeType: application/vnd.docker.image
     reference: artifactorycn.netcracker.com:17004/core/service-a:build1
+  # Image built within the current pipeline: attributes resolved from Component Metadata
   - name: service-b
     mimeType: application/vnd.docker.image
-    reference: artifactorycn.netcracker.com:17004/core/service-b:build1
 ```
 
 ### `artifactMappings` Processing
