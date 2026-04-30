@@ -2,17 +2,17 @@ from .business_helper import getEnvDefinition
 import pytest
 import logging
 
-# Enable logging ONLY for this file
-@pytest.fixture(autouse=True)
-def enable_logging():
+@pytest.fixture(scope="session", autouse=True)
+def log_start():
     logging.basicConfig(level=logging.INFO, force=True)
-    logging.info("getEnvDefinition method of business_helper.py is being tested...")
+
+@pytest.fixture(scope="session", autouse=True)
+def log_end(request):
+    yield
+    if request.session.testsfailed == 0:
+        logging.info("===== test_business_helper.py : All test cases passed successfully =====")
 
 
-test_logger = logging.getLogger("test_logger")
-
-
-# ===================== TEST CASES =====================
 test_cases = [
     {
         "name": "Inventory Missing",
@@ -56,56 +56,37 @@ test_cases = [
     },
 ]
 
-
-# ===================== PARAMETRIZED TEST =====================
 @pytest.mark.parametrize(
     "case",
     test_cases,
     ids=[case["name"] for case in test_cases]
 )
 def test_get_env_definition(case, monkeypatch):
-    test_logger.info(f"\n===== {case['name']} =====")
-    test_logger.info("INPUT YAML: %s", case["input_yaml"])
-
-    # Mock path
     monkeypatch.setattr(
         "envgenehelper.business_helper.getEnvDefinitionPath",
         lambda x: "dummy_path"
     )
-
-    # Mock file existence
     monkeypatch.setattr(
         "envgenehelper.business_helper.check_file_exists",
         lambda x: case["file_exists"]
     )
-
-    # Mock YAML loading
     if case["input_yaml"] is not None:
         monkeypatch.setattr(
             "envgenehelper.business_helper.openYaml",
             lambda x: case["input_yaml"].copy()
         )
-
-    # Mock env fallback
     monkeypatch.setattr(
         "envgenehelper.business_helper.get_current_env_dir_from_env_vars",
         lambda: "env_from_vars"
     )
-
-    # ===================== EXECUTION =====================
     if case["expect_exception"]:
         with pytest.raises(case["expect_exception"]):
             getEnvDefinition(case["env_dir"])
         return
 
     result = getEnvDefinition(case["env_dir"])
-
-    test_logger.info("RESULT: %s", result)
-
-    # ===================== ASSERTIONS =====================
     assert "inventory" in result
     assert result["inventory"] == case["expected_inventory"]
 
-    # Special case: ensure inventory not overridden
     if case["name"] == "Inventory Exists":
         assert result["inventory"] == case["input_yaml"]["inventory"]
