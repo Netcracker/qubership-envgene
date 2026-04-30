@@ -461,13 +461,13 @@ This allows incorporating build-time attributes (hashes, versions, registry refe
    - `tools.components` always contains one element
    - `tools.components[0].type` is always `"application"`
    - `tools.components[0].name` is always `"am-build-cli"`
-   - `tools.components[0].version` is taken from the CLI tool version
+   - `tools.components[0].version` is taken from the command-line tool version
 
 **Data sources:**
 
 - CLI parameters (`--name`, `--version`)
 - Configuration (`applicationName`, `applicationVersion`)
-- CLI tool version
+- Command-line tool version
 
 ### Components
 
@@ -504,7 +504,7 @@ Component structure is described in [Application Manifest v2 Specification](../a
 
 **Data sources:**
 
-- Component Metadata (if the component is built in the current pipeline)
+- Component Metadata (if the component is built within the current pipeline)
 - `reference` in the configuration (if the component is external)
 - Registry Definition (for PURL generation)
 
@@ -530,7 +530,7 @@ Component structure is described in [Application Manifest v2 Specification](../a
 
 **Data sources:**
 
-- Component Metadata (if the component is built in the current pipeline)
+- Component Metadata (if the component is built within the current pipeline)
 - `reference` in the configuration (if the component is external)
 - Chart artifact (for extracting values.schema.json and resource-profiles)
 - Registry Definition (for PURL generation)
