@@ -1,3 +1,50 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jschon-sort"
+version = "0.2.0"
+description = "Sorts a JSON or YAML document to match a JSON Schema's order of properties"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.8"
+maintainers = [
+    {name = "Ilya Konstantinov", email = "ilya.konstantinov@gmail.com"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3"
+]
+dependencies = [
+    "jschon==0.11.0",
+    "ruyaml==0.91.0"
+]
+
+[project.urls]
+Homepage = "https://www.github.com/ikonst/jschon-sort"
+
+[project.scripts]
+jschon-sort = "jschon_tools.cli:sort_main"
+jschon-remove-additional-props = "jschon_tools.cli:remove_additional_props_main"
+
+[tool.setuptools.packages.find]
+exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+jschon_sort = [
+    "py.typed"
+]
+
+[tool.pytest.ini_options]
+addopts = "--cov ."
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+omit = ["setup.py"]
+
 [tool.black]
 line-length = 120
 skip-string-normalization = true
@@ -14,3 +61,7 @@ show_error_codes = true
 implicit_reexport = false
 warn_unreachable = true
 disallow_incomplete_defs = true
+disallow_any_generics = true
+disallow_untyped_defs = true
+enable_error_code = "truthy-function"
+warn_unused_ignores = true
