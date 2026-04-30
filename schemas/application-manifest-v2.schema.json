@@ -208,7 +208,7 @@
     },
     "standalone-runnable": {
       "type": "object",
-      "required": ["type", "mime-type", "bom-ref", "name", "properties", "components"],
+      "required": ["type", "mime-type", "bom-ref", "name", "version", "properties", "components"],
       "additionalProperties": false,
       "properties": {
         "type": {
@@ -475,6 +475,13 @@
           "type": "array",
           "items": {
             "$ref": "#/definitions/hash"
+          }
+        },
+        "properties": {
+          "type": "array",
+          "description": "Additional properties for the Docker image. Recognized property names: nc:dd:image_type",
+          "items": {
+            "$ref": "#/definitions/property"
           }
         }
       }

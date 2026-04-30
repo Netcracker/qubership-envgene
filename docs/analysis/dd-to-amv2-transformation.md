@@ -116,7 +116,10 @@ For each `service` in `DD.services[]`:
 8. Convert `full_image_name` to PURL using Registry Definition according to [Artifact Reference -> PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference--purl) process
 9. Set `purl` attribute
 10. Convert `docker_digest` to hash object if available, otherwise set `hashes` = empty array `[]`
-11. Add component to root `components` array
+11. Initialize `properties` array and add property
+    `{"name": "nc:dd:image_type", "value": "image"}` to preserve the original DD
+    `image_type` for the reverse transformation
+12. Add component to root `components` array
 
 **If `image_type = "service"`:**
 
@@ -130,6 +133,9 @@ For each `service` in `DD.services[]`:
    - Convert `full_image_name` to PURL using Registry Definition according to [Artifact Reference -> PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference--purl) process
    - Set `purl` attribute
    - Convert `docker_digest` to hash object if available, otherwise set `hashes` = empty array `[]`
+   - Initialize `properties` array and add property
+     `{"name": "nc:dd:image_type", "value": "service"}` to preserve the original DD
+     `image_type` for the reverse transformation
    - Add component to root `components` array
 2. Create `application/vnd.nc.helm.chart` component
    - Set `type` = `"application"`
@@ -234,11 +240,11 @@ For each service Helm chart (created in Step 3):
    - For each `dependsOn` entry in Build Config:
      - Find dependency component by `name` and `mimeType`
      - Add dependency's `bom-ref` to `dependsOn` array
-     - If `valuesPathPrefix` is specified in `dependsOn`, add to `helm.values.artifactMappings` property
+     - If `valuesPathPrefix` is specified in `dependsOn`, add to `nc:helm.values.artifactMappings` property
 
-2. For Helm charts with `helm.values.artifactMappings`:
+2. For Helm charts with `nc:helm.values.artifactMappings`:
    - Map Docker image `bom-ref` to `valuesPathPrefix` from Build Config
-   - Add property: `{"name": "helm.values.artifactMappings", "value": {...}}` to Helm chart's `properties` array
+   - Add property: `{"name": "nc:helm.values.artifactMappings", "value": {...}}` to Helm chart's `properties` array
 
 3. For Application components (`application/vnd.nc.standalone-runnable`):
    - Based on `dependsOn` in Build Config, establish dependency relationships
@@ -282,7 +288,7 @@ For each service Helm chart (created in Step 3):
 | `git_revision`               | N/A       | Not used in CM and deployment cases             |
 | `git_url`                    | N/A       | Not used in CM and deployment cases             |
 | `image_name`                 | `name`    |                                                 |
-| `image_type`                 | N/A       | Not used in CM and deployment cases             |
+| `image_type`                 | `properties[].value` where `name = "nc:dd:image_type"` | Preserved as property to enable lossless reverse transformation. Allowed values: `"image"`, `"service"` |
 | `includeFrom`                | N/A       | Not used in CM and deployment cases             |
 | `promote_artifacts`          | N/A       | Not used in CM and deployment cases             |
 | `qualifier`                  | N/A       | **TBD**                                         |
@@ -370,3 +376,10 @@ full_chart_name: "https://artifactorycn.netcracker.com/nc.helm.charts/chart-1.0.
 ```
 
 **Note:** Registry Definition is required for `registry_name` lookup.
+
+**Note on encoding:** PURL qualifier values are percent-encoded per RFC 3986. Registry names
+may contain characters that are not URL-safe — most notably spaces (e.g. `Sandbox Registry`).
+Such characters MUST be percent-encoded when emitting the PURL: space → `%20`, `/` → `%2F`, etc.
+Example: `pkg:docker/core/image@build3?registry_name=Sandbox%20Registry`. See
+[Artifact Reference → PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference--purl)
+for the full encoding rules.

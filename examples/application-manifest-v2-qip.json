@@ -1,6 +1,6 @@
 {
   "serialNumber": "urn:uuid:c7eb7c5f-b8da-4c05-9c48-678a11c00a35",
-  "$schema": "../schemas/application-manifest.schema.json",
+  "$schema": "../schemas/application-manifest-v2.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "version": 1,
@@ -29,6 +29,7 @@
       "type": "application",
       "mime-type": "application/vnd.nc.standalone-runnable",
       "name": "qubership-integration-platform",
+      "version": "1.2.3",
       "properties": [],
       "components": []
     },
@@ -77,7 +78,7 @@
               "value": false
             },
             {
-              "name": "qubership:helm.values.artifactMapping",
+              "name": "nc:helm.values.artifactMappings",
               "value": {
                 "qubership-integration-engine:80f031da-024c-4748-a1b9-d548a3dd030f": {
                   "valuesPathPrefix": ""
@@ -98,7 +99,7 @@
               "value": false
             },
             {
-              "name": "qubership:helm.values.artifactMapping",
+              "name": "nc:helm.values.artifactMappings",
               "value": {
                 "qubership-integration-runtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f": {
                   "valuesPathPrefix": ""
@@ -119,7 +120,7 @@
               "value": false
             },
             {
-              "name": "qubership:helm.values.artifactMapping",
+              "name": "nc:helm.values.artifactMappings",
               "value": {
                 "qubership-integration-designtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f": {
                   "valuesPathPrefix": ""
@@ -140,7 +141,7 @@
               "value": false
             },
             {
-              "name": "qubership:helm.values.artifactMapping",
+              "name": "nc:helm.values.artifactMappings",
               "value": {
                 "qubership-integration-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f": {
                   "valuesPathPrefix": ""
@@ -161,7 +162,7 @@
               "value": false
             },
             {
-              "name": "qubership:helm.values.artifactMapping",
+              "name": "nc:helm.values.artifactMappings",
               "value": {
                 "qubership-integration-sessions-management:80f031da-024c-4748-a1b9-d548a3dd030f": {
                   "valuesPathPrefix": ""
@@ -182,7 +183,7 @@
               "value": false
             },
             {
-              "name": "qubership:helm.values.artifactMapping",
+              "name": "nc:helm.values.artifactMappings",
               "value": {
                 "qubership-integration-ui:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f": {
                   "valuesPathPrefix": ""
@@ -243,7 +244,13 @@
       "name": "qubership-integration-engine",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/qubership-integration-engine@build3?registry_name=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-engine@build3?registry_name=sandbox",
+      "properties": [
+        {
+          "name": "nc:dd:image_type",
+          "value": "service"
+        }
+      ]
     },
     {
       "bom-ref": "qubership-integration-runtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -252,7 +259,13 @@
       "name": "qubership-integration-runtime-catalog",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/qubership-integration-runtime-catalog@build3?registry_name=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-runtime-catalog@build3?registry_name=sandbox",
+      "properties": [
+        {
+          "name": "nc:dd:image_type",
+          "value": "service"
+        }
+      ]
     },
     {
       "bom-ref": "qubership-integration-designtime-catalog:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -261,7 +274,13 @@
       "name": "qubership-integration-designtime-catalog",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/qubership-integration-designtime-catalog@build3?registry_name=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-designtime-catalog@build3?registry_name=sandbox",
+      "properties": [
+        {
+          "name": "nc:dd:image_type",
+          "value": "service"
+        }
+      ]
     },
     {
       "bom-ref": "qubership-integration-variables-management:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -270,7 +289,13 @@
       "name": "qubership-integration-variables-management",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/qubership-integration-variables-management@build3?registry_name=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-variables-management@build3?registry_name=sandbox",
+      "properties": [
+        {
+          "name": "nc:dd:image_type",
+          "value": "service"
+        }
+      ]
     },
     {
       "bom-ref": "qubership-integration-sessions-management:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -279,7 +304,13 @@
       "name": "qubership-integration-sessions-management",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/qubership-integration-sessions-management@build3?registry_name=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-sessions-management@build3?registry_name=sandbox",
+      "properties": [
+        {
+          "name": "nc:dd:image_type",
+          "value": "service"
+        }
+      ]
     },
     {
       "bom-ref": "qubership-integration-ui:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f",
@@ -288,7 +319,13 @@
       "name": "qubership-integration-ui",
       "group": "core",
       "version": "build22",
-      "purl": "pkg:docker/core/qubership-integration-ui@build22?registry_name=sandbox"
+      "purl": "pkg:docker/core/qubership-integration-ui@build22?registry_name=sandbox",
+      "properties": [
+        {
+          "name": "nc:dd:image_type",
+          "value": "service"
+        }
+      ]
     },
     {
       "bom-ref": "cr-synchonizer:80f031da-024c-4748-a1b9-d548a3dd030f",
@@ -297,7 +334,13 @@
       "name": "cr-synchonizer",
       "group": "core",
       "version": "build3",
-      "purl": "pkg:docker/core/cr-synchonizer@build3?registry_name=sandbox"
+      "purl": "pkg:docker/core/cr-synchonizer@build3?registry_name=sandbox",
+      "properties": [
+        {
+          "name": "nc:dd:image_type",
+          "value": "image"
+        }
+      ]
     }
   ],
   "dependencies": [

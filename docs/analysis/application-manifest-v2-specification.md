@@ -488,6 +488,13 @@ Represents a Docker image artifact that contains containerized application code.
 | `hashes`        | array  | no        | None                           | List of hashes for the image (optional)                    |
 | `hashes.alg`    | string | yes       | None                           | Hash algorithm, e.g., "SHA-256" (required if hash present) |
 | `hashes.content`| string | yes       | None                           | Hash value as a hex string (required if hash present)      |
+| `properties`    | array  | no        | None                           | List of additional properties. See Properties below        |
+
+**Properties:**
+
+| Property Name        | Type   | Mandatory | Description                                                                                                                                                                                                                                                                                  |
+|----------------------|--------|-----------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `nc:dd:image_type`   | string | No        | Preserves the original Deployment Descriptor `image_type` value to enable lossless DD ↔ AMv2 round-trip. Allowed values: `image`, `service`. Set during DD → AMv2 transformation; read during AMv2 → DD transformation. Absent for Docker images that did not originate from a DD `service`. |
 
 ```json
 {
@@ -497,11 +504,17 @@ Represents a Docker image artifact that contains containerized application code.
   "name": "image-name",
   "group": "repository-group",
   "version": "image-tag",
-  "purl": "pkg:docker/group/image-name@version?registry_id=registry",
+  "purl": "pkg:docker/group/image-name@version?registry_name=registry",
   "hashes": [
     {
       "alg": "SHA-256",
       "content": "abc123..."
+    }
+  ],
+  "properties": [
+    {
+      "name": "nc:dd:image_type",
+      "value": "service"
     }
   ]
 }
@@ -546,7 +559,7 @@ Root components of this type describe Helm Chart artifact, nested helm charts de
 | `mime-type`           | string  | yes       | `application/vnd.nc.helm.chart` | Component MIME type                                        |
 | `bom-ref`             | string  | yes       | None                            | Unique component identifier within the AM                  |
 | `name`                | string  | yes       | None                            | Helm chart name                                            |
-| `version`             | string  | yes       | None                            | Helm chart version                                         |
+| `version`             | string  | no        | None                            | Helm chart version. Optional for nested service charts that have no separate artifact |
 | `purl`                | string  | no        | None                            | Package URL (PURL) for the chart                           |
 | `hashes`              | array   | no        | None                            | List of hashes for the chart (empty array if none)         |
 | `hashes.alg`          | string  | yes       | None                            | Hash algorithm, e.g., "SHA-256" (required if hash present) |

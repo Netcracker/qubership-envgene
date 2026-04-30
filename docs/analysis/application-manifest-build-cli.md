@@ -88,7 +88,7 @@ flowchart TD
 
 ## Requirements
 
-1. The CLI must generate AM that validates against [JSON Schema](/schemas/application-manifest.schema.json)
+1. The CLI must generate AM that validates against [JSON Schema](/schemas/application-manifest-v2.schema.json)
 2. The CLI must use as input [Registry Definition v2.0](/schemas/regdef-v2.schema.json)
 3. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
     1. "Service" -> `application/vnd.nc.standalone-runnable`
@@ -99,25 +99,25 @@ flowchart TD
 
 ## Application Manifest Examples
 
-[Application Manifest JSON schema](/schemas/application-manifest.schema.json)
+[Application Manifest JSON schema](/schemas/application-manifest-v2.schema.json)
 
 ### Simple
 
 ![application-manifest-example-drawio.png](/docs/images/application-manifest-example-drawio.png)
 
-[Simple Application Manifest](/examples/application-manifest.json)
+[Simple Application Manifest](/examples/application-manifest-v2.json)
 
 ### Jaeger
 
 ![application-manifest-example-jaeger.drawio.png](/docs/images/application-manifest-example-jaeger.drawio.png)
 
-[Jaeger Application Manifest](/examples/application-manifest-jaeger.json)
+[Jaeger Application Manifest](/examples/application-manifest-v2-jaeger.json)
 
 ### QIP
 
 ![application-manifest-example-qip.drawio.png](/docs/images/application-manifest-example-qip.drawio.png)
 
-[QIP Application Manifest](/examples/application-manifest-qip.json)
+[QIP Application Manifest](/examples/application-manifest-v2-qip.json)
 
 ## Application Manifest Build Config
 
@@ -264,7 +264,7 @@ components:
 
 ### `artifactMappings` Processing
 
-For components with `mime-type: application/vnd.nc.helm.chart`, you can define how artifact-derived parameters should be placed into Helm values. The CLI will translate this into the `qubership:helm.values.artifactMappings` property in the Application Manifest.
+For components with `mime-type: application/vnd.nc.helm.chart`, you can define how artifact-derived parameters should be placed into Helm values. The CLI will translate this into the `nc:helm.values.artifactMappings` property in the Application Manifest.
 
 - Each mapping links a Docker image (or other artifact component) to a `valuesPathPrefix` under which its parameters are injected
 - `artifact` should reference another component in this Build Config (by `name`)
@@ -455,7 +455,7 @@ Component structure is described in [Application Manifest v2 Specification](../a
 6. `hashes` is taken from Component Metadata (if provided)
 7. `properties` is generated as follows:
    - Mandatory property `isLibrary`: `true` for library charts
-   - Optional property `qubership:helm.values.artifactMappings`: generated from `dependsOn` in the configuration (see [`artifactMappings` Processing](#artifactmappings-processing))
+   - Optional property `nc:helm.values.artifactMappings`: generated from `dependsOn` in the configuration (see [`artifactMappings` Processing](#artifactmappings-processing))
 8. `components` is generated as follows:
    - If `charts/<chart-name>/values.schema.json` exists in the chart artifact, a child component `application/vnd.nc.helm.values.schema` is added (see [Helm Values Schema](#components-applicationvndnchelmvaluesschema))
    - If the folder `charts/<chart-name>/resource-profiles/` exists in the chart artifact with files, a child component `application/vnd.nc.resource-profile-baseline` is added (see [Resource Profile Baseline](#components-applicationvndncresource-profile-baseline))
@@ -726,18 +726,32 @@ REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
     | `@VERSION`     | from Step 2. `TAG`                                                                                 |
     | `?QUALIFIERS`  | from Step 3. `registry_name=<>` and from Step 2 `file_name=<>` `ARTIFACT-FILE` (only for `github`) |
 
+    **Qualifier value encoding.** Qualifier values (including `registry_name` and `file_name`)
+    MUST be percent-encoded according to [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986)
+    and the [purl spec](https://github.com/package-url/purl-spec) before being placed in the PURL.
+    Registry names are not constrained to URL-safe characters: in particular, the `name` attribute
+    of a Registry Definition can contain spaces (e.g. `Sandbox Registry`). Such values
+    MUST be encoded — space → `%20`, `/` → `%2F`, etc. The decoded value is used to look up
+    the Registry Definition during the reverse (PURL → Artifact Reference) transformation.
+
 **Examples:**
 
 - `<qubership-host>/core/qubership-core:2.1.0` -> `pkg:docker/core/qubership-core@2.1.0?registry_name=qubership`
 - `https://github.com/Netcracker/qubership-airflow/releases/download/2.0.1/airflow-1.19.0-dev.tgz` -> `pkg:github/Netcracker/qubership-airflow@2.0.1?registry_name=qubership&file_name=airflow-1.19.0-dev.tgz`
 - `oci://<qubership-host>/app-team/service-api:v3.2.1` -> `pkg:helm/app-team/service-api@v3.2.1?registry_name=qubership`
 - `https://artifactory.qubership.com/nc.helm.charts/scheduling-service-0.0.1-master-20260903.195778-11.tgz` -> `pkg:helm/scheduling-service@0.0.1-master-20260903.195778-11?registry_name=qubership`
+- Registry name with spaces: `<host>/core/image:build3` (with registry `Sandbox Registry`) -> `pkg:docker/core/image@build3?registry_name=Sandbox%20Registry`
 
 ### PURL -> Artifact Reference
 
 1. **Parse PURL**
 
     Extract `TYPE`, `NAMESPACE`, `NAME`, `@VERSION`, `?QUALIFIERS`, `#SUBPATH`
+
+    **Qualifier value decoding.** Qualifier values (including `registry_name` and `file_name`)
+    MUST be percent-decoded after parsing. For example, `registry_name=Sandbox%20Registry`
+    decodes to the lookup key `Sandbox Registry`, which is then matched against the
+    `name` attribute of Registry Definitions.
 
 2. **Determine `REGISTRY_HOST[:PORT]`**
 

@@ -1,6 +1,6 @@
 {
   "serialNumber": "urn:uuid:c7eb7c5f-b8da-4c05-9c48-678a11c00a35",
-  "$schema": "../schemas/application-manifest.schema.json",
+  "$schema": "../schemas/application-manifest-v2.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "version": 1,
@@ -46,7 +46,7 @@
           "value": false
         },
         {
-          "name": "qubership:helm.values.artifactMappings",
+          "name": "nc:helm.values.artifactMappings",
           "value": {
             "a-docker-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f": {
               "valuesPathPrefix": "."
@@ -64,7 +64,13 @@
       "group": "core",
       "version": "build22",
       "purl": "pkg:docker/core/a-docker-image@build22?registry_name=sandbox",
-      "hashes": []
+      "hashes": [],
+      "properties": [
+        {
+          "name": "nc:dd:image_type",
+          "value": "service"
+        }
+      ]
     }
   ],
   "dependencies": [

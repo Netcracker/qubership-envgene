@@ -18,9 +18,13 @@ This document describes the transformation rules from [Application Manifest v2 (
 ## Principles
 
 1. AMv2 is the **source of truth** - DD is reconstructed from AMv2 structure and values
-2. `application/vnd.docker.image` components are transformed into `DD.services[]` entries:
-   - Standalone Docker images (no associated Helm chart) → `image_type = "image"`
-   - Docker images with associated service charts → `image_type = "service"`
+2. `application/vnd.docker.image` components are transformed into `DD.services[]` entries.
+   The original DD `image_type` is read from the `nc:dd:image_type` property on the
+   Docker image component (set during DD → AMv2 transformation):
+   - `nc:dd:image_type = "image"` → `DD.services[].image_type = "image"`
+   - `nc:dd:image_type = "service"` → `DD.services[].image_type = "service"`
+   - If the property is missing, fall back to inference: a Docker image associated with
+     a service chart (via `nc:helm.values.artifactMappings`) → `"service"`; otherwise → `"image"`
 3. `application/vnd.nc.helm.chart` components are transformed into:
    - `DD.charts[]` entry if it's an app-chart (root-level Helm chart with nested service charts)
    - Part of `DD.services[]` entry if it's a service chart (nested in app-chart)
@@ -50,7 +54,12 @@ This document describes the transformation rules from [Application Manifest v2 (
 #### Step 1: Identify Service Charts and Associated Docker Images
 
 1. Find app-chart component:
-   - Locate `application/vnd.nc.helm.chart` at root level with non-empty `components` array
+   - Locate `application/vnd.nc.helm.chart` at root level whose `components` array
+     contains at least one nested `application/vnd.nc.helm.chart` (service chart)
+   - A root-level Helm chart whose `components` array contains only data components
+     (e.g. `application/vnd.nc.helm.values.schema`,
+     `application/vnd.nc.resource-profile-baseline`) is NOT an app-chart — it is a
+     standalone service chart
 2. For each service chart in app-chart `components` array:
    - Extract service chart `bom-ref`
    - Find `nc:helm.values.artifactMappings` property
@@ -60,9 +69,15 @@ This document describes the transformation rules from [Application Manifest v2 (
 
 #### Step 2: Extract Services from Docker Images
 
-For each `application/vnd.docker.image` component at root level:
+For each `application/vnd.docker.image` component at root level, determine `image_type` first:
 
-**If Docker image has NO associated service chart (standalone image):**
+1. Read the `nc:dd:image_type` property from the Docker image component's `properties` array
+2. If the property is present, use its value (`"image"` or `"service"`) directly
+3. If the property is absent, fall back to inference:
+   - Docker image is referenced in any service chart's `nc:helm.values.artifactMappings` → `image_type = "service"`
+   - Otherwise → `image_type = "image"`
+
+**If `image_type = "image"`:**
 
 1. Create `DD.services[]` entry with `image_type = "image"`
 2. Set `image_name` = AMv2 `name`
@@ -75,9 +90,9 @@ For each `application/vnd.docker.image` component at root level:
 7. Set `docker_registry` = extracted from PURL (registry host:port)
 8. Omit fields with `null` values - only include fields that have actual values
 
-**If Docker image HAS associated service chart:**
+**If `image_type = "service"`:**
 
-1. Find corresponding service chart component in app-chart
+1. Find corresponding service chart component in app-chart (via `nc:helm.values.artifactMappings`)
 2. Create `DD.services[]` entry with `image_type = "service"`
 3. Set `image_name` = AMv2 Docker image `name`
 4. Set `docker_repository_name` = AMv2 Docker image `group`
@@ -161,3 +176,10 @@ pkg:helm/chart@1.0.0?registry_name=artifactory-netcracker
 ```
 
 **Note:** Registry Definition is required for `registry_name` resolution.
+
+**Note on encoding:** PURL qualifier values are percent-encoded per RFC 3986. The
+`registry_name` qualifier MUST be percent-decoded before matching it against the `name`
+attribute of a Registry Definition. For example, `registry_name=Sandbox%20Registry`
+decodes to the lookup key `Sandbox Registry`. See
+[PURL → Artifact Reference](/docs/analysis/application-manifest-build-cli.md#purl---artifact-reference)
+for the full decoding rules.
