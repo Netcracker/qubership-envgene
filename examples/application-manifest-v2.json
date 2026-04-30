@@ -1,6 +1,6 @@
 {
   "serialNumber": "urn:uuid:c7eb7c5f-b8da-4c05-9c48-678a11c00a35",
-  "$schema": "../schemas/application-manifest.schema.json",
+  "$schema": "../schemas/application-manifest-v2.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.6",
   "version": 1,
@@ -9,7 +9,7 @@
     "component": {
       "bom-ref": "a-application:03d26d59-0405-45a1-a259-bc09032351bf",
       "type": "application",
-      "mime-type": "application/vnd.qubership.application",
+      "mime-type": "application/vnd.nc.application",
       "name": "a-application",
       "version": "release-2023.3-8.4.0-20230908.094348-15-RELEASE"
     },
@@ -27,7 +27,7 @@
     {
       "bom-ref": "a-standalone-runnable:61439aff-c00d-43f5-9bae-fe6db05db2d5",
       "type": "application",
-      "mime-type": "application/vnd.qubership.standalone-runnable",
+      "mime-type": "application/vnd.nc.standalone-runnable",
       "name": "a-standalone-runnable",
       "version": "1.2.3",
       "properties": [],
@@ -36,7 +36,7 @@
     {
       "bom-ref": "a-helm-chart:13dac210-3424-4799-9631-667d7b2b0ed8",
       "type": "application",
-      "mime-type": "application/vnd.qubership.helm.chart",
+      "mime-type": "application/vnd.nc.helm.chart",
       "name": "a-helm-chart",
       "version": "1.2.3",
       "purl": "pkg:helm/example-repo/a-helm-chart@1.2.3?registry_name=sandbox",
@@ -46,7 +46,7 @@
           "value": false
         },
         {
-          "name": "qubership:helm.values.artifactMappings",
+          "name": "nc:helm.values.artifactMappings",
           "value": {
             "a-docker-image:5a1b23d8-6fe4-4b7d-a5c1-1464d19f1e0f": {
               "valuesPathPrefix": "."
@@ -64,7 +64,13 @@
       "group": "core",
       "version": "build22",
       "purl": "pkg:docker/core/a-docker-image@build22?registry_name=sandbox",
-      "hashes": []
+      "hashes": [],
+      "properties": [
+        {
+          "name": "nc:dd:image_type",
+          "value": "service"
+        }
+      ]
     }
   ],
   "dependencies": [
