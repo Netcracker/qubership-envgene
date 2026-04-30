@@ -11,6 +11,7 @@
     - [Simple](#simple)
     - [Jaeger](#jaeger)
     - [QIP](#qip)
+    - [App-Chart](#app-chart)
   - [Application Manifest Build Config](#application-manifest-build-config)
     - [`artifactMappings` Processing](#artifactmappings-processing)
   - [Component Metadata](#component-metadata)
@@ -118,6 +119,10 @@ flowchart TD
 ![application-manifest-example-qip.drawio.png](/docs/images/application-manifest-example-qip.drawio.png)
 
 [QIP Application Manifest](/examples/application-manifest-v2-qip.json)
+
+### App-Chart
+
+[App-Chart Application Manifest](/examples/application-manifest-v2-app-chart.json)
 
 ## Application Manifest Build Config
 
@@ -260,6 +265,68 @@ components:
     mimeType: application/vnd.docker.image
   - name: qubership-deployment-status-provisioner
     mimeType: application/vnd.docker.image
+```
+
+**App-Chart Example:**
+
+Application built as an umbrella Helm chart (app-chart) that nests two service
+charts (`service-a`, `service-b`) and one library chart (`common-lib`). Service
+charts express their image-to-values wiring via `dependsOn` with `valuesPathPrefix`,
+which the CLI converts into the `nc:helm.values.artifactMappings` property on each
+service chart. The library chart has no Docker dependency. The umbrella chart's
+own `dependsOn` lists the nested charts.
+
+The corresponding manifest is
+[`/examples/application-manifest-v2-app-chart.json`](/examples/application-manifest-v2-app-chart.json).
+
+```yaml
+applicationVersion: 1.0.0
+applicationName: app-with-app-chart
+components:
+  # application/vnd.nc.standalone-runnable
+  - name: app-with-app-chart
+    mimeType: application/vnd.nc.standalone-runnable
+    dependsOn:
+      - name: app-with-app-chart
+        mimeType: application/vnd.nc.helm.chart
+
+  # application/vnd.nc.helm.chart - umbrella (app-chart)
+  - name: app-with-app-chart
+    mimeType: application/vnd.nc.helm.chart
+    reference: oci://artifactorycn.netcracker.com:17004/helm/app-with-app-chart:1.0.0
+    dependsOn:
+      - name: service-a
+        mimeType: application/vnd.nc.helm.chart
+      - name: service-b
+        mimeType: application/vnd.nc.helm.chart
+      - name: common-lib
+        mimeType: application/vnd.nc.helm.chart
+
+  # application/vnd.nc.helm.chart - service charts (sub-charts of umbrella)
+  - name: service-a
+    mimeType: application/vnd.nc.helm.chart
+    dependsOn:
+      - name: service-a
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: serviceA
+  - name: service-b
+    mimeType: application/vnd.nc.helm.chart
+    dependsOn:
+      - name: service-b
+        mimeType: application/vnd.docker.image
+        valuesPathPrefix: serviceB
+
+  # application/vnd.nc.helm.chart - library chart (no Docker dependency)
+  - name: common-lib
+    mimeType: application/vnd.nc.helm.chart
+
+  # application/vnd.docker.image
+  - name: service-a
+    mimeType: application/vnd.docker.image
+    reference: artifactorycn.netcracker.com:17004/core/service-a:build1
+  - name: service-b
+    mimeType: application/vnd.docker.image
+    reference: artifactorycn.netcracker.com:17004/core/service-b:build1
 ```
 
 ### `artifactMappings` Processing
