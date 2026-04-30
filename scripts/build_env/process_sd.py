@@ -17,6 +17,8 @@ from envgenehelper.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_merge_helper import basic_merge_multiple
 from envgenehelper.collections_helper import split_multi_value_param
+from envgenehelper import get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME
+from typing_extensions import deprecated
 
 
 class MergeType(Enum):
@@ -88,7 +90,7 @@ def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict
 
 def prepare_vars_and_run_sd_handling():
     base_dir = getenv_and_log('CI_PROJECT_DIR')
-    env_name = getenv_and_log('ENV_NAME')
+    env_name = getenv_and_log('ENVIRONMENT_NAME')
     cluster = getenv_and_log('CLUSTER_NAME')
 
     env = Environment(base_dir, cluster, env_name)
@@ -134,7 +136,7 @@ def build_namespace_dict(env) -> dict:
 def merge_sd(sd_path: Path, sd_data, merge_func):
     logger.info(f"Final destination! - {sd_path}")
     full_sd_yaml = helper.openYaml(sd_path)
-    logger.info(f"full_sd.yaml before merge: {full_sd_yaml}")
+    logger.info(f"Full sd before merge: {full_sd_yaml}")
     helper.check_dir_exist_and_create(sd_path.parent)
     result = merge_func(full_sd_yaml, sd_data)
     helper.writeYamlToFile(sd_path, result)
@@ -144,6 +146,7 @@ def merge_sd(sd_path: Path, sd_data, merge_func):
 def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
     if sd_merge_mode is not None:
         effective_merge_mode = MergeType.from_value(sd_merge_mode)
+    # sd_delta var is deprecated
     elif sd_delta == "true":
         effective_merge_mode = MergeType.EXTENDED
         logger.info(
@@ -158,6 +161,7 @@ def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
     return effective_merge_mode
 
 
+@deprecated
 def calculate_sd_delta(sd_delta):
     logger.info(f"printing sd_delta before {sd_delta}")
     if sd_delta is not None and str(sd_delta).strip() != "":
@@ -188,9 +192,23 @@ def multiply_sds_to_single(sds_data, effective_merge_mode):
     return full_sd_from_pipe
 
 
-def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
-    base_sd_path = Path(f'{env.env_path}/Inventory/solution-descriptor/')
+def resolve_sd_path() -> Path:
+    sd_delta = getenv('SD_DELTA')
+    sd_merge_mode = getenv("SD_REPO_MERGE_MODE")
+    base_sd_path = get_sd_dir()
+    merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
+    full_sd_path = base_sd_path.joinpath(SD_FILE_NAME)
+    sd_version = getenv("SD_VERSION")
+    sd_data = getenv("SD_DATA")
+    sd_input = bool(sd_data) or bool(sd_version)
+    if merge_mode == MergeType.REPLACE or (not sd_input and full_sd_path.is_file()):
+        return full_sd_path
+    elif merge_mode == MergeType.BASIC or merge_mode == MergeType.EXTENDED:
+        return base_sd_path.joinpath(DELTA_SD_FILE_NAME)
 
+
+def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
+    base_sd_path = get_sd_dir()
     sd_delta = calculate_sd_delta(sd_delta)
     effective_merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
 
@@ -238,13 +256,13 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
     full_sd_from_pipe = multiply_sds_to_single(transformed_data, effective_merge_mode)
     validate_applications(full_sd_from_pipe, effective_merge_mode)
 
-    sd_path = base_sd_path.joinpath("sd.yaml")
-    sd_delta_path = base_sd_path.joinpath("delta_sd.yaml")
+    sd_path = base_sd_path.joinpath(SD_FILE_NAME)
+    sd_delta_path = base_sd_path.joinpath(DELTA_SD_FILE_NAME)
     if effective_merge_mode == MergeType.REPLACE:
         logger.info("Inside replace")
         if helper.check_file_exists(sd_path):
             full_sd_yaml = helper.openYaml(sd_path)
-            logger.info(f"full_sd.yaml before replacement: {json.dumps(full_sd_yaml, indent=2)}")
+            logger.info(f"Full sd before replacement: {json.dumps(full_sd_yaml, indent=2)}")
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(sd_path))
@@ -306,7 +324,7 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
 
     artifact_info = asyncio.run(
         artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,
-                                       auth_headers=auth_headers))
+                                      auth_headers=auth_headers))
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')

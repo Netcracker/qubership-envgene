@@ -2,11 +2,12 @@ import json
 from os import getenv, environ
 from pathlib import Path
 
+from envgenehelper import cleanup_targets
+from envgenehelper import logger
 from gcip import WhenStatement, Need
 
-from envgenehelper import logger, get_sboms_dir
-from envgenehelper import cleanup_targets
 from pipeline_helper import job_instance
+from build_env.process_sd import resolve_sd_path
 
 
 def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluster_name, params):
@@ -16,26 +17,21 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     app_reg_defs_job = params["APP_REG_DEFS_JOB"]
     artifact_app_defs_path = params["APP_DEFS_PATH"]
     artifact_reg_defs_path = params["REG_DEFS_PATH"]
-    sd_version = params["SD_VERSION"]
-    sd_data = params["SD_DATA"]
     deployment_id = params["DEPLOYMENT_SESSION_ID"]
     effective_set_config = params["EFFECTIVE_SET_CONFIG"]
     if "CUSTOM_PARAMS" in params:
         custom_params = params["CUSTOM_PARAMS"]
 
     is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
-
-    base_dir = getenv('CI_PROJECT_DIR')   
-
-    sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
+    sd_path = resolve_sd_path()
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
     script = [
-        #Overriding sd_path to pick the correct value for CI_PROJECT_DIR
+        # Overriding sd_path to pick the correct value for CI_PROJECT_DIR
         f'base_env_path="$CI_PROJECT_DIR/environments/{full_env_name}";',
         'app_defs_path="$base_env_path/AppDefs";',
         'reg_defs_path="$base_env_path/RegDefs";',
         'sboms_path="$CI_PROJECT_DIR/sboms";',
-        'sd_path="$base_env_path/Inventory/solution-descriptor/sd.yaml";',
+        f'sd_path="$base_env_path/Inventory/solution-descriptor/{sd_path.name}";',
         # cert handling for java
         'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/',
         'if [ -f /default_cert.pem ]; then cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/"; fi',
@@ -56,15 +52,8 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     effective_set_config_dict = {}
     if effective_set_config:
         effective_set_config_dict = json.loads(effective_set_config)
-
-    effective_set_version = effective_set_config_dict.get("version") or "v2.0"
-    full_sd_exists = sd_path.is_file()
-    sd_data = bool(sd_data) or bool(sd_version)
-
-    if not (full_sd_exists and sd_data) and effective_set_version.lower() == "v1.0":
-        raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
-
-    if full_sd_exists or sd_data:
+    validate_topology_context_mode(effective_set_config_dict, full_env_name, params)
+    if sd_path.is_file():
         cmdb_cli_cmd_call.extend([
             "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
             "--sboms-path=$sboms_path",
@@ -114,7 +103,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         needs.append(Need(job=app_reg_defs_job, pipeline=real_ci_pipe_id, artifacts=True))
         environ['CI_PIPELINE_ID'] = real_ci_pipe_id
     generate_effective_set_job = job_instance(params=generate_effective_set_params, needs=needs,
-                                                              vars=generate_effective_set_vars)
+                                              vars=generate_effective_set_vars)
 
     effective_set_expiry = effective_set_config_dict.get("effective_set_expiry") or "1 hour"
     logger.info(f"effective set expiry value '{effective_set_expiry}'")
@@ -124,3 +113,12 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     pipeline.add_children(generate_effective_set_job)
 
     return generate_effective_set_job
+
+
+def validate_topology_context_mode(effective_set_config_dict, full_env_name, params):
+    effective_set_version = effective_set_config_dict.get("version") or "v2.0"
+    sd = bool(params["SD_DATA"]) or bool(params["SD_VERSION"])
+    full_sd_path = Path(f'{getenv('CI_PROJECT_DIR')}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
+    # effective set generation in version 1.0 does not support no SBOMs mode
+    if not (full_sd_path.exists() and sd) and effective_set_version.lower() == "v1.0":
+        raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
