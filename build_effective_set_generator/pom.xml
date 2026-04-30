@@ -10,18 +10,10 @@
 
     <name>DevOps Configuration Tool Aggregator</name>
     <description>DevOps Configuration Tool Aggregator</description>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/TODO+Plugin</url>
     <modules>
         <module>parameters-processor</module>
         <module>commons</module>
     </modules>
-    <repositories>
-        <repository>
-            <id>repo.jenkins-ci.org</id>
-            <url>https://repo.jenkins-ci.org/public/</url>
-        </repository>
-    </repositories>
-
 
      <profiles>
         <profile>
