@@ -431,7 +431,7 @@ This allows incorporating build-time attributes (hashes, versions, registry refe
 
 ### Root-Level Attributes
 
-**See specification**: [Root-Level Attributes](../analysis/application-manifest-v2-specification.md#root-level-attributes)
+**See specification**: [Format and Structure](/docs/analysis/application-manifest-v2-specification.md#format-and-structure)
 
 **Generation rules:**
 
@@ -446,7 +446,7 @@ This allows incorporating build-time attributes (hashes, versions, registry refe
 
 ### Metadata
 
-**See specification**: [Metadata](../analysis/application-manifest-v2-specification.md#metadata-1)
+**See specification**: [Metadata](/docs/analysis/application-manifest-v2-specification.md#metadata)
 
 **Generation rules:**
 

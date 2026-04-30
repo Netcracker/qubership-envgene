@@ -810,5 +810,5 @@ Dependencies describe relationships between components:
 ## References
 
 - [CycloneDX Specification 1.6](https://cyclonedx.org/specification/overview/)
-- [JSON Schema for AMv2](../schemas/application-manifest-v2.schema.json)
+- [JSON Schema for AMv2](/schemas/application-manifest-v2.schema.json)
 - [Package URL Specification](https://github.com/package-url/purl-spec)

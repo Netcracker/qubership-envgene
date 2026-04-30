@@ -113,7 +113,7 @@ For each `service` in `DD.services[]`:
 5. Set `name` = `image_name` from `DD.services[]` entry
 6. Set `group` = `docker_repository_name` from `DD.services[]` entry
 7. Set `version` = `docker_tag` from `DD.services[]` entry
-8. Convert `full_image_name` to PURL using Registry Definition according to [Artifact Reference -> PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference--purl) process
+8. Convert `full_image_name` to PURL using Registry Definition according to [Artifact Reference -> PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference---purl) process
 9. Set `purl` attribute
 10. Convert `docker_digest` to hash object if available, otherwise set `hashes` = empty array `[]`
 11. Initialize `properties` array and add property
@@ -130,7 +130,7 @@ For each `service` in `DD.services[]`:
    - Set `name` = `image_name` from `DD.services[]` entry
    - Set `group` = `docker_repository_name` from `DD.services[]` entry
    - Set `version` = `docker_tag` from `DD.services[]` entry
-   - Convert `full_image_name` to PURL using Registry Definition according to [Artifact Reference -> PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference--purl) process
+   - Convert `full_image_name` to PURL using Registry Definition according to [Artifact Reference -> PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference---purl) process
    - Set `purl` attribute
    - Convert `docker_digest` to hash object if available, otherwise set `hashes` = empty array `[]`
    - Initialize `properties` array and add property
@@ -159,7 +159,7 @@ If `DD.charts[]` exists and is not empty:
 4. Generate unique `bom-ref`
 5. Set `name` = `helm_chart_name` from `DD.charts[]` entry
 6. Set `version` = `helm_chart_version` from `DD.charts[]` entry
-7. Convert `full_chart_name` to PURL using Registry Definition according to [Artifact Reference -> PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference--purl) process
+7. Convert `full_chart_name` to PURL using Registry Definition according to [Artifact Reference -> PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference---purl) process
 8. Set `purl` attribute
 9. Set `hashes` = empty array `[]` (if no hash available)
 10. Initialize `properties` array
@@ -342,7 +342,7 @@ Where AMv2 shows N/A, that attribute is ignored. All other chart attributes are 
 
 ## PURL Conversion
 
-DD artifact references are converted to PURL using the [Artifact Reference → PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference--purl) algorithm.
+DD artifact references are converted to PURL using the [Artifact Reference → PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference---purl) algorithm.
 
 **DD to Artifact Reference Mapping:**
 
@@ -381,5 +381,5 @@ full_chart_name: "https://artifactorycn.netcracker.com/nc.helm.charts/chart-1.0.
 may contain characters that are not URL-safe — most notably spaces (e.g. `Sandbox Registry`).
 Such characters MUST be percent-encoded when emitting the PURL: space → `%20`, `/` → `%2F`, etc.
 Example: `pkg:docker/core/image@build3?registry_name=Sandbox%20Registry`. See
-[Artifact Reference → PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference--purl)
+[Artifact Reference → PURL](/docs/analysis/application-manifest-build-cli.md#artifact-reference---purl)
 for the full encoding rules.

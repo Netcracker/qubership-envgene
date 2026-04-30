@@ -83,7 +83,7 @@ For each `application/vnd.docker.image` component at root level, determine `imag
 2. Set `image_name` = AMv2 `name`
 3. Set `docker_repository_name` = AMv2 `group`
 4. Set `docker_tag` = AMv2 `version`
-5. Convert AMv2 `purl` to `full_image_name` using Registry Definition (see [PURL Conversion](#purl-to-dd-artifact-reference-conversion))
+5. Convert AMv2 `purl` to `full_image_name` using Registry Definition (see [PURL Conversion](#purl-conversion))
 6. Convert AMv2 `hashes[0]` to `docker_digest`:
    - If hash exists and alg is "SHA-256": `docker_digest = hash.content` (without `sha256:` prefix)
    - If no hash: omit `docker_digest` field
@@ -113,7 +113,7 @@ For each `application/vnd.docker.image` component at root level, determine `imag
    - Create `DD.charts[]` entry
    - Set `helm_chart_name` = AMv2 `name`
    - Set `helm_chart_version` = AMv2 `version`
-   - Convert AMv2 `purl` to `full_chart_name` using Registry Definition (see [PURL Conversion](#purl-to-dd-artifact-reference-conversion))
+   - Convert AMv2 `purl` to `full_chart_name` using Registry Definition (see [PURL Conversion](#purl-conversion))
    - Set `helm_registry` = extracted from PURL (registry URL)
    - Set `type` = `"app-chart"`
    - Omit fields with `null` values - only include fields that have actual values
