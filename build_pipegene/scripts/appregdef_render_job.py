@@ -5,14 +5,11 @@ from pipeline_helper import job_instance
 
 
 def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, cluster_name, group_id, artifact_id,
-                                 artifact_url, tags):
+                                 artifact_url):
     logger.info(f'Prepare appregdef render job for {full_env}')
-    env_template_version = params.get('ENV_TEMPLATE_VERSION')
-    is_template_test = params.get('IS_TEMPLATE_TEST')
-    env_tmp_ver_update_mode = params.get('ENV_TEMPLATE_VERSION_UPDATE_MODE')
     
     script = []
-    if env_template_version and not is_template_test:
+    if params.get('ENV_TEMPLATE_VERSION') and not params.get('IS_TEMPLATE_TEST'):
         script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
 
     script.append('python3 /build_env/scripts/build_env/appregdef_render.py')
@@ -29,22 +26,14 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
         "FULL_ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": environment_name,
-        "ENV_TEMPLATE_TEST": "true" if is_template_test else "false",
-        "ENV_TEMPLATE_VERSION": env_template_version,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
         "GROUP_ID": group_id,
         "ARTIFACT_ID": artifact_id,
         "ARTIFACT_URL": artifact_url,
-        "GITLAB_RUNNER_TAG_NAME": tags,
-        "ENV_TEMPLATE_VERSION_UPDATE_MODE": env_tmp_ver_update_mode
     }
 
     appregdef_render_job = job_instance(params=appregdef_render_params, vars=appregdef_render_vars)
-
-    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + full_env)
-    appregdef_render_job.artifacts.add_paths("${CI_PROJECT_DIR}/configuration")    
     appregdef_render_job.artifacts.when = WhenStatement.ALWAYS
-
     pipeline.add_children(appregdef_render_job)
 
     return appregdef_render_job
