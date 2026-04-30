@@ -15,7 +15,6 @@ globalE2EParameters:
   mergeTenantsAndE2EParameters: false
   environmentParameters: {}
 deployParameters:
-  ESCAPE_SEQUENCE: "true"
   api_config: ${database_config}
   database_config:
     connection:
