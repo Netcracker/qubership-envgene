@@ -80,7 +80,8 @@ def add_app(entry, apps: list) -> int:
     apps.append(entry)
     return 1
 
-#TODO <name>:<version> notation is supported only for extended merge for now, but later have to be removed
+
+# TODO <name>:<version> notation is supported only for extended merge for now, but later have to be removed
 def extended_merge(full_sd, delta_sd):
     # Merges delta SD into full SD by updating or adding matching apps, ensuring deployGraph consistency
     logger.info("Inside extended_merge")
@@ -227,3 +228,56 @@ def basic_exclusion_merge(full_sd, delta_sd):
             logger.info(f"Warning: New application '{get_app_name_sd(d_app)}' ignored (not present in Full SD)")
 
     return {"applications": result_apps}
+
+
+class MergeType(Enum):
+    EXTENDED = "extended-merge"
+    REPLACE = "replace"
+    BASIC = "basic-merge"
+    BASIC_EXCLUSION = "basic-exclusion-merge"
+
+    @classmethod
+    def from_value(cls, value: str):
+        if not isinstance(value, str):
+            raise ValueError(f"SD_REPO_MERGE_MODE value: '{value}' cannot be non-string")
+        value_lower = value.strip().lower()
+        for member in cls:
+            if member.value == value_lower:
+                return member
+        valid_values = [member.value for member in cls]
+        raise ValueError(
+            f"Invalid SD_REPO_MERGE_MODE: '{value}'. Valid values are: {valid_values}"
+        )
+
+
+def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
+    if sd_merge_mode is not None:
+        effective_merge_mode = MergeType.from_value(sd_merge_mode)
+    # sd_delta var is deprecated
+    elif sd_delta == "true":
+        effective_merge_mode = MergeType.EXTENDED
+        logger.info(
+            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
+    elif sd_delta == "false":
+        effective_merge_mode = MergeType.REPLACE
+        logger.info(
+            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
+    else:
+        effective_merge_mode = MergeType.BASIC
+        logger.info(f"SD_REPO_MERGE_MODE not passed. Default value: {effective_merge_mode.value}")
+    return effective_merge_mode
+
+
+def resolve_sd_path() -> Path:
+    sd_delta = getenv('SD_DELTA')
+    sd_merge_mode = getenv("SD_REPO_MERGE_MODE")
+    base_sd_path = get_sd_dir()
+    merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
+    full_sd_path = base_sd_path.joinpath(SD_FILE_NAME)
+    sd_version = getenv("SD_VERSION")
+    sd_data = getenv("SD_DATA")
+    sd_input = bool(sd_data) or bool(sd_version)
+    if merge_mode == MergeType.REPLACE or (not sd_input and full_sd_path.is_file()):
+        return full_sd_path
+    elif merge_mode == MergeType.BASIC or merge_mode == MergeType.EXTENDED:
+        return base_sd_path.joinpath(DELTA_SD_FILE_NAME)

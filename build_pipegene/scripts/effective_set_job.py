@@ -2,12 +2,11 @@ import json
 from os import getenv, environ
 from pathlib import Path
 
-from envgenehelper import cleanup_targets
+from envgenehelper import cleanup_targets, resolve_sd_path
 from envgenehelper import logger
 from gcip import WhenStatement, Need
 
 from pipeline_helper import job_instance
-from process_sd import resolve_sd_path
 
 
 def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluster_name, params):

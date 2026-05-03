@@ -1,45 +1,22 @@
 import asyncio
 import json
 import os
-from enum import Enum
 from os import path, getenv
 from pathlib import Path
 
-import yaml
-
 import envgenehelper as helper
+import yaml
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
+from envgenehelper import get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME
 from envgenehelper.business_helper import getenv_and_log, getenv_with_error
+from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper.sd_merge_helper import basic_merge_multiple
-from envgenehelper.collections_helper import split_multi_value_param
-from envgenehelper import get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME
+from envgenehelper.sd_helper import basic_merge_multiple, MergeType, calculate_merge_mode
 from typing_extensions import deprecated
-
-
-class MergeType(Enum):
-    EXTENDED = "extended-merge"
-    REPLACE = "replace"
-    BASIC = "basic-merge"
-    BASIC_EXCLUSION = "basic-exclusion-merge"
-
-    @classmethod
-    def from_value(cls, value: str):
-        if not isinstance(value, str):
-            raise ValueError(f"SD_REPO_MERGE_MODE value: '{value}' cannot be non-string")
-        value_lower = value.strip().lower()
-        for member in cls:
-            if member.value == value_lower:
-                return member
-        valid_values = [member.value for member in cls]
-        raise ValueError(
-            f"Invalid SD_REPO_MERGE_MODE: '{value}'. Valid values are: {valid_values}"
-        )
-
 
 MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,
@@ -143,24 +120,6 @@ def merge_sd(sd_path: Path, sd_data, merge_func):
     logger.info(f"Merged data into Target Path! - {result}")
 
 
-def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
-    if sd_merge_mode is not None:
-        effective_merge_mode = MergeType.from_value(sd_merge_mode)
-    # sd_delta var is deprecated
-    elif sd_delta == "true":
-        effective_merge_mode = MergeType.EXTENDED
-        logger.info(
-            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
-    elif sd_delta == "false":
-        effective_merge_mode = MergeType.REPLACE
-        logger.info(
-            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
-    else:
-        effective_merge_mode = MergeType.BASIC
-        logger.info(f"SD_REPO_MERGE_MODE not passed. Default value: {effective_merge_mode.value}")
-    return effective_merge_mode
-
-
 @deprecated
 def calculate_sd_delta(sd_delta):
     logger.info(f"printing sd_delta before {sd_delta}")
@@ -190,21 +149,6 @@ def multiply_sds_to_single(sds_data, effective_merge_mode):
 
     logger.info(f"Merged data after performing basic-merge for multiple SDs: {full_sd_from_pipe}")
     return full_sd_from_pipe
-
-
-def resolve_sd_path() -> Path:
-    sd_delta = getenv('SD_DELTA')
-    sd_merge_mode = getenv("SD_REPO_MERGE_MODE")
-    base_sd_path = get_sd_dir()
-    merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
-    full_sd_path = base_sd_path.joinpath(SD_FILE_NAME)
-    sd_version = getenv("SD_VERSION")
-    sd_data = getenv("SD_DATA")
-    sd_input = bool(sd_data) or bool(sd_version)
-    if merge_mode == MergeType.REPLACE or (not sd_input and full_sd_path.is_file()):
-        return full_sd_path
-    elif merge_mode == MergeType.BASIC or merge_mode == MergeType.EXTENDED:
-        return base_sd_path.joinpath(DELTA_SD_FILE_NAME)
 
 
 def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
