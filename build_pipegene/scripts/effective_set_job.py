@@ -10,71 +10,14 @@ from pipeline_helper import job_instance
 
 
 def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluster_name, params):
-    logger.info(f'Prepare generate-effective-set job for {full_env_name}')
-    logger.info(f'Cleanup_targets: {cleanup_targets}')
-
-    app_reg_defs_job = params["APP_REG_DEFS_JOB"]
-    artifact_app_defs_path = params["APP_DEFS_PATH"]
-    artifact_reg_defs_path = params["REG_DEFS_PATH"]
-    deployment_id = params["DEPLOYMENT_SESSION_ID"]
-    effective_set_config = params["EFFECTIVE_SET_CONFIG"]
-    if "CUSTOM_PARAMS" in params:
-        custom_params = params["CUSTOM_PARAMS"]
-
-    is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
-    sd_path = resolve_sd_path()
-    # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
     script = [
-        # Overriding sd_path to pick the correct value for CI_PROJECT_DIR
-        f'base_env_path="$CI_PROJECT_DIR/environments/{full_env_name}";',
-        'app_defs_path="$base_env_path/AppDefs";',
-        'reg_defs_path="$base_env_path/RegDefs";',
-        'sboms_path="$CI_PROJECT_DIR/sboms";',
-        f'sd_path="$base_env_path/Inventory/solution-descriptor/{sd_path.name}";',
         # cert handling for java
         'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/',
         'if [ -f /default_cert.pem ]; then cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/"; fi',
         'for cert in "${CI_PROJECT_DIR}/configuration/certs/*" ; do [ -f "$cert" ] && keytool -import -trustcacerts -alias "$(basename "$cert")" -file "$cert" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done',
-        'python3 /module/scripts/main.py decrypt_cred_files',
-        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p $app_defs_path && cp -rf {artifact_app_defs_path}/* $app_defs_path',
-        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p $reg_defs_path && cp -fr {artifact_reg_defs_path}/* $reg_defs_path',
-        'python3 /module/scripts/main.py validate_creds',
-        'python3 /module/scripts/sboms_retention_policy.py'
+
+        'python /scripts/effective_set_entrypoint.py'
     ]
-
-    cmdb_cli_cmd_call = [
-        f"/module/scripts/utils/entrypoint.sh --env-id={full_env_name}",
-        "--envs-path=$CI_PROJECT_DIR/environments",
-        f"--output=$CI_PROJECT_DIR/environments/{full_env_name}/effective-set"
-    ]
-
-    effective_set_config_dict = {}
-    if effective_set_config:
-        effective_set_config_dict = json.loads(effective_set_config)
-    validate_topology_context_mode(effective_set_config_dict, full_env_name, params)
-    if sd_path.is_file():
-        cmdb_cli_cmd_call.extend([
-            "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
-            "--sboms-path=$sboms_path",
-            "--sd-path=$sd_path",
-        ])
-
-    logger.info(f'Prepare generate_effective_set job for {full_env_name}.')
-    if effective_set_config:
-        logger.info(f"EFFECTIVE_SET_CONFIG: {effective_set_config}")
-        script.extend([
-            f"python3 /module/scripts/handle_effective_set_config.py --effective-set-config '{effective_set_config}'",
-            'extra_args=$(jq -r \'.extra_args // [] | join(" ")\' /tmp/effective_set_output.json)',
-        ])
-        cmdb_cli_cmd_call.extend(["$extra_args"])
-    if deployment_id:
-        cmdb_cli_cmd_call.extend([f"--extra_params=DEPLOYMENT_SESSION_ID={deployment_id}"])
-
-    if custom_params:
-        logger.info(f"custom_params : {custom_params}")
-        cmdb_cli_cmd_call.extend([f"--custom-params='{custom_params}'"])
-    script.append(" ".join(cmdb_cli_cmd_call))
-    script.append('python3 /module/scripts/main.py encrypt_cred_files')
 
     generate_effective_set_params = {
         "name": f'generate_effective_set.{full_env_name}',
@@ -113,12 +56,3 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     pipeline.add_children(generate_effective_set_job)
 
     return generate_effective_set_job
-
-
-def validate_topology_context_mode(effective_set_config_dict, full_env_name, params):
-    effective_set_version = effective_set_config_dict.get("version") or "v2.0"
-    sd = bool(params["SD_DATA"]) or bool(params["SD_VERSION"])
-    full_sd_path = Path(f'{getenv('CI_PROJECT_DIR')}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
-    # effective set generation in version 1.0 does not support no SBOMs mode
-    if not (full_sd_path.exists() and sd) and effective_set_version.lower() == "v1.0":
-        raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
