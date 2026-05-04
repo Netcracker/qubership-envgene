@@ -236,6 +236,8 @@ sbom_retention:
   # Number of latest versions to keep per application
   # Used only when enabled is true
   keep_versions_per_app: integer
+# Optional. Default value - `true`
+partial_effective_set_generation: boolean
 ```
 
 ## `integration.yml`

@@ -93,7 +93,7 @@ If the Delta SD is absent at the start of the stage, the pipeline falls back to 
 Applies to `SD_REPO_MERGE_MODE` values `basic-merge` and `extended-merge`. The Delta SD lists the applications being added or updated.
 
 - The calculator is invoked with the Delta SD as input. It produces output across all five contexts, scoped to the Delta SD.
-- The output is merged into the persistent ES recursively: per-application slices under `deployment/` and `runtime/` are overwritten for the applications in the Delta SD; `topology/`, `pipeline/`, and per-namespace `cleanup/` are regenerated; `mapping.yml` entries are upserted (added or updated, without removing entries for namespaces outside the Delta SD).
+- The output is merged into the persistent ES recursively: per-application slices under `deployment/` and `runtime/` are replaced for the applications in the Delta SD; `topology/`, `pipeline/`, and per-namespace `cleanup/` are replaced in full; `mapping.yml` entries are upserted (added or updated, without removing entries for namespaces outside the Delta SD).
 - Applications not in the Delta SD keep their existing slices; their SBOMs are not requested.
 
 #### Reverse merge
@@ -106,12 +106,7 @@ Applies to `SD_REPO_MERGE_MODE` value `basic-exclusion-merge`. The Delta SD list
 
 #### Limitation
 
-When an SD change and an environment instance change are submitted in the same pipeline run, only the SD-driven updates are applied. Environment instance changes affecting applications that are not in the Delta SD do not propagate in that run.
-
-To apply both kinds of changes, either:
-
-- split them into two pipeline runs — first without `SD_DATA`/`SD_VERSION`, then with the SD update, or
-- use `SD_REPO_MERGE_MODE=replace`, which forces full regeneration.
+Under partial generation, the `generate_effective_set` stage follows the Delta SD scope: `topology/`, `pipeline/`, and `cleanup/` are refreshed from the merged calculator output, but **`deployment/` and `runtime/` are recomputed only for applications in the Delta SD**. For every other application, the stage **does not rewrite** that application's slices under `effective-set/deployment/` and `effective-set/runtime/`. Environment-instance changes for those applications are **not** folded into the Effective Set on this run. To recalculate **all** applications, trigger [full regeneration](#full-regeneration).
 
 ### No-SD Mode
 
