@@ -7,7 +7,7 @@
   - [Solution Descriptor Role](#solution-descriptor-role)
   - [Pipeline Stage](#pipeline-stage)
   - [Generation Modes](#generation-modes)
-    - [Full Regeneration](#full-regeneration)
+    - [Full Generation](#full-generation)
     - [Partial Generation](#partial-generation)
       - [Forward merge](#forward-merge)
       - [Reverse merge](#reverse-merge)
@@ -70,7 +70,7 @@ See [How to generate an Effective Set](/docs/how-to/generate-effective-set.md) f
 
 The generation path is chosen automatically based on the outcome of SD processing in the current pipeline run. The user does not select the mode directly.
 
-### Full Regeneration
+### Full Generation
 
 The entire ES is rebuilt from the current Full SD and environment instance data. All five contexts (`topology`, `pipeline`, `deployment`, `runtime`, `cleanup`) are produced. Applied when:
 
@@ -78,15 +78,17 @@ The entire ES is rebuilt from the current Full SD and environment instance data.
 - The pipeline runs without an incoming SD and a Full SD already exists in the repository, or
 - An incoming SD is supplied with a merge mode but no Full SD exists yet — the incoming SD becomes the Full SD, there is nothing to merge against.
 
-Changes to any input are reflected. SBOMs for every application in the Full SD must be available.
+Application and Registry Definitions for every application in the Full SD must be available.
 
 ### Partial Generation
 
-All five contexts (`topology`, `pipeline`, `deployment`, `runtime`, `cleanup`) remain present in the persistent ES, exactly as in full regeneration. The difference is in *how* they are produced: the calculator is invoked with the Delta SD instead of the Full SD, and its output is recursively merged into the persistent ES — only slices affected by the SD change are recomputed. Applications unchanged in the current run keep their existing slices and their SBOMs are not requested.
+All five contexts (`topology`, `pipeline`, `deployment`, `runtime`, `cleanup`) remain present in the persistent ES, exactly as in full generation. The difference is in *how* they are produced: the calculator is invoked with the Delta SD instead of the Full SD, and its output is recursively merged into the persistent ES — only slices affected by the SD change are recomputed. Applications unchanged in the current run keep their existing slices and their SBOMs are not requested.
 
 Applied when SD processing produces a Delta SD — that is, `SD_REPO_MERGE_MODE` is `basic-merge`, `extended-merge`, or `basic-exclusion-merge`, and a Full SD already exists.
 
-If the Delta SD is absent at the start of the stage, the pipeline falls back to full regeneration.
+Application and Registry Definitions for every application in the Delta SD must be available.
+
+This mode is available only when `partial_effective_set_generation=true` or not set in [`config.yml`](/docs/envgene-configs.md#configyml).
 
 #### Forward merge
 
@@ -106,7 +108,7 @@ Applies to `SD_REPO_MERGE_MODE` value `basic-exclusion-merge`. The Delta SD list
 
 #### Limitation
 
-Under partial generation, the `generate_effective_set` stage follows the Delta SD scope: `topology/`, `pipeline/`, and `cleanup/` are refreshed from the merged calculator output, but **`deployment/` and `runtime/` are recomputed only for applications in the Delta SD**. For every other application, the stage **does not rewrite** that application's slices under `effective-set/deployment/` and `effective-set/runtime/`. Environment-instance changes for those applications are **not** folded into the Effective Set on this run. To recalculate **all** applications, trigger [full regeneration](#full-regeneration).
+Under partial generation, the `generate_effective_set` stage follows the Delta SD scope: `topology/`, `pipeline/`, and `cleanup/` are refreshed from the merged calculator output, but **`deployment/` and `runtime/` are recomputed only for applications in the Delta SD**. For every other application, the stage **does not rewrite** that application's slices under `effective-set/deployment/` and `effective-set/runtime/`. Environment-instance changes for those applications are **not** folded into the Effective Set on this run. To recalculate **all** applications, trigger [full generation](#full-generation).
 
 ### No-SD Mode
 

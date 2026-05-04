@@ -237,6 +237,11 @@ sbom_retention:
   # Used only when enabled is true
   keep_versions_per_app: integer
 # Optional. Default value - `true`
+# Enable or disable partial Effective Set generation in `generate_effective_set`
+# See [Partial Generation](/docs/features/effective-set-generation.md#partial-generation)
+# and [Full Generation](/docs/features/effective-set-generation.md#full-generation)
+# for generation mode behavior
+# When `false`, Partial Generation is disabled and only Full Generation is used
 partial_effective_set_generation: boolean
 ```
 
