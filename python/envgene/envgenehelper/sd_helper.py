@@ -269,15 +269,20 @@ def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
 
 
 def resolve_sd_path() -> Path:
-    sd_delta = getenv('SD_DELTA')
-    sd_merge_mode = getenv("SD_REPO_MERGE_MODE")
-    base_sd_path = get_sd_dir()
-    merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
-    full_sd_path = base_sd_path.joinpath(SD_FILE_NAME)
-    sd_version = getenv("SD_VERSION")
-    sd_data = getenv("SD_DATA")
-    sd_input = bool(sd_data) or bool(sd_version)
-    if merge_mode == MergeType.REPLACE or (not sd_input and full_sd_path.is_file()):
-        return full_sd_path
-    elif merge_mode == MergeType.BASIC or merge_mode == MergeType.EXTENDED:
-        return base_sd_path.joinpath(DELTA_SD_FILE_NAME)
+    partial_gen = get_envgene_config_yaml().get("effective_set_partial_generation")
+    sd_dir = get_sd_dir()
+    full_sd_path = sd_dir.joinpath(SD_FILE_NAME)
+    if partial_gen:
+        logger.info("effective_set_partial_generation feature enabled")
+        sd_delta = getenv('SD_DELTA')
+        sd_merge_mode = getenv("SD_REPO_MERGE_MODE")
+        merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
+        sd_version = getenv("SD_VERSION")
+        sd_data = getenv("SD_DATA")
+        sd_input = bool(sd_data) or bool(sd_version)
+        if merge_mode == MergeType.REPLACE or (not sd_input and full_sd_path.is_file()):
+            return full_sd_path
+        elif merge_mode == MergeType.BASIC or merge_mode == MergeType.EXTENDED:
+            return sd_dir.joinpath(DELTA_SD_FILE_NAME)
+    logger.info("effective_set_partial_generation feature disabled")
+    return full_sd_path
