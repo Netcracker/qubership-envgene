@@ -1,5 +1,6 @@
 import json
 from os import getenv, environ
+from pathlib import Path
 
 from envgenehelper import cleanup_targets
 from envgenehelper import logger
@@ -9,6 +10,14 @@ from pipeline_helper import job_instance
 
 
 def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluster_name, params):
+    logger.info(f'Prepare generate-effective-set job for {full_env_name}')
+
+    effective_set_config = params["EFFECTIVE_SET_CONFIG"]
+    if effective_set_config:
+        logger.info(f"EFFECTIVE_SET_CONFIG: {effective_set_config}")
+        effective_set_config_dict = json.loads(effective_set_config)
+        validate_topology_context_mode(effective_set_config_dict, full_env_name, params)
+
     script = [
         # cert handling for java
         'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/',
@@ -53,10 +62,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
                                               vars=generate_effective_set_vars)
 
     effective_set_config_dict = {}
-    effective_set_config = params["EFFECTIVE_SET_CONFIG"]
-    if effective_set_config:
-        logger.info(f"EFFECTIVE_SET_CONFIG: {effective_set_config}")
-        effective_set_config_dict = json.loads(effective_set_config)
     effective_set_expiry = effective_set_config_dict.get("effective_set_expiry") or "1 hour"
     logger.info(f"effective set expiry value '{effective_set_expiry}'")
     generate_effective_set_job.artifacts.expire_in = effective_set_expiry
@@ -65,3 +70,13 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     pipeline.add_children(generate_effective_set_job)
 
     return generate_effective_set_job
+
+
+def validate_topology_context_mode(effective_set_config_dict, full_env_name, params):
+    effective_set_version = effective_set_config_dict.get("version") or "v2.0"
+    sd = bool(params["SD_DATA"]) or bool(params["SD_VERSION"])
+    full_sd_path = Path(
+        f'{getenv('CI_PROJECT_DIR')}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
+    # effective set generation in version 1.0 does not support no SBOMs mode
+    if not (full_sd_path.exists() and sd) and effective_set_version.lower() == "v1.0":
+        raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
