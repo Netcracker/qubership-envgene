@@ -44,9 +44,7 @@ def effective_set_entrypoint():
         ])
 
     effective_set_config = getenv("EFFECTIVE_SET_CONFIG")
-    effective_set_config_dict = {}
     if effective_set_config:
-        logger.info(f"EFFECTIVE_SET_CONFIG: {effective_set_config}")
         effective_set_config_dict = json.loads(effective_set_config)
         # validate_topology_context_mode(effective_set_config_dict, full_env_name)
 
