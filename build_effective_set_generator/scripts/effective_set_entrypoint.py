@@ -1,7 +1,5 @@
-import json
 import subprocess
 from os import getenv
-from pathlib import Path
 
 from envgenehelper import decrypt_all_cred_files_for_env, copy_path, validate_creds, openJson, \
     encrypt_all_cred_files_for_env, resolve_sd_path, logger
@@ -45,10 +43,6 @@ def effective_set_entrypoint():
 
     effective_set_config = getenv("EFFECTIVE_SET_CONFIG")
     if effective_set_config:
-        effective_set_config_dict = json.loads(effective_set_config)
-        # validate_topology_context_mode(effective_set_config_dict, full_env_name)
-
-    if effective_set_config:
         handle_effective_set_config(effective_set_config)
         effective_set_output = openJson('/tmp/effective_set_output.json')
         extra_args = " ".join(effective_set_output.get("extra_args") or [])
@@ -67,13 +61,3 @@ def effective_set_entrypoint():
     subprocess.run(["sh", cmdb_cli_cmd_call], check=True)
 
     encrypt_all_cred_files_for_env()
-
-
-def validate_topology_context_mode(effective_set_config_dict, full_env_name):
-    effective_set_version = effective_set_config_dict.get("version") or "v2.0"
-    sd = bool(getenv("SD_DATA")) or bool(getenv("SD_VERSION"))
-    full_sd_path = Path(
-        f'{getenv('CI_PROJECT_DIR')}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
-    # effective set generation in version 1.0 does not support no SBOMs mode
-    if not (full_sd_path.exists() and sd) and effective_set_version.lower() == "v1.0":
-        raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
