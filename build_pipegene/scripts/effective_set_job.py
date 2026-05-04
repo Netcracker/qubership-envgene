@@ -1,8 +1,7 @@
 import json
 from os import getenv, environ
-from pathlib import Path
 
-from envgenehelper import cleanup_targets, resolve_sd_path
+from envgenehelper import cleanup_targets
 from envgenehelper import logger
 from gcip import WhenStatement, Need
 
@@ -37,6 +36,10 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     }
 
     needs = []
+    app_reg_defs_job = params["APP_REG_DEFS_JOB"]
+    artifact_app_defs_path = params["APP_DEFS_PATH"]
+    artifact_reg_defs_path = params["REG_DEFS_PATH"]
+    is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
     if is_local_app_def:
         # gcip library doesn't allow to create a Need object that has the same pipeline as one it runs within.
         # We need to specify pipeline because generated job will be ran in child pipeline
@@ -45,9 +48,15 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         environ['CI_PIPELINE_ID'] = '0000000'
         needs.append(Need(job=app_reg_defs_job, pipeline=real_ci_pipe_id, artifacts=True))
         environ['CI_PIPELINE_ID'] = real_ci_pipe_id
+
     generate_effective_set_job = job_instance(params=generate_effective_set_params, needs=needs,
                                               vars=generate_effective_set_vars)
 
+    effective_set_config_dict = {}
+    effective_set_config = params["EFFECTIVE_SET_CONFIG"]
+    if effective_set_config:
+        logger.info(f"EFFECTIVE_SET_CONFIG: {effective_set_config}")
+        effective_set_config_dict = json.loads(effective_set_config)
     effective_set_expiry = effective_set_config_dict.get("effective_set_expiry") or "1 hour"
     logger.info(f"effective set expiry value '{effective_set_expiry}'")
     generate_effective_set_job.artifacts.expire_in = effective_set_expiry
