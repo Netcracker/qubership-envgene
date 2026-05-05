@@ -1,6 +1,6 @@
 # Base module requirements (essential only)
 PyGithub==1.55
-certifi==2024.7.4
+certifi==2022.6.15
 
 boto3==1.39.4
 botocore==1.39.4
@@ -13,20 +13,20 @@ s3transfer==0.13.1
 setuptools-git-versioning==1.13.5
 six==1.16.0
 toml==0.10.2
-urllib3==2.6.3
+urllib3==2.0.7
 lxml==4.9.3
 ruamel.yaml==0.18.5
 ruamel.yaml.clib==0.2.8
 ruyaml==0.91.0
 jschon==0.11.0
 jsonschema==4.24.1
-diagrams==0.25.1
+diagrams==0.24.1
 graphviz==0.20.3
 attrs==23.2.0
 referencing==0.33.0
 rpds-py==0.17.1
 jsonschema-specifications==2023.12.1
-cryptography==46.0.5
+cryptography==41.0.3
 click==8.1.7
 deepmerge==2.0
 flatten_dict==0.4.2
