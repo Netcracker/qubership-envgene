@@ -27,8 +27,6 @@ CMDB_IMPORT_TAG = "CMDB_IMPORT"
 DEFAULT_PASSPORT_NAME = "passport"
 DEFAULT_PASSPORT_DIR_NAME = "cloud-passport"
 INV_GEN_CREDS_PATH = "Inventory/credentials/inventory_generation_creds.yml"
-SD_FILE_NAME = "sd.yaml"
-DELTA_SD_FILE_NAME = "delta_sd.yaml"
 
 TEMPLATE_DIR_PATTERN = re.compile(r'/from_(\w+_)?template/')
 
@@ -460,6 +458,3 @@ def is_from_template_dir(file_path: str) -> bool:
 def get_sboms_dir(work_dir) -> Path:
     return Path(work_dir) / "sboms"
 
-
-def get_sd_dir() -> Path:
-    return Path(f'{get_current_env_dir_from_env_vars()}/{INVENTORY_DIR_NAME}/solution-descriptor/')

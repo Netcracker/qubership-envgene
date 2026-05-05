@@ -2,7 +2,8 @@ import subprocess
 from os import getenv
 
 from envgenehelper import decrypt_all_cred_files_for_env, copy_path, validate_creds, openJson, \
-    encrypt_all_cred_files_for_env, resolve_sd_path, logger
+    encrypt_all_cred_files_for_env, resolve_sd_path, logger, get_current_env_dir_from_env_vars, cleanup_dir, \
+    get_envgene_config_yaml, openYaml, ESGenerationContext
 
 from handle_effective_set_config import handle_effective_set_config
 from sboms_retention_policy import sboms_retention_policy
@@ -28,10 +29,12 @@ def effective_set_entrypoint():
     validate_creds()
     sboms_retention_policy()
 
+    effective_set_dir = f"{get_current_env_dir_from_env_vars()}/effective-set"
+
     cmdb_cli_cmd_call = [
         f"/module/scripts/utils/run_effective_set_cli.sh --env-id={full_env_name}",
         "--envs-path=$CI_PROJECT_DIR/environments",
-        f"--output=$CI_PROJECT_DIR/environments/{full_env_name}/effective-set"
+        f"--output={effective_set_dir}"
     ]
     sd_path = resolve_sd_path()
     if sd_path.is_file():
@@ -40,6 +43,32 @@ def effective_set_entrypoint():
             "--sboms-path=$sboms_path",
             "--sd-path=$sd_path",
         ])
+        partial_gen = get_envgene_config_yaml().get("partial_effective_set_generation")
+        if partial_gen:
+            sd = openYaml(sd_path)
+            apps = sd.get('applications', [])
+            deploy_postfixes = {
+                app.get("deployPostfix")
+                for app in apps
+                if app.get("deployPostfix") is not None
+            }
+            for ns in deploy_postfixes:
+                cleanup_dir(effective_set_dir.join(ESGenerationContext.CLEANUP.value).join(ns))
+            for app in apps:
+                app_name = app.get("version").split(':')[0]
+                deploy_postfix = app.get("deployPostfix")
+                for_cleanup = (effective_set_dir.join(deploy_postfix).join(ESGenerationContext.RUNTIME.value)
+                               .join(app_name))
+                cleanup_dir(for_cleanup)
+                for_cleanup = (effective_set_dir.join(deploy_postfix).join(ESGenerationContext.DEPLOYMENT.value)
+                               .join(app_name))
+                cleanup_dir(for_cleanup)
+            cleanup_dir(effective_set_dir.join(ESGenerationContext.TOPOLOGY.value))
+            cleanup_dir(effective_set_dir.join(ESGenerationContext.PIPELINE.value))
+        else:
+            cleanup_dir(effective_set_dir)
+    else:
+        cleanup_dir(effective_set_dir)
 
     effective_set_config = getenv("EFFECTIVE_SET_CONFIG")
     if effective_set_config:
