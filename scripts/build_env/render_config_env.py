@@ -91,6 +91,7 @@ def render_obj_by_context(template: dict, context: Context) -> dict:
 class EnvGenerator:
     def __init__(self):
         self.ctx = Context()
+        self.isExternalCredEnv = False
         logger.debug("EnvGenerator initialized with context: %s",
                      self.ctx.dict(exclude_none=True, exclude={"env_vars"}))
 
@@ -427,6 +428,24 @@ class EnvGenerator:
             cs_file = Path(current_env_dir) / "composite_structure.yml"
             cs_file.parent.mkdir(parents=True, exist_ok=True)
             self.render_from_file_to_file(Template(composite_structure).render(self.ctx.as_dict()), str(cs_file))
+    
+    def generate_external_cred(self):
+        external_credential_template = self.ctx.current_env_template.get("external_credential_template")
+        if not external_credential_template:
+            return
+        external_cred_path = Template(external_credential_template).render(self.ctx.as_dict())
+        logger.info(f"Found external template. Render external credentials for {external_cred_path}")
+        external_creds = openYaml(external_cred_path)
+        default_remote_path = "{{ current_env.cloud }}/{{ current_env.name }}"
+        for credName, credConfig in external_creds.items():
+               if isinstance(credConfig, dict) and "remoteRefPath" not in credConfig:
+                   credConfig["remoteRefPath"] = default_remote_path
+        rendered_external_creds = render_obj_by_context(external_creds, self.ctx)
+        logger.debug(f"Rendered external credentials is: \n{rendered_external_creds}")
+        credYamlPath = self.ctx.render_extcred_dir +"/rendered-external-creds.yml"
+        writeYamlToFile(credYamlPath, rendered_external_creds)
+        self.isExternalCredEnv = True
+        logger.info(f"External cred env is set as {self.isExternalCredEnv}")
 
     def get_rendered_target_path(self, template_path: Path) -> Path:
         path_str = str(template_path)
@@ -628,6 +647,7 @@ class EnvGenerator:
             self.generate_cloud_file()
             self.generate_namespace_files()
             self.generate_composite_structure()
+            self.generate_external_cred()
 
             env_specific_schema = self.ctx.current_env_template.get("envSpecificSchema")
             if env_specific_schema:
