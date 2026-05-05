@@ -88,7 +88,7 @@
 5. Passport processing is skipped
 6. A log message is recorded:
 
-  - "No cloud passport definition found. Cloud passport processing skipped."
+- "No cloud passport definition found. Cloud passport processing skipped."
 
 **Results:**
 
@@ -131,10 +131,7 @@
 
 1. The user opens `cloud.yml`
 2. The user inspects parameter entries
-3. Each parameter includes an inline comment with:
-
-   - passport name
-   - passport version
+3. Each parameter includes an inline comment with: passport name, passport version
 
 4. The user identifies the parameter source
 
