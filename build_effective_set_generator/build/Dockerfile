@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir \
     --no-binary cffi \
     --no-binary cryptography \
     -r /build/requirements.txt
-
+    
 RUN pip install --no-cache-dir \
     /python/integration \
     /python/jschon-sort \
