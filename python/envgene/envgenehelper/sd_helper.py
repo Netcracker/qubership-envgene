@@ -276,21 +276,12 @@ def get_sd_dir() -> Path:
 def resolve_sd_path() -> Path:
     partial_gen = get_envgene_config_yaml().get("partial_effective_set_generation")
     sd_dir = get_sd_dir()
-    full_sd_path = sd_dir.joinpath(SD_FILE_NAME)
     if partial_gen:
-        logger.info("partial effective set generation feature enabled")
-        sd_delta = getenv('SD_DELTA')
-        sd_merge_mode = getenv("SD_REPO_MERGE_MODE")
-        merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
+        logger.info("Partial effective set generation feature enabled")
+        merge_mode = calculate_merge_mode(getenv("SD_REPO_MERGE_MODE"), getenv('SD_DELTA'))
         sd_version = getenv("SD_VERSION")
         sd_data = getenv("SD_DATA")
         sd_input = bool(sd_data) or bool(sd_version)
-        if merge_mode == MergeType.REPLACE or (not sd_input and full_sd_path.is_file()):
-            return full_sd_path
-        elif merge_mode == MergeType.BASIC or merge_mode == MergeType.EXTENDED:
+        if sd_input and merge_mode in [MergeType.BASIC, MergeType.EXTENDED, MergeType.BASIC_EXCLUSION]:
             return sd_dir.joinpath(DELTA_SD_FILE_NAME)
-        #TODO
-        elif merge_mode == MergeType.BASIC_EXCLUSION:
-            return
-    logger.info("effective_set_partial_generation feature disabled")
-    return full_sd_path
+    return sd_dir.joinpath(SD_FILE_NAME)

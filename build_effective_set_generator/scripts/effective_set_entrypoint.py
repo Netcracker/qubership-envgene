@@ -1,7 +1,6 @@
 import os
 import subprocess
 from os import getenv
-from pathlib import Path
 
 from envgenehelper import (
     decrypt_all_cred_files_for_env,
@@ -16,7 +15,8 @@ from envgenehelper import (
     get_envgene_config_yaml,
     openYaml,
     ESGenerationContext,
-    ES_MAPPING_FILE, writeYamlToFile
+    ES_MAPPING_FILE,
+    writeYamlToFile
 )
 
 from handle_effective_set_config import handle_effective_set_config
@@ -58,34 +58,34 @@ def effective_set_entrypoint():
             "--sboms-path=$sboms_path",
             "--sd-path=$sd_path",
         ])
-        partial_gen = get_envgene_config_yaml().get("partial_effective_set_generation")
-        if partial_gen:
-            sd = openYaml(sd_path)
-            apps = sd.get("applications", [])
+    is_es_partial = get_envgene_config_yaml().get("partial_effective_set_generation")
+    if is_es_partial and not sd_path.is_file():
+        raise ValueError(f"No delta sd or full sd by resolved path {sd_path}")
 
-            deploy_postfixes = {
-                app.get("deployPostfix")
-                for app in apps
-                if app.get("deployPostfix")
-            }
-            # cleanup per namespace
-            for ns in deploy_postfixes:
-                cleanup_dir(effective_set_dir / ESGenerationContext.CLEANUP.value / ns)
+    if is_es_partial:
+        sd = openYaml(sd_path)
+        apps = sd.get("applications", [])
 
-            # cleanup per app
-            for app in apps:
-                app_name = app.get("version").split(":")[0]
-                deploy_postfix = app.get("deployPostfix")
-                cleanup_dir(effective_set_dir / ESGenerationContext.RUNTIME.value / deploy_postfix / app_name)
-                cleanup_dir(effective_set_dir / ESGenerationContext.DEPLOYMENT.value / deploy_postfix / app_name)
+        deploy_postfixes = {
+            app.get("deployPostfix")
+            for app in apps
+            if app.get("deployPostfix")
+        }
+        # cleanup per namespace
+        for ns in deploy_postfixes:
+            cleanup_dir(effective_set_dir / ESGenerationContext.CLEANUP.value / ns)
 
-            cleanup_dir(effective_set_dir / ESGenerationContext.TOPOLOGY.value)
-            cleanup_dir(effective_set_dir / ESGenerationContext.PIPELINE.value)
+        # cleanup per app
+        for app in apps:
+            app_name = app.get("version").split(":")[0]
+            deploy_postfix = app.get("deployPostfix")
+            cleanup_dir(effective_set_dir / ESGenerationContext.RUNTIME.value / deploy_postfix / app_name)
+            cleanup_dir(effective_set_dir / ESGenerationContext.DEPLOYMENT.value / deploy_postfix / app_name)
 
-        else:
-            cleanup_dir(effective_set_dir)
+        cleanup_dir(effective_set_dir / ESGenerationContext.TOPOLOGY.value)
+        cleanup_dir(effective_set_dir / ESGenerationContext.PIPELINE.value)
+
     else:
-        # for pipeline and topology context generation in no sd mode
         cleanup_dir(effective_set_dir)
 
     effective_set_config = getenv("EFFECTIVE_SET_CONFIG")
@@ -104,27 +104,29 @@ def effective_set_entrypoint():
         logger.info(f"custom_params: {custom_params}")
         cmdb_cli_cmd_call.append(f"--custom-params={custom_params}")
 
-    cleanup_mapping_path = effective_set_dir / ESGenerationContext.CLEANUP.value / ES_MAPPING_FILE
-    runtime_mapping_path = effective_set_dir / ESGenerationContext.RUNTIME.value / ES_MAPPING_FILE
-    deployment_mapping_path = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / ES_MAPPING_FILE
+    if is_es_partial:
+        cleanup_mapping_path = effective_set_dir / ESGenerationContext.CLEANUP.value / ES_MAPPING_FILE
+        runtime_mapping_path = effective_set_dir / ESGenerationContext.RUNTIME.value / ES_MAPPING_FILE
+        deployment_mapping_path = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / ES_MAPPING_FILE
 
-    cleanup_mapping = openYaml(cleanup_mapping_path)
-    runtime_mapping = openYaml(runtime_mapping_path)
-    deployment_mapping = openYaml(deployment_mapping_path)
+        cleanup_mapping = openYaml(cleanup_mapping_path)
+        runtime_mapping = openYaml(runtime_mapping_path)
+        deployment_mapping = openYaml(deployment_mapping_path)
 
     # run java effective set cli
     subprocess.run(["sh", cmdb_cli_cmd_call], check=True)
 
-    new_cleanup_mapping = openYaml(cleanup_mapping_path)
-    new_runtime_mapping = openYaml(runtime_mapping_path)
-    new_deployment_mapping = openYaml(deployment_mapping_path)
+    if is_es_partial:
+        new_cleanup_mapping = openYaml(cleanup_mapping_path)
+        new_runtime_mapping = openYaml(runtime_mapping_path)
+        new_deployment_mapping = openYaml(deployment_mapping_path)
 
-    cleanup_mapping.update(new_cleanup_mapping)
-    runtime_mapping.update(new_runtime_mapping)
-    deployment_mapping.update(new_deployment_mapping)
+        cleanup_mapping.update(new_cleanup_mapping)
+        runtime_mapping.update(new_runtime_mapping)
+        deployment_mapping.update(new_deployment_mapping)
 
-    writeYamlToFile(cleanup_mapping_path, cleanup_mapping)
-    writeYamlToFile(runtime_mapping_path, runtime_mapping)
-    writeYamlToFile(deployment_mapping_path, deployment_mapping)
+        writeYamlToFile(cleanup_mapping_path, cleanup_mapping)
+        writeYamlToFile(runtime_mapping_path, runtime_mapping)
+        writeYamlToFile(deployment_mapping_path, deployment_mapping)
 
     encrypt_all_cred_files_for_env()
