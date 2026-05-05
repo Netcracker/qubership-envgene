@@ -162,6 +162,7 @@ public class BomCommonUtils {
                 : Stream.empty();
     }
 
+
     private boolean extractGatewayFlag(Component dataComponent) {
         try {
             return dataComponent.getData().stream()
