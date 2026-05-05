@@ -39,12 +39,14 @@ import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverte
 import org.qubership.cloud.devops.commons.service.interfaces.ProfileService;
 import org.qubership.cloud.devops.commons.service.interfaces.RegistryConfigurationService;
 import org.qubership.cloud.devops.commons.utils.ServiceArtifactType;
+import org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants;
 
 import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
 
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
+import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants.ESO_SUPPORT;
 
 @ApplicationScoped
 @Slf4j
@@ -79,10 +81,11 @@ public class BomReaderUtilsImplV2 {
                 ApplicationBomDTO applicationBomDto = component.getComponents()
                         .stream()
                         .map(subComp -> {
+                            String esoSupport = bomCommonUtils.getPropertyValue(subComp, ESO_SUPPORT);
                             RegistrySummaryDTO registrySummaryDTO = bomCommonUtils.getRegistrySummaryDTO(subComp, MAVEN_PATTERN);
                             String mavenRepoName = registryConfigurationService.getMavenRepoForApp(registrySummaryDTO);
                             return ApplicationBomDTO.builder().name(appName).artifactId(subComp.getName()).groupId(subComp.getGroup())
-                                    .version(subComp.getVersion()).mavenRepo(mavenRepoName).build();
+                                    .version(subComp.getVersion()).mavenRepo(mavenRepoName).esoSupport(esoSupport).build();
                         }).findFirst().orElse(null);
 
                 bomCommonUtils.getServiceEntities(entitiesMap, bomContent.getComponents());
