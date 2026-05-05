@@ -75,6 +75,6 @@ def validate_topology_context_mode(effective_set_config_dict, full_env_name, par
     sd = bool(params["SD_DATA"]) or bool(params["SD_VERSION"])
     full_sd_path = Path(
         f'{getenv('CI_PROJECT_DIR')}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
-    # effective set generation in version 1.0 does not support no SBOMs mode
+    # effective set generation in version 1.0 does not support no sd mode
     if not (full_sd_path.exists() and sd) and effective_set_version.lower() == "v1.0":
         raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
