@@ -2,7 +2,6 @@ import json
 from os import getenv, environ
 from pathlib import Path
 
-from envgenehelper import cleanup_targets
 from envgenehelper import logger
 from gcip import WhenStatement, Need
 
@@ -40,7 +39,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         "ENV_NAME": env_name,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
         "effective_set_generator_image": "$effective_set_generator_image",
-        "EXCLUDE_CLEANUP_TARGETS": " ".join(cleanup_targets),
         "FULL_ENV_NAME": full_env_name,
     }
 
