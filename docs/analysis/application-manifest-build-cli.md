@@ -293,7 +293,7 @@ components:
   # application/vnd.nc.helm.chart - umbrella (app-chart)
   - name: app-with-app-chart
     mimeType: application/vnd.nc.helm.chart
-    reference: oci://artifactorycn.netcracker.com:17004/helm/app-with-app-chart:1.0.0
+    reference: oci://artifactory.qubership.org:17004/helm/app-with-app-chart:1.0.0
     dependsOn:
       - name: service-a
         mimeType: application/vnd.nc.helm.chart
@@ -324,7 +324,7 @@ components:
   # External image: attributes resolved from `reference`
   - name: service-a
     mimeType: application/vnd.docker.image
-    reference: artifactorycn.netcracker.com:17004/core/service-a:build1
+    reference: artifactory.qubership.org:17004/core/service-a:build1
   # Image built within the current pipeline: attributes resolved from Component Metadata
   - name: service-b
     mimeType: application/vnd.docker.image
