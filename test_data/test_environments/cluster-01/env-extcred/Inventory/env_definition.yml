@@ -1,0 +1,21 @@
+inventory:
+  environmentName: env-extcred
+  tenantName: tenant
+  cloudName: cluster_01_env_extcred
+  cloudPassport: ext-mode
+  description: Composite Full Sample
+  owners: Qubership team
+envTemplate:
+  name: "extcred-template"
+  artifact: "deployment-configuration-env-templates:1.2.3"
+  additionalTemplateVariables:
+    site: "offsite"
+    use_env_prefix: true
+  sharedMasterCredentialFiles:
+    - "external-ci-creds"
+  envSpecificParamsets:
+    app:
+      - "extcred"
+  envSpecificE2EParamsets: {}
+generatedVersions:
+  generateEnvironmentLatestVersion: "deployment-configuration-env-templates:composite-prod"  # This value is automatically generated during job run.
