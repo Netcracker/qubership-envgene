@@ -1,6 +1,7 @@
 import os
 import subprocess
 from os import getenv
+from pathlib import Path
 
 from envgenehelper import (
     decrypt_all_cred_files_for_env,
@@ -15,7 +16,7 @@ from envgenehelper import (
     get_envgene_config_yaml,
     openYaml,
     ESGenerationContext,
-    ES_MAPPING_FILE
+    ES_MAPPING_FILE, writeYamlToFile
 )
 
 from handle_effective_set_config import handle_effective_set_config
@@ -103,11 +104,27 @@ def effective_set_entrypoint():
         logger.info(f"custom_params: {custom_params}")
         cmdb_cli_cmd_call.append(f"--custom-params={custom_params}")
 
-    cleanup_mapping = effective_set_dir / ESGenerationContext.CLEANUP.value / ES_MAPPING_FILE
-    runtime_mapping = effective_set_dir / ESGenerationContext.RUNTIME.value / ES_MAPPING_FILE
-    deployment_mapping = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / ES_MAPPING_FILE
+    cleanup_mapping_path = effective_set_dir / ESGenerationContext.CLEANUP.value / ES_MAPPING_FILE
+    runtime_mapping_path = effective_set_dir / ESGenerationContext.RUNTIME.value / ES_MAPPING_FILE
+    deployment_mapping_path = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / ES_MAPPING_FILE
+
+    cleanup_mapping = openYaml(cleanup_mapping_path)
+    runtime_mapping = openYaml(runtime_mapping_path)
+    deployment_mapping = openYaml(deployment_mapping_path)
 
     # run java effective set cli
     subprocess.run(["sh", cmdb_cli_cmd_call], check=True)
+
+    new_cleanup_mapping = openYaml(cleanup_mapping_path)
+    new_runtime_mapping = openYaml(runtime_mapping_path)
+    new_deployment_mapping = openYaml(deployment_mapping_path)
+
+    cleanup_mapping.update(new_cleanup_mapping)
+    runtime_mapping.update(new_runtime_mapping)
+    deployment_mapping.update(new_deployment_mapping)
+
+    writeYamlToFile(cleanup_mapping_path, cleanup_mapping)
+    writeYamlToFile(runtime_mapping_path, runtime_mapping)
+    writeYamlToFile(deployment_mapping_path, deployment_mapping)
 
     encrypt_all_cred_files_for_env()
