@@ -34,7 +34,7 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
             if found_path:
                 logger.info(f"Env specific resource profile file for '{profile_file_name}' found in '{found_path}'")
                 validate_yaml_by_scheme_or_fail(str(found_path), rp_schema)
-                result[templateType] = found_path
+                result[templateType] = str(found_path)
                 break
         if templateType not in result:
             raise ReferenceError(f"Resource profile file with key '{profile_file_name}' not found.")
