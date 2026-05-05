@@ -31,7 +31,7 @@ def prepare_trigger_passport_job(pipeline, full_env):
     return trigger_job
 
 
-def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags):
+def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name):
     logger.info(f'prepare get_passport job for {full_env}')
 
     get_passport_params = {
@@ -50,17 +50,9 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, tags
         "ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,
-        "envgen_image": "$envgen_image",
-        "envgen_args": " -vv",
-        "envgen_debug": "true",
-        "module_config_default": "/module/templates/defaults.yaml",
-        "COMMIT_ENV": "false",
-        "COMMIT_MESSAGE": f"[ci_skip] update cloud passport for {cluster_name}",
-        "GITLAB_RUNNER_TAG_NAME": tags
     }
     get_passport_job = job_instance(params=get_passport_params, vars=get_passport_vars)
     base = "${CI_PROJECT_DIR}/environments"
-    get_passport_job.artifacts.add_paths(f"{base}/{full_env}")
     get_passport_job.artifacts.add_paths(f"{base}/{cluster_name}/cloud-passport")
     get_passport_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(get_passport_job)
