@@ -273,3 +273,30 @@ def is_envgenenullvalue(value: object) -> bool:
     if value.lower() == "envgenenullvalue":
         return True
     return False
+
+def extract_external_cred(cred_map):
+    if cred_map.get("$type") != "credRef":
+        return None
+    cred_id = cred_map.get("credId")
+    if not cred_id or not str(cred_id).strip():
+        raise ValueError(f"Invalid credRef: 'credId' is missing or empty in {cred_map}")
+    return cred_id
+
+def validate_cred_types(credsMap, isExternalCredEnv, credFile):
+    types = {
+        v.get("type")
+        for v in credsMap.values()
+        if isinstance(v, dict) and v.get("type")
+    }
+    if isExternalCredEnv:
+        if types != {"external"}:
+            raise ValueError(f"Only external credentials allowed. Found: {types} in {credFile}")
+    else:
+        if "external" in types:
+            raise ValueError(f"External credentials not allowed. Found: {types} in {credFile}")
+        
+def has_external_creds(credsMap):
+    return any(
+        isinstance(v, dict) and v.get("type") == "external"
+        for v in credsMap.values()
+    )
