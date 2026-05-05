@@ -3,7 +3,8 @@ from envgenehelper import *
 MERGE_IMPOSSIBLE = "SD merge error:\nDelta SD contains a new applications, but doesn't contain this application in the deployGraph.\nSD Merge is impossible."
 NEW_CHUNK_ERROR = "SD merge error:\nDelta SD contains a new chunk\nSD Merge is impossible."
 NO_DEPLOY_GRAPH_ERROR = "SD merge error:\nDelta SD contains deployGraph, but Full SD doesn't contain deployGraph.\nSD Merge is impossible."
-
+SD_FILE_NAME = "sd.yaml"
+DELTA_SD_FILE_NAME = "delta_sd.yaml"
 
 def get_app_name(name: str):
     return name[0:name.find(":")]
@@ -268,6 +269,10 @@ def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
     return effective_merge_mode
 
 
+def get_sd_dir() -> Path:
+    return Path(f'{get_current_env_dir_from_env_vars()}/{INVENTORY_DIR_NAME}/solution-descriptor/')
+
+
 def resolve_sd_path() -> Path:
     partial_gen = get_envgene_config_yaml().get("partial_effective_set_generation")
     sd_dir = get_sd_dir()
@@ -284,6 +289,7 @@ def resolve_sd_path() -> Path:
             return full_sd_path
         elif merge_mode == MergeType.BASIC or merge_mode == MergeType.EXTENDED:
             return sd_dir.joinpath(DELTA_SD_FILE_NAME)
+        #TODO
         elif merge_mode == MergeType.BASIC_EXCLUSION:
             return
     logger.info("effective_set_partial_generation feature disabled")

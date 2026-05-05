@@ -1,4 +1,5 @@
 # envgenehelper/constants.py
+from enum import Enum
 
 cleanup_targets = [
     "Applications",
@@ -11,3 +12,11 @@ cleanup_targets = [
 ]
 
 CI_JOB_ARTIFACT_MAX_SIZE_MB = 1200  # 80% from limit 1.5
+
+
+class ESGenerationContext(Enum):
+    TOPOLOGY = "topology"
+    PIPELINE = "pipeline"
+    DEPLOYMENT = "deployment"
+    RUNTIME = "runtime"
+    CLEANUP = "cleanup"
