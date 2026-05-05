@@ -15,6 +15,7 @@ from envgenehelper import (
     get_envgene_config_yaml,
     openYaml,
     ESGenerationContext,
+    ES_MAPPING_FILE
 )
 
 from handle_effective_set_config import handle_effective_set_config
@@ -74,8 +75,8 @@ def effective_set_entrypoint():
             for app in apps:
                 app_name = app.get("version").split(":")[0]
                 deploy_postfix = app.get("deployPostfix")
-                cleanup_dir(effective_set_dir / deploy_postfix / ESGenerationContext.RUNTIME.value / app_name)
-                cleanup_dir(effective_set_dir / deploy_postfix / ESGenerationContext.DEPLOYMENT.value / app_name)
+                cleanup_dir(effective_set_dir / ESGenerationContext.RUNTIME.value / deploy_postfix / app_name)
+                cleanup_dir(effective_set_dir / ESGenerationContext.DEPLOYMENT.value / deploy_postfix / app_name)
 
             cleanup_dir(effective_set_dir / ESGenerationContext.TOPOLOGY.value)
             cleanup_dir(effective_set_dir / ESGenerationContext.PIPELINE.value)
@@ -83,7 +84,7 @@ def effective_set_entrypoint():
         else:
             cleanup_dir(effective_set_dir)
     else:
-        # for pipeline and topology context generation in no sbom mode
+        # for pipeline and topology context generation in no sd mode
         cleanup_dir(effective_set_dir)
 
     effective_set_config = getenv("EFFECTIVE_SET_CONFIG")
@@ -101,6 +102,10 @@ def effective_set_entrypoint():
     if custom_params:
         logger.info(f"custom_params: {custom_params}")
         cmdb_cli_cmd_call.append(f"--custom-params={custom_params}")
+
+    cleanup_mapping = effective_set_dir / ESGenerationContext.CLEANUP.value / ES_MAPPING_FILE
+    runtime_mapping = effective_set_dir / ESGenerationContext.RUNTIME.value / ES_MAPPING_FILE
+    deployment_mapping = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / ES_MAPPING_FILE
 
     # run java effective set cli
     subprocess.run(["sh", cmdb_cli_cmd_call], check=True)
