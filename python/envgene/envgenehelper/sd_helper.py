@@ -189,10 +189,9 @@ def basic_merge(full_sd, delta_sd):
 def basic_exclusion_merge(full_sd, delta_sd):
     """
     Merge Delta SD into Full SD using `basic-exclusion-merge` rules:
-      1. Matching App => update version from Delta
+      1. Matching App, New App => WARN
       2. Duplicating App => remove from Full SD
-      3. New App => log warning
-      4. Output contains only `applications` key
+      3. Output contains only `applications` key
     """
     logger.info("Inside basic_exclusion_merge")
     logger.info(f"Full SD: {full_sd}")
@@ -201,7 +200,6 @@ def basic_exclusion_merge(full_sd, delta_sd):
     delta_apps = delta_sd.get("applications", [])
     result_apps = []
 
-    # Track matched delta apps
     matched_delta_indices = set()
 
     # Stage 1: Process full SD
@@ -209,24 +207,23 @@ def basic_exclusion_merge(full_sd, delta_sd):
         keep = True
         for i, d_app in enumerate(delta_apps):
             if is_duplicating(f_app, d_app):
-                # Rule 3: Remove duplicating
+                # Rule 2: Remove duplicating
                 keep = False
                 matched_delta_indices.add(i)
                 break
             elif is_matching(f_app, d_app):
-                # Rule 1: Replace matching
-                result_apps.append(d_app)
-                keep = False
+                # Rule 1: Warn about matching apps
+                logger.warning(f"Warning: Update application '{get_app_name_sd(d_app)}' ignored (matching in Full SD)")
                 matched_delta_indices.add(i)
                 break
         if keep:
             result_apps.append(f_app)
 
-    # Stage 2: Warn about new apps
+    # Rule 1: Warn about new apps
     for i, d_app in enumerate(delta_apps):
         if i not in matched_delta_indices:
             # Rule 2: New Application, rejects
-            logger.info(f"Warning: New application '{get_app_name_sd(d_app)}' ignored (not present in Full SD)")
+            logger.warning(f"Warning: New application '{get_app_name_sd(d_app)}' ignored (not present in Full SD)")
 
     return {"applications": result_apps}
 
