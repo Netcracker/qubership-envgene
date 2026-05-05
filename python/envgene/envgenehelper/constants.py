@@ -20,3 +20,6 @@ class ESGenerationContext(Enum):
     DEPLOYMENT = "deployment"
     RUNTIME = "runtime"
     CLEANUP = "cleanup"
+
+
+ES_MAPPING_FILE = "mapping.yaml"
