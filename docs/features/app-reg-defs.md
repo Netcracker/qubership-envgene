@@ -93,7 +93,7 @@ During the `[app_reg_def_process](/docs/envgene-pipelines.md#instance-pipeline)`
 
 EnvGene itself uses Application and Registry Definitions to download artifacts (like the Environment Template artifact, Solution Descriptor artifact, etc.).
 
-These definitions are centralized across all environments. This means that for any operation on a specific environment, the system will use the definitions located at the root level. 
+These definitions are centralized across all environments. This means that for any operation on a specific environment, the system will use the definitions located at the root level.
 i.e.:
 
 - `/genDefs/AppDefs/...`
@@ -174,4 +174,3 @@ For example:
 - [appregdef_config.yaml example](/test_data/configuration/appregdef_config.yaml)
 - [Application Definition template](/test_data/test_templates/appdefs/application-1.yaml.j2)
 - [Registry Definition template](/test_data/test_templates/regdefs/registry-1.yaml.j2)
-
