@@ -28,3 +28,7 @@ def sboms_retention_policy():
         cleanup_dir_by_age(app_sbom_dir, sbom_retention.keep_versions_per_app)
 
     cleanup_dir_by_size(sboms_dir, CI_JOB_ARTIFACT_MAX_SIZE_MB)
+
+
+if __name__ == "__main__":
+    sboms_retention_policy()

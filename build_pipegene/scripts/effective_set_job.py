@@ -1,8 +1,9 @@
 import json
+import os
 from os import getenv, environ
 from pathlib import Path
 
-from envgenehelper import logger
+from envgenehelper import logger, copy_path
 from gcip import WhenStatement, Need
 
 from pipeline_helper import job_instance
@@ -17,13 +18,20 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         effective_set_config_dict = json.loads(effective_set_config)
         validate_topology_context_mode(effective_set_config_dict, full_env_name, params)
 
+    app_reg_defs_job = params.get("APP_REG_DEFS_JOB")
+    is_local_app_def = init_local_app_defs_from_artifact(full_env_name, app_reg_defs_job, params)
+
     script = [
         # cert handling for java
         'mkdir -p ${CI_PROJECT_DIR}/configuration/certs/',
         'if [ -f /default_cert.pem ]; then cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/"; fi',
         'for cert in "${CI_PROJECT_DIR}/configuration/certs/*" ; do [ -f "$cert" ] && keytool -import -trustcacerts -alias "$(basename "$cert")" -file "$cert" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done',
 
-        'python /scripts/effective_set_entrypoint.py'
+        'python3 /module/scripts/crypt_manager.py decrypt_cred_files',
+        'python3 /module/scripts/crypt_manager.py validate_creds',
+        'python3 /module/scripts/sboms_retention_policy.py',
+        'python3 /module/scripts/effective_set_entrypoint.py',
+        'python3 /module/scripts/crypt_manager.py encrypt_cred_files',
     ]
 
     generate_effective_set_params = {
@@ -43,10 +51,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     }
 
     needs = []
-    app_reg_defs_job = params["APP_REG_DEFS_JOB"]
-    artifact_app_defs_path = params["APP_DEFS_PATH"]
-    artifact_reg_defs_path = params["REG_DEFS_PATH"]
-    is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
     if is_local_app_def:
         # gcip library doesn't allow to create a Need object that has the same pipeline as one it runs within.
         # We need to specify pipeline because generated job will be ran in child pipeline
@@ -79,6 +83,18 @@ def validate_topology_context_mode(effective_set_config_dict, full_env_name, par
     # effective set generation in version 1.0 does not support no sd mode
     if not any_sd and effective_set_version.lower() == "v1.0":
         raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
-    elif not any_sd:
+
+    if not any_sd:
         logger.info("No-SD Mode: no SD present, only topology and pipeline contexts are generated; "
                     "deployment, runtime, and cleanup are skipped, SBOMs are not requested")
+
+
+def init_local_app_defs_from_artifact(full_env_name, app_reg_defs_job, params):
+    work_dir = os.path.join(getenv('CI_PROJECT_DIR'), "environments", full_env_name)
+    artifact_app_defs_path = params.get("APP_DEFS_PATH")
+    artifact_reg_defs_path = params.get("REG_DEFS_PATH")
+    is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
+    if is_local_app_def:
+        copy_path(artifact_app_defs_path, os.path.join(work_dir, "AppDefs"))
+        copy_path(artifact_reg_defs_path, os.path.join(work_dir, "RegDefs"))
+    return is_local_app_def
