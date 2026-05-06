@@ -5,11 +5,11 @@
   "customManagers": [
     {
       "customType": "regex",
-      "description": "Apk pins (apk add … =version) in any Dockerfile via Repology",
+      "description": "Apk pins (apk add ... =version) in any Dockerfile via Repology",
       "managerFilePatterns": ["(^|/)Dockerfile$"],
       "matchStrings": [
-        "^\\s+(?<pkg>(?!export)[a-z0-9][a-z0-9+._-]*)=(?<currentValue>[^\\s\\\\]+)\\s*(?:\\\\)?\\s*$",
-        "^ARG JAVA_PACKAGE=(?<pkg>[^=]+)=(?<currentValue>\\S+)\\s*$"
+        "(?:^|\\r?\\n)\\s+(?<pkg>[a-z0-9][a-z0-9+._-]*)=(?<currentValue>[^\\s\\\\]+)\\s*(?:\\\\)?\\s*(?:\\r?\\n|$)",
+        "(?:^|\\r?\\n)ARG JAVA_PACKAGE=(?<pkg>[^=]+)=(?<currentValue>\\S+)\\s*(?:\\r?\\n|$)"
       ],
       "datasourceTemplate": "repology",
       "packageNameTemplate": "alpine_3_19/{{{pkg}}}",
