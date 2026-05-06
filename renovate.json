@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "enabledManagers": ["dockerfile", "pip_requirements", "regex"],
+  "enabledManagers": ["dockerfile", "pip_requirements", "custom.regex"],
   "customManagers": [
     {
       "customType": "regex",
@@ -35,7 +35,7 @@
     },
     {
       "description": "Apk pins (Repology regex): only patch updates",
-      "matchManagers": ["regex"],
+      "matchManagers": ["custom.regex"],
       "matchDatasources": ["repology"],
       "matchUpdateTypes": ["minor", "major"],
       "enabled": false
@@ -47,7 +47,7 @@
     },
     {
       "description": "One PR for all Dockerfile + requirements + Alpine pins",
-      "matchManagers": ["dockerfile", "pip_requirements", "regex"],
+      "matchManagers": ["dockerfile", "pip_requirements", "custom.regex"],
       "groupName": "docker-and-python-deps"
     }
   ]
