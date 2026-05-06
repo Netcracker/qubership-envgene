@@ -12,7 +12,7 @@ from envgenehelper import get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME
 from envgenehelper.business_helper import getenv_and_log, getenv_with_error
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
-from envgenehelper.file_helper import identify_yaml_extension
+from envgenehelper.file_helper import identify_yaml_extension, deleteFileIfExists
 from envgenehelper.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_helper import basic_merge_multiple, MergeType, calculate_merge_mode
@@ -157,6 +157,8 @@ def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
     effective_merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
 
     helper.check_dir_exist_and_create(base_sd_path)
+    # do not commit delta sd to repo, delete old ones
+    deleteFileIfExists(base_sd_path.joinpath(DELTA_SD_FILE_NAME))
     if sd_source_type == "artifact":
         download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mode)
     elif sd_source_type == "json":
