@@ -162,7 +162,7 @@ Docker:
 ```text
 pkg:docker/cloud-core/image@build2?registry_name=artifactory-netcracker
   → Apply PURL → Artifact Reference algorithm
-  → "artifactory.qubership.org:17004/cloud-core/image:build2"
+  → "artifactorycn.netcracker.com:17004/cloud-core/image:build2"
   → DD.full_image_name
 ```
 
@@ -171,7 +171,7 @@ Helm (File registry):
 ```text
 pkg:helm/chart@1.0.0?registry_name=artifactory-netcracker
   → Apply PURL → Artifact Reference algorithm
-  → "https://artifactory.qubership.org/nc.helm.charts/chart-1.0.0.tgz"
+  → "https://artifactorycn.netcracker.com/nc.helm.charts/chart-1.0.0.tgz"
   → DD.full_chart_name
 ```
 

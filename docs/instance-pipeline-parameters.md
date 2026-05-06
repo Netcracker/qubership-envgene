@@ -333,8 +333,8 @@ This job must exist in the EnvGene instance pipeline.
 When this parameter is set, the system will:
 
 1. Download and unpack the `definitions.zip` file from the specified job artifact.
-2. Copy (with overwrite) Application Definitions from the extracted `definitions.zip` from the path specified in [`APP_DEFS_PATH`](#app_defs_path) to the `AppDefs` folder of the target Environment.
-3. Copy (with overwrite) Registry Definitions from the extracted `definitions.zip` from the path specified in [`REG_DEFS_PATH`](#reg_defs_path) to the `RegDefs` folder of the target Environment.
+2. Copy (with overwrite) Application Definitions from the extracted `definitions.zip` from the path specified in [`APP_DEFS_PATH`](#app_defs_path) to the `AppDefs` folder in /genDefs.
+3. Copy (with overwrite) Registry Definitions from the extracted `definitions.zip` from the path specified in [`REG_DEFS_PATH`](#reg_defs_path) to the `RegDefs` folder in /genDefs.
 
 **Default Value**: None
 
@@ -346,7 +346,7 @@ When this parameter is set, the system will:
 
 ### `APP_DEFS_PATH`
 
-**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Application Definitions are located. The contents from this path will be copied to the `AppDefs` folder of the target Environment.
+**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Application Definitions are located. The contents from this path will be copied to the `AppDefs` folder in /genDefs.
 
 **Default Value**: `AppDefs`
 
@@ -356,7 +356,7 @@ When this parameter is set, the system will:
 
 ### `REG_DEFS_PATH`
 
-**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Registry Definitions are located. The contents from this path will be copied to the `RegDefs` folder of the target Environment.
+**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Registry Definitions are located. The contents from this path will be copied to the `RegDefs` folder in /genDefs.
 
 **Default Value**: `RegDefs`
 
