@@ -13,20 +13,20 @@
     - [QIP](#qip)
     - [App-Chart](#app-chart)
   - [Application Manifest Build Config](#application-manifest-build-config)
-    - `[artifactMappings` Processing](#artifactmappings-processing)
+    - [`artifactMappings` Processing](#artifactmappings-processing)
   - [Component Metadata](#component-metadata)
-    - `[application/vnd.docker.image](#applicationvnddockerimage)`
-    - `[application/vnd.nc.helm.chart](#applicationvndnchelmchart)`
+    - [`application/vnd.docker.image`](#applicationvnddockerimage)
+    - [`application/vnd.nc.helm.chart`](#applicationvndnchelmchart)
   - [AM Build CLI execution attributes](#am-build-cli-execution-attributes)
   - [Application Manifest Structure](#application-manifest-structure)
     - [Root-Level Attributes](#root-level-attributes)
     - [Metadata](#metadata)
     - [Components](#components)
-      - [[Components] `application/vnd.nc.standalone-runnable](#components-applicationvndncstandalone-runnable)`
-      - [[Components] `application/vnd.docker.image](#components-applicationvnddockerimage)`
-      - [[Components] `application/vnd.nc.helm.chart](#components-applicationvndnchelmchart)`
-        - [[Components] `application/vnd.nc.helm.values.schema](#components-applicationvndnchelmvaluesschema)`
-        - [[Components] `application/vnd.nc.resource-profile-baseline](#components-applicationvndncresource-profile-baseline)`
+      - [\[Components\] `application/vnd.nc.standalone-runnable`](#components-applicationvndncstandalone-runnable)
+      - [\[Components\] `application/vnd.docker.image`](#components-applicationvnddockerimage)
+      - [\[Components\] `application/vnd.nc.helm.chart`](#components-applicationvndnchelmchart)
+        - [\[Components\] `application/vnd.nc.helm.values.schema`](#components-applicationvndnchelmvaluesschema)
+        - [\[Components\] `application/vnd.nc.resource-profile-baseline`](#components-applicationvndncresource-profile-baseline)
     - [Dependencies Generation](#dependencies-generation)
   - [Registry Definition](#registry-definition)
   - [Artifact Reference to PURL and Vice Versa](#artifact-reference-to-purl-and-vice-versa)
@@ -35,8 +35,8 @@
       - [Docker Images](#docker-images)
       - [Helm Charts](#helm-charts)
       - [GitHub Release](#github-release)
-    - [Artifact Reference - PURL](#artifact-reference---purl)
-    - [PURL - Artifact Reference](#purl---artifact-reference)
+    - [Artifact Reference -\> PURL](#artifact-reference---purl)
+    - [PURL -\> Artifact Reference](#purl---artifact-reference)
   - [Use Cases](#use-cases)
   - [Appendix](#appendix)
     - [References](#references)
@@ -92,9 +92,9 @@ flowchart TD
 1. The CLI must generate AM that validates against [JSON Schema](/schemas/application-manifest-v2.schema.json)
 2. The CLI must use as input [Registry Definition v2.0](/schemas/regdef-v2.schema.json)
 3. For each application entity listed below, an AM component with the corresponding MIME type must be generated:
-  1. "Service" -> `application/vnd.nc.standalone-runnable`
-  2. Docker image -> `application/vnd.docker.image`
-  3. Helm chart -> `application/vnd.nc.helm.chart`
+    1. "Service" -> `application/vnd.nc.standalone-runnable`
+    2. Docker image -> `application/vnd.docker.image`
+    3. Helm chart -> `application/vnd.nc.helm.chart`
 4. The CLI must complete the AM build for an application with 50 components within 10 seconds
 5. The CLI must support execution in both GitLab CI and GitHub Actions environments
 
@@ -104,19 +104,19 @@ flowchart TD
 
 ### Simple
 
-application-manifest-example-drawio.png
+![application-manifest-example-drawio.png](/docs/images/application-manifest-example-drawio.png)
 
 [Simple Application Manifest](/examples/application-manifest-v2.json)
 
 ### Jaeger
 
-application-manifest-example-jaeger.drawio.png
+![application-manifest-example-jaeger.drawio.png](/docs/images/application-manifest-example-jaeger.drawio.png)
 
 [Jaeger Application Manifest](/examples/application-manifest-v2-jaeger.json)
 
 ### QIP
 
-application-manifest-example-qip.drawio.png
+![application-manifest-example-qip.drawio.png](/docs/images/application-manifest-example-qip.drawio.png)
 
 [QIP Application Manifest](/examples/application-manifest-v2-qip.json)
 
@@ -277,7 +277,7 @@ service chart. The library chart has no Docker dependency. The umbrella chart's
 own `dependsOn` lists the nested charts.
 
 The corresponding manifest is
-`[/examples/application-manifest-v2-app-chart.json](/examples/application-manifest-v2-app-chart.json)`.
+[`/examples/application-manifest-v2-app-chart.json`](/examples/application-manifest-v2-app-chart.json).
 
 ```yaml
 applicationVersion: 1.0.0
@@ -293,7 +293,7 @@ components:
   # application/vnd.nc.helm.chart - umbrella (app-chart)
   - name: app-with-app-chart
     mimeType: application/vnd.nc.helm.chart
-    reference: oci://artifactorycn.netcracker.com:17004/helm/app-with-app-chart:1.0.0
+    reference: oci://artifactory.qubership.org:17004/helm/app-with-app-chart:1.0.0
     dependsOn:
       - name: service-a
         mimeType: application/vnd.nc.helm.chart
@@ -324,7 +324,7 @@ components:
   # External image: attributes resolved from `reference`
   - name: service-a
     mimeType: application/vnd.docker.image
-    reference: artifactorycn.netcracker.com:17004/core/service-a:build1
+    reference: artifactory.qubership.org:17004/core/service-a:build1
   # Image built within the current pipeline: attributes resolved from Component Metadata
   - name: service-b
     mimeType: application/vnd.docker.image
@@ -406,15 +406,13 @@ This allows incorporating build-time attributes (hashes, versions, registry refe
 
 ## AM Build CLI execution attributes
 
-
-| Attribute             | Type   | Mandatory | Description                                                | Example                                                               |
-| --------------------- | ------ | --------- | ---------------------------------------------------------- | --------------------------------------------------------------------- |
-| `--config`/`-c`       | string | yes       | Path to the Application Manifest Build configuration file  | `/path/to/am-build-config.yml`                                        |
-| `--version`/`-v`      | string | no        | Application version                                        | `1.2.3`                                                               |
-| `--name`/`-n`         | string | mp        | Application name                                           | `my-application`                                                      |
-| `--out`/`-o`          | string | yes       | Path where to save the generated Application Manifest      | `/path/to/output/application-manifest.json`                           |
-| positional parameters | string | yes       | Paths to component metadata files as positional parameters | `/path/to/component1-metadata.json /path/to/component2-metadata.json` |
-
+| Attribute             | Type   | Mandatory | Description                                                 | Example                                                               |
+|-----------------------|--------|-----------|-------------------------------------------------------------|-----------------------------------------------------------------------|
+| `--config`/`-c`       | string | yes       | Path to the Application Manifest Build configuration file   | `/path/to/am-build-config.yml`                                        |
+| `--version`/`-v`      | string | no        | Application version                                         | `1.2.3`                                                               |
+| `--name`/`-n`         | string | mp        | Application name                                            | `my-application`                                                      |
+| `--out`/`-o`          | string | yes       | Path where to save the generated Application Manifest       | `/path/to/output/application-manifest.json`                           |
+| positional parameters | string | yes       | Paths to component metadata files as positional parameters  | `/path/to/component1-metadata.json /path/to/component2-metadata.json` |
 
 ## Application Manifest Structure
 
@@ -455,16 +453,16 @@ This allows incorporating build-time attributes (hashes, versions, registry refe
 
 1. `timestamp` is generated as the current date and time in ISO 8601 format (e.g., `2024-01-15T10:30:00Z`)
 2. `component` is generated as follows:
-  - `component.type` is always `"application"`
-  - `component.mime-type` is always `"application/vnd.nc.application"`
-  - `component.bom-ref` is generated as `app-{application-name}` or a unique identifier
-  - `component.name` is taken from `applicationName` in the configuration or from the `--name` parameter
-  - `component.version` is taken from `applicationVersion` in the configuration or from the `--version` parameter
+   - `component.type` is always `"application"`
+   - `component.mime-type` is always `"application/vnd.nc.application"`
+   - `component.bom-ref` is generated as `app-{application-name}` or a unique identifier
+   - `component.name` is taken from `applicationName` in the configuration or from the `--name` parameter
+   - `component.version` is taken from `applicationVersion` in the configuration or from the `--version` parameter
 3. `tools` is generated as follows:
-  - `tools.components` always contains one element
-  - `tools.components[0].type` is always `"application"`
-  - `tools.components[0].name` is always `"am-build-cli"`
-  - `tools.components[0].version` is taken from the command-line tool version
+   - `tools.components` always contains one element
+   - `tools.components[0].type` is always `"application"`
+   - `tools.components[0].name` is always `"am-build-cli"`
+   - `tools.components[0].version` is taken from the command-line tool version
 
 **Data sources:**
 
@@ -478,7 +476,7 @@ Component structure is described in [Application Manifest v2 Specification](../a
 
 #### [Components] `application/vnd.nc.standalone-runnable`
 
-**See specification**: `[application/vnd.nc.standalone-runnable](../analysis/application-manifest-v2-specification.md#applicationvndncstandalone-runnable)`
+**See specification**: [`application/vnd.nc.standalone-runnable`](../analysis/application-manifest-v2-specification.md#applicationvndncstandalone-runnable)
 
 **Generation rules:**
 
@@ -491,7 +489,7 @@ Component structure is described in [Application Manifest v2 Specification](../a
 
 #### [Components] `application/vnd.docker.image`
 
-**See specification**: `[application/vnd.docker.image](../analysis/application-manifest-v2-specification.md#applicationvnddockerimage)`
+**See specification**: [`application/vnd.docker.image`](../analysis/application-manifest-v2-specification.md#applicationvnddockerimage)
 
 **Generation rules:**
 
@@ -513,7 +511,7 @@ Component structure is described in [Application Manifest v2 Specification](../a
 
 #### [Components] `application/vnd.nc.helm.chart`
 
-**See specification**: `[application/vnd.nc.helm.chart](../analysis/application-manifest-v2-specification.md#applicationvndnchelmchart)`
+**See specification**: [`application/vnd.nc.helm.chart`](../analysis/application-manifest-v2-specification.md#applicationvndnchelmchart)
 
 **Generation rules:**
 
@@ -524,12 +522,12 @@ Component structure is described in [Application Manifest v2 Specification](../a
 5. `purl` is generated from `reference` and Registry Definition (see [Artifact Reference to PURL](#artifact-reference-to-purl-and-vice-versa))
 6. `hashes` is taken from Component Metadata (if provided)
 7. `properties` is generated as follows:
-  - Mandatory property `isLibrary`: `true` for library charts
-  - Optional property `nc:helm.values.artifactMappings`: generated from `dependsOn` in the configuration (see `[artifactMappings` Processing](#artifactmappings-processing))
+   - Mandatory property `isLibrary`: `true` for library charts
+   - Optional property `nc:helm.values.artifactMappings`: generated from `dependsOn` in the configuration (see [`artifactMappings` Processing](#artifactmappings-processing))
 8. `components` is generated as follows:
-  - If `charts/<chart-name>/values.schema.json` exists in the chart artifact, a child component `application/vnd.nc.helm.values.schema` is added (see [Helm Values Schema](#components-applicationvndnchelmvaluesschema))
-  - If the folder `charts/<chart-name>/resource-profiles/` exists in the chart artifact with files, a child component `application/vnd.nc.resource-profile-baseline` is added (see [Resource Profile Baseline](#components-applicationvndncresource-profile-baseline))
-  - If nested charts are specified in the configuration, they are added as child components `application/vnd.nc.helm.chart`
+   - If `charts/<chart-name>/values.schema.json` exists in the chart artifact, a child component `application/vnd.nc.helm.values.schema` is added (see [Helm Values Schema](#components-applicationvndnchelmvaluesschema))
+   - If the folder `charts/<chart-name>/resource-profiles/` exists in the chart artifact with files, a child component `application/vnd.nc.resource-profile-baseline` is added (see [Resource Profile Baseline](#components-applicationvndncresource-profile-baseline))
+   - If nested charts are specified in the configuration, they are added as child components `application/vnd.nc.helm.chart`
 
 **Data sources:**
 
@@ -541,18 +539,18 @@ Component structure is described in [Application Manifest v2 Specification](../a
 
 ##### [Components] `application/vnd.nc.helm.values.schema`
 
-**See specification**: `[application/vnd.nc.helm.values.schema](../analysis/application-manifest-v2-specification.md#applicationvndnchelmvaluesschema)`
+**See specification**: [`application/vnd.nc.helm.values.schema`](../analysis/application-manifest-v2-specification.md#applicationvndnchelmvaluesschema)
 
 **Generation rules:**
 
 1. CLI checks for the presence of `values.schema.json` file in the chart artifact at path `charts/<chart-name>/values.schema.json` (at the same level as `Chart.yaml`)
 2. If the file exists:
-  - A child component `application/vnd.nc.helm.values.schema` is created in the `components` array of the parent Helm chart
-  - `bom-ref` is generated as `values-schema-{parent-chart-name}` or a unique identifier
-  - `name` is set to `values.schema.json`
-  - File contents are read, encoded in base64, and placed in `data[0].contents.attachment.content`
-  - `data[0].contents.attachment.contentType` is set to `application/json`
-  - `data[0].contents.attachment.encoding` is set to `base64`
+   - A child component `application/vnd.nc.helm.values.schema` is created in the `components` array of the parent Helm chart
+   - `bom-ref` is generated as `values-schema-{parent-chart-name}` or a unique identifier
+   - `name` is set to `values.schema.json`
+   - File contents are read, encoded in base64, and placed in `data[0].contents.attachment.content`
+   - `data[0].contents.attachment.contentType` is set to `application/json`
+   - `data[0].contents.attachment.encoding` is set to `base64`
 3. If the file does not exist, the component is not added (AM generation completes successfully)
 
 **Data sources:**
@@ -561,22 +559,22 @@ Component structure is described in [Application Manifest v2 Specification](../a
 
 ##### [Components] `application/vnd.nc.resource-profile-baseline`
 
-**See specification**: `[application/vnd.nc.resource-profile-baseline](../analysis/application-manifest-v2-specification.md#applicationvndncresource-profile-baseline)`
+**See specification**: [`application/vnd.nc.resource-profile-baseline`](../analysis/application-manifest-v2-specification.md#applicationvndncresource-profile-baseline)
 
 **Generation rules:**
 
 1. CLI checks for the presence of the `resource-profiles/` folder in the chart artifact at path `charts/<chart-name>/resource-profiles/` (at the same level as `Chart.yaml`)
 2. If the folder exists and contains files:
-  - A child component `application/vnd.nc.resource-profile-baseline` is created in the `components` array of the parent Helm chart
-  - `bom-ref` is generated as `resource-profile-{parent-chart-name}` or a unique identifier
-  - `name` is set to `resource-profile-baselines`
-  - For each `*.yaml` or `*.json` file in the `resource-profiles/` folder:
-    - An element is created in the `data` array
-    - `data[n].type` is set to `configuration`
-    - `data[n].name` is set to the filename (e.g., `small.yaml`, `dev.yaml`)
-    - File contents are read, encoded in base64, and placed in `data[n].contents.attachment.content`
-    - `data[n].contents.attachment.contentType` is determined by file extension: `application/yaml` for `.yaml`, `application/json` for `.json`
-    - `data[n].contents.attachment.encoding` is set to `base64`
+   - A child component `application/vnd.nc.resource-profile-baseline` is created in the `components` array of the parent Helm chart
+   - `bom-ref` is generated as `resource-profile-{parent-chart-name}` or a unique identifier
+   - `name` is set to `resource-profile-baselines`
+   - For each `*.yaml` or `*.json` file in the `resource-profiles/` folder:
+     - An element is created in the `data` array
+     - `data[n].type` is set to `configuration`
+     - `data[n].name` is set to the filename (e.g., `small.yaml`, `dev.yaml`)
+     - File contents are read, encoded in base64, and placed in `data[n].contents.attachment.content`
+     - `data[n].contents.attachment.contentType` is determined by file extension: `application/yaml` for `.yaml`, `application/json` for `.json`
+     - `data[n].contents.attachment.encoding` is set to `base64`
 3. If the folder does not exist or is empty, the component is not added (AM generation completes successfully)
 
 **Data sources:**
@@ -596,10 +594,10 @@ Component structure is described in [Application Manifest v2 Specification](../a
 
 1. CLI generates the `dependencies` array based on `dependsOn` in the component configuration
 2. For each component in the configuration that has `dependsOn`:
-  - An entry is created in `dependencies` with `ref` equal to the `bom-ref` of this component
-  - `dependsOn` is filled with an array of `bom-ref` values of components specified in the `dependsOn` configuration
+   - An entry is created in `dependencies` with `ref` equal to the `bom-ref` of this component
+   - `dependsOn` is filled with an array of `bom-ref` values of components specified in the `dependsOn` configuration
 3. For components without `dependsOn` in the configuration:
-  - An entry is created in `dependencies` with an empty array `dependsOn: []`
+   - An entry is created in `dependencies` with an empty array `dependsOn: []`
 4. `bom-ref` values for dependencies must match `bom-ref` values of components in the `components` array
 
 **Example:**
@@ -663,6 +661,7 @@ The `name` attribute must match the filename without the extension.
 The CLI needs to convert between artifact references (standard URLs) and Package URLs (PURLs) for different purposes:
 
 - **Artifact Reference → PURL**: When generating the Application Manifest, the CLI converts artifact references (e.g., `docker.io/namespace/image:tag`) to PURLs (e.g., `pkg:docker/namespace/image@tag?registry_name=docker-hub`) to store them in the manifest. This conversion uses Registry Definition to determine the `registry_name` qualifier.
+
 - **PURL → Artifact Reference**: When processing external artifacts specified by PURL in the configuration file, or when downloading artifacts (e.g., Helm charts), the CLI converts PURLs back to artifact references to interact with registries and tools that require standard URLs.
 
 The conversion process relies on Registry Definitions to map between registry identifiers (`registry_name` in PURL) and actual registry URLs and parameters.
@@ -696,15 +695,13 @@ For Docker images (Docker Registry or OCI-compatible registry):
 REGISTRY_HOST[:PORT]/NAMESPACE/IMAGE:TAG
 ```
 
-
-| Field           | Type   | Mandatory | Default     | Description           |
-| --------------- | ------ | --------- | ----------- | --------------------- |
-| `REGISTRY_HOST` | string | yes       | `docker.io` | Docker registry host  |
-| `PORT`          | number | no        | 443         | Docker registry port  |
-| `NAMESPACE`     | string | yes       | None        | Group or organization |
-| `IMAGE`         | string | yes       | None        | Docker image name     |
-| `TAG`           | string | yes       | latest      | Image version         |
-
+| Field            | Type   | Mandatory | Default    | Description                   |
+|------------------|--------|-----------|------------|-------------------------------|
+| `REGISTRY_HOST`  | string | yes       | `docker.io`| Docker registry host          |
+| `PORT`           | number | no        | 443        | Docker registry port          |
+| `NAMESPACE`      | string | yes       | None       | Group or organization         |
+| `IMAGE`          | string | yes       | None       | Docker image name             |
+| `TAG`            | string | yes       | latest     | Image version                 |
 
 #### Helm Charts
 
@@ -714,16 +711,14 @@ For Helm charts (OCI registry):
 oci://REGISTRY_HOST[:PORT]/NAMESPACE/IMAGE:TAG
 ```
 
-
-| Field           | Type   | Mandatory | Default | Description             |
-| --------------- | ------ | --------- | ------- | ----------------------- |
-| `oci://`        | string | yes       | None    | prefix for OCI registry |
-| `REGISTRY_HOST` | string | yes       | None    | OCI registry host       |
-| `PORT`          | number | no        | 443     | OCI registry port       |
-| `NAMESPACE`     | string | yes       | None    | group or organization   |
-| `IMAGE`         | string | yes       | None    | Helm chart name         |
-| `TAG`           | string | yes       | None    | chart version           |
-
+| Field             | Type   | Mandatory | Default | Description                     |
+|-------------------|--------|-----------|---------|---------------------------------|
+| `oci://`          | string | yes       | None    | prefix for OCI registry         |
+| `REGISTRY_HOST`   | string | yes       | None    | OCI registry host               |
+| `PORT`            | number | no        | 443     | OCI registry port               |
+| `NAMESPACE`       | string | yes       | None    | group or organization           |
+| `IMAGE`           | string | yes       | None    | Helm chart name                 |
+| `TAG`             | string | yes       | None    | chart version                   |
 
 For Helm charts (File registry):
 
@@ -731,16 +726,14 @@ For Helm charts (File registry):
 https://REGISTRY_HOST[:PORT]/PATH/IMAGE-VERSION.tgz
 ```
 
-
-| Field           | Type   | Mandatory | Default | Description                    |
-| --------------- | ------ | --------- | ------- | ------------------------------ |
-| `https://`      | string | yes       | None    | prefix for HTTP/HTTPS registry |
-| `REGISTRY_HOST` | string | yes       | None    | File registry host             |
-| `PORT`          | number | no        | 443     | File registry port             |
-| `PATH`          | string | no        | None    | Path to chart repository       |
-| `IMAGE`         | string | yes       | None    | Helm chart name                |
-| `VERSION`       | string | yes       | None    | chart version                  |
-
+| Field             | Type   | Mandatory | Default | Description                     |
+|-------------------|--------|-----------|---------|---------------------------------|
+| `https://`        | string | yes       | None    | prefix for HTTP/HTTPS registry  |
+| `REGISTRY_HOST`   | string | yes       | None    | File registry host              |
+| `PORT`            | number | no        | 443     | File registry port              |
+| `PATH`            | string | no        | None    | Path to chart repository        |
+| `IMAGE`           | string | yes       | None    | Helm chart name                 |
+| `VERSION`         | string | yes       | None    | chart version                   |
 
 #### GitHub Release
 
@@ -750,44 +743,56 @@ For Helm charts:
 REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
 ```
 
-
 | Field           | Type   | Mandatory | Default | Description       |
-| --------------- | ------ | --------- | ------- | ----------------- |
+|-----------------|--------|-----------|---------|-------------------|
 | `OWNER`         | string | yes       | None    | Repository owner  |
 | `REPO`          | string | yes       | None    | Repository name   |
 | `TAG`           | string | yes       | None    | Release tag       |
 | `ARTIFACT-FILE` | string | yes       | None    | Artifact filename |
 
-
 ### Artifact Reference -> PURL
 
 1. **Determining `TYPE` for PURL**
-  If Artifact Reference contains `https://github.com/` - `github`  
+
+    If Artifact Reference contains `https://github.com/` - `github`  
     Then by `mime-type` from [AM Build Config or Component Metadata](#proposed-approach) - `docker`, `helm`
+
 2. **Parsing Artifact Reference**
-  For `docker`: Extract `REGISTRY_HOST[:PORT]`, `NAMESPACE`, `IMAGE`, `TAG`  
+
+    For `docker`: Extract `REGISTRY_HOST[:PORT]`, `NAMESPACE`, `IMAGE`, `TAG`  
     For `helm` with `oci://` prefix: Extract `REGISTRY_HOST[:PORT]`, `NAMESPACE`, `IMAGE`, `TAG`  
     For `helm` with `https://` or `http://` prefix: Extract `REGISTRY_HOST[:PORT]`, `PATH`, `IMAGE`, `VERSION` from URL (parse `IMAGE-VERSION.tgz` format)  
     For `github`: Extract `REGISTRY_HOST[:PORT]`, `OWNER`, `REPO`, `TAG`, `ARTIFACT-FILE`
+
 3. **Finding `registry_name` (one of `?QUALIFIERS`)**
-  Find Registry Definition where the values
+
+    Find Registry Definition where the values
+
     For `docker`
-  - `dockerConfig.groupUri`/`dockerConfig.groupName`
+
+   - `dockerConfig.groupUri`/`dockerConfig.groupName`
+
     For `github`
-  - `githubReleaseConfig.repositoryDomainName`/`githubReleaseConfig.owner`/`githubReleaseConfig.repository`
+
+   - `githubReleaseConfig.repositoryDomainName`/`githubReleaseConfig.owner`/`githubReleaseConfig.repository`
+
     For `helm`
-  - `helmAppConfig.repositoryDomainName`/`helmAppConfig.helmGroupRepoName`
+
+   - `helmAppConfig.repositoryDomainName`/`helmAppConfig.helmGroupRepoName`
+
     Match with `REGISTRY_HOST[:PORT]` from Artifact Reference (for `helm` - both OCI and File registry) or `REGISTRY_HOST[:PORT]/NAMESPACE` (for `docker`) or `https://github.com/OWNER/REPO` (for `github`)
+
     The value of the `name` attribute of such registry will be the target value for `?QUALIFIERS` (`registry_name`)
+
 4. **Build PURL**
 
-  | PURL Parameter | Value Source                                                                                       |
-  | -------------- | -------------------------------------------------------------------------------------------------- |
-  | `TYPE`         | from Step 1                                                                                        |
-  | `NAMESPACE`    | from Step 2. `NAMESPACE` (for `docker`, `helm`) or `OWNER` (for `github`)                          |
-  | `NAME`         | from Step 2. `IMAGE` (for `docker`, `helm`) or `REPO` (for `github`)                               |
-  | `@VERSION`     | from Step 2. `TAG`                                                                                 |
-  | `?QUALIFIERS`  | from Step 3. `registry_name=<>` and from Step 2 `file_name=<>` `ARTIFACT-FILE` (only for `github`) |
+    | PURL Parameter | Value Source                                                                                       |
+    |----------------|----------------------------------------------------------------------------------------------------|
+    | `TYPE`         | from Step 1                                                                                        |
+    | `NAMESPACE`    | from Step 2. `NAMESPACE` (for `docker`, `helm`) or `OWNER` (for `github`)                          |
+    | `NAME`         | from Step 2. `IMAGE` (for `docker`, `helm`) or `REPO` (for `github`)                               |
+    | `@VERSION`     | from Step 2. `TAG`                                                                                 |
+    | `?QUALIFIERS`  | from Step 3. `registry_name=<>` and from Step 2 `file_name=<>` `ARTIFACT-FILE` (only for `github`) |
 
     **Qualifier value encoding.** Qualifier values (including `registry_name` and `file_name`)
     MUST be percent-encoded according to [RFC 3986](https://www.rfc-editor.org/rfc/rfc3986)
@@ -808,34 +813,45 @@ REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
 ### PURL -> Artifact Reference
 
 1. **Parse PURL**
-  Extract `TYPE`, `NAMESPACE`, `NAME`, `@VERSION`, `?QUALIFIERS`, `#SUBPATH`
+
+    Extract `TYPE`, `NAMESPACE`, `NAME`, `@VERSION`, `?QUALIFIERS`, `#SUBPATH`
+
     **Qualifier value decoding.** Qualifier values (including `registry_name` and `file_name`)
     MUST be percent-decoded after parsing. For example, `registry_name=Sandbox%20Registry`
     decodes to the lookup key `Sandbox Registry`, which is then matched against the
     `name` attribute of Registry Definitions.
+
 2. **Determine `REGISTRY_HOST[:PORT]`**
-  Based on `TYPE` and `?QUALIFIERS` `registry_name` determine:
+
+    Based on `TYPE` and `?QUALIFIERS` `registry_name` determine:
+
     For `docker`
-  - `dockerConfig.groupUri`/`dockerConfig.groupName`
+
+   - `dockerConfig.groupUri`/`dockerConfig.groupName`
+
     For `github`
-  - `githubReleaseConfig.repositoryDomainName`/`githubReleaseConfig.owner`/`githubReleaseConfig.repository`
+
+   - `githubReleaseConfig.repositoryDomainName`/`githubReleaseConfig.owner`/`githubReleaseConfig.repository`
+
     For `helm`
-  - `helmAppConfig.repositoryDomainName`/`helmAppConfig.helmGroupRepoName`
+
+   - `helmAppConfig.repositoryDomainName`/`helmAppConfig.helmGroupRepoName`
+
 3. **Build Artifact Reference**
 
-  | Artifact Reference Parameter | Value Source                                         |
-  | ---------------------------- | ---------------------------------------------------- |
-  | `oci://`                     | for (`helm` OCI registry)                            |
-  | `https://`                   | for (`helm` File registry)                           |
-  | `REGISTRY_HOST[:PORT]`       | From Step 2                                          |
-  | `NAMESPACE`                  | `NAMESPACE` from PURL (for `docker` and `helm`)      |
-  | `IMAGE`                      | `NAME` from PURL (for `docker` and `helm`)           |
-  | `TAG`                        | `@VERSION` from PURL (for `docker` and `helm` OCI)   |
-  | `VERSION`                    | `@VERSION` from PURL (for `helm` File registry)      |
-  | `OWNER`                      | `NAMESPACE` from PURL (for `github`)                 |
-  | `REPO`                       | `NAME` from PURL (for `github`)                      |
-  | `TAG`                        | `@VERSION` from PURL (for `github`)                  |
-  | `ARTIFACT-FILE`              | `?QUALIFIERS` `&file_name=` from PURL (for `github`) |
+    | Artifact Reference Parameter | Value Source                                         |
+    |------------------------------|------------------------------------------------------|
+    | `oci://`                     | for (`helm` OCI registry)                            |
+    | `https://`                   | for (`helm` File registry)                           |
+    | `REGISTRY_HOST[:PORT]`       | From Step 2                                          |
+    | `NAMESPACE`                  | `NAMESPACE` from PURL (for `docker` and `helm`)      |
+    | `IMAGE`                      | `NAME` from PURL (for `docker` and `helm`)           |
+    | `TAG`                        | `@VERSION` from PURL (for `docker` and `helm` OCI)   |
+    | `VERSION`                    | `@VERSION` from PURL (for `helm` File registry)      |
+    | `OWNER`                      | `NAMESPACE` from PURL (for `github`)                 |
+    | `REPO`                       | `NAME` from PURL (for `github`)                      |
+    | `TAG`                        | `@VERSION` from PURL (for `github`)                  |
+    | `ARTIFACT-FILE`              | `?QUALIFIERS` `&file_name=` from PURL (for `github`) |
 
     For `helm` File registry: Build as `https://REGISTRY_HOST[:PORT]/PATH/IMAGE-VERSION.tgz` where PATH is determined from Registry Definition or empty
 
@@ -849,24 +865,24 @@ REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
 ## Use Cases
 
 1. Building a multi-component application with:
-  1. `application/vnd.nc.standalone-runnable`
-  2. Docker images
-    1. By source:
-      1. Local (built as part of current build process)
-      2. External (built as part of another build process)
-      3. Mixed (combination of local and external images)
-  3. Helm charts
-    1. By source:
-      1. Local (built as part of current build process)
-      2. External (built as part of another build process)
-      3. Mixed (combination of local and external charts)
-    2. By structure:
-      1. One umbrella chart per application
-      2. One non-umbrella chart per application
-      3. Multiple non-umbrella charts per application
+   1. `application/vnd.nc.standalone-runnable`
+   2. Docker images
+      1. By source:
+         1. Local (built as part of current build process)
+         2. External (built as part of another build process)
+         3. Mixed (combination of local and external images)
+   3. Helm charts
+      1. By source:
+         1. Local (built as part of current build process)
+         2. External (built as part of another build process)
+         3. Mixed (combination of local and external charts)
+      2. By structure:
+         1. One umbrella chart per application
+         2. One non-umbrella chart per application
+         3. Multiple non-umbrella charts per application
 2. Publishing the Application Manifest
-  1. To OCI registry
-  2. As build artifact
+   1. To OCI registry
+   2. As build artifact
 
 ## Appendix
 
@@ -877,8 +893,8 @@ REGISTRY_HOST[:PORT]/OWNER/REPO/releases/download/TAG/ARTIFACT-FILE
 
 ### Potential Application Manifest Cases
 
-application-manifest-potential-cases.png
+![application-manifest-potential-cases.png](/docs/images/application-manifest-potential-cases.png)
 
 ### Potential Application Manifest Components
 
-application-manifest-components.png
+![application-manifest-components.png](/docs/images/application-manifest-components.png)
