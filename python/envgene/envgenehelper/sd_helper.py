@@ -270,15 +270,12 @@ def get_sd_dir() -> Path:
     return Path(f'{get_current_env_dir_from_env_vars()}/{INVENTORY_DIR_NAME}/solution-descriptor/')
 
 
-def resolve_sd_path() -> Path:
-    partial_gen = get_envgene_config_yaml().get("partial_effective_set_generation")
+def resolve_delta_sd_path() -> Path:
     sd_dir = get_sd_dir()
-    if partial_gen:
-        logger.info("Partial effective set generation feature enabled")
-        merge_mode = calculate_merge_mode(getenv("SD_REPO_MERGE_MODE"), getenv('SD_DELTA'))
-        sd_version = getenv("SD_VERSION")
-        sd_data = getenv("SD_DATA")
-        sd_input = bool(sd_data) or bool(sd_version)
-        if sd_input and merge_mode in [MergeType.BASIC, MergeType.EXTENDED, MergeType.BASIC_EXCLUSION]:
-            return sd_dir.joinpath(DELTA_SD_FILE_NAME)
-    return sd_dir.joinpath(SD_FILE_NAME)
+    merge_mode = calculate_merge_mode(getenv("SD_REPO_MERGE_MODE"), getenv('SD_DELTA'))
+    sd_version = getenv("SD_VERSION")
+    sd_data = getenv("SD_DATA")
+    sd_input = bool(sd_data) or bool(sd_version)
+    if sd_input and merge_mode in [MergeType.BASIC, MergeType.EXTENDED, MergeType.BASIC_EXCLUSION]:
+        return sd_dir.joinpath(DELTA_SD_FILE_NAME)
+
