@@ -1,13 +1,14 @@
 import subprocess
 from os import getenv
 
-from envgenehelper import (
-    decrypt_all_cred_files_for_env, validate_creds,
-    openJson, encrypt_all_cred_files_for_env, get_current_env_dir_from_env_vars, cleanup_dir,
-    openYaml, ESGenerationContext, resolve_partial_merge_mode, PartialMergeMode,
-    ES_MAPPING_FILE, writeYamlToFile, delete_dir, get_environment_name_from_full_name,
-    get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME, GenerationMode, resolve_es_generation_mode
-)
+from envgenehelper.business_helper import get_environment_name_from_full_name, get_current_env_dir_from_env_vars
+from envgenehelper.file_helper import writeYamlToFile, delete_dir, deleteFileIfExists, openYaml, cleanup_dir
+from envgenehelper.json_helper import openJson
+from envgenehelper.logger import logger
+from envgenehelper.yaml_helper import writeYamlToFile
+from envgenehelper.effective_set_helper import resolve_es_generation_mode, GenerationMode, PartialMergeMode, \
+    resolve_partial_merge_mode, ES_MAPPING_FILE
+from envgenehelper.sd_helper import get_sd_dir, DELTA_SD_FILE_NAME, SD_FILE_NAME
 
 from handle_effective_set_config import handle_effective_set_config
 
@@ -30,20 +31,17 @@ def effective_set_entrypoint():
     else:
         _run_full_generation(effective_set_dir, full_env_name, sd_path)
 
+    # do not commit delta sd to repo
+    deleteFileIfExists(delta_sd_path)
+
 
 def _run_full_generation(effective_set_dir, full_env_name, sd_path):
-    decrypt_all_cred_files_for_env()
-    validate_creds()
     cmd = _build_cli_cmd(effective_set_dir, full_env_name, sd_path)
     cleanup_dir(effective_set_dir)
     subprocess.run(["sh", cmd], check=True)
-    encrypt_all_cred_files_for_env()
 
 
 def _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path):
-    decrypt_all_cred_files_for_env()
-    validate_creds()
-
     cmd = _build_cli_cmd(effective_set_dir, full_env_name, delta_sd_path)
 
     delta_sd = openYaml(delta_sd_path)
@@ -88,8 +86,6 @@ def _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path):
     writeYamlToFile(cleanup_mapping_path, cleanup_mapping)
     writeYamlToFile(runtime_mapping_path, runtime_mapping)
     writeYamlToFile(deployment_mapping_path, deployment_mapping)
-
-    encrypt_all_cred_files_for_env()
 
 
 def _run_reverse_merge(effective_set_dir, full_env_name, delta_sd_path):
