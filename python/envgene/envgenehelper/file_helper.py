@@ -302,3 +302,8 @@ def cleanup_dir_by_age(dir_path, keep_last: int):
         for old_file in files[keep_last:]:
             logger.info(f"Removing file: {old_file}")
             deleteFileIfExists(old_file)
+
+
+def delete_dir_if_exists(dir_path):
+    if os.path.isdir(dir_path):
+        shutil.rmtree(dir_path)
