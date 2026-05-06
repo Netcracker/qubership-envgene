@@ -1,0 +1,40 @@
+---
+#Rules
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "push" || $CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - when: always
+
+#Stages
+stages:
+    - cloud-passport
+
+#Variables
+variables:
+  DOCKER_REGISTRY: "{{cookiecutter.docker_registry}}"
+  DOCKER_NAMESPACE: "{{cookiecutter.docker_namespace}}"
+  DOCKER_IMAGE_NAME: "{{cookiecutter.docker_image_name}}"
+  DOCKER_IMAGE_TAG: "{{cookiecutter.docker_image_tag}}"
+  GITLAB_RUNNER_TAG_NAME: "{{cookiecutter.gitlab_runner_tag_name}}"
+
+#Runner
+default:
+  tags: [ $GITLAB_RUNNER_TAG_NAME ]
+
+include:
+  - local: gitlab-ci/*_vars.yaml
+
+get_cloud_passport:
+  stage: cloud-passport
+  image: "${DOCKER_REGISTRY}/${DOCKER_NAMESPACE}/${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}"
+  extends:
+    - .discovery-tool.variables
+  script:
+    - chmod +x ${CI_PROJECT_DIR}/scripts/discovery_tool.sh
+    - . ${CI_PROJECT_DIR}/scripts/discovery_tool.sh
+  artifacts:
+    paths:
+      - $discovery_dst_dir
+  rules:
+      - if: $ENV_NAME
