@@ -36,19 +36,7 @@ def effective_set_entrypoint():
 
 def _prepare_context():
     full_env_name = getenv("FULL_ENV_NAME")
-    ci_project_dir = getenv("CI_PROJECT_DIR")
-    work_dir = os.path.join(ci_project_dir, "environments", full_env_name)
     merge_mode = calculate_merge_mode(getenv("SD_REPO_MERGE_MODE"), getenv("SD_DELTA"))
-
-    artifact_app_defs_path = getenv("APP_DEFS_PATH")
-    artifact_reg_defs_path = getenv("REG_DEFS_PATH")
-    app_reg_defs_job = getenv("APP_REG_DEFS_JOB")
-
-    if artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job:
-        copy_path(artifact_app_defs_path, os.path.join(work_dir, "AppDefs"))
-        copy_path(artifact_reg_defs_path, os.path.join(work_dir, "RegDefs"))
-
-    sboms_retention_policy()
 
     effective_set_dir = get_current_env_dir_from_env_vars() / "effective-set"
     sd_path = get_sd_dir().joinpath(SD_FILE_NAME)
