@@ -72,9 +72,13 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
 
 def validate_topology_context_mode(effective_set_config_dict, full_env_name, params):
     effective_set_version = effective_set_config_dict.get("version") or "v2.0"
-    sd = bool(params["SD_DATA"]) or bool(params["SD_VERSION"])
+    sd_input = bool(params["SD_DATA"]) or bool(params["SD_VERSION"])
     full_sd_path = Path(
         f'{getenv('CI_PROJECT_DIR')}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
+    any_sd = full_sd_path.exists() and sd_input
     # effective set generation in version 1.0 does not support no sd mode
-    if not (full_sd_path.exists() and sd) and effective_set_version.lower() == "v1.0":
+    if not any_sd and effective_set_version.lower() == "v1.0":
         raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
+    elif not any_sd:
+        logger.info("No-SD Mode: no SD present, only topology and pipeline contexts are generated; "
+                    "deployment, runtime, and cleanup are skipped, SBOMs are not requested")
