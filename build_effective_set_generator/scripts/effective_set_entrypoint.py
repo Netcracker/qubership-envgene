@@ -1,78 +1,50 @@
-import os
 import subprocess
 from os import getenv
 
 from envgenehelper import (
-    decrypt_all_cred_files_for_env, copy_path, validate_creds,
-    openJson, encrypt_all_cred_files_for_env, resolve_sd_path,
-    logger, get_current_env_dir_from_env_vars, cleanup_dir,
-    get_envgene_config_yaml, openYaml, ESGenerationContext,
-    ES_MAPPING_FILE, writeYamlToFile, calculate_merge_mode,
-    delete_dir, get_environment_name_from_full_name,
-    get_sd_dir, SD_FILE_NAME, MergeType, DELTA_SD_FILE_NAME
+    decrypt_all_cred_files_for_env, validate_creds,
+    openJson, encrypt_all_cred_files_for_env, get_current_env_dir_from_env_vars, cleanup_dir,
+    openYaml, ESGenerationContext, resolve_partial_merge_mode, PartialMergeMode,
+    ES_MAPPING_FILE, writeYamlToFile, delete_dir, get_environment_name_from_full_name,
+    get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME, GenerationMode, resolve_es_generation_mode
 )
 
 from handle_effective_set_config import handle_effective_set_config
-from sboms_retention_policy import sboms_retention_policy
 
 
 def effective_set_entrypoint():
-    ctx = _prepare_context()
-
-    if ctx["is_partial"]:
-        delta_sd_path = ctx["delta_sd_path"]
-        sd_path = ctx["sd_path"].exists()
-        if not ctx["delta_sd_path"].exists() and ctx["sd_path"].exists():
-            raise ValueError(
-                f"[Partial effective set generation] impossible without delta sd {delta_sd_path} and full sd {sd_path}")
-
-        elif ctx["is_reverse"]:
-            _run_reverse_merge(ctx)
-        else:
-            _run_forward_merge(ctx)
-    else:
-        _run_full_generation(ctx)
-
-
-def _prepare_context():
     full_env_name = getenv("FULL_ENV_NAME")
-    merge_mode = calculate_merge_mode(getenv("SD_REPO_MERGE_MODE"), getenv("SD_DELTA"))
-
     effective_set_dir = get_current_env_dir_from_env_vars() / "effective-set"
     sd_path = get_sd_dir().joinpath(SD_FILE_NAME)
     delta_sd_path = get_sd_dir().joinpath(DELTA_SD_FILE_NAME)
 
-    is_partial = get_envgene_config_yaml().get(
-        "partial_effective_set_generation") and merge_mode.name != MergeType.REPLACE
-    is_reverse = is_partial and merge_mode.name == MergeType.BASIC_EXCLUSION
+    if resolve_es_generation_mode() == GenerationMode.PARTIAL:
+        if not delta_sd_path.exists() and sd_path.exists():
+            raise ValueError(
+                f"[Partial effective set generation] impossible without delta sd {delta_sd_path} and full sd {sd_path}")
 
-    return {
-        "full_env_name": full_env_name,
-        "effective_set_dir": effective_set_dir,
-        "sd_path": sd_path,
-        "delta_sd_path": delta_sd_path,
-        "is_partial": is_partial,
-        "is_reverse": is_reverse,
-    }
+        elif resolve_partial_merge_mode() == PartialMergeMode.REVERSE:
+            _run_reverse_merge(effective_set_dir, full_env_name, delta_sd_path)
+        else:
+            _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path)
+    else:
+        _run_full_generation(effective_set_dir, full_env_name, sd_path)
 
 
-def _run_full_generation(ctx):
+def _run_full_generation(effective_set_dir, full_env_name, sd_path):
     decrypt_all_cred_files_for_env()
     validate_creds()
-    effective_set_dir = ctx["effective_set_dir"]
-    cmd = _build_cli_cmd(ctx)
+    cmd = _build_cli_cmd(effective_set_dir, full_env_name, sd_path)
     cleanup_dir(effective_set_dir)
     subprocess.run(["sh", cmd], check=True)
     encrypt_all_cred_files_for_env()
 
 
-def _run_forward_merge(ctx):
-    effective_set_dir = ctx["effective_set_dir"]
-    delta_sd_path = ctx["delta_sd_path"]
+def _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path):
     decrypt_all_cred_files_for_env()
     validate_creds()
 
-    cmd = _build_cli_cmd(ctx)
+    cmd = _build_cli_cmd(effective_set_dir, full_env_name, delta_sd_path)
 
     delta_sd = openYaml(delta_sd_path)
     apps = delta_sd.get("applications", [])
@@ -120,10 +92,7 @@ def _run_forward_merge(ctx):
     encrypt_all_cred_files_for_env()
 
 
-def _run_reverse_merge(ctx):
-    effective_set_dir = ctx["effective_set_dir"]
-    delta_sd_path = ctx["delta_sd_path"]
-
+def _run_reverse_merge(effective_set_dir, full_env_name, delta_sd_path):
     apps = openYaml(delta_sd_path).get("applications", [])
 
     for app in apps:
@@ -142,7 +111,7 @@ def _run_reverse_merge(ctx):
             delete_dir(cleanup_dp)
             delete_dir(deployment_dp)
 
-            ns = get_environment_name_from_full_name(ctx["full_env_name"])
+            ns = get_environment_name_from_full_name(full_env_name)
             mapping_paths = [
                 effective_set_dir / ESGenerationContext.CLEANUP.value / ES_MAPPING_FILE,
                 effective_set_dir / ESGenerationContext.RUNTIME.value / ES_MAPPING_FILE,
@@ -155,13 +124,10 @@ def _run_reverse_merge(ctx):
                     writeYamlToFile(path, mapping)
 
 
-def _build_cli_cmd(ctx):
-    effective_set_dir = ctx["effective_set_dir"]
-    sd_path = ctx["sd_path"]
-
+def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
     cmd = [
         "/module/scripts/utils/run_effective_set_cli.sh",
-        f"--env-id={ctx['full_env_name']}",
+        f"--env-id={full_env_name}",
         "--envs-path=$CI_PROJECT_DIR/environments",
         f"--output={effective_set_dir}",
     ]
