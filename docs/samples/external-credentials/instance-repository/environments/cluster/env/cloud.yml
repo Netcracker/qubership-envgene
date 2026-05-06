@@ -1,0 +1,19 @@
+---
+name: "cluster_env"
+apiUrl: "https://api.example.com"
+apiPort: 6443
+privateUrl: ""
+publicUrl: "https://apps.example.com"
+dashboardUrl: "https://dashboard.example.com"
+labels: []
+defaultCredentialsId: ""
+protocol: "https"
+deployParameters:
+  INTEGRATION_TOKEN:
+    $type: credRef
+    credId: app-sidecar-token
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []

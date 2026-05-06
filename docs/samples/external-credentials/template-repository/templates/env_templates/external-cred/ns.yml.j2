@@ -1,0 +1,17 @@
+---
+name: "{{ current_env.name }}-app"
+credentialsId: ""
+labels: []
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  DB_ADMIN_USER:
+    $type: credRef
+    credId: app-db-cred
+    property: username
+  DB_ADMIN_PASSWORD:
+    $type: credRef
+    credId: app-db-cred
+    property: password
+  INTERNAL_API_KEY: "${creds.get('app-local-internal').secret}"

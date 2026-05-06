@@ -1,0 +1,22 @@
+---
+# Cloud Passport main file (non-credential fields + credRef pointers). Pair: cluster-creds.yml
+version: 1.5
+cloud:
+  CLOUD_API_HOST: api.cluster.example.com
+  CLOUD_API_PORT: "6443"
+  CLOUD_PUBLIC_HOST: cluster.example.com
+  CLOUD_PRIVATE_HOST: cluster.example.com
+  CLOUD_DASHBOARD_URL: https://dashboard.cluster.example.com
+  CLOUD_PROTOCOL: https
+  CLOUD_SERVICES_TOKEN:
+    $type: credRef
+    credId: app-sidecar-token
+dbaas:
+  DBAAS_ADMIN_USERNAME:
+    $type: credRef
+    credId: app-db-cred
+    property: username
+  DBAAS_ADMIN_PASSWORD:
+    $type: credRef
+    credId: app-db-cred
+    property: password

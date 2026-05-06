@@ -1,0 +1,15 @@
+---
+# Cloud Passport credential file (Environment Credentials File). Pair: cluster.yml. External only.
+app-db-cred:
+  type: external
+  create: true
+  secretStore: default-store
+  remoteRefPath: cluster/env/db
+  properties:
+    - name: username
+    - name: password
+app-sidecar-token:
+  type: external
+  create: true
+  secretStore: default-store
+  remoteRefPath: cluster/env/sidecar

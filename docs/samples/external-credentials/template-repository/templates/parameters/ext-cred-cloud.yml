@@ -1,0 +1,6 @@
+---
+name: ext-cred-cloud
+parameters:
+  INTEGRATION_TOKEN:
+    $type: credRef
+    credId: app-sidecar-token
