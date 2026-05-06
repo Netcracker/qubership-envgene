@@ -12,7 +12,7 @@ environment:
 {% elif env_definition.inventory.cloudPassport is defined %}
   cloud: "{{ env_definition.inventory.cloudPassport | replace('-','_') }}"
 {% else %}
-  cloud: "{{ env_definition.inventory.environmentName | replace('-','_') }}"
+  cloud: "{{ (cluster_name ~ '_' ~ env_definition.inventory.environmentName) | replace('-','_') }}"
 {% endif %}
 {% if env_definition.inventory.cloudName is defined %}
   cloudNameWithCluster: "{{ env_definition.inventory.cloudName }}"
