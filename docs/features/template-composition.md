@@ -42,95 +42,120 @@ Introduce **Template Composition** - a feature that enables the creation of chil
 
 This diagram shows parent and child templates with their components. The color of component indicates its source:
 
-template-composition-1.png
+![template-composition-1.png](/docs/images/template-composition-1.png)
 
 ### Key Capabilities
 
 1. **Selective Composition**:
-  - Compose some or all components from parents
-  - Optionally override specific parameters of inherited components
-  - Define new components in child template
+   - Compose some or all components from parents
+   - Optionally override specific parameters of inherited components
+   - Define new components in child template
+
 2. **Component Composition Rules**:
-  - **Composable Components**:
-    - Tenant template (cannot be overridden)
-    - Cloud template (override allowed)
-    - Namespace template (override allowed)
-  - **Overrideable Attributes** (for Cloud/Namespace templates only):
-    - `profile`
-    - `deployParameters`
-    - `e2eParameters`
-    - `technicalConfigurationParameters`
-    - `deployParameterSets`
-    - `e2eParameterSets`
-    - `technicalConfigurationParameterSets`
+   - **Composable Components**:
+     - Tenant template (cannot be overridden)
+     - Cloud template (override allowed)
+     - Namespace template (override allowed)
+   - **Overrideable Attributes** (for Cloud/Namespace templates only):
+     - `profile`
+     - `deployParameters`
+     - `e2eParameters`
+     - `technicalConfigurationParameters`
+     - `deployParameterSets`
+     - `e2eParameterSets`
+     - `technicalConfigurationParameterSets`
+
 3. **Composition Processing**:
-  - Occurs during child template build in template repository pipeline
-  - Process flow:
-  1. Download parent template artifacts specified in `parent-templates` section
-  2. For each child component:
-    - Incorporate component from parent template if `parent` attribute specified
-    - Apply any parameter overrides if `overrides-parent` attribute specified
-    - Incorporate child-specific components (if `parent` attribute not specified)
-  3. Generate final child template artifact with processed components
+   - Occurs during child template build in template repository pipeline
+   - Process flow:
+     1. Download parent template artifacts specified in `parent-templates` section
+     2. For each child component:
+        - Incorporate component from parent template if `parent` attribute specified
+        - Apply any parameter overrides if `overrides-parent` attribute specified
+        - Incorporate child-specific components (if `parent` attribute not specified)
+     3. Generate final child template artifact with processed components
+
 4. **Key Characteristics**:
-  - Built child templates are regular EnvGene artifacts requiring no special handling
-  - Parent templates are regular EnvGene templates needing no special configuration
-  - Supports multi-level composition chains
+   - Built child templates are regular EnvGene artifacts requiring no special handling
+   - Parent templates are regular EnvGene templates needing no special configuration
+   - Supports multi-level composition chains
+
 5. **Application & Registry Definitions composition**:
-  - `appdefs` and `regdefs` live under `templates/` like other resources. Template composition does not merge YAML across files: if the same path appears in more than one source, the file from the later source in copy order replaces the earlier file entirely.
-  - See [Nested Application and Registry Definitions (appdefs / regdefs)](#nested-application-and-registry-definitions-appdefs--regdefs) below for precedence and how this differs from field-level merge.
+   - `appdefs` and `regdefs` live under `templates/` like other resources. Template composition does not merge YAML across files: if the same path appears in more than one source, the file from the later source in copy order replaces the earlier file entirely.
+   - See [Nested Application and Registry Definitions (appdefs / regdefs)](#nested-application-and-registry-definitions-appdefs--regdefs) below for precedence and how this differs from field-level merge.
 
 ### Detailed Composition Algorithm
 
 The sequence below describes how composition is executed during template build.
 
 1. **Discover descriptors**
-  Read all `*.yml|*.yaml` files from `templates/env_templates` (top-level only, non-recursive).
+
+   Read all `*.yml|*.yaml` files from `templates/env_templates` (top-level only, non-recursive).
    Each discovered file is processed as an independent child Template Descriptor.
+
 2. **Check whether composition is needed**
-  If a descriptor does not contain `parent-templates`, composition is skipped for that descriptor.
+
+   If a descriptor does not contain `parent-templates`, composition is skipped for that descriptor.
+
 3. **Validate parent references**
-  - `parent-templates` cannot be empty when declared.
-  - If multiple parents are declared, each inheriting namespace must explicitly set `parent`.
+
+   - `parent-templates` cannot be empty when declared.
+   - If multiple parents are declared, each inheriting namespace must explicitly set `parent`.
+
 4. **Resolve parent artifacts**
-  - For each `app:version` in `parent-templates`, find matching Artifact Definition in `configuration/artifact_definitions`.
-  - Download and unpack the parent template artifact into temporary storage.
-5. **Prepare resource files (`templates/`*)**
-  Copy resources in this order:
-  - `templates/`* from parents referenced by `namespaces[].parent`
-  - `templates/`* from `tenant.parent` (if used)
-  - `templates/*` from `cloud.parent` (if used)
-  - child `templates/*` (always last)
-    > [!IMPORTANT]
-    > The `templates/*` step is file-based and recursive. It includes all files and directories under `templates/`, including:
-    >
-    > - `env_templates`
-    > - `resource_profiles`
-    > - `parameters`
-    > - `appdefs`
-    > - `regdefs`
-    >
-    > If the same relative path exists in multiple sources, the later copy overwrites the earlier one.
+
+   - For each `app:version` in `parent-templates`, find matching Artifact Definition in `configuration/artifact_definitions`.
+   - Download and unpack the parent template artifact into temporary storage.
+
+5. **Prepare resource files (`templates/*`)**
+
+   Copy resources in this order:
+
+   - `templates/*` from parents referenced by `namespaces[].parent`
+   - `templates/*` from `tenant.parent` (if used)
+   - `templates/*` from `cloud.parent` (if used)
+   - child `templates/*` (always last)
+
+   > [!IMPORTANT]
+   > The `templates/*` step is file-based and recursive. It includes all files and directories under `templates/`, including:
+   >
+   > - `env_templates`
+   > - `resource_profiles`
+   > - `parameters`
+   > - `appdefs`
+   > - `regdefs`
+   >
+   > If the same relative path exists in multiple sources, the later copy overwrites the earlier one.
+
 6. **Build resulting Template Descriptor**
-  - Create the resulting descriptor as a copy of the child descriptor, then remove `parent-templates` from that resulting descriptor.
-  - If `tenant: { parent: <parent-key> }` is used, replace child `tenant` with the `tenant` value from the parent template descriptor referenced by `<parent-key>`.
-  - If `cloud: { parent: <parent-key> }` is used, replace child `cloud` with the `cloud` value from the parent template descriptor referenced by `<parent-key>`.
-  - If top-level `tenant`, `cloud` or `composite_structure` are missing in child, they are inherited from the first matching parent in namespace iteration order (`first parent wins`) and are not overwritten later.
+
+   - Create the resulting descriptor as a copy of the child descriptor, then remove `parent-templates` from that resulting descriptor.
+   - If `tenant: { parent: <parent-key> }` is used, replace child `tenant` with the `tenant` value from the parent template descriptor referenced by `<parent-key>`.
+   - If `cloud: { parent: <parent-key> }` is used, replace child `cloud` with the `cloud` value from the parent template descriptor referenced by `<parent-key>`.
+   - If top-level `tenant`, `cloud` or `composite_structure` are missing in child, they are inherited from the first matching parent in namespace iteration order (`first parent wins`) and are not overwritten later.
+
 7. **Process namespaces**
-  - For each namespace with `parent`, find the parent namespace by exact `name` and use it as the base namespace entry in the resulting descriptor.
-  - Then, if the child namespace defines `template_path`, overwrite the inherited `template_path` with the child value.
+
+   - For each namespace with `parent`, find the parent namespace by exact `name` and use it as the base namespace entry in the resulting descriptor.
+   - Then, if the child namespace defines `template_path`, overwrite the inherited `template_path` with the child value.
+
 8. **Apply `overrides-parent` (Cloud and Namespace only)**
-  - Parameter maps (`deployParameters`, `e2eParameters`, `technicalConfigurationParameters`) are merged into `template_override`.
-  - Parameter set lists (`deployParameterSets`, `e2eParameterSets`, `technicalConfigurationParameterSets`) are appended into `template_override`.
-  - `profile` override has two modes:
-    - default mode (`merge-with-parent` is false or not set): use the override profile as the resulting profile reference;
-    - merge mode (`merge-with-parent: true`): merge override profile content into the selected parent profile and use the merged result.
-  - `tenant` does not support `overrides-parent` in template composition (inherit-only behavior).
+
+   - Parameter maps (`deployParameters`, `e2eParameters`, `technicalConfigurationParameters`) are merged into `template_override`.
+   - Parameter set lists (`deployParameterSets`, `e2eParameterSets`, `technicalConfigurationParameterSets`) are appended into `template_override`.
+   - `profile` override has two modes:
+     - default mode (`merge-with-parent` is false or not set): use the override profile as the resulting profile reference;
+     - merge mode (`merge-with-parent: true`): merge override profile content into the selected parent profile and use the merged result.
+   - `tenant` does not support `overrides-parent` in template composition (inherit-only behavior).
+
 9. **Persist output**
-  - Save composed descriptor to output `env_templates`.
-  - Save generated/merged resource profiles to output `resource_profiles`.
+
+   - Save composed descriptor to output `env_templates`.
+   - Save generated/merged resource profiles to output `resource_profiles`.
+
 10. **Resulting artifact**
-  The output is a regular EnvGene template artifact and does not require special runtime handling.
+
+   The output is a regular EnvGene template artifact and does not require special runtime handling.
 
 > [!IMPORTANT]
 > File precedence is copy-order based. If the same file path exists in multiple sources, the last copied file wins.
@@ -142,7 +167,9 @@ The sequence below describes how composition is executed during template build.
 Application Definitions (`appdefs`) and Registry Definitions (`regdefs`) can be shipped in parent templates, child templates, or both. Bringing them together during template composition is file-based, not a content merge: overlapping paths are resolved by replacement (last copy wins).
 
 - **Different relative paths** (for example parent `.../billing-app.yml` and child `.../oss-app.yml`) all remain in the composed artifact; each file is kept as authored.
+
 - **Same relative path** in more than one source (for example parent and child both ship `templates/appdefs/my-app.yml`): the whole file from the winning source replaces the other. There is **no** field-by-field merge of two YAML documents into one definition. To customize a parent's app or registry file in the child, provide the complete desired file at that path in a source that copies after the parent.
+
 - Copy order matches template composition precedence: **namespace parents** → **tenant parent** → **cloud parent** → **child template files**. The last source in that order for a given path is what ends up in the built template artifact.
 
 > [!NOTE]
@@ -153,6 +180,7 @@ Application Definitions (`appdefs`) and Registry Definitions (`regdefs`) can be 
 #### Examples (app-reg-defs)
 
 1. Parent ships `templates/appdefs/my-app.yml` and the child adds `templates/appdefs/my-app.yml` with the same relative path. The child's file replaces the parent's. If you only need a small change, duplicate the parent content into the child file and edit the full document there - partial overlays are not applied automatically.
+
 2. Parent defines one application in `templates/appdefs/app-a.yml` and the child adds `templates/appdefs/app-b.yml`. Both paths are distinct, so both files appear in the composed template.
 
 ### Use Cases
@@ -163,13 +191,13 @@ This feature can be used in scenarios where EnvGene manages configuration parame
 
 A solution comprises multiple applications, where application's teams develop and provide their respective templates. The team responsible for the overall solution collects these templates, combines them into a product-level template, and adds necessary customizations.
 
-template-composition-2.png
+![template-composition-2.png](/docs/images/template-composition-2.png)
 
 #### Case 2
 
 A solution consists of application groups (domains). Domain teams develop and provide their templates. The product team aggregates these into a product-level template, adding for example integration parameters. Then, a project team customizes this product template for specific project needs. Here, the product template acts as both a parent and child template.
 
-template-composition-3.png
+![template-composition-3.png](/docs/images/template-composition-3.png)
 
 ### Template Composition Configuration
 
@@ -342,4 +370,3 @@ namespaces:
   - name: "{env}-bss"
     parent: default-bss
 ```
-
