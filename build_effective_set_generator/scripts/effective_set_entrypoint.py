@@ -1,18 +1,18 @@
 import os
 import subprocess
 from os import getenv
-from pathlib import Path
 
 from envgenehelper import (
     decrypt_all_cred_files_for_env, copy_path, validate_creds,
     openJson, encrypt_all_cred_files_for_env, resolve_sd_path,
     logger, get_current_env_dir_from_env_vars, cleanup_dir,
     get_envgene_config_yaml, openYaml, ESGenerationContext,
-    ES_MAPPING_FILE, writeYamlToFile, calculate_merge_mode, delete_dir, get_environment_name_from_full_name
+    ES_MAPPING_FILE, writeYamlToFile, calculate_merge_mode,
+    delete_dir, get_environment_name_from_full_name,
+    get_sd_dir, SD_FILE_NAME, MergeType, DELTA_SD_FILE_NAME
 )
 
 from handle_effective_set_config import handle_effective_set_config
-from python.envgene.envgenehelper import get_sd_dir, SD_FILE_NAME, MergeType
 from sboms_retention_policy import sboms_retention_policy
 
 
@@ -33,16 +33,12 @@ def effective_set_entrypoint():
     else:
         _run_full_generation(ctx)
 
-    encrypt_all_cred_files_for_env()
-
 
 def _prepare_context():
     full_env_name = getenv("FULL_ENV_NAME")
     ci_project_dir = getenv("CI_PROJECT_DIR")
     work_dir = os.path.join(ci_project_dir, "environments", full_env_name)
     merge_mode = calculate_merge_mode(getenv("SD_REPO_MERGE_MODE"), getenv("SD_DELTA"))
-
-    decrypt_all_cred_files_for_env()
 
     artifact_app_defs_path = getenv("APP_DEFS_PATH")
     artifact_reg_defs_path = getenv("REG_DEFS_PATH")
@@ -52,11 +48,11 @@ def _prepare_context():
         copy_path(artifact_app_defs_path, os.path.join(work_dir, "AppDefs"))
         copy_path(artifact_reg_defs_path, os.path.join(work_dir, "RegDefs"))
 
-    validate_creds()
     sboms_retention_policy()
 
     effective_set_dir = get_current_env_dir_from_env_vars() / "effective-set"
-    sd_path = resolve_sd_path()
+    sd_path = get_sd_dir().joinpath(SD_FILE_NAME)
+    delta_sd_path = get_sd_dir().joinpath(DELTA_SD_FILE_NAME)
 
     is_partial = get_envgene_config_yaml().get(
         "partial_effective_set_generation") and merge_mode.name != MergeType.REPLACE
@@ -66,22 +62,27 @@ def _prepare_context():
         "full_env_name": full_env_name,
         "effective_set_dir": effective_set_dir,
         "sd_path": sd_path,
-        "delta_sd_path": delta_sd_path
+        "delta_sd_path": delta_sd_path,
         "is_partial": is_partial,
         "is_reverse": is_reverse,
     }
 
 
 def _run_full_generation(ctx):
+    decrypt_all_cred_files_for_env()
+    validate_creds()
     effective_set_dir = ctx["effective_set_dir"]
     cmd = _build_cli_cmd(ctx)
     cleanup_dir(effective_set_dir)
     subprocess.run(["sh", cmd], check=True)
+    encrypt_all_cred_files_for_env()
 
 
 def _run_forward_merge(ctx):
     effective_set_dir = ctx["effective_set_dir"]
     delta_sd_path = ctx["delta_sd_path"]
+    decrypt_all_cred_files_for_env()
+    validate_creds()
 
     cmd = _build_cli_cmd(ctx)
 
@@ -127,6 +128,8 @@ def _run_forward_merge(ctx):
     writeYamlToFile(cleanup_mapping_path, cleanup_mapping)
     writeYamlToFile(runtime_mapping_path, runtime_mapping)
     writeYamlToFile(deployment_mapping_path, deployment_mapping)
+
+    encrypt_all_cred_files_for_env()
 
 
 def _run_reverse_merge(ctx):
