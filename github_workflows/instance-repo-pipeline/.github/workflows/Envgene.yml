@@ -56,6 +56,10 @@ on:
         default: ""
 
 env:
+  #CONFIGURATION
+  GITHUB_USER_EMAIL: envgene@qubership.org
+  GITHUB_USER_NAME: envgene
+  SECRET_POSTFIX: custom_secret
   CI_COMMIT_REF_NAME: ${{ github.ref_name }}
   CI_PROJECT_DIR: /workspace
   INSTANCES_DIR: /workspace/environments
@@ -63,6 +67,7 @@ env:
   ENVGENE_AGE_PUBLIC_KEY: ${{ secrets.ENVGENE_AGE_PUBLIC_KEY }}
   ENVGENE_AGE_PRIVATE_KEY: ${{ secrets.ENVGENE_AGE_PRIVATE_KEY }}
   GITHUB_TOKEN: ${{ secrets.GH_ACCESS_TOKEN }}
+  DOCKER_CLOUD_REGISTRY_PROVIDER: ${{ vars.DOCKER_CLOUD_REGISTRY_PROVIDER || '' }}
 
   #DOCKER_IMAGE_NAMES
   DOCKER_IMAGE_NAME_PIPEGENE: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-pipegene"
@@ -70,9 +75,9 @@ env:
   DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR: "${{ vars.DOCKER_REGISTRY || 'ghcr.io/netcracker' }}/qubership-effective-set-generator"
 
   #DOCKER_IMAGE_TAGS
-  DOCKER_IMAGE_TAG_PIPEGENE: "1.31.12"
-  DOCKER_IMAGE_TAG_ENVGENE: "1.31.12"
-  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.31.12"
+  DOCKER_IMAGE_TAG_PIPEGENE: "1.32.9"
+  DOCKER_IMAGE_TAG_ENVGENE: "1.32.9"
+  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: "1.32.9"
 
 jobs:
   process_environment_variables:
@@ -92,6 +97,7 @@ jobs:
       SD_SOURCE_TYPE: ${{ env.SD_SOURCE_TYPE }}
       SD_DATA: ${{ env.SD_DATA }}
       SD_VERSION: ${{ env.SD_VERSION }}
+      DOCKER_CLOUD_REGISTRY_PROVIDER: ${{ env.DOCKER_CLOUD_REGISTRY_PROVIDER }}
     steps:
       - name: Repository Checkout
         uses: actions/checkout@v4.1.0
@@ -102,7 +108,6 @@ jobs:
         uses: ./.github/actions/load-env-files
         with:
           paths: |
-            .github/configuration/config.env
             .github/pipeline_vars.env
 
       - name: Process Input Parameters
@@ -160,6 +165,7 @@ jobs:
         with:
           fetch-depth: 0
 
+      ### ENV VARS PROCESSING - START ###
       - name: Download environment-file
         uses: actions/download-artifact@v4
         with:
@@ -188,7 +194,17 @@ jobs:
       - name: Create env file for container
         run: env > .env.container
 
-      ### BG MANAGE ###
+      - name: Authenticate to GAR (Google Artifact Registry)
+        if: needs.process_environment_variables.outputs.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ vars.DOCKER_REGISTRY }}
+          username: _json_key
+          password: ${{ secrets.GCP_SA_KEY }}
+      ### ENV VARS PROCESSING - END ###
+
+
+      ### BG MANAGE - START ###
       - name: BG_MANAGE
         if: needs.process_environment_variables.outputs.BG_MANAGE == 'true'
         env:
@@ -197,6 +213,7 @@ jobs:
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} -e GITHUB_TOKEN -e FULL_ENV_NAME -e CI_PROJECT_DIR --user root --env-file .env.container --user root -e HOME=/root \
           ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
           bash -c "
+            set -eo pipefail
             source /module/venv/bin/activate
 
             echo 'Executing BG Manage...'
@@ -213,16 +230,17 @@ jobs:
           name: bg_manage_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
-      ##########################
+      ### BG MANAGE - END ###
 
 
-      ### ENV_INVENTORY_GENERATION ###
+      ### ENV_INVENTORY_GENERATION - START ###
       - name: ENV_INVENTORY_GENERATION
         if: (needs.process_environment_variables.outputs.ENV_INVENTORY_CONTENT != '') || (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
+              set -eo pipefail
               source /module/venv/bin/activate
 
               echo 'Executing inventory generation...'
@@ -239,16 +257,17 @@ jobs:
           name: env_inventory_generation_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
-      ##########################
+      ### ENV_INVENTORY_GENERATION - END ###
 
 
-      ### CREDENTIAL ROTATION ###
+      ### CREDENTIAL ROTATION - START ###
       - name: CREDENTIAL_ROTATION
         if: needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
+              set -eo pipefail
               source /module/venv/bin/activate
 
               echo 'Executing credential rotation...'
@@ -265,16 +284,17 @@ jobs:
           name: credential_rotation_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
-      ##########################
+      ### CREDENTIAL ROTATION - END ###
 
 
-      ### APP_REG_DEF_PROCESS ###
+      ### APP_REG_DEF_PROCESS - START ###
       - name: APP_REG_DEF_PROCESS
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
+              set -eo pipefail
               source /module/venv/bin/activate
               echo 'Executing APP_REG_DEF_PROCESS...'
               python3 /module/scripts/utils/log_pipe_params.py
@@ -293,16 +313,17 @@ jobs:
             configuration
             tmp
           include-hidden-files: true
-      ##########################
+      ### APP_REG_DEF_PROCESS - END ###
 
 
-      ### PROCESS_SD ###
+      ### PROCESS_SD - START ###
       - name: PROCESS_SD
         if: (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'json' && needs.process_environment_variables.outputs.SD_DATA != '') || (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'artifact' && needs.process_environment_variables.outputs.SD_VERSION != '')
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR }}:${{ env.DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR }} \
             bash -c "
+              set -eo pipefail
               source /module/venv/bin/activate
 
               echo 'Executing PROCESS_SD...'
@@ -325,21 +346,23 @@ jobs:
           name: process_sd_${{ env.PACKAGE_NAME }}
           path: environments/${{ matrix.environment }}
           include-hidden-files: true
-      ##################
+      ### PROCESS_SD - END ###
 
 
-      ### ENV_BUILD ###
+      ### ENV_BUILD - START ###
       - name: ENV_BUILD
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} -e COMMIT_ENV=true --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
+              set -eo pipefail
               source /module/venv/bin/activate
               echo 'Executing ENV_BUILD...'
               python /module/scripts/utils/log_pipe_params.py
               /module/scripts/utils/handle_certs.sh
-              cd /build_env; python3 /build_env/scripts/build_env/main.py
+              cd /build_env
+              python3 /build_env/scripts/build_env/main.py
             "
 
       - name: ENV_BUILD - Upload Build Env Package
@@ -352,32 +375,42 @@ jobs:
             configuration
             tmp
           include-hidden-files: true
-      ##########################
+      ### ENV_BUILD - END ###
 
 
-      ### GENERATE EFFECTIVE SET ###
+      ### GENERATE EFFECTIVE SET - START ###
       - name: GENERATE_EFFECTIVE_SET
         if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         run: |
           docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR }}:${{ env.DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR }} \
             bash -c "
+              set -eo pipefail
               echo 'Executing effective set generation...'
               source /module/venv/bin/activate
               /module/scripts/utils/handle_certs.sh
               mkdir -p \"\${CI_PROJECT_DIR}/configuration/certs\"
               [ -f /default_cert.pem ] && cp /default_cert.pem \"\${CI_PROJECT_DIR}/configuration/certs/default_cert.pem\" || true
               for cert in \"\${CI_PROJECT_DIR}/configuration/certs/\"*; do [ -f \"\$cert\" ] && keytool -import -trustcacerts -alias \"\$(basename \"\$cert\")\" -file \"\$cert\" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done
-              python3 /module/scripts/main.py decrypt_cred_files
+              if ! python3 /module/scripts/main.py decrypt_cred_files; then
+                echo 'decrypt_cred_files failed with exit code '\$?
+                exit 1
+              fi
               base_env_path=\"\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}\"
               app_defs_path=\"\${base_env_path}/AppDefs\"
               reg_defs_path=\"\${base_env_path}/RegDefs\"
               if [ -n \"\$APP_REG_DEFS_JOB\" ] && [ -n \"\$APP_DEFS_PATH\" ]; then mkdir -p \"\$app_defs_path\" && cp -rf \"\$APP_DEFS_PATH\"/* \"\$app_defs_path\"; fi
               if [ -n \"\$APP_REG_DEFS_JOB\" ] && [ -n \"\$REG_DEFS_PATH\" ]; then mkdir -p \"\$reg_defs_path\" && cp -fr \"\$REG_DEFS_PATH\"/* \"\$reg_defs_path\"; fi
-              python3 /module/scripts/main.py validate_creds
+              if ! python3 /module/scripts/main.py validate_creds; then
+                echo 'validate_creds failed with exit code '\$?
+                exit 1
+              fi
               java_cmd=\"/deployments/run-java.sh --env-id=${{ matrix.environment }} --envs-path=\${CI_PROJECT_DIR}/environments --output=\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}/effective-set --registries=\${CI_PROJECT_DIR}/configuration/registry.yml --sboms-path=\${CI_PROJECT_DIR}/sboms --sd-path=\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}/Inventory/solution-descriptor/sd.yaml\"
               if [ -n \"\$EFFECTIVE_SET_CONFIG\" ]; then
-                python3 /module/scripts/handle_effective_set_config.py --effective-set-config \"\$EFFECTIVE_SET_CONFIG\"
+                if ! python3 /module/scripts/handle_effective_set_config.py --effective-set-config \"\$EFFECTIVE_SET_CONFIG\"; then
+                  echo 'handle_effective_set_config failed with exit code '\$?
+                  exit 1
+                fi
                 extra_args=\$(jq -r '.extra_args // [] | join(\" \")' /tmp/effective_set_output.json)
                 java_cmd=\"\$java_cmd \$extra_args\"
               fi
@@ -387,7 +420,10 @@ jobs:
                 echo 'Effective set generation failed with exit code '\$?
                 exit 1
               fi
-              python3 /module/scripts/main.py encrypt_cred_files
+              if ! python3 /module/scripts/main.py encrypt_cred_files; then
+                echo 'encrypt_cred_files failed with exit code '\$?
+                exit 1
+              fi
               env_path=\"\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}\"
               if [ -d \"\$env_path/Credentials\" ]; then chmod -R ugo+rw \"\$env_path/Credentials\"; fi
             "
@@ -402,21 +438,25 @@ jobs:
             sboms
             configuration
           include-hidden-files: true
-      ##########################
+        ### GENERATE EFFECTIVE SET - END ###
 
 
-      ### GIT COMMIT ###
+      ### GIT COMMIT - START ###
       - name: GIT_COMMIT
         run: |
-          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
+          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} -e COMMIT_ENV=true --env-file .env.container --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
+              set -eo pipefail
               source /module/venv/bin/activate
               echo 'Prepare git_commit job for \${ENVIRONMENT_NAME}...'
               /module/scripts/utils/handle_certs.sh
               # Execute git commit with proper error handling
               echo 'Executing git commit operations...'
-              /module/scripts/git_commit.sh
+              if ! /module/scripts/git_commit.sh; then
+                echo 'git_commit.sh failed with exit code '\$?
+                exit 1
+              fi
 
               env_path=\$(find \"\${CI_PROJECT_DIR}/environments\" -type d -name \"\$env_name\")
               for path in \$env_path; do
@@ -424,8 +464,6 @@ jobs:
                   chmod ugo+rw \"\$path/Credentials/\"*
                 fi
               done
-
-              cp -rf \${CI_PROJECT_DIR}/environments \${CI_PROJECT_DIR}/git_envs
             "
             env > .env.container
 
@@ -435,7 +473,6 @@ jobs:
           name: git_commit_${{ env.PACKAGE_NAME }}
           path: |
             environments/${{ matrix.environment }}
-            git_envs
             sboms
           include-hidden-files: true
-      ##########################
+      ### GIT COMMIT - END ###

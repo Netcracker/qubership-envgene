@@ -14,6 +14,7 @@ from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
+APPDEF_SCHEMA = str(SCHEMAS_DIR / "appdef.schema.json")
 TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
 
 yml = create_yaml_processor()
@@ -465,35 +466,26 @@ class EnvGenerator:
 
     def render_app_defs(self):
         for def_tmpl_path in self.ctx.appdef_templates:
-            app_def_str = openFileAsString(def_tmpl_path)
-            matches = re.findall(
-                r'^\s*(name|artifactId|groupId):\s*"([^"]+)"',
-                app_def_str,
-                flags=re.MULTILINE,
-            )
-            appdef_meta = dict(matches)
-            ensure_valid_fields(appdef_meta, ["artifactId", "groupId", "name"])
-            group_id = appdef_meta["groupId"]
-            artifact_id = appdef_meta["artifactId"]
+            app_def = self.render_from_file_to_obj(def_tmpl_path)
+            ensure_valid_fields(app_def, ["artifactId", "groupId", "name"])
+
+            app_name = app_def.get("name")
+            group_id = app_def["groupId"]
+            artifact_id = app_def["artifactId"]
+
             self.ctx.update({
                 "app_lookup_key": f"{group_id}:{artifact_id}",
                 "groupId": group_id,
                 "artifactId": artifact_id,
             })
-            app_def_trg_path = f"{self.ctx.current_env_dir}/AppDefs/{appdef_meta.get("name")}.yml"
-            self.render_from_file_to_file(def_tmpl_path, app_def_trg_path)
+            app_def_trg_path = f"{self.ctx.current_env_dir}/AppDefs/{app_name}.yml"
+            writeYamlToFile(app_def_trg_path, app_def)
 
     def render_reg_defs(self):
         for def_tmpl_path in self.ctx.regdef_templates:
-            reg_def_str = openFileAsString(def_tmpl_path)
-            matches = re.findall(
-                r'^\s*(name):\s*"([^"]+)"',
-                reg_def_str,
-                flags=re.MULTILINE,
-            )
-            regdef_meta = dict(matches)
-            ensure_valid_fields(regdef_meta, ["name"])
-            reg_def_trg_path = f"{self.ctx.current_env_dir}/RegDefs/{regdef_meta['name']}.yml"
+            reg_def = self.render_from_file_to_obj(def_tmpl_path)
+            ensure_valid_fields(reg_def, ["name"])
+            reg_def_trg_path = f"{self.ctx.current_env_dir}/RegDefs/{reg_def.get('name')}.yml"
             self.render_from_file_to_file(def_tmpl_path, reg_def_trg_path)
 
     def set_appreg_def_overrides(self):
@@ -565,7 +557,7 @@ class EnvGenerator:
                 logger.warning(f"No AppDef YAMLs found in {appdef_dir}")
             for file in appdef_files:
                 logger.info(f"AppDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "appdef.schema.json"))
+                validate_yaml_by_scheme_or_fail(file, APPDEF_SCHEMA)
 
         if os.path.exists(regdef_dir):
             regdef_files = findAllYamlsInDir(regdef_dir)
@@ -573,7 +565,7 @@ class EnvGenerator:
                 logger.warning(f"No RegDef YAMLs found in {regdef_dir}")
             for file in regdef_files:
                 logger.info(f"RegDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, str(SCHEMAS_DIR / "regdef.schema.json"))
+                validate_regdef_or_fail(file)
 
     def process_app_reg_defs(self, env_name: str, extra_env: dict):
         logger.info(

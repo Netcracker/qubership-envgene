@@ -20,7 +20,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     sd_data = params["SD_DATA"]
     deployment_id = params["DEPLOYMENT_SESSION_ID"]
     effective_set_config = params["EFFECTIVE_SET_CONFIG"]
-    tags = params['GITLAB_RUNNER_TAG_NAME']
     if "CUSTOM_PARAMS" in params:
         custom_params = params["CUSTOM_PARAMS"]
 
@@ -102,10 +101,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         "ENV_NAME": env_name,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
         "effective_set_generator_image": "$effective_set_generator_image",
-        "envgen_args": " -vv",
-        "envgen_debug": "true",
-        "module_config_default": "/module/templates/defaults.yaml",
-        "GITLAB_RUNNER_TAG_NAME": tags,
         "EXCLUDE_CLEANUP_TARGETS": " ".join(cleanup_targets)
     }
 
@@ -120,9 +115,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         environ['CI_PIPELINE_ID'] = real_ci_pipe_id
     generate_effective_set_job = job_instance(params=generate_effective_set_params, needs=needs,
                                                               vars=generate_effective_set_vars)
-    generate_effective_set_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env_name}")
-    generate_effective_set_job.artifacts.add_paths('${CI_PROJECT_DIR}/sboms')
-    generate_effective_set_job.artifacts.add_paths('${CI_PROJECT_DIR}/configuration/registry.y*ml')
 
     effective_set_expiry = effective_set_config_dict.get("effective_set_expiry") or "1 hour"
     logger.info(f"effective set expiry value '{effective_set_expiry}'")

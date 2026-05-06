@@ -9,27 +9,35 @@ User Guide
 
 </div>
 
-![EnvGene Workflow](assets/envgene-workflow-header.png)
+![EnvGene Workflow](docs/assets/envgene-workflow-header.png)
 
-- [EnvGene GitHub Workflow — User Guide](#envgene-github-workflow)
+- [EnvGene GitHub Workflow](#envgene-github-workflow)
   - [Overview](#overview)
   - [Installation](#installation)
+    - [Prerequisites](#prerequisites)
+    - [Step 1: Copy the Pipeline](#step-1-copy-the-pipeline)
+    - [Step 2: Configure Required Secrets](#step-2-configure-required-secrets)
+    - [Step 3: Optional — Repository Variables](#step-3-optional--repository-variables)
+    - [Step 4: Optional — Customize Configuration](#step-4-optional--customize-configuration)
+    - [Verifying the Setup](#verifying-the-setup)
   - [Quick Start](#quick-start)
   - [Workflow Structure](#workflow-structure)
     - [Pipeline Steps](#pipeline-steps)
+      - [Job: `process_environment_variables`](#job-process_environment_variables)
+      - [Job: `envgene_execution` (runs per environment in matrix)](#job-envgene_execution-runs-per-environment-in-matrix)
   - [Workflow Dispatch Inputs](#workflow-dispatch-inputs)
     - [Understanding the 10-Input Limit](#understanding-the-10-input-limit)
     - [Input Reference](#input-reference)
-  - [GH_ADDITIONAL_PARAMS — Passing Extra Parameters](#gh_additional_params--passing-extra-parameters)
-    - [What Is GH_ADDITIONAL_PARAMS?](#what-is-gh_additional_params)
+  - [GH\_ADDITIONAL\_PARAMS — Passing Extra Parameters](#gh_additional_params--passing-extra-parameters)
+    - [What Is GH\_ADDITIONAL\_PARAMS?](#what-is-gh_additional_params)
     - [Format and Syntax](#format-and-syntax)
     - [Examples](#examples)
     - [JSON Values and Escaping](#json-values-and-escaping)
-    - [When to Use pipeline_vars.env Instead](#when-to-use-pipeline_varsenv-instead)
+    - [When to Use pipeline\_vars.env Instead](#when-to-use-pipeline_varsenv-instead)
   - [Adding New Parameters](#adding-new-parameters)
     - [Option A: Add as Workflow Input (If Under the Limit)](#option-a-add-as-workflow-input-if-under-the-limit)
-    - [Option B: Use GH_ADDITIONAL_PARAMS](#option-b-use-gh_additional_params)
-    - [Option C: Use pipeline_vars.env](#option-c-use-pipeline_varsenv)
+    - [Option B: Use GH\_ADDITIONAL\_PARAMS](#option-b-use-gh_additional_params)
+    - [Option C: Use pipeline\_vars.env](#option-c-use-pipeline_varsenv)
   - [Adding New Jobs and Conditional Execution](#adding-new-jobs-and-conditional-execution)
     - [Step 1: Ensure the Variable Is Available](#step-1-ensure-the-variable-is-available)
     - [Step 2: Expose the Variable as a Job Output](#step-2-expose-the-variable-as-a-job-output)
@@ -37,11 +45,26 @@ User Guide
     - [Complete Example: Adding a Custom Job](#complete-example-adding-a-custom-job)
   - [Parameter Priority](#parameter-priority)
   - [Repository Variables (vars)](#repository-variables-vars)
+    - [Variables Used by the Workflow](#variables-used-by-the-workflow)
+    - [How to Add Repository Variables](#how-to-add-repository-variables)
+    - [When Variables Are Empty or Missing](#when-variables-are-empty-or-missing)
+    - [Adding Custom Variables](#adding-custom-variables)
+  - [Using Different Docker Registries](#using-different-docker-registries)
+    - [GitHub Container Registry (GHCR)](#github-container-registry-ghcr)
+    - [Google Artifact Registry (GAR)](#google-artifact-registry-gar)
   - [How to Trigger the Workflow](#how-to-trigger-the-workflow)
     - [Via GitHub Actions UI](#via-github-actions-ui)
     - [Via GitHub API](#via-github-api)
   - [Directory Structure](#directory-structure)
   - [Use Case Scenarios](#use-case-scenarios)
+    - [Scenario 1: Full Deployment (Environment Build + Effective Set)](#scenario-1-full-deployment-environment-build--effective-set)
+    - [Scenario 2: Environment Build Only (No Effective Set)](#scenario-2-environment-build-only-no-effective-set)
+    - [Scenario 3: Update Template Version and Rebuild](#scenario-3-update-template-version-and-rebuild)
+    - [Scenario 4: Blue-Green Operation](#scenario-4-blue-green-operation)
+    - [Scenario 5: Credential Rotation](#scenario-5-credential-rotation)
+    - [Scenario 6: Process Solution Descriptor from Artifact](#scenario-6-process-solution-descriptor-from-artifact)
+    - [Scenario 7: Generate New Environment Inventory](#scenario-7-generate-new-environment-inventory)
+    - [Scenario 8: Multiple Environments in One Run](#scenario-8-multiple-environments-in-one-run)
   - [Further Reading](#further-reading)
 
 ## Overview
@@ -88,12 +111,13 @@ The copied structure includes the workflow, scripts, configuration files, and th
 
 Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets**, and add:
 
-| Secret                    | Required          | Description                                                           |
-|---------------------------|-------------------|-----------------------------------------------------------------------|
-| `SECRET_KEY`              | When using Fernet | Fernet key for credential encryption                                 |
-| `ENVGENE_AGE_PUBLIC_KEY`  | When using SOPS   | Public key from EnvGene AGE key pair (SOPS encryption)               |
-| `ENVGENE_AGE_PRIVATE_KEY` | When using SOPS   | Private key from EnvGene AGE key pair (SOPS decryption)                |
-| `GH_ACCESS_TOKEN`         | Yes               | GitHub token with `contents: write` to commit changes to repository  |
+| Secret                    | Required          | Description                                                         |
+|---------------------------|-------------------|---------------------------------------------------------------------|
+| `SECRET_KEY`              | When using Fernet | Fernet key for credential encryption                                |
+| `ENVGENE_AGE_PUBLIC_KEY`  | When using SOPS   | Public key from EnvGene AGE key pair (SOPS encryption)              |
+| `ENVGENE_AGE_PRIVATE_KEY` | When using SOPS   | Private key from EnvGene AGE key pair (SOPS decryption)             |
+| `GH_ACCESS_TOKEN`         | Yes               | GitHub token with `contents: write` to commit changes to repository |
+| `GCP_SA_KEY`              | When using GAR    | Full JSON key of GCP service account for Artifact Registry access   |
 
 > [!NOTE]
 > At least one encryption method (Fernet or SOPS) must be configured if your repository uses encrypted credentials. See [Credential Encryption](/docs/how-to/credential-encryption.md) for details.
@@ -102,18 +126,17 @@ Go to **Settings** → **Secrets and variables** → **Actions** → **Secrets**
 
 Configure variables in **Settings** → **Secrets and variables** → **Actions** → **Variables** to override defaults:
 
-| Variable                   | Default              | Purpose                                           |
-|----------------------------|----------------------|---------------------------------------------------|
-| `DOCKER_REGISTRY`          | `ghcr.io/netcracker` | Docker registry for EnvGene images                 |
-| `GH_RUNNER_TAG_NAME`       | `ubuntu-22.04`       | Runner label for workflow jobs                     |
-| `GH_RUNNER_SCRIPT_TIMEOUT` | `10`                 | Job timeout in minutes                             |
+| Variable                   | Default              | Purpose                                       |
+|----------------------------|----------------------|-----------------------------------------------|
+| `DOCKER_REGISTRY`          | `ghcr.io/netcracker` | Docker registry for EnvGene images            |
+| `GH_RUNNER_TAG_NAME`       | `ubuntu-22.04`       | Runner label for workflow jobs                |
+| `GH_RUNNER_SCRIPT_TIMEOUT` | `10`                 | Job timeout in minutes                        |
 
-See [Repository Variables (vars)](#repository-variables-vars) for details.
+See [Repository Variables (vars)](#repository-variables-vars) for details. For a step-by-step guide on GHCR and GAR, see [Using Different Docker Registries in Envgene.yml](/docs/how-to/docker-registry-configuration.md).
 
 ### Step 4: Optional — Customize Configuration
 
-- **`.github/configuration/config.env`** — Base pipeline configuration (e.g. `CI_PROJECT_DIR`, `GITHUB_USER_*`). Edit if you need different defaults.
-- **`.github/pipeline_vars.env`** — Override pipeline parameters for debugging or recurring runs. Leave empty or add variables as needed.
+- **`.github/pipeline_vars.env`** — Optional overrides loaded by the workflow (for example debugging or recurring runs). Leave empty or add variables as needed. Default pipeline settings live in the `env:` block of `.github/workflows/Envgene.yml`.
 
 ### Verifying the Setup
 
@@ -137,10 +160,10 @@ For initializing a new instance repository from scratch, see [Environment Instan
 
 The workflow consists of two main jobs:
 
-| Job                              | Purpose                                                                 |
-|----------------------------------|-------------------------------------------------------------------------|
-| `process_environment_variables`  | Parses inputs, loads config, builds matrix, exports variables           |
-| `envgene_execution`              | Runs EnvGene steps per environment (matrix job)                         |
+| Job                             | Purpose                                                         |
+|---------------------------------|-----------------------------------------------------------------|
+| `process_environment_variables` | Parses inputs, loads config, builds matrix, exports variables   |
+| `envgene_execution`             | Runs EnvGene steps per environment (matrix job)                 |
 
 The first job prepares all parameters and passes them to the second job via a shared `.env` artifact and job outputs. The second job runs once per environment in the matrix.
 
@@ -150,34 +173,34 @@ The following sections describe each step in the pipeline as defined in `Envgene
 
 #### Job: `process_environment_variables`
 
-| Step                         | Description                                                                 |
-|------------------------------|-----------------------------------------------------------------------------|
-| Repository Checkout          | Checks out the repository (without persisting credentials)                  |
-| Load environment variables   | Loads `config.env` and `pipeline_vars.env` into `GITHUB_ENV`               |
-| Process Input Parameters     | Exports workflow inputs (ENV_NAMES, ENV_BUILDER, etc.) to environment       |
-| Process additional variables | Parses `GH_ADDITIONAL_PARAMS` and adds each `KEY=VALUE` to environment     |
-| Create env_generation_params  | Builds `ENV_GENERATION_PARAMS` JSON from SD/ENV_SPECIFIC_PARAMS variables   |
-| Multiple Environment Processing | Generates environment matrix from `ENV_NAMES` (comma/semicolon/space)     |
-| Create .env file             | Dumps all environment variables to `.env`                                   |
-| Upload .env as artifact      | Uploads `.env` for use by `envgene_execution` job                           |
+| Step                            | Description                                                  |
+|---------------------------------|--------------------------------------------------------------|
+| Repository Checkout             | Checks out the repository (without persisting credentials)   |
+| Load environment variables      | Loads `pipeline_vars.env` into `GITHUB_ENV` |
+| Process Input Parameters        | Exports workflow inputs to environment                       |
+| Process additional variables    | Parses `GH_ADDITIONAL_PARAMS` and adds to environment        |
+| Create env_generation_params    | Builds `ENV_GENERATION_PARAMS` JSON from SD/ENV variables    |
+| Multiple Environment Processing | Generates environment matrix from `ENV_NAMES`                |
+| Create .env file                | Dumps all environment variables to `.env`                    |
+| Upload .env as artifact         | Uploads `.env` for use by `envgene_execution` job            |
 
 #### Job: `envgene_execution` (runs per environment in matrix)
 
-| Step                    | Condition                                      | Description                                                                 |
-|-------------------------|------------------------------------------------|-----------------------------------------------------------------------------|
-| Repository Checkout     | Always                                         | Checks out repository with full history                                    |
-| Download environment-file| Always                                         | Downloads `.env` artifact from previous job                                |
-| Prepare environment     | Always                                         | Restores env vars, sets `PACKAGE_NAME`, extracts `CLUSTER_NAME`/`ENV_NAME`  |
-| Create name for dynamic secret | Always                                   | Sets `SECRET_NAME` for cluster-specific secrets                            |
-| Create env file for container | Always                                    | Exports env to `.env.container` for Docker steps                           |
-| **BG_MANAGE**           | `BG_MANAGE == 'true'`                          | Blue-Green operations: state management, Origin/Peer config, validation     |
-| **ENV_INVENTORY_GENERATION** | `ENV_INVENTORY_CONTENT` / `ENV_SPECIFIC_PARAMS` / `ENV_TEMPLATE_NAME` set | Generates Environment Inventory at `env_definition.yml` |
-| **CREDENTIAL_ROTATION**  | `CRED_ROTATION_PAYLOAD` not empty              | Rotates credentials per payload                                            |
-| **APP_REG_DEF_PROCESS**  | `ENV_BUILDER == 'true'`                        | Sets template version, renders App/Reg definitions, handles certs            |
-| **PROCESS_SD**           | `SD_SOURCE_TYPE=json` + `SD_DATA` or `artifact` + `SD_VERSION`              | Processes Solution Descriptor (JSON or artifact)   |
-| **ENV_BUILD**            | `ENV_BUILDER == 'true'`                        | Main environment build: generates Environment Instance from templates      |
-| **GENERATE_EFFECTIVE_SET** | `GENERATE_EFFECTIVE_SET == 'true'`           | Generates Effective Set (SBOMs, validation, deployment artifacts)           |
-| **GIT_COMMIT**           | Always                                         | Commits changes to repository, prepares artifacts for downstream use        |
+| Step                           | Condition                                                                       | Description                                                  |
+|--------------------------------|---------------------------------------------------------------------------------|--------------------------------------------------------------|
+| Repository Checkout            | Always                                                                          | Checks out repository with full history                      |
+| Download environment-file      | Always                                                                          | Downloads `.env` artifact from previous job                  |
+| Prepare environment            | Always                                                                          | Restores env vars, sets `PACKAGE_NAME`, extracts cluster/env |
+| Create name for dynamic secret | Always                                                                          | Sets `SECRET_NAME` for cluster-specific secrets              |
+| Create env file for container  | Always                                                                          | Exports env to `.env.container` for Docker steps             |
+| **BG_MANAGE**                  | `BG_MANAGE == 'true'`                                                           | Blue-Green operations: state management, validation          |
+| **ENV_INVENTORY_GENERATION**   | One of: `ENV_INVENTORY_CONTENT`, `ENV_SPECIFIC_PARAMS`, `ENV_TEMPLATE_NAME` set | Generates Environment Inventory                              |
+| **CREDENTIAL_ROTATION**        | `CRED_ROTATION_PAYLOAD` not empty                                               | Rotates credentials per payload                              |
+| **APP_REG_DEF_PROCESS**        | `ENV_BUILDER == 'true'`                                                         | Sets template version, renders App/Reg definitions           |
+| **PROCESS_SD**                 | `SD_SOURCE_TYPE` + `SD_DATA` or `SD_VERSION`                                    | Processes Solution Descriptor                                |
+| **ENV_BUILD**                  | `ENV_BUILDER == 'true'`                                                         | Generates Environment Instance from templates                |
+| **GENERATE_EFFECTIVE_SET**     | `GENERATE_EFFECTIVE_SET == 'true'`                                              | Generates Effective Set (SBOMs, validation, artifacts)       |
+| **GIT_COMMIT**                 | Always                                                                          | Commits changes to repository                                |
 
 Each conditional step (in **bold**) also uploads its output as an artifact. The `GIT_COMMIT` step always runs at the end of the pipeline.
 
@@ -192,16 +215,16 @@ This design lets you pass any number of additional parameters without hitting th
 
 ### Input Reference
 
-| Input                   | Required | Default   | Type   | Description                                                             |
-|-------------------------|----------|-----------|--------|-------------------------------------------------------------------------|
-| `ENV_NAMES`             | Yes      | —         | string | Environment(s) to process. Format: `cluster/env` or comma-separated     |
-| `DEPLOYMENT_TICKET_ID`  | No       | `""`      | string | Ticket ID used as commit message prefix                                 |
-| `ENV_TEMPLATE_VERSION`  | No       | `""`      | string | Template version to apply (e.g. `env-template:v1.2.3`)                   |
-| `ENV_BUILDER`           | No       | `"true"`  | choice | Enable environment build. Options: `true`, `false`                       |
-| `GENERATE_EFFECTIVE_SET`| No       | `"false"` | choice | Enable Effective Set generation. Options: `true`, `false`                |
-| `GET_PASSPORT`          | No       | `"false"` | choice | Enable Cloud Passport discovery. Options: `true`, `false`                |
-| `CMDB_IMPORT`           | No       | `"false"` | choice | Enable CMDB export. Options: `true`, `false`                             |
-| `GH_ADDITIONAL_PARAMS`  | No       | `""`      | string | Comma-separated key-value pairs for all other parameters                 |
+| Input                    | Required | Default   | Type   | Description                                            |
+|--------------------------|----------|-----------|--------|--------------------------------------------------------|
+| `ENV_NAMES`              | Yes      | —         | string | Environment(s) to process. Format: `cluster/env`       |
+| `DEPLOYMENT_TICKET_ID`   | No       | `""`      | string | Ticket ID used as commit message prefix                |
+| `ENV_TEMPLATE_VERSION`   | No       | `""`      | string | Template version to apply (e.g. `env-template:v1.2.3`) |
+| `ENV_BUILDER`            | No       | `"true"`  | choice | Enable environment build                               |
+| `GENERATE_EFFECTIVE_SET` | No       | `"false"` | choice | Enable Effective Set generation                        |
+| `GET_PASSPORT`           | No       | `"false"` | choice | Enable Cloud Passport discovery                        |
+| `CMDB_IMPORT`            | No       | `"false"` | choice | Enable CMDB export                                     |
+| `GH_ADDITIONAL_PARAMS`   | No       | `""`      | string | Comma-separated key-value pairs for other parameters   |
 
 For full parameter semantics, see [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md).
 
@@ -332,7 +355,7 @@ The variable must be present in `GITHUB_ENV` after the `process_environment_vari
 
 - A workflow input (and the "Process Input Parameters" step)
 - `GH_ADDITIONAL_PARAMS` (parsed by `process_additional_variables.sh`)
-- `pipeline_vars.env` or `config.env` (loaded by `load-env-files`)
+- `pipeline_vars.env` (loaded by `load-env-files`)
 
 ### Step 2: Expose the Variable as a Job Output
 
@@ -362,13 +385,13 @@ Add your step inside the `envgene_execution` job with an `if`:
 
 **Common condition patterns:**
 
-| Condition type      | Example                                                                 |
-|---------------------|-------------------------------------------------------------------------|
-| Equals string       | `needs.process_environment_variables.outputs.MY_VAR == 'true'`          |
-| Not empty           | `needs.process_environment_variables.outputs.MY_VAR != ''`               |
-| Logical OR          | `(condition1) \|\| (condition2)`                                         |
-| Logical AND         | `(condition1) && (condition2)`                                           |
-| Multiple conditions | `outputs.ENV_BUILDER == 'true' && outputs.SD_VERSION != ''`              |
+| Condition type      | Example                                                         |
+|---------------------|-----------------------------------------------------------------|
+| Equals string       | `needs.process_environment_variables.outputs.MY_VAR == 'true'`  |
+| Not empty           | `needs.process_environment_variables.outputs.MY_VAR != ''`      |
+| Logical OR          | `(condition1) \|\| (condition2)`                                |
+| Logical AND         | `(condition1) && (condition2)`                                  |
+| Multiple conditions | `outputs.ENV_BUILDER == 'true' && outputs.SD_VERSION != ''`     |
 
 ### Complete Example: Adding a Custom Job
 
@@ -414,11 +437,12 @@ Repository variables are configured in **Settings → Secrets and variables → 
 
 ### Variables Used by the Workflow
 
-| Variable                   | Purpose                                  | Default when empty   |
-|----------------------------|------------------------------------------|----------------------|
-| `DOCKER_REGISTRY`          | Docker registry base for EnvGene images  | `ghcr.io/netcracker` |
-| `GH_RUNNER_TAG_NAME`       | Runner label for jobs (e.g. ubuntu-22.04)| `ubuntu-22.04`       |
-| `GH_RUNNER_SCRIPT_TIMEOUT` | Job timeout in minutes                   | `10`                 |
+| Variable                         | Purpose                                        | Default when empty   |
+|----------------------------------|------------------------------------------------|----------------------|
+| `DOCKER_REGISTRY`                | Docker registry base for EnvGene images        | `ghcr.io/netcracker` |
+| `DOCKER_CLOUD_REGISTRY_PROVIDER` | Cloud provider for registry auth (GCP for GAR) | (empty)              |
+| `GH_RUNNER_TAG_NAME`             | Runner label for jobs (e.g. ubuntu-22.04)      | `ubuntu-22.04`       |
+| `GH_RUNNER_SCRIPT_TIMEOUT`       | Job timeout in minutes                         | `10`                 |
 
 ### How to Add Repository Variables
 
@@ -455,6 +479,59 @@ To use your own variables in the workflow:
 1. For optional variables with a default, use: `${{ vars.MY_CUSTOM_VAR || 'default_value' }}`.
 
 For a full list of supported repository variables, see [EnvGene Repository Variables](/docs/envgene-repository-variables.md).
+
+## Using Different Docker Registries
+
+The workflow pulls EnvGene Docker images (envgene, pipegene, effective-set-generator) from a registry. By default, images are pulled from GitHub Container Registry (GHCR). You can switch to another registry such as Google Artifact Registry (GAR) by configuring the appropriate variables and secrets.
+
+### GitHub Container Registry (GHCR)
+
+GHCR is the default registry. No additional configuration is required.
+
+| Where to configure       | Parameter         | Value                          |
+|--------------------------|-------------------|--------------------------------|
+| **Settings → Variables** | `DOCKER_REGISTRY` | `ghcr.io/netcracker` (default) |
+
+**Authentication:** GitHub Actions automatically authenticates to `ghcr.io` using `GITHUB_TOKEN` when pulling images. No extra secrets are needed.
+
+**Image names:** The workflow builds image paths as `$DOCKER_REGISTRY/qubership-envgene`, `$DOCKER_REGISTRY/qubership-pipegene`, etc. For GHCR, the full path is `ghcr.io/netcracker/qubership-envgene:1.31.18` (see `DOCKER_IMAGE_TAG_*` in `.github/workflows/Envgene.yml`).
+
+### Google Artifact Registry (GAR)
+
+To use Google Artifact Registry, configure the registry URL and GCP authentication.
+
+| Where to configure       | Parameter                        | Value                                        |
+|--------------------------|----------------------------------|----------------------------------------------|
+| **Settings → Variables** | `DOCKER_REGISTRY`                | `REGION-docker.pkg.dev/PROJECT_ID/REPO_NAME` |
+| **Settings → Variables** | `DOCKER_CLOUD_REGISTRY_PROVIDER` | `GCP`                                        |
+| **Settings → Secrets**   | `GCP_SA_KEY`                     | Full JSON key of the GCP service account     |
+
+**Example `DOCKER_REGISTRY` for GAR:**
+
+```text
+europe-west1-docker.pkg.dev/my-gcp-project/envgene-images
+```
+
+**Authentication:** When `DOCKER_CLOUD_REGISTRY_PROVIDER` is set to `GCP`, the workflow runs a step that authenticates to GAR using `docker login` with the `_json_key` method. The `GCP_SA_KEY` secret must contain the full JSON key of a GCP service account that has `Artifact Registry Reader` (or equivalent) permissions.
+
+**How to set up GCP_SA_KEY:**
+
+1. Create a GCP service account with access to your Artifact Registry repository.
+1. Create a JSON key for the service account (IAM → Service Accounts → Keys → Add Key).
+1. Copy the entire JSON content.
+1. In GitHub: **Settings → Secrets and variables → Actions → Secrets** → **New repository secret**.
+1. Name: `GCP_SA_KEY`, Value: paste the full JSON.
+
+> [!IMPORTANT]
+> The service account must have at least `Artifact Registry Reader` role on the repository. For private images, ensure the key is not expired and has the correct permissions.
+
+**Summary:**
+
+| Parameter                        | Location  | Required for GAR          |
+|----------------------------------|-----------|---------------------------|
+| `DOCKER_REGISTRY`                | Variables | Yes - full GAR path       |
+| `DOCKER_CLOUD_REGISTRY_PROVIDER` | Variables | Yes - set to `GCP`        |
+| `GCP_SA_KEY`                     | Secrets   | Yes - JSON key content    |
 
 ## How to Trigger the Workflow
 
@@ -496,14 +573,13 @@ Replace `<YOUR_GITHUB_TOKEN>`, `<OWNER>`, `<REPO>`, and `main` as needed.
 
 ```text
 instance-repo-pipeline/
-├── README.md                    # This file
 └── .github/
+    ├── README.md                # This guide (EnvGene GitHub workflow)
+    ├── docs/
+    │   └── assets/
+    │       └── envgene-workflow-header.png
     ├── actions/
     │   └── load-env-files/      # Loads .env files into GITHUB_ENV
-    ├── configuration/
-    │   └── config.env           # Base pipeline configuration
-    ├── docs/
-    │   └── README.md            # Additional usage notes
     ├── scripts/
     │   ├── generate_env_matrix.sh           # Builds environment matrix from ENV_NAMES
     │   ├── process_additional_variables.sh  # Parses GH_ADDITIONAL_PARAMS
@@ -524,12 +600,12 @@ This section shows typical scenarios with example parameters and what happens wh
 
 **Goal:** Build the environment and generate the Effective Set for deployment.
 
-| Parameter             | Value                    |
-|-----------------------|--------------------------|
-| `ENV_NAMES`           | `prod-cluster/prod-01`   |
-| `ENV_BUILDER`         | `true`                   |
-| `GENERATE_EFFECTIVE_SET` | `true`                |
-| `DEPLOYMENT_TICKET_ID`| `QBSHP-1234`             |
+| Parameter                | Value                    |
+|--------------------------|--------------------------|
+| `ENV_NAMES`              | `prod-cluster/prod-01`   |
+| `ENV_BUILDER`            | `true`                   |
+| `GENERATE_EFFECTIVE_SET` | `true`                   |
+| `DEPLOYMENT_TICKET_ID`   | `QBSHP-1234`             |
 
 **Steps that run:** APP_REG_DEF_PROCESS → ENV_BUILD → GENERATE_EFFECTIVE_SET → GIT_COMMIT
 
@@ -541,10 +617,10 @@ This section shows typical scenarios with example parameters and what happens wh
 
 **Goal:** Regenerate the Environment Instance without generating the Effective Set (e.g. for validation or template updates).
 
-| Parameter   | Value                  |
-|-------------|------------------------|
-| `ENV_NAMES` | `dev-cluster/dev-01`   |
-| `ENV_BUILDER` | `true`              |
+| Parameter      | Value                  |
+|----------------|------------------------|
+| `ENV_NAMES`    | `dev-cluster/dev-01`   |
+| `ENV_BUILDER`  | `true`                 |
 
 **Steps that run:** APP_REG_DEF_PROCESS → ENV_BUILD → GIT_COMMIT
 
@@ -556,11 +632,11 @@ This section shows typical scenarios with example parameters and what happens wh
 
 **Goal:** Switch to a new template version and rebuild the environment.
 
-| Parameter             | Value                         |
-|-----------------------|-------------------------------|
-| `ENV_NAMES`           | `prod-cluster/prod-01`        |
-| `ENV_BUILDER`         | `true`                        |
-| `ENV_TEMPLATE_VERSION`| `env-template:v2.1.0`         |
+| Parameter              | Value                  |
+|------------------------|------------------------|
+| `ENV_NAMES`            | `prod-cluster/prod-01` |
+| `ENV_BUILDER`          | `true`                 |
+| `ENV_TEMPLATE_VERSION` | `env-template:v2.1.0`  |
 
 **Steps that run:** APP_REG_DEF_PROCESS (updates template version) → ENV_BUILD → GIT_COMMIT
 
@@ -572,10 +648,10 @@ This section shows typical scenarios with example parameters and what happens wh
 
 **Goal:** Perform a Blue-Green operation (e.g. warmup, state change).
 
-| Parameter             | Value                  |
-|-----------------------|------------------------|
-| `ENV_NAMES`           | `prod-cluster/prod-01` |
-| `GH_ADDITIONAL_PARAMS` | `BG_MANAGE=true,BG_STATE={...}` (see below) |
+| Parameter              | Value                               |
+|------------------------|-------------------------------------|
+| `ENV_NAMES`            | `prod-cluster/prod-01`              |
+| `GH_ADDITIONAL_PARAMS` | `BG_MANAGE=true,BG_STATE={...}`     |
 
 **Example `GH_ADDITIONAL_PARAMS` value:**
 
@@ -593,10 +669,10 @@ BG_MANAGE=true,BG_STATE={\"controllerNamespace\":\"bss-ctrl\",\"originNamespace\
 
 **Goal:** Rotate credentials for an environment without rebuilding.
 
-| Parameter              | Value                                      |
-|------------------------|--------------------------------------------|
-| `ENV_NAMES`            | `prod-cluster/prod-01`                     |
-| `GH_ADDITIONAL_PARAMS` | `CRED_ROTATION_PAYLOAD={...}` (see below)  |
+| Parameter              | Value                                   |
+|------------------------|-----------------------------------------|
+| `ENV_NAMES`            | `prod-cluster/prod-01`                  |
+| `GH_ADDITIONAL_PARAMS` | `CRED_ROTATION_PAYLOAD={...}`           |
 
 **Example `GH_ADDITIONAL_PARAMS` value:**
 
@@ -614,10 +690,10 @@ CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\
 
 **Goal:** Fetch SD from an artifact and merge it into the repository.
 
-| Parameter             | Value                                                                 |
-|-----------------------|-----------------------------------------------------------------------|
-| `ENV_NAMES`           | `prod-cluster/prod-01`                                                |
-| `GH_ADDITIONAL_PARAMS` | `SD_SOURCE_TYPE=artifact,SD_VERSION=my-solution:v1.2.3,SD_REPO_MERGE_MODE=replace` |
+| Parameter              | Value                                                           |
+|------------------------|-----------------------------------------------------------------|
+| `ENV_NAMES`            | `prod-cluster/prod-01`                                          |
+| `GH_ADDITIONAL_PARAMS` | `SD_SOURCE_TYPE=artifact,SD_VERSION=my-solution:v1.2.3,...`     |
 
 **Steps that run:** PROCESS_SD → GIT_COMMIT
 
@@ -629,10 +705,10 @@ CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\
 
 **Goal:** Create a new Environment Inventory (`env_definition.yml`) for a new environment.
 
-| Parameter             | Value                                                                 |
-|-----------------------|-----------------------------------------------------------------------|
-| `ENV_NAMES`           | `new-cluster/new-env`                                                 |
-| `GH_ADDITIONAL_PARAMS` | `ENV_INVENTORY_INIT=true,ENV_TEMPLATE_NAME=my-env-template`         |
+| Parameter              | Value                                                           |
+|------------------------|-----------------------------------------------------------------|
+| `ENV_NAMES`            | `new-cluster/new-env`                                           |
+| `GH_ADDITIONAL_PARAMS` | `ENV_INVENTORY_INIT=true,ENV_TEMPLATE_NAME=my-env-template`     |
 
 **Steps that run:** ENV_INVENTORY_GENERATION → GIT_COMMIT
 
@@ -644,10 +720,10 @@ CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\
 
 **Goal:** Process several environments with the same parameters.
 
-| Parameter   | Value                                |
-|-------------|--------------------------------------|
-| `ENV_NAMES` | `cluster-01/env-01,cluster-01/env-02,cluster-02/env-01` |
-| `ENV_BUILDER` | `true`                            |
+| Parameter     | Value                                      |
+|---------------|--------------------------------------------|
+| `ENV_NAMES`   | `cluster-01/env-01,cluster-01/env-02,...`  |
+| `ENV_BUILDER` | `true`                                     |
 
 **Steps that run:** For each environment in the matrix: APP_REG_DEF_PROCESS → ENV_BUILD → GIT_COMMIT (parallel jobs)
 
@@ -657,12 +733,13 @@ CRED_ROTATION_PAYLOAD={\"credentials\":[{\"name\":\"db-password\",\"newValue\":\
 
 ## Further Reading
 
-| Document | Description |
-|----------|--------------|
-| [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md) | Full parameter reference |
-| [EnvGene Pipelines](/docs/envgene-pipelines.md) | Pipeline flow and job descriptions |
-| [Blue-Green Deployment](/docs/features/blue-green-deployment.md) | BG-related parameters |
-| [SD Processing](/docs/use-cases/sd-processing.md) | Solution Descriptor use cases |
+| Document                                                                              | Description                    |
+|---------------------------------------------------------------------------------------|--------------------------------|
+| [Instance Pipeline Parameters](/docs/instance-pipeline-parameters.md)                 | Full parameter reference       |
+| [EnvGene Pipelines](/docs/envgene-pipelines.md)                                       | Pipeline flow and descriptions |
+| [Using Different Docker Registries](/docs/how-to/docker-registry-configuration.md)    | GHCR and GAR configuration     |
+| [Blue-Green Deployment](/docs/features/blue-green-deployment.md)                      | BG-related parameters          |
+| [SD Processing](/docs/use-cases/sd-processing.md)                                     | Solution Descriptor use cases  |
 
 ---
 
