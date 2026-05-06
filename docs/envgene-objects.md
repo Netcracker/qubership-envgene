@@ -26,8 +26,8 @@
     - [BG State Files](#bg-state-files)
     - [Solution Descriptor](#solution-descriptor)
     - [Credential](#credential)
-      - `[usernamePassword](#usernamepassword)`
-      - `[secret](#secret)`
+      - [`usernamePassword`](#usernamepassword)
+      - [`secret`](#secret)
     - [Environment Credentials File](#environment-credentials-file)
     - [Shared Credentials File](#shared-credentials-file)
     - [System Credentials File (in Instance repository)](#system-credentials-file-in-instance-repository)
@@ -407,7 +407,7 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by Envgene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -424,11 +424,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by Envgene
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by Envgene
   sd: string
   # Optional
   services:
@@ -502,10 +502,10 @@ This is a Jinja template file used to render the [BG Domain](#bg-domain) object 
 name: "{{ current_env.name }}-bg-domain"
 type: bgdomain
 originNamespace:
-  name: "{{ current_env.name }}-origin-bss" 
+  name: "{{ current_env.name }}-origin-bss"
   type: namespace
 peerNamespace:
-  name: "{{ current_env.name }}-peer-bss" 
+  name: "{{ current_env.name }}-peer-bss"
   type: namespace
 controllerNamespace:
   name: "{{ current_env.name }}-bg-controller"
@@ -1105,7 +1105,7 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by Envgene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -1122,11 +1122,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by Envgene
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by Envgene
   sd: string
   # Optional
   services:
@@ -1302,7 +1302,7 @@ controllerNamespace:
   url: <bg-operator-url>
 ```
 
-When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.  
+When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.
 The `[inventory.config.updateCredIdsWithEnvName](/docs/envgene-configs.md#env_definitionyml)` mechanism works for this Credential as well as for all other Credentials.
 
 **Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
@@ -1685,7 +1685,7 @@ The first match found is used as the environment-specific override for the given
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by Envgene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -1702,11 +1702,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by Envgene
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by Envgene
   sd: string
   # Optional
   services:
@@ -1878,7 +1878,7 @@ registry:
       # Depending on `authType`, it can be:
       # access key (username) + secret (password) for longLived
       # Credential with this ID must be located in /configuration/credentials/credentials.yml
-      credentialsId: string 
+      credentialsId: string
       # Optional
       # Public cloud registry authentication strategy
       # Used in case of public cloud registries
@@ -2322,7 +2322,7 @@ authConfig:
     # Depending on `authType`, it can be:
     # access key (username) + secret (password) for longLived
     # Credential with this ID must be located in /configuration/credentials/credentials.yml
-    credentialsId: string 
+    credentialsId: string
     # Optional
     # Public cloud registry authentication strategy
     # Used in case of public cloud registries
