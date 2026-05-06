@@ -7,6 +7,10 @@
   - [UC-04: Environment Uses Passport from Custom Location](#uc-04-environment-uses-passport-from-custom-location)
   - [UC-05: Parameter Source Traceability](#uc-05-parameter-source-traceability)
     - [Example](#example)
+  - [UC-06: Business Environments Auto-Associate the Business Passport in a Mixed Cluster](#uc-06-business-environments-auto-associate-the-business-passport-in-a-mixed-cluster)
+  - [UC-07: Infra Environments Use an Explicit Infra Passport in a Mixed Cluster](#uc-07-infra-environments-use-an-explicit-infra-passport-in-a-mixed-cluster)
+  - [UC-08: Mixed Cluster Failure When Infra Relies on Auto-Association](#uc-08-mixed-cluster-failure-when-infra-relies-on-auto-association)
+  - [UC-09: Backward Compatibility for Existing Business Environments](#uc-09-backward-compatibility-for-existing-business-environments)
 
 ## UC-01: Environment Inherits Cluster Cloud Passport Automatically
 
@@ -144,3 +148,130 @@ ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181  # cloud passport: cluster-01 versio
 **Results:**
 
 - Parameter origin is fully traceable from the file itself
+
+## UC-06: Business Environments Auto-Associate the Business Passport in a Mixed Cluster
+
+**Pre-requisites:**
+
+- Mixed cluster exists under `/environments/<cluster-name>/`
+- The cluster contains at least two passport files under:
+  `/environments/<cluster-name>/cloud-passport/`
+- The business default passport exists at:
+  `cloud-passport/<cluster-name>.yml`
+- The infra passport exists at:
+  `cloud-passport/<cluster-name>-infra.yml`
+- The business environment `env_definition.yml` does not include `inventory.cloudPassport`
+
+**Trigger:**
+
+- Build the business environment
+
+**Steps:**
+
+1. The system reads the business environment `env_definition.yml`
+2. The system detects that `inventory.cloudPassport` is absent
+3. The system resolves the passport via auto-association:
+   `cloud-passport/<cluster-name>.yml`
+4. The system merges all passport sections into the generated environment `cloud.yml`
+5. The system generates traceability comments for passport-derived parameters
+
+**Results:**
+
+- Business environment `cloud.yml` contains business workload keys (for example sections/keys like `bss`, `core`, `storage`, `maas`, `dbaas`, `zookeeper`) if those keys exist in `cloud-passport/<cluster-name>.yml`
+- For passport-derived values, inline comments reference:
+  - `cloud passport: <cluster-name> version: <passport-version>`
+
+## UC-07: Infra Environments Use an Explicit Infra Passport in a Mixed Cluster
+
+**Pre-requisites:**
+
+- Mixed cluster exists under `/environments/<cluster-name>/`
+- The cluster contains:
+  - business passport: `cloud-passport/<cluster-name>.yml`
+  - infra passport: `cloud-passport/<cluster-name>-infra.yml`
+- The infra environment `env_definition.yml` includes:
+
+  ```yaml
+  inventory:
+    cloudPassport: <cluster-name>-infra
+  ```
+
+- The infra environment `env_definition.yml` does not rely on auto-association.
+
+**Trigger:**
+
+- Build the infra environment
+
+**Steps:**
+
+1. The system reads the infra environment `env_definition.yml`
+2. The system detects `inventory.cloudPassport: <cluster-name>-infra`
+3. The system resolves `cloud-passport/<cluster-name>-infra.yml` (search hierarchy resolution)
+4. The system merges all passport sections into the infra environment generated `cloud.yml`
+5. The system generates traceability comments for passport-derived parameters
+
+**Results:**
+
+- Infra environment cloud.yml contains only the keys present in `cloud-passport/<cluster-name>-infra.yml`
+- Infra environment does not receive business-only keys from `cloud-passport/<cluster-name>.yml`
+- For passport-derived values present in cloud.yml, traceability comments reference:
+  - `cloud passport: <cluster-name>-infra version: <passport-version>`
+
+## UC-08: Mixed Cluster Failure When Infra Relies on Auto-Association
+
+**Pre-requisites:**
+
+- Mixed cluster exists under `/environments/<cluster-name>/`
+- Only the business default passport exists at:
+  - `cloud-passport/<cluster-name>.yml` (contains business-only keys)
+- The infra environment `env_definition.yml` does not include `inventory.cloudPassport`
+
+**Trigger:**
+
+- Build the infra environment and proceed to deployment
+
+**Steps:**
+
+1. The system reads the infra environment env_definition.yml
+2. The system detects inventory.cloudPassport is absent
+3. The system auto-associates the passport via cluster default: `cloud-passport/<cluster-name>.yml`
+4. The system merges passport sections into the infra environment generated cloud.yml
+5. The infra deployment context includes business-only parameters
+6. Infra deployer validates or consumes these parameters and fails
+
+**Results:**
+
+- Infra deployment fails because the infra environment inherits business-only parameters via the cluster default passport
+- Traceability comments in the generated cloud.yml confirm that problematic values came from:
+  - `cloud passport: <cluster-name> version: <passport-version>`
+
+## UC-09: Backward Compatibility for Existing Business Environments
+
+**Pre-requisites:**
+
+- Existing business environments already deploy successfully using auto-association
+- For those business environments: `env_definition.yml` has no `inventory.cloudPassport`
+- A new infra passport is introduced: `cloud-passport/<cluster-name>-infra.yml`
+- Only infra environments are updated to explicitly reference: `inventory.cloudPassport: <cluster-name>-infra`
+
+**Trigger:**
+
+- Rebuild/generate Effective Set for existing business environments after infra passport changes
+
+**Steps:**
+
+1. Build/generate Effective Set for each existing business environment before the infra passport change (baseline)
+2. Add the infra passport file
+3. Update infra environments to explicitly reference the infra passport
+4. Rebuild/generate Effective Set for the business environments without changing their env_definition.yml
+5. Compare:
+
+- business effective values (deployment context and/or generated `cloud.yml`)
+- traceability comments
+
+**Results:**
+
+- Business environments keep their Effective Set behaviour:
+  - same effective values for business workload keys
+  - traceability indicates the business passport origin (`cloud passport: <cluster-name> ...`)
+- Infra environments are isolated to the infra passport after explicit configuration
