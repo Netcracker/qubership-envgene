@@ -402,12 +402,11 @@ class EnvGenerator:
         cluster_name = self.ctx.cluster_name
         candidates = [
             inv.get("cloudName"),
-            inv.get("passportCloudName", "").replace("-", "_") if inv.get("passportCloudName") else "",
-            inv.get("cloudPassport", "").replace("-", "_") if inv.get("cloudPassport") else "",
-            cluster_name.replace("-", "_") if cluster_name else "",
-            inv.get("environmentName", "").replace("-", "_"),
+            (inv.get("passportCloudName", "") + "_" + inv.get("environmentName", "")).replace("-", "_") if inv.get("passportCloudName") else "",
+            (inv.get("cloudPassport", "") + "_" + inv.get("environmentName", "")).replace("-", "_") if inv.get("cloudPassport") else ""
             f"{cluster_name}_{inv.get('environmentName', '')}".replace("-", "_")
-            if cluster_name and inv.get("environmentName") else ""
+            if cluster_name and inv.get("environmentName") else "",
+            inv.get("environmentName", "").replace("-", "_")
         ]
 
         return next((c for c in candidates if c), "")
