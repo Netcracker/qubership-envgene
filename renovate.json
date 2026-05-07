@@ -1,7 +1,13 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended"],
-  "enabledManagers": ["dockerfile", "pip_requirements", "custom.regex"],
+  "enabledManagers": ["dockerfile", "pip_requirements", "custom.regex", "maven"],
+  "vulnerabilityAlerts": {
+    "groupName": "qubership-envgene-deps",
+    "labels": ["security"],
+    "commitMessageSuffix": "",
+    "minimumReleaseAge": null
+  },
   "customManagers": [
     {
       "customType": "regex",
@@ -21,10 +27,16 @@
   "schedule": ["* * 1,15 * *"],
   "packageRules": [
     {
-      "description": "Only semver patch (Z in X.Y.Z) for Docker base images and pip requirements files",
-      "matchManagers": ["dockerfile", "pip_requirements"],
+      "description": "Only semver patch (Z in X.Y.Z) for Docker images, pip requirements, and Maven (pom.xml)",
+      "matchManagers": ["dockerfile", "pip_requirements", "maven"],
       "matchUpdateTypes": ["minor", "major"],
       "enabled": false
+    },
+    {
+      "description": "Allow minor/major when Renovate is applying a vulnerability fix (patch-only would block the fix)",
+      "matchJsonata": ["$exists(vulnerabilityFixVersion)"],
+      "matchUpdateTypes": ["minor", "major"],
+      "enabled": true
     },
     {
       "description": "Full semver (X.Y.Z) for qubership-envgene-base-modules base image",
@@ -46,9 +58,12 @@
       "enabled": false
     },
     {
-      "description": "One PR for all Dockerfile + requirements + Alpine pins",
-      "matchManagers": ["dockerfile", "pip_requirements", "custom.regex"],
-      "groupName": "docker-and-python-deps"
+      "description": "Single PR: Docker base images, Python reqs, Alpine apk pins, Maven, and grouped vulnerability fixes",
+      "matchManagers": ["dockerfile", "pip_requirements", "custom.regex", "maven"],
+      "groupName": "qubership-envgene-deps",
+      "commitMessageAction": "update",
+      "commitMessageTopic": "dependencies",
+      "commitMessageExtra": " via Renovate"
     }
   ]
 }
