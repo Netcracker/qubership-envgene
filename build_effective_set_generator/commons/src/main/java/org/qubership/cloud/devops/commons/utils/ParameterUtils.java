@@ -25,7 +25,7 @@ import org.qubership.cloud.devops.commons.utils.extcreds.ExternalCredUtils;
 
 import java.util.*;
 
-import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.INVALID_CRED_FORMAT;
+import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.INVALID_CRED_TYPE;
 
 @UtilityClass
 public class ParameterUtils {
@@ -122,7 +122,7 @@ public class ParameterUtils {
     private static boolean shouldAddExtParams(Map<String, Parameter> paramsWithExtCredsOut, ExtCredEntities extCredEntities, String key, Parameter param, Map<String, Parameter> valueMap) {
         if (ExternalCredUtils.isExternalCred(valueMap)) {
             if (extCredEntities == null || !extCredEntities.isExternalOnly) {
-                throw new ExternalCredProcessingException(INVALID_CRED_FORMAT);
+                throw new ExternalCredProcessingException(String.format(INVALID_CRED_TYPE, valueMap));
             }
             if (!PARAM_TYPE.equals(extCredEntities.getParameterType())) {
                 return true;

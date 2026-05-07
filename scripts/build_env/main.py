@@ -101,13 +101,13 @@ def handle_template_override(render_dir):
         deleteFile(file)
 
 
-def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, output_dir, work_dir):
+def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, output_dir, work_dir, env_dir):
     # defining folders that will be used during generation
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     render_dir = f"{base_dir}/tmp/render"
     render_parameters_dir = f"{base_dir}/tmp/parameters_templates"
     render_profiles_dir = f"{base_dir}/tmp/resource_profiles"
-    render_extcred_dir = f"{base_dir}/tmp/ext-creds/{env_name}"
+
 
     namespaces_path = get_namespaces_path()
     if check_dir_exists(str(namespaces_path.absolute())):
@@ -176,7 +176,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     envvars["cmdb_url"] = cmdb_url
     envvars["output_dir"] = output_dir
     envvars["render_profiles_dir"] = render_profiles_dir
-    envvars["render_extcred_dir"] = render_extcred_dir
+    envvars["work_dir"] = work_dir
     render_context = EnvGenerator()
     render_context.render_config_env(env_name, envvars)
     handle_template_override(render_dir)
@@ -289,8 +289,8 @@ def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir
     logger.info(f"Environment {env_name} directory is {env_dir}")
 
     resulting_env_dir, isExternalCredEnv = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
-                                          output_dir, work_dir)
-    create_credentials(resulting_env_dir, env_dir, all_instances_dir, work_dir, env_name, isExternalCredEnv)
+                                          output_dir, work_dir, env_dir)
+    create_credentials(resulting_env_dir, env_dir, all_instances_dir, isExternalCredEnv)
     apply_ns_build_filter()
 
 

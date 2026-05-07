@@ -47,7 +47,7 @@ public class ExternalCredUtils {
     public static String resolveReferenceShape(Object secretFlow, Object esoSupport) {
         Object secretFlowVal = extractValue(secretFlow);
         Object esoSupportVal = extractValue(esoSupport);
-        String flow = secretFlowVal != null ? secretFlowVal.toString() : HELM_VALUES;
+        String flow = secretFlowVal != null ? validateSecretFlow(secretFlowVal.toString()) : HELM_VALUES;
         boolean eso = esoSupportVal != null &&
                 Boolean.parseBoolean(esoSupportVal.toString());
         switch (flow) {
@@ -65,6 +65,13 @@ public class ExternalCredUtils {
         }
     }
 
+    private static String validateSecretFlow(String secretFlow) {
+        if (!HELM_VALUES.equals(secretFlow) && !EXT_VALUES.equals(secretFlow)) {
+            throw new ExternalCredProcessingException(String.format(INVALID_SECRET_FLOW, secretFlow, HELM_VALUES, EXT_VALUES));
+        }
+        return secretFlow;
+    }
+
     private static Object extractValue(Object obj) {
         if (obj instanceof Parameter) {
             return ((Parameter) obj).getValue();
@@ -78,11 +85,11 @@ public class ExternalCredUtils {
             return null;
         }
         if (!"credRef".equals(typeParam.getValue())) {
-            return null;
+            throw new ExternalCredProcessingException(String.format(INVALID_CRED_MAP, map));
         }
         Parameter credIdParam = map.get("credId");
         if (credIdParam == null || credIdParam.getValue() == null) {
-            return null;
+            throw new ExternalCredProcessingException(String.format(INVALID_CRED_MAP, map));
         }
         String credId = credIdParam.getValue().toString();
         String origin = credIdParam.getOrigin();

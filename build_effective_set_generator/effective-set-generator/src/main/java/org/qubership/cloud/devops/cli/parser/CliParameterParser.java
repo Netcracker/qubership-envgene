@@ -39,6 +39,7 @@ import org.qubership.cloud.devops.commons.pojo.consumer.ConsumerDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.SecretCredentialsDTO;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.ExternalCredentials;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.UsernamePasswordCredentials;
 import org.qubership.cloud.devops.commons.pojo.extcreds.ExtCredEntities;
 import org.qubership.cloud.devops.commons.pojo.namespaces.dto.NamespaceDTO;
@@ -148,10 +149,9 @@ public class CliParameterParser {
                         cleanupMappingFileData.put(inputData.getNamespaceDTOMap().get(namespaceName).getName(), cleanupPostFixDir);
                         logInfo("Finished processing of application: " + app.getAppName() + ":" + app.getAppVersion() + " from the namespace " + namespaceName);
                     } catch (Exception e) {
-                          throw new RuntimeException(e);
-//                        logDebug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
-//                        logDebug(String.format("Stack trace for further details: %s", ExceptionUtils.getStackTrace(e)));
-//                        errorList.computeIfAbsent(app.getAppName() + ":" + namespaceName, k -> e.getMessage());
+                        logDebug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
+                        logDebug(String.format("Stack trace for further details: %s", ExceptionUtils.getStackTrace(e)));
+                        errorList.computeIfAbsent(app.getAppName() + ":" + namespaceName, k -> e.getMessage());
                     }
                 });
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
@@ -197,6 +197,9 @@ public class CliParameterParser {
                 UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentialPojo;
                 bgDomainEntityDTO.getControllerNamespace().setUserName(usernamePasswordCredentials.getUsername());
                 bgDomainEntityDTO.getControllerNamespace().setPassword(usernamePasswordCredentials.getPassword());
+            } else if (credentialPojo instanceof ExternalCredentials) {
+                bgDomainEntityDTO.getControllerNamespace().setUserName("");
+                bgDomainEntityDTO.getControllerNamespace().setPassword("");
             }
         }
     }
