@@ -1,5 +1,5 @@
-global: &id002
-  deployDescriptor: &id001
+global: &id001
+  deployDescriptor: &id002
     alertmanager:
       artifacts: []
       deploy_param: ''
@@ -810,13 +810,13 @@ global: &id002
       promote_artifacts: ''
       qualifier: ''
       version: ''
-deployDescriptor: *id001
+deployDescriptor: *id002
 alertmanager: &id003
   APPLICATION_NAME: MONITORING
   DEPLOYMENT_SESSION_ID: 6d5a6ce9-0b55-429d-8877-f7a88dae3d9c
   MANAGED_BY: argocd
-  deployDescriptor: *id001
-  global: *id002
+  deployDescriptor: *id002
+  global: *id001
 blackbox-exporter: *id003
 cert-exporter: *id003
 cloud-events-exporter: *id003

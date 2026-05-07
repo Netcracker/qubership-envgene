@@ -34,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.APP_ORIGIN;
+
 @Slf4j
 public class Binding extends HashMap<String, Parameter> implements Cloneable {
 
@@ -63,13 +65,13 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
     private void processSet(String tenant, String setName, String application, EscapeMap parameterSet, EscapeMap applicationMap) {
         ParameterSet set = Injector.getInstance().getParameterSetService().getParameterSet(tenant, setName);
         if (set != null) {
-            parameterSet.putAllStrings(set.getParameters(), String.format(ParametersConstants.PARAMETER_SET_ORIGIN, setName));
+            parameterSet.putAllStrings(set.getParameters(),APP_ORIGIN);
             ParameterSetApplication parameterSetApplication = set.getApplications().stream()
                     .filter(app -> app.getAppName().equals(application))
                     .findFirst()
                     .orElse(null);
             if (parameterSetApplication != null) {
-                applicationMap.putAllStrings(parameterSetApplication.getParameters(), String.format(ParametersConstants.PARAMETER_SET_APP_ORIGIN, setName, application));
+                applicationMap.putAllStrings(parameterSetApplication.getParameters(), APP_ORIGIN);
             }
         }
     }
@@ -145,7 +147,7 @@ public class Binding extends HashMap<String, Parameter> implements Cloneable {
                     if (param.getValue() instanceof Map) {
                         return new HashMap<String, Parameter>() {
                             {
-                                put(entry.getKey(), new Parameter(calculateCredentialsAndPrepareStructuredParams((Map<String, Parameter>) param.getValue())));
+                                put(entry.getKey(), new Parameter(calculateCredentialsAndPrepareStructuredParams((Map<String, Parameter>) param.getValue()), param.getOrigin(), false));
                             }
                         };
                     }
