@@ -40,10 +40,14 @@ public class ExternalCredExceptionMessages {
 
     public static final String INVALID_LENGTH = "Length exceeded for %s [%s] for type %s. Max allowed: %d, actual: %d";
 
-    public static final String INVALID_CRED_FORMAT = "External creds found in local creds only environment";
+    public static final String INVALID_CRED_TYPE = "Below external creds found in local creds only environment:\n%s";
+
+    public static final String INVALID_CRED_MAP = "Invalid value found in external credential reference:\n%s";
 
     public static final String MIXED_CREDS = "Exiting as mixture of external and non-external credentials is not allowed";
 
     public static final String EXT_TEMPLATE_FOUND = "External Credentials not found in parameter but external template found";
+
+    public static final String INVALID_SECRET_FLOW = "Invalid secretFlow: '%s'. Allowed values are '%s' or '%s'.";
 
 }
