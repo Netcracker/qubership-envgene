@@ -4,7 +4,8 @@ import json
 from pathlib import Path
 
 from envgenehelper import openYaml, get_empty_yaml, getenv_with_error
-from envgenehelper.yaml_helper import validate_yaml_by_scheme_or_fail
+from envgenehelper.yaml_helper import *
+from envgenehelper.creds_helper import validate_cred_types
 import jsonschema
 from .logger import logger
 
@@ -96,3 +97,18 @@ def get_envgene_config_yaml():
     validate_config_file(config)
     logger.debug(f"Config content: {config}")
     return config
+
+def copy_creds_to_env_creds_file(env_dir, credsYamlContent, comment, credsSchema, isExternalCredEnv):
+    envCredentialsPath = f"{env_dir}/Credentials/credentials.yml"       
+    if path.exists(envCredentialsPath) :
+        envCredsYaml = openYaml(envCredentialsPath)
+    else:
+        envCredsYaml = yaml.load("{}")
+
+    validate_cred_types(envCredsYaml, isExternalCredEnv, envCredentialsPath)
+
+    for key, value in credsYamlContent.items() :
+        store_value_to_yaml(envCredsYaml, key, value, comment)
+    # storing credentials yaml
+    writeYamlToFile(envCredentialsPath, envCredsYaml)
+    beautifyYaml(envCredentialsPath, credsSchema)
