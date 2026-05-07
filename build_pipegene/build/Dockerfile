@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 1: Build
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.2 AS build
 
 # Copy configuration files and source code
 COPY build_pipegene/build/pip.conf /etc/pip.conf
@@ -42,7 +42,7 @@ RUN chmod 754 /module/scripts/*
 # ═══════════════════════════════════════════════════════════════════════════════════
 # Stage 2: Runtime
 # ═══════════════════════════════════════════════════════════════════════════════════
-FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
+FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.2 AS runtime
 
 COPY --from=build /module /module
 COPY --from=build /python /python

@@ -7,8 +7,8 @@ certifi==2022.6.15
 # Build envgene requirements (essential only)
 lxml==4.9.3
 ruamel.yaml==0.18.5
-ruamel.yaml.clib==0.2.8
-jschon==0.11.0
+ruamel.yaml.clib==0.2.15
+jschon==0.11.1
 jsonschema==4.24.1
 jmespath==1.0.1
 semantic-version==2.10.0
@@ -16,7 +16,7 @@ termcolor==2.4.0
 cffi==1.16.0
 click==8.1.7
 deepmerge==2.0
-GitPython==3.1.45
+GitPython==3.1.47
 pydantic==2.10.6
 Jinja2==3.1.6
 
@@ -24,7 +24,7 @@ Jinja2==3.1.6
 platformdirs>=3.0.0
 
 google-auth~=2.34.0
-qubership-pipelines-common-library==2.0.3
+qubership-pipelines-common-library==2.0.9
 
 # Removed heavy packages:
 # - shyaml, yamale, prettytable (not essential)

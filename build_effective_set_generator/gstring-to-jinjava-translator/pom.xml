@@ -12,10 +12,10 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <antlr.version>4.13.1</antlr.version>
+        <antlr.version>4.13.2</antlr.version>
         <mojo.version>3.0.0</mojo.version>
         <junit.version>5.10.0</junit.version>
-        <jinjava.version>2.7.3</jinjava.version>
+        <jinjava.version>2.7.6</jinjava.version>
     </properties>
 
     <dependencyManagement>
