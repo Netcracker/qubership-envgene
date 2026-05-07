@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from envgenehelper import openYaml, get_empty_yaml, getenv_with_error
-from envgenehelper.yaml_helper import validate_yaml_by_scheme_or_fail
+from envgenehelper.yaml_helper import *
 import jsonschema
 from .logger import logger
 
@@ -96,3 +96,4 @@ def get_envgene_config_yaml():
     validate_config_file(config)
     logger.debug(f"Config content: {config}")
     return config
+
