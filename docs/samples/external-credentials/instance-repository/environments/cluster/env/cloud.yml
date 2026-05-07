@@ -1,14 +1,42 @@
 ---
 name: "cluster_env"
-apiUrl: "https://api.example.com"
+apiUrl: "api.cluster.example.com"
 apiPort: 6443
-privateUrl: ""
-publicUrl: "https://apps.example.com"
+publicUrl: "cluster.example.com"
+privateUrl: "cluster.example.com"
 dashboardUrl: "https://dashboard.example.com"
 labels: []
-defaultCredentialsId: ""
 protocol: "https"
+defaultCredentialsId: "cloud-deploy-cred"
+maasConfig:
+  enable: true
+  credentialsId: "maas-cred"
+  maasInternalAddress: "http://maas-service.maas:8080"
+  maasUrl: "http://maas-service.maas:8080"
+dbaasConfigs:
+  - credentialsId: "dbaas-cluster-dba-cred"
+    enable: true
+    apiUrl: "http://dbaas-aggregator.dbaas:8080"
+    aggregatorUrl: "https://aggregator-dbaas.cluster.example.com"
+consulConfig:
+  enabled: true
+  tokenSecret: "consul-admin-cred"
+  internalUrl: "http://consul-server.consul:8500"
+  publicUrl: "https://consul.cluster.example.com"
 deployParameters:
+  # Non-cred Cloud Passport parameters (free-form, propagated as-is)
+  CLOUD_API_HOST: "api.cluster.example.com"
+  CLOUD_API_PORT: "6443"
+  CLOUD_PUBLIC_HOST: "cluster.example.com"
+  CLOUD_PRIVATE_HOST: "cluster.example.com"
+  API_DBAAS_ADDRESS: "http://dbaas-aggregator.dbaas:8080"
+  DBAAS_AGGREGATOR_ADDRESS: "https://aggregator-dbaas.cluster.example.com"
+  MAAS_INTERNAL_ADDRESS: "http://maas-service.maas:8080"
+  MAAS_SERVICE_ADDRESS: "http://maas-service.maas:8080"
+  CONSUL_URL: "http://consul-server.consul:8500"
+  CONSUL_ENABLED: true
+  CONSUL_PUBLIC_URL: "https://consul.cluster.example.com"
+  # User-authored credential reference from cloud-level paramSet (ext-cred-cloud)
   INTEGRATION_TOKEN:
     $type: credRef
     credId: app-sidecar-token

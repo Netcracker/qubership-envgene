@@ -1,22 +1,40 @@
 ---
 # Cloud Passport main file (non-credential fields + credRef pointers). Pair: cluster-creds.yml
-version: 1.5
+version: 1.0
 cloud:
   CLOUD_API_HOST: api.cluster.example.com
   CLOUD_API_PORT: "6443"
   CLOUD_PUBLIC_HOST: cluster.example.com
   CLOUD_PRIVATE_HOST: cluster.example.com
-  CLOUD_DASHBOARD_URL: https://dashboard.cluster.example.com
-  CLOUD_PROTOCOL: https
-  CLOUD_SERVICES_TOKEN:
+  CLOUD_DEPLOY_TOKEN:
     $type: credRef
-    credId: app-sidecar-token
+    credId: cloud-deploy-cred
 dbaas:
-  DBAAS_ADMIN_USERNAME:
+  API_DBAAS_ADDRESS: http://dbaas-aggregator.dbaas:8080
+  DBAAS_AGGREGATOR_ADDRESS: https://aggregator-dbaas.cluster.example.com
+  DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME:
     $type: credRef
-    credId: app-db-cred
+    credId: dbaas-cluster-dba-cred
     property: username
-  DBAAS_ADMIN_PASSWORD:
+  DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD:
     $type: credRef
-    credId: app-db-cred
+    credId: dbaas-cluster-dba-cred
     property: password
+maas:
+  MAAS_INTERNAL_ADDRESS: http://maas-service.maas:8080
+  MAAS_SERVICE_ADDRESS: http://maas-service.maas:8080
+  MAAS_CREDENTIALS_USERNAME:
+    $type: credRef
+    credId: maas-cred
+    property: username
+  MAAS_CREDENTIALS_PASSWORD:
+    $type: credRef
+    credId: maas-cred
+    property: password
+consul:
+  CONSUL_URL: http://consul-server.consul:8500
+  CONSUL_ENABLED: true
+  CONSUL_PUBLIC_URL: https://consul.cluster.example.com
+  CONSUL_ADMIN_TOKEN:
+    $type: credRef
+    credId: consul-admin-cred

@@ -130,6 +130,44 @@ Item 1 is generated automatically. Item 2 is created manually by the user.
 
 ---
 
+#### Line length
+
+**CRITICAL: Wrap prose lines at 120 characters maximum.**
+
+**Scope:**
+
+- Applies to prose paragraphs and list items in any Markdown file.
+- **Excluded:** tables, fenced code blocks, URLs, and image references.
+- **New or rewritten content only.** When editing an existing document, wrap paragraphs you add or rewrite at 120
+  chars. Do NOT reflow surrounding existing prose to match - that produces large, noisy diffs unrelated to the
+  task.
+
+**How to wrap:**
+
+- Break at natural sentence or clause boundaries (after a period or comma, or before a conjunction).
+- Indent continuation lines of list items so they align with the first non-bullet character (3 spaces for `- `
+  bullets, 3 spaces for `1. ` numbered lists).
+- Keep a blank line before and after each paragraph (already required by the Lists rule above).
+
+❌ **DON'T (hard wrap mid-word):**
+
+```markdown
+The Effective Set calculator emits well-known deploy parameter names for selected built-in cred
+ential references.
+```
+
+✅ **DO (break at sentence or clause boundary):**
+
+```markdown
+The Effective Set calculator emits well-known deploy parameter names for selected built-in
+credential references.
+```
+
+**Why:** 120 characters keeps Markdown source readable in side-by-side diffs and code reviews without horizontal
+scrolling. Capping the rule to new content avoids whitespace-only churn in legacy files.
+
+---
+
 #### Callouts (Notes, Warnings, Tips)
 
 **CRITICAL: Always use GitHub-flavored Markdown native callout syntax, not bold-text workarounds.**

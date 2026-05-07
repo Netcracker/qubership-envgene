@@ -1,6 +1,6 @@
 ---
 name: "env-app"
-credentialsId: ""
+credentialsId: "ns-deploy-cred"
 labels: []
 isServerSideMerge: false
 cleanInstallApprovalRequired: false
@@ -14,4 +14,3 @@ deployParameters:
     $type: credRef
     credId: app-db-cred
     property: password
-  INTERNAL_API_KEY: "${creds.get('app-local-internal').secret}"

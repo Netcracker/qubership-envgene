@@ -6,6 +6,8 @@
   - [Assumption](#assumption)
   - [Proposed Approach](#proposed-approach)
     - [Overview](#overview)
+    - [Repository credentials mode](#repository-credentials-mode)
+    - [Credential sources and merging](#credential-sources-and-merging)
     - [Detailed description of objects](#detailed-description-of-objects)
       - [Credential Reference](#credential-reference)
       - [Built-in credential references](#built-in-credential-references)
@@ -43,7 +45,17 @@
 
 ## Description
 
-This document specifies external credentials for EnvGene: the `credRef` Credential Reference, `external` [Credential](#credential) objects, [Secret Store](#secret-store) configuration, Effective Set outputs (VALS, ESO, External Credential Context), and per-store normalization of remote secret names.
+This document specifies external credentials for EnvGene:
+
+- [Repository credentials mode](#repository-credentials-mode) - the local-vs-external mode determined by the
+  Template Descriptor.
+- [Credential Reference](#credential-reference) (`$type: credRef`) macro for sensitive parameter values.
+- [Built-in credential references](#built-in-credential-references) in Cloud / Namespace / Tenant / BG Domain
+  schema fields.
+- `external` [Credential](#credential) object type.
+- [Secret Store](#secret-store) configuration.
+- Effective Set outputs: VALS reference, ESO reference, External Credential Context.
+- Per-store normalization of remote secret names.
 
 A minimal end-to-end sample (template, instance repository, Effective Set deployment `values/credentials.yaml` and `values/external-credentials.yaml` for VALS vs ESO) lives under [/docs/samples/external-credentials/](/docs/samples/external-credentials/).
 
@@ -102,6 +114,64 @@ In the [External Credential Context](#external-credential-context):
 1. One [External Credential Context `credentials` entry](#external-credential-context-credentials-entry) for each [Credential](#credential) with `type: external` and `create: true`
 2. The [Secret Store](#secret-store) definitions copied for each store referenced by those Credentials
 
+### Repository credentials mode
+
+The credentials mode determines whether placeholder auto-generation runs during Environment Instance generation.
+It is controlled by the presence of the `external_credential_template` field in
+the [Template Descriptor](/docs/envgene-objects.md#template-descriptor):
+
+- Field absent: **local mode**.
+- Field present: **external mode**.
+
+**Scope.** EnvGene operations run at Environment Instance scope. Each operation reads the mode from the Template
+Descriptor used by that Environment Instance, so the determination is per-environment.
+
+Per [Assumption 4](#assumption), all Environment Instances in a single repository are expected to share one mode,
+and the migration from local to external is expected to be performed for the whole repository at once. EnvGene
+does not enforce this at the operation boundary. It works correctly for each environment independently, but
+mixing modes across environments in a repository is out of scope.
+
+**Placeholder auto-generation (local mode only).** EnvGene auto-generates a placeholder local Credential
+(`type: usernamePassword` / `secret`, `data: envgeneNullValue`) for every `credId` referenced by a
+`${creds.get('<credId>')...}` macro or by a [Built-in credential reference](#built-in-credential-references). If a
+source (see [Credential sources and merging](#credential-sources-and-merging)) supplies a real Credential for the
+same `credId`, the source-supplied entry overrides the placeholder in the merged result.
+
+**Placeholder auto-generation is disabled in external mode.** Every `credId` reachable through a
+[Built-in credential reference](#built-in-credential-references), a [`$type: credRef`](#credential-reference)
+macro, or a `${creds.get(...)}` macro must be explicitly declared by a source. Missing declarations fail
+Environment Instance generation with a targeted error identifying the unresolved `credId` and the reference that
+requires it.
+
+### Credential sources and merging
+
+Credential entries in the [Environment Credentials File](/docs/envgene-objects.md#credential-file) are populated
+from three sources during Environment Instance generation:
+
+1. **[Credential Template](#credential-template)** - rendered during Environment Instance generation. External
+   Credentials only.
+2. **Cloud Passport credentials file** (when a Cloud Passport is present) - local (`usernamePassword` / `secret`)
+   or external (`type: external`) as declared in the Cloud Passport.
+3. **[Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file)** - manually authored by the
+   user in the instance repository at Environment, Cluster, or Site scope.
+
+All three sources merge into a single [Credential file](/docs/envgene-objects.md#credential-file) per Environment
+Instance.
+
+**Precedence on duplicate `credId`.** When the same `credId` is declared in more than one source, the entry from
+the higher-precedence source wins. Precedence order (lowest to highest):
+
+1. Credential Template
+2. Cloud Passport credentials file
+3. [Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file)
+
+**Cross-source references are allowed.** A [Credential Reference](#credential-reference) or
+[Built-in credential reference](#built-in-credential-references) defined in one source can resolve to a Credential
+entry contributed by another source.
+
+Semantic validation (single-category, orphan check, built-in resolution) runs on the **merged result**, not on
+individual sources.
+
 ### Detailed description of objects
 
 #### Credential Reference
@@ -109,6 +179,11 @@ In the [External Credential Context](#external-credential-context):
 The Credential Reference (`$type: credRef`) points a parameter in an EnvGene object at an external [Credential](#credential) by `credId`. Optional `property` selects `username` or `password` when the remote secret is modeled with multiple fields. Omit `property` when the Credential has no `properties` list (single-value secret).
 
 This reference is used **only** for `external` Credentials type.
+
+Credential References (`$type: credRef`) are honored only in `deployParameters`. Occurrences in
+`e2eParameters` or `technicalConfigurationParameters` are out of scope - they pass through as plain YAML data,
+without resolution, validation, or transformation. External credential support for those contexts is future
+scope (see [To Do](#to-do)).
 
 For backward compatibility, `creds.get()` is still fully supported for working with local Credentials.
 
@@ -152,7 +227,11 @@ CONSUL_ADMIN_TOKEN:
 
 #### Built-in credential references
 
-Built-in credential references are `credId` string pointers in predefined schema fields of [Cloud](/docs/envgene-objects.md#cloud) and [Namespace](/docs/envgene-objects.md#namespace) objects, as opposed to free-form [Credential References](#credential-reference) in parameter values. They are part of the Cloud/Namespace schemas and are consumed by downstream systems (CMDB, deployer) that import these objects by their model.
+Built-in credential references are `credId` string pointers in predefined schema fields of
+[Cloud](/docs/envgene-objects.md#cloud), [Namespace](/docs/envgene-objects.md#namespace),
+[Tenant](/docs/envgene-objects.md#tenant), and [BG Domain](/docs/envgene-objects.md#bg-domain) objects, as opposed
+to free-form [Credential References](#credential-reference) in parameter values. They are part of the object
+schemas and are consumed by downstream systems.
 
 The complete list:
 
@@ -162,18 +241,51 @@ The complete list:
 - `Cloud.vaultConfig.credentialsId`
 - `Cloud.consulConfig.tokenSecret`
 - `Namespace.credentialsId`
+- `Tenant.credential`
+- `BGDomain.controllerNamespace.credentials`
 
-Each is a plain string holding a `credId` that resolves to a [Credential](#credential) in the rendered instance repository.
+Each holds a `credId` string. Resolution to a [Credential](#credential) entry happens against the merged
+credentials file produced according to [Credential sources and merging](#credential-sources-and-merging). The
+schema field itself stays a credId string regardless of whether the resolved Credential is local or external.
 
-**Local mode behavior (unchanged):**
+**Sourcing from Cloud Passport.** A Cloud Passport supplies the `credId` for a built-in credential reference
+indirectly, through its sectional structure (`cloud:`, `dbaas:`, `maas:`, `consul:`). When a sectional well-known
+parameter (for example, `cloud.CLOUD_DEPLOY_TOKEN`, `maas.MAAS_CREDENTIALS_USERNAME`) holds a credential macro -
+`${creds.get('<credId>').<field>}` or `{ $type: credRef, credId: <credId>, property: <field> }` - Environment
+Instance generation **extracts the `credId`** from the macro and writes it into the
+corresponding Cloud schema field (`Cloud.defaultCredentialsId`, `Cloud.maasConfig.credentialsId`,
+`Cloud.dbaasConfigs[].credentialsId`, `Cloud.consulConfig.tokenSecret`). The macro itself is consumed by the
+extraction. It is **not** propagated into `Cloud.deployParameters`. The actual deploy parameter value is produced
+later, at Effective Set generation, via auto-population.
 
-- If Cloud Passport is present, its credentials file supplies the Credential values (`type: usernamePassword` / `secret` with `data`), merged into the Environment Credentials File.
-- If Cloud Passport is absent, EnvGene auto-generates Credential entries with placeholder values (`envgeneNullValue`) for every `credId` discovered via a built-in credential reference. Users fill values externally.
+**Auto-population of deploy parameters.** At Effective Set generation, the Effective Set calculator emits
+well-known deploy parameter names for selected built-in credential references. The output shape is dispatched by
+the resolved Credential's `type`:
 
-**External mode behavior:**
+- **Local Credential** (`type: usernamePassword` / `secret`) - plain-text values are injected into the deployment
+  context.
+- **External Credential** (`type: external`) - a [VALS reference](#parameter-with-vals-reference) or
+  [ESO reference](#parameter-with-eso-reference) is emitted.
 
-- If Cloud Passport is present, its credentials file declares the corresponding Credentials as `type: external`.
-- If Cloud Passport is absent, the [Credential Template](#credential-template) is the sole source of external Credentials for all built-in credential references. Placeholder auto-generation does not apply — external Credentials require `secretStore` and `remoteRefPath`, which cannot be defaulted.
+Auto-population happens **only at Effective Set generation**. The rendered Cloud / Namespace / Tenant / BG Domain
+object in the Environment Instance does not contain the auto-generated parameter names - only the schema field
+with the `credId` string. Property names for multi-value built-in references (for example, `username` / `password`
+for `dbaasConfigs[].credentialsId`) are determined by the auto-population code, not by the schema field. The
+Credential entry must declare `properties` consistently with what the built-in reference expects.
+
+| Built-in credential reference              | Auto-generated deploy parameter names                                                                                                        |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
+| `Tenant.credential`                        | `CLOUD_DEPLOY_TOKEN`                                                                                                                         |
+| `Cloud.defaultCredentialsId`               | `CLOUD_DEPLOY_TOKEN`                                                                                                                         |
+| `Namespace.credentialsId`                  | `CLOUD_DEPLOY_TOKEN`                                                                                                                         |
+| `Cloud.maasConfig.credentialsId`           | `MAAS_CREDENTIALS_USERNAME`, `MAAS_CREDENTIALS_PASSWORD`                                                                                     |
+| `Cloud.dbaasConfigs[].credentialsId`       | `DBAAS_AGGREGATOR_USERNAME`, `DBAAS_AGGREGATOR_PASSWORD`, `DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME`, `DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD` |
+| `Cloud.vaultConfig.credentialsId`          | `VAULT_TOKEN`                                                                                                                                |
+| `Cloud.consulConfig.tokenSecret`           | `CONSUL_ADMIN_TOKEN`                                                                                                                         |
+| `BGDomain.controllerNamespace.credentials` | `BG_CONTROLLER_LOGIN`, `BG_CONTROLLER_PASSWORD`                                                                                              |
+
+When more than one of `Tenant.credential`, `Cloud.defaultCredentialsId`, and `Namespace.credentialsId` is set, the
+most specific level wins for the resulting `CLOUD_DEPLOY_TOKEN`: Namespace overrides Cloud overrides Tenant.
 
 #### Credential Template
 
@@ -556,7 +668,7 @@ The algorithm is vendor-specific. Effective Set calculator applies the rules for
 1. Validate characters
 2. Split `remoteRefPath` by `/` (up to four segments)
 3. Replace `/` with `--` between segments
-4. Truncate long segments per segment cap (20 characters after truncation: 15 chars + `-` + first 5 hex chars of SHA-256 of segment)
+4. Truncate long segments per segment cap (20 characters after truncation: 14 chars + `-` + first 5 hex chars of SHA-256 of segment)
 5. `<normalizedSecretName> = <normalized-remoteRefPath>--<credId>`
 6. Validate total length
 
@@ -801,47 +913,58 @@ Example:
 ### Validation
 
 > [!NOTE]
-> Schema validation of [Credential](#credential), [Secret Store](#secret-store), and [Credential Reference](#credential-reference) objects is assumed. The rules below are semantic checks applied on top of schema validation.
+> Schema validation of all EnvGene objects and configuration files referenced in this document is assumed (per
+> their JSON schemas under `/schemas/`). The rules below are semantic checks applied on top of schema validation.
 >
-> Violations of any rule below fail the corresponding generation stage, unless the rule is explicitly marked as a warning.
+> Violations of any rule below fail the corresponding generation stage, unless the rule is explicitly marked as
+> a warning.
 >
-> When a rule fails, EnvGene emits a human-readable error identifying the offending object(s), the violated rule, and enough context to act on it. This is implied for every rule below and is not repeated per rule.
+> When a rule fails, EnvGene emits a human-readable error identifying the offending object(s), the violated rule,
+> and enough context to act on it. This is implied for every rule below and is not repeated per rule.
 
 #### During Environment Instance generation
 
-1. Every [Credential Reference](#credential-reference) resolves to an external [Credential](#credential) in the rendered instance repository.
+1. **Reference resolution.** Every [Credential Reference](#credential-reference) in `deployParameters` and
+   every [Built-in credential reference](#built-in-credential-references) resolves to a
+   [Credential](#credential) entry in the
+   [Environment Credentials File](/docs/envgene-objects.md#credential-file).
 
-2. Every Environment Instance contains [Credentials](#credential) of only one category: either local (`type: usernamePassword` / `secret`) or external (`type: external`). Different Environment Instances in the same repository may differ.
+2. **Single category.** Every Environment Instance contains [Credentials](#credential) of only one category:
+   either local (`type: usernamePassword` / `secret`) or external (`type: external`). Different Environment
+   Instances in the same repository may differ.
 
-3. Every rendered external [Credential](#credential) is referenced by at least one [Credential Reference](#credential-reference) or [Built-in credential reference](#built-in-credential-references).
+3. **Orphan check.** Every rendered external [Credential](#credential) is referenced by at least one
+   [Credential Reference](#credential-reference) or
+   [Built-in credential reference](#built-in-credential-references).
 
-4. Every `credId` is unique across all rendered [Credentials](#credential).
-
-5. Every rendered external [Credential](#credential) whose [Secret Store](#secret-store) has `type ∈ { azure, aws, gcp }` has `len(credId) ≤ 32`.
-
-6. Every external [Credential](#credential) has [`properties`](#credential) either absent (single-value secret) or equal to `[{ name: username }, { name: password }]`.
-
-7. Every [Built-in credential reference](#built-in-credential-references) resolves to an existing [Credential](#credential) in the rendered instance repository.
+4. **Property cross-reference.** Every [Credential Reference](#credential-reference) with `property: <p>`
+   references a [Credential](#credential) whose `properties` list contains an entry with `name: <p>`. Every
+   Credential Reference without `property` references a Credential without `properties` (single-value).
 
 #### During Effective Set generation
 
-1. Every [Credential Reference](#credential-reference) with `property` has a value matching a `name` in `Credential.properties`; every [Credential Reference](#credential-reference) to a single-value Credential omits `property`.
+1. **Secret store binding.** Every `Credential.secretStore` matches an entry in
+   `/configuration/secret-stores.yml`.
 
-2. Every `Credential.secretStore` matches an entry in `/configuration/secret-stores.yml`.
+2. **Normalization.** Normalization to `normalizedSecretName` succeeds for every used [Credential](#credential)
+   under the character-set, per-segment, and total-length constraints of the target [Secret Store](#secret-store)
+   type.
 
-3. Normalization to `normalizedSecretName` succeeds for every used [Credential](#credential) under the character-set, per-segment, and total-length constraints of the target [Secret Store](#secret-store) type.
+3. **SECRET_FLOW domain.** The effective [`SECRET_FLOW`](#secret_flow-attribute) of every application is a value
+   from `[ helm-values, external-values ]`.
 
-4. The effective [`SECRET_FLOW`](#secret_flow-attribute) of every application is a value from `[ helm-values, external-values ]` (defaulting to `helm-values` when unset).
-
-5. Every application with effective `SECRET_FLOW = external-values` has [`eso_support`](#eso_support-attribute) set to `true` (see [Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references)).
+4. **ESO capability gate.** Every application with effective `SECRET_FLOW = external-values` has
+   [`eso_support`](#eso_support-attribute) set to `true`.
 
 #### During CMDB import
 
-1. The Environment Instance being imported contains no [Credentials](#credential) with `type: external`.
+1. **No external credentials.** The Environment Instance being imported contains no [Credentials](#credential)
+   with `type: external`.
 
 ### To Do
 
 1. Support Blue-Green deployment cases
 2. Support system-level external credentials
 3. Support external credentials in the runtime context
-4. Support template composition
+4. Support external credentials in the pipeline context
+5. Support template composition
