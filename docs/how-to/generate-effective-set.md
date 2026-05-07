@@ -112,7 +112,7 @@ effective-set/
 │   ├── parameters.yaml
 │   └── credentials.yaml
 ├── deployment/
-│   ├── mapping.yml
+│   ├── mapping.yaml
 │   ├── bss/
 │   │   └── Cloud-BSS/
 │   │       └── values/
@@ -138,7 +138,7 @@ effective-set/
 │                   └── cloud-oss/
 │                       └── deployment-parameters.yaml
 ├── runtime/
-│   ├── mapping.yml
+│   ├── mapping.yaml
 │   ├── bss/
 │   │   └── Cloud-BSS/
 │   │       ├── parameters.yaml
@@ -148,7 +148,7 @@ effective-set/
 │           ├── parameters.yaml
 │           └── credentials.yaml
 └── cleanup/
-    ├── mapping.yml
+    ├── mapping.yaml
     ├── bss/
     │   ├── parameters.yaml
     │   └── credentials.yaml
