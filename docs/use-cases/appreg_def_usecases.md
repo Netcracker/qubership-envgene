@@ -112,7 +112,7 @@ ENV_BUILDER: true
    - `/genDefs/appDefs/*`
    - `/genDefs/regDefs/*`
 2. Existing centralized definitions remain unchanged even when corresponding template files are deleted
-3. Deletion of generated AppDef and RegDef objects is currently not supported
+3. Deletion of /genDefs/appDefs/* and /genDefs/regDefs/* objects is currently not supported
 
 ## User Overrides
 
