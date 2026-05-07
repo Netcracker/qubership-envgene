@@ -14,7 +14,7 @@
 
 ## Overview
 
-This document defines enterprise-grade use cases for Application Definitions (AppDef) and Registry Definitions (RegDef) in EnvGene.
+This document defines use cases for Application Definitions (AppDef) and Registry Definitions (RegDef) in EnvGene.
 
 The use cases cover:
 
