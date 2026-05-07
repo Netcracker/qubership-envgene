@@ -55,8 +55,8 @@ public class NamespaceApplicationMap extends DynamicMap {
 
         Map<String, Object> appParams = applicationParams != null ? applicationParams.getAppParams() : new HashMap<>();
         Map<String, Object> configServerParams = applicationParams != null ? applicationParams.getConfigServerParams() : new HashMap<>();
-        EscapeMap map = new EscapeMap(appParams, binding, NS_ORIGIN );
-        EscapeMap configServerMap = new EscapeMap(configServerParams, binding, NS_ORIGIN);
+        EscapeMap map = new EscapeMap(appParams, binding, APP_ORIGIN );
+        EscapeMap configServerMap = new EscapeMap(configServerParams, binding, APP_ORIGIN);
 
 
         map.put("APPLICATION_NAME", appName);

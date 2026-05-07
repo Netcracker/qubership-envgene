@@ -24,6 +24,7 @@ import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.APP_ORIGIN;
 import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.CLOUD_ORIGIN;
 
 public class CloudApplicationMap extends DynamicMap {
@@ -44,21 +45,21 @@ public class CloudApplicationMap extends DynamicMap {
 
         Map<String, Object> appParams = applicationParams != null ? applicationParams.getAppParams() : new HashMap<>();
         Map<String, Object> configServerParams = applicationParams != null ? applicationParams.getConfigServerParams() : new HashMap<>();
-        EscapeMap map = new EscapeMap(appParams, binding, CLOUD_ORIGIN);
-        EscapeMap configServerMap = new EscapeMap(configServerParams, binding, CLOUD_ORIGIN);
+        EscapeMap map = new EscapeMap(appParams, binding, APP_ORIGIN);
+        EscapeMap configServerMap = new EscapeMap(configServerParams, binding, APP_ORIGIN);
 
         EscapeMap parameterSetMap = new EscapeMap(null, binding, "");
         map.put("parameterSet", parameterSetMap);
         if (cloud.getDeploymentParameterSets() != null) {
             new ArrayDeque<>(cloud.getDeploymentParameterSets()).descendingIterator().forEachRemaining(set -> {
-                processApplicationSet(cloud.getTenant().getName(), set, appName, CLOUD_ORIGIN, parameterSetMap);
+                processApplicationSet(cloud.getTenant().getName(), set, appName, APP_ORIGIN, parameterSetMap);
             });
         }
         EscapeMap parameterSetConfigServerMap = new EscapeMap(null, binding, "");
         configServerMap.put("parameterSet", parameterSetConfigServerMap);
         if (cloud.getTechnicalParameterSets() != null) {
             new ArrayDeque<>(cloud.getTechnicalParameterSets()).descendingIterator().forEachRemaining(set -> {
-                processApplicationSet(cloud.getTenant().getName(), set, appName, CLOUD_ORIGIN, configServerMap);
+                processApplicationSet(cloud.getTenant().getName(), set, appName, APP_ORIGIN, configServerMap);
             });
         }
 

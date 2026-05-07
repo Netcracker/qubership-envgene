@@ -166,7 +166,7 @@ public class LanguageTest extends BindingBaseTest {
         assertEquals(cloudOrigin, map.get("APP_PARAM_OVERRIDE_BY_CLOUD").getOrigin());
         assertEquals(cloudOrigin, map.get("TENANT_PARAM_OVERRIDE_BY_CLOUD").getOrigin());
 
-        String cloudAppOrigin = CLOUD_ORIGIN;
+        String cloudAppOrigin = APP_ORIGIN;
         assertEquals(cloudAppOrigin, map.get("CLOUD_APP_PARAM").getOrigin());
         assertEquals(cloudAppOrigin, map.get("TENANT_PARAM_OVERRIDE_BY_CLOUD_APP").getOrigin());
         assertEquals(cloudAppOrigin, map.get("APP_PARAM_OVERRIDE_BY_CLOUD_APP").getOrigin());
@@ -179,7 +179,7 @@ public class LanguageTest extends BindingBaseTest {
         assertEquals(nsOrigin, map.get("APP_PARAM_OVERRIDE_BY_NS").getOrigin());
         assertEquals(nsOrigin, map.get("TENANT_PARAM_OVERRIDE_BY_NS").getOrigin());
 
-        String nsAppOrigin = NS_ORIGIN;
+        String nsAppOrigin = APP_ORIGIN;
         assertEquals(nsAppOrigin, map.get("NS_APP_PARAM").getOrigin());
         assertEquals(nsAppOrigin, map.get("NS_PARAM_OVERRIDE_BY_NS_APP").getOrigin());
         assertEquals(nsAppOrigin, map.get("CLOUD_APP_PARAM_OVERRIDE_BY_NS_APP").getOrigin());
