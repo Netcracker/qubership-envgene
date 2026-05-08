@@ -1,3 +1,24 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "integration_loader"
+version = "0.0.1"
+description = "Provide integration_loader"
+requires-python = "~=3.12"
+classifiers = [
+    "Programming Language :: Python :: 3"
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+integration_loader = [
+    "py.typed"
+]
+
 [tool.black]
 line-length = 120
 skip-string-normalization = true
@@ -14,3 +35,7 @@ show_error_codes = true
 implicit_reexport = false
 warn_unreachable = true
 disallow_incomplete_defs = true
+disallow_any_generics = true
+disallow_untyped_defs = true
+enable_error_code = "truthy-function"
+warn_unused_ignores = true

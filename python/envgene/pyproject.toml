@@ -2,24 +2,32 @@
 requires = ["setuptools>=61"]
 build-backend = "setuptools.build_meta"
 
-
 [project]
 name = "envgenehelper"
 version = "0.0.1"
+description = "Provide helper functions for EnvGene"
 requires-python = "~=3.12"
-
+classifiers = [
+    "Programming Language :: Python :: 3"
+]
 dependencies = [
-    "pydantic~=2.10.6"
+    "pydantic==2.10.6",
+    "jschon==0.11.0",
+    "ruyaml==0.91.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["."]
 
 [tool.setuptools.package-data]
-envgenehelper = ["schemas/*.json"]
+envgenehelper = [
+    "schemas/*.json",
+    "py.typed"
+]
 
 [tool.black]
 line-length = 120
 skip-string-normalization = true
-
 
 [tool.mypy]
 warn_return_any = true
@@ -33,3 +41,7 @@ show_error_codes = true
 implicit_reexport = false
 warn_unreachable = true
 disallow_incomplete_defs = true
+disallow_any_generics = true
+disallow_untyped_defs = true
+enable_error_code = "truthy-function"
+warn_unused_ignores = true
