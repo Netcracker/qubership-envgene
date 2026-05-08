@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from envgenehelper import openYaml, get_empty_yaml, getenv_with_error
-from envgenehelper.yaml_helper import *
+from envgenehelper.yaml_helper import validate_yaml_by_scheme_or_fail
 import jsonschema
 from .logger import logger
 
