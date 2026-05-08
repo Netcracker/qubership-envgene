@@ -175,7 +175,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     envvars["cmdb_url"] = cmdb_url
     envvars["output_dir"] = output_dir
     envvars["render_profiles_dir"] = render_profiles_dir
-    envvars["work_dir"] = work_dir
+    envvars["work_dir"] = str(work_dir)
     render_context = EnvGenerator()
     render_context.render_config_env(env_name, envvars)
     handle_template_override(render_dir)
