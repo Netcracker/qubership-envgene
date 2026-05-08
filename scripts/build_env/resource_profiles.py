@@ -4,6 +4,14 @@ from render_config_env import EnvGenerator
 
 # TODO unit tests
 def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
+    levels = [
+        Path(env_dir) / "Inventory",
+        Path(env_dir).parent,
+        Path(instances_dir),
+    ]
+    
+    rp_dir_names = ["resource_profiles", "rp_override", "Profiles", "parameters"]
+    
     result = {}
     logger.info(f"Finding env specific resource profiles for '{env_dir}' in '{instances_dir}'")
     envDefinitionPath = getEnvDefinitionPath(env_dir)
@@ -15,25 +23,21 @@ def get_env_specific_resource_profiles(env_dir, instances_dir, rp_schema):
     envSepcificResourceProfileNames = inventoryYaml["envTemplate"]["envSpecificResourceProfiles"]
     logger.info(
         f"Environment specific resource profiles for '{envDefinitionPath}' are: \n{dump_as_yaml_format(envSepcificResourceProfileNames)}")
+
     for templateType in envSepcificResourceProfileNames:
-        logger.debug(f"Searching for env specific resource profiles for template '{templateType}'")
-        profileFileName = envSepcificResourceProfileNames[templateType]
-        logger.debug(f"Searching for {profileFileName} for template type {templateType}")
-        resourceProfileFiles = findResourcesBottomTop(env_dir, instances_dir, f"/{profileFileName}.",
-                                                      f"{env_dir}/Profiles/")
-        if len(resourceProfileFiles) == 1:
-            yamlPath = resourceProfileFiles[0]
-            result[templateType] = yamlPath
-            validate_yaml_by_scheme_or_fail(yamlPath, rp_schema)
-            logger.info(f"Env specific resource profile file for '{profileFileName}' added from: '{yamlPath}'")
-        elif len(resourceProfileFiles) > 1:
-            logger.error(
-                f"Duplicate resource profile files with key '{profileFileName}' found in '{instances_dir}': \n\t" + ",\n\t".join(
-                    str(x) for x in resourceProfileFiles))
-            raise ReferenceError(
-                f"Duplicate resource profile files with key '{profileFileName}' found. See logs above.")
-        else:
-            raise ReferenceError(f"Resource profile file with key '{profileFileName}' not found in '{instances_dir}'")
+        profile_file_name = envSepcificResourceProfileNames[templateType]
+        logger.debug(f"Searching for {profile_file_name} for template type {templateType}")
+        shared_rp_paths = [level / name for level in levels for name in rp_dir_names]
+
+        for p in shared_rp_paths:
+            found_path = find_yaml_file(p, profile_file_name, recursively=True)
+            if found_path:
+                logger.info(f"Env specific resource profile file for '{profile_file_name}' found in '{found_path}'")
+                validate_yaml_by_scheme_or_fail(str(found_path), rp_schema)
+                result[templateType] = str(found_path)
+                break
+        if templateType not in result:
+            raise ReferenceError(f"Resource profile file with key '{profile_file_name}' not found.")
     logger.info(f"Env specific resource profiles are: \n{dump_as_yaml_format(result)}")
     return result
 

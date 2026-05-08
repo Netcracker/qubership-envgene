@@ -7,12 +7,12 @@ ARG RUN_JAVA_VERSION=1.3.8
 
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libffi-dev \
-    openssl-dev \
-    python3-dev \
-    cargo \
-    rust \
-    build-base
+    libffi-dev=3.4.4-r3 \
+    openssl-dev=3.1.8-r1 \
+    python3-dev=3.11.14-r0 \
+    cargo=1.76.0-r0 \
+    rust=1.76.0-r0 \
+    build-base=0.5-r3
 
 COPY build_effective_set_generator/build/pip.conf /etc/pip.conf
 COPY build_effective_set_generator/build/requirements.txt /build/requirements.txt
@@ -22,7 +22,7 @@ RUN pip install --no-cache-dir \
     --no-binary cffi \
     --no-binary cryptography \
     -r /build/requirements.txt
-
+    
 RUN pip install --no-cache-dir \
     /python/integration \
     /python/jschon-sort \
@@ -41,7 +41,7 @@ COPY build_effective_set_generator/effective-set-generator/target/*.jar /deploym
 # ═══════════════════════════════════════════════════════════════════════════════════
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
 
-ARG JAVA_PACKAGE=openjdk17-jre-headless
+ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.14_p7-r0
 
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en'
@@ -49,7 +49,7 @@ ENV LANG='en_US.UTF-8' \
 # Install ONLY runtime dependencies (NO dev packages)
 # hadolint ignore=DL3018
 RUN apk add --no-cache \
-    libgcc \
+    libgcc=13.2.1_git20231014-r0 \
     ${JAVA_PACKAGE}
 
 COPY --from=build /python /python

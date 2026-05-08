@@ -362,7 +362,7 @@ DD field → Artifact Reference → [Official Algorithm] → PURL with registry_
 Docker:
 
 ```text
-full_image_name: "artifactorycn.netcracker.com:17004/cloud-core/image:build2"
+full_image_name: "artifactory.qubership.org:17004/cloud-core/image:build2"
   → Apply algorithm with Registry Definition
   → pkg:docker/cloud-core/image@build2?registry_name=artifactory-netcracker
 ```
@@ -370,7 +370,7 @@ full_image_name: "artifactorycn.netcracker.com:17004/cloud-core/image:build2"
 Helm (File registry):
 
 ```text
-full_chart_name: "https://artifactorycn.netcracker.com/nc.helm.charts/chart-1.0.0.tgz"
+full_chart_name: "https://artifactory.qubership.org/nc.helm.charts/chart-1.0.0.tgz"
   → Apply algorithm with Registry Definition
   → pkg:helm/chart@1.0.0?registry_name=artifactory-netcracker
 ```

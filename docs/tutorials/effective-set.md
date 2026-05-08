@@ -146,7 +146,7 @@ The generated files are now committed at `environments/prod-cluster/prod-01/effe
 ```text
 effective-set/
 ├── deployment/
-│   ├── mapping.yml
+│   ├── mapping.yaml
 │   ├── bss/
 │   │   └── Cloud-BSS/
 │   │       └── values/
@@ -178,7 +178,7 @@ effective-set/
 │   ├── credentials.yaml
 │   └── parameters.yaml
 ├── runtime/
-│   ├── mapping.yml
+│   ├── mapping.yaml
 │   ├── bss/
 │   │   └── Cloud-BSS/
 │   │       ├── credentials.yaml
@@ -188,7 +188,7 @@ effective-set/
 │           ├── credentials.yaml
 │           └── parameters.yaml
 └── cleanup/
-    ├── mapping.yml
+    ├── mapping.yaml
     ├── bss/
     │   ├── credentials.yaml
     │   └── parameters.yaml
@@ -197,7 +197,7 @@ effective-set/
         └── parameters.yaml
 ```
 
-`mapping.yml` appears in the `deployment/`, `runtime/`, and `cleanup/` contexts. It maps each namespace name to its folder path within the context, so consumers can locate the right directory without inferring naming conventions. For example, a consumer looking up parameters for the `prod-01-bss` namespace reads `mapping.yml` to find the folder `bss/`.
+`mapping.yaml` appears in the `deployment/`, `runtime/`, and `cleanup/` contexts. It maps each namespace name to its folder path within the context, so consumers can locate the right directory without inferring naming conventions. For example, a consumer looking up parameters for the `prod-01-bss` namespace reads `mapping.yaml` to find the folder `bss/`.
 
 The `per-service-parameters/` subfolder name is application name normalized to comply with Kubernetes naming rules. `Cloud-BSS` becomes `cloud-bss-7b`; `cloud-oss` is already lowercase and stays unchanged. [Section 4.1](#41-resource-sizing-in-per-service-parameters) explains this in detail.
 
@@ -273,16 +273,18 @@ MANAGED_BY: "argocd" #envgene default
 
 Each comment tells you where to look:
 
-| Comment               | Source object           | Where to look in the Instance                       |
-|-----------------------|-------------------------|-----------------------------------------------------|
-| `#tenant`             | Tenant object           | `tenant.yml` or its ParameterSets                   |
-| `#cloud`              | Cloud object            | `cloud.yml` or its ParameterSets                    |
-| `#namespace`          | Namespace object        | `Namespaces/bss/namespace.yml` or its ParameterSets |
-| `#application`        | Application object      | `Namespaces/bss/Applications/Cloud-BSS.yml`         |
-| `#sbom`               | Application SBOM        | SBOM in `sboms/` - not directly editable            |
-| `#envgene calculated` | Computed by EnvGene     | Not editable - derived value                        |
-| `#envgene default`    | EnvGene built-in        | Internal default - not configurable                 |
-| `#custom params`      | `CUSTOM_PARAMS` var     | Pipeline variable - highest priority                |
+| Comment                | Source object           | Where to look in the Instance                               |
+|------------------------|-------------------------|-------------------------------------------------------------|
+| `#tenant`              | Tenant object           | `tenant.yml` or its ParameterSets                           |
+| `#cloud`               | Cloud object            | `cloud.yml` or its ParameterSets                            |
+| `#namespace`           | Namespace object        | `Namespaces/<namespace>/namespace.yml` or its ParameterSets |
+| `#application`         | Application object      | `Namespaces/<namespace>/Applications/<application>.yml`     |
+| `#sbom`                | Application SBOM        | SBOM in `sboms/` - not directly editable                    |
+| `#composite-structure` | Composite Structure obj | `composite_structure.yml`                                   |
+| `#bg-domain`           | BG Domain object        | `bg_domain.yml`                                             |
+| `#envgene calculated`  | Computed by EnvGene     | Not editable - derived value                                |
+| `#envgene default`     | EnvGene built-in        | Internal default - not configurable                         |
+| `#custom params`       | `CUSTOM_PARAMS` var     | Pipeline variable - highest priority                        |
 
 For the complete list of comment types see the [Calculator CLI Reference](../features/calculator-cli.md#version-20-traceability-comments).
 

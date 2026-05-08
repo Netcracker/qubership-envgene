@@ -1,0 +1,77 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "separateMajorMinor": false,
+  "separateMinorPatch": false,
+  "prConcurrentLimit": 1,
+  "branchConcurrentLimit": 1,
+  "lockFileMaintenance": {
+    "enabled": false
+  },
+  "enabledManagers": ["dockerfile", "pip_requirements", "custom.regex", "maven"],
+  "hostRules": [
+    {
+      "description": "GitHub Packages Maven (credentials: Mend hostRules / PAT with read:packages)",
+      "hostType": "maven",
+      "matchHost": "maven.pkg.github.com"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": false
+  },
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Alpine apk pins in Dockerfiles (Repology alpine_3_19)",
+      "managerFilePatterns": ["(^|/)Dockerfile$"],
+      "matchStrings": [
+        "(?:^|\\r?\\n)\\s+(?<pkg>[a-z0-9][a-z0-9+._-]*)=(?<currentValue>[^\\s\\\\]+)\\s*(?:\\\\)?\\s*(?:\\r?\\n|$)",
+        "(?:^|\\r?\\n)ARG JAVA_PACKAGE=(?<pkg>[^=]+)=(?<currentValue>\\S+)\\s*(?:\\r?\\n|$)"
+      ],
+      "datasourceTemplate": "repology",
+      "packageNameTemplate": "alpine_3_19/{{{pkg}}}",
+      "versioningTemplate": "loose"
+    }
+  ],
+  "semanticCommits": "disabled",
+  "commitMessagePrefix": "feat:",
+  "schedule": ["* * 1,15 * *"],
+  "packageRules": [
+    {
+      "description": "Netcracker Qubership JARs published to GitHub Packages by CI",
+      "matchManagers": ["maven"],
+      "matchPackagePatterns": ["^org\\.qubership\\.cloud\\.devops(\\.cli)?:"],
+      "registryUrls": ["https://maven.pkg.github.com/Netcracker/qubership-envgene"]
+    },
+    {
+      "description": "Jenkins plugin coordinates (repo.jenkins-ci.org)",
+      "matchManagers": ["maven"],
+      "matchPackagePatterns": ["^io\\.jenkins\\.plugins:"],
+      "registryUrls": ["https://repo.jenkins-ci.org/public"]
+    },
+    {
+      "description": "Strict patch only: no minor or major upgrades (all managers)",
+      "matchUpdateTypes": ["minor", "major"],
+      "enabled": false
+    },
+    {
+      "description": "Docker: skip digest bumps (same tag, new image)- not semver patch",
+      "matchManagers": ["dockerfile"],
+      "matchUpdateTypes": ["digest"],
+      "enabled": false
+    },
+    {
+      "description": "Do not bump cython (constraint.txt uses cython<3)",
+      "matchPackageNames": ["cython"],
+      "enabled": false
+    },
+    {
+      "description": "One grouped PR for Docker, Python, Alpine pins, Maven",
+      "matchManagers": ["dockerfile", "pip_requirements", "custom.regex", "maven"],
+      "groupName": "qubership-envgene-deps",
+      "commitMessageAction": "update",
+      "commitMessageTopic": "dependencies",
+      "commitMessageExtra": " via Renovate"
+    }
+  ]
+}

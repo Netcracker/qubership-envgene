@@ -136,7 +136,9 @@ public class BomCommonUtils {
         serviceParams.put("TAG", dockerTag != null ? dockerTag : "");
         serviceParams.put("DOCKER_TAG", imageName != null ? imageName : "");
         serviceParams.put("BRANCH", gitBranch);
-        serviceParams.put("IMAGE_REPOSITORY", String.format("%s/%s/%s", registryConfigurationService.getDockerRepoForService(registrySummaryDTO), dockerRepo, imageName));
+        serviceParams.put("IMAGE_REPOSITORY", Stream.of(registryConfigurationService.getDockerRepoForService(registrySummaryDTO), dockerRepo, imageName)
+                .filter(s -> s != null && !s.isEmpty())
+                .collect(Collectors.joining("/")));
         if (isFacadeGateway) {
             serviceParams.put("OPENSHIFT_SERVICE_NAME", component.getName() + "v1");
             serviceParams.put("DEPLOYMENT_RESOURCE_NAME", component.getName() + "v1");
