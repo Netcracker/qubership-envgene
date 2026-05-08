@@ -304,7 +304,7 @@ def has_external_creds(credsMap):
 
 def copy_creds_to_env_creds_file(env_dir, credsYamlContent, comment, credsSchema, isExternalCredEnv):
     envCredentialsPath = f"{env_dir}/Credentials/credentials.yml"
-    if Path(envCredentialsPath).exists :
+    if Path(envCredentialsPath).exists() :
         envCredsYaml = openYaml(envCredentialsPath)
     else:
         envCredsYaml = yaml.load("{}")
