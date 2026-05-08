@@ -286,7 +286,7 @@ public class CliParameterParser {
                     originalNamespace,
                     k8TokenMap,
                     customParams);
-            validateParameterBundle(parameterBundle, tenantName, originalNamespace);
+            validateParameterBundle(parameterBundle, cloudName, originalNamespace);
             ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap);
             createCleanupParams(parameterBundle, cleanupParameterBundle);
         } else {
@@ -296,7 +296,7 @@ public class CliParameterParser {
                     appName,
                     deployerInputs,
                     originalNamespace);
-            validateParameterBundle(parameterBundle, tenantName, originalNamespace);
+            validateParameterBundle(parameterBundle, cloudName, originalNamespace);
         }
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
@@ -419,8 +419,7 @@ public class CliParameterParser {
             if (isNullValue(value)) {
                 throw new IllegalStateException(
                         String.format(
-                                "Error while validating parameters:\n  %s(%s).%s.%s - is not set",
-                                entityType,
+                                "Error while validating parameters:%n  %s.%s.%s - is not set",
                                 entityName,
                                 paramType,
                                 key
