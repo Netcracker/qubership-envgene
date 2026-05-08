@@ -3,9 +3,8 @@ from os import getenv, path
 import json
 from pathlib import Path
 
-from envgenehelper import openYaml, get_empty_yaml, getenv_with_error
+from envgenehelper import openYaml, get_empty_yaml, getenv_with_error, validate_cred_types
 from envgenehelper.yaml_helper import *
-from envgenehelper.creds_helper import validate_cred_types
 import jsonschema
 from .logger import logger
 
