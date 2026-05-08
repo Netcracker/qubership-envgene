@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "integration_loader"
 version = "0.0.1"
 description = "Provide integration_loader"
-requires-python = ">=3.8"
+requires-python = "~=3.12"
 classifiers = [
     "Programming Language :: Python :: 3"
 ]

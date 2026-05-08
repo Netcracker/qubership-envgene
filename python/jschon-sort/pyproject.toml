@@ -7,7 +7,7 @@ name = "jschon-sort"
 version = "0.2.0"
 description = "Sorts a JSON or YAML document to match a JSON Schema's order of properties"
 readme = {file = "README.md", content-type = "text/markdown"}
-requires-python = ">=3.8"
+requires-python = "~=3.12"
 maintainers = [
     {name = "Ilya Konstantinov", email = "ilya.konstantinov@gmail.com"}
 ]
