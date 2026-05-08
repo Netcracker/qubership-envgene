@@ -40,13 +40,13 @@
     {
       "description": "Netcracker Qubership JARs published to GitHub Packages by CI",
       "matchManagers": ["maven"],
-      "matchPackagePatterns": ["^org\\.qubership\\.cloud\\.devops(\\.cli)?:"],
+      "matchPackageNames": ["/^org\\.qubership\\.cloud\\.devops(\\.cli)?:/"],
       "registryUrls": ["https://maven.pkg.github.com/Netcracker/qubership-envgene"]
     },
     {
       "description": "Jenkins plugin coordinates (repo.jenkins-ci.org)",
       "matchManagers": ["maven"],
-      "matchPackagePatterns": ["^io\\.jenkins\\.plugins:"],
+      "matchPackageNames": ["/^io\\.jenkins\\.plugins:/"],
       "registryUrls": ["https://repo.jenkins-ci.org/public"]
     },
     {
