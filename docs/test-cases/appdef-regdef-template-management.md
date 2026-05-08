@@ -33,12 +33,12 @@ Pre-requisites:
 
 1. Set `app_reg_def_mode: "local"` in `config.yml`
 2. Run the environment build process
-3. Examine the generated AppDef file in the environment's AppDefs directory
+3. Examine the generated AppDef file in the instance repository at root level /genDefs/AppDefs directory
 
 **Expected Results**:
 
 - The AppDef template is discovered and rendered
-- The rendered AppDef file is saved to the environment's AppDefs directory
+- The rendered AppDef file is saved to the root level with the name /genDefs/AppDefs directory
 - The rendered file contains the expected content based on the template
 
 **Notes**:
@@ -59,12 +59,12 @@ Pre-requisites:
 
 1. Set `app_reg_def_mode: "local"` in `config.yml`
 2. Run the environment build process
-3. Examine the generated RegDef file in the environment's RegDefs directory
+3. Examine the generated RegDef file in the root level with the name /genDefs/RegDefs directory
 
 **Expected Results**:
 
 - The RegDef template is discovered and rendered
-- The rendered RegDef file is saved to the environment's RegDefs directory
+- The rendered RegDef file is saved to the root level with the name /genDefs/RegDefs directory
 - The rendered file contains the expected content based on the template
 
 **Notes**:

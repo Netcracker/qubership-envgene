@@ -1,13 +1,13 @@
 # EnvGene Configuration
 
 - [EnvGene Configuration](#envgene-configuration)
-  - [`env_definition.yml`](#env_definitionyml)
-  - [`config.yml`](#configyml)
-  - [`integration.yml`](#integrationyml)
-  - [`deployer.yml`](#deployeryml)
-  - [`appregdef_config.yaml`](#appregdef_configyaml)
+  - `[env_definition.yml](#env_definitionyml)`
+  - `[config.yml](#configyml)`
+  - `[integration.yml](#integrationyml)`
+  - `[deployer.yml](#deployeryml)`
+  - `[appregdef_config.yaml](#appregdef_configyaml)`
   - [Deprecated](#deprecated)
-    - [`registry.yml`](#registryyml)
+    - `[registry.yml](#registryyml)`
 
 ## `env_definition.yml`
 
@@ -25,9 +25,9 @@ Environment Inventory. The inventory file of a specific Environment. Contains th
 Mandatory for every Environment. Created and updated manually.
 
 Located in the Instance repository at: `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
-Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
+Pass the `<cluster-name>/<env-name>` to the `[ENV_NAMES](/docs/instance-pipeline-parameters.md#env_names)` input parameter when executing Environment operations
 
-[`env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
+`[env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
 
 ```yaml
 # Mandatory
@@ -201,7 +201,7 @@ envTemplate:
 The primary system configuration file
 Located at `/configuration/config.yml`
 
-[`config.yml` JSON Schema](/schemas/config.schema.json)
+`[config.yml` JSON Schema](/schemas/config.schema.json)
 
 ```yaml
 # Optional. Default value - `true`
@@ -242,7 +242,7 @@ sbom_retention:
 
 System Configuration File for External Integrations
 
-[`integration.yml` JSON Schema](/schemas/integration.schema.json)
+`[integration.yml` JSON Schema](/schemas/integration.schema.json)
 
 ```yaml
 # Optional
@@ -285,7 +285,7 @@ Located at:
 - `/configuration/deployer.yml`
 - `/environments/<cluster-name>/<env-name>/app-deployer/deployer.yml`
 
-[`deployer.yml` JSON Schema](/schemas/deployer.schema.json)
+`[deployer.yml` JSON Schema](/schemas/deployer.schema.json)
 
 ```yaml
 # Unique name. Must be unique within a single repository
@@ -312,17 +312,16 @@ This file is used to set parameters context for [Application Definition](/docs/e
 
 The parameters specified in this configuration file are used with macros:
 
-- [`appdefs.overrides`](/docs/template-macros.md#appdefsoverrides)
-- [`regdefs.overrides`](/docs/template-macros.md#regdefsoverrides)
+- `[appdefs.overrides](/docs/template-macros.md#appdefsoverrides)`
+- `[regdefs.overrides](/docs/template-macros.md#regdefsoverrides)`
 
 For more info, see [Application and Registry Definition](/docs/features/app-reg-defs.md).
 
 Location:
 
 - `/configuration/appregdef_config.yaml` - config for all Environments in the Instance repository
-- `/environments/<cluster-name>/configuration/appregdef_config.yaml` - config for all Environments in a specific cluster
 
-If both repository-wide and cluster-wide configuration files are present, then when rendering an Environment for a cluster that has its own cluster-wide config, the cluster-wide config is used and the repository-wide config is ignored.
+When rendering Application and Registry Definitions, EnvGene reads configuration only from the repository-wide file /configuration/appregdef_config.yaml. Cluster-specific appregdef_config.yaml files are not supported.
 
 [appregdef_config.yaml JSON Schema](/schemas/appregdef-config.schema.json)
 
@@ -364,7 +363,7 @@ Replacement: [Artifact Definitions](/docs/envgene-objects.md#artifact-definition
 
 Location: `/configuration/registry.yml`
 
-[`registry.yml` JSON Schema](/schemas/registry.schema.json)
+`[registry.yml` JSON Schema](/schemas/registry.schema.json)
 
 ```yaml
 <registry-name>:
@@ -399,3 +398,4 @@ artifactory:
   snapshotTemplateRepository: "https://artifactory.qubership.org/mvn.template-snapshot"
   stagingTemplateRepository: "https://artifactory.qubership.org/mvn.template-staging"
 ```
+
