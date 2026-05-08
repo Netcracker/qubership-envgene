@@ -15,7 +15,10 @@ from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotatio
 
 SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 APPDEF_SCHEMA = str(SCHEMAS_DIR / "appdef.schema.json")
+SECRET_SCHEMA = str(SCHEMAS_DIR / "secret-stores.schema.json")
+CRED_SCHEMA = str(SCHEMAS_DIR / "credential.schema.json")
 TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
+EXTERNAL_CRED_COMMENT="external credential template"
 
 yml = create_yaml_processor()
 
@@ -430,6 +433,7 @@ class EnvGenerator:
             self.render_from_file_to_file(Template(composite_structure).render(self.ctx.as_dict()), str(cs_file))
     
     def generate_external_cred(self):
+        #render external creds
         external_credential_template = self.ctx.current_env_template.get("external_credential_template")
         if not external_credential_template:
             return
@@ -442,10 +446,15 @@ class EnvGenerator:
                    credConfig["remoteRefPath"] = default_remote_path
         rendered_external_creds = render_obj_by_context(external_creds, self.ctx)
         logger.debug(f"Rendered external credentials is: \n{rendered_external_creds}")
-        credYamlPath = self.ctx.render_extcred_dir +"/rendered-external-creds.yml"
-        writeYamlToFile(credYamlPath, rendered_external_creds)
+
+        #validate secret file
+        secretStoreFile = f"{self.ctx.work_dir}/configuration/secret-stores.yml"
+        secretStoreMap = openYaml(secretStoreFile)
+        validateSchema(secretStoreMap, schema_path=SECRET_SCHEMA)
+
+        #copy rendred creds to env creds file
+        copy_creds_to_env_creds_file(self.ctx.current_env_dir, rendered_external_creds, EXTERNAL_CRED_COMMENT, CRED_SCHEMA, True)
         self.isExternalCredEnv = True
-        logger.info(f"External cred env is set as {self.isExternalCredEnv}")
 
     def get_rendered_target_path(self, template_path: Path) -> Path:
         path_str = str(template_path)

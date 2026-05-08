@@ -1,14 +1,13 @@
 from pathlib import Path
 import os
 from envgenehelper import *
-from typing import Optional, List
+from typing import Optional, Set
 
 #const
 CRED_TYPE_SECRET="secret"
 CRED_TYPE_USERPASS="usernamePassword"
 CRED_TYPE_VAULT="vaultAppRole"
 CRED_TYPE_EXTERNAL="external"
-EXTERNAL_CRED_COMMENT="external credential template"
 
 def createCredDefinition(credId, credType) :
     cred = {}
@@ -25,11 +24,11 @@ def processDictAndAppend(params, credsList, tenantName, cloudName, namespaceName
     for key, value in params.items():
         processSingleParam(key, value, credsList, tenantName, cloudName, namespaceName, comment, externalCredIds)
 
-def processSingleParam(key, value, credsList, tenantName, cloudName, namespaceName, comment, externalCredIds: Optional[List[str]] = None):
+def processSingleParam(key, value, credsList, tenantName, cloudName, namespaceName, comment, externalCredIds: Optional[Set[str]] = None):
     if isinstance(value, dict):
         cred_id = extract_external_cred(value)
         if cred_id and externalCredIds is not None:
-            externalCredIds.append(cred_id)
+            externalCredIds.add(cred_id)
             return
         processDictAndAppend(value, credsList, tenantName, cloudName, namespaceName, comment, externalCredIds)
     elif isinstance(value, list): # if is array, than iterate
@@ -42,7 +41,7 @@ def processSingleParam(key, value, credsList, tenantName, cloudName, namespaceNa
 def checkCredAndAppend(credName, credsList, secretType, comment="", isExternalCredEnv=False, externalCredIds=None):
     if (credName):
         if isExternalCredEnv and externalCredIds is not None:
-            externalCredIds.append(credName)
+            externalCredIds.add(credName)
             return
         appendCredList([createCredDefinition(credName, secretType)], credsList, comment)
     return credsList
@@ -63,21 +62,17 @@ def getTenantCreds(tenantContent, tenantName, isExternalCredEnv=False, externalC
     processParametersAndAppend("environmentParameters", tenantContent["globalE2EParameters"], creds, tenantName, comment=tenantComment)
     return creds
 
-def getExternalCreds(extCreds, envCredsMap, extCredIds, notFoundCred):
+def getExternalCreds(envCredsMap, extCredIds):
     logger.info(f"External cred ids found across entities are {extCredIds}")
-    count = 0
+    notFoundCred = []
     for credName in extCredIds:
-        if credName in extCreds:
-            credData = extCreds[credName]
-            logger.info(f"credName is {credName}")
-            store_value_to_yaml(envCredsMap, credName, credData, EXTERNAL_CRED_COMMENT)
-            count = count+1
-        elif credName in envCredsMap:
-            continue
-        else:
-            if credName not in notFoundCred:
+        if credName not in envCredsMap:
                 notFoundCred.append(credName)
-    return count
+    if notFoundCred:
+        raise ValueError(
+                f"Following external credentials:\n {notFoundCred}\n referred in environment are not found in any external credential source")
+    logger.info(f'{len(extCredIds) - len(notFoundCred)} external creds processed from environment')
+
 
 def getCloudCreds(cloudContent, tenantName, cloudName, isExternalCredEnv=False, externalCredIds=None):
     creds = []
@@ -224,16 +219,14 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir, isExternalCredEnv) :
     writeYamlToFile(credYamlPath, credsYaml)
     return credsYaml
 
-def create_credentials(envDir, envInstancesDir, instancesDir, workDir, env_name, isExternalCredEnv) :
-    logger.info(f"Start to create credentials: envDir={envDir}, envInstancesDir={envInstancesDir}, instancesDir={instancesDir} workDir={workDir}")
+def create_credentials(envDir, envInstancesDir, instancesDir, isExternalCredEnv) :
+    logger.info(f"Start to create credentials: envDir={envDir}, envInstancesDir={envInstancesDir}, instancesDir={instancesDir}")
     logger.info(f"Creating credentials for environment directory: {envDir}")
     credsSchema="schemas/credential.schema.json"
     resultingCreds = []
     #tenant
     tenantFileName = envDir+"/tenant.yml"
-
-    credYamlPath = envDir + "/Credentials/credentials.yml"
-    externalCredIds = []
+    externalCredIds = set()
     logger.info(f"Processing tenant")
     tenantYaml = openYaml(tenantFileName)
     tenantName = tenantYaml["name"]
@@ -288,37 +281,17 @@ def create_credentials(envDir, envInstancesDir, instancesDir, workDir, env_name,
         resultingCreds = mergeResult["mergedCreds"]
 
     #store credentials
+    credYamlPath = envDir + "/Credentials/credentials.yml"
     mergeAndSaveYaml(credYamlPath, resultingCreds, isExternalCredEnv)
     # process shared credentials
     envCredsMap = mergeSharedCreds(credYamlPath, envInstancesDir, instancesDir, isExternalCredEnv)
-    #iterate through rendered External Credentials and create cred definition
+    #process external credentials
     if isExternalCredEnv:
-        logger.info(f"Found environment with only external creds")
-        processExternalCreds(workDir, env_name, credYamlPath, envCredsMap, externalCredIds)
+        processExternalCreds(credYamlPath, envCredsMap, externalCredIds)
 
     beautifyYaml(credYamlPath, credsSchema)
 
-def processExternalCreds(workDir, env_name, credYamlPath, envCredsMap, externalCredIds):
-    logger.info(f"Processing external credentials")
-    notFoundCred = []
-    externalCredsFile = f"{workDir}/tmp/ext-creds/{env_name}/rendered-external-creds.yml"
-    extCredsMap = openYaml(externalCredsFile)
-    extCredsCount = getExternalCreds(extCredsMap, envCredsMap, externalCredIds, notFoundCred)
-    if notFoundCred:
-        raise ValueError(
-            f"Following external credentials \n"
-            f"{', '.join(map(str, notFoundCred))} "
-            f"\n referred in parameters are not found in any external credential source"
-            )
-    logger.info(f'{extCredsCount} external creds added from external template {externalCredsFile}')
-    if extCredsCount != len(extCredsMap):
-        raise ReferenceError(f"Not all credentials from external templates are used");
-    secretSchema = "schemas/secret-stores.schema.json"
-    secretStoreFile = workDir+"/configuration/secret-stores.yml"
-    secretStoreMap = openYaml(secretStoreFile)
-    validateSchema(secretStoreMap, schema_path=secretSchema)
+def processExternalCreds(credYamlPath, envCredsMap, externalCredIds):
+    logger.info(f"Processing external credentials for external only environment")
+    getExternalCreds(envCredsMap, externalCredIds)
     writeYamlToFile(credYamlPath, envCredsMap)
-
-
-
-
