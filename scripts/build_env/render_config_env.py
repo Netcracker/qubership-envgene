@@ -52,6 +52,7 @@ class Context(BaseModel):
     render_parameters_dir: Optional[str] = ''
     env_vars: OrderedDict = Field(default_factory=OrderedDict)
     render_profiles_dir: Optional[str] = ''
+    work_dir: Optional[str] = ''
 
     start_time: datetime | None = Field(default=None, exclude=True)
     end_time: datetime | None = Field(default=None, exclude=True)
