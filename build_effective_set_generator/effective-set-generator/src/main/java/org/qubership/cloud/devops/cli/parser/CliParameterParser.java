@@ -73,6 +73,7 @@ public class CliParameterParser {
     private final FileDataConverter fileDataConverter;
     private final SharedData sharedData;
     private final FileSystemUtils fileSystemUtils;
+    private static final String NULL_VALUE = "envgeneNullValue";
 
 
     @Inject
@@ -285,6 +286,7 @@ public class CliParameterParser {
                     originalNamespace,
                     k8TokenMap,
                     customParams);
+            validateParameterBundle(parameterBundle, tenantName, originalNamespace);
             ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap);
             createCleanupParams(parameterBundle, cleanupParameterBundle);
         } else {
@@ -294,7 +296,7 @@ public class CliParameterParser {
                     appName,
                     deployerInputs,
                     originalNamespace);
-
+            validateParameterBundle(parameterBundle, tenantName, originalNamespace);
         }
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
@@ -390,6 +392,47 @@ public class CliParameterParser {
         if (inputData.getCloudDTO() == null) {
             throw new NotFoundException(String.format(ENTITY_NOT_FOUND, "Cloud"));
         }
+    }
+    private void validateParameterBundle(ParameterBundle bundle,
+                                         String cloudName,
+                                         String namespaceName) {
+
+        validateMap("cloud", cloudName, "deployParameters", bundle.getDeployParams());
+        validateMap("namespace", namespaceName, "deployParameters", bundle.getDeployParams());
+
+        validateMap("cloud", cloudName, "e2eParameters", bundle.getE2eParams());
+        validateMap("namespace", namespaceName, "e2eParameters", bundle.getE2eParams());
+
+        validateMap("cloud", cloudName, "technicalConfigurationParameters", bundle.getConfigServerParams());
+        validateMap("namespace", namespaceName, "technicalConfigurationParameters", bundle.getConfigServerParams());
+    }
+
+    private void validateMap(String entityType,
+                             String entityName,
+                             String paramType,
+                             Map<String, Object> params) {
+
+        if (MapUtils.isEmpty(params)) {
+            return;
+        }
+        params.forEach((key, value) -> {
+            if (isNullValue(value)) {
+                throw new IllegalStateException(
+                        String.format(
+                                "Error while validating parameters:\n  %s(%s).%s.%s - is not set",
+                                entityType,
+                                entityName,
+                                paramType,
+                                key
+                        )
+                );
+            }
+        });
+    }
+
+    private boolean isNullValue(Object value) {
+        return value instanceof String &&
+                NULL_VALUE.equalsIgnoreCase((String) value);
     }
 
 }
