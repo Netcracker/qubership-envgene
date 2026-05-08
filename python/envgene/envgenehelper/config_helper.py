@@ -96,3 +96,4 @@ def get_envgene_config_yaml():
     validate_config_file(config)
     logger.debug(f"Config content: {config}")
     return config
+

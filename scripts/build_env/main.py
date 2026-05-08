@@ -101,12 +101,13 @@ def handle_template_override(render_dir):
         deleteFile(file)
 
 
-def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, output_dir, work_dir):
+def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, all_instances_dir, output_dir, work_dir, env_dir):
     # defining folders that will be used during generation
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     render_dir = f"{base_dir}/tmp/render"
     render_parameters_dir = f"{base_dir}/tmp/parameters_templates"
     render_profiles_dir = f"{base_dir}/tmp/resource_profiles"
+
 
     namespaces_path = get_namespaces_path()
     if check_dir_exists(str(namespaces_path.absolute())):
@@ -175,17 +176,18 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     envvars["cmdb_url"] = cmdb_url
     envvars["output_dir"] = output_dir
     envvars["render_profiles_dir"] = render_profiles_dir
+    envvars["work_dir"] = work_dir
     render_context = EnvGenerator()
     render_context.render_config_env(env_name, envvars)
     handle_template_override(render_dir)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
                                                                            ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs)
+              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs, render_context.isExternalCredEnv)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
                                                      output_dir)
 
-    return resulting_dir
+    return resulting_dir, render_context.isExternalCredEnv
 
 
 def get_duplicate_names(param_files):
@@ -286,9 +288,9 @@ def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir
     env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
     logger.info(f"Environment {env_name} directory is {env_dir}")
 
-    resulting_env_dir = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
-                                          output_dir, work_dir)
-    create_credentials(resulting_env_dir, env_dir, all_instances_dir)
+    resulting_env_dir, isExternalCredEnv = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
+                                          output_dir, work_dir, env_dir)
+    create_credentials(resulting_env_dir, env_dir, all_instances_dir, isExternalCredEnv)
     apply_ns_build_filter()
 
 
