@@ -132,6 +132,25 @@ Available types: `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, `CAUTION`.
 
 ---
 
+#### Line Length
+
+**Prose lines wrap at 120 characters.**
+
+Excluded from this limit:
+
+- Table rows (lines starting with `|`)
+- Code blocks (fenced)
+- URLs and other continuous tokens longer than 120 characters
+
+**Scope:** Applies to **new and modified content only**. Existing content that exceeds 120 characters
+is not affected by this rule and does not need reformatting unless the surrounding lines are being
+edited for other reasons.
+
+**Why:** Long prose lines complicate diff review and side-by-side comparison. 120 leaves room for
+meaningful wrap without forcing tight columns.
+
+---
+
 #### Tables
 
 **CRITICAL: All Markdown tables MUST have vertically aligned pipe characters (`|`).**
@@ -204,6 +223,27 @@ Available types: `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, `CAUTION`.
 | `/environments/<cluster>/<env>/Inventory/parameters/` | Environment-specific | One environment only            |
 | `/environments/<cluster>/parameters/`                 | Cluster-wide         | All environments in cluster     |
 | `/environments/parameters/`                           | Global               | Multiple clusters               |
+```
+
+##### Delimiter Row Style
+
+The delimiter row uses `|---|` form - no spaces between `|` and `-`. Dashes are padded to match
+column width for vertical alignment.
+
+❌ **INCORRECT:**
+
+```markdown
+| Field    | Required |
+| -------- | -------- |
+| `name`   | yes      |
+```
+
+✅ **CORRECT:**
+
+```markdown
+| Field    | Required |
+|----------|----------|
+| `name`   | yes      |
 ```
 
 ---
