@@ -95,6 +95,31 @@ EnvGene searches these locations - from bottom to top - and uses the first match
 
 ---
 
+#### Semicolons
+
+**Avoid semicolons in prose. Split into separate sentences instead.**
+
+❌ **AVOID:**
+
+```markdown
+Native callouts render with icons; bold-text variants are plain blockquotes.
+```
+
+✅ **PREFER:**
+
+```markdown
+Native callouts render with icons. Bold-text variants are plain blockquotes.
+```
+
+**Scope:** Applies to **new and modified content only**. Existing content using semicolons is
+not affected by this rule and does not need rewriting unless the surrounding lines are being
+edited for other reasons.
+
+**Why:** Two short sentences read more naturally on screen than one compound sentence linked by
+a semicolon. Also reduces AI-stylized rhythm in generated text.
+
+---
+
 #### Callouts (Notes, Warnings, Tips)
 
 **CRITICAL: Always use GitHub-flavored Markdown native callout syntax, not bold-text workarounds.**
@@ -128,7 +153,8 @@ Available types: `NOTE`, `TIP`, `IMPORTANT`, `WARNING`, `CAUTION`.
 > Setting `mergeEnvSpecificResourceProfiles: false` replaces the template override entirely.
 ```
 
-**Why:** Native callouts render with icons and colour highlighting on GitHub and other renderers; bold-text variants are plain blockquotes.
+**Why:** Native callouts render with icons and colour highlighting on GitHub and other renderers.
+Bold-text variants are plain blockquotes.
 
 ---
 
@@ -248,6 +274,29 @@ column width for vertical alignment.
 
 ---
 
+#### Avoid AI-Stylistics
+
+**Documentation is written for humans, not stylized like AI output.**
+
+Common AI-stylistics to avoid:
+
+- Em dashes (`—`) and en dashes (`–`). See [Dashes](#dashes).
+- Semicolons. See [Semicolons](#semicolons).
+- Filler intensifiers: `simply`, `just`, `easily`, `truly`, `incredibly`, `seamlessly`,
+  `robust`, `comprehensive`, `cutting-edge`, `leverage`, `delve`, `tapestry`, `landscape`.
+- Throat-clearing openings: `It's worth noting that...`, `It's important to remember...`,
+  `Let's explore...`, `In this section, we'll discuss...`.
+- `Not only X, but also Y` and `Not just X, but Y` patterns.
+- Empty closings: `In conclusion`, `To summarize`, `As we've seen`.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** AI-generated text leans on these patterns heavily. Their absence makes documentation
+feel more direct and trustworthy. Read sentences aloud. If it sounds like a press release or a
+chatbot, rewrite.
+
+---
+
 ## Object Examples in Documentation
 
 ### Source of Truth for Object Schemas
@@ -262,7 +311,9 @@ The two authoritative sources are:
 #### Rules
 
 1. **Before writing any YAML/JSON example** for an EnvGene object, read the corresponding entry in `docs/envgene-objects.md` AND the matching schema file under `schemas/`.
-2. **Validate every example against the schema**: all fields marked `"required"` in the schema must be present; no fields may be included that do not exist in the schema (unless `additionalProperties: true`).
+2. **Validate every example against the schema**: all fields marked `"required"` in the schema
+   must be present. No fields may be included that do not exist in the schema (unless
+   `additionalProperties: true`).
 3. **Do not guess**: if an object is not described in `docs/envgene-objects.md` and has no schema file, write explicitly:
 
    > No schema or description found for this object in `docs/envgene-objects.md` or `schemas/`. Cannot provide a validated example.
@@ -275,7 +326,7 @@ The two authoritative sources are:
 In tutorials and how-to guides, show only the **relevant part** of the object, not the full structure. Use `# ...` comments to signal omitted fields so the reader knows the snippet is intentionally incomplete.
 
 - **Reference docs** → show the full object.
-- **Tutorials / how-to guides** → show only the fields being explained; collapse the rest with `# ...`.
+- **Tutorials / how-to guides** → show only the fields being explained. Collapse the rest with `# ...`.
 
 This keeps examples focused on the concept being taught and avoids becoming outdated when unrelated fields change.
 
