@@ -173,11 +173,11 @@ Legacy repository may contain:
 
 ```bash
 git-system-follower install <path_to_template_package_image> \
--r <project_template_repository_path> \
--b <project_template_repository_branch> \
--t <gitlab_token> \
---extra env_template_artifact_name <template-artifact-name> no-masked \
---extra group_id <group_id> no-masked
+  -r <project_template_repository_path> \
+  -b <project_template_repository_branch> \
+  -t <gitlab_token> \
+  --extra env_template_artifact_name <template-artifact-name> no-masked \
+  --extra group_id <group_id> no-masked
 ```
 
 **Steps:**
