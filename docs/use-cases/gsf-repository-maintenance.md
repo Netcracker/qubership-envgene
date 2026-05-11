@@ -4,10 +4,10 @@
   - [Overview](#overview)
   - [Template Repository Maintenance via GSF](#template-repository-maintenance-via-gsf)
     - [UC-GSF-TMP-1: Initialize Template Repository via GSF](#uc-gsf-tmp-1-initialize-template-repository-via-gsf)
-      - [Initialization extra Parameter Rules](#initialization-extra-parameter-rules)
+      - [Initialization extra parameter rules](#initialization-extra-parameter-rules)
     - [UC-GSF-TMP-2: Upgrade Template Repository via GSF](#uc-gsf-tmp-2-upgrade-template-repository-via-gsf)
-    - [UC-GSF-TMP-2.1: Upgrade Legacy Template Repository (versions before 2.85.0)](#uc-gsf-tmp-21-upgrade-legacy-template-repository-versions-before-2850)
-    - [Behavior Matrix](#behavior-matrix)
+    - [UC-GSF-TMP-2.1: Upgrade legacy Template Repository (versions before 2.85.0)](#uc-gsf-tmp-21-upgrade-legacy-template-repository-versions-before-2850)
+    - [Behavior matrix](#behavior-matrix)
     - [UC-GSF-TMP-3: Downgrade Template Repository via GSF](#uc-gsf-tmp-3-downgrade-template-repository-via-gsf)
   - [Instance Repository Maintenance via GSF](#instance-repository-maintenance-via-gsf)
     - [UC-GSF-INST-1: Initialize Instance Repository via GSF](#uc-gsf-inst-1-initialize-instance-repository-via-gsf)
@@ -56,7 +56,8 @@ git-system-follower install <path_to_template_package_image> \
   --extra group_id <group_id> no-masked
 ```
 
-> Note: Extra parameters optional
+> [!NOTE]
+> Extra parameters optional
 
 **Steps:**
 
@@ -64,27 +65,29 @@ git-system-follower install <path_to_template_package_image> \
 2. GSF applies the selected package to the Template Repository.
 3. GSF adds required files from the selected version and removes obsolete managed files (if any).
 
-#### Initialization extra Parameter Rules
+#### Initialization extra parameter rules
 
 **`group_id`** (resolved in priority order):
 
-| Priority | Source | Condition |
-|----------|--------|-----------|
-| 1 | `--extra group_id` parameter | Supplied by caller |
-| 2 | Existing `group_id=` in `build_vars.sh` | File present and key found |
-| 3 | `-DgroupId=` in legacy `build.sh` | File present and argument found |
-| 4 | Default package value | No other source found |
+| Priority | Source                                  | Condition                       |
+|----------|-----------------------------------------|---------------------------------|
+| 1        | `--extra group_id` parameter            | Supplied by caller              |
+| 2        | Existing `group_id=` in `build_vars.sh` | File present and key found      |
+| 3        | `-DgroupId=` in legacy `build.sh`       | File present and argument found |
+| 4        | Default package value                   | No other source found           |
 
-> **Note:** `build.sh` is read before template generation, because the package template replaces it during step 2. If `group_id` is absent from all sources, the default is written into `build_vars.sh`.
+> [!NOTE]
+> `build.sh` is read before template generation, because the package template replaces it during step 2.
+> If `group_id` is absent from all sources, the default is written into `build_vars.sh`.
 
 ---
 
-**`env_template_artifact_name`** — controls two fields when supplied:
+**`env_template_artifact_name`** - controls two fields when supplied:
 
-| Field | File | Behavior when parameter supplied | Behavior when omitted |
-|-------|------|-----------------------------------|-----------------------|
-| `artifact_id` | `build_vars.sh` | Updated to provided value | Existing value preserved |
-| `application_id` | `description_template.*` | Updated to provided value | Existing value preserved; falls back to `{{ lookup('env', 'CI_PROJECT_NAME') }}` if absent |
+| Field            | File                     | Behavior when parameter supplied | Behavior when omitted                                                                      |
+|------------------|--------------------------|----------------------------------|--------------------------------------------------------------------------------------------|
+| `artifact_id`    | `build_vars.sh`          | Updated to provided value        | Existing value preserved                                                                   |
+| `application_id` | `description_template.*` | Updated to provided value        | Existing value preserved; falls back to `{{ lookup('env', 'CI_PROJECT_NAME') }}` if absent |
 
 **Results:**
 
@@ -132,7 +135,10 @@ git-system-follower install <path_to_template_package_image> \
    - `description_template.*` is regenerated from package defaults, while `deploy.dmp.application_id` is preserved or updated according to parameter rules
    - `pipeline_vars.*` preserves user-defined values, except allowed structural alignment with current package structure
 
-  > **Note:** All user customisations in `description_template.*` other than `application_id` (e.g. custom `build.variables`, `publication` overrides) will be replaced by the package defaults on upgrade. Values that must be preserved across upgrades should be maintained outside this file or re-applied manually after the upgrade.
+  > [!NOTE]
+  > All user customisations in `description_template.*` other than `application_id` (e.g. custom `build.variables`,
+  > `publication` overrides) will be replaced by the package defaults on upgrade. Values that must be preserved
+  > across upgrades should be maintained outside this file or re-applied manually after the upgrade.
 
 **Results:**
 
@@ -144,7 +150,7 @@ git-system-follower install <path_to_template_package_image> \
    - `pipeline_vars.*` is preserved, with structural alignment allowed when required
 4. No regressions related to repository upgrade are observed.
 
-### UC-GSF-TMP-2.1: Upgrade Legacy Template Repository (versions before 2.85.0)
+### UC-GSF-TMP-2.1: Upgrade legacy Template Repository (versions before 2.85.0)
 
 Support migration of repositories created before package version `2.85.0`.
 
@@ -182,12 +188,12 @@ git-system-follower install <path_to_template_package_image> \
 
 Resolve `group_id` using priority order:
 
-| Priority | Source |
-|----------|--------|
-| 1 | `--extra group_id` parameter |
-| 2 | `group_id=` in existing `build_vars.sh` |
-| 3 | `-DgroupId=` in legacy `build.sh` |
-| 4 | Default package value |
+| Priority | Source                                  |
+|----------|-----------------------------------------|
+| 1        | `--extra group_id` parameter            |
+| 2        | `group_id=` in existing `build_vars.sh` |
+| 3        | `-DgroupId=` in legacy `build.sh`       |
+| 4        | Default package value                   |
 
 Then:
 
@@ -196,10 +202,10 @@ Then:
 
 **2. Migrate `artifact_id`**
 
-| Scenario | Behavior |
-|----------|----------|
+| Scenario                                      | Behavior                                |
+|-----------------------------------------------|-----------------------------------------|
 | `--extra env_template_artifact_name` supplied | Update `artifact_id` in `build_vars.sh` |
-| No parameter | Preserve existing `artifact_id` |
+| No parameter                                  | Preserve existing `artifact_id`         |
 
 **3. Migrate `description_template.yml`**
 
@@ -214,13 +220,15 @@ build:
 
 After template generation, `application_id` is resolved and written back under `deploy.dmp`:
 
-| Priority | Source for `application_id` |
-|----------|-----------------------------|
-| 1 | `--extra env_template_artifact_name` parameter |
-| 2 | Value read from existing `description_template.*` before upgrade |
-| 3 | Default: `{{ lookup('env', 'CI_PROJECT_NAME') }}` |
+| Priority | Source for `application_id`                                      |
+|----------|------------------------------------------------------------------|
+| 1        | `--extra env_template_artifact_name` parameter                   |
+| 2        | Value read from existing `description_template.*` before upgrade |
+| 3        | Default: `{{ lookup('env', 'CI_PROJECT_NAME') }}`                |
 
-> **Note:** Only `application_id` is carried forward from the legacy file. Other customised values in `description_template.*` are not preserved and will reflect the package defaults after migration.
+> [!NOTE]
+> Only `application_id` is carried forward from the legacy file. Other customised values in `description_template.*`
+> are not preserved and will reflect the package defaults after migration.
 
 **4. Migrate `application_id` in `description_template.*`**
 
@@ -234,16 +242,16 @@ Follows the same resolution table as step 3. If `deploy.dmp.application_id` is a
 4. Missing values populated through fallback logic.
 5. Repository matches golden-state reference.
 
-### Behavior Matrix
+### Behavior matrix
 
-| Repository type | `group_id` extra | `env_template_artifact_name` extra | Result |
-|-----------------|------------------|------------------------------------|--------|
-| Legacy repository| yes | yes | Overwrite migrated values with supplied parameters |
-| Legacy repository| no | no | Preserve existing values; apply fallback resolution |
-| Current repository| yes | yes | Update `group_id`, `artifact_id`, and `application_id` |
-| Current repository| no | no | Preserve existing values in restricted files |
-| Empty repository| yes | yes | Initialize using provided values |
-| Empty repository| no | no | Initialize with defaults |
+| Repository type    | `group_id` extra | `env_template_artifact_name` extra | Result                                                 |
+|--------------------|------------------|------------------------------------|--------------------------------------------------------|
+| Legacy repository  | yes              | yes                                | Overwrite migrated values with supplied parameters     |
+| Legacy repository  | no               | no                                 | Preserve existing values; apply fallback resolution    |
+| Current repository | yes              | yes                                | Update `group_id`, `artifact_id`, and `application_id` |
+| Current repository | no               | no                                 | Preserve existing values in restricted files           |
+| Empty repository   | yes              | yes                                | Initialize using provided values                       |
+| Empty repository   | no               | no                                 | Initialize with defaults                               |
 
 ### UC-GSF-TMP-3: Downgrade Template Repository via GSF
 
