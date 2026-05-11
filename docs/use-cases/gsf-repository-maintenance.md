@@ -133,7 +133,8 @@ git-system-follower install <path_to_template_package_image> \
    - `description_template.yml` or `description_template.yaml`
 5. Verify restricted file behavior:
    - `build_vars.sh` preserves repository-specific values unless explicitly updated through input parameters
-   - `description_template.*` is regenerated from package defaults, while `deploy.dmp.application_id` is preserved or updated according to parameter rules
+   - `description_template.*` is regenerated from package defaults, while `deploy.dmp.application_id` is
+     preserved or updated according to parameter rules
    - `pipeline_vars.*` preserves user-defined values, except allowed structural alignment with current package structure
 
   > [!NOTE]
@@ -146,8 +147,10 @@ git-system-follower install <path_to_template_package_image> \
 1. Template Repository is upgraded to the target version.
 2. Repository matches the reference structure.
 3. Restricted files are preserved according to policy:
-   - `build_vars.sh` preserves repository-specific values by default and updates `group_id` or `artifact_id` only when explicitly supplied through input parameters.
-   - `description_template.*` is regenerated from package defaults, with `deploy.dmp.application_id` preserved or updated according to parameter rules.
+   - `build_vars.sh` preserves repository-specific values by default and updates `group_id` or
+     `artifact_id` only when explicitly supplied through input parameters.
+   - `description_template.*` is regenerated from package defaults, with `deploy.dmp.application_id`
+     preserved or updated according to parameter rules.
    - `pipeline_vars.*` is preserved, with structural alignment allowed when required
 4. No regressions related to repository upgrade are observed.
 
