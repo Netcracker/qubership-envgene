@@ -85,10 +85,10 @@ git-system-follower install <path_to_template_package_image> \
 
 **`env_template_artifact_name`** - controls two fields when supplied:
 
-| Field            | File                     | Behavior when parameter supplied | Behavior when omitted                                                                      |
-|------------------|--------------------------|----------------------------------|--------------------------------------------------------------------------------------------|
-| `artifact_id`    | `build_vars.sh`          | Updated to provided value        | Existing value preserved                                                                   |
-| `application_id` | `description_template.*` | Updated to provided value        | Existing value preserved; falls back to `{{ lookup('env', 'CI_PROJECT_NAME') }}` if absent |
+| Field            | File                     | Behavior when parameter supplied | Behavior when omitted                                                                         |
+|------------------|--------------------------|----------------------------------|-----------------------------------------------------------------------------------------------|
+| `artifact_id`    | `build_vars.sh`          | Updated to provided value        | Existing value preserved                                                                      |
+| `application_id` | `description_template.*` | Updated to provided value        | Existing value preserved, with fallback to `{{ lookup('env', 'CI_PROJECT_NAME') }}` if absent |
 
 **Results:**
 
