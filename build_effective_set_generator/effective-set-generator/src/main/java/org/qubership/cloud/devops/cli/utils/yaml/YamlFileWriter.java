@@ -21,11 +21,9 @@ import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import org.qubership.cloud.devops.cli.pojo.dto.shared.SharedData;
 import org.qubership.cloud.devops.cli.utils.FileSystemUtils;
-import org.snakeyaml.engine.v2.api.Dump;
-import org.snakeyaml.engine.v2.api.DumpSettings;
-import org.snakeyaml.engine.v2.api.StreamDataWriter;
-import org.snakeyaml.engine.v2.common.FlowStyle;
-import org.snakeyaml.engine.v2.nodes.Node;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.nodes.Node;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -34,6 +32,8 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.Map;
 import java.util.Set;
+
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logInfo;
 
 @ApplicationScoped
 @Slf4j
@@ -45,13 +45,16 @@ public class YamlFileWriter {
 
     private final FileSystemUtils fileSystemUtils;
     private final SharedData sharedData;
-    private final YamlNodeBuilder yamlNodeBuilder;
+    private final YamlNodeCommentHelper yamlNodeCommentHelper;
 
     @Inject
-    public YamlFileWriter(FileSystemUtils fileSystemUtils, SharedData sharedData, YamlNodeBuilder yamlNodeBuilder) {
+    public YamlFileWriter(
+            FileSystemUtils fileSystemUtils,
+            SharedData sharedData,
+            YamlNodeCommentHelper yamlNodeCommentHelper) {
         this.fileSystemUtils = fileSystemUtils;
         this.sharedData = sharedData;
-        this.yamlNodeBuilder = yamlNodeBuilder;
+        this.yamlNodeCommentHelper = yamlNodeCommentHelper;
     }
 
     public void write(Map<String, Object> params, String... path) throws IOException {
@@ -76,21 +79,31 @@ public class YamlFileWriter {
         }
     }
 
-    public String dump(Map<String, Object> data, boolean enableTraceability, boolean deployDescriptorYaml) {
-        Node root = yamlNodeBuilder.build(data, enableTraceability, deployDescriptorYaml);
-
-        DumpSettings settings = DumpSettings.builder()
-                .setDumpComments(true)
-                .setDefaultFlowStyle(FlowStyle.BLOCK)
-                .setDereferenceAliases(AdaptiveYamlPython.shouldExpand(data))
-                .build();
-
-        Dump dump = new Dump(settings);
-        StringStreamWriter writer = new StringStreamWriter();
-        dump.dumpNode(root, writer);
+    public String dump(
+            Map<String, Object> data,
+            boolean enableTraceability,
+            boolean deployDescriptorYaml) {
+        DumperOptions yamlDumperOptions = yamlDumperOptions( data);
+        EffectiveSetYamlRepresenter effectiveSetYamlRepresenter =
+                new EffectiveSetYamlRepresenter(yamlDumperOptions, yamlNodeCommentHelper);
+        Node root = effectiveSetYamlRepresenter.representEffectiveSet(data, enableTraceability, deployDescriptorYaml);
+        Yaml yaml = new Yaml(effectiveSetYamlRepresenter, yamlDumperOptions);
+        StringWriter writer = new StringWriter();
+        yaml.serialize(root, writer);
         return writer.toString();
     }
 
-    private static final class StringStreamWriter extends StringWriter implements StreamDataWriter {
+    public  DumperOptions yamlDumperOptions(Map<String, Object> data) {
+        DumperOptions options = new DumperOptions();
+        options.setProcessComments(true);
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
+        options.setPrettyFlow(false);
+        boolean expand = AdaptiveYaml.shouldExpand(data);
+        if (expand) {
+            logInfo("removing anchors and aliases for current file");
+        }
+        options.setDereferenceAliases(expand);
+        return options;
     }
 }
