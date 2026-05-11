@@ -160,16 +160,16 @@ Support migration of repositories created before package version `2.85.0`.
 
 **Pre-requisites:**
 
+1. Template Repository already exists and was created with EnvGene template package version before `2.85.0`.
+2. GitLab technical user, token, and required CI/CD variables are available.
+3. GSF package manager is installed and working on the local machine.
+4. Target EnvGene template package image path is known.
+5. A reference Template Repository structure for the target EnvGene version is defined.
+
 Legacy repository may contain:
 
-- `build.sh` with:
-
-```bash
--DgroupId=...
-```
-
+- `build.sh` with a `-DgroupId=...` argument
 - `build_vars.sh` without `group_id`
-
 - older `description_template.yml` format
 
 **Trigger:**
