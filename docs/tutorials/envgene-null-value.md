@@ -73,11 +73,12 @@ At each stage the same two scopes are checked, and both stages emit identical lo
 
   ```text
   Error while validating parameters:
-    <entity>.<paramType>.<key> - is not set
+    <object>.<paramType>.<key> - is not set
   ```
 
-  Where `<entity>` is the Cloud or Namespace name, `<paramType>` is `deployParameters`,
-  `e2eParameters`, or `technicalConfigurationParameters`, and `<key>` is the parameter key.
+  Where `<object>` is the name of the Environment Instance object containing the unresolved
+  value, `<paramType>` is `deployParameters`, `e2eParameters`, or
+  `technicalConfigurationParameters`, and `<key>` is the parameter key.
 
 - **Credentials:** for every entry in the Environment's `Credentials/credentials.yml`, the secret
   material is checked. Fields checked per credential type:
