@@ -243,7 +243,7 @@ build:
 2. Legacy formats normalized.
 3. User values preserved.
 4. Missing values populated through fallback logic.
-5. Repository matches golden-state reference.
+5. Repository matches the golden state reference.
 
 ### Behavior matrix
 
