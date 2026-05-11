@@ -72,7 +72,7 @@ public class CmdbCli implements Callable<Integer> {
             return 0;
         } catch (Exception e) {
             logError(String.format(EFFECTIVE_SET_FAILED, e.getMessage()));
-            logDebug(String.format("Stack trace: %s", ExceptionUtils.getStackTrace(e)));
+            logError(String.format("Stack trace: %s", ExceptionUtils.getStackTrace(e)));
             return 1;
         }
     }
