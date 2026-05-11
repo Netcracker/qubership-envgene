@@ -7,6 +7,7 @@
       - [Initialization extra parameter rules](#initialization-extra-parameter-rules)
     - [UC-GSF-TMP-2: Upgrade Template Repository via GSF](#uc-gsf-tmp-2-upgrade-template-repository-via-gsf)
     - [UC-GSF-TMP-2.1: Upgrade legacy Template Repository (versions before 2.85.0)](#uc-gsf-tmp-21-upgrade-legacy-template-repository-versions-before-2850)
+      - [Legacy upgrade resolution rules](#legacy-upgrade-resolution-rules)
     - [Behavior matrix](#behavior-matrix)
     - [UC-GSF-TMP-3: Downgrade Template Repository via GSF](#uc-gsf-tmp-3-downgrade-template-repository-via-gsf)
   - [Instance Repository Maintenance via GSF](#instance-repository-maintenance-via-gsf)
@@ -180,13 +181,19 @@ git-system-follower install <path_to_template_package_image> \
 ```
 
 **Steps:**
-**0. Read legacy values before template generation**
 
-`build.sh` is read for `-DgroupId=` before the package template replaces it. `application_id` is read from `description_template.*` (if present) before the file is overwritten.
+1. Run GSF with repository URL, branch, token, and target package image against a legacy repository.
+2. GSF reads legacy values (`-DgroupId=` from `build.sh`, existing `application_id` from `description_template.*`)
+   before they are replaced by the package template.
+3. GSF migrates `build_vars.sh`: inserts or updates `group_id` per the resolution priority, updates `artifact_id`
+   when `--extra env_template_artifact_name` is supplied, and otherwise preserves existing values.
+4. GSF replaces legacy `build.sh` with the package version.
+5. GSF regenerates `description_template.*` from package defaults and writes the resolved `application_id`
+   under `deploy.dmp`.
 
-**1. Migrate `build_vars.sh`**
+#### Legacy upgrade resolution rules
 
-Resolve `group_id` using priority order:
+**`group_id`** (in `build_vars.sh`, resolved in priority order):
 
 | Priority | Source                                  |
 |----------|-----------------------------------------|
@@ -195,30 +202,18 @@ Resolve `group_id` using priority order:
 | 3        | `-DgroupId=` in legacy `build.sh`       |
 | 4        | Default package value                   |
 
-Then:
+---
 
-- Insert or update `group_id` in `build_vars.sh`.
-- Replace legacy `build.sh` with the package version (handled by template generation).
-
-**2. Migrate `artifact_id`**
+**`artifact_id`** (in `build_vars.sh`):
 
 | Scenario                                      | Behavior                                |
 |-----------------------------------------------|-----------------------------------------|
 | `--extra env_template_artifact_name` supplied | Update `artifact_id` in `build_vars.sh` |
 | No parameter                                  | Preserve existing `artifact_id`         |
 
-**3. Migrate `description_template.yml`**
+---
 
-The package template replaces `description_template.*` in full, adopting the current format for `build.env.type` and `build.env.version`:
-
-```yaml
-build:
-  env:
-    type: custom
-    version: "{{ lookup('env', 'ENVGENE_TEMPLATE_BUILD_IMAGE') }}"
-```
-
-After template generation, `application_id` is resolved and written back under `deploy.dmp`:
+**`application_id`** (in `description_template.*` under `deploy.dmp`):
 
 | Priority | Source for `application_id`                                      |
 |----------|------------------------------------------------------------------|
@@ -230,9 +225,16 @@ After template generation, `application_id` is resolved and written back under `
 > Only `application_id` is carried forward from the legacy file. Other customised values in `description_template.*`
 > are not preserved and will reflect the package defaults after migration.
 
-**4. Migrate `application_id` in `description_template.*`**
+---
 
-Follows the same resolution table as step 3. If `deploy.dmp.application_id` is absent after template generation, the resolved value is inserted.
+**Resulting `build.env` shape in `description_template.*`:**
+
+```yaml
+build:
+  env:
+    type: custom
+    version: "{{ lookup('env', 'ENVGENE_TEMPLATE_BUILD_IMAGE') }}"
+```
 
 **Results:**
 
