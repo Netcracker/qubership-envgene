@@ -110,24 +110,29 @@ public class FileDataConverterImpl implements FileDataConverter {
 
     @Override
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
-
-        File file = fileSystemUtils.getFileFromGivenPath(args);
-
-        boolean enableTraceability =
-                sharedData != null
-                        && sharedData.isEnableTraceability()
-                        && !EXCLUDED_FILES.contains(file.getName());
-
-        boolean deployDescriptorYaml = DEPLOY_DESCRIPTOR_FILE_NAME.equals(file.getName());
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
-            if (params != null && !params.isEmpty()) {
-                if (deployDescriptorYaml && enableTraceability) {
-                    writer.write(DEPLOY_DESCRIPTOR_FILE_HEADER_LINE);
-                }
-                writer.write(dump(params, enableTraceability, deployDescriptorYaml));
-            }
+        try {
+            new YamlUtils().dumpYaml(params, args);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
+
+        // File file = fileSystemUtils.getFileFromGivenPath(args);
+
+        // boolean enableTraceability =
+        //         sharedData != null
+        //                 && sharedData.isEnableTraceability()
+        //                 && !EXCLUDED_FILES.contains(file.getName());
+
+        // boolean deployDescriptorYaml = DEPLOY_DESCRIPTOR_FILE_NAME.equals(file.getName());
+
+        // try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+        //     if (params != null && !params.isEmpty()) {
+        //         if (deployDescriptorYaml && enableTraceability) {
+        //             writer.write(DEPLOY_DESCRIPTOR_FILE_HEADER_LINE);
+        //         }
+        //         writer.write(dump(params, enableTraceability, deployDescriptorYaml));
+        //     }
+        // }
     }
 
     @Override
