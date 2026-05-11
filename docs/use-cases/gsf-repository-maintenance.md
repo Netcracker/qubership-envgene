@@ -137,7 +137,7 @@ git-system-follower install <path_to_template_package_image> \
    - `pipeline_vars.*` preserves user-defined values, except allowed structural alignment with current package structure
 
   > [!NOTE]
-  > All user customisations in `description_template.*` other than `application_id` (e.g. custom `build.variables`,
+  > All user customizations in `description_template.*` other than `application_id` (e.g. custom `build.variables`,
   > `publication` overrides) will be replaced by the package defaults on upgrade. Values that must be preserved
   > across upgrades should be maintained outside this file or re-applied manually after the upgrade.
 
@@ -218,7 +218,7 @@ git-system-follower install <path_to_template_package_image> \
 | 3        | Default: `{{ lookup('env', 'CI_PROJECT_NAME') }}`                |
 
 > [!NOTE]
-> Only `application_id` is carried forward from the legacy file. Other customised values in `description_template.*`
+> Only `application_id` is carried forward from the legacy file. Other customized values in `description_template.*`
 > are not preserved and will reflect the package defaults after migration.
 
 ---
