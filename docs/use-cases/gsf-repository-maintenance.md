@@ -174,6 +174,8 @@ Legacy repository may contain:
 
 **Trigger:**
 
+User runs GSF on the local machine to upgrade a legacy Template Repository:
+
 ```bash
 git-system-follower install <path_to_template_package_image> \
   -r <project_template_repository_path> \
