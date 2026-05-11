@@ -198,7 +198,7 @@ Use format: `UC-<PREFIX>-<GROUP>-<NUMBER>: <Descriptive Title>`
 
 - **Title**: Concise, descriptive title
   - Should clearly indicate what the use case demonstrates
-  - Use title case
+  - Use sentence case (see [Heading case](/AGENTS.md#heading-case))
 
 ### Numbering Rules
 
