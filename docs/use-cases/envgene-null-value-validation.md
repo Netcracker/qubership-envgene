@@ -11,7 +11,7 @@
 ## Overview
 
 This document covers use cases for `envgeneNullValue` validation - the safety check that prevents
-unresolved placeholder values from reaching deployment.
+unresolved placeholder values from leaving the pipeline.
 
 Validation runs at two pipeline stages - `generate_effective_set` and `cmdb_import` - and at each stage
 covers two scopes: parameters (`deployParameters`, `e2eParameters`, `technicalConfigurationParameters`) and

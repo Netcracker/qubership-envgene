@@ -55,11 +55,11 @@ Common use cases:
 - Credentials placeholders
 
 If a required value remains `envgeneNullValue` where a real value is mandatory, validation fails
-and deployment is blocked.
+and the pipeline aborts.
 
 ## Where validation happens
 
-EnvGene validates that no `envgeneNullValue` placeholders remain before they reach a target system.
+EnvGene validates that no `envgeneNullValue` placeholders remain before they leave the pipeline.
 The validation runs at two pipeline stages and covers both credentials and parameters:
 
 - **`generate_effective_set`** - validates the data that goes into the Effective Set.
@@ -96,7 +96,7 @@ At each stage the same two scopes are checked, and both stages emit identical lo
   Where `<credId>` is the credential identifier and `<field>` is the unresolved field
   (`username or password`, or `secret`).
 
-A failure at either stage blocks deployment until the placeholders are replaced with real values.
+A failure at either stage aborts the pipeline until the placeholders are replaced with real values.
 
 ## Scenario 1: Mandatory parameters in templates
 
