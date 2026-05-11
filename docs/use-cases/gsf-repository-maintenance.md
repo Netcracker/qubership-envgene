@@ -245,7 +245,7 @@ build:
 | Repository type    | `group_id` extra | `env_template_artifact_name` extra | Result                                                 |
 |--------------------|------------------|------------------------------------|--------------------------------------------------------|
 | Legacy repository  | yes              | yes                                | Overwrite migrated values with supplied parameters     |
-| Legacy repository  | no               | no                                 | Preserve existing values; apply fallback resolution    |
+| Legacy repository  | no               | no                                 | Preserve existing values and apply fallback resolution |
 | Current repository | yes              | yes                                | Update `group_id`, `artifact_id`, and `application_id` |
 | Current repository | no               | no                                 | Preserve existing values in restricted files           |
 | Empty repository   | yes              | yes                                | Initialize using provided values                       |
