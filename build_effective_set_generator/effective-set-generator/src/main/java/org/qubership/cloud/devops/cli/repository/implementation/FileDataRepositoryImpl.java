@@ -71,10 +71,7 @@ import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCre
 public class FileDataRepositoryImpl implements FileDataRepository {
     private final FileDataConverter fileDataConverter;
     private final InputData inputData;
-    private final String sourceDir;
     private final SharedData sharedData;
-
-    private final BomReaderUtils bomReaderUtils;
     private final FileSystemUtils fileSystemUtils;
 
 
@@ -82,14 +79,11 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     public FileDataRepositoryImpl(FileDataConverter fileDataConverter,
                                   SharedData sharedData,
                                   InputData inputData,
-                                  BomReaderUtils bomReaderUtils,
                                   FileSystemUtils fileSystemUtils) {
         this.fileDataConverter = fileDataConverter;
         this.inputData = inputData;
         this.sharedData = sharedData;
-        this.bomReaderUtils = bomReaderUtils;
         this.fileSystemUtils = fileSystemUtils;
-        this.sourceDir = String.format("%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId());
     }
 
     /*  **
@@ -117,7 +111,6 @@ public class FileDataRepositoryImpl implements FileDataRepository {
             traverseSourceDirectory(nsWithAppsFromSD, appsToProcess);
             populateEnvironments();
             correctDeployPostfix();
-            loadSecretStores();
             fileSystemUtils.createEffectiveSetFolder(inputData.getSolutionBomDTO());
         } catch (Exception e) {
             throw new FileParseException("Error preparing data due to " + e.getMessage());
@@ -225,6 +218,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void traverseSourceDirectory(Map<String, List<String>> nsWithAppsFromSD, Set<String> appsToProcess) {
+        String sourceDir = String.format("%s/%s", sharedData.getEnvsPath(), sharedData.getEnvId());
         Map<String, ProfileFullDto> profilesMap = new HashMap<>();
         Map<String, NamespaceDTO> namespaceMap = new HashMap<>();
         List<ApplicationLinkDTO> cloudApps = new ArrayList<>();
@@ -344,6 +338,7 @@ public class FileDataRepositoryImpl implements FileDataRepository {
                 Map<String, CredentialDTO> credentialDTOMap = fileDataConverter.parseInputFile(typeReference, file.toFile());
                 if (credentialDTOMap != null) {
                     validateUniformCredentialTypes(credentialDTOMap);
+                    loadSecretStores();
 //                    credentialDTOMap.replaceAll((id, cred) ->
 //                            CredentialDTO.builder().credentialsId(id)
 //                                    .data(cred.getData()).description(cred.getDescription()).build());
@@ -466,22 +461,24 @@ public class FileDataRepositoryImpl implements FileDataRepository {
     }
 
     private void loadSecretStores() {
-        Path envPath = Paths.get(sharedData.getEnvsPath());
-        Path basePath = envPath.getParent();
-
-        Path secretStorePath = basePath
-                .resolve("configuration")
-                .resolve("secret-stores.yml");
-
-        TypeReference<Map<String, SecretStoreDTO>> typeRef =
-                new TypeReference<>() {};
-        Map<String, SecretStoreDTO> secretStores = fileDataConverter.parseInputFile(typeRef, new File(secretStorePath.toString()));
-        if (secretStores == null && inputData.isExternalOnly()) {
-            throw new IllegalArgumentException(String.format("Mandatory file /configuration/secret-stores.yml is not found"));
+        if (!inputData.isExternalOnly()) {
+            return;
         }
-        inputData.setSecretStoreDTOMap(secretStores);
+            Path envPath = Paths.get(sharedData.getEnvsPath());
+            Path basePath = envPath.getParent();
 
+            Path secretStorePath = basePath
+                    .resolve("configuration")
+                    .resolve("secret-stores.yml");
 
+            TypeReference<Map<String, SecretStoreDTO>> typeRef =
+                    new TypeReference<>() {
+                    };
+            Map<String, SecretStoreDTO> secretStores = fileDataConverter.parseInputFile(typeRef, new File(secretStorePath.toString()));
+            if (secretStores == null) {
+                throw new ExternalCredProcessingException(String.format("Mandatory file for external cred mode /configuration/secret-stores.yml is not found"));
+            }
+            inputData.setSecretStoreDTOMap(secretStores);
     }
     private void validateUniformCredentialTypes(Map<String , CredentialDTO> credentials) {
         boolean hasExternal = false;

@@ -1,0 +1,7 @@
+version: 2.1
+type: deploy
+applications:
+  - version: eso-app:0.1.0-delivery-20261115.141230-4-RELEASE
+    deployPostfix: ns-test
+  - version: vals-app:0.1.0-20261215.141230-3-RELEASE
+    deployPostfix: ns-test
