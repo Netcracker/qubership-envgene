@@ -176,7 +176,7 @@ git-system-follower install <path_to_template_package_image> \
 -r <project_template_repository_path> \
 -b <project_template_repository_branch> \
 -t <gitlab_token> \
---extra env_template_artifact_name <env_template_artifact_name> no-masked \
+--extra env_template_artifact_name <template-artifact-name> no-masked \
 --extra group_id <group_id> no-masked
 ```
 
