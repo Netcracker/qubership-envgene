@@ -31,6 +31,28 @@ Use cases should be created when they provide value beyond what's already docume
 
 **Rule of thumb**: Use cases describe *scenarios* (different ways things can happen), not just *algorithms* (how things work). If feature documentation already describes the algorithm with examples and there's no variability in execution paths or outcomes, a use case may be redundant.
 
+## Use case design principles
+
+Beyond the template, three principles guide what each UC should include.
+
+**Apply equivalence class partitioning.** When candidate UCs differ only in a parameter value
+(e.g., job name, trigger flag), merge them into a single UC and parameterize the variable via
+the Trigger section's Note block. This is the standard test-design technique (ISTQB) and the
+principle behind [Gherkin Scenario Outlines](https://cucumber.io/docs/gherkin/reference/).
+
+**Keep steps abstract.** Steps describe what happens, not how it is implemented. Avoid
+patterns like `Reads X`, `Iterates Y`, `Detects Z` - they leak implementation that may not
+match the code.
+
+**Document only observable Results.** Results list what the operator observes. Avoid
+downstream-authority claims (e.g., "Deployment is blocked") that the documented component
+does not control.
+
+These align with modern API documentation style. See the
+[Google API Design Guide](https://cloud.google.com/apis/design), Stripe API docs, and GitHub
+REST API docs. For the AGENTS.md statement with INCORRECT/CORRECT examples, see
+[AGENTS.md > Use case design](/AGENTS.md#use-case-design).
+
 ## Use Case Organization
 
 Use cases are organized in a two-level hierarchy:
