@@ -177,6 +177,46 @@ meaningful wrap without forcing tight columns.
 
 ---
 
+#### Heading case
+
+**Use sentence case for all headings: capitalize the first word and proper nouns only.**
+
+Proper nouns include product names, feature names, brand names, and code identifiers
+(`envgeneNullValue`, `ParameterSet`, `Cloud Passport`, `EnvGene`).
+
+❌ **INCORRECT:**
+
+```markdown
+## How to Resolve Credentials
+### Verification Step (Required)
+#### Generated `credentials.yml` (Username/Password)
+```
+
+✅ **CORRECT:**
+
+```markdown
+## How to resolve credentials
+### Verification step (required)
+#### Generated `credentials.yml` (username/password)
+```
+
+**Scope:** Applies to **new and modified content only**. Existing headings in Title Case are not
+affected by this rule and do not need rewriting unless the surrounding lines are being edited
+for other reasons.
+
+**Recommended (not required):** When editing a Markdown file for any other reason, consider
+bringing its remaining Title Case headings to sentence case in the same PR. For large files
+(many headings, large TOC), a separate dedicated migration PR is preferred to keep the original
+change reviewable. Reviewers may suggest opportunistic migration but must not block merge over it.
+
+**Why:** Aligns with the GitHub Docs convention and modern dev-doc style guides (Google,
+Microsoft, Mozilla, GitHub). Sentence case has fewer rules (no debate about which prepositions
+or conjunctions to capitalize), keeps proper nouns visually distinct from generic words,
+translates more cleanly to non-English locales, and is the established convention across modern
+technical documentation.
+
+---
+
 #### Tables
 
 **CRITICAL: All Markdown tables MUST have vertically aligned pipe characters (`|`).**
