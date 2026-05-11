@@ -20,7 +20,13 @@
           "group": "org.qubership.deploy.product",
           "name": "prod.platform.system.monitoring_monitoring-operator",
           "version": "0.91.0-delivery-20241115.141230-4-RELEASE",
-          "purl": "pkg:maven/org.qubership.deploy.product/prod.platform.system.monitoring_monitoring-operator@0.91.0-delivery-20241115.141230-4-RELEASE?registry_id=registry-2&repository_id=targetRelease"
+          "purl": "pkg:maven/org.qubership.deploy.product/prod.platform.system.monitoring_monitoring-operator@0.91.0-delivery-20241115.141230-4-RELEASE?registry_id=registry-2&repository_id=targetRelease",
+          "properties": [
+            {
+              "name": "eso_support",
+              "value": "false"
+            }
+          ]
         }
       ]
     },
