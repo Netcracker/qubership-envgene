@@ -1,5 +1,4 @@
-import re
-import sys
+from pathlib import Path
 import os
 from envgenehelper import *
 
@@ -159,18 +158,26 @@ def mergeAndSaveYaml(yamlPath, newCreds) :
     logger.info("%s credentials created" % count)
     writeYamlToFile(yamlPath, credsYaml)
 
-def findSharedCredentials(cred_name, env_dir, instances_dir):
-    logger.debug(f"Searching for cred file {cred_name} from {env_dir} to {instances_dir}")
-    credFiles = findResourcesBottomTop(env_dir, instances_dir, f"/{cred_name}")
-    if len(credFiles) == 1:
-        yamlPath = credFiles[0]
-        logger.info(f"Shared credentials for {cred_name} found in: {yamlPath}")
-        return yamlPath
-    elif len(credFiles) > 1:
-        logger.error(f"Duplicate shared credentials with key {cred_name} found in {instances_dir}: \n\t" + ",\n\t".join(str(x) for x in credFiles))
-        raise ReferenceError(f"Duplicate shared credentials with key {cred_name} found. See logs above.")
-    else:
-        raise ReferenceError(f"Shared credentials with key {cred_name} not found in {instances_dir}")
+
+def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
+    levels = [
+        Path(env_dir) / "Inventory",
+        Path(env_dir).parent,
+        Path(instances_dir),
+    ]
+    
+    cred_dir_names = ["credentials", "Credentials", "shared-credentials"]
+
+    shared_cred_paths = [level / name for level in levels for name in cred_dir_names]
+
+    for p in shared_cred_paths:
+        found_path = find_yaml_file(p, cred_name, recursively=True)
+        if found_path:
+            logger.info(f"Shared credentials with key '{cred_name}' found in '{found_path}'")
+            return found_path
+
+    raise FileNotFoundError(f"Shared credentials with key '{cred_name}' not found.")
+
 
 def mergeSharedCreds(credYamlPath, envDir, instancesDir) :
     inventoryYaml = getEnvDefinition(envDir)
