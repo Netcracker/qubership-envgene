@@ -56,19 +56,9 @@
       "required": [
         "gitlab"
       ]
-    },
-    "self_token": {
-      "type": "string",
-      "title": "Self Token",
-      "description": "The access token granting the access to this repository for committing changes",
-      "examples": [
-        "glpat-67890fghij",
-        "glpat-11223klmno"
-      ]
     }
   },
   "required": [
-    "cp_discovery",
-    "self_token"
+    "cp_discovery"
   ]
 }
