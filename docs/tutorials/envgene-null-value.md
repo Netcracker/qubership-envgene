@@ -5,13 +5,12 @@
   - [Prerequisites](#prerequisites)
   - [Overview](#overview)
   - [Where validation happens](#where-validation-happens)
-  - [Scenario 1: Mandatory parameters in templates](#scenario-1-mandatory-parameters-in-templates)
-    - [Problem (mandatory parameters)](#problem-mandatory-parameters)
+  - [Mandatory parameters in templates](#mandatory-parameters-in-templates)
+    - [Problem](#problem)
     - [Example in template (ParameterSet)](#example-in-template-parameterset)
     - [How to resolve](#how-to-resolve)
     - [Key point](#key-point)
-  - [Scenario 2: Credentials placeholder](#scenario-2-credentials-placeholder)
-    - [Problem (credentials)](#problem-credentials)
+  - [Credentials placeholder](#credentials-placeholder)
   - [Credential type 1: usernamePassword](#credential-type-1-usernamepassword)
     - [Generated `credentials.yml` (username/password)](#generated-credentialsyml-usernamepassword)
   - [Credential type 2: secret](#credential-type-2-secret)
@@ -98,9 +97,9 @@ At each stage the same two scopes are checked, and both stages emit identical lo
 
 A failure at either stage aborts the pipeline until the placeholders are replaced with real values.
 
-## Scenario 1: Mandatory parameters in templates
+## Mandatory parameters in templates
 
-### Problem (mandatory parameters)
+### Problem
 
 Some template values cannot be decided at template-authoring time because they depend on the
 target environment. To make the requirement explicit, templates set such parameters to
@@ -141,9 +140,7 @@ file locations, lookup order, and merge behavior, see
 - Environments supply environment-specific values
 - Missing values are explicitly detected and rejected
 
-## Scenario 2: Credentials placeholder
-
-### Problem (credentials)
+## Credentials placeholder
 
 When EnvGene generates a `credentials.yml` file (for example from Cloud Passport),
 it may not have access to actual secret values.
