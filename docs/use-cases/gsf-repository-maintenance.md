@@ -183,13 +183,9 @@ git-system-follower install <path_to_template_package_image> \
 **Steps:**
 
 1. Run GSF with repository URL, branch, token, and target package image against a legacy repository.
-2. GSF reads legacy values (`-DgroupId=` from `build.sh`, existing `application_id` from `description_template.*`)
-   before they are replaced by the package template.
-3. GSF migrates `build_vars.sh`: inserts or updates `group_id` per the resolution priority, updates `artifact_id`
-   when `--extra env_template_artifact_name` is supplied, and otherwise preserves existing values.
-4. GSF replaces legacy `build.sh` with the package version.
-5. GSF regenerates `description_template.*` from package defaults and writes the resolved `application_id`
-   under `deploy.dmp`.
+2. GSF migrates `build_vars.sh` (`group_id`, `artifact_id`) per the resolution rules below.
+3. GSF replaces legacy `build.sh` with the package version.
+4. GSF regenerates `description_template.*` with the resolved `application_id` under `deploy.dmp`.
 
 #### Legacy upgrade resolution rules
 
