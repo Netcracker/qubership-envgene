@@ -22,6 +22,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import org.cyclonedx.model.Bom;
 import org.qubership.cloud.devops.cli.exceptions.constants.ExceptionMessage;
 import org.qubership.cloud.devops.cli.utils.deserializer.BomMixin;
+import org.qubership.cloud.devops.cli.utils.yaml.AdaptiveYaml;
 import org.qubership.cloud.devops.cli.utils.yaml.YamlFileWriter;
 import org.qubership.cloud.devops.commons.exceptions.FileParseException;
 import org.qubership.cloud.devops.commons.exceptions.JsonParseException;
@@ -96,7 +97,6 @@ public class FileDataConverterImpl implements FileDataConverter {
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
         yamlFileWriter.write(params, args);
     }
-
 
     @Override
     public <T> Map<String, Object> getObjectMap(T inputObject) {

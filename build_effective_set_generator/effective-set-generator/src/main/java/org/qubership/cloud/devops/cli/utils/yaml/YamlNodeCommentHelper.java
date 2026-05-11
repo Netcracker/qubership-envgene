@@ -18,15 +18,15 @@ package org.qubership.cloud.devops.cli.utils.yaml;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import org.apache.commons.lang3.StringUtils;
-import org.snakeyaml.engine.v2.comments.CommentLine;
-import org.snakeyaml.engine.v2.comments.CommentType;
-import org.snakeyaml.engine.v2.nodes.Node;
+import org.yaml.snakeyaml.comments.CommentLine;
+import org.yaml.snakeyaml.comments.CommentType;
+import org.yaml.snakeyaml.nodes.Node;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.SBOM_ORIGIN;
+
 
 @ApplicationScoped
 public class YamlNodeCommentHelper {
@@ -51,7 +51,7 @@ public class YamlNodeCommentHelper {
         if (!addComment) {
             return node;
         }
-        CommentLine comment = new CommentLine(Optional.empty(), Optional.empty(), origin, commentType);
+        CommentLine comment = new CommentLine(null, null, origin, commentType);
         List<CommentLine> comments = List.of(comment);
         if (commentType == CommentType.BLOCK) {
             node.setBlockComments(comments);
