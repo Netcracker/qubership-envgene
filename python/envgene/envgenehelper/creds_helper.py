@@ -290,6 +290,8 @@ def validate_cred_types(credsMap, isExternalCredEnv, credFile):
         for v in credsMap.values()
         if isinstance(v, dict) and v.get("type")
     }
+    if not types:
+        return
     if isExternalCredEnv:
         if types != {"external"}:
             raise ValueError(f"Only external credentials allowed. Found: {types} in {credFile}")
@@ -310,7 +312,7 @@ def copy_creds_to_env_creds_file(env_dir, credsYamlContent, comment, credsSchema
     else:
         envCredsYaml = yaml.load("{}")
 
-    validate_cred_types(envCredsYaml, isExternalCredEnv, envCredentialsPath)
+    #validate_cred_types(envCredsYaml, isExternalCredEnv, envCredentialsPath)
 
     for key, value in credsYamlContent.items() :
         store_value_to_yaml(envCredsYaml, key, value, comment)

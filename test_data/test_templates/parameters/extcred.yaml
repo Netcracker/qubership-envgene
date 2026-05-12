@@ -1,0 +1,13 @@
+version: 1
+name: extcred
+parameters: {}
+applications:
+  - appName: "eso-app"
+    parameters:
+      BSS_NAMESPACE: "apps-test"
+      OSS_NAMESPACE: "apps-test"
+      SECRET_FLOW: external-values
+  - appName: "vals-app"
+    parameters:
+      PMWP_INTEGRATED_SYSTEMS: COM|UTM|CPQ
+      BSS_NAMESPACE: "apps-test"
