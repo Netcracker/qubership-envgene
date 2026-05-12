@@ -49,6 +49,11 @@ runs:
 
         pip install --no-cache-dir -e python/artifact-searcher
 
+    - name: Install test tools
+      shell: bash
+      run: |
+        pip install --no-cache-dir junitparser
+
     - name: Configure test environment
       shell: bash
       run: |
