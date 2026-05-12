@@ -1,0 +1,38 @@
+---
+variables:
+  ENV_NAMES:
+    value: "test-cluster/e01"
+    description: "Set ENV_NAMES"
+    options:
+        - "test-cluster/e01\"test-cluster/e02"
+        - "test-cluster/e01"
+  ENV_BUILDER:
+    value: "true"
+    description: "Whether to run env_builder, possible values - true/false"
+    options:
+      - "true"
+      - "false"
+  ENV_TEMPLATE_VERSION:
+    value: "qubership_envgene_templates:0.0.1"
+    description: "template version"
+  DEPLOYMENT_TICKET_ID:
+    value: "TICKET-0001"
+    description: "Jira ticket"
+  GET_PASSPORT:
+    value: "false"
+    description: "Whether to get cloud passport, possible values - true/false"
+    options:
+      - "true"
+      - "false"
+  CMDB_IMPORT:
+    value: "false"
+    description: "Whether to import, possible values - true/false"
+    options:
+      - "true"
+      - "false"
+  GENERATE_EFFECTIVE_SET:
+    value: "false"
+    description: "Will EnvGene generate Effective set"
+    options:
+      - "true"
+      - "false"
