@@ -286,7 +286,7 @@ public class CliParameterParser {
                     originalNamespace,
                     k8TokenMap,
                     customParams);
-            validateParameterBundle(parameterBundle, cloudName, originalNamespace);
+            validateParameterBundle(parameterBundle, tenantName, cloudName, originalNamespace);
             ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap);
             createCleanupParams(parameterBundle, cleanupParameterBundle);
         } else {
@@ -296,7 +296,7 @@ public class CliParameterParser {
                     appName,
                     deployerInputs,
                     originalNamespace);
-            validateParameterBundle(parameterBundle, cloudName, originalNamespace);
+            validateParameterBundle(parameterBundle, tenantName, cloudName, originalNamespace);
         }
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
@@ -394,16 +394,19 @@ public class CliParameterParser {
         }
     }
     private void validateParameterBundle(ParameterBundle bundle,
+                                         String tenantName,
                                          String cloudName,
                                          String namespaceName) {
+        validateMap("tenant", tenantName, "deployParameters", bundle.getDeployParams());
+        validateMap("tenant", tenantName, "e2eParameters", bundle.getE2eParams());
+        validateMap("tenant", tenantName, "technicalConfigurationParameters", bundle.getConfigServerParams());
 
         validateMap("cloud", cloudName, "deployParameters", bundle.getDeployParams());
-        validateMap("namespace", namespaceName, "deployParameters", bundle.getDeployParams());
-
         validateMap("cloud", cloudName, "e2eParameters", bundle.getE2eParams());
-        validateMap("namespace", namespaceName, "e2eParameters", bundle.getE2eParams());
-
         validateMap("cloud", cloudName, "technicalConfigurationParameters", bundle.getConfigServerParams());
+
+        validateMap("namespace", namespaceName, "deployParameters", bundle.getDeployParams());
+        validateMap("namespace", namespaceName, "e2eParameters", bundle.getE2eParams());
         validateMap("namespace", namespaceName, "technicalConfigurationParameters", bundle.getConfigServerParams());
     }
 
