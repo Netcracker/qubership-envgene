@@ -16,10 +16,6 @@ runs:
     - name: Configure package sources
       shell: bash
       run: |
-        # Apply custom sources BEFORE any apt/pip usage
-        if [ -f build_envgene/build/sources.list ]; then
-          cp build_envgene/build/sources.list /etc/apt/sources.list
-        fi
         if [ -f build_envgene/build/pip.conf ]; then
           mkdir -p /etc/pip
           cp build_envgene/build/pip.conf /etc/pip.conf
