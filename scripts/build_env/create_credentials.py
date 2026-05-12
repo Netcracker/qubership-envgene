@@ -307,11 +307,3 @@ def create_credentials(envDir, envInstancesDir, instancesDir, isExternalCredEnv)
 
 
 
-def processExternalCreds(credYamlPath, envCredsMap, externalCredIds):
-    logger.info(f"Processing external credentials for external only environment")
-    getExternalCreds(envCredsMap, externalCredIds)
-    writeYamlToFile(credYamlPath, envCredsMap)
-
-
-
-
