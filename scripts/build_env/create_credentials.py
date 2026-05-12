@@ -62,16 +62,25 @@ def getTenantCreds(tenantContent, tenantName, isExternalCredEnv=False, externalC
     processParametersAndAppend("environmentParameters", tenantContent["globalE2EParameters"], creds, tenantName, comment=tenantComment)
     return creds
 
-def getExternalCreds(envCredsMap, extCredIds):
+def validateExternalCreds(envCredsMap, extCredIds):
     logger.info(f"External cred ids found across entities are {extCredIds}")
-    notFoundCred = []
-    for credName in extCredIds:
-        if credName not in envCredsMap:
-                notFoundCred.append(credName)
+    notFoundCred = [
+        credName for credName in extCredIds
+        if credName not in envCredsMap
+    ]
     if notFoundCred:
         raise ValueError(
                 f"Following external credentials:\n {notFoundCred}\n referred in environment are not found in any external credential source")
-    logger.info(f'{len(extCredIds) - len(notFoundCred)} external creds processed from environment')
+    unusedCreds = [
+        credName for credName in envCredsMap.keys()
+        if credName not in extCredIds
+    ]
+    if unusedCreds:
+        raise ValueError(
+            f"Following external credentials:\n{unusedCreds}\n"
+            f"exist in external credential source but are not referred in environment"
+        )
+    logger.info(f'{len(extCredIds)} external creds processed from environment')
 
 
 def getCloudCreds(cloudContent, tenantName, cloudName, isExternalCredEnv=False, externalCredIds=None):
@@ -177,7 +186,7 @@ def mergeAndSaveYaml(yamlPath, newCreds, isExternalCredEnv) :
             count = count + 1
             credsYaml = writeCredToYaml(cred, credsYaml)
     logger.info("%s credentials created" % count)
-    validate_cred_types(credsYaml, isExternalCredEnv, yamlPath)
+    #validate_cred_types(credsYaml, isExternalCredEnv, yamlPath)
     writeYamlToFile(yamlPath, credsYaml)
 
 
@@ -215,7 +224,7 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir, isExternalCredEnv) :
                 store_value_to_yaml(credsYaml, key, credYaml[key], f"shared credentials: {credFileName}")
                 count += 1
             logger.info(f"Added {count} shared master credentials from {credFilePath}")
-            validate_cred_types(credYaml, isExternalCredEnv, credFilePath)
+            #validate_cred_types(credYaml, isExternalCredEnv, credFilePath)
     writeYamlToFile(credYamlPath, credsYaml)
     return credsYaml
 
@@ -285,16 +294,15 @@ def create_credentials(envDir, envInstancesDir, instancesDir, isExternalCredEnv)
     mergeAndSaveYaml(credYamlPath, resultingCreds, isExternalCredEnv)
     # process shared credentials
     envCredsMap = mergeSharedCreds(credYamlPath, envInstancesDir, instancesDir, isExternalCredEnv)
+
     #process external credentials
     if isExternalCredEnv:
-        processExternalCreds(credYamlPath, envCredsMap, externalCredIds)
-
+        logger.info(f"Processing external credentials for external only environment")
+        validateExternalCreds(envCredsMap, externalCredIds)
+    validate_cred_types(envCredsMap, isExternalCredEnv, credYamlPath)
     beautifyYaml(credYamlPath, credsSchema)
-
-def processExternalCreds(credYamlPath, envCredsMap, externalCredIds):
-    logger.info(f"Processing external credentials for external only environment")
-    getExternalCreds(envCredsMap, externalCredIds)
-    writeYamlToFile(credYamlPath, envCredsMap)
+    
+   
 
 
 
