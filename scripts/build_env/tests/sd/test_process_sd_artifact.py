@@ -1,8 +1,9 @@
 import os
+from pathlib import Path
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
-from ruamel.yaml import YAML
+from envgenehelper.env_helper import Environment
 
 from scripts.build_env.tests.base_test import BaseTest
 from test_sd_helpers import do_prerequisites, assert_sd_contents, load_test_pipeline_sd_data
@@ -12,10 +13,8 @@ os.environ['CLUSTER_NAME'] = "temporary"
 os.environ['CI_PROJECT_DIR'] = "temporary"
 
 from process_sd import handle_sd
-from envgenehelper import *
-from envgenehelper.env_helper import Environment
+from envgenehelper import SD_FILE_NAME, logger, openJson
 
-yaml = YAML()
 
 TEST_CASES_POSITIVE = [
     "TC-001-098",
@@ -33,22 +32,20 @@ test_suits_map = {
     "replace": []
 }
 
-SD = "sd.yaml"
-
 FEATURE_TEST_DIR = "test_handle_sd"
 
 
 class TestSdProcessArtifact(BaseTest):
-    env_dir = ""
-    cluster_dir = ""
-    full_env_name = "cluster-01/env-01"
 
     def setup_method(self):
+        self.env_name = "env-01"
+        self.cluster = "cluster-01"
+        self.full_env_name = f"{self.cluster}/{self.env_name}"
+
         self.set_ci_project_dir(FEATURE_TEST_DIR)
         self.test_data_dir = self.test_data_dir / FEATURE_TEST_DIR
         self.output_dir = self.output_dir / FEATURE_TEST_DIR
-        self.env_name = get_environment_name_from_full_name(self.full_env_name)
-        self.cluster = get_cluster_name_from_full_name(self.full_env_name)
+
         os.environ["FULL_ENV_NAME"] = self.full_env_name
         os.environ["ENV_NAME"] = self.env_name
         os.environ["CLUSTER_NAME"] = self.cluster
@@ -57,7 +54,7 @@ class TestSdProcessArtifact(BaseTest):
     @patch("process_sd.download_sd_by_appver")
     def test_sd_positive(self, mock_download_sd, test_case_name):
         env = Environment(str(Path(self.output_dir, test_case_name)), self.cluster, self.env_name)
-        do_prerequisites(SD, self.test_data_dir, self.output_dir, test_case_name, env, test_suits_map)
+        do_prerequisites(SD_FILE_NAME, self.test_data_dir, self.output_dir, test_case_name, env, test_suits_map)
         logger.info(f"======TEST HANDLE_SD_ARTIFACT_POSITIVE: {test_case_name}======")
         logger.info(f"Starting SD test:"
                     f"\n\tTest case: {test_case_name}")
@@ -80,7 +77,7 @@ class TestSdProcessArtifact(BaseTest):
     def test_sd_negative(self, mock_download_sd, test_case_name, expected_exception):
 
         env = Environment(str(Path(self.output_dir, test_case_name)), self.cluster, self.env_name)
-        do_prerequisites(SD, self.test_data_dir, self.output_dir, test_case_name, env, test_suits_map)
+        do_prerequisites(SD_FILE_NAME, self.test_data_dir, self.output_dir, test_case_name, env, test_suits_map)
         logger.info(f"======TEST HANDLE_SD_ARTIFACT_NEGATIVE: {test_case_name}======")
         logger.info(f"Starting SD test:"
                     f"\n\tTest case: {test_case_name}")
