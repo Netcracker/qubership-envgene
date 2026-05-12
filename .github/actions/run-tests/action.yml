@@ -28,10 +28,10 @@ runs:
     - name: Install system dependencies
       shell: bash
       run: |
-        sudo apt-get update && sudo apt-get install -y --no-install-recommends \
-          build-essential \
-          curl \
-        && sudo rm -rf /var/lib/apt/lists/*
+        apt-get update && apt-get install -y --no-install-recommends \
+            build-essential \
+            curl \
+            && rm -rf /var/lib/apt/lists/*
 
         curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64
         mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops
