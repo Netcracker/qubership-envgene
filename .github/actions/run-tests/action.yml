@@ -18,11 +18,11 @@ runs:
       run: |
         # Apply custom sources BEFORE any apt/pip usage
         if [ -f build_envgene/build/sources.list ]; then
-          sudo cp build_envgene/build/sources.list /etc/apt/sources.list
+          cp build_envgene/build/sources.list /etc/apt/sources.list
         fi
         if [ -f build_envgene/build/pip.conf ]; then
           mkdir -p /etc/pip
-          sudo cp build_envgene/build/pip.conf /etc/pip.conf
+          cp build_envgene/build/pip.conf /etc/pip.conf
         fi
 
     - name: Install system dependencies
