@@ -275,17 +275,11 @@ Credential entry must declare `properties` consistently with what the built-in r
 
 | Built-in credential reference              | Auto-generated deploy parameter names                                                                                                        |
 |--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| `Tenant.credential`                        | `CLOUD_DEPLOY_TOKEN`                                                                                                                         |
-| `Cloud.defaultCredentialsId`               | `CLOUD_DEPLOY_TOKEN`                                                                                                                         |
-| `Namespace.credentialsId`                  | `CLOUD_DEPLOY_TOKEN`                                                                                                                         |
 | `Cloud.maasConfig.credentialsId`           | `MAAS_CREDENTIALS_USERNAME`, `MAAS_CREDENTIALS_PASSWORD`                                                                                     |
 | `Cloud.dbaasConfigs[].credentialsId`       | `DBAAS_AGGREGATOR_USERNAME`, `DBAAS_AGGREGATOR_PASSWORD`, `DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME`, `DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD` |
 | `Cloud.vaultConfig.credentialsId`          | `VAULT_TOKEN`                                                                                                                                |
 | `Cloud.consulConfig.tokenSecret`           | `CONSUL_ADMIN_TOKEN`                                                                                                                         |
 | `BGDomain.controllerNamespace.credentials` | `BG_CONTROLLER_LOGIN`, `BG_CONTROLLER_PASSWORD`                                                                                              |
-
-When more than one of `Tenant.credential`, `Cloud.defaultCredentialsId`, and `Namespace.credentialsId` is set, the
-most specific level wins for the resulting `CLOUD_DEPLOY_TOKEN`: Namespace overrides Cloud overrides Tenant.
 
 #### Credential Template
 
@@ -933,13 +927,10 @@ Example:
    either local (`type: usernamePassword` / `secret`) or external (`type: external`). Different Environment
    Instances in the same repository may differ.
 
-3. **Orphan check.** Every rendered external [Credential](#credential) is referenced by at least one
+3. **Orphan check (warning).** Every rendered external [Credential](#credential) is referenced by at least one
    [Credential Reference](#credential-reference) or
-   [Built-in credential reference](#built-in-credential-references).
-
-4. **Property cross-reference.** Every [Credential Reference](#credential-reference) with `property: <p>`
-   references a [Credential](#credential) whose `properties` list contains an entry with `name: <p>`. Every
-   Credential Reference without `property` references a Credential without `properties` (single-value).
+   [Built-in credential reference](#built-in-credential-references). Violation surfaces a warning and does not
+   fail Environment Instance generation.
 
 #### During Effective Set generation
 
@@ -955,6 +946,10 @@ Example:
 
 4. **ESO capability gate.** Every application with effective `SECRET_FLOW = external-values` has
    [`eso_support`](#eso_support-attribute) set to `true`.
+
+5. **Property cross-reference.** Every [Credential Reference](#credential-reference) with `property: <p>` resolves
+   to a [Credential](#credential) whose `properties` list contains an entry with `name: <p>`. Every Credential
+   Reference without `property` resolves to a Credential without `properties` (single-value).
 
 #### During CMDB import
 
