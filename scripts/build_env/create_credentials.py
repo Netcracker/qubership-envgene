@@ -71,13 +71,14 @@ def validateExternalCreds(envCredsMap, extCredIds):
     if notFoundCred:
         raise ValueError(
                 f"Following external credentials:\n {notFoundCred}\n referred in environment are not found in any external credential source")
-    unusedCreds = [
-        credName for credName in envCredsMap.keys()
-        if credName not in extCredIds
-    ]
-    if unusedCreds:
-        raise ValueError(
-            f"Following external credentials:\n{unusedCreds}\n"
+    orphanCreds = [
+        credName
+        for credName, credConfig in envCredsMap.items()
+        if credConfig.get("type") == "external"
+        and credName not in extCredIds
+    ]   
+    if orphanCreds:
+        logger.warning(f"Following external credentials:\n{orphanCreds}\n"
             f"exist in external credential source but are not referred in environment"
         )
     logger.info(f'{len(extCredIds)} external creds processed from environment')
