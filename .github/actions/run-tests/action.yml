@@ -13,36 +13,45 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Install dependencies
+    - name: Configure package sources
       shell: bash
       run: |
-        apt-get update && apt-get install -y --no-install-recommends \
-            build-essential \
-            curl \
-            && rm -rf /var/lib/apt/lists/*
-
-        if [ -f dependencies/pip.conf ]; then
-            mkdir -p /etc/pip
-            cp dependencies/pip.conf /etc/pip.conf
+        # Apply custom sources BEFORE any apt/pip usage
+        if [ -f build_envgene/build/sources.list ]; then
+          sudo cp build_envgene/build/sources.list /etc/apt/sources.list
+        fi
+        if [ -f build_envgene/build/pip.conf ]; then
+          mkdir -p /etc/pip
+          sudo cp build_envgene/build/pip.conf /etc/pip.conf
         fi
 
-        if [ -f dependencies/sources.list ]; then
-            cp dependencies/sources.list /etc/apt/sources.list
-        fi
+    - name: Install system dependencies
+      shell: bash
+      run: |
+        sudo apt-get update && sudo apt-get install -y --no-install-recommends \
+          build-essential \
+          curl \
+        && sudo rm -rf /var/lib/apt/lists/*
 
-        pip install --upgrade pip "setuptools==81" wheel
-        pip install --no-cache-dir -r dependencies/tests_requirements.txt
+        curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64
+        mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops
+        chmod +x /usr/local/bin/sops
+
+    - name: Install Python dependencies
+      shell: bash
+      run: |
+        pip install --no-cache-dir --upgrade pip "setuptools==81" wheel
+        pip install --no-cache-dir -r build_envgene/build/requirements.txt \
+        -r build_effective_set_generator/build/requirements.txt \
+        -r build_pipegene/build/requirements.txt \
+        -r creds_rotation/build/requirements.txt
 
         if [ -f python/build_modules.sh ]; then
             chmod +x python/build_modules.sh
             ./python/build_modules.sh
         fi
 
-        pip install python/artifact-searcher
-
-        curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64
-        mv sops-v3.9.0.linux.amd64 /usr/local/bin/sops
-        chmod +x /usr/local/bin/sops
+        pip install --no-cache-dir -e python/artifact-searcher
 
     - name: Configure test environment
       shell: bash
