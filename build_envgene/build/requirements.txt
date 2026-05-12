@@ -1,4 +1,4 @@
-certifi==2022.6.15
+certifi==2023.11.17
 cffi==1.16.0
 click==8.1.7
 cryptography==41.0.3

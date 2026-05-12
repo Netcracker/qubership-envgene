@@ -1,7 +1,7 @@
 attrs==23.2.0
 boto3==1.39.4
 botocore==1.39.4
-certifi==2022.6.15
+certifi==2023.11.17
 click==8.1.7
 cryptography==41.0.3
 deepmerge==2.0
