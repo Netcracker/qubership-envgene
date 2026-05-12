@@ -18,6 +18,7 @@ package org.qubership.cloud.devops.commons.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigInteger;
 
 public class HelmNameNormalizer {
 
@@ -44,7 +45,7 @@ public class HelmNameNormalizer {
         }
 
         // Convert binary mask to decimal
-        long decimalMask = Long.parseLong(mask.toString(), 2);
+        BigInteger decimalMask = new BigInteger(mask.toString(), 2);
 
         // Encode decimal mask in base-36 using custom symbols
         List<Integer> base36Digits = numberToBase(decimalMask, 36);
@@ -62,15 +63,17 @@ public class HelmNameNormalizer {
         return finalName;
     }
 
-    private static List<Integer> numberToBase(long number, int base) {
+    private static List<Integer> numberToBase(BigInteger number, int base) {
         List<Integer> digits = new ArrayList<>();
-        if (number == 0) {
+        BigInteger bigbase = BigInteger.valueOf(base);
+
+        if (number.equals(BigInteger.ZERO)) {
             digits.add(0);
             return digits;
         }
-        while (number > 0) {
-            digits.add(0, (int)(number % base));
-            number /= base;
+        while (number.compareTo(BigInteger.ZERO) > 0) {
+            digits.add(0, number.remainder(bigbase).intValue());
+            number = number.divide(bigbase);
         }
         return digits;
     }
