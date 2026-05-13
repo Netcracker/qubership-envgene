@@ -51,16 +51,16 @@ There are two sources for obtaining Application and Registry Definitions in EnvG
 
 An external job (not implemented in EnvGene itself, but serves as an extension point) that somehow creates/discovers/generates Application and Registry Definitions as YAML files and saves them in its artifact with the contract name `definitions.zip`.
 
-During the `[app_reg_def_process](/docs/envgene-pipelines.md#instance-pipeline)` job execution, EnvGene retrieves the Application and Registry Definitions from this artifact and saves them in the instance repository at:
+During the `[app_reg_def_process]`(/docs/envgene-pipelines.md#instance-pipeline) job execution, EnvGene retrieves the Application and Registry Definitions from this artifact and saves them in the instance repository at:
 
 - `/genDefs/AppDefs`
 - `/genDefs/RegDefs`
 
 EnvGene uses the following instance repository pipeline parameters:
 
-- `[APP_REG_DEFS_JOB](/docs/instance-pipeline-parameters.md#app_reg_defs_job)` - specifies which job to use
-- `[APP_DEFS_PATH](/docs/instance-pipeline-parameters.md#app_defs_path)` - specifies the path within the artifact where Application Definitions are located
-- `[REG_DEFS_PATH](/docs/instance-pipeline-parameters.md#reg_defs_path)` - specifies the path within the artifact where Registry Definitions are located
+- `[APP_REG_DEFS_JOB]`(/docs/instance-pipeline-parameters.md#app_reg_defs_job) - specifies which job to use
+- `[APP_DEFS_PATH]`(/docs/instance-pipeline-parameters.md#app_defs_path) - specifies the path within the artifact where Application Definitions are located
+- `[REG_DEFS_PATH]`(/docs/instance-pipeline-parameters.md#reg_defs_path) - specifies the path within the artifact where Registry Definitions are located
 
 The External Job must be configured as part of the EnvGene Instance pipeline.
 
@@ -81,11 +81,11 @@ The user defines, in the Template repository as part of the Environment Template
      └── registry2.yml.j2
 ```
 
-These files can be either Jinja templates of the object or plain objects without parameterization. All EnvGene [Jinja macros](/docs/template-macros.md#jinja-macros) are available for template creation.
+These files can be either Jinja templates of the object or plain objects without parameterization. All EnvGene `[Jinja macros]`(/docs/template-macros.md#jinja-macros) are available for template creation.
 
 Each Application and Registry Definition is created as a separate file.
 
-During the `[app_reg_def_process](/docs/envgene-pipelines.md#instance-pipeline)` job execution, EnvGene renders these templates and saves them as part of the Environment Instance.
+During the `[app_reg_def_process]`(/docs/envgene-pipelines.md#instance-pipeline) job execution, EnvGene renders these templates and saves them as part of the Environment Instance.
 
 ### Using Application and Registry Definitions
 
@@ -141,9 +141,9 @@ EnvGene provides an extension point for integration with external CMDB systems, 
 
 For this integration, the following configuration is used:
 
-- `[CMDB_IMPORT](/docs/instance-pipeline-parameters.md#cmdb_import)`: an Instance pipeline parameter that triggers the export operation
+- `[CMDB_IMPORT]`(/docs/instance-pipeline-parameters.md#cmdb_import): an Instance pipeline parameter that triggers the export operation
 - `inventory.deployer`: an attribute in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) that points to the CMDB instance configuration
-- `[deployer.yml](/docs/envgene-configs.md#deployeryml)`: a configuration file that describes the parameters of the CMDB instance
+- `[deployer.yml]`(/docs/envgene-configs.md#deployeryml): a configuration file that describes the parameters of the CMDB instance
 
 ### Application and Registry Definitions Transformation
 
@@ -162,15 +162,15 @@ However, the following attributes are usually changed:
 
 To avoid recreating these definitions from scratch, it is recommended to enable transformation of the Definitions using Jinja parameterization and macros that are available exclusively for rendering Definitions:
 
-- `[appdefs.overrides](/docs/template-macros.md#appdefsoverrides)`
-- `[regdefs.overrides](/docs/template-macros.md#regdefsoverrides)`
+- `[appdefs.overrides]`(/docs/template-macros.md#appdefsoverrides)
+- `[regdefs.overrides]`(/docs/template-macros.md#regdefsoverrides)
 
-The values for these macros are set in `[appregdef_config.yaml](/docs/envgene-configs.md#appregdef_configyaml)`
+The values for these macros are set in `[appregdef_config.yaml]`(/docs/envgene-configs.md#appregdef_configyaml)
 
-Other Jinja [macros](/docs/template-macros.md#jinja-macros) are also available.
+Other Jinja `[macros]`(/docs/template-macros.md#jinja-macros) are also available.
 
 For example:
 
-- [appregdef_config.yaml example](/test_data/configuration/appregdef_config.yaml)
-- [Application Definition template](/test_data/test_templates/appdefs/application-1.yaml.j2)
-- [Registry Definition template](/test_data/test_templates/regdefs/registry-1.yaml.j2)
+- `[appregdef_config.yaml example]`(/test_data/configuration/appregdef_config.yaml)
+- `[Application Definition template]`(/test_data/test_templates/appdefs/application-1.yaml.j2)
+- `[Registry Definition template]`(/test_data/test_templates/regdefs/registry-1.yaml.j2)
