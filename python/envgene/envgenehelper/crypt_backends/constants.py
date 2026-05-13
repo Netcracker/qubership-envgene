@@ -5,3 +5,8 @@ UNENCRYPTED_REGEX = re.compile(UNENCRYPTED_REGEX_STR)
 
 SOPS_MODES = {"encrypt": "encrypt", "decrypt": "decrypt"}
 FERNET_STR = '[encrypted:AES256_Fernet]'
+
+EFFECTIVE_SET_CREDENTIALS_RE = re.compile(
+    r'(^|/)effective-set/.*/credentials\.ya?ml$',
+    re.IGNORECASE,
+)
