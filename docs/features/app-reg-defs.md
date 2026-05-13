@@ -92,9 +92,9 @@ During the [`app_reg_def_process`](/docs/envgene-pipelines.md#instance-pipeline)
 
 #### Repo-level config attribute
 
-**Configure the below attribute in** [`config.yml`](/docs/envgene-config.yml)
+**Configure the below attribute in** [`config.yml`](/docs/envgene-config.md#config.yml)
 app_reg_defs_placement: dual   # default
-# or
+#or
 app_reg_defs_placement: root
 
 **Placement modes**
@@ -103,11 +103,16 @@ dual (default)
 EnvGene writes the rendered AppDef and RegDef files to both:
 
 Root-level folders:
+```text
 /appdefs/
 /regdefs/
+```
+
 Per-environment folders:
+```text
 AppDefs/
 RegDefs/
+```
 
 This mode is intended for backward compatibility with external consumers that still depend on the legacy per-environment folder structure.
 
@@ -115,9 +120,10 @@ root
 
 EnvGene writes the rendered AppDef and RegDef files only to the root-level folders:
 
+```text
 /appdefs/
 /regdefs/
-
+```
 No files are written to the per-environment AppDefs/ or RegDefs/ folders in this mode.
 
 **Canonical source behavior**
