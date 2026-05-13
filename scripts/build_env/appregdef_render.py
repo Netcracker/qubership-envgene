@@ -4,6 +4,15 @@ from envgenehelper.models import TemplateVersionUpdateMode
 from env_template.process_env_template import process_env_template
 from render_config_env import EnvGenerator
 
+def copy_app_reg_defs(render_dir, env_dir):
+    for dir_name in ["AppDefs", "RegDefs"]:
+        src = Path(render_dir) / dir_name
+        dst = Path(env_dir) / dir_name
+
+        if src.exists():
+            shutil.copytree(src, dst, dirs_exist_ok=True)
+
+
 if __name__ == '__main__':
     template_version = process_env_template()
 
@@ -31,13 +40,6 @@ if __name__ == '__main__':
     render_context = EnvGenerator()
     render_context.process_app_reg_defs(env_name, render_context_vars)
 
-    for dir_name in ["AppDefs", "RegDefs"]:
-        src = Path(render_dir) / dir_name
-        dst = Path(env_dir) / dir_name
-
-        if dst.exists():
-            shutil.rmtree(dst)
-        if src.exists():
-            shutil.move(src, dst)
+    copy_app_reg_defs(render_dir, env_dir)    
 
     update_generated_versions(env_dir, BUILD_ENV_TAG, template_version[NamespaceRole.COMMON])

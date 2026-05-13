@@ -8,6 +8,7 @@ import yaml
 from render_config_env import EnvGenerator
 from envgenehelper.test_helpers import TestHelpers
 from envgenehelper.business_helper import NamespaceRole
+from scripts.build_env.appregdef_render import copy_app_reg_defs
 
 
 class TestAppRegDefRendering:
@@ -106,3 +107,24 @@ class TestAppRegDefRendering:
         with pytest.raises(expected_exception):
             render_context.process_app_reg_defs(self.env_name, context_vars)
 
+    def test_appregdefs_merge_behavior(self, request):
+        self._setup_render_dir()
+
+        render_context = EnvGenerator()
+        context_vars = self._get_render_context("TC-001-001")
+
+        render_context.process_app_reg_defs(self.env_name, context_vars)
+
+        render_dir = Path(context_vars["current_env_dir"])
+        env_dir = Path(f"/tmp/environments/{self.cluster_name}/{self.env_name}")            
+        appdefs_dir = Path(f"{env_dir}/AppDefs")
+        appdefs_dir.mkdir(parents=True, exist_ok=True)
+        (appdefs_dir / "existing.yml").write_text("keep-me")       
+
+        copy_app_reg_defs(render_dir, env_dir)
+
+        assert (appdefs_dir / "application-1.yml").exists()
+        assert (appdefs_dir / "existing.yml").exists()
+
+        shutil.rmtree(appdefs_dir, ignore_errors=True)
+        shutil.rmtree(render_dir / "AppDefs", ignore_errors=True)
