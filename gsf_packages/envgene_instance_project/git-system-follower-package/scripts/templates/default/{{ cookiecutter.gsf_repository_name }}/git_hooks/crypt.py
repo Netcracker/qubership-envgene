@@ -1,5 +1,6 @@
 from cryptography.fernet import Fernet
 from os import getenv,listdir,path,walk,makedirs,path,remove,environ
+import re
 import click
 import json
 import ruyaml
@@ -9,6 +10,7 @@ import jsonschema
 import logging
 import subprocess
 import sys
+from pathlib import Path
 logging.basicConfig(format = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s', level = logging.INFO)
 
 SECRET_KEY_ID = "SECRET_KEY"
@@ -17,6 +19,24 @@ SOPS_ID = "SOPS"
 ENVGENE_AGE_PUBLIC_KEY_ID = "ENVGENE_AGE_PUBLIC_KEY"
 ENVGENE_AGE_PRIVATE_KEY_ID = "SOPS_AGE_KEY_FILE"
 UNENCRYPTED_REGEX_STR = "^type$"
+
+# Keep in sync with envgenehelper.crypt_backends.constants.EFFECTIVE_SET_CREDENTIALS_RE (instance hook is standalone).
+EFFECTIVE_SET_CREDENTIALS_RE = re.compile(
+    r'(^|/)effective-set/.*/credentials\.ya?ml$',
+    re.IGNORECASE,
+)
+
+
+def get_sops_scope_flag(file_path: str) -> str:
+    norm = file_path.replace('\\', '/')
+    name = Path(file_path).name.lower()
+
+    if name in ('credentials.yaml', 'credentials.yml') and \
+       EFFECTIVE_SET_CREDENTIALS_RE.search(norm):
+        return '--encrypted-regex ".*"'
+
+    return f'--unencrypted-regex "{UNENCRYPTED_REGEX_STR}"'
+
 
 def create_yaml_processor() -> ruyaml.main.YAML:
     def _null_representer(self: ruyaml.representer.BaseRepresenter, data: None) -> ruyaml.Any:
@@ -134,7 +154,8 @@ def encrypt_sensitive(cipher, sensitive_data):
 def encrypt_sensitive_sops(cred_file, age_public_key):
     dir_path = path.dirname(path.realpath(cred_file))
     encrypted_file = path.join(dir_path, 'tmp')
-    command = f'sops --encrypt --age {age_public_key} --unencrypted-regex {UNENCRYPTED_REGEX_STR} {cred_file} > {encrypted_file}'
+    scope_flag = get_sops_scope_flag(cred_file)
+    command = f'sops --encrypt --age {age_public_key} {scope_flag} {cred_file} > {encrypted_file}'
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     if result.returncode != 0 and "metadata not found" not in result.stderr:
         logging.info(f'The error occurred while SOPS encryption: {result.stderr}')
