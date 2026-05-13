@@ -201,7 +201,7 @@ envTemplate:
 The primary system configuration file
 Located at `/configuration/config.yml`
 
-`[config.yml` JSON Schema](/schemas/config.schema.json)
+[`config.yml` JSON Schema](/schemas/config.schema.json)
 
 ```yaml
 # Optional. Default value - `true`
@@ -242,7 +242,7 @@ sbom_retention:
 
 System Configuration File for External Integrations
 
-`[integration.yml` JSON Schema](/schemas/integration.schema.json)
+[`integration.yml` JSON Schema](/schemas/integration.schema.json)
 
 ```yaml
 # Optional
@@ -285,7 +285,7 @@ Located at:
 - `/configuration/deployer.yml`
 - `/environments/<cluster-name>/<env-name>/app-deployer/deployer.yml`
 
-`[deployer.yml` JSON Schema](/schemas/deployer.schema.json)
+[`deployer.yml` JSON Schema](/schemas/deployer.schema.json)
 
 ```yaml
 # Unique name. Must be unique within a single repository
@@ -363,7 +363,7 @@ Replacement: [`Artifact Definitions`](/docs/envgene-objects.md#artifact-definiti
 
 Location: `/configuration/registry.yml`
 
-`[registry.yml` JSON Schema](/schemas/registry.schema.json)
+[`registry.yml` JSON Schema](/schemas/registry.schema.json)
 
 ```yaml
 <registry-name>:
@@ -398,4 +398,3 @@ artifactory:
   snapshotTemplateRepository: "https://artifactory.qubership.org/mvn.template-snapshot"
   stagingTemplateRepository: "https://artifactory.qubership.org/mvn.template-staging"
 ```
-
