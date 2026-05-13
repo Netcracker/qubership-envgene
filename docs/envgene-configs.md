@@ -1,11 +1,11 @@
 # EnvGene Configuration
 
 - [EnvGene Configuration](#envgene-configuration)
-  - `[env_definition.yml](#env_definitionyml)`
-  - `[config.yml](#configyml)`
-  - `[integration.yml](#integrationyml)`
-  - `[deployer.yml](#deployeryml)`
-  - `[appregdef_config.yaml](#appregdef_configyaml)`
+  - `[env_definition.yml]`(#env_definitionyml)
+  - `[config.yml]`(#configyml)
+  - `[integration.yml]`(#integrationyml)
+  - `[deployer.yml]`(#deployeryml)
+  - `[appregdef_config.yaml]`(#appregdef_configyaml)
   - [Deprecated](#deprecated)
     - `[registry.yml](#registryyml)`
 
@@ -25,7 +25,7 @@ Environment Inventory. The inventory file of a specific Environment. Contains th
 Mandatory for every Environment. Created and updated manually.
 
 Located in the Instance repository at: `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
-Pass the `<cluster-name>/<env-name>` to the `[ENV_NAMES](/docs/instance-pipeline-parameters.md#env_names)` input parameter when executing Environment operations
+Pass the `<cluster-name>/<env-name>` to the `[ENV_NAMES]`(/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
 
 `[env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
 
@@ -312,8 +312,8 @@ This file is used to set parameters context for [Application Definition](/docs/e
 
 The parameters specified in this configuration file are used with macros:
 
-- `[appdefs.overrides](/docs/template-macros.md#appdefsoverrides)`
-- `[regdefs.overrides](/docs/template-macros.md#regdefsoverrides)`
+- `[appdefs.overrides]`(/docs/template-macros.md#appdefsoverrides)
+- `[regdefs.overrides]`(/docs/template-macros.md#regdefsoverrides)
 
 For more info, see [Application and Registry Definition](/docs/features/app-reg-defs.md).
 
