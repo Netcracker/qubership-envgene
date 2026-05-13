@@ -93,9 +93,12 @@ During the [`app_reg_def_process`](/docs/envgene-pipelines.md#instance-pipeline)
 #### Repo-level config attribute
 
 **Configure the below attribute in** [`config.yml`](/docs/envgene-config.md#config.yml)
+
+```text
 app_reg_defs_placement: dual   # default
 #or
 app_reg_defs_placement: root
+```
 
 **Placement modes**
 dual (default)
