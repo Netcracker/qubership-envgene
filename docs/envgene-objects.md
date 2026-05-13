@@ -518,7 +518,7 @@ controllerNamespace:
 
 This is a Jinja template file used to render the [Registry Definition](#registry-definition) object.
 
-In addition to other macros, `[regdefs.overrides]`(/docs/template-macros.md#regdefsoverrides) is available when rendering the Application Definition Template.
+In addition to other macros, [`regdefs.overrides`](/docs/template-macros.md#regdefsoverrides) is available when rendering the Application Definition Template.
 
 **Location:** `/templates/regdefs/<registry-name>.yaml|yml|yml.j2|yaml.j2`
 
@@ -548,7 +548,7 @@ dockerConfig:
 
 This is a Jinja template file used to render the [Application Definition](#application-definition) object.
 
-In addition to other macros, `[appdefs.overrides]`(/docs/template-macros.md#appdefsoverrides) is available when rendering the Application Definition Template.
+In addition to other macros, [`appdefs.overrides`](/docs/template-macros.md#appdefsoverrides) is available when rendering the Application Definition Template.
 
 **Location:** `/templates/appdefs/<application-name>.yaml|yml|yml.j2|yaml.j2`
 
@@ -1239,7 +1239,7 @@ composite_structure:
 
 #### BG Domain
 
-The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the `[NS_BUILD_FILTER]`(/docs/instance-pipeline-parameters.md#ns_build_filter) parameter and BGD lifecycle management.
+The BG Domain object defines the Blue-Green Domain structure and namespace mappings for environments that use BGD support. This object is used for alias resolution in the [`NS_BUILD_FILTER`](/docs/instance-pipeline-parameters.md#ns_build_filter) parameter and BGD lifecycle management.
 
 The BG Domain object is generated during Environment Instance generation based on:
 
@@ -1303,7 +1303,7 @@ controllerNamespace:
 ```
 
 When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.
-The `[inventory.config.updateCredIdsWithEnvName]`(/docs/envgene-configs.md#env_definitionyml) mechanism works for this Credential as well as for all other Credentials.
+The [`inventory.config.updateCredIdsWithEnvName`](/docs/envgene-configs.md#env_definitionyml) mechanism works for this Credential as well as for all other Credentials.
 
 **Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
 
@@ -1336,7 +1336,7 @@ bg_domain:
 
 This object, which is an empty file, is used to represent the current Blue-Green Domain state of the Origin and Peer namespaces via lightweight filesystem markers.
 
-The files are maintained by the `[bg_manage]`(/docs/envgene-pipelines.md) job.
+The files are maintained by the [`bg_manage`](/docs/envgene-pipelines.md) job.
 
 See details in [Blue-Green Domain](/docs/features/blue-green-deployment.md)
 
@@ -1370,7 +1370,7 @@ State files are located in the environment root directory:
 
 ### Solution Descriptor
 
-The Solution Descriptor (SD) defines the application composition of a solution. In EnvGene it serves as the primary input for EnvGene's Effective Set calculations. The SD can also be used for template rendering through the `[current_env.solution_structure]`(/docs/template-macros.md#current_envsolution_structure) variable.
+The Solution Descriptor (SD) defines the application composition of a solution. In EnvGene it serves as the primary input for EnvGene's Effective Set calculations. The SD can also be used for template rendering through the [`current_env.solution_structure`](/docs/template-macros.md#current_envsolution_structure) variable.
 
 Other systems can use it for other reasons, for example as a deployment blueprint for external systems.
 
@@ -1378,7 +1378,7 @@ Only SD versions 2.1 and 2.2 can be used by EnvGene for the purposes described a
 
 For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/features/sd-processing.md).
 
-SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [pipeline](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
+SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [`pipeline`](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
 
 In EnvGene, there are:
 
