@@ -197,6 +197,8 @@ EnvGene can override the Application and Registry definitions from the centraliz
         ├── registry-1.yml
         └── registry-2.yml
 ```
+**Note:**
+The override layer is repository-wide. A single override file applies to all environments within the repository.
 
 #### Used by External Systems
 
