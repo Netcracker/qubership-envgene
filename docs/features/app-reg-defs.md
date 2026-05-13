@@ -7,6 +7,7 @@
       - [External Job](#external-job)
       - [User Defined by Template](#user-defined-by-template)
     - [Using Application and Registry Definitions](#using-application-and-registry-definitions)
+      - [Repo-level config attribute](#repo-level-config-attribute)
       - [Used by EnvGene](#used-by-envgene)
       - [Overriding Centralized Definitions](#overriding-centralized-definitions)
       - [Used by External Systems](#used-by-external-systems)
@@ -87,7 +88,69 @@ Each Application and Registry Definition is created as a separate file.
 
 During the [`app_reg_def_process`](/docs/envgene-pipelines.md#instance-pipeline) job execution, EnvGene renders these templates and saves them as part of the Environment Instance.
 
-#### Using Application and Registry Definitions
+### Using Application and Registry Definitions
+
+#### Repo-level config attribute
+
+**Configure the below attribute in** [`config.yml`](/docs/envgene-config.yml)
+app_reg_defs_placement: dual   # default
+# or
+app_reg_defs_placement: root
+
+**Placement modes**
+dual (default)
+
+EnvGene writes the rendered AppDef and RegDef files to both:
+
+Root-level folders:
+/appdefs/
+/regdefs/
+Per-environment folders:
+AppDefs/
+RegDefs/
+
+This mode is intended for backward compatibility with external consumers that still depend on the legacy per-environment folder structure.
+
+root
+
+EnvGene writes the rendered AppDef and RegDef files only to the root-level folders:
+
+/appdefs/
+/regdefs/
+
+No files are written to the per-environment AppDefs/ or RegDefs/ folders in this mode.
+
+**Canonical source behavior**
+
+Starting from the EnvGene version that introduces this feature, EnvGene reads AppDef and RegDef files only from the root-level folders (/appdefs/ and /regdefs/).
+
+The selected placement mode controls only where rendered files are written for compatibility purposes. Even in dual mode, the per-environment folders are treated only as compatibility mirrors for external consumers.
+
+**Why this is a repository-level configuration**
+
+The app_reg_defs_placement setting is configured at the repository level and applies to all environments in that repository.
+
+This approach keeps the configuration simple, since compatibility requirements for external systems are usually the same across all environments. Managing this setting separately for each environment would add unnecessary complexity without significant benefits.
+
+**Deletion behavior in dual mode**
+
+In dual mode, the per-environment folders act as generated mirrors of the root-level definitions.
+
+When definitions are removed, the mirror folders are not automatically synchronized through deletion. The behavior follows the existing root rendering approach ("last write wins").
+
+As a result, stale definitions may remain in the per-environment folders until the corresponding environment is regenerated.
+
+**Switching from dual to root**
+
+When migrating from dual mode to root mode, all environments should be regenerated before relying exclusively on the root-level structure.
+
+This is important because:
+
+- Per-environment folders are generated artifacts, not authoritative sources.
+- Root-level definitions for a specific environment become complete only after that environment has been regenerated.
+- Switching to root mode before all environments are regenerated may leave outdated or stale data in the per-environment folders.
+
+It is therefore recommended to complete regeneration for all environments before fully adopting root mode.
 
 #### Used by EnvGene
 
