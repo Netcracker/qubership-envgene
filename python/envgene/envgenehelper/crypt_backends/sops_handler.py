@@ -1,13 +1,26 @@
 import os
+import shutil
 import subprocess
 import tempfile
-import shutil
+from pathlib import Path
 
 from ..business_helper import getenv_with_error
 from ..yaml_helper import openYaml, readYaml, get_or_create_nested_yaml_attribute, writeYamlToFile, dumpYamlToStr
 from ..logger import logger
 
 from .constants import *
+
+
+def get_sops_scope_flag(file_path: str) -> str:
+    norm = file_path.replace('\\', '/')
+    name = Path(file_path).name.lower()
+
+    if name in ('credentials.yaml', 'credentials.yml') and \
+       EFFECTIVE_SET_CREDENTIALS_RE.search(norm):
+        return '--encrypted-regex ".*"'
+
+    return f'--unencrypted-regex "{UNENCRYPTED_REGEX_STR}"'
+
 
 def _run_SOPS(arg_str, return_codes_to_ignore=None):
     return_codes_to_ignore = return_codes_to_ignore if return_codes_to_ignore else []
@@ -96,7 +109,7 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
     else:
         sops_args = f' --{SOPS_MODES[mode]} '
         if mode != "decrypt":
-            sops_args += f' --unencrypted-regex "{UNENCRYPTED_REGEX_STR}"'
+            sops_args += f' {get_sops_scope_flag(file_path)}'
         if in_place:
             sops_args += ' --in-place'
         sops_args += f' -age {public_key} {file_path}'
