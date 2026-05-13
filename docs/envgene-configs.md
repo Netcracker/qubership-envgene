@@ -1,13 +1,13 @@
 # EnvGene Configuration
 
 - [EnvGene Configuration](#envgene-configuration)
-  - `[env_definition.yml]`(#env_definitionyml)
-  - `[config.yml]`(#configyml)
-  - `[integration.yml]`(#integrationyml)
-  - `[deployer.yml]`(#deployeryml)
-  - `[appregdef_config.yaml]`(#appregdef_configyaml)
+  - [`env_definition.yml`](#env_definitionyml)
+  - [`config.yml`](#configyml)
+  - [`integration.yml`](#integrationyml)
+  - [`deployer.yml`](#deployeryml)
+  - [`appregdef_config.yaml`](#appregdef_configyaml)
   - [Deprecated](#deprecated)
-    - `[registry.yml](#registryyml)`
+    - [`registry.yml`](#registryyml)
 
 ## `env_definition.yml`
 
@@ -25,9 +25,9 @@ Environment Inventory. The inventory file of a specific Environment. Contains th
 Mandatory for every Environment. Created and updated manually.
 
 Located in the Instance repository at: `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
-Pass the `<cluster-name>/<env-name>` to the `[ENV_NAMES]`(/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
+Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
 
-`[env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
+[`env_definition.yml JSON Schema`](/schemas/env-definition.schema.json)
 
 ```yaml
 # Mandatory
@@ -312,8 +312,8 @@ This file is used to set parameters context for [Application Definition](/docs/e
 
 The parameters specified in this configuration file are used with macros:
 
-- `[appdefs.overrides]`(/docs/template-macros.md#appdefsoverrides)
-- `[regdefs.overrides]`(/docs/template-macros.md#regdefsoverrides)
+- [`appdefs.overrides`](/docs/template-macros.md#appdefsoverrides)
+- [`regdefs.overrides`](/docs/template-macros.md#regdefsoverrides)
 
 For more info, see [Application and Registry Definition](/docs/features/app-reg-defs.md).
 
@@ -323,7 +323,7 @@ Location:
 
 When rendering Application and Registry Definitions, EnvGene reads configuration only from the repository-wide file /configuration/appregdef_config.yaml. Cluster-specific appregdef_config.yaml files are not supported.
 
-[appregdef_config.yaml JSON Schema](/schemas/appregdef-config.schema.json)
+[`appregdef_config.yaml` JSON Schema](/schemas/appregdef-config.schema.json)
 
 ```yaml
 # Optional
@@ -359,7 +359,7 @@ regdefs:
 
 This config file contains the definition of one or more Maven registries used for downloading Environment Template artifacts.
 
-Replacement: [Artifact Definitions](/docs/envgene-objects.md#artifact-definition)
+Replacement: [`Artifact Definitions`](/docs/envgene-objects.md#artifact-definition)
 
 Location: `/configuration/registry.yml`
 
