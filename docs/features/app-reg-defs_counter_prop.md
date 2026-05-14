@@ -171,7 +171,7 @@ AppDefs/
 RegDefs/
 ```
 
-This mode exists for backward compatibility with external consumers that still depend on legacy per-environment folders.
+This mode is intended for backward compatibility with external consumers that still depend on the legacy per-environment folder structure.
 
 ###### root
 
@@ -193,31 +193,33 @@ Starting from the EnvGene version introducing this feature, EnvGene reads Applic
 /regdefs/
 ```
 
-Per-environment folders are compatibility mirrors only.
+The selected placement mode controls only where rendered files are written for compatibility purposes. Even in dual mode, the per-environment folders are treated only as compatibility mirrors for external consumers.
 
 ##### Repository-Level Configuration
 
 The `app_reg_defs_placement` setting is configured at the repository level and applies to all environments in that repository.
 
-This keeps compatibility handling consistent across environments and avoids unnecessary per-environment configuration complexity.
+This approach keeps the configuration simple, since compatibility requirements for external systems are usually the same across all environments. Managing this setting separately for each environment would add unnecessary complexity without significant benefits.
 
 ##### Deletion Behavior in dual Mode
 
-In `dual` mode, per-environment folders act as generated compatibility mirrors.
+In `dual` mode, EnvGene keeps the per-environment `AppDefs/` and `RegDefs/` folders as compatibility copies of the root-level rendered
+definitions.
 
-Writes are performed on a per-file basis. EnvGene does not replace entire folders during rendering.
+When definitions are removed, the mirror folders are not automatically synchronized through deletion. The behavior follows the existing root rendering approach ("last write wins").
 
-If multiple rendering operations target the same definition file, the last processed write becomes the effective definition (last-write-wins behavior).
-
-Removing a template definition or External Job entry does not automatically delete previously generated compatibility files.
-
-Stale files remain until manually removed or regenerated.
+Old definition files remain until they are manually deleted or the environment is regenerated.
 
 ##### Switching from dual to root
 
-When migrating from `dual` mode to `root` mode, all environments should be regenerated before relying exclusively on root-level rendered definitions.
+When migrating from dual mode to root mode, all environments should be regenerated before relying exclusively on the root-level structure.
 
-This ensures compatibility mirrors are fully synchronized before decommissioning legacy usage patterns.
+This is important because:
+
+Per-environment folders are generated artifacts, not authoritative sources.
+Root-level definitions for a specific environment become complete only after that environment has been regenerated.
+Switching to root mode before all environments are regenerated may leave outdated or stale data in the per-environment folders.
+It is therefore recommended to complete regeneration for all environments before fully adopting root mode.
 
 #### Used by EnvGene
 
@@ -325,7 +327,8 @@ In this case, `groupId` is removed because the override definition fully replace
 
 ##### Override Definitions Without Matching Templates
 
-If an override definition does not have a matching generated definition, the override definition is ignored. Override processing only applies to existing generated definitions.
+If an override definition does not have a matching generated definition, the override definition is ignored. 
+Override processing only applies to existing generated definitions.
 
 ##### Interaction with `appdefs.overrides`
 
@@ -367,6 +370,7 @@ During execution of the `app_reg_def_process` job:
 Cleanup behavior is idempotent.
 
 After the first successful pipeline execution on an upgraded repository, subsequent executions typically find no remaining legacy files to remove.
+Repeated executions therefore do not introduce additional cleanup changes.
 
 ###### Manual Migration
 
@@ -376,59 +380,52 @@ Migration occurs automatically during normal pipeline execution.
 
 #### Used by External Systems
 
-External systems can retrieve rendered Application and Registry Definitions using:
-- GitLab/GitHub API calls
-- repository checkout operations
+External systems can get Application and Registry Definitions from the EnvGene instance repository using GitLab/GitHub API calls, or by checking out the repository.
 
-External consumers should use only the centralized rendered definitions located in:
+Again, these definitions are shared across all environments. Therefore, for any operation on a specific environment, only the definitions located at the root level will be used:
 
 ```text
-/appdefs/
-/regdefs/
+/environments/<cluster-name>/<env-name>/AppDefs/...
+/environments/<cluster-name>/<env-name>/RegDefs/...
 ```
 
 #### Export to External CMDB Systems
 
-EnvGene provides an extension point for integration with external CMDB systems.
+EnvGene provides an extension point for integration with external CMDB systems, but does not implement the integration itself. As part of such integration, it is possible to create Application and Registry Definitions or their equivalents.
 
-The integration itself is not implemented inside EnvGene.
+For this integration, the following configuration is used:
 
-For CMDB export integration, the following configuration is used:
-
-- [`CMDB_IMPORT`](/docs/instance-pipeline-parameters.md#cmdb_import)
-- `inventory.deployer`
-- [`deployer.yml`](/docs/envgene-configs.md#deployeryml)
-
-The `cmdb_import` job exports the final effective definitions after override processing is completed.
+- [`CMDB_IMPORT`](/docs/instance-pipeline-parameters.md#cmdb_import): an Instance pipeline parameter that triggers the export operation
+- `inventory.deployer`: an attribute in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml) that points to the CMDB instance configuration
+- [`deployer.yml`](/docs/envgene-configs.md#deployeryml): a configuration file that describes the parameters of the CMDB instance
 
 ### Application and Registry Definitions Transformation
 
-When delivering a solution between sites, artifacts are typically transferred between registries, which affects Application and Registry Definitions.
+When delivering a solution from one site to another, the solution artifacts are transferred from one registry to another, which affects the Application and Registry Definitions.
 
-Usually the following attributes remain unchanged:
+Usually (and best practice), the following attributes typically remain unchanged during delivery:
 
 - group
 - name
 - version
 
-The following attributes usually change:
+However, the following attributes are usually changed:
 
 - registry URL
 - registry access parameters
 
-To avoid recreating definitions from scratch, it is recommended to use Jinja parameterization and transformation macros:
+To avoid recreating these definitions from scratch, it is recommended to enable transformation of the Definitions using Jinja parameterization and macros that are available exclusively for rendering Definitions:
 
 - [`appdefs.overrides`](/docs/template-macros.md#appdefsoverrides)
 - [`regdefs.overrides`](/docs/template-macros.md#regdefsoverrides)
 
-Macro values are configured in:
+The values for these macros are set in [`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml)
 
-- [`appregdef_config.yaml`](/docs/envgene-configs.md#appregdef_configyaml)
+Other Jinja [`macros`](/docs/template-macros.md#jinja-macros) are also available.
 
-Other EnvGene [`Jinja macros`](/docs/template-macros.md#jinja-macros) are also available.
-
-Examples:
+For example:
 
 - [`appregdef_config.yaml example`](/test_data/configuration/appregdef_config.yaml)
 - [`Application Definition template`](/test_data/test_templates/appdefs/application-1.yaml.j2)
 - [`Registry Definition template`](/test_data/test_templates/regdefs/registry-1.yaml.j2)
+
