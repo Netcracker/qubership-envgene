@@ -16,7 +16,7 @@
 
 **Pre-requisites:**
 
-- A Cloud Passport file `<cluster-name>.yml` exists under `cloud-passport/` at cluster level
+- A Cloud Passport file `<cluster-name>.{yml|yaml}` exists under `cloud-passport/` at cluster level
 - `env_definition.yml` does not contain a `cloudPassport` field
 
 **Trigger:**
@@ -28,7 +28,7 @@
 1. The system reads `env_definition.yml`
 2. The system detects that the `cloudPassport` field is not defined
 3. The system walks up the directory structure to the cluster level
-4. The system locates `cloud-passport/<cluster-name>.yml`
+4. The system locates `cloud-passport/<cluster-name>.{yml|yaml}`
 5. The passport is resolved
 6. All passport sections are merged into `cloud.yml`
 
@@ -66,7 +66,7 @@
 - If no matching passport is found:
   - The build fails with an error
 - If multiple matches exist:
-  - The closest file in the hierarchy is used
+  - The build fails with a duplicate-passport error
 
 **Results:**
 
@@ -157,9 +157,9 @@ ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181  # cloud passport: cluster-01 versio
 - The cluster contains at least two passport files under:
   `/environments/<cluster-name>/cloud-passport/`
 - The business default passport exists at:
-  `cloud-passport/<cluster-name>.yml`
+  `cloud-passport/<cluster-name>.{yml|yaml}`
 - The infra passport exists at:
-  `cloud-passport/<cluster-name>-infra.yml`
+  `cloud-passport/<cluster-name>-infra.{yml|yaml}`
 - The business environment `env_definition.yml` does not include `inventory.cloudPassport`
 
 **Trigger:**
@@ -171,13 +171,13 @@ ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181  # cloud passport: cluster-01 versio
 1. The system reads the business environment `env_definition.yml`
 2. The system detects that `inventory.cloudPassport` is absent
 3. The system resolves the passport via auto-association:
-   `cloud-passport/<cluster-name>.yml`
+   `cloud-passport/<cluster-name>.{yml|yaml}`
 4. The system merges all passport sections into the generated environment `cloud.yml`
 5. The system generates traceability comments for passport-derived parameters
 
 **Results:**
 
-- Business environment `cloud.yml` contains business workload keys (for example sections/keys like `bss`, `core`, `storage`, `maas`, `dbaas`, `zookeeper`) if those keys exist in `cloud-passport/<cluster-name>.yml`
+- Business environment `cloud.yml` contains business workload keys (for example sections/keys like `bss`, `core`, `storage`, `maas`, `dbaas`, `zookeeper`) if those keys exist in `cloud-passport/<cluster-name>.{yml|yaml}`
 - For passport-derived values, inline comments reference:
   - `cloud passport: <cluster-name> version: <passport-version>`
 
@@ -187,8 +187,8 @@ ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181  # cloud passport: cluster-01 versio
 
 - Mixed cluster exists under `/environments/<cluster-name>/`
 - The cluster contains:
-  - business passport: `cloud-passport/<cluster-name>.yml`
-  - infra passport: `cloud-passport/<cluster-name>-infra.yml`
+  - business passport: `cloud-passport/<cluster-name>.{yml|yaml}`
+  - infra passport: `cloud-passport/<cluster-name>-infra.{yml|yaml}`
 - The infra environment `env_definition.yml` includes:
 
   ```yaml
@@ -212,8 +212,8 @@ ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181  # cloud passport: cluster-01 versio
 
 **Results:**
 
-- Infra environment cloud.yml contains only the keys present in `cloud-passport/<cluster-name>-infra.yml`
-- Infra environment does not receive business-only keys from `cloud-passport/<cluster-name>.yml`
+- Infra environment cloud.yml contains only the keys present in `cloud-passport/<cluster-name>-infra.{yml|yaml}`
+- Infra environment does not receive business-only keys from `cloud-passport/<cluster-name>.{yml|yaml}`
 - For passport-derived values present in cloud.yml, traceability comments reference:
   - `cloud passport: <cluster-name>-infra version: <passport-version>`
 
@@ -223,7 +223,7 @@ ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181  # cloud passport: cluster-01 versio
 
 - Mixed cluster exists under `/environments/<cluster-name>/`
 - Only the business default passport exists at:
-  - `cloud-passport/<cluster-name>.yml` (contains business-only keys)
+  - `cloud-passport/<cluster-name>.{yml|yaml}` (contains business-only keys)
 - The infra environment `env_definition.yml` does not include `inventory.cloudPassport`
 
 **Trigger:**
@@ -234,7 +234,7 @@ ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181  # cloud passport: cluster-01 versio
 
 1. The system reads the infra environment env_definition.yml
 2. The system detects inventory.cloudPassport is absent
-3. The system auto-associates the passport via cluster default: `cloud-passport/<cluster-name>.yml`
+3. The system auto-associates the passport via cluster default: `cloud-passport/<cluster-name>.{yml|yaml}`
 4. The system merges passport sections into the infra environment generated cloud.yml
 5. The infra deployment context includes business-only parameters
 6. Infra deployer validates or consumes these parameters and fails

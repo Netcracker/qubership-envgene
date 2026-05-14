@@ -22,7 +22,7 @@
     - [7.1 When to Use Environment-Specific Passports](#71-when-to-use-environment-specific-passports)
     - [7.2 Configure the Business Passport (Default)](#72-configure-the-business-passport-default)
     - [7.3 Configure the Infra Passport (Explicit)](#73-configure-the-infra-passport-explicit)
-    - [Result](#result)
+      - [Result](#result)
     - [7.4 Mixed Cluster Result](#74-mixed-cluster-result)
   - [Summary](#summary)
 
@@ -198,7 +198,7 @@ inventory:
 
 Resolution behavior:
 
-- Look for `cloud-passport/<cluster-name>.yml`
+- Look for `cloud-passport/<cluster-name>.{yml|yaml}`
 - If missing, look for `passport.yml`
 - If neither exists, no passport is applied.
 
@@ -277,7 +277,7 @@ These sections are generally safe to share between **business** and **infra** en
 | `cloud` | `CLOUD_API_HOST`, `CLOUD_API_PORT`, `CLOUD_DEPLOY_TOKEN`, `CLOUD_PROTOCOL` | Required by all deployers to connect to the cluster |
 | `global` | `MONITORING_ENABLED`, `TRACING_ENABLED`, `TRACING_HOST` | Observability switches applicable to all workload types |
 | `consul` | `CONSUL_URL`, `CONSUL_ENABLED` | Safe when all environments in the cluster use Consul |
-| `vault` | `VAULT_URL`, `VAULT_ENABLED` | Safe when all environments use Vault for secrets management |
+| `vault` | `VAULT_ADDR`, `VAULT_AUTH_ROLE_ID` | Safe when all environments use Vault for secrets management |
 
 ### 6.2 Keep Out of the Cluster-Level Passport
 
@@ -426,7 +426,7 @@ inventory:
   cloudPassport: cluster-01-infra   # resolves cluster-01-infra.yml
 ```
 
-### Result
+#### Result
 
 - Infra uses minimal config and it will no longer auto-associates the full business passport.
 - It receives only the minimal, infra-safe subset.

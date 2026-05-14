@@ -26,7 +26,7 @@
 
 ## Overview
 
-This guide explains how Cloud Passport auto-association works in `Envgene` — what it is, what triggers it, how a passport is resolved, and what it contributes to an environment's deployment context. It also covers how passport scope applies when a cluster hosts both **business environments** and **infrastructure (infra) environments**.
+This guide explains how Cloud Passport auto-association works in `EnvGene` — what it is, what triggers it, how a passport is resolved, and what it contributes to an environment's deployment context. It also covers how passport scope applies when a cluster hosts both **business environments** and **infrastructure (infra) environments**.
 
 ## 1. What Is a Cloud Passport?
 
@@ -40,7 +40,7 @@ A Cloud Passport lives inside a dedicated folder at the cluster level of your in
 
 ```text
 <instance-repo>/
-└── <cluster-name>/
+└──environments
     └── cloud-passport/
         ├── <cluster-name>.yml        ← main passport file
         └── <cluster-name>-creds.yml  ← credential entries used by the passport
@@ -130,10 +130,10 @@ inventory:
   # no cloudPassport field → auto-association applies
 ```
 
-The system walks up from the environment directory to the cluster directory and searches for a default passport in this order:
+The system looks for a default passport in the env's parent (cluster) directory, in this order:
 
-1. `cloud-passport/<cluster-name>.yml` — a file named after the cluster directory
-2. `cloud-passport/passport.yml` — a generic fallback name
+1. `cloud-passport/<cluster-name>.{yml|yaml}` — a file named after the cluster directory
+2. `cloud-passport/passport.{yml|yaml}` — a generic fallback name
 
 If neither file exists, no passport is applied and the build continues without one.
 
@@ -141,9 +141,9 @@ If neither file exists, no passport is applied and the build continues without o
 
 | `cloudPassport` field in [`env_definition.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml) | Resolution behaviour |
 | --- | --- |
-| Set to a name | System searches bottom-up for `<name>.yml` and uses the first match |
-| Absent | System looks for `cloud-passport/<cluster-name>.yml`, then `cloud-passport/passport.yml` |
-| Absent and no `cloud-passport/` folder exists | No passport applied — build continues |
+| Set to a name | System searches bottom-up for `<name>.{yml\|yaml}`. Exactly one match is required; otherwise, the build fails. |
+| Absent | System looks for `cloud-passport/<cluster-name>.{yml\|yaml}`, then `cloud-passport/passport.{yml\|yaml}`. |
+| Absent and no matching file is found | No passport is applied — build continues. |
 
 ## 4. What the Passport Contributes to an Environment
 
@@ -189,7 +189,7 @@ This annotation is written automatically for every parameter and requires no add
 A Cloud Passport placed in `cloud-passport/` at the cluster directory level applies to all environments within that cluster that resolve it — either explicitly via the `cloudPassport` field or through auto-association.
 
 ```text
-<cluster-name>/
+environments/
 ├── cloud-passport/
 │   └── <cluster-name>.yml     ← passport at cluster scope
 ├── env-01/
@@ -218,7 +218,7 @@ These sections contain parameters that are safe and meaningful for all environme
 | `cloud` | `CLOUD_API_HOST`, `CLOUD_API_PORT`, `CLOUD_DEPLOY_TOKEN`, `CLOUD_PROTOCOL` | Required by all deployers to connect to the cluster |
 | `global` | `MONITORING_ENABLED`, `TRACING_ENABLED`, `TRACING_HOST` | Observability switches applicable to all workload types |
 | `consul` | `CONSUL_URL`, `CONSUL_ENABLED` | Safe when all environments in the cluster use Consul |
-| `vault` | `VAULT_URL`, `VAULT_ENABLED` | Safe when all environments use Vault for secrets management |
+| `vault` | `VAULT_ADDR`, `VAULT_AUTH_ROLE_ID` | Safe when all environments use Vault for secrets management |
 
 ### 7.2 Keep Out of the Cluster-Level Passport
 
@@ -253,7 +253,7 @@ The approach uses two passport files in the same `cloud-passport/` directory:
 
 ```text
 <instance-repo>/
-└── <cluster-name>/
+└──environments/
     └── cloud-passport/
         ├── <cluster-name>.yml            ← business passport — full parameter set
         ├── <cluster-name>-creds.yml      ← credentials for the business passport
@@ -265,7 +265,7 @@ The approach uses two passport files in the same `cloud-passport/` directory:
 
 The business passport is the cluster default. Any environment without a `cloudPassport` field resolves this passport via auto-association. It contains all sections required by business application workloads:
 
-**File:** `cloud-passport/<cluster-name>.yml`
+**File:** `cloud-passport/<cluster-name>.{yml|yaml}`
 
 ```yaml
 ---
@@ -382,7 +382,7 @@ inventory:
 With both passport files in place, business and infra environments resolve their own passport from the same `cloud-passport/` directory:
 
 ```text
-cluster-01/
+environments
 ├── cloud-passport/
 │   ├── cluster-01.yml                   ← full passport — business envs (default)
 │   ├── cluster-01-creds.yml
