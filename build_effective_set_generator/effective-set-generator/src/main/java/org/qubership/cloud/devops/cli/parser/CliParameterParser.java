@@ -294,8 +294,8 @@ public class CliParameterParser {
                     appName,
                     deployerInputs,
                     originalNamespace);
-        }
 
+        }
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
 
