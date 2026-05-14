@@ -1,5 +1,5 @@
 import click
-from envgenehelper import encrypt_all_cred_files_for_env, decrypt_all_cred_files_for_env, validate_creds
+from envgenehelper import encrypt_all_cred_files_for_env, decrypt_all_cred_files_for_env, validate_creds, validate_parameters
 
 
 @click.group(chain=True)
@@ -21,6 +21,9 @@ def encrypt_cred_files():
 def validate_credentials():
     validate_creds()
 
+@crypt_manager.command("validate_parameters")
+def validate_parameters_cmd():
+    validate_parameters()
 
 if __name__ == "__main__":
     crypt_manager()
