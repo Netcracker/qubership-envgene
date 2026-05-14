@@ -286,7 +286,7 @@ public class CliParameterParser {
                     originalNamespace,
                     k8TokenMap,
                     customParams);
-            validateParameterBundle(parameterBundle, tenantName, cloudName, originalNamespace);
+            //validateParameterBundle(parameterBundle, tenantName, cloudName, originalNamespace);
             ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap);
             createCleanupParams(parameterBundle, cleanupParameterBundle);
         } else {
@@ -296,7 +296,7 @@ public class CliParameterParser {
                     appName,
                     deployerInputs,
                     originalNamespace);
-            validateParameterBundle(parameterBundle, tenantName, cloudName, originalNamespace);
+            //validateParameterBundle(parameterBundle, tenantName, cloudName, originalNamespace);
         }
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
