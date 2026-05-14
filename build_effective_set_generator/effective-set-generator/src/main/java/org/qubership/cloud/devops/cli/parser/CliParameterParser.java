@@ -73,6 +73,7 @@ public class CliParameterParser {
     private final FileDataConverter fileDataConverter;
     private final SharedData sharedData;
     private final FileSystemUtils fileSystemUtils;
+    private static final String NULL_VALUE = "envgeneNullValue";
 
 
     @Inject
@@ -397,17 +398,20 @@ public class CliParameterParser {
                                          String tenantName,
                                          String cloudName,
                                          String namespaceName) {
-        validateMap("tenant", tenantName, "deployParameters", bundle.getDeployParams());
-        validateMap("tenant", tenantName, "e2eParameters", bundle.getE2eParams());
-        validateMap("tenant", tenantName, "technicalConfigurationParameters", bundle.getConfigServerParams());
 
-        validateMap("cloud", cloudName, "deployParameters", bundle.getDeployParams());
-        validateMap("cloud", cloudName, "e2eParameters", bundle.getE2eParams());
-        validateMap("cloud", cloudName, "technicalConfigurationParameters", bundle.getConfigServerParams());
+        List<String> errorList = new ArrayList<>();
 
-        validateMap("namespace", namespaceName, "deployParameters", bundle.getDeployParams());
-        validateMap("namespace", namespaceName, "e2eParameters", bundle.getE2eParams());
-        validateMap("namespace", namespaceName, "technicalConfigurationParameters", bundle.getConfigServerParams());
+        validateMap("tenant", tenantName, "deployParameters", bundle.getDeployParams(), errorList);
+        validateMap("tenant", tenantName, "e2eParameters", bundle.getE2eParams(), errorList);
+        validateMap("tenant", tenantName, "technicalConfigurationParameters", bundle.getConfigServerParams(), errorList);
+
+        validateMap("cloud", cloudName, "deployParameters", bundle.getDeployParams(), errorList);
+        validateMap("cloud", cloudName, "e2eParameters", bundle.getE2eParams(), errorList);
+        validateMap("cloud", cloudName, "technicalConfigurationParameters", bundle.getConfigServerParams(), errorList);
+
+        validateMap("namespace", namespaceName, "deployParameters", bundle.getDeployParams(), errorList);
+        validateMap("namespace", namespaceName, "e2eParameters", bundle.getE2eParams(), errorList);
+        validateMap("namespace", namespaceName, "technicalConfigurationParameters", bundle.getConfigServerParams(), errorList);
 
         if (!errorList.isEmpty()) {
             StringBuilder errorMessage = new StringBuilder("Error while validating parameters:\n");
