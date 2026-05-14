@@ -73,7 +73,6 @@ public class CliParameterParser {
     private final FileDataConverter fileDataConverter;
     private final SharedData sharedData;
     private final FileSystemUtils fileSystemUtils;
-    private static final String NULL_VALUE = "envgeneNullValue";
 
 
     @Inject
@@ -286,7 +285,6 @@ public class CliParameterParser {
                     originalNamespace,
                     k8TokenMap,
                     customParams);
-            //validateParameterBundle(parameterBundle, tenantName, cloudName, originalNamespace);
             ParameterBundle cleanupParameterBundle = parametersServiceV2.getCleanupParameterBundle(tenantName, cloudName, namespaceName, null, originalNamespace, k8TokenMap);
             createCleanupParams(parameterBundle, cleanupParameterBundle);
         } else {
@@ -296,7 +294,7 @@ public class CliParameterParser {
                     appName,
                     deployerInputs,
                     originalNamespace);
-            //validateParameterBundle(parameterBundle, tenantName, cloudName, originalNamespace);
+
         }
         createFiles(namespaceName, appName, parameterBundle, originalNamespace);
     }
@@ -394,58 +392,4 @@ public class CliParameterParser {
         }
     }
 
-    private void validateParameterBundle(ParameterBundle bundle,
-                                         String tenantName,
-                                         String cloudName,
-                                         String namespaceName) {
-
-        List<String> errorList = new ArrayList<>();
-
-        validateMap("tenant", tenantName, "deployParameters", bundle.getDeployParams(), errorList);
-        validateMap("tenant", tenantName, "e2eParameters", bundle.getE2eParams(), errorList);
-        validateMap("tenant", tenantName, "technicalConfigurationParameters", bundle.getConfigServerParams(), errorList);
-
-        validateMap("cloud", cloudName, "deployParameters", bundle.getDeployParams(), errorList);
-        validateMap("cloud", cloudName, "e2eParameters", bundle.getE2eParams(), errorList);
-        validateMap("cloud", cloudName, "technicalConfigurationParameters", bundle.getConfigServerParams(), errorList);
-
-        validateMap("namespace", namespaceName, "deployParameters", bundle.getDeployParams(), errorList);
-        validateMap("namespace", namespaceName, "e2eParameters", bundle.getE2eParams(), errorList);
-        validateMap("namespace", namespaceName, "technicalConfigurationParameters", bundle.getConfigServerParams(), errorList);
-
-        if (!errorList.isEmpty()) {
-            StringBuilder errorMessage = new StringBuilder("Error while validating parameters:\n");
-            for (String err : errorList) {
-                errorMessage.append("\t").append(err).append("\n");
-            }
-            throw new IllegalStateException(errorMessage.toString());
-        }
-    }
-
-    private void validateMap(String entityType,
-                             String entityName,
-                             String paramType,
-                             Map<String, Object> params,
-                             List<String> errorList) {
-
-        if (MapUtils.isEmpty(params)) {
-            return;
-        }
-
-        params.forEach((key, value) -> {
-            if (isNullValue(value)) {
-                errorList.add(
-                        String.format("%s.%s.%s - is not set", entityName, paramType, key)
-                );
-            }
-        });
-    }
-
-    private boolean isNullValue(Object value) {
-        return value instanceof String &&
-                NULL_VALUE.equalsIgnoreCase((String) value);
-    }
-
 }
-
-
