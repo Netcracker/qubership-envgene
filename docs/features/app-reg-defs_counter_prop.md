@@ -168,7 +168,7 @@ Per-environment compatibility folders:
 
 ```text
 /environments/<cluster>/<env>/AppDefs/
-/environments/<cluster>/<env>/AppDefs/
+/environments/<cluster>/<env>/RegDefs/
 ```
 
 This mode is intended for backward compatibility with external consumers that still depend on the legacy per-environment folder structure.
