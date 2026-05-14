@@ -408,25 +408,30 @@ public class CliParameterParser {
         validateMap("namespace", namespaceName, "deployParameters", bundle.getDeployParams());
         validateMap("namespace", namespaceName, "e2eParameters", bundle.getE2eParams());
         validateMap("namespace", namespaceName, "technicalConfigurationParameters", bundle.getConfigServerParams());
+
+        if (!errorList.isEmpty()) {
+            StringBuilder errorMessage = new StringBuilder("Error while validating parameters:\n");
+            for (String err : errorList) {
+                errorMessage.append("\t").append(err).append("\n");
+            }
+            throw new IllegalStateException(errorMessage.toString());
+        }
     }
 
     private void validateMap(String entityType,
                              String entityName,
                              String paramType,
-                             Map<String, Object> params) {
+                             Map<String, Object> params,
+                             List<String> errorList) {
 
         if (MapUtils.isEmpty(params)) {
             return;
         }
+
         params.forEach((key, value) -> {
             if (isNullValue(value)) {
-                throw new IllegalStateException(
-                        String.format(
-                                "Error while validating parameters:%n  %s.%s.%s - is not set",
-                                entityName,
-                                paramType,
-                                key
-                        )
+                errorList.add(
+                        String.format("%s.%s.%s - is not set", entityName, paramType, key)
                 );
             }
         });
@@ -439,4 +444,4 @@ public class CliParameterParser {
 
 }
 
-}
+
