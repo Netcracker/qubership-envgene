@@ -9,7 +9,7 @@
     - [Using Application and Registry Definitions](#using-application-and-registry-definitions)
       - [Repo-level config attribute](#repo-level-config-attribute)
       - [Used by EnvGene](#used-by-envgene)
-      - [Overriding Centralized Definitions](#overriding-centralized-definitions)
+      - [Overriding Definitions](#overriding-definitions)
       - [Used by External Systems](#used-by-external-systems)
       - [Export to External CMDB Systems](#export-to-external-cmdb-systems)
     - [Application and Registry Definitions Transformation](#application-and-registry-definitions-transformation)
@@ -181,22 +181,93 @@ i.e.:
         └── registry-2.yml
 ```
 
-#### Overriding Centralized Definitions
+#### Overriding Definitions
 
-EnvGene can override the Application and Registry definitions from the centralized locations `(/genDefs/AppDefs and /genDefs/RegDefs)` when the user supplies custom definitions in `/userDefs/AppDefs` and `/userDefs/RegDefs`.
-
-- `/userDefs/AppDefs/...`
-- `/userDefs/RegDefs/...`
+EnvGene supports overriding generated Application Definitions (AppDefs) and Registry Definitions (RegDefs) using user-provided definition files.
+Generated definitions stored in:
 
 ```text
- /userDefs
-    ├── AppDefs/                   # Application Definitions
-    │   ├── application-1.yml
-    │   └── application-2.yml
-    └── RegDefs/                   # Registry Definitions
-        ├── registry-1.yml
-        └── registry-2.yml
+- `/genDefs/appDefs/*`
+- `/genDefs/regDefs/*`
 ```
+
+can be overridden by user-provided definitions located in:
+
+```text
+- `/userDefs/appDefs/*`
+- `/userDefs/regDefs/*`
+```
+
+When a matching override definition exists, the user-provided definition becomes the effective definition used during downstream pipeline
+processing (CMDB export & Generate Effective Set).
+
+
+##### Override Matching
+
+Override definitions are matched to generated definitions by filename.
+
+For example:
+
+```text
+- `/genDefs/appDefs/application-1.yml`
+- `/userDefs/appDefs/application-1.yml`
+```
+
+In this case, the user definition overrides the generated definition.
+
+The `name` field inside the YAML content is not used for override matching.
+If filename and YAML `name` field differ, filename matching still applies.
+
+##### Override Processing Stage
+
+Overrides are applied after Jinja template rendering is completed.
+
+The processing flow is:
+
+1. Template rendering
+2. Generated definition creation
+3. Override processing
+4. Final effective definition generation
+
+This allows override definitions to operate on fully rendered
+environment-specific values and avoids requiring Jinja-aware override files.
+
+##### Override Semantics
+
+Override definitions use full-file replacement semantics.
+
+If a matching override definition exists, the generated definition
+is fully replaced by the override definition.
+
+Example:
+
+Generated definition:
+
+```yaml
+name: application-1
+artifactId: application-1
+groupId: org.qubership
+```
+**Override definition:**
+
+```yaml
+name: application-1
+artifactId: custom-application
+```
+
+**Final effective definition:**
+
+```yaml
+name: application-1
+artifactId: custom-application
+```
+In this case, groupId is removed because the override file replaces the generated definition entirely.
+
+##### Override Definitions Without Matching Templates
+
+If an override definition does not have a matching generated definition, the override definition is ignored.
+Override processing only applies to existing generated definitions.
+
 **Note:**
 The override layer is repository-wide. A single override file applies to all environments within the repository.
 
