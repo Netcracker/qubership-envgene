@@ -14,7 +14,7 @@ platformdirs==3.11.0
 pydantic==2.10.6
 PyGithub==1.59.0
 pyyaml==6.0.2
-qubership-pipelines-common-library==2.0.3
+qubership-pipelines-common-library==2.0.6
 ruamel.yaml.clib==0.2.8
 ruamel.yaml==0.18.5
 semantic-version==2.10.0
