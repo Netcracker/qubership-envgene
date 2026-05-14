@@ -1,0 +1,6 @@
+version: 2.1
+type: solutionDeploy
+deployMode: composite
+applications:
+  - version: postgres-services:1.32.6
+    deployPostfix: postgresql

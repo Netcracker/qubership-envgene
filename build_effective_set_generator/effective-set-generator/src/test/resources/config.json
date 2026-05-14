@@ -1,0 +1,8 @@
+{
+  "deployment": {
+    "username": "${creds.get(\"minio-cred\").username}"
+  },
+  "runtime": {
+    "password": "${STORAGE_PASSWORD}"
+  }
+}
