@@ -92,7 +92,7 @@ During the [`app_reg_def_process`](/docs/envgene-pipelines.md#instance-pipeline)
 
 #### Repo-level config attribute
 
-**Configure the below attribute in** [`config.yml`](/docs/envgene-configs.md#configyml)
+Configure the below attribute in [`config.yml`](/docs/envgene-configs.md#configyml)
 
 ```text
 app_reg_defs_placement: dual   # default
@@ -100,7 +100,7 @@ app_reg_defs_placement: dual   # default
 app_reg_defs_placement: root
 ```
 
-**Placement modes**
+- Placement modes
 dual (default)
 
 EnvGene writes the rendered AppDef and RegDef files to both:
@@ -129,19 +129,19 @@ EnvGene writes the rendered AppDef and RegDef files only to the root-level folde
 ```
 No files are written to the per-environment AppDefs/ or RegDefs/ folders in this mode.
 
-**Canonical source behavior**
+- Canonical source behavior
 
 Starting from the EnvGene version that introduces this feature, EnvGene reads AppDef and RegDef files only from the root-level folders (/appdefs/ and /regdefs/).
 
 The selected placement mode controls only where rendered files are written for compatibility purposes. Even in dual mode, the per-environment folders are treated only as compatibility mirrors for external consumers.
 
-**Why this is a repository-level configuration**
+- Why this is a repository-level configuration
 
 The app_reg_defs_placement setting is configured at the repository level and applies to all environments in that repository.
 
 This approach keeps the configuration simple, since compatibility requirements for external systems are usually the same across all environments. Managing this setting separately for each environment would add unnecessary complexity without significant benefits.
 
-**Deletion behavior in dual mode**
+- Deletion behavior in dual mode
 
 In dual mode, the per-environment folders act as generated mirrors of the root-level definitions.
 
@@ -149,7 +149,7 @@ When definitions are removed, the mirror folders are not automatically synchroni
 
 As a result, stale definitions may remain in the per-environment folders until the corresponding environment is regenerated.
 
-**Switching from dual to root**
+- Switching from dual to root
 
 When migrating from dual mode to root mode, all environments should be regenerated before relying exclusively on the root-level structure.
 
@@ -250,14 +250,14 @@ name: application-1
 artifactId: application-1
 groupId: org.qubership
 ```
-**Override definition:**
+- Override definition:
 
 ```yaml
 name: application-1
 artifactId: custom-application
 ```
 
-**Final effective definition:**
+- Final effective definition:
 
 ```yaml
 name: application-1
@@ -270,12 +270,19 @@ In this case, groupId is removed because the override file replaces the generate
 If an override definition does not have a matching generated definition, the override definition is ignored.
 Override processing only applies to existing generated definitions.
 
+##### Interaction with appdefs.overrides
+
+The existing `appdefs.overrides` Jinja-based mechanism and file-based override processing are independent features, `appdefs.overrides` applies during Jinja template rendering.
+
+File-based overrides are applied after rendering is completed.
+If both mechanisms modify the same definition, the file-based override takes precedence because it is applied later in the processing flow.
+
 ##### Migration from Per-Environment Definitions
 
 EnvGene supports automatic migration from the legacy per-environment
 AppDef and RegDef layout to the centralized definition model.
 
-**Legacy Layout**
+- Legacy Layout
 
 Previous EnvGene versions stored generated definitions inside
 environment-specific directories:
@@ -283,7 +290,7 @@ environment-specific directories:
 - `/environments/<cluster>/<env>/AppDefs/*`
 - `/environments/<cluster>/<env>/RegDefs/*`
 
-**Migration Behavior**
+- Migration Behavior**
 
 During execution of the `app_reg_def_process` job:
 
@@ -301,7 +308,7 @@ During execution of the `app_reg_def_process` job:
    - `/genDefs/appDefs/*`
    - `/genDefs/regDefs/*`
 
-**Idempotency**
+- Idempotency
 
 The cleanup process is idempotent.
 
@@ -310,7 +317,7 @@ subsequent executions typically find no remaining legacy files to remove.
 
 Repeated executions therefore do not introduce additional cleanup changes.
 
-**Manual Migration**
+- Manual Migration
 
 No manual migration steps are required for existing repositories.
 
