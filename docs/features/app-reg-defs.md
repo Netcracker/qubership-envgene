@@ -201,6 +201,8 @@ can be overridden by user-provided definitions located in:
 When a matching override definition exists, the user-provided definition becomes the effective definition used during downstream pipeline
 processing (CMDB export & Generate Effective Set).
 
+**Note:**
+The override layer is repository-wide. A single override file applies to all environments within the repository.
 
 ##### Override Matching
 
@@ -268,8 +270,51 @@ In this case, groupId is removed because the override file replaces the generate
 If an override definition does not have a matching generated definition, the override definition is ignored.
 Override processing only applies to existing generated definitions.
 
-**Note:**
-The override layer is repository-wide. A single override file applies to all environments within the repository.
+##### Migration from Per-Environment Definitions
+
+EnvGene supports automatic migration from the legacy per-environment
+AppDef and RegDef layout to the centralized definition model.
+
+**Legacy Layout**
+
+Previous EnvGene versions stored generated definitions inside
+environment-specific directories:
+
+- `/environments/<cluster>/<env>/AppDefs/*`
+- `/environments/<cluster>/<env>/RegDefs/*`
+
+**Migration Behavior**
+
+During execution of the `app_reg_def_process` job:
+
+1. Existing legacy definition files located in:
+   - `/environments/<cluster>/<env>/AppDefs/*`
+   - `/environments/<cluster>/<env>/RegDefs/*`
+
+   are automatically removed.
+
+2. Centralized definitions are regenerated from:
+   - rendered templates
+   - user override definitions
+
+3. Final effective definitions are written into:
+   - `/genDefs/appDefs/*`
+   - `/genDefs/regDefs/*`
+
+**Idempotency**
+
+The cleanup process is idempotent.
+
+After the first successful pipeline run on an upgraded repository,
+subsequent executions typically find no remaining legacy files to remove.
+
+Repeated executions therefore do not introduce additional cleanup changes.
+
+**Manual Migration**
+
+No manual migration steps are required for existing repositories.
+
+Migration is handled automatically during normal pipeline execution.
 
 #### Used by External Systems
 
