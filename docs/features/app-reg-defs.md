@@ -201,7 +201,7 @@ can be overridden by user-provided definitions located in:
 When a matching override definition exists, the user-provided definition becomes the effective definition used during downstream pipeline
 processing (CMDB export & Generate Effective Set).
 
-**Note:**
+> [!NOTE]
 The override layer is repository-wide. A single override file applies to all environments within the repository.
 
 ##### Override Matching
