@@ -299,7 +299,7 @@ Override definitions use full-file replacement semantics.
 
 If a matching override definition exists, the rendered definition is fully replaced by the override definition.
 
-Generated definition:
+Generated definition: /appdefs/application-1.yml
 
 ```yaml
 name: application-1
@@ -307,14 +307,14 @@ artifactId: application-1
 groupId: org.qubership
 ```
 
-Override definition:
+Override definition: /configuration/appdefs/application-1.yml
 
 ```yaml
 name: application-1
 artifactId: custom-application
 ```
 
-Final effective definition:
+Final effective definition: /appdefs/application-1.yml
 
 ```yaml
 name: application-1
@@ -325,9 +325,7 @@ In this case, `groupId` is removed because the override definition fully replace
 
 ##### Override Definitions Without Matching Templates
 
-If an override definition does not have a matching rendered definition, the override definition is ignored.
-
-Override processing applies only to existing rendered definitions.
+If an override definition does not have a matching generated definition, the override definition is ignored. Override processing only applies to existing generated definitions.
 
 ##### Interaction with `appdefs.overrides`
 
