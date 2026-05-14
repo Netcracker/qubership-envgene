@@ -22,7 +22,7 @@ def validate_credentials():
     validate_creds()
 
 @crypt_manager.command("validate_parameters")
-def validate_parameters():
+def validate_parameters_command():
     validate_parameters()
 
 if __name__ == "__main__":
