@@ -1,0 +1,18 @@
+credentialsId: "registry-cred"
+mavenConfig:
+  repositoryDomainName: "{{ regdefs.overrides.maven.RepositoryDomainName | default('maven.qubership.org') }}"
+  fullRepositoryUrl: "{{ regdefs.overrides.maven.fullRepositoryUrl | default('https://maven.qubership.org/repository') }}"
+  targetSnapshot: "snapshot"
+  targetStaging: "staging"
+  targetRelease: "release"
+  releaseGroup: ""
+  snapshotGroup: ""
+dockerConfig:
+  snapshotUri: "{{ regdefs.overrides.docker.snapshotUri | default('docker.qubership.org/snapshot') }}"
+  stagingUri: "{{ regdefs.overrides.docker.stagingUri | default('docker.qubership.org/staging') }}"
+  releaseUri: "{{ regdefs.overrides.docker.releaseUri | default('docker.qubership.org/release') }}"
+  groupUri: "{{ regdefs.overrides.docker.groupUri | default('docker.qubership.org/group') }}"
+  snapshotRepoName: "docker-snapshot"
+  stagingRepoName: "docker-staging"
+  releaseRepoName: "docker-release"
+  groupName: "docker-group"
