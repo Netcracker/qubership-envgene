@@ -27,7 +27,7 @@ Mandatory for every Environment. Created and updated manually.
 Located in the Instance repository at: `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
 Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
 
-[`env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
+[`env_definition.yml JSON Schema`](/schemas/env-definition.schema.json)
 
 ```yaml
 # Mandatory
@@ -225,6 +225,9 @@ artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 # `cmdb` - Application and Registry Definitions are discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository
 # `auto` - Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
 app_reg_def_mode: enum [`auto`, `cmdb`, `local`]
+app_reg_defs_placement: dual # default
+# or
+app_reg_defs_placement: root
 # Optional
 # SBOM retention configuration
 # Triggers during Effective Set generation when repository reaches 1200 MB size threshold
@@ -320,11 +323,10 @@ For more info, see [Application and Registry Definition](/docs/features/app-reg-
 Location:
 
 - `/configuration/appregdef_config.yaml` - config for all Environments in the Instance repository
-- `/environments/<cluster-name>/configuration/appregdef_config.yaml` - config for all Environments in a specific cluster
 
-If both repository-wide and cluster-wide configuration files are present, then when rendering an Environment for a cluster that has its own cluster-wide config, the cluster-wide config is used and the repository-wide config is ignored.
+When rendering Application and Registry Definitions, EnvGene reads configuration only from the repository-wide file /configuration/appregdef_config.yaml. Cluster-specific appregdef_config.yaml files are not supported.
 
-[appregdef_config.yaml JSON Schema](/schemas/appregdef-config.schema.json)
+[`appregdef_config.yaml` JSON Schema](/schemas/appregdef-config.schema.json)
 
 ```yaml
 # Optional
@@ -360,7 +362,7 @@ regdefs:
 
 This config file contains the definition of one or more Maven registries used for downloading Environment Template artifacts.
 
-Replacement: [Artifact Definitions](/docs/envgene-objects.md#artifact-definition)
+Replacement: [`Artifact Definitions`](/docs/envgene-objects.md#artifact-definition)
 
 Location: `/configuration/registry.yml`
 
