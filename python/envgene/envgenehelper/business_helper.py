@@ -15,7 +15,7 @@ from .file_helper import getAbsPath, extractNameFromFile, check_file_exists, che
 from .json_helper import findJsons
 from .logger import logger
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
-    validate_yaml_by_scheme_or_fail
+    validate_yaml_by_scheme_or_fail, find_yaml_file
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -298,7 +298,7 @@ def find_cloud_passport_definition(env_instances_dir, instances_dir):
     if ("cloudPassport" in inventoryYaml["inventory"]):
         cloud_passport_file_name = inventoryYaml["inventory"]["cloudPassport"]
     if (cloud_passport_file_name):
-        return findPassportByEnvDefinition(env_instances_dir, instances_dir, cloud_passport_file_name)
+        return find_passport_by_env_definition(cloud_passport_file_name, env_instances_dir, instances_dir)
     else:
         cloudDir = getParentDirName(env_instances_dir + "/")
         logger.info(
@@ -312,23 +312,24 @@ def find_cloud_passport_definition(env_instances_dir, instances_dir):
         return findPassportInDefaultDirByName(cloudDir, DEFAULT_PASSPORT_NAME)
 
 
-def findPassportByEnvDefinition(env_instances_dir, instances_dir, cloud_passport_file_name):
-    logger.debug(
-        f"Searching for cloud passport file {cloud_passport_file_name} from {env_instances_dir} to {instances_dir}")
-    passportFiles = findResourcesBottomTop(env_instances_dir, instances_dir, f"/{cloud_passport_file_name}.y",
-                                           "redentials/")
-    if len(passportFiles) == 1:
-        yamlPath = passportFiles[0]
-        logger.info(f"Cloud passport file for {cloud_passport_file_name} found in: {yamlPath}")
-        return yamlPath
-    elif len(passportFiles) > 1:
-        logger.error(
-            f"Duplicate cloud passport files with key {cloud_passport_file_name} found in {instances_dir}: \n\t" + ",\n\t".join(
-                str(x) for x in passportFiles))
-        raise ReferenceError(
-            f"Duplicate cloud passport files with key {cloud_passport_file_name} found. See logs above.")
-    else:
-        raise ReferenceError(f"Cloud passport with key {cloud_passport_file_name} not found in {instances_dir}")
+def find_passport_by_env_definition(cloud_passport_name, env_dir, instances_dir):
+    levels = [
+        Path(env_dir) / "Inventory",
+        Path(env_dir).parent,
+        Path(instances_dir),
+    ]
+    
+    passport_dir_names = ["cloud-passport", "cloud-passports"]
+    
+    shared_passport_paths = [level / name for level in levels for name in passport_dir_names]
+    
+    for p in shared_passport_paths:
+        found_path = find_yaml_file(p, cloud_passport_name, recursively=True)
+        if found_path:
+            logger.info(f"Cloud passport with key '{cloud_passport_name}' found in '{found_path}'")
+            return found_path
+
+    raise FileNotFoundError(f"Cloud passport with key '{cloud_passport_name}' not found.")
 
 
 def findPassportInDefaultDirByName(env_instances_dir, passport_name):
