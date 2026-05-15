@@ -2153,11 +2153,11 @@ This object describes registry where artifacts (other than environment template 
 
 It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
 
-A separate definition file is used for each individual registry. Each environment uses the registry definitions from the centralized location `/genDefs/regDefs`.
+A separate definition file is used for each individual registry. Each environment uses the registry definitions from the centralized location `/regdefs`.
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/genDefs/RegDefs/<registry-name>.yml`
+**Location:** `/regdefs/<registry-name>.yml`
 
 Two versions of this object are supported
 
@@ -2733,11 +2733,11 @@ This object describes application artifact parameters - artifact ID, group ID an
 
 It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
 
-A separate definition file is used for each individual application. Each environment uses the Application definitions from the centralized location `/genDefs/AppDefs`.
+A separate definition file is used for each individual application. Each environment uses the Application definitions from the centralized location `/appdefs`.
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/genDefs/AppDefs/<application-name>.yml`
+**Location:** `/appdefs/<application-name>.yml`
 
 ```yaml
 # Optional
