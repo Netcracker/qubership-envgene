@@ -1,13 +1,13 @@
 # EnvGene Configuration
 
 - [EnvGene Configuration](#envgene-configuration)
-  - `[env_definition.yml](#env_definitionyml)`
-  - `[config.yml](#configyml)`
-  - `[integration.yml](#integrationyml)`
-  - `[deployer.yml](#deployeryml)`
-  - `[appregdef_config.yaml](#appregdef_configyaml)`
+  - [`env_definition.yml`](#env_definitionyml)
+  - [`config.yml`](#configyml)
+  - [`integration.yml`](#integrationyml)
+  - [`deployer.yml`](#deployeryml)
+  - [`appregdef_config.yaml`](#appregdef_configyaml)
   - [Deprecated](#deprecated)
-    - `[registry.yml](#registryyml)`
+    - [`registry.yml`](#registryyml)
 
 ## `env_definition.yml`
 
@@ -25,9 +25,9 @@ Environment Inventory. The inventory file of a specific Environment. Contains th
 Mandatory for every Environment. Created and updated manually.
 
 Located in the Instance repository at: `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
-Pass the `<cluster-name>/<env-name>` to the `[ENV_NAMES](/docs/instance-pipeline-parameters.md#env_names)` input parameter when executing Environment operations
+Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
 
-`[env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
+[`env_definition.yml JSON Schema`](/schemas/env-definition.schema.json)
 
 ```yaml
 # Mandatory
@@ -201,7 +201,7 @@ envTemplate:
 The primary system configuration file
 Located at `/configuration/config.yml`
 
-`[config.yml` JSON Schema](/schemas/config.schema.json)
+[`config.yml` JSON Schema](/schemas/config.schema.json)
 
 ```yaml
 # Optional. Default value - `true`
@@ -225,6 +225,9 @@ artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 # `cmdb` - Application and Registry Definitions are discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository
 # `auto` - Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
 app_reg_def_mode: enum [`auto`, `cmdb`, `local`]
+app_reg_defs_placement: dual # default
+# or
+app_reg_defs_placement: root
 # Optional
 # SBOM retention configuration
 # Triggers during Effective Set generation when repository reaches 1200 MB size threshold
@@ -242,7 +245,7 @@ sbom_retention:
 
 System Configuration File for External Integrations
 
-`[integration.yml` JSON Schema](/schemas/integration.schema.json)
+[`integration.yml` JSON Schema](/schemas/integration.schema.json)
 
 ```yaml
 # Optional
@@ -285,7 +288,7 @@ Located at:
 - `/configuration/deployer.yml`
 - `/environments/<cluster-name>/<env-name>/app-deployer/deployer.yml`
 
-`[deployer.yml` JSON Schema](/schemas/deployer.schema.json)
+[`deployer.yml` JSON Schema](/schemas/deployer.schema.json)
 
 ```yaml
 # Unique name. Must be unique within a single repository
@@ -312,8 +315,8 @@ This file is used to set parameters context for [Application Definition](/docs/e
 
 The parameters specified in this configuration file are used with macros:
 
-- `[appdefs.overrides](/docs/template-macros.md#appdefsoverrides)`
-- `[regdefs.overrides](/docs/template-macros.md#regdefsoverrides)`
+- [`appdefs.overrides`](/docs/template-macros.md#appdefsoverrides)
+- [`regdefs.overrides`](/docs/template-macros.md#regdefsoverrides)
 
 For more info, see [Application and Registry Definition](/docs/features/app-reg-defs.md).
 
@@ -323,7 +326,7 @@ Location:
 
 When rendering Application and Registry Definitions, EnvGene reads configuration only from the repository-wide file /configuration/appregdef_config.yaml. Cluster-specific appregdef_config.yaml files are not supported.
 
-[appregdef_config.yaml JSON Schema](/schemas/appregdef-config.schema.json)
+[`appregdef_config.yaml` JSON Schema](/schemas/appregdef-config.schema.json)
 
 ```yaml
 # Optional
@@ -359,11 +362,11 @@ regdefs:
 
 This config file contains the definition of one or more Maven registries used for downloading Environment Template artifacts.
 
-Replacement: [Artifact Definitions](/docs/envgene-objects.md#artifact-definition)
+Replacement: [`Artifact Definitions`](/docs/envgene-objects.md#artifact-definition)
 
 Location: `/configuration/registry.yml`
 
-`[registry.yml` JSON Schema](/schemas/registry.schema.json)
+[`registry.yml` JSON Schema](/schemas/registry.schema.json)
 
 ```yaml
 <registry-name>:
@@ -398,4 +401,3 @@ artifactory:
   snapshotTemplateRepository: "https://artifactory.qubership.org/mvn.template-snapshot"
   stagingTemplateRepository: "https://artifactory.qubership.org/mvn.template-staging"
 ```
-
