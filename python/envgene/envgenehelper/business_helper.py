@@ -298,7 +298,7 @@ def find_cloud_passport_definition(env_instances_dir, instances_dir):
     if ("cloudPassport" in inventoryYaml["inventory"]):
         cloud_passport_file_name = inventoryYaml["inventory"]["cloudPassport"]
     if (cloud_passport_file_name):
-        return find_passport_by_env_definition(cloud_passport_file_name, env_instances_dir, instances_dir)
+        return str(find_passport_by_env_definition(cloud_passport_file_name, env_instances_dir, instances_dir))
     else:
         cloudDir = getParentDirName(env_instances_dir + "/")
         logger.info(
