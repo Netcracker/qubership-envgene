@@ -312,7 +312,7 @@ def find_cloud_passport_definition(env_instances_dir, instances_dir):
         return findPassportInDefaultDirByName(cloudDir, DEFAULT_PASSPORT_NAME)
 
 
-def find_passport_by_env_definition(cloud_passport_name, env_dir, instances_dir):
+def find_passport_by_env_definition(cloud_passport_name, env_dir, instances_dir) -> Path:
     levels = [
         Path(env_dir) / "Inventory",
         Path(env_dir).parent,
