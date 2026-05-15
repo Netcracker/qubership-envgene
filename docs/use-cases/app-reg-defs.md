@@ -64,15 +64,15 @@ ENV_BUILDER: true
       - `/templates/appdefs/*`
       - `/templates/regdefs/*`
    3. Generates centralized definitions into:
-      - `/genDefs/appDefs/*`
-      - `/genDefs/regDefs/*`
+      - `/appdefs/*`
+      - `/regdefs/*`
 
 **Results:**
 
 1. Application Definitions are generated in:
-   - `/genDefs/appDefs/<appdef.yml>`
+   - `/appdefs/<appdef.yml>`
 2. Registry Definitions are generated in:
-   - `/genDefs/regDefs/<regdef.yml>`
+   - `/regdefs/<regdef.yml>`
 3. Generated definitions become available for downstream pipeline processing
 
 ### UC-ARD-TR-2: Basic AppDef/RegDef Template Delete
@@ -80,8 +80,8 @@ ENV_BUILDER: true
 **Pre-requisites:**
 
 1. Definitions already exist in:
-   - `/genDefs/appDefs/*`
-   - `/genDefs/regDefs/*`
+   - `/appdefs/*`
+   - `/regdefs/*`
 
 2. User removes template files from:
    - `/templates/appdefs/*`
@@ -109,10 +109,10 @@ ENV_BUILDER: true
 **Results:**
 
 1. No deletion is performed in:
-   - `/genDefs/appDefs/*`
-   - `/genDefs/regDefs/*`
+   - `/appdefs/*`
+   - `/regdefs/*`
 2. Existing centralized definitions remain unchanged even when corresponding template files are deleted
-3. Deletion of /genDefs/appDefs/* and /genDefs/regDefs/* objects is currently not supported
+3. Deletion of /appdefs/* and /regdefs/* objects is currently not supported
 
 ## User Overrides
 
@@ -123,12 +123,12 @@ This group covers override functionality where user-provided definitions superse
 **Pre-requisites:**
 
 1. Centralized definitions exist in:
-   - `/genDefs/appDefs/*`
-   - `/genDefs/regDefs/*`
+   - `/appdefs/*`
+   - `/regdefs/*`
 
 2. User override definitions exist in:
-   - `/userDefs/appDefs/*`
-   - `/userDefs/regDefs/*`
+   - `/configuration/appdefs/*`
+   - `/configuration/regDefs/*`
 
 **Trigger:**
 
@@ -147,21 +147,21 @@ ENV_BUILDER: true
       - `/templates/appdefs/*`
       - `/templates/regdefs/*`
    3. Generates centralized definitions into:
-      - `/genDefs/appDefs/*`
-      - `/genDefs/regDefs/*`
+      - `/appdefs/*`
+      - `/regdefs/*`
    4. Discovers user override definitions from:
-      - `/userDefs/appDefs/*`
-      - `/userDefs/regDefs/*`
+      - `/configuration/appdefs/*`
+      - `/configuration/regdefs/*`
    5. Overrides centralized definitions using user-provided definitions
 
 **Results:**
 
 1. Definitions from:
-   - `/userDefs/appDefs/*`
-   - `/userDefs/regDefs/*`
+   - `/configuration/appdefs/*`
+   - `/configuration/regdefs/*`
    override generated definitions from:
-   - `/genDefs/appDefs/*`
-   - `/genDefs/regDefs/*`
+   - `/appdefs/*`
+   - `/regdefs/*`
 2. User-provided definitions take precedence during downstream processing
 3. Final effective definitions contain overridden user configuration
 
@@ -170,16 +170,16 @@ ENV_BUILDER: true
 **Pre-requisites:**
 
 1. Centralized definitions exist in:
-   - `/genDefs/appDefs/*`
-   - `/genDefs/regDefs/*`
+   - `/appdefs/*`
+   - `/regdefs/*`
 
 2. Override definitions previously existed in:
-   - `/userDefs/appDefs/*`
-   - `/userDefs/regDefs/*`
+   - `/configuration/appdefs/*`
+   - `/configuration/regdefs/*`
 
 3. User deletes override files from:
-   - `/userDefs/appDefs/*`
-   - `/userDefs/regDefs/*`
+   - `/configuration/appdefs/*`
+   - `/configuration/regdefs/*`
 
 **Trigger:**
 
@@ -198,8 +198,8 @@ ENV_BUILDER: true
       - `/templates/appdefs/*`
       - `/templates/regdefs/*`
    3. Generates centralized definitions into:
-      - `/genDefs/appDefs/*`
-      - `/genDefs/regDefs/*`
+      - `/appdefs/*`
+      - `/regdefs/*`
    4. Detects deleted override definition files
    5. Skips override processing for deleted override files
    6. Retains centralized generated definitions as effective definitions
@@ -207,8 +207,8 @@ ENV_BUILDER: true
 **Results:**
 
 1. No deletion is performed in:
-   - `/genDefs/appDefs/*`
-   - `/genDefs/regDefs/*`
+   - `/appdefs/*`
+   - `/regdefs/*`
 2. Existing centralized definitions remain active when override files are deleted
 3. Effective definitions revert back to centralized generated definitions
 4. Deletion of override files only removes override behavior and does not delete centralized definitions
@@ -224,8 +224,8 @@ This group covers integration and synchronization of Application Definitions and
 1. `deployer.yml` is configured
 2. `inventory.deployer` is defined
 3. Generated definitions exist in:
-   - `/genDefs/appDefs/*`
-   - `/genDefs/regDefs/*`
+   - `/appdefs/*`
+   - `/regdefs/*`
 
 **Trigger:**
 
@@ -235,18 +235,18 @@ Instance pipeline (GitLab or GitHub) is started.
 1.During pipeline execution, the `app_reg_def_process` job generates
 centralized AppDefs and RegDefs from templates.
 If matching user override definitions exist in:
-- `/userDefs/appDefs/*`
-- `/userDefs/regDefs/*`
+   - `/configuration/appdefs/*`
+   - `/configuration/regdefs/*`
 the override definitions fully replace the corresponding generated
 definitions from:
-- `/genDefs/appDefs/*`
-- `/genDefs/regDefs/*`
+   - `/appdefs/*`
+   - `/regdefs/*`
   
 2. The `cmdb_import` job runs in the pipeline:
    2.1. Reads Application Definitions from:
-      - `/genDefs/appDefs/*`
+      - `/appdefs/*`
    2.2. Reads Registry Definitions from:
-      - `/genDefs/regDefs/*`
+      - `/regdefs/*`
    2.3. Transforms definitions into CMDB-compatible payloads
    2.4. Pushes definitions to the configured CMDB endpoint
 
