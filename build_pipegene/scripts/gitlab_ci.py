@@ -113,7 +113,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
                 f'is skipped because we are in template test mode.')
 
         credential_rotation_job = None
-        if params['CRED_ROTATION_PAYLOAD']:
+        if params.get('CRED_ROTATION_PAYLOAD'):
             credential_rotation_job = prepare_credential_rotation_job(pipeline, full_env_name, environment_name,
                                                                       cluster_name)
             jobs_map["credential_rotation_job"] = credential_rotation_job
@@ -186,7 +186,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
             job_instance.add_needs(*find_predecessor_job(job, jobs_map, job_sequence))
 
         logger.info(f'----------------end processing for {full_env_name}---------------------')
-    
+
     for key, value in params.items():
         if key not in sensitive_params and value is not None and value != '':
             sorted_pipeline.add_variables(**{key: value})

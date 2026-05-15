@@ -293,7 +293,7 @@ def convertParameterSetsToParameters(templatePath, paramsTemplate, paramsetsTag,
 
 def convertParameterSetsToApplication(templatePath, paramsetDefinitionComment, applicationsParamSets, paramsetName,
                                       parametersTag, isEnvSpecificParamset, env_specific_params_map, header_text=""):
-    application_schema = "schemas/application.schema.json"
+    application_schema = f"{get_schema_dir()}/application.schema.json"
     for appParams in applicationsParamSets:
         appName = appParams["appName"] if "appName" in appParams else appParams["name"]
         applicationParametersFile = os.path.dirname(templatePath) + "/Applications/" + appName + ".yml"
@@ -487,10 +487,10 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
     logger.info(f"Env dir: {env_dir}")
     logger.info(f"Parameters dir: {parameters_dir}")
     # const
-    tenant_schema = "schemas/tenant.schema.json"
-    cloud_schema = "schemas/cloud.schema.json"
-    namespace_schema = "schemas/namespace.schema.json"
-    profiles_schema = "schemas/resource-profile.schema.json"
+    tenant_schema = f"{get_schema_dir()}/tenant.schema.json"
+    cloud_schema = f"{get_schema_dir()}/cloud.schema.json"
+    namespace_schema = f"{get_schema_dir()}/namespace.schema.json"
+    profiles_schema = f"{get_schema_dir()}/resource-profile.schema.json"
 
     envDefinitionYaml = getEnvDefinition(env_dir)
     logger.info(getEnvDefinitionPath(env_dir))

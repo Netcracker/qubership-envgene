@@ -6,14 +6,14 @@ from typing import Optional
 from deepmerge import always_merger
 from envgenehelper import *
 from envgenehelper.business_helper import get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole
-from envgenehelper.validation import ensure_valid_fields, ensure_required_keys
+from envgenehelper.validations import ensure_valid_fields, ensure_required_keys
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
 
 from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 
-SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
+SCHEMAS_DIR = Path(getenv_with_error("JSON_SCHEMAS_DIR"))
 APPDEF_SCHEMA = str(SCHEMAS_DIR / "appdef.schema.json")
 TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
 

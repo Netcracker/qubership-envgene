@@ -1,4 +1,3 @@
-from enum import Enum
 
 import envgenehelper as helper
 import envgenehelper.logger as logger
@@ -13,7 +12,6 @@ PARAMSETS_DIR_PATH = "Inventory/parameters/"
 CLUSTER_TOKEN_CRED_ID = "cloud-deploy-sa-token"
 INVENTORY = "Inventory"
 DEPRECATED_MESSAGE = "Deprecated inventory generation approach"
-SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 
 
 def generate_env_new_approach():
@@ -22,11 +20,12 @@ def generate_env_new_approach():
     logger.info(f"Starting env inventory generation for env: {env_name} in cluster: {cluster}")
 
     env_inventory_content = json.loads(getenv_with_error('ENV_INVENTORY_CONTENT'))
-    env_inv_content_schema_path = path.join(SCHEMAS_DIR, "env-inventory-content.schema.json")
+    schemas_dir = get_schema_dir()
+    env_inv_content_schema_path = f"{schemas_dir}/env-inventory-content.schema.json"
 
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
                                     schema_file_path=env_inv_content_schema_path,
-                                    schemas_dir=SCHEMAS_DIR)
+                                    schemas_dir=schemas_dir)
 
     handle_env_inv_content(env_inventory_content)
 
