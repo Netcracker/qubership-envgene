@@ -24,6 +24,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
 import org.qubership.cloud.devops.commons.pojo.extcreds.ExtCredEntities;
 import org.qubership.cloud.devops.commons.pojo.parameterset.CustomParameterDTO;
+import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants;

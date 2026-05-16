@@ -187,6 +187,7 @@ def mergeAndSaveYaml(yamlPath, newCreds, isExternalCredEnv) :
             count = count + 1
             credsYaml = writeCredToYaml(cred, credsYaml)
     logger.info("%s credentials created" % count)
+    #validate_cred_types(credsYaml, isExternalCredEnv, yamlPath)
     writeYamlToFile(yamlPath, credsYaml)
 
 
@@ -224,6 +225,7 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir, isExternalCredEnv) :
                 store_value_to_yaml(credsYaml, key, credYaml[key], f"shared credentials: {credFileName}")
                 count += 1
             logger.info(f"Added {count} shared master credentials from {credFilePath}")
+            #validate_cred_types(credYaml, isExternalCredEnv, credFilePath)
     writeYamlToFile(credYamlPath, credsYaml)
     return credsYaml
 
