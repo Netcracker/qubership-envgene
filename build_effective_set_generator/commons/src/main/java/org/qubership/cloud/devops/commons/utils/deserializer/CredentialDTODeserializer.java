@@ -17,6 +17,7 @@
 package org.qubership.cloud.devops.commons.utils.deserializer;
 
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +31,7 @@ import java.util.Map;
 
 import static org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum.Constants.*;
 import static org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum.Constants.VAULT_APP_ROLE_VALUE;
+import static org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum.usernamePassword;
 
 public class CredentialDTODeserializer extends JsonDeserializer<CredentialDTO> {
 
@@ -37,45 +39,37 @@ public class CredentialDTODeserializer extends JsonDeserializer<CredentialDTO> {
 
     @Override
     public CredentialDTO deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-
+        String credId = p.currentName();
         Map<String, Object> node = p.readValueAs(Map.class);
-        String credId = p.getCurrentName();
         CredentialsTypeEnum type =
                 CredentialsTypeEnum.valueOf(((String) node.get("type")));
 
         CredentialDTO.CredentialDTOBuilder builder = CredentialDTO.builder()
                 .type(type)
                 .credentialsId(credId);
-
         if (type == CredentialsTypeEnum.external) {
-
-            builder.data(null)
-                    .description(null)
-                    .create((Boolean) node.get("create"))
+            builder.create((Boolean) node.getOrDefault("create", Boolean.FALSE))
                     .secretStore((String) node.get("secretStore"))
                     .remoteRefPath((String) node.get("remoteRefPath"))
                     .properties(convertProps(node.get("properties")));
-
         } else {
             Object dataNode = node.get("data");
-
             if (dataNode != null) {
                 Credential data;
-                switch (type.toString()) {
-
-                    case USERNAME_PASSWORD_VALUE:
+                switch (type) {
+                    case usernamePassword:
                         data = mapper.convertValue(dataNode, UsernamePasswordCredentialsDTO.class);
                         break;
 
-                    case SECRET_VALUE:
+                    case secret:
                         data = mapper.convertValue(dataNode, SecretCredentialsDTO.class);
                         break;
 
-                    case SECRET_FILE_VALUE:
+                    case secretFile:
                         data = mapper.convertValue(dataNode, SecretFileCredentialsDTO.class);
                         break;
 
-                    case VAULT_APP_ROLE_VALUE:
+                    case vaultAppRole:
                         data = mapper.convertValue(dataNode, VaultAppRoleCredentialsDTO.class);
                         break;
 
@@ -84,20 +78,13 @@ public class CredentialDTODeserializer extends JsonDeserializer<CredentialDTO> {
                 }
                 builder.data(data);
             }
-
             builder.description((String) node.get("description"));
         }
-
         return builder.build();
     }
 
     private List<CredentialDTO.Property> convertProps(Object obj) {
         if (obj == null) return null;
-
-        return mapper.convertValue(
-                obj,
-                new com.fasterxml.jackson.core.type.TypeReference<
-                        List<CredentialDTO.Property>>() {}
-        );
+        return mapper.convertValue(obj, new TypeReference<List<CredentialDTO.Property>>() {});
     }
 }

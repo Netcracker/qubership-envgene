@@ -442,7 +442,7 @@ class EnvGenerator:
         logger.info(f"Found external template. Render external credentials for {external_cred_path}")
         external_creds = openYaml(external_cred_path)
         default_remote_path = "{{ current_env.cloud }}/{{ current_env.name }}"
-        for credName, credConfig in external_creds.items():
+        for credConfig in external_creds.values():
                if isinstance(credConfig, dict) and "remoteRefPath" not in credConfig:
                    credConfig["remoteRefPath"] = default_remote_path
         rendered_external_creds = render_obj_by_context(external_creds, self.ctx)
@@ -453,7 +453,7 @@ class EnvGenerator:
         secretStoreMap = openYaml(secretStoreFile)
         validateSchema(secretStoreMap, schema_path=SECRET_SCHEMA)
 
-        #copy rendred creds to env creds file
+        #copy rendred creds to env creds file seperately to propagate comments
         copy_creds_to_env_creds_file(self.ctx.current_env_dir, rendered_external_creds, EXTERNAL_CRED_COMMENT, CRED_SCHEMA, True)
         self.isExternalCredEnv = True
         logger.info(f"External cred env is set as {self.isExternalCredEnv}")

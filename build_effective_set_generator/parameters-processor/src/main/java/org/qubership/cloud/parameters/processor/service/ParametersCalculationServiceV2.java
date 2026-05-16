@@ -21,20 +21,13 @@ import jakarta.inject.Inject;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.qubership.cloud.devops.commons.Injector;
 import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
-import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
-import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum;
 import org.qubership.cloud.devops.commons.pojo.extcreds.ExtCredEntities;
-import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
 import org.qubership.cloud.devops.commons.pojo.parameterset.CustomParameterDTO;
-import org.qubership.cloud.devops.commons.utils.CredentialUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
-import org.qubership.cloud.devops.commons.utils.SecretStoresUtils;
 import org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants;
 import org.qubership.cloud.devops.commons.utils.extcreds.ExternalCredUtils;
-import org.qubership.cloud.devops.commons.utils.extcreds.SecretNameBuilder;
 import org.qubership.cloud.parameters.processor.ParametersProcessor;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
@@ -47,6 +40,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.EXT_TEMPLATE_FOUND;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logDebug;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logWarning;
 import static org.qubership.cloud.devops.commons.utils.ParameterUtils.prepareCustomParams;
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
 import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredConstants.ESO_SUPPORT;
@@ -199,9 +194,9 @@ public class ParametersCalculationServiceV2 {
         Map<String, Parameter> externalCredParams = null;
         extCredEntities.setParameterType(parameterType.toString());
         if (ParameterType.DEPLOY.equals(parameterType) && extCredEntities.isExternalOnly) {
-                externalCredParams = new TreeMap<>();
-                String refShape = ExternalCredUtils.resolveReferenceShape(parameters.get(ExternalCredConstants.SECRET_FLOW), parameters.get(ESO_SUPPORT));
-                extCredEntities.setRefShape(refShape);
+            externalCredParams = new TreeMap<>();
+            String refShape = ExternalCredUtils.resolveReferenceShape(parameters.get(ExternalCredConstants.SECRET_FLOW), parameters.get(ESO_SUPPORT));
+            extCredEntities.setRefShape(refShape);
         }
         filterSecuredParams(parameters, securedParams, inSecuredParams, externalCredParams, parameterType, extCredEntities);
         Map<String, Object> externalCredParamsAsObject = externalCredParams != null ? ParametersProcessor.convertParameterMapToObject(externalCredParams) : null;
@@ -244,10 +239,9 @@ public class ParametersCalculationServiceV2 {
         inSecuredParamsAsObject.remove(ESO_SUPPORT);
         if (externalCredParamsAsObject != null && !externalCredParamsAsObject.isEmpty()) {
             parameterBundle.setDeployParamsWithExtCreds(externalCredParamsAsObject);
-            parameterBundle.setExternalCreds(ExternalCredUtils.generateExternalCredentialsMap());
         } else {
             if (extCredEntities.isExternalOnly) {
-                throw new ExternalCredProcessingException(EXT_TEMPLATE_FOUND);
+                logWarning(EXT_TEMPLATE_FOUND);
             }
         }
 

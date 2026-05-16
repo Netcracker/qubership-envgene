@@ -311,9 +311,6 @@ def copy_creds_to_env_creds_file(env_dir, credsYamlContent, comment, credsSchema
         envCredsYaml = openYaml(envCredentialsPath)
     else:
         envCredsYaml = yaml.load("{}")
-
-    #validate_cred_types(envCredsYaml, isExternalCredEnv, envCredentialsPath)
-
     for key, value in credsYamlContent.items() :
         store_value_to_yaml(envCredsYaml, key, value, comment)
     # storing credentials yaml

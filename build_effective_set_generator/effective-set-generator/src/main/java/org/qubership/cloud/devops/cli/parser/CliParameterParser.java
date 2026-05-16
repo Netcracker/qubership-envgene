@@ -50,6 +50,7 @@ import org.qubership.cloud.devops.commons.utils.HelmNameNormalizer;
 import org.qubership.cloud.devops.commons.utils.Parameter;
 import org.qubership.cloud.devops.commons.utils.ParameterUtils;
 import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
+import org.qubership.cloud.devops.commons.utils.extcreds.ExternalCredUtils;
 import org.qubership.cloud.parameters.processor.dto.DeployerInputs;
 import org.qubership.cloud.parameters.processor.dto.ParameterBundle;
 import org.qubership.cloud.parameters.processor.service.ParametersCalculationServiceV1;
@@ -152,10 +153,12 @@ public class CliParameterParser {
                         logDebug(String.format(APP_PARSE_ERROR, app.getAppName(), namespaceName, e.getMessage()));
                         logDebug(String.format("Stack trace for further details: %s", ExceptionUtils.getStackTrace(e)));
                         errorList.computeIfAbsent(app.getAppName() + ":" + namespaceName, k -> e.getMessage());
+                        throw new RuntimeException(e);
                     }
                 });
         if (EffectiveSetVersion.V2_0 == sharedData.getEffectiveSetVersion()) {
             generateE2EOutput(tenantName, cloudName, k8TokenMap, getExtCredEntities());
+            createExtContextFile();
             if (solutionDescriptor.isPresent())  {
                 fileDataConverter.writeToFile(new TreeMap<>(deployMappingFileData), sharedData.getOutputDir(), "deployment", "mapping.yaml");
                 fileDataConverter.writeToFile(new TreeMap<>(runtimeMappingFileData), sharedData.getOutputDir(), "runtime", "mapping.yaml");
@@ -172,6 +175,14 @@ public class CliParameterParser {
             throw new RuntimeException("Application processing failed");
         }
 
+    }
+
+    private void createExtContextFile() throws IOException {
+        if (inputData.isExternalOnly()) {
+            Path externalContextDir = Paths.get(sharedData.getOutputDir(), "external-credential");
+            Files.createDirectories(externalContextDir);
+            fileDataConverter.writeToFile(ExternalCredUtils.generateExternalCredentialsMap(), externalContextDir.toString(), "external-credentials.yaml");
+        }
     }
 
     private void generateE2EOutput(String tenantName, String cloudName, Map<String, String> k8TokenMap, ExtCredEntities extCredEntities) throws IOException {
@@ -391,10 +402,7 @@ public class CliParameterParser {
             //parameters with external creds
             if (parameterBundle.getDeployParamsWithExtCreds() != null && !parameterBundle.getDeployParamsWithExtCreds().isEmpty()) {
                 fileDataConverter.writeToFile(parameterBundle.getDeployParamsWithExtCreds(), deploymentDir, "external-credentials.yaml");
-                Path externalContextDir = Paths.get(sharedData.getOutputDir(), "external-credential");
-                Files.createDirectories(externalContextDir);
-                fileDataConverter.writeToFile(parameterBundle.getExternalCreds(), externalContextDir.toString(), "external-credentials.yaml");
-            };
+            }
 
         } else {
             String appDirectory = String.format("%s/%s/%s", sharedData.getOutputDir(), namespaceName, appName);

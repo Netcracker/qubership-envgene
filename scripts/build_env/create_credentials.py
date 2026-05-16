@@ -187,7 +187,6 @@ def mergeAndSaveYaml(yamlPath, newCreds, isExternalCredEnv) :
             count = count + 1
             credsYaml = writeCredToYaml(cred, credsYaml)
     logger.info("%s credentials created" % count)
-    #validate_cred_types(credsYaml, isExternalCredEnv, yamlPath)
     writeYamlToFile(yamlPath, credsYaml)
 
 
@@ -225,7 +224,6 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir, isExternalCredEnv) :
                 store_value_to_yaml(credsYaml, key, credYaml[key], f"shared credentials: {credFileName}")
                 count += 1
             logger.info(f"Added {count} shared master credentials from {credFilePath}")
-            #validate_cred_types(credYaml, isExternalCredEnv, credFilePath)
     writeYamlToFile(credYamlPath, credsYaml)
     return credsYaml
 
@@ -295,11 +293,21 @@ def create_credentials(envDir, envInstancesDir, instancesDir, isExternalCredEnv)
     mergeAndSaveYaml(credYamlPath, resultingCreds, isExternalCredEnv)
     # process shared credentials
     envCredsMap = mergeSharedCreds(credYamlPath, envInstancesDir, instancesDir, isExternalCredEnv)
-
     #process external credentials
     if isExternalCredEnv:
+        if resultingCreds:
+            #to cover condition like local creds macro with external cred id
+            local_cred_ids = [
+                item.get('cred', {}).get('credentialsId')
+                for item in resultingCreds
+                if item.get('cred', {}).get('credentialsId')
+            ]
+            raise ReferenceError(f"Found local credential macros in external cred only environment. Credential IDs are  {local_cred_ids}")
         logger.info(f"Processing external credentials for external only environment")
         validateExternalCreds(envCredsMap, externalCredIds)
+    else:
+        if externalCredIds:
+            raise ReferenceError(f"Found external credential references in parameters in local cred only environment. Credential IDs are {externalCredIds}")
     validate_cred_types(envCredsMap, isExternalCredEnv, credYamlPath)
     beautifyYaml(credYamlPath, credsSchema)
     

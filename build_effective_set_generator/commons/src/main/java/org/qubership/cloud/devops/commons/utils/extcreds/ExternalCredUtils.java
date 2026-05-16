@@ -16,10 +16,12 @@
 
 package org.qubership.cloud.devops.commons.utils.extcreds;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.experimental.UtilityClass;
 import org.qubership.cloud.devops.commons.Injector;
 import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
 import org.qubership.cloud.devops.commons.pojo.credentials.dto.CredentialDTO;
+import org.qubership.cloud.devops.commons.pojo.credentials.model.Credential;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.CredentialsTypeEnum;
 import org.qubership.cloud.devops.commons.pojo.credentials.model.ExternalCredentials;
 import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreDTO;
@@ -36,6 +38,8 @@ import static org.qubership.cloud.devops.commons.utils.constant.ExternalCredCons
 @UtilityClass
 public class ExternalCredUtils {
 
+    private static final ObjectMapper MAPPER = new ObjectMapper();
+
     public static boolean isExternalCred(Map<String, Parameter> map) {
         Parameter typeParam = map.get("$type");
         if (typeParam != null && typeParam.getValue() instanceof String) {
@@ -47,7 +51,7 @@ public class ExternalCredUtils {
     public static String resolveReferenceShape(Object secretFlow, Object esoSupport) {
         Object secretFlowVal = extractValue(secretFlow);
         Object esoSupportVal = extractValue(esoSupport);
-        String flow = secretFlowVal != null ? validateSecretFlow(secretFlowVal.toString()) : HELM_VALUES;
+        String flow = secretFlowVal != null ? secretFlowVal.toString() : HELM_VALUES;
         boolean eso = esoSupportVal != null &&
                 Boolean.parseBoolean(esoSupportVal.toString());
         switch (flow) {
@@ -61,15 +65,8 @@ public class ExternalCredUtils {
                 throw new ExternalCredProcessingException(ESO_DISABLED_MESSAGE);
 
             default:
-                return VALS;
+                throw new ExternalCredProcessingException(String.format(INVALID_SECRET_FLOW, flow, HELM_VALUES, EXT_VALUES));
         }
-    }
-
-    private static String validateSecretFlow(String secretFlow) {
-        if (!HELM_VALUES.equals(secretFlow) && !EXT_VALUES.equals(secretFlow)) {
-            throw new ExternalCredProcessingException(String.format(INVALID_SECRET_FLOW, secretFlow, HELM_VALUES, EXT_VALUES));
-        }
-        return secretFlow;
     }
 
     private static Object extractValue(Object obj) {
@@ -101,10 +98,14 @@ public class ExternalCredUtils {
     }
 
     private static Object prepareFinalExtValue(String credId, String property, String refShape, String origin) {
-        ExternalCredentials credentials = (ExternalCredentials)Injector.getInstance().getDi().get(CredentialUtils.class).getCredentialsById(credId);
-        if (credentials == null) {
+        Credential rawCred = Injector.getInstance().getDi().get(CredentialUtils.class).getCredentialsById(credId);
+        if (rawCred == null) {
             throw new ExternalCredProcessingException(String.format(EXT_CRED_NOT_FOUND, credId));
         }
+        if (!(rawCred instanceof ExternalCredentials)) {
+            throw new ExternalCredProcessingException(String.format(INVALID_CRED, credId));
+        }
+        ExternalCredentials credentials = (ExternalCredentials) rawCred;
         SecretStoreDTO store = Injector.getInstance().getDi().get(SecretStoresUtils.class).getStoresById(credentials.getSecretStore());
         if (store == null) {
             throw new ExternalCredProcessingException(String.format(SECRET_NOT_FOUND ,credentials.getSecretStore(), credId));
@@ -166,7 +167,7 @@ public class ExternalCredUtils {
             case aws -> "ref+awssecrets://" + normalizedSecretName + "?region=" + store.getRegion();
             case gcp -> "ref+gcpsecrets://" + store.getProjectId() + "/" + normalizedSecretName;
         };
-        if (fragment != null && !fragment.isEmpty()) {
+        if (!fragment.isEmpty()) {
             return baseUri + fragment;
         }
         return baseUri;
@@ -197,13 +198,16 @@ public class ExternalCredUtils {
         SecretStoresUtils secretStoresUtils = Injector.getInstance().getDi().get(SecretStoresUtils.class);
         for (Map.Entry<String, CredentialDTO> entry : credentials.entrySet()) {
             String credId = entry.getKey();
-            CredentialDTO cred = credentials.get(credId);
+            CredentialDTO cred = entry.getValue();
             if (cred.getType() != CredentialsTypeEnum.external || !Boolean.TRUE.equals(cred.getCreate())) {
                 continue;
             }
             String storeId = cred.getSecretStore();
             SecretStoreDTO store = secretStoresUtils.getStoresById(storeId);
-            storesOut.putIfAbsent(storeId, buildStoreMap(store));
+            if (store == null) {
+                throw new ExternalCredProcessingException(String.format(SECRET_NOT_FOUND ,store, credId));
+            }
+            storesOut.putIfAbsent(storeId, MAPPER.convertValue(store, Map.class));
             Map<String, Object> credMap = new LinkedHashMap<>();
             credMap.put(SECRET_STORE_ID, storeId);
             String normalizedName = SecretNameBuilder.buildNormalizedSecretName(
@@ -225,26 +229,4 @@ public class ExternalCredUtils {
         result.put(CREDS, credsOut);
         return result;
     }
-
-    private static Map<String, Object> buildStoreMap(SecretStoreDTO store) {
-        Map<String, Object> map = new LinkedHashMap<>();
-        map.put(TYPE, store.getType().name().toLowerCase());
-        map.put(URL, store.getUrl());
-        switch (store.getType()) {
-            case vault:
-                map.put(MOUNT_PATH, store.getMountPath());
-                break;
-            case azure:
-                map.put(VAULT_NAME, store.getVaultName());
-                break;
-            case aws:
-                map.put(REGION, store.getRegion());
-                break;
-            case gcp:
-                map.put(PROJECT_ID, store.getProjectId());
-                break;
-        }
-        return map;
-    }
-
 }

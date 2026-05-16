@@ -26,7 +26,6 @@ import java.util.Map;
 public class ParameterBundle {
     Map<String, Object> securedDeployParams;
     Map<String, Object> deployParamsWithExtCreds;
-    Map<String, Object> externalCreds;
     Map<String, Object> deployParams;
     Map<String, Object> securedConfigParams;
     Map<String, Object> configServerParams;

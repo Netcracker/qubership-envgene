@@ -50,4 +50,6 @@ public class ExternalCredExceptionMessages {
 
     public static final String INVALID_SECRET_FLOW = "Invalid secretFlow: '%s'. Allowed values are '%s' or '%s'.";
 
+    public static final String INVALID_CRED = "Credential '%s' is not of type external";
+
 }

@@ -114,8 +114,6 @@ def add_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path, env_
     else:
         logger.error(f"No cloud pasport credentials files found in either {passportSubfolderPath} or {passportSameFolderPath}.")
         raise ReferenceError(f"No cloud pasport credentials files found. See logs above")
-    #validate_cred_types(passportCredsYaml, isExternalCredEnv, "cloud passport")
-
     copy_creds_to_env_creds_file(env_dir, passportCredsYaml, comment, credsSchema, isExternalCredEnv)  
 
 def extract_cred_id(param, isExternal=False):

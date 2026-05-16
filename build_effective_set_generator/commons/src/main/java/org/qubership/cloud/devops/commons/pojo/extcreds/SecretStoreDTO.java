@@ -16,6 +16,7 @@
 
 package org.qubership.cloud.devops.commons.pojo.extcreds;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.jackson.Jacksonized;
@@ -23,6 +24,7 @@ import lombok.extern.jackson.Jacksonized;
 @Data
 @Builder
 @Jacksonized
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SecretStoreDTO {
     private SecretStoreType type;
     private String url;

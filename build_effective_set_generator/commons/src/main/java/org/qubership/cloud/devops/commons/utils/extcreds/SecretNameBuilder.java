@@ -17,12 +17,10 @@
 package org.qubership.cloud.devops.commons.utils.extcreds;
 
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.qubership.cloud.devops.commons.exceptions.ExternalCredProcessingException;
 import org.qubership.cloud.devops.commons.pojo.extcreds.SecretStoreType;
 
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.regex.Pattern;
 
 import static org.qubership.cloud.devops.commons.exceptions.constant.ExternalCredExceptionMessages.*;
@@ -38,33 +36,30 @@ public class SecretNameBuilder {
         remoteRefPath = remoteRefPath.trim();
         credId = credId.trim();
         String type = secretStoreType.name();
+        if (secretStoreType != SecretStoreType.vault) {
+            validateLength(credId, MAX_CRED_ID_LENGTH, CREDID, type);
+        }
         switch (secretStoreType) {
             case vault:
                 String result = remoteRefPath + "/" + credId;
                 validate(result, VAULT_PATTERN, type);
                 return result;
             case azure:
-                validateLength(credId, MAX_CRED_ID_LENGTH, CREDID, type);
-
-                String azurePath = normalizeFlat(remoteRefPath, AZURE_SEGMENT_MAX);
+                String azurePath = normalizePath(remoteRefPath, AZURE_SEGMENT_MAX, 4, "--");
                 String azureResult = azurePath + "--" + credId;
 
                 validate(azureResult, AZURE_PATTERN, type);
                 validateLength(azureResult, AZURE_MAX_LENGTH, SECRET_NAME, type);
                 return azureResult;
             case aws:
-                validateLength(credId, MAX_CRED_ID_LENGTH, CREDID, type);
-
-                String awsPath = normalizeHierarchical(remoteRefPath);
+                String awsPath = normalizePath(remoteRefPath, AWS_SEGMENT_MAX, Integer.MAX_VALUE, "/");
                 String awsResult = awsPath + "/" + credId;
 
                 validate(awsResult, AWS_PATTERN, type);
                 validateLength(awsResult, AWS_MAX_LENGTH, SECRET_NAME, type);
                 return awsResult;
             case gcp:
-                validateLength(credId, MAX_CRED_ID_LENGTH, CREDID, type);
-
-                String gcpPath = normalizeFlat(remoteRefPath, GCP_SEGMENT_MAX);
+                String gcpPath = normalizePath(remoteRefPath, GCP_SEGMENT_MAX, Integer.MAX_VALUE, "--");
                 String gcpResult = gcpPath + "--" + credId;
 
                 validate(gcpResult, GCP_PATTERN, type);
@@ -91,29 +86,13 @@ public class SecretNameBuilder {
         }
     }
 
-    private static String normalizeFlat(String path, int maxSegmentLength) {
+    private static String normalizePath(String path, int maxSegmentLength, int maxSegments, String delimiter) {
         String[] segments = path.split("/");
-
         StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < segments.length && i < 4; i++) {
-            if (i > 0) result.append("--");
+        for (int i = 0; i < segments.length && i < maxSegments; i++) {
+            if (i > 0) result.append(delimiter);
             result.append(truncateSegment(segments[i], maxSegmentLength));
         }
-
-        return result.toString();
-    }
-
-    private static String normalizeHierarchical(String path) {
-        String[] segments = path.split("/");
-
-        StringBuilder result = new StringBuilder();
-
-        for (int i = 0; i < segments.length; i++) {
-            if (i > 0) result.append("/");
-            result.append(truncateSegment(segments[i], AWS_SEGMENT_MAX));
-        }
-
         return result.toString();
     }
 
@@ -122,7 +101,7 @@ public class SecretNameBuilder {
             return segment;
         }
         // rules:
-        // Azure: 15 + "-" + 5 hash = 21 (but maxLen passed as 20 → safe cap)
+        // Azure: 14 + "-" + 5 hash
         // AWS: 113 + "-" + 5 hash
         // GCP: 47 + "-" + 5 hash
         //prefixLen = totalLength - (dash [which is 1 character] + hash [is 5 characters]).
@@ -130,27 +109,8 @@ public class SecretNameBuilder {
         if (prefixLen <= 0) {
             throw new ExternalCredProcessingException("Invalid maxLen: " + maxLen);
         }
-        return segment.substring(0, prefixLen)
-                + "-"
-                + sha256(segment).substring(0, 5);
+        return segment.substring(0, prefixLen)  + "-" + DigestUtils.sha256Hex(segment).substring(0, 5);
     }
-
-    private static String sha256(String input) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
-
-            StringBuilder hex = new StringBuilder();
-            for (byte b : hash) {
-                hex.append(String.format("%02x", b));
-            }
-            return hex.toString();
-
-        } catch (NoSuchAlgorithmException e) {
-            throw new ExternalCredProcessingException(e.getMessage());
-        }
-    }
-
     private static boolean isNullOrBlank(String s) {
         return s == null || s.isBlank();
     }
