@@ -1,0 +1,167 @@
+{
+  "$schema": "../schemas/application-manifest-v2.schema.json",
+  "serialNumber": "urn:uuid:8b6f0a92-3f4d-4c8d-a3aa-7c1b4d2e5a01",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-01-21T12:00:00Z",
+    "component": {
+      "bom-ref": "app-with-app-chart:app-1",
+      "type": "application",
+      "mime-type": "application/vnd.nc.application",
+      "name": "app-with-app-chart",
+      "version": "1.0.0"
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "am-build-cli",
+          "version": "0.1.0"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "bom-ref": "app-with-app-chart:run-1",
+      "type": "application",
+      "mime-type": "application/vnd.nc.standalone-runnable",
+      "name": "app-with-app-chart",
+      "version": "1.0.0",
+      "properties": [],
+      "components": []
+    },
+    {
+      "bom-ref": "app-with-app-chart:chart-1",
+      "type": "application",
+      "mime-type": "application/vnd.nc.helm.chart",
+      "name": "app-with-app-chart",
+      "version": "1.0.0",
+      "purl": "pkg:helm/app-with-app-chart@1.0.0?registry_name=sandbox",
+      "properties": [
+        {
+          "name": "isLibrary",
+          "value": false
+        }
+      ],
+      "components": [
+        {
+          "bom-ref": "service-a:chart-1",
+          "type": "application",
+          "mime-type": "application/vnd.nc.helm.chart",
+          "name": "service-a",
+          "properties": [
+            {
+              "name": "isLibrary",
+              "value": false
+            },
+            {
+              "name": "nc:helm.values.artifactMappings",
+              "value": {
+                "service-a:img-1": {
+                  "valuesPathPrefix": "serviceA"
+                }
+              }
+            }
+          ],
+          "components": []
+        },
+        {
+          "bom-ref": "service-b:chart-1",
+          "type": "application",
+          "mime-type": "application/vnd.nc.helm.chart",
+          "name": "service-b",
+          "properties": [
+            {
+              "name": "isLibrary",
+              "value": false
+            },
+            {
+              "name": "nc:helm.values.artifactMappings",
+              "value": {
+                "service-b:img-1": {
+                  "valuesPathPrefix": "serviceB"
+                }
+              }
+            }
+          ],
+          "components": []
+        },
+        {
+          "bom-ref": "common-lib:chart-1",
+          "type": "application",
+          "mime-type": "application/vnd.nc.helm.chart",
+          "name": "common-lib",
+          "properties": [
+            {
+              "name": "isLibrary",
+              "value": true
+            }
+          ],
+          "components": []
+        }
+      ]
+    },
+    {
+      "bom-ref": "service-a:img-1",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "service-a",
+      "group": "core",
+      "version": "build1",
+      "purl": "pkg:docker/core/service-a@build1?registry_name=sandbox",
+      "properties": [
+        {
+          "name": "nc:dd:image_type",
+          "value": "service"
+        }
+      ]
+    },
+    {
+      "bom-ref": "service-b:img-1",
+      "type": "container",
+      "mime-type": "application/vnd.docker.image",
+      "name": "service-b",
+      "group": "core",
+      "version": "build1",
+      "purl": "pkg:docker/core/service-b@build1?registry_name=sandbox",
+      "properties": [
+        {
+          "name": "nc:dd:image_type",
+          "value": "service"
+        }
+      ]
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "app-with-app-chart:app-1",
+      "dependsOn": [
+        "app-with-app-chart:run-1",
+        "app-with-app-chart:chart-1",
+        "service-a:img-1",
+        "service-b:img-1"
+      ]
+    },
+    {
+      "ref": "app-with-app-chart:run-1",
+      "dependsOn": [
+        "app-with-app-chart:chart-1"
+      ]
+    },
+    {
+      "ref": "service-a:chart-1",
+      "dependsOn": [
+        "service-a:img-1"
+      ]
+    },
+    {
+      "ref": "service-b:chart-1",
+      "dependsOn": [
+        "service-b:img-1"
+      ]
+    }
+  ]
+}
