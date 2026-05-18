@@ -177,6 +177,46 @@ meaningful wrap without forcing tight columns.
 
 ---
 
+#### Heading case
+
+**Use sentence case for all headings: capitalize the first word and proper nouns only.**
+
+Proper nouns include product names, feature names, brand names, and code identifiers
+(`envgeneNullValue`, `ParameterSet`, `Cloud Passport`, `EnvGene`).
+
+❌ **INCORRECT:**
+
+```markdown
+## How to Resolve Credentials
+### Verification Step (Required)
+#### Generated `credentials.yml` (Username/Password)
+```
+
+✅ **CORRECT:**
+
+```markdown
+## How to resolve credentials
+### Verification step (required)
+#### Generated `credentials.yml` (username/password)
+```
+
+**Scope:** Applies to **new and modified content only**. Existing headings in Title Case are not
+affected by this rule and do not need rewriting unless the surrounding lines are being edited
+for other reasons.
+
+**Recommended (not required):** When editing a Markdown file for any other reason, consider
+bringing its remaining Title Case headings to sentence case in the same PR. For large files
+(many headings, large TOC), a separate dedicated migration PR is preferred to keep the original
+change reviewable. Reviewers may suggest opportunistic migration but must not block merge over it.
+
+**Why:** Aligns with the GitHub Docs convention and modern dev-doc style guides (Google,
+Microsoft, Mozilla, GitHub). Sentence case has fewer rules (no debate about which prepositions
+or conjunctions to capitalize), keeps proper nouns visually distinct from generic words,
+translates more cleanly to non-English locales, and is the established convention across modern
+technical documentation.
+
+---
+
 #### Tables
 
 **CRITICAL: All Markdown tables MUST have vertically aligned pipe characters (`|`).**
@@ -406,6 +446,138 @@ This repository follows the [Diátaxis documentation framework](https://github.c
 - Create long (>500 lines) how-to guides
 - Include detailed theory in practical guides
 - Use fantasy/made-up examples
+
+---
+
+## Use case design
+
+Use cases live in `/docs/use-cases/`. They describe observable system behavior in a structured
+format (Pre-requisites, Trigger, Steps, Results) and serve both as documentation and as
+test-design input.
+
+### Apply equivalence class partitioning
+
+**Do not enumerate variants of an identical-behavior UC. Merge them into a single parameterized
+UC.**
+
+When two or more candidate UCs would describe the same observable behavior with only a parameter
+difference (e.g., job name, trigger flag, environment kind), they belong to the same equivalence
+class. They must be merged into a single UC with the variable parameterized via the Trigger
+section.
+
+❌ **INCORRECT (enumerated variants):**
+
+```markdown
+### UC-X-1: Validation fails at `generate_effective_set`
+...
+
+### UC-X-2: Validation fails at `cmdb_import`
+...
+```
+
+Two UCs that differ only in job name. Both invoke the same validator and produce the same error
+message format. This is one equivalence class, not two.
+
+✅ **CORRECT (parameterized trigger):**
+
+```markdown
+### UC-X-1: Validation fails
+
+**Trigger:**
+
+> [!NOTE]
+> One of the following conditions must be met:
+
+1. Instance pipeline is started with `GENERATE_EFFECTIVE_SET: true`
+2. Instance pipeline is started with `CMDB_IMPORT: true`
+```
+
+### When to split UCs
+
+Split into separate UCs only when behavior differs in an observable way:
+
+- Different validators or handlers (e.g., parameter validator vs credential validator).
+- Different error message format or different output structure.
+- Different post-conditions or side effects.
+
+### When to merge UCs
+
+Merge into a single parameterized UC when:
+
+- Same observable behavior.
+- Same error message format.
+- Same outcome.
+- Differences are limited to parameter values (job name, flag values, environment names).
+
+### Abstract steps over implementation mechanics
+
+Steps describe what happens, not how it is implemented. Avoid `Reads X`, `Iterates Y`,
+`Detects Z` phrasing - it leaks implementation that the documentation cannot guarantee will
+match.
+
+❌ **INCORRECT:**
+
+```markdown
+**Steps:**
+
+1. The `generate_effective_set` job runs in the pipeline:
+    1. Reads the existing Cloud and Namespace YAMLs from the Environment Instance.
+    2. Iterates over `deployParameters`, `e2eParameters`, and ...
+    3. Detects a value equal to `envgeneNullValue`.
+    4. Aborts with a validation error.
+```
+
+✅ **CORRECT:**
+
+```markdown
+**Steps:**
+
+1. The `generate_effective_set` job runs.
+2. Parameter validation detects an unresolved `envgeneNullValue`.
+3. The job aborts with a validation error.
+```
+
+### Results: observable outcomes only
+
+Document what the operator observes, not downstream consequences that the documented component
+does not control.
+
+❌ **INCORRECT:**
+
+```markdown
+**Results:**
+
+1. The job fails with the message: ...
+2. No Effective Set is produced.
+3. Deployment is blocked.
+```
+
+`Deployment is blocked` assumes authority over deployment that the documented component does
+not have.
+
+✅ **CORRECT:**
+
+```markdown
+**Results:**
+
+1. The job fails with the message: ...
+```
+
+### Scope
+
+Applies to **new and modified UCs only**. Existing UCs that violate these rules are not
+affected and do not need rewriting unless the surrounding lines are being edited for other
+reasons.
+
+### Why
+
+- **Equivalence Class Partitioning** is the standard test-design technique (ISTQB) and aligns
+  with BDD Scenario Outlines and modern API documentation style (Stripe, GitHub, Google API
+  Design Guide).
+- Matrix decomposition (UC per combination of variables) creates combinatorial bloat where
+  most UCs are clones differing in one word.
+- Implementation-detail leaks bind documentation to a specific code shape. Abstraction
+  decouples docs from implementation churn.
 
 ---
 
