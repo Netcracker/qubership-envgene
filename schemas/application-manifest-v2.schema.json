@@ -1,0 +1,707 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://qubership.org/schema/application-manifest-v2.schema.json",
+  "type": "object",
+  "title": "Application Manifest v2",
+  "description": "CycloneDX-based Application Manifest v2 that supports bidirectional transformation with Deployment Descriptor",
+  "required": [
+    "$schema",
+    "bomFormat",
+    "specVersion",
+    "serialNumber",
+    "version",
+    "metadata",
+    "components",
+    "dependencies"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "JSON Schema reference for AMv2"
+    },
+    "bomFormat": {
+      "type": "string",
+      "title": "BOM Format",
+      "description": "Specifies the format of the BOM. This value must be \"CycloneDX\"",
+      "enum": ["CycloneDX"]
+    },
+    "specVersion": {
+      "type": "string",
+      "title": "CycloneDX Specification Version",
+      "description": "The version of the CycloneDX specification the BOM conforms to",
+      "enum": ["1.6"]
+    },
+    "serialNumber": {
+      "type": "string",
+      "title": "BOM Serial Number",
+      "description": "Every BOM generated SHOULD have a unique serial number, even if the contents of the BOM have not changed over time. If specified, the serial number must conform to RFC 4122",
+      "pattern": "^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "version": {
+      "type": "integer",
+      "title": "BOM Version",
+      "description": "Whenever an existing BOM is modified, either manually or through automated processes, the version of the BOM SHOULD be incremented by 1",
+      "minimum": 1,
+      "default": 1
+    },
+    "metadata": {
+      "$ref": "#/definitions/metadata-application",
+      "title": "BOM Metadata",
+      "description": "Provides additional information about a BOM"
+    },
+    "components": {
+      "type": "array",
+      "title": "Components",
+      "description": "A list of software and hardware components included in the parent component",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/definitions/standalone-runnable" },
+          { "$ref": "#/definitions/smartplug" },
+          { "$ref": "#/definitions/samplerepo" },
+          { "$ref": "#/definitions/cdn" },
+          { "$ref": "#/definitions/crd" },
+          { "$ref": "#/definitions/job" },
+          { "$ref": "#/definitions/docker-image" },
+          { "$ref": "#/definitions/helm-chart" },
+          { "$ref": "#/definitions/helm-values-schema" },
+          { "$ref": "#/definitions/resource-profile-baseline" },
+          { "$ref": "#/definitions/artifact" }
+        ]
+      },
+      "uniqueItems": true
+    },
+    "dependencies": {
+      "type": "array",
+      "title": "Dependencies",
+      "description": "Provides the ability to document dependency relationships",
+      "items": {
+        "$ref": "#/definitions/dependency"
+      },
+      "uniqueItems": true
+    }
+  },
+  "definitions": {
+    "refType": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Identifier for referable elements. Value SHOULD not start with 'urn:cdx:'"
+    },
+    "version": {
+      "type": "string",
+      "maxLength": 1024,
+      "description": "A single disjunctive version identifier"
+    },
+    "hash": {
+      "type": "object",
+      "required": ["alg", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "alg": {
+          "type": "string",
+          "enum": ["MD5", "SHA-1", "SHA-256", "SHA-384", "SHA-512", "SHA3-256", "SHA3-384", "SHA3-512", "BLAKE2b-256", "BLAKE2b-384", "BLAKE2b-512", "BLAKE3"]
+        },
+        "content": {
+          "type": "string",
+          "pattern": "^([a-fA-F0-9]{32}|[a-fA-F0-9]{40}|[a-fA-F0-9]{64}|[a-fA-F0-9]{96}|[a-fA-F0-9]{128})$"
+        }
+      }
+    },
+    "property": {
+      "type": "object",
+      "required": ["name", "value"],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "value": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "number" },
+            { "type": "boolean" },
+            { "type": "array" },
+            { "type": "object" }
+          ]
+        }
+      }
+    },
+    "dependency": {
+      "type": "object",
+      "required": ["ref", "dependsOn"],
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/refType"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "metadata-application": {
+      "type": "object",
+      "required": ["timestamp", "component", "tools"],
+      "additionalProperties": false,
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "component": {
+          "type": "object",
+          "required": ["type", "mime-type", "bom-ref", "name", "version"],
+          "additionalProperties": false,
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["application"]
+            },
+            "mime-type": {
+              "type": "string",
+              "enum": ["application/vnd.nc.application"]
+            },
+            "bom-ref": {
+              "$ref": "#/definitions/refType"
+            },
+            "name": {
+              "type": "string"
+            },
+            "version": {
+              "$ref": "#/definitions/version"
+            }
+          }
+        },
+        "tools": {
+          "type": "object",
+          "required": ["components"],
+          "additionalProperties": false,
+          "properties": {
+            "components": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["type", "name", "version"],
+                "additionalProperties": false,
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["application"]
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "$ref": "#/definitions/version"
+                  }
+                }
+              },
+              "uniqueItems": true
+            }
+          }
+        }
+      }
+    },
+    "standalone-runnable": {
+      "type": "object",
+      "required": ["type", "mime-type", "bom-ref", "name", "version", "properties", "components"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["application"]
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": ["application/vnd.nc.standalone-runnable"]
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/version"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/property"
+          },
+          "default": []
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/definitions/helm-chart" },
+              { "$ref": "#/definitions/docker-image" }
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "smartplug": {
+      "type": "object",
+      "required": ["type", "mime-type", "bom-ref", "name", "version", "properties", "components"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["application"]
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": ["application/vnd.nc.smartplug"]
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/version"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/property"
+          },
+          "default": []
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/artifact"
+          },
+          "default": [],
+          "uniqueItems": true
+        }
+      }
+    },
+    "samplerepo": {
+      "type": "object",
+      "required": ["type", "mime-type", "bom-ref", "name", "version", "properties", "components"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["application"]
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": ["application/vnd.nc.samplerepo"]
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/version"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/property"
+          },
+          "default": []
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/artifact"
+          },
+          "default": [],
+          "uniqueItems": true
+        }
+      }
+    },
+    "cdn": {
+      "type": "object",
+      "required": ["type", "mime-type", "bom-ref", "name", "version", "properties", "components"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["application"]
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": ["application/vnd.nc.cdn"]
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/version"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/property"
+          },
+          "default": []
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/artifact"
+          },
+          "default": [],
+          "uniqueItems": true
+        }
+      }
+    },
+    "crd": {
+      "type": "object",
+      "required": ["type", "mime-type", "bom-ref", "name", "version", "properties", "components"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["application"]
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": ["application/vnd.nc.crd"]
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/version"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/property"
+          },
+          "default": []
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/artifact"
+          },
+          "default": [],
+          "uniqueItems": true
+        }
+      }
+    },
+    "job": {
+      "type": "object",
+      "required": ["type", "mime-type", "bom-ref", "name", "version", "properties", "components"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["application"]
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": ["application/vnd.nc.job"]
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/version"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/property"
+          },
+          "default": []
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/artifact"
+          },
+          "default": [],
+          "uniqueItems": true
+        }
+      }
+    },
+    "docker-image": {
+      "type": "object",
+      "required": ["type", "mime-type", "bom-ref", "name", "group", "version", "purl"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["container"]
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": ["application/vnd.docker.image"]
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/version"
+        },
+        "purl": {
+          "type": "string",
+          "description": "Package URL (purl) for the image"
+        },
+        "hashes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/hash"
+          }
+        },
+        "properties": {
+          "type": "array",
+          "description": "Additional properties for the Docker image. Recognized property names: nc:dd:image_type",
+          "items": {
+            "$ref": "#/definitions/property"
+          }
+        }
+      }
+    },
+    "helm-chart": {
+      "type": "object",
+      "required": ["type", "mime-type", "bom-ref", "name", "properties"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["application"]
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": ["application/vnd.nc.helm.chart"]
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/version"
+        },
+        "purl": {
+          "type": "string"
+        },
+        "hashes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/hash"
+          }
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/property"
+          }
+        },
+        "components": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              { "$ref": "#/definitions/helm-chart" },
+              { "$ref": "#/definitions/helm-values-schema" },
+              { "$ref": "#/definitions/resource-profile-baseline" }
+            ]
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "artifact": {
+      "type": "object",
+      "required": ["type", "mime-type", "bom-ref", "name", "group", "version", "properties"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["application", "data"]
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": [
+            "application/zip",
+            "application/java-archive"
+          ]
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "name": {
+          "type": "string"
+        },
+        "group": {
+          "type": "string"
+        },
+        "version": {
+          "$ref": "#/definitions/version"
+        },
+        "properties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/property"
+          }
+        }
+      }
+    },
+    "helm-values-schema": {
+      "type": "object",
+      "required": ["type", "mime-type", "bom-ref", "name", "data"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["data"]
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": ["application/vnd.nc.helm.values.schema"]
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "name": {
+          "type": "string",
+          "default": "values.schema.json"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "name", "contents"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["configuration"]
+              },
+              "name": {
+                "type": "string"
+              },
+              "contents": {
+                "type": "object",
+                "required": ["attachment"],
+                "additionalProperties": false,
+                "properties": {
+                  "attachment": {
+                    "type": "object",
+                    "required": ["contentType", "content"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "contentType": {
+                        "type": "string",
+                        "default": "application/json"
+                      },
+                      "encoding": {
+                        "type": "string",
+                        "enum": ["base64"],
+                        "default": "base64"
+                      },
+                      "content": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "resource-profile-baseline": {
+      "type": "object",
+      "required": ["type", "mime-type", "bom-ref", "name", "data"],
+      "additionalProperties": false,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["data"]
+        },
+        "mime-type": {
+          "type": "string",
+          "enum": ["application/vnd.nc.resource-profile-baseline"]
+        },
+        "bom-ref": {
+          "$ref": "#/definitions/refType"
+        },
+        "name": {
+          "type": "string",
+          "default": "resource-profile-baselines"
+        },
+        "data": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type", "name", "contents"],
+            "additionalProperties": false,
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["configuration"]
+              },
+              "name": {
+                "type": "string"
+              },
+              "contents": {
+                "type": "object",
+                "required": ["attachment"],
+                "additionalProperties": false,
+                "properties": {
+                  "attachment": {
+                    "type": "object",
+                    "required": ["contentType", "encoding", "content"],
+                    "additionalProperties": false,
+                    "properties": {
+                      "contentType": {
+                        "type": "string",
+                        "enum": ["application/yaml", "application/json"]
+                      },
+                      "encoding": {
+                        "type": "string",
+                        "enum": ["base64"],
+                        "default": "base64"
+                      },
+                      "content": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
