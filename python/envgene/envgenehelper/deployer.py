@@ -54,7 +54,7 @@ def get_deployer(env_name, instances_dir, failonerror=True):
     deployer_name = data['inventory']['deployer']
     return deployer_name
 
-def find_deployer_definition(env_name, instances_dir) -> Path | None:
+def find_env_deployer_definition(env_name, instances_dir) -> Path | None:
     env_dir = Path(find_env_instances_dir(env_name, instances_dir))
     
     deployer_dir_names = ["app-deployer", "cloud-deployer"]
@@ -71,32 +71,29 @@ def find_deployer_definition(env_name, instances_dir) -> Path | None:
 
     return None
 
-def get_deployer_config(env_name=None, base_dir=None, instances_dir=None, secret_key=None, is_test=None, failonerror=True, deployer_name=None, fallback_on_root_config=True):
-    # finding necessary deployer
+def get_deployer_config(env_name, base_dir, instances_dir, secret_key=None, is_test=None, failonerror=True):
     basic_deployer_file_path = f"{base_dir}/configuration/deployer.yml"
-    if env_name and base_dir and instances_dir:
-        deployer_name = get_deployer(env_name, instances_dir, failonerror)
-        deployer_file_path = find_deployer_definition(env_name, instances_dir)
-        if not deployer_file_path:
-            logger.info("Deployer definition file is not found, exiting.")
-            return "","",""
-    else:
-        if deployer_name is None:
-            raise ValueError('get_deployer_config() function must be called either with (env_name, work_dir, instances_dir) or with (deployer_name) params')
-        deployer_file_path = basic_deployer_file_path
-    deployer_dir = getDirName(deployer_file_path)
-    data = openYaml(deployer_file_path, allow_default=True)
-    if deployer_name not in data and fallback_on_root_config:
-        logger.info(f"Deployer with key {deployer_name} not found in: {deployer_file_path}. Going to root configuration: {basic_deployer_file_path}")
+
+    deployer_name = get_deployer(env_name, instances_dir, failonerror)
+    env_deployer_file_path = find_env_deployer_definition(env_name, instances_dir)
+    
+    data = ""
+    if env_deployer_file_path is not None:
+        logger.info(f"Deployer definition not found for {env_name}, falling back to root configuration: {basic_deployer_file_path}")
+        deployer_dir = getDirName(env_deployer_file_path)
+        data = openYaml(env_deployer_file_path, allow_default=True)
+
+    if deployer_name not in data:
+        logger.info(f"Deployer with key {deployer_name} not found in: {env_deployer_file_path}. Going to root configuration: {basic_deployer_file_path}")
         deployer_dir = getDirName(basic_deployer_file_path)
         data = openYaml(basic_deployer_file_path, allow_default=True)
     if deployer_name not in data:
-        logger.error(f"Deployer with key {deployer_name} not found in either: {deployer_file_path} or {basic_deployer_file_path}")
+        logger.error(f"Deployer with key {deployer_name} not found in either: {env_deployer_file_path} or {basic_deployer_file_path}")
         if failonerror:
             raise ReferenceError(f"Deployer with key {deployer_name} not found. See logs above.")
         else:
             return "","",""
-    # getting values
+
     cmdb_username, cmdb_username_attribute_path = get_value_and_attributes_from_cred(data[deployer_name]['username'], deployer_dir)
     cmdb_api_token, cmdb_api_token_attribute_path = get_value_and_attributes_from_cred(data[deployer_name]['token'], deployer_dir)
     cmdb_url = data[deployer_name]['deployerUrl']
@@ -117,5 +114,5 @@ def get_sbom_generator_deployer_config():
     cluster_name = getenv_with_error("CLUSTER_NAME")
     env_name = getenv_with_error("ENVIRONMENT_NAME")
     instances_dir = work_dir + '/environments'
-    return get_deployer_config(f"{cluster_name}/{env_name}", work_dir, instances_dir, fallback_on_root_config=False)
+    return get_deployer_config(f"{cluster_name}/{env_name}", work_dir, instances_dir)
 
