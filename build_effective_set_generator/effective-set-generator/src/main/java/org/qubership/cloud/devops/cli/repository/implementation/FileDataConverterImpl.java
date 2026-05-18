@@ -34,13 +34,14 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.nodes.Node;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
+import org.qubership.cloud.devops.cli.utils.yaml.AdaptiveYaml;
 
 import java.io.*;
 import java.util.Base64;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.logError;
+import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 
 
 @ApplicationScoped
@@ -96,9 +97,16 @@ public class FileDataConverterImpl implements FileDataConverter {
     @Override
     public void writeToFile(Map<String, Object> params, String... args) throws IOException {
         File file = fileSystemUtils.getFileFromGivenPath(args);
+
+        boolean expand = params != null && !params.isEmpty()
+                && AdaptiveYaml.shouldExpand(params);
+        if (expand) {
+            logInfo("removing anchors and aliases for file: " + file.getAbsolutePath());
+        }
+
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
             if (params != null && !params.isEmpty()) {
-                getYamlObject().dump(params, writer);
+                getYamlObject(expand).dump(params, writer);
             }
         }
     }
@@ -112,11 +120,14 @@ public class FileDataConverterImpl implements FileDataConverter {
     }
 
 
-    private static Yaml getYamlObject() {
+    private static Yaml getYamlObject(boolean expand) {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
         options.setPrettyFlow(false);
+        if (expand) {            
+            options.setDereferenceAliases(true);
+        }
         Representer representer = new Representer(options) {
             @Override
             protected Node representScalar(Tag tag, String value, DumperOptions.ScalarStyle style) {
