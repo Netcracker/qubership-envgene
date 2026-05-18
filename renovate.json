@@ -5,6 +5,7 @@
   "separateMinorPatch": false,
   "prConcurrentLimit": 1,
   "branchConcurrentLimit": 1,
+  "dependencyDashboard": false,
   "lockFileMaintenance": {
     "enabled": false
   },
@@ -35,6 +36,7 @@
   ],
   "semanticCommits": "disabled",
   "commitMessagePrefix": "feat:",
+  "prTitle": "feat: UPDATE QUBERSHIP-ENVGENE DEPENDENCIES VIA RENOVATE",
   "schedule": ["* * 1,15 * *"],
   "packageRules": [
     {
