@@ -1,32 +1,21 @@
-# Base module requirements (essential only)
-cryptography==38.0.0
-pyyaml>=6.0
-PyGithub==1.55
-certifi==2022.6.15
-
-# Build envgene requirements (essential only)
-lxml==4.9.3
-ruamel.yaml==0.18.5
-ruamel.yaml.clib==0.2.8
-jschon==0.11.0
-jsonschema==4.24.1
-jmespath==1.0.1
-semantic-version==2.10.0
-termcolor==2.4.0
-cffi==1.16.0
+certifi==2024.7.4
+cffi==2.0.0
 click==8.1.7
+cryptography==46.0.5
 deepmerge==2.0
 GitPython==3.1.45
-pydantic==2.10.6
+google-auth==2.34.0
 Jinja2==3.1.6
-
-# Additional required packages
-platformdirs>=3.0.0
-
-google-auth~=2.34.0
-qubership-pipelines-common-library==2.0.3
-
-# Removed heavy packages:
-# - shyaml, yamale, prettytable (not essential)
-# - ruyaml (duplicate of ruamel.yaml)
-# - diagrams (heavy with typed-ast dependency)
+jmespath==1.0.1
+jschon==0.11.0
+jsonschema==4.24.1
+lxml==4.9.3
+platformdirs==3.11.0
+pydantic==2.10.6
+PyGithub==1.59.0
+pyyaml==6.0.2
+qubership-pipelines-common-library==2.0.6
+ruamel.yaml.clib==0.2.8
+ruamel.yaml==0.18.5
+semantic-version==2.10.0
+termcolor==2.4.0

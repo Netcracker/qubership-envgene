@@ -36,15 +36,15 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.opentelemetry</groupId>
+            <artifactId>opentelemetry-api</artifactId>
+            <version>1.60.1</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>1.23.0</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jenkins.plugins</groupId>
-            <artifactId>opentelemetry</artifactId>
-            <version>3.1494.v1d249433404c</version>
-            <type>pom</type>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
