@@ -13,7 +13,7 @@
       - [\[Version 1.0\] deployment-parameters.yaml](#version-10-deployment-parametersyaml)
       - [\[Version 1.0\] credentials.yaml](#version-10-credentialsyaml)
       - [\[Version 1.0\] technical-configuration-parameters.yaml](#version-10-technical-configuration-parametersyaml)
-      - [\[Version 1.0\] mapping.yml](#version-10-mappingyml)
+      - [\[Version 1.0\] mapping.yaml](#version-10-mappingyaml)
       - [\[Version 1.0\] No SBOMs Mode](#version-10-no-sboms-mode)
     - [Effective Set v2.0](#effective-set-v20)
       - [\[Version 2.0\] Effective Set Structure](#version-20-effective-set-structure)
@@ -43,7 +43,7 @@
           - [\[Version 2.0\] `tArtifactNames`](#version-20-tartifactnames)
         - [\[Version 2.0\]\[Deployment Parameter Context\] Per Service parameters](#version-20deployment-parameter-context-per-service-parameters)
           - [\[Version 2.0\]\[Deployment Parameter Context\] Resource Profile Processing](#version-20deployment-parameter-context-resource-profile-processing)
-        - [\[Version 2.0\]\[Deployment Parameter Context\] `mapping.yml`](#version-20deployment-parameter-context-mappingyml)
+        - [\[Version 2.0\]\[Deployment Parameter Context\] `mapping.yaml`](#version-20deployment-parameter-context-mappingyaml)
       - [\[Version 2.0\] Pipeline Parameter Context](#version-20-pipeline-parameter-context)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml)
@@ -59,11 +59,11 @@
       - [\[Version 2.0\] Runtime Parameter Context](#version-20-runtime-parameter-context)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `parameters.yaml`](#version-20runtime-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `credentials.yaml`](#version-20runtime-parameter-context-credentialsyaml)
-        - [\[Version 2.0\]\[Runtime Parameter Context\] `mapping.yml`](#version-20runtime-parameter-context-mappingyml)
+        - [\[Version 2.0\]\[Runtime Parameter Context\] `mapping.yaml`](#version-20runtime-parameter-context-mappingyaml)
       - [\[Version 2.0\] Cleanup Context](#version-20-cleanup-context)
         - [\[Version 2.0\]\[Cleanup Context\] `parameters.yaml`](#version-20cleanup-context-parametersyaml)
         - [\[Version 2.0\]\[Cleanup Context\] `credentials.yaml`](#version-20cleanup-context-credentialsyaml)
-        - [\[Version 2.0\]\[Cleanup Context\] `mapping.yml`](#version-20cleanup-context-mappingyml)
+        - [\[Version 2.0\]\[Cleanup Context\] `mapping.yaml`](#version-20cleanup-context-mappingyaml)
 
 ## Requirements
 
@@ -150,7 +150,7 @@ If the SD contains an application that is absent in the Environment Instance, ge
     └── <cluster-name-01>
         └── <environment-name-01>
             └── effective-set
-                ├── mapping.yml
+                ├── mapping.yaml
                 ├── <namespace-folder-01>
                 |   ├── <application-name-01>
                 |   |   ├── deployment-parameters.yaml
@@ -213,7 +213,7 @@ To avoid repetition, YAML anchors (&) are used for reusability, while aliases (*
 <key-N>: <value-N>
 ```
 
-#### [Version 1.0] mapping.yml
+#### [Version 1.0] mapping.yaml
 
 This file defines a mapping between Namespace's names and their corresponding folder paths in Effective Set file-structure.
 
@@ -265,7 +265,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   ├── <consumer-name-01>-parameters.yaml
                 |   └── <consumer-name-02>-credentials.yaml
                 ├── deployment
-                |   ├── mapping.yml
+                |   ├── mapping.yaml
                 |   ├── <namespace-folder-01>
                 |   |   ├── <application-name-01>
                 |   |   |   └── values
@@ -329,7 +329,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |               ├── deploy-descriptor.yaml
                 |               └── custom-params.yaml
                 ├── runtime
-                |   ├── mapping.yml
+                |   ├── mapping.yaml
                 |   ├── <namespace-folder-01>
                 |   |   ├── <application-name-01>
                 |   |   |   ├── parameters.yaml
@@ -345,7 +345,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |           ├── parameters.yaml
                 |           └── credentials.yaml
                 └── cleanup
-                    ├── mapping.yml
+                    ├── mapping.yaml
                     ├── <namespace-folder-01>
                     |   ├── parameters.yaml
                     |   └── credentials.yaml
@@ -354,7 +354,7 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                         └── credentials.yaml
 ```
 
-The namespace folder names in Effective Set v2.0 (e.g., `<namespace-folder-01>`, `<namespace-folder-02>`) must match exactly the namespace folder names from the Environment Instance (the folder name is a child of `Namespaces` and parent of `namespace.yml`). These folder names are used consistently across all Effective Set contexts (deployment, runtime, cleanup) and in `mapping.yml` files.
+The namespace folder names in Effective Set v2.0 (e.g., `<namespace-folder-01>`, `<namespace-folder-02>`) must match exactly the namespace folder names from the Environment Instance (the folder name is a child of `Namespaces` and parent of `namespace.yml`). These folder names are used consistently across all Effective Set contexts (deployment, runtime, cleanup) and in `mapping.yaml` files.
 
 #### [Version 2.0] Parameter type conversion
 
@@ -626,6 +626,8 @@ The CLI flag [`--enable-traceability`](#calculator-command-line-tool-execution-a
           REPLICAS: 1 #rp-override: dev-override
           CPU_LIMIT: 500m #rp-baseline: dev
     ```
+
+11. Traceability comments in `credentials.yaml` must remain unencrypted so the source of each parameter stays visible after SOPS encryption.
 
 #### [Version 2.0] Deployment Parameter Context
 
@@ -1099,7 +1101,7 @@ Per-service-specific parameters include performance parameters, generated by mer
 - Baseline Resource Profile. Located in Application SBOM in `.components[?name=<service-name>].components[?mime-type=application/vnd.qubership.resource-profile-baseline]` (Optional, if present in the SBOM for the corresponding component)
 - Resource Profile Override. Located in Environment Instance
 
-##### \[Version 2.0][Deployment Parameter Context] `mapping.yml`
+##### \[Version 2.0][Deployment Parameter Context] `mapping.yaml`
 
 This file defines a mapping between Namespace's names and their corresponding folder paths in Effective Set file-structure.
 
@@ -1115,7 +1117,7 @@ Namespace name is taken from the `name` attribute of Namespace.
 
 Path is relative to the Instance repository (i.e., it starts with `/environments`)
 
-The namespace folder name in Effective Set v2.0 must match exactly the namespace folder name from the Environment Instance (the folder name is a child of `Namespaces` and parent of `namespace.yml`). This folder name is used both in `mapping.yml` paths and in the Effective Set file structure.
+The namespace folder name in Effective Set v2.0 must match exactly the namespace folder name from the Environment Instance (the folder name is a child of `Namespaces` and parent of `namespace.yml`). This folder name is used both in `mapping.yaml` paths and in the Effective Set file structure.
 
 For example:
 
@@ -1387,9 +1389,9 @@ The structure of this file is as follows:
 
 The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
 
-##### \[Version 2.0][Runtime Parameter Context] `mapping.yml`
+##### \[Version 2.0][Runtime Parameter Context] `mapping.yaml`
 
-The contents of this file are identical to [mapping.yml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyml)
+The contents of this file are identical to [mapping.yaml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyaml)
 
 #### [Version 2.0] Cleanup Context
 
@@ -1425,6 +1427,6 @@ The structure of this file is as follows:
 <key-N>: <value-N>
 ```
 
-##### \[Version 2.0][Cleanup Context] `mapping.yml`
+##### \[Version 2.0][Cleanup Context] `mapping.yaml`
 
-The contents of this file are identical to [mapping.yml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyml).
+The contents of this file are identical to [mapping.yaml in the Deployment Parameter Context](#version-20deployment-parameter-context-mappingyaml).
