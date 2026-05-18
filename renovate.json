@@ -5,6 +5,7 @@
   "separateMinorPatch": false,
   "prConcurrentLimit": 1,
   "branchConcurrentLimit": 1,
+  "dependencyDashboard": false,
   "lockFileMaintenance": {
     "enabled": false
   },
