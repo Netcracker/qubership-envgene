@@ -2,7 +2,7 @@ from pathlib import Path
 
 from .config_helper import get_envgene_config_yaml
 from .creds_helper import check_is_envgen_cred, get_cred_id_and_property_from_cred_macros
-from .business_helper import find_env_instances_dir, findResourcesBottomTop, getEnvDefinition, getenv_with_error
+from .business_helper import find_env_instances_dir, getEnvDefinition, getenv_with_error
 from .yaml_helper import openYaml, get_or_create_nested_yaml_attribute, find_yaml_file
 from .file_helper import getDirName, check_file_exists
 from .logger import logger
