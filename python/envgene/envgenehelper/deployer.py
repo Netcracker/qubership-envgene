@@ -71,11 +71,10 @@ def find_deployer_definition(env_name, instances_dir) -> Path | None:
 
     return None
 
-def get_deployer_config(env_name=None, work_dir=None, instances_dir=None, secret_key=None, is_test=None, failonerror=True, deployer_name=None, fallback_on_root_config=True):
+def get_deployer_config(env_name=None, base_dir=None, instances_dir=None, secret_key=None, is_test=None, failonerror=True, deployer_name=None, fallback_on_root_config=True):
     # finding necessary deployer
-    base_dir = getenv_with_error('CI_PROJECT_DIR')
     basic_deployer_file_path = f"{base_dir}/configuration/deployer.yml"
-    if env_name and work_dir and instances_dir:
+    if env_name and base_dir and instances_dir:
         deployer_name = get_deployer(env_name, instances_dir, failonerror)
         deployer_file_path = find_deployer_definition(env_name, instances_dir)
         if not deployer_file_path:
