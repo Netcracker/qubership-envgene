@@ -68,9 +68,9 @@ flowchart TB
    - **What happens in this job**:
        1. Handles certificate updates from the configuration directory.
        2. Renders [Application Definitions](/docs/envgene-objects.md#application-definition) and [Registry Definitions](/docs/envgene-objects.md#registry-definition) from:
-          1. Templates, as described in [User Defined by Template](/docs/features/app-reg-defs.md#user-defined-by-template)
-          2. External Job, as described in [External Job](/docs/features/app-reg-defs.md#external-job) 
-       3. Runs [Application and Registry Definitions Transformation](/docs/features/app-reg-defs.md#application-and-registry-definitions-transformation)
+          1. Templates, as described in [Templates](/docs/features/app-reg-defs.md#templates)
+          2. External Job, as described in [External Job (deprecated)](/docs/features/app-reg-defs.md#external-job-deprecated)
+       3. Runs [Template transformation](/docs/features/app-reg-defs.md#template-transformation)
    - **Condition**: Runs if [`ENV_BUILD: true`](/docs/instance-pipeline-parameters.md#env_builder)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
