@@ -87,6 +87,7 @@ The user defines, in the Template repository as part of the Environment Template
 ```
 
 These files can be either:
+
 - Jinja templates
 - plain YAML definitions without parameterization
 
@@ -132,6 +133,7 @@ Final effective rendered definitions are generated in:
 ```
 
 These definitions contain the final rendered output after:
+
 1. Jinja template rendering
 2. Override processing
 
@@ -369,8 +371,8 @@ During execution of the `app_reg_def_process` job:
 3. Override definitions are applied
    - `/configuration/appdefs/*`
    - `/configuration/regdefs/*`
-
-5. Final effective definitions are written into:
+   
+4. Final effective definitions are written into:
    - `/appdefs/*`
    - `/regdefs/*`
 
