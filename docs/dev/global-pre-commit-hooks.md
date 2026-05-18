@@ -5,7 +5,7 @@
   - [Prerequisites](#prerequisites)
   - [Step 1: Clone pre-commit-global](#step-1-clone-pre-commit-global)
   - [Step 2: Point Git at the global hooks directory](#step-2-point-git-at-the-global-hooks-directory)
-  - [Step 3: Configure repositories you work on](#step-3-configure-repositories-you-work-on)
+  - [Step 3: grand-report.json](#step-3-grand-reportjson)
   - [What runs on commit](#what-runs-on-commit)
   - [Disable global hooks](#disable-global-hooks)
   - [References](#references)
@@ -73,15 +73,14 @@ The second command prints the value Git stored so you can confirm the path.
 > [!TIP]
 > Alternatively, run `linux_register_this_folder_as_global_hooks.sh` (Linux or macOS) or `win_register_*.cmd` (Windows) from your clone root so `core.hooksPath` points at this clone's `hooks-global` folder, instead of typing the `git config` commands above.
 
-## Step 3: Configure repositories you work on
+## Step 3: grand-report.json
 
-You **do not** need `.pre-commit-config.yaml` or any other file from this step for global hooks to run. Registration in [Step 2](#step-2-point-git-at-the-global-hooks-directory) applies to **every** repository on your machine. See [What runs on commit](#what-runs-on-commit) below for the branching logic.
+The **`.qubership/grand-report.json`** file at the repository root is **added by Andrei Rudchenko**. It is required on the CyberFerret-related hook path and holds ignores and exclusions for signatures as needed.
 
-Optional, depending on what you want in **this** repository:
+Use `CYBER_FERRET_PASSWORD` as in [Prerequisites](#prerequisites).
 
-1. **`[pre-commit](https://pre-commit.com/)` checks** - Add `.pre-commit-config.yaml` only if this repository should run the Python `pre-commit` CLI with that config. Without this file that step is skipped; global hooks still run their other behavior.
-2. **Install the `pre-commit` CLI** - Only needed if you added `.pre-commit-config.yaml` (for example `pip install pre-commit`, or whatever your team uses).
-3. **CyberFerret** - Add **`.qubership/grand-report.json`** only if you want CyberFerret invoked on commits in this repository (an empty JSON object is valid as a marker; exclusions live there later). Needs `CYBER_FERRET_PASSWORD` from [Prerequisites](#prerequisites).
+> [!NOTE]
+> For updates to this file or questions about it, contact **Andrei Rudchenko**.
 
 ## What runs on commit
 
