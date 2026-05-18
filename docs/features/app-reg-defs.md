@@ -359,23 +359,27 @@ environment-specific directories:
 During execution of the `app_reg_def_process` job:
 
 1. Existing legacy definition files located in:
+
    - `/environments/<cluster>/<env>/AppDefs/*`
    - `/environments/<cluster>/<env>/RegDefs/*`
 
    are automatically removed.
 
 2. Centralized definitions are regenerated from:
+
    - rendered templates
    - user override definitions
-   
-3. Override definitions are applied
+
+3. Override definitions are applied from:
+
    - `/configuration/appdefs/*`
    - `/configuration/regdefs/*`
-   
+
 4. Final effective definitions are written into:
+
    - `/appdefs/*`
    - `/regdefs/*`
-
+     
 ###### Idempotency
 
 The cleanup process is idempotent.
