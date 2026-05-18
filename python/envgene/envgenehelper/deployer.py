@@ -1,7 +1,9 @@
+from pathlib import Path
+
 from .config_helper import get_envgene_config_yaml
 from .creds_helper import check_is_envgen_cred, get_cred_id_and_property_from_cred_macros
 from .business_helper import find_env_instances_dir, findResourcesBottomTop, getEnvDefinition, getenv_with_error
-from .yaml_helper import openYaml, get_or_create_nested_yaml_attribute
+from .yaml_helper import openYaml, get_or_create_nested_yaml_attribute, find_yaml_file
 from .file_helper import getDirName, check_file_exists
 from .logger import logger
 from .crypt import decrypt_file
@@ -52,22 +54,20 @@ def get_deployer(env_name, instances_dir, failonerror=True):
     deployer_name = data['inventory']['deployer']
     return deployer_name
 
-def find_deployer_definition(env_name, work_dir, instances_dir, failonerror=True):
-    env_dir = find_env_instances_dir(env_name, instances_dir)
-    deployers = findResourcesBottomTop(env_dir, work_dir, "/deployer.y")
-    if len(deployers) == 1:
-        yamlPath = deployers[0]
-        logger.info(f"Deployer configuration found in: {yamlPath}")
-        return yamlPath
-    elif len(deployers) > 1:
-        logger.error(f"Duplicate deployer configuration found in {work_dir}: \n\t" + ",\n\t".join(str(x) for x in deployers))
-        if failonerror:
-            raise ReferenceError(f"Duplicate deployer configuration found in {work_dir} found. See logs above.")
-            return ""
-    else:
-        if failonerror:
-            raise ReferenceError(f"Deployer configuration not found in {work_dir}")
-            return ""
+def find_deployer_definition(env_name, instances_dir) -> Path | None:
+    env_dir = Path(find_env_instances_dir(env_name, instances_dir))
+    
+    deployer_dir_names = ["app-deployer", "cloud-deployer"]
+
+    deployer_paths = [env_dir / name for name in deployer_dir_names]
+
+    for p in deployer_paths:
+        found_path = find_yaml_file(p, 'deployer')
+        if found_path:
+            logger.info(f"Deployer configuration found in '{found_path}'")
+            return found_path
+
+    return None
 
 def get_deployer_config(env_name=None, work_dir=None, instances_dir=None, secret_key=None, is_test=None, failonerror=True, deployer_name=None, fallback_on_root_config=True):
     # finding necessary deployer
@@ -75,7 +75,7 @@ def get_deployer_config(env_name=None, work_dir=None, instances_dir=None, secret
     basic_deployer_file_path = f"{base_dir}/configuration/deployer.yml"
     if env_name and work_dir and instances_dir:
         deployer_name = get_deployer(env_name, instances_dir, failonerror)
-        deployer_file_path = find_deployer_definition(env_name, work_dir, instances_dir, failonerror)
+        deployer_file_path = find_deployer_definition(env_name, instances_dir)
         if not deployer_file_path:
             logger.info("Deployer definition file is not found, exiting.")
             return "","",""
