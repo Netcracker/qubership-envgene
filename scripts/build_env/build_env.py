@@ -442,7 +442,8 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
     
     template_params_dir_names = ["configuration", "configurations"]
     shared_template_vars_paths = [level / name for level in levels for name in template_params_dir_names]
-    
+    shared_template_vars_paths.append(Path(source_env_dir) / "Inventory")
+
     result = {}
     for file_name in shared_template_vars_values:
         for p in shared_template_vars_paths:

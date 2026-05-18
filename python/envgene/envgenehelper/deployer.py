@@ -58,14 +58,16 @@ def find_deployer_definition(env_name, instances_dir) -> Path | None:
     env_dir = Path(find_env_instances_dir(env_name, instances_dir))
     
     deployer_dir_names = ["app-deployer", "cloud-deployer"]
+    deployer_file_names = ["deployer", "app-deployer"]
 
     deployer_paths = [env_dir / name for name in deployer_dir_names]
 
     for p in deployer_paths:
-        found_path = find_yaml_file(p, 'deployer')
-        if found_path:
-            logger.info(f"Deployer configuration found in '{found_path}'")
-            return found_path
+        for file_name in deployer_file_names:
+            found_path = find_yaml_file(p, file_name)
+            if found_path:
+                logger.info(f"Deployer configuration found in '{found_path}'")
+                return found_path
 
     return None
 
