@@ -79,7 +79,8 @@
       "groupName": "qubership-envgene-deps",
       "commitMessageAction": "update",
       "commitMessageTopic": "dependencies",
-      "commitMessageExtra": " via Renovate"
+      "commitMessageExtra": " via Renovate",
+      "prTitleTemplate": "feat: UPDATE QUBERSHIP-ENVGENE DEPENDENCIES VIA RENOVATE"
     }
   ]
 }
