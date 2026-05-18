@@ -379,12 +379,13 @@ During execution of the `app_reg_def_process` job:
 
    - `/appdefs/*`
    - `/regdefs/*`
-     
+
 ###### Idempotency
 
 The cleanup process is idempotent.
 
-After the first successful pipeline run on an upgraded repository, subsequent executions typically find no remaining legacy files to remove.
+After the first successful pipeline run on an upgraded repository,
+subsequent executions typically find no remaining legacy files to remove.
 
 Repeated executions therefore do not introduce additional cleanup changes.
 
