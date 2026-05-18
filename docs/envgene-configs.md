@@ -27,7 +27,7 @@ Mandatory for every Environment. Created and updated manually.
 Located in the Instance repository at: `/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml`
 Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipeline-parameters.md#env_names) input parameter when executing Environment operations
 
-[`env_definition.yml JSON Schema`](/schemas/env-definition.schema.json)
+[`env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
 
 ```yaml
 # Mandatory
@@ -225,9 +225,12 @@ artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 # `cmdb` - Application and Registry Definitions are discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository
 # `auto` - Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
 app_reg_def_mode: enum [`auto`, `cmdb`, `local`]
-app_reg_defs_placement: dual # default
-# or
-app_reg_defs_placement: root
+# Optional. Default value - `dual`
+# Controls where rendered Application and Registry Definitions are written
+# `dual` - written to both `/appdefs/`, `/regdefs/` AND per-environment compatibility folders `/environments/<cluster>/<env>/AppDefs|RegDefs/`
+# `root` - written only to `/appdefs/`, `/regdefs/`. Any pre-existing per-environment files are removed on each run
+# See /docs/features/app-reg-defs.md#placement-modes for details
+app_reg_defs_placement: enum [`dual`, `root`]
 # Optional
 # SBOM retention configuration
 # Triggers during Effective Set generation when repository reaches 1200 MB size threshold
@@ -362,7 +365,7 @@ regdefs:
 
 This config file contains the definition of one or more Maven registries used for downloading Environment Template artifacts.
 
-Replacement: [`Artifact Definitions`](/docs/envgene-objects.md#artifact-definition)
+Replacement: [Artifact Definitions](/docs/envgene-objects.md#artifact-definition)
 
 Location: `/configuration/registry.yml`
 

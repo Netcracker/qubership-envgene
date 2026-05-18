@@ -602,7 +602,7 @@ EnvGene adds the following header to all auto-generated objects (all Environment
 ```
 
 > [!NOTE]
-> The environment-template-artifact> placeholder is automatically replaced with the name of the EnvGene Environment Template artifact used for generation.
+> The \<environment-template-artifact\> placeholder is automatically replaced with the name of the EnvGene Environment Template artifact used for generation.
 
 EnvGene sorts every Environment Instance object according to its JSON schema. This ensures that when objects are modified (e.g., when applying a new template version), the repository commits remain human-readable.
 
@@ -2109,9 +2109,8 @@ registry:
 
 The `authConfig` section has complex dependencies between attributes. The following table shows which fields are required based on `provider` and `authMethod` values:
 
-
 | Field                    | Condition                                           | Required     |
-| ------------------------ | --------------------------------------------------- | ------------ |
+|--------------------------|-----------------------------------------------------|--------------|
 | `provider`               | Always                                              | **REQUIRED** |
 | `authMethod`             | Always                                              | **REQUIRED** |
 | `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
@@ -2132,18 +2131,15 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
 | `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
-
 **Valid `authMethod` values per `provider`:**
 
-
 | Provider      | Valid authMethod values                      |
-| ------------- | -------------------------------------------- |
+|---------------|----------------------------------------------|
 | `nexus`       | `user_pass`, `anonymous`                     |
 | `artifactory` | `user_pass`, `anonymous`                     |
 | `aws`         | `secret`, `assume_role`, `anonymous`         |
 | `gcp`         | `federation`, `service_account`, `anonymous` |
 | `azure`       | `oauth2`, `anonymous`                        |
-
 
 [Artifact Definition v2.0 JSON schema](/schemas/artifact-definition-v2.schema.json)
 
@@ -2158,6 +2154,8 @@ A separate definition file is used for each individual registry. Each environmen
 The filename must match the value of the `name` attribute.
 
 **Location:** `/regdefs/<registry-name>.yml`
+
+Registry Definitions can also be supplied as user-provided files at `/configuration/regdefs/<registry-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
 
 Two versions of this object are supported
 
@@ -2552,9 +2550,8 @@ rawConfig:
 
 The `authConfig` section has complex dependencies between attributes. The following table shows which fields are required based on `provider` and `authMethod` values:
 
-
 | Field                    | Condition                                           | Required     |
-| ------------------------ | --------------------------------------------------- | ------------ |
+|--------------------------|-----------------------------------------------------|--------------|
 | `provider`               | Always                                              | **REQUIRED** |
 | `authMethod`             | Always                                              | **REQUIRED** |
 | `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
@@ -2576,18 +2573,15 @@ The `authConfig` section has complex dependencies between attributes. The follow
 | `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
 | `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
-
 **Valid `authMethod` values per `provider`:**
 
-
 | Provider      | Valid authMethod values                      |
-| ------------- | -------------------------------------------- |
+|---------------|----------------------------------------------|
 | `nexus`       | `user_pass`, `anonymous`                     |
 | `artifactory` | `user_pass`, `anonymous`                     |
 | `aws`         | `secret`, `assume_role`, `anonymous`         |
 | `gcp`         | `federation`, `service_account`, `anonymous` |
 | `azure`       | `oauth2`, `anonymous`                        |
-
 
 **Examples of different auth sections**:
 
@@ -2738,6 +2732,8 @@ A separate definition file is used for each individual application. Each environ
 The filename must match the value of the `name` attribute.
 
 **Location:** `/appdefs/<application-name>.yml`
+
+Application Definitions can also be supplied as user-provided files at `/configuration/appdefs/<application-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
 
 ```yaml
 # Optional
