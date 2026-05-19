@@ -413,7 +413,7 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 name: string
 # Optional
 # Deprecated
-# Not processed by EnvGene 
+# Not processed by EnvGene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -430,11 +430,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by EnvGene 
+  # Not processed by EnvGene
   version: string
   # Optional
   # Deprecated
-  # Not processed by EnvGene 
+  # Not processed by EnvGene
   sd: string
   # Optional
   services:
@@ -508,10 +508,10 @@ This is a Jinja template file used to render the [BG Domain](#bg-domain) object 
 name: "{{ current_env.name }}-bg-domain"
 type: bgdomain
 originNamespace:
-  name: "{{ current_env.name }}-origin-bss" 
+  name: "{{ current_env.name }}-origin-bss"
   type: namespace
 peerNamespace:
-  name: "{{ current_env.name }}-peer-bss" 
+  name: "{{ current_env.name }}-peer-bss"
   type: namespace
 controllerNamespace:
   name: "{{ current_env.name }}-bg-controller"
@@ -641,7 +641,7 @@ EnvGene adds the following header to all auto-generated objects (all Environment
 ```
 
 > [!NOTE]
-> The \<environment-template-artifact> placeholder is automatically replaced with the name of the EnvGene Environment Template artifact used for generation.
+> The \<environment-template-artifact\> placeholder is automatically replaced with the name of the EnvGene Environment Template artifact used for generation.
 
 EnvGene sorts every Environment Instance object according to its JSON schema. This ensures that when objects are modified (e.g., when applying a new template version), the repository commits remain human-readable.
 
@@ -1144,7 +1144,7 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 name: string
 # Optional
 # Deprecated
-# Not processed by EnvGene 
+# Not processed by EnvGene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -1161,11 +1161,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by EnvGene 
+  # Not processed by EnvGene
   version: string
   # Optional
   # Deprecated
-  # Not processed by EnvGene 
+  # Not processed by EnvGene
   sd: string
   # Optional
   services:
@@ -1341,7 +1341,7 @@ controllerNamespace:
   url: <bg-operator-url>
 ```
 
-When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.  
+When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.
 The [`inventory.config.updateCredIdsWithEnvName`](/docs/envgene-configs.md#env_definitionyml) mechanism works for this Credential as well as for all other Credentials.
 
 **Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
@@ -1417,7 +1417,7 @@ Only SD versions 2.1 and 2.2 can be used by EnvGene for the purposes described a
 
 For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/features/sd-processing.md).
 
-SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [pipeline](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
+SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [`pipeline`](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
 
 In EnvGene, there are:
 
@@ -1556,11 +1556,11 @@ The relationship between Shared Credentials and Environment is established throu
 Credentials can be defined at three scopes with different precedence:
 
 1. **Environment-level**
-   **Location:** `/environments/<cluster-name>/<environment-name>/Inventory/credentials/`
+  **Location:** `/environments/<cluster-name>/<environment-name>/Inventory/credentials/`
 2. **Cluster-level**
-   **Location:** `/environments/<cluster-name>/credentials/`
+  **Location:** `/environments/<cluster-name>/credentials/`
 3. **Site-level**
-   **Location:** `/environments/credentials/`
+  **Location:** `/environments/credentials/`
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
@@ -1615,11 +1615,11 @@ The relationship between Shared Template Variable Files and Environment is estab
 Files can be defined at three scopes with different precedence:
 
 1. **Environment-level**
-   **Location:** `/environments/<cluster-name>/<environment-name>/shared-template-variables/`
+  **Location:** `/environments/<cluster-name>/<environment-name>/shared-template-variables/`
 2. **Cluster-level**
-   **Location:** `/environments/<cluster-name>/shared-template-variables/`
+  **Location:** `/environments/<cluster-name>/shared-template-variables/`
 3. **Site-level**
-   **Location:** `/environments/shared-template-variables/`
+  **Location:** `/environments/shared-template-variables/`
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
@@ -1655,9 +1655,9 @@ Environment Specific ParameterSets also support application-level parameters thr
 
 When an Environment Specific ParameterSet is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
 
-1. `/environments/<cluster-name>/<environment-name>/Inventory/parameters/` — Environment-specific, highest priority  
-2. `/environments/<cluster-name>/parameters/` — Cluster-wide, applies to all environments in the cluster  
-3. `/environments/parameters/` — Global, common for the entire repository  
+1. `/environments/<cluster-name>/<environment-name>/Inventory/parameters/` — Environment-specific, highest priority
+2. `/environments/<cluster-name>/parameters/` — Cluster-wide, applies to all environments in the cluster
+3. `/environments/parameters/` — Global, common for the entire repository
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
 
@@ -1758,9 +1758,9 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 
 When an Environment Specific Resource Profile Override is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
 
-1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority  
-2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster  
-3. `/environments/resource_profiles` — Global, common for the entire repository  
+1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority
+2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster
+3. `/environments/resource_profiles` — Global, common for the entire repository
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
 
@@ -1771,7 +1771,7 @@ The first match found is used as the environment-specific override for the given
 name: string
 # Optional
 # Deprecated
-# Not processed by EnvGene 
+# Not processed by EnvGene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -1788,11 +1788,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by EnvGene 
+  # Not processed by EnvGene
   version: string
   # Optional
   # Deprecated
-  # Not processed by EnvGene 
+  # Not processed by EnvGene
   sd: string
   # Optional
   services:
@@ -1964,7 +1964,7 @@ registry:
       # Depending on `authType`, it can be:
       # access key (username) + secret (password) for longLived
       # Credential with this ID must be located in /configuration/credentials/credentials.yml
-      credentialsId: string 
+      credentialsId: string
       # Optional
       # Public cloud registry authentication strategy
       # Used in case of public cloud registries
@@ -2195,27 +2195,27 @@ registry:
 
 The `authConfig` section has complex dependencies between attributes. The following table shows which fields are required based on `provider` and `authMethod` values:
 
-| Field                    | Condition                                           | Required      |
-|--------------------------|-----------------------------------------------------|---------------|
-| `provider`               | Always                                              | **REQUIRED**  |
-| `authMethod`             | Always                                              | **REQUIRED**  |
-| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED**  |
-| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL      |
-| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL      |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED**  |
-| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED**  |
-| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL      |
-| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED**  |
-| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED**  |
-| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL      |
-| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL      |
-| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL      |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED**  |
-| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL      |
+| Field                    | Condition                                           | Required     |
+|--------------------------|-----------------------------------------------------|--------------|
+| `provider`               | Always                                              | **REQUIRED** |
+| `authMethod`             | Always                                              | **REQUIRED** |
+| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
+| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
+| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
+| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
+| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
+| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
+| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED** |
+| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL     |
+| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**
 
@@ -2235,11 +2235,13 @@ This object describes registry where artifacts (other than environment template 
 
 It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
 
-A separate definition file is used for each individual registry. Each Environment uses its own set of Registry Definitions.
+A separate definition file is used for each individual registry. Each environment uses the registry definitions from the centralized location `/regdefs`.
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/environments/<cluster-name>/<environment-name>/RegDefs/<registry-name>.yml`
+**Location:** `/regdefs/<registry-name>.yml`
+
+Registry Definitions can also be supplied as user-provided files at `/configuration/regdefs/<registry-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
 
 Two versions of this object are supported
 
@@ -2404,7 +2406,7 @@ authConfig:
     # Depending on `authType`, it can be:
     # access key (username) + secret (password) for longLived
     # Credential with this ID must be located in /configuration/credentials/credentials.yml
-    credentialsId: string 
+    credentialsId: string
     # Optional
     # Public cloud registry authentication strategy
     # Used in case of public cloud registries
@@ -2634,28 +2636,28 @@ rawConfig:
 
 The `authConfig` section has complex dependencies between attributes. The following table shows which fields are required based on `provider` and `authMethod` values:
 
-| Field                    | Condition                                           | Required      |
-|--------------------------|-----------------------------------------------------|---------------|
-| `provider`               | Always                                              | **REQUIRED**  |
-| `authMethod`             | Always                                              | **REQUIRED**  |
-| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED**  |
-| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL      |
-| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL      |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED**  |
-| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED**  |
-| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL      |
-| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED**  |
-| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED**  |
-| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL      |
-| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegion`              | `provider == "gcp"`                                 | OPTIONAL      |
-| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL      |
-| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL      |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED**  |
-| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL      |
+| Field                    | Condition                                           | Required     |
+|--------------------------|-----------------------------------------------------|--------------|
+| `provider`               | Always                                              | **REQUIRED** |
+| `authMethod`             | Always                                              | **REQUIRED** |
+| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
+| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
+| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
+| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
+| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
+| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
+| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED** |
+| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL     |
+| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegion`              | `provider == "gcp"`                                 | OPTIONAL     |
+| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**
 
@@ -2811,11 +2813,13 @@ This object describes application artifact parameters - artifact ID, group ID an
 
 It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
 
-A separate definition file is used for each individual application. Each Environment uses its own set of Application Definitions.
+A separate definition file is used for each individual application. Each environment uses the Application definitions from the centralized location `/appdefs`.
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/environments/<cluster-name>/<environment-name>/AppDefs/<application-name>.yml`
+**Location:** `/appdefs/<application-name>.yml`
+
+Application Definitions can also be supplied as user-provided files at `/configuration/appdefs/<application-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
 
 ```yaml
 # Optional
