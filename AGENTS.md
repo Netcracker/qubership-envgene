@@ -145,8 +145,8 @@ Item 1 is generated automatically. Item 2 is created manually by the user.
 **How to wrap:**
 
 - Break at natural sentence or clause boundaries (after a period or comma, or before a conjunction).
-- Indent continuation lines of list items so they align with the first non-bullet character (3 spaces for `- `
-  bullets, 3 spaces for `1. ` numbered lists).
+- Indent continuation lines of list items so they align with the first non-bullet character (3 spaces for `-`
+  bullets, 3 spaces for `1.` numbered lists).
 - Keep an empty line before and after each paragraph (already required by the Lists rule above).
 
 ❌ **DON'T (hard wrap mid-word):**
@@ -290,6 +290,52 @@ technical documentation.
 
 ---
 
+#### Heading numbering
+
+**Do not number headings unless they enumerate alternative workflows.**
+
+Visual hierarchy (`#` → `##` → `###`) and the document's table of contents already convey
+structure. Adding numeric prefixes (`## 1. Overview`, `### 2.1 Step one`) duplicates that
+information and creates fragile cross-references that break when sections are added or
+reordered.
+
+❌ **INCORRECT** (sequential topics in a feature document):
+
+```markdown
+## 1. Passport file
+## 2. Resolution
+## 3. Merge into cloud.yml
+## 4. Parameter traceability
+```
+
+✅ **CORRECT** (same content, no numbering):
+
+```markdown
+## Passport file
+## Resolution
+## Merge into cloud.yml
+## Parameter traceability
+```
+
+✅ **ACCEPTABLE** (alternative workflows, where numbering enumerates choices):
+
+```markdown
+## 1. Creating a cluster without a Cloud Passport
+## 2. Creating a cluster with a manually assembled Cloud Passport
+## 3. Creating a cluster using Cloud Passport Discovery
+```
+
+**Scope:** Applies to **new and modified content only**. Existing numbered headings are not
+affected by this rule unless the surrounding lines are being edited for other reasons.
+
+**Why:** Numbered headings duplicate the structure already shown by heading level and the TOC.
+They make in-text references (`see section 3.2`) fragile under reorganization, and they are not
+the convention in this repository (only 2 of ~36 docs use numbering, and only for enumerated
+alternative workflows). Modern dev-doc style guides (Google, Microsoft, Mozilla, GitHub Docs)
+do not number headings in user-facing documentation.
+
+---
+
 #### Tables
 
 **CRITICAL: All Markdown tables MUST have vertically aligned pipe characters (`|`).**
@@ -407,6 +453,46 @@ Common AI-stylistics to avoid:
 **Why:** AI-generated text leans on these patterns heavily. Their absence makes documentation
 feel more direct and trustworthy. Read sentences aloud. If it sounds like a press release or a
 chatbot, rewrite.
+
+---
+
+#### In-repo links
+
+**Use repo-root absolute paths for in-repo cross-references, not GitHub URLs.**
+
+For links between Markdown files inside this repository, use paths starting from the repository
+root (`/docs/...`, `/schemas/...`). Do not use absolute GitHub URLs
+(`https://github.com/Netcracker/qubership-envgene/blob/main/...`), and do not use relative paths
+(`../how-to/...`).
+
+External references (links to other repositories, third-party docs, blog posts) keep their full
+`https://` URL. This rule applies to in-repo cross-references only.
+
+❌ **INCORRECT** (absolute GitHub URL pins to `main` regardless of context):
+
+```markdown
+See [Creating a cluster](https://github.com/Netcracker/qubership-envgene/blob/main/docs/how-to/create-cluster.md).
+```
+
+❌ **INCORRECT** (relative path breaks when files move):
+
+```markdown
+See [Creating a cluster](../how-to/create-cluster.md).
+```
+
+✅ **CORRECT** (repo-root absolute path):
+
+```markdown
+See [Creating a cluster](/docs/how-to/create-cluster.md).
+```
+
+**Scope:** Applies to **new and modified content only**. Existing absolute or relative links are
+not affected unless the surrounding lines are being edited for other reasons.
+
+**Why:** Repo-root absolute paths render correctly on GitHub regardless of branch or fork. GitHub
+URLs pin to a specific branch (usually `main`), so a fork or feature-branch viewer following the
+link is taken back to `main` instead of staying in the current context. Relative paths break when
+the linking file or the target file is moved.
 
 ---
 
