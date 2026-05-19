@@ -405,6 +405,10 @@ jobs:
                 echo 'validate_creds failed with exit code '\$?
                 exit 1
               fi
+              if ! python3 /module/scripts/main.py validate_parameters; then
+                echo 'validate_parameters failed with exit code '\$?
+                exit 1
+              fi
               java_cmd=\"/deployments/run-java.sh --env-id=${{ matrix.environment }} --envs-path=\${CI_PROJECT_DIR}/environments --output=\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}/effective-set --registries=\${CI_PROJECT_DIR}/configuration/registry.yml --sboms-path=\${CI_PROJECT_DIR}/sboms --sd-path=\${CI_PROJECT_DIR}/environments/${{ matrix.environment }}/Inventory/solution-descriptor/sd.yaml\"
               if [ -n \"\$EFFECTIVE_SET_CONFIG\" ]; then
                 if ! python3 /module/scripts/handle_effective_set_config.py --effective-set-config \"\$EFFECTIVE_SET_CONFIG\"; then
