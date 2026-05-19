@@ -77,9 +77,8 @@ def get_deployer_config(env_name, base_dir, instances_dir, secret_key=None, is_t
     deployer_name = get_deployer(env_name, instances_dir, failonerror)
     env_deployer_file_path = find_env_deployer_definition(env_name, instances_dir)
     
-    data = ""
+    data = {}
     if env_deployer_file_path is not None:
-        logger.info(f"Deployer definition not found for {env_name}, falling back to root configuration: {basic_deployer_file_path}")
         deployer_dir = getDirName(env_deployer_file_path)
         data = openYaml(env_deployer_file_path, allow_default=True)
 
