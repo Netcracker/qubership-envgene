@@ -524,6 +524,29 @@ CI link-checker (lychee) catches this only after push.
 
 ---
 
+#### Doc index updates
+
+**Add new docs to (and remove deleted docs from) the index READMEs.**
+
+The repository has two parallel index READMEs that mirror the same structure:
+
+- `/README.md` (root project README, "Documentation" section)
+- `/docs/README.md` (docs hub README)
+
+When you add a tutorial, how-to, feature, or migration doc, add a link in both READMEs under
+the matching section. When you rename or remove a doc, update both READMEs to keep links live.
+Match the description style of sibling entries (short, verb-leading phrase, same capitalization
+convention).
+
+Per-directory READMEs (`/docs/features/README.md`, `/docs/use-cases/README.md`, etc.) are
+meta-docs that explain what kind of content the directory holds. They are not navigation
+indexes and do not need a per-doc entry.
+
+**Why:** GitHub's link-checker catches dead links but does not warn when a new doc is missing
+from the index. Readers discover docs through the index READMEs, not by browsing directories.
+
+---
+
 #### Pre-flight markdownlint check
 
 Before declaring documentation changes done, run markdownlint with the project's config:
@@ -848,3 +871,58 @@ Before committing documentation:
 2. Verify all links work
 3. Ensure tables are aligned
 4. Review for clarity and accuracy
+
+---
+
+## Commits and Pull Requests
+
+### Commit messages
+
+Use Conventional Commits format: `<type>: <description>`. Types in use here: `feat`, `fix`,
+`docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `style`. The repo convention is no scope
+prefix.
+
+Subject line:
+
+- Imperative mood (`Add X`, not `Added X` or `Adds X`).
+- Under 72 characters.
+- No trailing period.
+
+Body (when needed):
+
+- Blank line before body.
+- Explain WHY the change is needed and trade-offs, not WHAT (the diff already shows what).
+- Wrap at 72 characters.
+- Reference issues in a footer (`Closes #123`, `Refs #456`).
+
+### Commit granularity
+
+**One logical change per commit.** A commit should be a single coherent unit that a reviewer
+can read in one pass.
+
+Split into separate commits when:
+
+- A rule, convention, or schema is added (AGENTS.md, lint config) along with content that
+  follows it - put the rule change in its own commit so the rule can be reviewed separately
+  from its application.
+- Mechanical changes (mass rename, formatting sweep) are mixed with semantic changes - put
+  the mechanical change in its own commit so the semantic diff is readable.
+- A pre-existing issue is fixed in passing - put the fix in its own commit so it can be
+  backported or reverted independently.
+
+Keep in the same commit:
+
+- Test with the code or doc it covers.
+- Migration script with the schema change that requires it.
+- Anchor renames with the heading change that triggered them.
+
+### Pull request scope
+
+**One focused goal per PR.**
+
+- PR description states the problem, the decision, and trade-offs.
+- Target size: under 500 lines of changed prose for docs PRs, under 400 lines for code PRs.
+  Larger changes belong in a stack of dependent PRs (mention the order in each description).
+- Refactor PRs go separately from feature PRs. Rule additions go separately from
+  rule-application PRs.
+- Do not include unrelated cleanup. File a follow-up issue instead.
