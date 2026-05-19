@@ -32,6 +32,7 @@ public class ApplicationBomDTO {
     private String mavenRepo;
     private String deployerSessionId;
     public String appChartName;
+    private String esoSupport;
     private Map<String, Map<String, Object>> services;
     private Map<String, Map<String, Object>> configurations;
     private Map<String, Map<String, Object>> frontends;
