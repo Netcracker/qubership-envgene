@@ -251,7 +251,7 @@ def validate_creds(creds_path: str = ""):
 def check_cred_value(credId, credValue) -> str:
     result = ""
     type = credValue["type"]
-    data = credValue["data"]
+    data = credValue.get("data", {})
     match type:
         case _ if type == CRED_TYPE_USERPASS:
             if is_envgenenullvalue(data["username"]) or is_envgenenullvalue(data["password"]):
