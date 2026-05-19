@@ -246,6 +246,7 @@ passport-contributed value.
 
 - [Creating a cluster](/docs/how-to/create-cluster.md)
 - [Split a Cloud Passport for business and infra environments](/docs/how-to/split-cloud-passport-for-business-and-infra.md)
+- [Cloud Passport association: use cases](/docs/use-cases/cloud-passport.md)
 - [EnvGene Configs: `env_definition.yml`](/docs/envgene-configs.md#env_definitionyml)
 - [EnvGene Objects: Cloud Passport](/docs/envgene-objects.md#cloud-passport)
 - [EnvGene Objects: Cloud](/docs/envgene-objects.md#cloud)
