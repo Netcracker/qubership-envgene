@@ -32,8 +32,6 @@ CyberFerret hooks read `CYBER_FERRET_PASSWORD` from the environment of the proce
 
 > [!IMPORTANT]
 > Use the password value from **Andrei Rudchenko** (see [Prerequisites](#prerequisites)). Do not commit it to Git or store it in repository files.
-
-> [!WARNING]
 > After changing a user-level variable, close and reopen terminals, IDEs, and Git clients so they pick up the new value.
 
 ### Linux
