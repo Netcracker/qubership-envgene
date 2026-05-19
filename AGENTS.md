@@ -526,30 +526,32 @@ CI link-checker (lychee) catches this only after push.
 
 #### Doc index updates
 
-**Add new docs to (and remove deleted docs from) the index READMEs.**
+**Add new docs to (and remove deleted docs from) the index readmes.**
 
-The repository has two parallel index READMEs that mirror the same structure:
+The repository has two parallel index readmes that mirror the same structure:
 
-- `/README.md` (root project README, "Documentation" section)
-- `/docs/README.md` (docs hub README)
+- `/README.md` (root project readme, "Documentation" section)
+- `/docs/README.md` (docs hub readme)
 
-When you add a tutorial, how-to, feature, or migration doc, add a link in both READMEs under
-the matching section. When you rename or remove a doc, update both READMEs to keep links live.
+When you add a tutorial, how-to, feature, or migration doc, add a link in both readmes under
+the matching section. When you rename or remove a doc, update both readmes to keep links live.
 Match the description style of sibling entries (short, verb-leading phrase, same capitalization
 convention).
 
-Per-directory READMEs (`/docs/features/README.md`, `/docs/use-cases/README.md`, etc.) are
+Per-directory readmes (`/docs/features/README.md`, `/docs/use-cases/README.md`, etc.) are
 meta-docs that explain what kind of content the directory holds. They are not navigation
 indexes and do not need a per-doc entry.
 
 **Why:** GitHub's link-checker catches dead links but does not warn when a new doc is missing
-from the index. Readers discover docs through the index READMEs, not by browsing directories.
+from the index. Readers discover docs through the index readmes, not by browsing directories.
 
 ---
 
-#### Pre-flight markdownlint check
+#### Pre-flight linter checks
 
-Before declaring documentation changes done, run markdownlint with the project's config:
+Before declaring documentation changes done, run the same linters that CI will run.
+
+**Markdown structure (`markdownlint`):**
 
 ```bash
 npx --yes markdownlint-cli@latest --config .github/linters/.markdown-lint.yml <changed-files>
@@ -561,9 +563,23 @@ default settings (line length 80) which produces many false positives unrelated 
 rules and may hide real issues like `MD009` (trailing spaces) or `MD040` (fenced block missing
 language).
 
-**Why:** The CI super-linter runs markdownlint with the project config. Running locally with
-the same config gives a true preview of the CI result, catches real issues, and avoids
-distraction from false positives.
+**Natural-language terminology (`textlint` with `textlint-rule-terminology`):**
+
+CI runs textlint on prose to flag terminology preferences (for example, em dashes should be
+hyphens, `repo` should be `repository`, `READMEs` should be `readmes`, `Blank line` should be
+`Empty line`). The textlint config lives in the shared `netcracker/.github` repository and is
+pulled in at CI time; there is no local config file to reference. To preview locally:
+
+```bash
+npx --yes textlint --rule terminology <changed-files>
+```
+
+This runs the default terminology rule set. CI may flag a few additional terms layered on top
+by the shared config. Treat the CI report as authoritative.
+
+**Why:** The CI super-linter runs both linters. Running locally gives a true preview of the CI
+result, catches real issues, and avoids distraction from false positives that arise when
+running linters with default (non-project) settings.
 
 ---
 
@@ -879,8 +895,8 @@ Before committing documentation:
 ### Commit messages
 
 Use Conventional Commits format: `<type>: <description>`. Types in use here: `feat`, `fix`,
-`docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `style`. The repo convention is no scope
-prefix.
+`docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `style`. The repository convention is no
+scope prefix.
 
 Subject line:
 
@@ -890,7 +906,7 @@ Subject line:
 
 Body (when needed):
 
-- Blank line before body.
+- Empty line before body.
 - Explain WHY the change is needed and trade-offs, not WHAT (the diff already shows what).
 - Wrap at 72 characters.
 - Reference issues in a footer (`Closes #123`, `Refs #456`).

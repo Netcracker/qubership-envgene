@@ -214,7 +214,7 @@ flow flat into `deployParameters` - see the last row of the table for the patter
 
 **Notation used in the table:**
 
-- **(cred ref)** - the Cloud attribute stores a credentials reference (cred id, a pointer to an
+- **(cred ref)** - the Cloud attribute stores a credentials reference (cred ID, a pointer to an
   entry in the credentials file), not the secret itself.
 - **(cred.username)**, **(cred.password)**, **(cred.secret)** - the Effective Set parameter
   resolves to the corresponding field of the referenced credential entry.
