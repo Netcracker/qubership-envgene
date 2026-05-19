@@ -165,7 +165,7 @@ def findSharedCredentials(cred_name, env_dir, instances_dir) -> Path:
         Path(env_dir).parent,
         Path(instances_dir),
     ]
-    
+
     cred_dir_names = ["credentials", "Credentials", "shared-credentials"]
 
     shared_cred_paths = [level / name for level in levels for name in cred_dir_names]
@@ -198,7 +198,7 @@ def mergeSharedCreds(credYamlPath, envDir, instancesDir) :
 def create_credentials(envDir, envInstancesDir, instancesDir) :
     logger.info(f"Start to create credentials: envDir={envDir}, envInstancesDir={envInstancesDir}, instancesDir={instancesDir}")
     logger.info(f"Creating credentials for environment directory: {envDir}")
-    credsSchema="schemas/credential.schema.json"
+    credsSchema = f"{get_schema_dir()}/credential.schema.json"
     resultingCreds = []
     #tenant
     tenantFileName = envDir+"/tenant.yml"

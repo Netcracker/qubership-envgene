@@ -1,13 +1,15 @@
 import os
 import shutil
-from jinja2.exceptions import TemplateSyntaxError
 from pathlib import Path
+
 import pytest
-import yaml
+from jinja2.exceptions import TemplateSyntaxError
+
+base_dir = Path(__file__).parents[4]
+os.environ["JSON_SCHEMAS_DIR"] = str(base_dir / "schemas")
 
 from render_config_env import EnvGenerator
 from envgenehelper.test_helpers import TestHelpers
-from envgenehelper.business_helper import NamespaceRole
 
 
 class TestAppRegDefRendering:
@@ -16,7 +18,7 @@ class TestAppRegDefRendering:
     def setup_test_environment(self, request):
         cls = request.cls
 
-        test_base = Path(__file__).parents[4] / "test_data" / "test_app_reg_defs"
+        test_base = base_dir / "test_data" / "test_app_reg_defs"
         cls.test_data_dir = test_base
         cls.cluster_name = "cluster-01"
         cls.env_name = "env-01"

@@ -45,7 +45,7 @@ def find_registry_configuration(template_name, base_path):
 
     with open(app_definition, mode="w") as final_registry:
         safe_dump(applications_definition, final_registry)
-    beautifyYaml(app_definition, "schemas/artifact-definition.schema.json", remove_additional_props=True)
+    beautifyYaml(app_definition, f"{get_schema_dir()}/artifact-definition.schema.json", remove_additional_props=True)
 
 
 def create_credentials(base_path, registry):

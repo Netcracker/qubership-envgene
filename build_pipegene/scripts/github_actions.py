@@ -1,7 +1,8 @@
 import click
 
-from validations import validate_pipeline
 from scripts.utils.pipeline_parameters import PipelineParametersHandler
+from envgenehelper.validations import validate_pipeline
+
 
 @click.group()
 def cli():

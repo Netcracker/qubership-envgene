@@ -9,12 +9,14 @@ from resource_profiles import get_env_specific_resource_profiles
 
 from filter_namespaces import apply_ns_build_filter
 
+
 INVENTORY_DIR_NAME = "Inventory"
 ENV_DEFINITION_FILE_NAME = "env_definition.yml"
-PARAMSET_SCHEMA = "schemas/paramset.schema.json"
-CLOUD_SCHEMA = "schemas/cloud.schema.json"
-NAMESPACE_SCHEMA = "schemas/namespace.schema.json"
-ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = "schemas/resource-profile.schema.json"
+schema_dir = get_schema_dir()
+PARAMSET_SCHEMA = f"{schema_dir}/paramset.schema.json"
+CLOUD_SCHEMA = f"/{schema_dir}/cloud.schema.json"
+NAMESPACE_SCHEMA = f"/{schema_dir}/namespace.schema.json"
+ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = f"/{schema_dir}/resource-profile.schema.json"
 
 
 def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,

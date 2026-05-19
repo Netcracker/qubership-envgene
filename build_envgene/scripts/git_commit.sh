@@ -47,7 +47,7 @@ echo "ENVIRONMENT_NAME=${ENVIRONMENT_NAME}"
 echo "DEPLOYMENT_TICKET_ID=${DEPLOYMENT_TICKET_ID}"
 echo "COMMIT_ENV=${COMMIT_ENV}"
 echo "COMMIT_MESSAGE=${COMMIT_MESSAGE}"
-echo "DEPLOYMENT_SESSION_ID=${DEPLOY_SESSION_ID}"
+echo "DEPLOYMENT_SESSION_ID=${DEPLOYMENT_SESSION_ID}"
 
 export ticket_id=${DEPLOYMENT_TICKET_ID}
 
@@ -241,9 +241,9 @@ if [ -e /tmp/gitlab-ci ]; then
     message="${ticket_id} [ci_build_parameters] Update gitlab-ci configurations"
 fi
 
-if [ -n "${DEPLOY_SESSION_ID}" ]; then
-    echo "Deployment session id is ${DEPLOY_SESSION_ID}"
-    message="${message}"$'\n\n'"DEPLOYMENT-SESSION-ID: ${DEPLOY_SESSION_ID}"
+if [ -n "${DEPLOYMENT_SESSION_ID}" ]; then
+    echo "Deployment session id is ${DEPLOYMENT_SESSION_ID}"
+    message="${message}"$'\n\n'"DEPLOYMENT-SESSION-ID: ${DEPLOYMENT_SESSION_ID}"
     echo "Appended commit message with session id"
 fi
 
