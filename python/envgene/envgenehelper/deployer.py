@@ -46,17 +46,23 @@ def get_deployer(env_name, instances_dir):
     env_path = find_env_instances_dir(env_name, instances_dir)
     data = getEnvDefinition(env_path)
     if "deployer" not in data["inventory"]:
+        logger.warning(f"'deployer' key is not defined in inventory section of env definition")
         return None
     deployer_name = data['inventory']['deployer']
     return deployer_name
 
 def find_env_deployer_definition(env_name, instances_dir) -> Path | None:
-    env_dir = Path(find_env_instances_dir(env_name, instances_dir))
+    env_dir = find_env_instances_dir(env_name, instances_dir)
+    
+    levels = [
+        Path(env_dir).parent,
+        Path(env_dir),
+    ]
     
     deployer_dir_names = ["app-deployer", "cloud-deployer"]
     deployer_file_names = ["deployer", "app-deployer"]
 
-    deployer_paths = [env_dir / name for name in deployer_dir_names]
+    deployer_paths = [level / name for level in levels for name in deployer_dir_names]
 
     for p in deployer_paths:
         for file_name in deployer_file_names:
@@ -77,20 +83,21 @@ def get_deployer_config(env_name, base_dir, instances_dir, secret_key=None, is_t
     
     data = {}
     if env_deployer_file_path is not None:
-        deployer_dir = getDirName(env_deployer_file_path)
         data = openYaml(env_deployer_file_path, allow_default=True)
 
     if deployer_name not in data:
         logger.info(f"Deployer with key {deployer_name} not found in environment specific configuration for {env_name}. Going to root configuration: {basic_deployer_file_path}")
-        deployer_dir = getDirName(basic_deployer_file_path)
-        data = openYaml(basic_deployer_file_path, allow_default=True)
-    if deployer_name not in data:
-        logger.error(f"Deployer with key {deployer_name} not found in {basic_deployer_file_path}")
-        if failonerror:
-            raise ReferenceError(f"Deployer with key {deployer_name} not found. See logs above.")
-        else:
-            return "","",""
+        env_deployer_file_path = basic_deployer_file_path
+        data = openYaml(env_deployer_file_path, allow_default=True)
+    
+        if deployer_name not in data:
+            logger.error(f"Deployer with key {deployer_name} not found in {env_deployer_file_path}")
+            if failonerror:
+                raise ReferenceError(f"Deployer with key {deployer_name} not found. See logs above.")
+            else:
+                return "","",""
 
+    deployer_dir = getDirName(env_deployer_file_path)
     cmdb_username, cmdb_username_attribute_path = get_value_and_attributes_from_cred(data[deployer_name]['username'], deployer_dir)
     cmdb_api_token, cmdb_api_token_attribute_path = get_value_and_attributes_from_cred(data[deployer_name]['token'], deployer_dir)
     cmdb_url = data[deployer_name]['deployerUrl']
