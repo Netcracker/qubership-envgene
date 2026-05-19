@@ -39,6 +39,9 @@ The following are the launch parameters for the instance repository pipeline. Th
 
 All parameters are of the string data type
 
+> [!IMPORTANT]
+> EnvGene recognises and processes **only the parameters listed on this page**. Passing any variable not documented here has no effect on pipeline behaviour and will be silently ignored. Do not rely on undocumented parameters — they are not part of the EnvGene contract and may be removed or conflict with future additions without notice.
+
 ## Parameters
 
 ### `ENV_NAMES`
@@ -128,11 +131,11 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 **Allowed values**:
 
-- `PERSISTENT` (default)  
+- `PERSISTENT` (default)
   Applies the standard behavior: the pipeline updates the template version in Environment Inventory by modifying `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
 
-- `TEMPORARY`  
-  Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.  
+- `TEMPORARY`
+  Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
   The pipeline updates `generatedVersions.generateEnvironmentLatestVersion` in `env_definition.yml` to reflect the template artifact version that was actually applied in this run, for example:
 
   ```yaml
@@ -222,7 +225,7 @@ envTemplate:
 
 **Description**:
 
-Provides the Environment Inventory and related artifacts to be created or updated.  
+Provides the Environment Inventory and related artifacts to be created or updated.
 It allows external systems to manage `env_definition.yml` and additional files paramsets, credentials, resource profiles without manual changes in the Instance repository.
 
 See details in Environment Inventory Generation feature documentation [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
