@@ -147,7 +147,7 @@ Item 1 is generated automatically. Item 2 is created manually by the user.
 - Break at natural sentence or clause boundaries (after a period or comma, or before a conjunction).
 - Indent continuation lines of list items so they align with the first non-bullet character (3 spaces for `- `
   bullets, 3 spaces for `1. ` numbered lists).
-- Keep a blank line before and after each paragraph (already required by the Lists rule above).
+- Keep an empty line before and after each paragraph (already required by the Lists rule above).
 
 ❌ **DON'T (hard wrap mid-word):**
 
@@ -427,7 +427,7 @@ Cross-links in other files that point to the old anchor become broken (CI link-c
 
 3. Update the link text in `[text](#anchor)` to match the new heading text where appropriate.
 
-For a broader audit of all cross-links in the repo:
+For a broader audit of all cross-links in the repository:
 
 ```bash
 grep -rhoE '\]\([^)]+#[^)]+\)' --include='*.md' . | sort -u

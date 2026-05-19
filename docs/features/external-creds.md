@@ -563,7 +563,7 @@ The step-by-step algorithm is [External Credential Context `credentials` entry g
 
 An **External Credential Context `secretStores` entry** is one map entry under `secretStores` in the External Credential Context.
 
-The Effective Set calculator copies it from the corresponding [Secret Store](#secret-store) in the instance repository for each store id referenced by a [`credentials` entry](#external-credential-context-credentials-entry) in the same file (same keys and fields as in the store definition: `type`, `url`, and type-specific settings such as `mountPath`, `vaultName`, `region`, `projectId`). Only stores that are actually referenced are included.
+The Effective Set calculator copies it from the corresponding [Secret Store](#secret-store) in the instance repository for each store ID referenced by a [`credentials` entry](#external-credential-context-credentials-entry) in the same file (same keys and fields as in the store definition: `type`, `url`, and type-specific settings such as `mountPath`, `vaultName`, `region`, `projectId`). Only stores that are actually referenced are included.
 
 #### EnvGene System Credentials
 
@@ -893,10 +893,10 @@ Example:
    > may differ across applications, so the combined output of one Effective Set can mix VALS-shaped and ESO-shaped external parameters across applications.
 
    1. Local only
-   2. External VALS only (vault, azure, aws, gcp) * (multiple, single property)
-   3. External ESO only (vault, azure, aws, gcp) * (multiple, single property)
-   4. External VALS + ESO across applications (vault, azure, aws, gcp) * (multiple, single property)
-6. Effective Set: External Credential Context generation (vault, azure, aws, gcp) * (multiple, single property)
+   2. External VALS only (vault, Azure, aws, gcp) * (multiple, single property)
+   3. External ESO only (vault, Azure, aws, gcp) * (multiple, single property)
+   4. External VALS + ESO across applications (vault, Azure, aws, gcp) * (multiple, single property)
+6. Effective Set: External Credential Context generation (vault, Azure, aws, gcp) * (multiple, single property)
 7. Effective Set: Secret Store configuration
    1. Single
    2. Multiple
