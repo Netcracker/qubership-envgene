@@ -1,0 +1,5 @@
+name: prod-shared
+version: 25.1
+parameters:
+    SITE_LEVEL_PARAM_1: site-level-value-1
+applications: []
