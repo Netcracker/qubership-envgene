@@ -233,7 +233,9 @@ app_reg_def_mode: enum [`auto`, `cmdb`, `local`]
 app_reg_defs_placement: enum [`dual`, `root`]
 # Optional
 # SBOM retention configuration
-# Triggers during Effective Set generation when repository reaches 1200 MB size threshold
+# Runs during Effective Set generation when enabled
+# Applies per-application version retention to subdirectories of `/sboms/`
+# A safety net wipes `/sboms/` if its total size still exceeds 1200 MB after per-application retention
 sbom_retention:
   # Optional. Default value - `false`
   # Enable/disable SBOM retention cleanup
