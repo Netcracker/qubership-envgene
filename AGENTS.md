@@ -337,6 +337,54 @@ chatbot, rewrite.
 
 ---
 
+#### Heading renames and cross-links
+
+When renaming a Markdown heading, the GitHub-generated anchor (`#section-name`) also changes.
+Cross-links in other files that point to the old anchor become broken (CI link-checker fails).
+
+**Before pushing after a heading rename:**
+
+1. Grep the repository for references to the OLD anchor:
+
+   ```bash
+   grep -rnE "#old-anchor-name" --include='*.md' .
+   ```
+
+2. Update each matching cross-link to the NEW anchor in all affected files.
+
+3. Update the link text in `[text](#anchor)` to match the new heading text where appropriate.
+
+For a broader audit of all cross-links in the repo:
+
+```bash
+grep -rhoE '\]\([^)]+#[^)]+\)' --include='*.md' . | sort -u
+```
+
+**Why:** A heading rename inside one file silently breaks references in unrelated files. The
+CI link-checker (lychee) catches this only after push.
+
+---
+
+#### Pre-flight markdownlint check
+
+Before declaring documentation changes done, run markdownlint with the project's config:
+
+```bash
+npx --yes markdownlint-cli@latest --config .github/linters/.markdown-lint.yml <changed-files>
+```
+
+The project config (`.github/linters/.markdown-lint.yml`) relaxes `MD013` line length to 1000,
+and disables `MD012`, `MD033`, `MD051`. Running markdownlint without `--config` uses the
+default settings (line length 80) which produces many false positives unrelated to the project
+rules and may hide real issues like `MD009` (trailing spaces) or `MD040` (fenced block missing
+language).
+
+**Why:** The CI super-linter runs markdownlint with the project config. Running locally with
+the same config gives a true preview of the CI result, catches real issues, and avoids
+distraction from false positives.
+
+---
+
 ## Object Examples in Documentation
 
 ### Source of Truth for Object Schemas
