@@ -1384,9 +1384,9 @@ In EnvGene, there are:
 
 **Full SD**: Defines the complete application composition of a solution. There can be only one Full SD per environment, located at the path `/environments/<cluster-name>/<environment-name>/Inventory/solution-descriptor/sd.yml`
 
-**Delta SD**: A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. There can be only one Delta SD per environment, located at the path `/environments/<cluster-name>/<environment-name>/Inventory/solution-descriptor/delta_sd.yml`
+**Delta SD**: A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. The Delta SD is produced as a transient pipeline artifact during SD processing and is not persisted to the repository.
 
-Only Full SD is used for Effective Set calculation. The Delta SD is only needed for troubleshooting purposes.
+The Full SD is used for Effective Set calculation. The Delta SD drives the [partial Effective Set generation](/docs/features/effective-set-generation.md#partial-generation) path.
 
 **Example:**
 

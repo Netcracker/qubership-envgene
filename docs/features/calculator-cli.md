@@ -7,7 +7,6 @@
   - [Proposed Approach](#proposed-approach)
     - [Calculator command-line tool execution attributes](#calculator-command-line-tool-execution-attributes)
     - [Registry Configuration](#registry-configuration)
-    - [Solution Descriptor](#solution-descriptor)
     - [Effective Set v1.0](#effective-set-v10)
       - [\[Version 1.0\] Effective Set Structure](#version-10-effective-set-structure)
       - [\[Version 1.0\] deployment-parameters.yaml](#version-10-deployment-parametersyaml)
@@ -119,26 +118,6 @@ Below is a **complete** list of attributes
 [Registry config JSON Schema](/schemas/registry.schema.json)
 
 [Registry config example](/examples/registry.yml)
-
-### Solution Descriptor
-
-The Calculator CLI uses the Solution Descriptor (SD) as the source of structure for generating the Effective Set: it determines which applications and in which namespaces/roles (deployPostfix) should be included.
-
-Parameters at the namespace, application, and service levels are calculated only for applications specified in the SD. All other objects from the Environment Instance that are not described in the SD are ignored and do not appear in the Effective Set.
-
-For example:
-
-1. If the Environment Instance contains a namespace X, but the SD does not have an application with the corresponding deployPostfix, the parameters of this namespace will not be included in the Effective Set.
-
-2. If the Environment Instance contains an application Y, but it is absent in the SD, the parameters of this application will also not be included in the Effective Set.
-
-In both cases, the generation of the Effective Set continues for the remaining applications specified in the SD.
-
-At the same time:
-
-If the SD contains an application with a deployPostfix corresponding to a namespace that does not exist in the Environment Instance, generation terminates with an error.
-
-If the SD contains an application that is absent in the Environment Instance, generation completes successfully, but without user-defined parameters for this application.
 
 ### Effective Set v1.0
 
