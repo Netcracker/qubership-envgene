@@ -1,34 +1,34 @@
-# Cloud Passport Auto-Association — How It Works
+# Cloud Passport auto-association: how it works
 
-- [Cloud Passport Auto-Association — How It Works](#cloud-passport-auto-association--how-it-works)
+- [Cloud Passport auto-association: how it works](#cloud-passport-auto-association-how-it-works)
   - [Overview](#overview)
-  - [1. What Is a Cloud Passport?](#1-what-is-a-cloud-passport)
-  - [2. Environment Types in a Mixed Cluster](#2-environment-types-in-a-mixed-cluster)
-  - [3. How a Passport Is Resolved](#3-how-a-passport-is-resolved)
-    - [3.1 Path 1 — Explicit Association](#31-path-1--explicit-association)
-    - [3.2 Path 2 — Auto-Association](#32-path-2--auto-association)
-    - [3.3 Resolution Summary](#33-resolution-summary)
-  - [4. What the Passport Contributes to an Environment](#4-what-the-passport-contributes-to-an-environment)
-    - [4.1 Named Service Sections](#41-named-service-sections)
-    - [4.2 All Other Sections](#42-all-other-sections)
-    - [4.3 Merge Behaviour](#43-merge-behaviour)
-  - [5. Parameter Traceability](#5-parameter-traceability)
-  - [6. Passport Scope](#6-passport-scope)
-  - [7. Cloud Passport Content Guidance](#7-cloud-passport-content-guidance)
-    - [7.1 Safe to Place at Cluster Level](#71-safe-to-place-at-cluster-level)
-    - [7.2 Keep Out of the Cluster-Level Passport](#72-keep-out-of-the-cluster-level-passport)
-  - [8. Environment-Specific Passports (Business and Infra)](#8-environment-specific-passports-business-and-infra)
-    - [8.1 When to Use Environment-Specific Passports](#81-when-to-use-environment-specific-passports)
-    - [8.2 Business Passport](#82-business-passport)
-    - [8.3 Infra Passport](#83-infra-passport)
-    - [8.4 Mixed Cluster with Both Passport Types](#84-mixed-cluster-with-both-passport-types)
-  - [Related Documentation](#related-documentation)
+  - [1. What is a Cloud Passport?](#1-what-is-a-cloud-passport)
+  - [2. Environment types in a mixed cluster](#2-environment-types-in-a-mixed-cluster)
+  - [3. How a passport is resolved](#3-how-a-passport-is-resolved)
+    - [3.1 Path 1: explicit association](#31-path-1-explicit-association)
+    - [3.2 Path 2: auto-association](#32-path-2-auto-association)
+    - [3.3 Resolution summary](#33-resolution-summary)
+  - [4. What the passport contributes to an environment](#4-what-the-passport-contributes-to-an-environment)
+    - [4.1 Named service sections](#41-named-service-sections)
+    - [4.2 All other sections](#42-all-other-sections)
+    - [4.3 Merge behaviour](#43-merge-behaviour)
+  - [5. Parameter traceability](#5-parameter-traceability)
+  - [6. Passport scope](#6-passport-scope)
+  - [7. Cloud Passport content guidance](#7-cloud-passport-content-guidance)
+    - [7.1 Safe to place at cluster level](#71-safe-to-place-at-cluster-level)
+    - [7.2 Keep out of the cluster-level passport](#72-keep-out-of-the-cluster-level-passport)
+  - [8. Environment-specific passports (business and infra)](#8-environment-specific-passports-business-and-infra)
+    - [8.1 When to use environment-specific passports](#81-when-to-use-environment-specific-passports)
+    - [8.2 Business passport](#82-business-passport)
+    - [8.3 Infra passport](#83-infra-passport)
+    - [8.4 Mixed cluster with both passport types](#84-mixed-cluster-with-both-passport-types)
+  - [Related documentation](#related-documentation)
 
 ## Overview
 
-This guide explains how Cloud Passport auto-association works in `EnvGene` — what it is, what triggers it, how a passport is resolved, and what it contributes to an environment's deployment context. It also covers how passport scope applies when a cluster hosts both **business environments** and **infrastructure (infra) environments**.
+This guide explains how Cloud Passport auto-association works in `EnvGene`: what it is, what triggers it, how a passport is resolved, and what it contributes to an environment's deployment context. It also covers how passport scope applies when a cluster hosts both **business environments** and **infrastructure (infra) environments**.
 
-## 1. What Is a Cloud Passport?
+## 1. What is a Cloud Passport?
 
 A **Cloud Passport** is a versioned configuration file that defines the deployment context for a cluster. It is the central place where cluster-specific parameters are declared, including:
 
@@ -40,11 +40,15 @@ A Cloud Passport lives inside a dedicated folder at the cluster level of your in
 
 ```text
 <instance-repo>/
-└──environments
-    └── cloud-passport/
-        ├── <cluster-name>.yml        ← main passport file
-        └── <cluster-name>-creds.yml  ← credential entries used by the passport
+└── environments/
+    └── <cluster-name>/
+        └── cloud-passport/
+            ├── <passport-name>.yml        ← main passport file
+            └── <passport-name>-creds.yml  ← credential entries used by the passport
 ```
+
+EnvGene accepts both `.yml` and `.yaml` extensions. How `<passport-name>` is chosen and resolved
+is described in [Section 3](#3-how-a-passport-is-resolved).
 
 The passport file is a YAML document with a `version` field and a set of named sections. Each section is a flat map of parameter keys to values:
 
@@ -89,7 +93,7 @@ bss:
 
 > See [Cloud Passport](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud-passport) in the EnvGene Objects reference for the full object specification.
 
-## 2. Environment Types in a Mixed Cluster
+## 2. Environment types in a mixed cluster
 
 A cluster directory can host two types of environments. Both live under the same cluster folder and share cluster-level configuration, including the Cloud Passport.
 
@@ -100,11 +104,11 @@ A cluster directory can host two types of environments. Both live under the same
 
 Both environment types resolve the Cloud Passport through the same mechanism described in [Section 3](#3-how-a-passport-is-resolved). If a cluster requires each type to receive a different parameter set, see [Section 8](#8-environment-specific-passports-business-and-infra).
 
-## 3. How a Passport Is Resolved
+## 3. How a passport is resolved
 
 Every environment build goes through a passport resolution step. The system checks the environment's [`env_definition.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml) file and follows one of two paths.
 
-### 3.1 Path 1 — Explicit Association
+### 3.1 Path 1: explicit association
 
 If [`env_definition.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml) contains a `cloudPassport` field under `inventory`, the system uses that named passport:
 
@@ -118,7 +122,7 @@ inventory:
 
 The system searches for a file matching that name, starting from the environment's own directory and walking upward through the folder hierarchy to the instance repository root. The first match found is used.
 
-### 3.2 Path 2 — Auto-Association
+### 3.2 Path 2: auto-association
 
 If the `cloudPassport` field is **not present** in [`env_definition.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml), the system applies auto-association:
 
@@ -132,48 +136,48 @@ inventory:
 
 The system looks for a default passport in the env's parent (cluster) directory, in this order:
 
-1. `cloud-passport/<cluster-name>.{yml|yaml}` — a file named after the cluster directory
-2. `cloud-passport/passport.{yml|yaml}` — a generic fallback name
+1. `cloud-passport/<cluster-name>.{yml|yaml}` (a file named after the cluster directory)
+2. `cloud-passport/passport.{yml|yaml}` (a generic fallback name)
 
 If neither file exists, no passport is applied and the build continues without one.
 
-### 3.3 Resolution Summary
+### 3.3 Resolution summary
 
 | `cloudPassport` field in [`env_definition.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml) | Resolution behaviour |
 | --- | --- |
-| Set to a name | System searches bottom-up for `<name>.{yml\|yaml}`. Exactly one match is required; otherwise, the build fails. |
+| Set to a name | System searches bottom-up for `<name>.{yml\|yaml}`. Exactly one match is required. Otherwise, the build fails. |
 | Absent | System looks for `cloud-passport/<cluster-name>.{yml\|yaml}`, then `cloud-passport/passport.{yml\|yaml}`. |
-| Absent and no matching file is found | No passport is applied — build continues. |
+| Absent and no matching file is found | No passport is applied. The build continues. |
 
-## 4. What the Passport Contributes to an Environment
+## 4. What the passport contributes to an environment
 
 Once a passport is resolved, the system processes it and merges its contents into the environment's deployment context file ([`cloud.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud)). The passport sections are handled in two ways depending on the section name.
 
-### 4.1 Named Service Sections
+### 4.1 Named service sections
 
 The following sections are mapped into dedicated configuration blocks within [`cloud.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud):
 
 | Passport section | Destination in [`cloud.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud) | What it configures |
 | --- | --- | --- |
-| `cloud` | Top-level connectivity fields | API host, port, protocol, dashboard URL, deploy token, production mode flag |
+| `cloud` | Selected top-level fields in `cloud.yml` (API host/port, protocol, dashboard URL, deploy token, production mode) | A fixed set of 8 well-known keys is mapped to dedicated fields. Any other keys in the `cloud:` section flow into `deployParameters` (see 4.2). |
 | `dbaas` | `dbaasConfigs` block | Database aggregator URL, API address, credentials reference |
 | `maas` | `maasConfig` block | Message broker internal and external addresses, credentials reference |
 | `consul` | `consulConfig` block | Consul URL, enabled flag, admin token reference |
 | `vault` | `vaultConfig` block | Vault URL, enabled flag, credentials reference |
 
-### 4.2 All Other Sections
+### 4.2 All other sections
 
-Every section not listed above — such as `zookeeper`, `storage`, `core`, `global`, `bss`, or any custom section — is merged **flat** into the `deployParameters` map. Each key-value pair in those sections becomes a direct entry in `deployParameters`.
+Every section not listed above (such as `zookeeper`, `storage`, `core`, `global`, `bss`, or any custom section) is merged **flat** into the `deployParameters` map. Each key-value pair in those sections becomes a direct entry in `deployParameters`.
 
 This means all parameters from all sections of the passport are present in the environment's deployment context after the merge.
 
-### 4.3 Merge Behaviour
+### 4.3 Merge behaviour
 
 - Parameters from the passport are written into [`cloud.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud) during the build.
 - If a key already exists in [`cloud.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud), the passport value takes precedence unless a higher-priority source (such as a per-environment parameter file) overrides it later in the build pipeline.
-- All sections of the passport are processed — there is no filtering by section name beyond the named-service mappings above.
+- All sections of the passport are processed. There is no filtering by section name beyond the named-service mappings above.
 
-## 5. Parameter Traceability
+## 5. Parameter traceability
 
 Every parameter written from a passport into [`cloud.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud) is annotated with its origin. The annotation is an inline comment that records the passport name and the passport version:
 
@@ -184,32 +188,33 @@ MONITORING_ENABLED: "true"                                  # cloud passport: cl
 
 This annotation is written automatically for every parameter and requires no additional configuration. It allows you to open any environment's generated [`cloud.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud) and identify the exact source of any passport-contributed value.
 
-## 6. Passport Scope
+## 6. Passport scope
 
-A Cloud Passport placed in `cloud-passport/` at the cluster directory level applies to all environments within that cluster that resolve it — either explicitly via the `cloudPassport` field or through auto-association.
+A Cloud Passport placed in `cloud-passport/` at the cluster directory level applies to all environments within that cluster that resolve it, either explicitly via the `cloudPassport` field or through auto-association.
 
 ```text
 environments/
-├── cloud-passport/
-│   └── <cluster-name>.yml     ← passport at cluster scope
-├── env-01/
-│   └── Inventory/
-│       └── env_definition.yml ← cloudPassport: <cluster-name>  (explicit)
-├── env-02/
-│   └── Inventory/
-│       └── env_definition.yml ← cloudPassport: <cluster-name>  (explicit)
-└── env-03/
-    └── Inventory/
-        └── env_definition.yml ← no cloudPassport field  (auto-association)
+└── <cluster-name>/
+    ├── cloud-passport/
+    │   └── <cluster-name>.yml     ← passport at cluster scope
+    ├── env-01/
+    │   └── Inventory/
+    │       └── env_definition.yml ← cloudPassport: <cluster-name>  (explicit)
+    ├── env-02/
+    │   └── Inventory/
+    │       └── env_definition.yml ← cloudPassport: <cluster-name>  (explicit)
+    └── env-03/
+        └── Inventory/
+            └── env_definition.yml ← no cloudPassport field  (auto-association)
 ```
 
 All three environments above will have the full passport contents merged into their deployment context.
 
-## 7. Cloud Passport Content Guidance
+## 7. Cloud Passport content guidance
 
 Because the cluster-scoped passport is resolved for every environment that does not set an explicit `cloudPassport` field, its contents are applied cluster-wide. The following guidance helps you decide what belongs at this level.
 
-### 7.1 Safe to Place at Cluster Level
+### 7.1 Safe to place at cluster level
 
 These sections contain parameters that are safe and meaningful for all environment types:
 
@@ -220,7 +225,7 @@ These sections contain parameters that are safe and meaningful for all environme
 | `consul` | `CONSUL_URL`, `CONSUL_ENABLED` | Safe when all environments in the cluster use Consul |
 | `vault` | `VAULT_ADDR`, `VAULT_AUTH_ROLE_ID` | Safe when all environments use Vault for secrets management |
 
-### 7.2 Keep Out of the Cluster-Level Passport
+### 7.2 Keep out of the cluster-level passport
 
 These sections contain parameters that are meaningful only to specific workload types. When placed at cluster level, they are inherited by all environments regardless of workload type:
 
@@ -237,11 +242,11 @@ These sections contain parameters that are meaningful only to specific workload 
 
 ---
 
-## 8. Environment-Specific Passports (Business and Infra)
+## 8. Environment-specific passports (business and infra)
 
 This section applies when a mixed cluster requires business and infra environments to receive **different parameter sets**. If all environments in your cluster share the same passport, you do not need this section.
 
-### 8.1 When to Use Environment-Specific Passports
+### 8.1 When to use environment-specific passports
 
 Use environment-specific passports when:
 
@@ -253,15 +258,16 @@ The approach uses two passport files in the same `cloud-passport/` directory:
 
 ```text
 <instance-repo>/
-└──environments/
-    └── cloud-passport/
-        ├── <cluster-name>.yml            ← business passport — full parameter set
-        ├── <cluster-name>-creds.yml      ← credentials for the business passport
-        ├── <cluster-name>-infra.yml      ← infra passport — minimal parameter set
-        └── <cluster-name>-infra-creds.yml ← credentials for the infra passport
+└── environments/
+    └── <cluster-name>/
+        └── cloud-passport/
+            ├── <cluster-name>.yml            ← business passport — full parameter set
+            ├── <cluster-name>-creds.yml      ← credentials for the business passport
+            ├── <cluster-name>-infra.yml      ← infra passport — minimal parameter set
+            └── <cluster-name>-infra-creds.yml ← credentials for the infra passport
 ```
 
-### 8.2 Business Passport
+### 8.2 Business passport
 
 The business passport is the cluster default. Any environment without a `cloudPassport` field resolves this passport via auto-association. It contains all sections required by business application workloads:
 
@@ -323,7 +329,7 @@ bss:
   DOC_STORAGE_PERSISTENT_BUCKET_NAME: permanent-bucket
 ```
 
-**`env_definition.yml` for a business environment** — no `cloudPassport` field needed (auto-association resolves the default):
+**`env_definition.yml` for a business environment** (no `cloudPassport` field needed, auto-association resolves the default):
 
 ```yaml
 # cluster-01/env-business-payments/Inventory/env_definition.yml
@@ -333,9 +339,9 @@ inventory:
   # cloudPassport field absent → auto-association resolves cluster-01.yml
 ```
 
-### 8.3 Infra Passport
+### 8.3 Infra passport
 
-The infra passport is a minimal configuration intended for platform workloads. It contains only the parameters an infra deployer needs — cluster connectivity and observability. Infra environments must explicitly reference it via the `cloudPassport` field.
+The infra passport is a minimal configuration intended for platform workloads. It contains only the parameters an infra deployer needs: cluster connectivity and observability. Infra environments must explicitly reference it via the `cloudPassport` field.
 
 **File:** `cloud-passport/<cluster-name>-infra.yml`
 
@@ -367,7 +373,7 @@ global:
 #   zookeeper: coordination service
 ```
 
-**`env_definition.yml` for an infra environment** — must explicitly set `cloudPassport` to the infra passport:
+**`env_definition.yml` for an infra environment**, with `cloudPassport` set explicitly to the infra passport:
 
 ```yaml
 # cluster-01/env-infra-monitoring/Inventory/env_definition.yml
@@ -377,38 +383,39 @@ inventory:
   cloudPassport: cluster-01-infra    ← explicit → resolves cluster-01-infra.yml
 ```
 
-### 8.4 Mixed Cluster with Both Passport Types
+### 8.4 Mixed cluster with both passport types
 
 With both passport files in place, business and infra environments resolve their own passport from the same `cloud-passport/` directory:
 
 ```text
-environments
-├── cloud-passport/
-│   ├── cluster-01.yml                   ← full passport — business envs (default)
-│   ├── cluster-01-creds.yml
-│   ├── cluster-01-infra.yml             ← minimal passport — infra envs (explicit)
-│   └── cluster-01-infra-creds.yml
-│
-├── business-env/               ← BUSINESS env
-│   └── Inventory/
-│       └── env_definition.yml           ← no cloudPassport field (auto-association)
-│                                           resolves: cluster-01.yml
-│                                           receives: cloud + dbaas + maas + storage + core + global + bss
-│
-└── infra-env/                ← INFRA env
-    └── Inventory/
-        └── env_definition.yml           ← cloudPassport: cluster-01-infra  (explicit)
-                                            resolves: cluster-01-infra.yml
-                                            receives: cloud + global only
+environments/
+└── cluster-01/
+    ├── cloud-passport/
+    │   ├── cluster-01.yml                   ← full passport — business envs (default)
+    │   ├── cluster-01-creds.yml
+    │   ├── cluster-01-infra.yml             ← minimal passport — infra envs (explicit)
+    │   └── cluster-01-infra-creds.yml
+    │
+    ├── business-env/                        ← BUSINESS env
+    │   └── Inventory/
+    │       └── env_definition.yml           ← no cloudPassport field (auto-association)
+    │                                           resolves: cluster-01.yml
+    │                                           receives: cloud + dbaas + maas + storage + core + global + bss
+    │
+    └── infra-env/                           ← INFRA env
+        └── Inventory/
+            └── env_definition.yml           ← cloudPassport: cluster-01-infra  (explicit)
+                                                resolves: cluster-01-infra.yml
+                                                receives: cloud + global only
 ```
 
-Business environments require no change — auto-association continues to resolve the full passport by default. Only infra environments need a `cloudPassport` field added to their [`env_definition.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml).
+Business environments require no change. Auto-association continues to resolve the full passport by default. Only infra environments need a `cloudPassport` field added to their [`env_definition.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml).
 
 ---
 
-## Related Documentation
+## Related documentation
 
-- [EnvGene Configs — `env_definition.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml)
-- [EnvGene Objects — Cloud Passport](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud-passport)
-- [EnvGene Objects — Cloud (`cloud.yml`)](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud)
+- [EnvGene Configs: `env_definition.yml`](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-configs.md#env_definitionyml)
+- [EnvGene Objects: Cloud Passport](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud-passport)
+- [EnvGene Objects: Cloud (`cloud.yml`)](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud)
 - [`env_definition.yml` JSON Schema](https://github.com/Netcracker/qubership-envgene/blob/main/schemas/env-definition.schema.json)

@@ -1,32 +1,32 @@
-# Cloud Passport Auto-Association in Mixed Clusters
+# Cloud Passport auto-association in mixed clusters
 
-- [Cloud Passport Auto-Association in Mixed Clusters](#cloud-passport-auto-association-in-mixed-clusters)
-  - [What You Will Learn](#what-you-will-learn)
+- [Cloud Passport auto-association in mixed clusters](#cloud-passport-auto-association-in-mixed-clusters)
+  - [What you will learn](#what-you-will-learn)
   - [Prerequisites](#prerequisites)
   - [Scenario](#scenario)
-  - [Step 1: Understand What a Cloud Passport Is](#step-1-understand-what-a-cloud-passport-is)
-  - [Step 2: See How Environments Share a Cluster](#step-2-see-how-environments-share-a-cluster)
-  - [Step 3: Check How a Passport Is Resolved (Explicit vs Auto-Association)](#step-3-check-how-a-passport-is-resolved-explicit-vs-auto-association)
-    - [3.1 Path 1 - Explicit Association](#31-path-1---explicit-association)
-    - [3.2 Path 2 - Auto-Association](#32-path-2---auto-association)
-    - [3.3 Resolution Summary](#33-resolution-summary)
-  - [Step 4: Inspect What the Passport Contributes to an Environment](#step-4-inspect-what-the-passport-contributes-to-an-environment)
-    - [4.1 Named Sections](#41-named-sections)
-    - [4.2 Other Sections](#42-other-sections)
-    - [4.3 Merge Behavior](#43-merge-behavior)
-  - [Step 5: Use Traceability to See Where Values Came From](#step-5-use-traceability-to-see-where-values-came-from)
-  - [Step 6: Decide What Is Safe at Cluster-Level vs Per-Environment](#step-6-decide-what-is-safe-at-cluster-level-vs-per-environment)
-    - [6.1 Safe to Place at Cluster Level](#61-safe-to-place-at-cluster-level)
-    - [6.2 Keep Out of the Cluster-Level Passport](#62-keep-out-of-the-cluster-level-passport)
-  - [Step 7: Configure Environment-Specific Passports](#step-7-configure-environment-specific-passports)
-    - [7.1 When to Use Environment-Specific Passports](#71-when-to-use-environment-specific-passports)
-    - [7.2 Configure the Business Passport (Default)](#72-configure-the-business-passport-default)
-    - [7.3 Configure the Infra Passport (Explicit)](#73-configure-the-infra-passport-explicit)
+  - [Step 1: Understand what a Cloud Passport is](#step-1-understand-what-a-cloud-passport-is)
+  - [Step 2: See how environments share a cluster](#step-2-see-how-environments-share-a-cluster)
+  - [Step 3: Check how a passport is resolved (explicit vs auto-association)](#step-3-check-how-a-passport-is-resolved-explicit-vs-auto-association)
+    - [3.1 Path 1: explicit association](#31-path-1-explicit-association)
+    - [3.2 Path 2: auto-association](#32-path-2-auto-association)
+    - [3.3 Resolution summary](#33-resolution-summary)
+  - [Step 4: Inspect what the passport contributes to an environment](#step-4-inspect-what-the-passport-contributes-to-an-environment)
+    - [4.1 Named sections](#41-named-sections)
+    - [4.2 Other sections](#42-other-sections)
+    - [4.3 Merge behavior](#43-merge-behavior)
+  - [Step 5: Use traceability to see where values came from](#step-5-use-traceability-to-see-where-values-came-from)
+  - [Step 6: Decide what is safe at cluster-level vs per-environment](#step-6-decide-what-is-safe-at-cluster-level-vs-per-environment)
+    - [6.1 Safe to place at cluster level](#61-safe-to-place-at-cluster-level)
+    - [6.2 Keep out of the cluster-level passport](#62-keep-out-of-the-cluster-level-passport)
+  - [Step 7: Configure environment-specific passports](#step-7-configure-environment-specific-passports)
+    - [7.1 When to use environment-specific passports](#71-when-to-use-environment-specific-passports)
+    - [7.2 Configure the business passport (default)](#72-configure-the-business-passport-default)
+    - [7.3 Configure the infra passport (explicit)](#73-configure-the-infra-passport-explicit)
       - [Result](#result)
-    - [7.4 Mixed Cluster Result](#74-mixed-cluster-result)
+    - [7.4 Mixed cluster result](#74-mixed-cluster-result)
   - [Summary](#summary)
 
-## What You Will Learn
+## What you will learn
 
 By the end of this tutorial you will be able to:
 
@@ -54,14 +54,14 @@ By the end of this tutorial you will be able to:
   - [Cloud Passport object](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud-passport)
   - [Cloud object (`cloud.yml`)](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud)
 
-You do **not** need to change code for this tutorial; all steps are about configuration and understanding behaviour.
+You do **not** need to change code for this tutorial. All steps are about configuration and understanding behaviour.
 
 ## Scenario
 
 You have a cluster `cluster-01` that hosts:
 
-- **Business environments** — application workloads
-- **Infra environments** — platform workloads
+- **Business environments**: application workloads
+- **Infra environments**: platform workloads
 
 You want:
 
@@ -69,7 +69,7 @@ You want:
 - Infra environments to use a **minimal passport** that does not contain business-only parameters.
 - A clear understanding of how auto-association works and where parameters end up.
 
-## Step 1: Understand What a Cloud Passport Is
+## Step 1: Understand what a Cloud Passport is
 
 First, open the cluster-level `cloud-passport/` folder:
 
@@ -129,7 +129,7 @@ bss:
 
 This single file is the **central place** where cluster-specific deployment parameters are defined. Later steps will show how these sections flow into an environment.
 
-## Step 2: See How Environments Share a Cluster
+## Step 2: See how environments share a cluster
 
 In the same cluster-01 directory, list environments:
 
@@ -164,11 +164,11 @@ inventory:
 
 At this point, both envs are in the **same cluster** and both can auto-resolve the same passport. The rest of the tutorial explains how that resolution works and how to separate them safely.
 
-## Step 3: Check How a Passport Is Resolved (Explicit vs Auto-Association)
+## Step 3: Check how a passport is resolved (explicit vs auto-association)
 
 Every environment build needs to decide which passport to use (if any). That decision is based only on `env_definition.yml`.
 
-### 3.1 Path 1 - Explicit Association
+### 3.1 Path 1: explicit association
 
 If `env_definition.yml` has `inventory.cloudPassport`, that name is used:
 
@@ -182,10 +182,10 @@ inventory:
 
 Resolution behavior:
 
-- The system searches for `<name>.yml` starting at the environment folder and moving upwards to the repository root.
-- The first matching file is chosen.
+- The system searches for `<name>.{yml|yaml}` starting at the environment folder and moving upwards to the repository root.
+- Exactly one match is required. If multiple files match the same name, the build fails with a duplicate-passport error.
 
-### 3.2 Path 2 - Auto-Association
+### 3.2 Path 2: auto-association
 
 If `inventory.cloudPassport` is absent, auto-association is used:
 
@@ -198,27 +198,27 @@ inventory:
 
 Resolution behavior:
 
-- Look for `cloud-passport/<cluster-name>.{yml|yaml}`
-- If missing, look for `passport.yml`
+- Look for `cloud-passport/<cluster-name>.{yml|yaml}` (a file named after the cluster directory).
+- If missing, look for `cloud-passport/passport.{yml|yaml}` (a generic fallback name).
 - If neither exists, no passport is applied.
 
-### 3.3 Resolution Summary
+### 3.3 Resolution summary
 
-| Case       | Behavior                   |
-| ---------- | -------------------------- |
-| Explicit   | Uses named passport        |
-| Auto       | Uses cluster default       |
-| None found | Continues without passport |
+| `cloudPassport` field in `env_definition.yml` | Resolution behaviour |
+| --- | --- |
+| Set to a name | System searches bottom-up for `<name>.{yml\|yaml}`. Exactly one match is required. Otherwise, the build fails. |
+| Absent | System looks for `cloud-passport/<cluster-name>.{yml\|yaml}`, then `cloud-passport/passport.{yml\|yaml}`. |
+| Absent and no matching file is found | No passport is applied. The build continues. |
 
 In the current state of the scenario, both envs would auto-associate the same cluster-01.yml. The next steps show the impact of this.
 
-## Step 4: Inspect What the Passport Contributes to an Environment
+## Step 4: Inspect what the passport contributes to an environment
 
 In this step you look at the generated Cloud object and see what the passport actually adds.
 
 After running an environment build for env-business-payments, open its generated cloud.yml (path depends on your instance layout, see [Cloud object docs](https://github.com/Netcracker/qubership-envgene/blob/main/docs/envgene-objects.md#cloud)).
 
-### 4.1 Named Sections
+### 4.1 Named sections
 
 Confirm that these passport sections have been mapped to specific parts of `cloud.yml`:
 
@@ -232,7 +232,7 @@ Confirm that these passport sections have been mapped to specific parts of `clou
 
 These fields are populated from the passport and then participate in further merges.
 
-### 4.2 Other Sections
+### 4.2 Other sections
 
 Now look for parameters derived from other sections such as `storage`, `global`, `bss`, `core`, `zookeeper`, etc.
 
@@ -242,7 +242,7 @@ Every key defined in `storage`, `core`, `bss`, etc. becomes a top-level deployme
 There is no additional filtering by section name at this stage.
 This is the behaviour that can leak **business-only keys into infra environments** if they share the same passport.
 
-### 4.3 Merge Behavior
+### 4.3 Merge behavior
 
 Keep in mind:
 
@@ -250,7 +250,7 @@ Keep in mind:
 - Later, higher-priority sources may override them, but all passport keys are present initially.
 - For mixed clusters, this means every environment that resolves a given passport will see all its sections unless you introduce separation (Step 7).
 
-## Step 5: Use Traceability to See Where Values Came From
+## Step 5: Use traceability to see where values came from
 
 ```yaml
 STORAGE_SERVER_URL: https://minio.cluster-01.qubership.org  # cloud passport: cluster-01 version: 1.5
@@ -264,11 +264,11 @@ This tells you:
 - Which version of the passport file contributed the value.
 If your infra environment is failing due to an unexpected parameter, traceability makes it clear that the value came from the cluster-level passport, not from env-specific config.
 
-## Step 6: Decide What Is Safe at Cluster-Level vs Per-Environment
+## Step 6: Decide what is safe at cluster-level vs per-environment
 
 Now that you understand where values go, you can decide what to keep at cluster scope and what to move into env-specific passports.
 
-### 6.1 Safe to Place at Cluster Level
+### 6.1 Safe to place at cluster level
 
 These sections are generally safe to share between **business** and **infra** environments because they describe cluster-wide infrastructure:
 
@@ -279,7 +279,7 @@ These sections are generally safe to share between **business** and **infra** en
 | `consul` | `CONSUL_URL`, `CONSUL_ENABLED` | Safe when all environments in the cluster use Consul |
 | `vault` | `VAULT_ADDR`, `VAULT_AUTH_ROLE_ID` | Safe when all environments use Vault for secrets management |
 
-### 6.2 Keep Out of the Cluster-Level Passport
+### 6.2 Keep out of the cluster-level passport
 
 These sections contain parameters that are meaningful only to specific workload types. When placed at cluster level, they are inherited by all environments regardless of workload type:
 
@@ -292,14 +292,14 @@ These sections contain parameters that are meaningful only to specific workload 
 | `dbaas` | `API_DBAAS_ADDRESS`, `DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME` | Business application database provisioning |
 | `zookeeper` | `ZOOKEEPER_ADDRESS`, `ZOOKEEPER_URL` | Business application coordination service |
 
-## Step 7: Configure Environment-Specific Passports
+## Step 7: Configure environment-specific passports
 
 In this step you will:
 
 - Keep auto-association for business envs (no cloudPassport field required).
 - Introduce a minimal infra passport and reference it explicitly.
 
-### 7.1 When to Use Environment-Specific Passports
+### 7.1 When to use environment-specific passports
 
 Use this pattern when:
 
@@ -319,7 +319,7 @@ environments/
         └── cluster-01-infra-creds.yml
 ```
 
-### 7.2 Configure the Business Passport (Default)
+### 7.2 Configure the business passport (default)
 
 Keep your existing full passport as the **business default**, for example `cluster-01.yml`:
 
@@ -389,7 +389,7 @@ inventory:
   # cloudPassport field absent → auto-association resolves cluster-01.yml
 ```
 
-### 7.3 Configure the Infra Passport (Explicit)
+### 7.3 Configure the infra passport (explicit)
 
 Now create a minimal infra passport, for example `cluster-01-infra.yml`, containing only cluster-wide infra-safe parameters:
 
@@ -432,7 +432,7 @@ inventory:
 - It receives only the minimal, infra-safe subset.
 - Business remains unchanged.
 
-### 7.4 Mixed Cluster Result
+### 7.4 Mixed cluster result
 
 After these changes, your cluster layout looks like this:
 

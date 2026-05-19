@@ -1,18 +1,18 @@
-# Cloud Passport Association — Use Cases
+# Cloud Passport association: use cases
 
-- [Cloud Passport Association — Use Cases](#cloud-passport-association--use-cases)
-  - [UC-01: Environment Inherits Cluster Cloud Passport Automatically](#uc-01-environment-inherits-cluster-cloud-passport-automatically)
-  - [UC-02: Environment Uses Explicitly Named Cloud Passport](#uc-02-environment-uses-explicitly-named-cloud-passport)
-  - [UC-03: Environment Builds Without Cloud Passport](#uc-03-environment-builds-without-cloud-passport)
-  - [UC-04: Environment Uses Passport from Custom Location](#uc-04-environment-uses-passport-from-custom-location)
-  - [UC-05: Parameter Source Traceability](#uc-05-parameter-source-traceability)
+- [Cloud Passport association: use cases](#cloud-passport-association-use-cases)
+  - [UC-01: Environment inherits cluster Cloud Passport automatically](#uc-01-environment-inherits-cluster-cloud-passport-automatically)
+  - [UC-02: Environment uses explicitly named Cloud Passport](#uc-02-environment-uses-explicitly-named-cloud-passport)
+  - [UC-03: Environment builds without Cloud Passport](#uc-03-environment-builds-without-cloud-passport)
+  - [UC-04: Environment uses passport from custom location](#uc-04-environment-uses-passport-from-custom-location)
+  - [UC-05: Parameter source traceability](#uc-05-parameter-source-traceability)
     - [Example](#example)
-  - [UC-06: Business Environments Auto-Associate the Business Passport in a Mixed Cluster](#uc-06-business-environments-auto-associate-the-business-passport-in-a-mixed-cluster)
-  - [UC-07: Infra Environments Use an Explicit Infra Passport in a Mixed Cluster](#uc-07-infra-environments-use-an-explicit-infra-passport-in-a-mixed-cluster)
-  - [UC-08: Mixed Cluster Failure When Infra Relies on Auto-Association](#uc-08-mixed-cluster-failure-when-infra-relies-on-auto-association)
-  - [UC-09: Backward Compatibility for Existing Business Environments](#uc-09-backward-compatibility-for-existing-business-environments)
+  - [UC-06: Business environments auto-associate the business passport in a mixed cluster](#uc-06-business-environments-auto-associate-the-business-passport-in-a-mixed-cluster)
+  - [UC-07: Infra environments use an explicit infra passport in a mixed cluster](#uc-07-infra-environments-use-an-explicit-infra-passport-in-a-mixed-cluster)
+  - [UC-08: Mixed cluster failure when infra relies on auto-association](#uc-08-mixed-cluster-failure-when-infra-relies-on-auto-association)
+  - [UC-09: Backward compatibility for existing business environments](#uc-09-backward-compatibility-for-existing-business-environments)
 
-## UC-01: Environment Inherits Cluster Cloud Passport Automatically
+## UC-01: Environment inherits cluster Cloud Passport automatically
 
 **Pre-requisites:**
 
@@ -41,7 +41,7 @@
 
 - Each parameter includes traceability metadata (passport name and version)
 
-## UC-02: Environment Uses Explicitly Named Cloud Passport
+## UC-02: Environment uses explicitly named Cloud Passport
 
 **Pre-requisites:**
 
@@ -72,7 +72,7 @@
 
 - `cloud.yml` is populated using the explicitly selected passport
 
-## UC-03: Environment Builds Without Cloud Passport
+## UC-03: Environment builds without Cloud Passport
 
 **Pre-requisites:**
 
@@ -99,7 +99,7 @@
 - `cloud.yml` is not modified by passport logic
 - Build continues successfully
 
-## UC-04: Environment Uses Passport from Custom Location
+## UC-04: Environment uses passport from custom location
 
 **Pre-requisites:**
 
@@ -121,7 +121,7 @@
 
 - `cloud.yml` contains parameters from the custom passport only
 
-## UC-05: Parameter Source Traceability
+## UC-05: Parameter source traceability
 
 **Pre-requisites:**
 
@@ -149,7 +149,7 @@ ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181  # cloud passport: cluster-01 versio
 
 - Parameter origin is fully traceable from the file itself
 
-## UC-06: Business Environments Auto-Associate the Business Passport in a Mixed Cluster
+## UC-06: Business environments auto-associate the business passport in a mixed cluster
 
 **Pre-requisites:**
 
@@ -177,11 +177,13 @@ ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181  # cloud passport: cluster-01 versio
 
 **Results:**
 
-- Business environment `cloud.yml` contains business workload keys (for example sections/keys like `bss`, `core`, `storage`, `maas`, `dbaas`, `zookeeper`) if those keys exist in `cloud-passport/<cluster-name>.{yml|yaml}`
+- Business environment `cloud.yml` contains business workload keys (for example sections/keys
+  like `bss`, `core`, `storage`, `maas`, `dbaas`, `zookeeper`) if those keys exist in
+  `cloud-passport/<cluster-name>.{yml|yaml}`
 - For passport-derived values, inline comments reference:
   - `cloud passport: <cluster-name> version: <passport-version>`
 
-## UC-07: Infra Environments Use an Explicit Infra Passport in a Mixed Cluster
+## UC-07: Infra environments use an explicit infra passport in a mixed cluster
 
 **Pre-requisites:**
 
@@ -217,7 +219,7 @@ ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181  # cloud passport: cluster-01 versio
 - For passport-derived values present in cloud.yml, traceability comments reference:
   - `cloud passport: <cluster-name>-infra version: <passport-version>`
 
-## UC-08: Mixed Cluster Failure When Infra Relies on Auto-Association
+## UC-08: Mixed cluster failure when infra relies on auto-association
 
 **Pre-requisites:**
 
@@ -245,7 +247,7 @@ ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181  # cloud passport: cluster-01 versio
 - Traceability comments in the generated cloud.yml confirm that problematic values came from:
   - `cloud passport: <cluster-name> version: <passport-version>`
 
-## UC-09: Backward Compatibility for Existing Business Environments
+## UC-09: Backward compatibility for existing business environments
 
 **Pre-requisites:**
 
