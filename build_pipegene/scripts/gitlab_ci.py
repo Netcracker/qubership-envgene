@@ -81,9 +81,9 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         job_sequence = [
             "trigger_passport_job",
             "get_passport_job",
+            "credential_rotation_job",
             "bg_manage_job",
             "env_inventory_generation_job",
-            "credential_rotation_job",
             "appregdef_render_job",
             "process_sd_job",
             "env_build_job",
@@ -98,6 +98,18 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
             get_passport_jobs[cluster_name] = True
         else:
             logger.info(f"Generation of cloud passport for environment '{full_env_name}' is skipped")
+            
+        credential_rotation_job = None
+        if params["CRED_ROTATION_PAYLOAD"] and params['GET_PASSPORT']:
+            raise ValueError("CRED_ROTATION_PAYLOAD and GET_PASSPORT cannot be used together")
+        elif params['CRED_ROTATION_PAYLOAD']:
+            credential_rotation_job = prepare_credential_rotation_job(pipeline, full_env_name, environment_name,
+                                                                      cluster_name)
+            jobs_map["credential_rotation_job"] = credential_rotation_job
+        else:
+            logger.info(
+                f'Credential rotation job for {full_env_name} is skipped because CRED_ROTATION_PAYLOAD is empty.'
+            )
 
         if not params.get('BG_MANAGE', None):
             logger.info(f'Preparing of bg_manage job for environment {full_env_name} is skipped.')
@@ -111,15 +123,6 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
             logger.info(
                 f'Preparing of full_env_name inventory generation job for {full_env_name} '
                 f'is skipped because we are in template test mode.')
-
-        credential_rotation_job = None
-        if params['CRED_ROTATION_PAYLOAD']:
-            credential_rotation_job = prepare_credential_rotation_job(pipeline, full_env_name, environment_name,
-                                                                      cluster_name)
-            jobs_map["credential_rotation_job"] = credential_rotation_job
-        else:
-            logger.info(
-                f'Credential rotation job for {full_env_name} is skipped because CRED_ROTATION_PAYLOAD is empty.')
 
         if params['ENV_BUILD']:
             jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params, full_env_name,
