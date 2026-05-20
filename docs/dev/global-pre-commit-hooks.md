@@ -8,6 +8,10 @@
   - [Step 2: Point Git at the global hooks directory](#step-2-point-git-at-the-global-hooks-directory)
   - [Step 3: grand-report.json](#step-3-grand-reportjson)
   - [What runs on commit](#what-runs-on-commit)
+  - [CyberFerret output examples](#cyberferret-output-examples)
+    - [Successful scan](#successful-scan)
+    - [Failed scan](#failed-scan)
+    - [Local `commit-msg` hook](#local-commit-msg-hook)
   - [Disable global hooks](#disable-global-hooks)
   - [References](#references)
 
@@ -20,7 +24,7 @@ This guide shows how to register [pre-commit-global](https://github.com/exadmin/
 | Requirement                 | Purpose                                                                                                    |
 |-----------------------------|------------------------------------------------------------------------------------------------------------|
 | Git                         | Required. See [git-scm.com](https://git-scm.com/install/).                                                 |
-| Java (JDK or JRE)           | Required by the hook toolchain (upstream tests with a recent JDK).                                         |
+| Java (JDK or JRE)           | Required by the hook toolchain. Examples below were verified with **JDK 25**.                              |
 | `CYBER_FERRET_PASSWORD`     | Only if CyberFerret runs; see [Set `CYBER_FERRET_PASSWORD` permanently](#set-cyber_ferret_password-permanently). |
 
 > [!NOTE]
@@ -159,11 +163,70 @@ Use `CYBER_FERRET_PASSWORD` as in [Set `CYBER_FERRET_PASSWORD` permanently](#set
 
 When you run `git commit -m "your message"`:
 
-1. Global hooks run (including an online hook-update check).
-2. If `.pre-commit-config.yaml` exists, **pre-commit** runs with that config.
-3. If pre-commit passes or there is no config, the repository's **`.git/hooks/pre-commit`** runs if present.
+1. Global **pre-commit** runs (including a periodic `git pull` of the hooks repo, then any repository **`.git/hooks/pre-commit`** if present).
+2. If `.pre-commit-config.yaml` exists, the **pre-commit** framework may also run when configured in the repository.
+3. Global **commit-msg** runs. If the repository has **`.git/hooks/commit-msg`**, that local script runs instead of CyberFerret (see [Local `commit-msg` hook](#local-commit-msg-hook)).
+4. Otherwise, if **`.qubership/grand-report.json`** exists, CyberFerret scans changed files (see [CyberFerret output examples](#cyberferret-output-examples)).
 
 If any check fails, the commit stops until you fix the issue or adjust configuration and exclusions.
+
+## CyberFerret output examples
+
+CyberFerret runs during the global **commit-msg** hook when `.qubership/grand-report.json` is present and the repository does not define its own `.git/hooks/commit-msg`. Terminal output is prefixed with `[QUBERSHIP]`.
+
+Paths in the samples below match a typical Windows layout (`hooks-global` clone and a Qubership repository). Your paths will differ if you chose another install location.
+
+### Successful scan
+
+No matching signatures in the scanned files. The commit continues.
+
+```text
+[QUBERSHIP] Calling CyberFerret checks for C:/Users/andy-/Desktop/Work_folder/Qubership/qubership-envgene
+[QUBERSHIP] java -cp "C:/Users/andy-/Desktop/Work_folder/Qubership/tools/hooks-global/../cyberferret-dist/cyberferret-cli.jar" com.github.exadmin.cyberferret.CyberFerretCLI "C:/Users/andy-/Desktop/Work_folder/Qubership/qubership-envgene" "C:/Users/andy-/Desktop/Work_folder/Qubership/qubership-envgene/.git/cf_files.list"
+[INFO ]CyberFerretCLI version: 1.2.7
+[INFO ]Checking if new online dictionary exists
+[INFO ]Skipping dictionary download, local cache is still fresh: C:\Users\andy-\Desktop\Work_folder\Qubership\tools\hooks-global\.\dictionary-latest-cache.encrypted
+[INFO ]Signatures are loaded successfully, number of signatures is 70
+[INFO ]Number of allowed signatures is 13
+[INFO ]Dictionary version is 1.33
+[INFO ]Scan rate is 100%
+[INFO ]Scanning completed for 100%
+[INFO ]Scan is completed. Errors are not found :)
+```
+
+### Failed scan
+
+CyberFerret found a blocked signature in a changed file. The commit is rejected. The `[ERROR]` line names the matched dictionary term and the file path with line number.
+
+```text
+[QUBERSHIP] Calling CyberFerret checks for C:/Users/andy-/Desktop/Work_folder/Qubership/qubership-envgene
+[QUBERSHIP] java -cp "C:/Users/andy-/Desktop/Work_folder/Qubership/tools/hooks-global/../cyberferret-dist/cyberferret-cli.jar" com.github.exadmin.cyberferret.CyberFerretCLI "C:/Users/andy-/Desktop/Work_folder/Qubership/qubership-envgene" "C:/Users/andy-/Desktop/Work_folder/Qubership/qubership-envgene/.git/cf_files.list"
+[INFO ]CyberFerretCLI version: 1.2.7
+[INFO ]Checking if new online dictionary exists
+[INFO ]Skipping dictionary download, local cache is still fresh: C:\Users\andy-\Desktop\Work_folder\Qubership\tools\hooks-global\.\dictionary-latest-cache.encrypted
+[INFO ]Signatures are loaded successfully, number of signatures is 70
+[INFO ]Number of allowed signatures is 13
+[INFO ]Dictionary version is 1.33
+[INFO ]Scan rate is 100%
+[ERROR]Signature '<matched-name>' is found in C:\Users\andy-\Desktop\Work_folder\Qubership\qubership-envgene\docs\dev\example.md:42
+[INFO ]Scanning completed for 100%
+[INFO ]Scan is completed. Errors are found :( Breaking commit!
+[QUBERSHIP] Commit is not allowed
+[QUBERSHIP] If you think this warning must be ignored once - use any of magic words '@cf_ignore, @cf_skip, @ignore_cf, @skip_cf' right in the commit message (any place)
+[QUBERSHIP] If found signatures must be added to permanent ignores - use CyberFerret GUI app
+```
+
+To bypass CyberFerret for a single commit, add one of `@cf_ignore`, `@cf_skip`, `@ignore_cf`, or `@skip_cf` anywhere in the commit message. For permanent exclusions, use the CyberFerret GUI or update `.qubership/grand-report.json` with **Andrei Rudchenko**.
+
+### Local `commit-msg` hook
+
+If the repository defines **`.git/hooks/commit-msg`**, the global hook delegates to it and **does not** run CyberFerret:
+
+```text
+[QUBERSHIP] Local hook is defined - calling it
+```
+
+Remove or rename the local `commit-msg` hook if you want CyberFerret checks in that repository.
 
 ## Disable global hooks
 
