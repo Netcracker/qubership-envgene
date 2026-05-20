@@ -61,7 +61,7 @@
     "sbom_retention": {
       "type": "object",
       "title": "SBOM Retention Configuration",
-      "description": "Configuration for automatic SBOM file cleanup to manage repository size. Triggers only when repository reaches 1200 GB threshold.",
+      "description": "Configuration for automatic SBOM file cleanup. When enabled, applies per-application version retention to subdirectories of /sboms/. A safety net wipes /sboms/ if its total size still exceeds 1200 MB after per-application retention.",
       "additionalProperties": false,
       "properties": {
         "enabled": {
@@ -77,8 +77,8 @@
         "keep_versions_per_app": {
           "type": "integer",
           "title": "Versions to Keep",
-          "description": "Number of latest versions to keep per application. Used only when enabled is true.",
-          "minimum": 1,
+          "description": "Number of latest versions to keep per application subdirectory. Used only when enabled is true. A value of 0 means all files in each per-application subdirectory are deleted.",
+          "minimum": 0,
           "default": 10,
           "examples": [
             5,

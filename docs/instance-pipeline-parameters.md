@@ -39,6 +39,9 @@ The following are the launch parameters for the instance repository pipeline. Th
 
 All parameters are of the string data type
 
+> [!IMPORTANT]
+> EnvGene recognises and processes **only the parameters listed on this page**. Passing any variable not documented here has no effect on pipeline behaviour and will be silently ignored. Do not rely on undocumented parameters — they are not part of the EnvGene contract and may be removed or conflict with future additions without notice.
+
 ## Parameters
 
 ### `ENV_NAMES`
@@ -128,11 +131,11 @@ This parameter serves as a configuration for an extension point. Integration wit
 
 **Allowed values**:
 
-- `PERSISTENT` (default)  
+- `PERSISTENT` (default)
   Applies the standard behavior: the pipeline updates the template version in Environment Inventory by modifying `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
 
-- `TEMPORARY`  
-  Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.  
+- `TEMPORARY`
+  Applies `ENV_TEMPLATE_VERSION` **only for the current pipeline execution** and **does not** update `envTemplate.artifact` (or `envTemplate.templateArtifact.artifact.version`) in `env_definition.yml`.
   The pipeline updates `generatedVersions.generateEnvironmentLatestVersion` in `env_definition.yml` to reflect the template artifact version that was actually applied in this run, for example:
 
   ```yaml
@@ -222,7 +225,7 @@ envTemplate:
 
 **Description**:
 
-Provides the Environment Inventory and related artifacts to be created or updated.  
+Provides the Environment Inventory and related artifacts to be created or updated.
 It allows external systems to manage `env_definition.yml` and additional files paramsets, credentials, resource profiles without manual changes in the Instance repository.
 
 See details in Environment Inventory Generation feature documentation [Environment Inventory Generation](/docs/features/env-inventory-generation.md)
@@ -333,8 +336,8 @@ This job must exist in the EnvGene instance pipeline.
 When this parameter is set, the system will:
 
 1. Download and unpack the `definitions.zip` file from the specified job artifact.
-2. Copy (with overwrite) Application Definitions from the extracted `definitions.zip` from the path specified in [`APP_DEFS_PATH`](#app_defs_path) to the `AppDefs` folder of the target Environment.
-3. Copy (with overwrite) Registry Definitions from the extracted `definitions.zip` from the path specified in [`REG_DEFS_PATH`](#reg_defs_path) to the `RegDefs` folder of the target Environment.
+2. Copy (with overwrite) Application Definitions from the extracted `definitions.zip` from the path specified in [`APP_DEFS_PATH`](#app_defs_path) to the root-level /appdefs folder.
+3. Copy (with overwrite) Registry Definitions from the extracted `definitions.zip` from the path specified in [`REG_DEFS_PATH`](#reg_defs_path) to the root-level /regdefs folder..
 
 **Default Value**: None
 
@@ -346,9 +349,9 @@ When this parameter is set, the system will:
 
 ### `APP_DEFS_PATH`
 
-**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Application Definitions are located. The contents from this path will be copied to the `AppDefs` folder of the target Environment.
+**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Application Definitions are located. The contents from this path will be copied to the root-level /appdefs folder.
 
-**Default Value**: `AppDefs`
+**Default Value**: `appdefs`
 
 **Mandatory**: No
 
@@ -356,9 +359,9 @@ When this parameter is set, the system will:
 
 ### `REG_DEFS_PATH`
 
-**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Registry Definitions are located. The contents from this path will be copied to the `RegDefs` folder of the target Environment.
+**Description**: Specifies the relative path inside the `definitions.zip` artifact (downloaded from the job specified by `APP_REG_DEFS_JOB`) where Registry Definitions are located. The contents from this path will be copied to the root-level /regdefs folder.
 
-**Default Value**: `RegDefs`
+**Default Value**: `regdefs`
 
 **Mandatory**: No
 
@@ -485,7 +488,7 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 
 ### `CRED_ROTATION_PAYLOAD`
 
-**Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macro)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
+**Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macro-and-credential-reference)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
 
 ```json
 {

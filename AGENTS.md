@@ -93,6 +93,79 @@ EnvGene searches these locations - from bottom to top - and uses the first match
 
 **Why:** Em dashes are a typographic convention that varies by locale and style guide. A plain hyphen-minus is universally readable, renders consistently across all Markdown renderers, and avoids accidental character encoding issues.
 
+#### Semicolons in prose
+
+**Guideline:** Semicolons (`;`) are **not** forbidden, but avoid dense "clause; clause" chains in documentation when separate sentences or lists would read more clearly.
+
+**Prefer:**
+
+- One main idea per sentence, separated by a period.
+- Bullet or numbered lists for parallel steps, outcomes, or options.
+- A comma plus a coordinating conjunction (`and`, `or`) when the second part is short.
+
+**When a semicolon is still appropriate:**
+
+- **Complex list items** where each item already contains commas (the usual US-style role of `;` inside lists).
+- **Literal syntax** in code, paths, or URIs where `;` is required - leave unchanged.
+- **Rare compact one-line definitions** where brevity is more important than flow - use sparingly.
+
+**Avoid:**
+
+- Joining two independent statements in prose only to keep one long line - split into two sentences instead.
+- Using `;` between fragments inside bullets as a substitute for a period or a new bullet.
+
+❌ **HARDER TO READ:**
+
+```markdown
+Item 1 is generated automatically; item 2 is created manually by the user.
+```
+
+✅ **CLEARER:**
+
+```markdown
+Item 1 is generated automatically. Item 2 is created manually by the user.
+```
+
+**Why:** Semicolons are easy to overuse in technical English. Dense use can make specs feel monotonous and is often harder for readers whose first language is not English. Periods and lists align with the rest of these documentation rules.
+
+---
+
+#### Line length
+
+**CRITICAL: Wrap prose lines at 120 characters maximum.**
+
+**Scope:**
+
+- Applies to prose paragraphs and list items in any Markdown file.
+- **Excluded:** tables, fenced code blocks, URLs, and image references.
+- **New or rewritten content only.** When editing an existing document, wrap paragraphs you add or rewrite at 120
+  chars. Do NOT reflow surrounding existing prose to match - that produces large, noisy diffs unrelated to the
+  task.
+
+**How to wrap:**
+
+- Break at natural sentence or clause boundaries (after a period or comma, or before a conjunction).
+- Indent continuation lines of list items so they align with the first non-bullet character (3 spaces for `- `
+  bullets, 3 spaces for `1. ` numbered lists).
+- Keep an empty line before and after each paragraph (already required by the Lists rule above).
+
+❌ **DON'T (hard wrap mid-word):**
+
+```markdown
+The Effective Set calculator emits well-known deploy parameter names for selected built-in cred
+ential references.
+```
+
+✅ **DO (break at sentence or clause boundary):**
+
+```markdown
+The Effective Set calculator emits well-known deploy parameter names for selected built-in
+credential references.
+```
+
+**Why:** 120 characters keeps Markdown source readable in side-by-side diffs and code reviews without horizontal
+scrolling. Capping the rule to new content avoids whitespace-only churn in legacy files.
+
 ---
 
 #### Semicolons
@@ -334,6 +407,54 @@ Common AI-stylistics to avoid:
 **Why:** AI-generated text leans on these patterns heavily. Their absence makes documentation
 feel more direct and trustworthy. Read sentences aloud. If it sounds like a press release or a
 chatbot, rewrite.
+
+---
+
+#### Heading renames and cross-links
+
+When renaming a Markdown heading, the GitHub-generated anchor (`#section-name`) also changes.
+Cross-links in other files that point to the old anchor become broken (CI link-checker fails).
+
+**Before pushing after a heading rename:**
+
+1. Grep the repository for references to the OLD anchor:
+
+   ```bash
+   grep -rnE "#old-anchor-name" --include='*.md' .
+   ```
+
+2. Update each matching cross-link to the NEW anchor in all affected files.
+
+3. Update the link text in `[text](#anchor)` to match the new heading text where appropriate.
+
+For a broader audit of all cross-links in the repository:
+
+```bash
+grep -rhoE '\]\([^)]+#[^)]+\)' --include='*.md' . | sort -u
+```
+
+**Why:** A heading rename inside one file silently breaks references in unrelated files. The
+CI link-checker (lychee) catches this only after push.
+
+---
+
+#### Pre-flight markdownlint check
+
+Before declaring documentation changes done, run markdownlint with the project's config:
+
+```bash
+npx --yes markdownlint-cli@latest --config .github/linters/.markdown-lint.yml <changed-files>
+```
+
+The project config (`.github/linters/.markdown-lint.yml`) relaxes `MD013` line length to 1000,
+and disables `MD012`, `MD033`, `MD051`. Running markdownlint without `--config` uses the
+default settings (line length 80) which produces many false positives unrelated to the project
+rules and may hide real issues like `MD009` (trailing spaces) or `MD040` (fenced block missing
+language).
+
+**Why:** The CI super-linter runs markdownlint with the project config. Running locally with
+the same config gives a true preview of the CI result, catches real issues, and avoids
+distraction from false positives.
 
 ---
 

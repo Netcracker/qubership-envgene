@@ -29,10 +29,52 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p $app_defs_path && cp -rf {artifact_app_defs_path}/* $app_defs_path',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p $reg_defs_path && cp -fr {artifact_reg_defs_path}/* $reg_defs_path',
         'python3 /module/scripts/main.py validate_creds',
+        'python3 /module/scripts/main.py validate_parameters',
         'python3 /module/scripts/sboms_retention_policy.py',
         'python3 /module/scripts/cmdb_cli_cmd_call.py',
         'python3 /module/scripts/main.py encrypt_cred_files'
     ]
+
+    cmdb_cli_cmd_call = [
+        f"/module/scripts/utils/entrypoint.sh --env-id={full_env_name}",
+        "--envs-path=$CI_PROJECT_DIR/environments",
+        f"--output=$CI_PROJECT_DIR/environments/{full_env_name}/effective-set"
+    ]
+
+    effective_set_config_dict = {}
+    if effective_set_config:
+        effective_set_config_dict = json.loads(effective_set_config)
+
+    effective_set_version = effective_set_config_dict.get("version") or "v2.0"
+    full_sd_exists = sd_path.is_file()
+    sd_data = bool(sd_data) or bool(sd_version)
+
+    if not (full_sd_exists and sd_data) and effective_set_version.lower() == "v1.0":
+        raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
+
+    if full_sd_exists or sd_data:
+        cmdb_cli_cmd_call.extend([
+            "--registries=${CI_PROJECT_DIR}/configuration/registry.yml",
+            "--sboms-path=$sboms_path",
+            "--sd-path=$sd_path",
+        ])
+
+    logger.info(f'Prepare generate_effective_set job for {full_env_name}.')
+    if effective_set_config:
+        logger.info(f"EFFECTIVE_SET_CONFIG: {effective_set_config}")
+        script.extend([
+            f"python3 /module/scripts/handle_effective_set_config.py --effective-set-config '{effective_set_config}'",
+            'extra_args=$(jq -r \'.extra_args // [] | join(" ")\' /tmp/effective_set_output.json)',
+        ])
+        cmdb_cli_cmd_call.extend(["$extra_args"])
+    if deployment_id:
+        cmdb_cli_cmd_call.extend([f"--extra_params=DEPLOYMENT_SESSION_ID={deployment_id}"])
+
+    if custom_params:
+        logger.info(f"custom_params : {custom_params}")
+        cmdb_cli_cmd_call.extend([f"--custom-params='{custom_params}'"])
+    script.append(" ".join(cmdb_cli_cmd_call))
+    script.append('python3 /module/scripts/main.py encrypt_cred_files')
 
     generate_effective_set_params = {
         "name": f'generate_effective_set.{full_env_name}',

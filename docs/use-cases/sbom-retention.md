@@ -2,31 +2,39 @@
 
 - [SBOM Retention Use Cases](#sbom-retention-use-cases)
   - [Overview](#overview)
-  - [SBOM Cleanup Execution](#sbom-cleanup-execution)
-    - [UC-SBOM-1: SBOM Retention Disabled - No Cleanup](#uc-sbom-1-sbom-retention-disabled---no-cleanup)
-    - [UC-SBOM-2: Repository Below Threshold - No Cleanup](#uc-sbom-2-repository-below-threshold---no-cleanup)
-    - [UC-SBOM-3: Repository Above Threshold - Cleanup with Default Settings](#uc-sbom-3-repository-above-threshold---cleanup-with-default-settings)
-    - [UC-SBOM-4: Repository Above Threshold - Cleanup with Custom Version Count](#uc-sbom-4-repository-above-threshold---cleanup-with-custom-version-count)
+  - [SBOM cleanup execution](#sbom-cleanup-execution)
+    - [UC-SBOM-1: SBOM retention disabled - no cleanup](#uc-sbom-1-sbom-retention-disabled---no-cleanup)
+    - [UC-SBOM-2: All applications within per-application limit - no files deleted](#uc-sbom-2-all-applications-within-per-application-limit---no-files-deleted)
+    - [UC-SBOM-3: Per-application retention with default settings](#uc-sbom-3-per-application-retention-with-default-settings)
+    - [UC-SBOM-4: Per-application retention with custom version count](#uc-sbom-4-per-application-retention-with-custom-version-count)
+    - [UC-SBOM-5: Total /sboms/ size exceeds 1200 MB after per-application retention - full cache wipe](#uc-sbom-5-total-sboms-size-exceeds-1200-mb-after-per-application-retention---full-cache-wipe)
 
 ## Overview
 
-This document covers use cases for [SBOM Retention](/docs/features/sbom-retention.md) - automatic cleanup of cached SBOM files to manage Instance Repository size. SBOM files are stored under `/sboms/<application-name>/` as `<application-name>-<application-version>.sbom.json` (see [SBOM directory layout](/docs/features/sbom.md#sbom-directory-layout)).
+This document covers use cases for [SBOM Retention](/docs/features/sbom-retention.md), the
+automatic cleanup of cached SBOM files used to manage Instance Repository size. SBOM files are
+stored under `/sboms/<application-name>/` as `<application-name>-<application-version>.sbom.json`.
+See [SBOM directory layout](/docs/features/sbom.md#sbom-directory-layout) for the storage
+structure.
 
-## SBOM Cleanup Execution
+## SBOM cleanup execution
 
-The cleanup logic is triggered during effective set generation and depends on configuration settings and repository size. These use cases demonstrate different scenarios based on configuration and repository state.
+The cleanup logic runs during effective set generation and depends only on the
+`sbom_retention.enabled` flag. When enabled, retention always applies per-application version
+retention, then evaluates a 1200 MB safety net on the total size of `/sboms/`. These use cases
+demonstrate the observable behavior in each scenario.
 
-### UC-SBOM-1: SBOM Retention Disabled - No Cleanup
+### UC-SBOM-1: SBOM retention disabled - no cleanup
 
 **Pre-requisites:**
 
-1. Instance Repository exists with `/sboms/` directory; SBOM files are stored in `/sboms/<application-name>/`
+1. Instance Repository exists with `/sboms/` directory. SBOM files are stored in
+   `/sboms/<application-name>/`
 2. SBOM files exist in `/sboms/<application-name>/`
 3. SBOM retention is **disabled** in `/configuration/config.yml`:
 
    ```yaml
    # Option 1: No sbom_retention section
-   crypt: false
    ```
 
    or
@@ -37,8 +45,6 @@ The cleanup logic is triggered during effective set generation and depends on co
      enabled: false
    ```
 
-4. Repository size is 1300 MB (above 1200 MB threshold)
-
 **Trigger:**
 
 Instance pipeline (GitLab or GitHub) is started with parameters:
@@ -48,25 +54,28 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
-   1. Generates effective set for the environment
-   2. Checks SBOM retention configuration
-   3. Finds `sbom_retention.enabled: false` (or no configuration)
-   4. Skips SBOM cleanup logic
-   5. Completes effective set generation
+1. The `generate_effective_set` job runs.
+2. SBOM retention configuration is checked. `enabled` is false (or the section is absent).
+3. SBOM cleanup is skipped.
+4. The effective set generation completes.
 
 **Results:**
 
 1. Effective set is generated successfully
 2. No SBOM files are deleted
-3. Pipeline log shows: "SBOM retention is disabled, skipping cleanup"
+3. Pipeline log shows: `SBOMs retention policy is disabled`
 
-### UC-SBOM-2: Repository Below Threshold - No Cleanup
+### UC-SBOM-2: All applications within per-application limit - no files deleted
 
 **Pre-requisites:**
 
-1. Instance Repository exists with `/sboms/` directory; SBOM files are stored in `/sboms/<application-name>/`
-2. SBOM files exist in `/sboms/<application-name>/` with total size 800 MB
+1. Instance Repository exists with `/sboms/` directory. SBOM files are stored in
+   `/sboms/<application-name>/`
+2. SBOM files exist for multiple applications, with each subdirectory holding
+   `keep_versions_per_app` files or fewer:
+   - `/sboms/app-a/`: 7 versions
+   - `/sboms/app-b/`: 4 versions
+   - `/sboms/app-c/`: 10 versions
 3. SBOM retention is **enabled** in `/configuration/config.yml`:
 
    ```yaml
@@ -75,7 +84,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
      keep_versions_per_app: 10
    ```
 
-4. Repository size is 800 MB (below 1200 MB threshold)
+4. Total size of `/sboms/` is 200 MB (at or below the 1200 MB safety-net threshold)
 
 **Trigger:**
 
@@ -86,30 +95,32 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
-   1. Generates effective set for the environment
-   2. Checks SBOM retention configuration
-   3. Finds `sbom_retention.enabled: true`
-   4. Checks repository size: 800 MB
-   5. Compares with threshold: 800 MB < 1200 MB
-   6. Skips SBOM cleanup (threshold not reached)
-   7. Completes effective set generation
+1. The `generate_effective_set` job runs.
+2. SBOM retention is enabled with `keep_versions_per_app: 10`. The cleanup procedure starts.
+3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).
+4. Per-application retention runs over each subdirectory. Every subdirectory already contains 10
+   or fewer files, so no files are deleted.
+5. The total size of `/sboms/` is at or below the 1200 MB safety-net threshold. No safety-net
+   wipe is performed.
+6. The effective set generation completes.
 
 **Results:**
 
 1. Effective set is generated successfully
 2. No SBOM files are deleted
-3. Pipeline log shows: "Repository size (800 MB) below threshold (1200 MB), skipping cleanup"
+3. Pipeline log shows:
+   - `SBOMs retention policy is enabled`
+   - `Directory size 200.00 mb within limit 1200 mb`
 
-### UC-SBOM-3: Repository Above Threshold - Cleanup with Default Settings
+### UC-SBOM-3: Per-application retention with default settings
 
 **Pre-requisites:**
 
 1. Instance Repository exists with `/sboms/` directory
 2. SBOM files exist for multiple applications under per-application subdirectories:
-   - `/sboms/app-a/`: `app-a-1.0.15.sbom.json` through `app-a-1.0.1.sbom.json` (15 versions)
-   - `/sboms/app-b/`: `app-b-2.0.12.sbom.json` through `app-b-2.0.1.sbom.json` (12 versions)
-   - `/sboms/app-c/`: `app-c-3.5.8.sbom.json` through `app-c-3.5.1.sbom.json` (8 versions)
+   - `/sboms/app-a/`: 15 SBOM files
+   - `/sboms/app-b/`: 12 SBOM files
+   - `/sboms/app-c/`: 8 SBOM files
 3. SBOM retention is **enabled** with default settings in `/configuration/config.yml`:
 
    ```yaml
@@ -118,7 +129,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
      keep_versions_per_app: 10  # default value
    ```
 
-4. Repository size is 1300 MB (above 1200 MB threshold)
+4. Total size of `/sboms/` is 1100 MB (below the 1200 MB safety-net threshold)
 
 **Trigger:**
 
@@ -129,38 +140,37 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
-   1. Generates effective set for the environment
-   2. Checks SBOM retention configuration: enabled with `keep_versions_per_app: 10`
-   3. Checks repository size: 1300 MB > 1200 MB threshold
-   4. Triggers SBOM cleanup process:
-      1. Scans `/sboms/` directory (each subdirectory is one application)
-      2. For each application subdirectory (e.g. `/sboms/app-a/`):
-         - Sorts versions by file creation time (newest first)
-         - Keeps 10 most recent versions
-         - Deletes older versions
-   5. Completes effective set generation
+1. The `generate_effective_set` job runs.
+2. SBOM retention is enabled with `keep_versions_per_app: 10`. The cleanup procedure starts.
+3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).
+4. For each per-application subdirectory, the 10 most recent files are kept and older files are
+   deleted.
+5. The total size of `/sboms/` after per-application retention is at or below the 1200 MB
+   safety-net threshold. No safety-net wipe is performed.
+6. The effective set generation completes.
 
 **Results:**
 
 1. Effective set is generated successfully
-2. SBOM files are cleaned up for each application:
-   - **app-a** (under `/sboms/app-a/`): Keeps versions 1.0.15 through 1.0.6 (10 versions)
-   - **app-b** (under `/sboms/app-b/`): Keeps versions 2.0.12 through 2.0.3 (10 versions)
-   - **app-c** (under `/sboms/app-c/`): Keeps all 8 versions (no deletion needed)
+2. SBOM files are cleaned up per application:
+   - `/sboms/app-a/`: 10 most recently modified files are kept, the 5 oldest are deleted
+   - `/sboms/app-b/`: 10 most recently modified files are kept, the 2 oldest are deleted
+   - `/sboms/app-c/`: all 8 files are kept (count is at or below `keep_versions_per_app`)
 3. Total files deleted: 7 SBOM files
 4. Pipeline log shows:
-   - "Repository size (1300 MB) above threshold (1200 MB), starting cleanup"
-   - "Cleaned up 7 SBOM files"
-   - "Kept 10 versions per application"
+   - `SBOMs retention policy is enabled`
+   - `Only 10 files will remain in <path>/sboms/app-a` (and a `Removing file:` line per deleted
+     file)
+   - `Only 10 files will remain in <path>/sboms/app-b` (and a `Removing file:` line per deleted
+     file)
+   - `Directory size <X> mb within limit 1200 mb`
 
-### UC-SBOM-4: Repository Above Threshold - Cleanup with Custom Version Count
+### UC-SBOM-4: Per-application retention with custom version count
 
 **Pre-requisites:**
 
 1. Instance Repository exists with `/sboms/` directory
-2. SBOM files exist for application `postgres` under `/sboms/postgres/`:
-   - `postgres-pg16-2.10.10.sbom.json` through `postgres-pg16-2.10.1.sbom.json` (10 versions)
+2. SBOM files exist for application `postgres` under `/sboms/postgres/`: 10 SBOM files
 3. SBOM retention is **enabled** with custom settings in `/configuration/config.yml`:
 
    ```yaml
@@ -169,7 +179,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
      keep_versions_per_app: 3  # only keep 3 most recent versions
    ```
 
-4. Repository size is 1350 MB (above 1200 MB threshold)
+4. Total size of `/sboms/` is 350 MB (below the 1200 MB safety-net threshold)
 
 **Trigger:**
 
@@ -180,25 +190,70 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Steps:**
 
-1. The `generate_effective_set` job runs in the pipeline:
-   1. Generates effective set for the environment
-   2. Checks SBOM retention configuration: enabled with `keep_versions_per_app: 3`
-   3. Checks repository size: 1350 MB > 1200 MB threshold
-   4. Triggers SBOM cleanup process:
-      1. Scans `/sboms/` directory (finds subdirectory `postgres`)
-      2. For `/sboms/postgres/`: sorts versions by file creation time (newest first)
-      3. Keeps 3 most recent versions: 2.10.10, 2.10.9, 2.10.8
-      4. Deletes 7 older versions: 2.10.7 through 2.10.1
-   5. Completes effective set generation
+1. The `generate_effective_set` job runs.
+2. SBOM retention is enabled with `keep_versions_per_app: 3`. The cleanup procedure starts.
+3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).
+4. For `/sboms/postgres/`, the 3 most recent files are kept and the 7 older files are deleted.
+5. The total size of `/sboms/` after per-application retention is at or below the 1200 MB
+   safety-net threshold. No safety-net wipe is performed.
+6. The effective set generation completes.
 
 **Results:**
 
 1. Effective set is generated successfully
-2. SBOM files for `postgres` under `/sboms/postgres/` are cleaned up:
-   - **Kept**: `/sboms/postgres/postgres-pg16-2.10.10.sbom.json`, `postgres-pg16-2.10.9.sbom.json`, `postgres-pg16-2.10.8.sbom.json`
-   - **Deleted**: `/sboms/postgres/postgres-pg16-2.10.7.sbom.json` through `postgres-pg16-2.10.1.sbom.json` (7 files)
+2. SBOM files under `/sboms/postgres/` are cleaned up:
+   - 3 most recently modified files are kept
+   - 7 oldest files are deleted
 3. Total files deleted: 7 SBOM files
 4. Pipeline log shows:
-   - "Repository size (1350 MB) above threshold (1200 MB), starting cleanup"
-   - "Cleaned up 7 SBOM files for postgres"
-   - "Kept 3 versions per application"
+   - `SBOMs retention policy is enabled`
+   - `Only 3 files will remain in <path>/sboms/postgres` (and a `Removing file:` line per
+     deleted file)
+   - `Directory size <X> mb within limit 1200 mb`
+
+### UC-SBOM-5: Total /sboms/ size exceeds 1200 MB after per-application retention - full cache wipe
+
+**Pre-requisites:**
+
+1. Instance Repository exists with `/sboms/` directory
+2. SBOM files exist for several applications. Each subdirectory already contains
+   `keep_versions_per_app` files or fewer, but the individual SBOM files are unusually large
+3. SBOM retention is **enabled** in `/configuration/config.yml`:
+
+   ```yaml
+   sbom_retention:
+     enabled: true
+     keep_versions_per_app: 10
+   ```
+
+4. Total size of `/sboms/` is 1400 MB (above the 1200 MB safety-net threshold). Per-application
+   retention is not able to reduce the total below the threshold because no per-application
+   subdirectory exceeds `keep_versions_per_app`
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `GENERATE_EFFECTIVE_SET: true`
+
+**Steps:**
+
+1. The `generate_effective_set` job runs.
+2. SBOM retention is enabled with `keep_versions_per_app: 10`. The cleanup procedure starts.
+3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).
+4. Per-application retention runs over each subdirectory. No subdirectory exceeds
+   `keep_versions_per_app`, so no per-application files are deleted.
+5. The total size of `/sboms/` is above the 1200 MB safety-net threshold. All files under
+   `/sboms/` are deleted as a fail-safe.
+6. The effective set generation completes.
+
+**Results:**
+
+1. Effective set is generated successfully
+2. All cached SBOM files are deleted. The next pipeline run that needs SBOMs will regenerate
+   them, which is a costly operation
+3. Pipeline log shows:
+   - `SBOMs retention policy is enabled`
+   - `Directory size 1400.00 mb exceeds limit 1200 mb, deleting all files in <path>/sboms`
+   - One `Removing file: <path>` line per deleted file
