@@ -207,8 +207,7 @@
       "description": "Provides additional information about a BOM",
       "required": [
         "timestamp",
-        "component",
-        "tools"
+        "component"
       ],
       "additionalProperties": false,
       "properties": {
@@ -361,54 +360,6 @@
               "uniqueItems": true,
               "title": "Components",
               "description": "A list of software and hardware components included in the parent component. This is not a dependency tree. It provides a way to specify a hierarchical representation of component assemblies, similar to system &#8594; subsystem &#8594; parts assembly in physical supply chains"
-            }
-          }
-        },
-        "tools": {
-          "type": "object",
-          "title": "Tools",
-          "description": "The tool(s) used in the creation, enrichment, and validation of the BOM",
-          "additionalProperties": false,
-          "properties": {
-            "components": {
-              "type": "array",
-              "title": "Components",
-              "description": "A list of software and hardware components used as tools",
-              "items": {
-                "type": "object",
-                "title": "Component",
-                "required": [
-                  "type",
-                  "name",
-                  "version"
-                ],
-                "additionalProperties": false,
-                "uniqueItems": true,
-                "properties": {
-                  "type": {
-                    "type": "string",
-                    "enum": [
-                      "application"
-                    ],
-                    "title": "Component Type",
-                    "description": "Specifies the type of component. For software components, classify as application if no more specific appropriate classification is available or cannot be determined for the component"
-                  },
-                  "name": {
-                    "type": "string",
-                    "title": "Component Name",
-                    "description": "The name of the component. This will often be a shortened, single name of the component. Examples: commons-lang3 and jquery",
-                    "examples": [
-                      "tomcat-catalina"
-                    ]
-                  },
-                  "version": {
-                    "$ref": "#/$defs/version",
-                    "title": "Component Version",
-                    "description": "The component version. The version should ideally comply with semantic versioning but is not enforced"
-                  }
-                }
-              },
-              "uniqueItems": true
             }
           }
         }
