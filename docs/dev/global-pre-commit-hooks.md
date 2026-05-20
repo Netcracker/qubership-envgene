@@ -163,7 +163,7 @@ Use `CYBER_FERRET_PASSWORD` as in [Set `CYBER_FERRET_PASSWORD` permanently](#set
 
 When you run `git commit -m "your message"`:
 
-1. Global **pre-commit** runs (including a periodic `git pull` of the hooks repo, then any repository **`.git/hooks/pre-commit`** if present).
+1. Global **pre-commit** runs (including a periodic `git pull` of the hooks repository, then any repository **`.git/hooks/pre-commit`** if present).
 2. If `.pre-commit-config.yaml` exists, the **pre-commit** framework may also run when configured in the repository.
 3. Global **commit-msg** runs. If the repository has **`.git/hooks/commit-msg`**, that local script runs instead of CyberFerret (see [Local `commit-msg` hook](#local-commit-msg-hook)).
 4. Otherwise, if **`.qubership/grand-report.json`** exists, CyberFerret scans changed files (see [CyberFerret output examples](#cyberferret-output-examples)).
