@@ -40,12 +40,9 @@ import org.qubership.cloud.devops.commons.repository.interfaces.FileDataConverte
 import org.qubership.cloud.devops.commons.service.interfaces.ProfileService;
 import org.qubership.cloud.devops.commons.service.interfaces.RegistryConfigurationService;
 import org.qubership.cloud.devops.commons.utils.ServiceArtifactType;
-import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
-
 import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
-
 import static org.qubership.cloud.devops.commons.utils.ParameterUtils.wrapPlainMapWithOrigin;
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
 import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.*;
@@ -76,7 +73,6 @@ public class BomReaderUtilsImplV2 {
         if (bomContent == null) {
             return null;
         }
-        String baselineOrigin = String.format(ParametersConstants.RP_BASELINE_ORIGIN, baseline);
 
         EntitiesMap entitiesMap = new EntitiesMap();
         try {

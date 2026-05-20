@@ -26,12 +26,11 @@ import org.qubership.cloud.devops.commons.pojo.namespaces.model.Namespace;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 import org.qubership.cloud.devops.commons.utils.BomReaderUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
-
+import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.*;
 
 import java.util.*;
 
 import static org.qubership.cloud.devops.commons.utils.constant.ApplicationConstants.*;
-import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.*;
 
 
 @Slf4j

@@ -87,12 +87,12 @@ public class CloudMap extends DynamicMap {
             if (dbaas.getApiUrl() != null) {
                 map.putIfAbsent("API_DBAAS_ADDRESS", dbaas.getApiUrl());
             } else {
-                map.putIfAbsent("API_DBAAS_ADDRESS", DEFAULT_EMPTY_STRING,ENVGENE_DEFAULT);
+                map.putIfAbsent("API_DBAAS_ADDRESS", "",ENVGENE_DEFAULT);
             }
             if (dbaas.getAggregatorUrl() != null) {
                 map.putIfAbsent("DBAAS_AGGREGATOR_ADDRESS", dbaas.getAggregatorUrl());
             } else {
-                map.putIfAbsent("DBAAS_AGGREGATOR_ADDRESS", DEFAULT_EMPTY_STRING,ENVGENE_DEFAULT);
+                map.putIfAbsent("DBAAS_AGGREGATOR_ADDRESS", "",ENVGENE_DEFAULT);
             }
 
             Credential cred = credentialUtils.getCredentialsById(dbaas.getCredId());
@@ -155,10 +155,10 @@ public class CloudMap extends DynamicMap {
                             .getAuthClientToken();
                     map.put("VAULT_TOKEN", token);
                 } catch (VaultException e) {
-                    map.putIfAbsent("VAULT_TOKEN", DEFAULT_EMPTY_STRING,ENVGENE_DEFAULT);
+                    map.putIfAbsent("VAULT_TOKEN", "",ENVGENE_DEFAULT);
                 }
             } else {
-                map.putIfAbsent("VAULT_TOKEN", DEFAULT_EMPTY_STRING,ENVGENE_DEFAULT);
+                map.putIfAbsent("VAULT_TOKEN", "",ENVGENE_DEFAULT);
             }
         }
         Consul consul = config.getConsul();
@@ -170,7 +170,7 @@ public class CloudMap extends DynamicMap {
             if (cred instanceof StringCredentials) {
                 map.putIfAbsent("CONSUL_ADMIN_TOKEN", ((StringCredentials) cred).getSecret());
             } else {
-                map.putIfAbsent("CONSUL_ADMIN_TOKEN", DEFAULT_EMPTY_STRING,ENVGENE_DEFAULT);
+                map.putIfAbsent("CONSUL_ADMIN_TOKEN", "",ENVGENE_DEFAULT);
             }
         }
 
@@ -193,7 +193,7 @@ public class CloudMap extends DynamicMap {
 
         // Deployer parameters
         String protocol = StringUtils.isNotBlank(config.getClProtocol()) ? config.getClProtocol() : "https";
-        String protocolOrigin = "https".equalsIgnoreCase(protocol) ? ENVGENE_CALCULATED : ParametersConstants.CLOUD_ORIGIN;
+        String protocolOrigin = StringUtils.isBlank(config.getClProtocol()) ? ENVGENE_CALCULATED : ParametersConstants.CLOUD_ORIGIN;
         map.putIfAbsent("CLOUD_PROTOCOL", protocol.toLowerCase(),protocolOrigin);
         map.putIfAbsent("CLOUD_API_HOST", config.getCloudApiUrl());
         if (StringUtils.isBlank(config.getCloudUrlPrv())) {
@@ -204,7 +204,7 @@ public class CloudMap extends DynamicMap {
         map.putIfAbsent("CLOUD_PUBLIC_HOST", config.getCloudUrlPub());
 
         String port = StringUtils.isNotBlank(config.getCloudApiPort()) ? config.getCloudApiPort() : "8443";
-        String portOrigin = "8443".equalsIgnoreCase(port) ? ENVGENE_CALCULATED : ParametersConstants.CLOUD_ORIGIN;
+        String portOrigin = StringUtils.isBlank(config.getCloudApiPort()) ? ENVGENE_CALCULATED : ParametersConstants.CLOUD_ORIGIN;
         map.putIfAbsent("CLOUD_API_PORT ", port, portOrigin);
 
         maps.put(cloudName, map);
