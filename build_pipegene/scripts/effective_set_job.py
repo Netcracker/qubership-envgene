@@ -9,7 +9,7 @@ from envgenehelper import cleanup_targets
 from pipeline_helper import job_instance
 
 
-def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluster_name, params, env_artifact_paths):
+def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluster_name, params):
     logger.info(f'Prepare generate-effective-set job for {full_env_name}')
     logger.info(f'Cleanup_targets: {cleanup_targets}')
 
@@ -97,6 +97,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     }
 
     generate_effective_set_vars = {
+        "FULL_ENV_NAME": full_env_name,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": env_name,
         "ENV_NAME": env_name,
@@ -121,7 +122,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     logger.info(f"effective set expiry value '{effective_set_expiry}'")
     generate_effective_set_job.artifacts.expire_in = effective_set_expiry
 
-    generate_effective_set_job.artifacts.add_paths(*env_artifact_paths)
     generate_effective_set_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(generate_effective_set_job)
 

@@ -31,7 +31,7 @@ def prepare_trigger_passport_job(pipeline, full_env):
     return trigger_job
 
 
-def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, env_artifact_paths):
+def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name):
     logger.info(f'prepare get_passport job for {full_env}')
 
     get_passport_params = {
@@ -47,12 +47,12 @@ def prepare_passport_job(pipeline, full_env, enviroment_name, cluster_name, env_
     }
     get_passport_params['script'].append('/module/scripts/git_commit.sh')
     get_passport_vars = {
+        "FULL_ENV_NAME": full_env,
         "ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,
     }
     get_passport_job = job_instance(params=get_passport_params, vars=get_passport_vars)
-    get_passport_job.artifacts.add_paths(*env_artifact_paths)
     get_passport_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(get_passport_job)
     return get_passport_job

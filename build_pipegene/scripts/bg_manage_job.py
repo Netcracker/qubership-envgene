@@ -2,7 +2,7 @@ from gcip import WhenStatement
 from envgenehelper import logger
 from pipeline_helper import job_instance
 
-def prepare_bg_manage_job(pipeline, full_env, env_artifact_paths):
+def prepare_bg_manage_job(pipeline, full_env):
     logger.info(f'prepare_bg manage job for {full_env}')
 
     job_params = {
@@ -16,7 +16,6 @@ def prepare_bg_manage_job(pipeline, full_env, env_artifact_paths):
     }
 
     job = job_instance(params=job_params, vars=job_vars)
-    job.artifacts.add_paths(*env_artifact_paths)
     job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(job)
     return job

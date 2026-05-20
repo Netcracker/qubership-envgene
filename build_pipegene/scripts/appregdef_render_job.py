@@ -5,7 +5,7 @@ from pipeline_helper import job_instance
 
 
 def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, cluster_name, group_id, artifact_id,
-                                 artifact_url, env_artifact_paths):
+                                 artifact_url):
     logger.info(f'Prepare appregdef render job for {full_env}')
     
     script = []
@@ -33,7 +33,6 @@ def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, c
     }
 
     appregdef_render_job = job_instance(params=appregdef_render_params, vars=appregdef_render_vars)
-    appregdef_render_job.artifacts.add_paths(*env_artifact_paths)
     appregdef_render_job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(appregdef_render_job)
 

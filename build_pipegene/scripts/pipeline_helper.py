@@ -141,7 +141,7 @@ def do_checkout(job):
 
 def get_env_artifact_paths(cluster_name: str, env_name: str) -> list[str]:
     env_artifact_paths = [
-        f'environment/{cluster_name}/{env_name}'
+        f'environments/{cluster_name}/{env_name}'
     ]
     shared_entity_paths = get_shared_entity_paths(cluster_name)
     env_artifact_paths.extend(shared_entity_paths)
@@ -177,3 +177,4 @@ def get_shared_entity_paths(cluster_name: str) -> list[str]:
     )
         
     return paths
+
