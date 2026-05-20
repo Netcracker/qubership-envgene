@@ -1,4 +1,4 @@
-from gcip import Job, Need
+from gcip import Job, Need, TriggerJob
 from typing import Optional, List, Dict, Union, Any
 from envgenehelper import (
     logger,
@@ -121,3 +121,59 @@ def check_discovery_job_needed(env_definition: dict, env_template_vers: str) -> 
                         +'artifact_definitions_discovery_mode: false\n\n'
                         +'set artifact definition manually or enable artifact definition discovery \n')
     return True
+
+
+def is_trigger_job(job):
+    return isinstance(job, TriggerJob)
+
+
+def do_checkout(job):
+    is_first_job = job.needs is None or len(job.needs) == 0
+    if is_first_job or any(is_trigger_job(need) for need in job.needs):
+        logger.info(
+            f"Enabling checkout for {job.name} "
+            f"Stage: {job.stage}, Needs: {job.needs}"
+        )
+        return True
+
+    return False
+
+
+def get_env_artifact_paths(cluster_name: str, env_name: str) -> list[str]:
+    env_artifact_paths = [
+        f'environment/{cluster_name}/{env_name}'
+    ]
+    shared_entity_paths = get_shared_entity_paths(cluster_name)
+    env_artifact_paths.extend(shared_entity_paths)
+    
+    return env_artifact_paths
+
+
+def get_shared_entity_paths(cluster_name: str) -> list[str]:
+    ENV_ARTIFACT_SUBDIRS = [
+        "configuration",
+        "configurations",
+        "resource_profiles",
+        "rp_override",
+        "Profiles",
+        "parameters",
+        "cloud-passport",
+        "cloud-passports",
+        "credentials",
+        "Credentials",
+        "shared-credentials",
+    ]
+
+    CLUSTER_ONLY_SUBDIRS = [
+        "app-deployer",
+        "cloud-deployer",
+    ]
+    
+    paths = [f"environments/{d}" for d in ENV_ARTIFACT_SUBDIRS]
+
+    paths.extend(
+        f"environments/{cluster_name}/{d}"
+        for d in ENV_ARTIFACT_SUBDIRS + CLUSTER_ONLY_SUBDIRS
+    )
+        
+    return paths

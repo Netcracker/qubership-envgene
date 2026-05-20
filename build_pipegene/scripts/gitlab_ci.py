@@ -3,7 +3,7 @@ from os import listdir
 
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name
 from envgenehelper.plugin_engine import PluginEngine
-from gcip import JobFilter, Pipeline, TriggerJob
+from gcip import JobFilter, Pipeline
 
 import pipeline_helper
 from appregdef_render_job import prepare_appregdef_render_job
@@ -14,7 +14,7 @@ from inventory_generation_job import prepare_inventory_generation_job, is_invent
 from passport_jobs import prepare_trigger_passport_job, prepare_passport_job
 from process_sd_job import prepare_process_sd
 from effective_set_job import prepare_generate_effective_set_job
-from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job
+from pipeline_helper import get_gav_coordinates_from_build, find_predecessor_job, get_env_artifact_paths, do_checkout
 from envgenehelper.collections_helper import split_multi_value_param
 
 
@@ -77,6 +77,8 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         else:
             cluster_name = get_cluster_name_from_full_name(full_env_name)
             environment_name = get_environment_name_from_full_name(full_env_name)
+        
+        env_artifact_paths = get_env_artifact_paths(cluster_name, environment_name)
 
         job_sequence = [
             "trigger_passport_job",
@@ -94,7 +96,8 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         # get passport job if it is not already added for cluster
         if params['GET_PASSPORT'] and cluster_name not in get_passport_jobs:
             jobs_map["trigger_passport_job"] = prepare_trigger_passport_job(pipeline, full_env_name)
-            jobs_map["get_passport_job"] = prepare_passport_job(pipeline, full_env_name, environment_name, cluster_name)
+            jobs_map["get_passport_job"] = prepare_passport_job(pipeline, full_env_name, environment_name, 
+                                                                cluster_name, env_artifact_paths)
             get_passport_jobs[cluster_name] = True
         else:
             logger.info(f"Generation of cloud passport for environment '{full_env_name}' is skipped")
@@ -104,7 +107,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
             raise ValueError("CRED_ROTATION_PAYLOAD and GET_PASSPORT cannot be used together")
         elif params['CRED_ROTATION_PAYLOAD']:
             credential_rotation_job = prepare_credential_rotation_job(pipeline, full_env_name, environment_name,
-                                                                      cluster_name)
+                                                                      cluster_name, env_artifact_paths)
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
             logger.info(
@@ -114,11 +117,12 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         if not params.get('BG_MANAGE', None):
             logger.info(f'Preparing of bg_manage job for environment {full_env_name} is skipped.')
         else:
-            jobs_map['bg_manage_job'] = prepare_bg_manage_job(pipeline, full_env_name)
+            jobs_map['bg_manage_job'] = prepare_bg_manage_job(pipeline, full_env_name, env_artifact_paths)
 
         if is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params):
             jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, full_env_name,
-                                                                                        environment_name, cluster_name)
+                                                                                        environment_name, cluster_name,
+                                                                                        env_artifact_paths)
         else:
             logger.info(
                 f'Preparing of full_env_name inventory generation job for {full_env_name} '
@@ -127,7 +131,8 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         if params['ENV_BUILD']:
             jobs_map["appregdef_render_job"] = prepare_appregdef_render_job(pipeline, params, full_env_name,
                                                                             environment_name, cluster_name, group_id,
-                                                                            artifact_id, artifact_url)
+                                                                            artifact_id, artifact_url, 
+                                                                            env_artifact_paths)
         else:
             logger.info(f'Preparing of appregdef_render_job {full_env_name} is skipped.')
 
@@ -136,20 +141,22 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
                 (source_type == "json" and params.get("SD_DATA")) or
                 (source_type == "artifact" and params.get("SD_VERSION"))
         ):
-            jobs_map["process_sd_job"] = prepare_process_sd(pipeline, full_env_name, environment_name, cluster_name)
+            jobs_map["process_sd_job"] = prepare_process_sd(pipeline, full_env_name, environment_name, cluster_name, 
+                                                            env_artifact_paths)
         else:
             logger.info(f'Preparing of process_sd_job for {full_env_name} is skipped')
 
         if params['ENV_BUILD']:
             jobs_map["env_build_job"] = prepare_env_build_job(pipeline, params['IS_TEMPLATE_TEST'], full_env_name,
-                                                              environment_name, cluster_name, group_id, artifact_id)
+                                                              environment_name, cluster_name, group_id, artifact_id,
+                                                              env_artifact_paths)
         else:
             logger.info(f'Preparing of env_build job for {full_env_name} is skipped.')
 
         if params['GENERATE_EFFECTIVE_SET']:
             jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, full_env_name,
                                                                                         environment_name, cluster_name,
-                                                                                        params)
+                                                                                        params, env_artifact_paths)
         else:
             logger.info(f'Preparing of generate_effective_set job for {full_env_name} is skipped.')
             if "CUSTOM_PARAMS" in params and params["CUSTOM_PARAMS"]:
@@ -174,7 +181,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         if (any(job in jobs_map for job in plugin_params['jobs_requiring_git_commit']) and
                 not params['IS_TEMPLATE_TEST']):
             jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, full_env_name, environment_name, cluster_name,
-                                                                credential_rotation_job)
+                                                                env_artifact_paths, credential_rotation_job)
         else:
             logger.info(f'Preparing of git commit job for {full_env_name} is skipped.')
 
@@ -196,32 +203,15 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
     sorted_pipeline.add_tags(params["GITLAB_RUNNER_TAG_NAME"])
 
     # check out repo only once in the first job of the generated pipeline, later jobs get it through artifacts from each other
-    # purpose: avoid later jobs restoring files that were removed by previous jobs, so git commit job can commit those deletions
     for job in sorted_pipeline.find_jobs(JobFilter()):
         job.artifacts.add_paths(
-            'environments/',
             'configuration/',
             'sboms/',
             'templates/',
-            'tmp/'
+            'tmp/',
         )
 
         if not do_checkout(job):
             job.add_variables(GIT_STRATEGY="empty")
 
     sorted_pipeline.write_yaml()
-
-def is_trigger_job(job):
-    return isinstance(job, TriggerJob)
-
-
-def do_checkout(job):
-    is_first_job = job.needs is None or len(job.needs) == 0
-    if is_first_job or any(is_trigger_job(need) for need in job.needs):
-        logger.info(
-            f"Enabling checkout for {job.name} "
-            f"Stage: {job.stage}, Needs: {job.needs}"
-        )
-        return True
-
-    return False

@@ -6,7 +6,7 @@ from envgenehelper import logger
 from pipeline_helper import job_instance
 
 
-def prepare_process_sd(pipeline, full_env, environment_name, cluster_name):
+def prepare_process_sd(pipeline, full_env, environment_name, cluster_name, env_artifact_paths):
     logger.info(f'Prepare process_sd job for {full_env}')
     
     script = [
@@ -33,6 +33,7 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name):
     }
 
     process_sd_job = job_instance(params=process_sd_set_params, vars=process_sd_set_vars)
+    process_sd_job.artifacts.add_paths(*env_artifact_paths)
     process_sd_job.artifacts.when = WhenStatement.ALWAYS    
     pipeline.add_children(process_sd_job)
     

@@ -28,7 +28,7 @@ def is_inventory_generation_needed(is_template_test, inventory_params):
     return env_inventory_content or env_inventory_init or bool(env_specific_parameters) or bool(env_template_name)
 
 
-def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, cluster_name):
+def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, cluster_name, env_artifact_paths):
     logger.info(f"prepare env_generation job for {full_env_name}")
     params = {
         "name": f"env_inventory_generation.{full_env_name}",
@@ -44,6 +44,7 @@ def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, 
         "FULL_ENV_NAME": full_env_name,
     }
     job = job_instance(params=params, vars=vars)
+    job.artifacts.add_paths(*env_artifact_paths)
     job.artifacts.when = WhenStatement.ALWAYS
     pipeline.add_children(job)
     return job
