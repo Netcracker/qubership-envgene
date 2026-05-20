@@ -14,15 +14,13 @@
     - [UC-CC-HR-1: Namespace to Cloud Reference](#uc-cc-hr-1-namespace-to-cloud-reference)
     - [UC-CC-HR-2: Namespace to Tenant Reference](#uc-cc-hr-2-namespace-to-tenant-reference)
     - [UC-CC-HR-3: Cloud to Tenant Reference](#uc-cc-hr-3-cloud-to-tenant-reference)
-    - [UC-CC-HR-4: Cloud to Namespace Reference Error](#uc-cc-hr-4-cloud-to-namespace-reference-error)
-    - [UC-CC-HR-5: Tenant to Cloud Reference Error](#uc-cc-hr-5-tenant-to-cloud-reference-error)
-    - [UC-CC-HR-6: Tenant to Namespace Reference Error](#uc-cc-hr-6-tenant-to-namespace-reference-error)
+    - [UC-CC-HR-4: Cloud to Namespace Reference - Deploy and Technical Resolution](#uc-cc-hr-4-cloud-to-namespace-reference---deploy-and-technical-resolution)
+    - [UC-CC-HR-5: Tenant to Cloud Reference](#uc-cc-hr-5-tenant-to-cloud-reference)
+    - [UC-CC-HR-6: Tenant to Namespace Reference](#uc-cc-hr-6-tenant-to-namespace-reference)
   - [Cross-Context Parameter References](#cross-context-parameter-references)
-    - [UC-CC-CR-1: DeployParameters to E2EParameters Reference Error](#uc-cc-cr-1-deployparameters-to-e2eparameters-reference-error)
-    - [UC-CC-CR-2: DeployParameters to TechnicalConfigurationParameters Reference Error](#uc-cc-cr-2-deployparameters-to-technicalconfigurationparameters-reference-error)
-    - [UC-CC-CR-3: E2EParameters to DeployParameters Reference Error](#uc-cc-cr-3-e2eparameters-to-deployparameters-reference-error)
-    - [UC-CC-CR-4: E2EParameters to TechnicalConfigurationParameters Reference Error](#uc-cc-cr-4-e2eparameters-to-technicalconfigurationparameters-reference-error)
-    - [UC-CC-CR-5: TechnicalConfigurationParameters to DeployParameters Reference Error](#uc-cc-cr-5-technicalconfigurationparameters-to-deployparameters-reference-error)
+    - [UC-CC-CR-3: E2EParameters to DeployParameters - Silent Drop](#uc-cc-cr-3-e2eparameters-to-deployparameters---silent-drop)
+    - [UC-CC-CR-4: E2EParameters to TechnicalConfigurationParameters - Silent Drop](#uc-cc-cr-4-e2eparameters-to-technicalconfigurationparameters---silent-drop)
+    - [UC-CC-CR-5: TechnicalConfigurationParameters to DeployParameters - Resolves Successfully](#uc-cc-cr-5-technicalconfigurationparameters-to-deployparameters---resolves-successfully)
     - [UC-CC-CR-6: TechnicalConfigurationParameters to E2EParameters Reference Error](#uc-cc-cr-6-technicalconfigurationparameters-to-e2eparameters-reference-error)
   - [SBOM Processing](#sbom-processing)
     - [UC-ES-DEP-14: deploy_param image keys](#uc-es-dep-14-deploy_param-image-keys)
@@ -59,20 +57,27 @@
   - [Cleanup Context](#cleanup-context)
     - [UC-ES-CLN-1: cleanup/parameters.yaml from deployParameters](#uc-es-cln-1-cleanupparametersyaml-from-deployparameters)
     - [UC-ES-CLN-2: cleanup/credentials.yaml includes sensitive and custom runtime](#uc-es-cln-2-cleanupcredentialsyaml-includes-sensitive-and-custom-runtime)
+  - [No SBOMs Mode](#no-sboms-mode)
+    - [UC-ES-NOSBOM-1: Only Pipeline and Topology contexts generated](#uc-es-nosbom-1-only-pipeline-and-topology-contexts-generated)
+  - [Traceability Comments](#traceability-comments)
+    - [UC-ES-TR-1: Traceability comments enabled - source annotation per parameter](#uc-es-tr-1-traceability-comments-enabled---source-annotation-per-parameter)
+    - [UC-ES-TR-2: Traceability comments disabled by default](#uc-es-tr-2-traceability-comments-disabled-by-default)
+    - [UC-ES-TR-3: Multiline value gets comment on preceding line](#uc-es-tr-3-multiline-value-gets-comment-on-preceding-line)
+    - [UC-ES-TR-4: deploy-descriptor.yaml uses file-level header comment](#uc-es-tr-4-deploy-descriptoryaml-uses-file-level-header-comment)
+    - [UC-ES-TR-5: mapping.yaml and external-credentials.yaml have no comments](#uc-es-tr-5-mappingyaml-and-external-credentialsyaml-have-no-comments)
   - [Topology Context](#topology-context)
     - [UC-ES-TOP-1: Cluster endpoint from Cloud Passport](#uc-es-top-1-cluster-endpoint-from-cloud-passport)
-    - [UC-ES-TOP-2: Cluster endpoint from inventory.clusterUrl](#uc-es-top-2-cluster-endpoint-from-inventoryclusterurl)
-    - [UC-ES-TOP-3: inventory.clusterUrl parsing variants](#uc-es-top-3-inventoryclusterurl-parsing-variants)
-    - [UC-ES-TOP-6: Cloud Passport overrides inventory.clusterUrl](#uc-es-top-6-cloud-passport-overrides-inventoryclusterurl)
-    - [UC-ES-TOP-7: Missing cluster information yields empty cluster fields](#uc-es-top-7-missing-cluster-information-yields-empty-cluster-fields)
+    - [UC-ES-TOP-2: Cluster endpoint from Environment Inventory clusterUrl](#uc-es-top-2-cluster-endpoint-from-environment-inventory-clusterurl)
+    - [UC-ES-TOP-3: Environment Inventory clusterUrl parsing variants](#uc-es-top-3-environment-inventory-clusterurl-parsing-variants)
+    - [UC-ES-TOP-6: Cloud Passport overrides Environment Inventory clusterUrl](#uc-es-top-6-cloud-passport-overrides-environment-inventory-clusterurl)
 
 ## Overview
 
-This document covers use cases for [Calculator CLI](/docs/features/calculator-cli.md) operations related to Effective Set v2.0 generation.
+This document covers use cases for [Calculator CLI](/docs/features/calculator-cli.md) operations related to Effective Set generation.
 
 ## deployPostfix Matching Logic
 
-This section covers use cases for [deployPostfix Matching Logic](/docs/features/calculator-cli.md#version-20-deploypostfix-matching-logic). The matching logic matches `deployPostfix` values from Solution Descriptor(SD) to Namespace folders in Environment Instance.
+This section covers use cases for [deployPostfix Matching Logic](/docs/features/calculator-cli.md#version-20-deploypostfix-matching-logic).
 
 ### UC-CC-DP-1: Exact Match
 
@@ -103,6 +108,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. `deployPostfix` value from SD is matched to the Namespace folder with exact name match
 2. Applications from SD are associated with the matching Namespace folder in Effective Set
+3. Effective Set generation completes successfully
 
 ### UC-CC-DP-2: BG Domain Match
 
@@ -141,6 +147,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. `deployPostfix` value from SD is matched to either the `origin` or `peer` Namespace folder in BG Domain (with `-origin` or `-peer` suffix, depending on which match is found)
 2. Applications from SD are associated with the matching Namespace folder (`origin` or `peer`) in Effective Set
+3. Effective Set generation completes successfully
 
 ### UC-CC-DP-3: No Exact Match Found
 
@@ -172,7 +179,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. No Namespace folder is matched to the `deployPostfix` value from SD
 2. Applications from SD with this `deployPostfix` value are not associated with any Namespace folder in Effective Set
-3. Effective Set generation fails with an error indicating that no matching Namespace folder was found in Environment Instance for the `deployPostfix` value from SD (e.g., `Error: Cannot find Namespace folder in Environment Instance for deployPostfix: "<deployPostfix>"`)
+3. Effective Set generation fails
 
 ### UC-CC-DP-4: No BG Domain Match Found
 
@@ -212,11 +219,11 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. No Namespace folder is matched to the `deployPostfix` value from SD
 2. Applications from SD with this `deployPostfix` value are not associated with any Namespace folder in Effective Set
-3. Effective Set generation fails with an error indicating that no matching Namespace folder was found in Environment Instance for the `deployPostfix` value(s) from SD. The error message lists all `deployPostfix` values that could not be matched (e.g., `Cannot find Namespace folder in Environment Instance for deployPostfix: "<deployPostfix>", "<deployPostfix>"`)
+3. Effective Set generation fails
 
 ## Parameter Type Preservation in Macro Resolution
 
-This section covers use cases for [Macro Parameter Resolution](/docs/template-macros.md#calculator-command-line-tool-macros) in Effective Set v2.0. The Calculator CLI resolves parameter references while preserving the original parameter types according to [Parameter type conversion](/docs/features/calculator-cli.md#version-20-parameter-type-conversion) rules.
+This section covers use cases for [Macro Parameter Resolution](/docs/template-macros.md#calculator-command-line-tool-macros) in Effective Set.
 
 ### UC-CC-MR-1: Simple Type Resolution
 
@@ -263,6 +270,16 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
    4. `log_level: "true"` (string type)
 3. Effective Set files contain resolved parameters with correct types preserved
 4. No implicit type conversions occur during macro resolution
+5. Effective Set generation completes successfully
+
+**Example (resolved parameters in Effective Set deployment context, excerpt):**
+
+```yaml
+api_port: 8080
+service_version: "3.0"
+use_ssl: true
+log_level: "true"
+```
 
 ### UC-CC-MR-2: Complex Structure Resolution
 
@@ -348,10 +365,26 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 3. Effective Set files contain resolved complex parameters with original structure and format preserved
 4. No structure transformation or reformatting occurs during macro resolution
+5. Effective Set generation completes successfully
+
+**Example (`deployment/<namespace-folder>/<application>/values/deployment-parameters.yaml`, excerpt):**
+
+```yaml
+api_config:
+  connection:
+    host: db.example.com
+    port: 5432
+rendered_template: |
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
+```
 
 ## Cross-Level Parameter References
 
-This section covers use cases for cross-level parameter references in Effective Set v2.0. EnvGene has a hierarchical parameter structure: [Tenant](/docs/envgene-objects.md#tenant) → [Cloud](/docs/envgene-objects.md#cloud) → [Namespace](/docs/envgene-objects.md#namespace). Parameters can reference other parameters from higher levels in the hierarchy, but not from lower levels. The Calculator CLI enforces these rules during macro resolution.
+EnvGene has a hierarchical parameter structure: **Tenant → Cloud → Namespace**. Parameters may reference other parameters from higher levels in the hierarchy when macro resolution runs during Effective Set generation (see [Calculator CLI requirements](/docs/features/calculator-cli.md#requirements-calculator-cli), item 5).
 
 ### UC-CC-HR-1: Namespace to Cloud Reference
 
@@ -359,15 +392,14 @@ This section covers use cases for cross-level parameter references in Effective 
 
 1. Environment Instance exists with:
    1. Cloud object with:
-      1. `deployParameters` containing: `cloud_api_url: "https://api.example.com"`
-      2. `e2eParameters` containing: `cloud_test_url: "https://test.example.com"`
-      3. `technicalConfigurationParameters` containing: `cloud_config_url: "https://config.example.com"`
+      1. `deployParameters` containing `cloud_api_url: "https://api.example.com"`
+      2. `e2eParameters` containing `cloud_test_url: "https://test.example.com"`
+      3. `technicalConfigurationParameters` containing `cloud_config_url: "https://config.example.com"`
    2. Namespace object with:
-      1. `deployParameters` containing: `service_url: ${cloud_api_url}`
-      2. `e2eParameters` containing: `test_endpoint: ${cloud_test_url}`
-      3. `technicalConfigurationParameters` containing: `config_endpoint: ${cloud_config_url}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
+      1. `deployParameters` containing `service_url: ${cloud_api_url}`
+      2. `e2eParameters` containing `test_endpoint: ${cloud_test_url}`
+      3. `technicalConfigurationParameters` containing `config_endpoint: ${cloud_config_url}`
+2. Solution SBOM and Application SBOMs exist for the target application.
 
 **Trigger:**
 
@@ -379,18 +411,34 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Resolves parameter references:
-      1. Resolves `${cloud_api_url}` reference from Cloud `deployParameters`
-      2. Resolves `${cloud_test_url}` reference from Cloud `e2eParameters`
-      3. Resolves `${cloud_config_url}` reference from Cloud `technicalConfigurationParameters`
+   1. Resolves `${cloud_api_url}` for Namespace `deployParameters` and `${cloud_config_url}` for Namespace `technicalConfigurationParameters` from the parent Cloud.
+   2. Does not emit Namespace `e2eParameters` to any Effective Set file; Cloud `e2eParameters` are still written to `pipeline/parameters.yaml` when present on the Cloud object.
 
 **Results:**
 
-1. References from Namespace to Cloud level are successfully resolved for all parameter types:
-   1. Namespace parameter `service_url` is resolved to `"https://api.example.com"`
-   2. Namespace parameter `test_endpoint` is resolved to `"https://test.example.com"`
-   3. Namespace parameter `config_endpoint` is resolved to `"https://config.example.com"`
+1. Namespace-to-Cloud references behave as follows:
+   1. `service_url: "https://api.example.com"` in Deployment context
+   2. `config_endpoint: "https://config.example.com"` in Runtime context
+   3. `test_endpoint` in Namespace `e2eParameters` is **absent from all output files**; `pipeline/parameters.yaml` contains only Cloud `cloud_test_url` from Cloud `e2eParameters` (see example below)
+2. Effective Set generation completes successfully.
+
+**Example (`deployment/<namespace-folder>/<application>/values/deployment-parameters.yaml`, excerpt):**
+
+```yaml
+service_url: "https://api.example.com"
+```
+
+**Example (`runtime/<namespace-folder>/<application>/parameters.yaml`, excerpt):**
+
+```yaml
+config_endpoint: "https://config.example.com"
+```
+
+**Example (`pipeline/parameters.yaml`, excerpt - Cloud `e2eParameters` only):**
+
+```yaml
+cloud_test_url: "https://test.example.com"
+```
 
 ### UC-CC-HR-2: Namespace to Tenant Reference
 
@@ -398,15 +446,14 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. Environment Instance exists with:
    1. Tenant object with:
-      1. `deployParameters` containing: `tenant_id: "acme-corp"`
-      2. `e2eParameters` containing: `tenant_test_id: "acme-test"`
-      3. `technicalConfigurationParameters` containing: `tenant_config_id: "acme-config"`
+      1. `deployParameters` containing `tenant_id: "acme-corp"`
+      2. `e2eParameters` containing `tenant_test_id: "acme-test"`
+      3. `technicalConfigurationParameters` containing `tenant_config_id: "acme-config"`
    2. Namespace object with:
-      1. `deployParameters` containing: `organization: ${tenant_id}`
-      2. `e2eParameters` containing: `test_org: ${tenant_test_id}`
-      3. `technicalConfigurationParameters` containing: `config_org: ${tenant_config_id}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
+      1. `deployParameters` containing `organization: ${tenant_id}`
+      2. `e2eParameters` containing `test_org: ${tenant_test_id}`
+      3. `technicalConfigurationParameters` containing `config_org: ${tenant_config_id}`
+2. Solution SBOM and Application SBOMs exist for the target application.
 
 **Trigger:**
 
@@ -418,18 +465,28 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Resolves parameter references:
-      1. Resolves `${tenant_id}` reference from Tenant `deployParameters`
-      2. Resolves `${tenant_test_id}` reference from Tenant `e2eParameters`
-      3. Resolves `${tenant_config_id}` reference from Tenant `technicalConfigurationParameters`
+   1. Resolves `${tenant_id}` for Namespace `deployParameters` and `${tenant_config_id}` for Namespace `technicalConfigurationParameters` from the parent Tenant.
+   2. Does not emit Namespace or Tenant `e2eParameters` to Effective Set outputs; Cloud `e2eParameters` still feed `pipeline/parameters.yaml` when defined on the Cloud object.
 
 **Results:**
 
-1. References from Namespace to Tenant level are successfully resolved for all parameter types:
-   1. Namespace parameter `organization` is resolved to `"acme-corp"`
-   2. Namespace parameter `test_org` is resolved to `"acme-test"`
-   3. Namespace parameter `config_org` is resolved to `"acme-config"`
+1. Namespace-to-Tenant references behave as follows:
+   1. `organization: "acme-corp"` in Deployment context
+   2. `config_org: "acme-config"` in Runtime context
+   3. `test_org` in Namespace `e2eParameters` is **absent from all output files**; Tenant `tenant_test_id` is not written to `pipeline/` because Tenant `e2eParameters` are outside [Pipeline Parameter Context]
+2. Effective Set generation completes successfully.
+
+**Example (`deployment/<namespace-folder>/<application>/values/deployment-parameters.yaml`, excerpt):**
+
+```yaml
+organization: "acme-corp"
+```
+
+**Example (`runtime/<namespace-folder>/<application>/parameters.yaml`, excerpt):**
+
+```yaml
+config_org: "acme-config"
+```
 
 ### UC-CC-HR-3: Cloud to Tenant Reference
 
@@ -437,15 +494,14 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. Environment Instance exists with:
    1. Tenant object with:
-      1. `deployParameters` containing: `tenant_name: "acme-corp"`
-      2. `e2eParameters` containing: `tenant_test_name: "acme-test"`
-      3. `technicalConfigurationParameters` containing: `tenant_config_name: "acme-config"`
+      1. `deployParameters` containing `tenant_name: "acme-corp"`
+      2. `e2eParameters` containing `tenant_test_name: "acme-test"`
+      3. `technicalConfigurationParameters` containing `tenant_config_name: "acme-config"`
    2. Cloud object with:
-      1. `deployParameters` containing: `cloud_label: ${tenant_name}`
-      2. `e2eParameters` containing: `cloud_test_label: ${tenant_test_name}`
-      3. `technicalConfigurationParameters` containing: `cloud_config_label: ${tenant_config_name}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
+      1. `deployParameters` containing `cloud_label: ${tenant_name}`
+      2. `e2eParameters` containing `cloud_test_label: ${tenant_test_name}`
+      3. `technicalConfigurationParameters` containing `cloud_config_label: ${tenant_config_name}`
+2. Solution SBOM and Application SBOMs exist for the target application.
 
 **Trigger:**
 
@@ -457,34 +513,47 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Resolves parameter references:
-      1. Resolves `${tenant_name}` reference from Tenant `deployParameters`
-      2. Resolves `${tenant_test_name}` reference from Tenant `e2eParameters`
-      3. Resolves `${tenant_config_name}` reference from Tenant `technicalConfigurationParameters`
+   1. Resolves `${tenant_name}` in Cloud `deployParameters`, `${tenant_test_name}` in Cloud `e2eParameters`, and `${tenant_config_name}` in Cloud `technicalConfigurationParameters` from the parent Tenant.
+   2. Writes resolved values to deployment, runtime, and pipeline outputs per context rules.
 
 **Results:**
 
-1. References from Cloud to Tenant level are successfully resolved for all parameter types:
-   1. Cloud parameter `cloud_label` is resolved to `"acme-corp"`
-   2. Cloud parameter `cloud_test_label` is resolved to `"acme-test"`
-   3. Cloud parameter `cloud_config_label` is resolved to `"acme-config"`
+1. All Cloud-to-Tenant references resolve successfully:
+   1. `cloud_label: "acme-corp"` in Deployment context (merged into namespace application deployment parameters)
+   2. `cloud_config_label: "acme-config"` in Runtime context
+   3. `cloud_test_label: "acme-test"` in Pipeline context (`pipeline/parameters.yaml`)
+2. Effective Set generation completes successfully.
 
-### UC-CC-HR-4: Cloud to Namespace Reference Error
+**Example (`deployment/<namespace-folder>/<application>/values/deployment-parameters.yaml`, excerpt):**
+
+```yaml
+cloud_label: "acme-corp"
+```
+
+**Example (`runtime/<namespace-folder>/<application>/parameters.yaml`, excerpt):**
+
+```yaml
+cloud_config_label: "acme-config"
+```
+
+**Example (`pipeline/parameters.yaml`, excerpt):**
+
+```yaml
+cloud_test_label: "acme-test"
+```
+
+### UC-CC-HR-4: Cloud to Namespace Reference - Deploy and Technical Resolution
 
 **Pre-requisites:**
 
 1. Environment Instance exists with:
    1. Namespace object with:
-      1. `deployParameters` containing: `namespace_db_url: "postgres://db.local"`
-      2. `e2eParameters` containing: `namespace_test_url: "https://test.local"`
-      3. `technicalConfigurationParameters` containing: `namespace_config_url: "https://config.local"`
+      1. `deployParameters` containing `namespace_db_url: "postgres://db.local"`
+      2. `technicalConfigurationParameters` containing `namespace_config_url: "https://config.local"`
    2. Cloud object with:
-      1. `deployParameters` containing: `cloud_config: ${namespace_db_url}`
-      2. `e2eParameters` containing: `cloud_test_config: ${namespace_test_url}`
-      3. `technicalConfigurationParameters` containing: `cloud_config_param: ${namespace_config_url}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
+      1. `deployParameters` containing `cloud_config: ${namespace_db_url}`
+      2. `technicalConfigurationParameters` containing `cloud_config_param: ${namespace_config_url}`
+2. Solution SBOM and Application SBOMs exist for the target application.
 
 **Trigger:**
 
@@ -496,33 +565,47 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Attempts to resolve parameter references:
-      1. Attempts to resolve `${namespace_db_url}` reference
-      2. Attempts to resolve `${namespace_test_url}` reference
-      3. Attempts to resolve `${namespace_config_url}` reference
-   3. Detects that the references target a lower level (Namespace) from a higher level (Cloud)
-   4. Effective Set generation fails with an error indicating that cross-level references from Cloud to Namespace are not allowed
+   1. Resolves `${namespace_db_url}` and `${namespace_config_url}` for Cloud `deployParameters` and `technicalConfigurationParameters` when Namespace maps are available in the merge scope.
+   2. Writes resolved literals to deployment and runtime outputs for the namespace application.
 
 **Results:**
 
-1. Effective Set generation fails with error messages indicating that references from Cloud level to Namespace level are prohibited for all parameter types (e.g., `Invalid parameter reference '${namespace_db_url}' in Cloud '<cloud-name>': Cloud level parameters cannot reference Namespace level parameters`)
+1. Effective Set generation completes successfully.
+2. `deployment/<namespace-folder>/<application>/values/deployment-parameters.yaml` contains `cloud_config: "postgres://db.local"`.
+3. `runtime/<namespace-folder>/<application>/parameters.yaml` contains `cloud_config_param: "https://config.local"`.
 
-### UC-CC-HR-5: Tenant to Cloud Reference Error
+**Example (`deployment/<namespace-folder>/<application>/values/deployment-parameters.yaml`, excerpt):**
+
+```yaml
+cloud_config: "postgres://db.local"
+```
+
+**Example (`runtime/<namespace-folder>/<application>/parameters.yaml`, excerpt):**
+
+```yaml
+cloud_config_param: "https://config.local"
+```
+
+**Example (Namespace source in Environment Instance, not Effective Set):**
+
+```yaml
+namespace_db_url: "postgres://db.local"
+```
+
+### UC-CC-HR-5: Tenant to Cloud Reference
 
 **Pre-requisites:**
 
 1. Environment Instance exists with:
    1. Cloud object with:
-      1. `deployParameters` containing: `cloud_region: "us-east-1"`
-      2. `e2eParameters` containing: `cloud_test_region: "us-west-1"`
-      3. `technicalConfigurationParameters` containing: `cloud_config_region: "eu-central-1"`
+      1. `deployParameters` containing `cloud_region: "us-east-1"`
+      2. `e2eParameters` containing `cloud_test_region: "us-west-1"`
+      3. `technicalConfigurationParameters` containing `cloud_config_region: "eu-central-1"`
    2. Tenant object with:
-      1. `deployParameters` containing: `tenant_config: ${cloud_region}`
-      2. `e2eParameters` containing: `tenant_test_config: ${cloud_test_region}`
-      3. `technicalConfigurationParameters` containing: `tenant_config_param: ${cloud_config_region}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
+      1. `deployParameters` containing `tenant_config: ${cloud_region}`
+      2. `e2eParameters` containing `tenant_test_config: ${cloud_test_region}`
+      3. `technicalConfigurationParameters` containing `tenant_config_param: ${cloud_config_region}`
+2. Solution SBOM and Application SBOMs exist for the target application.
 
 **Trigger:**
 
@@ -534,33 +617,55 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Attempts to resolve parameter references:
-      1. Attempts to resolve `${cloud_region}` reference
-      2. Attempts to resolve `${cloud_test_region}` reference
-      3. Attempts to resolve `${cloud_config_region}` reference
-   3. Detects that the references target a lower level (Cloud) from a higher level (Tenant)
-   4. Effective Set generation fails with an error indicating that cross-level references from Tenant to Cloud are not allowed
+   1. Publishes Cloud `deployParameters`, `technicalConfigurationParameters`, and `e2eParameters` to deployment, runtime, and pipeline outputs per [Effective Set structure].
+   2. Resolves Tenant `deployParameters` and `technicalConfigurationParameters` that reference Cloud when cleanup parameters are built for the namespace, so literals can appear under `cleanup/<namespace-folder>/parameters.yaml`.
 
 **Results:**
 
-1. Effective Set generation fails with error messages indicating that references from Tenant level to Cloud level are prohibited for all parameter types (e.g., `Invalid parameter reference '${cloud_region}' in Tenant '<tenant-name>': Tenant level parameters cannot reference Cloud level parameters`)
+1. Effective Set generation completes successfully.
+2. `pipeline/parameters.yaml` contains Cloud `e2eParameters` (for example `cloud_test_region: "us-west-1"`).
+3. `deployment/` and `runtime/` outputs contain Cloud deploy and technical parameters (`cloud_region`, `cloud_config_region`).
+4. `cleanup/<namespace-folder>/parameters.yaml` can contain `tenant_config` and `tenant_config_param` with resolved Cloud values.
 
-### UC-CC-HR-6: Tenant to Namespace Reference Error
+**Example (`pipeline/parameters.yaml`, excerpt):**
+
+```yaml
+cloud_test_region: "us-west-1"
+```
+
+**Example (`deployment/<namespace-folder>/<application>/values/deployment-parameters.yaml`, excerpt):**
+
+```yaml
+cloud_region: "us-east-1"
+```
+
+**Example (`runtime/<namespace-folder>/<application>/parameters.yaml`, excerpt):**
+
+```yaml
+cloud_config_region: "eu-central-1"
+```
+
+**Example (`cleanup/<namespace-folder>/parameters.yaml`, excerpt):**
+
+```yaml
+tenant_config: "us-east-1"
+tenant_config_param: "eu-central-1"
+```
+
+### UC-CC-HR-6: Tenant to Namespace Reference
 
 **Pre-requisites:**
 
 1. Environment Instance exists with:
    1. Namespace object with:
-      1. `deployParameters` containing: `namespace_name: "core"`
-      2. `e2eParameters` containing: `namespace_test_name: "test-core"`
-      3. `technicalConfigurationParameters` containing: `namespace_config_name: "config-core"`
+      1. `deployParameters` containing `namespace_name: "core"`
+      2. `e2eParameters` containing `namespace_test_name: "test-core"`
+      3. `technicalConfigurationParameters` containing `namespace_config_name: "config-core"`
    2. Tenant object with:
-      1. `deployParameters` containing: `tenant_label: ${namespace_name}`
-      2. `e2eParameters` containing: `tenant_test_label: ${namespace_test_name}`
-      3. `technicalConfigurationParameters` containing: `tenant_config_label: ${namespace_config_name}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
+      1. `deployParameters` containing `tenant_label: ${namespace_name}`
+      2. `e2eParameters` containing `tenant_test_label: ${namespace_test_name}`
+      3. `technicalConfigurationParameters` containing `tenant_config_label: ${namespace_config_name}`
+2. Solution SBOM and Application SBOMs exist for the target application.
 
 **Trigger:**
 
@@ -572,32 +677,46 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Attempts to resolve parameter references:
-      1. Attempts to resolve `${namespace_name}` reference
-      2. Attempts to resolve `${namespace_test_name}` reference
-      3. Attempts to resolve `${namespace_config_name}` reference
-   3. Detects that the references target a lower level (Namespace) from a higher level (Tenant)
-   4. Effective Set generation fails with an error indicating that cross-level references from Tenant to Namespace are not allowed
+   1. Publishes Namespace `deployParameters` and `technicalConfigurationParameters` to deployment and runtime outputs for the namespace application.
+   2. Resolves Tenant `deployParameters` and `technicalConfigurationParameters` that reference Namespace when cleanup parameters are built, so literals can appear under `cleanup/<namespace-folder>/parameters.yaml`.
 
 **Results:**
 
-1. Effective Set generation fails with error messages indicating that references from Tenant level to Namespace level are prohibited for all parameter types (e.g., `Invalid parameter reference '${namespace_name}' in Tenant '<tenant-name>': Tenant level parameters cannot reference Namespace level parameters`)
+1. Effective Set generation completes successfully.
+2. `deployment/` and `runtime/` outputs contain Namespace deploy and technical parameters (`namespace_name`, `namespace_config_name`).
+3. `cleanup/<namespace-folder>/parameters.yaml` can contain `tenant_label` and `tenant_config_label` with resolved Namespace values.
+
+**Example (`deployment/<namespace-folder>/<application>/values/deployment-parameters.yaml`, excerpt):**
+
+```yaml
+namespace_name: "core"
+```
+
+**Example (`runtime/<namespace-folder>/<application>/parameters.yaml`, excerpt):**
+
+```yaml
+namespace_config_name: "config-core"
+```
+
+**Example (`cleanup/<namespace-folder>/parameters.yaml`, excerpt):**
+
+```yaml
+tenant_label: "core"
+tenant_config_label: "config-core"
+```
 
 ## Cross-Context Parameter References
 
-This section covers use cases for cross-context parameter references in Effective Set v2.0. Parameters can only reference other parameters within the same parameter type context. References between different parameter types (`deployParameters`, `e2eParameters`, and `technicalConfigurationParameters`) are not allowed. The Calculator CLI enforces these rules during macro resolution.
+This section covers **cross-context** references between `deployParameters`, `e2eParameters`, and `technicalConfigurationParameters` on the same Environment Instance objects.
 
-### UC-CC-CR-1: DeployParameters to E2EParameters Reference Error
+### UC-CC-CR-3: E2EParameters to DeployParameters - Silent Drop
 
 **Pre-requisites:**
 
-1. Environment Instance exists with:
-   1. Namespace object with:
-      1. `e2eParameters` containing: `test_url: "https://test.example.com"`
-      2. `deployParameters` containing: `service_url: ${test_url}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
+1. Environment Instance exists with a Namespace object:
+   1. `deployParameters` containing `api_url: "https://api.example.com"`
+   2. `e2eParameters` containing `test_endpoint: ${api_url}`
+2. Solution SBOM and Application SBOMs exist for the target application.
 
 **Trigger:**
 
@@ -609,26 +728,33 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Attempts to resolve parameter references:
-      1. Attempts to resolve `${test_url}` reference from `deployParameters`
-   3. Detects that the reference targets a different parameter type context (`e2eParameters`) from `deployParameters`
-   4. Effective Set generation fails with an error indicating that cross-context references from `deployParameters` to `e2eParameters` are not allowed
+   1. Does not emit Namespace `e2eParameters` (including `test_endpoint`) to any Effective Set output path.
+   2. Completes successfully; `api_url` from Namespace `deployParameters` appears in deployment output as usual.
 
 **Results:**
 
-1. Effective Set generation fails with an error message indicating that references from `deployParameters` to `e2eParameters` are prohibited (e.g., `Invalid parameter reference '${test_url}' in Namespace '<namespace-name>': Parameters in 'deployParameters' cannot reference parameters from 'e2eParameters'`)
+1. Effective Set generation **completes successfully** - no error is thrown.
+2. `test_endpoint` is **absent from all output files** (Namespace `e2eParameters` are not in Pipeline scope).
+3. `api_url` is present in Deployment context.
 
-### UC-CC-CR-2: DeployParameters to TechnicalConfigurationParameters Reference Error
+**Example (`deployment/<namespace-folder>/<application>/values/deployment-parameters.yaml`, excerpt):**
+
+```yaml
+api_url: "https://api.example.com"
+```
+
+**Example (`pipeline/parameters.yaml`):**
+
+`test_endpoint` is **not** present (Namespace `e2eParameters` are not pipeline output).
+
+### UC-CC-CR-4: E2EParameters to TechnicalConfigurationParameters - Silent Drop
 
 **Pre-requisites:**
 
-1. Environment Instance exists with:
-   1. Namespace object with:
-      1. `technicalConfigurationParameters` containing: `config_url: "https://config.example.com"`
-      2. `deployParameters` containing: `service_config: ${config_url}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
+1. Environment Instance exists with a Namespace object:
+   1. `technicalConfigurationParameters` containing `config_endpoint: "https://config.example.com"`
+   2. `e2eParameters` containing `test_config: ${config_endpoint}`
+2. Solution SBOM and Application SBOMs exist for the target application.
 
 **Trigger:**
 
@@ -640,26 +766,31 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Attempts to resolve parameter references:
-      1. Attempts to resolve `${config_url}` reference from `deployParameters`
-   3. Detects that the reference targets a different parameter type context (`technicalConfigurationParameters`) from `deployParameters`
-   4. Effective Set generation fails with an error indicating that cross-context references from `deployParameters` to `technicalConfigurationParameters` are not allowed
+   1. Does not emit Namespace `e2eParameters` (including `test_config`) to deployment, runtime, or pipeline outputs.
+   2. Completes successfully; `config_endpoint` remains in runtime output as usual.
 
 **Results:**
 
-1. Effective Set generation fails with an error message indicating that references from `deployParameters` to `technicalConfigurationParameters` are prohibited (e.g., `Invalid parameter reference '${config_url}' in Namespace '<namespace-name>': Parameters in 'deployParameters' cannot reference parameters from 'technicalConfigurationParameters'`)
+1. Effective Set generation **completes successfully** - no error is thrown.
+2. `test_config` is **absent from all output files**.
+3. `config_endpoint` remains in Runtime context.
 
-### UC-CC-CR-3: E2EParameters to DeployParameters Reference Error
+**Example (`runtime/<namespace-folder>/<application>/parameters.yaml`, excerpt):**
+
+```yaml
+config_endpoint: "https://config.example.com"
+```
+
+**Example:** `test_config` is absent from `pipeline/`, `deployment/`, and `runtime/`.
+
+### UC-CC-CR-5: TechnicalConfigurationParameters to DeployParameters - Resolves Successfully
 
 **Pre-requisites:**
 
-1. Environment Instance exists with:
-   1. Namespace object with:
-      1. `deployParameters` containing: `api_url: "https://api.example.com"`
-      2. `e2eParameters` containing: `test_endpoint: ${api_url}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
+1. Environment Instance exists with a Namespace object:
+   1. `deployParameters` containing `deploy_url: "https://deploy.example.com"`
+   2. `technicalConfigurationParameters` containing `runtime_config: ${deploy_url}`
+2. Solution SBOM and Application SBOMs exist for the target application.
 
 **Trigger:**
 
@@ -671,88 +802,35 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Attempts to resolve parameter references:
-      1. Attempts to resolve `${api_url}` reference from `e2eParameters`
-   3. Detects that the reference targets a different parameter type context (`deployParameters`) from `e2eParameters`
-   4. Effective Set generation fails with an error indicating that cross-context references from `e2eParameters` to `deployParameters` are not allowed
+   1. Resolves Namespace `deployParameters`, then Namespace `technicalConfigurationParameters`, so `${deploy_url}` is available when `runtime_config` is evaluated.
+   2. Completes successfully with deployment and runtime outputs populated.
 
 **Results:**
 
-1. Effective Set generation fails with an error message indicating that references from `e2eParameters` to `deployParameters` are prohibited (e.g., `Invalid parameter reference '${api_url}' in Namespace '<namespace-name>': Parameters in 'e2eParameters' cannot reference parameters from 'deployParameters'`)
+1. Effective Set generation **completes successfully**.
+2. `runtime_config` is resolved in Runtime context.
+3. `deploy_url` is present in Deployment context.
 
-### UC-CC-CR-4: E2EParameters to TechnicalConfigurationParameters Reference Error
+**Example (`runtime/<namespace-folder>/<application>/parameters.yaml`, excerpt):**
 
-**Pre-requisites:**
+```yaml
+runtime_config: "https://deploy.example.com"
+```
 
-1. Environment Instance exists with:
-   1. Namespace object with:
-      1. `technicalConfigurationParameters` containing: `config_endpoint: "https://config.example.com"`
-      2. `e2eParameters` containing: `test_config: ${config_endpoint}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
+**Example (`deployment/<namespace-folder>/<application>/values/deployment-parameters.yaml`, excerpt):**
 
-**Trigger:**
-
-Instance pipeline (GitLab or GitHub) is started with parameters:
-
-1. `ENV_NAMES: <env_name>`
-2. `GENERATE_EFFECTIVE_SET: true`
-
-**Steps:**
-
-1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Attempts to resolve parameter references:
-      1. Attempts to resolve `${config_endpoint}` reference from `e2eParameters`
-   3. Detects that the reference targets a different parameter type context (`technicalConfigurationParameters`) from `e2eParameters`
-   4. Effective Set generation fails with an error indicating that cross-context references from `e2eParameters` to `technicalConfigurationParameters` are not allowed
-
-**Results:**
-
-1. Effective Set generation fails with an error message indicating that references from `e2eParameters` to `technicalConfigurationParameters` are prohibited (e.g., `Invalid parameter reference '${config_endpoint}' in Namespace '<namespace-name>': Parameters in 'e2eParameters' cannot reference parameters from 'technicalConfigurationParameters'`)
-
-### UC-CC-CR-5: TechnicalConfigurationParameters to DeployParameters Reference Error
-
-**Pre-requisites:**
-
-1. Environment Instance exists with:
-   1. Namespace object with:
-      1. `deployParameters` containing: `deploy_url: "https://deploy.example.com"`
-      2. `technicalConfigurationParameters` containing: `runtime_config: ${deploy_url}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
-
-**Trigger:**
-
-Instance pipeline (GitLab or GitHub) is started with parameters:
-
-1. `ENV_NAMES: <env_name>`
-2. `GENERATE_EFFECTIVE_SET: true`
-
-**Steps:**
-
-1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Attempts to resolve parameter references:
-      1. Attempts to resolve `${deploy_url}` reference from `technicalConfigurationParameters`
-   3. Detects that the reference targets a different parameter type context (`deployParameters`) from `technicalConfigurationParameters`
-   4. Effective Set generation fails with an error indicating that cross-context references from `technicalConfigurationParameters` to `deployParameters` are not allowed
-
-**Results:**
-
-1. Effective Set generation fails with an error message indicating that references from `technicalConfigurationParameters` to `deployParameters` are prohibited (e.g., `Invalid parameter reference '${deploy_url}' in Namespace '<namespace-name>': Parameters in 'technicalConfigurationParameters' cannot reference parameters from 'deployParameters'`)
+```yaml
+deploy_url: "https://deploy.example.com"
+```
 
 ### UC-CC-CR-6: TechnicalConfigurationParameters to E2EParameters Reference Error
 
 **Pre-requisites:**
 
-1. Environment Instance exists with:
-   1. Namespace object with:
-      1. `e2eParameters` containing: `e2e_endpoint: "https://e2e.example.com"`
-      2. `technicalConfigurationParameters` containing: `runtime_endpoint: ${e2e_endpoint}`
-2. Solution SBOM exists with application elements
-3. Application SBOMs exist for applications referenced in Solution SBOM
+1. Environment Instance exists with a Namespace object:
+   1. `e2eParameters` containing `e2e_endpoint: "https://e2e.example.com"`
+   2. `technicalConfigurationParameters` containing `runtime_endpoint: ${e2e_endpoint}`
+2. Solution SBOM and Application SBOMs exist for the target application.
 
 **Trigger:**
 
@@ -764,15 +842,12 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Reads Environment Instance
-   2. Attempts to resolve parameter references:
-      1. Attempts to resolve `${e2e_endpoint}` reference from `technicalConfigurationParameters`
-   3. Detects that the reference targets a different parameter type context (`e2eParameters`) from `technicalConfigurationParameters`
-   4. Effective Set generation fails with an error indicating that cross-context references from `technicalConfigurationParameters` to `e2eParameters` are not allowed
+   1. Attempts to resolve `${e2e_endpoint}` in `technicalConfigurationParameters` context.
+   2. `e2e_endpoint` is not visible in `technicalConfigurationParameters` context.
 
 **Results:**
 
-1. Effective Set generation fails with an error message indicating that references from `technicalConfigurationParameters` to `e2eParameters` are prohibited (e.g., `Invalid parameter reference '${e2e_endpoint}' in Namespace '<namespace-name>': Parameters in 'technicalConfigurationParameters' cannot reference parameters from 'e2eParameters'`)
+1. Effective Set generation **fails** with an error (for example `Could not process expression for parameter runtime_endpoint with value: ${e2e_endpoint}`).
 
 ## SBOM Processing
 
@@ -827,7 +902,7 @@ Pipeline (GitLab or GitHub):
 
 1. `ENV_NAMES: <env_name>`
 2. `GENERATE_EFFECTIVE_SET: true`
-3. `EFFECTIVE_SET_CONFIG` does not set `app_chart_validation` to `false` (omit or default; validation on, see [app chart validation](/docs/features/calculator-cli.md#version-20-app-chart-validation)).
+3. `EFFECTIVE_SET_CONFIG` does not set `app_chart_validation` to `false`.
 
 **Steps:**
 
@@ -1181,7 +1256,7 @@ CA_BUNDLE_CERTIFICATE: |
 
 2. **Root deployment parameter:** The merged deployment map has a **top-level** key equal to that service id; the value is not credential-macro-backed (non-sensitive).
 
-3. **`deploy_param` exclusion:** That key is not the image-parameter case excluded from collision routing (see **Collision Parameters** in `docs/features/calculator-cli.md`).
+3. **`deploy_param` exclusion:** That key is not the image-parameter case excluded from collision routing.
 
 **Trigger:**
 
@@ -1236,7 +1311,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Results:**
 
-1. `deploy-descriptor.yaml` contains `global`, a top-level `deployDescriptor` map, and per-service sections aligned with the Effective Set v2.0 descriptor layout.
+1. `deploy-descriptor.yaml` contains `global`, a top-level `deployDescriptor` map, and per-service sections aligned with the Effective Set descriptor layout.
 2. `DEPLOYMENT_SESSION_ID` in this file matches the session value in root `deployment-parameters.yaml` from the same run.
 3. The configuration service section inside `deploy-descriptor.yaml` has a non-empty `artifacts` list when qualifying children exist.
 4. `tArtifactNames` includes `ecl: <name>-<version>.zip` when classifier is absent or empty on the zip child used for that entry.
@@ -1444,40 +1519,7 @@ pl-01-pg: /environments/cluster-01/pl-01/effective-set/cleanup/pg
 
 ## Pipeline Context
 
-This section covers use cases for [Pipeline Parameter Context](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context) in Effective Set v2.0. Cloud `e2eParameters` split into `pipeline/parameters.yaml` and `pipeline/credentials.yaml`. When the instance pipeline passes [`--pipeline-consumer-specific-schema-path`/`-pcssp`](/docs/features/calculator-cli.md#calculator-command-line-tool-execution-attributes) one or more times, the Calculator may emit `<consumer>-parameters.yaml` and `<consumer>-credentials.yaml` per [Consumer Specific Context of Pipeline Context](/docs/features/calculator-cli.md#consumer-specific-context-of-pipeline-context). The consumer name is the schema filename with the `.schema.json` suffix removed.
-
-Unless a use case states otherwise, consumer UCs assume a schema file on disk (for example `consumer-v1.0.schema.json`) whose content matches the reference file [`/examples/consumer-v1.0.json`](/examples/consumer-v1.0.json) from the feature documentation:
-
-```json
-{
-  "$schema": "http://json-schema.org/draft-04/schema#",
-  "type": "object",
-  "properties": {
-    "name": {
-      "type": "string"
-    },
-    "version": {
-      "type": "integer"
-    },
-    "group": {
-      "type": "string",
-      "default": "group"
-    },
-    "artifact": {
-      "type": "string",
-      "default": "artifact"
-    },
-    "registry": {
-      "type": "string"
-    }
-  },
-  "required": [
-    "name",
-    "version",
-    "group"
-  ]
-}
-```
+This section covers use cases for [Pipeline Parameter Context](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context) in Effective Set.
 
 ### UC-ES-PIPE-1: pipeline parameters and credentials from Cloud e2eParameters
 
@@ -1519,7 +1561,7 @@ PIPE_SECRET_SETTING: resolved-secret-from-credential-store
 
 **Pre-requisites:**
 
-1. Repository (or pipeline image) contains a consumer JSON Schema file passed to the Calculator as `-pcssp`, for example `consumer-v1.0.schema.json`, with the same structure as [`/examples/consumer-v1.0.json`](/examples/consumer-v1.0.json) (see [Pipeline Context](#pipeline-context)).
+1. Repository contains a consumer JSON Schema file passed to the Calculator as `-pcssp`, for example `consumer-v1.0.schema.json`, with the same structure as [`/examples/consumer-v1.0.json`](/examples/consumer-v1.0.json) (see [Pipeline Context](#pipeline-context)).
 2. Environment Instance exists with:
    1. Cloud `e2eParameters` defines root keys `name`, `version`, and `group` such that, after the pipeline split, they appear in `pipeline/parameters.yaml` with fixture values (for example `name: acme-service`, `version: 1`, `group: acme-group`).
    2. Cloud `e2eParameters` defines root key `registry` such that, after the pipeline split, it appears in `pipeline/credentials.yaml` with the resolved fixture secret (sensitivity follows Environment Instance rules for that key).
@@ -1536,7 +1578,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. The `generate_effective_set` job runs in the pipeline:
    1. The `generate_effective_set` job builds general pipeline parameters and credentials from Cloud `e2eParameters`.
-   2. For each root property declared in the consumer schema, the Calculator copies the value from the general pipeline output when that key exists ([principle 1](/docs/features/calculator-cli.md#consumer-specific-context-of-pipeline-context)).
+   2. For each root property declared in the consumer schema, the Calculator copies the value from the general pipeline output when that key exists.
 
 **Results:**
 
@@ -1575,7 +1617,7 @@ registry: resolved-registry-secret
 
 **Pre-requisites:**
 
-1. Repository (or pipeline image) contains a consumer schema file as in [UC-ES-PIPE-4](#uc-es-pipe-4-consumer-copies-root-keys-from-pipeline-context) (`consumer-v1.0.schema.json` matching [`/examples/consumer-v1.0.json`](/examples/consumer-v1.0.json)).
+1. Repository contains a consumer JSON Schema file passed to the Calculator as `-pcssp`, for example `consumer-v1.0.schema.json`, with the same structure as [`/examples/consumer-v1.0.json`](/examples/consumer-v1.0.json) (see [Pipeline Context](#pipeline-context)).
 2. Environment Instance exists with:
    1. Cloud `e2eParameters` supplies `name`, `version`, and `group` so the general pipeline output includes those keys.
    2. Cloud `e2eParameters` omits root key `artifact`, which is optional in the consumer schema and carries default `"artifact"`.
@@ -1591,12 +1633,12 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Consumer-specific files are built; the schema default is applied for `artifact` ([principle 2.1](/docs/features/calculator-cli.md#consumer-specific-context-of-pipeline-context)).
+   1. Consumer-specific files are built; the schema default is applied for `artifact`.
 
 **Results:**
 
 1. `pipeline/consumer-v1.0-parameters.yaml` includes `artifact: artifact` even though general `pipeline/parameters.yaml` omits `artifact`.
-2. `pipeline/consumer-v1.0-parameters.yaml` still contains `name`, `version`, and `group` with the same values as in `pipeline/parameters.yaml` (principle 1 copy).
+2. `pipeline/consumer-v1.0-parameters.yaml` still contains `name`, `version`, and `group` with the same values as in `pipeline/parameters.yaml`.
 
 **Example (`pipeline/consumer-v1.0-parameters.yaml`, excerpt):**
 
@@ -1611,7 +1653,7 @@ artifact: artifact
 
 **Pre-requisites:**
 
-1. Repository (or pipeline image) contains a consumer schema file as in [UC-ES-PIPE-4](#uc-es-pipe-4-consumer-copies-root-keys-from-pipeline-context) (`consumer-v1.0.schema.json` matching [`/examples/consumer-v1.0.json`](/examples/consumer-v1.0.json)).
+1. Repository contains a consumer JSON Schema file passed to the Calculator as `-pcssp`, for example `consumer-v1.0.schema.json`, with the same structure as [`/examples/consumer-v1.0.json`](/examples/consumer-v1.0.json) (see [Pipeline Context](#pipeline-context)).
 2. Environment Instance exists with:
    1. Cloud `e2eParameters` supplies required keys `name`, `version`, and `group` for a successful pipeline split.
    2. Cloud `e2eParameters` omits optional root `registry`, which has no default in the schema.
@@ -1627,7 +1669,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Consumer-specific files are built; optional properties without default and without pipeline value are skipped ([principle 2.2](/docs/features/calculator-cli.md#consumer-specific-context-of-pipeline-context)).
+   1. Consumer-specific files are built; optional properties without default and without pipeline value are skipped.
 
 **Results:**
 
@@ -1643,7 +1685,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 
 **Pre-requisites:**
 
-1. Repository (or pipeline image) contains a consumer schema file as in [UC-ES-PIPE-4](#uc-es-pipe-4-consumer-copies-root-keys-from-pipeline-context) (`consumer-v1.0.schema.json` matching [`/examples/consumer-v1.0.json`](/examples/consumer-v1.0.json)).
+1. Repository contains a consumer JSON Schema file passed to the Calculator as `-pcssp`, for example `consumer-v1.0.schema.json`, with the same structure as [`/examples/consumer-v1.0.json`](/examples/consumer-v1.0.json) (see [Pipeline Context](#pipeline-context)).
 2. Environment Instance exists with:
    1. Cloud `e2eParameters` omits root key `name`, which is required by the consumer schema and has no default.
    2. Other keys in `e2eParameters` are insufficient to populate `name` in the general pipeline output.
@@ -1659,16 +1701,15 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. Consumer assembly runs and fails because the required property has no pipeline value and no default ([principle 2.3](/docs/features/calculator-cli.md#consumer-specific-context-of-pipeline-context)).
+   1. Consumer assembly runs and fails because the required property has no pipeline value and no default.
 
 **Results:**
 
 1. Effective Set generation does not complete successfully.
-2. Failure indicates the required consumer pipeline property is missing from E2E configuration (property `name` for this schema).
 
 ## Runtime Context
 
-This section covers use cases for [Runtime Parameter Context](/docs/features/calculator-cli.md#version-20-runtime-parameter-context) in Effective Set v2.0 (`runtime/parameters.yaml`, `runtime/credentials.yaml`, `runtime/mapping.yaml`), including technical configuration and optional `CUSTOM_PARAMS` runtime overrides. Mapping key assertions are paired with deployment and cleanup under [Cross-context Effective Set consistency](#cross-context-effective-set-consistency).
+This section covers use cases for [Runtime Parameter Context](/docs/features/calculator-cli.md#version-20-runtime-parameter-context) in Effective Set.
 
 ### UC-ES-RUN-1: runtime/parameters.yaml from technicalConfigurationParameters
 
@@ -1740,7 +1781,7 @@ RUNTIME_ONLY_FROM_CUSTOM: extra-runtime-secret
 
 ## Cleanup Context
 
-This section covers use cases for [Cleanup Context](/docs/features/calculator-cli.md#version-20-cleanup-context) in Effective Set v2.0 (`cleanup/parameters.yaml`, `cleanup/credentials.yaml`, `cleanup/mapping.yaml`). Cleanup reuses deploy-parameter sources; sensitive cleanup merges `CUSTOM_PARAMS` runtime entries using the same precedence rules as runtime credentials.
+This section covers use cases for [Cleanup Context](/docs/features/calculator-cli.md#version-20-cleanup-context) in Effective Set.
 
 ### UC-ES-CLN-1: cleanup/parameters.yaml from deployParameters
 
@@ -1810,11 +1851,268 @@ CLEANUP_API_TOKEN: from-custom-params-overrides-cleanup
 CLEANUP_ONLY_CUSTOM: cleanup-extra-secret
 ```
 
+## No SBOMs Mode
+
+When the Calculator is invoked without `--sd-path`, `--sboms-path`, and `--registries`, it runs in No SBOMs Mode and generates only Pipeline and Topology contexts.
+
+### UC-ES-NOSBOM-1: Only Pipeline and Topology contexts generated
+
+**Pre-requisites:**
+
+1. Environment Instance exists with:
+   1. Cloud `e2eParameters` containing at least one non-sensitive and one sensitive parameter.
+   2. Cloud object containing `apiUrl`, `apiPort`, `publicUrl`, `protocol` attributes.
+   3. Topology-relevant data present: `composite_structure`, `bg_domain` (may be empty `{}`), namespace `defaultCredentialsId` resolving to a token.
+2. No Solution Descriptor is present for this environment, or the pipeline intentionally omits SD-related attributes.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `GENERATE_EFFECTIVE_SET: true`
+
+Calculator is invoked **without** `--sd-path`, `--sboms-path`, and `--registries`:
+
+```text
+calculator \
+  --env-id <cluster-name>/<env-name> \
+  --envs-path /environments \
+  --output /environments/<cluster>/<env>/effective-set
+```
+
+**Steps:**
+
+1. The `generate_effective_set` job detects No SBOMs Mode (absence of `--sd-path`, `--sboms-path`, `--registries`).
+2. Generates only Pipeline and Topology contexts from Environment Instance data.
+3. Skips Deployment, Runtime, and Cleanup context generation.
+
+**Results:**
+
+1. The following files are generated:
+   1. `pipeline/parameters.yaml` - non-sensitive Cloud `e2eParameters`
+   2. `pipeline/credentials.yaml` - sensitive Cloud `e2eParameters`
+   3. `topology/parameters.yaml` - `composite_structure`, `environments`, `cluster`, non-sensitive `bg_domain`
+   4. `topology/credentials.yaml` - `k8s_tokens`, sensitive `bg_domain` fields
+2. The following directories are **not generated**: `deployment/`, `runtime/`, `cleanup/`.
+3. Effective Set generation completes successfully.
+
+## Traceability Comments
+
+This section covers use cases for [Traceability Comments](/docs/features/calculator-cli.md#version-20-traceability-comments). When `--enable-traceability true` is passed, the Calculator annotates each parameter value with a comment indicating its source.
+
+### UC-ES-TR-1: Traceability comments enabled - source annotation per parameter
+
+**Pre-requisites:**
+
+1. Environment Instance exists with:
+   1. Tenant `deployParameters` containing `GITLAB_URL: "https://git.qubership.org"`.
+   2. Cloud `deployParameters` containing `CLOUD_API_HOST: "https://api.example.com"`.
+   3. Namespace `deployParameters` containing `NAMESPACE_NAME: "env-1-core"`.
+   4. Application `deployParameters` containing `APP_FEATURE_FLAG: true`.
+   5. Custom params injected via `--custom-params` containing `OVERRIDE_KEY: "value"` in the `deployment` section.
+2. Solution SBOM and Application SBOMs exist for the target application.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `GENERATE_EFFECTIVE_SET: true`
+
+Calculator is invoked with `--enable-traceability true`.
+
+**Steps:**
+
+1. The `generate_effective_set` job generates the Effective Set with traceability enabled.
+2. For each parameter, determines the highest-priority source and appends the corresponding comment on the same line (for non-multiline values).
+
+**Results:**
+
+1. `deployment-parameters.yaml` contains inline source comments:
+
+```yaml
+OVERRIDE_KEY: "value" #custom params
+GITLAB_URL: "https://git.qubership.org" #tenant
+CLOUD_API_HOST: "https://api.example.com" #cloud
+NAMESPACE_NAME: "env-1-core" #namespace
+APP_FEATURE_FLAG: true #application
+```
+
+1. Calculator-generated parameters carry `#envgene calculated`:
+
+```yaml
+PUBLIC_GATEWAY_URL: "https://public-gateway-env-1-core.apps.example.com" #envgene calculated
+```
+
+1. Predefined defaults carry `#envgene default`:
+
+```yaml
+MANAGED_BY: "argocd" #envgene default
+```
+
+1. SBOM-sourced parameters carry `#sbom`:
+
+```yaml
+git_revision: "a71c5988" #sbom
+```
+
+1. Comments are present in all Effective Set contexts (deployment, runtime, cleanup, pipeline, topology).
+
+### UC-ES-TR-2: Traceability comments disabled by default
+
+**Pre-requisites:**
+
+1. Environment Instance exists with:
+   1. Tenant `deployParameters` containing `GITLAB_URL: "https://git.qubership.org"`.
+   2. Cloud `deployParameters` containing `CLOUD_API_HOST: "https://api.example.com"`.
+   3. Namespace `deployParameters` containing `NAMESPACE_NAME: "env-1-core"`.
+   4. Application `deployParameters` containing `APP_FEATURE_FLAG: true`.
+   5. Custom params injected via `--custom-params` containing `OVERRIDE_KEY: "value"` in the `deployment` section.
+2. Solution SBOM and Application SBOMs exist for the target application.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `GENERATE_EFFECTIVE_SET: true`
+
+Calculator is invoked **without** `--enable-traceability` (default is `false`).
+
+**Steps:**
+
+1. The `generate_effective_set` job generates the Effective Set without traceability.
+
+**Results:**
+
+1. No `#source` comments appear in any generated file.
+1. `deployment-parameters.yaml` contains plain key-value pairs:
+
+```yaml
+MANAGED_BY: argocd
+CLOUD_API_HOST: "https://api.example.com"
+NAMESPACE_NAME: "env-1-core"
+```
+
+### UC-ES-TR-3: Multiline value gets comment on preceding line
+
+**Pre-requisites:**
+
+1. Environment Instance exists with Cloud `deployParameters` containing a multiline value:
+
+```yaml
+CS_CONTENT_SECURITY_POLICY: |
+  {"CONTENT_SECURITY_POLICY":"default-src 'self'"}
+```
+
+1. Solution SBOM and Application SBOMs exist for the target application.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `GENERATE_EFFECTIVE_SET: true`
+
+Calculator is invoked with `--enable-traceability true`.
+
+**Steps:**
+
+1. The `generate_effective_set` job detects that `CS_CONTENT_SECURITY_POLICY` uses a literal block scalar (`|`).
+1. Places the source comment on the line **above** the parameter key.
+
+**Results:**
+
+1. `deployment-parameters.yaml` contains:
+
+```yaml
+#cloud
+CS_CONTENT_SECURITY_POLICY: |
+  {"CONTENT_SECURITY_POLICY":"default-src 'self'"}
+```
+
+1. No inline comment appears after the `|` character.
+
+### UC-ES-TR-4: deploy-descriptor.yaml uses file-level header comment
+
+**Pre-requisites:**
+
+1. Environment Instance exists with an Application SBOM sufficient to produce `deploy-descriptor.yaml`.
+2. At least one service has a Resource Profile Override defined in the Environment Instance (to produce an inline override comment).
+3. At least one service has a Resource Profile Baseline in the SBOM.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `GENERATE_EFFECTIVE_SET: true`
+
+Calculator is invoked with `--enable-traceability true`.
+
+**Steps:**
+
+1. The `generate_effective_set` job generates `deploy-descriptor.yaml`.
+2. Places a single file-level header comment at the top.
+3. Annotates only parameters whose source differs from the header inline.
+
+**Results:**
+
+1. `deploy-descriptor.yaml` begins with:
+
+```yaml
+#Source of parameters not marked inline: `#sbom`
+```
+
+1. SBOM-sourced parameters have **no** inline comment.
+1. Resource Profile Override parameters carry `#rp-override: <name>`:
+
+```yaml
+REPLICAS: 1 #rp-override: dev-override
+```
+
+1. Resource Profile Baseline parameters carry `#rp-baseline: <name>`:
+
+```yaml
+CPU_LIMIT: 500m #rp-baseline: dev
+```
+
+### UC-ES-TR-5: mapping.yaml and external-credentials.yaml have no comments
+
+**Pre-requisites:**
+
+1. Environment Instance exists with external Credentials (`type: external`, `create: true`) sufficient to produce `external-credential/external-credentials.yaml`.
+2. Solution Descriptor lists at least two namespaces, producing entries in `deployment/mapping.yaml`.
+
+**Trigger:**
+
+Instance pipeline (GitLab or GitHub) is started with parameters:
+
+1. `ENV_NAMES: <env_name>`
+2. `GENERATE_EFFECTIVE_SET: true`
+
+Calculator is invoked with `--enable-traceability true`.
+
+**Steps:**
+
+1. The `generate_effective_set` job generates all Effective Set files with traceability enabled.
+2. For `mapping.yaml` files and `external-credential/external-credentials.yaml`, comment injection is explicitly skipped.
+
+**Results:**
+
+1. `deployment/mapping.yaml`, `runtime/mapping.yaml`, and `cleanup/mapping.yaml` contain **no** `#source` comments:
+
+```yaml
+pl-01-monitoring: /environments/cluster-01/pl-01/effective-set/deployment/monitoring-origin
+pl-01-pg: /environments/cluster-01/pl-01/effective-set/deployment/pg
+```
+
+1. `external-credential/external-credentials.yaml` contains **no** `#source` comments.
+
 ## Topology Context
 
-This section covers use cases for [Version 2.0 Topology Context](/docs/features/calculator-cli.md#version-20-topology-context) in Effective Set v2.0, in particular the `cluster` block in `topology/parameters.yaml` (Cloud Passport when present, otherwise `inventory.clusterUrl` parsing rules in the Environment Inventory).
-
-Executable checks with `test_data/test_environments/cluster01/...` paths are in [`docs/test-cases/cluster-endpoint-topology-context.md`](../test-cases/cluster-endpoint-topology-context.md). TC-CETC-001 through TC-CETC-007 correspond to UC-ES-TOP-1 through UC-ES-TOP-7. Output keys are `api_url`, `api_port`, `public_url`, and `protocol` (the test-case document may still reference historical label spellings in expected results).
+This section covers use cases for [Topology Context](/docs/features/calculator-cli.md#version-20-topology-context) in Effective Set. The `cluster` object in `topology/parameters.yaml` is populated from **Cloud Passport** when it is configured; otherwise it is derived from **`clusterUrl`** under **`inventory`** in **`Inventory/env_definition.yml`** (see [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)).
 
 ### UC-ES-TOP-1: Cluster endpoint from Cloud Passport
 
@@ -1829,7 +2127,7 @@ Executable checks with `test_data/test_environments/cluster01/...` paths are in 
 Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. `ENV_NAMES: cluster01/env-with-passport`
-2. `CALCULATOR_CLI: true`
+2. `GENERATE_EFFECTIVE_SET: true`
 
 **Steps:**
 
@@ -1854,26 +2152,26 @@ cluster:
   protocol: https
 ```
 
-### UC-ES-TOP-2: Cluster endpoint from inventory.clusterUrl
+### UC-ES-TOP-2: Cluster endpoint from Environment Inventory clusterUrl
 
 **Pre-requisites:**
 
 1. Environment Instance exists with:
    1. Target environment `cluster01/env-without-passport` exists.
    2. Cloud Passport is not configured.
-   3. `inventory.clusterUrl` is set to `https://API.cl-03.managed.qubership.cloud:6443`.
+   3. `clusterUrl` under `inventory` in `Inventory/env_definition.yml` is set to `https://API.cl-03.managed.qubership.cloud:6443`.
 
 **Trigger:**
 
 Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. `ENV_NAMES: cluster01/env-without-passport`
-2. `CALCULATOR_CLI: true`
+2. `GENERATE_EFFECTIVE_SET: true`
 
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. The topology context derives `cluster` endpoint values from `inventory.clusterUrl`.
+   1. The topology context derives `cluster` endpoint values from Environment Inventory `clusterUrl`.
 
 **Results:**
 
@@ -1893,7 +2191,7 @@ cluster:
   protocol: https
 ```
 
-### UC-ES-TOP-3: inventory.clusterUrl parsing variants
+### UC-ES-TOP-3: Environment Inventory clusterUrl parsing variants
 
 **Pre-requisites:**
 
@@ -1903,16 +2201,16 @@ cluster:
 
 **Trigger:**
 
-Three instance pipeline runs (GitLab or GitHub). Each run uses mandatory `ENV_NAMES` (`docs/instance-pipeline-parameters.md`, section `ENV_NAMES`) together with `CALCULATOR_CLI: true`. Environment IDs per run:
+Three instance pipeline runs (GitLab or GitHub). Each run uses mandatory `ENV_NAMES` (`docs/instance-pipeline-parameters.md`, section `ENV_NAMES`) and `GENERATE_EFFECTIVE_SET: true` (`docs/instance-pipeline-parameters.md`, section `GENERATE_EFFECTIVE_SET`). Environment IDs per run:
 
-1. Scenario port: `ENV_NAMES: cluster01/env-nonstandard-port` and `inventory.clusterUrl` is `https://API.cl-03.managed.qubership.cloud:8443`.
-2. Scenario protocol: `ENV_NAMES: cluster01/env-http-protocol` and `inventory.clusterUrl` is `http://API.cl-03.managed.qubership.cloud:6443`.
-3. Scenario hostname: `ENV_NAMES: cluster01/env-nonstandard-hostname` and `inventory.clusterUrl` is `https://cluster.cl-03.managed.qubership.cloud:6443`.
+1. Scenario port: `ENV_NAMES: cluster01/env-nonstandard-port` and Environment Inventory `clusterUrl` is `https://API.cl-03.managed.qubership.cloud:8443`.
+2. Scenario protocol: `ENV_NAMES: cluster01/env-http-protocol` and Environment Inventory `clusterUrl` is `http://API.cl-03.managed.qubership.cloud:6443`.
+3. Scenario hostname: `ENV_NAMES: cluster01/env-nonstandard-hostname` and Environment Inventory `clusterUrl` is `https://cluster.cl-03.managed.qubership.cloud:6443`.
 
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. The topology context derives `cluster` endpoint values from `inventory.clusterUrl`, preserving non-default port, protocol, and hostname parsing per product rules.
+   1. The topology context derives `cluster` endpoint values from Environment Inventory `clusterUrl`, preserving non-default port, protocol, and hostname parsing per product rules.
 
 **Results:**
 
@@ -1920,63 +2218,73 @@ Three instance pipeline runs (GitLab or GitHub). Each run uses mandatory `ENV_NA
 2. Scenario protocol: `topology/parameters.yaml` contains `cluster.api_url: API.cl-03.managed.qubership.cloud`, `cluster.api_port: 6443`, `cluster.public_url: apps.cl-03.managed.qubership.cloud`, and `cluster.protocol: http`.
 3. Scenario hostname: `topology/parameters.yaml` contains `cluster.api_url: cluster.cl-03.managed.qubership.cloud`, `cluster.api_port: 6443`, `cluster.public_url: cluster.cl-03.managed.qubership.cloud`, and `cluster.protocol: https`.
 
-**Scenario port (`topology/parameters.yaml`):**
+**Example (`topology/parameters.yaml`, scenario port - full topology file layout; `environments` content depends on the Environment Instance):**
 
 ```yaml
 cluster:
-  api_url: API.cl-03.managed.qubership.cloud
+  api_url: "API.cl-03.managed.qubership.cloud"
   api_port: "8443"
-  public_url: apps.cl-03.managed.qubership.cloud
-  protocol: https
+  public_url: "apps.cl-03.managed.qubership.cloud"
+  protocol: "https"
+
+environments:
+  cluster01/env-nonstandard-port:
+    namespaces:
+      sample-namespace:
+        deployPostfix: sample-namespace
+
+composite_structure: {}
+
+bg_domain: {}
 ```
 
-**Scenario protocol:**
+**Example (`topology/parameters.yaml`, scenario protocol - same single file; only `cluster` differs):**
 
 ```yaml
 cluster:
-  api_url: API.cl-03.managed.qubership.cloud
+  api_url: "API.cl-03.managed.qubership.cloud"
   api_port: "6443"
-  public_url: apps.cl-03.managed.qubership.cloud
-  protocol: http
+  public_url: "apps.cl-03.managed.qubership.cloud"
+  protocol: "http"
 ```
 
-**Scenario hostname:**
+**Example (`topology/parameters.yaml`, scenario hostname - same single file; only `cluster` differs):**
 
 ```yaml
 cluster:
-  api_url: cluster.cl-03.managed.qubership.cloud
+  api_url: "cluster.cl-03.managed.qubership.cloud"
   api_port: "6443"
-  public_url: cluster.cl-03.managed.qubership.cloud
-  protocol: https
+  public_url: "cluster.cl-03.managed.qubership.cloud"
+  protocol: "https"
 ```
 
-### UC-ES-TOP-6: Cloud Passport overrides inventory.clusterUrl
+### UC-ES-TOP-6: Cloud Passport overrides Environment Inventory clusterUrl
 
 **Pre-requisites:**
 
 1. Environment Instance exists with:
    1. Target environment `cluster01/env-passport-override` exists.
    2. Cloud Passport is configured and contains cluster endpoint data.
-   3. `inventory.clusterUrl` is set to `https://API.cl-03.managed.qubership.cloud:6443`.
+   3. `clusterUrl` under `inventory` in `Inventory/env_definition.yml` is set to `https://API.cl-03.managed.qubership.cloud:6443`.
 
 **Trigger:**
 
 Instance pipeline (GitLab or GitHub) is started with parameters:
 
 1. `ENV_NAMES: cluster01/env-passport-override`
-2. `CALCULATOR_CLI: true`
+2. `GENERATE_EFFECTIVE_SET: true`
 
 **Steps:**
 
 1. The `generate_effective_set` job runs in the pipeline:
-   1. The topology context resolves `cluster` endpoint values using Cloud Passport when both Cloud Passport and `inventory.clusterUrl` are present.
+   1. The topology context resolves `cluster` endpoint values using Cloud Passport when both Cloud Passport and Environment Inventory `clusterUrl` are present.
 
 **Results:**
 
 1. `topology/parameters.yaml` contains `cluster` values from Cloud Passport.
-2. `inventory.clusterUrl` value is not used for final `cluster` fields in this scenario.
+2. Cloud Passport supplies the final `cluster` fields (Environment Inventory `clusterUrl` does not override Passport in this scenario).
 
-**Example (`topology/parameters.yaml`, illustrative - Passport wins over inventory URL):**
+**Example (`topology/parameters.yaml`, illustrative - Passport wins over Environment Inventory URL):**
 
 ```yaml
 cluster:
@@ -1984,43 +2292,4 @@ cluster:
   api_port: "6443"
   public_url: apps.passport.override.example.com
   protocol: https
-```
-
-### UC-ES-TOP-7: Missing cluster information yields empty cluster fields
-
-**Pre-requisites:**
-
-1. Environment Instance exists with:
-   1. Target environment `cluster01/env-missing-cluster-info` exists.
-   2. Cloud Passport is not configured.
-   3. `inventory.clusterUrl` is not specified.
-
-**Trigger:**
-
-Instance pipeline (GitLab or GitHub) is started with parameters:
-
-1. `ENV_NAMES: cluster01/env-missing-cluster-info`
-2. `CALCULATOR_CLI: true`
-
-**Steps:**
-
-1. The `generate_effective_set` job runs in the pipeline:
-   1. The topology context attempts to resolve `cluster` endpoint values without Cloud Passport and without `inventory.clusterUrl`.
-
-**Results:**
-
-1. `topology/parameters.yaml` contains `cluster` with empty values:
-   1. `cluster.api_url: ""`
-   2. `cluster.api_port: ""`
-   3. `cluster.public_url: ""`
-   4. `cluster.protocol: ""`
-
-**Example (`topology/parameters.yaml`):**
-
-```yaml
-cluster:
-  api_url: ""
-  api_port: ""
-  public_url: ""
-  protocol: ""
 ```
