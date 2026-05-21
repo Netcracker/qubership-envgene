@@ -103,7 +103,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         credential_rotation_job = None
         if params.get("CRED_ROTATION_PAYLOAD") and params['GET_PASSPORT']:
             raise ValueError("CRED_ROTATION_PAYLOAD and GET_PASSPORT cannot be used together")
-        elif params['CRED_ROTATION_PAYLOAD']:
+        elif params.get("CRED_ROTATION_PAYLOAD"):
             credential_rotation_job = prepare_credential_rotation_job(pipeline, full_env_name, environment_name,
                                                                       cluster_name)
             jobs_map["credential_rotation_job"] = credential_rotation_job
