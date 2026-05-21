@@ -4,9 +4,10 @@
   - [Overview](#overview)
   - [Problem Statement](#problem-statement)
   - [Solution](#solution)
-  - [Retention Strategy](#retention-strategy)
-    - [Version-Based Strategy](#version-based-strategy)
-    - [When Cleanup is Triggered](#when-cleanup-is-triggered)
+  - [When cleanup is triggered](#when-cleanup-is-triggered)
+  - [Retention strategy](#retention-strategy)
+    - [Per-application version retention](#per-application-version-retention)
+    - [Total size safety net](#total-size-safety-net)
   - [Configuration](#configuration)
     - [Parameters](#parameters)
     - [Examples](#examples)
@@ -29,30 +30,57 @@ SBOM (Software Bill of Materials) files are cached in the Instance Repository to
 
 Automatic SBOM retention policy that:
 
-- Runs during effective set generation when [GENERATE_EFFECTIVE_SET: true](/docs/instance-pipeline-parameters.md#generate_effective_set)
-- Monitors repository size
-- Triggers cleanup when size threshold is reached (1200 MB)
-- Keeps N most recent versions per application
-- Prevents cache growth beyond acceptable limits
+- Runs during effective set generation when
+  [GENERATE_EFFECTIVE_SET: true](/docs/instance-pipeline-parameters.md#generate_effective_set)
+- Is activated by `sbom_retention.enabled: true`
+- Applies [per-application version retention](#per-application-version-retention) to each
+  subdirectory under `/sboms/`
+- Falls back to a [total size safety net](#total-size-safety-net) that wipes `/sboms/` if its
+  total size still exceeds 1200 MB after per-application retention
 
-## Retention Strategy
+## When cleanup is triggered
 
-### Version-Based Strategy
+Cleanup runs when both of the following conditions are true:
 
-The version-based strategy keeps the N most recent versions for each application:
+1. `GENERATE_EFFECTIVE_SET: true` (retention runs as part of the effective set job)
+2. `sbom_retention.enabled: true` in `/configuration/config.yml`
 
-- Each application's SBOMs are stored in `/sboms/<application-name>/`; cleanup processes each such subdirectory
-- Sorts versions by file creation time (newest first)
-- Keeps the latest N versions per application directory
-- Deletes all older versions
+Cleanup is **not** gated by repository size. The 1200 MB threshold is checked only by the
+[total size safety net](#total-size-safety-net) step, after per-application retention has run.
 
-### When Cleanup is Triggered
+## Retention strategy
 
-Cleanup runs **only** when:
+When cleanup is triggered, retention processes `/sboms/` in this order:
 
-1. `GENERATE_EFFECTIVE_SET: true`
-2. `sbom_retention.enabled: true` in configuration
-3. Repository size reaches 1200 MB threshold
+1. Any legacy flat SBOM files located directly under `/sboms/` (not inside a per-application
+   subdirectory) are removed first. See
+   [SBOM Storage Migration](/docs/how-to/sbom-storage-migration.md) for context.
+2. [Per-application version retention](#per-application-version-retention) runs for each
+   subdirectory under `/sboms/`.
+3. [Total size safety net](#total-size-safety-net) is evaluated on `/sboms/` as a whole.
+
+### Per-application version retention
+
+For each application subdirectory under `/sboms/`:
+
+- Files are sorted by modification time, newest first
+- The N most recent files are kept, where N = `keep_versions_per_app`
+- Older files are deleted
+- If the subdirectory already contains N or fewer files, no files are deleted from it
+
+> [!NOTE]
+> Ordering is by file modification time. Retention does not parse version strings from
+> filenames and is not aware of SemVer semantics.
+
+### Total size safety net
+
+After per-application retention, the total size of `/sboms/` is compared to the 1200 MB threshold:
+
+- If the total size is at or below 1200 MB, no further action is taken
+- If the total size exceeds 1200 MB, **all files** under `/sboms/` are deleted as a fail-safe
+
+The 1200 MB threshold sits below the [job artifacts](/docs/dev/job-artifacts.md) 1500 MB limit so
+that retention can keep the cache within bounds before the job artifact size becomes a problem.
 
 ## Configuration
 
@@ -62,13 +90,14 @@ SBOM retention is configured in `/configuration/config.yml`.
 
 ```yaml
 # Optional
-# Triggers only when repository reaches 1200 MB
+# SBOM retention configuration
 sbom_retention:
   # Optional
   # Default value: false
   enabled: bool
   # Optional
   # Default value: 10
+  # A value of 0 means all files in each per-application subdirectory are deleted
   keep_versions_per_app: int
 ```
 
@@ -97,4 +126,5 @@ sbom_retention:
 
 ## Use Cases
 
-For detailed step-by-step scenarios demonstrating different SBOM retention configurations and repository states, see [SBOM Retention Use Cases](/docs/use-cases/sbom-retention.md).
+For detailed step-by-step scenarios demonstrating different SBOM retention configurations and
+repository states, see [SBOM Retention Use Cases](/docs/use-cases/sbom-retention.md).
