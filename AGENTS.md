@@ -93,6 +93,79 @@ EnvGene searches these locations - from bottom to top - and uses the first match
 
 **Why:** Em dashes are a typographic convention that varies by locale and style guide. A plain hyphen-minus is universally readable, renders consistently across all Markdown renderers, and avoids accidental character encoding issues.
 
+#### Semicolons in prose
+
+**Guideline:** Semicolons (`;`) are **not** forbidden, but avoid dense "clause; clause" chains in documentation when separate sentences or lists would read more clearly.
+
+**Prefer:**
+
+- One main idea per sentence, separated by a period.
+- Bullet or numbered lists for parallel steps, outcomes, or options.
+- A comma plus a coordinating conjunction (`and`, `or`) when the second part is short.
+
+**When a semicolon is still appropriate:**
+
+- **Complex list items** where each item already contains commas (the usual US-style role of `;` inside lists).
+- **Literal syntax** in code, paths, or URIs where `;` is required - leave unchanged.
+- **Rare compact one-line definitions** where brevity is more important than flow - use sparingly.
+
+**Avoid:**
+
+- Joining two independent statements in prose only to keep one long line - split into two sentences instead.
+- Using `;` between fragments inside bullets as a substitute for a period or a new bullet.
+
+❌ **HARDER TO READ:**
+
+```markdown
+Item 1 is generated automatically; item 2 is created manually by the user.
+```
+
+✅ **CLEARER:**
+
+```markdown
+Item 1 is generated automatically. Item 2 is created manually by the user.
+```
+
+**Why:** Semicolons are easy to overuse in technical English. Dense use can make specs feel monotonous and is often harder for readers whose first language is not English. Periods and lists align with the rest of these documentation rules.
+
+---
+
+#### Line length
+
+**CRITICAL: Wrap prose lines at 120 characters maximum.**
+
+**Scope:**
+
+- Applies to prose paragraphs and list items in any Markdown file.
+- **Excluded:** tables, fenced code blocks, URLs, and image references.
+- **New or rewritten content only.** When editing an existing document, wrap paragraphs you add or rewrite at 120
+  chars. Do NOT reflow surrounding existing prose to match - that produces large, noisy diffs unrelated to the
+  task.
+
+**How to wrap:**
+
+- Break at natural sentence or clause boundaries (after a period or comma, or before a conjunction).
+- Indent continuation lines of list items so they align with the first non-bullet character (3 spaces for `-`
+  bullets, 3 spaces for `1.` numbered lists).
+- Keep an empty line before and after each paragraph (already required by the Lists rule above).
+
+❌ **DON'T (hard wrap mid-word):**
+
+```markdown
+The Effective Set calculator emits well-known deploy parameter names for selected built-in cred
+ential references.
+```
+
+✅ **DO (break at sentence or clause boundary):**
+
+```markdown
+The Effective Set calculator emits well-known deploy parameter names for selected built-in
+credential references.
+```
+
+**Why:** 120 characters keeps Markdown source readable in side-by-side diffs and code reviews without horizontal
+scrolling. Capping the rule to new content avoids whitespace-only churn in legacy files.
+
 ---
 
 #### Semicolons
@@ -217,6 +290,52 @@ technical documentation.
 
 ---
 
+#### Heading numbering
+
+**Do not number headings unless they enumerate alternative workflows.**
+
+Visual hierarchy (`#` → `##` → `###`) and the document's table of contents already convey
+structure. Adding numeric prefixes (`## 1. Overview`, `### 2.1 Step one`) duplicates that
+information and creates fragile cross-references that break when sections are added or
+reordered.
+
+❌ **INCORRECT** (sequential topics in a feature document):
+
+```markdown
+## 1. Passport file
+## 2. Resolution
+## 3. Merge into cloud.yml
+## 4. Parameter traceability
+```
+
+✅ **CORRECT** (same content, no numbering):
+
+```markdown
+## Passport file
+## Resolution
+## Merge into cloud.yml
+## Parameter traceability
+```
+
+✅ **ACCEPTABLE** (alternative workflows, where numbering enumerates choices):
+
+```markdown
+## 1. Creating a cluster without a Cloud Passport
+## 2. Creating a cluster with a manually assembled Cloud Passport
+## 3. Creating a cluster using Cloud Passport Discovery
+```
+
+**Scope:** Applies to **new and modified content only**. Existing numbered headings are not
+affected by this rule unless the surrounding lines are being edited for other reasons.
+
+**Why:** Numbered headings duplicate the structure already shown by heading level and the TOC.
+They make in-text references (`see section 3.2`) fragile under reorganization, and they are not
+the convention in this repository (only 2 of ~36 docs use numbering, and only for enumerated
+alternative workflows). Modern dev-doc style guides (Google, Microsoft, Mozilla, GitHub Docs)
+do not number headings in user-facing documentation.
+
+---
+
 #### Tables
 
 **CRITICAL: All Markdown tables MUST have vertically aligned pipe characters (`|`).**
@@ -334,6 +453,133 @@ Common AI-stylistics to avoid:
 **Why:** AI-generated text leans on these patterns heavily. Their absence makes documentation
 feel more direct and trustworthy. Read sentences aloud. If it sounds like a press release or a
 chatbot, rewrite.
+
+---
+
+#### In-repo links
+
+**Use repo-root absolute paths for in-repo cross-references, not GitHub URLs.**
+
+For links between Markdown files inside this repository, use paths starting from the repository
+root (`/docs/...`, `/schemas/...`). Do not use absolute GitHub URLs
+(`https://github.com/Netcracker/qubership-envgene/blob/main/...`), and do not use relative paths
+(`../how-to/...`).
+
+External references (links to other repositories, third-party docs, blog posts) keep their full
+`https://` URL. This rule applies to in-repo cross-references only.
+
+❌ **INCORRECT** (absolute GitHub URL pins to `main` regardless of context):
+
+```markdown
+See [Creating a cluster](https://github.com/Netcracker/qubership-envgene/blob/main/docs/how-to/create-cluster.md).
+```
+
+❌ **INCORRECT** (relative path breaks when files move):
+
+```markdown
+See [Creating a cluster](../how-to/create-cluster.md).
+```
+
+✅ **CORRECT** (repo-root absolute path):
+
+```markdown
+See [Creating a cluster](/docs/how-to/create-cluster.md).
+```
+
+**Scope:** Applies to **new and modified content only**. Existing absolute or relative links are
+not affected unless the surrounding lines are being edited for other reasons.
+
+**Why:** Repo-root absolute paths render correctly on GitHub regardless of branch or fork. GitHub
+URLs pin to a specific branch (usually `main`), so a fork or feature-branch viewer following the
+link is taken back to `main` instead of staying in the current context. Relative paths break when
+the linking file or the target file is moved.
+
+---
+
+#### Heading renames and cross-links
+
+When renaming a Markdown heading, the GitHub-generated anchor (`#section-name`) also changes.
+Cross-links in other files that point to the old anchor become broken (CI link-checker fails).
+
+**Before pushing after a heading rename:**
+
+1. Grep the repository for references to the OLD anchor:
+
+   ```bash
+   grep -rnE "#old-anchor-name" --include='*.md' .
+   ```
+
+2. Update each matching cross-link to the NEW anchor in all affected files.
+
+3. Update the link text in `[text](#anchor)` to match the new heading text where appropriate.
+
+For a broader audit of all cross-links in the repository:
+
+```bash
+grep -rhoE '\]\([^)]+#[^)]+\)' --include='*.md' . | sort -u
+```
+
+**Why:** A heading rename inside one file silently breaks references in unrelated files. The
+CI link-checker (lychee) catches this only after push.
+
+---
+
+#### Doc index updates
+
+**Add new docs to (and remove deleted docs from) the index readmes.**
+
+The repository has two parallel index readmes that mirror the same structure:
+
+- `/README.md` (root project readme, "Documentation" section)
+- `/docs/README.md` (docs hub readme)
+
+When you add a tutorial, how-to, feature, or migration doc, add a link in both readmes under
+the matching section. When you rename or remove a doc, update both readmes to keep links live.
+Match the description style of sibling entries (short, verb-leading phrase, same capitalization
+convention).
+
+Per-directory readmes (`/docs/features/README.md`, `/docs/use-cases/README.md`, etc.) are
+meta-docs that explain what kind of content the directory holds. They are not navigation
+indexes and do not need a per-doc entry.
+
+**Why:** GitHub's link-checker catches dead links but does not warn when a new doc is missing
+from the index. Readers discover docs through the index readmes, not by browsing directories.
+
+---
+
+#### Pre-flight linter checks
+
+Before declaring documentation changes done, run the same linters that CI will run.
+
+**Markdown structure (`markdownlint`):**
+
+```bash
+npx --yes markdownlint-cli@latest --config .github/linters/.markdown-lint.yml <changed-files>
+```
+
+The project config (`.github/linters/.markdown-lint.yml`) relaxes `MD013` line length to 1000,
+and disables `MD012`, `MD033`, `MD051`. Running markdownlint without `--config` uses the
+default settings (line length 80) which produces many false positives unrelated to the project
+rules and may hide real issues like `MD009` (trailing spaces) or `MD040` (fenced block missing
+language).
+
+**Natural-language terminology (`textlint` with `textlint-rule-terminology`):**
+
+CI runs textlint on prose to flag terminology preferences (for example, em dashes should be
+hyphens, `repo` should be `repository`, `READMEs` should be `readmes`, `Blank line` should be
+`Empty line`). The textlint config lives in the shared `netcracker/.github` repository and is
+pulled in at CI time; there is no local config file to reference. To preview locally:
+
+```bash
+npx --yes textlint --rule terminology <changed-files>
+```
+
+This runs the default terminology rule set. CI may flag a few additional terms layered on top
+by the shared config. Treat the CI report as authoritative.
+
+**Why:** The CI super-linter runs both linters. Running locally gives a true preview of the CI
+result, catches real issues, and avoids distraction from false positives that arise when
+running linters with default (non-project) settings.
 
 ---
 
@@ -641,3 +887,58 @@ Before committing documentation:
 2. Verify all links work
 3. Ensure tables are aligned
 4. Review for clarity and accuracy
+
+---
+
+## Commits and Pull Requests
+
+### Commit messages
+
+Use Conventional Commits format: `<type>: <description>`. Types in use here: `feat`, `fix`,
+`docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `style`. The repository convention is no
+scope prefix.
+
+Subject line:
+
+- Imperative mood (`Add X`, not `Added X` or `Adds X`).
+- Under 72 characters.
+- No trailing period.
+
+Body (when needed):
+
+- Empty line before body.
+- Explain WHY the change is needed and trade-offs, not WHAT (the diff already shows what).
+- Wrap at 72 characters.
+- Reference issues in a footer (`Closes #123`, `Refs #456`).
+
+### Commit granularity
+
+**One logical change per commit.** A commit should be a single coherent unit that a reviewer
+can read in one pass.
+
+Split into separate commits when:
+
+- A rule, convention, or schema is added (AGENTS.md, lint config) along with content that
+  follows it - put the rule change in its own commit so the rule can be reviewed separately
+  from its application.
+- Mechanical changes (mass rename, formatting sweep) are mixed with semantic changes - put
+  the mechanical change in its own commit so the semantic diff is readable.
+- A pre-existing issue is fixed in passing - put the fix in its own commit so it can be
+  backported or reverted independently.
+
+Keep in the same commit:
+
+- Test with the code or doc it covers.
+- Migration script with the schema change that requires it.
+- Anchor renames with the heading change that triggered them.
+
+### Pull request scope
+
+**One focused goal per PR.**
+
+- PR description states the problem, the decision, and trade-offs.
+- Target size: under 500 lines of changed prose for docs PRs, under 400 lines for code PRs.
+  Larger changes belong in a stack of dependent PRs (mention the order in each description).
+- Refactor PRs go separately from feature PRs. Rule additions go separately from
+  rule-application PRs.
+- Do not include unrelated cleanup. File a follow-up issue instead.

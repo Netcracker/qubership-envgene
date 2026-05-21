@@ -225,9 +225,17 @@ artifact_definitions_discovery_mode: enum [`auto`, `true`, `false`]
 # `cmdb` - Application and Registry Definitions are discovered from a CMDB system (discovery procedure is not part of EnvGene Core). Discovery result is saved in repository
 # `auto` - Definitions are first searched in repository, if not found - discovered from CMDB. Discovery result is saved in repository
 app_reg_def_mode: enum [`auto`, `cmdb`, `local`]
+# Optional. Default value - `dual`
+# Controls where rendered Application and Registry Definitions are written
+# `dual` - written to both `/appdefs/`, `/regdefs/` AND per-environment compatibility folders `/environments/<cluster>/<env>/AppDefs|RegDefs/`
+# `root` - written only to `/appdefs/`, `/regdefs/`. Any pre-existing per-environment files are removed on each run
+# See /docs/features/app-reg-defs.md#placement-modes for details
+app_reg_defs_placement: enum [`dual`, `root`]
 # Optional
 # SBOM retention configuration
-# Triggers during Effective Set generation when repository reaches 1200 MB size threshold
+# Runs during Effective Set generation when enabled
+# Applies per-application version retention to subdirectories of `/sboms/`
+# A safety net wipes `/sboms/` if its total size still exceeds 1200 MB after per-application retention
 sbom_retention:
   # Optional. Default value - `false`
   # Enable/disable SBOM retention cleanup
@@ -236,6 +244,13 @@ sbom_retention:
   # Number of latest versions to keep per application
   # Used only when enabled is true
   keep_versions_per_app: integer
+# Optional. Default value - `true`
+# Enable or disable partial Effective Set generation in `generate_effective_set`
+# See [Partial Generation](/docs/features/effective-set-generation.md#partial-generation)
+# and [Full Generation](/docs/features/effective-set-generation.md#full-generation)
+# for generation mode behavior
+# When `false`, Partial Generation is disabled and only Full Generation is used
+partial_effective_set_generation: boolean
 ```
 
 ## `integration.yml`
@@ -320,11 +335,10 @@ For more info, see [Application and Registry Definition](/docs/features/app-reg-
 Location:
 
 - `/configuration/appregdef_config.yaml` - config for all Environments in the Instance repository
-- `/environments/<cluster-name>/configuration/appregdef_config.yaml` - config for all Environments in a specific cluster
 
-If both repository-wide and cluster-wide configuration files are present, then when rendering an Environment for a cluster that has its own cluster-wide config, the cluster-wide config is used and the repository-wide config is ignored.
+When rendering Application and Registry Definitions, EnvGene reads configuration only from the repository-wide file /configuration/appregdef_config.yaml. Cluster-specific appregdef_config.yaml files are not supported.
 
-[appregdef_config.yaml JSON Schema](/schemas/appregdef-config.schema.json)
+[`appregdef_config.yaml` JSON Schema](/schemas/appregdef-config.schema.json)
 
 ```yaml
 # Optional
