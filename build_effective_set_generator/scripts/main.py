@@ -1,0 +1,29 @@
+import click
+from envgenehelper import encrypt_all_cred_files_for_env, decrypt_all_cred_files_for_env, validate_creds, validate_parameters
+
+
+@click.group(chain=True)
+def crypt_manager():
+    pass
+
+
+@crypt_manager.command("decrypt_cred_files")
+def decrypt_cred_files():
+    decrypt_all_cred_files_for_env()
+
+
+@crypt_manager.command("encrypt_cred_files")
+def encrypt_cred_files():
+    encrypt_all_cred_files_for_env()
+
+
+@crypt_manager.command("validate_creds")
+def validate_credentials():
+    validate_creds()
+
+@crypt_manager.command("validate_parameters")
+def validate_parameters_command():
+    validate_parameters()
+
+if __name__ == "__main__":
+    crypt_manager()

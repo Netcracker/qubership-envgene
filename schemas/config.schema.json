@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Generic Configuration",
+  "description": "Configuration for cryptographic operations, artifact discovery, SBOM retention, and cloud passport decryption",
+  "additionalProperties": true,
+  "properties": {
+    "crypt": {
+      "type": "boolean",
+      "title": "Enable Cryptographic Operations",
+      "description": "Specifies whether cryptographic operations should be enabled",
+      "default": true,
+      "examples": [
+        true,
+        false
+      ]
+    },
+    "crypt_backend": {
+      "title": "Cryptographic Backend",
+      "description": "The backend system used for cryptographic operations",
+      "enum": [
+        "Fernet",
+        "SOPS"
+      ],
+      "default": "Fernet",
+      "examples": [
+        "Fernet",
+        "SOPS"
+      ]
+    },
+    "artifact_definitions_discovery_mode": {
+      "title": "Artifact Definitions Discovery Mode",
+      "description": "Configures the mode of discovering Artifact Definitions",
+      "enum": [
+        "true",
+        "false",
+        "auto"
+      ],
+      "default": "auto",
+      "examples": [
+        "true",
+        "false",
+        "auto"
+      ]
+    },
+    "app_reg_def_mode": {
+      "title": "Application and Registry Definitions Discovery Mode",
+      "description": "Configures the mode of discovering Application and Registry Definitions",
+      "enum": [
+        "auto",
+        "cmdb",
+        "local"
+      ],
+      "default": "auto",
+      "examples": [
+        "auto",
+        "cmdb",
+        "local"
+      ]
+    },
+    "sbom_retention": {
+      "type": "object",
+      "title": "SBOM Retention Configuration",
+      "description": "Configuration for automatic SBOM file cleanup. When enabled, applies per-application version retention to subdirectories of /sboms/. A safety net wipes /sboms/ if its total size still exceeds 1200 MB after per-application retention.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Enable SBOM Retention",
+          "description": "Enable or disable SBOM retention cleanup",
+          "default": false,
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "keep_versions_per_app": {
+          "type": "integer",
+          "title": "Versions to Keep",
+          "description": "Number of latest versions to keep per application subdirectory. Used only when enabled is true. A value of 0 means all files in each per-application subdirectory are deleted.",
+          "minimum": 0,
+          "default": 10,
+          "examples": [
+            5,
+            10,
+            15
+          ]
+        }
+      }
+    }
+  }
+}

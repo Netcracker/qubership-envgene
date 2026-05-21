@@ -1,0 +1,30 @@
+#####################################################
+#
+# List of approvers for this repository
+#
+#####################################################
+
+#
+# Learn about CODEOWNERS file format:
+#  https://help.github.com/en/articles/about-code-owners
+#
+
+* @chethana-shastry-p @GlimmerCape @miyamuraga
+
+/.github/ @andyroode
+
+/github_workflows/ @andyroode
+
+/docs/ @popoveugene
+
+/test_data/ @popoveugene
+
+README.md @popoveugene
+
+CODEOWNERS @popoveugene
+
+CONTRIBUTING.md @popoveugene
+
+LICENSE @popoveugene
+
+SECURITY.md @popoveugene
