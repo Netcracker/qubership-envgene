@@ -97,6 +97,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     }
 
     generate_effective_set_vars = {
+        "FULL_ENV_NAME": full_env_name,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": env_name,
         "ENV_NAME": env_name,
