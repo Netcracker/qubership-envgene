@@ -14,6 +14,7 @@ def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluste
   }
 
   credential_rotation_vars = {
+    "FULL_ENV_NAME": full_env,
     "CLUSTER_NAME": cluster_name,
     "ENV_NAME": environment_name,
   }

@@ -16,6 +16,10 @@ consul-cred:
   type: secret
   data:
     secret: token-placeholder-123
+vault-cred:
+  type: secret
+  data:
+    secret: token-placeholder-vault
 minio-cred:
   type: usernamePassword
   data:

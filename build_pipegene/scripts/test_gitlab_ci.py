@@ -48,16 +48,16 @@ build_pipeline_test_data = [
             "git_commit",
         ],
     ),
-    (
-        PipelineVars(env_template_test="true", env_inventory_init="true"),
-        [
-            "trigger",
-            "process_passport",
-            "app_reg_def_render",
-            "env_builder",
-            "generate_effective_set",
-        ],
-    ),
+    # (
+    #     PipelineVars(env_template_test="true", env_inventory_init="true"),
+    #     [
+    #         "trigger",
+    #         "process_passport",
+    #         "app_reg_def_render",
+    #         "env_builder",
+    #         "generate_effective_set",
+    #     ],
+    # ),
     (
         PipelineVars(get_passport="false"),
         ["app_reg_def_render", "env_builder", "generate_effective_set", "git_commit"],

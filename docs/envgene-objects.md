@@ -1838,9 +1838,11 @@ applications:
 
 ### Cloud Passport
 
-Cloud Passport is contracted set of environment-specific deployment parameters that enables a business solution instance's (Environment) applications to access cloud infrastructure resources from a platform solution instance (Environment).
+A Cloud Passport is a contracted set of parameters describing a cluster and the platform applications installed in it, such as databases, message brokers, object storage, and observability tooling. It acts as a key-based contract between platform applications (which publish the keys describing their endpoints and credentials) and business applications (which consume those keys from their deployment context to access platform services).
 
 A Cloud Passport can be obtained either through cloud discovery (using the Cloud Passport Discovery Tool) or manually gathered.
+
+For how the passport is resolved and merged into the environment's deployment context during environment generation, see [Cloud Passport processing](/docs/features/cloud-passport-processing.md).
 
 #### Main File
 

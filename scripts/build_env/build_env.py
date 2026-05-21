@@ -426,43 +426,45 @@ def processTemplate(templatePath, templateName, env_instances_dir, schema_path, 
 
 
 def process_additional_template_parameters(render_env_dir, source_env_dir, all_instances_dir):
-    # getting additional template variables files from env_definition
     inventoryYaml = getEnvDefinition(render_env_dir)
     envDefinitionPath = getEnvDefinitionPath(render_env_dir)
-    if "sharedTemplateVariables" in inventoryYaml["envTemplate"] and len(
-            inventoryYaml["envTemplate"]["sharedTemplateVariables"]) > 0:
-        result = {}
-        for sharedVarFileName in inventoryYaml["envTemplate"]["sharedTemplateVariables"]:
-            sharedVarYamls = findResourcesBottomTop(source_env_dir, all_instances_dir, f"/{sharedVarFileName}")
-            if len(sharedVarYamls) == 1:
-                yamlPath = sharedVarYamls[0]
-                addedVars = openYaml(yamlPath)
-                result.update(addedVars)
-                logger.info(f"Shared template variables added from: {yamlPath}: \n{dump_as_yaml_format(addedVars)}")
-            elif len(sharedVarYamls) > 1:
-                logger.error(
-                    f"Duplicate shared template variables with key {sharedVarFileName} found in {all_instances_dir}: \n\t" + ",\n\t".join(
-                        str(x) for x in sharedVarYamls))
-                raise ReferenceError(
-                    f"Duplicate shared template variables with key {sharedVarFileName} found. See logs above.")
-            else:
-                raise ReferenceError(
-                    f"Shared template variables with key {sharedVarFileName} not found in {all_instances_dir}")
+    shared_template_vars_values = inventoryYaml["envTemplate"].get("sharedTemplateVariables", [])
 
-        # updating additional template variables from map
-        if "additionalTemplateVariables" not in inventoryYaml["envTemplate"]:
-            inventoryYaml["envTemplate"]["additionalTemplateVariables"] = {}
-        else:
-            inventoryVars = inventoryYaml["envTemplate"]["additionalTemplateVariables"]
-            logger.debug(f"Additional template variables from inventory: \n{dump_as_yaml_format(inventoryVars)}")
-            result.update(inventoryVars)
-
-        # storing to yaml
-        logger.info(f"Resulting additional template variables are: \n{dump_as_yaml_format(result)}")
-        inventoryYaml["envTemplate"]["additionalTemplateVariables"] = result;
-        writeYamlToFile(envDefinitionPath, inventoryYaml)
-    else:
+    if not shared_template_vars_values:
         logger.info(f"No shared templates variables are defined in: {envDefinitionPath}")
+        return
+
+    levels = [
+        Path(source_env_dir) / "Inventory",
+        Path(source_env_dir).parent,
+        Path(all_instances_dir),
+    ]
+    
+    template_params_dir_names = ["configuration", "configurations"]
+    shared_template_vars_paths = [level / name for level in levels for name in template_params_dir_names]
+    shared_template_vars_paths.append(Path(source_env_dir) / "Inventory")
+
+    result = {}
+    for file_name in shared_template_vars_values:
+        for p in shared_template_vars_paths:
+            found_path = find_yaml_file(p, file_name, recursively=True)
+            if found_path:
+                addedVars = openYaml(found_path)
+                result.update(addedVars)
+                logger.info(f"Shared template variables added from: {found_path}: \n{dump_as_yaml_format(addedVars)}")
+                break
+        else:
+            raise ReferenceError(f"Shared template variables with key {file_name} not found")
+
+    # updating additional template variables from map
+    additional_template_vars = inventoryYaml["envTemplate"].get("additionalTemplateVariables", {})
+    logger.debug(f"Additional template variables from inventory: \n{dump_as_yaml_format(additional_template_vars)}")
+    result.update(additional_template_vars)
+
+    # storing to yaml
+    logger.info(f"Resulting additional template variables are: \n{dump_as_yaml_format(result)}")
+    inventoryYaml["envTemplate"]["additionalTemplateVariables"] = result
+    writeYamlToFile(envDefinitionPath, inventoryYaml)
 
 
 def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, resource_profiles_dir,
