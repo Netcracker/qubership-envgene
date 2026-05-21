@@ -52,6 +52,7 @@
 - [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
 - [**Filter Namespaces in Template Descriptor**](/docs/how-to/filter-ns-in-template-descriptor.md) - Generate Environments with selected namespaces only
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
+- [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
 
 ## Migrations
 
@@ -61,6 +62,7 @@
 ## Advanced Features
 
 - [**Solution Descriptor Processing**](/docs/features/sd-processing.md) - Manage [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) for your Environments
+- [**Cloud Passport Processing**](/docs/features/cloud-passport-processing.md) - How a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is resolved and merged into the environment's Cloud object during environment generation
 - [**Effective Set Generation**](/docs/features/effective-set-generation.md) - Generate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20) for an environment; covers full and [partial](/docs/features/effective-set-generation.md#partial-generation) modes
 - [**Custom Params**](/docs/instance-pipeline-parameters.md#custom_params) for session-scoped overrides
 - [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced

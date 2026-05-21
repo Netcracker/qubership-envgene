@@ -153,6 +153,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Configure Namespace Names for Sites**](/docs/how-to/configure-ns-names-for-sites.md) - Site-specific namespace naming
 - [**Filter Namespaces in Template Descriptor**](/docs/how-to/filter-ns-in-template-descriptor.md) - Generate Environments with selected namespaces only
 - [**Credential Encryption**](/docs/how-to/credential-encryption.md) - Secure credential storage and rotation
+- [**Split a Cloud Passport for Business and Infra**](/docs/how-to/split-cloud-passport-for-business-and-infra.md) - Use separate cluster-default and infra passports in the same cluster
 
 ### Migrations
 
@@ -162,6 +163,7 @@ After the pipeline finishes, the Environment configuration will be generated and
 ### Advanced Features
 
 - [**Solution Descriptor Processing**](/docs/features/sd-processing.md) - Manage [Solution Descriptor](/docs/envgene-objects.md#solution-descriptor) for your Environments
+- [**Cloud Passport Processing**](/docs/features/cloud-passport-processing.md) - How a [Cloud Passport](/docs/envgene-objects.md#cloud-passport) is resolved and merged into the environment's Cloud object during environment generation
 - [**Effective Set Calculation**](/docs/features/calculator-cli.md) - Calculate the [Effective Set](/docs/features/calculator-cli.md#effective-set-v20)
 - [**Application and Registry Definition**](/docs/features/app-reg-defs.md) - Describe how applications and registries are defined and referenced
 - [**Environment Inventory Generation**](/docs/features/env-inventory-generation.md) - Auto-generate [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
