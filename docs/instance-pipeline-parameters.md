@@ -64,6 +64,10 @@ For multiple environments, each environment will initiate its own independent pi
   - `k8s-01/env-1,k8s-01/env2`
   - `k8s-01/env-1 k8s-01/env2`
 
+> [!IMPORTANT]
+> It is recommended to run a **maximum of 100 environments in parallel** within a single pipeline execution.
+> Each environment generates multiple jobs in the child pipeline configuration. Processing more than 100 environments in a single run may exceed GitLab pipeline configuration and job limits. If more environments need to be processed, split them across multiple pipeline runs.
+
 ### `ENV_BUILDER`
 
 **Description**: Feature flag. Valid values ​​are `true` or `false`.
