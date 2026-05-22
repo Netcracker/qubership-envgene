@@ -1,5 +1,7 @@
 import os
 import copy
+import shutil
+import tempfile
 import pytest
 from subprocess import SubprocessError
 
@@ -7,7 +9,14 @@ from ruyaml import CommentedMap
 
 from .collections_helper import compare_dicts
 
-from .crypt import decrypt_file, encrypt_file, is_encrypted
+from . import crypt as crypt_module
+from .crypt import (
+    decrypt_file,
+    encrypt_file,
+    decrypt_all_cred_files_for_env,
+    encrypt_all_cred_files_for_env,
+    is_encrypted,
+)
 from .file_helper import check_file_exists, writeToFile
 from .yaml_helper import openYaml, set_nested_yaml_attribute, writeYamlToFile
 
@@ -128,9 +137,9 @@ def test_with_file_missing(crypt_kwargs, crypt_func):
         new_yaml = crypt_func(**crypt_kwargs)
 
     new_yaml = crypt_func(**crypt_kwargs, allow_default=True)
-    assert type(new_yaml) == CommentedMap
+    assert type(new_yaml) is CommentedMap
     new_yaml = crypt_func(**crypt_kwargs, allow_default=True, default_yaml=dict)
-    assert type(new_yaml) == dict
+    assert type(new_yaml) is dict
 
     assert not check_file_exists(cred_file)
 
@@ -178,3 +187,77 @@ def test_minimize_diff(crypt_kwargs):
     # test wrong parameter combination
     with pytest.raises(ValueError):
         encrypt_file(**crypt_kwargs, minimize_diff=True)
+
+
+def test_cred_backup_dir_uses_job_identity(monkeypatch):
+    project_dir = tempfile.mkdtemp()
+    try:
+        monkeypatch.setattr(crypt_module, "BASE_DIR", project_dir)
+
+        monkeypatch.setenv("CI_JOB_ID", "job-1")
+        first_job_dir = crypt_module._cred_backup_dir()
+
+        monkeypatch.setenv("CI_JOB_ID", "job-2")
+        second_job_dir = crypt_module._cred_backup_dir()
+
+        assert first_job_dir != second_job_dir
+    finally:
+        shutil.rmtree(project_dir, ignore_errors=True)
+
+
+@pytest.mark.parametrize("crypt_backend", ["SOPS", "Fernet"])
+def test_encrypt_all_cred_files_minimize_diff(monkeypatch, crypt_backend):
+    if crypt_backend == "SOPS":
+        secret_key = crypt_test_data[0]["secret_key"]
+        public_key = crypt_test_data[0]["public_key"]
+        monkeypatch.setenv("ENVGENE_AGE_PRIVATE_KEY", secret_key)
+        monkeypatch.setenv("PUBLIC_AGE_KEYS", public_key)
+    else:
+        secret_key = crypt_test_data[1]["secret_key"]
+        public_key = None
+        monkeypatch.setenv("SECRET_KEY", secret_key)
+
+    project_dir = tempfile.mkdtemp()
+    try:
+        cred_dir = os.path.join(project_dir, "configuration", "credentials")
+        os.makedirs(cred_dir)
+        cred_file = os.path.join(cred_dir, "credentials.yml")
+        shutil.copy(TEST_FILE, cred_file)
+
+        config_path = os.path.join(project_dir, "configuration", "config.yml")
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(f"crypt: true\ncrypt_backend: {crypt_backend}\n")
+
+        monkeypatch.setenv("CI_PROJECT_DIR", project_dir)
+        monkeypatch.delenv("ENV_NAMES", raising=False)
+        monkeypatch.setattr(crypt_module, "BASE_DIR", project_dir)
+
+        crypt_kwargs = {
+            "file_path": cred_file,
+            "crypt_backend": crypt_backend,
+            "secret_key": secret_key,
+            "public_key": public_key,
+            "ignore_is_crypt": True,
+            "is_crypt": True,
+        }
+        bulk_kwargs = {key: value for key, value in crypt_kwargs.items() if key != "file_path"}
+
+        initial_enc_content = encrypt_file(**crypt_kwargs)
+        decrypt_all_cred_files_for_env(**bulk_kwargs)
+
+        backup_dir = crypt_module._cred_backup_dir()
+        backup_path = crypt_module._cred_backup_path(cred_file)
+        assert backup_dir.startswith(tempfile.gettempdir())
+        assert not backup_dir.startswith(project_dir)
+        assert os.path.exists(backup_path)
+
+        encrypt_all_cred_files_for_env(**bulk_kwargs)
+        assert not os.path.exists(backup_dir)
+
+        diff_paths, removed_paths = compare_encrypted_files(
+            initial_enc_content, openYaml(cred_file)
+        )
+        assert len(removed_paths) == 0 and len(diff_paths) == 0
+    finally:
+        crypt_module._cleanup_cred_backups()
+        shutil.rmtree(project_dir, ignore_errors=True)

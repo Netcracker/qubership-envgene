@@ -4,7 +4,7 @@ import tempfile
 import shutil
 
 from ..business_helper import getenv_with_error
-from ..yaml_helper import openYaml, readYaml, get_or_create_nested_yaml_attribute, writeYamlToFile, dumpYamlToStr
+from ..yaml_helper import openYaml, readYaml, get_or_create_nested_yaml_attribute, dumpYamlToStr
 from ..logger import logger
 
 from .constants import *
@@ -60,14 +60,12 @@ def _get_minimized_diff(file_path, old_file_path, public_key):
 
     tmp_file_obj = tempfile.NamedTemporaryFile(delete=False, suffix=".yml")
     tmp_file_obj.close()
+    tmp_path = tmp_file_obj.name
 
-    shutil.copy(old_file_path, tmp_file_obj.name)
+    shutil.copy(old_file_path, tmp_path)
 
-    _sops_edit(tmp_file_obj.name, new_content, public_key)
-    content_with_minimized_diff = openYaml(tmp_file_obj.name)
-    os.remove(tmp_file_obj.name)
-
-    return content_with_minimized_diff
+    _sops_edit(tmp_path, new_content, public_key)
+    return tmp_path
 
 def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=False, old_file_path=None, *args, **kwargs):
     if not secret_key:
@@ -90,9 +88,19 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         return openYaml(file_path)
 
     if minimize_diff and mode != "decrypt":
-        result = _get_minimized_diff(file_path, old_file_path, public_key)
-        if in_place:
-            writeYamlToFile(file_path, result)
+        tmp_path = _get_minimized_diff(file_path, old_file_path, public_key)
+        try:
+            if in_place:
+                shutil.copy2(tmp_path, file_path)
+            else:
+                result = openYaml(tmp_path)
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        logger.info(f'The file has been {mode}ed. Path: {file_path}')
+        if not in_place:
+            return result
+        return openYaml(file_path)
     else:
         sops_args = f' --{SOPS_MODES[mode]} '
         if mode != "decrypt":
