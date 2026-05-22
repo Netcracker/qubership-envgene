@@ -140,32 +140,16 @@ public class ParametersCalculationServiceV2 {
         }
         Map<String, Object> finalDeployDescMap = new LinkedHashMap<>();
         Map<String, Object> deployDescParams = ParameterUtils.deepSortMapKeysPreservingParameters((Map<String, ?>) parameter.getValue());
-
         Map<String, Object> commonParamMapAccumulated = new LinkedHashMap<>();
         Object commParamValue = commParameter.getValue();
-        Map<String, Object> commonDepDescMap = (commParamValue instanceof Map) ?
-                ParameterUtils.deepSortMapKeysPreservingParameters((Map<?, ?>) commParamValue) : new LinkedHashMap<>();
-        commonDepDescMap.entrySet().stream().forEach(entry -> {
-            Object value = entry.getValue();
-            Map<String, Object> valueMap = null;
-            if (value instanceof Parameter) {
-                Object innerValue = ((Parameter) value).getValue();
-                if (innerValue instanceof Map) {
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> map = (Map<String, Object>) innerValue;
-                    valueMap = map;
-                }
-            } else if (value instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> map = (Map<String, Object>) value;
-                valueMap = map;
-            }
+        Map<String, Object> commonDepDescMap = (commParamValue instanceof Map<?, ?> map) ? (Map<String, Object>) map : new LinkedHashMap<>();
+        commonDepDescMap.values().forEach(value -> {
+            Map<String, Object> valueMap = extractMap(value);
             if (valueMap != null) {
                 commonParamMapAccumulated.putAll(valueMap);
             }
         });
-        Map<String, Object> commonParamMap =
-                ParameterUtils.deepSortMapKeysPreservingParameters(commonParamMapAccumulated);
+        Map<String, Object> commonParamMap = ParameterUtils.deepSortMapKeysPreservingParameters(commonParamMapAccumulated);
         Map<String, Object> deployDescParamMap = new LinkedHashMap<>();
         deployDescParamMap.put("deployDescriptor", deployDescParams);
 
@@ -237,17 +221,17 @@ public class ParametersCalculationServiceV2 {
     private void handleDeployParameters(ParameterBundle parameterBundle, Map<String,Object> k8TokenMap, String originalNamespace,
                                         Map<String, Object> finalSecuredParams, Map<String, Object> inSecuredParamsAsObject) {
         Object appChartNameObj = inSecuredParamsAsObject.get(APPR_CHART_NAME);
-        if (appChartNameObj instanceof Parameter) {
-            appChartNameObj = ((Parameter) appChartNameObj).getValue();
+        if (appChartNameObj instanceof Parameter parameter) {
+            appChartNameObj = parameter.getValue();
         }
-        parameterBundle.setAppChartName(appChartNameObj != null ? appChartNameObj.toString() : "");
+        parameterBundle.setAppChartName(Objects.toString(appChartNameObj, ""));
         inSecuredParamsAsObject.remove(APPR_CHART_NAME);
         Map<String, Object> deployCollisionParams = getCollisionParams(inSecuredParamsAsObject);
         Map<String, Object> securedCollisionParams = getCollisionParams(finalSecuredParams);
         parameterBundle.setCollisionDeployParameters(deployCollisionParams);
         parameterBundle.setCollisionSecureParameters(securedCollisionParams);
         copyParams(finalSecuredParams, inSecuredParamsAsObject, k8TokenMap, originalNamespace);
-        prepareBundleParameters(parameterBundle, finalSecuredParams, inSecuredParamsAsObject);
+        prepareBundleParameters(finalSecuredParams, inSecuredParamsAsObject);
         Map<String, Object> finalInsecureParams = prepareFinalParams(inSecuredParamsAsObject, parameterBundle.isProcessPerServiceParams(),
                 deployCollisionParams);
         Map<String, Object> finalSecParams = prepareFinalParams(finalSecuredParams, true, securedCollisionParams);
@@ -255,7 +239,7 @@ public class ParametersCalculationServiceV2 {
         parameterBundle.setDeployParams(finalInsecureParams);
     }
 
-    private void prepareBundleParameters(ParameterBundle parameterBundle, Map<String, Object> finalSecParams, Map<String, Object> finalInsecureParams) {
+    private void prepareBundleParameters(Map<String, Object> finalSecParams, Map<String, Object> finalInsecureParams) {
         if (finalInsecureParams.containsKey(DEFAULT_SSL_CERTIFICATES_BUNDLE)) {
             Object defaultSslCertificatesBundle = finalInsecureParams.get(DEFAULT_SSL_CERTIFICATES_BUNDLE);
             finalSecParams.put(SSL_SECRET_VALUE, defaultSslCertificatesBundle);
@@ -392,5 +376,13 @@ public class ParametersCalculationServiceV2 {
                 inSecuredParams.put(entry.getKey(), entry.getValue());
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> extractMap(Object value) {
+        if (value instanceof Parameter parameter) {
+            value = parameter.getValue();
+        }
+        return (value instanceof Map<?, ?> map) ? (Map<String, Object>) map : null;
     }
 }
