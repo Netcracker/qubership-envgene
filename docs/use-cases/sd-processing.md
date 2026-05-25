@@ -110,7 +110,7 @@ The SD processing logic depends on:
 1. The `process_sd` job runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
-   3. Saves downloaded SD as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   3. Saves downloaded SD as a Delta SD pipeline artifact
    4. Reads existing Full SD from repository
    5. Merges downloaded SD with repository Full SD using [`extended-merge` mode](/docs/features/sd-processing.md#extended-merge-sd-merge-mode)
    6. Saves merged result as Full SD, replacing the existing one
@@ -118,7 +118,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 
 ### UC-SD-2a: Single SD_VERSION with `extended-merge` mode when Full SD does not exist
 
@@ -191,7 +191,7 @@ The SD processing logic depends on:
 1. The `process_sd` job runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
-   3. Saves downloaded SD as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   3. Saves downloaded SD as a Delta SD pipeline artifact
    4. Reads existing Full SD from repository
    5. Merges downloaded SD with repository Full SD using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
    6. Saves merged result as Full SD, replacing the existing one
@@ -199,7 +199,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 
 ### UC-SD-3a: Single SD_VERSION with `basic-merge` mode when Full SD does not exist
 
@@ -272,7 +272,7 @@ The SD processing logic depends on:
 1. The `process_sd` job runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
-   3. Saves downloaded SD as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   3. Saves downloaded SD as a Delta SD pipeline artifact
    4. Reads existing Full SD from repository
    5. Merges downloaded SD with repository Full SD using [`basic-exclusion-merge` mode](/docs/features/sd-processing.md#basic-exclusion-merge-sd-merge-mode)
    6. Saves merged result as Full SD, replacing the existing one
@@ -280,7 +280,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 
 ### UC-SD-4a: Single SD_VERSION with `basic-exclusion-merge` mode when Full SD does not exist
 
@@ -329,24 +329,70 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_VERSION: <application:version>\n<application:version>`
 
-   Or with explicit parameters:
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version>;<application:version>`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version>,<application:version>`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version> <application:version>`
+
+   Or with explicit parameters (using newline):
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using semicolon):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using comma):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using space):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
    4. `SD_REPO_MERGE_MODE: basic-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version>\\n<application:version>"`
 
-   Or with explicit parameters:
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version>,<application:version>"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version> <application:version>"`
+
+   Or with explicit parameters (using newline):
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=basic-merge"`
+
+   Or with explicit parameters (using comma):
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=basic-merge"`
+
+   Or with explicit parameters (using space):
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=basic-merge"`
 
 **Steps:**
 
@@ -354,7 +400,7 @@ The SD processing logic depends on:
    1. Reads `SD_VERSION` parameter with multiple entries
    2. Downloads SD artifacts for each `application:version` in sequence
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
-   4. Saves result from step 3 (merged multiple SDs) as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   4. Saves result from step 3 (merged multiple SDs) as a Delta SD pipeline artifact
    5. Reads existing Full SD from repository
    6. Merges result from step 3 with repository Full SD using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
    7. Saves merged result as Full SD, replacing the existing one
@@ -362,7 +408,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 
 ### UC-SD-5a: Multiple SD_VERSION with `basic-merge` mode when Full SD does not exist
 
@@ -375,24 +421,70 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_VERSION: <application:version>\n<application:version>`
 
-   Or with explicit parameters:
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version>;<application:version>`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version>,<application:version>`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_VERSION: <application:version> <application:version>`
+
+   Or with explicit parameters (using newline):
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using semicolon):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using comma):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-merge`
+
+   Or with explicit parameters (using space):
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
    4. `SD_REPO_MERGE_MODE: basic-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version>\\n<application:version>"`
 
-   Or with explicit parameters:
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version>,<application:version>"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_VERSION=<application:version> <application:version>"`
+
+   Or with explicit parameters (using newline):
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=basic-merge"`
+
+   Or with explicit parameters (using comma):
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=basic-merge"`
+
+   Or with explicit parameters (using space):
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=basic-merge"`
 
 **Steps:**
 
@@ -420,16 +512,42 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
    4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
 
 **Steps:**
 
@@ -437,7 +555,7 @@ The SD processing logic depends on:
    1. Reads `SD_VERSION` parameter with multiple entries
    2. Downloads SD artifacts for each `application:version` in sequence
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
-   4. Saves result from step 3 (merged multiple SDs) as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   4. Saves result from step 3 (merged multiple SDs) as a Delta SD pipeline artifact
    5. Reads existing Full SD from repository
    6. Merges result from step 3 with repository Full SD using [`basic-exclusion-merge` mode](/docs/features/sd-processing.md#basic-exclusion-merge-sd-merge-mode)
    7. Saves merged result as Full SD, replacing the existing one
@@ -445,7 +563,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 
 ### UC-SD-6a: Multiple SD_VERSION with `basic-exclusion-merge` mode when Full SD does not exist
 
@@ -458,16 +576,42 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
    4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
+   4. `SD_REPO_MERGE_MODE: basic-exclusion-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=basic-exclusion-merge"`
 
 **Steps:**
 
@@ -495,16 +639,42 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met. Multiple SDs with `extended-merge` mode are not supported and will result in an error.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
    4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=extended-merge"`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=extended-merge"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=extended-merge"`
 
 **Steps:**
 
@@ -534,16 +704,42 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met. Multiple SDs with `extended-merge` mode are not supported and will result in an error.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
    4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
+   4. `SD_REPO_MERGE_MODE: extended-merge`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=extended-merge"`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=extended-merge"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=extended-merge"`
 
 **Steps:**
 
@@ -570,16 +766,42 @@ The SD processing logic depends on:
 **Trigger:**
 
 > [!Note]
-> One of the following conditions must be met:
+> One of the following conditions must be met.
 
 1. GitLab Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `SD_SOURCE_TYPE: artifact`
    3. `SD_VERSION: <application:version>\n<application:version>`
    4. `SD_REPO_MERGE_MODE: replace`
+
+   Or using semicolon separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>;<application:version>`
+   4. `SD_REPO_MERGE_MODE: replace`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version>,<application:version>`
+   4. `SD_REPO_MERGE_MODE: replace`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `SD_SOURCE_TYPE: artifact`
+   3. `SD_VERSION: <application:version> <application:version>`
+   4. `SD_REPO_MERGE_MODE: replace`
 2. GitHub Instance pipeline is started with parameters:
    1. `ENV_NAMES: <env_name>`
    2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>\\n<application:version>,SD_REPO_MERGE_MODE=replace"`
+
+   Or using comma separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version>,<application:version>,SD_REPO_MERGE_MODE=replace"`
+
+   Or using space separator:
+   1. `ENV_NAMES: <env_name>`
+   2. `GH_ADDITIONAL_PARAMS: "SD_SOURCE_TYPE=artifact,SD_VERSION=<application:version> <application:version>,SD_REPO_MERGE_MODE=replace"`
 
 **Steps:**
 
@@ -625,7 +847,7 @@ The SD processing logic depends on:
 1. The `process_sd` job runs in the pipeline:
    1. Reads `SD_VERSION` parameter
    2. Downloads SD artifact for the specified `application:version`
-   3. Saves downloaded SD as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   3. Saves downloaded SD as a Delta SD pipeline artifact
    4. Reads existing Full SD from repository
    5. Merges downloaded SD with repository Full SD using `extended-merge` mode (equivalent to `SD_REPO_MERGE_MODE: extended-merge`)
    6. Saves merged result as Full SD, replacing the existing one
@@ -633,7 +855,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 
 ### UC-SD-9a: Single SD_VERSION with SD_DELTA=true when Full SD does not exist
 
@@ -790,7 +1012,7 @@ The SD processing logic depends on:
 1. The `process_sd` job runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
-   3. Saves SD from `SD_DATA` as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   3. Saves SD from `SD_DATA` as a Delta SD pipeline artifact
    4. Reads existing Full SD from repository
    5. Merges SD from `SD_DATA` with repository Full SD using [`extended-merge` mode](/docs/features/sd-processing.md#extended-merge-sd-merge-mode)
    6. Saves merged result as Full SD, replacing the existing one
@@ -798,7 +1020,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 
 ### UC-SD-12a: Single SD_DATA with `extended-merge` mode when Full SD does not exist
 
@@ -899,7 +1121,7 @@ The SD processing logic depends on:
 1. The `process_sd` job runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
-   3. Saves SD from `SD_DATA` as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   3. Saves SD from `SD_DATA` as a Delta SD pipeline artifact
    4. Reads existing Full SD from repository
    5. Merges SD from `SD_DATA` with repository Full SD using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
    6. Saves merged result as Full SD, replacing the existing one
@@ -907,7 +1129,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 
 ### UC-SD-13a: Single SD_DATA with `basic-merge` mode when Full SD does not exist
 
@@ -1008,7 +1230,7 @@ The SD processing logic depends on:
 1. The `process_sd` job runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
-   3. Saves SD from `SD_DATA` as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   3. Saves SD from `SD_DATA` as a Delta SD pipeline artifact
    4. Reads existing Full SD from repository
    5. Merges SD from `SD_DATA` with repository Full SD using [`basic-exclusion-merge` mode](/docs/features/sd-processing.md#basic-exclusion-merge-sd-merge-mode)
    6. Saves merged result as Full SD, replacing the existing one
@@ -1016,7 +1238,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 3. Duplicating Applications are removed from Full SD
 4. Warnings are logged for New Applications
 
@@ -1101,7 +1323,7 @@ The SD processing logic depends on:
    1. Reads `SD_DATA` parameter containing multiple SDs in JSON format
    2. Parses JSON content to extract all SDs
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
-   4. Saves result from step 3 (merged multiple SDs) as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   4. Saves result from step 3 (merged multiple SDs) as a Delta SD pipeline artifact
    5. Reads existing Full SD from repository
    6. Merges result from step 3 with repository Full SD using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
    7. Saves merged result as Full SD, replacing the existing one
@@ -1109,7 +1331,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 
 ### UC-SD-15a: Multiple SD_DATA with `basic-merge` mode when Full SD does not exist
 
@@ -1183,7 +1405,7 @@ The SD processing logic depends on:
    1. Reads `SD_DATA` parameter containing multiple SDs in JSON format
    2. Parses JSON content to extract all SDs
    3. Merges multiple SDs sequentially using [`basic-merge` mode](/docs/features/sd-processing.md#basic-merge-sd-merge-mode)
-   4. Saves result from step 3 (merged multiple SDs) as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   4. Saves result from step 3 (merged multiple SDs) as a Delta SD pipeline artifact
    5. Reads existing Full SD from repository
    6. Merges result from step 3 with repository Full SD using [`basic-exclusion-merge` mode](/docs/features/sd-processing.md#basic-exclusion-merge-sd-merge-mode)
    7. Saves merged result as Full SD, replacing the existing one
@@ -1191,7 +1413,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 3. Duplicating Applications are removed from Full SD
 4. Warnings are logged for New Applications
 
@@ -1378,7 +1600,7 @@ The SD processing logic depends on:
 1. The `process_sd` job runs in the pipeline:
    1. Reads `SD_DATA` parameter containing single SD in JSON format
    2. Parses JSON content to extract SD
-   3. Saves SD from `SD_DATA` as Delta SD at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml`
+   3. Saves SD from `SD_DATA` as a Delta SD pipeline artifact
    4. Reads existing Full SD from repository
    5. Merges SD from `SD_DATA` with repository Full SD using `extended-merge` mode (equivalent to `SD_REPO_MERGE_MODE: extended-merge`)
    6. Saves merged result as Full SD, replacing the existing one
@@ -1386,7 +1608,7 @@ The SD processing logic depends on:
 **Results:**
 
 1. Full SD is updated at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/sd.yaml` with merged result
-2. Delta SD is created or replaced at `/environments/<cloud-name>/<env-name>/Inventory/solution-descriptor/delta_sd.yaml` with merged result
+2. Delta SD pipeline artifact is produced with merged result
 3. Behavior is identical to UC-SD-12 (Single SD_DATA with `extended-merge` mode)
 
 ### UC-SD-19a: Single SD_DATA with SD_DELTA=true when Full SD does not exist

@@ -1,0 +1,28 @@
+---
+# Cloud Passport credential file (Environment Credentials File). Pair: cluster.yml. External only.
+cloud-deploy-cred:
+  type: external
+  create: true
+  secretStore: default-store
+  remoteRefPath: cluster
+dbaas-cluster-dba-cred:
+  type: external
+  create: true
+  secretStore: default-store
+  remoteRefPath: cluster
+  properties:
+    - name: username
+    - name: password
+maas-cred:
+  type: external
+  create: true
+  secretStore: default-store
+  remoteRefPath: cluster
+  properties:
+    - name: username
+    - name: password
+consul-admin-cred:
+  type: external
+  create: true
+  secretStore: default-store
+  remoteRefPath: cluster

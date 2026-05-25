@@ -16,7 +16,6 @@ def cmdb_prepare():
 @click.option('--secret_key', '-s', 'secret_key', required=True,
                help="Set secret_key for encrypt cred files")
 def decrypt_file(secret_key, file_path):
-    ''' {getenv('CI_PROJECT_DIR')}/ansible/inventory/group_vars/{getenv('env_name')}/appdeployer_cmdb/Tenants/{getenv('tenant_name')}/Credentials'''
     logger.debug('Try to read %s file', file_path)
     with open(file_path, mode="r", encoding="utf-8") as sensitive:
         sensitive_data = safe_load(sensitive)

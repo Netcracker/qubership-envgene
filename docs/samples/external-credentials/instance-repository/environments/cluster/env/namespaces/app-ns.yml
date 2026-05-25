@@ -1,0 +1,16 @@
+---
+name: "env-app"
+credentialsId: "ns-deploy-cred"
+labels: []
+isServerSideMerge: false
+cleanInstallApprovalRequired: false
+mergeDeployParametersAndE2EParameters: false
+deployParameters:
+  DB_ADMIN_USER:
+    $type: credRef
+    credId: app-db-cred
+    property: username
+  DB_ADMIN_PASSWORD:
+    $type: credRef
+    credId: app-db-cred
+    property: password
