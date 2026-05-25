@@ -150,16 +150,9 @@ public class ParametersCalculationServiceV2 {
         Map<String, Object> finalDeployDescMap = new LinkedHashMap<>();
         Map<String, Object> deployDescParams = ParameterUtils.deepSortMapKeysPreservingParameters((Map<String, ?>) parameter.getValue());
 
-        Map<String, Object> commonParamMapAccumulated = new LinkedHashMap<>();
-        Object commParamValue = commParameter.getValue();
-        Map<String, Object> commonDepDescMap = (commParamValue instanceof Map<?, ?> map) ? (Map<String, Object>) map : new LinkedHashMap<>();
-        commonDepDescMap.values().forEach(value -> {
-            Map<String, Object> valueMap = extractMap(value);
-            if (valueMap != null) {
-                commonParamMapAccumulated.putAll(valueMap);
-            }
-        });
-        Map<String, Object> commonParamMap = ParameterUtils.deepSortMapKeysPreservingParameters(commonParamMapAccumulated);
+        Map<String, Object> commonParamMap = new LinkedHashMap<>();
+        Map<String, Object> commonDepDescMap = extractMap(commParameter.getValue());
+        commonDepDescMap.values().forEach(value -> commonParamMap.putAll(extractMap(value)));
         Map<String, Object> deployDescParamMap = new LinkedHashMap<>();
         deployDescParamMap.put("deployDescriptor", deployDescParams);
 
@@ -294,17 +287,8 @@ public class ParametersCalculationServiceV2 {
     private Map<String, Object> getCollisionParams(Map<String, Object> parameters) {
         Map<String, Object> serviceMap = new LinkedHashMap<>();
         Map<String, Object> collisionParams = new LinkedHashMap<>();
-
         if (parameters.containsKey(SERVICES)) {
-            Object servicesObj = parameters.get(SERVICES);
-            if (servicesObj instanceof Parameter) {
-                servicesObj = ((Parameter) servicesObj).getValue();
-            }
-            if (servicesObj instanceof Map) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> servicesMap = (Map<String, Object>) servicesObj;
-                serviceMap = servicesMap;
-            }
+            serviceMap = extractMap(parameters.get(SERVICES));
         }
         Set<String> services = serviceMap.keySet();
         Set<String> keysToRemove = new HashSet<>();
@@ -326,69 +310,37 @@ public class ParametersCalculationServiceV2 {
 
         entities.stream()
                 .map(parameters::remove)
+                .map(ParametersCalculationServiceV2::extractMap)
                 .filter(Objects::nonNull)
-                .forEach(value -> {
-                    Map<String, Object> mapValue = null;
-                    if (value instanceof Parameter) {
-                        Object paramValue = ((Parameter) value).getValue();
-                        if (paramValue instanceof Map) {
-                            @SuppressWarnings("unchecked")
-                            Map<String, Object> map = (Map<String, Object>) paramValue;
-                            mapValue = map;
-                        }
-                    } else if (value instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> map = (Map<String, Object>) value;
-                        mapValue = map;
-                    }
-                    if (mapValue != null) {
-                        finalMap.putAll(mapValue);
-                    }
-                });
+                .forEach(finalMap::putAll);
+
         Map<String, Object> collidingImageParams = MapUtils.emptyIfNull(
                 (Map<String, Object>) parameters.remove(COLLIDING_IMAGE_DEPLOY_PARAMS));
         Map<String, Object> sortedMap = ParameterUtils.deepSortMapKeysPreservingParameters(parameters);
         orderedMap.putAll(sortedMap);
-
-        final Map<String, Object> sortedForLambdas;
-        if (parameters != null && !parameters.isEmpty() && !collisionParams.isEmpty()) {
-            Map<String, Object> merged = new LinkedHashMap<>(sortedMap);
-            merged.putAll(collisionParams);
-            sortedForLambdas = ParameterUtils.deepSortMapKeysPreservingParameters(merged);
-        } else {
-            sortedForLambdas = sortedMap;
-        }
         if (parameters != null && !parameters.isEmpty()) {
-            Map<String, Object> globalParams = new LinkedHashMap<>(sortedForLambdas);
-            globalParams.putAll(collidingImageParams);
-            orderedMap.put("global", ParameterUtils.deepSortMapKeysPreservingParameters(globalParams));
+            if (!collisionParams.isEmpty()) {
+                sortedMap.putAll(collisionParams);
+            }
+            sortedMap.putAll(collidingImageParams);
+            orderedMap.put("global", ParameterUtils.deepSortMapKeysPreservingParameters(sortedMap));
         }
         if (processPerServiceParams) {
             finalMap.forEach((key, value) -> {
                 Object mapValue = value instanceof Parameter ? ((Parameter) value).getValue() : value;
                 if (mapValue instanceof Map) {
-                    finalMap.put(key, sortedForLambdas);
+                    finalMap.put(key, sortedMap);
                 }
             });
         } else {
             finalMap.forEach((key, value) -> {
-                Map<String, Object> valueMap = null;
-                if (value instanceof Parameter) {
-                    Object paramValue = ((Parameter) value).getValue();
-                    if (paramValue instanceof Map) {
-                        @SuppressWarnings("unchecked")
-                        Map<String, Object> map = (Map<String, Object>) paramValue;
-                        valueMap = map;
-                    }
-                } else if (value instanceof Map) {
+                Object actualValue = value instanceof Parameter ? ((Parameter) value).getValue() : value;
+                if (actualValue instanceof Map) {
                     @SuppressWarnings("unchecked")
-                    Map<String, Object> map = (Map<String, Object>) value;
-                    valueMap = map;
-                }
-                if (valueMap != null) {
-                    Map<String, Object> modifiedMap = ParameterUtils.deepSortMapKeysPreservingParameters(valueMap);
-                    modifiedMap.put("!merge", sortedForLambdas);
-                    finalMap.put(key, ParameterUtils.deepSortMapKeysPreservingParameters(modifiedMap));
+                    Map<String, Object> valueMap = (Map<String, Object>) actualValue;
+                    valueMap.put("!merge", sortedMap);
+                    Map<String, Object> sortedValueMap = new TreeMap<>(valueMap);
+                    finalMap.put(key, sortedValueMap);
                 }
             });
         }
