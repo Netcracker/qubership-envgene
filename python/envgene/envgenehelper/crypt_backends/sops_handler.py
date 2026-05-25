@@ -25,7 +25,8 @@ def _run_SOPS(arg_str, return_codes_to_ignore=None):
 
 def _create_replace_content_sh(content):
     delimiter = 'ENVGENE_SOPS_EDIT_CUSTOM_EOF'
-
+    if content.endswith('\n'):
+        content = content[:-1]
     script_content = f"""#!/bin/sh
 if [ -z "$1" ]; then
     echo "No target file specified."
