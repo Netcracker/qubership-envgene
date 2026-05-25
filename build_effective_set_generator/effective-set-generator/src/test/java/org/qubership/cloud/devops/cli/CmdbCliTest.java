@@ -43,6 +43,7 @@ public class CmdbCliTest {
                 "--app_chart_validation", "false",
                 "--custom-params", "@config.json"
         );
+
         assertEquals(0, exitCode);
 
         Path expected = FileTestUtils.resource("environments/cluster-01/pl-01/effective-set");

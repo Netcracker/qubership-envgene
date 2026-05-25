@@ -61,7 +61,7 @@ public class EscapeMap extends LinkedHashMap<String, Parameter> {
         return super.put(key, new Parameter(map, origin, false));
     }
 
-    public Parameter put(String key, Map<?, ?> map,String origin) {
+    public Parameter put(String key, Map<?, ?> map, String origin) {
         return super.put(key, new Parameter(map, origin, false));
     }
 
@@ -69,7 +69,7 @@ public class EscapeMap extends LinkedHashMap<String, Parameter> {
         return super.put(key, new Parameter(string, origin, false));
     }
 
-    public Parameter put(String key, String string,String origin) {
+    public Parameter put(String key, String string, String origin) {
         return super.put(key, new Parameter(string, origin, false));
     }
 
