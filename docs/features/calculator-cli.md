@@ -23,7 +23,7 @@
       - [\[Version 2.0\] App chart validation](#version-20-app-chart-validation)
       - [\[Version 2.0\] Sensitive parameter processing](#version-20-sensitive-parameter-processing)
         - [\[Version 2.0\] Local Sensitive parameters](#version-20-local-sensitive-parameters)
-        - [\[Version 2.0\] External Sensitive parameters](#version-20-external-sensitive-parameters)
+        - [\[Version 2.0\] Sensitive parameters via external Credentials](#version-20-sensitive-parameters-via-external-credentials)
         - [\[Version 2.0\] Splitting sensitive/non sensitive parameters](#version-20-splitting-sensitivenon-sensitive-parameters)
         - [External credential algorithms](#external-credential-algorithms)
       - [\[Version 2.0\] No SBOMs Mode](#version-20-no-sboms-mode)
@@ -51,10 +51,12 @@
       - [\[Version 2.0\] Pipeline Parameter Context](#version-20-pipeline-parameter-context)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `parameters.yaml`](#version-20pipeline-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml)
+        - [\[Version 2.0\]\[Pipeline Parameter Context\] `external-credentials.yaml`](#version-20pipeline-parameter-context-external-credentialsyaml)
         - [Consumer Specific Context of Pipeline Context](#consumer-specific-context-of-pipeline-context)
           - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-parameters.yaml`](#version-20pipeline-parameter-context-consumer-parametersyaml)
           - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-credentials.yaml`](#version-20pipeline-parameter-context-consumer-credentialsyaml)
       - [\[Version 2.0\] Topology Context](#version-20-topology-context)
+        - [\[Version 2.0\]\[Topology Context\] `external-credentials.yaml`](#version-20topology-context-external-credentialsyaml)
         - [\[Version 2.0\]\[Topology Context\] `composite_structure` Example](#version-20topology-context-composite_structure-example)
         - [\[Version 2.0\]\[Topology Context\] `k8s_tokens` Example](#version-20topology-context-k8s_tokens-example)
         - [\[Version 2.0\]\[Topology Context\] `environments` Example](#version-20topology-context-environments-example)
@@ -242,10 +244,12 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
             └── effective-set
                 ├── topology
                 |   ├── parameters.yaml
-                |   └── credentials.yaml
+                |   ├── credentials.yaml
+                |   └── external-credentials.yaml
                 ├── pipeline
                 |   ├── parameters.yaml
                 |   ├── credentials.yaml
+                |   ├── external-credentials.yaml
                 |   ├── <consumer-name-01>-parameters.yaml
                 |   ├── <consumer-name-02>-credentials.yaml
                 |   ├── <consumer-name-01>-parameters.yaml
@@ -438,76 +442,17 @@ Sensitive parameters specified via the `creds.get` macro and local Credentials i
 6. `effective-set/runtime/<namespace-folder>/<application-name>/credentials.yaml`
 7. `effective-set/deployment/<namespace-folder>/<application-name>/values/custom-params.yaml`
 
-##### [Version 2.0] External Sensitive parameters
+##### [Version 2.0] Sensitive parameters via external Credentials
 
-Sensitive parameters specified via a `credRef` Credential Reference and external Credentials in the Effective Set are grouped into dedicated **external** credentials files. Encryption of these files is **not** required:
+Sensitive parameters specified via a `credRef` Credential Reference and external Credentials in the Effective Set are written as references (VALS URIs or ESO descriptors) to dedicated files. These files contain references, not secret material, and do not require encryption:
 
 1. `effective-set/deployment/<namespace-folder>/<application-name>/values/external-credentials.yaml`
+2. `effective-set/pipeline/external-credentials.yaml`
+3. `effective-set/topology/external-credentials.yaml`
 
-**Parameter with VALS reference:**
-
-A **parameter with VALS reference** is the deployment-side representation of a sensitive parameter after Effective Set calculation when the effective [`SECRET_FLOW`](/docs/features/external-creds.md#secret_flow-attribute) for the application is `helm-values`. Parameters that were defined with a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`) and resolve to an external [Credential](/docs/envgene-objects.md#credential) are emitted as plain YAML string values - `ref+...` URIs.
-
-Those references are resolved at deploy time to secret material by the Effective Set consumer. VALS Argo resolves them to plain text values.
-
-Parameters that resolve to VALS references are written to `effective-set/deployment/<namespace-folder>/<application-name>/values/external-credentials.yaml`.
-
-Output format:
-
-```yaml
-<parameter-key>: <vals-uri>
-```
-
-Example:
-
-```yaml
-global.secrets.streamingPlatform.username: ref+gcpsecrets://468649328578/ocp-05--env-1--env-1-data-management--cdc--cdc-streaming-cred#/username
-
-global.secrets.streamingPlatform.password: ref+gcpsecrets://468649328578/ocp-05--env-1--env-1-data-management--cdc--cdc-streaming-cred#/password
-
-CONSUL_ADMIN_TOKEN: ref+gcpsecrets://468649328578/ocp-05--postgres-password
-```
-
-**Parameter with ESO reference:**
-
-A **parameter with ESO reference** is the deployment-side representation of a sensitive parameter after Effective Set calculation when the effective [`SECRET_FLOW`](/docs/features/external-creds.md#secret_flow-attribute) for the application is `external-values` and the application's [`eso_support`](/docs/features/external-creds.md#eso_support-attribute) is `true`. Parameters that were defined with a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`) and resolve to an external [Credential](/docs/envgene-objects.md#credential).
-
-Those references are resolved at deploy time to secret material by the Effective Set consumer. The Helm chart consumes them (one object per parameter path) to render `ExternalSecret` CRs.
-
-Parameters that resolve to ESO references are written to `effective-set/deployment/<namespace-folder>/<application-name>/values/external-credentials.yaml`.
-
-Output format:
-
-```yaml
-<parameter-key>:
-  secretStoreId: <secret-store-id>
-  normalizedSecretName: <secret-name>
-  secretKeys:
-    - remoteKeyName: enum [ username, password ]
-```
-
-Example (multi-field credential):
-
-```yaml
-global.secrets.streamingPlatform.username:
-  secretStoreId: default-store
-  normalizedSecretName: ocp-05/env-1/env-1-data-management/cdc/cdc-streaming-cred
-  secretKeys:
-    - remoteKeyName: username
-
-global.secrets.streamingPlatform.password:
-  secretStoreId: default-store
-  normalizedSecretName: ocp-05/env-1/env-1-data-management/cdc/cdc-streaming-cred
-  secretKeys:
-    - remoteKeyName: password
-
-CONSUL_ADMIN_TOKEN:
-  secretStoreId: default-store
-  normalizedSecretName: ocp-05/postgres-password
-```
-
-> [!IMPORTANT]
-> For conceptual overview, use cases, and object definitions, see [External Credentials Management](/docs/features/external-creds.md).
+For the YAML shape of each reference form (VALS, ESO), the structure of every output file, the
+decision logic between VALS and ESO, and the generation algorithms, see
+[External Credentials Management](/docs/features/external-creds.md).
 
 ##### [Version 2.0] Splitting sensitive/non sensitive parameters
 
@@ -866,7 +811,7 @@ global: &id001
 
 This file contains **external** sensitive parameters defined in the `deployParameters` section of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects.
 
-For more information, refer to [External Sensitive parameters](#version-20-external-sensitive-parameters).
+For more information, refer to [Sensitive parameters via external Credentials](#version-20-sensitive-parameters-via-external-credentials).
 
 The structure of this file is as follows:
 
@@ -1244,10 +1189,11 @@ env-01-zookeeper: /environments/cluster-01/env-01/effective-set/deployment/zooke
 
 These parameters define a dedicated parameter context used for managing environment lifecycle systems, such as deployment orchestrators or CI/CD workflows.
 
-This context is constructed from parameters defined in the `e2eParameters` sections of the `Cloud` Environment Instance object. Such parameters are saved in a separate pair of files:
+This context is constructed from parameters defined in the `e2eParameters` sections of the `Cloud` Environment Instance object. Such parameters are saved in:
 
 - `parameters.yaml`
 - `credentials.yaml`
+- `external-credentials.yaml`
 
 ##### \[Version 2.0][Pipeline Parameter Context] `parameters.yaml`
 
@@ -1273,6 +1219,23 @@ The structure of this file is as follows:
 ```
 
 The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
+
+##### \[Version 2.0][Pipeline Parameter Context] `external-credentials.yaml`
+
+This file contains references for sensitive `e2eParameters` whose values resolve to external
+Credentials. The entries are grouped by the Credential's `secretStore`:
+
+```yaml
+<secret-store-id>:
+  <key-1>: <vals-uri>
+  <key-N>: <vals-uri>
+<another-secret-store-id>:
+  <key-1>: <vals-uri>
+```
+
+For VALS URI form, generation algorithm, and consumer responsibilities, see
+[Pipeline context](/docs/features/external-creds.md#pipeline-context)
+in [External Credentials Management](/docs/features/external-creds.md).
 
 ##### Consumer Specific Context of Pipeline Context
 
@@ -1321,10 +1284,11 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 #### [Version 2.0] Topology Context
 
-The Topology Context contains information about the relationships between systems and their components. It includes two files:
+The Topology Context contains information about the relationships between systems and their components. It includes:
 
 - `parameters.yaml` for non-sensitive data
 - `credentials.yaml` for **local** sensitive data
+- `external-credentials.yaml` for references to external Credentials
 
 For more information, refer to [Sensitive parameter processing](#version-20-sensitive-parameter-processing).
 
@@ -1456,6 +1420,25 @@ bg_domain:
     username: user-placeholder-123
     password: pass-placeholder-123
 ```
+
+##### \[Version 2.0][Topology Context] `external-credentials.yaml`
+
+This file contains references for Topology fields whose source Built-in credential references resolve
+to external Credentials. It mirrors the nested shape of `credentials.yaml`, with VALS URIs in place of
+plain values:
+
+```yaml
+k8s_tokens:
+  <namespace>: <vals-uri>
+bg_domain:
+  controllerNamespace:
+    username: <vals-uri>
+    password: <vals-uri>
+```
+
+For VALS URI form, generation algorithm, the default-store constraint, and consumer responsibilities, see
+[Topology context](/docs/features/external-creds.md#topology-context) in
+[External Credentials Management](/docs/features/external-creds.md).
 
 #### [Version 2.0] Runtime Parameter Context
 

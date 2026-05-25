@@ -17,7 +17,10 @@
       - [External Credential Context](#external-credential-context)
         - [External Credential Context `credentials` entry](#external-credential-context-credentials-entry)
         - [External Credential Context `secretStores` entry](#external-credential-context-secretstores-entry)
+      - [Pipeline context](#pipeline-context)
+      - [Topology context](#topology-context)
       - [EnvGene System Credentials](#envgene-system-credentials)
+        - [Authentication to the Secret Store](#authentication-to-the-secret-store)
       - [`eso_support` attribute](#eso_support-attribute)
       - [`SECRET_FLOW` attribute](#secret_flow-attribute)
     - [Environment Instance generation](#environment-instance-generation)
@@ -33,6 +36,8 @@
       - [VALS reference generation](#vals-reference-generation)
       - [ESO reference generation](#eso-reference-generation)
       - [External Credential Context `credentials` entry generation](#external-credential-context-credentials-entry-generation)
+      - [Pipeline context generation](#pipeline-context-generation)
+      - [Topology context generation](#topology-context-generation)
     - [KV Store Structure](#kv-store-structure)
     - [Credential in BG Deployment Cases](#credential-in-bg-deployment-cases)
     - [Use Cases](#use-cases)
@@ -43,6 +48,7 @@
       - [During Effective Set generation](#during-effective-set-generation)
       - [During CMDB import](#during-cmdb-import)
     - [To Do](#to-do)
+  - [Open questions](#open-questions)
 
 ## Description
 
@@ -55,7 +61,8 @@ This document specifies external credentials for EnvGene:
   schema fields.
 - `external` [Credential](#credential) object type.
 - [Secret Store](#secret-store) configuration.
-- Effective Set outputs: VALS reference, ESO reference, External Credential Context.
+- Effective Set outputs: VALS reference, ESO reference, External Credential Context, Pipeline context,
+  Topology context.
 - Per-store normalization of remote secret names.
 
 A minimal end-to-end sample (template, instance repository, Effective Set deployment `values/credentials.yaml` and `values/external-credentials.yaml` for VALS vs ESO) lives under [/docs/samples/external-credentials/](/docs/samples/external-credentials/).
@@ -72,10 +79,14 @@ It is necessary to extend EnvGene to support management of Credentials that resi
 ## Assumption
 
 1. When migrating to an external secret store, it is necessary to update the EnvGene Environment template
-2. Within a given `secretStore`, the remote secret is addressed by `normalizedSecretName`, derived from `remoteRefPath`, `credId`, and store type (see [Normalization to normalizedSecretName](#normalization-to-normalizedsecretname))
+2. Within a given Secret Store, the remote secret is addressed by `normalizedSecretName`, derived from `remoteRefPath`, `credId`, and store type (see [Normalization to normalizedSecretName](#normalization-to-normalizedsecretname))
 3. Credential uniqueness within EnvGene repository is determined by `credId`
-4. A single EnvGene instance repository uses **either** local Credentials (`usernamePassword`, `secret`) **or** external Credentials (`type: external`) - mixing local and external Credentials in the same repository is not a supported case
+4. A single Environment Instance uses **either** local Credentials (`usernamePassword`, `secret`) **or** external Credentials (`type: external`) - mixing local and external Credentials in the same Environment Instance is not a supported case. Different Environment Instances in the same repository may differ.
 5. CMDB import is not supported for Environment Instances that contain external Credentials. CMDB integration currently expects resolved credential values or local Credentials only.
+6. Sensitive parameters stored in environment template repositories are out of scope.
+7. External Secret Store entries for system credentials are pre-created by the user. EnvGene reads them
+   but does not create them.
+8. Consumer-specific pipeline context (`<consumer>-external-credentials.yaml`) is out of scope.
 
 ## Proposed Approach
 
@@ -110,6 +121,8 @@ Items 1 and 2 are generated during environment instance generation, 3 is created
 
 When generating the Effective Set, the deployment context contains sensitive parameters whose values are [Parameter with VALS reference](#parameter-with-vals-reference) values when the effective `SECRET_FLOW` for the application is `helm-values`, or [Parameter with ESO reference](#parameter-with-eso-reference) values when the effective `SECRET_FLOW` is `external-values`. See [Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references).
 
+The pipeline context emits sensitive `e2eParameters` whose values resolve to external Credentials into [Pipeline context](#pipeline-context), grouped by the Credential's `secretStore`.
+
 In the [External Credential Context](#external-credential-context):
 
 1. One [External Credential Context `credentials` entry](#external-credential-context-credentials-entry) for each [Credential](#credential) with `type: external` and `create: true`
@@ -123,10 +136,9 @@ The Credential Reference (`$type: credRef`) points a parameter in an EnvGene obj
 
 This reference is used **only** for `external` Credentials type.
 
-Credential References (`$type: credRef`) are honored only in `deployParameters`. Occurrences in
-`e2eParameters` or `technicalConfigurationParameters` are out of scope - they pass through as plain YAML data,
-without resolution, validation, or transformation. External credential support for those contexts is future
-scope (see [To Do](#to-do)).
+Credential References (`$type: credRef`) are honored in `deployParameters` (deployment context) and
+`e2eParameters` (pipeline context). Occurrences in `technicalConfigurationParameters` are not supported:
+the runtime context does not accept sensitive parameters via external Credentials.
 
 For backward compatibility, `creds.get()` is still fully supported for working with local Credentials.
 
@@ -224,6 +236,15 @@ Credential entry must declare `properties` consistently with what the built-in r
 | `Cloud.consulConfig.tokenSecret`           | `CONSUL_ADMIN_TOKEN`                                                                                                                         |
 | `BGDomain.controllerNamespace.credentials` | `BG_CONTROLLER_LOGIN`, `BG_CONTROLLER_PASSWORD`                                                                                              |
 
+**Topology context destinations.** Selected built-in credential references additionally feed into the
+[Topology context](#topology-context):
+
+| Built-in credential reference              | Topology context field                                                          |
+|--------------------------------------------|---------------------------------------------------------------------------------|
+| `Namespace.credentialsId`                  | `k8s_tokens.<namespace>`                                                 |
+| `Cloud.defaultCredentialsId`               | `k8s_tokens.<namespace>` (fallback when Namespace lacks `credentialsId`) |
+| `BGDomain.controllerNamespace.credentials` | `bg_domain.controllerNamespace.{username,password}`                      |
+
 #### Credential Template
 
 A Credential Template is part of the EnvGene template, a Jinja template used for rendering external [Credentials](#credential). The following applies:
@@ -239,7 +260,6 @@ A Credential Template is part of the EnvGene template, a Jinja template used for
 cdc-streaming-cred:
   type: external
   create: true
-  secretStore: default-store
   remoteRefPath: {{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc
   properties:
     - name: username
@@ -247,13 +267,12 @@ cdc-streaming-cred:
 
 consul-creds:
   type: external
-  secretStore: default-store
   remoteRefPath: {{ current_env.cloud }}
 ```
 
 #### Credential
 
-The existing [Credential](/docs/envgene-objects.md#credential) is extended by introducing a new type `external`, which:
+A [Credential](/docs/envgene-objects.md#credential) of `type: external`:
 
 1. Describes:
    1. Which external secret store it is located in
@@ -281,21 +300,12 @@ The existing [Credential](/docs/envgene-objects.md#credential) is extended by in
     ``` -->
 
 ```yaml
-# AS IS Credential
-<cred-id>:
-  type: enum [ usernamePassword, secret ]
-  data:
-    username: string
-    password: string
-    secret: string
-```
-
-```yaml
-# TO BE Credential
 <cred-id>:
   # Mandatory
   type: enum [ usernamePassword, secret, external ]
-  # Required when type is `external`
+  # Optional
+  # Only for `type: external`
+  # Default: default-store
   secretStore: string
   # Required when type is `external` (a default may be applied at render time if omitted in the template)
   remoteRefPath: string
@@ -317,12 +327,10 @@ The existing [Credential](/docs/envgene-objects.md#credential) is extended by in
 cdc-streaming-cred:
   type: external
   create: true
-  secretStore: default-store
   remoteRefPath: ocp-05/env-1/env-1-data-management/cdc
 
 consul-creds:
   type: external
-  secretStore: default-store
   remoteRefPath: ocp-05
 ```
 
@@ -508,16 +516,163 @@ An **External Credential Context `secretStores` entry** is one map entry under `
 
 The Effective Set calculator copies it from the corresponding [Secret Store](#secret-store) in the instance repository for each store ID referenced by a [`credentials` entry](#external-credential-context-credentials-entry) in the same file (same keys and fields as in the store definition: `type`, `url`, and type-specific settings such as `mountPath`, `vaultName`, `region`, `projectId`). Only stores that are actually referenced are included.
 
+#### Pipeline context
+
+In the **Pipeline context**, sensitive `e2eParameters` resolving to an [external Credential](#credential)
+are written to `effective-set/pipeline/external-credentials.yaml` as VALS references. This file is part
+of the [Pipeline Parameter Context](/docs/features/calculator-cli.md#version-20-pipeline-parameter-context).
+
+Entries are grouped by the Credential's `secretStore`:
+
+```yaml
+<secret-store-id>:
+  <parameter-key>: <vals-uri>
+  <parameter-key>: <vals-uri>
+<another-secret-store-id>:
+  <parameter-key>: <vals-uri>
+```
+
+Top-level keys match the `secretStore` field of the referenced [Credential](#credential). The canonical
+key for Credentials with `secretStore` unset or equal to `default-store` is `default-store`. Top-level
+groups are ordered alphabetically by store ID. Entries within a group are ordered alphabetically by
+parameter key.
+
+The file location is:
+
+```text
+└── environments
+    └── <cluster-name>
+        └── <env-name>
+            └── effective-set
+                └── pipeline
+                    └── external-credentials.yaml
+```
+
+The file is always emitted. When no e2eParameter references an external Credential, the file is empty.
+
+The consumer is responsible for selecting CI/CD variables for store authentication. For each top-level
+group, the consumer reads store-auth variables by the rule defined in
+[Authentication to the Secret Store](#authentication-to-the-secret-store) (default store: no prefix.
+Non-default store: store ID as prefix without a separator).
+
+#### Topology context
+
+In the **Topology context**, sensitive fields whose source [Built-in credential reference](#built-in-credential-references)
+resolves to an [external Credential](#credential) are written to
+`effective-set/topology/external-credentials.yaml` as VALS references. This file is part of the
+[Topology Context](/docs/features/calculator-cli.md#version-20-topology-context).
+
+The file mirrors the shape of `effective-set/topology/credentials.yaml`, with VALS URIs in place of
+plain values:
+
+```yaml
+k8s_tokens:
+  <namespace>: <vals-uri>
+bg_domain:
+  controllerNamespace:
+    username: <vals-uri>
+    password: <vals-uri>
+```
+
+The [Built-in credential references](#built-in-credential-references) that feed into the Topology
+context are:
+
+| Built-in credential reference              | Topology field                                                           |
+|--------------------------------------------|--------------------------------------------------------------------------|
+| `Namespace.credentialsId`                  | `k8s_tokens.<namespace>`                                                 |
+| `Cloud.defaultCredentialsId`               | `k8s_tokens.<namespace>` (fallback when Namespace lacks `credentialsId`) |
+| `BGDomain.controllerNamespace.credentials` | `bg_domain.controllerNamespace.{username,password}`                      |
+
+The file location is:
+
+```text
+└── environments
+    └── <cluster-name>
+        └── <env-name>
+            └── effective-set
+                └── topology
+                    └── external-credentials.yaml
+```
+
+The file is always emitted. When no Topology field resolves to an external Credential, the file is empty.
+
+**Constraint.** Phase 2 restricts external Credentials referenced from Topology Built-in credential
+references to the default Secret Store. Multi-store support is an [Open question](#open-questions).
+Violation fails Environment Instance generation per
+[Validation rule](#during-environment-instance-generation).
+
 #### EnvGene System Credentials
 
-EnvGene system credentials are credentials required for the operation of EnvGene itself, for example, credentials to access the registry or a GitLab token to perform commits.
+System credentials are credentials EnvGene jobs consume for their own operation (registry access, Git
+commit, CMDB integration and others). They are referenced from the following configuration files:
 
-Short term - the values are stored in the CI/CD variables of the EnvGene repository.
+| Parameter                        | Configuration file                                                                                   | CI/CD variable fallback         |
+|----------------------------------|------------------------------------------------------------------------------------------------------|---------------------------------|
+| `self_token`                     | `/configuration/integration.yml`                                                                     | `GITHUB_TOKEN` / `GITLAB_TOKEN` |
+| `cp_discovery.gitlab.token`      | `/configuration/integration.yml`                                                                     | none                            |
+| `docker_registry`                | `/configuration/integration.yml`                                                                     | `GCP_SA_KEY`                    |
+| `<registry>.{username,password}` | `/configuration/registry.yml`                                                                        | none                            |
+| `<deployer>.{username,token}`    | `/configuration/deployer.yml` or `/environments/<cluster>/app-deployer\|cloud-deployer/deployer.yml` | none                            |
 
-Long term - use of a library that leverages the [Secret Store](#secret-store) to retrieve the value from an external secret store.
+The Credential entries live in `/configuration/credentials/credentials.yml`, except for
+`<deployer>.{username,token}` whose Credential entries may also live in `deployer-creds.yml` within the
+same directory as the referencing `deployer.yml`.
 
-> [!WARNING]
-> A description of handling EnvGene System Credentials will be added later.
+When the CI/CD variable fallback column shows a name, EnvGene uses the file-side declaration when present,
+and falls back to the listed CI/CD variable when the parameter is absent from the configuration file.
+
+Each parameter uses the [Credential Reference](#credential-reference) form when the referenced Credential
+has `type: external`, and the `envgen.creds.get('<id>').<field>` macro otherwise. Example for `self_token`
+referencing an external Credential:
+
+```yaml
+# /configuration/integration.yml
+self_token:
+  $type: credRef
+  credId: self-token-cred
+```
+
+```yaml
+# /configuration/credentials/credentials.yml
+self-token-cred:
+  type: external
+  # Optional. Default: default-store
+  secretStore: default-store
+  remoteRefPath: /vcs/envgene-bot
+```
+
+##### Authentication to the Secret Store
+
+To read system credentials, EnvGene authenticates to the Secret Store. Each Credential entry selects its
+store through the `secretStore` field on the [Credential](#credential) (default: `default-store`).
+Authentication parameters for that store come from two sources:
+
+- the [Secret Store](#secret-store) object in `/configuration/secret-stores.yml` for non-sensitive values.
+- CI/CD variables for sensitive values.
+
+Vault auth:
+
+| Parameter        | Source              | Description                                 |
+|------------------|---------------------|---------------------------------------------|
+| `type`           | Secret Store object | `vault`                                     |
+| `url`            | Secret Store object | Vault server URL                            |
+| `VAULT_TOKEN`    | CI/CD variable      | Token-based authentication                  |
+| `VAULT_USERNAME` | CI/CD variable      | Userpass auth, paired with `VAULT_PASSWORD` |
+| `VAULT_PASSWORD` | CI/CD variable      | Userpass auth, paired with `VAULT_USERNAME` |
+
+Either `VAULT_TOKEN` or the pair (`VAULT_USERNAME`, `VAULT_PASSWORD`) is required.
+
+GCP auth:
+
+| Parameter                        | Source              | Description                          |
+|----------------------------------|---------------------|--------------------------------------|
+| `type`                           | Secret Store object | `gcp`                                |
+| `GOOGLE_APPLICATION_CREDENTIALS` | CI/CD variable      | Path to the service account key file |
+
+AWS Secrets Manager and Azure Key Vault are not supported as Secret Stores for system credentials.
+
+For non-default Secret Stores, CI/CD variable names use the store ID as a prefix without a separator (for
+example `secondary-vaultVAULT_TOKEN` for store ID `secondary-vault`).
 
 #### `eso_support` attribute
 
@@ -567,12 +722,8 @@ the [Template Descriptor](/docs/envgene-objects.md#template-descriptor):
 - Field present: **external mode**.
 
 **Scope.** EnvGene operations run at Environment Instance scope. Each operation reads the mode from the Template
-Descriptor used by that Environment Instance, so the determination is per-environment.
-
-Per [Assumption 4](#assumption), all Environment Instances in a single repository are expected to share one mode,
-and the migration from local to external is expected to be performed for the whole repository at once. EnvGene
-does not enforce this at the operation boundary. It works correctly for each environment independently, but
-mixing modes across environments in a repository is out of scope.
+Descriptor used by that Environment Instance, so the determination is per-environment. Different Environment
+Instances in the same repository may use different modes.
 
 **Placeholder auto-generation (local mode only).** EnvGene auto-generates a placeholder local Credential
 (`type: usernamePassword` / `secret`, `data: envgeneNullValue`) for every `credId` referenced by a
@@ -705,14 +856,25 @@ The algorithm is vendor-specific. Effective Set calculator applies the rules for
 
 #### VALS reference generation
 
-This applies while the Effective Set calculator builds the **deployment context** for a given application:
+This algorithm constructs a **vals URI** (`ref+...`) for a sensitive parameter resolving to an external
+[Credential](#credential). It is invoked by the Effective Set calculator while building:
 
-1. The effective [`SECRET_FLOW`](#secret_flow-attribute) for the application must be `helm-values` (see [Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references)).
-2. Only parameters whose values are [Credential References](#credential-reference) pointing at an [external Credential](#credential) are transformed.
+- **Deployment context** - for each parameter in `deployParameters` whose value is a
+  [Credential Reference](#credential-reference) pointing at an external Credential, when the
+  application's effective [`SECRET_FLOW`](#secret_flow-attribute) is `helm-values` (see
+  [Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references)).
+- **Pipeline context** - for each sensitive `e2eParameter` of the Cloud Environment Instance whose
+  value is a Credential Reference pointing at an external Credential. The `SECRET_FLOW`
+  applicability check does not apply to this context.
+- **Topology context** - for each Topology field whose source
+  [Built-in credential reference](#built-in-credential-references) resolves to an external Credential.
+  The `SECRET_FLOW` applicability check does not apply, and `secretStore` is constrained to
+  `default-store` (see [Topology context](#topology-context)).
 
-Each such parameter becomes one YAML string value, a **vals URI** (`ref+...`).
+Each input parameter becomes one YAML string value, a vals URI. The placement of the URI within the
+Effective Set output is determined by the invoking context.
 
-**Inputs (per target parameter in the deployment context):**
+**Inputs (per target parameter):**
 
 1. The parameter key.
 2. The resolved [Credential Reference](#credential-reference): `credId`, optional `property` (`username` or `password` when the Credential declares multiple fields).
@@ -746,7 +908,11 @@ Each such parameter becomes one YAML string value, a **vals URI** (`ref+...`).
 
    - **Final URI:** `base URI` + `fragment suffix`.
 
-4. Emit the deployment value: `<parameter-key>: "<vals-uri>"` (string scalar). The exact key is the same path as in the source parameter (for example `global.secrets.streamingPlatform.username`).
+4. Produce `<parameter-key>: "<vals-uri>"` (string scalar). The exact key is the same path as in the
+   source parameter (for example `global.secrets.streamingPlatform.username`). Placement in the
+   Effective Set output is the responsibility of the invoking context (deployment context: per-application
+   `external-credentials.yaml`. Pipeline context: under the `<secret-store-id>` group in
+   `effective-set/pipeline/external-credentials.yaml`).
 
 #### ESO reference generation
 
@@ -835,6 +1001,29 @@ The emitted shape per `credId` is the object described under [External Credentia
 
 4. Write the combined payload (`secretStores` from step 2, `credentials` from step 3) to `external-credentials.yaml` at the path defined in [External Credential Context](#external-credential-context).
 
+#### Pipeline context generation
+
+For each sensitive `e2eParameter` whose value is a [Credential Reference](#credential-reference)
+resolving to an external Credential `C`, the Effective Set calculator constructs a VALS URI (see
+[VALS reference generation](#vals-reference-generation)) and places it under the top-level group
+named by `C.secretStore` (default: `default-store`). Output ordering is deterministic.
+
+The file is emitted at `effective-set/pipeline/external-credentials.yaml` regardless of whether any
+`e2eParameter` resolves to an external Credential.
+
+#### Topology context generation
+
+For each Topology field whose source [Built-in credential reference](#built-in-credential-references)
+resolves to an external Credential `C`, the Effective Set calculator constructs a VALS URI (see
+[VALS reference generation](#vals-reference-generation)) and places it at the field path defined in
+[Topology context](#topology-context).
+
+`C.secretStore` is required to be unset or `default-store`. Non-default Stores fail Effective Set
+generation per [Validation rule](#during-environment-instance-generation).
+
+The file is emitted at `effective-set/topology/external-credentials.yaml` regardless of whether any
+Topology field resolves to an external Credential.
+
 ### KV Store Structure
 
 The location of a Credential within the KV Store structure is determined at the moment the Credential is created, i.e., during the deployment of the system/application that the Credential describes.
@@ -921,10 +1110,9 @@ Example:
 
 #### During Environment Instance generation
 
-1. **Reference resolution.** Every [Credential Reference](#credential-reference) in `deployParameters` and
-   every [Built-in credential reference](#built-in-credential-references) resolves to a
-   [Credential](#credential) entry in the
-   [Environment Credentials File](/docs/envgene-objects.md#credential-file).
+1. **Reference resolution.** Every [Credential Reference](#credential-reference) in `deployParameters` or
+   `e2eParameters`, and every [Built-in credential reference](#built-in-credential-references), resolves to a
+   [Credential](#credential) entry in the [Environment Credentials File](/docs/envgene-objects.md#credential-file).
 
 2. **Single category.** Every Environment Instance contains [Credentials](#credential) of only one category:
    either local (`type: usernamePassword` / `secret`) or external (`type: external`). Different Environment
@@ -934,6 +1122,14 @@ Example:
    [Credential Reference](#credential-reference) or
    [Built-in credential reference](#built-in-credential-references). Violation surfaces a warning and does not
    fail Environment Instance generation.
+
+4. **No external credentials in runtime context.** No [Credential Reference](#credential-reference)
+   (`$type: credRef`) appears in `technicalConfigurationParameters`. The runtime context does not support
+   sensitive parameters via external Credentials.
+
+5. **Topology external Credentials use default store.** Every external [Credential](#credential)
+   resolved through a [Built-in credential reference](#built-in-credential-references) feeding into
+   the [Topology context](#topology-context) has `secretStore` unset or equal to `default-store`.
 
 #### During Effective Set generation
 
@@ -954,6 +1150,14 @@ Example:
    to a [Credential](#credential) whose `properties` list contains an entry with `name: <p>`. Every Credential
    Reference without `property` resolves to a Credential without `properties` (single-value).
 
+6. **System Credential creation flag.** No [system Credential](#envgene-system-credentials) declares
+   `create: true`. System credentials are pre-created by the user in the external Secret Store, so they are
+   not included in the [External Credential Context](#external-credential-context) creation entries.
+
+7. **System Credential Secret Store type.** Every [system Credential](#envgene-system-credentials) with
+   `type: external` references a [Secret Store](#secret-store) of type `vault` or `gcp`. `aws` and `azure`
+   are not supported as Secret Stores for system credentials.
+
 #### During CMDB import
 
 1. **No external credentials.** The Environment Instance being imported contains no [Credentials](#credential)
@@ -962,7 +1166,19 @@ Example:
 ### To Do
 
 1. Support Blue-Green deployment cases
-2. Support system-level external credentials
-3. Support external credentials in the runtime context
-4. Support external credentials in the pipeline context
-5. Support template composition
+2. Support template composition
+3. Support AWS Secrets Manager as a Secret Store
+4. Support Azure Key Vault as a Secret Store
+
+## Open questions
+
+1. Whether to skip encryption for values in `effective-set/pipeline/credentials.yaml` when those values are
+   VALS reference strings rather than actual secret material.
+2. Notation unification. Today the `envgen.creds.get('<id>').<field>` macro is used for local Credentials
+   and `$type: credRef` is used for external Credentials. Whether to converge on a single notation, and if
+   so, in which direction.
+3. Multi-store support for Topology external Credentials. Phase 2 restricts external Credentials
+   reachable from Topology context to the default Secret Store. A future direction is to encode store
+   identity in the VALS URL via query parameters (`?address=...&token_env=<store-id>VAULT_TOKEN`),
+   extending [VALS reference generation](#vals-reference-generation) to emit these parameters for
+   non-default stores.
