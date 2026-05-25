@@ -116,7 +116,7 @@ public class CliParameterParser {
                 CredentialDTO credentialDTO = inputData.getCredentialDTOMap().get(credentialsId);
                 if (credentialDTO != null) {
                     SecretCredentialsDTO secCred = (SecretCredentialsDTO) credentialDTO.getData();
-                    k8TokenMap.put(originalNamespace, new Parameter(secCred.getSecret(),credentialsIdOrigin,false));
+                    k8TokenMap.put(originalNamespace, new Parameter(secCred.getSecret(), credentialsIdOrigin, false));
                 }
             }
         });
@@ -205,20 +205,16 @@ public class CliParameterParser {
         Map<String, Object> topologyParams = new TreeMap<>();
         Map<String, Object> topologySecuredParams = new TreeMap<>();
         Map<String, Object> clusterParameterMap = getClusterMap();
-        Map<String, Object> compositeStructure = getObjectMap(inputData.getCompositeStructureDTO());
-        topologyParams.put("composite_structure", new Parameter(compositeStructure,ParametersConstants.COMPOSITE_STRUCTURE,false));
-        Map<String, Object>  environments = inputData.getClusterMap();
-        topologyParams.put("environments",  new Parameter(environments,ENVGENE_CALCULATED,false));
-        topologyParams.put("cluster", new Parameter(clusterParameterMap,ENVGENE_CALCULATED,false));
-
-        topologySecuredParams.put("k8s_tokens", new Parameter(unwrapParameterValues(k8TokenMap),ENVGENE_CALCULATED,false));
-
+        topologyParams.put("composite_structure", new Parameter(getObjectMap(inputData.getCompositeStructureDTO()), ParametersConstants.COMPOSITE_STRUCTURE, false));
+        topologyParams.put("environments", new Parameter(inputData.getClusterMap(), ENVGENE_CALCULATED, false));
+        topologyParams.put("cluster", new Parameter(clusterParameterMap, ENVGENE_CALCULATED, false));
+        topologySecuredParams.put("k8s_tokens", new Parameter(unwrapParameterValues(k8TokenMap), ENVGENE_CALCULATED, false));
         Map<String, Object> bgDomainMap = getObjectMap(inputData.getBgDomainEntityDTO());
         Map<String, Object> bgDomainSecureMap = new LinkedHashMap<>();
         Map<String, Object> bgDomainParamsMap = new LinkedHashMap<>();
         ParameterUtils.splitBgDomainParams(bgDomainMap, bgDomainSecureMap, bgDomainParamsMap);
-        topologySecuredParams.put("bg_domain", new Parameter(bgDomainSecureMap,BG_DOMAIN,false));
-        topologyParams.put("bg_domain", new Parameter(bgDomainParamsMap,BG_DOMAIN,false));
+        topologySecuredParams.put("bg_domain", new Parameter(bgDomainSecureMap, BG_DOMAIN, false));
+        topologyParams.put("bg_domain", new Parameter(bgDomainParamsMap, BG_DOMAIN, false));
         String topologyDir = String.format("%s/%s", sharedData.getOutputDir(), "topology");
         fileDataConverter.writeToFile(topologyParams, topologyDir, "parameters.yaml");
         fileDataConverter.writeToFile(topologySecuredParams, topologyDir, "credentials.yaml");
@@ -257,7 +253,7 @@ public class CliParameterParser {
                     }
                 }
                 if (obj == null && StringUtils.isNotEmpty(k.getValue())) {
-                    consumerParamsMap.put(k.getName(), new Parameter(k.getValue(), ENVGENE_PIPELINE_CONSUMER_PARAMETER,false));
+                    consumerParamsMap.put(k.getName(), new Parameter(k.getValue(), ENVGENE_PIPELINE_CONSUMER_PARAMETER, false));
                 }
                 if (obj == null && StringUtils.isEmpty(k.getValue()) && k.isRequired()) {
                     throw new ConsumerFileProcessingException("Property " + k + " is required and no value is defined in E2E configurations");
@@ -361,8 +357,7 @@ public class CliParameterParser {
             //deployment
             fileDataConverter.writeToFile(parameterBundle.getDeployParams(), deploymentDir, "deployment-parameters.yaml");
             if (StringUtils.isNotBlank(parameterBundle.getAppChartName())) {
-                Map<String, Object> perServiceParams = parameterBundle.getPerServiceParams();
-                fileDataConverter.writeToFile(perServiceParams, appChartPath.toString(), "deployment-parameters.yaml");
+                fileDataConverter.writeToFile(parameterBundle.getPerServiceParams(), appChartPath.toString(), "deployment-parameters.yaml");
             }
             fileDataConverter.writeToFile(parameterBundle.getCollisionSecureParameters(), deploymentDir, "collision-credentials.yaml");
             fileDataConverter.writeToFile(parameterBundle.getCollisionDeployParameters(), deploymentDir, "collision-deployment-parameters.yaml");

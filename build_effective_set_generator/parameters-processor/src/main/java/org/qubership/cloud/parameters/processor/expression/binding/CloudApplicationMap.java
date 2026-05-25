@@ -25,7 +25,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.APP_ORIGIN;
-import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.CLOUD_ORIGIN;
 
 public class CloudApplicationMap extends DynamicMap {
 
