@@ -13,6 +13,7 @@
       - [BG Domain Template](#bg-domain-template)
       - [Registry Definition Template](#registry-definition-template)
       - [Application Definition Template](#application-definition-template)
+      - [Credential Template](#credential-template)
     - [System Credentials File (in Template repository)](#system-credentials-file-in-template-repository)
   - [Instance Repository Objects](#instance-repository-objects)
     - [Environment Instance Objects](#environment-instance-objects)
@@ -28,15 +29,20 @@
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
       - [`secret`](#secret)
+      - [`external`](#external)
+    - [Secret Store](#secret-store)
     - [Environment Credentials File](#environment-credentials-file)
     - [Shared Credentials File](#shared-credentials-file)
     - [System Credentials File (in Instance repository)](#system-credentials-file-in-instance-repository)
+    - [Shared Template Variable Files](#shared-template-variable-files)
     - [Environment Specific ParameterSet](#environment-specific-parameterset)
     - [Environment Specific Resource Profile Override](#environment-specific-resource-profile-override)
     - [Cloud Passport](#cloud-passport)
       - [Main File](#main-file)
       - [Credential File](#credential-file)
     - [Artifact Definition](#artifact-definition)
+      - [Artifact Definition v1.0](#artifact-definition-v10)
+      - [Artifact Definition v2.0](#artifact-definition-v20)
     - [Registry Definition](#registry-definition)
       - [Registry Definition v1.0](#registry-definition-v10)
       - [Registry Definition v2.0](#registry-definition-v20)
@@ -48,9 +54,9 @@
 
 ### Environment Template Objects
 
-An Environment Template is a file structure within the Envgene Template Repository that describes the structure of a solution — such as which namespaces are part of the solution, as well as environment-agnostic parameters, which are common to a specific type of solution.
+An Environment Template is a file structure within the EnvGene Template Repository that describes the structure of a solution - such as which namespaces are part of the solution, as well as environment-agnostic parameters, which are common to a specific type of solution.
 
-The objects that make up the Environment Template extensively use the Jinja template engine. During the generation of an Environment Instance, Envgene renders these templates with environment-specific parameters, allowing a single template to be used for preparing configurations for similar but not entirely identical environment/solution instances.
+The objects that make up the Environment Template extensively use the Jinja template engine. During the generation of an Environment Instance, EnvGene renders these templates with environment-specific parameters, allowing a single template to be used for preparing configurations for similar but not entirely identical environment/solution instances.
 
 The template repository can contain multiple Environment Templates describing configurations for different types of environments/solution instances, such as DEV, PROD, and SVT.
 
@@ -62,14 +68,21 @@ This object is a describes the structure of a solution, links to solution's comp
 
 The name of this file serves as the name of the Environment Template. In the Environment Inventory, this name is used to specify which Environment Template from the artifact should be used.
 
-**Location:** Any YAML file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
+**Location:** Any YAML or Jinja file located in the `/templates/env_templates/` folder is considered a Template Descriptor.
+
+**Supported file extensions:**
+
+- `.yml` / `.yaml` — Static Template Descriptor
+- `.yml.j2` / `.yaml.j2` — Jinja Template Descriptor (rendered before Environment Instance generation)
+
+When multiple Template Descriptors with the same base name but different extensions exist, EnvGene selects them in descending priority order: `yml.j2` > `yaml.j2` > `yml` > `yaml`. Jinja Template Descriptors enable conditional namespace inclusion. See [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md) for details.
 
 It has the following structure:
 
 ```yaml
 # Optional
-# Template Inheritance configuration
-# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+# Template Composition configuration
+# See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
 parent-templates:
   # Optional
   # Value must be in `application:version` notation
@@ -79,8 +92,8 @@ parent-templates:
 tenant: string
 # or
 tenant:
-  # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  # Template Composition configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
   parent: string
 # Mandatory
 # Can be specified either as direct template path (string) or as an object
@@ -92,17 +105,19 @@ cloud:
   # Optional
   # Template Override configuration
   # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-override.md
-  template_override:     
   template_override:
     <yaml or jinja expression>
   # Optional
-  # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  # Template Composition configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
   parent: string
   # Optional
-  # Template Inheritance configuration
-  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+  # Template Composition configuration
+  # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
   overrides-parent:
+    # Optional
+    # Override the name of the cloud in rendering result
+    name: string
     profile:
       override-profile-name: <resource-profile-override-name>
       parent-profile-name: <resource-profile-override-name>
@@ -119,6 +134,9 @@ composite_structure: <path-to-the-composite-structure-template-file>
 # Optional
 bg_domain: <path-to-the-bg-domain-template-file>
 # Optional
+# Path to the external Credential Template file (Jinja, single file).
+external_credential_template: string
+# Optional
 namespaces:
   - # Optional
     # Path to the namespace template file
@@ -134,16 +152,19 @@ namespaces:
       <yaml or jinja expression>
     # Optional
     # Name of Namespace in Parent Template
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
     name: string
     # Optional
     # Parent template name
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
     parent: string
     # Optional
-    # Template Inheritance configuration
-    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/template-inheritance.md
+    # Template Composition configuration
+    # See details in https://github.com/Netcracker/qubership-envgene/blob/main/docs/features/template-composition.md
     overrides-parent:
+      # Optional
+      # Override the name of the namespace in rendering result
+      name: string
       profile:
         override-profile-name: string
         parent-profile-name: string
@@ -162,11 +183,73 @@ namespaces:
 
 #### Tenant Template
 
-TBD
+This is a Jinja template file used to render the [Tenant](#tenant) object. It defines tenant-level parameters for Environment Instance generation.
+
+The Tenant template must be developed so that after Jinja rendering, the result is a valid Tenant object according to the [schema](/schemas/tenant.schema.json).
+
+[Macros](/docs/template-macros.md) are available for use when developing the template.
+
+**Location:** The Tenant template is located at `/templates/env_templates/*/`
+
+**Example:**
+
+```yaml
+name: "Applications"
+registryName: ""
+description: "For development"
+owners: "{{ current_env.owners }}"
+credential: ""
+labels: []
+```
 
 #### Cloud Template
 
-TBD
+This is a Jinja template file used to render the [Cloud](#cloud) object. It defines cluster-level parameters for Environment Instance generation.
+
+The Cloud template must be developed so that after Jinja rendering, the result is a valid Cloud object according to the [schema](/schemas/cloud.schema.json).
+
+[Macros](/docs/template-macros.md) are available for use when developing the template.
+
+**Location:** The Cloud template is located at `/templates/env_templates/*/`
+
+**Example:**
+
+```yaml
+name: "{{ current_env.cloudNameWithCluster }}"
+apiUrl: "{{ current_env.cluster.cloud_api_url }}"
+apiPort: "{{ current_env.cluster.cloud_api_port }}"
+privateUrl: ""
+publicUrl: "{{ current_env.cluster.cloud_public_url }}"
+dashboardUrl: "https://dashboard.{{ current_env.cluster.cloud_public_url }}"
+labels: []
+defaultCredentialsId: "token"
+protocol: "{{ current_env.cluster.cloud_api_protocol }}"
+deployParameters: {}
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+maasConfig:
+  credentialsId: "maas"
+  maasUrl: "http://maas-service-maas.{{ current_env.cluster.cloud_public_url }}"
+  maasInternalAddress: "http://maas-service.maas:8080"
+  enable: true
+vaultConfig:
+  url: ""
+  credentialsId: ""
+  enable: false
+dbaasConfigs:
+  - credentialsId: "dbaas"
+    apiUrl: 'http://dbaas-aggregator.dbaas:8080'
+    aggregatorUrl: 'https://aggregator-dbaas.{{ current_env.cluster.cloud_public_url }}'
+    enable: true
+consulConfig:
+  tokenSecret: "consul-token"
+  publicUrl: 'https://consul.{{ current_env.cluster.cloud_public_url }}'
+  enabled: true
+  internalUrl: 'http://consul-server.consul:8500'
+```
 
 #### Namespace Template
 
@@ -330,7 +413,7 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by EnvGene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -347,11 +430,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   sd: string
   # Optional
   services:
@@ -425,10 +508,10 @@ This is a Jinja template file used to render the [BG Domain](#bg-domain) object 
 name: "{{ current_env.name }}-bg-domain"
 type: bgdomain
 originNamespace:
-  name: "{{ current_env.name }}-origin-bss" 
+  name: "{{ current_env.name }}-origin-bss"
   type: namespace
 peerNamespace:
-  name: "{{ current_env.name }}-peer-bss" 
+  name: "{{ current_env.name }}-peer-bss"
   type: namespace
 controllerNamespace:
   name: "{{ current_env.name }}-bg-controller"
@@ -484,6 +567,39 @@ artifactId: "application-1"
 groupId: "org.qubership"
 ```
 
+#### Credential Template
+
+This is a Jinja file in the Template Repository used to render [Credential](#credential) objects with `type: external`.
+
+The rendered document must be a map of `<cred-id>` entries that each conform to the [Credential](#credential) object for `external` as defined in [Credential JSON schema](/schemas/credential.schema.json).
+
+During Environment Instance generation, the result is merged into the instance [Environment Credentials File](#environment-credentials-file) together with Credentials created for local types from `${creds.get(...)}`.
+
+Parameters in Cloud, Namespace, and ParameterSet templates then reference those external Credentials via [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`).
+
+For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 External Sensitive parameters](/docs/features/calculator-cli.md#version-20-external-sensitive-parameters).
+
+Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `current_namespace`) are available when this file is rendered.
+
+**Location:** The path to the Credential Template is set in the [Template Descriptor](#template-descriptor) as `external_credential_template`: a string path to a **single** Jinja file (for example `.yml`, `.yaml`, `.yml.j2`, or `.yaml.j2`).
+
+**Example:**
+
+```yaml
+streaming-cred:
+  type: external
+  create: true
+  secretStore: default-store
+  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc"
+  properties:
+    - name: username
+    - name: password
+consul-creds:
+  type: external
+  secretStore: default-store
+  remoteRefPath: "{{ current_env.cloud }}"
+```
+
 ### System Credentials File (in Template repository)
 
 This file contains [Credential](#credential) objects used by EnvGene to integrate with external systems like artifact registries, GitLab, GitHub, and others.
@@ -508,7 +624,7 @@ gitlab-token-cred:
 
 ### Environment Instance Objects
 
-An Environment Instance is a file structure within the Envgene Instance Repository that describes the configuration for a specific environment/solution instance.
+An Environment Instance is a file structure within the EnvGene Instance Repository that describes the configuration for a specific environment/solution instance.
 
 It is generated during the rendering process of an Environment Template. During this rendering process, environment-agnostic parameters from the Environment Template are combined with environment-specific parameters, such as Cloud Passport, environment-specific ParameterSet, environment-specific Resource Profile Overrides, to produce a set of parameters specific to a particular environment/solution instance.
 
@@ -525,7 +641,7 @@ EnvGene adds the following header to all auto-generated objects (all Environment
 ```
 
 > [!NOTE]
-> The \<environment-template-artifact> placeholder is automatically replaced with the name of the EnvGene Environment Template artifact used for generation.
+> The \<environment-template-artifact\> placeholder is automatically replaced with the name of the EnvGene Environment Template artifact used for generation.
 
 EnvGene sorts every Environment Instance object according to its JSON schema. This ensures that when objects are modified (e.g., when applying a new template version), the repository commits remain human-readable.
 
@@ -533,11 +649,319 @@ EnvGene validates each Environment Instance object against the corresponding [JS
 
 #### Tenant
 
-TBD
+The Tenant object holds tenant-level parameters describing the tenancy, including registry configuration, ownership information, and pipeline parameters. These parameters are common to all environments within the tenant.
+
+The Tenant object is used to generate Effective Set.
+
+The Tenant object is generated during Environment Instance generation based on:
+
+- [Tenant Template](#tenant-template)
+- [Template ParamSet](#template-parameterset)
+- [Instance ParamSet](#environment-specific-parameterset)
+
+For each parameter in the Tenant, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
+
+**Location:** `/environments/<cluster-name>/<environment-name>/tenant.yml`.
+
+```yaml
+# Mandatory
+# Field is used to uniquely identify the Tenant
+# The name of the tenant
+name: string
+# Mandatory
+# Deprecated
+# Not processed by EnvGene
+registryName: string
+# Optional
+# Description of the tenant
+# Used for documentation and identification purposes
+description: string
+# Optional
+# Tenant owners
+# Used to identify responsible parties for the tenant
+owners: string
+# Optional
+# Deprecated
+# Not processed by EnvGene
+gitRepository: string
+# Optional
+# Deprecated
+# Not processed by EnvGene
+defaultBranch: string
+# Optional
+# The identifier for credentials used by the deployment
+# Used for authentication when performing deployment operations
+credential: string
+# Optional
+# List of labels for Tenant
+# A list of labels that should be applied to the tenant
+# Used for filtering, organization, and grouping
+labels: list
+# Optional
+# Deprecated
+# Not processed by EnvGene
+globalE2EParameters:
+  # Optional
+  # Deprecated
+  # Not processed by EnvGene
+  pipelineDefaultRecipients: string
+  # Optional
+  # Deprecated
+  # Not processed by EnvGene
+  recipientsStrategy: string
+  # Optional
+  # Deprecated
+  # Not processed by EnvGene
+  mergeTenantsAndE2EParameters: boolean
+  # Optional
+  # Deprecated
+  # Not processed by EnvGene
+  environmentParameters: hashmap
+# Optional
+# Deprecated
+# Not processed by EnvGene
+deployParameters: hashmap
+```
+
+**Example:**
+
+```yaml
+# The contents of this file is generated from template artifact: sample-template:v1.2.3.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "tenant"
+registryName: ""
+description: "Composite Full Sample"
+owners: "Qubership team"
+credential: ""
+labels: []
+```
+
+[Tenant JSON schema](/schemas/tenant.schema.json)
 
 #### Cloud
 
-TBD
+The Cloud object holds cluster-level parameters describing the cluster and platform applications installed in it. These parameters are common to all namespaces in the environment.
+
+The Cloud object is used to generate Effective Set.
+
+The Cloud object is generated during Environment Instance generation based on:
+
+- [Cloud Template](#cloud-template)
+- [Template ParamSet](#template-parameterset)
+- [Instance ParamSet](#environment-specific-parameterset)
+- [Cloud Passport](/docs/envgene-objects.md#cloud-passport) data (when used)
+
+For each parameter in the Cloud, a comment is added indicating the source Parameter Set from which this parameter originated. This is used for traceability in the generation of the environment instance.
+
+**Location:** `/environments/<cluster-name>/<environment-name>/cloud.yml`.
+
+```yaml
+# Mandatory
+# The name of the cloud configuration
+# Typically combines cluster and environment name
+name: string
+# Mandatory
+# The URL of the API endpoint of the cloud
+# Used to connect to the Kubernetes cluster API server
+apiUrl: string
+# Mandatory
+# The port on which the API runs
+# Used to connect to the Kubernetes cluster API server
+apiPort: integer|string
+# Optional
+# The private-facing URL for internal access
+# Used to form service URLs accessible from within the cluster
+privateUrl: string
+# Optional
+# The public-facing URL for external access
+# Used to form service URLs accessible from outside the cluster
+# Calculator macros are generated based on this URL
+publicUrl: string
+# Mandatory
+# The URL for accessing the cloud's k8s dashboard
+# Used for monitoring and management
+dashboardUrl: string
+# Mandatory
+# A list of labels for categorizing or tagging the cloud
+# Used for filtering, organization, and grouping
+labels: list
+# Mandatory
+# The identifier for credentials used by the deployment
+# Used for authentication when performing deployment
+defaultCredentialsId: string
+# Mandatory
+# The communication protocol used
+# HTTP or HTTPS
+protocol: string
+# Optional
+# Deprecated
+# Not processed by EnvGene
+version: number
+# Optional
+# Deprecated
+# Not processed by EnvGene
+dbMode: string
+# Optional
+# Deprecated
+# Not processed by EnvGene
+databases: array
+# Optional
+# Deprecated
+# Not processed by EnvGene
+mergeDeployParametersAndE2EParameters: boolean
+# Mandatory
+# Configuration for the monitoring-as-a-service (MaaS)
+maasConfig:
+  # Optional
+  # Credentials identifier for MaaS
+  # Used for authentication when accessing MaaS
+  credentialsId: string
+  # Mandatory
+  # Flag to enable or disable MaaS
+  # Controls whether MaaS-related parameters appear in the Effective Set
+  enable: boolean
+  # Optional
+  # URL for accessing MaaS
+  # Used to configure external access to MaaS
+  maasUrl: string
+  # Optional
+  # Internal address for MaaS
+  # Used to configure internal cluster access to MaaS
+  maasInternalAddress: string
+# Mandatory
+# Configuration for the vault service
+vaultConfig:
+  # Optional
+  # Credentials identifier for the vault
+  # Used for authentication when accessing Vault
+  credentialsId: string
+  # Mandatory
+  # Flag to enable or disable vault integration
+  # Controls whether Vault-related parameters appear in the Effective Set
+  enable: boolean
+  # Optional
+  # The vault service URL
+  # Used to configure access to Vault
+  url: string
+# Optional
+# Database-as-a-service (DBaaS) configurations
+# Multiple DBaaS instances can be configured
+dbaasConfigs:
+  - # Optional
+    # Credentials identifier for DBaaS
+    # Used for authentication when accessing DBaaS
+    credentialsId: string
+    # Mandatory
+    # Flag to enable or disable DBaaS
+    # Controls whether DBaaS-related parameters appear in the Effective Set
+    enable: boolean
+    # Optional
+    # API URL for DBaaS
+    # Used to configure internal cluster access to DBaaS
+    apiUrl: string
+    # Optional
+    # URL for the DBaaS aggregator
+    # Used to configure external access to DBaaS
+    aggregatorUrl: string
+# Mandatory
+# Configuration for Consul service integration
+consulConfig:
+  # Optional
+  # Secret token for Consul authentication
+  # Used for authentication when accessing Consul
+  tokenSecret: string
+  # Mandatory
+  # Flag to enable or disable Consul integration
+  # Controls whether Consul-related parameters appear in the Effective Set
+  enabled: boolean
+  # Optional
+  # The public URL for accessing Consul
+  # Used to configure external access to Consul
+  publicUrl: string
+  # Optional
+  # The internal URL for accessing Consul
+  # Used to configure internal cluster access to Consul
+  internalUrl: string
+# Optional
+# Key-value pairs of deployment parameters at the cloud level
+# Used to set parameters that will be used for rendering Helm charts of applications in this cloud
+deployParameters: hashmap
+# Optional
+# Key-value pairs of e2e parameters at the cloud level
+# Used to configure the systems/pipelines managing the Environment lifecycle for this cloud
+e2eParameters: hashmap
+# Optional
+# Key-value pairs of technical configuration parameters at the cloud level
+# Used to set parameters that can be applied to the application at runtime
+# without redeployment for this cloud
+technicalConfigurationParameters: hashmap
+# Optional
+# List of deployment Parameter Set names to include at the cloud level
+# Used to set parameters that will be used for rendering Helm charts of applications in this cloud
+deployParameterSets: list
+# Optional
+# List of e2e Parameter Set names to include at the cloud level
+# Used to configure the systems/pipelines managing the Environment lifecycle for this cloud
+e2eParameterSets: list
+# Optional
+# List of technical configuration Parameter Set names to include at the cloud level
+# Used to include predefined sets of parameters that can be applied to the application at runtime
+# without redeployment for this cloud
+technicalConfigurationParameterSets: list
+```
+
+**Example:**
+
+```yaml
+# The contents of this file is generated from template artifact: sample-template:v1.2.3.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "cluster_01_env_01"
+apiUrl: "api.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+apiPort: "6443" # cloud passport: cluster-01 version: 1.5
+privateUrl: "cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+publicUrl: "cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+dashboardUrl: "https://dashboard.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+labels: []
+defaultCredentialsId: "cloud-deploy-sa-token" # cloud passport: cluster-01 version: 1.5
+protocol: "https" # cloud passport: cluster-01 version: 1.5
+maasConfig:
+  credentialsId: "maas-cred" # cloud passport: cluster-01 version: 1.5
+  enable: true  # cloud passport: cluster-01 version: 1.5
+  maasUrl: "http://maas.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+  maasInternalAddress: "http://maas.maas:8080" # cloud passport: cluster-01 version: 1.5
+vaultConfig:
+  credentialsId: ""
+  enable: false
+  url: ""
+dbaasConfigs:
+  - credentialsId: "dbaas-cred" # cloud passport: cluster-01 version: 1.5
+    enable: true # cloud passport: cluster-01 version: 1.5
+    apiUrl: "http://dbaas.dbaas:8080" # cloud passport: cluster-01 version: 1.5
+    aggregatorUrl: "https://dbaas.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+consulConfig:
+  tokenSecret: "consul-cred" # cloud passport: cluster-01 version: 1.5
+  enabled: true # cloud passport: cluster-01 version: 1.5
+  publicUrl: "http://consul.consul:8080" # cloud passport: cluster-01 version: 1.5
+  internalUrl: "http://consul.consul:8080" # cloud passport: cluster-01 version: 1.5
+deployParameters:
+  CLOUD_DASHBOARD_URL: "https://dashboard.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+  CMDB_URL: "https://cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
+  CONSUL_ENABLED: "true" # cloud passport: cluster-01 version: 1.5
+  MAVEN_REPO_URL: "https://artifactory.qubership.org" # cloud passport: cluster-01 version: 1.5
+  MONITORING_ENABLED: "true" # cloud passport: cluster-01 version: 1.5
+  STORAGE_RWO_CLASS: "standard" # cloud passport: cluster-01 version: 1.5
+  ZOOKEEPER_ADDRESS: "zookeeper.zookeeper:2181" # cloud passport: cluster-01 version: 1.5
+e2eParameters:
+  CLOUD_LEVEL_PARAM_1: "cloud-level-value-1" # paramset: cloud-level-params version: 25.1 source: instance
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+```
+
+[Cloud JSON schema](/schemas/cloud.schema.json)
 
 #### Namespace
 
@@ -720,7 +1144,7 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by EnvGene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -737,11 +1161,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   sd: string
   # Optional
   services:
@@ -753,7 +1177,7 @@ applications:
     parameters:
     - # Mandatory
       # Parameter key
-      # Точки в ключе параметры рассматриваются как маркер вложенной структуры
+      # Dots in parameter keys are considered as markers of nested structure
       # See details in [resource-profile](/docs/features/resource-profile.md)
       name: string
       # Mandatory
@@ -917,7 +1341,7 @@ controllerNamespace:
   url: <bg-operator-url>
 ```
 
-When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.  
+When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.
 The [`inventory.config.updateCredIdsWithEnvName`](/docs/envgene-configs.md#env_definitionyml) mechanism works for this Credential as well as for all other Credentials.
 
 **Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
@@ -993,15 +1417,15 @@ Only SD versions 2.1 and 2.2 can be used by EnvGene for the purposes described a
 
 For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/features/sd-processing.md).
 
-SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [pipeline](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
+SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [`pipeline`](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
 
 In EnvGene, there are:
 
 **Full SD**: Defines the complete application composition of a solution. There can be only one Full SD per environment, located at the path `/environments/<cluster-name>/<environment-name>/Inventory/solution-descriptor/sd.yml`
 
-**Delta SD**: A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. There can be only one Delta SD per environment, located at the path `/environments/<cluster-name>/<environment-name>/Inventory/solution-descriptor/delta_sd.yml`
+**Delta SD**: A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. The Delta SD is produced as a transient pipeline artifact during SD processing and is not persisted to the repository.
 
-Only Full SD is used for Effective Set calculation. The Delta SD is only needed for troubleshooting purposes.
+The Full SD is used for Effective Set calculation. The Delta SD drives the [partial Effective Set generation](/docs/features/effective-set-generation.md#partial-generation) path.
 
 **Example:**
 
@@ -1022,9 +1446,13 @@ applications:
 
 ### Credential
 
-This object is used by EnvGene to manage sensitive parameters. It is generated during environment instance creation for each `<cred-id>` specified in [Credential macros](/docs/template-macros.md#credential-macro)
+This object is used by EnvGene to manage sensitive parameters. How it is produced depends on the `type`:
 
-There are two Credential types with different structures:
+- **`usernamePassword` and `secret`:** For each `<cred-id>` referenced by the credential macro `${creds.get(...)}`, EnvGene creates a Credential during Environment Instance generation. See [Credential Macro and Credential Reference](/docs/template-macros.md#credential-macro-and-credential-reference).
+
+- **`external`:** These Credentials are **not** created from `${creds.get(...)}`. They are rendered from a [Credential Template](#credential-template) in the Template repository and written to the instance repository [Environment Credentials File](#environment-credentials-file). Sensitive parameters then reference them with a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`). See [External Credentials Management](/docs/features/external-creds.md).
+
+The following sections summarize each type:
 
 #### `usernamePassword`
 
@@ -1051,7 +1479,50 @@ Used for single-secret credentials. Contains one mandatory credentials field(`se
 
 After generation, `<value>` is set to `envgeneNullValue`. The user must manually set the actual value.
 
+#### `external`
+
+Used when secret material lives in an external store (Vault, Azure Key Vault, AWS Secrets Manager, or GCP Secret Manager) rather than in the repository. The instance repository holds the [Credential](#credential) definition produced from a [Credential Template](#credential-template).
+
+```yaml
+<cred-id>:
+  type: external
+  secretStore: string
+  # Optional; when omitted, normalization uses credId and store rules (see External Credentials Management)
+  remoteRefPath: string
+  # Optional: idempotent create in the remote store
+  create: boolean
+  # Optional: multi-field remote secret (username / password)
+  properties:
+    - name: enum [ username, password ]
+```
+
+`data` is not used for `type: external`.
+
 [Credential JSON schema](/schemas/credential.schema.json)
+
+### Secret Store
+
+A **Secret Store** is a named entry in the instance repository configuration that describes how to reach an external secret backend. [External Credentials Management](/docs/features/external-creds.md) defines fields, normalization of remote secret names, and how stores are copied into the Effective Set.
+
+**Location:** `/configuration/secret-stores.yml`
+
+```yaml
+<secret-store-name>:
+  # Mandatory
+  type: enum [ vault, azure, aws, gcp ]
+  # Mandatory
+  url: URL
+  # Required when type is vault
+  mountPath: string
+  # Required when type is azure
+  vaultName: string
+  # Required when type is aws
+  region: string
+  # Required when type is gcp
+  projectId: string
+```
+
+[Secret Stores JSON schema](/schemas/secret-stores.schema.json)
 
 ### Environment Credentials File
 
@@ -1085,11 +1556,11 @@ The relationship between Shared Credentials and Environment is established throu
 Credentials can be defined at three scopes with different precedence:
 
 1. **Environment-level**
-   **Location:** `/environments/<cluster-name>/<environment-name>/Inventory/credentials/`
+  **Location:** `/environments/<cluster-name>/<environment-name>/Inventory/credentials/`
 2. **Cluster-level**
-   **Location:** `/environments/<cluster-name>/credentials/`
+  **Location:** `/environments/<cluster-name>/credentials/`
 3. **Site-level**
-   **Location:** `/environments/credentials/`
+  **Location:** `/environments/credentials/`
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
@@ -1132,9 +1603,126 @@ gitlab-token-cred:
     secret: "token-placeholder-123"
 ```
 
+### Shared Template Variable Files
+
+This file includes template variables that can be shared across multiple environments. During Environment Instance generation, EnvGene automatically merges variables from these shared files with `additionalTemplateVariables` from the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
+
+The relationship between Shared Template Variable Files and Environment is established through:
+
+- The `envTemplate.sharedTemplateVariables` property in [Environment Inventory](/docs/envgene-configs.md#env_definitionyml)
+- The property value should be the filename (without extension) of the Shared Template Variable File
+
+Files can be defined at three scopes with different precedence:
+
+1. **Environment-level**
+  **Location:** `/environments/<cluster-name>/<environment-name>/shared-template-variables/`
+2. **Cluster-level**
+  **Location:** `/environments/<cluster-name>/shared-template-variables/`
+3. **Site-level**
+  **Location:** `/environments/shared-template-variables/`
+
+EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
+
+The file must contain a key-value hashmap and must NOT be located in a `parameters` directory.
+
+During Environment Instance generation, variables from Shared Template Variable Files are merged with `additionalTemplateVariables` from the Environment Inventory. Variables from `additionalTemplateVariables` take precedence over variables from Shared Template Variable Files if there are conflicts.
+
+**Example:**
+
+```yaml
+TEMPLATE_VARIABLE_1: "value-1"
+TEMPLATE_VARIABLE_2: "value-2"
+nested:
+  key1: "nested-value-1"
+  key2: "nested-value-2"
+```
+
 ### Environment Specific ParameterSet
 
-TBD
+Environment Specific ParameterSets are containers for parameters that override template-level parameters for a specific environment or group of environments. These ParameterSets are created by the configurator in the Instance repository to customize parameter values without modifying the Template repository.
+
+The Environment-Specific ParameterSet is specified individually for each Namespace or Cloud via the `envTemplate.envSpecificParamsets`, `envTemplate.envSpecificE2EParamsets`, or `envTemplate.envSpecificTechnicalParamsets` parameters in the [Environment Inventory](/docs/envgene-configs.md#env_definitionyml).
+
+During the generation of an Environment Instance, parameters from Environment-Specific ParameterSets are merged with parameters from Template ParameterSets, with environment-specific values taking precedence:
+
+- Parameters from ParameterSets referenced in `envSpecificParamsets` override values in `deployParameters` of the corresponding Cloud or Namespace.
+- Parameters from ParameterSets referenced in `envSpecificE2EParamsets` override values in `e2eParameters`.
+- Parameters from ParameterSets referenced in `envSpecificTechnicalParamsets` override values in `technicalConfigurationParameters`.
+
+Environment Specific ParameterSets also support application-level parameters through the `applications` section, allowing you to override parameters for specific applications within a namespace.
+
+**Location:**
+
+When an Environment Specific ParameterSet is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
+
+1. `/environments/<cluster-name>/<environment-name>/Inventory/parameters/` — Environment-specific, highest priority
+2. `/environments/<cluster-name>/parameters/` — Cluster-wide, applies to all environments in the cluster
+3. `/environments/parameters/` — Global, common for the entire repository
+
+The first match found is used as the environment-specific override for the given Cloud or Namespace.
+
+```yaml
+# Optional
+# Deprecated
+version: string
+# Mandatory
+# The name of the Parameter Set
+# Used to reference the Parameter Set in env_definition.yml
+# Must match the Parameter Set filename
+name: string
+# Mandatory
+# Key-value pairs of parameters that will override template-level parameters
+parameters: hashmap
+# Optional
+# Section describing application-level parameters
+# For each `appName`, parameters will be merged with the Application object parameters
+applications:
+  - # Mandatory
+    appName: string
+    # Mandatory
+    parameters: hashmap
+```
+
+**Example:**
+
+```yaml
+# File: environments/prod-cluster/prod-env/Inventory/parameters/billing-prod-deploy.yml
+# Deployment parameters - used for Helm chart rendering during deployment
+name: billing-prod-deploy
+version: 1.0
+parameters:
+  INGRESS_HOST: "billing.prod.example.com"
+  INGRESS_TLS_ENABLED: "true"
+  STORAGE_CLASS: "ssd-retain"
+  DATABASE_NAME: "billing_prod"
+  FEATURE_NEW_PAYMENT_GATEWAY: "true"
+  FEATURE_INVOICE_GENERATOR: "true"
+applications:
+  - appName: billing-api
+    parameters:
+      SERVICE_TYPE: "LoadBalancer"
+      EXTERNAL_PORT: "8443"
+      HEALTH_CHECK_PATH: "/api/health"
+  - appName: billing-worker
+    parameters:
+      CRON_SCHEDULE: "0 */6 * * *"
+      PERSISTENCE_ENABLED: "true"
+```
+
+Referenced in `env_definition.yml`:
+
+```yaml
+envTemplate:
+  envSpecificParamsets:
+    billing:
+      - billing-prod-deploy
+```
+
+The filename of the ParameterSet must match the value of the `name` attribute. The ParameterSet name must be unique within the repository scope where it is located. This is validated during processing; if the validation fails, the operation will stop with an error.
+
+The Environment Specific ParameterSet schema is identical to the [Template ParameterSet](#template-parameterset).
+
+[ParameterSet JSON schema](/schemas/paramset.schema.json)
 
 ### Environment Specific Resource Profile Override
 
@@ -1170,9 +1758,9 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 
 When an Environment Specific Resource Profile Override is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
 
-1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority  
-2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster  
-3. `/environments/resource_profiles` — Global, common for the entire repository  
+1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority
+2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster
+3. `/environments/resource_profiles` — Global, common for the entire repository
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
 
@@ -1183,7 +1771,7 @@ The first match found is used as the environment-specific override for the given
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by EnvGene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -1200,11 +1788,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   sd: string
   # Optional
   services:
@@ -1216,7 +1804,7 @@ applications:
     parameters:
     - # Mandatory
       # Parameter key
-      # Точки в ключе параметры рассматриваются как маркер вложенной структуры
+      # Dots in parameter keys are considered as markers of nested structure
       # See details in [resource-profile](/docs/features/resource-profile.md)
       name: string
       # Mandatory
@@ -1250,9 +1838,11 @@ applications:
 
 ### Cloud Passport
 
-Cloud Passport is contracted set of environment-specific deployment parameters that enables a business solution instance's (Environment) applications to access cloud infrastructure resources from a platform solution instance (Environment).
+A Cloud Passport is a contracted set of parameters describing a cluster and the platform applications installed in it, such as databases, message brokers, object storage, and observability tooling. It acts as a key-based contract between platform applications (which publish the keys describing their endpoints and credentials) and business applications (which consume those keys from their deployment context to access platform services).
 
 A Cloud Passport can be obtained either through cloud discovery (using the Cloud Passport Discovery Tool) or manually gathered.
+
+For how the passport is resolved and merged into the environment's deployment context during environment generation, see [Cloud Passport processing](/docs/features/cloud-passport-processing.md).
 
 #### Main File
 
@@ -1273,6 +1863,10 @@ This object describes where the **environment template artifact** is stored in t
 **Location:** `/configuration/artifact_definitions/<artifact-definition-name>.yaml`
 
 The filename must match the value of the `name` attribute.
+
+Two versions of this object are supported
+
+#### Artifact Definition v1.0
 
 ```yaml
 # Mandatory
@@ -1329,17 +1923,327 @@ registry:
 
 [Artifact Definition JSON schema](/schemas/artifact-definition.schema.json)
 
+#### Artifact Definition v2.0
+
+This version of Artifact Definition uses [Registry Definition v2.0](#registry-definition-v20) structure with support for advanced authentication configurations, including public cloud registries (AWS, Azure, GCP).
+
+**Location:** `/configuration/artifact_definitions/<artifact-definition-name>.yaml`
+
+The filename must match the value of the `name` attribute.
+
+```yaml
+# Mandatory
+# Artifact Definition object version
+version: "2.0"
+# Mandatory
+# Name of the artifact template. This corresponds to the `application` part in the `application:version` notation.
+name: string
+# Mandatory
+# Artifact template Maven group id
+groupId: string
+# Mandatory
+# Artifact template Maven artifact id
+artifactId: string
+# Mandatory
+registry:
+  # Mandatory
+  # Name of the registry where the artifact is stored
+  name: string
+  # Optional
+  # Deprecated
+  # Use authConfig section instead
+  # Pointer to the EnvGene Credential object.
+  # Credential with this ID must be located in /configuration/credentials/credentials.yml
+  credentialsId: string
+  # Optional
+  # Authentication configs
+  # Supports advanced authentication methods including public cloud registries
+  authConfig:
+    <auth-config-name>:
+      # Optional
+      # Not used in case of `authMethod: anonymous`
+      # Pointer to the EnvGene Credential object.
+      # Depending on `authType`, it can be:
+      # access key (username) + secret (password) for longLived
+      # Credential with this ID must be located in /configuration/credentials/credentials.yml
+      credentialsId: string
+      # Optional
+      # Public cloud registry authentication strategy
+      # Used in case of public cloud registries
+      authType: enum [ shortLived, longLived ]
+      # Mandatory
+      # Registry type
+      provider: enum [ aws, azure, gcp, nexus, artifactory ]
+      # Mandatory
+      # In case of non-cloud public registries, `user_pass` is used
+      # In case of public cloud registries valid values, depends on `provider`:
+      # `nexus`: `user_pass` or `anonymous`
+      # `artifactory`: `user_pass` or `anonymous`
+      # `aws`: `secret`, `assume_role` or `anonymous`
+      # `gcp`: `federation`, `service_account` or `anonymous`
+      # `azure`: `oauth2` or `anonymous`
+      authMethod: enum [ secret, assume_role, federation, service_account, oauth2, user_pass, anonymous ]
+      # Optional
+      # Region of the AWS cloud
+      # Used with `provider: aws` only
+      awsRegion: string
+      # Optional
+      # Domain of the AWS cloud
+      # Used with `provider: aws` only
+      # Required for CodeArtifact
+      awsDomain: string
+      # Optional
+      # Amazon Resource Name (ARN) of the role to assume
+      # Used with `provider: aws` AND `authMethod: assume_role` only
+      awsRoleARN: string
+      # Optional
+      # Constant session name part to be used to generate --role-session-name parameter for AssumeRole
+      # Used with `provider: aws` AND `authMethod: assume_role` only
+      awsRoleSessionPrefix: string
+      # Optional
+      # Section, that describes OIDC interaction
+      # Used with `provider: gcp` AND `authMethod: federation` only
+      gcpOIDC:
+        # Mandatory
+        # URL of external OIDC server
+        URL: string
+        # Optional
+        # Custom parameters for external OIDC server
+        customParams:
+          - <key>: <value>
+          - <keyN>: <valueN>
+      # Optional
+      # GCP project number
+      # Used with `provider: gcp` AND `authMethod: federation` only
+      gcpRegProject: string
+      # Optional
+      # Workload identity pool ID
+      # Used with `provider: gcp` AND `authMethod: federation` only
+      gcpRegPoolId: string
+      # Optional
+      # Workload identity Provider ID
+      # Used with `provider: gcp` AND `authMethod: federation` only
+      gcpRegProviderId: string
+      # Optional
+      # Service account email
+      # Used with `provider: gcp` AND `authMethod: federation` only
+      gcpRegSAEmail: string
+      # Optional
+      # Azure AD tenant ID
+      # Used with `provider: azure` only
+      azureTenantId: string
+      # Optional
+      # Target resource for ACR
+      # Used with `provider: azure` only
+      azureACRResource: string
+      # Optional
+      # Azure Container Registry name
+      # Used with `provider: azure` only
+      # Required for ACR
+      azureACRName: string
+      # Optional
+      # Target resource for Azure Artifacts
+      # Used with `provider: azure` only
+      azureArtifactsResource: string
+  # Mandatory
+  mavenConfig:
+    # Mandatory
+    # Pointer to authentication config described in `authConfig` section
+    authConfig: string
+    # Mandatory
+    # Domain name of the registry
+    repositoryDomainName: string
+    # Optional
+    # Used in case of provider nexus or artifactory only
+    # Snapshot repository name
+    # EnvGene checks repositories in this order: release -> staging -> snapshot
+    # It stops when it finds the artifact
+    targetSnapshot: string
+    # Optional
+    # Used in case of provider nexus or artifactory only
+    # Staging repository name
+    targetStaging: string
+    # Optional
+    # Used in case of provider nexus or artifactory only
+    # Release repository name
+    targetRelease: string
+    # Optional
+    # Used in case of provider nexus or artifactory only
+    # Snapshot Maven repository group name
+    snapshotGroup: string
+    # Optional
+    # Release Maven repository group name
+    releaseGroup: string
+```
+
+**Example with simple authentication:**
+
+```yaml
+version: "2.0"
+name: "env-template"
+groupId: "org.qubership"
+artifactId: "env-template"
+registry:
+  name: "sandbox"
+  authConfig:
+    maven-auth:
+      authType: longLived
+      provider: nexus
+      authMethod: user_pass
+      credentialsId: "artifactory-cred"
+  mavenConfig:
+    authConfig: maven-auth
+    repositoryDomainName: "https://artifactory.qubership.org"
+    targetSnapshot: "mvn.snapshot"
+    targetStaging: "mvn.staging"
+    targetRelease: "mvn.release"
+    snapshotGroup: "mvn.snapshot-group"
+    releaseGroup: "mvn.release-group"
+```
+
+**Example with AWS CodeArtifact:**
+
+```yaml
+version: "2.0"
+name: "env-template"
+groupId: "org.qubership"
+artifactId: "env-template"
+registry:
+  name: "aws-codeartifact"
+  authConfig:
+    aws-maven:
+      authType: shortLived
+      provider: aws
+      authMethod: assume_role
+      credentialsId: "aws-key-secret"
+      awsRegion: "eu-west-1"
+      awsDomain: "codeartifact.eu-west-1.amazonaws.com"
+      awsRoleARN: "arn:aws:iam::123456789012:role/CodeArtifactRole"
+      awsRoleSessionPrefix: "envgene-session"
+  mavenConfig:
+    authConfig: aws-maven
+    repositoryDomainName: "https://codeartifact.eu-west-1.amazonaws.com/maven/app"
+    targetSnapshot: "snapshots"
+    targetStaging: "staging"
+    targetRelease: "releases"
+    snapshotGroup: "snapshot-group"
+    releaseGroup: "release-group"
+```
+
+**Example with GCP Artifact Registry:**
+
+```yaml
+version: "2.0"
+name: "env-template"
+groupId: "org.qubership"
+artifactId: "env-template"
+registry:
+  name: "gcp-artifact-registry"
+  authConfig:
+    gcp-maven:
+      authType: shortLived
+      provider: gcp
+      authMethod: federation
+      credentialsId: "oidc-token"
+      gcpOIDC:
+        URL: "https://external-oidc-server-url"
+        customParams:
+          - key1: value1
+          - key2: value2
+      gcpRegProject: "123456789012"
+      gcpRegPoolId: "idp-pool-id"
+      gcpRegProviderId: "idp-provider"
+      gcpRegSAEmail: "test@test.iam.gserviceaccount.com"
+  mavenConfig:
+    authConfig: gcp-maven
+    repositoryDomainName: "https://artifactregistry.googleapis.com"
+    targetSnapshot: "maven-snapshots"
+    targetStaging: "maven-staging"
+    targetRelease: "maven-releases"
+    snapshotGroup: "maven-snapshots-group"
+    releaseGroup: "maven-releases-group"
+```
+
+**Example with Azure Artifacts:**
+
+```yaml
+version: "2.0"
+name: "env-template"
+groupId: "org.qubership"
+artifactId: "env-template"
+registry:
+  name: "azure-artifacts"
+  authConfig:
+    azure-maven:
+      authType: shortLived
+      provider: azure
+      authMethod: oauth2
+      credentialsId: "azure-ad"
+      azureTenantId: "tenant-id"
+      azureACRResource: "management"
+      azureACRName: "acr-name"
+      azureArtifactsResource: "499b84ac-1321-427f-aa17-267ca6975798"
+  mavenConfig:
+    authConfig: azure-maven
+    repositoryDomainName: "https://pkgs.dev.azure.com"
+    targetSnapshot: "maven-snapshots"
+    targetStaging: "maven-staging"
+    targetRelease: "maven-releases"
+    snapshotGroup: "maven-snapshots-group"
+    releaseGroup: "maven-releases-group"
+```
+
+**Authentication Configuration Dependencies:**
+
+The `authConfig` section has complex dependencies between attributes. The following table shows which fields are required based on `provider` and `authMethod` values:
+
+| Field                    | Condition                                           | Required     |
+|--------------------------|-----------------------------------------------------|--------------|
+| `provider`               | Always                                              | **REQUIRED** |
+| `authMethod`             | Always                                              | **REQUIRED** |
+| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
+| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
+| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
+| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
+| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
+| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
+| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED** |
+| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL     |
+| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
+
+**Valid `authMethod` values per `provider`:**
+
+| Provider      | Valid authMethod values                      |
+|---------------|----------------------------------------------|
+| `nexus`       | `user_pass`, `anonymous`                     |
+| `artifactory` | `user_pass`, `anonymous`                     |
+| `aws`         | `secret`, `assume_role`, `anonymous`         |
+| `gcp`         | `federation`, `service_account`, `anonymous` |
+| `azure`       | `oauth2`, `anonymous`                        |
+
+[Artifact Definition v2.0 JSON schema](/schemas/artifact-definition-v2.schema.json)
+
 ### Registry Definition
 
 This object describes registry where artifacts (other than environment template artifacts) are stored.
 
 It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
 
-A separate definition file is used for each individual registry. Each Environment uses its own set of Registry Definitions.
+A separate definition file is used for each individual registry. Each environment uses the registry definitions from the centralized location `/regdefs`.
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/environments/<cluster-name>/<environment-name>/RegDefs/<registry-name>.yml`
+**Location:** `/regdefs/<registry-name>.yml`
+
+Registry Definitions can also be supplied as user-provided files at `/configuration/regdefs/<registry-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
 
 Two versions of this object are supported
 
@@ -1351,7 +2255,7 @@ Two versions of this object are supported
 name: string
 # Mandatory
 # Pointer to the EnvGene Credential object.
-# Credential with this ID must be located in /environments/<cluster-name>/<environment-name>/Credentials/credentials.yml
+# Credential with this ID must be located in /configuration/credentials/credentials.yml
 credentialsId: string
 # Mandatory
 mavenConfig:
@@ -1498,28 +2402,29 @@ name: string
 # Authentication configs
 authConfig:
   <auth-config-name>:
-    # Mandatory
-    # Name of the credential in the credential storage
-    # The credential type can be either `usernamePassword` or `secret`
+    # Optional
+    # Not used in case of `authMethod: anonymous`
+    # Pointer to the EnvGene Credential object.
     # Depending on `authType`, it can be:
     # access key (username) + secret (password) for longLived
-    # or different authentication credential components for shortLived
-    credentialsId: string 
+    # Credential with this ID must be located in /configuration/credentials/credentials.yml
+    credentialsId: string
     # Optional
     # Public cloud registry authentication strategy
     # Used in case of public cloud registries
     authType: enum [ shortLived, longLived ]
-    # Optional
-    # Public cloud registry type
-    # Used in case of public cloud registries
-    provider: enum [ aws, azure, gcp ]
-    # Optional
+    # Mandatory
+    # Registry type
+    provider: enum [ aws, azure, gcp, nexus, artifactory ]
+    # Mandatory
     # In case of non-cloud public registries, `user_pass` is used
     # In case of public cloud registries valid values, depends on `provider`:
-    # `aws`: `secret` or `assume_role`
-    # `gcp`: `federation` or `service_account`
-    # `azure`: `oauth2`
-    authMethod: enum [ secret, assume_role, federation, service_account, oauth2, user_pass ]
+    # `nexus`: `user_pass` or `anonymous`
+    # `artifactory`: `user_pass` or `anonymous`
+    # `aws`: `secret`, `assume_role` or `anonymous`
+    # `gcp`: `federation`, `service_account` or `anonymous`
+    # `azure`: `oauth2` or `anonymous`
+    authMethod: enum [ secret, assume_role, federation, service_account, oauth2, user_pass, anonymous ]
     # Optional
     # Region of the AWS cloud
     # Used with `provider: aws` only
@@ -1570,6 +2475,10 @@ authConfig:
     # Used with `provider: azure` only
     azureTenantId: string
     # Optional
+    # Region of the GCP cloud
+    # Used with `provider: gcp` only
+    gcpRegion: string
+    # Optional
     # Target resource for ACR
     # Used with `provider: azure` only
     azureACRResource: string
@@ -1584,33 +2493,35 @@ authConfig:
     azureArtifactsResource: string
 # Mandatory
 mavenConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
   repositoryDomainName: string
-  # Mandatory
+  # Optional
+  # Used in case of authMethod nexus or artifactory only
   # Snapshot Maven repository name
   targetSnapshot: string
-  # Mandatory
+  # Optional
+  # Used in case of authMethod nexus or artifactory only
   # Staging Maven repository name
   targetStaging: string
-  # Mandatory
+  # Optional
+  # Used in case of authMethod nexus or artifactory only
   # Release Maven repository name
   targetRelease: string
-  # Mandatory
+  # Optional
+  # Used in case of authMethod nexus or artifactory only
   # Snapshot Maven repository name
   snapshotGroup: string
-  # Mandatory
+  # Optional
   # Release Maven repository name
   releaseGroup: string
-# Mandatory
+# Optional
 dockerConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # URI for Docker snapshot registry
@@ -1638,9 +2549,8 @@ dockerConfig:
   groupName: string
 # Optional
 helmConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
@@ -1653,9 +2563,8 @@ helmConfig:
   helmTargetRelease: string
 # Optional
 helmAppConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
@@ -1674,16 +2583,14 @@ helmAppConfig:
   helmDevRepoName: string
 # Optional
 goConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
   repositoryDomainName: string
   # Mandatory
-  # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
+  # Go snapshot repository name
   goTargetSnapshot: string
   # Mandatory
   # Go release repository name
@@ -1693,9 +2600,8 @@ goConfig:
   goProxyRepository: string
 # Optional
 npmConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
@@ -1708,16 +2614,14 @@ npmConfig:
   npmTargetRelease: string
 # Optional
 rawConfig:
-  # Optional
+  # Mandatory
   # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
   authConfig: string
   # Mandatory
   # Domain name of the registry
   repositoryDomainName: string
   # Mandatory
-  # Pointer to authentication config described in `authConfig` section
-  # Cannot be set in if anonymous access is used
+  # Raw snapshot repository name
   rawTargetSnapshot: string
   # Mandatory
   # Raw release repository name
@@ -1729,6 +2633,43 @@ rawConfig:
   # Raw proxy repository name
   rawTargetProxy: string
 ```
+
+**Authentication Configuration Dependencies:**
+
+The `authConfig` section has complex dependencies between attributes. The following table shows which fields are required based on `provider` and `authMethod` values:
+
+| Field                    | Condition                                           | Required     |
+|--------------------------|-----------------------------------------------------|--------------|
+| `provider`               | Always                                              | **REQUIRED** |
+| `authMethod`             | Always                                              | **REQUIRED** |
+| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
+| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
+| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
+| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
+| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
+| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
+| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED** |
+| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL     |
+| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegion`              | `provider == "gcp"`                                 | OPTIONAL     |
+| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
+
+**Valid `authMethod` values per `provider`:**
+
+| Provider      | Valid authMethod values                      |
+|---------------|----------------------------------------------|
+| `nexus`       | `user_pass`, `anonymous`                     |
+| `artifactory` | `user_pass`, `anonymous`                     |
+| `aws`         | `secret`, `assume_role`, `anonymous`         |
+| `gcp`         | `federation`, `service_account`, `anonymous` |
+| `azure`       | `oauth2`, `anonymous`                        |
 
 **Examples of different auth sections**:
 
@@ -1785,8 +2726,13 @@ authConfig:
 
   helm-nexus:
     authType: longLived
+    provider: nexus
     authMethod: user_pass
     credentialsId: cred-nexus
+
+  docker-anonymous:
+    provider: nexus
+    authMethod: anonymous
 ```
 
 **Example:**
@@ -1805,8 +2751,12 @@ authConfig:
     awsRoleARN: arn:aws:iam::123456789012:role/YourRole
   helm:
     authType: longLived
+    provider: nexus
     authMethod: user_pass
     credentialsId: cred-nexus
+  public-repo:
+    provider: nexus
+    authMethod: anonymous
 mavenConfig:
   authConfig: aws
   repositoryDomainName: https://codeartifact.eu-west-1.amazonaws.com/maven/app
@@ -1838,15 +2788,18 @@ helmAppConfig:
   helmReleaseRepoName: helm-releases
   helmGroupRepoName: helm-group
 goConfig:
+  authConfig: public-repo
   repositoryDomainName: https://nexus.mycompany.internal/repository/go
   goTargetSnapshot: go-snapshots
   goTargetRelease: go-releases
   goProxyRepository: https://goproxy.internal/go/
 npmConfig:
+  authConfig: public-repo
   repositoryDomainName: https://mycompany.internal
   npmTargetSnapshot: npm-snapshots
   npmTargetRelease: npm-releases
 rawConfig:
+  authConfig: public-repo
   repositoryDomainName: https://proxy.raw.local/raw
   rawTargetSnapshot: raw/snapshots
   rawTargetRelease: raw/releases
@@ -1854,7 +2807,7 @@ rawConfig:
   rawTargetProxy: https://proxy.raw.local/
 ```
 
-[Registry Definition v2.0 JSON schema](/schemas/regdef-v2.schema.json)
+**[Registry Definition v2.0](/python/envgene/envgenehelper/schemas/regdef-v2.schema.json) JSON schema** — bundled in `envgenehelper` package at `python/envgene/envgenehelper/schemas/regdef-v2.schema.json`
 
 ### Application Definition
 
@@ -1862,11 +2815,13 @@ This object describes application artifact parameters - artifact ID, group ID an
 
 It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
 
-A separate definition file is used for each individual application. Each Environment uses its own set of Application Definitions.
+A separate definition file is used for each individual application. Each environment uses the Application definitions from the centralized location `/appdefs`.
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/environments/<cluster-name>/<environment-name>/AppDefs/<application-name>.yml`
+**Location:** `/appdefs/<application-name>.yml`
+
+Application Definitions can also be supplied as user-provided files at `/configuration/appdefs/<application-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
 
 ```yaml
 # Optional

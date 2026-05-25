@@ -1,0 +1,6 @@
+cp_discovery:
+  gitlab:
+    project: "value"
+    branch: master
+    token: somevalue.secret
+self_token: somevalue.secret

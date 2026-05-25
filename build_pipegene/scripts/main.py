@@ -16,7 +16,7 @@ def perform_generation():
     handler = PipelineParametersHandler()
     handler.log_pipeline_params()
     validate_pipeline(handler.params)
-    build_pipeline(handler.params)
+    build_pipeline(handler.params, handler.sensitive_params)
 
 if __name__ == "__main__":
     gcip()
