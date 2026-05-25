@@ -153,12 +153,6 @@ def test_is_encrypted(crypt_kwargs):
     decrypt_file(**crypt_kwargs)
     assert not is_encrypted(cred_file, crypt_kwargs['crypt_backend'])
 
-def compare_encrypted_files(source, target):
-    sops_metadata_to_ignore = [['sops', 'lastmodified'],['sops','mac']]
-    diff_paths, removed_paths = compare_dicts(source, target)
-    diff_paths = [item for item in diff_paths if item not in sops_metadata_to_ignore]
-    return diff_paths, removed_paths
-
 def test_minimize_diff(crypt_kwargs):
     cred_file = crypt_kwargs['file_path']
 
@@ -172,7 +166,7 @@ def test_minimize_diff(crypt_kwargs):
     decrypt_file(**crypt_kwargs)
     encrypt_file(**crypt_kwargs, minimize_diff=True, old_file_path=old_cred_file)
 
-    diff_paths, removed_paths = compare_encrypted_files(initial_enc_content, openYaml(cred_file))
+    diff_paths, removed_paths = compare_dicts(initial_enc_content, openYaml(cred_file))
     assert len(removed_paths) == 0 and len(diff_paths) == 0
 
     # test with one change
@@ -181,8 +175,13 @@ def test_minimize_diff(crypt_kwargs):
     writeYamlToFile(cred_file, new_content)
     new_enc_content = encrypt_file(**crypt_kwargs, minimize_diff=True, old_file_path=old_cred_file)
 
-    diff_paths, removed_paths = compare_encrypted_files(initial_enc_content, new_enc_content)
-    assert len(removed_paths) == 0 and len(diff_paths) == 1
+    diff_paths, removed_paths = compare_dicts(initial_enc_content, new_enc_content)
+    assert len(removed_paths) == 0
+    assert ['first_cred', 'data', 'secret'] in diff_paths
+    if crypt_kwargs.get('crypt_backend') == 'SOPS':
+        assert ['sops', 'mac'] in diff_paths
+    else:
+        assert len(diff_paths) == 1
 
     # test wrong parameter combination
     with pytest.raises(ValueError):
@@ -254,7 +253,7 @@ def test_encrypt_all_cred_files_minimize_diff(monkeypatch, crypt_backend):
         encrypt_all_cred_files_for_env(**bulk_kwargs)
         assert not os.path.exists(backup_dir)
 
-        diff_paths, removed_paths = compare_encrypted_files(
+        diff_paths, removed_paths = compare_dicts(
             initial_enc_content, openYaml(cred_file)
         )
         assert len(removed_paths) == 0 and len(diff_paths) == 0

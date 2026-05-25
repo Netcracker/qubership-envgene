@@ -4,7 +4,7 @@ import tempfile
 import shutil
 
 from ..business_helper import getenv_with_error
-from ..yaml_helper import openYaml, readYaml, get_or_create_nested_yaml_attribute, dumpYamlToStr
+from ..yaml_helper import openYaml, readYaml, get_or_create_nested_yaml_attribute
 from ..logger import logger
 
 from .constants import *
@@ -42,29 +42,28 @@ cat > "$1" << '{delimiter}'
 
     return script.name
 
-def _sops_edit(file_path, new_content, public_key):
+def _sops_edit(encrypted_path, plaintext_path, public_key):
     # expects that SOPS age key is set in environment variables
-    new_content_str = dumpYamlToStr(new_content)
-    editor_path = _create_replace_content_sh(new_content_str)
+    with open(plaintext_path, 'r', encoding='utf-8') as f:
+        plaintext_str = f.read()
+    editor_path = _create_replace_content_sh(plaintext_str)
     try:
         os.chmod(editor_path, 0o777)
         os.environ['EDITOR'] = editor_path
-        sops_args = f'edit --age {public_key} {file_path}'
+        sops_args = f'edit --age {public_key} {encrypted_path}'
         _run_SOPS(sops_args, [200]) # 200 is FileHasNotBeenModified error code
     finally:
         if os.path.exists(editor_path):
             os.remove(editor_path)
 
 def _get_minimized_diff(file_path, old_file_path, public_key):
-    new_content = openYaml(file_path)
-
     tmp_file_obj = tempfile.NamedTemporaryFile(delete=False, suffix=".yml")
     tmp_file_obj.close()
     tmp_path = tmp_file_obj.name
 
     shutil.copy(old_file_path, tmp_path)
 
-    _sops_edit(tmp_path, new_content, public_key)
+    _sops_edit(tmp_path, file_path, public_key)
     return tmp_path
 
 def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=False, old_file_path=None, *args, **kwargs):
