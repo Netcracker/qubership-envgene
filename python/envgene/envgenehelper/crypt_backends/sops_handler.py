@@ -1,3 +1,4 @@
+import base64
 import os
 import subprocess
 import tempfile
@@ -23,31 +24,29 @@ def _run_SOPS(arg_str, return_codes_to_ignore=None):
         raise subprocess.SubprocessError()
     return result
 
-def _create_replace_content_sh(content):
-    delimiter = 'ENVGENE_SOPS_EDIT_CUSTOM_EOF'
-    if content.endswith('\n'):
-        content = content[:-1]
-    script_content = f"""#!/bin/sh
-if [ -z "$1" ]; then
-    echo "No target file specified."
-    exit 1
-fi
-cat > "$1" << '{delimiter}'
-{content}
-{delimiter}
-"""
-    script = tempfile.NamedTemporaryFile(delete=False, suffix=".sh")
+def _create_replace_content_sh(content_bytes):
+    """Build an executable SOPS EDITOR script that writes plaintext bytes exactly."""
+    payload = base64.b64encode(content_bytes).decode('ascii')
+    script_content = f"""#!/usr/bin/env python3
+import base64
+import sys
 
-    script.write(script_content.encode('utf-8'))
+if len(sys.argv) < 2:
+    raise SystemExit("No target file specified.")
+with open(sys.argv[1], "wb") as out:
+    out.write(base64.b64decode({payload!r}))
+"""
+    script = tempfile.NamedTemporaryFile(delete=False, suffix=".py", mode='w', encoding='utf-8')
+    script.write(script_content)
     script.close()
 
     return script.name
 
 def _sops_edit(encrypted_path, plaintext_path, public_key):
     # expects that SOPS age key is set in environment variables
-    with open(plaintext_path, 'r', encoding='utf-8') as f:
-        plaintext_str = f.read()
-    editor_path = _create_replace_content_sh(plaintext_str)
+    with open(plaintext_path, 'rb') as f:
+        plaintext_bytes = f.read()
+    editor_path = _create_replace_content_sh(plaintext_bytes)
     try:
         os.chmod(editor_path, 0o777)
         os.environ['EDITOR'] = editor_path
