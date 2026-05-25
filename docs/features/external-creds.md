@@ -6,9 +6,7 @@
   - [Assumption](#assumption)
   - [Proposed Approach](#proposed-approach)
     - [Overview](#overview)
-    - [Repository credentials mode](#repository-credentials-mode)
-    - [Credential sources and merging](#credential-sources-and-merging)
-    - [Detailed description of objects](#detailed-description-of-objects)
+    - [Objects](#objects)
       - [Credential Reference](#credential-reference)
       - [Built-in credential references](#built-in-credential-references)
       - [Credential Template](#credential-template)
@@ -22,8 +20,11 @@
       - [EnvGene System Credentials](#envgene-system-credentials)
       - [`eso_support` attribute](#eso_support-attribute)
       - [`SECRET_FLOW` attribute](#secret_flow-attribute)
-    - [Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references)
-    - [Effective Set external credential behavior](#effective-set-external-credential-behavior)
+    - [Environment Instance generation](#environment-instance-generation)
+      - [Repository credentials mode](#repository-credentials-mode)
+      - [Credential sources and merging](#credential-sources-and-merging)
+    - [Effective Set generation](#effective-set-generation)
+      - [Deciding between VALS and ESO references](#deciding-between-vals-and-eso-references)
       - [Normalization to `normalizedSecretName`](#normalization-to-normalizedsecretname)
         - [Vault](#vault)
         - [Azure Key Vault](#azure-key-vault)
@@ -114,65 +115,7 @@ In the [External Credential Context](#external-credential-context):
 1. One [External Credential Context `credentials` entry](#external-credential-context-credentials-entry) for each [Credential](#credential) with `type: external` and `create: true`
 2. The [Secret Store](#secret-store) definitions copied for each store referenced by those Credentials
 
-### Repository credentials mode
-
-The credentials mode determines whether placeholder auto-generation runs during Environment Instance generation.
-It is controlled by the presence of the `external_credential_template` field in
-the [Template Descriptor](/docs/envgene-objects.md#template-descriptor):
-
-- Field absent: **local mode**.
-- Field present: **external mode**.
-
-**Scope.** EnvGene operations run at Environment Instance scope. Each operation reads the mode from the Template
-Descriptor used by that Environment Instance, so the determination is per-environment.
-
-Per [Assumption 4](#assumption), all Environment Instances in a single repository are expected to share one mode,
-and the migration from local to external is expected to be performed for the whole repository at once. EnvGene
-does not enforce this at the operation boundary. It works correctly for each environment independently, but
-mixing modes across environments in a repository is out of scope.
-
-**Placeholder auto-generation (local mode only).** EnvGene auto-generates a placeholder local Credential
-(`type: usernamePassword` / `secret`, `data: envgeneNullValue`) for every `credId` referenced by a
-`${creds.get('<credId>')...}` macro or by a [Built-in credential reference](#built-in-credential-references). If a
-source (see [Credential sources and merging](#credential-sources-and-merging)) supplies a real Credential for the
-same `credId`, the source-supplied entry overrides the placeholder in the merged result.
-
-**Placeholder auto-generation is disabled in external mode.** Every `credId` reachable through a
-[Built-in credential reference](#built-in-credential-references), a [`$type: credRef`](#credential-reference)
-macro, or a `${creds.get(...)}` macro must be explicitly declared by a source. Missing declarations fail
-Environment Instance generation with a targeted error identifying the unresolved `credId` and the reference that
-requires it.
-
-### Credential sources and merging
-
-Credential entries in the [Environment Credentials File](/docs/envgene-objects.md#credential-file) are populated
-from three sources during Environment Instance generation:
-
-1. **[Credential Template](#credential-template)** - rendered during Environment Instance generation. External
-   Credentials only.
-2. **Cloud Passport credentials file** (when a Cloud Passport is present) - local (`usernamePassword` / `secret`)
-   or external (`type: external`) as declared in the Cloud Passport.
-3. **[Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file)** - manually authored by the
-   user in the instance repository at Environment, Cluster, or Site scope.
-
-All three sources merge into a single [Credential file](/docs/envgene-objects.md#credential-file) per Environment
-Instance.
-
-**Precedence on duplicate `credId`.** When the same `credId` is declared in more than one source, the entry from
-the higher-precedence source wins. Precedence order (lowest to highest):
-
-1. Credential Template
-2. Cloud Passport credentials file
-3. [Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file)
-
-**Cross-source references are allowed.** A [Credential Reference](#credential-reference) or
-[Built-in credential reference](#built-in-credential-references) defined in one source can resolve to a Credential
-entry contributed by another source.
-
-Semantic validation (single-category, orphan check, built-in resolution) runs on the **merged result**, not on
-individual sources.
-
-### Detailed description of objects
+### Objects
 
 #### Credential Reference
 
@@ -612,7 +555,69 @@ Values:
 > [!NOTE]
 > The effective `SECRET_FLOW` is computed per application. Different applications in the same environment may end up with different effective values, so a single Effective Set can mix VALS-shaped and ESO-shaped external parameters across applications.
 
-### Deciding between VALS and ESO references
+### Environment Instance generation
+
+#### Repository credentials mode
+
+The credentials mode determines whether placeholder auto-generation runs during Environment Instance generation.
+It is controlled by the presence of the `external_credential_template` field in
+the [Template Descriptor](/docs/envgene-objects.md#template-descriptor):
+
+- Field absent: **local mode**.
+- Field present: **external mode**.
+
+**Scope.** EnvGene operations run at Environment Instance scope. Each operation reads the mode from the Template
+Descriptor used by that Environment Instance, so the determination is per-environment.
+
+Per [Assumption 4](#assumption), all Environment Instances in a single repository are expected to share one mode,
+and the migration from local to external is expected to be performed for the whole repository at once. EnvGene
+does not enforce this at the operation boundary. It works correctly for each environment independently, but
+mixing modes across environments in a repository is out of scope.
+
+**Placeholder auto-generation (local mode only).** EnvGene auto-generates a placeholder local Credential
+(`type: usernamePassword` / `secret`, `data: envgeneNullValue`) for every `credId` referenced by a
+`${creds.get('<credId>')...}` macro or by a [Built-in credential reference](#built-in-credential-references). If a
+source (see [Credential sources and merging](#credential-sources-and-merging)) supplies a real Credential for the
+same `credId`, the source-supplied entry overrides the placeholder in the merged result.
+
+**Placeholder auto-generation is disabled in external mode.** Every `credId` reachable through a
+[Built-in credential reference](#built-in-credential-references), a [`$type: credRef`](#credential-reference)
+macro, or a `${creds.get(...)}` macro must be explicitly declared by a source. Missing declarations fail
+Environment Instance generation with a targeted error identifying the unresolved `credId` and the reference that
+requires it.
+
+#### Credential sources and merging
+
+Credential entries in the [Environment Credentials File](/docs/envgene-objects.md#credential-file) are populated
+from three sources during Environment Instance generation:
+
+1. **[Credential Template](#credential-template)** - rendered during Environment Instance generation. External
+   Credentials only.
+2. **Cloud Passport credentials file** (when a Cloud Passport is present) - local (`usernamePassword` / `secret`)
+   or external (`type: external`) as declared in the Cloud Passport.
+3. **[Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file)** - manually authored by the
+   user in the instance repository at Environment, Cluster, or Site scope.
+
+All three sources merge into a single [Credential file](/docs/envgene-objects.md#credential-file) per Environment
+Instance.
+
+**Precedence on duplicate `credId`.** When the same `credId` is declared in more than one source, the entry from
+the higher-precedence source wins. Precedence order (lowest to highest):
+
+1. Credential Template
+2. Cloud Passport credentials file
+3. [Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file)
+
+**Cross-source references are allowed.** A [Credential Reference](#credential-reference) or
+[Built-in credential reference](#built-in-credential-references) defined in one source can resolve to a Credential
+entry contributed by another source.
+
+Semantic validation (single-category, orphan check, built-in resolution) runs on the **merged result**, not on
+individual sources.
+
+### Effective Set generation
+
+#### Deciding between VALS and ESO references
 
 The Effective Set calculator decides between VALS and ESO reference shapes per application using the effective [`SECRET_FLOW`](#secret_flow-attribute) and the application's [`eso_support`](#eso_support-attribute):
 
@@ -623,8 +628,6 @@ The Effective Set calculator decides between VALS and ESO reference shapes per a
 | not set (default)       | not set (default) | [VALS reference](#parameter-with-vals-reference) |
 | `external-values`       | `true`            | [ESO reference](#parameter-with-eso-reference)   |
 | `external-values`       | `false` (default) | Effective Set generation fails                   |
-
-### Effective Set external credential behavior
 
 #### Normalization to `normalizedSecretName`
 
