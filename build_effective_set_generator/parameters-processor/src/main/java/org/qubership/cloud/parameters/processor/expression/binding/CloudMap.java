@@ -87,12 +87,12 @@ public class CloudMap extends DynamicMap {
                 if (dbaas.getApiUrl() != null) {
                     map.putIfAbsent("API_DBAAS_ADDRESS", dbaas.getApiUrl());
                 } else {
-                    map.putIfAbsent("API_DBAAS_ADDRESS", "");
+                    map.putIfAbsent("API_DBAAS_ADDRESS", "", ENVGENE_DEFAULT);
                 }
                 if (dbaas.getAggregatorUrl() != null) {
                     map.putIfAbsent("DBAAS_AGGREGATOR_ADDRESS", dbaas.getAggregatorUrl());
                 } else {
-                    map.putIfAbsent("DBAAS_AGGREGATOR_ADDRESS", "");
+                    map.putIfAbsent("DBAAS_AGGREGATOR_ADDRESS", "", ENVGENE_DEFAULT);
                 }
 
                 String dbaasCredId = dbaas.getCredId();
@@ -109,10 +109,10 @@ public class CloudMap extends DynamicMap {
                         map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", ((UsernamePasswordCredentials) cred).getUsername());
                         map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", ((UsernamePasswordCredentials) cred).getPassword());
                     } else {
-                        map.putIfAbsent("DBAAS_AGGREGATOR_USERNAME", DEFAULT_DBAAS_AGGREGATOR_LOGIN);
-                        map.putIfAbsent("DBAAS_AGGREGATOR_PASSWORD", DEFAULT_DBAAS_AGGREGATOR_PASSWORD);
-                        map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", DEFAULT_DBAAS_AGGREGATOR_LOGIN);
-                        map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", DEFAULT_DBAAS_AGGREGATOR_PASSWORD);
+                        map.putIfAbsent("DBAAS_AGGREGATOR_USERNAME", DEFAULT_DBAAS_AGGREGATOR_LOGIN, ENVGENE_DEFAULT);
+                        map.putIfAbsent("DBAAS_AGGREGATOR_PASSWORD", DEFAULT_DBAAS_AGGREGATOR_PASSWORD, ENVGENE_DEFAULT);
+                        map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", DEFAULT_DBAAS_AGGREGATOR_LOGIN, ENVGENE_DEFAULT);
+                        map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", DEFAULT_DBAAS_AGGREGATOR_PASSWORD, ENVGENE_DEFAULT);
                     }
                 }
             }
@@ -138,8 +138,8 @@ public class CloudMap extends DynamicMap {
                         map.putIfAbsent("MAAS_CREDENTIALS_USERNAME", ((UsernamePasswordCredentials) cred).getUsername());
                         map.putIfAbsent("MAAS_CREDENTIALS_PASSWORD", ((UsernamePasswordCredentials) cred).getPassword());
                     } else {
-                        map.putIfAbsent("MAAS_CREDENTIALS_USERNAME", DEFAULT_MAAS_LOGIN);
-                        map.putIfAbsent("MAAS_CREDENTIALS_PASSWORD", DEFAULT_MAAS_PASSWORD);
+                        map.putIfAbsent("MAAS_CREDENTIALS_USERNAME", DEFAULT_MAAS_LOGIN, ENVGENE_DEFAULT);
+                        map.putIfAbsent("MAAS_CREDENTIALS_PASSWORD", DEFAULT_MAAS_PASSWORD, ENVGENE_DEFAULT);
                     }
                 }
             }
@@ -173,10 +173,10 @@ public class CloudMap extends DynamicMap {
                                 .getAuthClientToken();
                         map.put("VAULT_TOKEN", token);
                     } catch (VaultException e) {
-                        map.putIfAbsent("VAULT_TOKEN", "");
+                        map.putIfAbsent("VAULT_TOKEN", "", ENVGENE_DEFAULT);
                     }
                 } else {
-                    map.putIfAbsent("VAULT_TOKEN", "");
+                    map.putIfAbsent("VAULT_TOKEN", "", ENVGENE_DEFAULT);
                 }
             }
         }
@@ -192,7 +192,7 @@ public class CloudMap extends DynamicMap {
                 } else if (cred instanceof StringCredentials) {
                     map.putIfAbsent("CONSUL_ADMIN_TOKEN", ((StringCredentials) cred).getSecret());
                 } else {
-                    map.putIfAbsent("CONSUL_ADMIN_TOKEN", "");
+                    map.putIfAbsent("CONSUL_ADMIN_TOKEN", "", ENVGENE_DEFAULT);
                 }
             }
         }
@@ -212,12 +212,12 @@ public class CloudMap extends DynamicMap {
         // Deprecated deployer parameters
         map.putIfAbsent("CUSTOM_HOST", customHost);
         map.putIfAbsent("SERVER_HOSTNAME", cloudHostname);
-        map.putIfAbsent("OPENSHIFT_SERVER", api,ENVGENE_CALCULATED);
+        map.putIfAbsent("OPENSHIFT_SERVER", api, ENVGENE_CALCULATED);
 
         // Deployer parameters
         String protocol = StringUtils.isNotBlank(config.getClProtocol()) ? config.getClProtocol() : "https";
-        String protocolOrigin = "https".equalsIgnoreCase(protocol) ? ENVGENE_CALCULATED : ParametersConstants.CLOUD_ORIGIN;
-        map.putIfAbsent("CLOUD_PROTOCOL", protocol.toLowerCase(),protocolOrigin);
+        String protocolOrigin = StringUtils.isBlank(config.getClProtocol()) ? ENVGENE_CALCULATED : ParametersConstants.CLOUD_ORIGIN;
+        map.putIfAbsent("CLOUD_PROTOCOL", protocol.toLowerCase(), protocolOrigin);
         map.putIfAbsent("CLOUD_API_HOST", config.getCloudApiUrl());
         if (StringUtils.isBlank(config.getCloudUrlPrv())) {
             map.putIfAbsent("CLOUD_PRIVATE_HOST", config.getCloudUrlPub());
@@ -227,7 +227,7 @@ public class CloudMap extends DynamicMap {
         map.putIfAbsent("CLOUD_PUBLIC_HOST", config.getCloudUrlPub());
 
         String port = StringUtils.isNotBlank(config.getCloudApiPort()) ? config.getCloudApiPort() : "8443";
-        String portOrigin = "8443".equalsIgnoreCase(port) ? ENVGENE_CALCULATED : ParametersConstants.CLOUD_ORIGIN;
+        String portOrigin = StringUtils.isBlank(config.getCloudApiPort()) ? ENVGENE_CALCULATED : ParametersConstants.CLOUD_ORIGIN;
         map.putIfAbsent("CLOUD_API_PORT ", port, portOrigin);
 
         maps.put(cloudName, map);

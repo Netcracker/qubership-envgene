@@ -147,35 +147,25 @@ public class ParameterUtils {
                 .build();
     }
 
-    /**
-     * Recursively copies maps into {@link TreeMap} key order (same stable ordering as
-     * {@code convertParameterMapToObject}), but keeps {@link Parameter} wrappers and their metadata.
-     * Nested map/list values inside a {@link Parameter} are sorted and reassigned via {@link #copyOldValues(Parameter, Object)}.
-     */
     public static Map<String, Object> deepSortMapKeysPreservingParameters(Map<?, ?> source) {
-        if (source == null || source.isEmpty()) {
-            return new TreeMap<>();
-        }
-        List<Map.Entry<?, ?>> entries = new ArrayList<>(source.entrySet());
-        entries.sort(Comparator.comparing(e -> String.valueOf(e.getKey())));
         Map<String, Object> out = new TreeMap<>();
-        for (Map.Entry<?, ?> e : entries) {
-            out.put(String.valueOf(e.getKey()), deepSortValuePreservingParameters(e.getValue()));
+        if (source != null) {
+            for (Map.Entry<?, ?> e : source.entrySet()) {
+                out.put(String.valueOf(e.getKey()), deepSortValuePreservingParameters(e.getValue()));
+            }
         }
         return out;
     }
 
     private static Object deepSortValuePreservingParameters(Object value) {
         if (value instanceof Parameter p) {
-            Object inner = p.getValue();
-            if (inner instanceof Map<?, ?>) {
-                return copyOldValues(p, deepSortMapKeysPreservingParameters((Map<?, ?>) inner));
-            }
-            if (inner instanceof List<?>) {
-                return copyOldValues(p, deepSortListPreservingParameters((List<?>) inner));
-            }
-            return p;
+            Object sorted = deepSortNestedValue(p.getValue());
+            return copyOldValues(p, sorted);
         }
+        return deepSortNestedValue(value);
+    }
+
+    private static Object deepSortNestedValue(Object value) {
         if (value instanceof Map<?, ?>) {
             return deepSortMapKeysPreservingParameters((Map<?, ?>) value);
         }

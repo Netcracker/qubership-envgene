@@ -94,7 +94,7 @@ public class NamespaceMap extends DynamicMap {
 
                 // Deprecated deployer parameters
                 map.putIfAbsent(GATEWAY_URL, "http://internal-gateway-service:8080", ParametersConstants.ENVGENE_DEFAULT);
-                map.putIfAbsent(STATIC_CACHE_SERVICE_ROUTE_HOST, String.format("static-cache-service-%s.%s", originalNamespace, cloudHostname),ParametersConstants.ENVGENE_CALCULATED);
+                map.putIfAbsent(STATIC_CACHE_SERVICE_ROUTE_HOST, String.format("static-cache-service-%s.%s", originalNamespace, cloudHostname), ParametersConstants.ENVGENE_CALCULATED);
 
                 CredentialUtils credentialUtils = Injector.getInstance().getDi().get(CredentialUtils.class);
 
@@ -107,24 +107,24 @@ public class NamespaceMap extends DynamicMap {
 
                     //Primary Namespace & Secondary Namespace
                     if (origin.getName().equalsIgnoreCase(originalNamespace)) {
-                        map.put(ORIGIN_NAMESPACE,  originalNamespace, ParametersConstants.ENVGENE_DEFAULT);
-                        map.put(PEER_NAMESPACE, peer.getName());
-                        map.put(CONTROLLER_NAMESPACE, controller.getName());
+                        map.put(ORIGIN_NAMESPACE,  originalNamespace, ParametersConstants.BG_DOMAIN);
+                        map.put(PEER_NAMESPACE, peer.getName(), ParametersConstants.BG_DOMAIN);
+                        map.put(CONTROLLER_NAMESPACE, controller.getName(), ParametersConstants.BG_DOMAIN);
                     } else if (controller.getName().equalsIgnoreCase(originalNamespace)) { //Controller Namespace
                         if (origin != null) {
-                            map.put(ORIGIN_NAMESPACE,  origin.getName());
+                            map.put(ORIGIN_NAMESPACE, origin.getName(), ParametersConstants.BG_DOMAIN);
                         } else {
                             map.put(ORIGIN_NAMESPACE, originalNamespace);
                         }
-                        map.put(PEER_NAMESPACE, peer.getName());
-                        map.put(CONTROLLER_NAMESPACE, controller.getName());
+                        map.put(PEER_NAMESPACE, peer.getName(), ParametersConstants.BG_DOMAIN);
+                        map.put(CONTROLLER_NAMESPACE, controller.getName(), ParametersConstants.BG_DOMAIN);
 
                         if (controller != null) {
                             if (controller.getUrl() != null && !controller.getUrl().isEmpty()) {
-                                map.put(BG_CONTROLLER_URL, controller.getUrl());
+                                map.put(BG_CONTROLLER_URL, controller.getUrl(), ParametersConstants.BG_DOMAIN);
                             } else {
                                 String bg_url = String.format("%s://bluegreen-controller-%s.%s", protocol.toLowerCase(), originalNamespace, customHost);
-                                map.put(BG_CONTROLLER_URL, bg_url,ParametersConstants.ENVGENE_CALCULATED);
+                                map.put(BG_CONTROLLER_URL, bg_url, ParametersConstants.ENVGENE_CALCULATED);
                             }
 
                             if (controller.getCredentials() != null && !controller.getCredentials().isEmpty()) {
@@ -134,25 +134,25 @@ public class NamespaceMap extends DynamicMap {
                                     map.put("BG_CONTROLLER_PASSWORD", buildCredentialRefMap(controller.getCredentials(), (ExternalCredentials) credentialPojo, "password", nsOrigin));
                                 } else if (credentialPojo instanceof UsernamePasswordCredentials) {
                                     UsernamePasswordCredentials usernamePasswordCredentials = (UsernamePasswordCredentials) credentialPojo;
-                                    map.put(BG_CONTROLLER_LOGIN, usernamePasswordCredentials.getUsername());
-                                    map.put(BG_CONTROLLER_PASSWORD, usernamePasswordCredentials.getPassword());
+                                    map.put(BG_CONTROLLER_LOGIN, usernamePasswordCredentials.getUsername(), ParametersConstants.BG_DOMAIN);
+                                    map.put(BG_CONTROLLER_PASSWORD, usernamePasswordCredentials.getPassword(), ParametersConstants.BG_DOMAIN);
                                 }
                             } else {
-                                map.put(BG_CONTROLLER_LOGIN, "bgoperator",ParametersConstants.ENVGENE_DEFAULT);
-                                map.put(BG_CONTROLLER_PASSWORD, "F21wuZNRpw",ParametersConstants.ENVGENE_DEFAULT);
+                                map.put(BG_CONTROLLER_LOGIN, "bgoperator", ParametersConstants.ENVGENE_DEFAULT);
+                                map.put(BG_CONTROLLER_PASSWORD, "F21wuZNRpw", ParametersConstants.ENVGENE_DEFAULT);
                             }
                         }
 
 //                        String rootUrl = Injector.getInstance().get(URLUtils.class).getRootUrl();
 //                        rootUrl = rootUrl.endsWith("/") ? rootUrl.substring(0, rootUrl.length() - 1) : rootUrl;
-                        map.put(CMDB_CALLBACK_TOKEN, "",ParametersConstants.ENVGENE_DEFAULT);
-                        map.put(CMDB_CALLBACK_URL, "",ParametersConstants.ENVGENE_DEFAULT);
+                        map.put(CMDB_CALLBACK_TOKEN, "", ParametersConstants.ENVGENE_DEFAULT);
+                        map.put(CMDB_CALLBACK_URL, "", ParametersConstants.ENVGENE_DEFAULT);
 //                        map.put(CMDB_CALLBACK_TOKEN, Injector.getInstance().get(BGDomainRepository.class).getBgDomainToken(tenant, cloud, config.getBgDomainNamespaceData().getName()));
 //                        map.put(CMDB_CALLBACK_URL, String.format("%s/cm/v1/tenants/%s/clouds/%s/bgdomains/clone",
 //                                rootUrl, tenant, cloud));
                     }
                 } else {
-                    map.put(ORIGIN_NAMESPACE,  originalNamespace);
+                    map.put(ORIGIN_NAMESPACE, originalNamespace);
                 }
 
                 if (compositeStructureDTO != null) {
@@ -166,7 +166,7 @@ public class NamespaceMap extends DynamicMap {
 
                 // Deprecated deployer parameters
                 map.putIfAbsent(GATEWAY_URL,  "http://internal-gateway-service:8080", ParametersConstants.ENVGENE_DEFAULT);
-                map.putIfAbsent(STATIC_CACHE_SERVICE_ROUTE_HOST, String.format("static-cache-service-%s.%s", originalNamespace, cloudHostname),ParametersConstants.ENVGENE_CALCULATED);
+                map.putIfAbsent(STATIC_CACHE_SERVICE_ROUTE_HOST, String.format("static-cache-service-%s.%s", originalNamespace, cloudHostname), ParametersConstants.ENVGENE_CALCULATED);
 
                 String gatewayNamespace = "";
                 String idpUrlNamespace = "";
@@ -207,7 +207,7 @@ public class NamespaceMap extends DynamicMap {
                 }
             }
 
-            EscapeMap e2e = new EscapeMap(config.getE2eParameters(), binding,ParametersConstants.NS_ORIGIN);
+            EscapeMap e2e = new EscapeMap(config.getE2eParameters(), binding, ParametersConstants.NS_ORIGIN);
             EscapeMap configServer = new EscapeMap(config.getConfigServerParameters(), binding, ParametersConstants.NS_ORIGIN);
 
             map.put(E2E, new Parameter(e2e));
@@ -221,14 +221,14 @@ public class NamespaceMap extends DynamicMap {
     private void setBaselineVars(EscapeMap map, CompositeEntityDTO baselineEntity, BgDomainEntityDTO bgDomainEntityDTO) {
         if (baselineEntity != null) {
             if (baselineEntity.getType().equalsIgnoreCase(BG_DOMAIN) && bgDomainEntityDTO != null) {
-                map.put(BASELINE_ORIGIN, bgDomainEntityDTO.getOriginNamespace().getName(),ParametersConstants.BG_DOMAIN);
-                map.put(BASELINE_PEER, bgDomainEntityDTO.getPeerNamespace().getName(),ParametersConstants.BG_DOMAIN);
-                map.put(BASELINE_CONTROLLER, bgDomainEntityDTO.getControllerNamespace().getName(),ParametersConstants.BG_DOMAIN);
-                map.put(BASELINE_PROJ, bgDomainEntityDTO.getControllerNamespace().getName(),ParametersConstants.BG_DOMAIN);
+                map.put(BASELINE_ORIGIN, bgDomainEntityDTO.getOriginNamespace().getName(), ParametersConstants.BG_DOMAIN);
+                map.put(BASELINE_PEER, bgDomainEntityDTO.getPeerNamespace().getName(), ParametersConstants.BG_DOMAIN);
+                map.put(BASELINE_CONTROLLER, bgDomainEntityDTO.getControllerNamespace().getName(), ParametersConstants.BG_DOMAIN);
+                map.put(BASELINE_PROJ, bgDomainEntityDTO.getControllerNamespace().getName(), ParametersConstants.BG_DOMAIN);
             } else if (baselineEntity.getType().equalsIgnoreCase(NAMESPACE) &&
                     !baselineEntity.getName().equalsIgnoreCase(originalNamespace)) {
-                map.put(BASELINE_ORIGIN, baselineEntity.getName(),ParametersConstants.COMPOSITE_STRUCTURE);
-                map.put(BASELINE_PROJ, baselineEntity.getName(),ParametersConstants.COMPOSITE_STRUCTURE);
+                map.put(BASELINE_ORIGIN, baselineEntity.getName(), ParametersConstants.COMPOSITE_STRUCTURE);
+                map.put(BASELINE_PROJ, baselineEntity.getName(), ParametersConstants.COMPOSITE_STRUCTURE);
             }
         }
     }
@@ -244,8 +244,8 @@ public class NamespaceMap extends DynamicMap {
             }
             credentialValue = ca.getSecret();
             credentialValue = credentialValue.replace("\r\n", "\n");
-            map.put("SSL_SECRET_VALUE", credentialValue,ParametersConstants.ENVGENE_CALCULATED);
-            map.put("CERTIFICATE_BUNDLE_MD5SUM", DigestUtils.md5Hex(DigestUtils.getMd5Digest().digest(credentialValue.getBytes(StandardCharsets.UTF_8))),ParametersConstants.ENVGENE_CALCULATED);
+            map.put("SSL_SECRET_VALUE", credentialValue, ParametersConstants.ENVGENE_CALCULATED);
+            map.put("CERTIFICATE_BUNDLE_MD5SUM", DigestUtils.md5Hex(DigestUtils.getMd5Digest().digest(credentialValue.getBytes(StandardCharsets.UTF_8))), ParametersConstants.ENVGENE_CALCULATED);
         }
     }
 
@@ -258,19 +258,19 @@ public class NamespaceMap extends DynamicMap {
         String gatewayUrl = isPublic ? PUBLIC_GATEWAY_URL : PRIVATE_GATEWAY_URL;
         String identityProviderUrl = isPublic ? PUBLIC_IDENTITY_PROVIDER_URL : PRIVATE_IDENTITY_PROVIDER_URL;
         if (customParameters.containsKey(gatewayUrl) && customParameters.containsKey(identityProviderUrl)) {
-            map.put(gatewayUrl, String.valueOf(customParameters.get(gatewayUrl)),ParametersConstants.CUSTOM_PARAMS_ORIGIN);
-            map.put(identityProviderUrl, String.valueOf(customParameters.get(identityProviderUrl)),ParametersConstants.CUSTOM_PARAMS_ORIGIN);
+            map.put(gatewayUrl, String.valueOf(customParameters.get(gatewayUrl)), ParametersConstants.CUSTOM_PARAMS_ORIGIN);
+            map.put(identityProviderUrl, String.valueOf(customParameters.get(identityProviderUrl)), ParametersConstants.CUSTOM_PARAMS_ORIGIN);
         } else {
             if (customParameters.containsKey(gatewayUrl)) {
-                map.put(gatewayUrl, String.valueOf(customParameters.get(gatewayUrl)),ParametersConstants.CUSTOM_PARAMS_ORIGIN);
-                map.put(identityProviderUrl, String.valueOf(customParameters.get(gatewayUrl)),ParametersConstants.CUSTOM_PARAMS_ORIGIN);
+                map.put(gatewayUrl, String.valueOf(customParameters.get(gatewayUrl)), ParametersConstants.CUSTOM_PARAMS_ORIGIN);
+                map.put(identityProviderUrl, String.valueOf(customParameters.get(gatewayUrl)), ParametersConstants.CUSTOM_PARAMS_ORIGIN);
             }
             if (customParameters.containsKey(identityProviderUrl)) {
-                map.put(identityProviderUrl, String.valueOf(customParameters.get(identityProviderUrl)),ParametersConstants.CUSTOM_PARAMS_ORIGIN);
+                map.put(identityProviderUrl, String.valueOf(customParameters.get(identityProviderUrl)), ParametersConstants.CUSTOM_PARAMS_ORIGIN);
             }
         }
-        map.putIfAbsent(gatewayUrl, defaultGatewayUrl,ParametersConstants.ENVGENE_CALCULATED);
-        map.putIfAbsent(identityProviderUrl, defaultIdpUrl,ParametersConstants.ENVGENE_CALCULATED);
+        map.putIfAbsent(gatewayUrl, defaultGatewayUrl, ParametersConstants.ENVGENE_CALCULATED);
+        map.putIfAbsent(identityProviderUrl, defaultIdpUrl, ParametersConstants.ENVGENE_CALCULATED);
     }
 
 }
