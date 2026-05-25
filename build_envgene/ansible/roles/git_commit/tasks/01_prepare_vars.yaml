@@ -1,4 +1,0 @@
----
-- name: Set env_definition path
-  set_fact:
-    env_definition_path: "{{ envs_directory_path + '/' + cluster_name + '/' + environment_name }}"

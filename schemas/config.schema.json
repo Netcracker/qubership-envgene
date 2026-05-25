@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "title": "Generic Configuration",
-  "description": "Configuration for the for cryptographic operations, artifact discovery, and cloud passport decryption",
+  "description": "Configuration for cryptographic operations, artifact discovery, SBOM retention, and cloud passport decryption",
   "additionalProperties": true,
   "properties": {
     "crypt": {
@@ -57,6 +57,36 @@
         "cmdb",
         "local"
       ]
+    },
+    "sbom_retention": {
+      "type": "object",
+      "title": "SBOM Retention Configuration",
+      "description": "Configuration for automatic SBOM file cleanup. When enabled, applies per-application version retention to subdirectories of /sboms/. A safety net wipes /sboms/ if its total size still exceeds 1200 MB after per-application retention.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "Enable SBOM Retention",
+          "description": "Enable or disable SBOM retention cleanup",
+          "default": false,
+          "examples": [
+            true,
+            false
+          ]
+        },
+        "keep_versions_per_app": {
+          "type": "integer",
+          "title": "Versions to Keep",
+          "description": "Number of latest versions to keep per application subdirectory. Used only when enabled is true. A value of 0 means all files in each per-application subdirectory are deleted.",
+          "minimum": 0,
+          "default": 10,
+          "examples": [
+            5,
+            10,
+            15
+          ]
+        }
+      }
     }
   }
 }

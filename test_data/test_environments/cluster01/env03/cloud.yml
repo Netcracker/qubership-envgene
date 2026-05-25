@@ -14,7 +14,7 @@ dbMode: "db"
 databases: []
 maasConfig:
   credentialsId: "maas"
-  enable: true
+  enable: false
   maasUrl: "http://maas."
   maasInternalAddress: "http://maas.maas:8888"
 vaultConfig:
@@ -23,12 +23,12 @@ vaultConfig:
   url: ""
 dbaasConfigs:
   - credentialsId: "dbaas"
-    enable: true
+    enable: false
     apiUrl: "http://dbaas.dbaas:8888"
     aggregatorUrl: "https://dbaas."
 consulConfig:
   tokenSecret: "consul-token"
-  enabled: true
+  enabled: false
   publicUrl: "https://consul."
   internalUrl: "http://consul.consul:8888"
 deployParameters:

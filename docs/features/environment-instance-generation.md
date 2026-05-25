@@ -16,7 +16,7 @@
 
 ## Description
 
-This feature describes the process of generating an [Environment Instance](/docs/envgene-objects.md#environment-instance) from an [Environment Template](/docs/envgene-objects.md#environment-template) and [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). The generation process creates the directory structure and files for the Environment Instance, including Namespaces, Applications, Resource Profiles, Credentials, and other EnvGene objects.
+This feature describes the process of generating an [Environment Instance](/docs/envgene-objects.md#environment-instance-objects) from an [Environment Template](/docs/envgene-objects.md#environment-template-objects) and [Environment Inventory](/docs/envgene-configs.md#env_definitionyml). The generation process creates the directory structure and files for the Environment Instance, including Namespaces, Applications, Resource Profiles, Credentials, and other EnvGene objects.
 
 ## Namespace Folder Name Generation
 
@@ -119,6 +119,7 @@ In this example:
 
 ## Related Features
 
-- [Namespace Render Filtering](/docs/features/namespace-render-filtering.md) - Uses namespace folder names for filtering
-- [Blue-Green Deployment](/docs/features/blue-green-deployment.md) - Describes BG Domain structure
+- [Namespace Render Filter](/docs/features/namespace-render-filtering.md) - Select which Namespaces to render in a specific pipeline run
+- [Namespace Filtering in Template Descriptor](/docs/features/namespace-filtering-in-template-descriptor.md) - Filter which Namespaces are included in Environment structure during Template Descriptor rendering
+- [Blue-Green Deployment](/docs/features/blue-green-deployment.md) - BG domains and state management
 - [Effective Set Calculator](/docs/features/calculator-cli.md) - Uses folder names for effective set structure
