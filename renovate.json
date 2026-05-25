@@ -61,7 +61,9 @@
   ],
   "semanticCommits": "disabled",
   "commitMessagePrefix": "feat:",
-  "prTitle": "feat: UPDATE QUBERSHIP-ENVGENE DEPENDENCIES VIA RENOVATE",
+  "commitMessageAction": "UPDATE",
+  "commitMessageTopic": "QUBERSHIP-ENVGENE DEPENDENCIES",
+  "commitMessageExtra": " VIA RENOVATE",
   "schedule": ["* * 1,15 * *"],
   "packageRules": [
     {
@@ -110,9 +112,9 @@
         "github-actions"
       ],
       "groupName": "qubership-envgene-deps",
-      "commitMessageAction": "update",
-      "commitMessageTopic": "dependencies",
-      "commitMessageExtra": " via Renovate"
+      "commitMessageAction": "UPDATE",
+      "commitMessageTopic": "QUBERSHIP-ENVGENE DEPENDENCIES",
+      "commitMessageExtra": " VIA RENOVATE"
     }
   ]
 }
