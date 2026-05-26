@@ -4,7 +4,7 @@ This guide shows a template repository maintainer how to add new AppDef/RegDef t
 repository, parameterized for different deployment sites.
 
 For background, see [Application and Registry Definition](/docs/features/app-reg-defs.md). For use case examples,
-see [UC-ARD-TR-3 / TR-4](/docs/use-cases/app-reg-defs.md#uc-ard-tr-3-shared-template-repo-off-site-instance-rendering).
+see [UC-ARD-TR-3 / TR-4](/docs/use-cases/app-reg-defs.md#uc-ard-tr-3-shared-template-repository-off-site-instance-rendering).
 
 ## Prerequisites
 
@@ -31,7 +31,7 @@ repository. There is no automated tool. Copy files manually.
 
 Place them in a working directory for editing.
 
-### 3. Place in the template repo
+### 3. Place in the template repository
 
 Move the copied files under the template directories:
 
@@ -108,7 +108,7 @@ for the procedure.
 After committing the templates and the instance config:
 
 1. Trigger the `app_reg_def_process` job in the instance pipeline.
-2. Inspect `/appdefs/` and `/regdefs/` in the instance repo.
+2. Inspect `/appdefs/` and `/regdefs/` in the instance repository.
 3. Confirm AppDef `registryName` resolves as expected per instance overrides.
 4. Confirm RegDef fields use override values where configured.
 
@@ -117,7 +117,7 @@ After committing the templates and the instance config:
 - All RegDef templates in `/templates/regdefs/` render unconditionally on each pipeline run. Templates not referenced
   by AppDefs in a particular instance are still generated as effective definitions and persist in `/regdefs/` -
   harmless but unused.
-- For instance-only customizations (no template repo changes), see
+- For instance-only customizations (no template repository changes), see
   [Add an Application or Registry Definition without a template](/docs/how-to/app-reg-defs-add-without-template.md).
 - For the full set of fields, see [Application Definition](/docs/envgene-objects.md#application-definition) and
   [Registry Definition](/docs/envgene-objects.md#registry-definition).
