@@ -1298,3 +1298,14 @@ Keep in the same commit:
 - Refactor PRs go separately from feature PRs. Rule additions go separately from
   rule-application PRs.
 - Do not include unrelated cleanup. File a follow-up issue instead.
+
+---
+
+## Issues
+
+### Change requests
+
+A change request (CR) is the implementation-phase issue. It hands a settled design to a
+developer for implementation, not for design discussion or investigation. CRs follow a
+six-section structure. For the body template, the convention, and good and bad examples, see
+[docs/dev/creating-cr.md](/docs/dev/creating-cr.md).
