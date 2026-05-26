@@ -1123,6 +1123,12 @@ unnecessary image builds.
 
 Tests and linters run on every PR regardless of commit type.
 
+### Pull request description for docs-only changes
+
+Documentation PRs omit the "Test plan" section by default. The doc-quality gates (super-linter,
+textlint, link-checker, markdownlint) cover correctness. Include a Test plan section only when
+explicitly requested or when the change has runtime implications beyond text.
+
 ### Commit granularity
 
 **One logical change per commit.** A commit should be a single coherent unit that a reviewer
