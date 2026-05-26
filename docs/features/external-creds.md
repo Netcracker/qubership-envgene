@@ -1148,7 +1148,7 @@ Example:
 
 These rules fire whenever EnvGene reads a [system Credential](#envgene-system-credentials), in any operation
 that consumes system credentials (Environment Instance generation, artifact downloads, CMDB integration,
-git operations, and others).
+Git operations, and others).
 
 1. **System Credential creation flag.** No system Credential declares `create: true`. System credentials
    are pre-created by the user in the external Secret Store, so they are not included in the
