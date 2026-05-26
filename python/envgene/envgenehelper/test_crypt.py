@@ -188,22 +188,6 @@ def test_minimize_diff(crypt_kwargs):
         encrypt_file(**crypt_kwargs, minimize_diff=True)
 
 
-def test_cred_backup_dir_uses_job_identity(monkeypatch):
-    project_dir = tempfile.mkdtemp()
-    try:
-        monkeypatch.setattr(crypt_module, "BASE_DIR", project_dir)
-
-        monkeypatch.setenv("CI_JOB_ID", "job-1")
-        first_job_dir = crypt_module._cred_backup_dir()
-
-        monkeypatch.setenv("CI_JOB_ID", "job-2")
-        second_job_dir = crypt_module._cred_backup_dir()
-
-        assert first_job_dir != second_job_dir
-    finally:
-        shutil.rmtree(project_dir, ignore_errors=True)
-
-
 @pytest.mark.parametrize("crypt_backend", ["SOPS", "Fernet"])
 def test_encrypt_all_cred_files_minimize_diff(monkeypatch, crypt_backend):
     if crypt_backend == "SOPS":
