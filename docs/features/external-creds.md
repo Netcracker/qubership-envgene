@@ -1171,8 +1171,8 @@ Example:
 
 1. Support Blue-Green deployment cases
 2. Support template composition
-3. Support AWS Secrets Manager as a Secret Store
-4. Support Azure Key Vault as a Secret Store
+3. Support AWS Secrets Manager as a Secret Store for system credentials
+4. Support Azure Key Vault as a Secret Store for system credentials
 5. Support multi-store for external Credentials. Encode store identity in the VALS URL via a
    `?secret_store_id=<store-id>` query parameter, extending
    [VALS reference generation](#vals-reference-generation) to emit it for non-default stores. Applies to
