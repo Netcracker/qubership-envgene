@@ -253,7 +253,9 @@ Effective Set generation in Version 1.0 does not support [No SBOMs Mode](#versio
                 |   ├── <consumer-name-01>-parameters.yaml
                 |   ├── <consumer-name-02>-credentials.yaml
                 |   ├── <consumer-name-01>-parameters.yaml
-                |   └── <consumer-name-02>-credentials.yaml
+                |   ├── <consumer-name-02>-credentials.yaml
+                |   ├── <consumer-name-01>-external-credentials.yaml
+                |   └── <consumer-name-02>-external-credentials.yaml
                 ├── deployment
                 |   ├── mapping.yaml
                 |   ├── <namespace-folder-01>
@@ -448,7 +450,8 @@ Sensitive parameters specified via a `credRef` Credential Reference and external
 
 1. `effective-set/deployment/<namespace-folder>/<application-name>/values/external-credentials.yaml`
 2. `effective-set/pipeline/external-credentials.yaml`
-3. `effective-set/topology/external-credentials.yaml`
+3. `effective-set/pipeline/<consumer-name>-external-credentials.yaml`
+4. `effective-set/topology/external-credentials.yaml`
 
 For the YAML shape of each reference form (VALS, ESO), the structure of every output file, the
 decision logic between VALS and ESO, and the generation algorithms, see
@@ -1222,16 +1225,16 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ##### \[Version 2.0][Pipeline Parameter Context] `external-credentials.yaml`
 
-This file contains references for sensitive `e2eParameters` whose values resolve to external
-Credentials. The entries are grouped by the Credential's `secretStore`:
+This file contains references for sensitive `e2eParameters` whose values resolve to external Credentials.
+It is a flat map of parameter key to VALS URI:
 
 ```yaml
-<secret-store-id>:
-  <key-1>: <vals-uri>
-  <key-N>: <vals-uri>
-<another-secret-store-id>:
-  <key-1>: <vals-uri>
+<key-1>: <vals-uri>
+<key-N>: <vals-uri>
 ```
+
+A per-consumer subset is also emitted as `effective-set/pipeline/<consumer-name>-external-credentials.yaml`,
+filtered by the consumer's schema (same selector used for `<consumer-name>-credentials.yaml`).
 
 For VALS URI form, generation algorithm, and consumer responsibilities, see
 [Pipeline context](/docs/features/external-creds.md#pipeline-context)

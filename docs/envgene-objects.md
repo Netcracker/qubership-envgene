@@ -1864,6 +1864,9 @@ This object describes where the **environment template artifact** is stored in t
 
 The filename must match the value of the `name` attribute.
 
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
+
 Two versions of this object are supported
 
 #### Artifact Definition v1.0
@@ -2244,6 +2247,9 @@ The filename must match the value of the `name` attribute.
 **Location:** `/regdefs/<registry-name>.yml`
 
 Registry Definitions can also be supplied as user-provided files at `/configuration/regdefs/<registry-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
+
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
 
 Two versions of this object are supported
 
