@@ -66,11 +66,16 @@ from it.
 
 ### Design reference
 
-Required. A link to where the design lives. One of:
+Required. A permalink to where the design lives. The link must survive the design PR's merge
+and the deletion of the source branch. Use one of:
 
-- A merged file under `docs/features/`, for example `docs/features/cleanup.md`.
-- A documentation PR with the design content, for example `#1198`.
+- A PR reference like `#1198`. GitHub auto-links it, and the PR stays accessible after merge.
+- A commit-SHA permalink to a feature doc, for example
+  `https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/features/cleanup.md`. The
+  SHA freezes the design version the CR was scoped to.
 - A previous design issue whose body contains the spec.
+
+Avoid branch-pinned URLs (`.../blob/<branch>/...`). They break when the branch is deleted.
 
 If no design reference exists, the work is not ready for a CR.
 
@@ -159,7 +164,7 @@ same structure. Sections marked optional may be omitted when empty.
 
 ## Design reference
 
-<link to a merged file under docs/features/, a documentation PR, or a previous design issue>
+<permalink: PR ref like `#1198`, or a commit-SHA URL to a feature doc. No branch-pinned URLs.>
 
 ## In scope changes
 
