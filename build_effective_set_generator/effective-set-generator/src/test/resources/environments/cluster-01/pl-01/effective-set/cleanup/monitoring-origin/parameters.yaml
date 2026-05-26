@@ -107,4 +107,3 @@ yaml_template: |-
       image: api:latest
       ports:
         - 8080:8080
-
