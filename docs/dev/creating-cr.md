@@ -53,13 +53,14 @@ change. Do not restate the design - the design reference link covers that.
 
 Good:
 
-> The instance pipeline today runs each functional area as a separate GitLab job. Each job pays
-> the cost of runner startup and artifact handoff. End-to-end pipeline time is dominated by this
-> overhead when more than three environments run in sequence.
+> EnvGene's `generate_effective_set` regenerates the full deployment context for every
+> namespace in the env_instance on each run. The pipeline has no way to express "this namespace
+> should be cleaned". Operators work around the gap by manually editing `env_instance` and
+> `sd.yml` between runs, which has no audit trail and is error-prone.
 
 Bad:
 
-> We want to consolidate pipeline jobs.
+> We want to add cleanup support.
 
 The bad example states the action, not the situation. The reader cannot judge urgency or fit
 from it.
