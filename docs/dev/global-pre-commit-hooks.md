@@ -21,11 +21,11 @@ This guide shows how to register [pre-commit-global](https://github.com/exadmin/
 
 ## Prerequisites
 
-| Requirement                 | Purpose                                                                                                    |
-|-----------------------------|------------------------------------------------------------------------------------------------------------|
-| Git                         | Required. See [git-scm.com](https://git-scm.com/install/).                                                 |
-| Java (JDK or JRE)           | Required by the hook toolchain. Examples below were verified with **JDK 25**.                              |
-| `CYBER_FERRET_PASSWORD`     | Only if CyberFerret runs; see [Set `CYBER_FERRET_PASSWORD` permanently](#set-cyber_ferret_password-permanently). |
+| Requirement             | Purpose                                                                                                          |
+|-------------------------|------------------------------------------------------------------------------------------------------------------|
+| Git                     | Required. See [git-scm.com](https://git-scm.com/install/).                                                       |
+| Java (JDK or JRE)       | Required by the hook toolchain. Examples below were verified with **JDK 25**.                                    |
+| `CYBER_FERRET_PASSWORD` | Only if CyberFerret runs; see [Set `CYBER_FERRET_PASSWORD` permanently](#set-cyber_ferret_password-permanently). |
 
 > [!NOTE]
 > For the `CYBER_FERRET_PASSWORD` value or questions about it, contact **Andrei Rudchenko**.
@@ -238,7 +238,7 @@ git config --global --unset core.hooksPath
 
 ## References
 
-| Resource                                | Link                                                                                                                   |
-|-----------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
-| pre-commit-global overview and readme   | [github.com/exadmin/pre-commit-global](https://github.com/exadmin/pre-commit-global)                                    |
-| pre-commit framework                    | [pre-commit.com](https://pre-commit.com/)                                                                              |
+| Resource                              | Link                                                                                 |
+|---------------------------------------|--------------------------------------------------------------------------------------|
+| pre-commit-global overview and readme | [github.com/exadmin/pre-commit-global](https://github.com/exadmin/pre-commit-global) |
+| pre-commit framework                  | [pre-commit.com](https://pre-commit.com/)                                            |

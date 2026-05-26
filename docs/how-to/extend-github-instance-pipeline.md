@@ -39,10 +39,10 @@ A complete copypaste example for `.gitlab-ci.yml` is in [GitLab CI configuration
 
 **Steps:**
 
-| Step | Description |
-|------|-------------|
-| Init & apply | Runs `apply_envgene_patch.py`: removes `extended_github_instance_pipeline/<tag>/` (staging) and `.github/`, copies `/opt/github`, applies patches, then writes **`extended_github_instance_pipeline/<tag>.zip`** by default and removes the staging dir |
-| Commit & push | Commits changes and pushes to the current branch |
+| Step          | Description                                                                                                                                                                                                                                             |
+|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Init & apply  | Runs `apply_envgene_patch.py`: removes `extended_github_instance_pipeline/<tag>/` (staging) and `.github/`, copies `/opt/github`, applies patches, then writes **`extended_github_instance_pipeline/<tag>.zip`** by default and removes the staging dir |
+| Commit & push | Commits changes and pushes to the current branch                                                                                                                                                                                                        |
 
 **Requirements:**
 
@@ -58,10 +58,10 @@ Copy the following into the root of your instance repository as `.gitlab-ci.yml`
 
 **Placeholders:**
 
-| Placeholder | Description |
-|-------------|-------------|
-| `DOCKER_IMAGE_NAME` | Container image name without tag (for example `registry.example.com/org/qubership-instance-repo-pipeline`) |
-| `DOCKER_IMAGE_TAG` | Image tag (for example `1.2.3` or `latest`). Must match the pipeline image tag; the artifact file is **`extended_github_instance_pipeline/<tag>.zip`**. |
+| Placeholder         | Description                                                                                                                                                                  |
+|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `DOCKER_IMAGE_NAME` | Container image name without tag (for example `registry.example.com/org/qubership-instance-repo-pipeline`)                                                                   |
+| `DOCKER_IMAGE_TAG`  | Image tag (for example `1.2.3` or `latest`). Must match the pipeline image tag; the artifact file is **`extended_github_instance_pipeline/<tag>.zip`**.                      |
 | `PATH_TO_COMPONENT` | Zero or more patch YAML files in your repository (for example `components/component-a.yaml`). Omit all arguments to only materialize the base workflow as a ZIP (no merges). |
 
 GitLab artifacts should still publish **`extended_github_instance_pipeline/`** as a whole. By default each run produces **`extended_github_instance_pipeline/<DOCKER_IMAGE_TAG>.zip`** (for example `extended_github_instance_pipeline/1.2.3.zip`). Extract the ZIP to get `workflows/`, `configuration/`, and so on at the archive root.
@@ -138,22 +138,22 @@ Adjust the path to the script if your working directory is not the repository ro
 
 **Environment variables (versioned name):**
 
-| Variable | Description |
-|----------|-------------|
-| `DOCKER_IMAGE_TAG` | Preferred. Used in **`extended_github_instance_pipeline/<tag>.zip`** (or folder `<tag>/` with `--output-format dir`). |
-| `INSTANCE_REPO_PIPELINE_IMAGE_TAG` | Used if `DOCKER_IMAGE_TAG` is unset (same value as the pipeline image tag in CI). |
-| (none) | Defaults to `latest`. |
+| Variable                           | Description                                                                                                           |
+|------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
+| `DOCKER_IMAGE_TAG`                 | Preferred. Used in **`extended_github_instance_pipeline/<tag>.zip`** (or folder `<tag>/` with `--output-format dir`). |
+| `INSTANCE_REPO_PIPELINE_IMAGE_TAG` | Used if `DOCKER_IMAGE_TAG` is unset (same value as the pipeline image tag in CI).                                     |
+| (none)                             | Defaults to `latest`.                                                                                                 |
 
 Patches are applied against the **staging tree** **`<output-dir>/<tag>/`**. Unless **`--output-format dir`** is used, that directory is removed after **`extended_github_instance_pipeline/<tag>.zip`** is written.
 
 **Options:**
 
-| Option | Description |
-|--------|-------------|
-| `--output-dir DIR` | Parent directory for artifacts and staging. Maps `target_file` paths starting with `.github/` into the staging directory. Default: `extended_github_instance_pipeline`. |
-| `--output-format` | **ZIP** (default): after patching, create **`<output-dir>/<tag>.zip`** and delete staging. **Directory** (`dir`): keep **`<output-dir>/<tag>/`** and do not create a ZIP file. |
-| `--init-from DIR` | Before applying patches: remove `<output-dir>/<tag>/` and `.github`, copy DIR into the staging directory. Default: `/opt/github`. |
-| `--no-init` | Skip init step. Use when the staging directory already exists (e.g. local runs without `/opt/github`). |
+| Option             | Description                                                                                                                                                                    |
+|--------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `--output-dir DIR` | Parent directory for artifacts and staging. Maps `target_file` paths starting with `.github/` into the staging directory. Default: `extended_github_instance_pipeline`.        |
+| `--output-format`  | **ZIP** (default): after patching, create **`<output-dir>/<tag>.zip`** and delete staging. **Directory** (`dir`): keep **`<output-dir>/<tag>/`** and do not create a ZIP file. |
+| `--init-from DIR`  | Before applying patches: remove `<output-dir>/<tag>/` and `.github`, copy DIR into the staging directory. Default: `/opt/github`.                                              |
+| `--no-init`        | Skip init step. Use when the staging directory already exists (e.g. local runs without `/opt/github`).                                                                         |
 
 **Default behavior:** The script initializes **`<output-dir>/<tag>/`**, applies patches (if any), then **writes a ZIP archive** unless **`--output-format dir`**. If you pass **no patch file paths**, it only initializes and writes the base snapshot as a ZIP. Use `--no-init` for local runs when the staging tree already exists.
 
@@ -189,13 +189,13 @@ Patch files are YAML documents containing a list of operations. Use `target_file
 
 Adds or updates key-value pairs in the target file.
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `target_file` | Yes* | Path to target file |
-| `action` | Yes | `merge` |
-| `content` | Yes | Dict of key-value pairs |
-| `section` | For YAML | Section comment (e.g. `#DOCKER_IMAGE_NAMES`) |
-| `path` | For YAML | Dotted path (e.g. `jobs.process_environment_variables.outputs`) |
+| Parameter     | Required | Description                                                     |
+|---------------|----------|-----------------------------------------------------------------|
+| `target_file` | Yes*     | Path to target file                                             |
+| `action`      | Yes      | `merge`                                                         |
+| `content`     | Yes      | Dict of key-value pairs                                         |
+| `section`     | For YAML | Section comment (e.g. `#DOCKER_IMAGE_NAMES`)                    |
+| `path`        | For YAML | Dotted path (e.g. `jobs.process_environment_variables.outputs`) |
 
 **Merge variants:**
 
@@ -209,16 +209,16 @@ Adds or updates key-value pairs in the target file.
 
 Inserts a block of content at a specific position. Requires exactly one anchor.
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `target_file` | Yes* | Path to target file |
-| `action` | Yes | `insert` |
-| `content` | Yes | String or YAML block to insert |
-| `after_section` | One of | Insert after `### SECTION - END ###` |
-| `before_section` | One of | Insert before `### SECTION - START ###` |
-| `after_step` | One of | Insert after step with given name |
-| `before_step` | One of | Insert before step with given name |
-| `skip_if_present` | No | Skip if this string is already in the file |
+| Parameter         | Required | Description                                |
+|-------------------|----------|--------------------------------------------|
+| `target_file`     | Yes*     | Path to target file                        |
+| `action`          | Yes      | `insert`                                   |
+| `content`         | Yes      | String or YAML block to insert             |
+| `after_section`   | One of   | Insert after `### SECTION - END ###`       |
+| `before_section`  | One of   | Insert before `### SECTION - START ###`    |
+| `after_step`      | One of   | Insert after step with given name          |
+| `before_step`     | One of   | Insert before step with given name         |
+| `skip_if_present` | No       | Skip if this string is already in the file |
 
 **Formatting:** Inserted content gets 2 empty lines before and after; indentation is preserved.
 
@@ -404,13 +404,13 @@ Avoid duplicate insertion:
 
 The base workflow uses these extension points:
 
-| Extension point | Type | Example |
-|-----------------|------|---------|
-| `#DOCKER_IMAGE_NAMES` | Section comment | Merge env vars |
-| `#DOCKER_IMAGE_TAGS` | Section comment | Merge env vars |
-| `jobs.process_environment_variables.outputs` | Dotted path | Merge job outputs |
-| `### SECTION - START ###` / `### SECTION - END ###` | Section markers | Insert steps |
-| Step names | `- name: "..."` | Insert by step anchor |
+| Extension point                                     | Type            | Example               |
+|-----------------------------------------------------|-----------------|-----------------------|
+| `#DOCKER_IMAGE_NAMES`                               | Section comment | Merge env vars        |
+| `#DOCKER_IMAGE_TAGS`                                | Section comment | Merge env vars        |
+| `jobs.process_environment_variables.outputs`        | Dotted path     | Merge job outputs     |
+| `### SECTION - START ###` / `### SECTION - END ###` | Section markers | Insert steps          |
+| Step names                                          | `- name: "..."` | Insert by step anchor |
 
 ---
 
@@ -430,12 +430,12 @@ The base workflow uses these extension points:
 
 ## Troubleshooting
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| `Source directory not found: /opt/github` | Running locally without Docker image | Use `--no-init` and ensure output-dir exists, or `--init-from` a local path |
-| `Section #X not found` | Section comment missing in target | Add `#SECTION` comment or use `path` |
-| `Marker '### X - END ###' not found` | Section markers missing | Add `### SECTION - START ###` and `### SECTION - END ###` |
-| `Step 'X' not found` | Step name doesn't match | Use exact or partial step name (case-insensitive) |
-| `Block 'path' not found` | Dotted path invalid | Verify YAML structure (jobs → job_name → outputs) |
-| `File not found` | Wrong target path or output-dir missing | Use path relative to repository root; run with init or `--no-init` on existing dir |
-| `Invalid DOCKER_IMAGE_TAG` | Tag contains path separators | Use a plain tag only (for example `1.2.3`), not a path |
+| Error                                     | Cause                                   | Solution                                                                           |
+|-------------------------------------------|-----------------------------------------|------------------------------------------------------------------------------------|
+| `Source directory not found: /opt/github` | Running locally without Docker image    | Use `--no-init` and ensure output-dir exists, or `--init-from` a local path        |
+| `Section #X not found`                    | Section comment missing in target       | Add `#SECTION` comment or use `path`                                               |
+| `Marker '### X - END ###' not found`      | Section markers missing                 | Add `### SECTION - START ###` and `### SECTION - END ###`                          |
+| `Step 'X' not found`                      | Step name doesn't match                 | Use exact or partial step name (case-insensitive)                                  |
+| `Block 'path' not found`                  | Dotted path invalid                     | Verify YAML structure (jobs → job_name → outputs)                                  |
+| `File not found`                          | Wrong target path or output-dir missing | Use path relative to repository root; run with init or `--no-init` on existing dir |
+| `Invalid DOCKER_IMAGE_TAG`                | Tag contains path separators            | Use a plain tag only (for example `1.2.3`), not a path                             |
