@@ -786,6 +786,50 @@ lookup value.
 
 ---
 
+### Validation rule sections
+
+**When documenting semantic validation rules in a feature spec, group them by phase, state invariants
+declaratively, and factor out shared failure behaviour into a single note.**
+
+A validation section catalogs semantic checks the system applies on top of schema validation. The pattern:
+
+1. **Open with a note that establishes shared context** - what schema validation already covers, the
+   default failure behaviour (fail vs warn), and the error-message contract. Do not repeat these in
+   each rule.
+2. **Group rules by phase** - each phase (a generation stage, an import operation, a runtime check)
+   gets its own subsection.
+3. **State invariants, not actions** - write what must be true. The reader infers the negative case.
+4. **Name each rule** with a short bold noun-phrase followed by a period, then the explanation.
+5. **Mark exceptions inline** - non-failure cases (warnings, deferred checks) are noted in the rule
+   name itself.
+6. **Cross-link, do not restate** - reference the canonical object definitions and field semantics
+   rather than duplicating them.
+
+❌ **INCORRECT:**
+
+- Describing the validator's actions ("The validator iterates over...", "The check runs after...")
+  instead of the invariant.
+- Repeating "If this fails, generation stops with an error" in every rule.
+- Listing field constraints already documented in the object schema.
+- Mixing rules across phases in one undifferentiated list.
+
+✅ **CORRECT:**
+
+- "Every X of type Y has a Z field referencing a known W." (invariant form)
+- A single note block at the top of the section describing the default failure behaviour and the
+  error-message contract.
+- Cross-link to the object definition for field semantics.
+- Subsections per phase ("During X generation", "During Y import").
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Declarative invariants are easier to scan and harder to misinterpret than procedural
+descriptions of validator behaviour. Phase grouping helps readers locate rules relevant to the
+operation they care about. Shared failure semantics factored out reduces noise and prevents
+inconsistencies between rules.
+
+---
+
 ## Object Examples in Documentation
 
 ### Source of Truth for Object Schemas
