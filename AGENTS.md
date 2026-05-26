@@ -733,6 +733,42 @@ cross-references.
 
 ---
 
+### Don't re-gloss established terms
+
+**Once the document defines a term, use it bare. Don't append the definition in parentheses every time the
+term appears.**
+
+❌ **INCORRECT** (every mention re-glosses):
+
+```markdown
+The runtime context does not accept external Credentials (`type: external`).
+Local Credentials (`type: usernamePassword` / `secret`) are emitted as plain text.
+Built-in credential references resolve to a Credential (`type: external` or `type: usernamePassword` / `secret`).
+```
+
+✅ **CORRECT** (terms used bare):
+
+```markdown
+The runtime context does not accept external Credentials.
+Local Credentials are emitted as plain text.
+Built-in credential references resolve to a Credential.
+```
+
+**Exceptions where the inline detail is justified:**
+
+- **First mention** in the document, especially when the term appears before its definition section in
+  reading order. The parenthetical serves as a forward-defining hint.
+- **Conditions or filters** that pick a subset, not a redefinition. "External Credential with `create: true`"
+  is a filter, not a redefinition of "external".
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Each repetition of a definition is a maintenance liability - when a type renames or an enum value is
+added, every parenthetical must be updated. Established vocabulary lets readers internalize the term and
+frees the doc from re-glossing.
+
+---
+
 ### Observable behaviour over implementation detail
 
 Documentation works best when it foregrounds observable behaviour - what users, downstream tools, or
