@@ -1114,6 +1114,21 @@ Body (when needed):
 - Wrap at 72 characters.
 - Reference issues in a footer (`Closes #123`, `Refs #456`).
 
+### Commit type for docs-only changes
+
+If a commit touches only documentation files (`*.md`, `AGENTS.md`, `CLAUDE.md`, files under `docs/`), use
+`docs:` as the commit type. The post-merge build workflow skips Docker image rebuilds for commit types
+other than `feat:`, `fix:`, and `BREAKING CHANGE`. A doc-only change marked `feat:` or `fix:` triggers
+unnecessary image builds.
+
+Tests and linters run on every PR regardless of commit type.
+
+### Pull request description for docs-only changes
+
+Documentation PRs omit the "Test plan" section by default. The doc-quality gates (super-linter,
+textlint, link-checker, markdownlint) cover correctness. Include a Test plan section only when
+explicitly requested or when the change has runtime implications beyond text.
+
 ### Commit granularity
 
 **One logical change per commit.** A commit should be a single coherent unit that a reviewer
