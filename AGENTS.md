@@ -586,7 +586,7 @@ convention).
 
 Per-directory readmes (`/docs/features/README.md`, `/docs/use-cases/README.md`, etc.) are
 meta-docs that explain what kind of content the directory holds. They are not navigation
-indexes and do not need a per-doc entry.
+indices and do not need a per-doc entry.
 
 **Why:** GitHub's link-checker catches dead links but does not warn when a new doc is missing
 from the index. Readers discover docs through the index readmes, not by browsing directories.
@@ -631,7 +631,7 @@ running linters with default (non-project) settings.
 
 ## Documentation content rules
 
-These rules govern content and scope. The markdown formatting rules above govern syntax. These rules
+These rules govern content and scope. The Markdown formatting rules above govern syntax. These rules
 govern what the documentation says, across all documentation types.
 
 ### Section adds only what it uniquely contributes
@@ -1157,6 +1157,21 @@ Body (when needed):
 - Explain WHY the change is needed and trade-offs, not WHAT (the diff already shows what).
 - Wrap at 72 characters.
 - Reference issues in a footer (`Closes #123`, `Refs #456`).
+
+### Commit type for docs-only changes
+
+If a commit touches only documentation files (`*.md`, `AGENTS.md`, `CLAUDE.md`, files under `docs/`), use
+`docs:` as the commit type. The post-merge build workflow skips Docker image rebuilds for commit types
+other than `feat:`, `fix:`, and `BREAKING CHANGE`. A doc-only change marked `feat:` or `fix:` triggers
+unnecessary image builds.
+
+Tests and linters run on every PR regardless of commit type.
+
+### Pull request description for docs-only changes
+
+Documentation PRs omit the "Test plan" section by default. The doc-quality gates (super-linter,
+textlint, link-checker, markdownlint) cover correctness. Include a Test plan section only when
+explicitly requested or when the change has runtime implications beyond text.
 
 ### Commit granularity
 
