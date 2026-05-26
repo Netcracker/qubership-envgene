@@ -586,7 +586,7 @@ convention).
 
 Per-directory readmes (`/docs/features/README.md`, `/docs/use-cases/README.md`, etc.) are
 meta-docs that explain what kind of content the directory holds. They are not navigation
-indexes and do not need a per-doc entry.
+indices and do not need a per-doc entry.
 
 **Why:** GitHub's link-checker catches dead links but does not warn when a new doc is missing
 from the index. Readers discover docs through the index readmes, not by browsing directories.
@@ -631,7 +631,7 @@ running linters with default (non-project) settings.
 
 ## Documentation content rules
 
-These rules govern content and scope. The markdown formatting rules above govern syntax. These rules
+These rules govern content and scope. The Markdown formatting rules above govern syntax. These rules
 govern what the documentation says, across all documentation types.
 
 ### Section adds only what it uniquely contributes
