@@ -553,7 +553,7 @@ complex_key:
 
 ##### External credential algorithms
 
-Normative algorithms for normalization to `normalizedSecretName`, VALS reference generation, and ESO reference generation are specified under [Effective Set external credential behavior](/docs/features/external-creds.md#effective-set-external-credential-behavior) in [External Credentials Management](/docs/features/external-creds.md):
+Normative algorithms for normalization to `normalizedSecretName`, VALS reference generation, and ESO reference generation are specified under [Effective Set generation](/docs/features/external-creds.md#effective-set-generation) in [External Credentials Management](/docs/features/external-creds.md):
 
 - [Normalization to `normalizedSecretName`](/docs/features/external-creds.md#normalization-to-normalizedsecretname)
 - [VALS reference generation](/docs/features/external-creds.md#vals-reference-generation)
@@ -1572,4 +1572,4 @@ For object definitions and conceptual overview, see [External Credentials Manage
 
 ##### External Credential Context generation
 
-Normative step-by-step algorithm for building this context (including top-level `secretStores`, `credentials` entries, and the output path) is specified in [External Credential Context `credentials` entry generation](/docs/features/external-creds.md#external-credential-context-credentials-entry-generation) under [Effective Set external credential behavior](/docs/features/external-creds.md#effective-set-external-credential-behavior).
+Normative step-by-step algorithm for building this context (including top-level `secretStores`, `credentials` entries, and the output path) is specified in [External Credential Context `credentials` entry generation](/docs/features/external-creds.md#external-credential-context-credentials-entry-generation) under [Effective Set generation](/docs/features/external-creds.md#effective-set-generation).
