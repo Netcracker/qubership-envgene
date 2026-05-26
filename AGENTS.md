@@ -658,6 +658,37 @@ authoritative. Lengthens reviews without adding value.
 
 ---
 
+### Section value audit
+
+**During refactors and final reviews, ask of each section: what unique fact does it carry? If most content
+is restated from elsewhere, drop or trim.**
+
+Checklist for each section:
+
+1. Name the load-bearing fact (unique observable, rule, or definition).
+2. Check where else it is said (catalog, table, sibling sections, parent section).
+3. If the unique fact is small (one sentence), fold into a neighbouring section.
+4. If everything is derivable from elsewhere, drop the section. Cross-link from the catalog if an explicit
+   pointer is needed.
+
+❌ **INCORRECT** (section earns no keep):
+
+A subsection that rehashes the catalog table and restates a dispatching rule already implied by sibling
+sections covering each context.
+
+✅ **CORRECT** (drop the section):
+
+The dispatching rule is derivable from sibling sections. Drop the subsection. Cross-link from the catalog
+table only if an explicit pointer is needed.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Sections without unique content fragment the doc and add maintenance burden. Restated content drifts
+from its canonical source. Apply this audit during refactors, not only when first writing a section, because
+content accumulates restated facts as the doc evolves.
+
+---
+
 ### Verify, don't fabricate
 
 When a documentation statement names a specific identifier - a parameter, environment variable, file
@@ -733,6 +764,42 @@ cross-references.
 
 ---
 
+### Don't re-gloss established terms
+
+**Once the document defines a term, use it bare. Don't append the definition in parentheses every time the
+term appears.**
+
+❌ **INCORRECT** (every mention re-glosses):
+
+```markdown
+The runtime context does not accept external Credentials (`type: external`).
+Local Credentials (`type: usernamePassword` / `secret`) are emitted as plain text.
+Built-in credential references resolve to a Credential (`type: external` or `type: usernamePassword` / `secret`).
+```
+
+✅ **CORRECT** (terms used bare):
+
+```markdown
+The runtime context does not accept external Credentials.
+Local Credentials are emitted as plain text.
+Built-in credential references resolve to a Credential.
+```
+
+**Exceptions where the inline detail is justified:**
+
+- **First mention** in the document, especially when the term appears before its definition section in
+  reading order. The parenthetical serves as a forward-defining hint.
+- **Conditions or filters** that pick a subset, not a redefinition. "External Credential with `create: true`"
+  is a filter, not a redefinition of "external".
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Each repetition of a definition is a maintenance liability - when a type renames or an enum value is
+added, every parenthetical must be updated. Established vocabulary lets readers internalize the term and
+frees the doc from re-glossing.
+
+---
+
 ### Observable behaviour over implementation detail
 
 Documentation works best when it foregrounds observable behaviour - what users, downstream tools, or
@@ -783,6 +850,33 @@ the document already defines, not invented labels.
 
 **Why:** Tables in documentation are dense lookups. Composite cells and free-text columns reduce their
 lookup value.
+
+---
+
+### Write international English
+
+**Most readers of these docs are not native English speakers. Prefer simple, common words and short
+sentences over Latinate or literary phrasing.**
+
+Following Microsoft's "Global communications" and Google's "Translation-friendly content" principles:
+
+- **Common verbs over Latinate ones.** "use" not "utilize", "help" not "facilitate", "do" not "perform",
+  "let" not "permit", "set" not "establish".
+- **One main idea per sentence.** Split long compound sentences into two.
+- **No idioms or metaphors.** "Out of the box", "low-hanging fruit", "hands down", "moving the needle" -
+  drop them. They do not translate and read awkwardly to non-native English speakers.
+- **English over Latin abbreviations.** "for example" not "e.g.", "that is" not "i.e.", "and so on" not
+  "etc.".
+- **One term per concept.** Pick one and stick with it across the document.
+- **Active voice for behaviour statements.** "The calculator emits X" not "X is emitted by the calculator".
+- **No noun stacks.** Long chains of nouns ("application instance environment configuration file") force
+  readers to parse syntactic structure on the fly. Split into a possessive or prepositional phrase.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Simpler vocabulary, shorter sentences, and absence of idioms make the docs faster to read for
+non-native speakers and easier for downstream translation. Industry style guides (Microsoft, Google, IBM
+Global English) converge on these principles for the same reason.
 
 ---
 
