@@ -20,7 +20,7 @@ def write_app_reg_defs(base_dir, render_dir, env_dir, placement_mode):
         if src.exists():
             shutil.move(src, root_dst)
             if placement_mode == "dual":
-                shutil.copytree(root_dst, env_dir)
+                shutil.copytree(root_dst, env_dst)
 
 
 if __name__ == '__main__':
@@ -39,6 +39,7 @@ if __name__ == '__main__':
     cloud_passport_file_path = find_cloud_passport_definition(env_dir, instances_dir)
 
     render_context_vars = {
+        "base_dir": base_dir,
         "cluster_name": cluster_name,
         "output_dir": output_dir,
         "current_env_dir": render_dir,
