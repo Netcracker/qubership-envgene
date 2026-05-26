@@ -1103,11 +1103,9 @@ Example:
    [Credential](#credential) entry in the [Environment Credentials File](/docs/envgene-objects.md#credential-file).
 
 2. **Single category.** Every Environment Instance contains [Credentials](#credential) of only one
-   category: either local or external. System credentials (see
-   [EnvGene System Credentials](#envgene-system-credentials)) are exempt and may be mixed. Different
-   Environment Instances in the same repository may differ.
+   category: either local or external. Different Environment Instances in the same repository may differ.
 
-3. **Orphan check (warning).** Every rendered external [Credential](#credential) is referenced by at least one
+3. **Orphan check.** Every rendered external [Credential](#credential) is referenced by at least one
    [Credential Reference](#credential-reference) or
    [Built-in credential reference](#built-in-credential-references). Violation surfaces a warning and does not
    fail Environment Instance generation.
@@ -1140,21 +1138,17 @@ Example:
    (single-value).
 
 6. **System Credential creation flag.** No [system Credential](#envgene-system-credentials) declares
-   `create: true`. System credentials are pre-created by the user in the external Secret Store, so they are
-   not included in the [External Credential Context](#external-credential-context) creation entries.
+   `create: true`.
 
 7. **System Credential Secret Store type.** Every [system Credential](#envgene-system-credentials) with
    `type: external` references a [Secret Store](#secret-store) of type `vault` or `gcp`. `aws` and `azure`
    are not supported as Secret Stores for system credentials.
 
-8. **Built-in credential reference property shape.** Every
-   [Built-in credential reference](#built-in-credential-references) resolving to an external
-   [Credential](#credential) whose consumer expects multi-field resolves to a Credential whose `properties` list
-   contains an entry for each required `name`. Every Built-in credential reference whose consumer expects a
-   single value resolves to a Credential without `properties`. Required shapes per reference are documented in
-   the destinations tables in the [Built-in credential references](#built-in-credential-references) section and,
-   for references consumed by the artifact-searcher (AppDef/RegDef), in the AppDef v2.0 / RegDef v2.0
-   `authConfig` schema (per `provider` + `authMethod`).
+8. **Built-in credential reference property shape.** When a Built-in credential reference resolves to an
+   external Credential, the Credential's `properties` describe the same fields the reference reads.
+   A reference that reads one value matches a Credential without `properties`. A reference that reads
+   multiple named fields matches a Credential whose `properties` lists every required name. Per-reference
+   fields are documented in the [Built-in credential references](#built-in-credential-references) section.
 
 #### During CMDB import
 
