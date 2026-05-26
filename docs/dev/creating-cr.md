@@ -26,7 +26,7 @@ slice and states how the work will be verified.
 The design lives in a documentation PR or in a merged `docs/features/X.md`.
 
 This guide explains when to create a CR, what each section of the body contains, and shows
-good and bad examples per section. It also provides a copy-paste body template.
+good and bad examples per section. It also provides a copypaste body template.
 
 ## When to create a CR
 
@@ -39,7 +39,7 @@ Create a CR when all of these hold:
 Do not create a CR when:
 
 - The design is not settled. File an analysis issue instead.
-- The work is a pure bug fix. Use the bug template.
+- The work is a pure bugfix. Use the bug template.
 - The work is a docs-only change with no implementation. Open a PR directly.
 
 ## Sections
@@ -155,7 +155,7 @@ Do not put design decisions here. Decisions belong in the design doc.
 
 ## Issue body template
 
-Copy-paste the block below as the issue body, then fill each section. The skill produces the
+Copypaste the block below as the issue body, then fill each section. The skill produces the
 same structure. Sections marked optional may be omitted when empty.
 
 ````markdown
