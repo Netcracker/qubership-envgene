@@ -786,6 +786,33 @@ lookup value.
 
 ---
 
+### Write international English
+
+**Most readers of these docs are not native English speakers. Prefer simple, common words and short
+sentences over Latinate or literary phrasing.**
+
+Following Microsoft's "Global communications" and Google's "Translation-friendly content" principles:
+
+- **Common verbs over Latinate ones.** "use" not "utilize", "help" not "facilitate", "do" not "perform",
+  "let" not "permit", "set" not "establish".
+- **One main idea per sentence.** Split long compound sentences into two.
+- **No idioms or metaphors.** "Out of the box", "low-hanging fruit", "hands down", "moving the needle" -
+  drop them. They do not translate and read awkwardly to non-native English speakers.
+- **English over Latin abbreviations.** "for example" not "e.g.", "that is" not "i.e.", "and so on" not
+  "etc.".
+- **One term per concept.** Pick one and stick with it across the document.
+- **Active voice for behaviour statements.** "The calculator emits X" not "X is emitted by the calculator".
+- **No noun stacks.** Long chains of nouns ("application instance environment configuration file") force
+  readers to parse syntactic structure on the fly. Split into a possessive or prepositional phrase.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Simpler vocabulary, shorter sentences, and absence of idioms make the docs faster to read for
+non-native speakers and easier for downstream translation. Industry style guides (Microsoft, Google, IBM
+Global English) converge on these principles for the same reason.
+
+---
+
 ## Object Examples in Documentation
 
 ### Source of Truth for Object Schemas
