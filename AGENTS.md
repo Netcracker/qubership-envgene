@@ -658,6 +658,37 @@ authoritative. Lengthens reviews without adding value.
 
 ---
 
+### Section value audit
+
+**During refactors and final reviews, ask of each section: what unique fact does it carry? If most content
+is restated from elsewhere, drop or trim.**
+
+Checklist for each section:
+
+1. Name the load-bearing fact (unique observable, rule, or definition).
+2. Check where else it is said (catalog, table, sibling sections, parent section).
+3. If the unique fact is small (one sentence), fold into a neighbouring section.
+4. If everything is derivable from elsewhere, drop the section. Cross-link from the catalog if an explicit
+   pointer is needed.
+
+❌ **INCORRECT** (section earns no keep):
+
+A subsection that rehashes the catalog table and restates a dispatching rule already implied by sibling
+sections covering each context.
+
+✅ **CORRECT** (drop the section):
+
+The dispatching rule is derivable from sibling sections. Drop the subsection. Cross-link from the catalog
+table only if an explicit pointer is needed.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Sections without unique content fragment the doc and add maintenance burden. Restated content drifts
+from its canonical source. Apply this audit during refactors, not only when first writing a section, because
+content accumulates restated facts as the doc evolves.
+
+---
+
 ### Verify, don't fabricate
 
 When a documentation statement names a specific identifier - a parameter, environment variable, file
