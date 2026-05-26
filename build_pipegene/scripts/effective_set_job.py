@@ -9,7 +9,7 @@ from envgenehelper import cleanup_targets
 from pipeline_helper import job_instance
 
 
-def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluster_name, params):
+def prepare_generate_effective_set_job(pipeline, full_env_name, cluster_name, params):
     logger.info(f'Prepare generate-effective-set job for {full_env_name}')
     logger.info(f'Cleanup_targets: {cleanup_targets}')
 
@@ -25,7 +25,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
 
     is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
 
-    base_dir = getenv('CI_PROJECT_DIR')   
+    base_dir = getenv('CI_PROJECT_DIR')
 
     sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
@@ -97,8 +97,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
 
     generate_effective_set_vars = {
         "CLUSTER_NAME": cluster_name,
-        "ENVIRONMENT_NAME": env_name,
-        "ENV_NAME": env_name,
+        "ENV_NAME": full_env_name,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
         "effective_set_generator_image": "$effective_set_generator_image",
         "EXCLUDE_CLEANUP_TARGETS": " ".join(cleanup_targets)

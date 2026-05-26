@@ -2,10 +2,10 @@ from gcip import WhenStatement
 from envgenehelper import logger
 from pipeline_helper import job_instance
 
-def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluster_name):
-  logger.info(f'Prepare credential_rotation_job job for {full_env}.')
+def prepare_credential_rotation_job(pipeline, full_env_name, cluster_name):
+  logger.info(f'Prepare credential_rotation_job job for {full_env_name}.')
   credential_rotation_params = {
-    "name":   f'credential_rotation.{full_env}',
+    "name":   f'credential_rotation.{full_env_name}',
     "image":  '${envgen_image}',
     "stage":  'credential_rotation',
     "script": [
@@ -15,7 +15,7 @@ def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluste
 
   credential_rotation_vars = {
     "CLUSTER_NAME": cluster_name,
-    "ENV_NAME": environment_name,
+    "ENV_NAME": full_env_name,
   }
   credential_rotation_job = job_instance(params=credential_rotation_params, vars=credential_rotation_vars)
   credential_rotation_job.artifacts.add_paths("${CI_PROJECT_DIR}/affected-sensitive-parameters.yaml")

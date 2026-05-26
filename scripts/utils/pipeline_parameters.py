@@ -3,7 +3,7 @@ import uuid
 import copy
 from os import getenv
 
-from envgenehelper import logger
+from envgenehelper import logger, get_schemas_dir
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.models import TemplateVersionUpdateMode
 
@@ -15,10 +15,9 @@ def get_pipeline_parameters() -> dict:
         'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
         'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false").lower() == "true",
         'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
-        'ENV_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST", "false").lower() == "true",
         'IS_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST", "false").lower() == "true",
         'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
-        'JSON_SCHEMAS_DIR': getenv("JSON_SCHEMAS_DIR", "/module/schemas"),
+        'JSON_SCHEMAS_DIR': get_schemas_dir(),
         "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE", "artifact"),
         "SD_VERSION": getenv("SD_VERSION"),
         "SD_DATA": getenv("SD_DATA"),
@@ -46,7 +45,7 @@ def get_pipeline_parameters() -> dict:
         "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
             "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
     }
-    
+
 def get_sensitive_param_names() -> list:
     return [
         "CRED_ROTATION_PAYLOAD",
@@ -63,7 +62,7 @@ class PipelineParametersHandler:
 
         if pipe_param_plugin.modules:
             pipe_param_plugin.run(pipeline_params=self.params)
-        
+
         for k, v in self.params.items():
             try:
                 parsed = json.loads(v)
@@ -95,7 +94,7 @@ class PipelineParametersHandler:
             parsed = json.loads(env_inventory_content)
             self.hide_secrets(parsed)
             params["ENV_INVENTORY_CONTENT"] = json.dumps(parsed, separators=(",", ":"))
-            
+
         for k, v in params.items():
             params_str += f"\n{k.upper()}: {v}"
 

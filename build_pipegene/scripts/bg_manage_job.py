@@ -2,17 +2,17 @@ from gcip import WhenStatement
 from envgenehelper import logger
 from pipeline_helper import job_instance
 
-def prepare_bg_manage_job(pipeline, full_env):
-    logger.info(f'prepare_bg manage job for {full_env}')
+def prepare_bg_manage_job(pipeline, full_env_name):
+    logger.info(f'prepare_bg manage job for {full_env_name}')
 
     job_params = {
-        "name": f'bg_manage.{full_env}',
+        "name": f'bg_manage.{full_env_name}',
         "image": '${envgen_image}',
         "stage": 'bg_manage',
         "script": ['python /scripts/bg_manage/bg_manage.py',]
     }
     job_vars = {
-        "FULL_ENV_NAME": full_env,
+        "ENV_NAME": full_env_name,
     }
 
     job = job_instance(params=job_params, vars=job_vars)

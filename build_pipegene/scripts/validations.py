@@ -1,7 +1,7 @@
 import os
 from os import getenv
 
-from envgenehelper import check_for_cyrillic, logger, findAllYamlsInDir, openYaml, check_dir_exists, get_cluster_name_from_full_name, get_environment_name_from_full_name, check_environment_is_valid_or_fail, check_file_exists, validate_yaml_by_scheme_or_fail
+from envgenehelper import check_for_cyrillic, logger, findAllYamlsInDir, openYaml, check_dir_exists, get_cluster_name_from_full_name, get_environment_name_from_full_name, check_environment_is_valid_or_fail, check_file_exists, validate_yaml_by_scheme_or_fail, get_schemas_dir
 from envgenehelper.collections_helper import split_multi_value_param
 
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
@@ -60,7 +60,7 @@ def real_execution_checks(env_names, get_passport, env_build, env_inventory_init
 def check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init, env_inventory_content):
     if env_inventory_init == "true" or env_inventory_content:
         return
-    schemas_dir = getenv("JSON_SCHEMAS_DIR", "/module/schemas")
+    schemas_dir = get_schemas_dir()
     all_environments_dir = f"{project_dir}/environments"
     skip_env_definition_check = get_passport and not env_build
     check_environment_is_valid_or_fail(environment_name, cluster_name, all_environments_dir, skip_env_definition_check, not skip_env_definition_check, schemas_dir=schemas_dir)
@@ -68,7 +68,7 @@ def check_environment(environment_name, cluster_name, get_passport, env_build, e
 def check_passport_params(get_passport):
     if get_passport:
         integration_path = f"{project_dir}/configuration/integration.yml"
-        integration_schema_path = f"{getenv('JSON_SCHEMAS_DIR', '/module/schemas')}/integration.schema.json"
+        integration_schema_path = f"{get_schemas_dir()}/integration.schema.json"
         if check_file_exists(integration_path):
             validate_yaml_by_scheme_or_fail(integration_path, integration_schema_path)
         else:
