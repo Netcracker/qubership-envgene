@@ -115,16 +115,18 @@ Rules for both:
 
 Good:
 
-> 1. Add optional field `cleaned` (boolean, default absent) to the
->    [namespace schema](https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/features/cleanup.md#namespace-object).
-> 2. Add CLEAN behavior to
->    [`env_build_job`](https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/features/cleanup.md#env_build_job).
->    When activated, it sets `cleaned: true` on the named namespaces. All other env_instance
->    content is left untouched.
-> 3. Add a marker-driven branch to
->    [`generate_effective_set_job`](https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/features/cleanup.md#generate_effective_set_job).
->    For each namespace with `cleaned: true`, emit `cleanup/<ns>/` using the existing cleanup
->    context logic.
+````markdown
+1. Add optional field `cleaned` (boolean, default absent) to the
+   [namespace schema](https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/features/cleanup.md#namespace-object).
+2. Add CLEAN behavior to
+   [`env_build_job`](https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/features/cleanup.md#env_build_job).
+   When activated, it sets `cleaned: true` on the named namespaces. All other env_instance
+   content is left untouched.
+3. Add a marker-driven branch to
+   [`generate_effective_set_job`](https://github.com/Netcracker/qubership-envgene/blob/<sha>/docs/features/cleanup.md#generate_effective_set_job).
+   For each namespace with `cleaned: true`, emit `cleanup/<ns>/` using the existing cleanup
+   context logic.
+````
 
 Bad:
 
