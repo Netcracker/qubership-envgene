@@ -46,6 +46,7 @@
     - [Validation](#validation)
       - [During Environment Instance generation](#during-environment-instance-generation)
       - [During Effective Set generation](#during-effective-set-generation)
+      - [During system credentials read](#during-system-credentials-read)
       - [During CMDB import](#during-cmdb-import)
       - [During Credential Rotation](#during-credential-rotation)
     - [To Do](#to-do)
@@ -1137,18 +1138,25 @@ Example:
    `name: <p>`. Every Credential Reference without `property` resolves to a Credential without `properties`
    (single-value).
 
-6. **System Credential creation flag.** No [system Credential](#envgene-system-credentials) declares
-   `create: true`.
-
-7. **System Credential Secret Store type.** Every [system Credential](#envgene-system-credentials) with
-   `type: external` references a [Secret Store](#secret-store) of type `vault` or `gcp`. `aws` and `azure`
-   are not supported as Secret Stores for system credentials.
-
-8. **Built-in credential reference property shape.** When a Built-in credential reference resolves to an
+6. **Built-in credential reference property shape.** When a Built-in credential reference resolves to an
    external Credential, the Credential's `properties` describe the same fields the reference reads.
    A reference that reads one value matches a Credential without `properties`. A reference that reads
    multiple named fields matches a Credential whose `properties` lists every required name. Per-reference
    fields are documented in the [Built-in credential references](#built-in-credential-references) section.
+
+#### During system credentials read
+
+These rules fire whenever EnvGene reads a [system Credential](#envgene-system-credentials), in any operation
+that consumes system credentials (Environment Instance generation, artifact downloads, CMDB integration,
+git operations, and others).
+
+1. **System Credential creation flag.** No system Credential declares `create: true`. System credentials
+   are pre-created by the user in the external Secret Store, so they are not included in the
+   [External Credential Context](#external-credential-context) creation entries.
+
+2. **System Credential Secret Store type.** Every system Credential with `type: external` references a
+   [Secret Store](#secret-store) of type `vault` or `gcp`. `aws` and `azure` are not supported as Secret
+   Stores for system credentials.
 
 #### During CMDB import
 
