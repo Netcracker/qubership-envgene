@@ -1,0 +1,6 @@
+---
+# Template-test fixture for pipegene (see pipeline_helper.get_gav_coordinates_from_build).
+artifact:
+  group_id: org.qubership.test
+  artifact_id: app_def
+  version: new-version

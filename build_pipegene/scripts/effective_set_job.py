@@ -20,13 +20,12 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     sd_data = params["SD_DATA"]
     deployment_id = params["DEPLOYMENT_SESSION_ID"]
     effective_set_config = params["EFFECTIVE_SET_CONFIG"]
-    tags = params['GITLAB_RUNNER_TAG_NAME']
     if "CUSTOM_PARAMS" in params:
         custom_params = params["CUSTOM_PARAMS"]
 
     is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
 
-    base_dir = getenv('CI_PROJECT_DIR')   
+    base_dir = getenv('CI_PROJECT_DIR')
 
     sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
@@ -45,6 +44,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p $app_defs_path && cp -rf {artifact_app_defs_path}/* $app_defs_path',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p $reg_defs_path && cp -fr {artifact_reg_defs_path}/* $reg_defs_path',
         'python3 /module/scripts/main.py validate_creds',
+        'python3 /module/scripts/main.py validate_parameters',
         'python3 /module/scripts/sboms_retention_policy.py'
     ]
 
@@ -97,15 +97,12 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     }
 
     generate_effective_set_vars = {
+        "FULL_ENV_NAME": full_env_name,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": env_name,
         "ENV_NAME": env_name,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
         "effective_set_generator_image": "$effective_set_generator_image",
-        "envgen_args": " -vv",
-        "envgen_debug": "true",
-        "module_config_default": "/module/templates/defaults.yaml",
-        "GITLAB_RUNNER_TAG_NAME": tags,
         "EXCLUDE_CLEANUP_TARGETS": " ".join(cleanup_targets)
     }
 
@@ -120,9 +117,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         environ['CI_PIPELINE_ID'] = real_ci_pipe_id
     generate_effective_set_job = job_instance(params=generate_effective_set_params, needs=needs,
                                                               vars=generate_effective_set_vars)
-    generate_effective_set_job.artifacts.add_paths("${CI_PROJECT_DIR}/environments/" + f"{full_env_name}")
-    generate_effective_set_job.artifacts.add_paths('${CI_PROJECT_DIR}/sboms')
-    generate_effective_set_job.artifacts.add_paths('${CI_PROJECT_DIR}/configuration/registry.y*ml')
 
     effective_set_expiry = effective_set_config_dict.get("effective_set_expiry") or "1 hour"
     logger.info(f"effective set expiry value '{effective_set_expiry}'")
