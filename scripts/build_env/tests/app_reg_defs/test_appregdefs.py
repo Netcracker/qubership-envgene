@@ -52,6 +52,7 @@ class TestAppRegDefRendering:
         templates_dirs = {'common': str(templates_dir)}
 
         return {
+            "base_dir": test_case_dir,
             "cluster_name": self.cluster_name,
             "output_dir": str(test_case_dir / "environments"),
             "current_env_dir": str(render_dir),
