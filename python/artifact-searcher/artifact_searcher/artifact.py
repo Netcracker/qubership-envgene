@@ -346,6 +346,7 @@ async def _retry_with_nexus_url(
     if fixed_domain != original_domain:
         logger.info(f"Retrying artifact check with edited domain: {fixed_domain}")
         result = await _attempt_check(app, version, artifact_extension, fixed_domain, auth_headers, classifier)
+        app.registry.maven_config.repository_domain_name = original_domain
         if result is not None:
             return result
     else:

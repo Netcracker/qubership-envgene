@@ -13,6 +13,7 @@
       - [BG Domain Template](#bg-domain-template)
       - [Registry Definition Template](#registry-definition-template)
       - [Application Definition Template](#application-definition-template)
+      - [Credential Template](#credential-template)
     - [System Credentials File (in Template repository)](#system-credentials-file-in-template-repository)
   - [Instance Repository Objects](#instance-repository-objects)
     - [Environment Instance Objects](#environment-instance-objects)
@@ -28,6 +29,8 @@
     - [Credential](#credential)
       - [`usernamePassword`](#usernamepassword)
       - [`secret`](#secret)
+      - [`external`](#external)
+    - [Secret Store](#secret-store)
     - [Environment Credentials File](#environment-credentials-file)
     - [Shared Credentials File](#shared-credentials-file)
     - [System Credentials File (in Instance repository)](#system-credentials-file-in-instance-repository)
@@ -51,9 +54,9 @@
 
 ### Environment Template Objects
 
-An Environment Template is a file structure within the Envgene Template Repository that describes the structure of a solution — such as which namespaces are part of the solution, as well as environment-agnostic parameters, which are common to a specific type of solution.
+An Environment Template is a file structure within the EnvGene Template Repository that describes the structure of a solution - such as which namespaces are part of the solution, as well as environment-agnostic parameters, which are common to a specific type of solution.
 
-The objects that make up the Environment Template extensively use the Jinja template engine. During the generation of an Environment Instance, Envgene renders these templates with environment-specific parameters, allowing a single template to be used for preparing configurations for similar but not entirely identical environment/solution instances.
+The objects that make up the Environment Template extensively use the Jinja template engine. During the generation of an Environment Instance, EnvGene renders these templates with environment-specific parameters, allowing a single template to be used for preparing configurations for similar but not entirely identical environment/solution instances.
 
 The template repository can contain multiple Environment Templates describing configurations for different types of environments/solution instances, such as DEV, PROD, and SVT.
 
@@ -130,6 +133,9 @@ cloud:
 composite_structure: <path-to-the-composite-structure-template-file>
 # Optional
 bg_domain: <path-to-the-bg-domain-template-file>
+# Optional
+# Path to the external Credential Template file (Jinja, single file).
+external_credential_template: string
 # Optional
 namespaces:
   - # Optional
@@ -407,7 +413,7 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by EnvGene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -424,11 +430,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   sd: string
   # Optional
   services:
@@ -502,10 +508,10 @@ This is a Jinja template file used to render the [BG Domain](#bg-domain) object 
 name: "{{ current_env.name }}-bg-domain"
 type: bgdomain
 originNamespace:
-  name: "{{ current_env.name }}-origin-bss" 
+  name: "{{ current_env.name }}-origin-bss"
   type: namespace
 peerNamespace:
-  name: "{{ current_env.name }}-peer-bss" 
+  name: "{{ current_env.name }}-peer-bss"
   type: namespace
 controllerNamespace:
   name: "{{ current_env.name }}-bg-controller"
@@ -561,6 +567,39 @@ artifactId: "application-1"
 groupId: "org.qubership"
 ```
 
+#### Credential Template
+
+This is a Jinja file in the Template Repository used to render [Credential](#credential) objects with `type: external`.
+
+The rendered document must be a map of `<cred-id>` entries that each conform to the [Credential](#credential) object for `external` as defined in [Credential JSON schema](/schemas/credential.schema.json).
+
+During Environment Instance generation, the result is merged into the instance [Environment Credentials File](#environment-credentials-file) together with Credentials created for local types from `${creds.get(...)}`.
+
+Parameters in Cloud, Namespace, and ParameterSet templates then reference those external Credentials via [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`).
+
+For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 External Sensitive parameters](/docs/features/calculator-cli.md#version-20-external-sensitive-parameters).
+
+Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `current_namespace`) are available when this file is rendered.
+
+**Location:** The path to the Credential Template is set in the [Template Descriptor](#template-descriptor) as `external_credential_template`: a string path to a **single** Jinja file (for example `.yml`, `.yaml`, `.yml.j2`, or `.yaml.j2`).
+
+**Example:**
+
+```yaml
+streaming-cred:
+  type: external
+  create: true
+  secretStore: default-store
+  remoteRefPath: "{{ current_env.cloud }}/{{ current_env.name }}/{{ current_env.name }}-data-management/cdc"
+  properties:
+    - name: username
+    - name: password
+consul-creds:
+  type: external
+  secretStore: default-store
+  remoteRefPath: "{{ current_env.cloud }}"
+```
+
 ### System Credentials File (in Template repository)
 
 This file contains [Credential](#credential) objects used by EnvGene to integrate with external systems like artifact registries, GitLab, GitHub, and others.
@@ -585,7 +624,7 @@ gitlab-token-cred:
 
 ### Environment Instance Objects
 
-An Environment Instance is a file structure within the Envgene Instance Repository that describes the configuration for a specific environment/solution instance.
+An Environment Instance is a file structure within the EnvGene Instance Repository that describes the configuration for a specific environment/solution instance.
 
 It is generated during the rendering process of an Environment Template. During this rendering process, environment-agnostic parameters from the Environment Template are combined with environment-specific parameters, such as Cloud Passport, environment-specific ParameterSet, environment-specific Resource Profile Overrides, to produce a set of parameters specific to a particular environment/solution instance.
 
@@ -602,7 +641,7 @@ EnvGene adds the following header to all auto-generated objects (all Environment
 ```
 
 > [!NOTE]
-> The \<environment-template-artifact> placeholder is automatically replaced with the name of the EnvGene Environment Template artifact used for generation.
+> The \<environment-template-artifact\> placeholder is automatically replaced with the name of the EnvGene Environment Template artifact used for generation.
 
 EnvGene sorts every Environment Instance object according to its JSON schema. This ensures that when objects are modified (e.g., when applying a new template version), the repository commits remain human-readable.
 
@@ -1105,7 +1144,7 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by EnvGene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -1122,11 +1161,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   sd: string
   # Optional
   services:
@@ -1302,7 +1341,7 @@ controllerNamespace:
   url: <bg-operator-url>
 ```
 
-When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.  
+When generating an Environment Instance that includes a BG Domain object, a [Credential](#credential) object with `usernamePassword` type is also generated in the [Environment Credentials File](#environment-credentials-file). The ID of the Credential uses the value `bg_domain.controllerNamespace.credentials`.
 The [`inventory.config.updateCredIdsWithEnvName`](/docs/envgene-configs.md#env_definitionyml) mechanism works for this Credential as well as for all other Credentials.
 
 **Location:** `/environments/<cluster-name>/<env-name>/bg_domain.yml`
@@ -1378,15 +1417,15 @@ Only SD versions 2.1 and 2.2 can be used by EnvGene for the purposes described a
 
 For details on how EnvGene processes SD, refer to the [SD Processing documentation](/docs/features/sd-processing.md).
 
-SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [pipeline](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
+SD in EnvGene can be introduced either through a manual commit to the repository or by running the Instance repository pipeline. The parameters of this [`pipeline`](/docs/instance-pipeline-parameters.md) that start with `SD_` relate to SD processing.
 
 In EnvGene, there are:
 
 **Full SD**: Defines the complete application composition of a solution. There can be only one Full SD per environment, located at the path `/environments/<cluster-name>/<environment-name>/Inventory/solution-descriptor/sd.yml`
 
-**Delta SD**: A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. There can be only one Delta SD per environment, located at the path `/environments/<cluster-name>/<environment-name>/Inventory/solution-descriptor/delta_sd.yml`
+**Delta SD**: A partial Solution Descriptor that contains incremental changes to be applied to the Full SD. Delta SDs enable selective updates to solution components without requiring a complete SD replacement. The Delta SD is produced as a transient pipeline artifact during SD processing and is not persisted to the repository.
 
-Only Full SD is used for Effective Set calculation. The Delta SD is only needed for troubleshooting purposes.
+The Full SD is used for Effective Set calculation. The Delta SD drives the [partial Effective Set generation](/docs/features/effective-set-generation.md#partial-generation) path.
 
 **Example:**
 
@@ -1407,9 +1446,13 @@ applications:
 
 ### Credential
 
-This object is used by EnvGene to manage sensitive parameters. It is generated during environment instance creation for each `<cred-id>` specified in [Credential macros](/docs/template-macros.md#credential-macro)
+This object is used by EnvGene to manage sensitive parameters. How it is produced depends on the `type`:
 
-There are two Credential types with different structures:
+- **`usernamePassword` and `secret`:** For each `<cred-id>` referenced by the credential macro `${creds.get(...)}`, EnvGene creates a Credential during Environment Instance generation. See [Credential Macro and Credential Reference](/docs/template-macros.md#credential-macro-and-credential-reference).
+
+- **`external`:** These Credentials are **not** created from `${creds.get(...)}`. They are rendered from a [Credential Template](#credential-template) in the Template repository and written to the instance repository [Environment Credentials File](#environment-credentials-file). Sensitive parameters then reference them with a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`). See [External Credentials Management](/docs/features/external-creds.md).
+
+The following sections summarize each type:
 
 #### `usernamePassword`
 
@@ -1436,7 +1479,50 @@ Used for single-secret credentials. Contains one mandatory credentials field(`se
 
 After generation, `<value>` is set to `envgeneNullValue`. The user must manually set the actual value.
 
+#### `external`
+
+Used when secret material lives in an external store (Vault, Azure Key Vault, AWS Secrets Manager, or GCP Secret Manager) rather than in the repository. The instance repository holds the [Credential](#credential) definition produced from a [Credential Template](#credential-template).
+
+```yaml
+<cred-id>:
+  type: external
+  secretStore: string
+  # Optional; when omitted, normalization uses credId and store rules (see External Credentials Management)
+  remoteRefPath: string
+  # Optional: idempotent create in the remote store
+  create: boolean
+  # Optional: multi-field remote secret (username / password)
+  properties:
+    - name: enum [ username, password ]
+```
+
+`data` is not used for `type: external`.
+
 [Credential JSON schema](/schemas/credential.schema.json)
+
+### Secret Store
+
+A **Secret Store** is a named entry in the instance repository configuration that describes how to reach an external secret backend. [External Credentials Management](/docs/features/external-creds.md) defines fields, normalization of remote secret names, and how stores are copied into the Effective Set.
+
+**Location:** `/configuration/secret-stores.yml`
+
+```yaml
+<secret-store-name>:
+  # Mandatory
+  type: enum [ vault, azure, aws, gcp ]
+  # Mandatory
+  url: URL
+  # Required when type is vault
+  mountPath: string
+  # Required when type is azure
+  vaultName: string
+  # Required when type is aws
+  region: string
+  # Required when type is gcp
+  projectId: string
+```
+
+[Secret Stores JSON schema](/schemas/secret-stores.schema.json)
 
 ### Environment Credentials File
 
@@ -1470,11 +1556,11 @@ The relationship between Shared Credentials and Environment is established throu
 Credentials can be defined at three scopes with different precedence:
 
 1. **Environment-level**
-   **Location:** `/environments/<cluster-name>/<environment-name>/Inventory/credentials/`
+  **Location:** `/environments/<cluster-name>/<environment-name>/Inventory/credentials/`
 2. **Cluster-level**
-   **Location:** `/environments/<cluster-name>/credentials/`
+  **Location:** `/environments/<cluster-name>/credentials/`
 3. **Site-level**
-   **Location:** `/environments/credentials/`
+  **Location:** `/environments/credentials/`
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
@@ -1529,11 +1615,11 @@ The relationship between Shared Template Variable Files and Environment is estab
 Files can be defined at three scopes with different precedence:
 
 1. **Environment-level**
-   **Location:** `/environments/<cluster-name>/<environment-name>/shared-template-variables/`
+  **Location:** `/environments/<cluster-name>/<environment-name>/shared-template-variables/`
 2. **Cluster-level**
-   **Location:** `/environments/<cluster-name>/shared-template-variables/`
+  **Location:** `/environments/<cluster-name>/shared-template-variables/`
 3. **Site-level**
-   **Location:** `/environments/shared-template-variables/`
+  **Location:** `/environments/shared-template-variables/`
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
@@ -1569,9 +1655,9 @@ Environment Specific ParameterSets also support application-level parameters thr
 
 When an Environment Specific ParameterSet is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
 
-1. `/environments/<cluster-name>/<environment-name>/Inventory/parameters/` — Environment-specific, highest priority  
-2. `/environments/<cluster-name>/parameters/` — Cluster-wide, applies to all environments in the cluster  
-3. `/environments/parameters/` — Global, common for the entire repository  
+1. `/environments/<cluster-name>/<environment-name>/Inventory/parameters/` — Environment-specific, highest priority
+2. `/environments/<cluster-name>/parameters/` — Cluster-wide, applies to all environments in the cluster
+3. `/environments/parameters/` — Global, common for the entire repository
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
 
@@ -1672,9 +1758,9 @@ See details in [resource-profile](/docs/features/resource-profile.md)
 
 When an Environment Specific Resource Profile Override is referenced, EnvGene searches for the corresponding YAML file in the Instance repository using the following location priority (from highest to lowest):
 
-1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority  
-2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster  
-3. `/environments/resource_profiles` — Global, common for the entire repository  
+1. `/environments/<cluster-name>/<environment-name>/Inventory/resource_profiles` — Environment-specific, highest priority
+2. `/environments/<cluster-name>/resource_profiles` — Cluster-wide, applies to all environments in the cluster
+3. `/environments/resource_profiles` — Global, common for the entire repository
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
 
@@ -1685,7 +1771,7 @@ The first match found is used as the environment-specific override for the given
 name: string
 # Optional
 # Deprecated
-# Not processed by Envgene 
+# Not processed by EnvGene
 version: string
 # Optional
 # Name of the resource profile baseline that this override modifies
@@ -1702,11 +1788,11 @@ applications:
   name: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   version: string
   # Optional
   # Deprecated
-  # Not processed by Envgene 
+  # Not processed by EnvGene
   sd: string
   # Optional
   services:
@@ -1752,9 +1838,11 @@ applications:
 
 ### Cloud Passport
 
-Cloud Passport is contracted set of environment-specific deployment parameters that enables a business solution instance's (Environment) applications to access cloud infrastructure resources from a platform solution instance (Environment).
+A Cloud Passport is a contracted set of parameters describing a cluster and the platform applications installed in it, such as databases, message brokers, object storage, and observability tooling. It acts as a key-based contract between platform applications (which publish the keys describing their endpoints and credentials) and business applications (which consume those keys from their deployment context to access platform services).
 
 A Cloud Passport can be obtained either through cloud discovery (using the Cloud Passport Discovery Tool) or manually gathered.
+
+For how the passport is resolved and merged into the environment's deployment context during environment generation, see [Cloud Passport processing](/docs/features/cloud-passport-processing.md).
 
 #### Main File
 
@@ -1878,7 +1966,7 @@ registry:
       # Depending on `authType`, it can be:
       # access key (username) + secret (password) for longLived
       # Credential with this ID must be located in /configuration/credentials/credentials.yml
-      credentialsId: string 
+      credentialsId: string
       # Optional
       # Public cloud registry authentication strategy
       # Used in case of public cloud registries
@@ -2109,27 +2197,27 @@ registry:
 
 The `authConfig` section has complex dependencies between attributes. The following table shows which fields are required based on `provider` and `authMethod` values:
 
-| Field                    | Condition                                           | Required      |
-|--------------------------|-----------------------------------------------------|---------------|
-| `provider`               | Always                                              | **REQUIRED**  |
-| `authMethod`             | Always                                              | **REQUIRED**  |
-| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED**  |
-| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL      |
-| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL      |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED**  |
-| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED**  |
-| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL      |
-| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED**  |
-| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED**  |
-| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL      |
-| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL      |
-| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL      |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED**  |
-| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL      |
+| Field                    | Condition                                           | Required     |
+|--------------------------|-----------------------------------------------------|--------------|
+| `provider`               | Always                                              | **REQUIRED** |
+| `authMethod`             | Always                                              | **REQUIRED** |
+| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
+| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
+| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
+| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
+| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
+| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
+| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED** |
+| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL     |
+| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**
 
@@ -2149,11 +2237,13 @@ This object describes registry where artifacts (other than environment template 
 
 It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
 
-A separate definition file is used for each individual registry. Each Environment uses its own set of Registry Definitions.
+A separate definition file is used for each individual registry. Each environment uses the registry definitions from the centralized location `/regdefs`.
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/environments/<cluster-name>/<environment-name>/RegDefs/<registry-name>.yml`
+**Location:** `/regdefs/<registry-name>.yml`
+
+Registry Definitions can also be supplied as user-provided files at `/configuration/regdefs/<registry-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
 
 Two versions of this object are supported
 
@@ -2318,7 +2408,7 @@ authConfig:
     # Depending on `authType`, it can be:
     # access key (username) + secret (password) for longLived
     # Credential with this ID must be located in /configuration/credentials/credentials.yml
-    credentialsId: string 
+    credentialsId: string
     # Optional
     # Public cloud registry authentication strategy
     # Used in case of public cloud registries
@@ -2548,28 +2638,28 @@ rawConfig:
 
 The `authConfig` section has complex dependencies between attributes. The following table shows which fields are required based on `provider` and `authMethod` values:
 
-| Field                    | Condition                                           | Required      |
-|--------------------------|-----------------------------------------------------|---------------|
-| `provider`               | Always                                              | **REQUIRED**  |
-| `authMethod`             | Always                                              | **REQUIRED**  |
-| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED**  |
-| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL      |
-| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL      |
-| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED**  |
-| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED**  |
-| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL      |
-| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED**  |
-| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED**  |
-| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL      |
-| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL      |
-| `gcpRegion`              | `provider == "gcp"`                                 | OPTIONAL      |
-| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL      |
-| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL      |
-| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED**  |
-| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL      |
+| Field                    | Condition                                           | Required     |
+|--------------------------|-----------------------------------------------------|--------------|
+| `provider`               | Always                                              | **REQUIRED** |
+| `authMethod`             | Always                                              | **REQUIRED** |
+| `credentialsId`          | `authMethod != "anonymous"`                         | **REQUIRED** |
+| `authType`               | `provider IN ["aws", "azure", "gcp"]`               | OPTIONAL     |
+| `awsRegion`              | `provider == "aws"`                                 | OPTIONAL     |
+| `awsDomain`              | `provider == "aws"` (required for CodeArtifact)     | **REQUIRED** |
+| `awsRoleARN`             | `provider == "aws" AND authMethod == "assume_role"` | **REQUIRED** |
+| `awsRoleSessionPrefix`   | `provider == "aws" AND authMethod == "assume_role"` | OPTIONAL     |
+| `gcpOIDC`                | `provider == "gcp" AND authMethod == "federation"`  | **REQUIRED** |
+| `gcpOIDC.URL`            | Inside `gcpOIDC`                                    | **REQUIRED** |
+| `gcpOIDC.customParams`   | Inside `gcpOIDC`                                    | OPTIONAL     |
+| `gcpRegProject`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegPoolId`           | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegProviderId`       | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegSAEmail`          | `provider == "gcp" AND authMethod == "federation"`  | OPTIONAL     |
+| `gcpRegion`              | `provider == "gcp"`                                 | OPTIONAL     |
+| `azureTenantId`          | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRResource`       | `provider == "azure"`                               | OPTIONAL     |
+| `azureACRName`           | `provider == "azure"` (required for ACR)            | **REQUIRED** |
+| `azureArtifactsResource` | `provider == "azure"`                               | OPTIONAL     |
 
 **Valid `authMethod` values per `provider`:**
 
@@ -2725,11 +2815,13 @@ This object describes application artifact parameters - artifact ID, group ID an
 
 It is used by **external systems** to convert the `application:version` format of an artifact template into the registry and Maven artifact parameters required to download it.
 
-A separate definition file is used for each individual application. Each Environment uses its own set of Application Definitions.
+A separate definition file is used for each individual application. Each environment uses the Application definitions from the centralized location `/appdefs`.
 
 The filename must match the value of the `name` attribute.
 
-**Location:** `/environments/<cluster-name>/<environment-name>/AppDefs/<application-name>.yml`
+**Location:** `/appdefs/<application-name>.yml`
+
+Application Definitions can also be supplied as user-provided files at `/configuration/appdefs/<application-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
 
 ```yaml
 # Optional
