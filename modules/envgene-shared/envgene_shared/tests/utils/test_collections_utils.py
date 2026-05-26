@@ -69,6 +69,8 @@ def test_compare_dicts():
         ("env01;env02", ["env01", "env02"]),
         ("env01 env02", ["env01", "env02"]),
         ("env01\nenv02", ["env01", "env02"]),
+        ("env01\\nenv02", ["env01", "env02"]),
+        ("env01\\nenv02", ["env01", "env02"]),
         (" env01 env02 ", ["env01", "env02"]),
         ("app1:1.0", ["app1:1.0"]),
         ("app1:1.0;app2:2.0", ["app1:1.0", "app2:2.0"]),
@@ -86,10 +88,14 @@ def test_split_multi_value_param_valid(value, expected):
 @pytest.mark.parametrize(
     "value",
     [
-        "env01, env02", 
+        "env01, env02",
         "env01; env02",
         "env01\nenv02 env03",
         "env01,env02;env03",
+        "env01\\nenv02 env03",
+        "env01\\nenv02,env03",
+        "env01\\nenv02;env03",
+        "env01,\nenv02",
     ],
 )
 def test_split_multi_value_param_invalid(value):
