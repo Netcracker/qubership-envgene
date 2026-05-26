@@ -146,7 +146,6 @@ global: &id004
   DOC_STORAGE_TEMPORARY_BUCKET_NAME: temporary-bucket
   ENVGENE_CONFIG_REF_NAME: branch_name
   ENVGENE_CONFIG_TAG: No Ref tag
-  ESCAPE_SEQUENCE: 'true'
   GATEWAY_URL: http://internal-gateway-service:8080
   GRAFANA_UI_URL: https://cluster-01.qubership.org
   GRAYLOG_UI_URL: https://cluster-01.qubership.org
