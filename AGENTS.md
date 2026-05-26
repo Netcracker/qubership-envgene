@@ -456,6 +456,52 @@ chatbot, rewrite.
 
 ---
 
+#### Declarative tone (reference docs)
+
+**Reference documentation describes the system as it is. Do not describe transitions, before/after diffs,
+or mark elements as "new".**
+
+Feature specifications and object schemas live in the Diátaxis Reference quadrant. Implementation history
+(what changed, what was added, what was deprecated) belongs in tickets, PR descriptions, and commit
+messages, not in the reference docs themselves.
+
+❌ **INCORRECT** (transitional, history-laden):
+
+```markdown
+The existing Credential is extended by introducing a new type `external`...
+
+| Section                     | ...
+| `docker_registry` (**new**) | ...
+
+For local Credentials the **existing** macro is used, **unchanged from today**.
+
+# AS IS Credential          # TO BE Credential
+```
+
+✅ **CORRECT** (state-only, declarative):
+
+```markdown
+A Credential of `type: external` describes...
+
+| Section            | ...
+| `docker_registry`  | ...
+
+For local Credentials the `envgen.creds.get(...)` macro is used.
+
+# Local Credential          # External Credential
+```
+
+**Exception:** Migration documents and changelogs are explicitly about transitions. They describe how to
+move from state X to state Y and are not subject to this rule.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Reference docs are looked up to learn what something IS. Mixed transitional content makes the spec
+brittle - phrases like "new" or "AS IS" age poorly as the system evolves, and force readers to mentally
+filter what is current vs what is historical.
+
+---
+
 #### In-repo links
 
 **Use repo-root absolute paths for in-repo cross-references, not GitHub URLs.**
@@ -580,6 +626,163 @@ by the shared config. Treat the CI report as authoritative.
 **Why:** The CI super-linter runs both linters. Running locally gives a true preview of the CI
 result, catches real issues, and avoids distraction from false positives that arise when
 running linters with default (non-project) settings.
+
+---
+
+## Documentation content rules
+
+These rules govern content and scope. The markdown formatting rules above govern syntax. These rules
+govern what the documentation says, across all documentation types.
+
+### Section adds only what it uniquely contributes
+
+A documentation section should add only the information specific to the concept it introduces.
+Cross-cutting facts - schemas, notations, rules, examples of canonical types - are cross-linked to
+their canonical location, not restated.
+
+❌ **INCORRECT:**
+
+- Re-describing the full schema of an object that already has its own section.
+- Repeating notation rules in every section that uses the notation.
+- Re-deriving constraints already stated in upstream sections.
+
+✅ **CORRECT:**
+
+- Link to the canonical definition for the concept.
+- Add only the new facts unique to the current section.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Restated information ages out of sync with the canonical copy. Readers wonder which copy is
+authoritative. Lengthens reviews without adding value.
+
+---
+
+### Verify, don't fabricate
+
+When a documentation statement names a specific identifier - a parameter, environment variable, file
+path, library symbol - that identifier is confirmed in the source it describes. Unverifiable
+identifiers are open questions, not statements of fact.
+
+For object schemas and example fields, see also
+[Object Examples in Documentation](#object-examples-in-documentation).
+
+❌ **INCORRECT:**
+
+- Naming a CI variable for a service by extending a pattern from a sibling service, without checking
+  the implementation.
+- Listing a config file path from memory without grepping the repository.
+- Assuming a library exposes an env-var auth method by analogy with another component.
+
+✅ **CORRECT:**
+
+- Grep or read the source code to confirm the identifier before stating it.
+- Mark the identifier as an open question until verifiable.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Documentation is consumed as authoritative. A fabricated detail propagates into tickets,
+validation rules, and tooling assumptions.
+
+---
+
+### Don't silently extend the spec
+
+If a section would read more cleanly under a hypothetical spec extension - a wider enum, a new
+notation, a relaxed constraint - do not apply the extension in the draft. File the proposed extension
+as an open question and write the section against the current spec.
+
+❌ **INCORRECT:**
+
+- Drafting a section that implies a notation works in a wider scope than the spec currently allows.
+- Adding examples that assume a constraint has been relaxed.
+
+✅ **CORRECT:**
+
+- Write to the current spec, accepting any awkwardness in the section.
+- File the proposed extension as an open question, separately.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Spec changes propagate to validation rules, schemas, tooling, and migration. They deserve
+explicit decisions, not implicit drafting assumptions.
+
+---
+
+### Use existing vocabulary
+
+If the document already defines terms, types, and notations for a domain, reuse them. Parallel
+vocabulary - new section titles, column labels, role names - for concepts the document already covers
+is avoided.
+
+❌ **INCORRECT:**
+
+- Inventing a column name that describes the same property an existing column already covers.
+- Adding a structural subsection that duplicates an existing section type.
+- Coining a new term when the document already names the same concept.
+
+✅ **CORRECT:**
+
+- Reuse the document's existing terms for the same concepts.
+- If new vocabulary is genuinely needed, introduce it in a definitions section.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Parallel vocabulary forces readers to maintain two mental glossaries and produces ambiguous
+cross-references.
+
+---
+
+### Observable behaviour over implementation detail
+
+Documentation works best when it foregrounds observable behaviour - what users, downstream tools, or
+consuming systems can rely on. Internal mechanism - phases, ordering of components, runtime fallback
+paths - is worth including when it is part of what readers depend on. Otherwise the observable outcome
+often communicates more clearly.
+
+A useful self-check: would a reasonable alternative implementation that produces the same outcome
+invalidate this paragraph? If yes, the mechanism is load-bearing - keep it. If no, the observable
+outcome alone may carry the message.
+
+❌ **INCORRECT** (when mechanism is not load-bearing):
+
+- Describing the sequence of internal components (step 1: X reads file. Step 2: Y exports value).
+- Naming runtime phases that have no user-visible meaning.
+
+✅ **CORRECT:**
+
+- Stating the observable outcome (the value is available to downstream consumer Y).
+- Documenting mechanism only when it is part of the commitment (timing, atomicity, ordering).
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Implementation choices evolve faster than the observables they deliver. Documenting mechanism
+that is not load-bearing forces stale doc updates with every implementation change.
+
+---
+
+### Tables: one fact per row
+
+In documentation tables, each row carries one identifier or entity. Composite cells listing multiple
+alternatives separated by punctuation are split into separate rows. Column names describe properties
+the document already defines, not invented labels.
+
+❌ **INCORRECT:**
+
+- Packing alternative values into one cell separated by "or" or commas.
+- Adding a column labelled in vocabulary the document has not introduced elsewhere.
+- Composite cells listing multiple identifiers when each could be its own row.
+
+✅ **CORRECT:**
+
+- One identifier per row.
+- Column labels reuse the document's existing vocabulary.
+- Alternatives appear as separate rows or in prose below the table.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Tables in documentation are dense lookups. Composite cells and free-text columns reduce their
+lookup value.
 
 ---
 
