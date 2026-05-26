@@ -1,8 +1,27 @@
 from envgenehelper import *
-from envgenehelper.models import TemplateVersionUpdateMode
 
 from env_template.process_env_template import process_env_template
 from render_config_env import EnvGenerator
+
+
+def write_app_reg_defs(base_dir, render_dir, env_dir, placement_mode):
+    if placement_mode not in ("root", "dual"):
+        raise ValueError(f"Unknown 'app_reg_defs_placement' value: {placement_mode}. Expected 'root' or 'dual'")
+
+    for dir_name in ["AppDefs", "RegDefs"]:
+        src = Path(render_dir) / dir_name
+        env_dst = Path(env_dir) / dir_name
+        root_dst = Path(base_dir) / dir_name.lower()
+
+        if env_dst.exists():
+            shutil.rmtree(env_dst)
+        if root_dst.exists():
+            shutil.rmtree(root_dst)
+        if src.exists():
+            shutil.move(src, root_dst)
+            if placement_mode == "dual":
+                shutil.copytree(root_dst, env_dir)
+
 
 if __name__ == '__main__':
     template_version = process_env_template()
@@ -30,14 +49,9 @@ if __name__ == '__main__':
 
     render_context = EnvGenerator()
     render_context.process_app_reg_defs(env_name, render_context_vars)
-
-    for dir_name in ["AppDefs", "RegDefs"]:
-        src = Path(render_dir) / dir_name
-        dst = Path(env_dir) / dir_name
-
-        if dst.exists():
-            shutil.rmtree(dst)
-        if src.exists():
-            shutil.move(src, dst)
+    
+    config = get_envgene_config_yaml()
+    placement_mode = config.get("app_reg_defs_placement", "dual").lower()
+    write_app_reg_defs(base_dir, render_dir, env_dir, placement_mode)
 
     update_generated_versions(env_dir, BUILD_ENV_TAG, template_version[NamespaceRole.COMMON])
