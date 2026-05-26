@@ -577,7 +577,7 @@ During Environment Instance generation, the result is merged into the instance [
 
 Parameters in Cloud, Namespace, and ParameterSet templates then reference those external Credentials via [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`).
 
-For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 External Sensitive parameters](/docs/features/calculator-cli.md#version-20-external-sensitive-parameters).
+For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 Sensitive parameters via external Credentials](/docs/features/calculator-cli.md#version-20-sensitive-parameters-via-external-credentials).
 
 Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `current_namespace`) are available when this file is rendered.
 
