@@ -599,7 +599,7 @@ The Artifact Definition and Registry Definition `credentialsId` fields use the
 of the referenced Credential's `type`.
 
 System credentials may be local, external, or supplied directly through a CI/CD variable, mixed freely across
-parameters. The single-category rule that applies to deployment-flow Credentials does not apply to system
+parameters. The single-category rule that applies to Environment Instance Credentials does not apply to system
 credentials. For the two parameters that have a CI/CD variable, the environment-variable value is treated as
 local-equivalent: the value is supplied directly, without a Credential object.
 
@@ -1102,8 +1102,8 @@ Example:
    `e2eParameters`, and every [Built-in credential reference](#built-in-credential-references), resolves to a
    [Credential](#credential) entry in the [Environment Credentials File](/docs/envgene-objects.md#credential-file).
 
-2. **Single category (deployment-flow).** Every Environment Instance contains deployment-flow
-   [Credentials](#credential) of only one category: either local or external. System credentials (see
+2. **Single category.** Every Environment Instance contains [Credentials](#credential) of only one
+   category: either local or external. System credentials (see
    [EnvGene System Credentials](#envgene-system-credentials)) are exempt and may be mixed. Different
    Environment Instances in the same repository may differ.
 
