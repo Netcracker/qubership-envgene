@@ -6,8 +6,8 @@
   - [Template rendering](#template-rendering)
     - [UC-ARD-TR-1: Basic AppDef/RegDef template rendering](#uc-ard-tr-1-basic-appdefregdef-template-rendering)
     - [UC-ARD-TR-2: Basic AppDef/RegDef template delete](#uc-ard-tr-2-basic-appdefregdef-template-delete)
-    - [UC-ARD-TR-3: Shared template repo, off-site instance rendering](#uc-ard-tr-3-shared-template-repo-off-site-instance-rendering)
-    - [UC-ARD-TR-4: Shared template repo, on-site instance rendering](#uc-ard-tr-4-shared-template-repo-on-site-instance-rendering)
+    - [UC-ARD-TR-3: Shared template repository, off-site instance rendering](#uc-ard-tr-3-shared-template-repository-off-site-instance-rendering)
+    - [UC-ARD-TR-4: Shared template repository, on-site instance rendering](#uc-ard-tr-4-shared-template-repository-on-site-instance-rendering)
   - [User-provided definitions](#user-provided-definitions)
     - [UC-ARD-UD-1: Replace template-rendered definition with user-provided file](#uc-ard-ud-1-replace-template-rendered-definition-with-user-provided-file)
     - [UC-ARD-UD-2: Delete user-provided file](#uc-ard-ud-2-delete-user-provided-file)
@@ -133,7 +133,7 @@ ENV_BUILDER: true
 2. Existing template-rendered definitions remain unchanged even when corresponding template files are deleted
 3. Deletion of `/appdefs/*` and `/regdefs/*` objects is currently not supported
 
-### UC-ARD-TR-3: Shared template repo, off-site instance rendering
+### UC-ARD-TR-3: Shared template repository, off-site instance rendering
 
 **Description:**
 
@@ -154,7 +154,7 @@ overrides are applied. Templates render with their default (source) registry ref
 2. Off-site instance repository:
    - `/configuration/appregdef_config.yaml` does not define `appdefs.overrides.registryName` (or the file is absent)
 
-**Trigger:** Instance pipeline (GitLab or GitHub) is started in the off-site repo with `ENV_NAMES`, `ENV_BUILDER: true`.
+**Trigger:** Instance pipeline (GitLab or GitHub) is started in the off-site repository with `ENV_NAMES`, `ENV_BUILDER: true`.
 
 **Steps:**
 
@@ -169,7 +169,7 @@ overrides are applied. Templates render with their default (source) registry ref
 1. AppDefs in `/appdefs/*` reference off-site registries via template defaults
 2. RegDefs for off-site registries are generated in `/regdefs/*`
 
-### UC-ARD-TR-4: Shared template repo, on-site instance rendering
+### UC-ARD-TR-4: Shared template repository, on-site instance rendering
 
 **Description:**
 
@@ -190,7 +190,7 @@ a single on-site registry via `appregdef_config.yaml` overrides.
          registryName: on-site-registry
      ```
 
-**Trigger:** Instance pipeline (GitLab or GitHub) is started in the on-site repo with `ENV_NAMES`, `ENV_BUILDER: true`.
+**Trigger:** Instance pipeline (GitLab or GitHub) is started in the on-site repository with `ENV_NAMES`, `ENV_BUILDER: true`.
 
 **Steps:**
 
