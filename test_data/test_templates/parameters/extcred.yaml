@@ -1,0 +1,12 @@
+version: 1
+name: extcred
+parameters: {}
+applications:
+  - appName: "eso-app"
+    parameters:
+      TEST_NAMESPACE: "apps-test"
+      SECRET_FLOW: external-values
+  - appName: "vals-app"
+    parameters:
+      INTEGRATED_SYSTEMS: ABC
+      TEST_NAMESPACE: "apps-test"
