@@ -25,7 +25,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
 
     is_local_app_def = artifact_app_defs_path and artifact_reg_defs_path and app_reg_defs_job
 
-    base_dir = getenv('CI_PROJECT_DIR')   
+    base_dir = getenv('CI_PROJECT_DIR')
 
     sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
     # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
@@ -44,6 +44,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p $app_defs_path && cp -rf {artifact_app_defs_path}/* $app_defs_path',
         f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p $reg_defs_path && cp -fr {artifact_reg_defs_path}/* $reg_defs_path',
         'python3 /module/scripts/main.py validate_creds',
+        'python3 /module/scripts/main.py validate_parameters',
         'python3 /module/scripts/sboms_retention_policy.py'
     ]
 
@@ -96,6 +97,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     }
 
     generate_effective_set_vars = {
+        "FULL_ENV_NAME": full_env_name,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": env_name,
         "ENV_NAME": env_name,

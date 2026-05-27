@@ -274,69 +274,69 @@ For each service Helm chart (created in Step 3):
 
 ### `service` to `application/vnd.docker.image` Mapping
 
-| DD `service` attribute       | AMv2      | Notes                                           |
-|------------------------------|-----------|-------------------------------------------------|
-| `artifacts`                  | N/A       | **TBD**                                         |
-| `build_id_dtrust`            | N/A       | Not used in CM and deployment cases             |
-| `deploy_param`               | N/A       | **TBD**                                         |
-| `docker_digest`              | `hashes`  | Converted to hash object if available           |
-| `docker_registry`            | N/A       | Not used in CM and deployment cases             |
-| `docker_repository_name`     | `group`   |                                                 |
-| `docker_tag`                 | `version` |                                                 |
-| `full_image_name`            | `purl`    | Converted to PURL using Registry Definition     |
-| `git_branch`                 | N/A       | Not used in CM and deployment cases             |
-| `git_revision`               | N/A       | Not used in CM and deployment cases             |
-| `git_url`                    | N/A       | Not used in CM and deployment cases             |
-| `image_name`                 | `name`    |                                                 |
-| `image_type`                 | `properties[].value` where `name = "nc:dd:image_type"` | Preserved as property to enable lossless reverse transformation. Allowed values: `"image"`, `"service"` |
-| `includeFrom`                | N/A       | Not used in CM and deployment cases             |
-| `promote_artifacts`          | N/A       | Not used in CM and deployment cases             |
-| `qualifier`                  | N/A       | **TBD**                                         |
-| `service_name`               | N/A       | Not used in DD in case of `image_type: image`   |
-| `version`                    | N/A       | Not used in DD in case of `image_type: image`   |
+| DD `service` attribute   | AMv2                                                   | Notes                                                                                                   |
+|--------------------------|--------------------------------------------------------|---------------------------------------------------------------------------------------------------------|
+| `artifacts`              | N/A                                                    | **TBD**                                                                                                 |
+| `build_id_dtrust`        | N/A                                                    | Not used in CM and deployment cases                                                                     |
+| `deploy_param`           | N/A                                                    | **TBD**                                                                                                 |
+| `docker_digest`          | `hashes`                                               | Converted to hash object if available                                                                   |
+| `docker_registry`        | N/A                                                    | Not used in CM and deployment cases                                                                     |
+| `docker_repository_name` | `group`                                                |                                                                                                         |
+| `docker_tag`             | `version`                                              |                                                                                                         |
+| `full_image_name`        | `purl`                                                 | Converted to PURL using Registry Definition                                                             |
+| `git_branch`             | N/A                                                    | Not used in CM and deployment cases                                                                     |
+| `git_revision`           | N/A                                                    | Not used in CM and deployment cases                                                                     |
+| `git_url`                | N/A                                                    | Not used in CM and deployment cases                                                                     |
+| `image_name`             | `name`                                                 |                                                                                                         |
+| `image_type`             | `properties[].value` where `name = "nc:dd:image_type"` | Preserved as property to enable lossless reverse transformation. Allowed values: `"image"`, `"service"` |
+| `includeFrom`            | N/A                                                    | Not used in CM and deployment cases                                                                     |
+| `promote_artifacts`      | N/A                                                    | Not used in CM and deployment cases                                                                     |
+| `qualifier`              | N/A                                                    | **TBD**                                                                                                 |
+| `service_name`           | N/A                                                    | Not used in DD in case of `image_type: image`                                                           |
+| `version`                | N/A                                                    | Not used in DD in case of `image_type: image`                                                           |
 
 Where AMv2 shows N/A, that attribute is ignored. All other service attributes are ignored.
 
 ### `service` to `application/vnd.nc.helm.chart` Mapping
 
-| DD `service` attribute       | AMv2      | Notes                                           |
-|------------------------------|-----------|-------------------------------------------------|
-| `artifacts`                  | N/A       | **TBD**                                         |
-| `build_id_dtrust`            | N/A       | Not used in CM and deployment cases             |
-| `deploy_param`               | N/A       | **TBD**                                         |
-| `docker_digest`              | N/A       | Not used for `application/vnd.nc.helm.chart`    |
-| `docker_registry`            | N/A       | Not used for `application/vnd.nc.helm.chart`    |
-| `docker_repository_name`     | N/A       | Not used for `application/vnd.nc.helm.chart`    |
-| `docker_tag`                 | N/A       | Not used for `application/vnd.nc.helm.chart`    |
-| `full_image_name`            | N/A       | Not used for `application/vnd.nc.helm.chart`    |
-| `git_branch`                 | N/A       | Not used in CM and deployment cases             |
-| `git_revision`               | N/A       | Not used in CM and deployment cases             |
-| `git_url`                    | N/A       | Not used in CM and deployment cases             |
-| `image_name`                 | N/A       | Not used in DD in case of `image_type: service` |
-| `image_type`                 | N/A       | Not used in CM and deployment cases             |
-| `includeFrom`                | N/A       | Not used in CM and deployment cases             |
-| `promote_artifacts`          | N/A       | Not used in CM and deployment cases             |
-| `qualifier`                  | N/A       | **TBD**                                         |
-| `service_name`               | `name`    |                                                 |
-| `version`                    | `version` |                                                 |
+| DD `service` attribute   | AMv2      | Notes                                           |
+|--------------------------|-----------|-------------------------------------------------|
+| `artifacts`              | N/A       | **TBD**                                         |
+| `build_id_dtrust`        | N/A       | Not used in CM and deployment cases             |
+| `deploy_param`           | N/A       | **TBD**                                         |
+| `docker_digest`          | N/A       | Not used for `application/vnd.nc.helm.chart`    |
+| `docker_registry`        | N/A       | Not used for `application/vnd.nc.helm.chart`    |
+| `docker_repository_name` | N/A       | Not used for `application/vnd.nc.helm.chart`    |
+| `docker_tag`             | N/A       | Not used for `application/vnd.nc.helm.chart`    |
+| `full_image_name`        | N/A       | Not used for `application/vnd.nc.helm.chart`    |
+| `git_branch`             | N/A       | Not used in CM and deployment cases             |
+| `git_revision`           | N/A       | Not used in CM and deployment cases             |
+| `git_url`                | N/A       | Not used in CM and deployment cases             |
+| `image_name`             | N/A       | Not used in DD in case of `image_type: service` |
+| `image_type`             | N/A       | Not used in CM and deployment cases             |
+| `includeFrom`            | N/A       | Not used in CM and deployment cases             |
+| `promote_artifacts`      | N/A       | Not used in CM and deployment cases             |
+| `qualifier`              | N/A       | **TBD**                                         |
+| `service_name`           | `name`    |                                                 |
+| `version`                | `version` |                                                 |
 
 Where AMv2 shows N/A, that attribute is ignored. All other service attributes are ignored.
 
 ### `chart` to `application/vnd.nc.helm.chart` Mapping
 
-| DD `chart` attribute         | AMv2      | Notes                                           |
-|------------------------------|-----------|-------------------------------------------------|
-| `full_chart_name`            | `purl`    | Converted to PURL using Registry Definition     |
-| `git_branch`                 | N/A       | Not used in CM and deployment cases             |
-| `git_revision`               | N/A       | Not used in CM and deployment cases             |
-| `git_url`                    | N/A       | Not used in CM and deployment cases             |
-| `helm_chart_name`            | `name`    |                                                 |
-| `helm_chart_version`         | `version` |                                                 |
-| `helm_registry`              | N/A       | Not used in CM and deployment cases             |
-| `promote_artifacts`          | N/A       | Not used in CM and deployment cases             |
-| `qualifier`                  | N/A       | May be added in the future                      |
-| `type`                       | N/A       | Not used in CM and deployment cases             |
-| `version`                    | N/A       | Not used in CM and deployment cases             |
+| DD `chart` attribute | AMv2      | Notes                                       |
+|----------------------|-----------|---------------------------------------------|
+| `full_chart_name`    | `purl`    | Converted to PURL using Registry Definition |
+| `git_branch`         | N/A       | Not used in CM and deployment cases         |
+| `git_revision`       | N/A       | Not used in CM and deployment cases         |
+| `git_url`            | N/A       | Not used in CM and deployment cases         |
+| `helm_chart_name`    | `name`    |                                             |
+| `helm_chart_version` | `version` |                                             |
+| `helm_registry`      | N/A       | Not used in CM and deployment cases         |
+| `promote_artifacts`  | N/A       | Not used in CM and deployment cases         |
+| `qualifier`          | N/A       | May be added in the future                  |
+| `type`               | N/A       | Not used in CM and deployment cases         |
+| `version`            | N/A       | Not used in CM and deployment cases         |
 
 Where AMv2 shows N/A, that attribute is ignored. All other chart attributes are ignored.
 

@@ -75,10 +75,10 @@ Supports working with SOPS encryption.
 
 ### Instance Repository Pipeline Parameters
 
-| Attribute | Type | Mandatory | Description | Default | Example |
-|---|---|---|---|---|---|
-| `CRED_ROTATION_PAYLOAD` | string | no | A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macro)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format | None | [example](#cred_rotation_payload-example) |
-| `CRED_ROTATION_FORCE` | string | no | Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential | `false` | `true` |
+| Attribute               | Type   | Mandatory | Description                                                                                                                                                                                                                                                                                                                                               | Default | Example                                   |
+|-------------------------|--------|-----------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|-------------------------------------------|
+| `CRED_ROTATION_PAYLOAD` | string | no        | A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macro-and-credential-reference)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format | None    | [example](#cred_rotation_payload-example) |
+| `CRED_ROTATION_FORCE`   | string | no        | Enables force mode for updating sensitive parameter values. In force mode, the sensitive parameter value will be changed even if it affects other sensitive parameters that may be linked through the same credential                                                                                                                                     | `false` | `true`                                    |
 
 #### `CRED_ROTATION_PAYLOAD`
 
@@ -96,13 +96,13 @@ Supports working with SOPS encryption.
 }
 ```
 
-| Attribute         | Mandatory | Description                                                                                                                                                                                                 | Default | Example |
-|-------------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|---------|
-| `namespace`       | Mandatory | The name of the namespace where the parameter to be modified is defined                                                                                               | None    | `env-1-platform-monitoring` |
-| `application`     | Optional  | The name of the application (sub-resource under `namespace`) where the parameter to be modified is defined. Cannot be used with `pipeline` context                   | None    | `MONITORING` |
-| `context`         | Mandatory | The context of the parameter being modified. Valid values: `pipeline`, `deployment`, `runtime`                                                                       | None    | `deployment` |
-| `parameter_key`   | Mandatory | The name (key) of the parameter to be modified. | None    | `login` or `db.connection.password` |
-| `parameter_value` | Mandatory | New value (plaintext or encrypted). Envgene, depending on the value of the [`crypt`](/docs/envgene-configs.md#configyml) attribute, will either decrypt, encrypt, or leave the value unchanged. If an encrypted value is passed, it must be encrypted with a key that Envgene can decrypt. | None    | `admin` |
+| Attribute         | Mandatory | Description                                                                                                                                                                                                                                                                                | Default | Example                             |
+|-------------------|-----------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|-------------------------------------|
+| `namespace`       | Mandatory | The name of the namespace where the parameter to be modified is defined                                                                                                                                                                                                                    | None    | `env-1-platform-monitoring`         |
+| `application`     | Optional  | The name of the application (sub-resource under `namespace`) where the parameter to be modified is defined. Cannot be used with `pipeline` context                                                                                                                                         | None    | `MONITORING`                        |
+| `context`         | Mandatory | The context of the parameter being modified. Valid values: `pipeline`, `deployment`, `runtime`                                                                                                                                                                                             | None    | `deployment`                        |
+| `parameter_key`   | Mandatory | The name (key) of the parameter to be modified.                                                                                                                                                                                                                                            | None    | `login` or `db.connection.password` |
+| `parameter_value` | Mandatory | New value (plaintext or encrypted). Envgene, depending on the value of the [`crypt`](/docs/envgene-configs.md#configyml) attribute, will either decrypt, encrypt, or leave the value unchanged. If an encrypted value is passed, it must be encrypted with a key that Envgene can decrypt. | None    | `admin`                             |
 
 A sensitive parameter can be defined within a complex parameter structure. In such cases during rotation, the `parameter_key` should use dot notation (e.g., `key1.key2.username`)
 
@@ -152,7 +152,7 @@ Per-Item Processing (for each item in `CRED_ROTATION_PAYLOAD`):
    1. It is `e2eParameters` if item's context is `pipeline`
    2. It is `deployParameters` if item's context is `deployment`
    3. It is `technicalConfigurationParameters` if item's context is `runtime`
-3. Find the cred-id linked (via the [cred macro](/docs/template-macros.md#credential-macro)) to the parameter matching the item's `parameter_key` on the object from step 1 in the context from step 2
+3. Find the cred-id linked (via the [cred macro](/docs/template-macros.md#credential-macro-and-credential-reference)) to the parameter matching the item's `parameter_key` on the object from step 1 in the context from step 2
 4. Find all [affected parameters](#affected-parameters) for this parameter
 5. Save affected parameters in job artifacts
 6. Perform [force mode](#force-mode) check
