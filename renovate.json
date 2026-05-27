@@ -1,14 +1,40 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": ["config:recommended", ":disableDependencyDashboard"],
   "separateMajorMinor": false,
   "separateMinorPatch": false,
   "prConcurrentLimit": 1,
   "branchConcurrentLimit": 1,
+  "dependencyDashboard": false,
+  "dependencyDashboardApproval": false,
+  "dependencyDashboardAutoclose": true,
+  "suppressNotifications": ["configErrorIssue"],
   "lockFileMaintenance": {
     "enabled": false
   },
-  "enabledManagers": ["dockerfile", "pip_requirements", "custom.regex", "maven"],
+  "enabledManagers": [
+    "dockerfile",
+    "pip_requirements",
+    "pep621",
+    "maven",
+    "github-actions",
+    "custom.regex"
+  ],
+  "pip_requirements": {
+    "managerFilePatterns": [
+      "(^|/)requirements[^/]*\\.txt$",
+      "(^|/)build/[^/]+/requirements\\.txt$"
+    ]
+  },
+  "pep621": {
+    "managerFilePatterns": ["(^|/)pyproject\\.toml$"]
+  },
+  "github-actions": {
+    "managerFilePatterns": [
+      "(^|/)\\.github/(?:workflows|actions)/.+\\.ya?ml$",
+      "(^|/)github_workflows/.+\\.ya?ml$"
+    ]
+  },
   "hostRules": [
     {
       "description": "GitHub Packages Maven (credentials: Mend hostRules / PAT with read:packages)",
@@ -35,6 +61,9 @@
   ],
   "semanticCommits": "disabled",
   "commitMessagePrefix": "feat:",
+  "commitMessageAction": "UPDATE",
+  "commitMessageTopic": "QUBERSHIP-ENVGENE DEPENDENCIES",
+  "commitMessageExtra": " VIA RENOVATE",
   "schedule": ["* * 1,15 * *"],
   "packageRules": [
     {
@@ -50,19 +79,19 @@
       "registryUrls": ["https://repo.jenkins-ci.org/public"]
     },
     {
-      "description": "Strict patch only: no minor or major upgrades (all managers)",
+      "description": "Patch-only for all managers (no minor or major upgrades)",
       "matchUpdateTypes": ["minor", "major"],
       "enabled": false
     },
     {
-      "description": "GHCR base image: allow major/minor/patch tag bumps",
+      "description": "GHCR base image: allow major/minor/patch tag bumps (internal base modules)",
       "matchManagers": ["dockerfile"],
       "matchPackageNames": ["ghcr.io/netcracker/qubership-envgene-base-modules"],
       "matchUpdateTypes": ["major", "minor", "patch"],
       "enabled": true
     },
     {
-      "description": "Docker: skip digest bumps (same tag, new image)- not semver patch",
+      "description": "Docker: skip digest bumps (same tag, new image) - not semver patch",
       "matchManagers": ["dockerfile"],
       "matchUpdateTypes": ["digest"],
       "enabled": false
@@ -73,12 +102,19 @@
       "enabled": false
     },
     {
-      "description": "One grouped PR for Docker, Python, Alpine pins, Maven",
-      "matchManagers": ["dockerfile", "pip_requirements", "custom.regex", "maven"],
+      "description": "One grouped PR for all dependency managers",
+      "matchManagers": [
+        "dockerfile",
+        "pip_requirements",
+        "pep621",
+        "custom.regex",
+        "maven",
+        "github-actions"
+      ],
       "groupName": "qubership-envgene-deps",
-      "commitMessageAction": "update",
-      "commitMessageTopic": "dependencies",
-      "commitMessageExtra": " via Renovate"
+      "commitMessageAction": "UPDATE",
+      "commitMessageTopic": "QUBERSHIP-ENVGENE DEPENDENCIES",
+      "commitMessageExtra": " VIA RENOVATE"
     }
   ]
 }

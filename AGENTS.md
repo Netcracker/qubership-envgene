@@ -93,6 +93,79 @@ EnvGene searches these locations - from bottom to top - and uses the first match
 
 **Why:** Em dashes are a typographic convention that varies by locale and style guide. A plain hyphen-minus is universally readable, renders consistently across all Markdown renderers, and avoids accidental character encoding issues.
 
+#### Semicolons in prose
+
+**Guideline:** Semicolons (`;`) are **not** forbidden, but avoid dense "clause; clause" chains in documentation when separate sentences or lists would read more clearly.
+
+**Prefer:**
+
+- One main idea per sentence, separated by a period.
+- Bullet or numbered lists for parallel steps, outcomes, or options.
+- A comma plus a coordinating conjunction (`and`, `or`) when the second part is short.
+
+**When a semicolon is still appropriate:**
+
+- **Complex list items** where each item already contains commas (the usual US-style role of `;` inside lists).
+- **Literal syntax** in code, paths, or URIs where `;` is required - leave unchanged.
+- **Rare compact one-line definitions** where brevity is more important than flow - use sparingly.
+
+**Avoid:**
+
+- Joining two independent statements in prose only to keep one long line - split into two sentences instead.
+- Using `;` between fragments inside bullets as a substitute for a period or a new bullet.
+
+❌ **HARDER TO READ:**
+
+```markdown
+Item 1 is generated automatically; item 2 is created manually by the user.
+```
+
+✅ **CLEARER:**
+
+```markdown
+Item 1 is generated automatically. Item 2 is created manually by the user.
+```
+
+**Why:** Semicolons are easy to overuse in technical English. Dense use can make specs feel monotonous and is often harder for readers whose first language is not English. Periods and lists align with the rest of these documentation rules.
+
+---
+
+#### Line length
+
+**CRITICAL: Wrap prose lines at 120 characters maximum.**
+
+**Scope:**
+
+- Applies to prose paragraphs and list items in any Markdown file.
+- **Excluded:** tables, fenced code blocks, URLs, and image references.
+- **New or rewritten content only.** When editing an existing document, wrap paragraphs you add or rewrite at 120
+  chars. Do NOT reflow surrounding existing prose to match - that produces large, noisy diffs unrelated to the
+  task.
+
+**How to wrap:**
+
+- Break at natural sentence or clause boundaries (after a period or comma, or before a conjunction).
+- Indent continuation lines of list items so they align with the first non-bullet character (3 spaces for `-`
+  bullets, 3 spaces for `1.` numbered lists).
+- Keep an empty line before and after each paragraph (already required by the Lists rule above).
+
+❌ **DON'T (hard wrap mid-word):**
+
+```markdown
+The Effective Set calculator emits well-known deploy parameter names for selected built-in cred
+ential references.
+```
+
+✅ **DO (break at sentence or clause boundary):**
+
+```markdown
+The Effective Set calculator emits well-known deploy parameter names for selected built-in
+credential references.
+```
+
+**Why:** 120 characters keeps Markdown source readable in side-by-side diffs and code reviews without horizontal
+scrolling. Capping the rule to new content avoids whitespace-only churn in legacy files.
+
 ---
 
 #### Semicolons
@@ -217,6 +290,52 @@ technical documentation.
 
 ---
 
+#### Heading numbering
+
+**Do not number headings unless they enumerate alternative workflows.**
+
+Visual hierarchy (`#` → `##` → `###`) and the document's table of contents already convey
+structure. Adding numeric prefixes (`## 1. Overview`, `### 2.1 Step one`) duplicates that
+information and creates fragile cross-references that break when sections are added or
+reordered.
+
+❌ **INCORRECT** (sequential topics in a feature document):
+
+```markdown
+## 1. Passport file
+## 2. Resolution
+## 3. Merge into cloud.yml
+## 4. Parameter traceability
+```
+
+✅ **CORRECT** (same content, no numbering):
+
+```markdown
+## Passport file
+## Resolution
+## Merge into cloud.yml
+## Parameter traceability
+```
+
+✅ **ACCEPTABLE** (alternative workflows, where numbering enumerates choices):
+
+```markdown
+## 1. Creating a cluster without a Cloud Passport
+## 2. Creating a cluster with a manually assembled Cloud Passport
+## 3. Creating a cluster using Cloud Passport Discovery
+```
+
+**Scope:** Applies to **new and modified content only**. Existing numbered headings are not
+affected by this rule unless the surrounding lines are being edited for other reasons.
+
+**Why:** Numbered headings duplicate the structure already shown by heading level and the TOC.
+They make in-text references (`see section 3.2`) fragile under reorganization, and they are not
+the convention in this repository (only 2 of ~36 docs use numbering, and only for enumerated
+alternative workflows). Modern dev-doc style guides (Google, Microsoft, Mozilla, GitHub Docs)
+do not number headings in user-facing documentation.
+
+---
+
 #### Tables
 
 **CRITICAL: All Markdown tables MUST have vertically aligned pipe characters (`|`).**
@@ -334,6 +453,474 @@ Common AI-stylistics to avoid:
 **Why:** AI-generated text leans on these patterns heavily. Their absence makes documentation
 feel more direct and trustworthy. Read sentences aloud. If it sounds like a press release or a
 chatbot, rewrite.
+
+---
+
+#### Declarative tone (reference docs)
+
+**Reference documentation describes the system as it is. Do not describe transitions, before/after diffs,
+or mark elements as "new".**
+
+Feature specifications and object schemas live in the Diátaxis Reference quadrant. Implementation history
+(what changed, what was added, what was deprecated) belongs in tickets, PR descriptions, and commit
+messages, not in the reference docs themselves.
+
+❌ **INCORRECT** (transitional, history-laden):
+
+```markdown
+The existing Credential is extended by introducing a new type `external`...
+
+| Section                     | ...
+| `docker_registry` (**new**) | ...
+
+For local Credentials the **existing** macro is used, **unchanged from today**.
+
+# AS IS Credential          # TO BE Credential
+```
+
+✅ **CORRECT** (state-only, declarative):
+
+```markdown
+A Credential of `type: external` describes...
+
+| Section            | ...
+| `docker_registry`  | ...
+
+For local Credentials the `envgen.creds.get(...)` macro is used.
+
+# Local Credential          # External Credential
+```
+
+**Exception:** Migration documents and changelogs are explicitly about transitions. They describe how to
+move from state X to state Y and are not subject to this rule.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Reference docs are looked up to learn what something IS. Mixed transitional content makes the spec
+brittle - phrases like "new" or "AS IS" age poorly as the system evolves, and force readers to mentally
+filter what is current vs what is historical.
+
+---
+
+#### In-repo links
+
+**Use repo-root absolute paths for in-repo cross-references, not GitHub URLs.**
+
+For links between Markdown files inside this repository, use paths starting from the repository
+root (`/docs/...`, `/schemas/...`). Do not use absolute GitHub URLs
+(`https://github.com/Netcracker/qubership-envgene/blob/main/...`), and do not use relative paths
+(`../how-to/...`).
+
+External references (links to other repositories, third-party docs, blog posts) keep their full
+`https://` URL. This rule applies to in-repo cross-references only.
+
+❌ **INCORRECT** (absolute GitHub URL pins to `main` regardless of context):
+
+```markdown
+See [Creating a cluster](https://github.com/Netcracker/qubership-envgene/blob/main/docs/how-to/create-cluster.md).
+```
+
+❌ **INCORRECT** (relative path breaks when files move):
+
+```markdown
+See [Creating a cluster](../how-to/create-cluster.md).
+```
+
+✅ **CORRECT** (repo-root absolute path):
+
+```markdown
+See [Creating a cluster](/docs/how-to/create-cluster.md).
+```
+
+**Scope:** Applies to **new and modified content only**. Existing absolute or relative links are
+not affected unless the surrounding lines are being edited for other reasons.
+
+**Why:** Repo-root absolute paths render correctly on GitHub regardless of branch or fork. GitHub
+URLs pin to a specific branch (usually `main`), so a fork or feature-branch viewer following the
+link is taken back to `main` instead of staying in the current context. Relative paths break when
+the linking file or the target file is moved.
+
+---
+
+#### Heading renames and cross-links
+
+When renaming a Markdown heading, the GitHub-generated anchor (`#section-name`) also changes.
+Cross-links in other files that point to the old anchor become broken (CI link-checker fails).
+
+**Before pushing after a heading rename:**
+
+1. Grep the repository for references to the OLD anchor:
+
+   ```bash
+   grep -rnE "#old-anchor-name" --include='*.md' .
+   ```
+
+2. Update each matching cross-link to the NEW anchor in all affected files.
+
+3. Update the link text in `[text](#anchor)` to match the new heading text where appropriate.
+
+For a broader audit of all cross-links in the repository:
+
+```bash
+grep -rhoE '\]\([^)]+#[^)]+\)' --include='*.md' . | sort -u
+```
+
+**Why:** A heading rename inside one file silently breaks references in unrelated files. The
+CI link-checker (lychee) catches this only after push.
+
+---
+
+#### Doc index updates
+
+**Add new docs to (and remove deleted docs from) the index readmes.**
+
+The repository has two parallel index readmes that mirror the same structure:
+
+- `/README.md` (root project readme, "Documentation" section)
+- `/docs/README.md` (docs hub readme)
+
+When you add a tutorial, how-to, feature, or migration doc, add a link in both readmes under
+the matching section. When you rename or remove a doc, update both readmes to keep links live.
+Match the description style of sibling entries (short, verb-leading phrase, same capitalization
+convention).
+
+Per-directory readmes (`/docs/features/README.md`, `/docs/use-cases/README.md`, etc.) are
+meta-docs that explain what kind of content the directory holds. They are not navigation
+indices and do not need a per-doc entry.
+
+**Why:** GitHub's link-checker catches dead links but does not warn when a new doc is missing
+from the index. Readers discover docs through the index readmes, not by browsing directories.
+
+---
+
+#### Pre-flight linter checks
+
+Before declaring documentation changes done, run the same linters that CI will run.
+
+**Markdown structure (`markdownlint`):**
+
+```bash
+npx --yes markdownlint-cli@latest --config .github/linters/.markdown-lint.yml <changed-files>
+```
+
+The project config (`.github/linters/.markdown-lint.yml`) relaxes `MD013` line length to 1000,
+and disables `MD012`, `MD033`, `MD051`. Running markdownlint without `--config` uses the
+default settings (line length 80) which produces many false positives unrelated to the project
+rules and may hide real issues like `MD009` (trailing spaces) or `MD040` (fenced block missing
+language).
+
+**Natural-language terminology (`textlint` with `textlint-rule-terminology`):**
+
+CI runs textlint on prose to flag terminology preferences (for example, em dashes should be
+hyphens, `repo` should be `repository`, `READMEs` should be `readmes`, `Blank line` should be
+`Empty line`). The textlint config lives in the shared `netcracker/.github` repository and is
+pulled in at CI time; there is no local config file to reference. To preview locally:
+
+```bash
+npx --yes textlint --rule terminology <changed-files>
+```
+
+This runs the default terminology rule set. CI may flag a few additional terms layered on top
+by the shared config. Treat the CI report as authoritative.
+
+**Why:** The CI super-linter runs both linters. Running locally gives a true preview of the CI
+result, catches real issues, and avoids distraction from false positives that arise when
+running linters with default (non-project) settings.
+
+---
+
+## Documentation content rules
+
+These rules govern content and scope. The Markdown formatting rules above govern syntax. These rules
+govern what the documentation says, across all documentation types.
+
+### Section adds only what it uniquely contributes
+
+A documentation section should add only the information specific to the concept it introduces.
+Cross-cutting facts - schemas, notations, rules, examples of canonical types - are cross-linked to
+their canonical location, not restated.
+
+❌ **INCORRECT:**
+
+- Re-describing the full schema of an object that already has its own section.
+- Repeating notation rules in every section that uses the notation.
+- Re-deriving constraints already stated in upstream sections.
+
+✅ **CORRECT:**
+
+- Link to the canonical definition for the concept.
+- Add only the new facts unique to the current section.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Restated information ages out of sync with the canonical copy. Readers wonder which copy is
+authoritative. Lengthens reviews without adding value.
+
+---
+
+### Section value audit
+
+**During refactors and final reviews, ask of each section: what unique fact does it carry? If most content
+is restated from elsewhere, drop or trim.**
+
+Checklist for each section:
+
+1. Name the load-bearing fact (unique observable, rule, or definition).
+2. Check where else it is said (catalog, table, sibling sections, parent section).
+3. If the unique fact is small (one sentence), fold into a neighbouring section.
+4. If everything is derivable from elsewhere, drop the section. Cross-link from the catalog if an explicit
+   pointer is needed.
+
+❌ **INCORRECT** (section earns no keep):
+
+A subsection that rehashes the catalog table and restates a dispatching rule already implied by sibling
+sections covering each context.
+
+✅ **CORRECT** (drop the section):
+
+The dispatching rule is derivable from sibling sections. Drop the subsection. Cross-link from the catalog
+table only if an explicit pointer is needed.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Sections without unique content fragment the doc and add maintenance burden. Restated content drifts
+from its canonical source. Apply this audit during refactors, not only when first writing a section, because
+content accumulates restated facts as the doc evolves.
+
+---
+
+### Verify, don't fabricate
+
+When a documentation statement names a specific identifier - a parameter, environment variable, file
+path, library symbol - that identifier is confirmed in the source it describes. Unverifiable
+identifiers are open questions, not statements of fact.
+
+For object schemas and example fields, see also
+[Object Examples in Documentation](#object-examples-in-documentation).
+
+❌ **INCORRECT:**
+
+- Naming a CI variable for a service by extending a pattern from a sibling service, without checking
+  the implementation.
+- Listing a config file path from memory without grepping the repository.
+- Assuming a library exposes an env-var auth method by analogy with another component.
+
+✅ **CORRECT:**
+
+- Grep or read the source code to confirm the identifier before stating it.
+- Mark the identifier as an open question until verifiable.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Documentation is consumed as authoritative. A fabricated detail propagates into tickets,
+validation rules, and tooling assumptions.
+
+---
+
+### Don't silently extend the spec
+
+If a section would read more cleanly under a hypothetical spec extension - a wider enum, a new
+notation, a relaxed constraint - do not apply the extension in the draft. File the proposed extension
+as an open question and write the section against the current spec.
+
+❌ **INCORRECT:**
+
+- Drafting a section that implies a notation works in a wider scope than the spec currently allows.
+- Adding examples that assume a constraint has been relaxed.
+
+✅ **CORRECT:**
+
+- Write to the current spec, accepting any awkwardness in the section.
+- File the proposed extension as an open question, separately.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Spec changes propagate to validation rules, schemas, tooling, and migration. They deserve
+explicit decisions, not implicit drafting assumptions.
+
+---
+
+### Use existing vocabulary
+
+If the document already defines terms, types, and notations for a domain, reuse them. Parallel
+vocabulary - new section titles, column labels, role names - for concepts the document already covers
+is avoided.
+
+❌ **INCORRECT:**
+
+- Inventing a column name that describes the same property an existing column already covers.
+- Adding a structural subsection that duplicates an existing section type.
+- Coining a new term when the document already names the same concept.
+
+✅ **CORRECT:**
+
+- Reuse the document's existing terms for the same concepts.
+- If new vocabulary is genuinely needed, introduce it in a definitions section.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Parallel vocabulary forces readers to maintain two mental glossaries and produces ambiguous
+cross-references.
+
+---
+
+### Don't re-gloss established terms
+
+**Once the document defines a term, use it bare. Don't append the definition in parentheses every time the
+term appears.**
+
+❌ **INCORRECT** (every mention re-glosses):
+
+```markdown
+The runtime context does not accept external Credentials (`type: external`).
+Local Credentials (`type: usernamePassword` / `secret`) are emitted as plain text.
+Built-in credential references resolve to a Credential (`type: external` or `type: usernamePassword` / `secret`).
+```
+
+✅ **CORRECT** (terms used bare):
+
+```markdown
+The runtime context does not accept external Credentials.
+Local Credentials are emitted as plain text.
+Built-in credential references resolve to a Credential.
+```
+
+**Exceptions where the inline detail is justified:**
+
+- **First mention** in the document, especially when the term appears before its definition section in
+  reading order. The parenthetical serves as a forward-defining hint.
+- **Conditions or filters** that pick a subset, not a redefinition. "External Credential with `create: true`"
+  is a filter, not a redefinition of "external".
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Each repetition of a definition is a maintenance liability - when a type renames or an enum value is
+added, every parenthetical must be updated. Established vocabulary lets readers internalize the term and
+frees the doc from re-glossing.
+
+---
+
+### Observable behaviour over implementation detail
+
+Documentation works best when it foregrounds observable behaviour - what users, downstream tools, or
+consuming systems can rely on. Internal mechanism - phases, ordering of components, runtime fallback
+paths - is worth including when it is part of what readers depend on. Otherwise the observable outcome
+often communicates more clearly.
+
+A useful self-check: would a reasonable alternative implementation that produces the same outcome
+invalidate this paragraph? If yes, the mechanism is load-bearing - keep it. If no, the observable
+outcome alone may carry the message.
+
+❌ **INCORRECT** (when mechanism is not load-bearing):
+
+- Describing the sequence of internal components (step 1: X reads file. Step 2: Y exports value).
+- Naming runtime phases that have no user-visible meaning.
+
+✅ **CORRECT:**
+
+- Stating the observable outcome (the value is available to downstream consumer Y).
+- Documenting mechanism only when it is part of the commitment (timing, atomicity, ordering).
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Implementation choices evolve faster than the observables they deliver. Documenting mechanism
+that is not load-bearing forces stale doc updates with every implementation change.
+
+---
+
+### Tables: one fact per row
+
+In documentation tables, each row carries one identifier or entity. Composite cells listing multiple
+alternatives separated by punctuation are split into separate rows. Column names describe properties
+the document already defines, not invented labels.
+
+❌ **INCORRECT:**
+
+- Packing alternative values into one cell separated by "or" or commas.
+- Adding a column labelled in vocabulary the document has not introduced elsewhere.
+- Composite cells listing multiple identifiers when each could be its own row.
+
+✅ **CORRECT:**
+
+- One identifier per row.
+- Column labels reuse the document's existing vocabulary.
+- Alternatives appear as separate rows or in prose below the table.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Tables in documentation are dense lookups. Composite cells and free-text columns reduce their
+lookup value.
+
+---
+
+### Write international English
+
+**Most readers of these docs are not native English speakers. Prefer simple, common words and short
+sentences over Latinate or literary phrasing.**
+
+Following Microsoft's "Global communications" and Google's "Translation-friendly content" principles:
+
+- **Common verbs over Latinate ones.** "use" not "utilize", "help" not "facilitate", "do" not "perform",
+  "let" not "permit", "set" not "establish".
+- **One main idea per sentence.** Split long compound sentences into two.
+- **No idioms or metaphors.** "Out of the box", "low-hanging fruit", "hands down", "moving the needle" -
+  drop them. They do not translate and read awkwardly to non-native English speakers.
+- **English over Latin abbreviations.** "for example" not "e.g.", "that is" not "i.e.", "and so on" not
+  "etc.".
+- **One term per concept.** Pick one and stick with it across the document.
+- **Active voice for behaviour statements.** "The calculator emits X" not "X is emitted by the calculator".
+- **No noun stacks.** Long chains of nouns ("application instance environment configuration file") force
+  readers to parse syntactic structure on the fly. Split into a possessive or prepositional phrase.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Simpler vocabulary, shorter sentences, and absence of idioms make the docs faster to read for
+non-native speakers and easier for downstream translation. Industry style guides (Microsoft, Google, IBM
+Global English) converge on these principles for the same reason.
+
+---
+
+### Validation rule sections
+
+**When documenting semantic validation rules in a feature spec, group them by phase, state invariants
+declaratively, and factor out shared failure behaviour into a single note.**
+
+A validation section catalogs semantic checks the system applies on top of schema validation. The pattern:
+
+1. **Open with a note that establishes shared context** - what schema validation already covers, the
+   default failure behaviour (fail vs warn), and the error-message contract. Do not repeat these in
+   each rule.
+2. **Group rules by phase** - each phase (a generation stage, an import operation, a runtime check)
+   gets its own subsection.
+3. **State invariants, not actions** - write what must be true. The reader infers the negative case.
+4. **Name each rule** with a short bold noun-phrase followed by a period, then the explanation.
+5. **Mark exceptions inline** - non-failure cases (warnings, deferred checks) are noted in the rule
+   name itself.
+6. **Cross-link, do not restate** - reference the canonical object definitions and field semantics
+   rather than duplicating them.
+
+❌ **INCORRECT:**
+
+- Describing the validator's actions ("The validator iterates over...", "The check runs after...")
+  instead of the invariant.
+- Repeating "If this fails, generation stops with an error" in every rule.
+- Listing field constraints already documented in the object schema.
+- Mixing rules across phases in one undifferentiated list.
+
+✅ **CORRECT:**
+
+- "Every X of type Y has a Z field referencing a known W." (invariant form)
+- A single note block at the top of the section describing the default failure behaviour and the
+  error-message contract.
+- Cross-link to the object definition for field semantics.
+- Subsections per phase ("During X generation", "During Y import").
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Declarative invariants are easier to scan and harder to misinterpret than procedural
+descriptions of validator behaviour. Phase grouping helps readers locate rules relevant to the
+operation they care about. Shared failure semantics factored out reduces noise and prevents
+inconsistencies between rules.
 
 ---
 
@@ -641,3 +1228,84 @@ Before committing documentation:
 2. Verify all links work
 3. Ensure tables are aligned
 4. Review for clarity and accuracy
+
+---
+
+## Commits and Pull Requests
+
+### Commit messages
+
+Use Conventional Commits format: `<type>: <description>`. Types in use here: `feat`, `fix`,
+`docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `style`. The repository convention is no
+scope prefix.
+
+Subject line:
+
+- Imperative mood (`Add X`, not `Added X` or `Adds X`).
+- Under 72 characters.
+- No trailing period.
+
+Body (when needed):
+
+- Empty line before body.
+- Explain WHY the change is needed and trade-offs, not WHAT (the diff already shows what).
+- Wrap at 72 characters.
+- Reference issues in a footer (`Closes #123`, `Refs #456`).
+
+### Commit type for docs-only changes
+
+If a commit touches only documentation files (`*.md`, `AGENTS.md`, `CLAUDE.md`, files under `docs/`), use
+`docs:` as the commit type. The post-merge build workflow skips Docker image rebuilds for commit types
+other than `feat:`, `fix:`, and `BREAKING CHANGE`. A doc-only change marked `feat:` or `fix:` triggers
+unnecessary image builds.
+
+Tests and linters run on every PR regardless of commit type.
+
+### Pull request description for docs-only changes
+
+Documentation PRs omit the "Test plan" section by default. The doc-quality gates (super-linter,
+textlint, link-checker, markdownlint) cover correctness. Include a Test plan section only when
+explicitly requested or when the change has runtime implications beyond text.
+
+### Commit granularity
+
+**One logical change per commit.** A commit should be a single coherent unit that a reviewer
+can read in one pass.
+
+Split into separate commits when:
+
+- A rule, convention, or schema is added (AGENTS.md, lint config) along with content that
+  follows it - put the rule change in its own commit so the rule can be reviewed separately
+  from its application.
+- Mechanical changes (mass rename, formatting sweep) are mixed with semantic changes - put
+  the mechanical change in its own commit so the semantic diff is readable.
+- A pre-existing issue is fixed in passing - put the fix in its own commit so it can be
+  backported or reverted independently.
+
+Keep in the same commit:
+
+- Test with the code or doc it covers.
+- Migration script with the schema change that requires it.
+- Anchor renames with the heading change that triggered them.
+
+### Pull request scope
+
+**One focused goal per PR.**
+
+- PR description states the problem, the decision, and trade-offs.
+- Target size: under 500 lines of changed prose for docs PRs, under 400 lines for code PRs.
+  Larger changes belong in a stack of dependent PRs (mention the order in each description).
+- Refactor PRs go separately from feature PRs. Rule additions go separately from
+  rule-application PRs.
+- Do not include unrelated cleanup. File a follow-up issue instead.
+
+---
+
+## Issues
+
+### Change requests
+
+A change request (CR) is the implementation-phase issue. It hands a settled design to a
+developer for implementation, not for design discussion or investigation. CRs follow a
+six-section structure. For the body template, the convention, and good and bad examples, see
+[docs/dev/creating-cr.md](/docs/dev/creating-cr.md).

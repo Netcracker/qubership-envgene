@@ -28,6 +28,9 @@ consul:
   CONSUL_ENABLED: true
   CONSUL_PUBLIC_URL: http://consul.consul:8080
   CONSUL_ADMIN_TOKEN: ${creds.get("consul-cred").secret}
+vault:
+  VAULT_ADDR: https://vault.cluster-01.qubership.org
+  VAULT_AUTH_ROLE_ID: ${creds.get("vault-cred").secret}
 zookeeper:
   ZOOKEEPER_URL: ${ZOOKEEPER_ADDRESS}
   ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181

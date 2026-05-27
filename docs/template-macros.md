@@ -62,7 +62,9 @@
     - [`BASELINE_CONTROLLER`](#baseline_controller)
     - [`PUBLIC_IDENTITY_PROVIDER_URL`](#public_identity_provider_url)
     - [`PRIVATE_IDENTITY_PROVIDER_URL`](#private_identity_provider_url)
-  - [Credential Macro](#credential-macro)
+  - [Credential Macro and Credential Reference](#credential-macro-and-credential-reference)
+    - [Local credentials via `creds.get`](#local-credentials-via-credsget)
+    - [External Credentials via Credential Reference](#external-credentials-via-credential-reference)
   - [Deprecated Macros](#deprecated-macros)
     - [Deprecated Jinja Macros](#deprecated-jinja-macros)
       - [`environment.environmentName`](#environmentenvironmentname)
@@ -1199,10 +1201,19 @@ Calculation rules:
 
 **Usage in sample:** TBD
 
-## Credential Macro
+## Credential Macro and Credential Reference
 
----
-**Description:** This macro marks parameters as sensitive, triggering special processing that differs from regular parameters.
+Sensitive parameters are defined in one of two ways:
+
+- **Local credentials** - reference [Credential](/docs/envgene-objects.md#credential) objects with `type: usernamePassword` or `type: secret` through the credential macro `${creds.get(...)}`.
+
+- **External credentials** - reference [Credential](/docs/envgene-objects.md#credential) objects with `type: external` through a [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`).
+
+For the feature overview, see [External Credentials Management](/docs/features/external-creds.md).
+
+### Local credentials via `creds.get`
+
+This macro marks parameters as sensitive and refers to Local [Credential](/docs/envgene-objects.md#credential) objects (`type: usernamePassword` or `secret`). It triggers processing that differs from regular parameters.
 
 ```text
 ${creds.get('<cred-id>').username|password|secret}
@@ -1226,6 +1237,46 @@ k8s_token: ${creds.get('k8s-cred').secret}
 ```
 
 **Usage in sample:** [Sample](/docs/samples/template-repository/templates/parameters/migration/test-deploy-creds.yml)
+
+### External Credentials via Credential Reference
+
+The Credential Reference points a parameter to an External [Credential](/docs/envgene-objects.md#credential) by `credId` (`type: external`). Optional `property` selects `username` or `password` when the remote secret is modeled with multiple fields. Omit `property` when the Credential has no `properties` list (single-value secret).
+
+This reference is used **only** for `external` Credentials type.
+
+The same Credential Reference is valid in the environment template and in the instance repository after rendering.
+
+```yaml
+# External Credential Reference
+<parameter-key>:
+  # Mandatory
+  # Macro type
+  $type: credRef
+  # Mandatory
+  # Pointer to EnvGene Credential
+  credId: string
+  # Optional: key inside the remote secret
+  property: enum [ username, password ]
+
+# Example
+global.secrets.streamingPlatform.username:
+  $type: credRef
+  credId: cdc-streaming-cred
+  property: username
+
+global.secrets.streamingPlatform.password:
+  $type: credRef
+  credId: cdc-streaming-cred
+  property: password
+
+# Single-value (Credential has no `properties`)
+CONSUL_ADMIN_TOKEN:
+  $type: credRef
+  credId: postgres-password
+```
+
+> [!NOTE]
+> Unlike `${creds.get(...)}`, Environment Instance generation does not create `type: external` Credential objects automatically from Credential References alone. Each external Credential must be defined by a [Credential Template](/docs/features/external-creds.md#credential-template) in the Template repository. The path to that file is `external_credential_template` on the [Template Descriptor](/docs/envgene-objects.md#template-descriptor).
 
 ## Deprecated Macros
 
@@ -1259,11 +1310,11 @@ k8s_token: ${creds.get('k8s-cred').secret}
 
 #### `${envgen.creds.get('<cred-id>').username|password|secret}`
 
-**Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro)
+**Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro-and-credential-reference)
 
 #### `${cmdb.creds.get('<cred-id>').username|password|secret}`
 
-**Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro)
+**Replacement**: [`${creds.get('<cred-id>').username|password|secret}`](#credential-macro-and-credential-reference)
 
 ### Deprecated Calculator CLI macros
 
