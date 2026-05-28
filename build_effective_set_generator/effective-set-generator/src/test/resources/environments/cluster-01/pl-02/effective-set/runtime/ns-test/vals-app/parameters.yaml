@@ -1,2 +1,1 @@
-artifact: org.snakeyaml
 integrations.ndo-api-gw.url: http://api-test:8080
