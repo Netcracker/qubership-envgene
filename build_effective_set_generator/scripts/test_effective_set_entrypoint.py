@@ -1,10 +1,11 @@
 from pathlib import Path
 
 import pytest
-from envgenehelper.effective_set_helper import ESGenerationContext, ES_MAPPING_FILE
+from envgenehelper.effective_set_helper import ESGenerationContext, ES_MAPPING_FILE, GenerationMode, PartialMergeMode
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
-from effective_set_entrypoint import _run_reverse_merge, _run_forward_merge
+import effective_set_entrypoint
+from effective_set_entrypoint import _run_reverse_merge, _run_forward_merge, effective_set_entrypoint as run_entrypoint
 
 PARAMETERS_CONTENT = '{"param": "value"}'
 
@@ -260,3 +261,122 @@ class TestRunForwardMerge:
             assert "ns-1" in mapping
             assert "ns-2" in mapping
             assert mapping["ns-1"] == f"/es/{ctx.value}/ns-1-new"
+
+
+class TestEffectiveSetEntrypoint:
+
+    def _patch_paths(self, monkeypatch, tmp_path):
+        env_dir = tmp_path / "environments" / "cluster-01" / "env-01"
+        sd_dir = env_dir / "Inventory" / "solution-descriptor"
+        monkeypatch.setattr(effective_set_entrypoint, "get_current_env_dir_from_env_vars", lambda: env_dir)
+        monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: sd_dir)
+        monkeypatch.setattr(effective_set_entrypoint, "getenv", lambda key, *a: "cluster-01/env-01" if key == "FULL_ENV_NAME" else None)
+        return env_dir, sd_dir
+
+    @pytest.mark.unit
+    def test_full_mode_calls_full_generation(self, tmp_path, monkeypatch):
+        """FULL generation mode — _run_full_generation called, effective-set dir deleted and re-created."""
+        env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
+        sd_dir.mkdir(parents=True, exist_ok=True)
+        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
+
+        monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.FULL)
+
+        called = {}
+        monkeypatch.setattr(effective_set_entrypoint, "_run_full_generation",
+                            lambda es, name, sd: called.update({"es": es, "name": name, "sd": sd}))
+
+        run_entrypoint()
+
+        assert "es" in called
+        assert called["es"] == env_dir / "effective-set"
+        assert called["name"] == "cluster-01/env-01"
+
+    @pytest.mark.unit
+    def test_partial_first_run_calls_full_generation(self, tmp_path, monkeypatch):
+        """PARTIAL mode, effective-set dir doesn't exist yet — first run, calls _run_full_generation."""
+        env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
+        sd_dir.mkdir(parents=True, exist_ok=True)
+        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
+        writeYamlToFile(sd_dir / "delta_sd.yaml", {"applications": []})
+
+        monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.PARTIAL)
+
+        called = {}
+        monkeypatch.setattr(effective_set_entrypoint, "_run_full_generation",
+                            lambda es, name, sd: called.update({"called": True}))
+
+        run_entrypoint()
+
+        assert called.get("called")
+
+    @pytest.mark.unit
+    def test_partial_reverse_mode(self, tmp_path, monkeypatch):
+        """PARTIAL mode + REVERSE — _run_reverse_merge called."""
+        env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
+        sd_dir.mkdir(parents=True, exist_ok=True)
+        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
+        writeYamlToFile(sd_dir / "delta_sd.yaml", {"applications": []})
+        (env_dir / "effective-set").mkdir(parents=True, exist_ok=True)
+
+        monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.PARTIAL)
+        monkeypatch.setattr(effective_set_entrypoint, "resolve_partial_merge_mode", lambda: PartialMergeMode.REVERSE)
+
+        called = {}
+        monkeypatch.setattr(effective_set_entrypoint, "_run_reverse_merge",
+                            lambda es, delta, sd: called.update({"called": True}))
+
+        run_entrypoint()
+
+        assert called.get("called")
+
+    @pytest.mark.unit
+    def test_partial_forward_mode(self, tmp_path, monkeypatch):
+        """PARTIAL mode + FORWARD — _run_forward_merge called."""
+        env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
+        sd_dir.mkdir(parents=True, exist_ok=True)
+        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
+        writeYamlToFile(sd_dir / "delta_sd.yaml", {"applications": []})
+        (env_dir / "effective-set").mkdir(parents=True, exist_ok=True)
+
+        monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.PARTIAL)
+        monkeypatch.setattr(effective_set_entrypoint, "resolve_partial_merge_mode", lambda: PartialMergeMode.FORWARD)
+
+        called = {}
+        monkeypatch.setattr(effective_set_entrypoint, "_run_forward_merge",
+                            lambda es, name, delta: called.update({"called": True}))
+
+        run_entrypoint()
+
+        assert called.get("called")
+
+    @pytest.mark.unit
+    def test_partial_missing_delta_raises(self, tmp_path, monkeypatch):
+        """PARTIAL mode, delta_sd.yaml missing — ValueError raised."""
+        env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
+        sd_dir.mkdir(parents=True, exist_ok=True)
+        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
+        # delta_sd.yaml intentionally not created
+
+        monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.PARTIAL)
+
+        with pytest.raises(ValueError):
+            run_entrypoint()
+
+    @pytest.mark.unit
+    def test_delta_sd_deleted_after_run(self, tmp_path, monkeypatch):
+        """delta_sd.yaml is deleted at the end regardless of generation mode."""
+        env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
+        sd_dir.mkdir(parents=True, exist_ok=True)
+        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
+        delta_path = sd_dir / "delta_sd.yaml"
+        writeYamlToFile(delta_path, {"applications": []})
+        (env_dir / "effective-set").mkdir(parents=True, exist_ok=True)
+
+        monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.PARTIAL)
+        monkeypatch.setattr(effective_set_entrypoint, "resolve_partial_merge_mode", lambda: PartialMergeMode.FORWARD)
+        monkeypatch.setattr(effective_set_entrypoint, "_run_forward_merge", lambda *a: None)
+
+        run_entrypoint()
+
+        assert not delta_path.exists()

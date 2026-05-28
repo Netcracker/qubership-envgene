@@ -5,10 +5,8 @@ import os
 import shutil
 import zipfile
 from pathlib import Path
-from typing import Any
 
 from envgenehelper import dump_as_yaml_format, get_all_files_in_dir, logger
-from envgenehelper.yaml_helper import writeYamlToFile
 
 
 class TestHelpers:
@@ -87,33 +85,3 @@ class TestHelpers:
         path.write_bytes(b"x" * size)
         if mtime is not None:
             os.utime(path, (mtime, mtime))
-
-    @staticmethod
-    def make_sd(apps: list[dict]) -> dict:
-        return {"applications": apps}
-
-    @staticmethod
-    def make_sd_app(name: str, version: str, deploy_postfix: str) -> dict[str, Any]:
-        return {"version": f"{name}:{version}", "deployPostfix": deploy_postfix}
-
-    @staticmethod
-    def create_es_app_dirs(effective_set_dir: Path, deploy_postfix: str, app_name: str) -> None:
-        from envgenehelper.effective_set_helper import ESGenerationContext
-        for ctx in [ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
-            app_dir = effective_set_dir / ctx.value / deploy_postfix / app_name
-            app_dir.mkdir(parents=True, exist_ok=True)
-            (app_dir / "parameters.yaml").write_text("param: value")
-
-    @staticmethod
-    def create_es_cleanup_dir(effective_set_dir: Path, deploy_postfix: str) -> None:
-        from envgenehelper.effective_set_helper import ESGenerationContext
-        cleanup_dir = effective_set_dir / ESGenerationContext.CLEANUP.value / deploy_postfix
-        cleanup_dir.mkdir(parents=True, exist_ok=True)
-        (cleanup_dir / "parameters.yaml").write_text("param: value")
-
-    @staticmethod
-    def create_es_mapping(effective_set_dir: Path, ctx: Any, entries: dict) -> None:
-        from envgenehelper.effective_set_helper import ES_MAPPING_FILE
-        mapping_path = effective_set_dir / ctx.value / ES_MAPPING_FILE
-        mapping_path.parent.mkdir(parents=True, exist_ok=True)
-        writeYamlToFile(mapping_path, entries)
