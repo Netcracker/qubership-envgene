@@ -15,7 +15,7 @@ databases: []
 mergeDeployParametersAndE2EParameters: false
 maasConfig:
   credentialsId: "app-maas-cred" # cloud passport: cluster-01 version: 1.5
-  enable: true  # cloud passport: cluster-01 version: 1.5
+  enable: false  # cloud passport: cluster-01 version: 1.5
   maasUrl: "http://maas.cluster-01.qubership.org" # cloud passport: cluster-01 version: 1.5
   maasInternalAddress: "http://maas.maas:8080" # cloud passport: cluster-01 version: 1.5
 vaultConfig:
@@ -33,22 +33,14 @@ consulConfig:
   publicUrl: "http://consul.consul:8080" # cloud passport: cluster-01 version: 1.5
   internalUrl: "http://consul.consul:8080" # cloud passport: cluster-01 version: 1.5
 deployParameters:
-  MAVEN_REPO_URL: "https://artifactory.qubership.org" # cloud passport: cluster-01 version: 1.5
-  MONITORING_ENABLED: "true" # cloud passport: cluster-01 version: 1.5
   STORAGE_PASSWORD: # cloud passport: cluster-01 version: 1.5
     $type: credRef
     credId: app-custom-cred
     property: password
-  STORAGE_PROVIDER: "s3" # cloud passport: cluster-01 version: 1.5
-  STORAGE_REGION: "eu-west-1" # cloud passport: cluster-01 version: 1.5
-  STORAGE_RWO_CLASS: "standard" # cloud passport: cluster-01 version: 1.5
-  STORAGE_RWX_CLASS: "" # cloud passport: cluster-01 version: 1.5e2eParameters:
-  CLOUD_LEVEL_PARAM_1: "cloud-level-value-1" # paramset: cloud-level-params version: 25.1 source: instance
 e2eParameters:
   CLOUD_LEVEL_PARAM_1: "cloud-level-value-1" # paramset: cloud-level-params version: 25.1 source: instance
 technicalConfigurationParameters:
   integrations.ndo-api-gw.url: "http://api-test:8080"
-  artifact: "org.snakeyaml"
 deployParameterSets: []
 e2eParameterSets: []
 technicalConfigurationParameterSets: []

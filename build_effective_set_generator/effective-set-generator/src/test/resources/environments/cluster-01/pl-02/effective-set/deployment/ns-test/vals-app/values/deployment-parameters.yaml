@@ -5,13 +5,12 @@ APP_PARAM: &id001
 ARTIFACT_DESCRIPTOR_ARTIFACT_ID: test.platform.system.monitoring_monitoring-operator
 ARTIFACT_DESCRIPTOR_GROUP_ID: org.qubership.deploy.product
 ARTIFACT_DESCRIPTOR_MAVEN_REPO: null
-ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+ARTIFACT_DESCRIPTOR_VERSION: 0.1.0-20261215.141230-3-RELEASE
 BUILD_TAG_NEW: keycloak-database
 CLIENT_PREFIX: ns-test-pl
 CLOUDNAME: cluster_01_pl_02
 CLOUD_API_HOST: api.cluster-01.qubership.org
 CLOUD_API_PORT: '6443'
-CLOUD_LEVEL_PARAM_1: cloud-level-value-1
 CLOUD_PRIVATE_HOST: cluster-01.qubership.org
 CLOUD_PROTOCOL: https
 CLOUD_PUBLIC_HOST: cluster-01.qubership.org
@@ -26,24 +25,15 @@ DB_TOKEN: &id002
   SECURED_FLAG: 'true'
 DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
 GATEWAY_URL: http://internal-gateway-service:8080
-MAAS_ENABLED: true
-MAAS_EXTERNAL_ROUTE: http://maas.cluster-01.qubership.org
-MAAS_INTERNAL_ADDRESS: http://maas.maas:8080
-MAAS_SERVICE_ADDRESS: http://maas.cluster-01.qubership.org
-MAVEN_REPO_URL: https://artifactory.qubership.org
-MONITORING_ENABLED: 'true'
+MAAS_ENABLED: false
 NAMESPACE: ns-test-pl
-NOTIFICATION_SERVICE_TOPIC: product.product
-NOTIFICATION_TOPIC: customer.quote
 OPENSHIFT_SERVER: https://api.cluster-01.qubership.org:6443
-ORDER_NOTIFICATION_TOPIC: customer.order
 ORIGIN_NAMESPACE: ns-test-pl
 PRIVATE_GATEWAY_URL: https://private-gateway-ns-test-pl.cluster-01.qubership.org
 PRIVATE_IDENTITY_PROVIDER_URL: https://private-gateway-ns-test-pl.cluster-01.qubership.org
 PRODUCTION_MODE: false
 PUBLIC_GATEWAY_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
 PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
-RUN_INSTALL: 'true'
 SECRET_FLOW: helm-values
 SECRET_META: &id003
   normalizedSecretName: test-cluster-01--env-1--app-db-cred
@@ -53,10 +43,6 @@ SECRET_META: &id003
 SERVER_HOSTNAME: cluster-01.qubership.org
 SSL_SECRET: defaultsslcertificate
 STATIC_CACHE_SERVICE_ROUTE_HOST: static-cache-service-ns-test-pl.cluster-01.qubership.org
-STORAGE_PROVIDER: s3
-STORAGE_REGION: eu-west-1
-STORAGE_RWO_CLASS: standard
-STORAGE_RWX_CLASS: ''
 TENANTNAME: Platform
 global: &id004
   API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
@@ -65,13 +51,12 @@ global: &id004
   ARTIFACT_DESCRIPTOR_ARTIFACT_ID: test.platform.system.monitoring_monitoring-operator
   ARTIFACT_DESCRIPTOR_GROUP_ID: org.qubership.deploy.product
   ARTIFACT_DESCRIPTOR_MAVEN_REPO: null
-  ARTIFACT_DESCRIPTOR_VERSION: 0.91.0-delivery-20241115.141230-4-RELEASE
+  ARTIFACT_DESCRIPTOR_VERSION: 0.1.0-20261215.141230-3-RELEASE
   BUILD_TAG_NEW: keycloak-database
   CLIENT_PREFIX: ns-test-pl
   CLOUDNAME: cluster_01_pl_02
   CLOUD_API_HOST: api.cluster-01.qubership.org
   CLOUD_API_PORT: '6443'
-  CLOUD_LEVEL_PARAM_1: cloud-level-value-1
   CLOUD_PRIVATE_HOST: cluster-01.qubership.org
   CLOUD_PROTOCOL: https
   CLOUD_PUBLIC_HOST: cluster-01.qubership.org
@@ -83,76 +68,19 @@ global: &id004
   DB_TOKEN: *id002
   DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
   GATEWAY_URL: http://internal-gateway-service:8080
-  MAAS_ENABLED: true
-  MAAS_EXTERNAL_ROUTE: http://maas.cluster-01.qubership.org
-  MAAS_INTERNAL_ADDRESS: http://maas.maas:8080
-  MAAS_SERVICE_ADDRESS: http://maas.cluster-01.qubership.org
-  MAVEN_REPO_URL: https://artifactory.qubership.org
-  MONITORING_ENABLED: 'true'
+  MAAS_ENABLED: false
   NAMESPACE: ns-test-pl
-  NOTIFICATION_SERVICE_TOPIC: product.product
-  NOTIFICATION_TOPIC: customer.quote
   OPENSHIFT_SERVER: https://api.cluster-01.qubership.org:6443
-  ORDER_NOTIFICATION_TOPIC: customer.order
   ORIGIN_NAMESPACE: ns-test-pl
   PRIVATE_GATEWAY_URL: https://private-gateway-ns-test-pl.cluster-01.qubership.org
   PRIVATE_IDENTITY_PROVIDER_URL: https://private-gateway-ns-test-pl.cluster-01.qubership.org
   PRODUCTION_MODE: false
   PUBLIC_GATEWAY_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
   PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
-  RUN_INSTALL: 'true'
   SECRET_FLOW: helm-values
   SECRET_META: *id003
   SERVER_HOSTNAME: cluster-01.qubership.org
   SSL_SECRET: defaultsslcertificate
   STATIC_CACHE_SERVICE_ROUTE_HOST: static-cache-service-ns-test-pl.cluster-01.qubership.org
-  STORAGE_PROVIDER: s3
-  STORAGE_REGION: eu-west-1
-  STORAGE_RWO_CLASS: standard
-  STORAGE_RWX_CLASS: ''
   TENANTNAME: Platform
 alertmanager: *id004
-blackbox-exporter: *id004
-cert-exporter: *id004
-cloud-events-exporter: *id004
-cloud-events-reader: *id004
-cloudwatch-exporter: *id004
-common-dashboards: *id004
-configmap-reload: *id004
-configurations-streamer: *id004
-grafana: *id004
-grafana-image-renderer: *id004
-grafana-operator: *id004
-grafana-plugins-init: *id004
-graphite-remote-adapter: *id004
-json-exporter: *id004
-kube-rbac-proxy: *id004
-kube-state-metrics: *id004
-monitoring-operator: *id004
-network-latency-exporter: *id004
-node-exporter: *id004
-oauth2-proxy: *id004
-platform_monitoring_tests: *id004
-prometheus: *id004
-prometheus-adapter: *id004
-prometheus-adapter-converter: *id004
-prometheus-adapter-operator: *id004
-prometheus-config-reloader: *id004
-prometheus-operator: *id004
-promitor-agent-resource-discovery: *id004
-promitor-agent-scraper: *id004
-promxy: *id004
-pushgateway: *id004
-stackdriver-exporter: *id004
-version-exporter: *id004
-victoriametrics-operator: *id004
-vmagent: *id004
-vmalert: *id004
-vmauth: *id004
-vmcleanup: *id004
-vminsert: *id004
-vmoperator: *id004
-vmoperator_config_reloader: *id004
-vmselect: *id004
-vmsingle: *id004
-vmstorage: *id004

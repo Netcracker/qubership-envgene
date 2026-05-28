@@ -4,14 +4,9 @@
 name: "ns-test-pl"
 credentialsId: ""
 isServerSideMerge: false
-labels:
-  - "solutionInstance-pl-01"
-  - "solution-Platform"
+labels: []
 cleanInstallApprovalRequired: true
 mergeDeployParametersAndE2EParameters: false
-profile:
-  name: "dev_core_override"
-  baseline: "dev"
 deployParameters:
   SECRET_FLOW: "helm-values"
   DB_TOKEN:

@@ -1,0 +1,7 @@
+ARTIFACT_DESCRIPTOR_VERSION: 0.1.0-20261215.141230-3-RELEASE
+DEPLOYMENT_RESOURCE_NAME: alertmanager-v1
+DEPLOYMENT_VERSION: v1
+DOCKER_TAG: artifactory.qubership.org:17215/prom/alertmanager:v0.28.1
+IMAGE_REPOSITORY: artifactory.qubership.org:17215/prom/alertmanager
+SERVICE_NAME: alertmanager
+TAG: v0.28.1
