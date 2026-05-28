@@ -418,7 +418,7 @@ class EnvGenerator:
             p = Path(config_dir) / dir_name
             app_reg_defs = findAllYamlsInDir(p, recursively=False)
             for app_reg_def in app_reg_defs:
-                shutil.copy(app_reg_def, templates_dir)
+                shutil.copy(app_reg_def, f"{templates_dir}/{dir_name}")
 
     def get_template_name(self, template_path: str) -> str:
         template_path = Path(template_path)
