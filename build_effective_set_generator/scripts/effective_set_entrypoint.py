@@ -1,7 +1,7 @@
 import subprocess
 from os import getenv
 
-from envgenehelper.business_helper import get_environment_name_from_full_name, get_current_env_dir_from_env_vars
+from envgenehelper.business_helper import get_current_env_dir_from_env_vars
 from envgenehelper.file_helper import delete_dir, deleteFileIfExists, delete_dir_if_exists
 from envgenehelper.json_helper import openJson
 from envgenehelper.logger import logger
@@ -28,7 +28,7 @@ def effective_set_entrypoint():
             _run_full_generation(effective_set_dir, full_env_name, sd_path)
 
         elif resolve_partial_merge_mode() == PartialMergeMode.REVERSE:
-            _run_reverse_merge(effective_set_dir, full_env_name, delta_sd_path)
+            _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path)
         else:
             _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path)
     else:
@@ -91,17 +91,19 @@ def _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path):
     writeYamlToFile(deployment_mapping_path, deployment_mapping)
 
 
-def _run_reverse_merge(effective_set_dir, full_env_name, delta_sd_path):
-    apps = openYaml(delta_sd_path).get("applications", [])
+def _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path):
+    sd_apps = openYaml(sd_path).get("applications", [])
+    sd_postfixes = {app.get("deployPostfix") for app in sd_apps if app.get("deployPostfix")}
+    delta_sd_apps = openYaml(delta_sd_path).get("applications", [])
 
     mapping_paths = [
         effective_set_dir / ESGenerationContext.CLEANUP.value / ES_MAPPING_FILE,
         effective_set_dir / ESGenerationContext.RUNTIME.value / ES_MAPPING_FILE,
         effective_set_dir / ESGenerationContext.DEPLOYMENT.value / ES_MAPPING_FILE,
     ]
-    ns = get_environment_name_from_full_name(full_env_name)
 
-    for app in apps:
+    deleted_postfixes = set()
+    for app in delta_sd_apps:
         app_name = app.get("version", "").split(":")[0]
         dp = app.get("deployPostfix")
 
@@ -109,26 +111,28 @@ def _run_reverse_merge(effective_set_dir, full_env_name, delta_sd_path):
         deployment_dp = effective_set_dir / ESGenerationContext.DEPLOYMENT.value / dp
         cleanup_dp = effective_set_dir / ESGenerationContext.CLEANUP.value / dp
 
-        delete_dir(runtime_dp / app_name)
-        delete_dir(deployment_dp / app_name)
+        delete_dir_if_exists(runtime_dp / app_name)
+        delete_dir_if_exists(deployment_dp / app_name)
 
-        if any(runtime_dp.iterdir()):
+        if dp in deleted_postfixes:
             continue
 
-        delete_dir(runtime_dp)
-        delete_dir(deployment_dp)
-        delete_dir(cleanup_dp)
+        if dp not in sd_postfixes:
+            delete_dir_if_exists(runtime_dp)
+            delete_dir_if_exists(deployment_dp)
+            delete_dir_if_exists(cleanup_dp)
+            deleted_postfixes.add(dp)
 
-        for path in mapping_paths:
-            if not path.exists():
-                logger.warning(f"Mapping file not found, skipping: {path}")
-                continue
-            mapping = openYaml(path, allow_default=True) or {}
-            if ns not in mapping:
-                logger.warning(f"Namespace '{ns}' not found in mapping file {path}, skipping removing by key: {ns}")
-                continue
-            mapping.pop(ns)
-            writeYamlToFile(path, mapping)
+            for path in mapping_paths:
+                if not path.exists():
+                    logger.warning(f"Mapping file not found, skipping: {path}")
+                    continue
+                mapping = openYaml(path, allow_default=True) or {}
+                if dp not in mapping:
+                    logger.warning(f"Namespace '{dp}' not found in mapping file {path}, skipping removing by key: {dp}")
+                    continue
+                mapping.pop(dp)
+                writeYamlToFile(path, mapping)
 
 
 def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
