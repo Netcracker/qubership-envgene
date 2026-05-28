@@ -24,6 +24,7 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name):
     }
 
     process_sd_set_vars = {
+        "FULL_ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": environment_name,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
