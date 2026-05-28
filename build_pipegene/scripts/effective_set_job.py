@@ -29,6 +29,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
 
         'python3 /module/scripts/crypt_manager.py decrypt_cred_files',
         'python3 /module/scripts/crypt_manager.py validate_creds',
+        'python3 /module/scripts/main.py validate_parameters',
         'python3 /module/scripts/sboms_retention_policy.py',
         'python3 /module/scripts/effective_set_entrypoint.py',
         'python3 /module/scripts/crypt_manager.py encrypt_cred_files',
@@ -42,6 +43,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     }
 
     generate_effective_set_vars = {
+        "FULL_ENV_NAME": full_env_name,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": env_name,
         "ENV_NAME": env_name,

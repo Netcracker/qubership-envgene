@@ -1,0 +1,4 @@
+cloud-deploy-sa-token:
+  type: "secret"
+  data:
+    secret: "token-placeholder-123"

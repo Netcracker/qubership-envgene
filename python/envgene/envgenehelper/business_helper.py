@@ -12,10 +12,9 @@ from .collections_helper import dump_as_yaml_format
 from .collections_helper import merge_lists
 from .file_helper import getAbsPath, extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
-from .json_helper import findJsons
 from .logger import logger
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
-    validate_yaml_by_scheme_or_fail
+    validate_yaml_by_scheme_or_fail, find_yaml_file
 
 # const
 INVENTORY_DIR_NAME = "Inventory"
@@ -111,53 +110,6 @@ def check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir):
         validate_yaml_by_scheme_or_fail(env_definition_path, schemaPath)
     except ValueError:
         raise ValueError(f"Validation of env_definition in '{env_definition_path} failed. See logs above'") from None
-
-
-def findResourcesBottomTop(sourceDir, stopParentDir, pattern, notPattern="", additionalRegexpPattern="",
-                           additionalRegexpNotPattern="", searchJsons=False):
-    result = []
-    foundMap = {}
-    # checking that stopParentDir is real parent of sourceDir or we will have infinite loop
-    stopParentDirAbs = getAbsPath(stopParentDir)
-    sourceDirAbs = getAbsPath(sourceDir)
-    parentPath = Path(stopParentDirAbs)
-    sourcePath = Path(sourceDirAbs)
-    if parentPath not in sourcePath.parents:
-        logger.error(f"Error while finding resources. {stopParentDirAbs} is not in parents of {sourceDirAbs}.")
-        raise ReferenceError(
-            f"Error while finding resources. {stopParentDirAbs} is not in parents of {sourceDirAbs}. See logs above.")
-    return __findResourcesBottomTop__(sourceDir, stopParentDir, pattern, notPattern, additionalRegexpPattern,
-                                      additionalRegexpNotPattern, searchJsons, result, foundMap)
-
-
-def __findResourcesBottomTop__(sourceDir, stopParentDir, pattern, notPattern, additionalRegexpPattern,
-                               additionalRegexpNotPattern, searchJsons, result, foundMap):
-    logger.debug(
-        f"Searching files in {sourceDir}. Pattern:{pattern}\nNotPattern:{notPattern}\nResult:\n{dump_as_yaml_format(result)}. foundMap:\n{foundMap}")
-    findResults = findYamls(sourceDir, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
-    if searchJsons:
-        findResults = merge_lists(findResults, findJsons(sourceDir, pattern, notPattern, additionalRegexpPattern,
-                                                         additionalRegexpNotPattern))
-    for foundFile in findResults:
-        fileName = extractNameFromFile(foundFile)
-        if fileName not in foundMap:
-            foundMap[fileName] = foundFile
-            if len(findResults) == 1:
-                yamlPath = findResults[0]
-                result.append(yamlPath)
-                logger.debug(f"Resource added from: {yamlPath}")
-            elif len(findResults) > 1:
-                logger.error(
-                    f"Duplicate resource file with pattern {pattern} found in {sourceDir}: \n\t" + ",\n\t".join(
-                        str(x) for x in findResults))
-                raise ReferenceError(f"Duplicate resource file with pattern {pattern} found. See logs above.")
-    if getAbsPath(sourceDir) == getAbsPath(stopParentDir):
-        logger.debug(f"Reached parent dir {stopParentDir}. Stopping.")
-        return result
-    else:
-        parentEnvDirPath = str(Path(sourceDir).parent)
-        return __findResourcesBottomTop__(parentEnvDirPath, stopParentDir, pattern, notPattern, additionalRegexpPattern,
-                                          additionalRegexpNotPattern, searchJsons, result, foundMap)
 
 
 def getTemplateArtifactName(env_definition_yaml):
@@ -298,7 +250,7 @@ def find_cloud_passport_definition(env_instances_dir, instances_dir):
     if ("cloudPassport" in inventoryYaml["inventory"]):
         cloud_passport_file_name = inventoryYaml["inventory"]["cloudPassport"]
     if (cloud_passport_file_name):
-        return findPassportByEnvDefinition(env_instances_dir, instances_dir, cloud_passport_file_name)
+        return str(find_passport_by_env_definition(cloud_passport_file_name, env_instances_dir, instances_dir))
     else:
         cloudDir = getParentDirName(env_instances_dir + "/")
         logger.info(
@@ -312,23 +264,24 @@ def find_cloud_passport_definition(env_instances_dir, instances_dir):
         return findPassportInDefaultDirByName(cloudDir, DEFAULT_PASSPORT_NAME)
 
 
-def findPassportByEnvDefinition(env_instances_dir, instances_dir, cloud_passport_file_name):
-    logger.debug(
-        f"Searching for cloud passport file {cloud_passport_file_name} from {env_instances_dir} to {instances_dir}")
-    passportFiles = findResourcesBottomTop(env_instances_dir, instances_dir, f"/{cloud_passport_file_name}.y",
-                                           "redentials/")
-    if len(passportFiles) == 1:
-        yamlPath = passportFiles[0]
-        logger.info(f"Cloud passport file for {cloud_passport_file_name} found in: {yamlPath}")
-        return yamlPath
-    elif len(passportFiles) > 1:
-        logger.error(
-            f"Duplicate cloud passport files with key {cloud_passport_file_name} found in {instances_dir}: \n\t" + ",\n\t".join(
-                str(x) for x in passportFiles))
-        raise ReferenceError(
-            f"Duplicate cloud passport files with key {cloud_passport_file_name} found. See logs above.")
-    else:
-        raise ReferenceError(f"Cloud passport with key {cloud_passport_file_name} not found in {instances_dir}")
+def find_passport_by_env_definition(cloud_passport_name, env_dir, instances_dir) -> Path:
+    levels = [
+        Path(env_dir) / "Inventory",
+        Path(env_dir).parent,
+        Path(instances_dir),
+    ]
+    
+    passport_dir_names = ["cloud-passport", "cloud-passports"]
+    
+    shared_passport_paths = [level / name for level in levels for name in passport_dir_names]
+    
+    for p in shared_passport_paths:
+        found_path = find_yaml_file(p, cloud_passport_name, recursively=True)
+        if found_path:
+            logger.info(f"Cloud passport with key '{cloud_passport_name}' found in '{found_path}'")
+            return found_path
+
+    raise FileNotFoundError(f"Cloud passport with key '{cloud_passport_name}' not found.")
 
 
 def findPassportInDefaultDirByName(env_instances_dir, passport_name):

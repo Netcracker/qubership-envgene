@@ -57,6 +57,7 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, cr
 
     git_commit_vars = {
         "ENV_NAME": full_env,
+        "FULL_ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,
         "COMMIT_ENV": "true",
