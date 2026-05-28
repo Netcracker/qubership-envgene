@@ -12,7 +12,7 @@ class ESGenerationContext(Enum):
     CLEANUP = "cleanup"
 
 
-ES_MAPPING_FILE = "mapping.yaml"
+ES_MAPPING_FILE = "mapping.yml"
 
 
 class GenerationMode(Enum):

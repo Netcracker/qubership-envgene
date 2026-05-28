@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 import pytest
 from envgenehelper import logger, SD_FILE_NAME
@@ -43,7 +42,7 @@ class TestSdProcessArtifact(BaseTest):
         self.cluster = "cluster-01"
         self.full_env_name = f"{self.cluster}/{self.env_name}"
 
-        self.set_ci_project_dir(FEATURE_TEST_DIR)
+        self.set_ci_project_dir(self.output_dir / FEATURE_TEST_DIR)
         self.test_data_dir = self.test_data_dir / FEATURE_TEST_DIR
         self.output_dir = self.output_dir / FEATURE_TEST_DIR
 
@@ -53,17 +52,12 @@ class TestSdProcessArtifact(BaseTest):
 
     @pytest.mark.parametrize("test_case_name", TEST_CASES_POSITIVE)
     def test_sd_positive(self, test_case_name):
-        env = Environment(str(Path(self.output_dir, test_case_name)), "cluster-01", "env-01")
+        env = Environment(self.output_dir, "cluster-01", "env-01")
         do_prerequisites(SD_FILE_NAME, self.test_data_dir, self.output_dir, test_case_name, env, test_suits_map)
-        logger.info(f"======TEST HANDLE_SD_LOCAL_POSITIVE: {test_case_name}======")
-        logger.info(f"Starting SD test:"
-                    f"\n\tTest case: {test_case_name}")
+        logger.info(f"Starting SD test:\n\tTest case: {test_case_name}")
 
-        sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = load_test_pipeline_sd_data(self.test_data_dir,
-                                                                                                  test_case_name)
-
+        sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = load_test_pipeline_sd_data(self.test_data_dir, test_case_name)
         handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
-        actual_dir = os.path.join(env.env_path, "Inventory", "solution-descriptor")
 
-        assert_sd_contents(self.test_data_dir, self.output_dir, test_case_name, actual_dir, test_suits_map)
+        assert_sd_contents(self.test_data_dir, env.env_path, test_case_name, test_suits_map)
         logger.info(f"=====SUCCESS - {test_case_name}======")
