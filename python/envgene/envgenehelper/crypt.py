@@ -205,15 +205,13 @@ def decrypt_all_cred_files_for_env(**kwargs):
     for f in files:
         _backup_encrypted_cred_file(f)
         decrypt_file(f, **kwargs)
-    logger.debug("Decrypted next cred files:")
-    logger.debug(files)
+    logger.debug(f"Decrypted next cred files:\n{files}")
 
 
 def encrypt_all_cred_files_for_env(**kwargs):
     try:
         files = get_all_necessary_cred_files()
-        logger.debug("Attempting to encrypt(if crypt is true) next files:")
-        logger.debug(files)
+        logger.debug(f"Attempting to encrypt(if crypt is true) next files:\n{files}")
         for f in files:
             backup = _get_cred_backup_path(f)
             encrypt_file(f, minimize_diff=backup is not None, old_file_path=backup, **kwargs)
