@@ -69,8 +69,16 @@ if [ "${COMMIT_ENV}" = "true" ] && [ -d "environments/${CLUSTER_NAME}/${ENVIRONM
     cp -r environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME} /tmp/artifact_environments/${CLUSTER_NAME}/
 fi
 
-if [ -e environments/${CLUSTER_NAME}/cloud-passport ]; then
-    cp -r environments/${CLUSTER_NAME}/cloud-passport /tmp/artifact_environments/${CLUSTER_NAME}/
+if [ -e appdefs ]; then
+    echo "Copy appdefs folder"
+    mkdir -p /tmp/appdefs
+    cp -r appdefs/. /tmp/appdefs/
+fi
+
+if [ -e regdefs ]; then
+    echo "Copy regdefs folder"
+    mkdir -p /tmp/regdefs
+    cp -r regdefs/. /tmp/regdefs/
 fi
 
 if [ -e configuration ]; then
@@ -93,31 +101,6 @@ if [ -e gitlab-ci/prefix_build ]; then
     echo "Copy templates"
     mkdir -p /tmp/templates
     cp -r templates /tmp
-fi
-
-echo "Saving cluster and site shared folders"
-mkdir -p /tmp/artifact_shared
-
-if [ -d environments/${CLUSTER_NAME} ]; then
-    for dir in parameters credentials resource_profiles shared_template_variables; do
-        SRC="environments/${CLUSTER_NAME}/$dir"
-        if [ -d "$SRC" ]; then
-            echo "Saving $SRC"
-            mkdir -p "/tmp/artifact_shared/environments/${CLUSTER_NAME}"
-            cp -r "$SRC" "/tmp/artifact_shared/environments/${CLUSTER_NAME}/"
-        fi
-    done
-fi
-
-if [ -d environments ]; then
-    for dir in parameters credentials resource_profiles shared_template_variables; do
-        SRC="environments/$dir"
-        if [ -d "$SRC" ]; then
-            echo "Saving $SRC"
-            mkdir -p "/tmp/artifact_shared/environments"
-            cp -r "$SRC" "/tmp/artifact_shared/environments/"
-        fi
-    done
 fi
 
 # Copying cred files modified as part of cred rotation job.
@@ -178,25 +161,6 @@ git switch -C ${REF_NAME} origin/${REF_NAME}
 
 # moving back environments folder and committing
 
-echo "Restoring cluster and site shared folders"
-
-for dir in parameters credentials resource_profiles shared_template_variables; do
-    if [ -d /tmp/artifact_shared/environments/$dir ]; then
-        rm -rf environments/$dir
-        mkdir -p environments/$dir
-        cp -r /tmp/artifact_shared/environments/$dir/. environments/$dir/
-    fi
-done
-
-for dir in parameters credentials resource_profiles shared_template_variables; do
-    if [ -d /tmp/artifact_shared/environments/${CLUSTER_NAME}/$dir ]; then
-        rm -rf environments/${CLUSTER_NAME}/$dir
-        mkdir -p environments/${CLUSTER_NAME}/$dir
-        cp -r /tmp/artifact_shared/environments/${CLUSTER_NAME}/$dir/. environments/${CLUSTER_NAME}/$dir/
-    fi
-done
-
-
 echo "Restoring environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}"
 
 if [ "${COMMIT_ENV}" = "true" ]; then
@@ -212,10 +176,16 @@ if [ "${COMMIT_ENV}" = "true" ]; then
     fi
 fi
 
-if [ -e /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport ]; then
-    rm -rf environments/${CLUSTER_NAME}/cloud-passport
-    mkdir -p environments/${CLUSTER_NAME}/cloud-passport
-    cp -r /tmp/artifact_environments/${CLUSTER_NAME}/cloud-passport/. "environments/${CLUSTER_NAME}/cloud-passport/"
+if [ -e /tmp/appdefs ]; then
+    echo "Restoring appdefs folder"
+    mkdir -p appdefs
+    cp -r /tmp/appdefs/. appdefs/
+fi
+
+if [ -e /tmp/regdefs ]; then
+    echo "Restoring regdefs folder"
+    mkdir -p regdefs
+    cp -r /tmp/regdefs/. regdefs/
 fi
 
 if [ -e /tmp/configuration ]; then
