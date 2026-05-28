@@ -26,8 +26,7 @@ import org.qubership.cloud.devops.commons.pojo.namespaces.model.Namespace;
 import org.qubership.cloud.devops.commons.pojo.profile.model.Profile;
 import org.qubership.cloud.devops.commons.utils.BomReaderUtils;
 import org.qubership.cloud.devops.commons.utils.Parameter;
-import org.qubership.cloud.devops.commons.utils.constant.ParametersConstants;
-
+import static org.qubership.cloud.devops.commons.utils.constant.ParametersConstants.*;
 
 import java.util.*;
 
@@ -55,12 +54,8 @@ public class NamespaceApplicationMap extends DynamicMap {
 
         Map<String, Object> appParams = applicationParams != null ? applicationParams.getAppParams() : new HashMap<>();
         Map<String, Object> configServerParams = applicationParams != null ? applicationParams.getConfigServerParams() : new HashMap<>();
-        EscapeMap map = new EscapeMap(appParams, binding,
-                String.format(ParametersConstants.NS_APP_ORIGIN, namespace.getCloud().getTenant().getName(), namespace.getCloud().getName(),
-                        namespace.getName(), appName));
-        EscapeMap configServerMap = new EscapeMap(configServerParams, binding,
-                String.format(ParametersConstants.NS_APP_CONFIG_SERVER_ORIGIN, namespace.getCloud().getTenant().getName(), namespace.getCloud().getName(),
-                        namespace.getName(), appName));
+        EscapeMap map = new EscapeMap(appParams, binding, APP_ORIGIN );
+        EscapeMap configServerMap = new EscapeMap(configServerParams, binding, APP_ORIGIN);
 
 
         map.put("APPLICATION_NAME", appName);
@@ -80,12 +75,12 @@ public class NamespaceApplicationMap extends DynamicMap {
     private void populateAdditionalParams(String appName, String appFileRef, EscapeMap map) {
         ApplicationBomDTO applicationBomDto = getApplicationBomDto(appName, appFileRef);
         if (applicationBomDto != null) {
-            map.put("ARTIFACT_DESCRIPTOR_ARTIFACT_ID", applicationBomDto.getArtifactId());
-            map.put("ARTIFACT_DESCRIPTOR_GROUP_ID", applicationBomDto.getGroupId());
-            map.put("ARTIFACT_DESCRIPTOR_VERSION", applicationBomDto.getVersion());
-            map.put("ARTIFACT_DESCRIPTOR_MAVEN_REPO", applicationBomDto.getMavenRepo());
-            map.put("DEPLOYMENT_SESSION_ID", applicationBomDto.getDeployerSessionId());
-            map.put(APPR_CHART_NAME, applicationBomDto.getAppChartName());
+            map.put("ARTIFACT_DESCRIPTOR_ARTIFACT_ID", applicationBomDto.getArtifactId(), SBOM_ORIGIN);
+            map.put("ARTIFACT_DESCRIPTOR_GROUP_ID", applicationBomDto.getGroupId(), SBOM_ORIGIN);
+            map.put("ARTIFACT_DESCRIPTOR_VERSION", applicationBomDto.getVersion(), SBOM_ORIGIN);
+            map.put("ARTIFACT_DESCRIPTOR_MAVEN_REPO", applicationBomDto.getMavenRepo(), SBOM_ORIGIN);
+            map.put("DEPLOYMENT_SESSION_ID", applicationBomDto.getDeployerSessionId(), ENVGENE_PIPELINE_PARAMETER);
+            map.put(APPR_CHART_NAME, applicationBomDto.getAppChartName(), SBOM_ORIGIN);
             map.put(SERVICES, applicationBomDto.getServices());
             map.put(CONFIGURATIONS, applicationBomDto.getConfigurations());
             map.put(FRONTENDS, applicationBomDto.getFrontends());
