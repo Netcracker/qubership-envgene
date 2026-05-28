@@ -577,7 +577,7 @@ During Environment Instance generation, the result is merged into the instance [
 
 Parameters in Cloud, Namespace, and ParameterSet templates then reference those external Credentials via [Credential Reference](/docs/features/external-creds.md#credential-reference) (`credRef`).
 
-For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 External Sensitive parameters](/docs/features/calculator-cli.md#version-20-external-sensitive-parameters).
+For defaults when `remoteRefPath` is omitted, VALS/ESO behavior, and normalization rules, see [External Credentials Management](/docs/features/external-creds.md#credential-template) and [Calculator CLI - Version 2.0 Sensitive parameters via external Credentials](/docs/features/calculator-cli.md#version-20-sensitive-parameters-via-external-credentials).
 
 Standard [Jinja macros](/docs/template-macros.md) (for example `current_env`, `current_namespace`) are available when this file is rendered.
 
@@ -1864,6 +1864,9 @@ This object describes where the **environment template artifact** is stored in t
 
 The filename must match the value of the `name` attribute.
 
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
+
 Two versions of this object are supported
 
 #### Artifact Definition v1.0
@@ -2244,6 +2247,9 @@ The filename must match the value of the `name` attribute.
 **Location:** `/regdefs/<registry-name>.yml`
 
 Registry Definitions can also be supplied as user-provided files at `/configuration/regdefs/<registry-name>.yml`. A user-provided file replaces a template-rendered definition with a matching filename, or adds a new effective definition when no template counterpart exists. See [User-provided files](/docs/features/app-reg-defs.md#user-provided-files) for the file-based mechanism.
+
+The `credentialsId` field may reference an external Credential. See
+[EnvGene System Credentials](/docs/features/external-creds.md#envgene-system-credentials).
 
 Two versions of this object are supported
 
