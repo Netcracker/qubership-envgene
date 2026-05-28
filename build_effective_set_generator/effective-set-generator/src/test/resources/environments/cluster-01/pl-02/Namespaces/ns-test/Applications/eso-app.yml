@@ -4,6 +4,4 @@
 name: "eso-app"
 deployParameters:
   SECRET_FLOW: "external-values"
-  PARAM_1: "value-1" # paramset: core version: 25.1 source: template
-  PARAM_5: "value-5" # paramset: core version: 25.1 source: template
 technicalConfigurationParameters: {}

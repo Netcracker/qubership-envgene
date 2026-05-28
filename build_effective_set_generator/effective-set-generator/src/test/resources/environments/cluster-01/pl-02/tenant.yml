@@ -14,5 +14,4 @@ globalE2EParameters:
   recipientsStrategy: "merge"
   mergeTenantsAndE2EParameters: false
   environmentParameters: {}
-deployParameters:
-  RUN_INSTALL: "true"
+deployParameters: {}

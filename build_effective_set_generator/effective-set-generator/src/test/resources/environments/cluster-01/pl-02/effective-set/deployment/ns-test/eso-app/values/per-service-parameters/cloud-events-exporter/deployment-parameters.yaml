@@ -1,0 +1,7 @@
+ARTIFACT_DESCRIPTOR_VERSION: 0.1.0-delivery-20261115.141230-4-RELEASE
+DEPLOYMENT_RESOURCE_NAME: cloud-events-exporter-v1
+DEPLOYMENT_VERSION: v1
+DOCKER_TAG: artifactory.qubership.org:17208/product/test.platform.system.monitoring_monitoring-operator:0.91.0_20241115-141230
+IMAGE_REPOSITORY: artifactory.qubership.org:17208/product/test.platform.system.monitoring_monitoring-operator
+SERVICE_NAME: cloud-events-exporter
+TAG: 0.91.0_20241115-141230

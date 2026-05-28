@@ -20,13 +20,7 @@
           "group": "org.qubership.deploy.product",
           "name": "prod.platform.ha.postgres",
           "version": "pg16-2.10.5-20241215.141230-3-RELEASE",
-          "purl": "pkg:maven/org.qubership.deploy.product/prod.platform.ha.postgres@pg16-2.10.5-20241215.141230-3-RELEASE?registry_id=registry-1&repository_id=targetRelease",
-          "properties": [
-            {
-              "name": "eso_support",
-              "value": "false"
-            }
-          ]
+          "purl": "pkg:maven/org.qubership.deploy.product/prod.platform.ha.postgres@pg16-2.10.5-20241215.141230-3-RELEASE?registry_id=registry-1&repository_id=targetRelease"
         }
       ]
     },
