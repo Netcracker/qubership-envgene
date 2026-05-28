@@ -68,9 +68,6 @@ public class FileSystemUtils {
 
     private void createEffectiveSetTwo(Optional<SolutionBomDTO> solutionDescriptor) throws IOException {
         File file = getFileFromGivenPath(data.getOutputDir());
-        if (file.exists()) {
-            FileUtils.forceDelete(file);
-        }
         file.mkdir();
         Path pipelinePath = getFileFromGivenPath(data.getOutputDir(), "pipeline").toPath();
         Files.createDirectories(pipelinePath);
@@ -92,13 +89,9 @@ public class FileSystemUtils {
                 }));
     }
 
-    private void createEffectiveSetOne(List<SBApplicationDTO> applicationDTOList) throws IOException {
+    private void createEffectiveSetOne(List<SBApplicationDTO> applicationDTOList) {
         File file = getFileFromGivenPath(data.getOutputDir());
-        if (file.exists()) {
-            FileUtils.forceDelete(file);
-        }
         file.mkdir();
-
         applicationDTOList
                 .forEach(app -> {
                     Path appPath = getFileFromGivenPath(data.getOutputDir(), app.getNamespace(), app.getAppName()).toPath();
