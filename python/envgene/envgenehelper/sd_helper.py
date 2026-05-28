@@ -3,6 +3,8 @@ from envgenehelper import *
 MERGE_IMPOSSIBLE = "SD merge error:\nDelta SD contains a new applications, but doesn't contain this application in the deployGraph.\nSD Merge is impossible."
 NEW_CHUNK_ERROR = "SD merge error:\nDelta SD contains a new chunk\nSD Merge is impossible."
 NO_DEPLOY_GRAPH_ERROR = "SD merge error:\nDelta SD contains deployGraph, but Full SD doesn't contain deployGraph.\nSD Merge is impossible."
+SD_FILE_NAME = "sd.yaml"
+DELTA_SD_FILE_NAME = "delta_sd.yaml"
 
 
 def get_app_name(name: str):
@@ -80,7 +82,8 @@ def add_app(entry, apps: list) -> int:
     apps.append(entry)
     return 1
 
-#TODO <name>:<version> notation is supported only for extended merge for now, but later have to be removed
+
+# TODO <name>:<version> notation is supported only for extended merge for now, but later have to be removed
 def extended_merge(full_sd, delta_sd):
     # Merges delta SD into full SD by updating or adding matching apps, ensuring deployGraph consistency
     logger.info("Inside extended_merge")
@@ -187,10 +190,9 @@ def basic_merge(full_sd, delta_sd):
 def basic_exclusion_merge(full_sd, delta_sd):
     """
     Merge Delta SD into Full SD using `basic-exclusion-merge` rules:
-      1. Matching App => update version from Delta
+      1. Matching App, New App => WARN
       2. Duplicating App => remove from Full SD
-      3. New App => log warning
-      4. Output contains only `applications` key
+      3. Output contains only `applications` key
     """
     logger.info("Inside basic_exclusion_merge")
     logger.info(f"Full SD: {full_sd}")
@@ -199,7 +201,6 @@ def basic_exclusion_merge(full_sd, delta_sd):
     delta_apps = delta_sd.get("applications", [])
     result_apps = []
 
-    # Track matched delta apps
     matched_delta_indices = set()
 
     # Stage 1: Process full SD
@@ -207,23 +208,64 @@ def basic_exclusion_merge(full_sd, delta_sd):
         keep = True
         for i, d_app in enumerate(delta_apps):
             if is_duplicating(f_app, d_app):
-                # Rule 3: Remove duplicating
+                # Rule 2: Remove duplicating
                 keep = False
                 matched_delta_indices.add(i)
                 break
             elif is_matching(f_app, d_app):
-                # Rule 1: Replace matching
-                result_apps.append(d_app)
-                keep = False
+                # Rule 1: Warn about matching apps
+                logger.warning(f"Warning: Update application '{get_app_name_sd(d_app)}' ignored (matching in Full SD)")
                 matched_delta_indices.add(i)
                 break
         if keep:
             result_apps.append(f_app)
 
-    # Stage 2: Warn about new apps
+    # Rule 1: Warn about new apps
     for i, d_app in enumerate(delta_apps):
         if i not in matched_delta_indices:
             # Rule 2: New Application, rejects
-            logger.info(f"Warning: New application '{get_app_name_sd(d_app)}' ignored (not present in Full SD)")
+            logger.warning(f"Warning: New application '{get_app_name_sd(d_app)}' ignored (not present in Full SD)")
 
     return {"applications": result_apps}
+
+
+class MergeType(Enum):
+    EXTENDED = "extended-merge"
+    REPLACE = "replace"
+    BASIC = "basic-merge"
+    BASIC_EXCLUSION = "basic-exclusion-merge"
+
+    @classmethod
+    def from_value(cls, value: str):
+        if not isinstance(value, str):
+            raise ValueError(f"SD_REPO_MERGE_MODE value: '{value}' cannot be non-string")
+        value_lower = value.strip().lower()
+        for member in cls:
+            if member.value == value_lower:
+                return member
+        valid_values = [member.value for member in cls]
+        raise ValueError(
+            f"Invalid SD_REPO_MERGE_MODE: '{value}'. Valid values are: {valid_values}"
+        )
+
+
+def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
+    if sd_merge_mode is not None:
+        effective_merge_mode = MergeType.from_value(sd_merge_mode)
+    # sd_delta var is deprecated
+    elif sd_delta == "true":
+        effective_merge_mode = MergeType.EXTENDED
+        logger.info(
+            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
+    elif sd_delta == "false":
+        effective_merge_mode = MergeType.REPLACE
+        logger.info(
+            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
+    else:
+        effective_merge_mode = MergeType.BASIC
+        logger.info(f"SD_REPO_MERGE_MODE not passed. Default value: {effective_merge_mode.value}")
+    return effective_merge_mode
+
+
+def get_sd_dir() -> Path:
+    return Path(f'{get_current_env_dir_from_env_vars()}/{INVENTORY_DIR_NAME}/solution-descriptor/')
