@@ -269,3 +269,8 @@ def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
 
 def get_sd_dir() -> Path:
     return Path(f'{get_current_env_dir_from_env_vars()}/{INVENTORY_DIR_NAME}/solution-descriptor/')
+
+
+def get_sd_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
+    instance_dir = get_env_dir_by_env_cluster_name(cluster_name, environment_name)
+    return Path(f'{instance_dir}/{INVENTORY_DIR_NAME}/solution-descriptor/')
