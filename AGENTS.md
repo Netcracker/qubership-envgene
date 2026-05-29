@@ -586,7 +586,7 @@ convention).
 
 Per-directory readmes (`/docs/features/README.md`, `/docs/use-cases/README.md`, etc.) are
 meta-docs that explain what kind of content the directory holds. They are not navigation
-indexes and do not need a per-doc entry.
+indices and do not need a per-doc entry.
 
 **Why:** GitHub's link-checker catches dead links but does not warn when a new doc is missing
 from the index. Readers discover docs through the index readmes, not by browsing directories.
@@ -631,7 +631,7 @@ running linters with default (non-project) settings.
 
 ## Documentation content rules
 
-These rules govern content and scope. The markdown formatting rules above govern syntax. These rules
+These rules govern content and scope. The Markdown formatting rules above govern syntax. These rules
 govern what the documentation says, across all documentation types.
 
 ### Section adds only what it uniquely contributes
@@ -655,6 +655,37 @@ their canonical location, not restated.
 
 **Why:** Restated information ages out of sync with the canonical copy. Readers wonder which copy is
 authoritative. Lengthens reviews without adding value.
+
+---
+
+### Section value audit
+
+**During refactors and final reviews, ask of each section: what unique fact does it carry? If most content
+is restated from elsewhere, drop or trim.**
+
+Checklist for each section:
+
+1. Name the load-bearing fact (unique observable, rule, or definition).
+2. Check where else it is said (catalog, table, sibling sections, parent section).
+3. If the unique fact is small (one sentence), fold into a neighbouring section.
+4. If everything is derivable from elsewhere, drop the section. Cross-link from the catalog if an explicit
+   pointer is needed.
+
+❌ **INCORRECT** (section earns no keep):
+
+A subsection that rehashes the catalog table and restates a dispatching rule already implied by sibling
+sections covering each context.
+
+✅ **CORRECT** (drop the section):
+
+The dispatching rule is derivable from sibling sections. Drop the subsection. Cross-link from the catalog
+table only if an explicit pointer is needed.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Sections without unique content fragment the doc and add maintenance burden. Restated content drifts
+from its canonical source. Apply this audit during refactors, not only when first writing a section, because
+content accumulates restated facts as the doc evolves.
 
 ---
 
@@ -733,6 +764,42 @@ cross-references.
 
 ---
 
+### Don't re-gloss established terms
+
+**Once the document defines a term, use it bare. Don't append the definition in parentheses every time the
+term appears.**
+
+❌ **INCORRECT** (every mention re-glosses):
+
+```markdown
+The runtime context does not accept external Credentials (`type: external`).
+Local Credentials (`type: usernamePassword` / `secret`) are emitted as plain text.
+Built-in credential references resolve to a Credential (`type: external` or `type: usernamePassword` / `secret`).
+```
+
+✅ **CORRECT** (terms used bare):
+
+```markdown
+The runtime context does not accept external Credentials.
+Local Credentials are emitted as plain text.
+Built-in credential references resolve to a Credential.
+```
+
+**Exceptions where the inline detail is justified:**
+
+- **First mention** in the document, especially when the term appears before its definition section in
+  reading order. The parenthetical serves as a forward-defining hint.
+- **Conditions or filters** that pick a subset, not a redefinition. "External Credential with `create: true`"
+  is a filter, not a redefinition of "external".
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Each repetition of a definition is a maintenance liability - when a type renames or an enum value is
+added, every parenthetical must be updated. Established vocabulary lets readers internalize the term and
+frees the doc from re-glossing.
+
+---
+
 ### Observable behaviour over implementation detail
 
 Documentation works best when it foregrounds observable behaviour - what users, downstream tools, or
@@ -783,6 +850,77 @@ the document already defines, not invented labels.
 
 **Why:** Tables in documentation are dense lookups. Composite cells and free-text columns reduce their
 lookup value.
+
+---
+
+### Write international English
+
+**Most readers of these docs are not native English speakers. Prefer simple, common words and short
+sentences over Latinate or literary phrasing.**
+
+Following Microsoft's "Global communications" and Google's "Translation-friendly content" principles:
+
+- **Common verbs over Latinate ones.** "use" not "utilize", "help" not "facilitate", "do" not "perform",
+  "let" not "permit", "set" not "establish".
+- **One main idea per sentence.** Split long compound sentences into two.
+- **No idioms or metaphors.** "Out of the box", "low-hanging fruit", "hands down", "moving the needle" -
+  drop them. They do not translate and read awkwardly to non-native English speakers.
+- **English over Latin abbreviations.** "for example" not "e.g.", "that is" not "i.e.", "and so on" not
+  "etc.".
+- **One term per concept.** Pick one and stick with it across the document.
+- **Active voice for behaviour statements.** "The calculator emits X" not "X is emitted by the calculator".
+- **No noun stacks.** Long chains of nouns ("application instance environment configuration file") force
+  readers to parse syntactic structure on the fly. Split into a possessive or prepositional phrase.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Simpler vocabulary, shorter sentences, and absence of idioms make the docs faster to read for
+non-native speakers and easier for downstream translation. Industry style guides (Microsoft, Google, IBM
+Global English) converge on these principles for the same reason.
+
+---
+
+### Validation rule sections
+
+**When documenting semantic validation rules in a feature spec, group them by phase, state invariants
+declaratively, and factor out shared failure behaviour into a single note.**
+
+A validation section catalogs semantic checks the system applies on top of schema validation. The pattern:
+
+1. **Open with a note that establishes shared context** - what schema validation already covers, the
+   default failure behaviour (fail vs warn), and the error-message contract. Do not repeat these in
+   each rule.
+2. **Group rules by phase** - each phase (a generation stage, an import operation, a runtime check)
+   gets its own subsection.
+3. **State invariants, not actions** - write what must be true. The reader infers the negative case.
+4. **Name each rule** with a short bold noun-phrase followed by a period, then the explanation.
+5. **Mark exceptions inline** - non-failure cases (warnings, deferred checks) are noted in the rule
+   name itself.
+6. **Cross-link, do not restate** - reference the canonical object definitions and field semantics
+   rather than duplicating them.
+
+❌ **INCORRECT:**
+
+- Describing the validator's actions ("The validator iterates over...", "The check runs after...")
+  instead of the invariant.
+- Repeating "If this fails, generation stops with an error" in every rule.
+- Listing field constraints already documented in the object schema.
+- Mixing rules across phases in one undifferentiated list.
+
+✅ **CORRECT:**
+
+- "Every X of type Y has a Z field referencing a known W." (invariant form)
+- A single note block at the top of the section describing the default failure behaviour and the
+  error-message contract.
+- Cross-link to the object definition for field semantics.
+- Subsections per phase ("During X generation", "During Y import").
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Declarative invariants are easier to scan and harder to misinterpret than procedural
+descriptions of validator behaviour. Phase grouping helps readers locate rules relevant to the
+operation they care about. Shared failure semantics factored out reduces noise and prevents
+inconsistencies between rules.
 
 ---
 
@@ -1114,6 +1252,21 @@ Body (when needed):
 - Wrap at 72 characters.
 - Reference issues in a footer (`Closes #123`, `Refs #456`).
 
+### Commit type for docs-only changes
+
+If a commit touches only documentation files (`*.md`, `AGENTS.md`, `CLAUDE.md`, files under `docs/`), use
+`docs:` as the commit type. The post-merge build workflow skips Docker image rebuilds for commit types
+other than `feat:`, `fix:`, and `BREAKING CHANGE`. A doc-only change marked `feat:` or `fix:` triggers
+unnecessary image builds.
+
+Tests and linters run on every PR regardless of commit type.
+
+### Pull request description for docs-only changes
+
+Documentation PRs omit the "Test plan" section by default. The doc-quality gates (super-linter,
+textlint, link-checker, markdownlint) cover correctness. Include a Test plan section only when
+explicitly requested or when the change has runtime implications beyond text.
+
 ### Commit granularity
 
 **One logical change per commit.** A commit should be a single coherent unit that a reviewer
@@ -1145,3 +1298,14 @@ Keep in the same commit:
 - Refactor PRs go separately from feature PRs. Rule additions go separately from
   rule-application PRs.
 - Do not include unrelated cleanup. File a follow-up issue instead.
+
+---
+
+## Issues
+
+### Change requests
+
+A change request (CR) is the implementation-phase issue. It hands a settled design to a
+developer for implementation, not for design discussion or investigation. CRs follow a
+six-section structure. For the body template, the convention, and good and bad examples, see
+[docs/dev/creating-cr.md](/docs/dev/creating-cr.md).

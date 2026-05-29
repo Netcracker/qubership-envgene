@@ -604,7 +604,7 @@ consul-creds:
 
 This file contains [Credential](#credential) objects used by EnvGene to integrate with external systems like artifact registries, GitLab, GitHub, and others.
 
-**Location:** `/environments/configuration/credentials/credentials.yml|yaml`
+**Location:** `/configuration/credentials/credentials.yml|yaml`
 
 **Example:**
 
@@ -1586,7 +1586,7 @@ This file contains [Credential](#credential) objects used by EnvGene to integrat
 
 Location:
 
-- `/environments/configuration/credentials/credentials.yml|yaml`
+- `/configuration/credentials/credentials.yml|yaml`
 - `/environments/<cluster-name>/app-deployer/<any-string>-creds.yml|yaml`
 
 **Example:**
