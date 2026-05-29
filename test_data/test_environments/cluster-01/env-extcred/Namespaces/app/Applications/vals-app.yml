@@ -4,5 +4,4 @@
 name: "vals-app"
 deployParameters:
   INTEGRATED_SYSTEMS: "ABC" # paramset: extcred version: 1 source: template
-  TEST_NAMESPACE: "apps-test" # paramset: extcred version: 1 source: template
 technicalConfigurationParameters: {}
