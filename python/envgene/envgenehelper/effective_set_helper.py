@@ -39,8 +39,14 @@ def resolve_partial_merge_mode():
     raise ValueError(f"Unsupported merge mode for partial: {merge_mode}")
 
 
-def resolve_es_generation_mode():
+def resolve_es_generation_mode(sd_path):
     merge_mode = calculate_merge_mode(getenv("SD_REPO_MERGE_MODE"), getenv("SD_DELTA"))
+
+    sd_input = bool(getenv("SD_DATA") or bool(getenv("SD_VERSION")))
+    any_sd = sd_path.exists() and sd_input
+
+    if not any_sd:
+        return GenerationMode.FULL
 
     if get_envgene_config_yaml().get("partial_effective_set_generation") and merge_mode.name != MergeType.REPLACE:
         return GenerationMode.PARTIAL

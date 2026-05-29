@@ -1,9 +1,8 @@
 import json
 import os
 from os import getenv, environ
-from pathlib import Path
 
-from envgenehelper import logger, copy_path
+from envgenehelper import logger, copy_path, get_sd_dir, SD_FILE_NAME
 from gcip import WhenStatement, Need
 
 from pipeline_helper import job_instance
@@ -16,7 +15,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     if effective_set_config:
         logger.info(f"EFFECTIVE_SET_CONFIG: {effective_set_config}")
         effective_set_config_dict = json.loads(effective_set_config)
-        validate_topology_context_mode(effective_set_config_dict, full_env_name, params)
+        validate_topology_context_mode(effective_set_config_dict, params)
 
     app_reg_defs_job = params.get("APP_REG_DEFS_JOB")
     is_local_app_def = init_local_app_defs_from_artifact(full_env_name, app_reg_defs_job, params)
@@ -75,17 +74,15 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     return generate_effective_set_job
 
 
-def validate_topology_context_mode(effective_set_config_dict, full_env_name, params):
+def validate_topology_context_mode(effective_set_config_dict, params):
     effective_set_version = effective_set_config_dict.get("version") or "v2.0"
     sd_input = bool(params["SD_DATA"]) or bool(params["SD_VERSION"])
-    full_sd_path = Path(
-        f'{getenv('CI_PROJECT_DIR')}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
-    any_sd = full_sd_path.exists() and sd_input
+    has_sd = (get_sd_dir() / SD_FILE_NAME).is_file() or sd_input
     # effective set generation in version 1.0 does not support no sd mode
-    if not any_sd and effective_set_version.lower() == "v1.0":
+    if not has_sd and effective_set_version.lower() == "v1.0":
         raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
 
-    if not any_sd:
+    if not has_sd:
         logger.info("No-SD Mode: no SD present, only topology and pipeline contexts are generated; "
                     "deployment, runtime, and cleanup are skipped, SBOMs are not requested")
 

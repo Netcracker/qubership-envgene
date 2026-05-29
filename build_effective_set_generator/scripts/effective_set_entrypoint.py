@@ -19,15 +19,8 @@ def effective_set_entrypoint():
     sd_path = get_sd_dir().joinpath(SD_FILE_NAME)
     delta_sd_path = get_sd_dir().joinpath(DELTA_SD_FILE_NAME)
 
-    if resolve_es_generation_mode() == GenerationMode.PARTIAL:
-        if not delta_sd_path.exists() and sd_path.exists():
-            raise ValueError(
-                f"[Partial effective set generation] impossible without delta sd {delta_sd_path} and full sd {sd_path}")
-        # first run
-        if not effective_set_dir.exists():
-            _run_full_generation(effective_set_dir, full_env_name, sd_path)
-
-        elif resolve_partial_merge_mode() == PartialMergeMode.REVERSE:
+    if resolve_es_generation_mode(sd_path) == GenerationMode.PARTIAL:
+        if resolve_partial_merge_mode() == PartialMergeMode.REVERSE:
             _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path)
         else:
             _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path)
