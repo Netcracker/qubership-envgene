@@ -7,7 +7,12 @@ from envgenehelper.business_helper import NamespaceRole
 from main import render_environment
 from envgenehelper.test_helpers import TestHelpers
 
-from tests.base_test import BaseTest
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
+from base_test import BaseTest
 
 test_data = [
     # (cluster_name, environment_name, template)

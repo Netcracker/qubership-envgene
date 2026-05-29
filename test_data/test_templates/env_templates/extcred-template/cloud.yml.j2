@@ -29,9 +29,6 @@ consulConfig:
   publicUrl: 'https://consul.{{current_env.cluster.cloud_public_url}}'
   enabled: true
   internalUrl: 'http://consul.consul:8888'
-e2eParameters:
-  CMDB_NAME: "{{current_env.cmdb_name}}"
-  TEMPLATE_NAME: "{{current_env.env_template}}"
 deployParameters:
   DB_ADMIN_USERNAME:
     $type: "credRef"
@@ -45,6 +42,7 @@ deployParameters:
     $type: "credRef"
     credId: "app-test-cred"
     property: "password"
+e2eParameters: {}
 technicalConfigurationParameters: {}
 deployParameterSets: []
 e2eParameterSets: []
