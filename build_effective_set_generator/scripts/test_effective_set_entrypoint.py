@@ -262,9 +262,9 @@ class TestRunForwardMerge:
 
         for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
             mapping = openYaml(es / ctx.value / ES_MAPPING_FILE)
-            assert "ns-1" in mapping
-            assert "ns-2" in mapping
-            assert mapping["ns-1"] == f"/es/{ctx.value}/ns-1-new"
+            assert any("ns-1" in key for key in mapping)
+            assert any("ns-2" in key for key in mapping)
+            assert mapping[f"{ENV_NAME}-ns-1"] == f"/es/{ctx.value}/ns-1-new"
 
 
 class TestEffectiveSetEntrypoint:
