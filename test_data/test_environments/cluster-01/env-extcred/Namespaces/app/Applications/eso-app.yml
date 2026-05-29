@@ -4,5 +4,4 @@
 name: "eso-app"
 deployParameters:
   SECRET_FLOW: "external-values" # paramset: extcred version: 1 source: template
-  TEST_NAMESPACE: "apps-test" # paramset: extcred version: 1 source: template
 technicalConfigurationParameters: {}

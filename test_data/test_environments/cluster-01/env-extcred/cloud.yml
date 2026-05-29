@@ -69,9 +69,7 @@ deployParameters:
   TRACING_UI_URL: "https://cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
   ZOOKEEPER_ADDRESS: "zookeeper.zookeeper:2181" # cloud passport: ext-mode version: 1.5
   ZOOKEEPER_URL: "${ZOOKEEPER_ADDRESS}" # cloud passport: ext-mode version: 1.5
-e2eParameters:
-  CMDB_NAME: ""
-  TEMPLATE_NAME: "extcred-template"
+e2eParameters: {}
 technicalConfigurationParameters: {}
 deployParameterSets: []
 e2eParameterSets: []
