@@ -468,7 +468,7 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
 
 
 def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, resource_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None, isExternalCredEnv=False):
+              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs=None, is_external_cred_env=False):
     # Check which role-specific templates were downloaded
     templates_dirs = templates_dirs or {}
     origin_template_exists = NamespaceRole.ORIGIN in templates_dirs
@@ -527,7 +527,7 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
         header_text=generated_header_text,
         process_env_specific=False)
     # process cloud passport
-    process_cloud_passport(env_dir, env_instances_dir, all_instances_dir, isExternalCredEnv)
+    process_cloud_passport(env_dir, env_instances_dir, all_instances_dir, is_external_cred_env)
     logger.info("Processing cloud with env specific parameters.")
     processTemplate(
         cloudTemlatePath,

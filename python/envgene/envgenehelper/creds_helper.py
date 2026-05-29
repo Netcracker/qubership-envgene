@@ -284,35 +284,35 @@ def extract_external_cred(cred_map):
         raise ValueError(f"Invalid credRef: 'credId' is missing or empty in {cred_map}")
     return cred_id
 
-def validate_cred_types(credsMap, isExternalCredEnv, credFile):
+def validate_cred_types(creds_map, is_external_cred_env, cred_file):
     types = {
         v.get("type")
-        for v in credsMap.values()
+        for v in creds_map.values()
         if isinstance(v, dict) and v.get("type")
     }
     if not types:
         return
-    if isExternalCredEnv:
+    if is_external_cred_env:
         if types != {"external"}:
-            raise ValueError(f"Only external credentials allowed. Found: {types} in {credFile}")
+            raise ValueError(f"Only external credentials allowed. Found: {types} in {cred_file}")
     else:
         if "external" in types:
-            raise ValueError(f"External credentials not allowed. Found: {types} in {credFile}")
+            raise ValueError(f"External credentials not allowed. Found: {types} in {cred_file}")
         
-def has_external_creds(credsMap):
+def has_external_creds(creds_map):
     return any(
         isinstance(v, dict) and v.get("type") == "external"
-        for v in credsMap.values()
+        for v in creds_map.values()
     )
 
-def copy_creds_to_env_creds_file(env_dir, credsYamlContent, comment, credsSchema):
-    envCredentialsPath = f"{env_dir}/Credentials/credentials.yml"       
-    if os.path.exists(envCredentialsPath) :
-        envCredsYaml = openYaml(envCredentialsPath)
+def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_schema):
+    env_credentials_path = f"{env_dir}/Credentials/credentials.yml"       
+    if os.path.exists(env_credentials_path) :
+        env_creds_yaml = openYaml(env_credentials_path)
     else:
-        envCredsYaml = yaml.load("{}")
-    for key, value in credsYamlContent.items() :
-        store_value_to_yaml(envCredsYaml, key, value, comment)
+        env_creds_yaml = yaml.load("{}")
+    for key, value in creds_yaml_content.items() :
+        store_value_to_yaml(env_creds_yaml, key, value, comment)
     # storing credentials yaml
-    writeYamlToFile(envCredentialsPath, envCredsYaml)
-    beautifyYaml(envCredentialsPath, credsSchema)
+    writeYamlToFile(env_credentials_path, env_creds_yaml)
+    beautifyYaml(env_credentials_path, creds_schema)
