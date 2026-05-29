@@ -10,11 +10,7 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name):
     logger.info(f'Prepare process_sd job for {full_env}')
     
     script = [
-        f'base_env_path="$CI_PROJECT_DIR/environments/{full_env}";',
-        'app_defs_path="$base_env_path/AppDefs";',
-        'reg_defs_path="$base_env_path/RegDefs";',
-        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$APP_DEFS_PATH" ] && mkdir -p $app_defs_path && cp -rf $APP_DEFS_PATH/* $app_defs_path',
-        f'[ -n "$APP_REG_DEFS_JOB" ] && [ -n "$REG_DEFS_PATH" ] && mkdir -p $reg_defs_path && cp -fr $REG_DEFS_PATH/* $reg_defs_path',
+        f'./scripts/external_app_reg_defs.sh "{full_env}"',
         'python3 /build_env/scripts/build_env/process_sd.py',
     ]
 
