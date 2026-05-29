@@ -2,10 +2,12 @@ from pathlib import Path
 
 import pytest
 from envgenehelper.effective_set_helper import ESGenerationContext, ES_MAPPING_FILE, GenerationMode, PartialMergeMode
+from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
 import effective_set_entrypoint
 from effective_set_entrypoint import _run_reverse_merge, _run_forward_merge, effective_set_entrypoint as run_entrypoint
+from envgenehelper.effective_set_helper import ES_DIR_NAME
 
 PARAMETERS_CONTENT = '{"param": "value"}'
 
@@ -48,9 +50,9 @@ class TestRunReverseMerge:
     @pytest.mark.unit
     def test_removes_app_dirs_namespace_still_in_full_sd(self, tmp_path):
         """Remove one app, namespace stays because another app is still in Full SD."""
-        es = tmp_path / "effective-set"
-        sd = tmp_path / "sd.yaml"
-        delta = tmp_path / "delta_sd.yaml"
+        es = tmp_path / ES_DIR_NAME
+        sd = tmp_path / SD_FILE_NAME
+        delta = tmp_path / DELTA_SD_FILE_NAME
 
         create_es_app_dirs(es, "ns-1", "app-a")
         create_es_app_dirs(es, "ns-1", "app-b")
@@ -67,10 +69,10 @@ class TestRunReverseMerge:
 
     @pytest.mark.unit
     def test_removes_namespace_when_empty_in_full_sd(self, tmp_path):
-        """Remove last app — namespace absent from Full SD, dirs and mapping entries deleted."""
-        es = tmp_path / "effective-set"
-        sd = tmp_path / "sd.yaml"
-        delta = tmp_path / "delta_sd.yaml"
+        """Remove last app - namespace absent from Full SD, dirs and mapping entries deleted."""
+        es = tmp_path / ES_DIR_NAME
+        sd = tmp_path / SD_FILE_NAME
+        delta = tmp_path / DELTA_SD_FILE_NAME
 
         create_es_app_dirs(es, "ns-1", "app-a")
         create_es_cleanup_dir(es, "ns-1")
@@ -86,15 +88,15 @@ class TestRunReverseMerge:
         assert not (es / ESGenerationContext.DEPLOYMENT.value / "ns-1").exists()
         assert not (es / ESGenerationContext.CLEANUP.value / "ns-1").exists()
         for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
-            mapping = openYaml(es / ctx.value / ES_MAPPING_FILE, allow_default=True) or {}
+            mapping = openYaml(es / ctx.value / ES_MAPPING_FILE)
             assert "ns-1" not in mapping
 
     @pytest.mark.unit
     def test_multiple_apps_same_namespace_removed_once(self, tmp_path):
         """Two apps in same namespace both removed — namespace deleted once, no errors."""
-        es = tmp_path / "effective-set"
-        sd = tmp_path / "sd.yaml"
-        delta = tmp_path / "delta_sd.yaml"
+        es = tmp_path / ES_DIR_NAME
+        sd = tmp_path / SD_FILE_NAME
+        delta = tmp_path / DELTA_SD_FILE_NAME
 
         create_es_app_dirs(es, "ns-1", "app-a")
         create_es_app_dirs(es, "ns-1", "app-b")
@@ -119,9 +121,9 @@ class TestRunReverseMerge:
     @pytest.mark.unit
     def test_two_namespaces_one_removed_one_kept(self, tmp_path):
         """Two namespaces: ns-1 removed (empty in Full SD), ns-2 kept (still in Full SD)."""
-        es = tmp_path / "effective-set"
-        sd = tmp_path / "sd.yaml"
-        delta = tmp_path / "delta_sd.yaml"
+        es = tmp_path / ES_DIR_NAME
+        sd = tmp_path / SD_FILE_NAME
+        delta = tmp_path / DELTA_SD_FILE_NAME
 
         create_es_app_dirs(es, "ns-1", "app-a")
         create_es_app_dirs(es, "ns-2", "app-b")
@@ -148,9 +150,9 @@ class TestRunReverseMerge:
     @pytest.mark.unit
     def test_app_dir_missing_no_error(self, tmp_path):
         """App directory doesn't exist (failed previous job) — no FileNotFoundError."""
-        es = tmp_path / "effective-set"
-        sd = tmp_path / "sd.yaml"
-        delta = tmp_path / "delta_sd.yaml"
+        es = tmp_path / ES_DIR_NAME
+        sd = tmp_path / SD_FILE_NAME
+        delta = tmp_path / DELTA_SD_FILE_NAME
 
         write_sd_yaml(sd, [])
         write_sd_yaml(delta, [make_sd_app("app-a", "1.0", "ns-1")])
@@ -160,9 +162,9 @@ class TestRunReverseMerge:
     @pytest.mark.unit
     def test_mapping_missing_logs_warning_no_error(self, tmp_path):
         """Mapping file missing — warning logged, no exception."""
-        es = tmp_path / "effective-set"
-        sd = tmp_path / "sd.yaml"
-        delta = tmp_path / "delta_sd.yaml"
+        es = tmp_path / ES_DIR_NAME
+        sd = tmp_path / SD_FILE_NAME
+        delta = tmp_path / DELTA_SD_FILE_NAME
 
         create_es_app_dirs(es, "ns-1", "app-a")
         write_sd_yaml(sd, [])
@@ -173,9 +175,9 @@ class TestRunReverseMerge:
     @pytest.mark.unit
     def test_empty_delta_sd_no_changes(self, tmp_path):
         """Empty delta SD — nothing deleted."""
-        es = tmp_path / "effective-set"
-        sd = tmp_path / "sd.yaml"
-        delta = tmp_path / "delta_sd.yaml"
+        es = tmp_path / ES_DIR_NAME
+        sd = tmp_path / SD_FILE_NAME
+        delta = tmp_path / DELTA_SD_FILE_NAME
 
         create_es_app_dirs(es, "ns-1", "app-a")
         write_sd_yaml(sd, [make_sd_app("app-a", "1.0", "ns-1")])
@@ -191,8 +193,8 @@ class TestRunForwardMerge:
     @pytest.mark.unit
     def test_topology_pipeline_deleted_before_cli(self, tmp_path, monkeypatch):
         """topology/ and pipeline/ are deleted before CLI runs."""
-        es = tmp_path / "effective-set"
-        delta = tmp_path / "delta_sd.yaml"
+        es = tmp_path / ES_DIR_NAME
+        delta = tmp_path / DELTA_SD_FILE_NAME
 
         (es / ESGenerationContext.TOPOLOGY.value).mkdir(parents=True)
         (es / ESGenerationContext.PIPELINE.value).mkdir(parents=True)
@@ -211,8 +213,8 @@ class TestRunForwardMerge:
     @pytest.mark.unit
     def test_cleanup_ns_deleted_per_deploy_postfix(self, tmp_path, monkeypatch):
         """cleanup/<ns> deleted only for namespaces in delta SD, others untouched."""
-        es = tmp_path / "effective-set"
-        delta = tmp_path / "delta_sd.yaml"
+        es = tmp_path / ES_DIR_NAME
+        delta = tmp_path / DELTA_SD_FILE_NAME
 
         create_es_cleanup_dir(es, "ns-1")
         create_es_cleanup_dir(es, "ns-2")
@@ -235,8 +237,8 @@ class TestRunForwardMerge:
     @pytest.mark.unit
     def test_mapping_upserted_not_replaced(self, tmp_path, monkeypatch):
         """Existing mapping entries outside delta SD are preserved after CLI merge."""
-        es = tmp_path / "effective-set"
-        delta = tmp_path / "delta_sd.yaml"
+        es = tmp_path / ES_DIR_NAME
+        delta = tmp_path / DELTA_SD_FILE_NAME
 
         for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
             create_es_mapping(es, ctx, {
@@ -278,7 +280,7 @@ class TestEffectiveSetEntrypoint:
         """FULL generation mode — _run_full_generation called, effective-set dir deleted and re-created."""
         env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
         sd_dir.mkdir(parents=True, exist_ok=True)
-        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
+        writeYamlToFile(sd_dir / SD_FILE_NAME, {"applications": []})
 
         monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.FULL)
 
@@ -289,7 +291,7 @@ class TestEffectiveSetEntrypoint:
         run_entrypoint()
 
         assert "es" in called
-        assert called["es"] == env_dir / "effective-set"
+        assert called["es"] == env_dir / ES_DIR_NAME
         assert called["name"] == "cluster-01/env-01"
 
     @pytest.mark.unit
@@ -297,8 +299,8 @@ class TestEffectiveSetEntrypoint:
         """PARTIAL mode, effective-set dir doesn't exist yet — first run, calls _run_full_generation."""
         env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
         sd_dir.mkdir(parents=True, exist_ok=True)
-        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
-        writeYamlToFile(sd_dir / "delta_sd.yaml", {"applications": []})
+        writeYamlToFile(sd_dir / SD_FILE_NAME, {"applications": []})
+        writeYamlToFile(sd_dir / DELTA_SD_FILE_NAME, {"applications": []})
 
         monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.PARTIAL)
 
@@ -315,9 +317,9 @@ class TestEffectiveSetEntrypoint:
         """PARTIAL mode + REVERSE — _run_reverse_merge called."""
         env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
         sd_dir.mkdir(parents=True, exist_ok=True)
-        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
-        writeYamlToFile(sd_dir / "delta_sd.yaml", {"applications": []})
-        (env_dir / "effective-set").mkdir(parents=True, exist_ok=True)
+        writeYamlToFile(sd_dir / SD_FILE_NAME, {"applications": []})
+        writeYamlToFile(sd_dir / DELTA_SD_FILE_NAME, {"applications": []})
+        (env_dir / ES_DIR_NAME).mkdir(parents=True, exist_ok=True)
 
         monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.PARTIAL)
         monkeypatch.setattr(effective_set_entrypoint, "resolve_partial_merge_mode", lambda: PartialMergeMode.REVERSE)
@@ -335,9 +337,9 @@ class TestEffectiveSetEntrypoint:
         """PARTIAL mode + FORWARD — _run_forward_merge called."""
         env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
         sd_dir.mkdir(parents=True, exist_ok=True)
-        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
-        writeYamlToFile(sd_dir / "delta_sd.yaml", {"applications": []})
-        (env_dir / "effective-set").mkdir(parents=True, exist_ok=True)
+        writeYamlToFile(sd_dir / SD_FILE_NAME, {"applications": []})
+        writeYamlToFile(sd_dir / DELTA_SD_FILE_NAME, {"applications": []})
+        (env_dir / ES_DIR_NAME).mkdir(parents=True, exist_ok=True)
 
         monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.PARTIAL)
         monkeypatch.setattr(effective_set_entrypoint, "resolve_partial_merge_mode", lambda: PartialMergeMode.FORWARD)
@@ -355,7 +357,7 @@ class TestEffectiveSetEntrypoint:
         """PARTIAL mode, delta_sd.yaml missing — ValueError raised."""
         env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
         sd_dir.mkdir(parents=True, exist_ok=True)
-        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
+        writeYamlToFile(sd_dir / SD_FILE_NAME, {"applications": []})
         # delta_sd.yaml intentionally not created
 
         monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.PARTIAL)
@@ -368,10 +370,10 @@ class TestEffectiveSetEntrypoint:
         """delta_sd.yaml is deleted at the end regardless of generation mode."""
         env_dir, sd_dir = self._patch_paths(monkeypatch, tmp_path)
         sd_dir.mkdir(parents=True, exist_ok=True)
-        writeYamlToFile(sd_dir / "sd.yaml", {"applications": []})
-        delta_path = sd_dir / "delta_sd.yaml"
+        writeYamlToFile(sd_dir / SD_FILE_NAME, {"applications": []})
+        delta_path = sd_dir / DELTA_SD_FILE_NAME
         writeYamlToFile(delta_path, {"applications": []})
-        (env_dir / "effective-set").mkdir(parents=True, exist_ok=True)
+        (env_dir / ES_DIR_NAME).mkdir(parents=True, exist_ok=True)
 
         monkeypatch.setattr(effective_set_entrypoint, "resolve_es_generation_mode", lambda: GenerationMode.PARTIAL)
         monkeypatch.setattr(effective_set_entrypoint, "resolve_partial_merge_mode", lambda: PartialMergeMode.FORWARD)

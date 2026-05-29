@@ -13,6 +13,7 @@ class ESGenerationContext(Enum):
 
 
 ES_MAPPING_FILE = "mapping.yml"
+ES_DIR_NAME = "effective-set"
 
 
 class GenerationMode(Enum):

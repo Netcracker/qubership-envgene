@@ -7,7 +7,7 @@ from envgenehelper.json_helper import openJson
 from envgenehelper.logger import logger
 from envgenehelper.yaml_helper import writeYamlToFile, openYaml
 from envgenehelper.effective_set_helper import resolve_es_generation_mode, GenerationMode, PartialMergeMode, \
-    resolve_partial_merge_mode, ES_MAPPING_FILE, ESGenerationContext
+    resolve_partial_merge_mode, ES_MAPPING_FILE, ESGenerationContext, ES_DIR_NAME
 from envgenehelper.sd_helper import get_sd_dir, DELTA_SD_FILE_NAME, SD_FILE_NAME
 
 from handle_effective_set_config import handle_effective_set_config
@@ -15,7 +15,7 @@ from handle_effective_set_config import handle_effective_set_config
 
 def effective_set_entrypoint():
     full_env_name = getenv("FULL_ENV_NAME")
-    effective_set_dir = get_current_env_dir_from_env_vars() / "effective-set"
+    effective_set_dir = get_current_env_dir_from_env_vars() / ES_DIR_NAME
     sd_path = get_sd_dir().joinpath(SD_FILE_NAME)
     delta_sd_path = get_sd_dir().joinpath(DELTA_SD_FILE_NAME)
 
