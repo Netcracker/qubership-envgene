@@ -95,7 +95,7 @@ def render_obj_by_context(template: dict, context: Context) -> dict:
 class EnvGenerator:
     def __init__(self):
         self.ctx = Context()
-        self.isExternalCredEnv = False
+        self.is_external_cred_env = False
         logger.debug("EnvGenerator initialized with context: %s",
                      self.ctx.dict(exclude_none=True, exclude={"env_vars"}))
 
@@ -442,20 +442,20 @@ class EnvGenerator:
         logger.info(f"Found external template. Render external credentials for {external_cred_path}")
         external_creds = openYaml(external_cred_path)
         default_remote_path = "{{ current_env.cloud }}/{{ current_env.name }}"
-        for credConfig in external_creds.values():
-               if isinstance(credConfig, dict) and "remoteRefPath" not in credConfig:
-                   credConfig["remoteRefPath"] = default_remote_path
+        for cred_config in external_creds.values():
+               if isinstance(cred_config, dict) and "remoteRefPath" not in cred_config:
+                   cred_config["remoteRefPath"] = default_remote_path
         rendered_external_creds = render_obj_by_context(external_creds, self.ctx)
         logger.debug(f"Rendered external credentials is: \n{rendered_external_creds}")
 
         #validate secret file
-        secretStoreFile = f"{self.ctx.work_dir}/configuration/secret-stores.yml"
-        secretStoreMap = openYaml(secretStoreFile)
-        validateSchema(secretStoreMap, schema_path=SECRET_SCHEMA)
+        secret_store_file = f"{self.ctx.work_dir}/configuration/secret-stores.yml"
+        secret_store_map = openYaml(secret_store_file)
+        validateSchema(secret_store_map, schema_path=SECRET_SCHEMA)
 
         #copy rendred creds to env creds file seperately to propagate comments
         copy_creds_to_env_creds_file(self.ctx.current_env_dir, rendered_external_creds, EXTERNAL_CRED_COMMENT, CRED_SCHEMA)
-        self.isExternalCredEnv = True
+        self.is_external_cred_env = True
 
     def get_rendered_target_path(self, template_path: Path) -> Path:
         path_str = str(template_path)

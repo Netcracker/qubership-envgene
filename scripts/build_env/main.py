@@ -183,11 +183,11 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
                                                                            ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
-              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs, render_context.isExternalCredEnv)
+              env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs, render_context.is_external_cred_env)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
                                                      output_dir)
-    logger.info(f"External cred env is set as {render_context.isExternalCredEnv}")
-    return resulting_dir, render_context.isExternalCredEnv
+    logger.info(f"External cred env is set as {render_context.is_external_cred_env}")
+    return resulting_dir, render_context.is_external_cred_env
 
 
 def get_duplicate_names(param_files):
@@ -288,9 +288,9 @@ def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir
     env_dir = get_env_instances_dir(env_name, cluster_name, all_instances_dir)
     logger.info(f"Environment {env_name} directory is {env_dir}")
 
-    resulting_env_dir, isExternalCredEnv = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
+    resulting_env_dir, is_external_cred_env = build_environment(env_name, cluster_name, templates_dirs, env_dir, all_instances_dir,
                                           output_dir, work_dir)
-    create_credentials(resulting_env_dir, env_dir, all_instances_dir, isExternalCredEnv)
+    create_credentials(resulting_env_dir, env_dir, all_instances_dir, is_external_cred_env)
     apply_ns_build_filter()
 
 
