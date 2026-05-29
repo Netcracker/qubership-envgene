@@ -1,13 +1,12 @@
 import os
 import shutil
-from jinja2.exceptions import TemplateSyntaxError
 from pathlib import Path
+
+from jinja2.exceptions import TemplateSyntaxError
 import pytest
-import yaml
 
 from render_config_env import EnvGenerator
 from envgenehelper.test_helpers import TestHelpers
-from envgenehelper.business_helper import NamespaceRole
 
 
 class TestAppRegDefRendering:
@@ -106,4 +105,3 @@ class TestAppRegDefRendering:
         context_vars = self._get_render_context(test_number)
         with pytest.raises(expected_exception):
             render_context.process_app_reg_defs(self.env_name, context_vars)
-
