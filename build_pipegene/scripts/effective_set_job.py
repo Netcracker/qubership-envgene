@@ -39,7 +39,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         'if [ -f /default_cert.pem ]; then cp /default_cert.pem "${CI_PROJECT_DIR}/configuration/certs/"; fi',
         'for cert in "${CI_PROJECT_DIR}/configuration/certs/*" ; do [ -f "$cert" ] && keytool -import -trustcacerts -alias "$(basename "$cert")" -file "$cert" -keystore /etc/ssl/certs/keystore.jks -storepass changeit -noprompt; done',
         'python3 /module/scripts/main.py decrypt_cred_files',
-        f'./scripts/external_app_reg_defs.sh "{full_env_name}"',
+        f'/module/scripts/utils/external_app_reg_defs.sh "{full_env_name}"',
         'python3 /module/scripts/main.py validate_creds',
         'python3 /module/scripts/main.py validate_parameters',
         'python3 /module/scripts/sboms_retention_policy.py'

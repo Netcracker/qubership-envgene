@@ -10,7 +10,7 @@ def prepare_process_sd(pipeline, full_env, environment_name, cluster_name):
     logger.info(f'Prepare process_sd job for {full_env}')
     
     script = [
-        f'./scripts/external_app_reg_defs.sh "{full_env}"',
+        f'/module/scripts/utils/external_app_reg_defs.sh "{full_env}"',
         'python3 /build_env/scripts/build_env/process_sd.py',
     ]
 
