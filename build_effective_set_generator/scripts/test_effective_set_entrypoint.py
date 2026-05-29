@@ -1,15 +1,13 @@
 from pathlib import Path
 
 import pytest
-from envgenehelper.effective_set_helper import ESGenerationContext, ES_MAPPING_FILE, GenerationMode, PartialMergeMode
+from envgenehelper.effective_set_helper import ESGenerationContext, ES_MAPPING_FILE, GenerationMode, PartialMergeMode, \
+    ES_DIR_NAME
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
 import effective_set_entrypoint
 from effective_set_entrypoint import _run_reverse_merge, _run_forward_merge, effective_set_entrypoint as run_entrypoint
-from envgenehelper.effective_set_helper import ES_DIR_NAME
-
-PARAMETERS_CONTENT = '{"param": "value"}'
 
 
 def create_es_app_dirs(effective_set_dir: Path, deploy_postfix: str, app_name: str):
@@ -45,6 +43,10 @@ def write_sd_yaml(path: Path, apps: list[dict]) -> None:
     })
 
 
+PARAMETERS_CONTENT = '{"param": "value"}'
+ENV_NAME = "env_name"
+
+
 class TestRunReverseMerge:
 
     @pytest.mark.unit
@@ -77,7 +79,7 @@ class TestRunReverseMerge:
         create_es_app_dirs(es, "ns-1", "app-a")
         create_es_cleanup_dir(es, "ns-1")
         for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
-            create_es_mapping(es, ctx, {"ns-1": f"/es/{ctx.value}/ns-1"})
+            create_es_mapping(es, ctx, {f"{ENV_NAME}-ns-1": f"/{ctx.value}/ns-1"})
 
         write_sd_yaml(sd, [])
         write_sd_yaml(delta, [make_sd_app("app-a", "1.0", "ns-1")])
@@ -89,7 +91,7 @@ class TestRunReverseMerge:
         assert not (es / ESGenerationContext.CLEANUP.value / "ns-1").exists()
         for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
             mapping = openYaml(es / ctx.value / ES_MAPPING_FILE)
-            assert "ns-1" not in mapping
+            assert not any("ns-1" in key for key in mapping)
 
     @pytest.mark.unit
     def test_multiple_apps_same_namespace_removed_once(self, tmp_path):
@@ -102,7 +104,7 @@ class TestRunReverseMerge:
         create_es_app_dirs(es, "ns-1", "app-b")
         create_es_cleanup_dir(es, "ns-1")
         for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
-            create_es_mapping(es, ctx, {"ns-1": f"/es/{ctx.value}/ns-1"})
+            create_es_mapping(es, ctx, {f"{ENV_NAME}-ns-1": f"/es/{ctx.value}/ns-1"})
 
         write_sd_yaml(sd, [])
         write_sd_yaml(delta, [
@@ -131,7 +133,7 @@ class TestRunReverseMerge:
         create_es_cleanup_dir(es, "ns-2")
         for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
             create_es_mapping(es, ctx, {
-                "ns-1": f"/es/{ctx.value}/ns-1",
+                f"{ENV_NAME}-ns-1": f"/es/{ctx.value}/ns-1",
                 "ns-2": f"/es/{ctx.value}/ns-2",
             })
 
@@ -242,7 +244,7 @@ class TestRunForwardMerge:
 
         for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
             create_es_mapping(es, ctx, {
-                "ns-1": f"/es/{ctx.value}/ns-1",
+                f"{ENV_NAME}-ns-1": f"/es/{ctx.value}/ns-1",
                 "ns-2": f"/es/{ctx.value}/ns-2",
             })
 
@@ -250,7 +252,7 @@ class TestRunForwardMerge:
 
         def fake_cli_run(cmd, check):
             for ctx in [ESGenerationContext.CLEANUP, ESGenerationContext.RUNTIME, ESGenerationContext.DEPLOYMENT]:
-                create_es_mapping(es, ctx, {"ns-1": f"/es/{ctx.value}/ns-1-new"})
+                create_es_mapping(es, ctx, {f"{ENV_NAME}-ns-1": f"/es/{ctx.value}/ns-1-new"})
 
         import effective_set_entrypoint
         monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", lambda *a: "fake_cmd")
@@ -272,7 +274,8 @@ class TestEffectiveSetEntrypoint:
         sd_dir = env_dir / "Inventory" / "solution-descriptor"
         monkeypatch.setattr(effective_set_entrypoint, "get_current_env_dir_from_env_vars", lambda: env_dir)
         monkeypatch.setattr(effective_set_entrypoint, "get_sd_dir", lambda: sd_dir)
-        monkeypatch.setattr(effective_set_entrypoint, "getenv", lambda key, *a: "cluster-01/env-01" if key == "FULL_ENV_NAME" else None)
+        monkeypatch.setattr(effective_set_entrypoint, "getenv",
+                            lambda key, *a: "cluster-01/env-01" if key == "FULL_ENV_NAME" else None)
         return env_dir, sd_dir
 
     @pytest.mark.unit

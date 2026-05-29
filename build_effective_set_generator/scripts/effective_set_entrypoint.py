@@ -128,10 +128,13 @@ def _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path):
                     logger.warning(f"Mapping file not found, skipping: {path}")
                     continue
                 mapping = openYaml(path, allow_default=True) or {}
-                if dp not in mapping:
-                    logger.warning(f"Namespace '{dp}' not found in mapping file {path}, skipping removing by key: {dp}")
+                mapping_key = next((key for key in mapping if dp in key), None)
+
+                if mapping_key is None:
+                    logger.warning(f"Namespace substring '{dp}' not found in mapping file {path}, skipping removing")
                     continue
-                mapping.pop(dp)
+
+                mapping.pop(mapping_key)
                 writeYamlToFile(path, mapping)
 
 
