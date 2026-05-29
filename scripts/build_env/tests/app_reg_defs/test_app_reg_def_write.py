@@ -37,11 +37,15 @@ class TestWriteAppRegDefs:
         assert (self.env_dir / "AppDefs").exists()
         assert (self.env_dir / "RegDefs").exists()
 
-    def test_cleans_stale_dirs_before_writing(self):
-        (self.env_dir  / "AppDefs").mkdir(parents=True)
-        (self.base_dir / "appdefs").mkdir(parents=True)
+    def test_preserves_existing_files(self):
+        self._create_source_dirs()
 
-        write_app_reg_defs(self.base_dir, self.render_dir, self.env_dir, "dual")
+        stale = self.base_dir / "appdefs"
+        stale.mkdir(parents=True)
+        (stale / "old.yaml").write_text("stale")
 
-        assert not (self.env_dir  / "AppDefs").exists()
-        assert not (self.base_dir / "appdefs").exists()
+        write_app_reg_defs(self.base_dir, self.render_dir, self.env_dir, "root")
+
+        assert stale.exists()
+        assert (stale / "old.yaml").exists()
+        assert (stale / "file.yaml").exists()

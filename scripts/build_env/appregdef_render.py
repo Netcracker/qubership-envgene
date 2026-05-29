@@ -12,15 +12,15 @@ def write_app_reg_defs(base_dir, render_dir, env_dir, placement_mode):
         src = Path(render_dir) / dir_name
         env_dst = Path(env_dir) / dir_name
         root_dst = Path(base_dir) / dir_name.lower()
-
+        
+        if not src.exists():
+            continue
+        
+        shutil.copytree(src, root_dst, dirs_exist_ok=True)
         if env_dst.exists():
             shutil.rmtree(env_dst)
-        if root_dst.exists():
-            shutil.rmtree(root_dst)
-        if src.exists():
-            shutil.move(src, root_dst)
-            if placement_mode == "dual":
-                shutil.copytree(root_dst, env_dst)
+        if placement_mode == "dual":
+            shutil.copytree(root_dst, env_dst)
 
 
 if __name__ == '__main__':
