@@ -8,7 +8,7 @@
       - [Resource profiles](#resource-profiles)
       - [Cloud Passport](#cloud-passport)
       - [Shared credentials](#shared-credentials)
-    - [Deployer configuration](#deployer-configuration)
+      - [Deployer configuration](#deployer-configuration)
   - [`config.yml`](#configyml)
   - [`integration.yml`](#integrationyml)
   - [`deployer.yml`](#deployeryml)
@@ -64,7 +64,8 @@ inventory:
   clusterUrl: string
   # Optional
   # Reference to Cloud Passport
-  # Cloud Passport should be located in `/environments/<cluster-name>/<env-name>/cloud-passport/` directory
+  # Recommended location: `/environments/<cluster-name>/cloud-passport/`
+  # For the full search-path priority see "File resolution for shared entities -> Cloud Passport"
   cloudPassport: string
   # Optional
   # Reference to external CMDB system where the Environment Instance can be imported
@@ -241,10 +242,10 @@ file format.
 | Priority | Path                                                                | Status      |
 |----------|---------------------------------------------------------------------|-------------|
 | 1        | `/environments/<cluster-name>/<env-name>/Inventory/configuration/`  | Recommended |
-| 2        | `/environments/<cluster-name>/<env-name>/Inventory/configurations/` | Deprecated  |
 | 3        | `/environments/<cluster-name>/configuration/`                       | Recommended |
-| 4        | `/environments/<cluster-name>/configurations/`                      | Deprecated  |
 | 5        | `/environments/configuration/`                                      | Recommended |
+| 2        | `/environments/<cluster-name>/<env-name>/Inventory/configurations/` | Deprecated  |
+| 4        | `/environments/<cluster-name>/configurations/`                      | Deprecated  |
 | 6        | `/environments/configurations/`                                     | Deprecated  |
 | 7        | `/environments/<cluster-name>/<env-name>/Inventory/`                | Deprecated  |
 
@@ -270,14 +271,14 @@ for the file format.
 | Priority | Path                                                                   | Status      |
 |----------|------------------------------------------------------------------------|-------------|
 | 1        | `/environments/<cluster-name>/<env-name>/Inventory/resource_profiles/` | Recommended |
+| 5        | `/environments/<cluster-name>/resource_profiles/`                      | Recommended |
+| 9        | `/environments/resource_profiles/`                                     | Recommended |
 | 2        | `/environments/<cluster-name>/<env-name>/Inventory/rp_override/`       | Deprecated  |
 | 3        | `/environments/<cluster-name>/<env-name>/Inventory/Profiles/`          | Deprecated  |
 | 4        | `/environments/<cluster-name>/<env-name>/Inventory/parameters/`        | Deprecated  |
-| 5        | `/environments/<cluster-name>/resource_profiles/`                      | Recommended |
 | 6        | `/environments/<cluster-name>/rp_override/`                            | Deprecated  |
 | 7        | `/environments/<cluster-name>/Profiles/`                               | Deprecated  |
 | 8        | `/environments/<cluster-name>/parameters/`                             | Deprecated  |
-| 9        | `/environments/resource_profiles/`                                     | Recommended |
 | 10       | `/environments/rp_override/`                                           | Deprecated  |
 | 11       | `/environments/Profiles/`                                              | Deprecated  |
 | 12       | `/environments/parameters/`                                            | Deprecated  |
@@ -290,9 +291,9 @@ behavior, including auto-association which applies only at the cluster level.
 
 | Priority | Path                                                                 | Status      |
 |----------|----------------------------------------------------------------------|-------------|
+| 3        | `/environments/<cluster-name>/cloud-passport/`                       | Recommended |
 | 1        | `/environments/<cluster-name>/<env-name>/Inventory/cloud-passport/`  | Deprecated  |
 | 2        | `/environments/<cluster-name>/<env-name>/Inventory/cloud-passports/` | Deprecated  |
-| 3        | `/environments/<cluster-name>/cloud-passport/`                       | Recommended |
 | 4        | `/environments/<cluster-name>/cloud-passports/`                      | Deprecated  |
 | 5        | `/environments/cloud-passport/`                                      | Deprecated  |
 | 6        | `/environments/cloud-passports/`                                     | Deprecated  |
@@ -305,16 +306,16 @@ Referenced via `envTemplate.sharedMasterCredentialFiles`. See
 | Priority | Path                                                                    | Status      |
 |----------|-------------------------------------------------------------------------|-------------|
 | 1        | `/environments/<cluster-name>/<env-name>/Inventory/credentials/`        | Recommended |
+| 4        | `/environments/<cluster-name>/credentials/`                             | Recommended |
+| 7        | `/environments/credentials/`                                            | Recommended |
 | 2        | `/environments/<cluster-name>/<env-name>/Inventory/Credentials/`        | Deprecated  |
 | 3        | `/environments/<cluster-name>/<env-name>/Inventory/shared-credentials/` | Deprecated  |
-| 4        | `/environments/<cluster-name>/credentials/`                             | Recommended |
 | 5        | `/environments/<cluster-name>/Credentials/`                             | Deprecated  |
 | 6        | `/environments/<cluster-name>/shared-credentials/`                      | Deprecated  |
-| 7        | `/environments/credentials/`                                            | Recommended |
 | 8        | `/environments/Credentials/`                                            | Deprecated  |
 | 9        | `/environments/shared-credentials/`                                     | Deprecated  |
 
-### Deployer configuration
+#### Deployer configuration
 
 Loaded when `inventory.deployer` is set. See [`deployer.yml`](#deployeryml) for the file format.
 
@@ -325,14 +326,14 @@ If the deployer key is not found in that file, it falls back to the global confi
 | Priority | Path                                                                      | Status      |
 |----------|---------------------------------------------------------------------------|-------------|
 | 1        | `/environments/<cluster-name>/app-deployer/deployer.yml`                  | Recommended |
+| 5        | `/environments/<cluster-name>/<env-name>/app-deployer/deployer.yml`       | Recommended |
+| 9        | `/configuration/deployer.yml`                                             | Recommended |
 | 2        | `/environments/<cluster-name>/app-deployer/app-deployer.yml`              | Deprecated  |
 | 3        | `/environments/<cluster-name>/cloud-deployer/deployer.yml`                | Deprecated  |
 | 4        | `/environments/<cluster-name>/cloud-deployer/app-deployer.yml`            | Deprecated  |
-| 5        | `/environments/<cluster-name>/<env-name>/app-deployer/deployer.yml`       | Recommended |
 | 6        | `/environments/<cluster-name>/<env-name>/app-deployer/app-deployer.yml`   | Deprecated  |
 | 7        | `/environments/<cluster-name>/<env-name>/cloud-deployer/deployer.yml`     | Deprecated  |
 | 8        | `/environments/<cluster-name>/<env-name>/cloud-deployer/app-deployer.yml` | Deprecated  |
-| 9        | `/configuration/deployer.yml`                                             | Recommended |
 
 ## `config.yml`
 
