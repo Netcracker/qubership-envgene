@@ -280,7 +280,7 @@ def extract_external_cred(cred_map):
     if cred_map.get("$type") != "credRef":
         return None
     cred_id = cred_map.get("credId")
-    if not cred_id or not str(cred_id).strip():
+    if not isinstance(cred_id, str) or not cred_id.strip():
         raise ValueError(f"Invalid credRef: 'credId' is missing or empty in {cred_map}")
     return cred_id
 
