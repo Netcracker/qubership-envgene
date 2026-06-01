@@ -52,61 +52,6 @@ This repository follows the [Diátaxis documentation framework](https://github.c
 
 ## Always-loaded essentials
 
-### Section adds only what it uniquely contributes
-
-A documentation section should add only the information specific to the concept it introduces.
-Cross-cutting facts - schemas, notations, rules, examples of canonical types - are cross-linked to
-their canonical location, not restated.
-
-❌ **INCORRECT:**
-
-- Re-describing the full schema of an object that already has its own section.
-- Repeating notation rules in every section that uses the notation.
-- Re-deriving constraints already stated in upstream sections.
-
-✅ **CORRECT:**
-
-- Link to the canonical definition for the concept.
-- Add only the new facts unique to the current section.
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** Restated information ages out of sync with the canonical copy. Readers wonder which copy is
-authoritative. Lengthens reviews without adding value.
-
----
-
-### Section value audit
-
-**During refactors and final reviews, ask of each section: what unique fact does it carry? If most content
-is restated from elsewhere, drop or trim.**
-
-Checklist for each section:
-
-1. Name the load-bearing fact (unique observable, rule, or definition).
-2. Check where else it is said (catalog, table, sibling sections, parent section).
-3. If the unique fact is small (one sentence), fold into a neighbouring section.
-4. If everything is derivable from elsewhere, drop the section. Cross-link from the catalog if an explicit
-   pointer is needed.
-
-❌ **INCORRECT** (section earns no keep):
-
-A subsection that rehashes the catalog table and restates a dispatching rule already implied by sibling
-sections covering each context.
-
-✅ **CORRECT** (drop the section):
-
-The dispatching rule is derivable from sibling sections. Drop the subsection. Cross-link from the catalog
-table only if an explicit pointer is needed.
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** Sections without unique content fragment the doc and add maintenance burden. Restated content drifts
-from its canonical source. Apply this audit during refactors, not only when first writing a section, because
-content accumulates restated facts as the doc evolves.
-
----
-
 ### Verify, don't fabricate
 
 When a documentation statement names a specific identifier - a parameter, environment variable, file
@@ -132,29 +77,6 @@ For object schemas and example fields, see also
 
 **Why:** Documentation is consumed as authoritative. A fabricated detail propagates into tickets,
 validation rules, and tooling assumptions.
-
----
-
-### Don't silently extend the spec
-
-If a section would read more cleanly under a hypothetical spec extension - a wider enum, a new
-notation, a relaxed constraint - do not apply the extension in the draft. File the proposed extension
-as an open question and write the section against the current spec.
-
-❌ **INCORRECT:**
-
-- Drafting a section that implies a notation works in a wider scope than the spec currently allows.
-- Adding examples that assume a constraint has been relaxed.
-
-✅ **CORRECT:**
-
-- Write to the current spec, accepting any awkwardness in the section.
-- File the proposed extension as an open question, separately.
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** Spec changes propagate to validation rules, schemas, tooling, and migration. They deserve
-explicit decisions, not implicit drafting assumptions.
 
 ---
 
@@ -218,34 +140,6 @@ frees the doc from re-glossing.
 
 ---
 
-### Observable behaviour over implementation detail
-
-Documentation works best when it foregrounds observable behaviour - what users, downstream tools, or
-consuming systems can rely on. Internal mechanism - phases, ordering of components, runtime fallback
-paths - is worth including when it is part of what readers depend on. Otherwise the observable outcome
-often communicates more clearly.
-
-A useful self-check: would a reasonable alternative implementation that produces the same outcome
-invalidate this paragraph? If yes, the mechanism is load-bearing - keep it. If no, the observable
-outcome alone may carry the message.
-
-❌ **INCORRECT** (when mechanism is not load-bearing):
-
-- Describing the sequence of internal components (step 1: X reads file. Step 2: Y exports value).
-- Naming runtime phases that have no user-visible meaning.
-
-✅ **CORRECT:**
-
-- Stating the observable outcome (the value is available to downstream consumer Y).
-- Documenting mechanism only when it is part of the commitment (timing, atomicity, ordering).
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** Implementation choices evolve faster than the observables they deliver. Documenting mechanism
-that is not load-bearing forces stale doc updates with every implementation change.
-
----
-
 ### In-repo links
 
 **Use repo-root absolute paths for in-repo cross-references, not GitHub URLs.**
@@ -286,70 +180,6 @@ the linking file or the target file is moved.
 
 ---
 
-### Heading renames and cross-links
-
-When renaming a Markdown heading, the GitHub-generated anchor (`#section-name`) also changes.
-Cross-links in other files that point to the old anchor become broken (CI link-checker fails).
-
-**Before pushing after a heading rename:**
-
-1. Grep the repository for references to the OLD anchor:
-
-   ```bash
-   grep -rnE "#old-anchor-name" --include='*.md' .
-   ```
-
-2. Update each matching cross-link to the NEW anchor in all affected files.
-
-3. Update the link text in `[text](#anchor)` to match the new heading text where appropriate.
-
-For a broader audit of all cross-links in the repository:
-
-```bash
-grep -rhoE '\]\([^)]+#[^)]+\)' --include='*.md' . | sort -u
-```
-
-**Why:** A heading rename inside one file silently breaks references in unrelated files. The
-CI link-checker (lychee) catches this only after push.
-
----
-
-## EnvGene-Specific Documentation Rules
-
-### Avoid Duplication in Description
-
-**Don't repeat the same information multiple times in the Description section.**
-
-#### ❌ INCORRECT (duplicated info)
-
-```markdown
-## Description
-
-Parameters are defined two ways:
-- Inline
-- Via ParameterSets
-
-Template-level parameters are defined two ways:  <!-- DUPLICATE -->
-- Inline
-- Via ParameterSets
-```
-
-#### ✅ CORRECT (concise, mentioned once)
-
-```markdown
-## Description
-
-This guide shows how to override template-level parameters.
-
-Template-level parameters are defined in two ways:
-- Inline
-- Via ParameterSets
-
-[Rest of description...]
-```
-
----
-
 ## Code Style
 
 ### YAML
@@ -363,17 +193,6 @@ Template-level parameters are defined in two ways:
 
 - Use kebab-case: `override-template-parameters.md`
 - Be descriptive: `billing-prod-deploy.yml` not `override.yml`
-
----
-
-## Testing Documentation Changes
-
-Before committing documentation:
-
-1. Check Markdown syntax
-2. Verify all links work
-3. Ensure tables are aligned
-4. Review for clarity and accuracy
 
 ---
 
@@ -860,6 +679,146 @@ column width for vertical alignment.
 
 ## Doc voice and structure
 
+### Section adds only what it uniquely contributes
+
+A documentation section should add only the information specific to the concept it introduces.
+Cross-cutting facts - schemas, notations, rules, examples of canonical types - are cross-linked to
+their canonical location, not restated.
+
+❌ **INCORRECT:**
+
+- Re-describing the full schema of an object that already has its own section.
+- Repeating notation rules in every section that uses the notation.
+- Re-deriving constraints already stated in upstream sections.
+
+✅ **CORRECT:**
+
+- Link to the canonical definition for the concept.
+- Add only the new facts unique to the current section.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Restated information ages out of sync with the canonical copy. Readers wonder which copy is
+authoritative. Lengthens reviews without adding value.
+
+---
+
+### Section value audit
+
+**During refactors and final reviews, ask of each section: what unique fact does it carry? If most content
+is restated from elsewhere, drop or trim.**
+
+Checklist for each section:
+
+1. Name the load-bearing fact (unique observable, rule, or definition).
+2. Check where else it is said (catalog, table, sibling sections, parent section).
+3. If the unique fact is small (one sentence), fold into a neighbouring section.
+4. If everything is derivable from elsewhere, drop the section. Cross-link from the catalog if an explicit
+   pointer is needed.
+
+❌ **INCORRECT** (section earns no keep):
+
+A subsection that rehashes the catalog table and restates a dispatching rule already implied by sibling
+sections covering each context.
+
+✅ **CORRECT** (drop the section):
+
+The dispatching rule is derivable from sibling sections. Drop the subsection. Cross-link from the catalog
+table only if an explicit pointer is needed.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Sections without unique content fragment the doc and add maintenance burden. Restated content drifts
+from its canonical source. Apply this audit during refactors, not only when first writing a section, because
+content accumulates restated facts as the doc evolves.
+
+---
+
+### Don't silently extend the spec
+
+If a section would read more cleanly under a hypothetical spec extension - a wider enum, a new
+notation, a relaxed constraint - do not apply the extension in the draft. File the proposed extension
+as an open question and write the section against the current spec.
+
+❌ **INCORRECT:**
+
+- Drafting a section that implies a notation works in a wider scope than the spec currently allows.
+- Adding examples that assume a constraint has been relaxed.
+
+✅ **CORRECT:**
+
+- Write to the current spec, accepting any awkwardness in the section.
+- File the proposed extension as an open question, separately.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Spec changes propagate to validation rules, schemas, tooling, and migration. They deserve
+explicit decisions, not implicit drafting assumptions.
+
+---
+
+### Observable behaviour over implementation detail
+
+Documentation works best when it foregrounds observable behaviour - what users, downstream tools, or
+consuming systems can rely on. Internal mechanism - phases, ordering of components, runtime fallback
+paths - is worth including when it is part of what readers depend on. Otherwise the observable outcome
+often communicates more clearly.
+
+A useful self-check: would a reasonable alternative implementation that produces the same outcome
+invalidate this paragraph? If yes, the mechanism is load-bearing - keep it. If no, the observable
+outcome alone may carry the message.
+
+❌ **INCORRECT** (when mechanism is not load-bearing):
+
+- Describing the sequence of internal components (step 1: X reads file. Step 2: Y exports value).
+- Naming runtime phases that have no user-visible meaning.
+
+✅ **CORRECT:**
+
+- Stating the observable outcome (the value is available to downstream consumer Y).
+- Documenting mechanism only when it is part of the commitment (timing, atomicity, ordering).
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Implementation choices evolve faster than the observables they deliver. Documenting mechanism
+that is not load-bearing forces stale doc updates with every implementation change.
+
+---
+
+### Avoid Duplication in Description
+
+**Don't repeat the same information multiple times in the Description section.**
+
+#### ❌ INCORRECT (duplicated info)
+
+```markdown
+## Description
+
+Parameters are defined two ways:
+- Inline
+- Via ParameterSets
+
+Template-level parameters are defined two ways:  <!-- DUPLICATE -->
+- Inline
+- Via ParameterSets
+```
+
+#### ✅ CORRECT (concise, mentioned once)
+
+```markdown
+## Description
+
+This guide shows how to override template-level parameters.
+
+Template-level parameters are defined in two ways:
+- Inline
+- Via ParameterSets
+
+[Rest of description...]
+```
+
+---
+
 ### Declarative tone (reference docs)
 
 **Reference documentation describes the system as it is. Do not describe transitions, before/after diffs,
@@ -1260,6 +1219,32 @@ indices and do not need a per-doc entry.
 **Why:** GitHub's link-checker catches dead links but does not warn when a new doc is missing
 from the index. Readers discover docs through the index readmes, not by browsing directories.
 
+### Heading renames and cross-links
+
+When renaming a Markdown heading, the GitHub-generated anchor (`#section-name`) also changes.
+Cross-links in other files that point to the old anchor become broken (CI link-checker fails).
+
+**Before pushing after a heading rename:**
+
+1. Grep the repository for references to the OLD anchor:
+
+   ```bash
+   grep -rnE "#old-anchor-name" --include='*.md' .
+   ```
+
+2. Update each matching cross-link to the NEW anchor in all affected files.
+
+3. Update the link text in `[text](#anchor)` to match the new heading text where appropriate.
+
+For a broader audit of all cross-links in the repository:
+
+```bash
+grep -rhoE '\]\([^)]+#[^)]+\)' --include='*.md' . | sort -u
+```
+
+**Why:** A heading rename inside one file silently breaks references in unrelated files. The
+CI link-checker (lychee) catches this only after push.
+
 ### Pre-flight linter checks
 
 Before declaring documentation changes done, run the same linters that CI will run.
@@ -1293,6 +1278,15 @@ by the shared config. Treat the CI report as authoritative.
 **Why:** The CI super-linter runs both linters. Running locally gives a true preview of the CI
 result, catches real issues, and avoids distraction from false positives that arise when
 running linters with default (non-project) settings.
+
+### Testing Documentation Changes
+
+Before committing documentation:
+
+1. Check Markdown syntax
+2. Verify all links work
+3. Ensure tables are aligned
+4. Review for clarity and accuracy
 
 ---
 
