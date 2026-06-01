@@ -7,8 +7,8 @@
     - [UC-ESE-PL-2: Remote publish only](#uc-ese-pl-2-remote-publish-only)
     - [UC-ESE-PL-3: Dual publish to Instance and external repository](#uc-ese-pl-3-dual-publish-to-instance-and-external-repository)
   - [DCL fallback (e2eParameters)](#dcl-fallback-e2eparameters)
-    - [UC-ESE-DCL-1: Connection parameters from e2e when Cloud Passport has no ARGOCD values](#uc-ese-dcl-1-connection-parameters-from-e2e-when-cloud-passport-has-no-argocd-values)
-    - [UC-ESE-DCL-2: Publish branch from e2e when Cloud Passport has no branch](#uc-ese-dcl-2-publish-branch-from-e2e-when-cloud-passport-has-no-branch)
+    - [UC-ESE-DCL-1: Connection parameters from `e2eParameters` when Cloud Passport has no ARGOCD values](#uc-ese-dcl-1-connection-parameters-from-e2eparameters-when-cloud-passport-has-no-argocd-values)
+    - [UC-ESE-DCL-2: Publish branch from `e2eParameters` when Cloud Passport has no branch](#uc-ese-dcl-2-publish-branch-from-e2eparameters-when-cloud-passport-has-no-branch)
   - [Repository access validation](#repository-access-validation)
     - [UC-ESE-VAL-1: Repository access check fails before publish](#uc-ese-val-1-repository-access-check-fails-before-publish)
 
@@ -57,14 +57,15 @@ GENERATE_EFFECTIVE_SET: true
 
 **Pre-requisites:**
 
-1. `env_definition.yml` contains:
+1. `env_definition.yml` contains `effective_set.placement: remote`:
 
-```yaml
-effective_set:
-  placement: remote
-```
+   ```yaml
+   effective_set:
+     placement: remote
+   ```
 
 2. Connection parameters resolve from Cloud Passport and/or `e2eParameters` in `cloud.yaml`.
+
 3. External repository access validation succeeds.
 
 **Trigger:**
@@ -95,14 +96,15 @@ GENERATE_EFFECTIVE_SET: true
 
 **Pre-requisites:**
 
-1. `env_definition.yml` contains:
+1. `env_definition.yml` contains `effective_set.placement: dual`:
 
-```yaml
-effective_set:
-  placement: dual
-```
+   ```yaml
+   effective_set:
+     placement: dual
+   ```
 
 2. Connection parameters resolve from Cloud Passport and/or `e2eParameters` in `cloud.yaml`.
+
 3. External repository access validation succeeds.
 
 **Trigger:**
@@ -135,7 +137,7 @@ When Cloud Passport has no `ARGOCD_*` connection values, EnvGene reads the mappe
 `cloud.yaml`. See [Parameter resolution](/docs/features/effective-set-generation.md#parameter-resolution) and
 [Branch resolution](/docs/features/effective-set-generation.md#branch-resolution).
 
-### UC-ESE-DCL-1: Connection parameters from e2e when Cloud Passport has no ARGOCD values
+### UC-ESE-DCL-1: Connection parameters from `e2eParameters` when Cloud Passport has no ARGOCD values
 
 **Pre-requisites:**
 
@@ -175,7 +177,7 @@ GENERATE_EFFECTIVE_SET: true
 1. External publish uses `DCL_*` values from `e2eParameters`.
 2. Repository access validation runs against the resolved GitLab URL and credentials.
 
-### UC-ESE-DCL-2: Publish branch from e2e when Cloud Passport has no branch
+### UC-ESE-DCL-2: Publish branch from `e2eParameters` when Cloud Passport has no branch
 
 **Pre-requisites:**
 
