@@ -150,7 +150,7 @@ class TestRunForwardMerge:
 
     def mock_effective_set_cli(self, monkeypatch):
         monkeypatch.setattr(effective_set_entrypoint, "_build_cli_cmd", lambda *a: "fake_cmd")
-        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda cmd, check: None)
+        monkeypatch.setattr(effective_set_entrypoint.subprocess, "run", lambda cmd, check=False, shell=False: None)
 
     @pytest.mark.unit
     def test_topology_pipeline_deleted_before_cli(self, tmp_path, monkeypatch):
