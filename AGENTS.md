@@ -278,6 +278,29 @@ a semicolon. Also reduces AI-stylized rhythm in generated text.
 
 ---
 
+### Oxford comma
+
+**Use a serial (Oxford) comma in lists of three or more items.**
+
+❌ **INCORRECT:**
+
+```markdown
+The pipeline reads `A`, `B` and `C`.
+```
+
+✅ **CORRECT:**
+
+```markdown
+The pipeline reads `A`, `B`, and `C`.
+```
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** The serial comma removes parsing ambiguity in lists with conjunctions inside list items
+and matches the OUP, Google, and Microsoft style guides.
+
+---
+
 ### Heading case
 
 **Use sentence case for all headings: capitalize the first word and proper nouns only.**
@@ -318,6 +341,32 @@ technical documentation.
 
 ---
 
+### Compound modifiers
+
+**Hyphenate compound modifiers when they appear before the noun they qualify.**
+
+❌ **INCORRECT:**
+
+```markdown
+A well known parameter.
+```
+
+✅ **CORRECT:**
+
+```markdown
+A well-known parameter.
+```
+
+Compound modifiers that appear **after** the noun do not need a hyphen: "The parameter is well
+known."
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Hyphenation signals "treat these words as one unit". Without it, readers parse
+adjective-noun-noun and stumble on the boundary.
+
+---
+
 ### Avoid AI-Stylistics
 
 **Documentation is written for humans, not stylized like AI output.**
@@ -341,30 +390,176 @@ chatbot, rewrite.
 
 ---
 
-### Write international English
+### Vocabulary
 
-**Most readers of these docs are not native English speakers. Prefer simple, common words and short
-sentences over Latinate or literary phrasing.**
+**Choose common words. Define unfamiliar ones. Pick one term per concept.**
 
-Following Microsoft's "Global communications" and Google's "Translation-friendly content" principles:
+The rule covers vocabulary choices that hurt non-native readers most:
 
-- **Common verbs over Latinate ones.** "use" not "utilize", "help" not "facilitate", "do" not "perform",
-  "let" not "permit", "set" not "establish".
-- **One main idea per sentence.** Split long compound sentences into two.
-- **No idioms or metaphors.** "Out of the box", "low-hanging fruit", "hands down", "moving the needle" -
-  drop them. They do not translate and read awkwardly to non-native English speakers.
-- **English over Latin abbreviations.** "for example" not "e.g.", "that is" not "i.e.", "and so on" not
-  "etc.".
+- **Common verbs over Latinate ones.** "use" not "utilize", "help" not "facilitate", "do" not
+  "perform", "let" not "permit", "set" not "establish".
+- **English over Latin abbreviations.** "for example" not "e.g.", "that is" not "i.e.", "and so
+  on" not "etc.".
 - **One term per concept.** Pick one and stick with it across the document.
-- **Active voice for behaviour statements.** "The calculator emits X" not "X is emitted by the calculator".
-- **No noun stacks.** Long chains of nouns ("application instance environment configuration file") force
-  readers to parse syntactic structure on the fly. Split into a possessive or prepositional phrase.
+- **Use specific verbs.** Avoid vague `be`, `have`, `do`, `make` when a specific verb names the
+  action. "The pipeline validates the inputs", not "The pipeline does the validation".
+- **Define acronyms on first use; prefer full names.** Spell out the acronym at first mention
+  with the short form in parentheses. Bare acronyms are fine after that.
+
+❌ **INCORRECT:**
+
+```markdown
+The CR includes acceptance criteria from UC steps.
+```
+
+✅ **CORRECT:**
+
+```markdown
+The change-request (CR) issue includes acceptance criteria from use-case (UC) steps.
+```
+
+**Scope:** Applies to **new and modified content only**. Established repository acronyms used in
+filenames (`AGENTS.md`, `CLAUDE.md`) need no expansion.
+
+**Why:** Common and specific vocabulary reads faster across language backgrounds. Acronyms
+expanded on first use spare readers a hunt for the definition.
+
+---
+
+### Sentence craft
+
+**One main idea per sentence; active voice; no noun stacks; parallel construction in lists.**
+
+- **One main idea per sentence.** Split long compound sentences into two. Target no more than 25
+  words.
+- **Active voice for behaviour statements.** "The calculator emits X" not "X is emitted by the
+  calculator".
+- **No idioms or metaphors.** "Out of the box", "low-hanging fruit", "hands down", "moving the
+  needle" - drop them. They do not translate and read awkwardly to non-native English speakers.
+- **No noun stacks.** Long chains of nouns ("application instance environment configuration
+  file") force readers to parse syntactic structure on the fly. Split into a possessive or
+  prepositional phrase.
+- **Parallel structure in lists and headings.** Every bullet starts with the same part of
+  speech; every step uses the same imperative form.
+
+❌ **INCORRECT** (mixed forms):
+
+```markdown
+- Configure replicas
+- Setting retention
+- Restart node
+```
+
+✅ **CORRECT** (parallel imperatives):
+
+```markdown
+- Configure replicas
+- Set retention
+- Restart node
+```
 
 **Scope:** Applies to **new and modified content only**.
 
-**Why:** Simpler vocabulary, shorter sentences, and absence of idioms make the docs faster to read for
-non-native speakers and easier for downstream translation. Industry style guides (Microsoft, Google, IBM
-Global English) converge on these principles for the same reason.
+**Why:** Short, active, parallel sentences read at a steady pace. Parsing speed matters most
+when the reader's first language is not English.
+
+---
+
+### Pronouns and modifiers
+
+**Pronoun references and modifier placement carry weight in technical prose. Keep them
+unambiguous.**
+
+- **Avoid ambiguous pronouns; repeat the noun if there is any doubt.** With multiple actors in a
+  paragraph, `it` and `this` lose their referent fast.
+- **Place modifiers next to what they modify.** `only`, `just`, `also`, `even`, `not` belong
+  immediately before the word they qualify.
+- **Avoid gerund subordinate clauses; use `you` or `to`.** Replace `When configuring the
+  cluster...` with `When you configure the cluster...` or `To configure the cluster...`.
+
+❌ **INCORRECT** (ambiguous pronoun, then ambiguous `only`, then gerund clause):
+
+```markdown
+The validator reads the config. It applies the rules. It then reports findings.
+The hook only runs on changed files.
+When configuring the cluster, set the region.
+```
+
+✅ **CORRECT:**
+
+```markdown
+The validator reads the config, applies the rules, and reports findings.
+The hook runs only on changed files.
+When you configure the cluster, set the region.
+```
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Ambiguous pronouns, misplaced modifiers, and headless gerund clauses are translation
+traps. They force re-reading even when each word is familiar.
+
+---
+
+### Voice and tense
+
+**Speak directly to the reader. Describe the system in the present.**
+
+- **Use second person (`you`, `your`); reserve `we` for an actual team decision.** Imperatives
+  address the reader directly: "Set the region" not "We set the region".
+- **Lead with the answer (Bottom Line Up Front).** Put the verb the reader runs, or the
+  conclusion they need, in the first clause. Detail follows.
+- **Present tense for system behaviour.** "The handler retries three times" not "The handler
+  will retry three times".
+- **Reserve `will` for the actual future.** "The build fails if the secret is missing" describes
+  a property; "The build will fail when we update X next quarter" describes a future event.
+- **Avoid `currently`.** It dates the sentence the moment it is written. Either give a version
+  or drop it.
+
+❌ **INCORRECT:**
+
+```markdown
+We recommend that you should set replicas to 3.
+Currently the validator will support YAML.
+```
+
+✅ **CORRECT:**
+
+```markdown
+Set replicas to 3.
+The validator supports YAML.
+```
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Second person and BLUF cut reading time. Present tense names the system's behaviour as
+observable now; future tense describes change events. Mixing them confuses readers.
+
+---
+
+### Hedging
+
+**One hedge per sentence at most. State the rule, then add a caveat only when a real one
+exists.**
+
+Avoid weasel words like `can`, `may`, `should` when clarity matters. "X happens" is stronger
+than "X may happen" when X always happens.
+
+❌ **INCORRECT:**
+
+```markdown
+It may possibly sometimes fail under unusual conditions.
+```
+
+✅ **CORRECT:**
+
+```markdown
+It fails when the input exceeds 256 MB.
+```
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Stacked hedges make rules sound suggestive when they are mandatory. Readers cannot tell
+from "may possibly sometimes" whether an action is required, optional, or unreliable.
 
 ---
 
