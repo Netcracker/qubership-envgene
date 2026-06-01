@@ -180,7 +180,6 @@ After the pipeline finishes, the Environment configuration will be generated and
 - [**Resource Profiles**](/docs/features/resource-profile.md) - Baselines and overrides for performance parameters
 - [**SBOM**](/docs/features/sbom.md) - CycloneDX-based artifact and parameter exchange for EnvGene
 - [**SBOM Retention**](/docs/features/sbom-retention.md) - Automatic cleanup of cached SBOM files to manage repository size
-- [**Shared entity search paths**](/docs/features/shared-entity-search-paths.md) - Priority-ordered search locations for shared entities (credentials, parameter sets, template variables, Cloud Passport, resource profiles, deployer configuration), with recommended and deprecated markers
 
 ### Examples & Samples
 

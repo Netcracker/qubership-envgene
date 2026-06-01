@@ -1564,9 +1564,8 @@ Credentials can be defined at three scopes with different precedence:
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
-> [!NOTE]
-> For the full list of file search paths and their priority order, see
-> [Shared entity search paths - Shared credentials](/docs/features/shared-entity-search-paths.md#shared-credentials).
+*For the file search-path priority, see
+[File resolution → Shared credentials](/docs/envgene-configs.md#shared-credentials).*
 
 Any YAML file located in these folders is treated as a Shared Credentials File.
 
@@ -1627,9 +1626,8 @@ Files can be defined at three scopes with different precedence:
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
-> [!NOTE]
-> For the full list of file search paths and their priority order, see
-> [Shared entity search paths - Shared template variables](/docs/features/shared-entity-search-paths.md#shared-template-variables).
+*For the file search-path priority, see
+[File resolution → Shared template variables](/docs/envgene-configs.md#shared-template-variables).*
 
 The file must contain a key-value hashmap and must NOT be located in a `parameters` directory.
 
@@ -1669,9 +1667,8 @@ When an Environment Specific ParameterSet is referenced, EnvGene searches for th
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
 
-> [!NOTE]
-> For the full list of file search paths and their priority order, see
-> [Shared entity search paths - Parameter sets](/docs/features/shared-entity-search-paths.md#parameter-sets).
+*For the file search-path priority, see
+[File resolution → Parameter sets](/docs/envgene-configs.md#parameter-sets).*
 
 ```yaml
 # Optional
@@ -1776,9 +1773,8 @@ When an Environment Specific Resource Profile Override is referenced, EnvGene se
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
 
-> [!NOTE]
-> For the full list of file search paths and their priority order, see
-> [Shared entity search paths - Resource profiles](/docs/features/shared-entity-search-paths.md#resource-profiles).
+*For the file search-path priority, see
+[File resolution → Resource profiles](/docs/envgene-configs.md#resource-profiles).*
 
 ```yaml
 # Mandatory
