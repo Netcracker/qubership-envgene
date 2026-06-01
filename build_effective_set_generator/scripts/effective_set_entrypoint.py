@@ -33,8 +33,9 @@ def effective_set_entrypoint():
 
 def _run_full_generation(effective_set_dir, full_env_name, sd_path):
     cmd = _build_cli_cmd(effective_set_dir, full_env_name, sd_path)
+    logger.info(cmd)
     delete_dir(effective_set_dir)
-    subprocess.run(["sh", cmd], check=True)
+    subprocess.run(" ".join(cmd), shell=True, check=True)
 
 
 def _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path):
@@ -69,7 +70,7 @@ def _run_forward_merge(effective_set_dir, full_env_name, delta_sd_path):
     runtime_mapping = openYaml(runtime_mapping_path, allow_default=True)
     deployment_mapping = openYaml(deployment_mapping_path, allow_default=True)
 
-    subprocess.run(["sh", cmd], check=True)
+    subprocess.run(" ".join(cmd), shell=True, check=True)
 
     new_cleanup_mapping = openYaml(cleanup_mapping_path, allow_default=True)
     new_runtime_mapping = openYaml(runtime_mapping_path, allow_default=True)
