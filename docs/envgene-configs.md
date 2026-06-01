@@ -21,6 +21,7 @@ Environment Inventory. The inventory file of a specific Environment. Contains th
   - Shared credentials
 - Parameters for Environment Template rendering
 - Configuration parameters
+- Effective Set publish placement (`effective_set.placement`) when external GitLab export is used
 
 Mandatory for every Environment. Created and updated manually.
 
@@ -149,6 +150,15 @@ envTemplate:
   # Following parameters are automatically generated during job and display that application:version artifact
   # of template was used for last Environment generation
   generatedVersions: hashmap
+# Optional
+# Effective Set publish target when GENERATE_EFFECTIVE_SET is true.
+# Omit the block or omit placement for Instance repository only.
+# See [External export](/docs/features/effective-set-generation.md#external-export)
+effective_set:
+  # Optional. Values: `remote`, `dual`
+  # `remote` - external GitLab repository only
+  # `dual` - Instance repository and external repository
+  placement: string
 # Optional
 # Security-related parameters of the Environment.
 # NOT set manually by users and NOT processed by EnvGene.
