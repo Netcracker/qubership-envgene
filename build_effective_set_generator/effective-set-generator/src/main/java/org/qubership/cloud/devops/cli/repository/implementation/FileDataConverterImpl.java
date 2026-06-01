@@ -48,8 +48,6 @@ import static org.qubership.cloud.devops.commons.utils.ConsoleLogger.*;
 @Slf4j
 public class FileDataConverterImpl implements FileDataConverter {
     public static final String CLEANUPER = "cleanuper";
-    /** Match SOPS decrypt output so re-encrypt with minimize_diff stays byte-stable. */
-    private static final int YAML_INDENT = 4;
     private final ObjectMapper objectMapper;
     private final FileSystemUtils fileSystemUtils;
 
@@ -126,7 +124,6 @@ public class FileDataConverterImpl implements FileDataConverter {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setDefaultScalarStyle(DumperOptions.ScalarStyle.PLAIN);
-        options.setIndent(YAML_INDENT);
         options.setPrettyFlow(false);
         if (expand) {            
             options.setDereferenceAliases(true);
