@@ -30,7 +30,6 @@ DOC_STORAGE_PROVIDER: s3
 DOC_STORAGE_REGION: eu-west-1
 DOC_STORAGE_SERVER_URL: https://minio.cluster-01.qubership.org
 DOC_STORAGE_TEMPORARY_BUCKET_NAME: temporary-bucket
-ESCAPE_SEQUENCE: 'true'
 GATEWAY_URL: http://internal-gateway-service:8080
 GRAFANA_UI_URL: https://cluster-01.qubership.org
 GRAYLOG_UI_URL: https://cluster-01.qubership.org
@@ -68,3 +67,23 @@ TRACING_HOST: tracing-agent
 TRACING_UI_URL: https://cluster-01.qubership.org
 ZOOKEEPER_ADDRESS: zookeeper.zookeeper:2181
 ZOOKEEPER_URL: zookeeper.zookeeper:2181
+api_config:
+  connection:
+    host: db.example.com
+    port: 5432
+database_config:
+  connection:
+    host: db.example.com
+    port: 5432
+rendered_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
+yaml_template: |-
+  services:
+    api:
+      image: api:latest
+      ports:
+        - 8080:8080
