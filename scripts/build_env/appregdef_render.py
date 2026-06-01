@@ -25,14 +25,19 @@ def write_app_reg_defs(base_dir: str, render_dir: str, env_dir: str, placement_m
 
 def override_app_reg_defs(base_dir: str, env_dir: str, placement_mode: str) -> None:
     config_dir = Path(base_dir) / "configuration"
-    
-    for dir_name in ["AppDefs", "RegDefs"]:
-        p = Path(config_dir) / dir_name.lower()
-        app_reg_defs = findAllYamlsInDir(p, recursively=False)
-        for app_reg_def in app_reg_defs:
-            shutil.copy(app_reg_def, f"{base_dir}/{dir_name.lower()}")
+
+    for dir_name in ("AppDefs", "RegDefs"):
+        root_dst = Path(base_dir) / dir_name.lower()
+        root_dst.mkdir(parents=True, exist_ok=True)
+
+        if placement_mode == "dual":
+            env_dst = Path(env_dir) / dir_name
+            env_dst.mkdir(parents=True, exist_ok=True)
+
+        for yaml_file in findAllYamlsInDir(config_dir / dir_name.lower(), recursively=False):
+            shutil.copy(yaml_file, root_dst)
             if placement_mode == "dual":
-                shutil.copy(app_reg_def, f"{env_dir}/{dir_name}")
+                shutil.copy(yaml_file, env_dst)
 
 
 def main():
