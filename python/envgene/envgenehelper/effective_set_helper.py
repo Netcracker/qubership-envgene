@@ -50,16 +50,18 @@ def resolve_es_generation_mode():
         logger.info(f"Resolved effective set generation mode: {GenerationMode.FULL} (no SD input found)")
         return GenerationMode.FULL
 
-    strategy = get_envgene_config_yaml().get(
-        "effective_set_generation_strategy",
-        GenerationMode.PARTIAL,
+    strategy = GenerationMode(
+        get_envgene_config_yaml().get(
+            "effective_set_generation_strategy",
+            GenerationMode.PARTIAL.value,
+        )
     )
 
-    if strategy == GenerationMode.PARTIAL and merge_mode.name != MergeType.REPLACE:
+    if strategy == GenerationMode.PARTIAL and merge_mode != MergeType.REPLACE:
         logger.info(f"Resolved effective set generation mode: {GenerationMode.PARTIAL} (strategy={strategy},"
-                    f" merge_mode={merge_mode.name})")
+                    f" merge_mode={merge_mode})")
         return GenerationMode.PARTIAL
 
     logger.info(f"Resolved effective set generation mode: {GenerationMode.FULL} (strategy={strategy},"
-                f" merge_mode={merge_mode.name})")
+                f" merge_mode={merge_mode})")
     return GenerationMode.FULL
