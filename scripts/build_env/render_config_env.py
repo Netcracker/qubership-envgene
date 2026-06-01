@@ -410,15 +410,6 @@ class EnvGenerator:
         ]
 
         return next((c for c in candidates if c), "")
-    
-    def copy_user_provided_app_reg_defs(self, templates_dir):
-        config_dir = Path(self.ctx.base_dir) / "configuration"
-        
-        for dir_name in ["appdefs", "regdefs"]:
-            p = Path(config_dir) / dir_name
-            app_reg_defs = findAllYamlsInDir(p, recursively=False)
-            for app_reg_def in app_reg_defs:
-                shutil.copy(app_reg_def, f"{templates_dir}/{dir_name}")
 
     def get_template_name(self, template_path: str) -> str:
         template_path = Path(template_path)
@@ -584,7 +575,6 @@ class EnvGenerator:
 
             current_env_dir = self.ctx.current_env_dir
             templates_dir = self.ctx.templates_dirs[NamespaceRole.COMMON]
-            self.copy_user_provided_app_reg_defs(templates_dir)
             patterns = ["*.yaml.j2", "*.yml.j2", "*.j2", "*.yaml", "*.yml"]
             appdef_templates = self.find_templates(f"{templates_dir}/appdefs", patterns)
             regdef_templates = self.find_templates(f"{templates_dir}/regdefs", patterns)
