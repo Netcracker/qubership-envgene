@@ -208,6 +208,8 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         job.artifacts.add_paths(*env_artifact_paths)
         
         job.artifacts.add_paths(
+            'appdefs/',
+            'regdefs/',
             'configuration/',
             'sboms/',
             'templates/',
