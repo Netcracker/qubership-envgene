@@ -19,7 +19,7 @@ def effective_set_entrypoint():
     sd_path = get_sd_dir().joinpath(SD_FILE_NAME)
     delta_sd_path = get_sd_dir().joinpath(DELTA_SD_FILE_NAME)
 
-    if resolve_es_generation_mode(sd_path) == GenerationMode.PARTIAL:
+    if resolve_es_generation_mode() == GenerationMode.PARTIAL:
         if resolve_partial_merge_mode() == PartialMergeMode.REVERSE:
             _run_reverse_merge(effective_set_dir, delta_sd_path, sd_path)
         else:

@@ -1,7 +1,7 @@
 from enum import Enum
 from os import getenv
 
-from envgenehelper import get_envgene_config_yaml, calculate_merge_mode, MergeType
+from envgenehelper import get_envgene_config_yaml, calculate_merge_mode, MergeType, logger
 
 
 class ESGenerationContext(Enum):
@@ -46,9 +46,19 @@ def resolve_es_generation_mode(sd_path):
     any_sd = sd_path.exists() and sd_input
 
     if not any_sd:
+        logger.info(f"Resolved effective set generation mode: {GenerationMode.FULL} (no SD input found)")
         return GenerationMode.FULL
 
-    if get_envgene_config_yaml().get("partial_effective_set_generation") and merge_mode.name != MergeType.REPLACE:
+    strategy = get_envgene_config_yaml().get(
+        "effective_set_generation_strategy",
+        GenerationMode.PARTIAL,
+    )
+
+    if strategy == GenerationMode.PARTIAL and merge_mode.name != MergeType.REPLACE:
+        logger.info(f"Resolved effective set generation mode: {GenerationMode.PARTIAL} (strategy={strategy},"
+                    f" merge_mode={merge_mode.name})")
         return GenerationMode.PARTIAL
 
+    logger.info(f"Resolved effective set generation mode: {GenerationMode.FULL} (strategy={strategy},"
+                f" merge_mode={merge_mode.name})")
     return GenerationMode.FULL
