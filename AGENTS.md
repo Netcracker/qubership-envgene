@@ -198,6 +198,32 @@ the linking file or the target file is moved.
 
 ## English style
 
+### Dialect
+
+**Default to British English. Yield to existing dialect when a repository already uses American
+spelling consistently.**
+
+- **Spelling.** `-ise` endings (`organise`, `organisation`); `-our` (`colour`, `behaviour`);
+  `-re` (`centre`, `metre`); doubled consonants in past tense (`travelled`, `signalled`).
+- **Quotation marks.** Single quotation marks in body prose for British style; either is fine
+  in code or inline literals where the syntax requires.
+- **Date format.** `DD Month YYYY` (`15 March 2026`). Avoid all-numeric `dd/mm/yyyy` because it
+  is ambiguous with `mm/dd/yyyy`.
+- **Word choices.** `while` not `whilst`; `among` not `amongst`. Contractions (`don't`,
+  `it's`, `you'll`) are fine in both dialects.
+- **Yield rule.** If a repository's existing prose is mostly US-spelled, treat it as `en-US`
+  and match. Never mix dialects within a file. A pinned dialect in `CONTRIBUTING.md` or a Vale
+  config wins.
+
+The Oxford serial comma stays in both dialects - see [Oxford comma](#oxford-comma).
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Consistent dialect within a file removes friction. Defaulting to one dialect prevents
+docs from drifting into mixed spelling. British English matches the qubership convention.
+
+---
+
 ### Dashes
 
 **CRITICAL: Always use a regular hyphen-minus (`-`) as a dash in prose. Never use em dashes (`—`) or en dashes (`–`).**
@@ -381,6 +407,15 @@ Common AI-stylistics to avoid:
   `Let's explore...`, `In this section, we'll discuss...`.
 - `Not only X, but also Y` and `Not just X, but Y` patterns.
 - Empty closings: `In conclusion`, `To summarize`, `As we've seen`.
+- Vague attributions: `widely regarded as`, `has been described as`, `experts agree`. Cite a
+  source or delete the claim.
+- Tail `-ing` significance clauses: `...enabling teams to deliver value at scale`. The phrase
+  almost never carries information. Cut it.
+- Rigid section scaffolding lifted onto a technical page: `Introduction / Challenges / Future
+  Prospects`. Use the section headings the content actually needs.
+- Bullet lists where every item starts with a bold inline header plus colon used to format
+  ordinary prose. Fine for genuine term-definition pairs; an AI tell when applied to all
+  bullets by default.
 
 **Scope:** Applies to **new and modified content only**.
 
@@ -432,6 +467,7 @@ expanded on first use spare readers a hunt for the definition.
 
 - **One main idea per sentence.** Split long compound sentences into two. Target no more than 25
   words.
+- **One main idea per paragraph.** The first sentence carries the point; the rest supports it.
 - **Active voice for behaviour statements.** "The calculator emits X" not "X is emitted by the
   calculator".
 - **No idioms or metaphors.** "Out of the box", "low-hanging fruit", "hands down", "moving the
@@ -439,6 +475,9 @@ expanded on first use spare readers a hunt for the definition.
 - **No noun stacks.** Long chains of nouns ("application instance environment configuration
   file") force readers to parse syntactic structure on the fly. Split into a possessive or
   prepositional phrase.
+- **No adjective stacks.** Three or more adjectives before a noun (`a robust scalable cloud-native
+  message broker`) is a rewrite signal. Pick the one adjective that earns the spot or drop them
+  all.
 - **Parallel structure in lists and headings.** Every bullet starts with the same part of
   speech; every step uses the same imperative form.
 
@@ -508,6 +547,10 @@ traps. They force re-reading even when each word is familiar.
   address the reader directly: "Set the region" not "We set the region".
 - **Lead with the answer (Bottom Line Up Front).** Put the verb the reader runs, or the
   conclusion they need, in the first clause. Detail follows.
+- **Specific, not promotional.** Say what the thing does, not how `powerful`, `seamless`, or
+  `robust` it is. Drop adjectives that do not pay rent.
+- **No page-topic self-description.** Skip openers like `This guide explains how to...` or
+  `In this section, we will cover...`. Start with the thing.
 - **Present tense for system behaviour.** "The handler retries three times" not "The handler
   will retry three times".
 - **Reserve `will` for the actual future.** "The build fails if the secret is missing" describes
@@ -869,6 +912,32 @@ column width for vertical alignment.
 |----------|----------|
 | `name`   | yes      |
 ```
+
+---
+
+### Link text
+
+**Link text names the destination. Do not use `click here` or `this page`.**
+
+❌ **INCORRECT:**
+
+```markdown
+For setup steps, [click here](/docs/how-to/setup.md).
+The schema reference is available [here](/schemas/credential.schema.json).
+```
+
+✅ **CORRECT:**
+
+```markdown
+For setup steps, see the [setup how-to](/docs/how-to/setup.md).
+The [credential schema](/schemas/credential.schema.json) lists the required fields.
+```
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Link text is read out of context by screen readers, search engines, and readers who
+scan. `Click here` carries no information when extracted. A destination-naming link tells the
+reader where they will land.
 
 ---
 
