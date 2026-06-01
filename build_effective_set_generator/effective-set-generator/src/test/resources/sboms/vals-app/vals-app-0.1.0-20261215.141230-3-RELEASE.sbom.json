@@ -1,0 +1,106 @@
+{
+  "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.6",
+  "serialNumber": "urn:uuid:776e042c-5940-4a1c-b6ca-c7a6f03ba14d",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2024-11-15T14:12:30.123456+00:00",
+    "component": {
+      "type": "application",
+      "mime-type": "application/vnd.qubership.application",
+      "bom-ref": "BomRef.046371270286701516.6226838985304548",
+      "name": "vals-app",
+      "version": "0.1.0-20261215.141230-3-RELEASE",
+      "components": [
+        {
+          "type": "data",
+          "mime-type": "application/vnd.qubership.deployment-descriptor",
+          "bom-ref": "BomRef.5613682882548706.07189009888782105",
+          "group": "org.qubership.deploy.product",
+          "name": "test.platform.system.monitoring_monitoring-operator",
+          "version": "0.1.0-20261215.141230-3-RELEASE",
+          "purl": "pkg:maven/org.qubership.deploy.product/test.platform.system.monitoring_monitoring-operator@0.1.0-20261215.141230-3-RELEASE?registry_id=registry-2&repository_id=targetRelease",
+	      "properties": [
+            {
+              "name": "eso_support",
+              "value": "false"
+            }
+          ]
+        }
+      ]
+    },
+    "tools": {
+      "components": [
+        {
+          "type": "application",
+          "name": "sbom_generator",
+          "version": "0.1.2"
+        }
+      ]
+    }
+  },
+  "components": [
+    {
+      "type": "application",
+      "mime-type": "application/octet-stream",
+      "bom-ref": "BomRef.9326066192873279.6463074100259174",
+      "name": "alertmanager",
+      "version": "",
+      "properties": [
+        {
+          "name": "deploy_param",
+          "value": ""
+        },
+        {
+          "name": "docker_registry",
+          "value": "artifactory.qubership.org:17215"
+        },
+        {
+          "name": "full_image_name",
+          "value": "artifactory.qubership.org:17215/prom/alertmanager:v0.28.1"
+        },
+        {
+          "name": "git_branch",
+          "value": ""
+        },
+        {
+          "name": "git_revision",
+          "value": ""
+        },
+        {
+          "name": "git_url",
+          "value": ""
+        },
+        {
+          "name": "image_type",
+          "value": "image"
+        },
+        {
+          "name": "promote_artifacts",
+          "value": ""
+        },
+        {
+          "name": "qualifier",
+          "value": ""
+        }
+      ],
+      "components": [
+        {
+          "type": "container",
+          "mime-type": "application/vnd.docker.image",
+          "bom-ref": "BomRef.10591160095356567.3087400544244663",
+          "group": "prom",
+          "name": "alertmanager",
+          "version": "v0.28.1",
+          "purl": "pkg:docker/prom/alertmanager@v0.28.1?registry_id=registry-2"
+        }
+      ]
+    }
+  ],
+  "dependencies": [    
+    {
+      "ref": "BomRef.9326066192873279.6463074100259174"
+    }
+  ]
+}

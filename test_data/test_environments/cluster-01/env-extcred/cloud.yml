@@ -1,0 +1,77 @@
+# The contents of this file is generated from template artifact: deployment-configuration-env-templates.
+# Contents will be overwritten by next generation.
+# Please modify this contents only for development purposes or as workaround.
+name: "cluster_01_env_extcred"
+apiUrl: "api.cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+apiPort: "6443" # cloud passport: ext-mode version: 1.5
+privateUrl: "cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+publicUrl: "cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+dashboardUrl: "https://dashboard.cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+labels: []
+defaultCredentialsId: "app-sidecar-token" # cloud passport: ext-mode version: 1.5
+protocol: "https" # cloud passport: ext-mode version: 1.5
+dbMode: "db"
+databases: []
+maasConfig:
+  credentialsId: "app-maas-cred" # cloud passport: ext-mode version: 1.5
+  enable: true  # cloud passport: ext-mode version: 1.5
+  maasUrl: "http://maas.cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+  maasInternalAddress: "http://maas.maas:8080" # cloud passport: ext-mode version: 1.5
+vaultConfig:
+  credentialsId: ""
+  enable: false
+  url: ""
+dbaasConfigs:
+  - credentialsId: "app-dbaas-cred"  # cloud passport: ext-mode version: 1.5
+    enable: true # cloud passport: ext-mode version: 1.5
+    apiUrl: "http://dbaas.dbaas:8080" # cloud passport: ext-mode version: 1.5
+    aggregatorUrl: "https://dbaas.cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+consulConfig:
+  tokenSecret: "app-sidecar-token" # cloud passport: ext-mode version: 1.5
+  enabled: true # cloud passport: ext-mode version: 1.5
+  publicUrl: "http://consul.consul:8080" # cloud passport: ext-mode version: 1.5
+  internalUrl: "http://consul.consul:8080" # cloud passport: ext-mode version: 1.5
+deployParameters:
+  CLOUD_DASHBOARD_URL: "https://dashboard.cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+  CMDB_URL: "https://cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+  CONSUL_ENABLED: true # cloud passport: ext-mode version: 1.5
+  DB_ADMIN_USERNAME:
+    $type: "credRef"
+    credId: "app-db-cred"
+    property: "username"
+  DEFAULT_TENANT_ADMIN_LOGIN: "admin" # cloud passport: ext-mode version: 1.5
+  DEFAULT_TENANT_ADMIN_PASSWORD: "password" # cloud passport: ext-mode version: 1.5
+  DEFAULT_TENANT_NAME: "tenant" # cloud passport: ext-mode version: 1.5
+  DOC_STORAGE_PERSISTENT_BUCKET_NAME: "permanent-bucket" # cloud passport: ext-mode version: 1.5
+  DOC_STORAGE_TEMPORARY_BUCKET_NAME: "temporary-bucket" # cloud passport: ext-mode version: 1.5
+  GRAFANA_UI_URL: "https://cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+  GRAYLOG_UI_URL: "https://cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+  MAAS_PASSWORD:
+    $type: "credRef"
+    credId: "app-maas-cred"
+    property: "password"
+  MAVEN_REPO_DEV_NAME: "${MAVEN_REPO_NAME}" # cloud passport: ext-mode version: 1.5
+  MAVEN_REPO_NAME: "mvn.group" # cloud passport: ext-mode version: 1.5
+  MAVEN_REPO_STAGING_NAME: "${MAVEN_REPO_NAME}" # cloud passport: ext-mode version: 1.5
+  MAVEN_REPO_URL: "https://artifactory.qubership.org" # cloud passport: ext-mode version: 1.5
+  MONITORING_ENABLED: "true" # cloud passport: ext-mode version: 1.5
+  STORAGE_PROVIDER: "s3" # cloud passport: ext-mode version: 1.5
+  STORAGE_REGION: "eu-west-1" # cloud passport: ext-mode version: 1.5
+  STORAGE_RWO_CLASS: "standard" # cloud passport: ext-mode version: 1.5
+  STORAGE_RWX_CLASS: "" # cloud passport: ext-mode version: 1.5
+  STORAGE_SERVER_URL: "https://minio.cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+  TEST_PASSWORD:
+    $type: "credRef"
+    credId: "app-test-cred"
+    property: "password"
+  TRACING_ENABLED: "false" # cloud passport: ext-mode version: 1.5
+  TRACING_HOST: "tracing-agent" # cloud passport: ext-mode version: 1.5
+  TRACING_UI_URL: "https://cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
+  ZOOKEEPER_ADDRESS: "zookeeper.zookeeper:2181" # cloud passport: ext-mode version: 1.5
+  ZOOKEEPER_URL: "${ZOOKEEPER_ADDRESS}" # cloud passport: ext-mode version: 1.5
+e2eParameters: {}
+technicalConfigurationParameters: {}
+deployParameterSets: []
+e2eParameterSets: []
+technicalConfigurationParameterSets: []
+productionMode: false # cloud passport: ext-mode version: 1.5

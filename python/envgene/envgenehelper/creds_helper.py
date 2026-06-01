@@ -1,8 +1,10 @@
 import re
+import os
 from pathlib import Path
 
 from envgenehelper import crypt, getenv_with_error, get_env_instances_dir, findAllYamlsInDir, openYaml, getEnvCredentialsPath
 from envgenehelper.errors import ValidationError
+from envgenehelper.yaml_helper import  store_value_to_yaml, writeYamlToFile, beautifyYaml, yaml
 
 from .logger import logger
 
@@ -251,7 +253,7 @@ def validate_creds(creds_path: str = ""):
 def check_cred_value(credId, credValue) -> str:
     result = ""
     type = credValue["type"]
-    data = credValue["data"]
+    data = credValue.get("data", {})
     match type:
         case _ if type == CRED_TYPE_USERPASS:
             if is_envgenenullvalue(data["username"]) or is_envgenenullvalue(data["password"]):
@@ -273,3 +275,44 @@ def is_envgenenullvalue(value: object) -> bool:
     if value.lower() == "envgenenullvalue":
         return True
     return False
+
+def extract_external_cred(cred_map):
+    if cred_map.get("$type") != "credRef":
+        return None
+    cred_id = cred_map.get("credId")
+    if not cred_id or not str(cred_id).strip():
+        raise ValueError(f"Invalid credRef: 'credId' is missing or empty in {cred_map}")
+    return cred_id
+
+def validate_cred_types(creds_map, is_external_cred_env, cred_file):
+    types = {
+        v.get("type")
+        for v in creds_map.values()
+        if isinstance(v, dict) and v.get("type")
+    }
+    if not types:
+        return
+    if is_external_cred_env:
+        if types != {"external"}:
+            raise ValueError(f"Only external credentials allowed. Found: {types} in {cred_file}")
+    else:
+        if "external" in types:
+            raise ValueError(f"External credentials not allowed. Found: {types} in {cred_file}")
+        
+def has_external_creds(creds_map):
+    return any(
+        isinstance(v, dict) and v.get("type") == "external"
+        for v in creds_map.values()
+    )
+
+def copy_creds_to_env_creds_file(env_dir, creds_yaml_content, comment, creds_schema):
+    env_credentials_path = f"{env_dir}/Credentials/credentials.yml"       
+    if os.path.exists(env_credentials_path) :
+        env_creds_yaml = openYaml(env_credentials_path)
+    else:
+        env_creds_yaml = yaml.load("{}")
+    for key, value in creds_yaml_content.items() :
+        store_value_to_yaml(env_creds_yaml, key, value, comment)
+    # storing credentials yaml
+    writeYamlToFile(env_credentials_path, env_creds_yaml)
+    beautifyYaml(env_credentials_path, creds_schema)
