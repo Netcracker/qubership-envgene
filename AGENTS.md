@@ -106,15 +106,26 @@ cross-references.
 
 ### Don't re-gloss established terms
 
-**Once the document defines a term, use it bare. Don't append the definition in parentheses every time the
-term appears.**
+**Once the document defines a term, use it bare. Do not append the definition, type tag, or
+location to every reference.**
 
-❌ **INCORRECT** (every mention re-glosses):
+The rule covers both classes of re-glossing - inline type or definition tags, and inline location or
+path bindings.
+
+❌ **INCORRECT - definition repeated** (every mention re-glosses the type tag):
 
 ```markdown
 The runtime context does not accept external Credentials (`type: external`).
 Local Credentials (`type: usernamePassword` / `secret`) are emitted as plain text.
 Built-in credential references resolve to a Credential (`type: external` or `type: usernamePassword` / `secret`).
+```
+
+❌ **INCORRECT - location repeated** (every mention restates the path):
+
+```markdown
+The generator reads the schema at `/schemas/credentials.schema.json`.
+If the schema at `/schemas/credentials.schema.json` is missing, the build fails.
+Validation rules at `/schemas/credentials.schema.json` are checked before output.
 ```
 
 ✅ **CORRECT** (terms used bare):
@@ -125,18 +136,28 @@ Local Credentials are emitted as plain text.
 Built-in credential references resolve to a Credential.
 ```
 
+```markdown
+The credentials schema lives at `/schemas/credentials.schema.json`.
+
+The generator reads the schema. If the schema is missing, the build fails. Validation rules
+are checked before output.
+```
+
 **Exceptions where the inline detail is justified:**
 
 - **First mention** in the document, especially when the term appears before its definition section in
   reading order. The parenthetical serves as a forward-defining hint.
 - **Conditions or filters** that pick a subset, not a redefinition. "External Credential with `create: true`"
   is a filter, not a redefinition of "external".
+- **Taxonomy tables** that explicitly map terms to bindings, like a Components or Glossary table.
+- **Operational instructions** where the reader copies the exact path or value to act on it.
 
 **Scope:** Applies to **new and modified content only**.
 
-**Why:** Each repetition of a definition is a maintenance liability - when a type renames or an enum value is
-added, every parenthetical must be updated. Established vocabulary lets readers internalize the term and
-frees the doc from re-glossing.
+**Why:** Each repetition of a binding is a maintenance liability - when a type renames, an enum value
+is added, or a path moves, every parenthetical or location must be updated. Established vocabulary
+lets readers internalize the term and frees the doc from re-glossing, whether the gloss is a type
+tag or a file path.
 
 ---
 
@@ -358,7 +379,10 @@ adjective-noun-noun and stumble on the boundary.
 The rule covers vocabulary choices that hurt non-native readers most:
 
 - **Common verbs over Latinate ones.** "use" not "utilize", "help" not "facilitate", "do" not
-  "perform", "let" not "permit", "set" not "establish".
+  "perform", "let" not "permit", "set" not "establish", "try" not "endeavour", "happen" not
+  "transpire", "spread" not "proliferate", "outline" not "delineate", "above" not
+  "aforementioned". Domain Latinate verbs that name a concept of art (`orchestrate`,
+  `instantiate`, `obfuscate`) stay.
 - **English over Latin abbreviations.** "for example" not "e.g.", "that is" not "i.e.", "and so
   on" not "etc.".
 - **One term per concept.** Pick one and stick with it across the document.
