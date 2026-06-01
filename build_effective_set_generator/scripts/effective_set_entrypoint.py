@@ -163,3 +163,7 @@ def _build_cli_cmd(effective_set_dir, full_env_name, sd_path):
         cmd.append(f"--custom-params={custom_params}")
     logger.info(f"CMD:{" ".join(cmd)}")
     return " ".join(cmd)
+
+
+if __name__ == "__main__":
+    effective_set_entrypoint()
