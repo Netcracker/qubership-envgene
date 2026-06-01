@@ -189,11 +189,6 @@ the linking file or the target file is moved.
 - Add comments for complex logic
 - Use meaningful key names
 
-### Documentation File Naming
-
-- Use kebab-case: `override-template-parameters.md`
-- Be descriptive: `billing-prod-deploy.yml` not `override.yml`
-
 ---
 
 ## English style
@@ -241,43 +236,6 @@ EnvGene searches these locations - from bottom to top - and uses the first match
 ```
 
 **Why:** Em dashes are a typographic convention that varies by locale and style guide. A plain hyphen-minus is universally readable, renders consistently across all Markdown renderers, and avoids accidental character encoding issues.
-
-### Semicolons in prose
-
-**Guideline:** Semicolons (`;`) are **not** forbidden, but avoid dense "clause; clause" chains in documentation when separate sentences or lists would read more clearly.
-
-**Prefer:**
-
-- One main idea per sentence, separated by a period.
-- Bullet or numbered lists for parallel steps, outcomes, or options.
-- A comma plus a coordinating conjunction (`and`, `or`) when the second part is short.
-
-**When a semicolon is still appropriate:**
-
-- **Complex list items** where each item already contains commas (the usual US-style role of `;` inside lists).
-- **Literal syntax** in code, paths, or URIs where `;` is required - leave unchanged.
-- **Rare compact one-line definitions** where brevity is more important than flow - use sparingly.
-
-**Avoid:**
-
-- Joining two independent statements in prose only to keep one long line - split into two sentences instead.
-- Using `;` between fragments inside bullets as a substitute for a period or a new bullet.
-
-❌ **HARDER TO READ:**
-
-```markdown
-Item 1 is generated automatically; item 2 is created manually by the user.
-```
-
-✅ **CLEARER:**
-
-```markdown
-Item 1 is generated automatically. Item 2 is created manually by the user.
-```
-
-**Why:** Semicolons are easy to overuse in technical English. Dense use can make specs feel monotonous and is often harder for readers whose first language is not English. Periods and lists align with the rest of these documentation rules.
-
----
 
 ### Semicolons
 
@@ -390,38 +348,6 @@ known."
 
 **Why:** Hyphenation signals "treat these words as one unit". Without it, readers parse
 adjective-noun-noun and stumble on the boundary.
-
----
-
-### Avoid AI-Stylistics
-
-**Documentation is written for humans, not stylized like AI output.**
-
-Common AI-stylistics to avoid:
-
-- Em dashes (`—`) and en dashes (`–`). See [Dashes](#dashes).
-- Semicolons. See [Semicolons](#semicolons).
-- Filler intensifiers: `simply`, `just`, `easily`, `truly`, `incredibly`, `seamlessly`,
-  `robust`, `comprehensive`, `cutting-edge`, `leverage`, `delve`, `tapestry`, `landscape`.
-- Throat-clearing openings: `It's worth noting that...`, `It's important to remember...`,
-  `Let's explore...`, `In this section, we'll discuss...`.
-- `Not only X, but also Y` and `Not just X, but Y` patterns.
-- Empty closings: `In conclusion`, `To summarize`, `As we've seen`.
-- Vague attributions: `widely regarded as`, `has been described as`, `experts agree`. Cite a
-  source or delete the claim.
-- Tail `-ing` significance clauses: `...enabling teams to deliver value at scale`. The phrase
-  almost never carries information. Cut it.
-- Rigid section scaffolding lifted onto a technical page: `Introduction / Challenges / Future
-  Prospects`. Use the section headings the content actually needs.
-- Bullet lists where every item starts with a bold inline header plus colon used to format
-  ordinary prose. Fine for genuine term-definition pairs; an AI tell when applied to all
-  bullets by default.
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** AI-generated text leans on these patterns heavily. Their absence makes documentation
-feel more direct and trustworthy. Read sentences aloud. If it sounds like a press release or a
-chatbot, rewrite.
 
 ---
 
@@ -549,8 +475,9 @@ traps. They force re-reading even when each word is familiar.
   conclusion they need, in the first clause. Detail follows.
 - **Specific, not promotional.** Say what the thing does, not how `powerful`, `seamless`, or
   `robust` it is. Drop adjectives that do not pay rent.
-- **No page-topic self-description.** Skip openers like `This guide explains how to...` or
-  `In this section, we will cover...`. Start with the thing.
+- **No throat-clearing or page-topic self-description.** Skip filler openers - `It's worth
+  noting that...`, `It's important to remember...`, `Let's explore...`, `This guide explains
+  how to...`, `In this section, we will cover...`. Start with the thing.
 - **Present tense for system behaviour.** "The handler retries three times" not "The handler
   will retry three times".
 - **Reserve `will` for the actual future.** "The build fails if the secret is missing" describes
@@ -603,6 +530,36 @@ It fails when the input exceeds 256 MB.
 
 **Why:** Stacked hedges make rules sound suggestive when they are mandatory. Readers cannot tell
 from "may possibly sometimes" whether an action is required, optional, or unreliable.
+
+---
+
+### Avoid AI tells
+
+**Documentation is written for humans, not stylized like AI output.**
+
+Common AI tells to avoid:
+
+- Em dashes (`—`) and en dashes (`–`). See [Dashes](#dashes).
+- Semicolons. See [Semicolons](#semicolons).
+- Filler intensifiers: `simply`, `just`, `easily`, `truly`, `incredibly`, `seamlessly`,
+  `robust`, `comprehensive`, `cutting-edge`, `leverage`, `delve`, `tapestry`, `landscape`.
+- `Not only X, but also Y` and `Not just X, but Y` patterns.
+- Empty closings: `In conclusion`, `To summarize`, `As we've seen`.
+- Vague attributions: `widely regarded as`, `has been described as`, `experts agree`. Cite a
+  source or delete the claim.
+- Tail `-ing` significance clauses: `...enabling teams to deliver value at scale`. The phrase
+  almost never carries information. Cut it.
+- Rigid section scaffolding lifted onto a technical page: `Introduction / Challenges / Future
+  Prospects`. Use the section headings the content actually needs.
+- Bullet lists where every item starts with a bold inline header plus colon used to format
+  ordinary prose. Fine for genuine term-definition pairs; an AI tell when applied to all
+  bullets by default.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** AI-generated text leans on these patterns heavily. Their absence makes documentation
+feel more direct and trustworthy. Read sentences aloud. If it sounds like a press release or a
+chatbot, rewrite.
 
 ---
 
@@ -753,25 +710,6 @@ Bold-text variants are plain blockquotes.
 
 ---
 
-### Line Length
-
-**Prose lines wrap at 120 characters.**
-
-Excluded from this limit:
-
-- Table rows (lines starting with `|`)
-- Code blocks (fenced)
-- URLs and other continuous tokens longer than 120 characters
-
-**Scope:** Applies to **new and modified content only**. Existing content that exceeds 120 characters
-is not affected by this rule and does not need reformatting unless the surrounding lines are being
-edited for other reasons.
-
-**Why:** Long prose lines complicate diff review and side-by-side comparison. 120 leaves room for
-meaningful wrap without forcing tight columns.
-
----
-
 ### Heading numbering
 
 **Do not number headings unless they enumerate alternative workflows.**
@@ -822,7 +760,7 @@ do not number headings in user-facing documentation.
 
 **CRITICAL: All Markdown tables MUST have vertically aligned pipe characters (`|`).**
 
-#### ❌ INCORRECT Format
+#### ❌ Incorrect format
 
 ```markdown
 | Column 1 | Column 2 | Column 3 |
@@ -833,7 +771,7 @@ do not number headings in user-facing documentation.
 
 **Problem:** Pipes are not aligned, causing Markdown linting warnings and poor readability.
 
-#### ✅ CORRECT Format
+#### ✅ Correct format
 
 ```markdown
 | Column 1             | Column 2 | Column 3 |
@@ -856,7 +794,7 @@ do not number headings in user-facing documentation.
 3. **Uniform width per column** - Each cell in a column should have the same width (add trailing spaces)
 4. **Don't add spaces endlessly** - If alignment fails repeatedly, the problem is content length, not spacing
 
-#### Common Mistake
+#### Common mistake
 
 ❌ **DON'T: Try to align long, varying content with spaces**
 
@@ -882,7 +820,7 @@ do not number headings in user-facing documentation.
 
 **Solution:** Shortened "Use When" text → pipes naturally align because each cell in the column has the same width.
 
-#### Real Example from Repository
+#### Real example from repository
 
 ```markdown
 | Location                                              | Scope                | Use When                        |
@@ -892,7 +830,7 @@ do not number headings in user-facing documentation.
 | `/environments/parameters/`                           | Global               | Multiple clusters               |
 ```
 
-#### Delimiter Row Style
+#### Delimiter row style
 
 The delimiter row uses `|---|` form - no spaces between `|` and `-`. Dashes are padded to match
 column width for vertical alignment.
@@ -938,6 +876,13 @@ The [credential schema](/schemas/credential.schema.json) lists the required fiel
 **Why:** Link text is read out of context by screen readers, search engines, and readers who
 scan. `Click here` carries no information when extracted. A destination-naming link tells the
 reader where they will land.
+
+---
+
+### Documentation file naming
+
+- Use kebab-case: `override-template-parameters.md`
+- Be descriptive: `billing-prod-deploy.yml` not `override.yml`
 
 ---
 
@@ -1049,11 +994,11 @@ that is not load-bearing forces stale doc updates with every implementation chan
 
 ---
 
-### Avoid Duplication in Description
+### Avoid duplication in description
 
 **Don't repeat the same information multiple times in the Description section.**
 
-#### ❌ INCORRECT (duplicated info)
+#### ❌ Incorrect (duplicated info)
 
 ```markdown
 ## Description
@@ -1067,7 +1012,7 @@ Template-level parameters are defined two ways:  <!-- DUPLICATE -->
 - Via ParameterSets
 ```
 
-#### ✅ CORRECT (concise, mentioned once)
+#### ✅ Correct (concise, mentioned once)
 
 ```markdown
 ## Description
@@ -1200,7 +1145,7 @@ inconsistencies between rules.
 
 ## Object Examples in Documentation
 
-### Source of Truth for Object Schemas
+### Source of truth for object schemas
 
 **CRITICAL: Never invent object structures. Always derive examples from authoritative sources.**
 
@@ -1231,7 +1176,7 @@ In tutorials and how-to guides, show only the **relevant part** of the object, n
 
 This keeps examples focused on the concept being taught and avoids becoming outdated when unrelated fields change.
 
-#### ❌ INCORRECT - invented fields and unnecessary noise
+#### ❌ Incorrect - invented fields and unnecessary noise
 
 ```yaml
 # Namespace template - WRONG: invented fields, full object shown in tutorial context
@@ -1247,7 +1192,7 @@ deployParameterSets:
   - "bss"
 ```
 
-#### ✅ CORRECT - focused snippet, validated field names, omissions annotated
+#### ✅ Correct - focused snippet, validated field names, omissions annotated
 
 ```yaml
 # Namespace template - only the relevant section is shown
@@ -1264,9 +1209,23 @@ profile:
 
 ## Use case design
 
-Use cases live in `/docs/use-cases/`. They describe observable system behavior in a structured
-format (Pre-requisites, Trigger, Steps, Results) and serve both as documentation and as
-test-design input.
+Use cases (UCs) live in `/docs/use-cases/`. They describe observable system behaviour in a
+structured format (Pre-requisites, Trigger, Steps, Results) and serve both as documentation and
+as test-design input.
+
+**Scope:** All rules in this section apply to **new and modified UCs only**. Existing UCs that
+violate these rules are not affected and do not need rewriting unless the surrounding lines are
+being edited for other reasons.
+
+**Rationale:**
+
+- **Equivalence Class Partitioning** is the standard test-design technique (ISTQB) and aligns
+  with BDD Scenario Outlines and modern API documentation style (Stripe, GitHub, Google API
+  Design Guide).
+- Matrix decomposition (UC per combination of variables) creates combinatorial bloat where
+  most UCs are clones differing in one word.
+- Implementation-detail leaks bind documentation to a specific code shape. Abstraction
+  decouples docs from implementation churn.
 
 ### Apply equivalence class partitioning
 
@@ -1375,22 +1334,6 @@ not have.
 
 1. The job fails with the message: ...
 ```
-
-### Scope
-
-Applies to **new and modified UCs only**. Existing UCs that violate these rules are not
-affected and do not need rewriting unless the surrounding lines are being edited for other
-reasons.
-
-### Why
-
-- **Equivalence Class Partitioning** is the standard test-design technique (ISTQB) and aligns
-  with BDD Scenario Outlines and modern API documentation style (Stripe, GitHub, Google API
-  Design Guide).
-- Matrix decomposition (UC per combination of variables) creates combinatorial bloat where
-  most UCs are clones differing in one word.
-- Implementation-detail leaks bind documentation to a specific code shape. Abstraction
-  decouples docs from implementation churn.
 
 ---
 
@@ -1543,7 +1486,7 @@ by the shared config. Treat the CI report as authoritative.
 result, catches real issues, and avoids distraction from false positives that arise when
 running linters with default (non-project) settings.
 
-### Testing Documentation Changes
+### Testing documentation changes
 
 Before committing documentation:
 
@@ -1551,10 +1494,6 @@ Before committing documentation:
 2. Verify all links work
 3. Ensure tables are aligned
 4. Review for clarity and accuracy
-
----
-
-## Issues
 
 ### Change requests
 
