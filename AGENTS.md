@@ -366,6 +366,12 @@ The rule covers vocabulary choices that hurt non-native readers most:
   action. "The pipeline validates the inputs", not "The pipeline does the validation".
 - **Define acronyms on first use; prefer full names.** Spell out the acronym at first mention
   with the short form in parentheses. Bare acronyms are fine after that.
+- **Avoid metaphorical phrasal verbs.** Drop spatial metaphors (`wired into`, `tied into`,
+  `bolted on`, `plugged into`), causality metaphors (`ends up`, `winds up`, `boils down to`,
+  `comes out to`), and activity metaphors (`kicks in`, `picks up`, `falls through`). Replace
+  with a direct verb: `wired into` → `uses`, or `ends up X` → `becomes X` (or just `is X`). Operational
+  phrasals stay - they are the canonical term: `set up`, `look up`, `roll back`, `fall back`,
+  `back up`, `log in`/`log out`, `sign up`.
 
 ❌ **INCORRECT:**
 
@@ -396,8 +402,10 @@ expanded on first use spare readers a hunt for the definition.
 - **One main idea per paragraph.** The first sentence carries the point; the rest supports it.
 - **Active voice for behaviour statements.** "The calculator emits X" not "X is emitted by the
   calculator".
-- **No idioms or metaphors.** "Out of the box", "low-hanging fruit", "hands down", "moving the
-  needle" - drop them. They do not translate and read awkwardly to non-native English speakers.
+- **No idioms, metaphors, or office-speak.** "Out of the box", "low-hanging fruit", "hands
+  down", "moving the needle", "circle back", "touch base", "deep dive", "drill down", "boil
+  the ocean", "stakeholder buy-in", "take this offline" - drop them. They do not translate
+  and read awkwardly to non-native English speakers.
 - **No noun stacks.** Long chains of nouns ("application instance environment configuration
   file") force readers to parse syntactic structure on the fly. Split into a possessive or
   prepositional phrase.
@@ -473,8 +481,10 @@ traps. They force re-reading even when each word is familiar.
   address the reader directly: "Set the region" not "We set the region".
 - **Lead with the answer (Bottom Line Up Front).** Put the verb the reader runs, or the
   conclusion they need, in the first clause. Detail follows.
-- **Specific, not promotional.** Say what the thing does, not how `powerful`, `seamless`, or
-  `robust` it is. Drop adjectives that do not pay rent.
+- **Specific, not promotional.** Say what the thing does, not that it is `powerful`,
+  `seamless`, `robust`, `next-generation`, `industry-leading`, `best-in-class`, or
+  `cutting-edge`. Skip release-note verbs: `revolutionize`, `unlock`, `transform`, `empower`,
+  `accelerate`, `streamline`. Drop words that do not pay rent.
 - **No throat-clearing or page-topic self-description.** Skip filler openers - `It's worth
   noting that...`, `It's important to remember...`, `Let's explore...`, `This guide explains
   how to...`, `In this section, we will cover...`. Start with the thing.
