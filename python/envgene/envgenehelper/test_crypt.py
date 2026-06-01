@@ -1,5 +1,6 @@
 import os
 import copy
+import subprocess
 import pytest
 from subprocess import SubprocessError
 

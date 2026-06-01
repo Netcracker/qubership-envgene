@@ -88,7 +88,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
             "process_sd_job",
             "env_build_job",
             "generate_effective_set_job",
-            "git_commit_job"
+            "git_commit_job",
         ]
 
         # get passport job if it is not already added for cluster
@@ -174,8 +174,9 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
 
         if (any(job in jobs_map for job in plugin_params['jobs_requiring_git_commit']) and
                 not params['IS_TEMPLATE_TEST']):
-            jobs_map["git_commit_job"] = prepare_git_commit_job(pipeline, full_env_name, environment_name, cluster_name,
-                                                                credential_rotation_job)
+            jobs_map["git_commit_job"] = prepare_git_commit_job(
+                pipeline, full_env_name, environment_name, cluster_name, credential_rotation_job
+            )
         else:
             logger.info(f'Preparing of git commit job for {full_env_name} is skipped.')
 
