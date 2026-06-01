@@ -12,7 +12,7 @@ classifiers = [
 ]
 dependencies = [
     "pydantic==2.10.6",
-    "jschon==0.11.0",
+    "jschon==0.11.1",
     "ruyaml==0.91.0",
 ]
 

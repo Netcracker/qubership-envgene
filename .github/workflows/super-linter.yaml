@@ -37,7 +37,7 @@
       runs-on: ubuntu-latest
       steps:
       - name: "Get the common linters configuration"
-        uses: actions/checkout@v5 # v5.0.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           ref: main # fix/superlinter-config
           repository: netcracker/.github
@@ -45,7 +45,7 @@
           sparse-checkout: |
             config/linters
       - name: "Upload the common linters configuration"
-        uses: actions/upload-artifact@v4 # v4.6.2
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: linter-config
           path: "${{ github.workspace }}/config"
@@ -60,13 +60,13 @@
         statuses: write
       steps:
       - name: Checkout code
-        uses: actions/checkout@v5 # v5.0.0
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
         with:
           # Full git history is needed to get a proper list of changed files within `super-linter`
           fetch-depth: 0
           persist-credentials: false
       - name: "Get the common linters configuration"
-        uses: actions/download-artifact@v5 # v5.0.0
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
         id: download
         with:
           name: linter-config
