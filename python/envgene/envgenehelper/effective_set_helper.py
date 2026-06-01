@@ -1,7 +1,7 @@
 from enum import Enum
 from os import getenv
 
-from envgenehelper import get_envgene_config_yaml, calculate_merge_mode, MergeType, logger
+from envgenehelper import get_envgene_config_yaml, calculate_merge_mode, MergeType, logger, get_sd_dir, SD_FILE_NAME
 
 
 class ESGenerationContext(Enum):
@@ -39,9 +39,10 @@ def resolve_partial_merge_mode():
     raise ValueError(f"Unsupported merge mode for partial: {merge_mode}")
 
 
-def resolve_es_generation_mode(sd_path):
+def resolve_es_generation_mode():
     merge_mode = calculate_merge_mode(getenv("SD_REPO_MERGE_MODE"), getenv("SD_DELTA"))
 
+    sd_path = get_sd_dir().joinpath(SD_FILE_NAME)
     sd_input = bool(getenv("SD_DATA") or bool(getenv("SD_VERSION")))
     any_sd = sd_path.exists() and sd_input
 
