@@ -2,6 +2,13 @@
 
 - [EnvGene Configuration](#envgene-configuration)
   - [`env_definition.yml`](#env_definitionyml)
+  - [File resolution for shared entities](#file-resolution-for-shared-entities)
+    - [Shared template variables](#shared-template-variables)
+    - [Parameter sets](#parameter-sets)
+    - [Resource profiles](#resource-profiles)
+    - [Cloud Passport](#cloud-passport)
+    - [Shared credentials](#shared-credentials)
+    - [Deployer configuration](#deployer-configuration)
   - [`config.yml`](#configyml)
   - [`integration.yml`](#integrationyml)
   - [`deployer.yml`](#deployeryml)
