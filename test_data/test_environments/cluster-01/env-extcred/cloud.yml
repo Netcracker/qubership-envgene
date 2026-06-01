@@ -39,36 +39,15 @@ deployParameters:
     $type: "credRef"
     credId: "app-db-cred"
     property: "username"
-  DEFAULT_TENANT_ADMIN_LOGIN: "admin" # cloud passport: ext-mode version: 1.5
-  DEFAULT_TENANT_ADMIN_PASSWORD: "password" # cloud passport: ext-mode version: 1.5
-  DEFAULT_TENANT_NAME: "tenant" # cloud passport: ext-mode version: 1.5
-  DOC_STORAGE_PERSISTENT_BUCKET_NAME: "permanent-bucket" # cloud passport: ext-mode version: 1.5
-  DOC_STORAGE_TEMPORARY_BUCKET_NAME: "temporary-bucket" # cloud passport: ext-mode version: 1.5
-  GRAFANA_UI_URL: "https://cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
-  GRAYLOG_UI_URL: "https://cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
   MAAS_PASSWORD:
     $type: "credRef"
     credId: "app-maas-cred"
     property: "password"
-  MAVEN_REPO_DEV_NAME: "${MAVEN_REPO_NAME}" # cloud passport: ext-mode version: 1.5
-  MAVEN_REPO_NAME: "mvn.group" # cloud passport: ext-mode version: 1.5
-  MAVEN_REPO_STAGING_NAME: "${MAVEN_REPO_NAME}" # cloud passport: ext-mode version: 1.5
-  MAVEN_REPO_URL: "https://artifactory.qubership.org" # cloud passport: ext-mode version: 1.5
   MONITORING_ENABLED: "true" # cloud passport: ext-mode version: 1.5
-  STORAGE_PROVIDER: "s3" # cloud passport: ext-mode version: 1.5
-  STORAGE_REGION: "eu-west-1" # cloud passport: ext-mode version: 1.5
-  STORAGE_RWO_CLASS: "standard" # cloud passport: ext-mode version: 1.5
-  STORAGE_RWX_CLASS: "" # cloud passport: ext-mode version: 1.5
-  STORAGE_SERVER_URL: "https://minio.cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
   TEST_PASSWORD:
     $type: "credRef"
     credId: "app-test-cred"
     property: "password"
-  TRACING_ENABLED: "false" # cloud passport: ext-mode version: 1.5
-  TRACING_HOST: "tracing-agent" # cloud passport: ext-mode version: 1.5
-  TRACING_UI_URL: "https://cluster-01.qubership.org" # cloud passport: ext-mode version: 1.5
-  ZOOKEEPER_ADDRESS: "zookeeper.zookeeper:2181" # cloud passport: ext-mode version: 1.5
-  ZOOKEEPER_URL: "${ZOOKEEPER_ADDRESS}" # cloud passport: ext-mode version: 1.5
 e2eParameters: {}
 technicalConfigurationParameters: {}
 deployParameterSets: []

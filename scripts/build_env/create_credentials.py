@@ -62,8 +62,7 @@ def getTenantCreds(tenantContent, tenantName, is_external_cred_env=False, extern
     processParametersAndAppend("environmentParameters", tenantContent["globalE2EParameters"], creds, tenantName, comment=tenantComment)
     return creds
 
-def validate_external_creds(env_creds_map, external_cred_ids):
-    logger.info(f"External cred ids found across entities are {external_cred_ids}")
+def validate_external_creds(env_creds_map, external_cred_ids):    
     not_found_creds = [
         cred_name for cred_name in external_cred_ids
         if cred_name not in env_creds_map
@@ -81,7 +80,7 @@ def validate_external_creds(env_creds_map, external_cred_ids):
         logger.warning(f"Following external credentials:\n{orphan_creds}\n"
             f"exist in external credential source but are not referred in environment"
         )
-    logger.info(f'{len(external_cred_ids)} external creds processed from environment')
+    logger.info(f'External creds processed from environment: {external_cred_ids}')
 
 
 def getCloudCreds(cloudContent, tenantName, cloudName, is_external_cred_env=False, external_cred_ids=None):
