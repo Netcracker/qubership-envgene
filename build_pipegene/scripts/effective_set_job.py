@@ -2,7 +2,7 @@ import json
 import os
 from os import getenv, environ
 
-from envgenehelper import logger, copy_path, get_sd_dir, SD_FILE_NAME
+from envgenehelper import logger, copy_path, get_sd_dir, SD_FILE_NAME, get_sd_dir_by_env_cluster_name
 from gcip import WhenStatement, Need
 
 from pipeline_helper import job_instance
@@ -77,7 +77,8 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
 def validate_topology_context_mode(effective_set_config_dict, params):
     effective_set_version = effective_set_config_dict.get("version") or "v2.0"
     sd_input = bool(params["SD_DATA"]) or bool(params["SD_VERSION"])
-    has_sd = (get_sd_dir() / SD_FILE_NAME).is_file() or sd_input
+    sd_path = get_sd_dir_by_env_cluster_name(params['cluster_name'], params['env_name']) / SD_FILE_NAME
+    has_sd = sd_path or sd_input
     # effective set generation in version 1.0 does not support no sd mode
     if not has_sd and effective_set_version.lower() == "v1.0":
         raise ValueError("Feature generation effective set for pipeline and topology context is not supported for v1.0")
