@@ -7,7 +7,7 @@
     - [UC-SBOM-2: All applications within per-application limit - no files deleted](#uc-sbom-2-all-applications-within-per-application-limit---no-files-deleted)
     - [UC-SBOM-3: Per-application retention keeps 10 most recent versions](#uc-sbom-3-per-application-retention-keeps-10-most-recent-versions)
     - [UC-SBOM-4: Per-application retention with custom version count](#uc-sbom-4-per-application-retention-with-custom-version-count)
-    - [UC-SBOM-5: Total /sboms/ size exceeds 600 MB - safety net keeps newest per application](#uc-sbom-5-total-sboms-size-exceeds-600-mb---safety-net-keeps-newest-per-application)
+    - [UC-SBOM-5: Total /sboms/ size exceeds 600 MB - keeps newest per application](#uc-sbom-5-total-sboms-size-exceeds-600-mb---keeps-newest-per-application)
 
 ## Overview
 
@@ -21,8 +21,8 @@ structure.
 
 The cleanup logic runs during effective set generation and depends only on the
 `sbom_retention.enabled` flag. When enabled, per-application SBOM retention runs only if
-`keep_versions_per_app` is set, then a 600 MB safety net is evaluated on the total size
-of `/sboms/`. These use cases demonstrate the observable behavior in each scenario.
+`keep_versions_per_app` is set, then the total size of `/sboms/` is checked against the
+600 MB limit. These use cases demonstrate the observable behavior in each scenario.
 
 ### UC-SBOM-1: SBOM retention disabled - no cleanup
 
@@ -84,7 +84,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
      keep_versions_per_app: 10
    ```
 
-4. Total size of `/sboms/` is 200 MB (at or below the 600 MB safety-net threshold)
+4. Total size of `/sboms/` is 200 MB (at or below the 600 MB limit)
 
 **Trigger:**
 
@@ -100,7 +100,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).
 4. Per-application SBOM retention runs over each subdirectory. Every subdirectory already
    contains 10 or fewer files, so no files are deleted.
-5. The total size of `/sboms/` is at or below the 600 MB safety-net threshold. The safety net
+5. The total size of `/sboms/` is at or below the 600 MB limit. The total size limit step
    does not run.
 6. The effective set generation completes.
 
@@ -129,7 +129,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
      keep_versions_per_app: 10
    ```
 
-4. Total size of `/sboms/` is 500 MB (below the 600 MB safety-net threshold)
+4. Total size of `/sboms/` is 500 MB (below the 600 MB limit)
 
 **Trigger:**
 
@@ -146,7 +146,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 4. For each per-application subdirectory, the 10 most recent files are kept and older files are
    deleted.
 5. The total size of `/sboms/` after per-application SBOM retention is at or below the 600 MB
-   safety-net threshold. The safety net does not run.
+   limit. The total size limit step does not run.
 6. The effective set generation completes.
 
 **Results:**
@@ -179,7 +179,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
      keep_versions_per_app: 3  # only keep 3 most recent versions
    ```
 
-4. Total size of `/sboms/` is 350 MB (below the 600 MB safety-net threshold)
+4. Total size of `/sboms/` is 350 MB (below the 600 MB limit)
 
 **Trigger:**
 
@@ -195,7 +195,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).
 4. For `/sboms/postgres/`, the 3 most recent files are kept and the 7 older files are deleted.
 5. The total size of `/sboms/` after per-application SBOM retention is at or below the 600 MB
-   safety-net threshold. The safety net does not run.
+   limit. The total size limit step does not run.
 6. The effective set generation completes.
 
 **Results:**
@@ -211,7 +211,7 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
      deleted file)
    - `Directory size <X> MB`
 
-### UC-SBOM-5: Total /sboms/ size exceeds 600 MB - safety net keeps newest per application
+### UC-SBOM-5: Total /sboms/ size exceeds 600 MB - keeps newest per application
 
 **Pre-requisites:**
 
@@ -226,9 +226,9 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
      keep_versions_per_app: 10
    ```
 
-4. Total size of `/sboms/` is 700 MB (above the 600 MB safety-net threshold). Per-application
-   retention is not able to reduce the total below the threshold because no per-application
-   subdirectory exceeds `keep_versions_per_app`
+4. Total size of `/sboms/` is 700 MB (above the 600 MB limit). Per-application retention is not
+   able to reduce the total below the limit because no per-application subdirectory exceeds
+   `keep_versions_per_app`
 
 **Trigger:**
 
@@ -244,9 +244,9 @@ Instance pipeline (GitLab or GitHub) is started with parameters:
 3. Any legacy flat SBOM files at the top of `/sboms/` are removed (none in this case).
 4. Per-application SBOM retention runs over each subdirectory. No subdirectory exceeds
    `keep_versions_per_app`, so no per-application files are deleted.
-5. The total size of `/sboms/` is above the 600 MB safety-net threshold. Safety-net retention
-   runs over each subdirectory and keeps only the most recently modified file. Older files in
-   each subdirectory are deleted.
+5. The total size of `/sboms/` exceeds the 600 MB limit. The total size limit step runs over
+   each subdirectory and keeps only the most recently modified file. Older files in each
+   subdirectory are deleted.
 6. The effective set generation completes.
 
 **Results:**

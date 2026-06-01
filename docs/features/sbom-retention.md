@@ -7,7 +7,7 @@
   - [When cleanup is triggered](#when-cleanup-is-triggered)
   - [Retention strategy](#retention-strategy)
     - [Per-application version retention](#per-application-version-retention)
-    - [Total size safety net](#total-size-safety-net)
+    - [Total size limit](#total-size-limit)
   - [Configuration](#configuration)
     - [Parameters](#parameters)
     - [Examples](#examples)
@@ -35,7 +35,7 @@ Automatic SBOM retention policy that:
 - Is activated by `sbom_retention.enabled: true`
 - Applies [per-application version retention](#per-application-version-retention) to each
   subdirectory under `/sboms/`, when `keep_versions_per_app` is set
-- Falls back to a [total size safety net](#total-size-safety-net) that keeps only the single most
+- Falls back to a [total size limit](#total-size-limit) step that keeps only the single most
   recently modified file in each per-application subdirectory if the total size of `/sboms/`
   still exceeds 600 MB after per-application SBOM retention
 
@@ -46,9 +46,8 @@ Cleanup runs when both of the following conditions are true:
 1. `GENERATE_EFFECTIVE_SET: true` (retention runs as part of the effective set job)
 2. `sbom_retention.enabled: true` in `/configuration/config.yml`
 
-Cleanup is **not** gated by repository size. The 600 MB threshold is checked only by the
-[total size safety net](#total-size-safety-net) step, after per-application SBOM retention
-has run.
+Cleanup is **not** gated by repository size. The 600 MB limit is checked only by the
+[total size limit](#total-size-limit) step, after per-application SBOM retention has run.
 
 ## Retention strategy
 
@@ -59,13 +58,13 @@ When cleanup is triggered, retention processes `/sboms/` in this order:
    [SBOM Storage Migration](/docs/how-to/sbom-storage-migration.md) for context.
 2. [Per-application version retention](#per-application-version-retention) runs for each
    subdirectory under `/sboms/`.
-3. [Total size safety net](#total-size-safety-net) is evaluated on `/sboms/` as a whole.
+3. [Total size limit](#total-size-limit) is evaluated on `/sboms/` as a whole.
 
 ### Per-application version retention
 
-This step runs only when `keep_versions_per_app` is set to a positive integer. When the value is
-unset or `0`, per-application SBOM retention is skipped and only the
-[total size safety net](#total-size-safety-net) is applied.
+Per-application SBOM retention runs only when `keep_versions_per_app` is set to a positive
+integer. If the field is omitted or set to `0`, this step is skipped and only the
+[total size limit](#total-size-limit) step runs.
 
 For each application subdirectory under `/sboms/`:
 
@@ -78,18 +77,18 @@ For each application subdirectory under `/sboms/`:
 > Ordering is by file modification time. Retention does not parse version strings from
 > filenames and is not aware of SemVer semantics.
 
-### Total size safety net
+### Total size limit
 
 After per-application SBOM retention, the total size of `/sboms/` is compared to the 600 MB
-threshold:
+limit:
 
 - If the total size is at or below 600 MB, no further action is taken
 - If the total size exceeds 600 MB, retention runs over each per-application subdirectory and
   keeps only the single most recently modified file. Older files in each subdirectory are deleted
 
-The 600 MB threshold sits well below the [job artifacts](/docs/dev/job-artifacts.md) 1500 MB
-limit so that retention can keep the cache within bounds before the job artifact size becomes
-a problem.
+The 600 MB limit sits well below the [job artifacts](/docs/dev/job-artifacts.md) 1500 MB
+limit on job artifact size, so that retention can keep the cache within bounds before the job
+artifact size becomes a problem.
 
 ## Configuration
 
@@ -106,9 +105,10 @@ sbom_retention:
   enabled: bool
   # Optional
   # No default value
-  # When unset or `0`, per-application SBOM retention is skipped and only the total size
-  # safety net runs (keeping the most recent file per application subdirectory when /sboms/
-  # exceeds 600 MB)
+  # Per-application SBOM retention runs only when this is set to a positive integer.
+  # If the field is omitted or set to `0`, this step is skipped and only the total size
+  # limit step runs (keeping the most recent file per application subdirectory when
+  # /sboms/ exceeds 600 MB)
   keep_versions_per_app: int
 ```
 

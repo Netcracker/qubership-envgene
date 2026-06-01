@@ -253,16 +253,18 @@ app_reg_defs_placement: enum [`dual`, `root`]
 # SBOM retention configuration
 # Runs during Effective Set generation when enabled
 # Applies per-application SBOM retention to subdirectories of `/sboms/` when `keep_versions_per_app` is set
-# A safety net keeps only the single most recent file per application subdirectory if the total size
-# of `/sboms/` still exceeds 600 MB after per-application SBOM retention
+# A total size limit step keeps only the single most recent file per application subdirectory
+# if the total size of `/sboms/` still exceeds 600 MB after per-application SBOM retention
 sbom_retention:
   # Optional. Default value - `false`
   # Enable/disable SBOM retention cleanup
   enabled: boolean
   # Optional. No default value
   # Number of latest versions to keep per application. Used only when `enabled` is true
-  # When unset or `0`, per-application SBOM retention is skipped and only the total size
-  # safety net runs
+  # Per-application SBOM retention runs only when this is set to a positive integer.
+  # If the field is omitted or set to `0`, this step is skipped and only the total size
+  # limit step runs (keeping the most recent file per application subdirectory when /sboms/
+  # exceeds 600 MB)
   keep_versions_per_app: integer
 # Optional. Default value - `true`
 # Enable or disable partial Effective Set generation in `generate_effective_set`
