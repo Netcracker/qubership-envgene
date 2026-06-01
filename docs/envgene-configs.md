@@ -120,7 +120,7 @@ envTemplate:
   sharedTemplateVariables: array
   # Optional
   # Set of environment-specific deployment parameters
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` 
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
   # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificParamsets: hashmap
@@ -163,6 +163,13 @@ security:
   effectiveAccessGroups:
     - string
 ```
+
+> [!NOTE]
+> For the file search paths used when resolving `envTemplate.sharedTemplateVariables`,
+> `envTemplate.envSpecificParamsets`, `envTemplate.envSpecificE2EParamsets`,
+> `envTemplate.envSpecificTechnicalParamsets`, `envTemplate.envSpecificResourceProfiles`,
+> `envTemplate.sharedMasterCredentialFiles`, `inventory.cloudPassport`, and `inventory.deployer`,
+> see [Shared entity search paths](/docs/features/shared-entity-search-paths.md).
 
 Basic example with minimal set of fields:
 
@@ -317,6 +324,10 @@ Located at:
 
 - `/configuration/deployer.yml`
 - `/environments/<cluster-name>/<env-name>/app-deployer/deployer.yml`
+
+> [!NOTE]
+> For the full list of search paths and their priority order, see
+> [Shared entity search paths - Deployer configuration](/docs/features/shared-entity-search-paths.md#deployer-configuration).
 
 [`deployer.yml` JSON Schema](/schemas/deployer.schema.json)
 
