@@ -2,12 +2,12 @@
 
 - [EnvGene Configuration](#envgene-configuration)
   - [`env_definition.yml`](#env_definitionyml)
-  - [File resolution for shared entities](#file-resolution-for-shared-entities)
-    - [Shared template variables](#shared-template-variables)
-    - [Parameter sets](#parameter-sets)
-    - [Resource profiles](#resource-profiles)
-    - [Cloud Passport](#cloud-passport)
-    - [Shared credentials](#shared-credentials)
+    - [File resolution for shared entities](#file-resolution-for-shared-entities)
+      - [Shared template variables](#shared-template-variables)
+      - [Parameter sets](#parameter-sets)
+      - [Resource profiles](#resource-profiles)
+      - [Cloud Passport](#cloud-passport)
+      - [Shared credentials](#shared-credentials)
     - [Deployer configuration](#deployer-configuration)
   - [`config.yml`](#configyml)
   - [`integration.yml`](#integrationyml)
@@ -171,9 +171,6 @@ security:
     - string
 ```
 
-*For the file search-path priority of fields that reference shared entities, see
-[File resolution for shared entities](#file-resolution-for-shared-entities) below.*
-
 Basic example with minimal set of fields:
 
 ```yaml
@@ -224,7 +221,7 @@ envTemplate:
     - prod-integration-creds
 ```
 
-## File resolution for shared entities
+### File resolution for shared entities
 
 When `env_definition.yml` references a shared entity by name - a credentials file, parameter set,
 template variable file, Cloud Passport, resource profile, or deployer configuration - EnvGene
@@ -235,7 +232,7 @@ For new instance repositories, place files in a path marked **Recommended** for 
 The full list of paths is preserved for troubleshooting and migration: paths marked **Deprecated**
 exist for backwards compatibility with legacy layouts and may be removed in future releases.
 
-### Shared template variables
+#### Shared template variables
 
 Referenced via `envTemplate.sharedTemplateVariables`. See
 [Shared Template Variable Files](/docs/envgene-objects.md#shared-template-variable-files) for the
@@ -244,14 +241,14 @@ file format.
 | Priority | Path                                                                | Status      |
 |----------|---------------------------------------------------------------------|-------------|
 | 1        | `/environments/<cluster-name>/<env-name>/Inventory/configuration/`  | Recommended |
-| 2        | `/environments/<cluster-name>/<env-name>/Inventory/configurations/` | Recommended |
+| 2        | `/environments/<cluster-name>/<env-name>/Inventory/configurations/` | Deprecated  |
 | 3        | `/environments/<cluster-name>/configuration/`                       | Recommended |
-| 4        | `/environments/<cluster-name>/configurations/`                      | Recommended |
+| 4        | `/environments/<cluster-name>/configurations/`                      | Deprecated  |
 | 5        | `/environments/configuration/`                                      | Recommended |
-| 6        | `/environments/configurations/`                                     | Recommended |
+| 6        | `/environments/configurations/`                                     | Deprecated  |
 | 7        | `/environments/<cluster-name>/<env-name>/Inventory/`                | Deprecated  |
 
-### Parameter sets
+#### Parameter sets
 
 Referenced via `envTemplate.envSpecificParamsets`, `envTemplate.envSpecificE2EParamsets`, and
 `envTemplate.envSpecificTechnicalParamsets`. See
@@ -264,7 +261,7 @@ for the file format.
 | 2        | `/environments/<cluster-name>/parameters/`                      | Recommended |
 | 3        | `/environments/parameters/`                                     | Recommended |
 
-### Resource profiles
+#### Resource profiles
 
 Referenced via `envTemplate.envSpecificResourceProfiles`. See
 [Environment Specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override)
@@ -285,7 +282,7 @@ for the file format.
 | 11       | `/environments/Profiles/`                                              | Deprecated  |
 | 12       | `/environments/parameters/`                                            | Deprecated  |
 
-### Cloud Passport
+#### Cloud Passport
 
 Referenced via `inventory.cloudPassport`. See
 [Cloud Passport processing](/docs/features/cloud-passport-processing.md) for the full resolution
@@ -293,14 +290,14 @@ behavior, including auto-association which applies only at the cluster level.
 
 | Priority | Path                                                                 | Status      |
 |----------|----------------------------------------------------------------------|-------------|
-| 1        | `/environments/<cluster-name>/<env-name>/Inventory/cloud-passport/`  | Recommended |
+| 1        | `/environments/<cluster-name>/<env-name>/Inventory/cloud-passport/`  | Deprecated  |
 | 2        | `/environments/<cluster-name>/<env-name>/Inventory/cloud-passports/` | Deprecated  |
 | 3        | `/environments/<cluster-name>/cloud-passport/`                       | Recommended |
 | 4        | `/environments/<cluster-name>/cloud-passports/`                      | Deprecated  |
-| 5        | `/environments/cloud-passport/`                                      | Recommended |
+| 5        | `/environments/cloud-passport/`                                      | Deprecated  |
 | 6        | `/environments/cloud-passports/`                                     | Deprecated  |
 
-### Shared credentials
+#### Shared credentials
 
 Referenced via `envTemplate.sharedMasterCredentialFiles`. See
 [Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file) for the file format.
@@ -442,7 +439,7 @@ Located at:
 - `/environments/<cluster-name>/<env-name>/app-deployer/deployer.yml`
 
 *For the deployer file search-path priority, see
-[File resolution → Deployer configuration](#deployer-configuration).*
+[Deployer configuration](#deployer-configuration) under `env_definition.yml`.*
 
 [`deployer.yml` JSON Schema](/schemas/deployer.schema.json)
 
