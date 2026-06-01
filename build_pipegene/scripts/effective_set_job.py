@@ -15,7 +15,7 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     if effective_set_config:
         logger.info(f"EFFECTIVE_SET_CONFIG: {effective_set_config}")
         effective_set_config_dict = json.loads(effective_set_config)
-        validate_topology_context_mode(effective_set_config_dict, params)
+        validate_topology_context_mode(effective_set_config_dict, params, cluster_name, env_name)
 
     app_reg_defs_job = params.get("APP_REG_DEFS_JOB")
     is_local_app_def = init_local_app_defs_from_artifact(full_env_name, app_reg_defs_job, params)
@@ -74,10 +74,10 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     return generate_effective_set_job
 
 
-def validate_topology_context_mode(effective_set_config_dict, params):
+def validate_topology_context_mode(effective_set_config_dict, params, cluster_name, env_name):
     effective_set_version = effective_set_config_dict.get("version") or "v2.0"
     sd_input = bool(params["SD_DATA"]) or bool(params["SD_VERSION"])
-    sd_path = get_sd_dir_by_env_cluster_name(params['cluster_name'], params['env_name']) / SD_FILE_NAME
+    sd_path = get_sd_dir_by_env_cluster_name(cluster_name, env_name) / SD_FILE_NAME
     has_sd = sd_path or sd_input
     # effective set generation in version 1.0 does not support no sd mode
     if not has_sd and effective_set_version.lower() == "v1.0":
