@@ -387,13 +387,14 @@ sbom_retention:
   # limit step runs (keeping the most recent file per application subdirectory when /sboms/
   # exceeds 600 MB)
   keep_versions_per_app: integer
-# Optional. Default value - `true`
-# Enable or disable partial Effective Set generation in `generate_effective_set`
+# Optional. Default value - `partial`
+# Defines the Effective Set generation strategy used by `generate_effective_set`
+# `partial` - Partial Generation is enabled. Selected automatically when applicable, otherwise Full Generation is used
+# `full` - Partial Generation is disabled, only Full Generation is used
 # See [Partial Generation](/docs/features/effective-set-generation.md#partial-generation)
 # and [Full Generation](/docs/features/effective-set-generation.md#full-generation)
 # for generation mode behavior
-# When `false`, Partial Generation is disabled and only Full Generation is used
-partial_effective_set_generation: boolean
+effective_set_generation_strategy: enum [`full`, `partial`]
 ```
 
 ## `integration.yml`
