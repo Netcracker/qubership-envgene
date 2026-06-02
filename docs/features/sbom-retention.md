@@ -37,7 +37,7 @@ Automatic SBOM retention policy that:
   subdirectory under `/sboms/`, when `keep_versions_per_app` is set
 - Falls back to a [total size limit](#total-size-limit) step that keeps only the single most
   recently modified file in each per-application subdirectory if the total size of `/sboms/`
-  still exceeds 600 MB after per-application SBOM retention
+  still exceeds 1200 MB after per-application SBOM retention
 
 ## When cleanup is triggered
 
@@ -46,7 +46,7 @@ Cleanup runs when both of the following conditions are true:
 1. `GENERATE_EFFECTIVE_SET: true` (retention runs as part of the effective set job)
 2. `sbom_retention.enabled: true` in `/configuration/config.yml`
 
-Cleanup is **not** gated by repository size. The 600 MB limit is checked only by the
+Cleanup is **not** gated by repository size. The 1200 MB limit is checked only by the
 [total size limit](#total-size-limit) step, after per-application SBOM retention has run.
 
 ## Retention strategy
@@ -79,16 +79,16 @@ For each application subdirectory under `/sboms/`:
 
 ### Total size limit
 
-After per-application SBOM retention, the total size of `/sboms/` is compared to the 600 MB
+After per-application SBOM retention, the total size of `/sboms/` is compared to the 1200 MB
 limit:
 
-- If the total size is at or below 600 MB, no further action is taken
-- If the total size exceeds 600 MB, retention runs over each per-application subdirectory and
+- If the total size is at or below 1200 MB, no further action is taken
+- If the total size exceeds 1200 MB, retention runs over each per-application subdirectory and
   keeps only the single most recently modified file. Older files in each subdirectory are deleted
 
-The 600 MB limit sits well below the [job artifacts](/docs/dev/job-artifacts.md) 1500 MB
-limit on job artifact size, so that retention can keep the cache within bounds before the job
-artifact size becomes a problem.
+The 1200 MB limit sits below the [job artifacts](/docs/dev/job-artifacts.md) 1500 MB limit on
+job artifact size, so that retention can keep the cache within bounds before the job artifact
+size becomes a problem.
 
 ## Configuration
 
@@ -108,7 +108,7 @@ sbom_retention:
   # Per-application SBOM retention runs only when this is set to a positive integer.
   # If the field is omitted or set to `0`, this step is skipped and only the total size
   # limit step runs (keeping the most recent file per application subdirectory when
-  # /sboms/ exceeds 600 MB)
+  # /sboms/ exceeds 1200 MB)
   keep_versions_per_app: int
 ```
 
