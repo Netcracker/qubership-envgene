@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import subprocess
 import tempfile
@@ -23,7 +21,7 @@ def _minimize_single_cred_file(rel_path: str, repo_root: str) -> None:
         logger.debug(f'Skipping minimize for new cred file: {rel_path}')
         return
 
-    suffix = path.splitext(rel_path)[1] or '.yml'
+    suffix = path.splitext(rel_path)[1]
     old_tmp = None
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as old_tmp_obj:
@@ -36,7 +34,7 @@ def _minimize_single_cred_file(rel_path: str, repo_root: str) -> None:
 
         decrypt_file(full_path, in_place=True)
         encrypt_file(full_path, in_place=True, minimize_diff=True, old_file_path=old_tmp)
-        logger.info(f'Minimized cred diff vs HEAD: {rel_path}')
+        logger.debug(f'Minimized cred diff vs HEAD: {rel_path}')
     finally:
         if old_tmp and os.path.exists(old_tmp):
             os.remove(old_tmp)
