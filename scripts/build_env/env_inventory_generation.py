@@ -17,7 +17,7 @@ SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 
 
 def generate_env_new_approach():
-    env_name = getenv_with_error('ENV_NAME')
+    env_name = getenv_with_error('ENVIRONMENT_NAME')
     cluster = getenv_with_error('CLUSTER_NAME')
     logger.info(f"Starting env inventory generation for env: {env_name} in cluster: {cluster}")
 
@@ -34,7 +34,7 @@ def generate_env_new_approach():
 @deprecated(DEPRECATED_MESSAGE)
 def generate_env():
     base_dir = getenv_and_log('CI_PROJECT_DIR')
-    env_name = getenv_and_log('ENV_NAME')
+    env_name = getenv_and_log('ENVIRONMENT_NAME')
     cluster = getenv_and_log('CLUSTER_NAME')
 
     env_inventory_init = getenv('ENV_INVENTORY_INIT')

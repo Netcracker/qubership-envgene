@@ -7,7 +7,8 @@ class IPluginRegistry(type):
             IPluginRegistry.plugin_registries.append(cls)
 
 class PluginCore(object, metaclass=IPluginRegistry):
-    def __init__(self) -> None:
+
+    def __init__(*args, **kwargs) -> None:
         pass
 
     def invoke(self) -> object:

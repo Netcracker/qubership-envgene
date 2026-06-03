@@ -7,6 +7,8 @@ from envgenehelper.collections_helper import split_multi_value_param
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 logger.info(f"Info about project_dir: {project_dir}")
 
+SCHEMAS_DIR = getenv("JSON_SCHEMAS_DIR", "/module/schemas")
+
 def validate_pipeline(params: dict):
     basic_checks(params['ENV_NAMES'])
     if params['IS_TEMPLATE_TEST']:
@@ -60,15 +62,14 @@ def real_execution_checks(env_names, get_passport, env_build, env_inventory_init
 def check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init, env_inventory_content):
     if env_inventory_init == "true" or env_inventory_content:
         return
-    schemas_dir = getenv("JSON_SCHEMAS_DIR", "/module/schemas")
     all_environments_dir = f"{project_dir}/environments"
     skip_env_definition_check = get_passport and not env_build
-    check_environment_is_valid_or_fail(environment_name, cluster_name, all_environments_dir, skip_env_definition_check, not skip_env_definition_check, schemas_dir=schemas_dir)
+    check_environment_is_valid_or_fail(environment_name, cluster_name, all_environments_dir, skip_env_definition_check, not skip_env_definition_check, schemas_dir=SCHEMAS_DIR)
 
 def check_passport_params(get_passport):
     if get_passport:
         integration_path = f"{project_dir}/configuration/integration.yml"
-        integration_schema_path = f"{getenv('JSON_SCHEMAS_DIR', '/module/schemas')}/integration.schema.json"
+        integration_schema_path = f"{SCHEMAS_DIR}/integration.schema.json"
         if check_file_exists(integration_path):
             validate_yaml_by_scheme_or_fail(integration_path, integration_schema_path)
         else:

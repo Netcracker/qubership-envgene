@@ -32,7 +32,7 @@ def validate_env_vars(is_encrypted: bool, encrypt_type: str):
             values[var_name] = value
 
     # Always required
-    check_env("ENV_NAME")
+    check_env("ENVIRONMENT_NAME")
     check_env("CRED_ROTATION_FORCE")
     check_env("CRED_ROTATION_PAYLOAD")
     check_env("CLUSTER_NAME")
@@ -65,7 +65,7 @@ def validate_env_vars(is_encrypted: bool, encrypt_type: str):
         )
 
     return EnvConfig(
-        env_name=values["ENV_NAME"],
+        env_name=values["ENVIRONMENT_NAME"],
         creds_rotation_enabled=values["CRED_ROTATION_FORCE"] == "true",
         payload_data=payload_data,
         cluster_name=values["CLUSTER_NAME"],
@@ -121,9 +121,9 @@ def cred_rotation():
     start = time.time()
     encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
     config = validate_env_vars(is_encrypted, encrypt_type)
-    
+
     logger.info(f"Starting rotation for: CLUSTER={config.cluster_name}, WORKDIR={config.work_dir}")
- 
+
     logger.info(f"Detected encryption={is_encrypted}, type={encrypt_type}")
 
     base_env_path = f"{config.work_dir}/environments/{config.cluster_name}/{config.env_name}"
@@ -132,7 +132,7 @@ def cred_rotation():
 
     logger.info(f"base env path is {base_env_path}")
 
-   
+
     fileread = time.time()
     # Scan and read all required files
     entity_files_map, env_files_map, env_creds_files = scan_and_get_yaml_files(

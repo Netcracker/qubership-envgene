@@ -28,7 +28,7 @@ class TestEnvInvGen(BaseTest):
         self.env_name = get_environment_name_from_full_name(self.full_env_name)
         self.cluster = get_cluster_name_from_full_name(self.full_env_name)
 
-        environ["ENV_NAME"] = self.env_name
+        environ["ENVIRONMENT_NAME"] = self.env_name
         environ["CLUSTER_NAME"] = self.cluster
         environ["FULL_ENV_NAME"] = self.full_env_name
 
