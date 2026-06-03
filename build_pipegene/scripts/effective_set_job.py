@@ -28,7 +28,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
     base_dir = getenv('CI_PROJECT_DIR')
 
     sd_path = Path(f'{base_dir}/environments/{full_env_name}/Inventory/solution-descriptor/sd.yaml')
-    # TODO it is necessary to remove unnecessary calls, leave only script calls in such jobs! bad for gsf delivery
     script = [
         #Overriding sd_path to pick the correct value for CI_PROJECT_DIR
         f'base_env_path="$CI_PROJECT_DIR/environments/{full_env_name}";',
@@ -100,7 +99,6 @@ def prepare_generate_effective_set_job(pipeline, full_env_name, env_name, cluste
         "FULL_ENV_NAME": full_env_name,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": env_name,
-        "ENV_NAME": env_name,
         "INSTANCES_DIR": "${CI_PROJECT_DIR}/environments",
         "effective_set_generator_image": "$effective_set_generator_image",
         "EXCLUDE_CLEANUP_TARGETS": " ".join(cleanup_targets)

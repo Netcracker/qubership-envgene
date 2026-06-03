@@ -16,7 +16,7 @@ def prepare_credential_rotation_job(pipeline, full_env, environment_name, cluste
   credential_rotation_vars = {
     "FULL_ENV_NAME": full_env,
     "CLUSTER_NAME": cluster_name,
-    "ENV_NAME": environment_name,
+    "ENVIRONMENT_NAME": environment_name,
   }
   credential_rotation_job = job_instance(params=credential_rotation_params, vars=credential_rotation_vars)
   credential_rotation_job.artifacts.add_paths("${CI_PROJECT_DIR}/affected-sensitive-parameters.yaml")

@@ -11,6 +11,7 @@ def prepare_bg_manage_job(pipeline, full_env):
         "stage": 'bg_manage',
         "script": ['python /scripts/bg_manage/bg_manage.py',]
     }
+
     job_vars = {
         "FULL_ENV_NAME": full_env,
     }

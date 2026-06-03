@@ -41,7 +41,6 @@ echo "Branch/Ref Name: ${REF_NAME}"
 echo "User Email: ${USER_EMAIL}"
 echo "User Name: ${USER_NAME}"
 
-echo "ENV_NAME=${ENV_NAME}"
 echo "CLUSTER_NAME=${CLUSTER_NAME}"
 echo "ENVIRONMENT_NAME=${ENVIRONMENT_NAME}"
 echo "DEPLOYMENT_TICKET_ID=${DEPLOYMENT_TICKET_ID}"

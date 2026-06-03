@@ -22,7 +22,7 @@ def setup_env(cluster_name, env_name):
     copy_path(g_inventory_dir, g_test_dir)
     os.rename(f"{g_test_dir}/test_environments", f"{g_test_dir}/environments")
     os.environ["CLUSTER_NAME"] = cluster_name
-    os.environ["ENV_NAME"] = env_name
+    os.environ["ENVIRONMENT_NAME"] = env_name
     with open(f"{g_cred_dir}/payload.json") as f:
         os.environ["CRED_ROTATION_PAYLOAD"] = f.read()
     os.environ["CI_PROJECT_DIR"] = f"{g_test_dir}"

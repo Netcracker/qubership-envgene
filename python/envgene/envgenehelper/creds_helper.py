@@ -125,38 +125,6 @@ def _remove_first_cred_from_input(value):
     return re.sub(r'\${.*creds\.get\(.*\).*}', "", value, 1)
 
 
-# #creds, #credscl, #credsns macroses are not supported
-# vault creds are not supported
-def expand_cred_macro_and_return_value(param_key, param_value, env_creds):
-    credValue = param_value.strip()
-    credKey = param_key.replace(" ", "") if isinstance(param_key, str) else ""
-    if re.match(r'#creds{(.+)\s*,\s*(.+)}', credKey) or re.match(r'#credscl{(.+)\s*,\s*(.+)}', credKey) or re.match(
-            r'#credsns{(.+)\s*,\s*(.+)}', credKey):
-        logger.error(f"Credential macros for parameter is not supported: {param_key}={param_value}")
-        raise ReferenceError(f"Error during credentials preparation. See logs above.")
-    elif re.search(r'\${.*creds\.get.*\.roleId}', credValue) or re.search(r'\${.*creds\.get.*\.secretId}', credValue) \
-            or re.search(r'\${.*creds\.get.*\.path}', credValue) or re.search(r'\${.*creds\.get.*\.namespace}',
-                                                                              credValue):
-        logger.error(f"Credential macros for parameter is not supported: {param_key}={param_value}")
-        raise ReferenceError(f"Error during credentials preparation. See logs above.")
-    credList = get_cred_list_from_param(param_key, param_value)
-    for cred in credList:
-        credId = cred["credentialsId"]
-        if match := re.search(r'\${.*creds\.get.*(' + re.escape(credId) + r').*\.username}', credValue):
-            value = get_value_from_cred(credId, CRED_VALUE_TYPE_USERNAME, env_creds)
-            credValue = credValue.replace(match.group(0), value)
-        elif match := re.search(r'\${.*creds\.get.*(' + re.escape(credId) + r').*\.password}', credValue):
-            value = get_value_from_cred(credId, CRED_VALUE_TYPE_PASSWORD, env_creds)
-            credValue = credValue.replace(match.group(0), value)
-        elif match := re.search(r'\${.*creds\.get.*(' + re.escape(credId) + r').*\.secret}', credValue):
-            value = get_value_from_cred(credId, CRED_VALUE_TYPE_SECRET, env_creds)
-            credValue = credValue.replace(match.group(0), value)
-        else:
-            logger.error(f"Macros for credentialsId {credId} is not found in parameter: {param_key}={param_value}")
-            raise ReferenceError(f"Error during credentials preparation. See logs above.")
-    return credValue
-
-
 def get_value_from_cred(cred_id, cred_val_type, env_creds):
     if cred_id in env_creds:
         credData = env_creds[cred_id]
@@ -229,7 +197,7 @@ def validate_creds(creds_path: str = ""):
         instances_dir = getenv_with_error('INSTANCES_DIR')
         env_dir = get_env_instances_dir(environment_name, cluster_name, instances_dir)
         creds_path = Path(getEnvCredentialsPath(env_dir)).parent
-    
+
     credsErrors = []
     credsYamls = findAllYamlsInDir(creds_path)
     logger.info(f"Starting validation of credentials")
@@ -244,7 +212,7 @@ def validate_creds(creds_path: str = ""):
         for err in credsErrors:
             errorMessage += f"\t{err}\n"
         raise ValidationError(errorMessage)
-    
+
     logger.info(f"Validation of credentials is completed")
 
 

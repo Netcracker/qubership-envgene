@@ -23,7 +23,6 @@ def prepare_env_build_job(pipeline, is_template_test, full_env, enviroment_name,
     }
 
     env_build_vars = {
-        "ENV_NAME": full_env,
         "FULL_ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,
@@ -49,14 +48,12 @@ def prepare_git_commit_job(pipeline, full_env, enviroment_name, cluster_name, cr
         "stage": 'git_commit',
         "script": [
             '/module/scripts/git_commit.sh',
-            "export env_name=$(echo $ENV_NAME | awk -F '/' '{print $NF}')",
-            'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$env_name")',
+            'env_path=$(sudo find $CI_PROJECT_DIR/environments -type d -name "$ENVIRONMENT_NAME")',
             'for path in $env_path; do if [ -d "$path/Credentials" ]; then sudo chmod ugo+rw $path/Credentials/*; fi;  done',
         ],
     }
 
     git_commit_vars = {
-        "ENV_NAME": full_env,
         "FULL_ENV_NAME": full_env,
         "CLUSTER_NAME": cluster_name,
         "ENVIRONMENT_NAME": enviroment_name,

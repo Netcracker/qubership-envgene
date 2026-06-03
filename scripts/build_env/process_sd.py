@@ -88,7 +88,7 @@ def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict
 
 def prepare_vars_and_run_sd_handling():
     base_dir = getenv_and_log('CI_PROJECT_DIR')
-    env_name = getenv_and_log('ENV_NAME')
+    env_name = getenv_and_log('ENVIRONMENT_NAME')
     cluster = getenv_and_log('CLUSTER_NAME')
 
     env = Environment(base_dir, cluster, env_name)
@@ -298,7 +298,6 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
     if 'SNAPSHOT' in version:
         raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
-    # TODO: check if job would fail without plugins
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
     env_creds = helper.get_cred_config()
