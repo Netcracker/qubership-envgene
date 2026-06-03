@@ -14,6 +14,13 @@
       - [Limitation](#limitation)
     - [No-SD Mode](#no-sd-mode)
   - [Configuration](#configuration)
+  - [External export](#external-export)
+    - [Placement modes](#placement-modes)
+    - [External repository location](#external-repository-location)
+    - [Migration](#migration)
+    - [Parameter resolution](#parameter-resolution)
+    - [Branch resolution](#branch-resolution)
+    - [Validation](#validation)
   - [See also](#see-also)
 
 ## Overview
@@ -127,10 +134,110 @@ Key pipeline parameters that affect ES generation:
 
 See [Instance pipeline parameters](/docs/instance-pipeline-parameters.md) for the full list.
 
+## External export
+
+`effective_set.placement` in
+[`env_definition.yml`](/docs/envgene-configs.md#env_definitionyml) at
+`/environments/<cluster-name>/<env-name>/Inventory/env_definition.yml` selects whether the Effective Set is published
+to an external GitLab repository. Set it per environment when one EnvGene instance serves several zones.
+
+### Placement modes
+
+| `placement` | Publish target |
+|-------------|--------------------------------------------------------------------------------|
+| Absent | Instance repository only ([Location](#location)) |
+| `remote` | External repository ([External repository location](#external-repository-location)) |
+| `dual` | [Location](#location) and external repository |
+
+```yaml
+effective_set:
+  placement: remote
+# or
+effective_set:
+  placement: dual
+```
+
+- **`remote`** - publishes only to the external repository. `git_commit` does not add, update, or delete files under
+  [Location](#location).
+- **`dual`** - publishes to the external repository and commits to [Location](#location). Use while consumers still
+  read from the Instance repository (see [Migration](#migration)).
+
+EnvGene reads `effective_set.placement` at the end of [Pipeline Stage](#pipeline-stage), after generation, when
+[`GENERATE_EFFECTIVE_SET`](/docs/instance-pipeline-parameters.md#generate_effective_set) is `true`. [Full
+Generation](#full-generation) and [Partial Generation](#partial-generation) support `remote` and `dual`.
+
+> [!NOTE]
+> Placement controls **where the Effective Set is published** after generation. EnvGene always writes the tree under
+> [Location](#location) in the workspace first.
+
+### External repository location
+
+```text
+/environments/<environment_id>/effective-set
+```
+
+> [!NOTE]
+> When `placement` is `remote`, the Effective Set under [Location](#location) in the Instance repository is stale. The
+> current Effective Set is in the external repository only.
+
+### Migration
+
+Use `placement: dual` while consumers still read from the Instance repository. Switch to `placement: remote` when every
+consumer reads from the external repository. Configure placement only in `env_definition.yml`. See
+[Publish Effective Set to an external GitLab repository](/docs/how-to/generate-effective-set.md#publish-effective-set-to-an-external-gitlab-repository)
+in the how-to guide.
+
+### Parameter resolution
+
+For `remote` and `dual`, EnvGene resolves each connection parameter in this order:
+
+1. [Cloud Passport](/docs/features/cloud-passport-processing.md#passport-file) (`ARGOCD_*`)
+2. DCL parameters (`DCL_*`) from `e2eParameters` in `cloud.yaml` for the environment when the matching `ARGOCD_*` value
+   is not in Cloud Passport
+
+| ARGOCD parameter         | DCL fallback in `e2eParameters` |
+|--------------------------|---------------------------------|
+| `ARGOCD_GITLAB_URL`      | `DCL_GIT_URL`                   |
+| `ARGOCD_GITLAB_BRANCH`   | `DCL_GIT_BRANCH`                |
+| `ARGOCD_GITLAB_USER`     | `DCL_CONFIG_GITLAB_USER`        |
+| `ARGOCD_GITLAB_PASSWORD` | `DCL_CONFIG_GITLAB_TOKEN`       |
+| `ARGOCD_URL`             | `DCL_CONFIG_ARGOCD_URL`         |
+| `ARGOCD_USER`            | `DCL_CONFIG_ARGOCD_USER`        |
+| `ARGOCD_PASSWORD`        | `DCL_CONFIG_ARGOCD_PASSWORD`    |
+
+### Branch resolution
+
+For `remote` and `dual`, the publish branch is resolved in this order:
+
+1. `ARGOCD_GITLAB_BRANCH` in Cloud Passport
+2. `DCL_GIT_BRANCH` in `e2eParameters` in `cloud.yaml`
+3. `master`
+
+### Validation
+
+> [!NOTE]
+> For `remote` and `dual`, each rule below terminates the `generate_effective_set` job. The error names the failing
+> check and, when relevant, the missing parameter or URL.
+
+#### During parameter resolution
+
+1. **Parameter completeness.** Every mapped connection parameter in [Parameter resolution](#parameter-resolution) has
+   a value from Cloud Passport or from `e2eParameters` in `cloud.yaml`.
+2. **Branch completeness.** The publish branch is defined per [Branch resolution](#branch-resolution).
+
+#### During repository access check
+
+1. **Reachability.** The external GitLab URL responds before publish. Failure code: `endpoint_unreachable`.
+2. **Authentication.** Resolved credentials authenticate to that URL. Failure code: `authentication_failed` (includes
+   the URL and remediation guidance).
+
+See [Effective Set external export use cases](/docs/use-cases/effective-set-external-export.md) for worked examples.
+
 ## See also
 
-- [Calculator CLI](/docs/features/calculator-cli.md) — the underlying tool and the detailed ES file-structure reference.
-- [How to generate an Effective Set](/docs/how-to/generate-effective-set.md) — operational guide.
-- [Tutorial: Understanding the Effective Set](/docs/tutorials/effective-set.md) — walkthrough of ES contents and parameter flow.
-- [SD processing](/docs/features/sd-processing.md) — how the Solution Descriptor is merged and stored.
-- [SBOM](/docs/features/sbom.md) — how Application SBOMs are produced and cached.
+- [Calculator CLI](/docs/features/calculator-cli.md) - the underlying tool and the detailed ES file-structure reference.
+- [How to generate an Effective Set](/docs/how-to/generate-effective-set.md) - operational guide.
+- [Tutorial: Understanding the Effective Set](/docs/tutorials/effective-set.md) - walkthrough of ES contents and
+  parameter flow.
+- [SD processing](/docs/features/sd-processing.md) - how the Solution Descriptor is merged and stored.
+- [SBOM](/docs/features/sbom.md) - how Application SBOMs are produced and cached.
