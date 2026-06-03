@@ -25,9 +25,9 @@
 
 ## Overview
 
-The Effective Set (ES) is the resolved parameter set for an environment — the output consumed by deployment tooling such as ArgoCD. It is produced by merging inputs from the Solution Descriptor, the environment instance objects, Application SBOMs, and registry configuration according to strict priority rules.
+The Effective Set (ES) is the resolved parameter set for an environment - the output consumed by deployment tooling such as ArgoCD. It is produced by merging inputs from the Solution Descriptor, the environment instance objects, Application SBOMs, and registry configuration according to strict priority rules.
 
-ES generation runs as a dedicated stage in the Instance Repository pipeline and commits its output back to the repository.
+ES generation runs as a dedicated stage in the Instance Repository pipeline. By default, `git_commit` writes the output to the Instance repository under [Location](#location). When `effective_set.placement` is `remote` or `dual`, EnvGene can also publish to an external GitLab repository - see [External export](#external-export).
 
 ## Location
 
@@ -43,6 +43,9 @@ The generated ES is stored alongside its environment:
 ```
 
 `topology/` and `pipeline/` hold solution-level data. `deployment/`, `runtime/`, and `cleanup/` contain per-namespace (and per-application for `deployment` and `runtime`) data.
+
+> [!NOTE]
+> The `generate_effective_set` job always writes this tree in the workspace under the path above. Where that tree is published after generation depends on `effective_set.placement` in `env_definition.yml` - Instance repository only (default), external repository only (`remote`), or both (`dual`). See [External export](#external-export).
 
 The detailed file-level layout and contents are documented in [Calculator CLI](/docs/features/calculator-cli.md#version-20-effective-set-structure).
 
