@@ -48,8 +48,8 @@ def test_sd_positive(test_case_name):
                 f"\n\tTest case: {test_case_name}")
 
     sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = load_test_pipeline_sd_data(TEST_SD_DIR, test_case_name)
-        
-    handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
+
+    handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode, OperationType.DEPLOY)
     actual_dir = os.path.join(env.env_path, "Inventory", "solution-descriptor")
 
     assert_sd_contents(TEST_SD_DIR, OUTPUT_DIR, test_case_name, actual_dir, test_suits_map)

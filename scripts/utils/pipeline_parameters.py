@@ -8,7 +8,7 @@ from pathlib import Path
 
 from envgenehelper import logger
 from envgenehelper import writeToFile, getenv_with_error, split_multi_value_param, get_schema_dir
-from envgenehelper.models import TemplateVersionUpdateMode
+from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.validations import real_execution_checks
 
@@ -49,6 +49,8 @@ def get_pipeline_parameters() -> dict:
         "CUSTOM_PARAMS": getenv("CUSTOM_PARAMS"),
         "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
             "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
+        "OPERATION_TYPE": getenv("OPERATION_TYPE", OperationType.DEPLOY.value),
+        "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", "")
     }
 
 
