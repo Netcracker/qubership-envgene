@@ -31,6 +31,7 @@ class PipelineVars:
     env_template_name: str = ""
     env_specific_params: str = ""
     custom_params: str = ""
+    env_inventory_content: str = ""
 
 def convert_keys_to_uppercase(pairs):
     return {k.upper(): v for k, v in pairs}
@@ -77,6 +78,24 @@ build_pipeline_test_data = [
     (
         PipelineVars(get_passport="false", generate_effective_set="false", custom_params='{"params": "value"}'),
         ["app_reg_def_render", "env_builder", "git_commit"],
+    ),
+    # ENV_INVENTORY_CONTENT with ENV_BUILDER=false: only inventory generation and git_commit
+    (
+        PipelineVars(
+            get_passport="false",
+            env_builder="false",
+            generate_effective_set="false",
+            env_inventory_content='{"envDefinition":{"action":"create_or_replace","content":{}}}',
+        ),
+        ["env_inventory_generation", "git_commit"],
+    ),
+    # ENV_INVENTORY_CONTENT with ENV_BUILDER=true: inventory generation runs alongside build
+    (
+        PipelineVars(
+            get_passport="false",
+            env_inventory_content='{"envDefinition":{"action":"create_or_replace","content":{}}}',
+        ),
+        ["env_inventory_generation", "app_reg_def_render", "env_builder", "generate_effective_set", "git_commit"],
     ),
 ]
 

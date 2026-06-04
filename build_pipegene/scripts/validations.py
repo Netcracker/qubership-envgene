@@ -60,7 +60,7 @@ def real_execution_checks(env_names, get_passport, env_build, env_inventory_init
         check_passport_params(get_passport)
 
 def check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init, env_inventory_content):
-    if env_inventory_init == "true" or env_inventory_content:
+    if env_inventory_init or env_inventory_content:
         return
     all_environments_dir = f"{project_dir}/environments"
     skip_env_definition_check = get_passport and not env_build
