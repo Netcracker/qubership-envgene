@@ -5,18 +5,16 @@ from enum import Enum
 from os import path, getenv
 from pathlib import Path
 
-import yaml
-
 import envgenehelper as helper
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from envgenehelper.business_helper import getenv_and_log, getenv_with_error
+from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_merge_helper import basic_merge_multiple
-from envgenehelper.collections_helper import split_multi_value_param
 
 
 class MergeType(Enum):
@@ -115,9 +113,8 @@ def build_namespace_dict(env) -> dict:
         if os.path.isdir(folder_path):
             namespace_file = os.path.join(folder_path, "namespace.yml")
             if os.path.isfile(namespace_file):
-                with open(namespace_file, 'r') as f:
-                    data = yaml.safe_load(f)
-                    logger.info(f"Parsed content of {namespace_file}: {data}")
+                data = helper.openYaml(namespace_file, safe_load=True)
+                logger.debug(f"Parsed content of {namespace_file}: {data}")
                 # Extract 'name' property
                 ns_name = data.get("name")
                 logger.info(f"ns_name = {ns_name}")
@@ -305,7 +302,7 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
 
     artifact_info = asyncio.run(
         artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,
-                                       auth_headers=auth_headers))
+                                      auth_headers=auth_headers))
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')

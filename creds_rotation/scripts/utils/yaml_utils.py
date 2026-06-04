@@ -1,10 +1,14 @@
 import os
-import yaml
 import re
 from typing import Any
+
+import yaml
+
 import envgenehelper.logger as logger
-from utils.error_constants import  *
 from envgenehelper.errors import ValidationError, ValueError
+from envgenehelper.yaml_helper import openYaml
+from utils.error_constants import *
+
 
 def write_yaml_to_file(file_path: str, contents: Any) -> None:
     logger.debug(f"Writing YAML to file: {file_path}")
@@ -12,20 +16,21 @@ def write_yaml_to_file(file_path: str, contents: Any) -> None:
     with open(file_path, "w") as f:
         yaml.safe_dump(contents, f, sort_keys=False)
 
-def convert_json_to_yaml(file_path: str, json_data: Any):
 
+def convert_json_to_yaml(file_path: str, json_data: Any):
     with open(file_path, "w") as yaml_file:
         yaml.dump(json_data, yaml_file, sort_keys=False)
 
 
 def get_content_form_file(file: str) -> Any:
-        try:
-            with open(file, "r", encoding="utf-8") as f:
-                return yaml.safe_load(f)
-        except FileNotFoundError as e:
-            raise
-        except Exception as e:
-            raise ValidationError(ErrorMessages.INVALID_YAML_FILE.format(file=file, e=str(e)), ErrorCodes.INVALID_CONFIG_CODE)
+    try:
+        return openYaml(file, safe_load=True)
+    except FileNotFoundError as e:
+        raise
+    except Exception as e:
+        raise ValidationError(ErrorMessages.INVALID_YAML_FILE.format(file=file, e=str(e)),
+                              ErrorCodes.INVALID_CONFIG_CODE)
+
 
 def get_nested_target_key(yaml_data: dict, path: str) -> str:
     current = yaml_data
@@ -45,10 +50,11 @@ def get_nested_target_key(yaml_data: dict, path: str) -> str:
 
         if index is not None:
             if not isinstance(current, list):
-                raise ValueError(ErrorMessages.INVALID_DATA_TYPE.format(expected="list", value=key[index], type=type(current)), ErrorCodes.INVALID_DATA_TYPE_CODE)
+                raise ValueError(
+                    ErrorMessages.INVALID_DATA_TYPE.format(expected="list", value=key[index], type=type(current)),
+                    ErrorCodes.INVALID_DATA_TYPE_CODE)
             if index >= len(current):
                 raise ValueError(ErrorMessages.OUT_OF_RANGE.format(index=index, key=key), ErrorCodes.OUT_OF_RANGE_CODE)
             current = current[index]
 
     return current
-
