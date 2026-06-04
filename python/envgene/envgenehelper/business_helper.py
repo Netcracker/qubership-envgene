@@ -1,6 +1,6 @@
-from enum import auto, StrEnum
 import re
 from dataclasses import InitVar, dataclass, field
+from enum import auto, StrEnum
 from os import getenv
 from pathlib import Path
 from typing import overload
@@ -9,8 +9,7 @@ from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
 from .collections_helper import dump_as_yaml_format
-from .collections_helper import merge_lists
-from .file_helper import getAbsPath, extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
+from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
 from .logger import logger
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
@@ -270,11 +269,11 @@ def find_passport_by_env_definition(cloud_passport_name, env_dir, instances_dir)
         Path(env_dir).parent,
         Path(instances_dir),
     ]
-    
+
     passport_dir_names = ["cloud-passport", "cloud-passports"]
-    
+
     shared_passport_paths = [level / name for level in levels for name in passport_dir_names]
-    
+
     for p in shared_passport_paths:
         found_path = find_yaml_file(p, cloud_passport_name, recursively=True)
         if found_path:
