@@ -494,6 +494,10 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 
 **Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macro-and-credential-reference)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
 
+> [!CAUTION]
+> `CRED_ROTATION_PAYLOAD` and `GET_PASSPORT: true` cannot be set in the same pipeline run. The pipeline
+> fails at validation before any job starts if both are set.
+
 ```json
 {
   "rotation_items": [

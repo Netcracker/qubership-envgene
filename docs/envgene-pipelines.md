@@ -28,8 +28,8 @@ flowchart TB
         A[trigger_passport] --> B[get_passport]
     end
     subgraph per_env["Per-environment jobs"]
-        C[bg_manage] --> D[env_inventory_generation]
-        D --> E[credential_rotation]
+        C[credential_rotation] --> D[bg_manage]
+        D --> E[env_inventory_generation]
         E --> F[app_reg_def_process]
         F --> G[process_sd]
         G --> H[env_build]
@@ -48,20 +48,20 @@ flowchart TB
    - **Condition**: Runs if [`GET_PASSPORT: true`](/docs/instance-pipeline-parameters.md#get_passport)
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-3. **bg_manage**
+3. **credential_rotation**:
+   - **Condition**: Runs if [`CRED_ROTATION_PAYLOAD`](/docs/instance-pipeline-parameters.md#cred_rotation_payload) is provided
+   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
+
+4. **bg_manage**
    - **Condition**: Runs if [`BG_MANAGE: true`](/docs/instance-pipeline-parameters.md#bg_manage).
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
-4. **env_inventory_generation**:
+5. **env_inventory_generation**:
    - **Condition**: Runs if [`ENV_TEMPLATE_TEST: false`](/docs/envgene-repository-variables.md#env_template_test) AND any of the following holds:
      - [`ENV_INVENTORY_CONTENT`](/docs/instance-pipeline-parameters.md#env_inventory_content) is set, or
      - [`ENV_INVENTORY_INIT`](/docs/instance-pipeline-parameters.md#env_inventory_init) is `true`, or
      - [`ENV_SPECIFIC_PARAMS`](/docs/instance-pipeline-parameters.md#env_specific_params) is set (non-empty), or
      - [`ENV_TEMPLATE_NAME`](/docs/instance-pipeline-parameters.md#env_template_name) is set (non-empty)
-   - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
-
-5. **credential_rotation**:
-   - **Condition**: Runs if [`CRED_ROTATION_PAYLOAD`](/docs/instance-pipeline-parameters.md#cred_rotation_payload) is provided
    - **Docker image**: [`qubership-envgene`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-envgene)
 
 6. **app_reg_def_process**:
