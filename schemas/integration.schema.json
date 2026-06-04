@@ -57,6 +57,8 @@
         "gitlab"
       ]
     }
-  }
-
+  },
+  "required": [
+    "cp_discovery"
+  ]
 }
