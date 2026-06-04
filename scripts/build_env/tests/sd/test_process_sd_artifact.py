@@ -51,14 +51,14 @@ def test_sd_positive(mock_download_sd, test_case_name):
     file_path = Path(TEST_SD_DIR, test_case_name, f"mock_sd.json")
     sd_data = openJson(file_path)
     mock_download_sd.return_value = sd_data
-        
-    handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
+
+    handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode, OperationType.DEPLOY)
     actual_dir = os.path.join(env.env_path, "Inventory", "solution-descriptor")
 
     assert_sd_contents(TEST_SD_DIR, OUTPUT_DIR, test_case_name, actual_dir, test_suits_map)
     logger.info(f"=====SUCCESS - {test_case_name}======")
-    
-    
+
+
 @pytest.mark.parametrize("test_case_name,expected_exception", [(k, v) for k, v in TEST_CASES_NEGATIVE.items()])
 @patch("process_sd.download_sd_by_appver")
 def test_sd_negative(mock_download_sd, test_case_name, expected_exception):
@@ -73,8 +73,8 @@ def test_sd_negative(mock_download_sd, test_case_name, expected_exception):
     file_path = Path(TEST_SD_DIR, test_case_name, f"mock_sd.json")
     sd_data = openJson(file_path)
     mock_download_sd.return_value = sd_data
-    
+
     with pytest.raises(expected_exception):
-        handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
+        handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode, OperationType.DEPLOY)
 
     logger.info(f"=====SUCCESS - {test_case_name}======")

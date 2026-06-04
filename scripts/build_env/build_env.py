@@ -439,7 +439,7 @@ def process_additional_template_parameters(render_env_dir, source_env_dir, all_i
         Path(source_env_dir).parent,
         Path(all_instances_dir),
     ]
-    
+
     template_params_dir_names = ["configuration", "configurations"]
     shared_template_vars_paths = [level / name for level in levels for name in template_params_dir_names]
     shared_template_vars_paths.append(Path(source_env_dir) / "Inventory")
@@ -563,6 +563,9 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
             resource_profiles_map=needed_resource_profiles_map,
             header_text=generated_header_text,
         )
+    operation_type = OperationType(getenv("OPERATION_TYPE"))
+    if operation_type == OperationType.CLEAN:
+        set_cleaned_mark(namespaces)
     logger.info(f"EnvSpecific parameters are: \n{dump_as_yaml_format(env_specific_parameters_map)}")
     checkEnvSpecificParametersBySchema(env_dir, env_specific_parameters_map, template_namespace_names)
 
@@ -590,3 +593,24 @@ def build_env(env_name, env_instances_dir, parameters_dir, env_template_dir, res
         copy_path(profile_file_path, f"{result_profiles_dir}/")
         resulting_profile_path = result_profiles_dir / Path(profile_file_path).name
         beautifyYaml(resulting_profile_path, profiles_schema, generated_header_text)
+
+
+def set_cleaned_mark(namespaces: list[NamespaceFile]):
+    ns_map = {ns.name: ns for ns in namespaces}
+    ns_names_var = getenv("NAMESPACE_NAMES")
+    if not ns_names_var:
+        logger.info("NAMESPACE_NAMES is empty, marking all namespaces as cleaned (env-cleanup)")
+        filtered_ns = namespaces.copy()
+    else:
+        ns_names = split_multi_value_param(ns_names_var)
+        filtered_ns = []
+        for name in ns_names:
+            ns_obj = ns_map.get(name)
+            if ns_obj is None:
+                raise ValueError(f"Operation type CLEAN: namespace '{name}' not found in env_instance")
+            filtered_ns.append(ns_obj)
+    for ns in filtered_ns:
+        logger.info(f"Operation type CLEAN: setting cleaned=true for namespace '{ns.name}'")
+        ns_yaml = openYaml(ns.definition_path)
+        set_nested_yaml_attribute(ns_yaml, "cleaned", True)
+        writeYamlToFile(ns.definition_path, ns_yaml)

@@ -5,18 +5,18 @@ from enum import Enum
 from os import path, getenv
 from pathlib import Path
 
-import yaml
-
 import envgenehelper as helper
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
+from envgenehelper import openYaml
 from envgenehelper.business_helper import getenv_and_log, getenv_with_error
+from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
-from envgenehelper.file_helper import identify_yaml_extension
+from envgenehelper.file_helper import identify_yaml_extension, deleteFileIfExists
 from envgenehelper.logger import logger
+from envgenehelper.models import OperationType
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_merge_helper import basic_merge_multiple
-from envgenehelper.collections_helper import split_multi_value_param
 
 
 class MergeType(Enum):
@@ -98,7 +98,8 @@ def prepare_vars_and_run_sd_handling():
     sd_data = getenv('SD_DATA')
     sd_delta = getenv('SD_DELTA')
     sd_merge_mode = getenv("SD_REPO_MERGE_MODE")
-    handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
+    operation_type = OperationType(getenv("OPERATION_TYPE"))
+    handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode, operation_type)
 
 
 def build_namespace_dict(env) -> dict:
@@ -107,7 +108,7 @@ def build_namespace_dict(env) -> dict:
 
     if not os.path.exists(namespaces_dir):
         logger.warning(f"Namespaces directory does not exist: {namespaces_dir}")
-        return result  # Return empty dict instead of throwing an error
+        return result
 
     # Iterate over all items in Namespaces directory
     for folder_name in os.listdir(namespaces_dir):
@@ -115,12 +116,11 @@ def build_namespace_dict(env) -> dict:
         if os.path.isdir(folder_path):
             namespace_file = os.path.join(folder_path, "namespace.yml")
             if os.path.isfile(namespace_file):
-                with open(namespace_file, 'r') as f:
-                    data = yaml.safe_load(f)
-                    logger.info(f"Parsed content of {namespace_file}: {data}")
+                data = openYaml(namespace_file)
+                logger.debug(f"Parsed content of {namespace_file}: {data}")
                 # Extract 'name' property
                 ns_name = data.get("name")
-                logger.info(f"ns_name = {ns_name}")
+                logger.debug(f"ns_name = {ns_name}")
                 if ns_name and isinstance(ns_name, str):
                     result[ns_name] = folder_name
                 else:
@@ -188,20 +188,64 @@ def multiply_sds_to_single(sds_data, effective_merge_mode):
     return full_sd_from_pipe
 
 
-def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
+def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode, operation_type: OperationType):
     base_sd_path = Path(f'{env.env_path}/Inventory/solution-descriptor/')
+    if operation_type == OperationType.DEPLOY:
+        namespace_names = getenv("NAMESPACE_NAMES")
+        if namespace_names:
+            logger.warning("NAMESPACE_NAMES is ignored when OPERATION_TYPE=DEPLOY")
 
-    sd_delta = calculate_sd_delta(sd_delta)
-    effective_merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
+        sd_delta = calculate_sd_delta(sd_delta)
+        effective_merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
 
-    helper.check_dir_exist_and_create(base_sd_path)
-    if sd_source_type == "artifact":
-        download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mode)
-    elif sd_source_type == "json":
-        extract_sds_from_json(env, base_sd_path, sd_data, effective_merge_mode)
-    else:
-        logger.error('SD_SOURCE_TYPE must be set either to "artifact" or "json"')
-        exit(1)
+        helper.check_dir_exist_and_create(base_sd_path)
+        if sd_source_type == "artifact":
+            download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mode)
+        elif sd_source_type == "json":
+            extract_sds_from_json(env, base_sd_path, sd_data, effective_merge_mode)
+        else:
+            logger.error('SD_SOURCE_TYPE must be set either to "artifact" or "json"')
+            exit(1)
+    elif operation_type == OperationType.CLEAN:
+        ns_names_var = getenv("NAMESPACE_NAMES")
+        sd_path = base_sd_path / "sd.yaml"
+        if not sd_path.exists():
+            logger.info(f"Operation type CLEAN: sd.yaml not found at {sd_path}, nothing to filter")
+            return
+
+        if not ns_names_var:
+            deleteFileIfExists(sd_path)
+            logger.info(f"Operation type CLEAN: NAMESPACE_NAMES is empty, env-cleanup (all namespaces), deleted {sd_path}")
+            return
+
+        # { "namespace_name": "folder_name_for_ns" }
+        ns_map = build_namespace_dict(env)
+        ns_for_cleanup = {}
+
+        for ns_name in split_multi_value_param(ns_names_var):
+            deploy_postfix = ns_map.get(ns_name)
+            if deploy_postfix is None:
+                raise ValueError(f"Operation type CLEAN: namespace '{ns_name}' has no matching namespace folder")
+            ns_for_cleanup[ns_name] = deploy_postfix
+
+        sd = openYaml(sd_path)
+        apps = sd.get("applications", [])
+
+        postfixes_from_sd = {app.get("deployPostfix") for app in apps if app.get("deployPostfix")}
+        for ns_name, dp in ns_for_cleanup.items():
+            if dp not in postfixes_from_sd:
+                # case incorrect ns from namespace_names or accidentally launched 2 clean up same ns
+                logger.warning(f"Operation type CLEAN: deployPostfix '{dp}' (namespace '{ns_name}') not found in sd")
+
+        postfixes_for_cleanup = set(ns_for_cleanup.values())
+        filtered_apps = [app for app in apps if app.get("deployPostfix") not in postfixes_for_cleanup]
+        if not filtered_apps:
+            logger.info(f"Operation type CLEAN: applications is empty, delete {sd_path}")
+            deleteFileIfExists(sd_path)
+            return
+
+        sd["applications"] = filtered_apps
+        helper.writeYamlToFile(sd_path, sd)
 
 
 def validate_applications(sd, effective_merge_mode: MergeType):
@@ -306,7 +350,7 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
 
     artifact_info = asyncio.run(
         artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,
-                                       auth_headers=auth_headers))
+                                      auth_headers=auth_headers))
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')
