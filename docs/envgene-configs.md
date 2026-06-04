@@ -421,11 +421,6 @@ cp_discovery:
     # Recommended to set via cred macro:
     # ${creds.get('<cred-id>').secret}
     token: string
-# Authentication token for EnvGene to access the instance repository
-# Required for EnvGene to commit changes to the instance repository
-# Recommended to set via cred macro:
-# ${creds.get('<cred-id>').secret}
-self_token: string
 ```
 
 ## `deployer.yml`
