@@ -32,6 +32,11 @@ class TestEnvInvGen(BaseTest):
         environ["CLUSTER_NAME"] = self.cluster
         environ["FULL_ENV_NAME"] = self.full_env_name
 
+    def teardown_method(self):
+        for var in ("ENVIRONMENT_NAME", "CLUSTER_NAME", "FULL_ENV_NAME",
+                    "ENV_INVENTORY_CONTENT", "ENV_TEMPLATE_VERSION"):
+            environ.pop(var, None)
+
         site = Path(self.ci_project_dir) / "environments"
         self.site_dir = site
         self.cluster_dir = self.site_dir / self.cluster

@@ -30,7 +30,7 @@ class TestEnvBuild(BaseTest):
         monkeypatch.chdir(self.base_dir)
 
     @pytest.mark.parametrize("cluster_name, env_name, version, extra_templates", test_data)
-    def test_render_envs(self, cluster_name, env_name, version, extra_templates):
+    def test_render_envs(self, cluster_name, env_name, version, extra_templates, monkeypatch):
         g_templates_dirs = {
             NamespaceRole.COMMON: str((self.test_data_dir / "test_templates").resolve())
         }
@@ -39,8 +39,8 @@ class TestEnvBuild(BaseTest):
         g_inventory_dir = str((self.test_data_dir / "test_environments").resolve())
         g_output_dir = str((self.base_dir / "/tmp/test_environments").resolve())
 
-        os.environ['CI_COMMIT_REF_NAME'] = "branch_name"
-        environ['FULL_ENV_NAME'] = cluster_name + '/' + env_name
+        monkeypatch.setenv('CI_COMMIT_REF_NAME', "branch_name")
+        monkeypatch.setenv('FULL_ENV_NAME', cluster_name + '/' + env_name)
 
         render_environment(env_name, cluster_name, g_templates_dirs, g_inventory_dir, g_output_dir, self.test_data_dir)
         source_dir = f"{g_inventory_dir}/{cluster_name}/{env_name}"
