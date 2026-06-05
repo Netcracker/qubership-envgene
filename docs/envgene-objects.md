@@ -1564,6 +1564,9 @@ Credentials can be defined at three scopes with different precedence:
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
+*For the file search-path priority, see
+[File resolution → Shared credentials](/docs/envgene-configs.md#shared-credentials).*
+
 Any YAML file located in these folders is treated as a Shared Credentials File.
 
 **Example:**
@@ -1623,6 +1626,9 @@ Files can be defined at three scopes with different precedence:
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
+*For the file search-path priority, see
+[File resolution → Shared template variables](/docs/envgene-configs.md#shared-template-variables).*
+
 The file must contain a key-value hashmap and must NOT be located in a `parameters` directory.
 
 During Environment Instance generation, variables from Shared Template Variable Files are merged with `additionalTemplateVariables` from the Environment Inventory. Variables from `additionalTemplateVariables` take precedence over variables from Shared Template Variable Files if there are conflicts.
@@ -1660,6 +1666,9 @@ When an Environment Specific ParameterSet is referenced, EnvGene searches for th
 3. `/environments/parameters/` — Global, common for the entire repository
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
+
+*For the file search-path priority, see
+[File resolution → Parameter sets](/docs/envgene-configs.md#parameter-sets).*
 
 ```yaml
 # Optional
@@ -1763,6 +1772,9 @@ When an Environment Specific Resource Profile Override is referenced, EnvGene se
 3. `/environments/resource_profiles` — Global, common for the entire repository
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
+
+*For the file search-path priority, see
+[File resolution → Resource profiles](/docs/envgene-configs.md#resource-profiles).*
 
 ```yaml
 # Mandatory
