@@ -110,9 +110,9 @@ dd_json_without_mvn_repo = {
     }]
 }
 
-def set_env(name: str):
+def set_env(name: str, cluster: str = "cluster-01"):
     environ["ENVIRONMENT_NAME"] = name
-    environ["FULL_ENV_NAME"] = f"{getenv("CLUSTER_NAME")}/{getenv("ENVIRONMENT_NAME")}"
+    environ["FULL_ENV_NAME"] = f"{getenv('CLUSTER_NAME', cluster)}/{name}"
 
 
 def mock_metadata(aio_mock, url=METADATA_URL, repeat=1):
@@ -166,6 +166,8 @@ class TestEnvTemplate:
         environ.pop("CLUSTER_NAME", None)
         environ.pop("ENVIRONMENT_NAME", None)
         environ.pop("FULL_ENV_NAME", None)
+        environ.pop("GITHUB_TOKEN", None)
+        environ.pop("GITHUB_USER_NAME", None)
 
     @responses.activate
     def test_new_logic_with_dd(self, mock_aio_response):
