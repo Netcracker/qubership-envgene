@@ -2,11 +2,604 @@
 
 This document contains guidelines and rules for AI coding assistants working with this repository.
 
-## Documentation Standards
+## Documentation Structure (Diátaxis Framework)
 
-### Markdown Formatting Rules
+This repository follows the [Diátaxis documentation framework](https://github.com/evildmp/diataxis-documentation-framework).
 
-#### Lists
+### Documentation Types
+
+1. **How-to Guides** (`/docs/how-to/`)
+   - Goal-oriented, practical steps
+   - Solve specific problems
+   - Minimal theory, maximum action
+   - Target: ~200-400 lines
+
+2. **Explanation** (`/docs/explanation/`)
+   - Conceptual understanding
+   - "Why" questions
+   - Background and context
+   - Design decisions and trade-offs
+
+3. **Reference** (`/docs/`)
+   - Technical specifications
+   - Object schemas
+   - API documentation
+   - Factual, precise
+
+4. **Tutorials** (`/docs/tutorials/`)
+   - Learning-oriented
+   - Step-by-step for beginners
+   - Complete working example
+
+### When Creating Documentation
+
+**✅ DO:**
+
+- Keep how-to guides focused and practical
+- Separate theory into explanation documents
+- Link between documentation types
+- Use clear, descriptive titles
+- Include realistic examples from the codebase
+
+**❌ DON'T:**
+
+- Mix how-to and explanation in one document
+- Create long (>500 lines) how-to guides
+- Include detailed theory in practical guides
+- Use fantasy/made-up examples
+
+---
+
+## Always-loaded essentials
+
+### Verify, don't fabricate
+
+When a documentation statement names a specific identifier - a parameter, environment variable, file
+path, library symbol - that identifier is confirmed in the source it describes. Unverifiable
+identifiers are open questions, not statements of fact.
+
+For object schemas and example fields, see also
+[Object Examples in Documentation](#object-examples-in-documentation).
+
+❌ **INCORRECT:**
+
+- Naming a CI variable for a service by extending a pattern from a sibling service, without checking
+  the implementation.
+- Listing a config file path from memory without grepping the repository.
+- Assuming a library exposes an env-var auth method by analogy with another component.
+
+✅ **CORRECT:**
+
+- Grep or read the source code to confirm the identifier before stating it.
+- Mark the identifier as an open question until verifiable.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Documentation is consumed as authoritative. A fabricated detail propagates into tickets,
+validation rules, and tooling assumptions.
+
+---
+
+### Use existing vocabulary
+
+If the document already defines terms, types, and notations for a domain, reuse them. Parallel
+vocabulary - new section titles, column labels, role names - for concepts the document already covers
+is avoided.
+
+❌ **INCORRECT:**
+
+- Inventing a column name that describes the same property an existing column already covers.
+- Adding a structural subsection that duplicates an existing section type.
+- Coining a new term when the document already names the same concept.
+
+✅ **CORRECT:**
+
+- Reuse the document's existing terms for the same concepts.
+- If new vocabulary is genuinely needed, introduce it in a definitions section.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Parallel vocabulary forces readers to maintain two mental glossaries and produces ambiguous
+cross-references.
+
+---
+
+### Don't re-gloss established terms
+
+**Once the document defines a term, use it bare. Do not append the definition, type tag, or
+location to every reference.**
+
+The rule covers both classes of re-glossing - inline type or definition tags, and inline location or
+path bindings.
+
+❌ **INCORRECT - definition repeated** (every mention re-glosses the type tag):
+
+```markdown
+The runtime context does not accept external Credentials (`type: external`).
+Local Credentials (`type: usernamePassword` / `secret`) are emitted as plain text.
+Built-in credential references resolve to a Credential (`type: external` or `type: usernamePassword` / `secret`).
+```
+
+❌ **INCORRECT - location repeated** (every mention restates the path):
+
+```markdown
+The generator reads the schema at `/schemas/credentials.schema.json`.
+If the schema at `/schemas/credentials.schema.json` is missing, the build fails.
+Validation rules at `/schemas/credentials.schema.json` are checked before output.
+```
+
+✅ **CORRECT** (terms used bare):
+
+```markdown
+The runtime context does not accept external Credentials.
+Local Credentials are emitted as plain text.
+Built-in credential references resolve to a Credential.
+```
+
+```markdown
+The credentials schema lives at `/schemas/credentials.schema.json`.
+
+The generator reads the schema. If the schema is missing, the build fails. Validation rules
+are checked before output.
+```
+
+**Exceptions where the inline detail is justified:**
+
+- **First mention** in the document, especially when the term appears before its definition section in
+  reading order. The parenthetical serves as a forward-defining hint.
+- **Conditions or filters** that pick a subset, not a redefinition. "External Credential with `create: true`"
+  is a filter, not a redefinition of "external".
+- **Taxonomy tables** that explicitly map terms to bindings, like a Components or Glossary table.
+- **Operational instructions** where the reader copies the exact path or value to act on it.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Each repetition of a binding is a maintenance liability - when a type renames, an enum value
+is added, or a path moves, every parenthetical or location must be updated. Established vocabulary
+lets readers internalize the term and frees the doc from re-glossing, whether the gloss is a type
+tag or a file path.
+
+---
+
+### In-repo links
+
+**Use repo-root absolute paths for in-repo cross-references, not GitHub URLs.**
+
+For links between Markdown files inside this repository, use paths starting from the repository
+root (`/docs/...`, `/schemas/...`). Do not use absolute GitHub URLs
+(`https://github.com/Netcracker/qubership-envgene/blob/main/...`), and do not use relative paths
+(`../how-to/...`).
+
+External references (links to other repositories, third-party docs, blog posts) keep their full
+`https://` URL. This rule applies to in-repo cross-references only.
+
+❌ **INCORRECT** (absolute GitHub URL pins to `main` regardless of context):
+
+```markdown
+See [Creating a cluster](https://github.com/Netcracker/qubership-envgene/blob/main/docs/how-to/create-cluster.md).
+```
+
+❌ **INCORRECT** (relative path breaks when files move):
+
+```markdown
+See [Creating a cluster](../how-to/create-cluster.md).
+```
+
+✅ **CORRECT** (repo-root absolute path):
+
+```markdown
+See [Creating a cluster](/docs/how-to/create-cluster.md).
+```
+
+**Scope:** Applies to **new and modified content only**. Existing absolute or relative links are
+not affected unless the surrounding lines are being edited for other reasons.
+
+**Why:** Repo-root absolute paths render correctly on GitHub regardless of branch or fork. GitHub
+URLs pin to a specific branch (usually `main`), so a fork or feature-branch viewer following the
+link is taken back to `main` instead of staying in the current context. Relative paths break when
+the linking file or the target file is moved.
+
+---
+
+## Code Style
+
+### YAML
+
+- Use 2-space indentation
+- Quote string values consistently
+- Add comments for complex logic
+- Use meaningful key names
+
+---
+
+## English style
+
+### Dialect
+
+**Default to British English. Yield to existing dialect when a repository already uses American
+spelling consistently.**
+
+- **Spelling.** `-ise` endings (`organise`, `organisation`); `-our` (`colour`, `behaviour`);
+  `-re` (`centre`, `metre`); doubled consonants in past tense (`travelled`, `signalled`).
+- **Quotation marks.** Single quotation marks in body prose for British style; either is fine
+  in code or inline literals where the syntax requires.
+- **Date format.** `DD Month YYYY` (`15 March 2026`). Avoid all-numeric `dd/mm/yyyy` because it
+  is ambiguous with `mm/dd/yyyy`.
+- **Word choices.** `while` not `whilst`; `among` not `amongst`. Contractions (`don't`,
+  `it's`, `you'll`) are fine in both dialects.
+- **Yield rule.** If a repository's existing prose is mostly US-spelled, treat it as `en-US`
+  and match. Never mix dialects within a file. A pinned dialect in `CONTRIBUTING.md` or a Vale
+  config wins.
+
+The Oxford serial comma stays in both dialects - see [Oxford comma](#oxford-comma).
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Consistent dialect within a file removes friction. Defaulting to one dialect prevents
+docs from drifting into mixed spelling. British English matches the qubership convention.
+
+---
+
+### Dashes
+
+**CRITICAL: Always use a regular hyphen-minus (`-`) as a dash in prose. Never use em dashes (`—`) or en dashes (`–`).**
+
+❌ **INCORRECT:**
+
+```markdown
+EnvGene searches these locations — from bottom to top — and uses the first match.
+```
+
+✅ **CORRECT:**
+
+```markdown
+EnvGene searches these locations - from bottom to top - and uses the first match.
+```
+
+**Why:** Em dashes are a typographic convention that varies by locale and style guide. A plain hyphen-minus is universally readable, renders consistently across all Markdown renderers, and avoids accidental character encoding issues.
+
+### Semicolons
+
+**Avoid semicolons in prose. Split into separate sentences instead.**
+
+❌ **AVOID:**
+
+```markdown
+Native callouts render with icons; bold-text variants are plain blockquotes.
+```
+
+✅ **PREFER:**
+
+```markdown
+Native callouts render with icons. Bold-text variants are plain blockquotes.
+```
+
+**Scope:** Applies to **new and modified content only**. Existing content using semicolons is
+not affected by this rule and does not need rewriting unless the surrounding lines are being
+edited for other reasons.
+
+**Why:** Two short sentences read more naturally on screen than one compound sentence linked by
+a semicolon. Also reduces AI-stylized rhythm in generated text.
+
+---
+
+### Oxford comma
+
+**Use a serial (Oxford) comma in lists of three or more items.**
+
+❌ **INCORRECT:**
+
+```markdown
+The pipeline reads `A`, `B` and `C`.
+```
+
+✅ **CORRECT:**
+
+```markdown
+The pipeline reads `A`, `B`, and `C`.
+```
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** The serial comma removes parsing ambiguity in lists with conjunctions inside list items
+and matches the OUP, Google, and Microsoft style guides.
+
+---
+
+### Heading case
+
+**Use sentence case for all headings: capitalize the first word and proper nouns only.**
+
+Proper nouns include product names, feature names, brand names, and code identifiers
+(`envgeneNullValue`, `ParameterSet`, `Cloud Passport`, `EnvGene`).
+
+❌ **INCORRECT:**
+
+```markdown
+## How to Resolve Credentials
+### Verification Step (Required)
+#### Generated `credentials.yml` (Username/Password)
+```
+
+✅ **CORRECT:**
+
+```markdown
+## How to resolve credentials
+### Verification step (required)
+#### Generated `credentials.yml` (username/password)
+```
+
+**Scope:** Applies to **new and modified content only**. Existing headings in Title Case are not
+affected by this rule and do not need rewriting unless the surrounding lines are being edited
+for other reasons.
+
+**Recommended (not required):** When editing a Markdown file for any other reason, consider
+bringing its remaining Title Case headings to sentence case in the same PR. For large files
+(many headings, large TOC), a separate dedicated migration PR is preferred to keep the original
+change reviewable. Reviewers may suggest opportunistic migration but must not block merge over it.
+
+**Why:** Aligns with the GitHub Docs convention and modern dev-doc style guides (Google,
+Microsoft, Mozilla, GitHub). Sentence case has fewer rules (no debate about which prepositions
+or conjunctions to capitalize), keeps proper nouns visually distinct from generic words,
+translates more cleanly to non-English locales, and is the established convention across modern
+technical documentation.
+
+---
+
+### Compound modifiers
+
+**Hyphenate compound modifiers when they appear before the noun they qualify.**
+
+❌ **INCORRECT:**
+
+```markdown
+A well known parameter.
+```
+
+✅ **CORRECT:**
+
+```markdown
+A well-known parameter.
+```
+
+Compound modifiers that appear **after** the noun do not need a hyphen: "The parameter is well
+known."
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Hyphenation signals "treat these words as one unit". Without it, readers parse
+adjective-noun-noun and stumble on the boundary.
+
+---
+
+### Vocabulary
+
+**Choose common words. Define unfamiliar ones. Pick one term per concept.**
+
+The rule covers vocabulary choices that hurt non-native readers most:
+
+- **Common verbs over Latinate ones.** "use" not "utilize", "help" not "facilitate", "do" not
+  "perform", "let" not "permit", "set" not "establish", "try" not "endeavour", "happen" not
+  "transpire", "spread" not "proliferate", "outline" not "delineate", "above" not
+  "aforementioned". Domain Latinate verbs that name a concept of art (`orchestrate`,
+  `instantiate`, `obfuscate`) stay.
+- **English over Latin abbreviations.** "for example" not "e.g.", "that is" not "i.e.", "and so
+  on" not "etc.".
+- **One term per concept.** Pick one and stick with it across the document.
+- **Use specific verbs.** Avoid vague `be`, `have`, `do`, `make` when a specific verb names the
+  action. "The pipeline validates the inputs", not "The pipeline does the validation".
+- **Define acronyms on first use; prefer full names.** Spell out the acronym at first mention
+  with the short form in parentheses. Bare acronyms are fine after that.
+- **Avoid metaphorical phrasal verbs.** Drop spatial metaphors (`wired into`, `tied into`,
+  `bolted on`, `plugged into`), causality metaphors (`ends up`, `winds up`, `boils down to`,
+  `comes out to`), and activity metaphors (`kicks in`, `picks up`, `falls through`). Replace
+  with a direct verb: `wired into` → `uses`, or `ends up X` → `becomes X` (or just `is X`). Operational
+  phrasals stay - they are the canonical term: `set up`, `look up`, `roll back`, `fall back`,
+  `back up`, `log in`/`log out`, `sign up`.
+
+❌ **INCORRECT:**
+
+```markdown
+The CR includes acceptance criteria from UC steps.
+```
+
+✅ **CORRECT:**
+
+```markdown
+The change-request (CR) issue includes acceptance criteria from use-case (UC) steps.
+```
+
+**Scope:** Applies to **new and modified content only**. Established repository acronyms used in
+filenames (`AGENTS.md`, `CLAUDE.md`) need no expansion.
+
+**Why:** Common and specific vocabulary reads faster across language backgrounds. Acronyms
+expanded on first use spare readers a hunt for the definition.
+
+---
+
+### Sentence craft
+
+**One main idea per sentence; active voice; no noun stacks; parallel construction in lists.**
+
+- **One main idea per sentence.** Split long compound sentences into two. Target no more than 25
+  words.
+- **One main idea per paragraph.** The first sentence carries the point; the rest supports it.
+- **Active voice for behaviour statements.** "The calculator emits X" not "X is emitted by the
+  calculator".
+- **No idioms, metaphors, or office-speak.** "Out of the box", "low-hanging fruit", "hands
+  down", "moving the needle", "circle back", "touch base", "deep dive", "drill down", "boil
+  the ocean", "stakeholder buy-in", "take this offline" - drop them. They do not translate
+  and read awkwardly to non-native English speakers.
+- **No noun stacks.** Long chains of nouns ("application instance environment configuration
+  file") force readers to parse syntactic structure on the fly. Split into a possessive or
+  prepositional phrase.
+- **No adjective stacks.** Three or more adjectives before a noun (`a robust scalable cloud-native
+  message broker`) is a rewrite signal. Pick the one adjective that earns the spot or drop them
+  all.
+- **Parallel structure in lists and headings.** Every bullet starts with the same part of
+  speech; every step uses the same imperative form.
+
+❌ **INCORRECT** (mixed forms):
+
+```markdown
+- Configure replicas
+- Setting retention
+- Restart node
+```
+
+✅ **CORRECT** (parallel imperatives):
+
+```markdown
+- Configure replicas
+- Set retention
+- Restart node
+```
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Short, active, parallel sentences read at a steady pace. Parsing speed matters most
+when the reader's first language is not English.
+
+---
+
+### Pronouns and modifiers
+
+**Pronoun references and modifier placement carry weight in technical prose. Keep them
+unambiguous.**
+
+- **Avoid ambiguous pronouns; repeat the noun if there is any doubt.** With multiple actors in a
+  paragraph, `it` and `this` lose their referent fast.
+- **Place modifiers next to what they modify.** `only`, `just`, `also`, `even`, `not` belong
+  immediately before the word they qualify.
+- **Avoid gerund subordinate clauses; use `you` or `to`.** Replace `When configuring the
+  cluster...` with `When you configure the cluster...` or `To configure the cluster...`.
+
+❌ **INCORRECT** (ambiguous pronoun, then ambiguous `only`, then gerund clause):
+
+```markdown
+The validator reads the config. It applies the rules. It then reports findings.
+The hook only runs on changed files.
+When configuring the cluster, set the region.
+```
+
+✅ **CORRECT:**
+
+```markdown
+The validator reads the config, applies the rules, and reports findings.
+The hook runs only on changed files.
+When you configure the cluster, set the region.
+```
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Ambiguous pronouns, misplaced modifiers, and headless gerund clauses are translation
+traps. They force re-reading even when each word is familiar.
+
+---
+
+### Voice and tense
+
+**Speak directly to the reader. Describe the system in the present.**
+
+- **Use second person (`you`, `your`); reserve `we` for an actual team decision.** Imperatives
+  address the reader directly: "Set the region" not "We set the region".
+- **Lead with the answer (Bottom Line Up Front).** Put the verb the reader runs, or the
+  conclusion they need, in the first clause. Detail follows.
+- **Specific, not promotional.** Say what the thing does, not that it is `powerful`,
+  `seamless`, `robust`, `next-generation`, `industry-leading`, `best-in-class`, or
+  `cutting-edge`. Skip release-note verbs: `revolutionize`, `unlock`, `transform`, `empower`,
+  `accelerate`, `streamline`. Drop words that do not pay rent.
+- **No throat-clearing or page-topic self-description.** Skip filler openers - `It's worth
+  noting that...`, `It's important to remember...`, `Let's explore...`, `This guide explains
+  how to...`, `In this section, we will cover...`. Start with the thing.
+- **Present tense for system behaviour.** "The handler retries three times" not "The handler
+  will retry three times".
+- **Reserve `will` for the actual future.** "The build fails if the secret is missing" describes
+  a property; "The build will fail when we update X next quarter" describes a future event.
+- **Avoid `currently`.** It dates the sentence the moment it is written. Either give a version
+  or drop it.
+
+❌ **INCORRECT:**
+
+```markdown
+We recommend that you should set replicas to 3.
+Currently the validator will support YAML.
+```
+
+✅ **CORRECT:**
+
+```markdown
+Set replicas to 3.
+The validator supports YAML.
+```
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Second person and BLUF cut reading time. Present tense names the system's behaviour as
+observable now; future tense describes change events. Mixing them confuses readers.
+
+---
+
+### Hedging
+
+**One hedge per sentence at most. State the rule, then add a caveat only when a real one
+exists.**
+
+Avoid weasel words like `can`, `may`, `should` when clarity matters. "X happens" is stronger
+than "X may happen" when X always happens.
+
+❌ **INCORRECT:**
+
+```markdown
+It may possibly sometimes fail under unusual conditions.
+```
+
+✅ **CORRECT:**
+
+```markdown
+It fails when the input exceeds 256 MB.
+```
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Stacked hedges make rules sound suggestive when they are mandatory. Readers cannot tell
+from "may possibly sometimes" whether an action is required, optional, or unreliable.
+
+---
+
+### Avoid AI tells
+
+**Documentation is written for humans, not stylized like AI output.**
+
+Common AI tells to avoid:
+
+- Em dashes (`—`) and en dashes (`–`). See [Dashes](#dashes).
+- Semicolons. See [Semicolons](#semicolons).
+- Filler intensifiers: `simply`, `just`, `easily`, `truly`, `incredibly`, `seamlessly`,
+  `robust`, `comprehensive`, `cutting-edge`, `leverage`, `delve`, `tapestry`, `landscape`.
+- `Not only X, but also Y` and `Not just X, but Y` patterns.
+- Empty closings: `In conclusion`, `To summarize`, `As we've seen`.
+- Vague attributions: `widely regarded as`, `has been described as`, `experts agree`. Cite a
+  source or delete the claim.
+- Tail `-ing` significance clauses: `...enabling teams to deliver value at scale`. The phrase
+  almost never carries information. Cut it.
+- Rigid section scaffolding lifted onto a technical page: `Introduction / Challenges / Future
+  Prospects`. Use the section headings the content actually needs.
+- Bullet lists where every item starts with a bold inline header plus colon used to format
+  ordinary prose. Fine for genuine term-definition pairs; an AI tell when applied to all
+  bullets by default.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** AI-generated text leans on these patterns heavily. Their absence makes documentation
+feel more direct and trustworthy. Read sentences aloud. If it sounds like a press release or a
+chatbot, rewrite.
+
+---
+
+## Markdown formatting
+
+### Lists
 
 **CRITICAL: All lists (bullet or numbered) MUST have empty lines before and after them.**
 
@@ -32,7 +625,7 @@ When you need environment-specific values...
 
 **Why:** Markdown linters require empty lines around lists for proper parsing and rendering.
 
-#### Table of Contents
+### Table of Contents
 
 **CRITICAL: Documents with 10+ headings MUST include a Table of Contents after the main title.**
 
@@ -75,62 +668,7 @@ Content...
 - Remove special characters
 - Example: `### Step 1: Install Tools` → `#step-1-install-tools`
 
-#### Dashes
-
-**CRITICAL: Always use a regular hyphen-minus (`-`) as a dash in prose. Never use em dashes (`—`) or en dashes (`–`).**
-
-❌ **INCORRECT:**
-
-```markdown
-EnvGene searches these locations — from bottom to top — and uses the first match.
-```
-
-✅ **CORRECT:**
-
-```markdown
-EnvGene searches these locations - from bottom to top - and uses the first match.
-```
-
-**Why:** Em dashes are a typographic convention that varies by locale and style guide. A plain hyphen-minus is universally readable, renders consistently across all Markdown renderers, and avoids accidental character encoding issues.
-
-#### Semicolons in prose
-
-**Guideline:** Semicolons (`;`) are **not** forbidden, but avoid dense "clause; clause" chains in documentation when separate sentences or lists would read more clearly.
-
-**Prefer:**
-
-- One main idea per sentence, separated by a period.
-- Bullet or numbered lists for parallel steps, outcomes, or options.
-- A comma plus a coordinating conjunction (`and`, `or`) when the second part is short.
-
-**When a semicolon is still appropriate:**
-
-- **Complex list items** where each item already contains commas (the usual US-style role of `;` inside lists).
-- **Literal syntax** in code, paths, or URIs where `;` is required - leave unchanged.
-- **Rare compact one-line definitions** where brevity is more important than flow - use sparingly.
-
-**Avoid:**
-
-- Joining two independent statements in prose only to keep one long line - split into two sentences instead.
-- Using `;` between fragments inside bullets as a substitute for a period or a new bullet.
-
-❌ **HARDER TO READ:**
-
-```markdown
-Item 1 is generated automatically; item 2 is created manually by the user.
-```
-
-✅ **CLEARER:**
-
-```markdown
-Item 1 is generated automatically. Item 2 is created manually by the user.
-```
-
-**Why:** Semicolons are easy to overuse in technical English. Dense use can make specs feel monotonous and is often harder for readers whose first language is not English. Periods and lists align with the rest of these documentation rules.
-
----
-
-#### Line length
+### Line length
 
 **CRITICAL: Wrap prose lines at 120 characters maximum.**
 
@@ -168,32 +706,7 @@ scrolling. Capping the rule to new content avoids whitespace-only churn in legac
 
 ---
 
-#### Semicolons
-
-**Avoid semicolons in prose. Split into separate sentences instead.**
-
-❌ **AVOID:**
-
-```markdown
-Native callouts render with icons; bold-text variants are plain blockquotes.
-```
-
-✅ **PREFER:**
-
-```markdown
-Native callouts render with icons. Bold-text variants are plain blockquotes.
-```
-
-**Scope:** Applies to **new and modified content only**. Existing content using semicolons is
-not affected by this rule and does not need rewriting unless the surrounding lines are being
-edited for other reasons.
-
-**Why:** Two short sentences read more naturally on screen than one compound sentence linked by
-a semicolon. Also reduces AI-stylized rhythm in generated text.
-
----
-
-#### Callouts (Notes, Warnings, Tips)
+### Callouts (Notes, Warnings, Tips)
 
 **CRITICAL: Always use GitHub-flavored Markdown native callout syntax, not bold-text workarounds.**
 
@@ -231,66 +744,7 @@ Bold-text variants are plain blockquotes.
 
 ---
 
-#### Line Length
-
-**Prose lines wrap at 120 characters.**
-
-Excluded from this limit:
-
-- Table rows (lines starting with `|`)
-- Code blocks (fenced)
-- URLs and other continuous tokens longer than 120 characters
-
-**Scope:** Applies to **new and modified content only**. Existing content that exceeds 120 characters
-is not affected by this rule and does not need reformatting unless the surrounding lines are being
-edited for other reasons.
-
-**Why:** Long prose lines complicate diff review and side-by-side comparison. 120 leaves room for
-meaningful wrap without forcing tight columns.
-
----
-
-#### Heading case
-
-**Use sentence case for all headings: capitalize the first word and proper nouns only.**
-
-Proper nouns include product names, feature names, brand names, and code identifiers
-(`envgeneNullValue`, `ParameterSet`, `Cloud Passport`, `EnvGene`).
-
-❌ **INCORRECT:**
-
-```markdown
-## How to Resolve Credentials
-### Verification Step (Required)
-#### Generated `credentials.yml` (Username/Password)
-```
-
-✅ **CORRECT:**
-
-```markdown
-## How to resolve credentials
-### Verification step (required)
-#### Generated `credentials.yml` (username/password)
-```
-
-**Scope:** Applies to **new and modified content only**. Existing headings in Title Case are not
-affected by this rule and do not need rewriting unless the surrounding lines are being edited
-for other reasons.
-
-**Recommended (not required):** When editing a Markdown file for any other reason, consider
-bringing its remaining Title Case headings to sentence case in the same PR. For large files
-(many headings, large TOC), a separate dedicated migration PR is preferred to keep the original
-change reviewable. Reviewers may suggest opportunistic migration but must not block merge over it.
-
-**Why:** Aligns with the GitHub Docs convention and modern dev-doc style guides (Google,
-Microsoft, Mozilla, GitHub). Sentence case has fewer rules (no debate about which prepositions
-or conjunctions to capitalize), keeps proper nouns visually distinct from generic words,
-translates more cleanly to non-English locales, and is the established convention across modern
-technical documentation.
-
----
-
-#### Heading numbering
+### Heading numbering
 
 **Do not number headings unless they enumerate alternative workflows.**
 
@@ -336,11 +790,11 @@ do not number headings in user-facing documentation.
 
 ---
 
-#### Tables
+### Tables
 
 **CRITICAL: All Markdown tables MUST have vertically aligned pipe characters (`|`).**
 
-##### ❌ INCORRECT Format
+#### ❌ Incorrect format
 
 ```markdown
 | Column 1 | Column 2 | Column 3 |
@@ -351,7 +805,7 @@ do not number headings in user-facing documentation.
 
 **Problem:** Pipes are not aligned, causing Markdown linting warnings and poor readability.
 
-##### ✅ CORRECT Format
+#### ✅ Correct format
 
 ```markdown
 | Column 1             | Column 2 | Column 3 |
@@ -374,7 +828,7 @@ do not number headings in user-facing documentation.
 3. **Uniform width per column** - Each cell in a column should have the same width (add trailing spaces)
 4. **Don't add spaces endlessly** - If alignment fails repeatedly, the problem is content length, not spacing
 
-##### Common Mistake
+#### Common mistake
 
 ❌ **DON'T: Try to align long, varying content with spaces**
 
@@ -400,7 +854,7 @@ do not number headings in user-facing documentation.
 
 **Solution:** Shortened "Use When" text → pipes naturally align because each cell in the column has the same width.
 
-##### Real Example from Repository
+#### Real example from repository
 
 ```markdown
 | Location                                              | Scope                | Use When                        |
@@ -410,7 +864,7 @@ do not number headings in user-facing documentation.
 | `/environments/parameters/`                           | Global               | Multiple clusters               |
 ```
 
-##### Delimiter Row Style
+#### Delimiter row style
 
 The delimiter row uses `|---|` form - no spaces between `|` and `-`. Dashes are padded to match
 column width for vertical alignment.
@@ -433,206 +887,40 @@ column width for vertical alignment.
 
 ---
 
-#### Avoid AI-Stylistics
+### Link text
 
-**Documentation is written for humans, not stylized like AI output.**
+**Link text names the destination. Do not use `click here` or `this page`.**
 
-Common AI-stylistics to avoid:
+❌ **INCORRECT:**
 
-- Em dashes (`—`) and en dashes (`–`). See [Dashes](#dashes).
-- Semicolons. See [Semicolons](#semicolons).
-- Filler intensifiers: `simply`, `just`, `easily`, `truly`, `incredibly`, `seamlessly`,
-  `robust`, `comprehensive`, `cutting-edge`, `leverage`, `delve`, `tapestry`, `landscape`.
-- Throat-clearing openings: `It's worth noting that...`, `It's important to remember...`,
-  `Let's explore...`, `In this section, we'll discuss...`.
-- `Not only X, but also Y` and `Not just X, but Y` patterns.
-- Empty closings: `In conclusion`, `To summarize`, `As we've seen`.
+```markdown
+For setup steps, [click here](/docs/how-to/setup.md).
+The schema reference is available [here](/schemas/credential.schema.json).
+```
+
+✅ **CORRECT:**
+
+```markdown
+For setup steps, see the [setup how-to](/docs/how-to/setup.md).
+The [credential schema](/schemas/credential.schema.json) lists the required fields.
+```
 
 **Scope:** Applies to **new and modified content only**.
 
-**Why:** AI-generated text leans on these patterns heavily. Their absence makes documentation
-feel more direct and trustworthy. Read sentences aloud. If it sounds like a press release or a
-chatbot, rewrite.
+**Why:** Link text is read out of context by screen readers, search engines, and readers who
+scan. `Click here` carries no information when extracted. A destination-naming link tells the
+reader where they will land.
 
 ---
 
-#### Declarative tone (reference docs)
+### Documentation file naming
 
-**Reference documentation describes the system as it is. Do not describe transitions, before/after diffs,
-or mark elements as "new".**
-
-Feature specifications and object schemas live in the Diátaxis Reference quadrant. Implementation history
-(what changed, what was added, what was deprecated) belongs in tickets, PR descriptions, and commit
-messages, not in the reference docs themselves.
-
-❌ **INCORRECT** (transitional, history-laden):
-
-```markdown
-The existing Credential is extended by introducing a new type `external`...
-
-| Section                     | ...
-| `docker_registry` (**new**) | ...
-
-For local Credentials the **existing** macro is used, **unchanged from today**.
-
-# AS IS Credential          # TO BE Credential
-```
-
-✅ **CORRECT** (state-only, declarative):
-
-```markdown
-A Credential of `type: external` describes...
-
-| Section            | ...
-| `docker_registry`  | ...
-
-For local Credentials the `envgen.creds.get(...)` macro is used.
-
-# Local Credential          # External Credential
-```
-
-**Exception:** Migration documents and changelogs are explicitly about transitions. They describe how to
-move from state X to state Y and are not subject to this rule.
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** Reference docs are looked up to learn what something IS. Mixed transitional content makes the spec
-brittle - phrases like "new" or "AS IS" age poorly as the system evolves, and force readers to mentally
-filter what is current vs what is historical.
+- Use kebab-case: `override-template-parameters.md`
+- Be descriptive: `billing-prod-deploy.yml` not `override.yml`
 
 ---
 
-#### In-repo links
-
-**Use repo-root absolute paths for in-repo cross-references, not GitHub URLs.**
-
-For links between Markdown files inside this repository, use paths starting from the repository
-root (`/docs/...`, `/schemas/...`). Do not use absolute GitHub URLs
-(`https://github.com/Netcracker/qubership-envgene/blob/main/...`), and do not use relative paths
-(`../how-to/...`).
-
-External references (links to other repositories, third-party docs, blog posts) keep their full
-`https://` URL. This rule applies to in-repo cross-references only.
-
-❌ **INCORRECT** (absolute GitHub URL pins to `main` regardless of context):
-
-```markdown
-See [Creating a cluster](https://github.com/Netcracker/qubership-envgene/blob/main/docs/how-to/create-cluster.md).
-```
-
-❌ **INCORRECT** (relative path breaks when files move):
-
-```markdown
-See [Creating a cluster](../how-to/create-cluster.md).
-```
-
-✅ **CORRECT** (repo-root absolute path):
-
-```markdown
-See [Creating a cluster](/docs/how-to/create-cluster.md).
-```
-
-**Scope:** Applies to **new and modified content only**. Existing absolute or relative links are
-not affected unless the surrounding lines are being edited for other reasons.
-
-**Why:** Repo-root absolute paths render correctly on GitHub regardless of branch or fork. GitHub
-URLs pin to a specific branch (usually `main`), so a fork or feature-branch viewer following the
-link is taken back to `main` instead of staying in the current context. Relative paths break when
-the linking file or the target file is moved.
-
----
-
-#### Heading renames and cross-links
-
-When renaming a Markdown heading, the GitHub-generated anchor (`#section-name`) also changes.
-Cross-links in other files that point to the old anchor become broken (CI link-checker fails).
-
-**Before pushing after a heading rename:**
-
-1. Grep the repository for references to the OLD anchor:
-
-   ```bash
-   grep -rnE "#old-anchor-name" --include='*.md' .
-   ```
-
-2. Update each matching cross-link to the NEW anchor in all affected files.
-
-3. Update the link text in `[text](#anchor)` to match the new heading text where appropriate.
-
-For a broader audit of all cross-links in the repository:
-
-```bash
-grep -rhoE '\]\([^)]+#[^)]+\)' --include='*.md' . | sort -u
-```
-
-**Why:** A heading rename inside one file silently breaks references in unrelated files. The
-CI link-checker (lychee) catches this only after push.
-
----
-
-#### Doc index updates
-
-**Add new docs to (and remove deleted docs from) the index readmes.**
-
-The repository has two parallel index readmes that mirror the same structure:
-
-- `/README.md` (root project readme, "Documentation" section)
-- `/docs/README.md` (docs hub readme)
-
-When you add a tutorial, how-to, feature, or migration doc, add a link in both readmes under
-the matching section. When you rename or remove a doc, update both readmes to keep links live.
-Match the description style of sibling entries (short, verb-leading phrase, same capitalization
-convention).
-
-Per-directory readmes (`/docs/features/README.md`, `/docs/use-cases/README.md`, etc.) are
-meta-docs that explain what kind of content the directory holds. They are not navigation
-indices and do not need a per-doc entry.
-
-**Why:** GitHub's link-checker catches dead links but does not warn when a new doc is missing
-from the index. Readers discover docs through the index readmes, not by browsing directories.
-
----
-
-#### Pre-flight linter checks
-
-Before declaring documentation changes done, run the same linters that CI will run.
-
-**Markdown structure (`markdownlint`):**
-
-```bash
-npx --yes markdownlint-cli@latest --config .github/linters/.markdown-lint.yml <changed-files>
-```
-
-The project config (`.github/linters/.markdown-lint.yml`) relaxes `MD013` line length to 1000,
-and disables `MD012`, `MD033`, `MD051`. Running markdownlint without `--config` uses the
-default settings (line length 80) which produces many false positives unrelated to the project
-rules and may hide real issues like `MD009` (trailing spaces) or `MD040` (fenced block missing
-language).
-
-**Natural-language terminology (`textlint` with `textlint-rule-terminology`):**
-
-CI runs textlint on prose to flag terminology preferences (for example, em dashes should be
-hyphens, `repo` should be `repository`, `READMEs` should be `readmes`, `Blank line` should be
-`Empty line`). The textlint config lives in the shared `netcracker/.github` repository and is
-pulled in at CI time; there is no local config file to reference. To preview locally:
-
-```bash
-npx --yes textlint --rule terminology <changed-files>
-```
-
-This runs the default terminology rule set. CI may flag a few additional terms layered on top
-by the shared config. Treat the CI report as authoritative.
-
-**Why:** The CI super-linter runs both linters. Running locally gives a true preview of the CI
-result, catches real issues, and avoids distraction from false positives that arise when
-running linters with default (non-project) settings.
-
----
-
-## Documentation content rules
-
-These rules govern content and scope. The Markdown formatting rules above govern syntax. These rules
-govern what the documentation says, across all documentation types.
+## Doc voice and structure
 
 ### Section adds only what it uniquely contributes
 
@@ -689,34 +977,6 @@ content accumulates restated facts as the doc evolves.
 
 ---
 
-### Verify, don't fabricate
-
-When a documentation statement names a specific identifier - a parameter, environment variable, file
-path, library symbol - that identifier is confirmed in the source it describes. Unverifiable
-identifiers are open questions, not statements of fact.
-
-For object schemas and example fields, see also
-[Object Examples in Documentation](#object-examples-in-documentation).
-
-❌ **INCORRECT:**
-
-- Naming a CI variable for a service by extending a pattern from a sibling service, without checking
-  the implementation.
-- Listing a config file path from memory without grepping the repository.
-- Assuming a library exposes an env-var auth method by analogy with another component.
-
-✅ **CORRECT:**
-
-- Grep or read the source code to confirm the identifier before stating it.
-- Mark the identifier as an open question until verifiable.
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** Documentation is consumed as authoritative. A fabricated detail propagates into tickets,
-validation rules, and tooling assumptions.
-
----
-
 ### Don't silently extend the spec
 
 If a section would read more cleanly under a hypothetical spec extension - a wider enum, a new
@@ -737,66 +997,6 @@ as an open question and write the section against the current spec.
 
 **Why:** Spec changes propagate to validation rules, schemas, tooling, and migration. They deserve
 explicit decisions, not implicit drafting assumptions.
-
----
-
-### Use existing vocabulary
-
-If the document already defines terms, types, and notations for a domain, reuse them. Parallel
-vocabulary - new section titles, column labels, role names - for concepts the document already covers
-is avoided.
-
-❌ **INCORRECT:**
-
-- Inventing a column name that describes the same property an existing column already covers.
-- Adding a structural subsection that duplicates an existing section type.
-- Coining a new term when the document already names the same concept.
-
-✅ **CORRECT:**
-
-- Reuse the document's existing terms for the same concepts.
-- If new vocabulary is genuinely needed, introduce it in a definitions section.
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** Parallel vocabulary forces readers to maintain two mental glossaries and produces ambiguous
-cross-references.
-
----
-
-### Don't re-gloss established terms
-
-**Once the document defines a term, use it bare. Don't append the definition in parentheses every time the
-term appears.**
-
-❌ **INCORRECT** (every mention re-glosses):
-
-```markdown
-The runtime context does not accept external Credentials (`type: external`).
-Local Credentials (`type: usernamePassword` / `secret`) are emitted as plain text.
-Built-in credential references resolve to a Credential (`type: external` or `type: usernamePassword` / `secret`).
-```
-
-✅ **CORRECT** (terms used bare):
-
-```markdown
-The runtime context does not accept external Credentials.
-Local Credentials are emitted as plain text.
-Built-in credential references resolve to a Credential.
-```
-
-**Exceptions where the inline detail is justified:**
-
-- **First mention** in the document, especially when the term appears before its definition section in
-  reading order. The parenthetical serves as a forward-defining hint.
-- **Conditions or filters** that pick a subset, not a redefinition. "External Credential with `create: true`"
-  is a filter, not a redefinition of "external".
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** Each repetition of a definition is a maintenance liability - when a type renames or an enum value is
-added, every parenthetical must be updated. Established vocabulary lets readers internalize the term and
-frees the doc from re-glossing.
 
 ---
 
@@ -828,6 +1028,86 @@ that is not load-bearing forces stale doc updates with every implementation chan
 
 ---
 
+### Avoid duplication in description
+
+**Don't repeat the same information multiple times in the Description section.**
+
+#### ❌ Incorrect (duplicated info)
+
+```markdown
+## Description
+
+Parameters are defined two ways:
+- Inline
+- Via ParameterSets
+
+Template-level parameters are defined two ways:  <!-- DUPLICATE -->
+- Inline
+- Via ParameterSets
+```
+
+#### ✅ Correct (concise, mentioned once)
+
+```markdown
+## Description
+
+This guide shows how to override template-level parameters.
+
+Template-level parameters are defined in two ways:
+- Inline
+- Via ParameterSets
+
+[Rest of description...]
+```
+
+---
+
+### Declarative tone (reference docs)
+
+**Reference documentation describes the system as it is. Do not describe transitions, before/after diffs,
+or mark elements as "new".**
+
+Feature specifications and object schemas live in the Diátaxis Reference quadrant. Implementation history
+(what changed, what was added, what was deprecated) belongs in tickets, PR descriptions, and commit
+messages, not in the reference docs themselves.
+
+❌ **INCORRECT** (transitional, history-laden):
+
+```markdown
+The existing Credential is extended by introducing a new type `external`...
+
+| Section                     | ...
+| `docker_registry` (**new**) | ...
+
+For local Credentials the **existing** macro is used, **unchanged from today**.
+
+# AS IS Credential          # TO BE Credential
+```
+
+✅ **CORRECT** (state-only, declarative):
+
+```markdown
+A Credential of `type: external` describes...
+
+| Section            | ...
+| `docker_registry`  | ...
+
+For local Credentials the `envgen.creds.get(...)` macro is used.
+
+# Local Credential          # External Credential
+```
+
+**Exception:** Migration documents and changelogs are explicitly about transitions. They describe how to
+move from state X to state Y and are not subject to this rule.
+
+**Scope:** Applies to **new and modified content only**.
+
+**Why:** Reference docs are looked up to learn what something IS. Mixed transitional content makes the spec
+brittle - phrases like "new" or "AS IS" age poorly as the system evolves, and force readers to mentally
+filter what is current vs what is historical.
+
+---
+
 ### Tables: one fact per row
 
 In documentation tables, each row carries one identifier or entity. Composite cells listing multiple
@@ -850,33 +1130,6 @@ the document already defines, not invented labels.
 
 **Why:** Tables in documentation are dense lookups. Composite cells and free-text columns reduce their
 lookup value.
-
----
-
-### Write international English
-
-**Most readers of these docs are not native English speakers. Prefer simple, common words and short
-sentences over Latinate or literary phrasing.**
-
-Following Microsoft's "Global communications" and Google's "Translation-friendly content" principles:
-
-- **Common verbs over Latinate ones.** "use" not "utilize", "help" not "facilitate", "do" not "perform",
-  "let" not "permit", "set" not "establish".
-- **One main idea per sentence.** Split long compound sentences into two.
-- **No idioms or metaphors.** "Out of the box", "low-hanging fruit", "hands down", "moving the needle" -
-  drop them. They do not translate and read awkwardly to non-native English speakers.
-- **English over Latin abbreviations.** "for example" not "e.g.", "that is" not "i.e.", "and so on" not
-  "etc.".
-- **One term per concept.** Pick one and stick with it across the document.
-- **Active voice for behaviour statements.** "The calculator emits X" not "X is emitted by the calculator".
-- **No noun stacks.** Long chains of nouns ("application instance environment configuration file") force
-  readers to parse syntactic structure on the fly. Split into a possessive or prepositional phrase.
-
-**Scope:** Applies to **new and modified content only**.
-
-**Why:** Simpler vocabulary, shorter sentences, and absence of idioms make the docs faster to read for
-non-native speakers and easier for downstream translation. Industry style guides (Microsoft, Google, IBM
-Global English) converge on these principles for the same reason.
 
 ---
 
@@ -926,7 +1179,7 @@ inconsistencies between rules.
 
 ## Object Examples in Documentation
 
-### Source of Truth for Object Schemas
+### Source of truth for object schemas
 
 **CRITICAL: Never invent object structures. Always derive examples from authoritative sources.**
 
@@ -957,7 +1210,7 @@ In tutorials and how-to guides, show only the **relevant part** of the object, n
 
 This keeps examples focused on the concept being taught and avoids becoming outdated when unrelated fields change.
 
-#### ❌ INCORRECT - invented fields and unnecessary noise
+#### ❌ Incorrect - invented fields and unnecessary noise
 
 ```yaml
 # Namespace template - WRONG: invented fields, full object shown in tutorial context
@@ -973,7 +1226,7 @@ deployParameterSets:
   - "bss"
 ```
 
-#### ✅ CORRECT - focused snippet, validated field names, omissions annotated
+#### ✅ Correct - focused snippet, validated field names, omissions annotated
 
 ```yaml
 # Namespace template - only the relevant section is shown
@@ -988,59 +1241,25 @@ profile:
 
 ---
 
-## Documentation Structure (Diátaxis Framework)
-
-This repository follows the [Diátaxis documentation framework](https://github.com/evildmp/diataxis-documentation-framework).
-
-### Documentation Types
-
-1. **How-to Guides** (`/docs/how-to/`)
-   - Goal-oriented, practical steps
-   - Solve specific problems
-   - Minimal theory, maximum action
-   - Target: ~200-400 lines
-
-2. **Explanation** (`/docs/explanation/`)
-   - Conceptual understanding
-   - "Why" questions
-   - Background and context
-   - Design decisions and trade-offs
-
-3. **Reference** (`/docs/`)
-   - Technical specifications
-   - Object schemas
-   - API documentation
-   - Factual, precise
-
-4. **Tutorials** (`/docs/tutorials/`)
-   - Learning-oriented
-   - Step-by-step for beginners
-   - Complete working example
-
-### When Creating Documentation
-
-**✅ DO:**
-
-- Keep how-to guides focused and practical
-- Separate theory into explanation documents
-- Link between documentation types
-- Use clear, descriptive titles
-- Include realistic examples from the codebase
-
-**❌ DON'T:**
-
-- Mix how-to and explanation in one document
-- Create long (>500 lines) how-to guides
-- Include detailed theory in practical guides
-- Use fantasy/made-up examples
-
----
-
 ## Use case design
 
-Use cases live in `/docs/use-cases/`. They describe observable system behavior in a structured
-format (Pre-requisites, Trigger, Steps, Results) and serve both as documentation and as
-test-design input.
+Use cases (UCs) live in `/docs/use-cases/`. They describe observable system behaviour in a
+structured format (Pre-requisites, Trigger, Steps, Results) and serve both as documentation and
+as test-design input.
+
+**Scope:** All rules in this section apply to **new and modified UCs only**. Existing UCs that
+violate these rules are not affected and do not need rewriting unless the surrounding lines are
+being edited for other reasons.
+
+**Rationale:**
+
+- **Equivalence Class Partitioning** is the standard test-design technique (ISTQB) and aligns
+  with BDD Scenario Outlines and modern API documentation style (Stripe, GitHub, Google API
+  Design Guide).
+- Matrix decomposition (UC per combination of variables) creates combinatorial bloat where
+  most UCs are clones differing in one word.
+- Implementation-detail leaks bind documentation to a specific code shape. Abstraction
+  decouples docs from implementation churn.
 
 ### Apply equivalence class partitioning
 
@@ -1150,88 +1369,9 @@ not have.
 1. The job fails with the message: ...
 ```
 
-### Scope
-
-Applies to **new and modified UCs only**. Existing UCs that violate these rules are not
-affected and do not need rewriting unless the surrounding lines are being edited for other
-reasons.
-
-### Why
-
-- **Equivalence Class Partitioning** is the standard test-design technique (ISTQB) and aligns
-  with BDD Scenario Outlines and modern API documentation style (Stripe, GitHub, Google API
-  Design Guide).
-- Matrix decomposition (UC per combination of variables) creates combinatorial bloat where
-  most UCs are clones differing in one word.
-- Implementation-detail leaks bind documentation to a specific code shape. Abstraction
-  decouples docs from implementation churn.
-
 ---
 
-## EnvGene-Specific Documentation Rules
-
-### Avoid Duplication in Description
-
-**Don't repeat the same information multiple times in the Description section.**
-
-#### ❌ INCORRECT (duplicated info)
-
-```markdown
-## Description
-
-Parameters are defined two ways:
-- Inline
-- Via ParameterSets
-
-Template-level parameters are defined two ways:  <!-- DUPLICATE -->
-- Inline
-- Via ParameterSets
-```
-
-#### ✅ CORRECT (concise, mentioned once)
-
-```markdown
-## Description
-
-This guide shows how to override template-level parameters.
-
-Template-level parameters are defined in two ways:
-- Inline
-- Via ParameterSets
-
-[Rest of description...]
-```
-
----
-
-## Code Style
-
-### YAML
-
-- Use 2-space indentation
-- Quote string values consistently
-- Add comments for complex logic
-- Use meaningful key names
-
-### Documentation File Naming
-
-- Use kebab-case: `override-template-parameters.md`
-- Be descriptive: `billing-prod-deploy.yml` not `override.yml`
-
----
-
-## Testing Documentation Changes
-
-Before committing documentation:
-
-1. Check Markdown syntax
-2. Verify all links work
-3. Ensure tables are aligned
-4. Review for clarity and accuracy
-
----
-
-## Commits and Pull Requests
+## Commits and pull requests
 
 ### Commit messages
 
@@ -1299,9 +1439,95 @@ Keep in the same commit:
   rule-application PRs.
 - Do not include unrelated cleanup. File a follow-up issue instead.
 
----
+### Doc index updates
 
-## Issues
+**Add new docs to (and remove deleted docs from) the index readmes.**
+
+The repository has two parallel index readmes that mirror the same structure:
+
+- `/README.md` (root project readme, "Documentation" section)
+- `/docs/README.md` (docs hub readme)
+
+When you add a tutorial, how-to, feature, or migration doc, add a link in both readmes under
+the matching section. When you rename or remove a doc, update both readmes to keep links live.
+Match the description style of sibling entries (short, verb-leading phrase, same capitalization
+convention).
+
+Per-directory readmes (`/docs/features/README.md`, `/docs/use-cases/README.md`, etc.) are
+meta-docs that explain what kind of content the directory holds. They are not navigation
+indices and do not need a per-doc entry.
+
+**Why:** GitHub's link-checker catches dead links but does not warn when a new doc is missing
+from the index. Readers discover docs through the index readmes, not by browsing directories.
+
+### Heading renames and cross-links
+
+When renaming a Markdown heading, the GitHub-generated anchor (`#section-name`) also changes.
+Cross-links in other files that point to the old anchor become broken (CI link-checker fails).
+
+**Before pushing after a heading rename:**
+
+1. Grep the repository for references to the OLD anchor:
+
+   ```bash
+   grep -rnE "#old-anchor-name" --include='*.md' .
+   ```
+
+2. Update each matching cross-link to the NEW anchor in all affected files.
+
+3. Update the link text in `[text](#anchor)` to match the new heading text where appropriate.
+
+For a broader audit of all cross-links in the repository:
+
+```bash
+grep -rhoE '\]\([^)]+#[^)]+\)' --include='*.md' . | sort -u
+```
+
+**Why:** A heading rename inside one file silently breaks references in unrelated files. The
+CI link-checker (lychee) catches this only after push.
+
+### Pre-flight linter checks
+
+Before declaring documentation changes done, run the same linters that CI will run.
+
+**Markdown structure (`markdownlint`):**
+
+```bash
+npx --yes markdownlint-cli@latest --config .github/linters/.markdown-lint.yml <changed-files>
+```
+
+The project config (`.github/linters/.markdown-lint.yml`) relaxes `MD013` line length to 1000,
+and disables `MD012`, `MD033`, `MD051`. Running markdownlint without `--config` uses the
+default settings (line length 80) which produces many false positives unrelated to the project
+rules and may hide real issues like `MD009` (trailing spaces) or `MD040` (fenced block missing
+language).
+
+**Natural-language terminology (`textlint` with `textlint-rule-terminology`):**
+
+CI runs textlint on prose to flag terminology preferences (for example, em dashes should be
+hyphens, `repo` should be `repository`, `READMEs` should be `readmes`, `Blank line` should be
+`Empty line`). The textlint config lives in the shared `netcracker/.github` repository and is
+pulled in at CI time; there is no local config file to reference. To preview locally:
+
+```bash
+npx --yes textlint --rule terminology <changed-files>
+```
+
+This runs the default terminology rule set. CI may flag a few additional terms layered on top
+by the shared config. Treat the CI report as authoritative.
+
+**Why:** The CI super-linter runs both linters. Running locally gives a true preview of the CI
+result, catches real issues, and avoids distraction from false positives that arise when
+running linters with default (non-project) settings.
+
+### Testing documentation changes
+
+Before committing documentation:
+
+1. Check Markdown syntax
+2. Verify all links work
+3. Ensure tables are aligned
+4. Review for clarity and accuracy
 
 ### Change requests
 
