@@ -139,7 +139,7 @@ def merge_sd(sd_path: Path, sd_data, merge_func):
 
 
 def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
-    if sd_merge_mode is not None:
+    if sd_merge_mode:
         effective_merge_mode = MergeType.from_value(sd_merge_mode)
     elif sd_delta == "true":
         effective_merge_mode = MergeType.EXTENDED
