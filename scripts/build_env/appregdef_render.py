@@ -21,7 +21,7 @@ def write_app_reg_defs(base_dir: str, render_dir: str, env_dir: str, placement_m
         if env_dst.exists():
             shutil.rmtree(env_dst)
         if placement_mode == "dual":
-            shutil.copytree(root_dst, env_dst)
+            shutil.copytree(src, env_dst)
 
 
 def override_app_reg_defs(base_dir: str, env_dir: str, placement_mode: str) -> None:
