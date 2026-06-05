@@ -11,8 +11,8 @@
   - [Value generation](#value-generation)
   - [Behaviour](#behaviour)
     - [Pre-flight phase](#pre-flight-phase)
-    - [Dry-run phase](#dry-run-phase)
     - [Processing phase](#processing-phase)
+    - [Dry-run phase](#dry-run-phase)
     - [Post-processing](#post-processing)
 
 ## Synopsis
@@ -44,15 +44,17 @@ external-cred-provision --dry-run effective-set/external-credential/external-cre
 |----------------------------|---------|------------------------------------------------------|
 | `--dry-run`                | off     | Run prerequisite checks only, no writes              |
 
-The `--dry-run` flag stops execution after the [Dry-run phase](#dry-run-phase).
-Processing and Post-processing phases do not run.
+When `--dry-run` is set, the CLI runs the [Dry-run phase](#dry-run-phase). No writes happen.
 
 ## Environment variables
 
-Store authentication variables are read from the process environment. For each Secret
-Store entry in `secretStores`, the CLI looks up variables prefixed with the store name in
-upper-snake form (hyphens replaced with underscores, all uppercase). Store `default-store`
-maps to the prefix `DEFAULT_STORE_`. Store `gcp-primary` maps to `GCP_PRIMARY_`.
+All store configuration is read from the process environment. The CLI determines the
+store type from the VALS reference scheme in each credential's `vals` field
+(`ref+vault://...` → `vault`, `ref+gcpsecrets://...` → `gcp`, `ref+awssecrets://...` →
+`aws`). The store identifier comes from the `secret_store_id` query parameter in
+`vals`, or defaults to `default-store` when the parameter is absent.
+
+For each store identifier, the CLI looks up variables prefixed with the store name.
 
 | Store type | Variable(s)                                                                |
 |------------|----------------------------------------------------------------------------|
@@ -72,74 +74,41 @@ overwrite).
 The CLI reads the external credentials context YAML at the path given as the positional
 argument.
 
-The context carries two sections. The `secretStores` map provides store endpoint and
-authentication lookup. The `credentials` map addresses each secret in the store with a
-VALS reference string, a strategy enum value, and a `data` field map.
+The context is a `credentials` map. Each entry addresses a secret with a VALS reference
+string, a strategy enum value, and a `data` map that describes the credential content.
+The CLI infers the store type from the VALS scheme and adapts `data` to the target
+store's format. Store configuration and authentication come from the process environment
+(see [Environment variables](#environment-variables)).
 
 ```yaml
-# Mandatory
-# Map of Secret Store definitions referenced by the credentials in the context.
-secretStores:
-  # Map key is the Secret Store name. Referenced from credential entries through the
-  # `secret_store_id` query parameter in `vals`, or used as the `default-store` fallback
-  # when the parameter is absent.
-  <secret-store-name>:
-    # Mandatory
-    type: enum [ vault, azure, aws, gcp ]
-    # Mandatory
-    url: url
-    # Mandatory when `type` is `vault`
-    # KV mount path inside Vault.
-    mountPath: string
-    # Mandatory when `type` is `azure`
-    # Azure Key Vault name.
-    vaultName: string
-    # Mandatory when `type` is `aws`
-    # AWS region of the Secrets Manager instance.
-    region: string
-    # Mandatory when `type` is `gcp`
-    # GCP project that owns the secret.
-    projectId: string
-
 # Mandatory
 credentials:
   # Map key is the Credential id.
   <cred-id>:
     # Mandatory
-    # VALS reference string that addresses the secret as a whole. The string carries no
-    # key segment after `#`. The store is selected by the `secret_store_id` query
-    # parameter when present. When absent, the entry named `default-store` in 
-    # `secretStores` is used.
+    # VALS reference string that addresses the secret. The string is a path only — no
+    # key segments (no `#` fragment). The CLI infers the store type from the VALS
+    # scheme. The store identifier comes from the `secret_store_id` query parameter,
+    # or defaults to `default-store` when the parameter is absent.
     vals: string
     # Mandatory
     # See the Strategy enum section for the meaning of each value.
     strategy: enum [fail_if_absent, create_if_absent, create_if_present]
     # Mandatory
-    # Map of plaintext field values. Keys depend on the source Credential type. For
-    # multiple-value, the keys are `username` and `password`. For single-value cases
-    # the key is `secret`. Each value is either a real
-    # plaintext value or the reserved marker `envgeneGenerateValue`. A real value goes
-    # to the store as is. The marker tells the CLI to generate a value using the
-    # default pattern for the field.
+    # Credential content as a map of named field values. The shape reflects the
+    # credential's structure: `value` for a single-value
+    # credential (token, secret); `username` and `password` for the usernamePassword
+    # pair. Each value is either a real
+    # plaintext value or the reserved marker `envgeneGenerateValue`.
     data:
       username: string
       password: string
-      secret: string
+      value: string
 ```
 
 Example:
 
 ```yaml
-secretStores:
-  default-store:
-    type: vault
-    url: "https://vault.example.com"
-    mountPath: kv
-  gcp-primary:
-    type: gcp
-    url: "https://secretmanager.googleapis.com"
-    projectId: example-project
-
 credentials:
   db-app-cred:
     vals: "ref+vault://kv/data/env-1/db-app-cred"
@@ -159,13 +128,13 @@ credentials:
     vals: "ref+vault://kv/data/env-1/mq-connection-secret"
     strategy: create_if_absent
     data:
-      secret: token
+      value: token
 
   third-party-api-token:
-    vals: "ref+gcpsecrets://example-project/third-party-api-token?secret_store_id=gcp-primary"
+    vals: "ref+gcpsecrets://example-project/third-party-api-token"
     strategy: fail_if_absent
     data:
-      secret: envgeneGenerateValue
+      value: envgeneGenerateValue
 ```
 
 > [!IMPORTANT]
@@ -181,6 +150,10 @@ The strategy is an attribute on each credential entry in the context.
 | `fail_if_absent`     | skip the credential      | fail                  |
 | `create_if_absent`   | skip the credential      | create the credential |
 | `create_if_present`  | overwrite the credential | create the credential |
+
+A per-credential failure does not stop the run. The CLI logs each
+failure and continues with the next credential so the log carries the full list of
+failures. The summary line tallies them.
 
 In dry-run mode the CLI performs no writes. For each strategy, the CLI runs the
 prerequisite check shown below.
@@ -206,50 +179,47 @@ Generated values use **only** characters from this set:
 - Angle brackets: `<` `>`
 - Common symbols: `@` `#` `%` `+` `=` `,` `;` `~` `&` `*` `|` `^` `` ` `` `?` `!`
 
-Length is 32 characters.
+Length is 16 characters.
 
 ## Behaviour
 
 ### Pre-flight phase
 
-Structural checks on the context and the CLI environment. No network calls.
+Runs before any per-credential work.
 
-1. **Store reference in `vals` query.** When a `vals` string carries a `secret_store_id`
-   query parameter, that name appears in `secretStores`.
-2. **Store credentials.** Authentication variables for every store referenced in the
-   context are present in the CLI environment.
+1. **Check env vars.** For every unique store identifier referenced by `vals` fields
+   (the `secret_store_id` query parameter, or `default-store` when absent), the
+   corresponding prefixed environment variables are present.
+2. **Check authentication.** Authenticate to each referenced store using the prefixed
+   environment variables.
 
 On failure, the CLI logs the failure and exits non-zero. No further phase runs.
 
-### Dry-run phase
-
-Store authentication and per-credential prerequisite checks. No writes. This phase runs
-in both apply and `--dry-run` modes.
-
-1. **Store authentication.** For each `secretStores` entry, authenticate to the store
-   using the corresponding environment variables.
-2. **Per-credential check.** For each `credentials.<id>`, resolve the target store from
-   the `vals` query parameter or, when absent, from the `default-store` entry in
-   `secretStores`. Run the per-strategy prerequisite check from the dry-run table in
-   [Strategy enum](#strategy-enum).
-
-In `--dry-run` mode, the CLI stops after this phase. The Processing and Post-processing
-phases do not run.
-
 ### Processing phase
 
-Runs in apply mode only. For each `credentials.<id>` entry, in input order:
-
-1. Apply the strategy per the behaviour table in [Strategy enum](#strategy-enum). When
-   the strategy calls for a write, generate values for each `envgeneGenerateValue`
-   marker using the default pattern for the field. Real values from `data` go through
-   as is. Write the result to the store through `secret_manager`.
+Runs in apply mode (non `--dry-run`). For each `credentials.<id>` entry, in input order
+apply the strategy per the behaviour table in [Strategy enum](#strategy-enum). When
+the strategy calls for a write, generate values for each `envgeneGenerateValue`
+marker using the default pattern for the field. Real values from `data` go through
+as is. Write the result to the store through `secret_manager`. Log the outcome.
 
 A single credential failure does not stop the run. The CLI keeps processing the
-remaining credentials and reports the final outcome in the summary line.
+remaining credentials.
+
+### Dry-run phase
+
+Runs in `--dry-run` mode in place of the Processing phase. For each `credentials.<id>`
+entry, in input order run the per-strategy prerequisite check from the dry-run table
+in [Strategy enum](#strategy-enum). No writes happen. Log the outcome.
+
+A check failure does not stop the run.
 
 ### Post-processing
 
-Runs in apply mode only. The CLI emits a summary line with counts of `created`,
-`overwritten`, `skipped`, `verified`, and `failed`. The CLI exit code reflects whether
-any credential failed and whether any earlier phase failed.
+Emits a summary line and sets the exit code.
+
+- **Apply mode:** counts of `created`, `overwritten`, `skipped`, `verified`, and
+  `failed`.
+- **Dry-run mode:** counts of `dry_run_ok` and `dry_run_fail`.
+
+The exit code is non-zero if any credential failed or if any earlier phase failed.
