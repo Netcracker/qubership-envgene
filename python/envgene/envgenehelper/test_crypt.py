@@ -145,6 +145,39 @@ def test_is_encrypted(crypt_kwargs):
     decrypt_file(**crypt_kwargs)
     assert not is_encrypted(cred_file, crypt_kwargs['crypt_backend'])
 
+
+def test_is_encrypted_sops_top_level_only(tmp_path):
+    cred_file = tmp_path / 'credentials.yml'
+    cred_file.write_text(
+        'credentials:\n'
+        '  nested:\n'
+        '    sops: not-metadata\n',
+        encoding='utf-8',
+    )
+    assert not is_encrypted(str(cred_file), 'SOPS')
+
+    cred_file.write_text('sops:\n  mac: ENC[AES256_GCM,...]\n', encoding='utf-8')
+    assert is_encrypted(str(cred_file), 'SOPS')
+
+def compare_encrypted_files(source, target):
+    sops_metadata_to_ignore = [['sops', 'lastmodified'],['sops','mac']]
+    diff_paths, removed_paths = compare_dicts(source, target)
+    diff_paths = [item for item in diff_paths if item not in sops_metadata_to_ignore]
+    return diff_paths, removed_paths
+
+def test_load_result_false_sops(crypt_kwargs):
+    if crypt_kwargs.get('crypt_backend') != 'SOPS':
+        pytest.skip('load_result=False fast path is SOPS-specific')
+    cred_file = crypt_kwargs['file_path']
+    encrypt_file(**crypt_kwargs)
+    result = decrypt_file(**crypt_kwargs, load_result=False)
+    assert result is None
+    assert not is_encrypted(cred_file, 'SOPS')
+    decrypt_file(**crypt_kwargs)
+    result = encrypt_file(**crypt_kwargs, load_result=False)
+    assert result is None
+
+
 def test_minimize_diff(crypt_kwargs):
     cred_file = crypt_kwargs['file_path']
 
