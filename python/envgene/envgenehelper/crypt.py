@@ -164,7 +164,10 @@ def _parallel_cred_op(files, op_func, **kwargs):
     file_list = sorted(files)
     if not file_list:
         return
-    max_workers = min(len(file_list), os.cpu_count() or 2)
+    if kwargs.get('minimize_diff'):
+        max_workers = 1
+    else:
+        max_workers = min(len(file_list), os.cpu_count() or 2)
     errors = []
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_file = {
@@ -180,7 +183,7 @@ def _parallel_cred_op(files, op_func, **kwargs):
 
     if errors:
         summary = '; '.join(
-            f'{path} ({type(exc).__name__}: {exc})' for path, exc in errors
+            f'{file_path} ({type(exc).__name__}: {exc})' for file_path, exc in errors
         )
         raise RuntimeError(f'{op_func.__name__} failed: {summary}') from errors[0][1]
 

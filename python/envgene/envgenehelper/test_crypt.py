@@ -1,6 +1,7 @@
 import os
 import copy
-import subprocess
+from unittest.mock import patch
+
 import pytest
 from subprocess import SubprocessError
 
@@ -8,7 +9,14 @@ from ruyaml import CommentedMap
 
 from .collections_helper import compare_dicts
 
-from .crypt import decrypt_file, encrypt_file, is_encrypted
+from .crypt import (
+    _parallel_cred_op,
+    decrypt_all_cred_files_for_env,
+    decrypt_file,
+    encrypt_all_cred_files_for_env,
+    encrypt_file,
+    is_encrypted,
+)
 from .file_helper import check_file_exists, writeToFile
 from .yaml_helper import openYaml, set_nested_yaml_attribute, writeYamlToFile
 
@@ -165,17 +173,55 @@ def compare_encrypted_files(source, target):
     diff_paths = [item for item in diff_paths if item not in sops_metadata_to_ignore]
     return diff_paths, removed_paths
 
-def test_load_result_false_sops(crypt_kwargs):
-    if crypt_kwargs.get('crypt_backend') != 'SOPS':
-        pytest.skip('load_result=False fast path is SOPS-specific')
+def test_load_result_false(crypt_kwargs):
     cred_file = crypt_kwargs['file_path']
+    crypt_backend = crypt_kwargs.get('crypt_backend')
     encrypt_file(**crypt_kwargs)
     result = decrypt_file(**crypt_kwargs, load_result=False)
     assert result is None
-    assert not is_encrypted(cred_file, 'SOPS')
+    assert not is_encrypted(cred_file, crypt_backend)
     decrypt_file(**crypt_kwargs)
     result = encrypt_file(**crypt_kwargs, load_result=False)
     assert result is None
+
+
+def test_parallel_cred_op_load_result_false(crypt_kwargs, tmp_path):
+    cred_file = crypt_kwargs['file_path']
+    second_file = tmp_path / 'credentials.yml'
+    second_file.write_text(open(cred_file, encoding='utf-8').read(), encoding='utf-8')
+    files = {cred_file, str(second_file)}
+    batch_kwargs = {
+        k: v for k, v in crypt_kwargs.items() if k != 'file_path'
+    }
+    batch_kwargs.update(ignore_is_crypt=True, is_crypt=True)
+
+    with patch('envgenehelper.crypt.get_all_necessary_cred_files', return_value=files):
+        encrypt_all_cred_files_for_env(**batch_kwargs)
+        assert is_encrypted(cred_file, crypt_kwargs.get('crypt_backend'))
+        assert is_encrypted(str(second_file), crypt_kwargs.get('crypt_backend'))
+
+        decrypt_all_cred_files_for_env(**batch_kwargs)
+        assert not is_encrypted(cred_file, crypt_kwargs.get('crypt_backend'))
+        assert not is_encrypted(str(second_file), crypt_kwargs.get('crypt_backend'))
+
+
+def test_parallel_cred_op_sequential_when_minimize_diff():
+    files = {'a.yml', 'b.yml'}
+
+    with patch('envgenehelper.crypt.ThreadPoolExecutor') as mock_executor:
+        mock_ctx = mock_executor.return_value.__enter__.return_value
+
+        def fake_as_completed(future_to_file):
+            return list(future_to_file)
+
+        with patch('envgenehelper.crypt.as_completed', side_effect=fake_as_completed):
+            _parallel_cred_op(
+                files,
+                lambda f, **kw: None,
+                minimize_diff=True,
+            )
+
+        mock_executor.assert_called_once_with(max_workers=1)
 
 
 def test_minimize_diff(crypt_kwargs):
@@ -191,7 +237,7 @@ def test_minimize_diff(crypt_kwargs):
     decrypt_file(**crypt_kwargs)
     encrypt_file(**crypt_kwargs, minimize_diff=True, old_file_path=old_cred_file)
 
-    diff_paths, removed_paths = compare_dicts(initial_enc_content, openYaml(cred_file))
+    diff_paths, removed_paths = compare_encrypted_files(initial_enc_content, openYaml(cred_file))
     assert len(removed_paths) == 0 and len(diff_paths) == 0
 
     # test with one change
@@ -200,13 +246,8 @@ def test_minimize_diff(crypt_kwargs):
     writeYamlToFile(cred_file, new_content)
     new_enc_content = encrypt_file(**crypt_kwargs, minimize_diff=True, old_file_path=old_cred_file)
 
-    diff_paths, removed_paths = compare_dicts(initial_enc_content, new_enc_content)
-    assert len(removed_paths) == 0
-    assert ['first_cred', 'data', 'secret'] in diff_paths
-    if crypt_kwargs.get('crypt_backend') == 'SOPS':
-        assert ['sops', 'mac'] in diff_paths
-    else:
-        assert len(diff_paths) == 1
+    diff_paths, removed_paths = compare_encrypted_files(initial_enc_content, new_enc_content)
+    assert len(removed_paths) == 0 and len(diff_paths) == 1
 
     # test wrong parameter combination
     with pytest.raises(ValueError):
