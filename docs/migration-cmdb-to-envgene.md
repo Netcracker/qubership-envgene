@@ -24,7 +24,6 @@
    - 4.3 [Required repository folder structure](#43-required-repository-folder-structure)
    - 4.4 [Instance pipeline job reference](#44-instance-pipeline-job-reference)
    - 4.5 [Configuration file parameters reference](#45-configuration-file-parameters-reference)
-   - 4.6 [Documentation gaps](#46-documentation-gaps)
 
 ---
 
@@ -1006,17 +1005,3 @@ Jobs run sequentially. A job failure stops the pipeline.
 | `registry.mavenConfig.targetRelease` | string | Yes | Release repo name |
 
 ---
-
-### 4.6 Documentation gaps
-
-The following areas have insufficient documentation in the current EnvGene docs or could not be fully verified from the provided repositories:
-
-| Gap | Location | Impact |
-|---|---|---|
-| Cloud Passport key-to-`current_env.cluster.*` mapping is not documented in a single reference table | `docs/features/cloud-passport-processing.md` (not read in full) | High — configurators must trial-and-error the variable names |
-| The `template-macros.md` file was not read; the full list of available Jinja macros (`current_env.*`, `creds.get()`, etc.) is not included in this document | `docs/template-macros.md` | High — critical for writing Namespace/Cloud Templates |
-| The `deployer.yml` CMDB integration (how EnvGene imports objects back into CMDB) is described as "not part of EnvGene Core" with no detail on which CMDB systems are supported | `docs/envgene-configs.md` | Medium — relevant for teams that need bidirectional CMDB sync |
-| The `instance-pipeline-parameters.md` full parameter list was not read | `docs/instance-pipeline-parameters.md` | Medium — the pipeline parameter table in this document is incomplete |
-| No documentation was found for how EnvGene handles the `mergeDeployParametersAndE2EParameters: true` flag (present in both CMDB and EnvGene) during Effective Set generation | — | Medium — affects environments migrated from CMDB with this flag set |
-| The `CMDB_URL` Cloud Passport key appears in both the CMDB Cloud export (`productionMode` + `CMDB_URL` in `deployParameters`) and in all Cloud Passports. Its exact semantics in the Effective Set are not documented | — | Low |
-| EnvGene's handling of CMDB ParameterSets with `applications: []` (empty list, as in `dcl-paramset-mandatory-k8sApps3.yml`) is not explicitly documented — whether an empty list is valid or should be omitted | `docs/envgene-objects.md` | Low |
