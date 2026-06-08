@@ -352,24 +352,14 @@ git-system-follower install <path_to_instance_package_image> \
 1. Run GSF with repository URL, branch, token, and target package image.
 2. GSF updates the Instance Repository to the target version.
 3. GSF updates changed files, adds new files, and removes outdated managed files.
-4. Verify `configuration/credentials/credentials.yml` contains `self-token-cred`:
-   - `type: secret`
-   - `data.secret` is present.
-5. Verify `configuration/integration.yml` contains:
-   - `self_token: "${creds.get('self-token-cred').secret}"`.
-6. Verify legacy `self_token` definition is absent in `configuration/config.yml` or ignored by the target version.
-7. Verify placeholder file `configuration/.gitkeep` is present.
+4. Verify `configuration/integration.yml` contains the `cp_discovery` block.
+5. Verify placeholder file `configuration/.gitkeep` is present.
 
 **Results:**
 
 1. Instance Repository is upgraded to the target version.
 2. Repository matches the reference structure.
-3. Token configuration is migrated and valid:
-   - `configuration/credentials/credentials.yml` contains `self-token-cred` with non-empty secret data,
-   - `configuration/integration.yml` references `${creds.get('self-token-cred').secret}` in `self_token`,
-   - runtime execution does not fail with missing `self_token` or missing `self-token-cred`.
-4. Legacy token definition in `configuration/config.yml` is absent or ignored by the target version, and does not affect runtime behavior.
-5. `pipeline_vars.*` preserves user-defined values, except allowed structural alignment with current package structure
+3. `pipeline_vars.*` preserves user-defined values, except allowed structural alignment with current package structure
 
 ### UC-GSF-INST-3: Downgrade Instance Repository via GSF
 
