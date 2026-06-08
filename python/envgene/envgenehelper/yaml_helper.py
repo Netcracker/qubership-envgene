@@ -319,11 +319,15 @@ def findYamls(dir, pattern, notPattern="", additionalRegexpPattern="", additiona
     return findFiles(fileList, pattern, notPattern, additionalRegexpPattern, additionalRegexpNotPattern)
 
 
-def findAllYamlsInDir(dir):
+def findAllYamlsInDir(dir, recursively=True):
     result = []
     dirPointer = pathlib.Path(dir)
-    fileList = list(dirPointer.rglob("*.yml"))
-    fileListYaml = list(dirPointer.rglob("*.yaml"))
+    if recursively:
+        fileList     = list(dirPointer.rglob("*.yml"))
+        fileListYaml = list(dirPointer.rglob("*.yaml"))
+    else:
+        fileList     = list(dirPointer.glob("*.yml"))
+        fileListYaml = list(dirPointer.glob("*.yaml"))
     if len(fileListYaml) > 0:
         fileList = fileList + fileListYaml
     for f in fileList:
