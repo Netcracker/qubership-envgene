@@ -105,9 +105,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
             raise ValueError("CRED_ROTATION_PAYLOAD and GET_PASSPORT cannot be used together")
         elif params['CRED_ROTATION_PAYLOAD']:
             credential_rotation_job = prepare_credential_rotation_job(pipeline, full_env_name, environment_name,
-                                                                      cluster_name,
-                                                                      params['CRED_ROTATION_PAYLOAD'],
-                                                                      params['CRED_ROTATION_FORCE'])
+                                                                      cluster_name)
             jobs_map["credential_rotation_job"] = credential_rotation_job
         else:
             logger.info(
@@ -117,7 +115,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         if not params.get('BG_MANAGE', None):
             logger.info(f'Preparing of bg_manage job for environment {full_env_name} is skipped.')
         else:
-            jobs_map['bg_manage_job'] = prepare_bg_manage_job(pipeline, full_env_name, params['BG_STATE'])
+            jobs_map['bg_manage_job'] = prepare_bg_manage_job(pipeline, full_env_name)
 
         if is_inventory_generation_needed(params['IS_TEMPLATE_TEST'], params):
             jobs_map["env_inventory_generation_job"] = prepare_inventory_generation_job(pipeline, full_env_name,
