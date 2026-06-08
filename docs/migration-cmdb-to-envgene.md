@@ -9,7 +9,6 @@
    - 1.2 [Why migrate from CMDB Objects to EnvGene Objects?](#12-why-migrate-from-cmdb-objects-to-envgene-objects)
    - 1.3 [Conceptual differences](#13-conceptual-differences)
    - 1.4 [High-level architecture](#14-high-level-architecture)
-   - 1.5 [When NOT to migrate](#15-when-not-to-migrate)
 2. [Tutorial — Migrate one CMDB Object end-to-end](#2-tutorial--migrate-one-cmdb-object-end-to-end)
 3. [How-to Guides](#3-how-to-guides)
    - 3.1 [Map CMDB Object types to EnvGene Object types](#31-map-cmdb-object-types-to-envgene-object-types)
@@ -120,16 +119,6 @@ Effective Set (consumer-ready output)
 ```
 
 The `env_definition.yml` is the single file a configurator writes per environment. Everything else under that environment folder is generated.
-
-### 1.5 When NOT to migrate
-
-- **Environments managed by a system that writes directly to CMDB** — if an external orchestrator owns the CMDB record and overwrites it on each deployment, migrating to EnvGene requires also migrating that orchestrator's integration.
-- **Environments where every parameter is unique** — if two environments share no common structure, template reuse is low and the overhead of a template repository may not pay off.
-- **Short-lived ephemeral environments** — if an environment lives less than one deployment cycle, the one-time setup cost (Cloud Passport, `env_definition.yml`, credentials) may exceed the benefit.
-- **CMDB Objects with no cluster binding** — Application and Registry Definitions that describe only Maven/Docker coordinates and carry no cluster-specific parameters can remain in CMDB or be migrated independently without touching environments.
-- **ParameterSets whose parameters are only understood by the DCL pipeline** (`DCL_*` keys) — these can be migrated as Template ParameterSets referenced in `e2eParameterSets`, but their values must still be correct for the DCL toolchain.
-
----
 
 ## 2. Tutorial — Migrate one CMDB Object end-to-end
 
