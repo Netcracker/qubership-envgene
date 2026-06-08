@@ -5,7 +5,6 @@ from os import path, getenv
 from pathlib import Path
 
 import envgenehelper as helper
-import yaml
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from envgenehelper import openYaml
@@ -17,7 +16,7 @@ from envgenehelper.logger import logger
 from envgenehelper.models import OperationType
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_helper import (basic_merge_multiple, MergeType, calculate_merge_mode,
-                                     get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME)
+                                     SD_FILE_NAME, DELTA_SD_FILE_NAME)
 from typing_extensions import deprecated
 
 MERGE_METHODS = {
