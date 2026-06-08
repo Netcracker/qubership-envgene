@@ -1,7 +1,5 @@
 # Migration Blueprint: CMDB Objects → EnvGene Objects
 
-> **Diátaxis document** — four clearly separated content types: Explanation, Tutorial, How-to Guides, Reference.
-
 ---
 
 ## Table of Contents
@@ -31,8 +29,6 @@
 ---
 
 ## 1. Explanation — Why and What
-
-> *Diátaxis type: **Explanation** — understanding-oriented background material. No step-by-step instructions here.*
 
 ### 1.1 What is EnvGene?
 
