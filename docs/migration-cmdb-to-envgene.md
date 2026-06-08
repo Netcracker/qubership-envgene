@@ -134,8 +134,6 @@ The `env_definition.yml` is the single file a configurator writes per environmen
 
 ## 2. Tutorial — Migrate one CMDB Object end-to-end
 
-> *Diátaxis type: **Tutorial** — learning-oriented. Follow along to produce a working result. Uses the real `k8sApps3` / `api-hub-dev` CMDB Objects as the source.*
-
 **Goal:** Take the CMDB Cloud `k8sApps3` with its Namespace `api-hub-dev` and produce a working EnvGene environment that generates the same Cloud and Namespace objects.
 
 **Time required:** ~30 minutes  
@@ -432,8 +430,6 @@ Open `namespace.yml` and verify `ESCAPE_SEQUENCE: "true"` appears, with a commen
 
 ## 3. How-to Guides
 
-> *Diátaxis type: **How-to** — goal-oriented guides for users who already understand the concepts. Each guide answers a specific "how do I…" question.*
-
 ---
 
 ### 3.1 Map CMDB Object types to EnvGene Object types
@@ -725,8 +721,6 @@ The CMDB Namespace export contains a `dirty` field that is not part of the EnvGe
 ---
 
 ## 4. Reference
-
-> *Diátaxis type: **Reference** — information-oriented technical facts. No prose explanation, no how-to steps.*
 
 ---
 
