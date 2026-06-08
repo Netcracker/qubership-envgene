@@ -1,6 +1,6 @@
-from enum import auto, StrEnum
 import re
 from dataclasses import InitVar, dataclass, field
+from enum import auto, StrEnum
 from os import getenv
 from pathlib import Path
 from typing import overload
@@ -9,8 +9,7 @@ from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
 from .collections_helper import dump_as_yaml_format
-from .collections_helper import merge_lists
-from .file_helper import getAbsPath, extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
+from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
 from .logger import logger
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
