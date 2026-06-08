@@ -28,7 +28,7 @@ class TestEnvInvGen(BaseTest):
         self.env_name = get_environment_name_from_full_name(self.full_env_name)
         self.cluster = get_cluster_name_from_full_name(self.full_env_name)
 
-        environ["ENV_NAME"] = self.env_name
+        environ["ENVIRONMENT_NAME"] = self.env_name
         environ["CLUSTER_NAME"] = self.cluster
         environ["FULL_ENV_NAME"] = self.full_env_name
 
@@ -39,6 +39,11 @@ class TestEnvInvGen(BaseTest):
 
         self.config_dir = self.ci_project_dir / "configuration" / "config.yml"
         writeYamlToFile(self.config_dir, yaml.safe_load("crypt: false\n"))
+
+    def teardown_method(self):
+        for var in ("ENVIRONMENT_NAME", "CLUSTER_NAME", "FULL_ENV_NAME",
+                    "ENV_INVENTORY_CONTENT", "ENV_TEMPLATE_VERSION"):
+            environ.pop(var, None)
 
     def set_inv_content(self):
         places = [p.value for p in Place]

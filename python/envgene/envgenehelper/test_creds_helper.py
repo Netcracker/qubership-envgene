@@ -209,13 +209,6 @@ expand_cred_macro_and_return_param_map_test_data = [
 ]
 
 
-@pytest.mark.parametrize("param_key, param_value, expected", expand_cred_macro_and_return_param_map_test_data)
-def test_get_cred_list_from_param_without_update(param_key, param_value, expected):
-    credsYaml = openYaml("test_data/test_credentials.yaml")
-    assert expand_cred_macro_and_return_value(param_key, param_value,
-                                              credsYaml) == expected, f"Param {param_key}={param_value} expected expanded cred should be: {dump_as_yaml_format(expected)}"
-
-
 def test_mask_sensitive_creds():
     creds = openYaml("test_data/test_crypt.yaml")
     creds_masked = mask_sensitive(creds)

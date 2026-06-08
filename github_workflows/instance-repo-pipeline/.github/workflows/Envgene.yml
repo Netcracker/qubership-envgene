@@ -87,8 +87,10 @@ jobs:
     outputs:
       env_matrix: ${{ steps.matrix-generator.outputs.env_matrix }}
       BG_MANAGE: ${{ env.BG_MANAGE }}
+      BG_STATE: ${{ env.BG_STATE }}
       ENV_INVENTORY_CONTENT: ${{ env.ENV_INVENTORY_CONTENT }}
       CRED_ROTATION_PAYLOAD: ${{ env.CRED_ROTATION_PAYLOAD }}
+      CRED_ROTATION_FORCE: ${{ env.CRED_ROTATION_FORCE }}
       ENV_BUILDER: ${{ env.ENV_BUILDER }}
       GENERATE_EFFECTIVE_SET: ${{ env.GENERATE_EFFECTIVE_SET }}
       ENV_INVENTORY_INIT: ${{ env.ENV_INVENTORY_INIT }}
@@ -192,7 +194,15 @@ jobs:
           echo "SECRET_NAME=$SECRET_NAME" >> $GITHUB_ENV
 
       - name: Create env file for container
-        run: env > .env.container
+        run: |
+          # docker --env-file cannot handle multi-line values (e.g. ENV_INVENTORY_CONTENT, CRED_ROTATION_PAYLOAD).
+          # Export only single-line variables; multi-line vars are passed via explicit -e in each docker run.
+          while IFS='=' read -r key value; do
+            [[ -z "$key" || "$key" == _* ]] && continue
+            if [[ "$value" != *$'\n'* ]]; then
+              printf '%s=%s\n' "$key" "$value"
+            fi
+          done < <(env) > .env.container
 
       - name: Authenticate to GAR (Google Artifact Registry)
         if: needs.process_environment_variables.outputs.DOCKER_CLOUD_REGISTRY_PROVIDER == 'GCP'
@@ -209,8 +219,16 @@ jobs:
         if: needs.process_environment_variables.outputs.BG_MANAGE == 'true'
         env:
           FULL_ENV_NAME: ${{ matrix.environment }}
+          BG_STATE: ${{ needs.process_environment_variables.outputs.BG_STATE }}
         run: |
-          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} -e GITHUB_TOKEN -e FULL_ENV_NAME -e CI_PROJECT_DIR --user root --env-file .env.container --user root -e HOME=/root \
+          docker run --rm \
+            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
+            -w ${{ env.CI_PROJECT_DIR }} \
+            --env-file .env.container \
+            -e FULL_ENV_NAME \
+            -e BG_STATE \
+            -e CI_PROJECT_DIR \
+            --user root -e HOME=/root \
           ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
           bash -c "
             set -eo pipefail
@@ -236,8 +254,18 @@ jobs:
       ### ENV_INVENTORY_GENERATION - START ###
       - name: ENV_INVENTORY_GENERATION
         if: (needs.process_environment_variables.outputs.ENV_INVENTORY_CONTENT != '') || (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
+        env:
+          ENV_INVENTORY_CONTENT: ${{ needs.process_environment_variables.outputs.ENV_INVENTORY_CONTENT }}
         run: |
-          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
+          docker run --rm \
+            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
+            -w ${{ env.CI_PROJECT_DIR }} \
+            --env-file .env.container \
+            -e ENVIRONMENT_NAME \
+            -e CLUSTER_NAME \
+            -e FULL_ENV_NAME \
+            -e ENV_INVENTORY_CONTENT \
+            --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               set -eo pipefail
@@ -263,8 +291,18 @@ jobs:
       ### CREDENTIAL ROTATION - START ###
       - name: CREDENTIAL_ROTATION
         if: needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD != ''
+        env:
+          CRED_ROTATION_PAYLOAD: ${{ needs.process_environment_variables.outputs.CRED_ROTATION_PAYLOAD }}
+          CRED_ROTATION_FORCE: ${{ needs.process_environment_variables.outputs.CRED_ROTATION_FORCE }}
         run: |
-          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
+          docker run --rm \
+            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
+            -w ${{ env.CI_PROJECT_DIR }} \
+            --env-file .env.container \
+            -e ENVIRONMENT_NAME -e CLUSTER_NAME -e FULL_ENV_NAME \
+            -e CRED_ROTATION_PAYLOAD \
+            -e CRED_ROTATION_FORCE \
+            --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               set -eo pipefail
@@ -291,7 +329,12 @@ jobs:
       - name: APP_REG_DEF_PROCESS
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         run: |
-          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
+          docker run --rm \
+            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
+            -w ${{ env.CI_PROJECT_DIR }} \
+            --env-file .env.container \
+            -e ENVIRONMENT_NAME -e CLUSTER_NAME -e FULL_ENV_NAME \
+            --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               set -eo pipefail
@@ -320,7 +363,12 @@ jobs:
       - name: PROCESS_SD
         if: (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'json' && needs.process_environment_variables.outputs.SD_DATA != '') || (needs.process_environment_variables.outputs.SD_SOURCE_TYPE == 'artifact' && needs.process_environment_variables.outputs.SD_VERSION != '')
         run: |
-          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
+          docker run --rm \
+            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
+            -w ${{ env.CI_PROJECT_DIR }} \
+            --env-file .env.container \
+            -e ENVIRONMENT_NAME -e CLUSTER_NAME -e FULL_ENV_NAME \
+            --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR }}:${{ env.DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR }} \
             bash -c "
               set -eo pipefail
@@ -353,7 +401,13 @@ jobs:
       - name: ENV_BUILD
         if: needs.process_environment_variables.outputs.ENV_BUILDER == 'true'
         run: |
-          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} -e COMMIT_ENV=true --env-file .env.container --user root -e HOME=/root \
+          docker run --rm \
+            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
+            -w ${{ env.CI_PROJECT_DIR }} \
+            --env-file .env.container \
+            -e ENVIRONMENT_NAME -e CLUSTER_NAME -e FULL_ENV_NAME \
+            -e COMMIT_ENV=true \
+            --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               set -eo pipefail
@@ -382,7 +436,12 @@ jobs:
       - name: GENERATE_EFFECTIVE_SET
         if: needs.process_environment_variables.outputs.GENERATE_EFFECTIVE_SET == 'true'
         run: |
-          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} --env-file .env.container --user root -e HOME=/root \
+          docker run --rm \
+            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
+            -w ${{ env.CI_PROJECT_DIR }} \
+            --env-file .env.container \
+            -e ENVIRONMENT_NAME -e CLUSTER_NAME -e FULL_ENV_NAME \
+            --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_EFFECTIVE_SET_GENERATOR }}:${{ env.DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR }} \
             bash -c "
               set -eo pipefail
@@ -448,7 +507,13 @@ jobs:
       ### GIT COMMIT - START ###
       - name: GIT_COMMIT
         run: |
-          docker run --rm -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} -w ${{ env.CI_PROJECT_DIR }} -e COMMIT_ENV=true --env-file .env.container --user root -e HOME=/root \
+          docker run --rm \
+            -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
+            -w ${{ env.CI_PROJECT_DIR }} \
+            --env-file .env.container \
+            -e ENVIRONMENT_NAME -e CLUSTER_NAME -e FULL_ENV_NAME \
+            -e COMMIT_ENV=true \
+            --user root -e HOME=/root \
             ${{ env.DOCKER_IMAGE_NAME_ENVGENE }}:${{ env.DOCKER_IMAGE_TAG_ENVGENE }} \
             bash -c "
               set -eo pipefail

@@ -5,18 +5,16 @@ from enum import Enum
 from os import path, getenv
 from pathlib import Path
 
-import yaml
-
 import envgenehelper as helper
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from envgenehelper.business_helper import getenv_and_log, getenv_with_error
+from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension
 from envgenehelper.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_merge_helper import basic_merge_multiple
-from envgenehelper.collections_helper import split_multi_value_param
 
 
 class MergeType(Enum):
@@ -88,7 +86,7 @@ def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict
 
 def prepare_vars_and_run_sd_handling():
     base_dir = getenv_and_log('CI_PROJECT_DIR')
-    env_name = getenv_and_log('ENV_NAME')
+    env_name = getenv_and_log('ENVIRONMENT_NAME')
     cluster = getenv_and_log('CLUSTER_NAME')
 
     env = Environment(base_dir, cluster, env_name)
@@ -115,9 +113,8 @@ def build_namespace_dict(env) -> dict:
         if os.path.isdir(folder_path):
             namespace_file = os.path.join(folder_path, "namespace.yml")
             if os.path.isfile(namespace_file):
-                with open(namespace_file, 'r') as f:
-                    data = yaml.safe_load(f)
-                    logger.info(f"Parsed content of {namespace_file}: {data}")
+                data = helper.openYaml(namespace_file, safe_load=True)
+                logger.debug(f"Parsed content of {namespace_file}: {data}")
                 # Extract 'name' property
                 ns_name = data.get("name")
                 logger.info(f"ns_name = {ns_name}")
@@ -142,7 +139,7 @@ def merge_sd(sd_path: Path, sd_data, merge_func):
 
 
 def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
-    if sd_merge_mode is not None:
+    if sd_merge_mode:
         effective_merge_mode = MergeType.from_value(sd_merge_mode)
     elif sd_delta == "true":
         effective_merge_mode = MergeType.EXTENDED
@@ -298,7 +295,6 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
 def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) -> dict[str, object]:
     if 'SNAPSHOT' in version:
         raise ValueError("SNAPSHOT is not supported version of Solution Descriptor artifacts")
-    # TODO: check if job would fail without plugins
     app_def = get_appdef_for_app(f"{app_name}:{version}", app_name, plugins)
 
     env_creds = helper.get_cred_config()
@@ -306,7 +302,7 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
 
     artifact_info = asyncio.run(
         artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,
-                                       auth_headers=auth_headers))
+                                      auth_headers=auth_headers))
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')

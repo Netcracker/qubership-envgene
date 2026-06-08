@@ -39,7 +39,7 @@ def prepare_inventory_generation_job(pipeline, full_env_name, environment_name, 
         ],
     }
     vars = {
-        "ENV_NAME": environment_name,
+        "ENVIRONMENT_NAME": environment_name,
         "CLUSTER_NAME": cluster_name,
         "FULL_ENV_NAME": full_env_name,
     }
