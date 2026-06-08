@@ -7,6 +7,7 @@ WORKDIR /workspace
 COPY github_workflows/instance-repo-pipeline/.github /opt/github
 
 COPY github_workflows/instance-repo-pipeline/extend_logic/scripts/ /opt/github/extend_logic/scripts/
+COPY build_envgene/scripts/retry/ /opt/github/extend_logic/scripts/retry/
 
 RUN find /opt/github/scripts -type f -name "*.sh" -exec chmod +x {} \; \
     && find /opt/github/extend_logic/scripts -type f -name "*.py" -exec chmod +x {} \;
