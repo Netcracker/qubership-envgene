@@ -88,7 +88,7 @@ Applied when SD processing produces a Delta SD — that is, `SD_REPO_MERGE_MODE`
 
 Application and Registry Definitions for every application in the Delta SD must be available.
 
-This mode is available only when `partial_effective_set_generation=true` or not set in [`config.yml`](/docs/envgene-configs.md#configyml).
+This mode is available only when `effective_set_generation_strategy=partial` or not set in [`config.yml`](/docs/envgene-configs.md#configyml).
 
 #### Forward merge
 

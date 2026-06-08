@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -19,4 +20,4 @@ class TemplateVersionUpdateMode(str, Enum):
 
 class SbomRetentionConfig(BaseModel):
     enabled: bool = Field(default=False)
-    keep_versions_per_app: int = Field(default=10, ge=0)
+    keep_versions_per_app: Optional[int] = Field(default=None, ge=0)

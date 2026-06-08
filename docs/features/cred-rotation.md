@@ -54,11 +54,13 @@ Supports working with SOPS encryption.
 5. An external system is responsible for triggering Cloud Passport rediscovery
 6. Credential rotation can only be run for a single Environment at a time
 7. Credential rotation in a single operation for multiple Environments is not supported. `ENV_NAMES` can only contain a single Environment ID.
+8. `CRED_ROTATION_PAYLOAD` and `GET_PASSPORT: true` cannot be combined in one pipeline run.
+   The pipeline fails at validation before any per-environment job starts.
 
 ### Requirements
 
 1. Credential rotation operation is performed in a separate `credential_rotation` job
-   1. The job must be launched after the `env_inventory_generation_job` and before the `env_build_job`
+   1. The job runs first among per-environment jobs
 2. Credential rotation operation must complete within 1 second (excluding GitLab/GitHub runner span time) for `CRED_ROTATION_PAYLOAD` with 10 elements
 3. Job logs must clearly show how long the job took to execute
 4. The operation must fail if there are [affected parameters](#affected-parameters) and `CRED_ROTATION_FORCE` is `false` or not specified
