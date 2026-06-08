@@ -871,15 +871,15 @@ For more information, refer to [External Sensitive parameters](#version-20-exter
 The structure of this file is as follows:
 
 ```yaml
-<key-1>: <value-1>
-<key-N>: <value-N>
-<application-predefined-key-1>: <application-predefined-value-1>
-<application-predefined-key-N>: <application-predefined-value-N>
+<key-1>: <vals-or-eso-reference-1>
+<key-N>: <vals-or-eso-reference-N>
+<application-predefined-key-1>: <application-predefined-vals-or-eso-reference-1>
+<application-predefined-key-N>: <application-predefined-vals-or-eso-reference-N>
 global: &id001
-  <key-1>: <value-1>
-  <key-N>: <value-N>
-  <application-predefined-key-1>: <application-predefined-value-1>
-  <application-predefined-key-N>: <application-predefined-value-N>
+  <key-1>: <vals-or-eso-reference-1>
+  <key-N>: <vals-or-eso-reference-N>
+  <application-predefined-key-1>: <application-predefined-vals-or-eso-reference-1>
+  <application-predefined-key-N>: <application-predefined-vals-or-eso-reference-N>
 <service-name-1>: *id001
 <service-name-2>: *id001
 ```

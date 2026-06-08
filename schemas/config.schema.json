@@ -61,7 +61,7 @@
     "sbom_retention": {
       "type": "object",
       "title": "SBOM Retention Configuration",
-      "description": "Configuration for automatic SBOM file cleanup. When enabled, per-application SBOM retention is applied to subdirectories of /sboms/ if keep_versions_per_app is set. A total size limit step then keeps only the most recently modified file in each per-application subdirectory if the total size of /sboms/ still exceeds 600 MB.",
+      "description": "Configuration for automatic SBOM file cleanup. When enabled, per-application SBOM retention is applied to subdirectories of /sboms/ if keep_versions_per_app is set. A total size limit step then keeps only the most recently modified file in each per-application subdirectory if the total size of /sboms/ still exceeds 1200 MB.",
       "additionalProperties": false,
       "properties": {
         "enabled": {

@@ -17,5 +17,5 @@ crypt: false
   # Per-application SBOM retention runs only when this is set to a positive integer.
   # If the field is omitted or set to 0, this step is skipped and only the total
   # size limit step runs (keeping the most recent file per application subdirectory
-  # when /sboms/ exceeds 600 MB)
+  # when /sboms/ exceeds 1200 MB)
   # keep_versions_per_app: 10

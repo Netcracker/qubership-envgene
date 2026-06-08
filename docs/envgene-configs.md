@@ -375,7 +375,7 @@ app_reg_defs_placement: enum [`dual`, `root`]
 # Runs during Effective Set generation when enabled
 # Applies per-application SBOM retention to subdirectories of `/sboms/` when `keep_versions_per_app` is set
 # A total size limit step keeps only the single most recent file per application subdirectory
-# if the total size of `/sboms/` still exceeds 600 MB after per-application SBOM retention
+# if the total size of `/sboms/` still exceeds 1200 MB after per-application SBOM retention
 sbom_retention:
   # Optional. Default value - `false`
   # Enable/disable SBOM retention cleanup
@@ -385,7 +385,7 @@ sbom_retention:
   # Per-application SBOM retention runs only when this is set to a positive integer.
   # If the field is omitted or set to `0`, this step is skipped and only the total size
   # limit step runs (keeping the most recent file per application subdirectory when /sboms/
-  # exceeds 600 MB)
+  # exceeds 1200 MB)
   keep_versions_per_app: integer
 # Optional. Default value - `partial`
 # Defines the Effective Set generation strategy used by `generate_effective_set`
@@ -421,11 +421,6 @@ cp_discovery:
     # Recommended to set via cred macro:
     # ${creds.get('<cred-id>').secret}
     token: string
-# Authentication token for EnvGene to access the instance repository
-# Required for EnvGene to commit changes to the instance repository
-# Recommended to set via cred macro:
-# ${creds.get('<cred-id>').secret}
-self_token: string
 ```
 
 ## `deployer.yml`
