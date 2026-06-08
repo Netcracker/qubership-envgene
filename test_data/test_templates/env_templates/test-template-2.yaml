@@ -1,7 +1,6 @@
----
-tenant: "{{ templates_dir }}/env_templates/test-template-2/tenant.yml.j2"
+tenant: C:\devjara1022\devenvgen\opensource\qubership-envgene\test_data\test_templates/env_templates/test-template-2/tenant.yml.j2
 cloud:
-  template_path: "{{ templates_dir }}/env_templates/test-template-2/cloud.yml.j2"
+  template_path: C:\devjara1022\devenvgen\opensource\qubership-envgene\test_data\test_templates/env_templates/test-template-2/cloud.yml.j2
 namespaces:
-  - template_path: "{{ templates_dir }}/env_templates/test-template-2/Namespaces/app-2.yml.j2"
-    deploy_postfix: "app-2"
+  - template_path: C:\devjara1022\devenvgen\opensource\qubership-envgene\test_data\test_templates/env_templates/test-template-2/Namespaces/app.yml.j2
+    deploy_postfix: "app"

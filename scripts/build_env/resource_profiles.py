@@ -149,17 +149,6 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
     override_profile_map = {}
     render_context.generate_profiles(set(env_specific_resource_profile_map.values()))
     for profile_key, env_specific_profile_path in env_specific_resource_profile_map.items():
-        if profile_key not in all_profiles:
-            raise ReferenceError(
-                f"Environment specific profile '{env_specific_profile_path}' cannot be applied "
-                f"for profile key '{profile_key}', because no base template profile was found"
-            )
-        logger.info(f"Found template override profile for profile key '{profile_key}'"
-                    f" with environment specific profile {env_specific_profile_path}")
-        template_profile_file_path = all_profiles[profile_key]
-        template_profile_yaml = openYaml(template_profile_file_path)
-        env_specific_profile_yaml = openYaml(env_specific_profile_path)
-
         combination_mode_key = "mergeEnvSpecificResourceProfiles"
         try:
             combination_mode = render_context.ctx.env_definition['inventory']['config'][combination_mode_key]
@@ -168,6 +157,25 @@ def override_by_env_specific_profiles(all_profiles, env_specific_resource_profil
                 f"inventory.config.{combination_mode_key} key not found in env_definition, default value is 'true'")
             combination_mode = 'true'
         common_msg = f"profile overrides, because {combination_mode_key} is set to {combination_mode}"
+
+        if profile_key not in all_profiles:
+            if str(combination_mode).lower() == 'true':
+                raise ReferenceError(
+                    f"Environment specific profile '{env_specific_profile_path}' cannot be applied "
+                    f"for profile key '{profile_key}', because no base template profile was found "
+                    f"and {combination_mode_key} is set to {combination_mode} (merge mode requires a base profile)"
+                )
+            else:
+                logger.info(f"No base template profile found for profile key '{profile_key}'. "
+                            f"Using environment specific profile directly as replacement.")
+                override_profile_map[profile_key] = env_specific_profile_path
+                continue
+
+        logger.info(f"Found template override profile for profile key '{profile_key}'"
+                    f" with environment specific profile {env_specific_profile_path}")
+        template_profile_file_path = all_profiles[profile_key]
+        template_profile_yaml = openYaml(template_profile_file_path)
+        env_specific_profile_yaml = openYaml(env_specific_profile_path)
 
         if str(combination_mode).lower() == 'true':
             logger.info(f"Joining {common_msg}")
