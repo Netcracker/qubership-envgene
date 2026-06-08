@@ -1,68 +1,62 @@
 import os
-import subprocess
 import tempfile
-from os import getenv, path
+from os import getenv
+from pathlib import Path
+
+from git import GitCommandError, Repo
 
 from envgenehelper import decrypt_file, encrypt_file
-from envgenehelper.crypt import get_crypt, is_cred_file, is_encrypted
+from envgenehelper.crypt import get_crypt, is_cred_file
 from envgenehelper.logger import logger
 
-BASE_DIR = getenv('CI_PROJECT_DIR', os.getcwd())
 
-
-def _minimize_single_cred_file(rel_path: str, repo_root: str) -> None:
-    full_path = path.join(repo_root, rel_path)
-    result = subprocess.run(
-        ['git', 'show', f'HEAD:{rel_path}'],
-        cwd=repo_root,
-        capture_output=True,
-    )
-    if result.returncode != 0:
+def _minimize_single_cred_file(repo: Repo, base_dir: Path, rel_path: str) -> None:
+    full_path = base_dir / rel_path
+    try:
+        head_content = repo.head.commit.tree[rel_path].data_stream.read()
+    except KeyError:
         logger.debug(f'Skipping minimize for new cred file: {rel_path}')
         return
+    except (GitCommandError, OSError) as exc:
+        logger.warning(f'Cannot read credential file at HEAD, skipping minimize for {rel_path}: {exc}')
+        return
 
-    suffix = path.splitext(rel_path)[1]
     old_tmp = None
     try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as old_tmp_obj:
-            old_tmp_obj.write(result.stdout)
-            old_tmp = old_tmp_obj.name
+        with tempfile.NamedTemporaryFile(delete=False, suffix=Path(rel_path).suffix) as old_tmp_obj:
+            old_tmp_obj.write(head_content)
+            old_tmp = Path(old_tmp_obj.name)
 
-        if not is_encrypted(old_tmp):
-            logger.debug(f'Skipping minimize for unencrypted cred file at HEAD: {rel_path}')
-            return
-
-        decrypt_file(full_path, in_place=True)
-        encrypt_file(full_path, in_place=True, minimize_diff=True, old_file_path=old_tmp)
+        decrypt_file(str(full_path), in_place=True)
+        encrypt_file(str(full_path), in_place=True, minimize_diff=True, old_file_path=str(old_tmp))
         logger.debug(f'Minimized cred diff vs HEAD: {rel_path}')
     finally:
-        if old_tmp and os.path.exists(old_tmp):
-            os.remove(old_tmp)
+        if old_tmp is not None:
+            old_tmp.unlink(missing_ok=True)
 
 
-def main(repo_root: str | None = None) -> None:
-    repo_root = repo_root or BASE_DIR
+def main() -> None:
     if not get_crypt():
         logger.info("'crypt' is disabled, skipping credential diff minimization")
         return
 
-    result = subprocess.run(
-        ['git', 'diff', '--name-only', 'HEAD'],
-        cwd=repo_root,
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"git diff against HEAD failed in {repo_root}: {result.stderr.strip() or result.stdout.strip()}"
-        )
-    for rel_path in result.stdout.splitlines():
+    base_dir = Path(getenv('CI_PROJECT_DIR', os.getcwd()))
+    repo = Repo(base_dir)
+
+    try:
+        changed_paths = repo.git.diff('--name-only', 'HEAD').splitlines()
+    except GitCommandError as exc:
+        message = f'git diff against HEAD failed in {base_dir}: {exc}'
+        logger.error(message)
+        raise RuntimeError(message) from exc
+
+    for rel_path in changed_paths:
         rel_path = rel_path.strip()
         if not rel_path:
             continue
-        if not is_cred_file(path.join(repo_root, rel_path)):
+        if not is_cred_file(str(base_dir / rel_path)):
             continue
-        _minimize_single_cred_file(rel_path, repo_root)
+        _minimize_single_cred_file(repo, base_dir, rel_path)
 
 
 if __name__ == '__main__':

@@ -115,6 +115,14 @@ runs:
         cd ../..
         mv junit.xml junit_sbom_retention.xml
 
+    - name: BUILD ENVGENE SCRIPTS test
+      shell: bash
+      run: |
+        cd build_envgene/scripts
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
+        cd ../..
+        mv junit.xml junit_build_envgene_scripts.xml
+
     - name: Merge test results
       shell: bash
       run: |
