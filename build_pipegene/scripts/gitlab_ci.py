@@ -2,6 +2,7 @@ import os
 from os import listdir
 
 from envgenehelper import logger, get_cluster_name_from_full_name, get_environment_name_from_full_name
+from envgenehelper.effective_set_helper import resolve_es_generation_mode
 from envgenehelper.plugin_engine import PluginEngine
 from gcip import JobFilter, Pipeline
 
@@ -133,10 +134,12 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
             logger.info(f'Preparing of appregdef_render_job {full_env_name} is skipped.')
 
         source_type = (params.get("SD_SOURCE_TYPE", "artifact")).lower()
+        es_generation_mode = None
         if (
                 (source_type == "json" and params.get("SD_DATA")) or
                 (source_type == "artifact" and params.get("SD_VERSION"))
         ):
+            es_generation_mode = resolve_es_generation_mode(cluster_name, environment_name)
             jobs_map["process_sd_job"] = prepare_process_sd(pipeline, full_env_name, environment_name, cluster_name)
         else:
             logger.info(f'Preparing of process_sd_job for {full_env_name} is skipped')
@@ -150,7 +153,7 @@ def build_pipeline(params: dict, sensitive_params: list) -> None:
         if params['GENERATE_EFFECTIVE_SET']:
             jobs_map["generate_effective_set_job"] = prepare_generate_effective_set_job(pipeline, full_env_name,
                                                                                         environment_name, cluster_name,
-                                                                                        params)
+                                                                                        es_generation_mode, params)
         else:
             logger.info(f'Preparing of generate_effective_set job for {full_env_name} is skipped.')
             if "CUSTOM_PARAMS" in params and params["CUSTOM_PARAMS"]:

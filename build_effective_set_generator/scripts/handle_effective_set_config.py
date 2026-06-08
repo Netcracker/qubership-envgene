@@ -1,9 +1,9 @@
 import json
 import os
-import tempfile
 import shutil
-import argparse
-from envgenehelper import logger, get_schema_dir
+import tempfile
+
+from envgenehelper import logger
 
 
 def handle_effective_set_config(config_str):
@@ -87,25 +87,3 @@ def handle_effective_set_config(config_str):
         "extra_args": extra_args,
     }
     return result_args
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--effective-set-config",
-        required=True,
-        help="JSON string or path to JSON file"
-    )
-    args = parser.parse_args()
-    config_str = args.effective_set_config
-
-    logger.info(f"config_str inside: {config_str}")
-
-    try:
-        result_args = handle_effective_set_config(config_str)
-        logger.info(f"Resolved Extra args: {result_args}")
-        with open("/tmp/effective_set_output.json", "w") as f:
-            json.dump(result_args, f)
-    except Exception as e:
-        logger.error(f"Error: {e}")
-        exit(1)

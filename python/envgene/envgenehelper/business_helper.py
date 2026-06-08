@@ -272,11 +272,11 @@ def find_passport_by_env_definition(cloud_passport_name, env_dir, instances_dir)
         Path(env_dir).parent,
         Path(instances_dir),
     ]
-    
+
     passport_dir_names = ["cloud-passport", "cloud-passports"]
-    
+
     shared_passport_paths = [level / name for level in levels for name in passport_dir_names]
-    
+
     for p in shared_passport_paths:
         found_path = find_yaml_file(p, cloud_passport_name, recursively=True)
         if found_path:
@@ -412,6 +412,12 @@ def is_from_template_dir(file_path: str) -> bool:
 
 def get_sboms_dir(work_dir) -> Path:
     return Path(work_dir) / "sboms"
+
+
+def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
+    instances_dir = getenv_with_error('CI_PROJECT_DIR')
+    env_dir_path = Path(f"{instances_dir}/environments/{cluster_name}/{environment_name}")
+    return env_dir_path
 
 
 def get_schema_dir():

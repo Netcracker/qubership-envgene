@@ -62,10 +62,11 @@ COPY scripts/utils/ /module/scripts/utils/
 
 # Permissions
 RUN chown -R ci:ci /module /deployments && \
-    chmod +x /module/scripts/*.sh && \
-    chmod 644 /module/scripts/*.py 2>/dev/null || true && \
-    chmod 540 /deployments/run-java.sh && \
-    chmod g+rwX /deployments
+  chmod +x /module/scripts/*.sh && \
+  chmod +x /module/scripts/utils/*.sh && \
+  chmod 644 /module/scripts/*.py 2>/dev/null || true && \
+  chmod 540 /deployments/run-java.sh && \
+  chmod g+rwX /deployments
 
 USER ci:ci
 WORKDIR /module

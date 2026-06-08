@@ -2,6 +2,13 @@
 
 - [EnvGene Configuration](#envgene-configuration)
   - [`env_definition.yml`](#env_definitionyml)
+    - [File resolution for shared entities](#file-resolution-for-shared-entities)
+      - [Shared template variables](#shared-template-variables)
+      - [Parameter sets](#parameter-sets)
+      - [Resource profiles](#resource-profiles)
+      - [Cloud Passport](#cloud-passport)
+      - [Shared credentials](#shared-credentials)
+      - [Deployer configuration](#deployer-configuration)
   - [`config.yml`](#configyml)
   - [`integration.yml`](#integrationyml)
   - [`deployer.yml`](#deployeryml)
@@ -30,6 +37,11 @@ Pass the `<cluster-name>/<env-name>` to the [`ENV_NAMES`](/docs/instance-pipelin
 [`env_definition.yml` JSON Schema](/schemas/env-definition.schema.json)
 
 ```yaml
+# Optional
+# Free-form metadata map. Structure is not specified.
+# NOT set manually by users and NOT processed by EnvGene.
+# Used exclusively by Colly, which saves and reads these values for its own use cases.
+metadata: hashmap
 # Mandatory
 inventory:
   # Optional
@@ -52,7 +64,8 @@ inventory:
   clusterUrl: string
   # Optional
   # Reference to Cloud Passport
-  # Cloud Passport should be located in `/environments/<cluster-name>/<env-name>/cloud-passport/` directory
+  # Recommended location: `/environments/<cluster-name>/cloud-passport/`
+  # For the full search-path priority see "File resolution for shared entities -> Cloud Passport"
   cloudPassport: string
   # Optional
   # Reference to external CMDB system where the Environment Instance can be imported
@@ -115,7 +128,7 @@ envTemplate:
   sharedTemplateVariables: array
   # Optional
   # Set of environment-specific deployment parameters
-  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix` 
+  # Keys can be either the `cloud` name or the Namespace identifier (which is defined by the `deploy_postfix`
   # in the Template Descriptor, or by the Namespace template filename without extension)
   # Values are the names of parameter set files without extension located in the `parameters` directory
   envSpecificParamsets: hashmap
@@ -144,6 +157,19 @@ envTemplate:
   # Following parameters are automatically generated during job and display that application:version artifact
   # of template was used for last Environment generation
   generatedVersions: hashmap
+# Optional
+# Security-related parameters of the Environment.
+# NOT set manually by users and NOT processed by EnvGene.
+# Used exclusively by Colly, which saves and reads these values for its own use cases.
+security:
+  # Optional
+  # List of access groups directly assigned to the Environment
+  accessGroups:
+    - string
+  # Optional
+  # List of effective access groups (assigned plus inherited/derived)
+  effectiveAccessGroups:
+    - string
 ```
 
 Basic example with minimal set of fields:
@@ -196,6 +222,119 @@ envTemplate:
     - prod-integration-creds
 ```
 
+### File resolution for shared entities
+
+When `env_definition.yml` references a shared entity by name - a credentials file, parameter set,
+template variable file, Cloud Passport, resource profile, or deployer configuration - EnvGene
+searches the instance repository for the corresponding file in a priority-ordered set of
+locations. The first match is used.
+
+For new instance repositories, place files in a path marked **Recommended** for the entity type.
+The full list of paths is preserved for troubleshooting and migration: paths marked **Deprecated**
+exist for backwards compatibility with legacy layouts and may be removed in future releases.
+
+#### Shared template variables
+
+Referenced via `envTemplate.sharedTemplateVariables`. See
+[Shared Template Variable Files](/docs/envgene-objects.md#shared-template-variable-files) for the
+file format.
+
+| Priority | Path                                                                | Status      |
+|----------|---------------------------------------------------------------------|-------------|
+| 1        | `/environments/<cluster-name>/<env-name>/Inventory/configuration/`  | Recommended |
+| 3        | `/environments/<cluster-name>/configuration/`                       | Recommended |
+| 5        | `/environments/configuration/`                                      | Recommended |
+| 2        | `/environments/<cluster-name>/<env-name>/Inventory/configurations/` | Deprecated  |
+| 4        | `/environments/<cluster-name>/configurations/`                      | Deprecated  |
+| 6        | `/environments/configurations/`                                     | Deprecated  |
+| 7        | `/environments/<cluster-name>/<env-name>/Inventory/`                | Deprecated  |
+
+#### Parameter sets
+
+Referenced via `envTemplate.envSpecificParamsets`, `envTemplate.envSpecificE2EParamsets`, and
+`envTemplate.envSpecificTechnicalParamsets`. See
+[Environment Specific ParameterSet](/docs/envgene-objects.md#environment-specific-parameterset)
+for the file format.
+
+| Priority | Path                                                            | Status      |
+|----------|-----------------------------------------------------------------|-------------|
+| 1        | `/environments/<cluster-name>/<env-name>/Inventory/parameters/` | Recommended |
+| 2        | `/environments/<cluster-name>/parameters/`                      | Recommended |
+| 3        | `/environments/parameters/`                                     | Recommended |
+
+#### Resource profiles
+
+Referenced via `envTemplate.envSpecificResourceProfiles`. See
+[Environment Specific Resource Profile Override](/docs/envgene-objects.md#environment-specific-resource-profile-override)
+for the file format.
+
+| Priority | Path                                                                   | Status      |
+|----------|------------------------------------------------------------------------|-------------|
+| 1        | `/environments/<cluster-name>/<env-name>/Inventory/resource_profiles/` | Recommended |
+| 5        | `/environments/<cluster-name>/resource_profiles/`                      | Recommended |
+| 9        | `/environments/resource_profiles/`                                     | Recommended |
+| 2        | `/environments/<cluster-name>/<env-name>/Inventory/rp_override/`       | Deprecated  |
+| 3        | `/environments/<cluster-name>/<env-name>/Inventory/Profiles/`          | Deprecated  |
+| 4        | `/environments/<cluster-name>/<env-name>/Inventory/parameters/`        | Deprecated  |
+| 6        | `/environments/<cluster-name>/rp_override/`                            | Deprecated  |
+| 7        | `/environments/<cluster-name>/Profiles/`                               | Deprecated  |
+| 8        | `/environments/<cluster-name>/parameters/`                             | Deprecated  |
+| 10       | `/environments/rp_override/`                                           | Deprecated  |
+| 11       | `/environments/Profiles/`                                              | Deprecated  |
+| 12       | `/environments/parameters/`                                            | Deprecated  |
+
+#### Cloud Passport
+
+Referenced via `inventory.cloudPassport`. See
+[Cloud Passport processing](/docs/features/cloud-passport-processing.md) for the full resolution
+behavior, including auto-association which applies only at the cluster level.
+
+| Priority | Path                                                                 | Status      |
+|----------|----------------------------------------------------------------------|-------------|
+| 3        | `/environments/<cluster-name>/cloud-passport/`                       | Recommended |
+| 1        | `/environments/<cluster-name>/<env-name>/Inventory/cloud-passport/`  | Deprecated  |
+| 2        | `/environments/<cluster-name>/<env-name>/Inventory/cloud-passports/` | Deprecated  |
+| 4        | `/environments/<cluster-name>/cloud-passports/`                      | Deprecated  |
+| 5        | `/environments/cloud-passport/`                                      | Deprecated  |
+| 6        | `/environments/cloud-passports/`                                     | Deprecated  |
+
+#### Shared credentials
+
+Referenced via `envTemplate.sharedMasterCredentialFiles`. See
+[Shared Credentials File](/docs/envgene-objects.md#shared-credentials-file) for the file format.
+
+| Priority | Path                                                                    | Status      |
+|----------|-------------------------------------------------------------------------|-------------|
+| 1        | `/environments/<cluster-name>/<env-name>/Inventory/credentials/`        | Recommended |
+| 4        | `/environments/<cluster-name>/credentials/`                             | Recommended |
+| 7        | `/environments/credentials/`                                            | Recommended |
+| 2        | `/environments/<cluster-name>/<env-name>/Inventory/Credentials/`        | Deprecated  |
+| 3        | `/environments/<cluster-name>/<env-name>/Inventory/shared-credentials/` | Deprecated  |
+| 5        | `/environments/<cluster-name>/Credentials/`                             | Deprecated  |
+| 6        | `/environments/<cluster-name>/shared-credentials/`                      | Deprecated  |
+| 8        | `/environments/Credentials/`                                            | Deprecated  |
+| 9        | `/environments/shared-credentials/`                                     | Deprecated  |
+
+#### Deployer configuration
+
+Loaded when `inventory.deployer` is set. See [`deployer.yml`](#deployeryml) for the file format.
+
+EnvGene first searches for a cluster-level or environment-level deployer file (priorities 1-8).
+If the deployer key is not found in that file, it falls back to the global configuration file
+(priority 9).
+
+| Priority | Path                                                                      | Status      |
+|----------|---------------------------------------------------------------------------|-------------|
+| 1        | `/environments/<cluster-name>/app-deployer/deployer.yml`                  | Recommended |
+| 5        | `/environments/<cluster-name>/<env-name>/app-deployer/deployer.yml`       | Recommended |
+| 9        | `/configuration/deployer.yml`                                             | Recommended |
+| 2        | `/environments/<cluster-name>/app-deployer/app-deployer.yml`              | Deprecated  |
+| 3        | `/environments/<cluster-name>/cloud-deployer/deployer.yml`                | Deprecated  |
+| 4        | `/environments/<cluster-name>/cloud-deployer/app-deployer.yml`            | Deprecated  |
+| 6        | `/environments/<cluster-name>/<env-name>/app-deployer/app-deployer.yml`   | Deprecated  |
+| 7        | `/environments/<cluster-name>/<env-name>/cloud-deployer/deployer.yml`     | Deprecated  |
+| 8        | `/environments/<cluster-name>/<env-name>/cloud-deployer/app-deployer.yml` | Deprecated  |
+
 ## `config.yml`
 
 The primary system configuration file
@@ -234,23 +373,28 @@ app_reg_defs_placement: enum [`dual`, `root`]
 # Optional
 # SBOM retention configuration
 # Runs during Effective Set generation when enabled
-# Applies per-application version retention to subdirectories of `/sboms/`
-# A safety net wipes `/sboms/` if its total size still exceeds 1200 MB after per-application retention
+# Applies per-application SBOM retention to subdirectories of `/sboms/` when `keep_versions_per_app` is set
+# A total size limit step keeps only the single most recent file per application subdirectory
+# if the total size of `/sboms/` still exceeds 1200 MB after per-application SBOM retention
 sbom_retention:
   # Optional. Default value - `false`
   # Enable/disable SBOM retention cleanup
   enabled: boolean
-  # Optional. Default value - `10`
-  # Number of latest versions to keep per application
-  # Used only when enabled is true
+  # Optional. No default value
+  # Number of latest versions to keep per application. Used only when `enabled` is true
+  # Per-application SBOM retention runs only when this is set to a positive integer.
+  # If the field is omitted or set to `0`, this step is skipped and only the total size
+  # limit step runs (keeping the most recent file per application subdirectory when /sboms/
+  # exceeds 1200 MB)
   keep_versions_per_app: integer
-# Optional. Default value - `true`
-# Enable or disable partial Effective Set generation in `generate_effective_set`
+# Optional. Default value - `partial`
+# Defines the Effective Set generation strategy used by `generate_effective_set`
+# `partial` - Partial Generation is enabled. Selected automatically when applicable, otherwise Full Generation is used
+# `full` - Partial Generation is disabled, only Full Generation is used
 # See [Partial Generation](/docs/features/effective-set-generation.md#partial-generation)
 # and [Full Generation](/docs/features/effective-set-generation.md#full-generation)
 # for generation mode behavior
-# When `false`, Partial Generation is disabled and only Full Generation is used
-partial_effective_set_generation: boolean
+effective_set_generation_strategy: enum [`full`, `partial`]
 ```
 
 ## `integration.yml`
@@ -277,11 +421,6 @@ cp_discovery:
     # Recommended to set via cred macro:
     # ${creds.get('<cred-id>').secret}
     token: string
-# Authentication token for EnvGene to access the instance repository
-# Required for EnvGene to commit changes to the instance repository
-# Recommended to set via cred macro:
-# ${creds.get('<cred-id>').secret}
-self_token: string
 ```
 
 ## `deployer.yml`
@@ -299,6 +438,9 @@ Located at:
 
 - `/configuration/deployer.yml`
 - `/environments/<cluster-name>/<env-name>/app-deployer/deployer.yml`
+
+*For the deployer file search-path priority, see
+[Deployer configuration](#deployer-configuration) under `env_definition.yml`.*
 
 [`deployer.yml` JSON Schema](/schemas/deployer.schema.json)
 

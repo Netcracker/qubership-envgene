@@ -81,13 +81,13 @@ git add -A && git commit -m "Remove legacy Delta SD files"
 
 ### Instance Repository Pipeline Parameters
 
-| Attribute | Type | Mandatory | Description | Default | Example |
-|---|---|---|---|---|---|
-| `SD_VERSION` | string | no | Specifies one or more SD artifacts in `application:version` notation passed via a `\n` separator. EnvGene downloads and sequentially merges them in the `basic-merge` mode, where subsequent `application:version` takes priority over the previous one. Optionally saves the result to [Delta SD](#delta-sd), then merges with [Full SD](#full-sd) using `SD_REPO_MERGE_MODE` merge mode | None | `solution:0.64.1` |
-| `SD_DATA` | string | no | Specifies the **list** of contents of one or more SD in JSON-in-string format. EnvGene sequentially merges them in the `basic-merge` mode described, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](#delta-sd), then merges with [Full SD](#full-sd) using `SD_REPO_MERGE_MODE` merge mode | None | [Example](#sd_data-example) |
-| `SD_SOURCE_TYPE` | enumerate[`artifact`,`json`] | TBD | Determines the method by which SD is passed in the `SD_VERSION`/`SD_DATA` attributes. If `artifact`, an SD artifact is expected in `SD_VERSION` in `application:version` notation. If `json`, SD content is expected in `SD_DATA` in JSON-in-string format | TBD | `artifact` |
-| `SD_DELTA` | enumerate[`true`, `false`] | no | Deprecated. When `true`: behaves identically to `SD_REPO_MERGE_MODE: extended-merge`. When `false` behaves identically to `SD_REPO_MERGE_MODE: replace`. If both `SD_DELTA` and `SD_REPO_MERGE_MODE` are provided, `SD_REPO_MERGE_MODE` takes precedence | `true` | `false` |
-| `SD_REPO_MERGE_MODE` | enumerate[`basic-merge`, `basic-exclusion-merge`, `extended-merge`, `replace`] | no | Defines SD merge mode between incoming SD and already existed in repository SD. See details in [SD Merge](#sd-merge) | `basic-merge` | `extended-merge` |
+| Attribute            | Type                                                                           | Mandatory | Description                                                                                                                                                                                                                                                                                                                                                                               | Default       | Example                     |
+|----------------------|--------------------------------------------------------------------------------|-----------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|-----------------------------|
+| `SD_VERSION`         | string                                                                         | no        | Specifies one or more SD artifacts in `application:version` notation passed via a `\n` separator. EnvGene downloads and sequentially merges them in the `basic-merge` mode, where subsequent `application:version` takes priority over the previous one. Optionally saves the result to [Delta SD](#delta-sd), then merges with [Full SD](#full-sd) using `SD_REPO_MERGE_MODE` merge mode | None          | `solution:0.64.1`           |
+| `SD_DATA`            | string                                                                         | no        | Specifies the **list** of contents of one or more SD in JSON-in-string format. EnvGene sequentially merges them in the `basic-merge` mode described, where subsequent element takes priority over the previous one. Optionally saves the result to [Delta SD](#delta-sd), then merges with [Full SD](#full-sd) using `SD_REPO_MERGE_MODE` merge mode                                      | None          | [Example](#sd_data-example) |
+| `SD_SOURCE_TYPE`     | enumerate[`artifact`,`json`]                                                   | TBD       | Determines the method by which SD is passed in the `SD_VERSION`/`SD_DATA` attributes. If `artifact`, an SD artifact is expected in `SD_VERSION` in `application:version` notation. If `json`, SD content is expected in `SD_DATA` in JSON-in-string format                                                                                                                                | TBD           | `artifact`                  |
+| `SD_DELTA`           | enumerate[`true`, `false`]                                                     | no        | Deprecated. When `true`: behaves identically to `SD_REPO_MERGE_MODE: extended-merge`. When `false` behaves identically to `SD_REPO_MERGE_MODE: replace`. If both `SD_DELTA` and `SD_REPO_MERGE_MODE` are provided, `SD_REPO_MERGE_MODE` takes precedence                                                                                                                                  | `true`        | `false`                     |
+| `SD_REPO_MERGE_MODE` | enumerate[`basic-merge`, `basic-exclusion-merge`, `extended-merge`, `replace`] | no        | Defines SD merge mode between incoming SD and already existed in repository SD. See details in [SD Merge](#sd-merge)                                                                                                                                                                                                                                                                      | `basic-merge` | `extended-merge`            |
 
 #### `SD_DATA` Example
 
@@ -340,19 +340,19 @@ For information on use cases, refer to the [documentation](/docs/use-cases/sd-pr
 
 ## Invalid Input Combinations
 
-| ID  | Error Condition                                                               |
-|:---:|:------------------------------------------------------------------------------|
-| 1   | `SD_SOURCE_TYPE` undefined with `SD_VERSION`/`SD_DATA`                        |
-| 2   | `SD_VERSION` missing for `artifact` source                                    |
-| 3   | `SD_DATA` missing for `json` source                                           |
-| 4   | Both `SD_REPO_MERGE_MODE` and `SD_DELTA` specified                            |
-| 5   | Malformed JSON in `SD_DATA`                                                   |
-| 6   | Invalid `SD_REPO_MERGE_MODE` value                                            |
-| 7   | `SD_DELTA=true` with no existing Delta SD (only for `extended-merge`)         |
-| 8   | New Application without **corresponding** `deployGraph` entry (only for `extended-merge`) |
-| 9   | `version`/`type`/`deployMode` mismatch between SDs (only for `extended-merge`) |
-| 10  | Delta SD contains Chunk not in Full SD (only for `extended-merge`)            |
-| 11  | `deployGraph` presence mismatch between SDs (only for `extended-merge`)       |
+| ID  | Error Condition                                                                           |
+|:---:|:------------------------------------------------------------------------------------------|
+|  1  | `SD_SOURCE_TYPE` undefined with `SD_VERSION`/`SD_DATA`                                    |
+|  2  | `SD_VERSION` missing for `artifact` source                                                |
+|  3  | `SD_DATA` missing for `json` source                                                       |
+|  4  | Both `SD_REPO_MERGE_MODE` and `SD_DELTA` specified                                        |
+|  5  | Malformed JSON in `SD_DATA`                                                               |
+|  6  | Invalid `SD_REPO_MERGE_MODE` value                                                        |
+|  7  | `SD_DELTA=true` with no existing Delta SD (only for `extended-merge`)                     |
+|  8  | New Application without **corresponding** `deployGraph` entry (only for `extended-merge`) |
+|  9  | `version`/`type`/`deployMode` mismatch between SDs (only for `extended-merge`)            |
+| 10  | Delta SD contains Chunk not in Full SD (only for `extended-merge`)                        |
+| 11  | `deployGraph` presence mismatch between SDs (only for `extended-merge`)                   |
 
 ## Test Cases
 

@@ -64,6 +64,10 @@ For multiple environments, each environment will initiate its own independent pi
   - `k8s-01/env-1,k8s-01/env2`
   - `k8s-01/env-1 k8s-01/env2`
 
+> [!IMPORTANT]
+> It is recommended to run a **maximum of 100 environments in parallel** within a single pipeline execution.
+> Each environment generates multiple jobs in the child pipeline configuration. Processing more than 100 environments in a single run may exceed GitLab pipeline configuration and job limits. If more environments need to be processed, split them across multiple pipeline runs.
+
 ### `ENV_BUILDER`
 
 **Description**: Feature flag. Valid values ​​are `true` or `false`.
@@ -489,6 +493,9 @@ See details in [Namespace Render Filtering](/docs/features/namespace-render-filt
 ### `CRED_ROTATION_PAYLOAD`
 
 **Description**: A parameter used to dynamically update sensitive parameters (those defined via the [cred macro](/docs/template-macros.md#credential-macro-and-credential-reference)). It modifies values across different contexts within a specified namespace and optional application. The value can be provided as plain text or encrypted. **JSON in string** format. See details in [feature description](/docs/features/cred-rotation.md)
+
+> [!CAUTION]
+> `CRED_ROTATION_PAYLOAD` cannot be combined with `GET_PASSPORT: true` in one pipeline run.
 
 ```json
 {

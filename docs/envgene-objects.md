@@ -604,7 +604,7 @@ consul-creds:
 
 This file contains [Credential](#credential) objects used by EnvGene to integrate with external systems like artifact registries, GitLab, GitHub, and others.
 
-**Location:** `/environments/configuration/credentials/credentials.yml|yaml`
+**Location:** `/configuration/credentials/credentials.yml|yaml`
 
 **Example:**
 
@@ -1564,6 +1564,9 @@ Credentials can be defined at three scopes with different precedence:
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
+*For the file search-path priority, see
+[File resolution → Shared credentials](/docs/envgene-configs.md#shared-credentials).*
+
 Any YAML file located in these folders is treated as a Shared Credentials File.
 
 **Example:**
@@ -1586,7 +1589,7 @@ This file contains [Credential](#credential) objects used by EnvGene to integrat
 
 Location:
 
-- `/environments/configuration/credentials/credentials.yml|yaml`
+- `/configuration/credentials/credentials.yml|yaml`
 - `/environments/<cluster-name>/app-deployer/<any-string>-creds.yml|yaml`
 
 **Example:**
@@ -1622,6 +1625,9 @@ Files can be defined at three scopes with different precedence:
   **Location:** `/environments/shared-template-variables/`
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
+
+*For the file search-path priority, see
+[File resolution → Shared template variables](/docs/envgene-configs.md#shared-template-variables).*
 
 The file must contain a key-value hashmap and must NOT be located in a `parameters` directory.
 
@@ -1660,6 +1666,9 @@ When an Environment Specific ParameterSet is referenced, EnvGene searches for th
 3. `/environments/parameters/` — Global, common for the entire repository
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
+
+*For the file search-path priority, see
+[File resolution → Parameter sets](/docs/envgene-configs.md#parameter-sets).*
 
 ```yaml
 # Optional
@@ -1763,6 +1772,9 @@ When an Environment Specific Resource Profile Override is referenced, EnvGene se
 3. `/environments/resource_profiles` — Global, common for the entire repository
 
 The first match found is used as the environment-specific override for the given Cloud or Namespace.
+
+*For the file search-path priority, see
+[File resolution → Resource profiles](/docs/envgene-configs.md#resource-profiles).*
 
 ```yaml
 # Mandatory
