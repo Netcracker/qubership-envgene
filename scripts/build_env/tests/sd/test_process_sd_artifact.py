@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from envgenehelper.env_helper import Environment
+from envgenehelper.models import OperationType
 
 from scripts.build_env.tests.base_test import BaseTest
 from test_sd_helpers import do_prerequisites, assert_sd_contents, load_test_pipeline_sd_data
@@ -65,9 +66,8 @@ class TestSdProcessArtifact(BaseTest):
         mock_download_sd.return_value = sd_data
 
         handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode, OperationType.DEPLOY)
-        actual_dir = os.path.join(env.env_path, "Inventory", "solution-descriptor")
 
-        assert_sd_contents(self.test_data_dir, env.env_path, test_case_name, actual_dir, test_suits_map)
+        assert_sd_contents(self.test_data_dir, env.env_path, test_case_name, test_suits_map)
         logger.info(f"=====SUCCESS - {test_case_name}======")
 
     @pytest.mark.parametrize("test_case_name,expected_exception", [(k, v) for k, v in TEST_CASES_NEGATIVE.items()])
@@ -86,6 +86,6 @@ class TestSdProcessArtifact(BaseTest):
         mock_download_sd.return_value = sd_data
 
         with pytest.raises(expected_exception):
-            handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode)
+            handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode, OperationType.DEPLOY)
 
         logger.info(f"=====SUCCESS - {test_case_name}======")

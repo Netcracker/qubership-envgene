@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from envgenehelper import logger, SD_FILE_NAME
+from envgenehelper import logger, SD_FILE_NAME, OperationType
 from envgenehelper.env_helper import Environment
 
 from scripts.build_env.tests.base_test import BaseTest
@@ -58,7 +58,6 @@ class TestSdProcessArtifact(BaseTest):
 
         sd_data, sd_source_type, sd_version, sd_delta, sd_merge_mode = load_test_pipeline_sd_data(self.test_data_dir, test_case_name)
         handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode, OperationType.DEPLOY)
-        actual_dir = os.path.join(env.env_path, "Inventory", "solution-descriptor")
 
-        assert_sd_contents(self.test_data_dir, env.env_path, test_case_name, actual_dir, test_suits_map)
+        assert_sd_contents(self.test_data_dir, env.env_path, test_case_name, test_suits_map)
         logger.info(f"=====SUCCESS - {test_case_name}======")
