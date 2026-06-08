@@ -4,9 +4,13 @@ from pathlib import Path
 
 class BaseTest:
     base_dir = Path(__file__).resolve().parents[3]
+    # expected result here
     test_data_dir = base_dir / "test_data"
+    # result after run
+    output_dir = base_dir / "tmp"
+
+    # work dir
     ci_project_dir = test_data_dir
-    expected_dir = test_data_dir
     os.environ['CI_PROJECT_DIR'] = str(test_data_dir)
     os.environ['JSON_SCHEMAS_DIR'] = str(base_dir / "schemas")
 
