@@ -1618,11 +1618,11 @@ The relationship between Shared Template Variable Files and Environment is estab
 Files can be defined at three scopes with different precedence:
 
 1. **Environment-level**
-  **Location:** `/environments/<cluster-name>/<environment-name>/shared-template-variables/`
+  **Location:** `/environments/<cluster-name>/<environment-name>/configuration/`
 2. **Cluster-level**
-  **Location:** `/environments/<cluster-name>/shared-template-variables/`
+  **Location:** `/environments/<cluster-name>/configuration/`
 3. **Site-level**
-  **Location:** `/environments/shared-template-variables/`
+  **Location:** `/environments/configuration/`
 
 EnvGene checks these locations in order (environment → cluster → site) and uses the first matching file found.
 
