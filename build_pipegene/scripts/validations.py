@@ -70,13 +70,13 @@ def check_environment(environment_name, cluster_name, get_passport, env_build, e
     all_environments_dir = f"{project_dir}/environments"
     skip_env_definition_check = get_passport and not env_build
     check_environment_is_valid_or_fail(environment_name, cluster_name, all_environments_dir, skip_env_definition_check,
-                                       not skip_env_definition_check, schemas_dir="/module/schemas")
+                                       not skip_env_definition_check, schemas_dir="schemas")
 
 
 def check_passport_params(get_passport):
     if get_passport:
         integration_path = f"{project_dir}/configuration/integration.yml"
-        integration_schema_path = f"/module/schemas/integration.schema.json"
+        integration_schema_path = f"schemas/integration.schema.json"
         if check_file_exists(integration_path):
             validate_yaml_by_scheme_or_fail(integration_path, integration_schema_path)
         else:
