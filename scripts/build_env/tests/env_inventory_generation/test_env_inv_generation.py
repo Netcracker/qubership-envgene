@@ -2,12 +2,13 @@ from os import environ
 from pathlib import Path
 
 import yaml
+from tests.base_test import BaseTest
+
 from env_inventory_generation import generate_env_new_approach, Place, resolve_path, INVENTORY, Action
-from envgenehelper import get_cluster_name_from_full_name, dumpYamlToStr, get_environment_name_from_full_name, readYaml, \
+from envgenehelper import get_cluster_name_from_full_name, get_environment_name_from_full_name, readYaml, \
     is_dir_empty, writeYamlToFile
 from envgenehelper.test_helpers import TestHelpers
 from jinja.jinja import create_jinja_env
-from tests.base_test import BaseTest
 
 FEATURE_TEST_DIR = "test_inventory_generation"
 
@@ -39,11 +40,6 @@ class TestEnvInvGen(BaseTest):
 
         self.config_dir = self.ci_project_dir / "configuration" / "config.yml"
         writeYamlToFile(self.config_dir, yaml.safe_load("crypt: false\n"))
-
-    def teardown_method(self):
-        for var in ("ENVIRONMENT_NAME", "CLUSTER_NAME", "FULL_ENV_NAME",
-                    "ENV_INVENTORY_CONTENT", "ENV_TEMPLATE_VERSION"):
-            environ.pop(var, None)
 
     def set_inv_content(self):
         places = [p.value for p in Place]

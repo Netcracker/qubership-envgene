@@ -20,14 +20,16 @@ class JobExtended(Job):
         variables: Optional[Dict[str, str]] = None,
         needs: Optional[List[Union['Need', 'Job', List[str]]]] = None,
         tags: Optional[List[str]] = None,
-        timeout: Optional[int] = None
+        timeout: Optional[str] = None
     ) -> None:
         super().__init__(name=name, stage=stage, image=image, script=script, variables=variables, needs=needs, tags=tags)
-        self.timeout = timeout
+        if timeout is not None:
+            self.set_timeout(timeout)
 
     def render(self) -> Dict[str, Any]:
         job_data = super().render()
-        job_data['timeout'] = self.timeout
+        if self.timeout is not None:
+            job_data['timeout'] = self.timeout
         return job_data
 
 def job_instance(params, vars, needs=None, rules=None):
