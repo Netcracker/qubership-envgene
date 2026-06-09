@@ -9,7 +9,6 @@ _REPO_ROOT = Path(__file__).resolve().parents[2]
 os.environ["CI_PROJECT_DIR"] = str(_REPO_ROOT / "test_data" / "pipegene_ci_instance")
 os.environ["CI_JOB_NAME"] = 'JOB_NAME_PLACEHOLDER'
 os.environ["CI_COMMIT_REF_SLUG"] = 'PLACEHOLDER'
-os.environ.setdefault("JSON_SCHEMAS_DIR", str(_REPO_ROOT / "schemas"))
 
 from main import perform_generation
 from envgenehelper import openYaml, dump_as_yaml_format

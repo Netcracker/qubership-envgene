@@ -7,7 +7,7 @@ from envgenehelper.collections_helper import split_multi_value_param
 
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 logger.info(f"Info about project_dir: {project_dir}")
-
+SCHEMAS_DIR = os.getenv("JSON_SCHEMAS_DIR", "/module/schemas")
 
 def validate_pipeline(params: dict):
     basic_checks(params['ENV_NAMES'])
@@ -70,13 +70,13 @@ def check_environment(environment_name, cluster_name, get_passport, env_build, e
     all_environments_dir = f"{project_dir}/environments"
     skip_env_definition_check = get_passport and not env_build
     check_environment_is_valid_or_fail(environment_name, cluster_name, all_environments_dir, skip_env_definition_check,
-                                       not skip_env_definition_check, schemas_dir=SCHEMAS_DIR)
+                                       not skip_env_definition_check, schemas_dir="/module/schemas")
 
 
 def check_passport_params(get_passport):
     if get_passport:
         integration_path = f"{project_dir}/configuration/integration.yml"
-        integration_schema_path = f"{SCHEMAS_DIR}/integration.schema.json"
+        integration_schema_path = f"/module/schemas/integration.schema.json"
         if check_file_exists(integration_path):
             validate_yaml_by_scheme_or_fail(integration_path, integration_schema_path)
         else:
