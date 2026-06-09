@@ -112,17 +112,19 @@ def _copy_single(src: Path, target_dir: Path, is_from_glob: bool):
 
 
 def move_path(source_path, target_path):
-    matched = glob.glob(source_path)
-    if matched:
+    if glob.glob(source_path):
         logger.info(f'Moving from {source_path} to {target_path}')
         logger.debug(f'Checking target path {target_path} exists: {os.path.exists(target_path)}')
-        os.makedirs(target_path, exist_ok=True)
-        try:
-            for src in matched:
-                shutil.move(src, target_path)
-        except Exception as e:
+        if not os.path.exists(target_path):
+            if os.path.isdir(target_path):
+                dirPath = target_path
+            else:
+                dirPath = os.path.dirname(target_path)
+            logger.debug(f'Creating dir {dirPath}')
+            os.makedirs(dirPath, exist_ok=True)
+        exit_code = os.system(f"mv -f {source_path} {target_path}")
+        if (exit_code):
             logger.error(f"Error during Moving from {source_path} to {target_path}")
-            logger.error(str(e))
             exit(1)
     else:
         logger.info(f"Path {source_path} doesn't exist. Skipping...")
