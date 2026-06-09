@@ -20,16 +20,14 @@ class JobExtended(Job):
         variables: Optional[Dict[str, str]] = None,
         needs: Optional[List[Union['Need', 'Job', List[str]]]] = None,
         tags: Optional[List[str]] = None,
-        timeout: Optional[str] = None
+        timeout: Optional[int] = None
     ) -> None:
         super().__init__(name=name, stage=stage, image=image, script=script, variables=variables, needs=needs, tags=tags)
-        if timeout is not None:
-            self.set_timeout(timeout)
+        self.timeout = timeout
 
     def render(self) -> Dict[str, Any]:
         job_data = super().render()
-        if self.timeout is not None:
-            job_data['timeout'] = self.timeout
+        job_data['timeout'] = self.timeout
         return job_data
 
 def job_instance(params, vars, needs=None, rules=None):
@@ -147,7 +145,7 @@ def get_env_artifact_paths(cluster_name: str, env_name: str) -> list[str]:
     ]
     shared_entity_paths = get_shared_entity_paths(cluster_name)
     env_artifact_paths.extend(shared_entity_paths)
-    
+
     return env_artifact_paths
 
 
@@ -170,13 +168,13 @@ def get_shared_entity_paths(cluster_name: str) -> list[str]:
         "app-deployer",
         "cloud-deployer",
     ]
-    
+
     paths = [f"environments/{d}" for d in ENV_ARTIFACT_SUBDIRS]
 
     paths.extend(
         f"environments/{cluster_name}/{d}"
         for d in ENV_ARTIFACT_SUBDIRS + CLUSTER_ONLY_SUBDIRS
     )
-        
+
     return paths
 
