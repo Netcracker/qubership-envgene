@@ -41,6 +41,11 @@ class TestEnvInvGen(BaseTest):
         self.config_dir = self.ci_project_dir / "configuration" / "config.yml"
         writeYamlToFile(self.config_dir, yaml.safe_load("crypt: false\n"))
 
+    def teardown_method(self):
+        for var in ("ENVIRONMENT_NAME", "CLUSTER_NAME", "FULL_ENV_NAME",
+                    "ENV_INVENTORY_CONTENT", "ENV_TEMPLATE_VERSION"):
+            environ.pop(var, None)
+
     def set_inv_content(self):
         places = [p.value for p in Place]
         template = create_jinja_env(self.test_data_dir / FEATURE_TEST_DIR / "input").get_template("content.yml.j2")
