@@ -27,6 +27,7 @@ runs:
         apt-get update && apt-get install -y --no-install-recommends \
             build-essential \
             curl \
+            git \
             && rm -rf /var/lib/apt/lists/*
 
         curl -LO https://github.com/getsops/sops/releases/download/v3.9.0/sops-v3.9.0.linux.amd64
