@@ -1,0 +1,9 @@
+---
+# Non-BG baseline template descriptor (before migration).
+# Package with tenant/cloud templates from your template repository.
+tenant: "{{ templates_dir }}/env_templates/common/tenant.yml.j2"
+cloud:
+  template_path: "{{ templates_dir }}/env_templates/common/cloud.yml.j2"
+namespaces:
+  - template_path: "{{ templates_dir }}/env_templates/non-bgd/bss.yml.j2"
+parametersets: []

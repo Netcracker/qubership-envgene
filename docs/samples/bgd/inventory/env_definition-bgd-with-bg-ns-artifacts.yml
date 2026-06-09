@@ -1,0 +1,23 @@
+# BGD Environment Inventory with separate origin/peer template artifacts.
+# Copy to: /environments/<cluster-name>/<env-name>/Inventory/env_definition.yml
+inventory:
+  environmentName: "sample-bgd-env"
+  tenantName: "Application"
+  cloudName: "sample_cloud"
+  cloudPassport: "sample-cluster"
+  clusterUrl: "https://k8s.example.local:6443"
+  description: "BGD environment with split origin/peer artifacts"
+  owners: "Platform team"
+envTemplate:
+  name: "bgd"
+  artifact: "my-env-templates:2.0.0"
+  bgNsArtifacts:
+    origin: "my-env-templates:2.0.0-origin"
+    peer: "my-env-templates:2.0.0-peer"
+  additionalTemplateVariables: {}
+  sharedTemplateVariables: []
+  envSpecificParamsets: {}
+  envSpecificTechnicalParamsets: {}
+  sharedMasterCredentialFiles: []
+generatedVersions:
+  generateEnvironmentLatestVersion: "my-env-templates:2.0.0"
