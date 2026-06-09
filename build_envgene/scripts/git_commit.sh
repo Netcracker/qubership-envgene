@@ -281,6 +281,9 @@ cp /tmp/build.env build.env
 echo "Restoring ARGO_DPG_CONTEXT.env"
 cp /tmp/ARGO_DPG_CONTEXT.env ARGO_DPG_CONTEXT.env
 
+echo "Minimizing credential file diffs (plaintext compare against HEAD)..."
+python3 /module/scripts/minimize_cred_diffs.py
+
 echo "Checking changes..."
 git add . \
     ":(exclude)environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/effective-set" \
