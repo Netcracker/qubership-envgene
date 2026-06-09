@@ -7,10 +7,9 @@ from pipeline_helper import job_instance
 def prepare_appregdef_render_job(pipeline, params, full_env, environment_name, cluster_name, group_id, artifact_id,
                                  artifact_url):
     logger.info(f'Prepare appregdef render job for {full_env}')
-    
+
     script = []
-    if params.get('ENV_TEMPLATE_VERSION') and not params.get('IS_TEMPLATE_TEST'):
-        script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
+    script.append('python3 /build_env/scripts/build_env/env_template/set_template_version.py')
 
     script.append('python3 /build_env/scripts/build_env/appregdef_render.py')
 
