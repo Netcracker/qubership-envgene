@@ -121,7 +121,7 @@ def getTemplateArtifactName(env_definition_yaml):
         return gav["artifact_id"]
 
 
-def getEnvDefinition(env_dir = None):
+def getEnvDefinition(env_dir=None):
     env_dir = env_dir or get_current_env_dir_from_env_vars()
     env_definition_path = getEnvDefinitionPath(env_dir)
     if not check_file_exists(env_definition_path):
@@ -270,11 +270,11 @@ def find_passport_by_env_definition(cloud_passport_name, env_dir, instances_dir)
         Path(env_dir).parent,
         Path(instances_dir),
     ]
-    
+
     passport_dir_names = ["cloud-passport", "cloud-passports"]
-    
+
     shared_passport_paths = [level / name for level in levels for name in passport_dir_names]
-    
+
     for p in shared_passport_paths:
         found_path = find_yaml_file(p, cloud_passport_name, recursively=True)
         if found_path:
@@ -324,10 +324,12 @@ def find_cloud_name_from_passport(source_env_dir, all_instances_dir):
     else:
         return ""
 
+
 class NamespaceRole(StrEnum):
     COMMON = auto()
     ORIGIN = auto()
     PEER = auto()
+
 
 def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> NamespaceRole:
     if not bgd_object:
@@ -339,6 +341,7 @@ def get_namespace_role(ns_name: str, bgd_object: dict | None = None) -> Namespac
     if bgd_object['peerNamespace']['name'] == ns_name:
         return NamespaceRole.PEER
     return NamespaceRole.COMMON
+
 
 @dataclass
 class NamespaceFile:
@@ -362,6 +365,7 @@ def get_namespaces_path(env_dir: Path | None = None) -> Path:
     logger.debug(namespaces_path)
     return namespaces_path
 
+
 def get_bgd_path(env_dir: Path | None = None) -> Path:
     env_dir = env_dir or get_current_env_dir_from_env_vars()
     bgd_path = env_dir.joinpath('bg_domain.yml')
@@ -375,6 +379,7 @@ def get_bgd_object(env_dir: Path | None = None) -> CommentedMap:
     logger.debug(bgd_object)
     return bgd_object
 
+
 def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     namespaces_path = get_namespaces_path(env_dir)
     if not check_dir_exists(str(namespaces_path)):
@@ -384,6 +389,7 @@ def get_namespaces(env_dir: Path | None = None) -> list[NamespaceFile]:
     namespaces = [NamespaceFile(path=p, bgd=bgd) for p in namespace_paths]
     logger.debug(namespaces)
     return namespaces
+
 
 def get_template_dirs(base_dir: str | None = None) -> dict[NamespaceRole, str]:
     base_dir = base_dir if base_dir else getenv_with_error('CI_PROJECT_DIR')
@@ -397,9 +403,16 @@ def get_template_dirs(base_dir: str | None = None) -> dict[NamespaceRole, str]:
         result[NamespaceRole.PEER] = peer_template_path
     return result
 
+
 def is_from_template_dir(file_path: str) -> bool:
     return bool(TEMPLATE_DIR_PATTERN.search(file_path))
 
 
 def get_sboms_dir(work_dir) -> Path:
     return Path(work_dir) / "sboms"
+
+
+def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
+    instances_dir = getenv_with_error('CI_PROJECT_DIR')
+    env_dir_path = Path(f"{instances_dir}/environments/{cluster_name}/{environment_name}")
+    return env_dir_path
