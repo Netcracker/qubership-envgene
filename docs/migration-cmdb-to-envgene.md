@@ -50,12 +50,12 @@ When the instance pipeline runs, it downloads the template artifact, merges it w
 
 ### 1.2 Why migrate from CMDB Objects to EnvGene Objects?
 
-**Problems with the CMDB approach (observed in the `cmdbExport` data):**
+**Problems with the CMDB approach:**
 
-- Parameters are stored inline in Cloud and Namespace YAML files. Sensitive values such as JWT private keys, TLS certificates, database passwords, and LDAP passwords are plaintext inside `deployParameters` (see `api-hub-dev.yml` lines 11–78).
-- There is no template layer. Every environment (e.g., `ndoSupport232`, `ndoSupport233`, `ndoShared232`, …) is a fully independent record. A cross-cutting change requires touching dozens of files.
-- ParameterSets live at the Tenant level and carry only pipeline-tool parameters (`DCL_*`, `CLOUD_NAME`, `PAAS_PLATFORM`). There is no mechanism to compose, override, or scope them per environment type.
-- Application objects under Namespaces (`technical-config-loader.yml`) are mostly empty shells; application-level parameters are stuffed into Namespace `deployParameters` as multi-kilobyte YAML-in-string blobs.
+- Parameters are stored inline in Cloud and Namespace YAML files. Sensitive values such as JWT private keys, TLS certificates, database passwords, and LDAP passwords are plaintext inside `deployParameters`.
+- There is no template layer. Every environment is a fully independent record. A cross-cutting change requires touching every affected record individually.
+- ParameterSets live at the Tenant level and carry only pipeline-tool parameters. There is no mechanism to compose, override, or scope them per environment type.
+- Application objects under Namespaces are mostly empty shells; application-level parameters are stuffed into Namespace `deployParameters` as multi-kilobyte YAML-in-string blobs.
 
 **What EnvGene adds:**
 
@@ -188,15 +188,15 @@ The `env_definition.yml` is the single file a configurator writes per environmen
 - **Environments where every parameter is unique** — if two environments share no common structure, template reuse is low and the overhead of a template repository may not pay off.
 - **Short-lived ephemeral environments** — if an environment lives less than one deployment cycle, the one-time setup cost (Cloud Passport, `env_definition.yml`, credentials) may exceed the benefit.
 - **CMDB Objects with no cluster binding** — Application and Registry Definitions that describe only Maven/Docker coordinates and carry no cluster-specific parameters can remain in CMDB or be migrated independently without touching environments.
-- **ParameterSets whose parameters are only understood by the DCL pipeline** (`DCL_*` keys) — these can be migrated as Template ParameterSets referenced in `e2eParameterSets`, but their values must still be correct for the DCL toolchain.
+- **ParameterSets whose parameters are only understood by an external pipeline** — these can be migrated as Template ParameterSets referenced in `e2eParameterSets`, but their values must still be correct for the consuming toolchain.
 
 ---
 
 ## 2. Tutorial — Migrate one CMDB Object end-to-end
 
-> *Diátaxis type: **Tutorial** — learning-oriented. Follow along to produce a working result. Uses the real `k8sApps3` / `api-hub-dev` CMDB Objects as the source.*
+> *Diátaxis type: **Tutorial** — learning-oriented. Follow along to produce a working result. Uses generic `<cloudName>` / `<envName>` placeholders — substitute your own values throughout.*
 
-**Goal:** Take the CMDB Cloud `k8sApps3` with its Namespace `api-hub-dev` and produce a working EnvGene environment that generates the same Cloud and Namespace objects.
+**Goal:** Take a CMDB Cloud record with one Namespace and produce a working EnvGene environment that generates the same Cloud and Namespace objects.
 
 **Time required:** ~30 minutes  
 **Prerequisites:** A GitLab/GitHub instance with two empty repositories (template and instance), EnvGene pipeline configured in the instance repo.
@@ -205,47 +205,46 @@ The `env_definition.yml` is the single file a configurator writes per environmen
 
 ### Step 1 — Examine the source CMDB Objects
 
-Open `cmdbExport/Tenants/API-HUB/Clouds/k8sApps3/k8sApps3.yml`:
+Open your CMDB Cloud export file (typically `cmdbExport/Tenants/<tenantName>/Clouds/<cloudName>/<cloudName>.yml`). A minimal Cloud record looks like:
 
 ```yaml
-name: "k8sApps3"
-apiUrl: "k8s-apps3.k8s.sdntest.netcracker.com"
+name: "<cloudName>"
+apiUrl: "<k8s-api-host>"
 apiPort: "6443"
-publicUrl: "k8s-apps3.k8s.sdntest.netcracker.com"
-defaultCredentialsId: "k8sApps3-apihub-admin"
+publicUrl: "<public-host>"
+defaultCredentialsId: "<cloudName>-admin"
 protocol: "HTTPS"
 deployParameters:
   PAAS_PLATFORM: "KUBERNETES"
 e2eParameterSets:
-  - "dcl-paramset-mandatory-k8sApps3"
+  - "<common-paramset-name>"
 maasConfig:
   enable: false
 consulConfig:
   enabled: false
-tenantName: "API-HUB"
+tenantName: "<tenantName>"
 ```
 
-Open `cmdbExport/Tenants/API-HUB/Clouds/k8sApps3/Namespaces/api-hub-dev/api-hub-dev.yml`:
+Open the Namespace export file (`Clouds/<cloudName>/Namespaces/<envName>/<envName>.yml`):
 
 ```yaml
-name: "api-hub-dev"
-credentialsId: "k8sApps3-apihub-admin"
+name: "<envName>"
+credentialsId: "<cloudName>-admin"
 cleanInstallApprovalRequired: true
 mergeDeployParametersAndE2EParameters: true
 deployParameters:
-  APIHUB_SKIP_DB_CREATION: "true"
-  MONITORING_ENABLED: "'false'"
   LOG_LEVEL: "INFO"
-  # ... large APIHUB_CONFIG and APIHUB_AGENT_CONFIG blobs omitted for brevity
-  ESCAPE_SEQUENCE: "true"
+  MONITORING_ENABLED: "'false'"
   PAAS_VERSION: "\"1.32\""
+  # ... any env-specific parameters; large YAML-in-string blobs or secret values
+  #     should be extracted in the steps below
 ```
 
 **What you observe:**
 - Cluster connectivity (`apiUrl`, `apiPort`, `protocol`) lives inside the Cloud object — these will move to a Cloud Passport.
-- `deployParameters.PAAS_PLATFORM` is a cluster-wide constant that belongs in a Template ParameterSet.
-- `e2eParameterSets` references `dcl-paramset-mandatory-k8sApps3` — this will become a Template ParameterSet.
-- The large `APIHUB_CONFIG` and `APIHUB_AGENT_CONFIG` blobs in the Namespace are environment-specific and contain secrets — these will move to an instance-level ParameterSet and Credentials.
+- Cluster-wide constants in `deployParameters` (e.g., `PAAS_PLATFORM`) belong in a Template ParameterSet.
+- Any `e2eParameterSets` entries will become Template ParameterSets in the template repo.
+- Large YAML-in-string blobs and secret values in `deployParameters` should move to an instance-level ParameterSet and Credential objects respectively.
 
 **Expected output of this step:** a clear list of what goes where in EnvGene.
 
@@ -256,17 +255,17 @@ deployParameters:
 In the instance repository, create:
 
 ```
-environments/k8sApps3/cloud-passport/k8sApps3.yml
+environments/<cloudName>/cloud-passport/<cloudName>.yml
 ```
 
 ```yaml
 version: 1.5
 cloud:
-  CLOUD_API_HOST: k8s-apps3.k8s.sdntest.netcracker.com
+  CLOUD_API_HOST: <k8s-api-host>
   CLOUD_API_PORT: "6443"
-  CLOUD_DEPLOY_TOKEN: k8sApps3-apihub-admin
-  CLOUD_PUBLIC_HOST: k8s-apps3.k8s.sdntest.netcracker.com
-  CLOUD_PRIVATE_HOST: k8s-apps3.k8s.sdntest.netcracker.com
+  CLOUD_DEPLOY_TOKEN: <cloudName>-admin
+  CLOUD_PUBLIC_HOST: <public-host>
+  CLOUD_PRIVATE_HOST: <private-host>
   CLOUD_DASHBOARD_URL: ""
   CLOUD_PROTOCOL: HTTPS
   PRODUCTION_MODE: false
@@ -279,11 +278,11 @@ consul:
 Also create the credentials file for the Cloud Passport (sensitive values):
 
 ```
-environments/k8sApps3/cloud-passport/k8sApps3-creds.yml
+environments/<cloudName>/cloud-passport/<cloudName>-creds.yml
 ```
 
 ```yaml
-k8sApps3-apihub-admin:
+<cloudName>-admin:
   type: secret
   data:
     secret: "envgeneNullValue"
@@ -295,29 +294,23 @@ k8sApps3-apihub-admin:
 
 ---
 
-### Step 3 — Create the Template ParameterSet for common e2e parameters
+### Step 3 — Create the Template ParameterSet and Cloud Template
 
-In the **template repository**, create:
+In the **template repository**, create a ParameterSet for parameters that are common to all environments of this type. The name should describe its scope (e.g., cluster-level constants, e2e tooling parameters):
 
 ```
-templates/parameters/dcl-paramset-mandatory-k8sApps3.yml
+templates/parameters/<common-paramset-name>.yml
 ```
 
 ```yaml
-name: dcl-paramset-mandatory-k8sApps3
+name: <common-paramset-name>
 parameters:
-  DCL_CONFIGURATION_FILE_VERSION: "v2"
-  DCL_CONFIG_ARGOCD_URL: "https://argocd-server.k8s-apps3.k8s.sdntest.netcracker.com"
-  DCL_CONFIG_ARGOCD_PROJECT: "api-hub"
-  DCL_CONFIG_CMDB_URL: "https://cloud-deployer.netcracker.com"
-  DCL_CONFIG_DOCKER_REGISTRY: "artifactorycn.netcracker.com:17014"
-  DCL_GIT_BRANCH: "master"
-  DCL_GIT_URL: "https://git.netcracker.com/prod.dtwo.dcl/sandbox/api-hub"
-  DCL_SKIP_CHART_VALIDATION: "true"
   PAAS_PLATFORM: "KUBERNETES"
+  # add any other parameters shared by every environment of this type
+  # e.g. registry URLs, pipeline tool settings, cluster-specific constants
 ```
 
-Also create a Cloud Template at `templates/env_templates/apihub/cloud.yml.j2`:
+Also create a Cloud Template at `templates/env_templates/<templateName>/cloud.yml.j2`:
 
 ```yaml
 name: "{{ current_env.cloudNameWithCluster }}"
@@ -342,17 +335,19 @@ e2eParameters: {}
 technicalConfigurationParameters: {}
 deployParameterSets: []
 e2eParameterSets:
-  - dcl-paramset-mandatory-k8sApps3
+  - <common-paramset-name>
 technicalConfigurationParameterSets: []
 ```
 
-**Expected output:** The template repo now has a Cloud Template that references the ParameterSet. Commit and publish the template artifact (e.g., `apihub-template:1.0.0`).
+**Expected output:** The template repo now has a Cloud Template that references the ParameterSet. Commit and publish the template artifact (e.g., `<productName>-template:1.0.0`).
 
 ---
 
 ### Step 4 — Create the Namespace Template
 
-In the template repo, create `templates/env_templates/apihub/Namespaces/api-hub.yml.j2`:
+In the template repo, create `templates/env_templates/<templateName>/Namespaces/<namespaceName>.yml.j2`.
+
+Include only parameters that are **identical across every environment** of this type. Leave out environment-specific values and secrets — those go in the instance repo (Step 5).
 
 ```yaml
 name: "{{ current_env.name }}"
@@ -362,11 +357,9 @@ isServerSideMerge: false
 cleanInstallApprovalRequired: true
 mergeDeployParametersAndE2EParameters: true
 deployParameters:
-  ESCAPE_SEQUENCE: "true"
+  # place parameters that are the same for all environments of this type
   LOG_LEVEL: "INFO"
   MONITORING_ENABLED: "'false'"
-  PAAS_VERSION: "\"1.32\""
-  APIHUB_SKIP_DB_CREATION: "true"
 e2eParameters: {}
 technicalConfigurationParameters: {}
 deployParameterSets: []
@@ -374,16 +367,16 @@ e2eParameterSets: []
 technicalConfigurationParameterSets: []
 ```
 
-> The large `APIHUB_CONFIG` blob contains secrets and environment-specific URLs. Do **not** put it in the template. Move it to an instance-level ParameterSet (Step 5).
+> Parameters that are environment-specific, vary per cluster, or contain secrets must **not** go here. Move them to an instance-level ParameterSet or Credential objects (Step 5).
 
-Create the Template Descriptor at `templates/env_templates/apihub.yaml`:
+Create the Template Descriptor at `templates/env_templates/<templateName>.yaml`:
 
 ```yaml
-tenant: apihub/tenant.yml.j2
-cloud: apihub/cloud.yml.j2
+tenant: <templateName>/tenant.yml.j2
+cloud: <templateName>/cloud.yml.j2
 namespaces:
-  - template_path: apihub/Namespaces/api-hub.yml.j2
-    deploy_postfix: api-hub-dev
+  - template_path: <templateName>/Namespaces/<namespaceName>.yml.j2
+    deploy_postfix: <envName>
 ```
 
 **Expected output:** A valid Template Descriptor committed to the template repo.
@@ -395,59 +388,56 @@ namespaces:
 In the instance repository, create:
 
 ```
-environments/k8sApps3/api-hub-dev/Inventory/env_definition.yml
+environments/<cloudName>/<envName>/Inventory/env_definition.yml
 ```
 
 ```yaml
 inventory:
-  environmentName: "api-hub-dev"
-  tenantName: "API-HUB"
-  cloudName: "k8sApps3"
-  cloudPassport: "k8sApps3"
-  deployer: "cloud-deployer"
+  environmentName: "<envName>"
+  tenantName: "<tenantName>"
+  cloudName: "<cloudName>"
+  cloudPassport: "<cloudName>"
   config:
-    updateCredIdsWithEnvName: true
+    updateCredIdsWithEnvName: true   # recommended for production environments
 envTemplate:
-  name: "apihub"
-  artifact: "apihub-template:1.0.0"
+  name: "<templateName>"
+  artifact: "<productName>-template:1.0.0"
   envSpecificParamsets:
-    api-hub-dev:
-      - apihub-dev-deploy
+    <envName>:
+      - <envName>-deploy
 ```
 
-Then create the environment-specific ParameterSet at:
+Then create the environment-specific ParameterSet for values that differ from the template defaults:
 
 ```
-environments/k8sApps3/api-hub-dev/Inventory/parameters/apihub-dev-deploy.yml
+environments/<cloudName>/<envName>/Inventory/parameters/<envName>-deploy.yml
 ```
 
 ```yaml
-name: apihub-dev-deploy
+name: <envName>-deploy
 parameters:
-  APIHUB_CONFIG: |
-    apihubBackend:
-      env:
-        database:
-          host: pg-patroni.apihub-postgresql-nonprod
-          port: 5432
-          name: api_hub_dev
-          username: api_hub_dev_db_admin
-          password: "${creds.get(\"apihub-dev-db-cred\").password}"
+  # environment-specific parameters that override or extend template defaults
+  SOME_ENV_PARAM: "value"
+  # for parameters containing secrets, reference a Credential object instead
+  # of putting the value here:
+  DB_PASSWORD: "${creds.get(\"<envName>-db-cred\").password}"
 ```
 
-And add the credential placeholder:
+And add a Credential placeholder for any secret values:
 
 ```
-environments/k8sApps3/api-hub-dev/Credentials/credentials.yml
+environments/<cloudName>/<envName>/Credentials/credentials.yml
 ```
 
 ```yaml
-apihub-dev-db-cred:
+<envName>-db-cred:
   type: usernamePassword
   data:
-    username: "api_hub_dev_db_admin"
+    username: "<db-username>"
     password: "envgeneNullValue"
 ```
+
+> Replace all `envgeneNullValue` entries with real secret values before or after the pipeline run, depending on your credential management workflow.
 
 **Expected output:** All files committed. The environment is fully described. Pipeline is ready to run.
 
@@ -459,18 +449,18 @@ Trigger the instance pipeline with these parameters:
 
 | Parameter | Value |
 |---|---|
-| `ENV_NAMES` | `k8sApps3/api-hub-dev` |
+| `ENV_NAMES` | `<cloudName>/<envName>` |
 | `ENV_BUILD` | `true` |
 | `GENERATE_EFFECTIVE_SET` | `true` |
 
 **Expected output:** The pipeline runs the `env_build` job, then `generate_effective_set`, then `git_commit`. After the pipeline completes, the following files are present in the instance repo:
 
 ```
-environments/k8sApps3/api-hub-dev/
+environments/<cloudName>/<envName>/
   cloud.yml          ← generated, contains apiUrl from Cloud Passport
   tenant.yml         ← generated
   Namespaces/
-    api-hub-dev/
+    <envName>/
       namespace.yml  ← generated, contains merged deployParameters
   Credentials/
     credentials.yml  ← generated placeholders
@@ -481,10 +471,10 @@ environments/k8sApps3/api-hub-dev/
 
 Open `cloud.yml` and verify it contains a comment like:
 ```yaml
-apiUrl: "k8s-apps3.k8s.sdntest.netcracker.com" # cloud passport: k8sApps3 version: 1.5
+apiUrl: "<k8s-api-host>" # cloud passport: <cloudName> version: 1.5
 ```
 
-Open `namespace.yml` and verify `ESCAPE_SEQUENCE: "true"` appears, with a comment indicating the source ParameterSet.
+Open `namespace.yml` and verify your expected parameters appear, each with a comment indicating the source ParameterSet.
 
 **Congratulations — you have migrated one CMDB environment to EnvGene.**
 
@@ -557,7 +547,7 @@ The CMDB Application object (`name`, `deployParameters`, `technicalConfiguration
 
 **Goal:** Set up a template repository that covers the CMDB environments you are migrating.
 
-1. **Identify environment types.** Group CMDB Cloud+Namespace combinations that share the same structure. Each group becomes one Template Descriptor. For example, all `k8sApps*` clouds with `apihub-*` namespaces form one type.
+1. **Identify environment types.** Group CMDB Cloud+Namespace combinations that share the same structure. Each group becomes one Template Descriptor. For example, all clusters running the same product version with identical namespace layouts form one type.
 
 2. **Create the folder structure:**
 
@@ -695,7 +685,7 @@ Internal CMDB state. Drop it entirely.
 
 Marked deprecated in the EnvGene Cloud schema. Do not migrate.
 
-**Large multi-line YAML-in-string parameter values (e.g., `APIHUB_CONFIG`)**
+**Large multi-line YAML-in-string parameter values**
 
 These blobs typically mix connection strings, secrets, and application configuration. Decompose them:
 - Connection strings that vary per environment → instance-level ParameterSet.
@@ -704,9 +694,9 @@ These blobs typically mix connection strings, secrets, and application configura
 
 If decomposition is not feasible in the short term, the entire blob can go into an instance-level ParameterSet as a literal YAML scalar. This is valid but loses the benefits of template-level reuse.
 
-**`DCL_CONFIG_ARGOCD_CREDENTIALS_ID`, `DCL_CONFIG_CMDB_CREDENTIALS_ID`, `DCL_GIT_CREDENTIALS_ID`** (from `dcl-paramset-mandatory-k8sApps3.yml`)
+**Credential ID parameters expected by external pipeline tools**
 
-These reference credential IDs expected by the DCL pipeline, not by EnvGene. Keep them in a Template ParameterSet in the `e2eParameterSets` scope. The corresponding Credential objects must exist in `Credentials/credentials.yml`.
+Some CMDB ParameterSets contain credential ID parameters consumed by external pipelines (not by EnvGene itself). Keep these in a Template ParameterSet in the `e2eParameterSets` scope. The corresponding Credential objects must exist in `Credentials/credentials.yml`.
 
 **Tenant-level ParameterSets (CMDB)**
 
@@ -723,8 +713,8 @@ In CMDB, ParameterSets are defined at the Tenant level and applied to Clouds. In
 The `name` field inside a ParameterSet YAML must exactly match the filename (without extension).
 
 ```
-# Wrong: file is named "apihub-dev-deploy.yml" but name field says:
-name: apihub_dev_deploy   ← underscore vs hyphen
+# Wrong: file is named "my-env-deploy.yml" but name field says:
+name: my_env_deploy   ← underscore vs hyphen
 ```
 
 Fix: rename the file or change the `name` field to match.
@@ -741,7 +731,7 @@ Fix: verify the template artifact was built with the latest commit and the file 
 
 **`Cloud Passport not found`**
 
-`env_definition.yml` references a Cloud Passport by name (`cloudPassport: k8sApps3`) but EnvGene cannot find the file.
+`env_definition.yml` references a Cloud Passport by name (e.g., `cloudPassport: <cloudName>`) but EnvGene cannot find the file.
 
 EnvGene searches the following locations in order:
 1. `environments/<cluster>/<env>/Inventory/cloud-passport/`
@@ -792,7 +782,7 @@ The CMDB Namespace export contains a `dirty` field that is not part of the EnvGe
 
 ### 4.1 CMDB Object → EnvGene Object mapping table
 
-All CMDB Object types found in `cmdbExport/Tenants/API-HUB/`:
+All CMDB Object types and their EnvGene equivalents:
 
 | CMDB Object type | Location in CMDB export | EnvGene Object type(s) | Location in EnvGene | Notes |
 |---|---|---|---|---|
@@ -1085,4 +1075,4 @@ The following areas have insufficient documentation in the current EnvGene docs 
 | The `instance-pipeline-parameters.md` full parameter list was not read | `docs/instance-pipeline-parameters.md` | Medium — the pipeline parameter table in this document is incomplete |
 | No documentation was found for how EnvGene handles the `mergeDeployParametersAndE2EParameters: true` flag (present in both CMDB and EnvGene) during Effective Set generation | — | Medium — affects environments migrated from CMDB with this flag set |
 | The `CMDB_URL` Cloud Passport key appears in both the CMDB Cloud export (`productionMode` + `CMDB_URL` in `deployParameters`) and in all Cloud Passports. Its exact semantics in the Effective Set are not documented | — | Low |
-| EnvGene's handling of CMDB ParameterSets with `applications: []` (empty list, as in `dcl-paramset-mandatory-k8sApps3.yml`) is not explicitly documented — whether an empty list is valid or should be omitted | `docs/envgene-objects.md` | Low |
+| EnvGene's handling of CMDB ParameterSets with `applications: []` (empty list) is not explicitly documented — whether an empty list is valid or should be omitted | `docs/envgene-objects.md` | Low |
