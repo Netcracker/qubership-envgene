@@ -1,6 +1,6 @@
 import click
 
-from scripts.utils.pipeline_parameters import PipelineParametersHandler
+from scripts.pipeline.pipeline_parameters import PipelineParametersHandler
 from envgenehelper.validations import validate_pipeline
 
 

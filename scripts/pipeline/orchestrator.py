@@ -19,6 +19,8 @@ from inventory_generation import is_inventory_generation_needed
 from main import render_environment
 from process_sd import prepare_vars_and_run_sd_handling
 
+from scripts.pipeline.pipeline_parameters import PipelineParametersHandler
+
 
 class PipelineContext(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
@@ -108,8 +110,8 @@ class ProcessSdStep(PipelineStep):
     def should_run(self, ctx: PipelineContext) -> bool:
         source_type = (ctx.params.get("SD_SOURCE_TYPE")).lower()
         has_sd = (
-            (source_type == "json" and bool(ctx.params.get("SD_DATA"))) or
-            (source_type == "artifact" and bool(ctx.params.get("SD_VERSION")))
+                (source_type == "json" and bool(ctx.params.get("SD_DATA"))) or
+                (source_type == "artifact" and bool(ctx.params.get("SD_VERSION")))
         )
         if has_sd:
             ctx.es_generation_mode = resolve_es_generation_mode(ctx.cluster_name, ctx.env_name)
@@ -193,6 +195,9 @@ class GitCommitStep(PipelineStep):
 
 
 def run_unified_pipeline() -> None:
+    handler = PipelineParametersHandler()
+    handler.log_pipeline_params()
+
     env_names = split_multi_value_param(getenv_with_error('ENV_NAMES'))
     if len(env_names) > 1:
         raise ValueError(f"Envgene pipeline supports exactly one environment, got: {env_names}")
@@ -232,3 +237,7 @@ def run_unified_pipeline() -> None:
         finally:
             duration_ms = (time.time_ns() - start) // 1_000_000
             logger.info(f"Step '{step.name}' completed in {duration_ms}ms")
+
+
+if __name__ == "__main__":
+    run_unified_pipeline()

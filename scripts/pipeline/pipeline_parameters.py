@@ -139,7 +139,7 @@ class PipelineParametersHandler:
         if len(env_names) != 1:
             raise ValueError(f"ENV_NAMES must contain exactly one value, got: {env_names}")
 
-        if os.getenv("ENV_TEMPLATE_TEST") == "true" or os.getenv("IS_TEMPLATE_TEST") == "true":
+        if os.getenv("ENV_TEMPLATE_TEST") == "true":
             raise ValueError("ENV_TEMPLATE_TEST is not supported for static pipeline")
 
         for k, v in self.params.items():

@@ -8,12 +8,6 @@ def pipeline():
     pass
 
 
-@pipeline.command("log_params")
-def log_params():
-    handler = PipelineParametersHandler()
-    handler.log_pipeline_params()
-
-
 # for setting in parameters for static pipeline
 @pipeline.command("init_params")
 def init_pipeline():
