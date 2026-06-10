@@ -1,7 +1,5 @@
 # Migration Blueprint: CMDB Objects → EnvGene Objects
 
-> **Diátaxis document** — four clearly separated content types: Explanation, Tutorial, How-to Guides, Reference.
-
 ---
 
 ## Table of Contents
@@ -26,13 +24,10 @@
    - 4.3 [Required repository folder structure](#43-required-repository-folder-structure)
    - 4.4 [Instance pipeline job reference](#44-instance-pipeline-job-reference)
    - 4.5 [Configuration file parameters reference](#45-configuration-file-parameters-reference)
-   - 4.6 [Documentation gaps](#46-documentation-gaps)
 
 ---
 
 ## 1. Explanation — Why and What
-
-> *Diátaxis type: **Explanation** — understanding-oriented background material. No step-by-step instructions here.*
 
 ### 1.1 What is EnvGene?
 
@@ -193,8 +188,6 @@ The `env_definition.yml` is the single file a configurator writes per environmen
 ---
 
 ## 2. Tutorial — Migrate one CMDB Object end-to-end
-
-> *Diátaxis type: **Tutorial** — learning-oriented. Follow along to produce a working result. Uses generic `<cloudName>` / `<envName>` placeholders — substitute your own values throughout.*
 
 **Goal:** Take a CMDB Cloud record with one Namespace and produce a working EnvGene environment that generates the same Cloud and Namespace objects.
 
@@ -481,8 +474,6 @@ Open `namespace.yml` and verify your expected parameters appear, each with a com
 ---
 
 ## 3. How-to Guides
-
-> *Diátaxis type: **How-to** — goal-oriented guides for users who already understand the concepts. Each guide answers a specific "how do I…" question.*
 
 ---
 
@@ -776,8 +767,6 @@ The CMDB Namespace export contains a `dirty` field that is not part of the EnvGe
 
 ## 4. Reference
 
-> *Diátaxis type: **Reference** — information-oriented technical facts. No prose explanation, no how-to steps.*
-
 ---
 
 ### 4.1 CMDB Object → EnvGene Object mapping table
@@ -1060,19 +1049,3 @@ Jobs run sequentially. A job failure stops the pipeline.
 | `registry.mavenConfig.targetSnapshot` | string | Yes | Snapshot repo name |
 | `registry.mavenConfig.targetStaging` | string | Yes | Staging repo name |
 | `registry.mavenConfig.targetRelease` | string | Yes | Release repo name |
-
----
-
-### 4.6 Documentation gaps
-
-The following areas have insufficient documentation in the current EnvGene docs or could not be fully verified from the provided repositories:
-
-| Gap | Location | Impact |
-|---|---|---|
-| Cloud Passport key-to-`current_env.cluster.*` mapping is not documented in a single reference table | `docs/features/cloud-passport-processing.md` (not read in full) | High — configurators must trial-and-error the variable names |
-| The `template-macros.md` file was not read; the full list of available Jinja macros (`current_env.*`, `creds.get()`, etc.) is not included in this document | `docs/template-macros.md` | High — critical for writing Namespace/Cloud Templates |
-| The `deployer.yml` CMDB integration (how EnvGene imports objects back into CMDB) is described as "not part of EnvGene Core" with no detail on which CMDB systems are supported | `docs/envgene-configs.md` | Medium — relevant for teams that need bidirectional CMDB sync |
-| The `instance-pipeline-parameters.md` full parameter list was not read | `docs/instance-pipeline-parameters.md` | Medium — the pipeline parameter table in this document is incomplete |
-| No documentation was found for how EnvGene handles the `mergeDeployParametersAndE2EParameters: true` flag (present in both CMDB and EnvGene) during Effective Set generation | — | Medium — affects environments migrated from CMDB with this flag set |
-| The `CMDB_URL` Cloud Passport key appears in both the CMDB Cloud export (`productionMode` + `CMDB_URL` in `deployParameters`) and in all Cloud Passports. Its exact semantics in the Effective Set are not documented | — | Low |
-| EnvGene's handling of CMDB ParameterSets with `applications: []` (empty list) is not explicitly documented — whether an empty list is valid or should be omitted | `docs/envgene-objects.md` | Low |
