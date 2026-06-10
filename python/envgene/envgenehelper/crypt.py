@@ -156,9 +156,6 @@ def get_all_necessary_cred_files() -> set[str]:
     if not env_names:
         logger.info("ENV_NAMES not set, running in test mode")
         return get_files_with_filter(BASE_DIR, is_cred_file)
-    if env_names == "env_template_test":
-        logger.info("Running in env_template_test mode")
-        return get_files_with_filter(BASE_DIR, is_cred_file)
     env_names_list = split_multi_value_param(env_names)
 
     sources = set()

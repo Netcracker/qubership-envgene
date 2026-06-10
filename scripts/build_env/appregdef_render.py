@@ -1,15 +1,19 @@
-from envgenehelper import *
-from envgenehelper.models import TemplateVersionUpdateMode
+import shutil
+from pathlib import Path
 
-from env_template.process_env_template import process_env_template
-from render_config_env import EnvGenerator
+from envgenehelper import getenv_with_error, get_template_dirs, get_env_instances_dir, find_cloud_passport_definition, \
+    update_generated_versions, NamespaceRole, BUILD_ENV_TAG
 
-if __name__ == '__main__':
+from build_env.env_template.process_env_template import process_env_template
+from build_env.render_config_env import EnvGenerator
+
+
+def run_appregdef_render():
+    base_dir = getenv_with_error('CI_PROJECT_DIR')
     template_version = process_env_template()
 
     cluster_name = getenv_with_error("CLUSTER_NAME")
     env_name = getenv_with_error("ENVIRONMENT_NAME")
-    base_dir = getenv_with_error('CI_PROJECT_DIR')
     instances_dir = getenv_with_error("INSTANCES_DIR")
 
     output_dir = f"{base_dir}/environments"

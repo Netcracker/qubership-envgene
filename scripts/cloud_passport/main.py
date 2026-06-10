@@ -9,8 +9,8 @@ from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml
 from envgenehelper.crypt import get_configured_encryption_type
 from envgenehelper.errors import ValidationError
 
-from cmdb import update_creds_to_cmdb_format
-from git_client import GitRepoManager, GitLabClient
+from cloud_passport.cmdb import update_creds_to_cmdb_format
+from cloud_passport.git_client import GitRepoManager, GitLabClient
 from envgenehelper import get_cred_config
 
 SECRET_KEY = "SECRET_KEY"
@@ -119,8 +119,8 @@ def process_discovery_files(env_name: str,
         addHeaderToYaml(cp_file, header_text)
 
 
-def main():
-    env_name = os.getenv("ENV_NAME")
+def run_cloud_passport():
+    env_name = os.getenv("FULL_ENV_NAME")
     logger.info(f"Starting discovery of cloud passport for environment {env_name}")
     base_dir = os.getenv("CI_PROJECT_DIR")
 
@@ -180,7 +180,3 @@ def main():
         discovery_secret_key
     )
     logger.info(f"Discovery of cloud passport for environment {env_name} completed successfully")
-
-
-if __name__ == "__main__":
-    main()

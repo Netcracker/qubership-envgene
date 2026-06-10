@@ -1,22 +1,16 @@
 from envgenehelper import *
 from envgenehelper.deployer import *
 
-from build_env import build_env, process_additional_template_parameters
-from cloud_passport import update_env_definition_with_cloud_name
-from create_credentials import create_credentials
-from render_config_env import EnvGenerator
-from resource_profiles import get_env_specific_resource_profiles
-
-from filter_namespaces import apply_ns_build_filter
+from build_env.build_env import build_env, process_additional_template_parameters
+from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
+from build_env.create_credentials import create_credentials
+from build_env.render_config_env import EnvGenerator
+from build_env.resource_profiles import get_env_specific_resource_profiles
+from bg_manage.filter_namespaces import apply_ns_build_filter
 
 
 INVENTORY_DIR_NAME = "Inventory"
 ENV_DEFINITION_FILE_NAME = "env_definition.yml"
-schema_dir = get_schema_dir()
-PARAMSET_SCHEMA = f"{schema_dir}/paramset.schema.json"
-CLOUD_SCHEMA = f"/{schema_dir}/cloud.schema.json"
-NAMESPACE_SCHEMA = f"/{schema_dir}/namespace.schema.json"
-ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA = f"/{schema_dir}/resource-profile.schema.json"
 
 
 def prepare_folders_for_rendering(env_name, cluster_name, source_env_dir, templates_dirs, render_dir,
@@ -96,9 +90,9 @@ def handle_template_override(render_dir):
         template_path_stem = Path(template_path).stem
         schema_path = ""
         if template_path_stem == 'cloud':
-            schema_path = CLOUD_SCHEMA
+            schema_path = get_schema_dir() / "cloud.schema.json"
         if template_path_stem == 'namespace':
-            schema_path = NAMESPACE_SCHEMA
+            schema_path = get_schema_dir() / "namespace.schema.json"
         beautifyYaml(template_path, schema_path)
         deleteFile(file)
 
@@ -181,7 +175,7 @@ def build_environment(env_name, cluster_name, templates_dirs, source_env_dir, al
     render_context.render_config_env(env_name, envvars)
     handle_template_override(render_dir)
     env_specific_resource_profile_map = get_env_specific_resource_profiles(source_env_dir, all_instances_dir,
-                                                                           ENV_SPECIFIC_RESOURCE_PROFILE_SCHEMA)
+                                                                           get_schema_dir() / "resource-profile.schema.json")
     build_env(env_name, source_env_dir, render_parameters_dir, render_dir, render_profiles_dir,
               env_specific_resource_profile_map, all_instances_dir, render_context, templates_dirs)
     resulting_dir = post_process_env_after_rendering(env_name, render_env_dir, source_env_dir, all_instances_dir,
@@ -260,7 +254,7 @@ def validate_parameter_files(param_files):
     for param_file_path in param_files:
         rel_param_file_path = os.path.relpath(param_file_path, os.getenv('CI_PROJECT_DIR'))
         try:
-            validate_yaml_by_scheme_or_fail(param_file_path, PARAMSET_SCHEMA)
+            validate_yaml_by_scheme_or_fail(param_file_path, get_schema_dir() / "paramset.schema.json")
         except ValueError:
             errors.append(f'Parameter file at {rel_param_file_path} is invalid, look for details above')
         file_name = extractNameFromFile(param_file_path)
@@ -294,7 +288,7 @@ def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir
     apply_ns_build_filter()
 
 
-if __name__ == "__main__":
+def run_build_environment():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
