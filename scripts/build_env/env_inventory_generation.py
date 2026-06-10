@@ -2,6 +2,7 @@ from enum import Enum
 
 import envgenehelper as helper
 import envgenehelper.logger as logger
+from build_pipegene.scripts.validations import SCHEMAS_DIR
 from envgenehelper import *
 from envgenehelper.business_helper import INV_GEN_CREDS_PATH
 from envgenehelper.env_helper import Environment
@@ -13,7 +14,6 @@ PARAMSETS_DIR_PATH = "Inventory/parameters/"
 CLUSTER_TOKEN_CRED_ID = "cloud-deploy-sa-token"
 INVENTORY = "Inventory"
 DEPRECATED_MESSAGE = "Deprecated inventory generation approach"
-SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
 
 
 def generate_env_new_approach():
