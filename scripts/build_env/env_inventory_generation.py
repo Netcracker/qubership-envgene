@@ -22,7 +22,7 @@ def generate_env_new_approach():
     logger.info(f"Starting env inventory generation for env: {env_name} in cluster: {cluster}")
 
     env_inventory_content = json.loads(getenv_with_error('ENV_INVENTORY_CONTENT'))
-    env_inv_content_schema_path = path.join(SCHEMAS_DIR, "env-inventory-content.schema.json")
+    env_inv_content_schema_path = os.path.join(SCHEMAS_DIR, "env-inventory-content.schema.json")
 
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
                                     schema_file_path=env_inv_content_schema_path,
