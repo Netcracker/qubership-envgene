@@ -43,6 +43,7 @@ RUN chmod 754 /module/scripts/*
 # ═══════════════════════════════════════════════════════════════════════════════════
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
 
+COPY --from=build /module /module
 COPY --from=build /schemas /schemas
 COPY --from=build /python /python
 COPY --from=build /etc/pip.conf /etc/pip.conf
