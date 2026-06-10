@@ -1,4 +1,5 @@
 import re
+import warnings
 from dataclasses import InitVar, dataclass, field
 from enum import auto, StrEnum
 from os import getenv
@@ -421,3 +422,25 @@ def get_env_dir_by_env_cluster_name(cluster_name, environment_name) -> Path:
 
 def get_schema_dir():
     return getenv("JSON_SCHEMAS_DIR", "/schemas")
+
+
+def is_inventory_generation_needed(is_template_test, inventory_params):
+    if is_template_test:
+        return False
+
+    env_inventory_init = inventory_params.get('ENV_INVENTORY_INIT')
+    env_specific_parameters = inventory_params.get('ENV_SPECIFIC_PARAMS')
+    env_template_name = inventory_params.get('ENV_TEMPLATE_NAME')
+    env_inventory_content = inventory_params.get('ENV_INVENTORY_CONTENT')
+
+    if env_inventory_content and (env_inventory_init or env_specific_parameters or env_template_name):
+        warnings.warn(
+            "ENV_INVENTORY_INIT, ENV_SPECIFIC_PARAMS, and ENV_TEMPLATE_NAME are deprecated",
+            DeprecationWarning
+        )
+        raise ValueError(
+            "ENV_INVENTORY_CONTENT cannot be used together with "
+            "ENV_INVENTORY_INIT, ENV_SPECIFIC_PARAMS, or ENV_TEMPLATE_NAME"
+        )
+
+    return env_inventory_content or env_inventory_init or bool(env_specific_parameters) or bool(env_template_name)
