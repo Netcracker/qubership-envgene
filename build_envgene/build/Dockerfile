@@ -19,7 +19,7 @@ COPY creds_rotation/scripts /module/creds_rotation_scripts
 COPY scripts/build_env /build_env/scripts/build_env/
 COPY scripts/build_template /build_env/scripts/build_template/
 COPY scripts/cloud_passport/ /cloud_passport/scripts/
-COPY schemas /build_env/schemas
+COPY schemas /schemas
 COPY scripts/utils /module/scripts/utils
 
 RUN pip install --no-cache-dir --retries 10 --timeout 60 \

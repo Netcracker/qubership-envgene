@@ -9,7 +9,7 @@ COPY build_pipegene/build/constraint.txt /build/constraint.txt
 COPY build_pipegene/build/requirements.txt /build/requirements.txt
 
 COPY python /python
-COPY schemas /module/schemas
+COPY schemas /schemas
 COPY build_pipegene/scripts /module/scripts
 COPY scripts/utils /module/scripts/scripts/utils/
 COPY build_pipegene/pipegene_plugins /module/scripts/pipegene_plugins
