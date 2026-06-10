@@ -229,11 +229,14 @@ def handle_env_inv_content(env_inventory_content: dict):
     handle_objects(env_dir, env_inventory_content.get("sharedTemplateVariables"), "shared_template_variables")
 
 
-if __name__ == "__main__":
-
+def run():
     if getenv('ENV_INVENTORY_CONTENT'):
         logger.info("Using new inventory generation approach")
         generate_env_new_approach()
     else:
         logger.info("Using old inventory generation approach")
         generate_env()
+
+
+if __name__ == "__main__":
+    run()

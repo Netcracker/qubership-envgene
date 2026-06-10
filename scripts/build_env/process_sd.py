@@ -66,19 +66,28 @@ def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict
     return sd_data
 
 
-def prepare_vars_and_run_sd_handling():
-    base_dir = getenv_and_log('CI_PROJECT_DIR')
-    env_name = getenv_and_log('ENVIRONMENT_NAME')
-    cluster = getenv_and_log('CLUSTER_NAME')
+def prepare_vars_and_run_sd_handling(
+    base_dir: str = None,
+    env_name: str = None,
+    cluster: str = None,
+    sd_source_type: str = None,
+    sd_version: str = None,
+    sd_data: str = None,
+    sd_delta: str = None,
+    sd_merge_mode: str = None,
+    operation_type: OperationType = None,
+):
+    base_dir = base_dir or getenv_and_log('CI_PROJECT_DIR')
+    env_name = env_name or getenv_and_log('ENVIRONMENT_NAME')
+    cluster = cluster or getenv_and_log('CLUSTER_NAME')
+    sd_source_type = sd_source_type or getenv('SD_SOURCE_TYPE')
+    sd_version = sd_version or getenv('SD_VERSION')
+    sd_data = sd_data or getenv('SD_DATA')
+    sd_delta = sd_delta or getenv('SD_DELTA')
+    sd_merge_mode = sd_merge_mode or getenv("SD_REPO_MERGE_MODE")
+    operation_type = operation_type or OperationType(getenv("OPERATION_TYPE"))
 
     env = Environment(base_dir, cluster, env_name)
-
-    sd_source_type = getenv('SD_SOURCE_TYPE')
-    sd_version = getenv('SD_VERSION')
-    sd_data = getenv('SD_DATA')
-    sd_delta = getenv('SD_DELTA')
-    sd_merge_mode = getenv("SD_REPO_MERGE_MODE")
-    operation_type = OperationType(getenv("OPERATION_TYPE"))
     handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode, operation_type)
 
 
