@@ -25,9 +25,11 @@
    - 4.4 [Instance pipeline job reference](#44-instance-pipeline-job-reference)
    - 4.5 [Configuration file parameters reference](#45-configuration-file-parameters-reference)
 
+
 ---
 
 ## 1. Explanation — Why and What
+
 
 ### 1.1 What is EnvGene?
 
@@ -45,21 +47,33 @@ When the instance pipeline runs, it downloads the template artifact, merges it w
 
 ### 1.2 Why migrate from CMDB Objects to EnvGene Objects?
 
-**Problems with the CMDB approach:**
+Consider migrating if any of the following situations sound familiar:
 
-- Parameters are stored inline in Cloud and Namespace YAML files. Sensitive values such as JWT private keys, TLS certificates, database passwords, and LDAP passwords are plaintext inside `deployParameters`.
-- There is no template layer. Every environment is a fully independent record. A cross-cutting change requires touching every affected record individually.
-- ParameterSets live at the Tenant level and carry only pipeline-tool parameters. There is no mechanism to compose, override, or scope them per environment type.
-- Application objects under Namespaces are mostly empty shells; application-level parameters are stuffed into Namespace `deployParameters` as multi-kilobyte YAML-in-string blobs.
+- **You maintain many near-identical environments.** You have a dev environment, a test environment, a staging environment — and they all share the same structure but with slightly different values. In CMDB, each is a completely independent record. Changing a common parameter (e.g., a platform version or a registry URL) means updating every environment record manually, one by one.
 
-**What EnvGene adds:**
+- **Making a change is risky because you don't know what it will affect.** There is no single place that defines what an "environment of type X" looks like. Differences between environments have accumulated over time and are invisible until something breaks.
 
-- A **template layer** that factors out all common structure and parameters. A single Jinja template replaces dozens of identical CMDB Cloud/Namespace records.
-- **Layered ParameterSets**: template-level (common to all environments of a type) and instance-level (environment-specific overrides), with clear precedence and source traceability comments in every generated file.
-- **Cloud Passport** as a first-class object. Platform connection parameters (API URL, MaaS, DBaaS, Consul, credentials) are published once per cluster and consumed by all environments on that cluster.
-- **Credential objects** with placeholder generation and optional encryption, replacing plaintext secrets in parameter values.
-- **Effective Set generation**: a consumer-ready parameter bundle (for ArgoCD / Helm) derived from the Environment Instance.
-- **Full audit trail**: every generated parameter carries a `# paramset: <name> version: <v> source: template|instance` comment.
+- **Secrets are stored as plain text.** Passwords, tokens, and private keys sit in the same configuration files as non-sensitive parameters. There is no separation between "things anyone can read" and "things that must be protected".
+
+- **You can't tell where a parameter came from.** When a value in a generated object is wrong, there is no audit trail to show which record set it, who changed it, or when.
+
+- **Onboarding a new environment takes too long.** Creating a new environment means copying an existing record and manually adjusting dozens of fields — a process that is both tedious and error-prone.
+
+---
+
+**What you gain by migrating to EnvGene:**
+
+- **One change, all environments updated.** Common structure and parameters live in a shared template. Bumping the template version regenerates every environment that uses it — no manual record editing.
+
+- **A clear separation between what is shared and what is environment-specific.** Template parameters cover what every environment has in common. Instance parameters cover only what differs. This makes each environment definition small and easy to review.
+
+- **Cluster connectivity defined once.** A Cloud Passport captures all connection details for a cluster (API endpoint, credentials, service integrations). Every environment on that cluster reads from it automatically — no duplication, no drift.
+
+- **Secrets are no longer stored as plain text.** Sensitive values are replaced with named Credential objects. Actual secret values are injected at deployment time, keeping configuration files safe to store in Git.
+
+- **A full audit trail on every generated value.** Every parameter in a generated file carries a comment showing which parameter set provided it and whether it came from the template or the instance. Debugging a wrong value takes seconds rather than hours.
+
+- **New environments are fast to create.** Once a template exists for an environment type, onboarding a new environment requires writing only one file (`env_definition.yml`) and providing the values that make it unique.
 
 ### 1.3 Conceptual differences
 
@@ -188,6 +202,7 @@ The `env_definition.yml` is the single file a configurator writes per environmen
 ---
 
 ## 2. Tutorial — Migrate one CMDB Object end-to-end
+
 
 **Goal:** Take a CMDB Cloud record with one Namespace and produce a working EnvGene environment that generates the same Cloud and Namespace objects.
 
@@ -474,6 +489,7 @@ Open `namespace.yml` and verify your expected parameters appear, each with a com
 ---
 
 ## 3. How-to Guides
+
 
 ---
 
@@ -767,6 +783,7 @@ The CMDB Namespace export contains a `dirty` field that is not part of the EnvGe
 
 ## 4. Reference
 
+
 ---
 
 ### 4.1 CMDB Object → EnvGene Object mapping table
@@ -1050,10 +1067,3 @@ Jobs run sequentially. A job failure stops the pipeline.
 | `registry.mavenConfig.targetStaging` | string | Yes | Staging repo name |
 | `registry.mavenConfig.targetRelease` | string | Yes | Release repo name |
 
----
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            gh — critical for writing Namespace/Cloud Templates |
-| The `deployer.yml` CMDB integration (how EnvGene imports objects back into CMDB) is described as "not part of EnvGene Core" with no detail on which CMDB systems are supported | `docs/envgene-configs.md` | Medium — relevant for teams that need bidirectional CMDB sync |
-| The `instance-pipeline-parameters.md` full parameter list was not read | `docs/instance-pipeline-parameters.md` | Medium — the pipeline parameter table in this document is incomplete |
-| No documentation was found for how EnvGene handles the `mergeDeployParametersAndE2EParameters: true` flag (present in both CMDB and EnvGene) during Effective Set generation | — | Medium — affects environments migrated from CMDB with this flag set |
-| The `CMDB_URL` Cloud Passport key appears in both the CMDB Cloud export (`productionMode` + `CMDB_URL` in `deployParameters`) and in all Cloud Passports. Its exact semantics in the Effective Set are not documented | — | Low |
-| EnvGene's handling of CMDB ParameterSets with `applications: []` (empty list) is not explicitly documented — whether an empty list is valid or should be omitted | `docs/envgene-objects.md` | Low |
