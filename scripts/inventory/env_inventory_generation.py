@@ -1,4 +1,3 @@
-
 import envgenehelper as helper
 import envgenehelper.logger as logger
 from envgenehelper import *
@@ -7,6 +6,7 @@ from envgenehelper.env_helper import Environment
 from typing_extensions import deprecated
 
 from create_credentials import CRED_TYPE_SECRET
+from scripts.pipeline.orchestrator import PipelineParametersHandler
 
 PARAMSETS_DIR_PATH = "Inventory/parameters/"
 CLUSTER_TOKEN_CRED_ID = "cloud-deploy-sa-token"
@@ -229,14 +229,10 @@ def handle_env_inv_content(env_inventory_content: dict):
     handle_objects(env_dir, env_inventory_content.get("sharedTemplateVariables"), "shared_template_variables")
 
 
-def run():
-    if getenv('ENV_INVENTORY_CONTENT'):
+def run_inventory_generation(handler: PipelineParametersHandler):
+    if handler.params.get('ENV_INVENTORY_CONTENT'):
         logger.info("Using new inventory generation approach")
         generate_env_new_approach()
     else:
         logger.info("Using old inventory generation approach")
         generate_env()
-
-
-if __name__ == "__main__":
-    run()

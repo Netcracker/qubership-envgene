@@ -1,8 +1,5 @@
-import re
-import sys
-import os
 from envgenehelper import *
-from schema_validation import checkCloudPassportBySchema
+from scripts.utils.schema_validation import checkCloudPassportBySchema
 
 # const
 CLOUD_SUBSTITUTIONS = {

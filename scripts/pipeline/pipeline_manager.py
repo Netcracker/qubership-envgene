@@ -1,11 +1,17 @@
-from pipeline_parameters import PipelineParametersHandler
 
 import click
+from orchestrator import PipelineParametersHandler
 
 
 @click.group(chain=True)
 def pipeline():
     pass
+
+
+@pipeline.command("log_params")
+def log_params():
+    handler = PipelineParametersHandler()
+    handler.log_pipeline_params()
 
 
 # for setting in parameters for static pipeline

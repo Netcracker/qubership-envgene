@@ -1,10 +1,14 @@
-from envgenehelper import *
-from envgenehelper.models import TemplateVersionUpdateMode
+import shutil
+from pathlib import Path
+
+from envgenehelper import getenv_with_error, get_template_dirs, get_env_instances_dir, find_cloud_passport_definition, \
+    update_generated_versions, NamespaceRole, BUILD_ENV_TAG
 
 from env_template.process_env_template import process_env_template
 from render_config_env import EnvGenerator
 
-if __name__ == '__main__':
+
+def run_appregdef_render():
     template_version = process_env_template()
 
     cluster_name = getenv_with_error("CLUSTER_NAME")

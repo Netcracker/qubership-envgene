@@ -1,31 +1,36 @@
+import copy
+import json
+import os
+import shlex
 import time
+import uuid
 from abc import ABC, abstractmethod
 from os import getenv
 from pathlib import Path
 
-from pydantic import BaseModel, Field
-
-from appregdef_render import render_app_reg_defs
 from bg_manage import run as run_bg_manage
 from cloud_passport.scripts.main import run as run_passport
 from cred_rotation import run as run_cred_rotation
 from effective_set_entrypoint import effective_set_entrypoint
-from env_inventory_generation import run as run_inventory_generation
-from envgenehelper import logger, getenv_with_error
+from envgenehelper import logger, getenv_with_error, writeToFile, get_schema_dir, is_inventory_generation_needed
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.effective_set_helper import GenerationMode, resolve_es_generation_mode
+from envgenehelper.models import TemplateVersionUpdateMode, OperationType
+from envgenehelper.plugin_engine import PluginEngine
 from git_commit import run as run_git_commit
-from inventory_generation import is_inventory_generation_needed
 from main import render_environment
-from process_sd import prepare_vars_and_run_sd_handling
+from pydantic import BaseModel, Field
 
-from scripts.pipeline.pipeline_parameters import PipelineParametersHandler
+from scripts.build_env.appregdef_render import run_appregdef_render
+from scripts.inventory.env_inventory_generation import run_inventory_generation
+from scripts.sd.process_sd import handle_sd
 
 
-class PipelineContext(BaseModel):
+class PipelineParametersHandler(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
     params: dict
+    sensitive_params: list
     full_env_name: str
     cluster_name: str
     env_name: str
@@ -33,6 +38,126 @@ class PipelineContext(BaseModel):
     es_generation_mode: GenerationMode = GenerationMode.PARTIAL
     git_commit: bool = True
     work_dir: Path = Field(default_factory=lambda: Path(getenv('CI_PROJECT_DIR')))
+    dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/build.env"))
+
+    @classmethod
+    def from_env(cls) -> 'PipelineParametersHandler':
+        params = {
+            'ENV_NAMES': getenv("ENV_NAMES", ""),
+            'ENV_BUILD': getenv("ENV_BUILDER", "false").lower() == "true",
+            'GET_PASSPORT': getenv("GET_PASSPORT", "false").lower() == "true",
+            'GENERATE_EFFECTIVE_SET': getenv("GENERATE_EFFECTIVE_SET", "false").lower() == "true",
+            'ENV_TEMPLATE_VERSION': getenv("ENV_TEMPLATE_VERSION", ""),
+            'ENV_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST", "false").lower() == "true",
+            'IS_TEMPLATE_TEST': getenv("ENV_TEMPLATE_TEST", "false").lower() == "true",
+            'CI_COMMIT_REF_NAME': getenv("CI_COMMIT_REF_NAME", ""),
+            'JSON_SCHEMAS_DIR': get_schema_dir(),
+            "SD_SOURCE_TYPE": getenv("SD_SOURCE_TYPE", "artifact"),
+            "SD_VERSION": getenv("SD_VERSION"),
+            "SD_DATA": getenv("SD_DATA"),
+            "SD_DELTA": getenv("SD_DELTA"),
+            "SD_REPO_MERGE_MODE": getenv("SD_REPO_MERGE_MODE"),
+            "ENV_INVENTORY_INIT": getenv("ENV_INVENTORY_INIT", "false").lower() == "true",
+            "ENV_SPECIFIC_PARAMS": getenv("ENV_SPECIFIC_PARAMS"),
+            "ENV_TEMPLATE_NAME": getenv("ENV_TEMPLATE_NAME"),
+            'CRED_ROTATION_FORCE': getenv("CRED_ROTATION_FORCE", "false"),
+            'NS_BUILD_FILTER': getenv("NS_BUILD_FILTER", ""),
+            'GITLAB_RUNNER_TAG_NAME': getenv("GITLAB_RUNNER_TAG_NAME", ""),
+            'RUNNER_SCRIPT_TIMEOUT': getenv("RUNNER_SCRIPT_TIMEOUT", "10m"),
+            'DEPLOYMENT_SESSION_ID': getenv("DEPLOYMENT_SESSION_ID", str(uuid.uuid4())),
+            'ENVGENE_LOG_LEVEL': getenv("ENVGENE_LOG_LEVEL", "INFO"),
+            'CALCULATOR_CLI_JAVA_OPTIONS': getenv("CALCULATOR_CLI_JAVA_OPTIONS", ""),
+            "BG_STATE": getenv("BG_STATE"),
+            "BG_MANAGE": getenv("BG_MANAGE", "false").lower() == "true",
+            "APP_DEFS_PATH": getenv("APP_DEFS_PATH"),
+            "REG_DEFS_PATH": getenv("REG_DEFS_PATH"),
+            "APP_REG_DEFS_JOB": getenv("APP_REG_DEFS_JOB"),
+            "EFFECTIVE_SET_CONFIG": getenv("EFFECTIVE_SET_CONFIG"),
+            "ENV_INVENTORY_CONTENT": getenv("ENV_INVENTORY_CONTENT"),
+            "CUSTOM_PARAMS": getenv("CUSTOM_PARAMS"),
+            "ENV_TEMPLATE_VERSION_UPDATE_MODE": getenv(
+                "ENV_TEMPLATE_VERSION_UPDATE_MODE", TemplateVersionUpdateMode.PERSISTENT.value),
+            "OPERATION_TYPE": getenv("OPERATION_TYPE", OperationType.DEPLOY.value),
+            "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", ""),
+        }
+
+        pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/pipe_parameters')
+        if pipe_param_plugin.modules:
+            pipe_param_plugin.run(pipeline_params=params)
+
+        for k, v in params.items():
+            try:
+                parsed = json.loads(v)
+                params[k] = json.dumps(parsed, separators=(",", ":"))
+            except (TypeError, ValueError):
+                pass
+
+        env_names = split_multi_value_param(getenv_with_error("ENV_NAMES"))
+        if len(env_names) != 1:
+            raise ValueError(f"ENV_NAMES must contain exactly one value, got: {env_names}")
+        if os.getenv("ENV_TEMPLATE_TEST") == "true":
+            raise ValueError("ENV_TEMPLATE_TEST is not supported for static pipeline")
+
+        for k, v in params.items():
+            if v is not None:
+                os.environ[k] = str(v)
+
+        # real_execution_checks
+
+        full_env_name = env_names[0]
+        cluster_name, env_name = full_env_name.split("/")
+        sensitive_params = ["CRED_ROTATION_PAYLOAD", "ENV_INVENTORY_CONTENT"]
+        return cls(
+            params=params,
+            sensitive_params=sensitive_params,
+            full_env_name=full_env_name,
+            cluster_name=cluster_name,
+            env_name=env_name,
+            templates_dirs=templates_dirs,
+        )
+
+    def log_pipeline_params(self) -> None:
+        params_str = "Input parameters are: "
+
+        params = copy.deepcopy(self.params)
+        if params.get("CRED_ROTATION_PAYLOAD"):
+            params["CRED_ROTATION_PAYLOAD"] = "***"
+
+        env_inventory_content = params.get("ENV_INVENTORY_CONTENT")
+        if env_inventory_content:
+            parsed = json.loads(env_inventory_content)
+            self.hide_secrets(parsed)
+            # remove spaces
+            params["ENV_INVENTORY_CONTENT"] = json.dumps(parsed, separators=(",", ":"))
+
+        for k, v in params.items():
+            params_str += f"\n{k.upper()}: {v}"
+
+        logger.info(params_str)
+
+    def write_dotenv(self):
+        lines = []
+        for key, value in {**self.params, **self.internal_params}.items():
+            if value is None:
+                continue
+            if key in self.sensitive_params:
+                continue
+            value = str(value)
+            if "\n" in value:
+                raise ValueError(f"Newlines are not allowed in dotenv values: {key}. Make parameter 1 line")
+            lines.append(f"{key}={shlex.quote(value)}")
+        writeToFile(self.dotenv_path, "\n".join(lines))
+
+    def hide_secrets(self, data):
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if k.lower() in {"username", "password", "secret"}:
+                    data[k] = "***"
+                else:
+                    self.hide_secrets(v)
+        elif isinstance(data, list):
+            for item in data:
+                self.hide_secrets(item)
 
 
 class PipelineStep(ABC):
@@ -42,10 +167,10 @@ class PipelineStep(ABC):
     def name(self) -> str: ...
 
     @abstractmethod
-    def should_run(self, ctx: PipelineContext) -> bool: ...
+    def should_run(self, ctx: PipelineParametersHandler) -> bool: ...
 
     @abstractmethod
-    def execute(self, ctx: PipelineContext) -> None: ...
+    def execute(self, ctx: PipelineParametersHandler) -> None: ...
 
 
 class PassportStep(PipelineStep):
@@ -54,12 +179,12 @@ class PassportStep(PipelineStep):
     def name(self) -> str:
         return "get_passport"
 
-    def should_run(self, ctx: PipelineContext) -> bool:
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
         get_passport = bool(ctx.params.get('GET_PASSPORT'))
         ctx.git_commit = False
         return get_passport
 
-    def execute(self, ctx: PipelineContext) -> None:
+    def execute(self, ctx: PipelineParametersHandler) -> None:
         run_passport(ctx.full_env_name)
 
 
@@ -68,13 +193,13 @@ class CredentialRotationStep(PipelineStep):
     def name(self) -> str:
         return "credential_rotation"
 
-    def should_run(self, ctx: PipelineContext) -> bool:
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
         cred_rotation = ctx.params.get("CRED_ROTATION_PAYLOAD")
         if cred_rotation and ctx.params.get('GET_PASSPORT'):
             raise ValueError("CRED_ROTATION_PAYLOAD and GET_PASSPORT cannot be used together")
         return cred_rotation
 
-    def execute(self, ctx: PipelineContext) -> None:
+    def execute(self, ctx: PipelineParametersHandler) -> None:
         run_cred_rotation()
 
 
@@ -83,10 +208,10 @@ class BgManageStep(PipelineStep):
     def name(self) -> str:
         return "bg_manage"
 
-    def should_run(self, ctx: PipelineContext) -> bool:
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
         return bool(ctx.params.get('BG_MANAGE'))
 
-    def execute(self, ctx: PipelineContext) -> None:
+    def execute(self, ctx: PipelineParametersHandler) -> None:
         run_bg_manage()
 
 
@@ -95,11 +220,11 @@ class InventoryGenerationStep(PipelineStep):
     def name(self) -> str:
         return "env_inventory_generation"
 
-    def should_run(self, ctx: PipelineContext) -> bool:
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
         return is_inventory_generation_needed(ctx.params)
 
-    def execute(self, ctx: PipelineContext) -> None:
-        run_inventory_generation()
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        run_inventory_generation(ctx)
 
 
 class ProcessSdStep(PipelineStep):
@@ -107,7 +232,7 @@ class ProcessSdStep(PipelineStep):
     def name(self) -> str:
         return "process_sd"
 
-    def should_run(self, ctx: PipelineContext) -> bool:
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
         source_type = (ctx.params.get("SD_SOURCE_TYPE")).lower()
         has_sd = (
                 (source_type == "json" and bool(ctx.params.get("SD_DATA"))) or
@@ -117,18 +242,8 @@ class ProcessSdStep(PipelineStep):
             ctx.es_generation_mode = resolve_es_generation_mode(ctx.cluster_name, ctx.env_name)
         return has_sd
 
-    def execute(self, ctx: PipelineContext) -> None:
-        prepare_vars_and_run_sd_handling(
-            base_dir=str(ctx.work_dir),
-            env_name=ctx.env_name,
-            cluster=ctx.cluster_name,
-            sd_source_type=ctx.params.get('SD_SOURCE_TYPE'),
-            sd_version=ctx.params.get('SD_VERSION'),
-            sd_data=ctx.params.get('SD_DATA'),
-            sd_delta=ctx.params.get('SD_DELTA'),
-            sd_merge_mode=ctx.params.get('SD_REPO_MERGE_MODE'),
-            operation_type=ctx.params.get('OPERATION_TYPE'),
-        )
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        handle_sd(ctx)
 
 
 class AppregdefRenderStep(PipelineStep):
@@ -136,11 +251,11 @@ class AppregdefRenderStep(PipelineStep):
     def name(self) -> str:
         return "appregdef_render"
 
-    def should_run(self, ctx: PipelineContext) -> bool:
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
         return bool(ctx.params.get('ENV_BUILD'))
 
-    def execute(self, ctx: PipelineContext) -> None:
-        render_app_reg_defs()
+    def execute(self, ctx: PipelineParametersHandler) -> None:
+        run_appregdef_render()
 
 
 class EnvBuildStep(PipelineStep):
@@ -148,10 +263,10 @@ class EnvBuildStep(PipelineStep):
     def name(self) -> str:
         return "env_build"
 
-    def should_run(self, ctx: PipelineContext) -> bool:
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
         return bool(ctx.params.get('ENV_BUILD'))
 
-    def execute(self, ctx: PipelineContext) -> None:
+    def execute(self, ctx: PipelineParametersHandler) -> None:
         render_environment(
             ctx.env_name,
             ctx.cluster_name,
@@ -167,7 +282,7 @@ class GenerateEffectiveSetStep(PipelineStep):
     def name(self) -> str:
         return "generate_effective_set"
 
-    def should_run(self, ctx: PipelineContext) -> bool:
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
         if not ctx.params.get('GENERATE_EFFECTIVE_SET'):
             if ctx.params.get('CUSTOM_PARAMS'):
                 logger.warning(
@@ -176,7 +291,7 @@ class GenerateEffectiveSetStep(PipelineStep):
             return False
         return True
 
-    def execute(self, ctx: PipelineContext) -> None:
+    def execute(self, ctx: PipelineParametersHandler) -> None:
         effective_set_entrypoint()
 
 
@@ -187,31 +302,17 @@ class GitCommitStep(PipelineStep):
     def name(self) -> str:
         return "git_commit"
 
-    def should_run(self, ctx: PipelineContext) -> bool:
+    def should_run(self, ctx: PipelineParametersHandler) -> bool:
         return self.requires_git_commit
 
-    def execute(self, ctx: PipelineContext) -> None:
+    def execute(self, ctx: PipelineParametersHandler) -> None:
         run_git_commit()
 
 
 def run_unified_pipeline() -> None:
-    handler = PipelineParametersHandler()
-    handler.log_pipeline_params()
-
-    env_names = split_multi_value_param(getenv_with_error('ENV_NAMES'))
-    if len(env_names) > 1:
-        raise ValueError(f"Envgene pipeline supports exactly one environment, got: {env_names}")
-
-    full_env_name = env_names[0].strip()
-    cluster_name, env_name = full_env_name.split('/')
-
-    ctx = PipelineContext(
-        params=params,
-        full_env_name=full_env_name,
-        cluster_name=cluster_name,
-        env_name=env_name,
-        templates_dirs=templates_dirs
-    )
+    ctx = PipelineParametersHandler.from_env()
+    ctx.log_params()
+    ctx.write_dotenv()
 
     steps: list[PipelineStep] = [
         PassportStep(),

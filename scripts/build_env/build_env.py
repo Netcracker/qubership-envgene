@@ -1,10 +1,10 @@
 import yaml
 from envgenehelper import *
 
-from cloud_passport import process_cloud_passport
+from scripts.cloud_passport.cloud_passport import process_cloud_passport
 from resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
     update_profile_name
-from schema_validation import checkEnvSpecificParametersBySchema
+from scripts.utils.schema_validation import checkEnvSpecificParametersBySchema
 
 # const
 GENERATED_HEADER = "The contents of this file is generated from template artifact: %s.\nContents will be overwritten by next generation.\nPlease modify this contents only for development purposes or as workaround."
