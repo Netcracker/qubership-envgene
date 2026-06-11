@@ -295,7 +295,7 @@ def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=Fals
 
 
 def find_yaml_file(dir_path: Path, search_name: str, recursively: bool = False) -> Path | None:
-    
+
     if not dir_path.exists():
         return None
 
@@ -402,6 +402,13 @@ def yaml_from_string(yaml_str):
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
                                     input_yaml_content: dict = None, input_schema_content: dict = None,
                                     schemas_dir=None):
+    for root, dirs, files in os.walk('/'):
+        if "schemas" in dirs:
+            for file in files:
+                full_path = os.path.join(root, file)
+                logger.info(full_path)
+        else:
+            continue
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
     schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
 
