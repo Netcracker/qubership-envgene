@@ -17,14 +17,14 @@ from pydantic import BaseModel, Field
 
 from envgenehelper.business_helper import is_inventory_generation_needed
 from envgenehelper.validations import real_execution_checks
-from scripts.bg_manage.bg_manage import run_bg_manage
-from scripts.build_env.appregdef_render import run_appregdef_render
-from scripts.build_env.main import run_build_environment
-from scripts.cloud_passport.main import run_cloud_passport
-from scripts.creds_rotation.creds_rotation_handler import run_cred_rotation
-from scripts.effective_set.effective_set_entrypoint import effective_set_entrypoint
-from scripts.inventory.env_inventory_generation import run_inventory_generation
-from scripts.sd.process_sd import handle_sd
+from bg_manage.bg_manage import run_bg_manage
+from build_env.appregdef_render import run_appregdef_render
+from build_env.main import run_build_environment
+from cloud_passport.main import run_cloud_passport
+from creds_rotation.creds_rotation_handler import run_cred_rotation
+from effective_set.effective_set_entrypoint import effective_set_entrypoint
+from inventory.env_inventory_generation import run_inventory_generation
+from sd.process_sd import handle_sd
 
 
 class PipelineParametersHandler(BaseModel):

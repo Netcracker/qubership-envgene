@@ -50,7 +50,7 @@ runs:
     - name: Configure test environment
       shell: bash
       run: |
-        echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> "${GITHUB_ENV}"
+        echo "PYTHONPATH=${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}/scripts" >> "${GITHUB_ENV}"
 
     - name: ENVGENE HELPER test
       shell: bash
@@ -72,9 +72,7 @@ runs:
         FULL_ENV_NAME: "sdp-dev/env-1"
         BG_STATE: ""
       run: |
-        cd scripts
-        pytest tests/ --capture=no -W ignore::DeprecationWarning --junitxml=../junit_scripts.xml
-        cd ..
+        pytest scripts/tests/ --capture=no -W ignore::DeprecationWarning --junitxml=junit_scripts.xml
 
     - name: Merge test results
       shell: bash

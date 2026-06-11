@@ -2,11 +2,11 @@ from envgenehelper import *
 from envgenehelper.deployer import *
 
 from build_env import build_env, process_additional_template_parameters
-from scripts.cloud_passport.cloud_passport import update_env_definition_with_cloud_name
+from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
 from create_credentials import create_credentials
 from render_config_env import EnvGenerator
 from resource_profiles import get_env_specific_resource_profiles
-from scripts.bg_manage.filter_namespaces import apply_ns_build_filter
+from bg_manage.filter_namespaces import apply_ns_build_filter
 
 
 INVENTORY_DIR_NAME = "Inventory"

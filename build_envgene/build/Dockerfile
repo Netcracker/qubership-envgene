@@ -61,7 +61,8 @@ FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
 ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.14_p7-r0
 
 ENV LANG='en_US.UTF-8' \
-    LANGUAGE='en_US:en'
+    LANGUAGE='en_US:en' \
+    PYTHONPATH='/scripts'
 
 RUN apk add --no-cache \
     libgcc=13.2.1_git20231014-r0 \

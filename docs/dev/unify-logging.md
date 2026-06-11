@@ -66,5 +66,3 @@ A script was added that:
 
 - Runs at the start of every generated job
 - Logs input parameters
-
-[How it was implemented](/build_pipegene/scripts/pipeline_helper.py#L47-L50)
