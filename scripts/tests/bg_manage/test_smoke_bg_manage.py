@@ -4,7 +4,7 @@ import shutil
 from pathlib import Path
 
 from envgenehelper.test_helpers import TestHelpers
-import bg_manage
+import bg_manage.bg_manage as bg_manage
 
 os.environ["FULL_ENV_NAME"] = "bgd-cluster/bgd-env"
 TEST_DATA_PATH = Path(f"{Path(__file__).resolve().parents[2]}/test_data/test_bg_manage")

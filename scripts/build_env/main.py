@@ -6,7 +6,6 @@ from scripts.cloud_passport.cloud_passport import update_env_definition_with_clo
 from create_credentials import create_credentials
 from render_config_env import EnvGenerator
 from resource_profiles import get_env_specific_resource_profiles
-
 from scripts.bg_manage.filter_namespaces import apply_ns_build_filter
 
 

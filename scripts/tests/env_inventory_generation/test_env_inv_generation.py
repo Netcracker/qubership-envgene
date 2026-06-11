@@ -2,11 +2,11 @@ from os import environ
 from pathlib import Path
 
 import yaml
-from env_inventory_generation import generate_env_new_approach, Place, resolve_path, INVENTORY, Action
+from inventory.env_inventory_generation import generate_env_new_approach, Place, resolve_path, INVENTORY, Action
 from envgenehelper import get_cluster_name_from_full_name, get_environment_name_from_full_name, readYaml, \
     is_dir_empty, writeYamlToFile
 from envgenehelper.test_helpers import TestHelpers
-from jinja.jinja import create_jinja_env
+from build_env.jinja.jinja import create_jinja_env
 from tests.base_test import BaseTest
 
 FEATURE_TEST_DIR = "test_inventory_generation"

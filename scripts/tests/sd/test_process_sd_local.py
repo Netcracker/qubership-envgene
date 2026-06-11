@@ -4,14 +4,14 @@ import pytest
 from envgenehelper import logger, SD_FILE_NAME, OperationType
 from envgenehelper.env_helper import Environment
 
-from scripts.tests.base_test import BaseTest
+from tests.base_test import BaseTest
 from test_sd_helpers import do_prerequisites, assert_sd_contents, load_test_pipeline_sd_data
 
 os.environ['ENVIRONMENT_NAME'] = "temporary"
 os.environ['CLUSTER_NAME'] = "temporary"
 os.environ['CI_PROJECT_DIR'] = "temporary"
 
-from process_sd import handle_sd
+from sd.process_sd import handle_sd
 
 TEST_CASES_POSITIVE = [
     "TC-001-002",

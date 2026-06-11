@@ -4,7 +4,7 @@ import os
 os.environ["CI_PROJECT_DIR"] = os.path.abspath("../../../test_data")
 
 from envgenehelper import *
-from creds_rotation_handler import cred_rotation
+from creds_rotation.creds_rotation_handler import cred_rotation
 import yaml
 
 test_data = [

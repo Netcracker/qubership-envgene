@@ -1,5 +1,4 @@
-from envgenehelper.business_helper import is_from_template_dir
-from build_env import sort_paramsets_with_same_name
+from build_env.build_env import sort_paramsets_with_same_name
 
 class TestSortParamsetsWithSameName:
 

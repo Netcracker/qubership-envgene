@@ -16,7 +16,7 @@ os.environ['BG_STATE'] = """
   "updateTime": "2023-07-07T10:00:54Z"
 }
 """
-from bg_manage import State, S, mirror_pair, is_valid_transition, VALID_TRANSITIONS, NON_MIRRORABLE_STATES
+from bg_manage.bg_manage import State, S, mirror_pair, is_valid_transition, VALID_TRANSITIONS, NON_MIRRORABLE_STATES
 
 def test_valid_transition():
     assert is_valid_transition(

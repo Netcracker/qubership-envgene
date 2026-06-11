@@ -8,7 +8,7 @@ from jinja2.exceptions import TemplateSyntaxError
 base_dir = Path(__file__).parents[4]
 os.environ["JSON_SCHEMAS_DIR"] = str(base_dir / "schemas")
 
-from render_config_env import EnvGenerator
+from build_env.render_config_env import EnvGenerator
 from envgenehelper.test_helpers import TestHelpers
 
 

@@ -4,7 +4,7 @@ import pytest
 from envgenehelper import *
 from envgenehelper.business_helper import NamespaceRole
 
-from main import render_environment
+from build_env.main import render_environment
 from envgenehelper.test_helpers import TestHelpers
 
 from tests.base_test import BaseTest

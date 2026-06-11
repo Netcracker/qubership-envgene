@@ -15,7 +15,8 @@ from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from envgenehelper.plugin_engine import PluginEngine
 from pydantic import BaseModel, Field
 
-from python.envgene.envgenehelper import is_inventory_generation_needed
+from envgenehelper.business_helper import is_inventory_generation_needed
+from envgenehelper.validations import real_execution_checks
 from scripts.bg_manage.bg_manage import run_bg_manage
 from scripts.build_env.appregdef_render import run_appregdef_render
 from scripts.build_env.main import run_build_environment

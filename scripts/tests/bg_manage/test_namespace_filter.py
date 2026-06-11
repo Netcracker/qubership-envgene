@@ -1,5 +1,5 @@
 import pytest
-from filter_namespaces import filter_namespaces
+from bg_manage.filter_namespaces import filter_namespaces
 
 @pytest.fixture
 def sample_namespaces():

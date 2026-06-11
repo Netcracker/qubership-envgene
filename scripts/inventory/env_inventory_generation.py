@@ -5,8 +5,7 @@ from envgenehelper.business_helper import INV_GEN_CREDS_PATH
 from envgenehelper.env_helper import Environment
 from typing_extensions import deprecated
 
-from create_credentials import CRED_TYPE_SECRET
-from scripts.pipeline.orchestrator import PipelineParametersHandler
+from scripts.build_env.create_credentials import CRED_TYPE_SECRET
 
 PARAMSETS_DIR_PATH = "Inventory/parameters/"
 CLUSTER_TOKEN_CRED_ID = "cloud-deploy-sa-token"
