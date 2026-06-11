@@ -20,10 +20,12 @@ from utils.error_constants import *
 from utils.file_utils import scan_and_get_yaml_files, write_cred_file_path
 from utils.yaml_utils import convert_json_to_yaml, write_yaml_to_file
 
+
 def validate_env_vars(is_encrypted: bool, encrypt_type: str):
     missing_params = []
     values = {}
     creds_path = "/tmp/payload.yml"
+
     def check_env(var_name):
         value = os.getenv(var_name)
         if value is None or value.strip() == "":
@@ -56,7 +58,6 @@ def validate_env_vars(is_encrypted: bool, encrypt_type: str):
                 ErrorMessages.PAYLOAD_DECRYPT_ERROR,
                 ErrorCodes.INVALID_CONFIG_CODE,
             )
-
 
     if missing_params:
         raise ValueError(
@@ -117,13 +118,13 @@ def load_payload(payload: str):
         )
 
 
-def cred_rotation():
+def run_cred_rotation():
     start = time.time()
     encrypt_type, is_encrypted = crypt.get_configured_encryption_type()
     config = validate_env_vars(is_encrypted, encrypt_type)
-    
+
     logger.info(f"Starting rotation for: CLUSTER={config.cluster_name}, WORKDIR={config.work_dir}")
- 
+
     logger.info(f"Detected encryption={is_encrypted}, type={encrypt_type}")
 
     base_env_path = f"{config.work_dir}/environments/{config.cluster_name}/{config.env_name}"
@@ -132,7 +133,6 @@ def cred_rotation():
 
     logger.info(f"base env path is {base_env_path}")
 
-   
     fileread = time.time()
     # Scan and read all required files
     entity_files_map, env_files_map, env_creds_files = scan_and_get_yaml_files(
@@ -203,7 +203,3 @@ def cred_rotation():
     logger.info(
         f"✅ Cred Rotation completed in {round(time.time() - start, 2)} seconds."
     )
-
-
-if __name__ == "__main__":
-    cred_rotation()

@@ -5,8 +5,8 @@ from envgenehelper.effective_set_helper import ESGenerationContext, ES_MAPPING_F
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
-import effective_set_entrypoint
-from effective_set_entrypoint import _run_reverse_merge, _run_forward_merge
+from scripts.effective_set import effective_set_entrypoint
+from scripts.effective_set.effective_set_entrypoint import _run_reverse_merge, _run_forward_merge
 
 
 def create_es_app_dirs(effective_set_dir: Path, deploy_postfix: str, app_name: str):

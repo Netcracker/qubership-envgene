@@ -119,7 +119,7 @@ def process_discovery_files(env_name: str,
         addHeaderToYaml(cp_file, header_text)
 
 
-def main():
+def run_cloud_passport():
     env_name = os.getenv("ENV_NAME")
     logger.info(f"Starting discovery of cloud passport for environment {env_name}")
     base_dir = os.getenv("CI_PROJECT_DIR")
@@ -180,7 +180,3 @@ def main():
         discovery_secret_key
     )
     logger.info(f"Discovery of cloud passport for environment {env_name} completed successfully")
-
-
-if __name__ == "__main__":
-    main()

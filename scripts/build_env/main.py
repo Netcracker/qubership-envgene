@@ -294,7 +294,7 @@ def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir
     apply_ns_build_filter()
 
 
-if __name__ == "__main__":
+def run_build_environment():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")

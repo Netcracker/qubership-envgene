@@ -8,20 +8,20 @@ from abc import ABC, abstractmethod
 from os import getenv
 from pathlib import Path
 
-from bg_manage import run as run_bg_manage
-from cloud_passport.scripts.main import run as run_passport
-from cred_rotation import run as run_cred_rotation
-from effective_set_entrypoint import effective_set_entrypoint
-from envgenehelper import logger, getenv_with_error, writeToFile, get_schema_dir, is_inventory_generation_needed
+from envgenehelper import logger, getenv_with_error, writeToFile, get_schema_dir
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.effective_set_helper import GenerationMode, resolve_es_generation_mode
 from envgenehelper.models import TemplateVersionUpdateMode, OperationType
 from envgenehelper.plugin_engine import PluginEngine
-from git_commit import run as run_git_commit
-from main import render_environment
 from pydantic import BaseModel, Field
 
+from python.envgene.envgenehelper import is_inventory_generation_needed
+from scripts.bg_manage.bg_manage import run_bg_manage
 from scripts.build_env.appregdef_render import run_appregdef_render
+from scripts.build_env.main import run_build_environment
+from scripts.cloud_passport.main import run_cloud_passport
+from scripts.creds_rotation.creds_rotation_handler import run_cred_rotation
+from scripts.effective_set.effective_set_entrypoint import effective_set_entrypoint
 from scripts.inventory.env_inventory_generation import run_inventory_generation
 from scripts.sd.process_sd import handle_sd
 
@@ -34,9 +34,8 @@ class PipelineParametersHandler(BaseModel):
     full_env_name: str
     cluster_name: str
     env_name: str
-    templates_dirs: dict
+    # templates_dirs: dict
     es_generation_mode: GenerationMode = GenerationMode.PARTIAL
-    git_commit: bool = True
     work_dir: Path = Field(default_factory=lambda: Path(getenv('CI_PROJECT_DIR')))
     dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/build.env"))
 
@@ -112,8 +111,7 @@ class PipelineParametersHandler(BaseModel):
             sensitive_params=sensitive_params,
             full_env_name=full_env_name,
             cluster_name=cluster_name,
-            env_name=env_name,
-            templates_dirs=templates_dirs,
+            env_name=env_name
         )
 
     def log_pipeline_params(self) -> None:
@@ -181,11 +179,10 @@ class PassportStep(PipelineStep):
 
     def should_run(self, ctx: PipelineParametersHandler) -> bool:
         get_passport = bool(ctx.params.get('GET_PASSPORT'))
-        ctx.git_commit = False
         return get_passport
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_passport(ctx.full_env_name)
+        run_cloud_passport()
 
 
 class CredentialRotationStep(PipelineStep):
@@ -267,14 +264,7 @@ class EnvBuildStep(PipelineStep):
         return bool(ctx.params.get('ENV_BUILD'))
 
     def execute(self, ctx: PipelineParametersHandler) -> None:
-        render_environment(
-            ctx.env_name,
-            ctx.cluster_name,
-            ctx.templates_dirs,
-            str(ctx.work_dir / 'environments'),
-            str(ctx.work_dir / 'environments'),
-            str(ctx.work_dir),
-        )
+        run_build_environment()
 
 
 class GenerateEffectiveSetStep(PipelineStep):
@@ -294,19 +284,20 @@ class GenerateEffectiveSetStep(PipelineStep):
     def execute(self, ctx: PipelineParametersHandler) -> None:
         effective_set_entrypoint()
 
+#TODO after refactor git_commit.sh
 
-class GitCommitStep(PipelineStep):
-    requires_git_commit = False
-
-    @property
-    def name(self) -> str:
-        return "git_commit"
-
-    def should_run(self, ctx: PipelineParametersHandler) -> bool:
-        return self.requires_git_commit
-
-    def execute(self, ctx: PipelineParametersHandler) -> None:
-        run_git_commit()
+# class GitCommitStep(PipelineStep):
+#     requires_git_commit = False
+#
+#     @property
+#     def name(self) -> str:
+#         return "git_commit"
+#
+#     def should_run(self, ctx: PipelineParametersHandler) -> bool:
+#         return self.requires_git_commit
+#
+#     def execute(self, ctx: PipelineParametersHandler) -> None:
+#         run_git_commit()
 
 
 def run_unified_pipeline() -> None:
@@ -322,8 +313,7 @@ def run_unified_pipeline() -> None:
         AppregdefRenderStep(),
         ProcessSdStep(),
         EnvBuildStep(),
-        GenerateEffectiveSetStep(),
-        GitCommitStep(),
+        GenerateEffectiveSetStep()
     ]
 
     for step in steps:

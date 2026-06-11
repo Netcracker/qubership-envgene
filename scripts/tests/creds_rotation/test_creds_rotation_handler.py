@@ -1,7 +1,7 @@
 
 import pytest
 import os
-os.environ["CI_PROJECT_DIR"] = os.path.abspath("../../test_data")
+os.environ["CI_PROJECT_DIR"] = os.path.abspath("../../../test_data")
 
 from envgenehelper import *
 from creds_rotation_handler import cred_rotation
@@ -11,9 +11,9 @@ test_data = [
       ("cluster-02", "env-01")
 ]
 
-g_inventory_dir = getAbsPath("../../test_data")
+g_inventory_dir = getAbsPath("../../../test_data")
 g_test_dir = getAbsPath("../../tmpcred/cred_test/")
-g_cred_dir = getAbsPath("../../test_data/test_cred_rotation")
+g_cred_dir = getAbsPath("../../../test_data/test_cred_rotation")
 
 
 @pytest.fixture(scope="function")
