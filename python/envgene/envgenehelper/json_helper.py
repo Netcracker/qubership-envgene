@@ -10,7 +10,11 @@ SCHEMAS_DIR  = "schemas"
 def findFileInSchemas(file_name):
     schemas_dir = pathlib.Path(os.getcwd()).rglob("schemas")[0]
     logger.info(f"Schemas_dir path: {schemas_dir}")
-    return list(schemas_dir.rglob("*.json"))
+    for file_path in list(schemas_dir.rglob("*.json")):
+        if file_name in file_path:
+            return file_path
+    return None
+
 
 def openJson(filePath):
     logger.info(f"Open json file: {filePath}")
