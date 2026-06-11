@@ -8,7 +8,7 @@ import envgenehelper as helper
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from envgenehelper import openYaml
-from envgenehelper.business_helper import getenv_and_log, getenv_with_error
+from envgenehelper.business_helper import getenv_with_error
 from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
 from envgenehelper.file_helper import identify_yaml_extension, deleteFileIfExists
@@ -19,7 +19,6 @@ from envgenehelper.sd_helper import (basic_merge_multiple, MergeType, calculate_
                                      SD_FILE_NAME, DELTA_SD_FILE_NAME)
 from pipeline.pipeline_parameters import PipelineParametersHandler
 from typing_extensions import deprecated
-
 
 MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,

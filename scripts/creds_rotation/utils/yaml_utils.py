@@ -3,7 +3,7 @@ import yaml
 import re
 from typing import Any
 import envgenehelper.logger as logger
-from utils.error_constants import  *
+from creds_rotation.utils.error_constants import *
 from envgenehelper.errors import ValidationError, ValueError
 
 def write_yaml_to_file(file_path: str, contents: Any) -> None:

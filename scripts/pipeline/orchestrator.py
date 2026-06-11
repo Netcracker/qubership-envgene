@@ -41,7 +41,7 @@ class PipelineParametersHandler(BaseModel):
     dotenv_path: Path = Field(default_factory=lambda: Path(f"{getenv('CI_PROJECT_DIR')}/build.env"))
 
     @classmethod
-    def from_env(cls) -> 'PipelineParametersHandler':
+    def from_env(cls) -> PipelineParametersHandler:
         params = {
             'ENV_NAMES': getenv("ENV_NAMES", ""),
             'ENV_BUILD': getenv("ENV_BUILDER", "false").lower() == "true",
