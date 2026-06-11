@@ -127,31 +127,6 @@ jobs:
     with:
       tag-name: v${{ github.event.inputs.version }}
 
-  build-qubership-pipegene:
-    needs: [tag]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-    outputs:
-      custom_tag: ${{ steps.build-pipegene.outputs.custom_tag }}
-      branch_tag: ${{ steps.build-pipegene.outputs.branch_tag }}
-      timestamp: ${{ steps.build-pipegene.outputs.timestamp }}
-      branch_latest_tag: ${{ steps.build-pipegene.outputs.branch_latest_tag }}
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-
-    - name: Build Qubership PipeGene Docker Image
-      uses: ./.github/actions/build-pipegene
-      id: build-pipegene
-      with:
-        registry: ${{ env.REGISTRY }}
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        version: ${{ inputs.version }}
-
   build-qubership-envgene:
     needs: [tag]
     runs-on: ubuntu-latest
@@ -273,7 +248,6 @@ jobs:
 
   github-release:
     needs:
-      - build-qubership-pipegene
       - build-qubership-envgene
       - build-effective-set-generator
       - build-instance-repo-pipeline
