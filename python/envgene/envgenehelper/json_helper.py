@@ -1,4 +1,5 @@
 import json
+import os
 import pathlib
 from os import path, makedirs
 
@@ -10,6 +11,10 @@ def openJson(filePath):
     logger.info(f"Open json file: {filePath}")
     for path in pathlib.Path("/").rglob("schemas"):
         logger.info(f"{SCHEMAS_DIR} path: {path}")
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                full_path = os.path.join(root, file)
+                logger.info(full_path)
     with open(filePath, 'r') as f:
         resultJson = json.load(f)
     return resultJson
