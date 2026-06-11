@@ -1,13 +1,12 @@
 from envgenehelper import *
 from envgenehelper.deployer import *
 
-from build_env import build_env, process_additional_template_parameters
-from cloud_passport import update_env_definition_with_cloud_name
-from create_credentials import create_credentials
-from render_config_env import EnvGenerator
-from resource_profiles import get_env_specific_resource_profiles
-
-from filter_namespaces import apply_ns_build_filter
+from build_env.build_env import build_env, process_additional_template_parameters
+from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
+from build_env.create_credentials import create_credentials
+from build_env.render_config_env import EnvGenerator
+from build_env.resource_profiles import get_env_specific_resource_profiles
+from bg_manage.filter_namespaces import apply_ns_build_filter
 
 
 INVENTORY_DIR_NAME = "Inventory"
@@ -294,7 +293,7 @@ def render_environment(env_name, cluster_name, templates_dirs, all_instances_dir
     apply_ns_build_filter()
 
 
-if __name__ == "__main__":
+def run_build_environment():
     base_dir = getenv_with_error('CI_PROJECT_DIR')
     cluster = getenv_with_error("CLUSTER_NAME")
     environment = getenv_with_error("ENVIRONMENT_NAME")
