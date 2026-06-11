@@ -7,11 +7,12 @@ from .logger import logger
 SCHEMAS_DIR  = "schemas"
 
 def findFileInSchemas(file_name):
-    schemas_dir = pathlib.Path(os.getcwd()).rglob("schemas")[0]
+    schemas_dir = pathlib.Path("/").rglob("schemas")
     logger.info(f"Schemas_dir path: {schemas_dir}")
-    for file_path in list(schemas_dir.rglob("*.json")):
-        if file_name in file_path:
-            return file_path
+    for dir in schemas_dir:
+        for file_path in list(dir.rglob("*.json")):
+            if file_name in file_path:
+                return file_path
     return None
 
 
