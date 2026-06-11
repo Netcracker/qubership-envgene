@@ -1,3 +1,5 @@
+from os import path
+
 from typing_extensions import deprecated
 
 import envgenehelper as helper
