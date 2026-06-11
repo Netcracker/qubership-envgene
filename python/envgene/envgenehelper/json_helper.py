@@ -8,6 +8,8 @@ from .logger import logger
 SCHEMAS_DIR = "/schemas"
 
 def openJson(filePath):
+    current_dir = os.getcwd()
+    logger.info(f"current_dir: {current_dir}")
     logger.info(f"Open json file: {filePath}")
     for path in pathlib.Path("/").rglob("schemas"):
         logger.info(f"{SCHEMAS_DIR} path: {path}")
