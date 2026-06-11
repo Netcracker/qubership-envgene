@@ -97,7 +97,6 @@ jobs:
             # New tag
             NEW_TAG="${{ github.event.inputs.version }}"
 
-            sed -i "/DOCKER_IMAGE_TAG_PIPEGENE:/c\\  DOCKER_IMAGE_TAG_PIPEGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
             sed -i "/DOCKER_IMAGE_TAG_ENVGENE:/c\\  DOCKER_IMAGE_TAG_ENVGENE: \"${NEW_TAG}\"" "$TARGET_FILE"
             sed -i "/DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR:/c\\  DOCKER_IMAGE_TAG_EFFECTIVE_SET_GENERATOR: \"${NEW_TAG}\"" "$TARGET_FILE"
 
