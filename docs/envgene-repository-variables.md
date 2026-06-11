@@ -21,6 +21,12 @@
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
     - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
     - [`DOCKER_REGISTRY` (in template repository)](#docker_registry-in-template-repository)
+  - [Discovery EnvGene Repository](#discovery-envgene-repository)
+    - [`DOCKER_REGISTRY` (in discovery repository)](#docker_registry-in-discovery-repository)
+    - [`GITLAB_RUNNER_TAG_NAME` (in discovery repository)](#gitlab_runner_tag_name-in-discovery-repository)
+    - [`K8S_HOST`](#k8s_host)
+    - [`K8S_TOKEN`](#k8s_token)
+    - [`SECRET_KEY` (in discovery repository)](#secret_key-in-discovery-repository)
 
 The following are parameters that are set in GitLab CI/CD variables or GitHub environment variables.
 
@@ -213,3 +219,76 @@ The same as [`ENVGENE_LOG_LEVEL` in instance repository](#envgene_log_level)
 ### `DOCKER_REGISTRY` (in template repository)
 
 The same as [`DOCKER_REGISTRY` in instance repository](#docker_registry-in-instance-repository)
+
+## Discovery EnvGene Repository
+
+### `DOCKER_REGISTRY` (in discovery repository)
+
+**Description**: Specifies the Docker registry where the `qubership-cloud-passport-cli` image is located.
+
+Set by the GSF installer during Discovery repository initialization. For on-premises deployments, set this to the internal registry.
+
+**Default Value**: `ghcr.io`
+
+**Mandatory**: Yes
+
+**Example**: `artifactorycn.netcracker.com:17014`
+
+### `GITLAB_RUNNER_TAG_NAME` (in discovery repository)
+
+**Description**: The tag that identifies the GitLab runner used to execute the `get_cloud_passport` job.
+
+**Default Value**: None
+
+**Mandatory**: No
+
+**Example**: `NETCRACKER`
+
+### `K8S_HOST`
+
+**Description**: Kubernetes API server URL used to connect to the cluster when no kubeconfig file is present in the Discovery repository.
+
+The Discovery pipeline resolves the host in the following order of precedence:
+
+1. Per-environment variable: `K8S_HOST_<env_name>` (where `<env_name>` is derived from `ENV_NAME` — e.g., for `ocp-01/platform` the variable name is `K8S_HOST_ocp-01_platform`)
+2. Generic fallback: `K8S_HOST`
+
+If neither is set and no kubeconfig file is found in the repository, the pipeline fails.
+
+**Default Value**: None
+
+**Mandatory**: Conditional — required when no kubeconfig file is present
+
+**Example**: `https://api.ocp-01.example.com:6443`
+
+### `K8S_TOKEN`
+
+**Description**: Kubernetes API bearer token used to authenticate with the cluster when no kubeconfig file is present in the Discovery repository.
+
+Resolved with the same per-environment precedence as [`K8S_HOST`](#k8s_host):
+
+1. Per-environment variable: `K8S_TOKEN_<env_name>`
+2. Generic fallback: `K8S_TOKEN`
+
+Store as a **masked** CI/CD variable to prevent the token from appearing in job logs.
+
+**Default Value**: None
+
+**Mandatory**: Conditional — required when no kubeconfig file is present
+
+**Example**: `eyJhbGciOiJSUzI1NiIs...`
+
+### `SECRET_KEY` (in discovery repository)
+
+**Description**: Fernet key used by the `cloud_passport_cli` to encrypt credential values in the generated Cloud Passport.
+
+Resolved with per-environment precedence:
+
+1. Per-environment variable: `SECRET_KEY_<env_name>`
+2. Generic fallback: `SECRET_KEY`
+
+**Default Value**: None
+
+**Mandatory**: Conditional — required when credentials are stored encrypted
+
+**Example**: `key-placeholder-123`
