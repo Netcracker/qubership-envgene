@@ -278,6 +278,7 @@ def store_cred_value_to_yaml(yamlContent, key, value, comment=""):
         del yamlContent[key]
     yamlContent[key] = value
     if comment:
+        # SOPS doesn't support inline comments and it causes issues with comment duplication on each run of envgene with env_build
         yamlContent.yaml_set_comment_before_after_key(key, before=comment)
 
 

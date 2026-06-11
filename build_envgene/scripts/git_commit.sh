@@ -326,8 +326,15 @@ if [ "$exit_code" -ne 0 ]; then
               break
           fi
 
-          git reset --soft origin/"${REF_NAME}"
-          git commit -m "${message}"
+          echo "Rebasing local commit onto origin/${REF_NAME}..."
+          git rebase origin/"${REF_NAME}"
+          rebase_exit_code=$?
+
+          if [ "$rebase_exit_code" -ne 0 ]; then
+              echo "❌ Rebase failed with exit code: $rebase_exit_code (concurrent edit on the same file?)"
+              exit_code=$rebase_exit_code
+              break
+          fi
 
           echo "Attempting push (retry $retries)..."
           git push origin HEAD:"${REF_NAME}"
