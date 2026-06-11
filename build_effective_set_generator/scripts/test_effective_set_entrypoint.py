@@ -1,12 +1,13 @@
 from pathlib import Path
 
 import pytest
+import shlex
 from envgenehelper.effective_set_helper import ESGenerationContext, ES_MAPPING_FILE, ES_DIR_NAME
 from envgenehelper.sd_helper import SD_FILE_NAME, DELTA_SD_FILE_NAME
 from envgenehelper.yaml_helper import openYaml, writeYamlToFile
 
 import effective_set_entrypoint
-from effective_set_entrypoint import _run_reverse_merge, _run_forward_merge
+from effective_set_entrypoint import _run_reverse_merge, _run_forward_merge, _build_cli_cmd
 
 
 def create_es_app_dirs(effective_set_dir: Path, deploy_postfix: str, app_name: str):
@@ -190,3 +191,22 @@ class TestRunForwardMerge:
         assert not (es / ESGenerationContext.CLEANUP.value / DP_1).exists()
         assert not (es / ESGenerationContext.CLEANUP.value / DP_2).exists()
         assert (es / ESGenerationContext.CLEANUP.value / "dp-3").exists()
+
+class TestBuildCliCmd:
+    full_env_name = f"{CLUSTER_NAME}/{ENV_NAME}"
+
+    @pytest.mark.unit
+    def test_custom_params_are_shell_quoted(self, tmp_path, monkeypatch):
+        sd = tmp_path / SD_FILE_NAME
+        sd.touch()
+
+        custom_params = '{"deployment": {"NAMESPACE": "consul-service"}}'
+        monkeypatch.setenv("CUSTOM_PARAMS", custom_params)
+
+        cmd = _build_cli_cmd(
+            tmp_path / ES_DIR_NAME,
+            self.full_env_name,
+            sd,
+        )
+
+        assert f"--custom-params={shlex.quote(custom_params)}" in cmd
