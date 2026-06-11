@@ -14,7 +14,7 @@ def find_file_in_schemas(file_name):
     #     if file_name in file_path.name:
     #         logger.info(f"Json file path: {file_name}")
     #         return str(file_path)
-    return str(list(Path.home().rglob(file_name))[0])
+    return str(list(Path.cwd().rglob(file_name))[0])
 
 
 def openJson(filePath):
