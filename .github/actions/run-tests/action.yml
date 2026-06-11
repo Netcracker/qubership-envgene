@@ -37,9 +37,7 @@ runs:
       shell: bash
       run: |
         pip install --no-cache-dir --upgrade pip "setuptools==81" wheel
-        pip install --no-cache-dir -r build_envgene/build/requirements.txt \
-        -r build_effective_set_generator/build/requirements.txt \
-        -r creds_rotation/build/requirements.txt
+        pip install --no-cache-dir -r build_envgene/build/requirements.txt
 
         if [ -f python/build_modules.sh ]; then
             chmod +x python/build_modules.sh
