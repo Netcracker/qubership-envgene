@@ -8,6 +8,7 @@ from typing import overload
 from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
+from . import findFileInSchemas
 from .collections_helper import dump_as_yaml_format
 from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir
@@ -99,12 +100,12 @@ def check_environment_is_valid_or_fail(environment_name, cluster_name, instances
             f"Env_definition.yml is not found in path '{env_definition_path}' for environment {cluster_name}/{environment_name}. Please specify correct env_definition.yml in '{cluster_name}/{environment_name}/Inventory' folder")
         raise ReferenceError(f"Validation of environment folder '{env_dir}' failed. See logs above.")
     if validate_env_definition_by_schema:
-        check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir)
+        check_env_definition_is_valid_or_fail(env_definition_path)
     logger.info(f"Environment {cluster_name}/{environment_name} validation is succesful")
 
 
-def check_env_definition_is_valid_or_fail(env_definition_path, schemas_dir):
-    schemaPath = f"{schemas_dir}/env-definition.schema.json" if schemas_dir else "schemas/env-definition.schema.json"
+def check_env_definition_is_valid_or_fail(env_definition_path):
+    schemaPath = findFileInSchemas("env-definition.schema.json")
     try:
         validate_yaml_by_scheme_or_fail(env_definition_path, schemaPath)
     except ValueError:

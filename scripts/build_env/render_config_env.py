@@ -14,9 +14,6 @@ from envgenehelper.validation import ensure_valid_fields, ensure_required_keys
 from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 
-APPDEF_SCHEMA = os.path.join(SCHEMAS_DIR, "appdef.schema.json")
-TD_SCHEMA = os.path.join(SCHEMAS_DIR, "template-descriptor.schema.json")
-
 yml = create_yaml_processor()
 
 
@@ -130,7 +127,7 @@ class EnvGenerator:
             env_tmpl_final_path = str(env_template_path).removesuffix(".j2")
             self.render_from_file_to_file(env_template_path, env_tmpl_final_path)
 
-        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, TD_SCHEMA)
+        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, findFileInSchemas("template-descriptor.schema.json"))
         env_template = openYaml(filePath=env_tmpl_final_path, safe_load=True)
         logger.info(f"Loaded env_template from {env_tmpl_final_path}")
         return env_template, suitable_files
@@ -562,7 +559,7 @@ class EnvGenerator:
                 logger.warning(f"No AppDef YAMLs found in {appdef_dir}")
             for file in appdef_files:
                 logger.info(f"AppDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, APPDEF_SCHEMA)
+                validate_yaml_by_scheme_or_fail(file, findFileInSchemas("appdef.schema.json"))
 
         if os.path.exists(regdef_dir):
             regdef_files = findAllYamlsInDir(regdef_dir)

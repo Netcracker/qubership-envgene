@@ -2,11 +2,12 @@ import os
 
 from envgenehelper import check_for_cyrillic, logger, findAllYamlsInDir, openYaml, check_dir_exists, \
     get_cluster_name_from_full_name, get_environment_name_from_full_name, check_environment_is_valid_or_fail, \
-    check_file_exists, validate_yaml_by_scheme_or_fail, SCHEMAS_DIR
+    check_file_exists, validate_yaml_by_scheme_or_fail, findFileInSchemas
 from envgenehelper.collections_helper import split_multi_value_param
 
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 logger.info(f"Info about project_dir: {project_dir}")
+
 
 def validate_pipeline(params: dict):
     basic_checks(params['ENV_NAMES'])
@@ -69,13 +70,13 @@ def check_environment(environment_name, cluster_name, get_passport, env_build, e
     all_environments_dir = f"{project_dir}/environments"
     skip_env_definition_check = get_passport and not env_build
     check_environment_is_valid_or_fail(environment_name, cluster_name, all_environments_dir, skip_env_definition_check,
-                                       not skip_env_definition_check, schemas_dir=SCHEMAS_DIR)
+                                       not skip_env_definition_check)
 
 
 def check_passport_params(get_passport):
     if get_passport:
         integration_path = f"{project_dir}/configuration/integration.yml"
-        integration_schema_path = os.path.join(SCHEMAS_DIR, "integration.schema.json")
+        integration_schema_path = findFileInSchemas("integration.schema.json")
         if check_file_exists(integration_path):
             validate_yaml_by_scheme_or_fail(integration_path, integration_schema_path)
         else:

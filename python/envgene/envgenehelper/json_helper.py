@@ -5,7 +5,12 @@ from os import path, makedirs
 
 from .logger import logger
 
-SCHEMAS_DIR = pathlib.Path(os.getcwd()).rglob("schemas")[0]
+SCHEMAS_DIR  = "schemas"
+
+def findFileInSchemas(file_name):
+    schemas_dir = pathlib.Path(os.getcwd()).rglob("schemas")[0]
+    logger.info(f"Schemas_dir path: {schemas_dir}")
+    return list(schemas_dir.rglob("*.json"))
 
 def openJson(filePath):
     logger.info(f"Open json file: {filePath}")

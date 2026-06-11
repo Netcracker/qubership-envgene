@@ -8,6 +8,7 @@ import jschon
 import jsonschema
 import ruyaml
 from jsonschema import RefResolver
+from referencing import Registry, Resource
 from ruyaml import CommentedMap, CommentedSeq
 from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
 
@@ -405,8 +406,9 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
     schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
 
     if schemas_dir:
-        base_uri = Path(schemas_dir).absolute().as_uri() + "/"
-        resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
+        base_uri = Path(schema_file_path).parent
+        main_resource = Resource.from_contents(schema_content)
+        resolver = Registry().with_resource(uri=base_uri, resource=main_resource)
         errors = validate_yaml_data_by_scheme(yaml_content, schema_content, resolver=resolver)
     else:
         errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
