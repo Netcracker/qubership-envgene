@@ -5,18 +5,10 @@ from os import path, makedirs
 
 from .logger import logger
 
-SCHEMAS_DIR = "../schemas"
+SCHEMAS_DIR = pathlib.Path(os.getcwd()).rglob("schemas")[0]
 
 def openJson(filePath):
-    current_dir = os.getcwd()
-    logger.info(f"current_dir: {current_dir}")
     logger.info(f"Open json file: {filePath}")
-    for path in pathlib.Path("/").rglob("schemas"):
-        logger.info(f"{SCHEMAS_DIR} path: {path}")
-        for root, dirs, files in os.walk(path):
-            for file in files:
-                full_path = os.path.join(root, file)
-                logger.info(full_path)
     with open(filePath, 'r') as f:
         resultJson = json.load(f)
     return resultJson
