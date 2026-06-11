@@ -8,7 +8,6 @@ from deepmerge import always_merger
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
 
-from build_pipegene.scripts.validations import SCHEMAS_DIR
 from envgenehelper import *
 from envgenehelper.business_helper import get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole
 from envgenehelper.validation import ensure_valid_fields, ensure_required_keys

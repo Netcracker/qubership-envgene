@@ -2,12 +2,11 @@ import os
 
 from envgenehelper import check_for_cyrillic, logger, findAllYamlsInDir, openYaml, check_dir_exists, \
     get_cluster_name_from_full_name, get_environment_name_from_full_name, check_environment_is_valid_or_fail, \
-    check_file_exists, validate_yaml_by_scheme_or_fail
+    check_file_exists, validate_yaml_by_scheme_or_fail, SCHEMAS_DIR
 from envgenehelper.collections_helper import split_multi_value_param
 
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 logger.info(f"Info about project_dir: {project_dir}")
-SCHEMAS_DIR = "schemas"
 
 def validate_pipeline(params: dict):
     basic_checks(params['ENV_NAMES'])

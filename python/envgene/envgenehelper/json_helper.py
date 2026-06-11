@@ -1,8 +1,9 @@
-from os import path, makedirs
 import json
 import pathlib
-from .file_helper import findFiles
+from os import path, makedirs
+
 from .logger import logger
+SCHEMAS_DIR = "/schemas"
 
 def openJson(filePath):
     logger.debug(f"Open json file: {filePath}")
@@ -10,13 +11,15 @@ def openJson(filePath):
         resultJson = json.load(f)
     return resultJson
 
-def findAllJsonsInDir(dir) :
+
+def findAllJsonsInDir(dir):
     result = []
     dirPointer = pathlib.Path(dir)
     fileList = list(dirPointer.rglob("*.json"))
-    for f in fileList :
+    for f in fileList:
         result.append(str(f))
     return result
+
 
 def writeJsonToFile(file_path: str, content: dict):
     logger.debug(f"Writing json to file: {file_path}")
