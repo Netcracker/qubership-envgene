@@ -25,26 +25,18 @@ COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
 COPY build_effective_set_generator/build/requirements.txt /build/esg_requirements.txt
-COPY creds_rotation/build/requirements.txt /build/creds_rotation_requirements.txt
 
 COPY python /python
-COPY build_envgene/scripts /module/scripts
-COPY scripts/bg_manage /scripts/bg_manage
-COPY creds_rotation/scripts /module/creds_rotation_scripts
-COPY scripts/build_env /build_env/scripts/build_env/
-COPY scripts/build_template /build_env/scripts/build_template/
-COPY scripts/cloud_passport/ /cloud_passport/scripts/
 COPY schemas /schemas
-COPY scripts/utils /module/scripts/utils
+COPY scripts/ /scripts/
+COPY build_envgene/scripts /module/scripts
 
 RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     -r /build/requirements.txt \
     /python/jschon-sort \
     /python/envgene \
     /python/integration \
-    /python/artifact-searcher && \
-    pip install --no-cache-dir --no-deps \
-    -r /build/creds_rotation_requirements.txt
+    /python/artifact-searcher
 
 RUN mkdir -p /deployments && \
     curl -sSL https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh \
@@ -76,10 +68,8 @@ RUN apk add --no-cache \
     ${JAVA_PACKAGE}
 
 COPY --from=build /module /module
-COPY --from=build /scripts/bg_manage /scripts/bg_manage
+COPY --from=build /scripts /scripts
 COPY --from=build /schemas /schemas
-COPY --from=build /build_env /build_env
-COPY --from=build /cloud_passport /cloud_passport
 COPY --from=build /python /python
 COPY --from=build /etc/pip.conf /etc/pip.conf
 COPY --from=build /deployments /deployments
@@ -90,7 +80,7 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     /module/venv/bin/pip cache purge
 
-RUN chown -R ci:ci /module /build_env /cloud_passport /scripts /deployments && \
+RUN chown -R ci:ci /module /scripts /deployments && \
     chmod +x /module/scripts/*.sh && \
     chmod +x /module/scripts/utils/*.sh && \
     chmod 644 /module/scripts/*.py 2>/dev/null || true && \
