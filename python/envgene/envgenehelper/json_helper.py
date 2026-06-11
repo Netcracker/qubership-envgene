@@ -5,7 +5,7 @@ from os import path, makedirs
 
 from .logger import logger
 
-SCHEMAS_DIR = "/schemas"
+SCHEMAS_DIR = "../schemas"
 
 def openJson(filePath):
     current_dir = os.getcwd()
