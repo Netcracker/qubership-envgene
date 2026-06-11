@@ -1,12 +1,12 @@
 # EnvGene end-to-end flows
 
 - [EnvGene end-to-end flows](#envgene-end-to-end-flows)
-  - [TC-001 — Baseline Flow (Template to Effective Set)](#tc-001-baseline-flow-template-to-effective-set)
-  - [TC-002 — Full flow with CMDB import](#tc-002-full-flow-with-cmdb-import)
-  - [TC-003 — Full flow with SD processing and Effective Set generation](#tc-003-full-flow-with-sd-processing-and-effective-set-generation)
+  - [TC-001: Baseline flow (template to Effective Set)](#tc-001-baseline-flow-template-to-effective-set)
+  - [TC-002: Full flow with CMDB import](#tc-002-full-flow-with-cmdb-import)
+  - [TC-003: Full flow with SD processing and Effective Set generation](#tc-003-full-flow-with-sd-processing-and-effective-set-generation)
 
 
-## TC-001 — Baseline Flow (Template to Effective Set)
+## TC-001: Baseline flow (template to Effective Set)
 
 **Description:**
 
@@ -55,7 +55,7 @@ Verifies the minimal end-to-end EnvGene flow.
 
 ---
 
-## TC-002 — Full flow with CMDB import
+## TC-002: Full flow with CMDB import
 
 **Description:**
 
@@ -100,7 +100,7 @@ Verifies the instance pipeline flow with App Reg Def rendering, environment buil
 
 ---
 
-## TC-003 — Full flow with SD processing and Effective Set generation
+## TC-003: Full flow with SD processing and Effective Set generation
 
 **Description:**
 
