@@ -1,6 +1,6 @@
-# EnvGene E2E Flows
+# EnvGene end-to-end flows
 
-- [EnvGene E2E Flows](#envgene-e2e-flows)
+- [EnvGene end-to-end flows](#envgene-end-to-end-flows)
   - [TC-001 — Baseline Flow (Template to Effective Set)](#tc-001-baseline-flow-template-to-effective-set)
   - [TC-002 — Full flow with CMDB import](#tc-002-full-flow-with-cmdb-import)
   - [TC-003 — Full flow with SD processing and Effective Set generation](#tc-003-full-flow-with-sd-processing-and-effective-set-generation)
@@ -16,7 +16,7 @@ Verifies the minimal end-to-end EnvGene flow.
 
 - Template repository exists and is accessible.
 - Instance repository exists and is accessible.
-- Baseline template files exist in the repo under the agreed path (e.g. `/test-data/templates/baseline-template/`).
+- Baseline template files exist in the repository under the agreed path (e.g. `/test-data/templates/baseline-template/`).
 - `git-clean-repository` procedure has been executed for both repositories before starting the test.
 
 **Steps:**
@@ -24,7 +24,7 @@ Verifies the minimal end-to-end EnvGene flow.
 1. Run the orchestration pipeline with the required inputs to identify:
 
    - target Template repository (project + branch)
-   - target Instance repository / environment id (`<cluster-name>/<env-name>`)
+   - target Instance repository / environment ID (`<cluster-name>/<env-name>`)
    - baseline template location
    - required EnvGene/GSF artifacts (if applicable)
 
@@ -59,7 +59,7 @@ Verifies the minimal end-to-end EnvGene flow.
 
 **Description:**
 
-Verifies the instance pipeline flow with App Reg Def rendering, environment build, git commit, and CMDB import.
+Verifies the instance pipeline flow with App Reg Def rendering, environment build, Git commit, and CMDB import.
 
 **Preconditions:**
 
@@ -72,7 +72,7 @@ Verifies the instance pipeline flow with App Reg Def rendering, environment buil
 
 1. Run the instance pipeline with the required inputs:
 
-   - target Instance repository / environment id (`<cluster-name>/<env-name>`)
+   - target Instance repository / environment ID (`<cluster-name>/<env-name>`)
    - pipeline parameters (`ENV_TEMPLATE_VERSION` — substitute the target template version from test data):
 
      ```yaml
@@ -104,7 +104,7 @@ Verifies the instance pipeline flow with App Reg Def rendering, environment buil
 
 **Description:**
 
-Verifies the instance pipeline flow with App Reg Def rendering, SD processing, environment build, Effective Set generation, and git commit.
+Verifies the instance pipeline flow with App Reg Def rendering, SD processing, environment build, Effective Set generation, and Git commit.
 
 **Preconditions:**
 
@@ -116,7 +116,7 @@ Verifies the instance pipeline flow with App Reg Def rendering, SD processing, e
 
 1. Run the instance pipeline with the required inputs:
 
-   - target Instance repository / environment id from test data (`<cluster-name>/<env-name>`)
+   - target Instance repository / environment ID from test data (`<cluster-name>/<env-name>`)
    - input parameters (`ENV_NAMES` and `SD_DATA` — substitute values from test data):
 
      ```yaml
