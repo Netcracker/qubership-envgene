@@ -8,7 +8,7 @@ from typing import overload
 from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
-from . import findFileInSchemas
+from .json_helper import findFileInSchemas
 from .collections_helper import dump_as_yaml_format
 from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir

@@ -1,7 +1,6 @@
 import json
 import os
 import pathlib
-from os import path, makedirs
 
 from .logger import logger
 
@@ -34,7 +33,7 @@ def findAllJsonsInDir(dir):
 
 def writeJsonToFile(file_path: str, content: dict):
     logger.debug(f"Writing json to file: {file_path}")
-    makedirs(path.dirname(file_path), exist_ok=True)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, 'w+') as f:
         json.dump(content, f, indent=2, ensure_ascii=False)
     return
