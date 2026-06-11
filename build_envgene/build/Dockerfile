@@ -2,14 +2,29 @@
 # checkov:skip=CKV_DOCKER_8:Root required for workspace write (shutil.copy2 utime) in CI/CD
 # checkov:skip=CKV2_DOCKER_1:sudo is required for certain operations in scripts
 
-# ═══════════════════════════════════════════════════════════════════════════════════
-# Stage 1: Build
-# ═══════════════════════════════════════════════════════════════════════════════════
+# Stage 1: Build Java JAR
+FROM maven:3.9-eclipse-temurin-17 AS maven-build
+
+COPY build_effective_set_generator /build_effective_set_generator
+RUN mvn --batch-mode package -Dgpg.skip=true -f /build_effective_set_generator/pom.xml
+
+# Stage 2: Build Python dependencies
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
+
+ARG RUN_JAVA_VERSION=1.3.8
+
+RUN apk add --no-cache \
+    libffi-dev=3.4.4-r3 \
+    openssl-dev=3.1.8-r1 \
+    python3-dev=3.11.14-r0 \
+    cargo=1.76.0-r0 \
+    rust=1.76.0-r0 \
+    build-base=0.5-r3
 
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
+COPY build_effective_set_generator/build/requirements.txt /build/esg_requirements.txt
 COPY creds_rotation/build/requirements.txt /build/creds_rotation_requirements.txt
 
 COPY python /python
@@ -31,6 +46,12 @@ RUN pip install --no-cache-dir --retries 10 --timeout 60 \
     pip install --no-cache-dir --no-deps \
     -r /build/creds_rotation_requirements.txt
 
+RUN mkdir -p /deployments && \
+    curl -sSL https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh \
+    -o /deployments/run-java.sh
+
+COPY --from=maven-build /build_effective_set_generator/effective-set-generator/target/*.jar /deployments/app.jar
+
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyo' -delete && \
@@ -42,10 +63,17 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
 RUN chmod 754 /module/scripts/* && \
     chmod 754 /module/creds_rotation_scripts/*
 
-# ═══════════════════════════════════════════════════════════════════════════════════
-# Stage 2: Runtime
-# ═══════════════════════════════════════════════════════════════════════════════════
+# Stage 3: Runtime
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
+
+ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.14_p7-r0
+
+ENV LANG='en_US.UTF-8' \
+    LANGUAGE='en_US:en'
+
+RUN apk add --no-cache \
+    libgcc=13.2.1_git20231014-r0 \
+    ${JAVA_PACKAGE}
 
 COPY --from=build /module /module
 COPY --from=build /scripts/bg_manage /scripts/bg_manage
@@ -54,12 +82,20 @@ COPY --from=build /build_env /build_env
 COPY --from=build /cloud_passport /cloud_passport
 COPY --from=build /python /python
 COPY --from=build /etc/pip.conf /etc/pip.conf
+COPY --from=build /deployments /deployments
+
+COPY build_effective_set_generator/scripts/ /module/scripts/
 
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     /module/venv/bin/pip cache purge
 
-RUN chown -R ci:ci /module /build_env /cloud_passport /scripts
+RUN chown -R ci:ci /module /build_env /cloud_passport /scripts /deployments && \
+    chmod +x /module/scripts/*.sh && \
+    chmod +x /module/scripts/utils/*.sh && \
+    chmod 644 /module/scripts/*.py 2>/dev/null || true && \
+    chmod 540 /deployments/run-java.sh && \
+    chmod g+rwX /deployments
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
