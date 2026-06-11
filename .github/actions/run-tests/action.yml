@@ -39,7 +39,6 @@ runs:
         pip install --no-cache-dir --upgrade pip "setuptools==81" wheel
         pip install --no-cache-dir -r build_envgene/build/requirements.txt \
         -r build_effective_set_generator/build/requirements.txt \
-        -r build_pipegene/build/requirements.txt \
         -r creds_rotation/build/requirements.txt
 
         if [ -f python/build_modules.sh ]; then
@@ -62,14 +61,6 @@ runs:
         pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit.xml
         cd ../../..
         mv junit.xml junit_envgenehelper.xml
-
-    - name: PIPEGENE test
-      shell: bash
-      run: |
-        cd build_pipegene/scripts
-        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-        cd ../..
-        mv junit.xml junit_pipegene.xml
 
     - name: ARTIFACT SEARCHER test
       shell: bash
