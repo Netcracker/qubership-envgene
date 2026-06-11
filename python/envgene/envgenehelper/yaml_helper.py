@@ -408,7 +408,7 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
     if schemas_dir:
         base_uri = Path(schema_file_path).parent
         main_resource = Resource.from_contents(schema_content)
-        resolver = Registry().with_resource(uri=base_uri, resource=main_resource)
+        resolver = Registry().with_resource(uri=base_uri.as_uri(), resource=main_resource)
         errors = validate_yaml_data_by_scheme(yaml_content, schema_content, resolver=resolver)
     else:
         errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
