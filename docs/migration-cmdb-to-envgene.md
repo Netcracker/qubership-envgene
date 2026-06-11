@@ -193,17 +193,22 @@ The `env_definition.yml` is the single file a configurator writes per environmen
 
 ### 1.5 When NOT to migrate
 
-Migration to EnvGene brings the most value when environments share common structure and need to be managed consistently over time. In some situations, the effort of migrating may outweigh the benefit. Consider deferring or avoiding migration in the following cases:
+Not all environments are suitable candidates for migration. Defer or avoid migration in the following cases.
 
-- **The environment is automatically managed by another system.** If a separate tool or automation already owns an environment's configuration and rewrites it on every deployment, migrating to EnvGene would also require changing how that external system works. This is a broader integration change that should be planned separately, and the environment should not be migrated until that work is ready.
+**1. Environments under external configuration management**
+If an external system owns the environment configuration and overwrites it on each deployment, migrating to EnvGene also requires re-integrating that system. This falls outside the scope of a standard migration and must be planned as a separate workstream.
 
-- **Every environment has a completely unique configuration.** EnvGene works best when a group of environments share a common structure that can be captured in a template. If your environments have little or nothing in common — different services, different parameter sets, no shared structure — there is no shared template to build, and the migration overhead will not be recovered.
+**2. Environments with no shared structure**
+EnvGene delivers value when a common template can be shared across multiple environments. If environments differ fundamentally in namespace layout or service composition, no meaningful template abstraction can be derived and migration effort is unlikely to yield operational benefit.
 
-- **The environment is short-lived.** If an environment is created for a single test run or a brief validation cycle and then discarded, the one-time effort of setting up the configuration files, Cloud Passport, and credentials in EnvGene is unlikely to be worthwhile. Long-lived, regularly maintained environments are a better starting point.
+**3. Short-lived or ephemeral environments**
+Environments provisioned for a single deployment cycle or transient test run do not justify the one-time setup investment. Migration should be prioritised for persistent environments maintained across multiple release cycles.
 
-- **The configuration contains only build or packaging metadata.** Some CMDB records describe only software artifact coordinates — for example, which container image or Maven package to use — and contain no cluster-specific connection details or runtime parameters. These records do not benefit from the cluster-aware features of EnvGene and can remain in CMDB or be handled separately.
+**4. Records containing only artifact metadata**
+CMDB records that describe only software artifact coordinates — such as container image references or package registry identifiers — carry no cluster-specific parameters and derive no benefit from EnvGene's generation model. These may remain in CMDB or be migrated independently.
 
-- **The environment is tightly coupled to an external tool's parameter format.** If an environment's parameters are consumed directly by an external deployment tool and must conform exactly to that tool's expected format, care is needed before restructuring them. Migration is still possible, but it should be validated carefully against the consuming tool to ensure compatibility is not broken.
+**5. Environments tightly coupled to an external toolchain's parameter contract**
+Where parameters are consumed by an external tool that enforces a strict structural contract, migration must be preceded by a compatibility validation exercise to confirm that the generated output satisfies that contract before cutover.
 
 ---
 
