@@ -5,13 +5,13 @@ from io import StringIO
 from typing import OrderedDict
 
 import jschon
-import jschon_tools
 import jsonschema
 import ruyaml
 from jsonschema import RefResolver
 from ruyaml import CommentedMap, CommentedSeq
 from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
 
+import jschon_tools
 from .file_helper import *
 from .json_helper import openJson
 from .logger import logger
@@ -295,7 +295,6 @@ def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=Fals
 
 
 def find_yaml_file(dir_path: Path, search_name: str, recursively: bool = False) -> Path | None:
-
     if not dir_path.exists():
         return None
 
@@ -404,9 +403,11 @@ def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path
                                     schemas_dir=None):
     for root, dirs, files in os.walk('/'):
         if "schemas" in dirs:
-            for file in files:
-                full_path = os.path.join(root, file)
-                logger.info(full_path)
+            for dir in dirs:
+                if "schemas" == dir:
+                    for file in files:
+                        full_path = os.path.join(root, file)
+                        logger.info(full_path)
         else:
             continue
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
