@@ -9,7 +9,7 @@ from envgenehelper.logger import logger
 from envgenehelper.sd_helper import get_sd_dir, DELTA_SD_FILE_NAME, SD_FILE_NAME
 from envgenehelper.yaml_helper import writeYamlToFile, openYaml
 
-from effective_set.handle_effective_set_config import handle_effective_set_config
+from effective_set.handle_effective_set_config import handle_effective_set_config  # noqa: E402
 
 
 def effective_set_entrypoint():

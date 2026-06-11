@@ -60,6 +60,7 @@ FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
 
 ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.14_p7-r0
 
+# hadolint ignore=DL3002
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
     PYTHONPATH='/scripts'

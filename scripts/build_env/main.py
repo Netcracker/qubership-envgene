@@ -1,11 +1,11 @@
 from envgenehelper import *
 from envgenehelper.deployer import *
 
-from build_env import build_env, process_additional_template_parameters
+from build_env.build_env import build_env, process_additional_template_parameters
 from cloud_passport.cloud_passport import update_env_definition_with_cloud_name
-from create_credentials import create_credentials
-from render_config_env import EnvGenerator
-from resource_profiles import get_env_specific_resource_profiles
+from build_env.create_credentials import create_credentials
+from build_env.render_config_env import EnvGenerator
+from build_env.resource_profiles import get_env_specific_resource_profiles
 from bg_manage.filter_namespaces import apply_ns_build_filter
 
 

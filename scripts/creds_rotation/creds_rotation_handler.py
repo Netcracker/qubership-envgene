@@ -4,11 +4,11 @@ import time
 from typing import List
 
 import envgenehelper.logger as logger
-from core_rotation import process_entry_in_payload
+from creds_rotation.core_rotation import process_entry_in_payload
 from envgenehelper import crypt
 from envgenehelper.errors import RuntimeError, ValidationError, ValueError
-from models import PayloadEntry, RotationResult, EnvConfig
-from utils.cred_utils import (
+from creds_rotation.models import PayloadEntry, RotationResult, EnvConfig
+from creds_rotation.utils.cred_utils import (
     collect_shared_credentials,
     decrypt_file,
     read_env_cred_files,
@@ -16,9 +16,9 @@ from utils.cred_utils import (
     update_cred_content,
     write_updated_cred_into_file,
 )
-from utils.error_constants import *
-from utils.file_utils import scan_and_get_yaml_files, write_cred_file_path
-from utils.yaml_utils import convert_json_to_yaml, write_yaml_to_file
+from creds_rotation.utils.error_constants import *
+from creds_rotation.utils.file_utils import scan_and_get_yaml_files, write_cred_file_path
+from creds_rotation.utils.yaml_utils import convert_json_to_yaml, write_yaml_to_file
 
 
 def validate_env_vars(is_encrypted: bool, encrypt_type: str):

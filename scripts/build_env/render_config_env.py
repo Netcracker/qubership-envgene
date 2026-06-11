@@ -10,8 +10,8 @@ from envgenehelper.validations import ensure_valid_fields, ensure_required_keys
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
 
-from jinja.jinja import create_jinja_env
-from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
+from build_env.jinja.jinja import create_jinja_env
+from build_env.jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
 
 SCHEMAS_DIR = Path(getenv_with_error("JSON_SCHEMAS_DIR"))
 APPDEF_SCHEMA = str(SCHEMAS_DIR / "appdef.schema.json")

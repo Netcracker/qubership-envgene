@@ -1,5 +1,5 @@
 from typing import Optional, Dict, List, Any
-from models import PayloadEntry, RotationResult, ParameterReference, CredMap
+from creds_rotation.models import PayloadEntry, RotationResult, ParameterReference, CredMap
 import envgenehelper.logger as logger
 from envgenehelper.errors import ValidationError, ReferenceError
 

@@ -1,5 +1,5 @@
 from envgenehelper import *
-from render_config_env import EnvGenerator
+from build_env.render_config_env import EnvGenerator
 
 
 # TODO unit tests

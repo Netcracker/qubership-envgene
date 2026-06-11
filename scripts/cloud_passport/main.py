@@ -9,8 +9,8 @@ from envgenehelper import openYaml, unpack_archive, cleanup_dir, addHeaderToYaml
 from envgenehelper.crypt import get_configured_encryption_type
 from envgenehelper.errors import ValidationError
 
-from cmdb import update_creds_to_cmdb_format
-from git_client import GitRepoManager, GitLabClient
+from cloud_passport.cmdb import update_creds_to_cmdb_format
+from cloud_passport.git_client import GitRepoManager, GitLabClient
 from envgenehelper import get_cred_config
 
 SECRET_KEY = "SECRET_KEY"

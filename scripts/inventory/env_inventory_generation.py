@@ -228,7 +228,7 @@ def handle_env_inv_content(env_inventory_content: dict):
     handle_objects(env_dir, env_inventory_content.get("sharedTemplateVariables"), "shared_template_variables")
 
 
-def run_inventory_generation(handler: PipelineParametersHandler):
+def run_inventory_generation(handler):
     if handler.params.get('ENV_INVENTORY_CONTENT'):
         logger.info("Using new inventory generation approach")
         generate_env_new_approach()

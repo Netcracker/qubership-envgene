@@ -2,7 +2,7 @@ import yaml
 from envgenehelper import *
 
 from scripts.cloud_passport.cloud_passport import process_cloud_passport
-from resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
+from build_env.resource_profiles import collect_resource_profiles, override_by_env_specific_profiles, has_valid_profile_name, \
     update_profile_name
 from scripts.utils.schema_validation import checkEnvSpecificParametersBySchema
 

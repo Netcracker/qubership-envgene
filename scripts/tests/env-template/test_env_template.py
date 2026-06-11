@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 import responses
 from aioresponses import aioresponses
-from env_template.process_env_template import process_env_template
+from build_env.env_template.process_env_template import process_env_template
 from envgenehelper.test_helpers import TestHelpers
 
 GROUP_ID = "org.qubership"

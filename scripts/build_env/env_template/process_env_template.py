@@ -5,13 +5,13 @@ from pathlib import Path
 
 from artifact_searcher import artifact
 from artifact_searcher.utils.models import FileExtension, Credentials, Registry, Application
-from env_template.template_testing import run_env_test_setup
+from build_env.env_template.template_testing import run_env_test_setup
 from envgenehelper import getEnvDefinition, fetch_cred_value, getAppDefinitionPath
 from envgenehelper import openYaml, getenv_with_error, logger, get_or_create_nested_yaml_attribute
 from envgenehelper import unpack_archive, get_cred_config, check_dir_exist_and_create
 from envgenehelper.business_helper import NamespaceRole
 from envgenehelper.yaml_helper import get_nested_yaml_attribute_or_fail
-from render_config_env import render_obj_by_context, Context
+from build_env.render_config_env import render_obj_by_context, Context
 
 
 def parse_artifact_appver(env_definition: dict, attribute_str: str) -> list[str]:
