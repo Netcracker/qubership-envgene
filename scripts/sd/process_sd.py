@@ -17,9 +17,9 @@ from envgenehelper.models import OperationType
 from envgenehelper.plugin_engine import PluginEngine
 from envgenehelper.sd_helper import (basic_merge_multiple, MergeType, calculate_merge_mode,
                                      SD_FILE_NAME, DELTA_SD_FILE_NAME)
+from pipeline.pipeline_parameters import PipelineParametersHandler
 from typing_extensions import deprecated
 
-from scripts.pipeline.orchestrator import PipelineParametersHandler
 
 MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,

@@ -5,7 +5,6 @@ from pathlib import Path
 
 from artifact_searcher import artifact
 from artifact_searcher.utils.models import FileExtension, Credentials, Registry, Application
-from build_env.env_template.template_testing import run_env_test_setup
 from envgenehelper import getEnvDefinition, fetch_cred_value, getAppDefinitionPath
 from envgenehelper import openYaml, getenv_with_error, logger, get_or_create_nested_yaml_attribute
 from envgenehelper import unpack_archive, get_cred_config, check_dir_exist_and_create
@@ -166,10 +165,6 @@ async def resolve_artifact_old_logic(env_definition: dict, template_dest: str, c
 
 
 def process_env_template() -> dict:
-    env_template_test = os.getenv("ENV_TEMPLATE_TEST", "").lower() == "true"
-    if env_template_test:
-        run_env_test_setup()
-
     env_definition = getEnvDefinition()
 
     appvers = {

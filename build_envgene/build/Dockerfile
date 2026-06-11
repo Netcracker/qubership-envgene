@@ -13,6 +13,7 @@ FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS build
 
 ARG RUN_JAVA_VERSION=1.3.8
 
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     libffi-dev=3.4.4-r3 \
     openssl-dev=3.1.8-r1 \
@@ -60,11 +61,11 @@ FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
 
 ARG JAVA_PACKAGE=openjdk17-jre-headless=17.0.14_p7-r0
 
-# hadolint ignore=DL3002
 ENV LANG='en_US.UTF-8' \
     LANGUAGE='en_US:en' \
     PYTHONPATH='/scripts'
 
+# hadolint ignore=DL3018
 RUN apk add --no-cache \
     libgcc=13.2.1_git20231014-r0 \
     ${JAVA_PACKAGE}
