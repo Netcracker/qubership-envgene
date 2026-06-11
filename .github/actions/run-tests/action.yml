@@ -58,53 +58,26 @@ runs:
       shell: bash
       run: |
         cd python/envgene/envgenehelper
-        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit.xml
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit_envgenehelper.xml
         cd ../../..
-        mv junit.xml junit_envgenehelper.xml
 
     - name: ARTIFACT SEARCHER test
       shell: bash
       run: |
         cd python/artifact-searcher/artifact_searcher
-        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit.xml
+        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../../junit_artifact_searcher.xml
         cd ../../..
-        mv junit.xml junit_artifact_searcher.xml
 
-    - name: BG MANAGE test
+    - name: ENVGENE SCRIPTS SCOPE tests
       shell: bash
       env:
         FULL_ENV_NAME: "sdp-dev/env-1"
         BG_STATE: ""
-        CI_PROJECT_DIR: ${GITHUB_WORKSPACE}
+        CI_PROJECT_DIR: ${{ github.workspace }}
       run: |
-        cd scripts/bg_manage
-        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-        cd ../..
-        mv junit.xml junit_bg_manage.xml
-
-    - name: BUILD ENV test
-      shell: bash
-      run: |
-        cd scripts/build_env
-        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-        cd ../..
-        mv junit.xml junit_build_env.xml
-
-    - name: BUILD CRED ROTATION test
-      shell: bash
-      run: |
-        cd creds_rotation/scripts
-        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-        cd ../..
-        mv junit.xml junit_cred_rotation.xml
-
-    - name: SBOMS RETENTION POLICY test
-      shell: bash
-      run: |
-        cd build_effective_set_generator/scripts
-        pytest --capture=no -W ignore::DeprecationWarning --junitxml=../../junit.xml
-        cd ../..
-        mv junit.xml junit_sbom_retention.xml
+        cd scripts
+        pytest tests/ --capture=no -W ignore::DeprecationWarning --junitxml=../junit_scripts.xml
+        cd ..
 
     - name: Merge test results
       shell: bash
