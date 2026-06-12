@@ -117,7 +117,7 @@ def add_cloud_passport_creds(cloud_passport_name, cloud_passport_file_path, env_
     else:
         envCredsYaml = yaml.load("{}")
     for key, value in passportCredsYaml.items() :
-        store_value_to_yaml(envCredsYaml, key, value, comment)
+        store_cred_value_to_yaml(envCredsYaml, key, value, comment)
     # storing credentials yaml
     writeYamlToFile(envCredentialsPath, envCredsYaml)
     beautifyYaml(envCredentialsPath, credsSchema)

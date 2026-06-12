@@ -58,7 +58,63 @@ else
 fi
 echo "Commit message: ${message}"
 
+ENV_PREFIX="environments/${CLUSTER_NAME}/${ENVIRONMENT_NAME}/"
+LOCAL_COMMIT=""
 
+cherry_pick_onto_origin() {
+    local local_commit=$1
+    if [ -z "$local_commit" ]; then
+        echo "❌ No local commit to cherry-pick"
+        return 1
+    fi
+
+    echo "Resetting to origin/${REF_NAME}..."
+    git reset --hard "origin/${REF_NAME}"
+
+    echo "Cherry-picking ${local_commit} onto origin/${REF_NAME}..."
+    GIT_EDITOR=true git cherry-pick --empty=drop "${local_commit}" 2>/dev/null \
+        || GIT_EDITOR=true git cherry-pick "${local_commit}"
+    local rc=$?
+    if [ "$rc" -eq 0 ]; then
+        return 0
+    fi
+
+    if ! git diff --name-only --diff-filter=U 2>/dev/null | grep -q .; then
+        echo "❌ Cherry-pick failed without merge conflicts"
+        git cherry-pick --abort 2>/dev/null || true
+        return "$rc"
+    fi
+
+    echo "Resolving cherry-pick conflicts (owned prefix: ${ENV_PREFIX})..."
+
+    while git diff --name-only --diff-filter=U 2>/dev/null | grep -q .; do
+        while IFS= read -r path; do
+            [ -z "$path" ] && continue
+            if [[ "$path" == "${ENV_PREFIX}"* ]]; then
+                echo "  keeping job version: ${path}"
+                git checkout --theirs -- "${path}"
+            else
+                echo "  keeping remote version: ${path}"
+                git checkout --ours -- "${path}"
+            fi
+            git add -- "${path}"
+        done < <(git diff --name-only --diff-filter=U)
+
+        GIT_EDITOR=true git cherry-pick --continue
+        rc=$?
+        if [ "$rc" -eq 0 ]; then
+            return 0
+        fi
+
+        if ! git diff --name-only --diff-filter=U 2>/dev/null | grep -q .; then
+            echo "❌ Cherry-pick continue failed without remaining conflicts"
+            git cherry-pick --abort 2>/dev/null || true
+            return "$rc"
+        fi
+    done
+
+    return 0
+}
 
 # copying environments folder to temp storage
 
@@ -286,6 +342,8 @@ git diff --cached --quiet || diff_status=$?
 if [ $diff_status -ne 0 ]; then
     echo "Changes detected. Committing..."
     git commit -am "${message}"
+    LOCAL_COMMIT=$(git rev-parse HEAD)
+    echo "Local commit to replay on retry: ${LOCAL_COMMIT}"
 
     echo "Pushing to origin HEAD:${REF_NAME}"
     echo "Current commit: $(git rev-parse HEAD)"
@@ -317,7 +375,7 @@ if [ "$exit_code" -ne 0 ]; then
           echo "Waiting ${sleep_time} seconds before retry..."
           sleep $sleep_time
 
-          echo "Fetching latest changes from origin/${REF_NAME}..."
+          echo "Fetching latest changes from origin/${REF_NAME} (depth=1)..."
           git fetch --depth=1 origin "${REF_NAME}"
           fetch_exit_code=$?
 
@@ -326,8 +384,15 @@ if [ "$exit_code" -ne 0 ]; then
               break
           fi
 
-          git reset --soft origin/"${REF_NAME}"
-          git commit -m "${message}"
+          echo "Cherry-picking local commit onto origin/${REF_NAME}..."
+          cherry_pick_onto_origin "${LOCAL_COMMIT}"
+          cherry_pick_exit_code=$?
+
+          if [ "$cherry_pick_exit_code" -ne 0 ]; then
+              echo "❌ Cherry-pick failed with exit code: $cherry_pick_exit_code"
+              exit_code=$cherry_pick_exit_code
+              break
+          fi
 
           echo "Attempting push (retry $retries)..."
           git push origin HEAD:"${REF_NAME}"
