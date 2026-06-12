@@ -5,6 +5,13 @@ from pathlib import *
 from .logger import logger
 
 
+def find_file_in_schemas(file_name):
+    for file_path in list(Path('/').rglob(file_name)):
+        logger.info(f"Json file path: {str(file_path)}")
+        return str(file_path)
+    return None
+
+
 def openJson(filePath):
     logger.info(f"Open json file: {filePath}")
     with open(filePath, 'r') as f:

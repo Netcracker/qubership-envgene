@@ -127,7 +127,7 @@ class EnvGenerator:
             env_tmpl_final_path = str(env_template_path).removesuffix(".j2")
             self.render_from_file_to_file(env_template_path, env_tmpl_final_path)
 
-        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, getAbsPath("template-descriptor.schema.json"))
+        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, find_file_in_schemas("template-descriptor.schema.json"))
         env_template = openYaml(filePath=env_tmpl_final_path, safe_load=True)
         logger.info(f"Loaded env_template from {env_tmpl_final_path}")
         return env_template, suitable_files
@@ -559,7 +559,7 @@ class EnvGenerator:
                 logger.warning(f"No AppDef YAMLs found in {appdef_dir}")
             for file in appdef_files:
                 logger.info(f"AppDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, getAbsPath("appdef.schema.json"))
+                validate_yaml_by_scheme_or_fail(file, find_file_in_schemas("appdef.schema.json"))
 
         if os.path.exists(regdef_dir):
             regdef_files = findAllYamlsInDir(regdef_dir)

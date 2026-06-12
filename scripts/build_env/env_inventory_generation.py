@@ -21,7 +21,7 @@ def generate_env_new_approach():
     logger.info(f"Starting env inventory generation for env: {env_name} in cluster: {cluster}")
 
     env_inventory_content = json.loads(getenv_with_error('ENV_INVENTORY_CONTENT'))
-    env_inv_content_schema_path = getAbsPath("env-inventory-content.schema.json")
+    env_inv_content_schema_path = find_file_in_schemas("env-inventory-content.schema.json")
 
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
                                     schema_file_path=env_inv_content_schema_path,
@@ -110,7 +110,7 @@ def handle_env_specific_params(env, env_specific_params):
 def create_paramset_files(env, paramsets):
     if not paramsets:
         return
-    PARAMSET_SCHEMA_PATH = getAbsPath("paramset.schema.json")
+    PARAMSET_SCHEMA_PATH = find_file_in_schemas("paramset.schema.json")
     ps_dir_path = path.join(env.env_path, PARAMSETS_DIR_PATH)
     helper.check_dir_exist_and_create(ps_dir_path)
     logger.info(f"Creating paramsets in {ps_dir_path}")
