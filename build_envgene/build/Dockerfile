@@ -25,7 +25,7 @@ RUN apk add --no-cache \
 COPY build_envgene/build/pip.conf /etc/pip.conf
 COPY build_envgene/build/requirements.txt /build/requirements.txt
 COPY build_envgene/build/constraint.txt /build/constraint.txt
-COPY build_effective_set_generator/build/requirements.txt /build/esg_requirements.txt
+
 
 COPY python /python
 COPY schemas /schemas
@@ -77,7 +77,7 @@ COPY --from=build /python /python
 COPY --from=build /etc/pip.conf /etc/pip.conf
 COPY --from=build /deployments /deployments
 
-COPY build_effective_set_generator/scripts/ /module/scripts/
+COPY scripts/effective_set/ /module/scripts/
 
 RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
