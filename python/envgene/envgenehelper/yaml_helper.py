@@ -7,7 +7,6 @@ from typing import OrderedDict
 import jschon
 import jsonschema
 import ruyaml
-from jsonschema import RefResolver
 from referencing import Registry, Resource
 from ruyaml import CommentedMap, CommentedSeq
 from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
@@ -401,11 +400,11 @@ def yaml_from_string(yaml_str):
 
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
                                     input_yaml_content: dict = None, input_schema_content: dict = None,
-                                    schemas_dir=None):
+                                    is_schemas=False):
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
     schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
 
-    if schemas_dir:
+    if is_schemas:
         schemas_path = Path(schema_file_path).parent
         resources = []
         for schema_file in schemas_path.glob("*.json"):

@@ -4,8 +4,6 @@ from pathlib import *
 
 from .logger import logger
 
-SCHEMAS_DIR = "schemas"
-
 
 def find_file_in_schemas(file_name):
     for file_path in list(Path('/').rglob(file_name)):

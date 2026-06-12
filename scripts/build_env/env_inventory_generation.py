@@ -25,7 +25,7 @@ def generate_env_new_approach():
 
     validate_yaml_by_scheme_or_fail(input_yaml_content=env_inventory_content,
                                     schema_file_path=env_inv_content_schema_path,
-                                    schemas_dir=SCHEMAS_DIR)
+                                    is_schemas=True)
 
     handle_env_inv_content(env_inventory_content)
 
@@ -46,7 +46,7 @@ def generate_env():
     logger.info(f"Starting env inventory generation for env: {env.name} in cluster: {env.cluster}")
 
     handle_env_inventory_init(env, env_inventory_init, env_template_version)
-    handle_env_specific_params(env, env_specific_params, SCHEMAS_DIR)
+    handle_env_specific_params(env, env_specific_params)
     helper.set_nested_yaml_attribute(env.inventory, 'envTemplate.name', env_template_name)
 
     helper.writeYamlToFile(env.inventory_path, env.inventory)
@@ -73,7 +73,7 @@ def handle_env_inventory_init(env, env_inventory_init, env_template_version):
 
 
 @deprecated(DEPRECATED_MESSAGE)
-def handle_env_specific_params(env, env_specific_params, schemas_dir):
+def handle_env_specific_params(env, env_specific_params):
     if not env_specific_params or env_specific_params == "":
         logger.info("ENV_SPECIFIC_PARAMS are not set. Skipping env inventory update")
         return
@@ -98,7 +98,7 @@ def handle_env_specific_params(env, env_specific_params, schemas_dir):
     helper.merge_yaml_into_target(env.inventory, 'envTemplate.envSpecificParamsets', envSpecificParamsets)
     logger.info("ENV_SPECIFIC_PARAMS env details ", vars(env))
     handle_credentials(env, creds)
-    create_paramset_files(env, paramsets, schemas_dir)
+    create_paramset_files(env, paramsets)
 
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
     helper.set_nested_yaml_attribute(env.inventory, 'inventory.tenantName', tenantName)
@@ -107,7 +107,7 @@ def handle_env_specific_params(env, env_specific_params, schemas_dir):
 
 
 @deprecated(DEPRECATED_MESSAGE)
-def create_paramset_files(env, paramsets, schemas_dir):
+def create_paramset_files(env, paramsets):
     if not paramsets:
         return
     PARAMSET_SCHEMA_PATH = find_file_in_schemas("paramset.schema.json")
