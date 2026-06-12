@@ -2837,15 +2837,8 @@ Application Definitions can also be supplied as user-provided files at `/configu
 
 ```yaml
 # Optional
-metadata:
-  # Optional
-  # Describes the strategy for generating the Helm release name.
-  # Deployment automation relies on this attribute to form a unique Helm release name.
-  # Available options:
-  #   `perApplication` - Unique per application
-  #   `perVersion` - Unique per application version
-  #   `perDeployment` - Unique per deployment of this application
-  helmReleaseNameStrategy: enum[ perApplication, perVersion, perDeployment ]
+# Free-form metadata map. Structure is not specified.
+metadata: hashmap
 # Mandatory
 # Name of the artifact application. This corresponds to the `application` part in the `application:version` notation.
 name: string
