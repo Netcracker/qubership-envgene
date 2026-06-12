@@ -307,6 +307,10 @@ EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. 
 
 **Format**: A string containing a JSON object (JSON-in-string). The JSON object must conform to the [schema](/schemas/custom-params.schema.json).
 
+Two modes are supported. The modes are **mutually exclusive** — a payload that contains both a top-level `deployment`/`runtime` key and a `namespaces` key is rejected with a validation error.
+
+**Global mode** — parameters applied to every namespace:
+
 ```json
 {
   "deployment": {
@@ -320,10 +324,30 @@ EnvGene passes the value unchanged to the Calculator CLI via `--custom-params`. 
 }
 ```
 
+**Namespace-scoped mode** — parameters applied only to specific namespaces (identified by their folder name under `effective-set/deployment/`). Namespaces not listed receive an empty `custom-params.yaml`:
+
+```json
+{
+  "namespaces": {
+    "<namespace-folder-name>": {
+      "deployment": {
+        "<key>": "<value>",
+         "...": "..."
+      },
+      "runtime": {
+        "<key>": "<value>",
+         "...": "..."
+      }
+    }
+  }
+}
+```
+
 > [!NOTE]
 >
 > 1. `<value>` can be complex, i.e. a map or a list
 > 2. All keys are optional
+> Passing both a top-level `deployment`/`runtime` key and a `namespaces` key in the same payload causes a validation error. The Calculator will fail before writing any Effective Set output.
 
 **Default Value**: None
 
