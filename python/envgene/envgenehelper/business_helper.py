@@ -8,10 +8,10 @@ from typing import overload
 from ruyaml import CommentedMap
 from ruyaml.scalarstring import DoubleQuotedScalarString
 
-from .json_helper import find_file_in_schemas
 from .collections_helper import dump_as_yaml_format
 from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
-    extractNameFromDir
+    extractNameFromDir, getAbsPath
+from .json_helper import find_file_in_schemas
 from .logger import logger
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
     validate_yaml_by_scheme_or_fail, find_yaml_file
@@ -105,7 +105,7 @@ def check_environment_is_valid_or_fail(environment_name, cluster_name, instances
 
 
 def check_env_definition_is_valid_or_fail(env_definition_path):
-    schemaPath = find_file_in_schemas("env-definition.schema.json")
+    schemaPath = getAbsPath("env-definition.schema.json")
     try:
         validate_yaml_by_scheme_or_fail(env_definition_path, schemaPath)
     except ValueError:

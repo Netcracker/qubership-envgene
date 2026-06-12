@@ -49,6 +49,7 @@ FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
 
 COPY --from=build /module /module
 COPY --from=build /scripts/bg_manage /scripts/bg_manage
+COPY --from=build /build_env /build_env
 COPY --from=build /schemas /schemas
 COPY --from=build /cloud_passport /cloud_passport
 COPY --from=build /python /python
@@ -58,7 +59,7 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
     find /module/venv/lib/python3.12/site-packages -name '*.pyc' -delete && \
     /module/venv/bin/pip cache purge
 
-RUN chown -R ci:ci /module /schemas /cloud_passport /scripts
+RUN chown -R ci:ci /module /schemas /build_env /cloud_passport /scripts
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
