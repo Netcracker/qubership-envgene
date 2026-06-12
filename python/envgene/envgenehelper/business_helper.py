@@ -11,7 +11,6 @@ from ruyaml.scalarstring import DoubleQuotedScalarString
 from .collections_helper import dump_as_yaml_format
 from .file_helper import extractNameFromFile, check_file_exists, check_dir_exists, getParentDirName, \
     extractNameFromDir, getAbsPath
-from .json_helper import find_file_in_schemas
 from .logger import logger
 from .yaml_helper import findYamls, openYaml, yaml, writeYamlToFile, store_value_to_yaml, \
     validate_yaml_by_scheme_or_fail, find_yaml_file
