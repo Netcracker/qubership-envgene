@@ -1,21 +1,18 @@
+import os.path
 from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
 from typing import Optional
 
 from deepmerge import always_merger
-from envgenehelper import *
-from envgenehelper.business_helper import get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole
-from envgenehelper.validation import ensure_valid_fields, ensure_required_keys
 from jinja2 import Template, TemplateError
 from pydantic import BaseModel, Field
 
+from envgenehelper import *
+from envgenehelper.business_helper import get_bgd_object, get_namespaces, get_namespace_role, NamespaceRole
+from envgenehelper.validation import ensure_valid_fields, ensure_required_keys
 from jinja.jinja import create_jinja_env
 from jinja.replace_ansible_stuff import replace_ansible_stuff, escaping_quotation
-
-SCHEMAS_DIR = Path(__file__).resolve().parents[2] / "schemas"
-APPDEF_SCHEMA = str(SCHEMAS_DIR / "appdef.schema.json")
-TD_SCHEMA = str(SCHEMAS_DIR / "template-descriptor.schema.json")
 
 yml = create_yaml_processor()
 
@@ -130,7 +127,7 @@ class EnvGenerator:
             env_tmpl_final_path = str(env_template_path).removesuffix(".j2")
             self.render_from_file_to_file(env_template_path, env_tmpl_final_path)
 
-        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, TD_SCHEMA)
+        validate_yaml_by_scheme_or_fail(env_tmpl_final_path, find_file_in_schemas("template-descriptor.schema.json"))
         env_template = openYaml(filePath=env_tmpl_final_path, safe_load=True)
         logger.info(f"Loaded env_template from {env_tmpl_final_path}")
         return env_template, suitable_files
@@ -140,7 +137,8 @@ class EnvGenerator:
 
         env_templates_dir = Path(f'{self.ctx.templates_dirs.get(NamespaceRole.COMMON)}/env_templates')
         env_template_basename = env_templates_dir / env_template_name
-        env_template, suitable_files = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.COMMON), env_template_name)
+        env_template, suitable_files = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.COMMON),
+                                                                     env_template_name)
         if not env_template:
             all_files = [f for f in env_templates_dir.iterdir() if f.is_file()]
             remains_files = list(set(all_files) - set(suitable_files))
@@ -153,11 +151,13 @@ class EnvGenerator:
         self.ctx.current_env_template = env_template
 
         if self.ctx.templates_dirs:
-            peer_template, _ = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.PEER), env_template_name)
+            peer_template, _ = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.PEER),
+                                                             env_template_name)
             if peer_template:
                 self.ctx.peer_env_template = peer_template
 
-            origin_template, _ = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.ORIGIN), env_template_name)
+            origin_template, _ = self.find_env_template_in_dir(self.ctx.templates_dirs.get(NamespaceRole.ORIGIN),
+                                                               env_template_name)
             if origin_template:
                 self.ctx.origin_env_template = origin_template
 
@@ -389,13 +389,15 @@ class EnvGenerator:
                 role_ns_config = self._find_ns_config_by_name(role_env_template, ns_name, role_templates_dir)
                 if role_ns_config:
                     effective_ns = role_ns_config
-                    effective_template_path = self._resolve_template_path(role_ns_config["template_path"], role_templates_dir)
+                    effective_template_path = self._resolve_template_path(role_ns_config["template_path"],
+                                                                          role_templates_dir)
                     logger.info(f"Using {role.name} template for namespace {ns_name}")
 
             logger.info(f"Generate Namespace yaml for {postfix}")
             ns_dir = Path(self.ctx.current_env_dir) / "Namespaces" / postfix
             self.render_from_file_to_file(effective_template_path, str(ns_dir / "namespace.yml"))
-            self.generate_override_template(effective_ns.get("template_override"), ns_dir / "namespace.yml_override", postfix)
+            self.generate_override_template(effective_ns.get("template_override"), ns_dir / "namespace.yml_override",
+                                            postfix)
 
     def calculate_cloud_name(self) -> str:
         inv = self.ctx.env_definition["inventory"]
@@ -557,7 +559,7 @@ class EnvGenerator:
                 logger.warning(f"No AppDef YAMLs found in {appdef_dir}")
             for file in appdef_files:
                 logger.info(f"AppDef file: {file}")
-                validate_yaml_by_scheme_or_fail(file, APPDEF_SCHEMA)
+                validate_yaml_by_scheme_or_fail(file, find_file_in_schemas("appdef.schema.json"))
 
         if os.path.exists(regdef_dir):
             regdef_files = findAllYamlsInDir(regdef_dir)

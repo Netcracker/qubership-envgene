@@ -5,13 +5,13 @@ from io import StringIO
 from typing import OrderedDict
 
 import jschon
-import jschon_tools
 import jsonschema
 import ruyaml
-from jsonschema import RefResolver
+from referencing import Registry, Resource
 from ruyaml import CommentedMap, CommentedSeq
 from ruyaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
 
+import jschon_tools
 from .file_helper import *
 from .json_helper import openJson
 from .logger import logger
@@ -295,7 +295,6 @@ def beautifyYaml(file_path, schema_path="", header_text="", allign_comments=Fals
 
 
 def find_yaml_file(dir_path: Path, search_name: str, recursively: bool = False) -> Path | None:
-    
     if not dir_path.exists():
         return None
 
@@ -401,14 +400,21 @@ def yaml_from_string(yaml_str):
 
 def validate_yaml_by_scheme_or_fail(yaml_file_path: str = None, schema_file_path: str = None,
                                     input_yaml_content: dict = None, input_schema_content: dict = None,
-                                    schemas_dir=None):
+                                    is_schemas=False):
     yaml_content = openYaml(yaml_file_path) if yaml_file_path else input_yaml_content
     schema_content = openJson(schema_file_path) if schema_file_path else input_schema_content
 
-    if schemas_dir:
-        base_uri = Path(schemas_dir).absolute().as_uri() + "/"
-        resolver = RefResolver(base_uri=base_uri, referrer=schema_content)
-        errors = validate_yaml_data_by_scheme(yaml_content, schema_content, resolver=resolver)
+    if is_schemas:
+        schemas_path = Path(schema_file_path).parent
+        resources = []
+        for schema_file in schemas_path.glob("*.json"):
+            try:
+                contents = openJson(str(schema_file))
+                resources.append((schema_file.name, Resource.from_contents(contents)))
+            except Exception:
+                pass
+        registry = Registry().with_resources(resources)
+        errors = validate_yaml_data_by_scheme(yaml_content, schema_content, registry=registry)
     else:
         errors = validate_yaml_data_by_scheme(yaml_content, schema_content)
     if len(errors) > 0:

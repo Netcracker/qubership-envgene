@@ -145,7 +145,7 @@ def get_env_artifact_paths(cluster_name: str, env_name: str) -> list[str]:
     ]
     shared_entity_paths = get_shared_entity_paths(cluster_name)
     env_artifact_paths.extend(shared_entity_paths)
-    
+
     return env_artifact_paths
 
 
@@ -168,13 +168,13 @@ def get_shared_entity_paths(cluster_name: str) -> list[str]:
         "app-deployer",
         "cloud-deployer",
     ]
-    
+
     paths = [f"environments/{d}" for d in ENV_ARTIFACT_SUBDIRS]
 
     paths.extend(
         f"environments/{cluster_name}/{d}"
         for d in ENV_ARTIFACT_SUBDIRS + CLUSTER_ONLY_SUBDIRS
     )
-        
+
     return paths
 

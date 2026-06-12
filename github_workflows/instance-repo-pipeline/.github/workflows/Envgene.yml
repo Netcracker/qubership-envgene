@@ -29,25 +29,25 @@ on:
         required: false
         default: "true"
         type: choice
-        options: ["false", "true"]
+        options: [ "false", "true" ]
         description: ""
       GENERATE_EFFECTIVE_SET:
         required: false
         default: "false"
         type: choice
-        options: ["false", "true"]
+        options: [ "false", "true" ]
         description: ""
       GET_PASSPORT:
         required: false
         default: "false"
         type: choice
-        options: ["false", "true"]
+        options: [ "false", "true" ]
         description: ""
       CMDB_IMPORT:
         required: false
         default: "false"
         type: choice
-        options: ["false", "true"]
+        options: [ "false", "true" ]
         description: ""
       GH_ADDITIONAL_PARAMS:
         required: false
@@ -87,10 +87,7 @@ jobs:
     outputs:
       env_matrix: ${{ steps.matrix-generator.outputs.env_matrix }}
       BG_MANAGE: ${{ env.BG_MANAGE }}
-      BG_STATE: ${{ env.BG_STATE }}
       ENV_INVENTORY_CONTENT: ${{ env.ENV_INVENTORY_CONTENT }}
-      CRED_ROTATION_PAYLOAD: ${{ env.CRED_ROTATION_PAYLOAD }}
-      CRED_ROTATION_FORCE: ${{ env.CRED_ROTATION_FORCE }}
       ENV_BUILDER: ${{ env.ENV_BUILDER }}
       GENERATE_EFFECTIVE_SET: ${{ env.GENERATE_EFFECTIVE_SET }}
       ENV_INVENTORY_INIT: ${{ env.ENV_INVENTORY_INIT }}
@@ -114,14 +111,14 @@ jobs:
 
       - name: Process Input Parameters
         run: |
-           echo "DEPLOYMENT_TICKET_ID=${{ github.event.inputs.DEPLOYMENT_TICKET_ID }}" >> $GITHUB_ENV
-           echo "ENV_NAMES=${{ github.event.inputs.ENV_NAMES }}" >> $GITHUB_ENV
-           echo "ENV_BUILDER=${{ github.event.inputs.ENV_BUILDER }}" >> $GITHUB_ENV
-           echo "GENERATE_EFFECTIVE_SET=${{ github.event.inputs.GENERATE_EFFECTIVE_SET }}" >> $GITHUB_ENV
-           echo "GET_PASSPORT=${{ github.event.inputs.GET_PASSPORT }}" >> $GITHUB_ENV
-           echo "CMDB_IMPORT=${{ github.event.inputs.CMDB_IMPORT }}" >> $GITHUB_ENV
-           echo "ENV_TEMPLATE_VERSION=${{ github.event.inputs.ENV_TEMPLATE_VERSION }}" >> $GITHUB_ENV
-           echo "GH_ADDITIONAL_PARAMS=${{ github.event.inputs.GH_ADDITIONAL_PARAMS }}" >> $GITHUB_ENV
+          echo "DEPLOYMENT_TICKET_ID=${{ github.event.inputs.DEPLOYMENT_TICKET_ID }}" >> $GITHUB_ENV
+          echo "ENV_NAMES=${{ github.event.inputs.ENV_NAMES }}" >> $GITHUB_ENV
+          echo "ENV_BUILDER=${{ github.event.inputs.ENV_BUILDER }}" >> $GITHUB_ENV
+          echo "GENERATE_EFFECTIVE_SET=${{ github.event.inputs.GENERATE_EFFECTIVE_SET }}" >> $GITHUB_ENV
+          echo "GET_PASSPORT=${{ github.event.inputs.GET_PASSPORT }}" >> $GITHUB_ENV
+          echo "CMDB_IMPORT=${{ github.event.inputs.CMDB_IMPORT }}" >> $GITHUB_ENV
+          echo "ENV_TEMPLATE_VERSION=${{ github.event.inputs.ENV_TEMPLATE_VERSION }}" >> $GITHUB_ENV
+          echo "GH_ADDITIONAL_PARAMS=${{ github.event.inputs.GH_ADDITIONAL_PARAMS }}" >> $GITHUB_ENV
 
       - name: Process additional variables
         run: |
@@ -147,9 +144,9 @@ jobs:
       - name: Upload .env as artifact
         uses: actions/upload-artifact@v4
         with:
-            include-hidden-files: true
-            name: environment-file
-            path: .env
+          include-hidden-files: true
+          name: environment-file
+          path: .env
 
   envgene_execution:
     name: "EnvGene - ${{ matrix.environment }}"
@@ -219,7 +216,6 @@ jobs:
         if: needs.process_environment_variables.outputs.BG_MANAGE == 'true'
         env:
           FULL_ENV_NAME: ${{ matrix.environment }}
-          BG_STATE: ${{ needs.process_environment_variables.outputs.BG_STATE }}
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \
@@ -254,8 +250,6 @@ jobs:
       ### ENV_INVENTORY_GENERATION - START ###
       - name: ENV_INVENTORY_GENERATION
         if: (needs.process_environment_variables.outputs.ENV_INVENTORY_CONTENT != '') || (needs.process_environment_variables.outputs.ENV_SPECIFIC_PARAMS != '' || needs.process_environment_variables.outputs.ENV_TEMPLATE_NAME != '')
-        env:
-          ENV_INVENTORY_CONTENT: ${{ needs.process_environment_variables.outputs.ENV_INVENTORY_CONTENT }}
         run: |
           docker run --rm \
             -v ${{ github.workspace }}:${{ env.CI_PROJECT_DIR }} \

@@ -1,13 +1,13 @@
 import os
-from os import getenv
 
-from envgenehelper import check_for_cyrillic, logger, findAllYamlsInDir, openYaml, check_dir_exists, get_cluster_name_from_full_name, get_environment_name_from_full_name, check_environment_is_valid_or_fail, check_file_exists, validate_yaml_by_scheme_or_fail
+from envgenehelper import check_for_cyrillic, logger, findAllYamlsInDir, openYaml, check_dir_exists, \
+    get_cluster_name_from_full_name, get_environment_name_from_full_name, check_environment_is_valid_or_fail, \
+    check_file_exists, validate_yaml_by_scheme_or_fail, find_file_in_schemas
 from envgenehelper.collections_helper import split_multi_value_param
 
 project_dir = os.getenv('CI_PROJECT_DIR') or os.getenv('GITHUB_WORKSPACE')
 logger.info(f"Info about project_dir: {project_dir}")
 
-SCHEMAS_DIR = getenv("JSON_SCHEMAS_DIR", "/module/schemas")
 
 def validate_pipeline(params: dict):
     basic_checks(params['ENV_NAMES'])
@@ -22,6 +22,7 @@ def validate_pipeline(params: dict):
             params["ENV_INVENTORY_CONTENT"]
         )
 
+
 def basic_checks(env_names):
     if not env_names:
         logger.error('"ENV_NAMES" variable is not found or empty')
@@ -34,22 +35,24 @@ def template_test_checks():
     yaml_files = findAllYamlsInDir(templates_dir)
     errorFound = False
     for yaml_file in yaml_files:
-      content = openYaml(yaml_file)
-      if content and check_for_cyrillic(content, yaml_file):
-          logger.error(f"Cyrillic characters found in '{yaml_file}'")
-          errorFound = True
+        content = openYaml(yaml_file)
+        if content and check_for_cyrillic(content, yaml_file):
+            logger.error(f"Cyrillic characters found in '{yaml_file}'")
+            errorFound = True
     if not check_dir_exists(f"{templates_dir}/env_templates"):
         logger.error(f"Directory with templates '{templates_dir}' not found.")
         errorFound = True
     if errorFound:
         raise ReferenceError("Execution is aborted as validation is not successful. See logs above.")
 
+
 def real_execution_checks(env_names, get_passport, env_build, env_inventory_init, env_inventory_content):
     environment_names = split_multi_value_param(env_names)
     for env in environment_names:
         # now we are using only complex environment names that contain both cluster_name and environment_name
         if env.count('/') != 1:
-            logger.fatal(f"Wrong env_name given: {env}. Env_name should contain both cloud name and environment name by pattern '<cluster_name>/<environment_name>'")
+            logger.fatal(
+                f"Wrong env_name given: {env}. Env_name should contain both cloud name and environment name by pattern '<cluster_name>/<environment_name>'")
             exit(1)
         logger.info(f"Parsing environment name for: {env}")
         cluster_name = get_cluster_name_from_full_name(env)
@@ -59,17 +62,21 @@ def real_execution_checks(env_names, get_passport, env_build, env_inventory_init
                           env_inventory_content)
         check_passport_params(get_passport)
 
-def check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init, env_inventory_content):
+
+def check_environment(environment_name, cluster_name, get_passport, env_build, env_inventory_init,
+                      env_inventory_content):
     if env_inventory_init or env_inventory_content:
         return
     all_environments_dir = f"{project_dir}/environments"
     skip_env_definition_check = get_passport and not env_build
-    check_environment_is_valid_or_fail(environment_name, cluster_name, all_environments_dir, skip_env_definition_check, not skip_env_definition_check, schemas_dir=SCHEMAS_DIR)
+    check_environment_is_valid_or_fail(environment_name, cluster_name, all_environments_dir, skip_env_definition_check,
+                                       not skip_env_definition_check)
+
 
 def check_passport_params(get_passport):
     if get_passport:
         integration_path = f"{project_dir}/configuration/integration.yml"
-        integration_schema_path = f"{SCHEMAS_DIR}/integration.schema.json"
+        integration_schema_path = find_file_in_schemas("integration.schema.json")
         if check_file_exists(integration_path):
             validate_yaml_by_scheme_or_fail(integration_path, integration_schema_path)
         else:

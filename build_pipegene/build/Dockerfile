@@ -9,7 +9,7 @@ COPY build_pipegene/build/constraint.txt /build/constraint.txt
 COPY build_pipegene/build/requirements.txt /build/requirements.txt
 
 COPY python /python
-COPY schemas /module/schemas
+COPY schemas /schemas
 COPY build_pipegene/scripts /module/scripts
 COPY scripts/utils /module/scripts/scripts/utils/
 COPY build_pipegene/pipegene_plugins /module/scripts/pipegene_plugins
@@ -44,6 +44,7 @@ RUN chmod 754 /module/scripts/*
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
 
 COPY --from=build /module /module
+COPY --from=build /schemas /schemas
 COPY --from=build /python /python
 COPY --from=build /etc/pip.conf /etc/pip.conf
 
