@@ -53,8 +53,7 @@ RUN rm -rf /var/cache/apk/* /tmp/* /var/tmp/* /root/.cache && \
         /module/venv/lib/python3.12/site-packages/_pytest* 2>/dev/null || true && \
     /module/venv/bin/pip cache purge
 
-RUN chmod 754 /module/scripts/* && \
-    chmod 754 /module/creds_rotation_scripts/*
+RUN chmod 754 /module/scripts/*
 
 # Stage 3: Runtime
 FROM ghcr.io/netcracker/qubership-envgene-base-modules:1.0.0 AS runtime
