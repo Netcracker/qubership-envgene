@@ -1,10 +1,11 @@
+import base64
 import os
 import subprocess
 import tempfile
 import shutil
 
 from ..business_helper import getenv_with_error
-from ..yaml_helper import openYaml, readYaml, get_or_create_nested_yaml_attribute, writeYamlToFile, dumpYamlToStr
+from ..yaml_helper import openYaml, readYaml, get_or_create_nested_yaml_attribute
 from ..logger import logger
 
 from .constants import *
@@ -23,51 +24,47 @@ def _run_SOPS(arg_str, return_codes_to_ignore=None):
         raise subprocess.SubprocessError()
     return result
 
-def _create_replace_content_sh(content):
-    delimiter = 'ENVGENE_SOPS_EDIT_CUSTOM_EOF'
+def _create_replace_content_sh(content_bytes):
+    """Build an executable SOPS EDITOR script that writes plaintext bytes exactly."""
+    payload = base64.b64encode(content_bytes).decode('ascii')
+    script_content = f"""#!/usr/bin/env python3
+import base64
+import sys
 
-    script_content = f"""#!/bin/sh
-if [ -z "$1" ]; then
-    echo "No target file specified."
-    exit 1
-fi
-cat > "$1" << '{delimiter}'
-{content}
-{delimiter}
+if len(sys.argv) < 2:
+    raise SystemExit("No target file specified.")
+with open(sys.argv[1], "wb") as out:
+    out.write(base64.b64decode({payload!r}))
 """
-    script = tempfile.NamedTemporaryFile(delete=False, suffix=".sh")
-
-    script.write(script_content.encode('utf-8'))
+    script = tempfile.NamedTemporaryFile(delete=False, suffix=".py", mode='w', encoding='utf-8')
+    script.write(script_content)
     script.close()
 
     return script.name
 
-def _sops_edit(file_path, new_content, public_key):
+def _sops_edit(encrypted_path, plaintext_path, public_key):
     # expects that SOPS age key is set in environment variables
-    new_content_str = dumpYamlToStr(new_content)
-    editor_path = _create_replace_content_sh(new_content_str)
+    with open(plaintext_path, 'rb') as f:
+        plaintext_bytes = f.read()
+    editor_path = _create_replace_content_sh(plaintext_bytes)
     try:
         os.chmod(editor_path, 0o777)
         os.environ['EDITOR'] = editor_path
-        sops_args = f'edit --age {public_key} {file_path}'
+        sops_args = f'edit --age {public_key} {encrypted_path}'
         _run_SOPS(sops_args, [200]) # 200 is FileHasNotBeenModified error code
     finally:
         if os.path.exists(editor_path):
             os.remove(editor_path)
 
 def _get_minimized_diff(file_path, old_file_path, public_key):
-    new_content = openYaml(file_path)
-
     tmp_file_obj = tempfile.NamedTemporaryFile(delete=False, suffix=".yml")
     tmp_file_obj.close()
+    tmp_path = tmp_file_obj.name
 
-    shutil.copy(old_file_path, tmp_file_obj.name)
+    shutil.copy(old_file_path, tmp_path)
 
-    _sops_edit(tmp_file_obj.name, new_content, public_key)
-    content_with_minimized_diff = openYaml(tmp_file_obj.name)
-    os.remove(tmp_file_obj.name)
-
-    return content_with_minimized_diff
+    _sops_edit(tmp_path, file_path, public_key)
+    return tmp_path
 
 def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=False, old_file_path=None, *args, **kwargs):
     if not secret_key:
@@ -90,9 +87,19 @@ def crypt_SOPS(file_path, secret_key, in_place, public_key, mode, minimize_diff=
         return openYaml(file_path)
 
     if minimize_diff and mode != "decrypt":
-        result = _get_minimized_diff(file_path, old_file_path, public_key)
-        if in_place:
-            writeYamlToFile(file_path, result)
+        tmp_path = _get_minimized_diff(file_path, old_file_path, public_key)
+        try:
+            if in_place:
+                shutil.copy2(tmp_path, file_path)
+            else:
+                result = openYaml(tmp_path)
+        finally:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+        logger.info(f'The file has been {mode}ed. Path: {file_path}')
+        if not in_place:
+            return result
+        return openYaml(file_path)
     else:
         sops_args = f' --{SOPS_MODES[mode]} '
         if mode != "decrypt":

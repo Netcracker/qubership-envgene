@@ -1,43 +1,22 @@
 import asyncio
 import json
 import os
-from enum import Enum
 from os import path, getenv
 from pathlib import Path
 
-import yaml
-
 import envgenehelper as helper
+import yaml
 from artifact_searcher import artifact
 from artifact_searcher.utils import models as artifact_models
 from envgenehelper.business_helper import getenv_and_log, getenv_with_error
+from envgenehelper.collections_helper import split_multi_value_param
 from envgenehelper.env_helper import Environment
-from envgenehelper.file_helper import identify_yaml_extension
+from envgenehelper.file_helper import identify_yaml_extension, deleteFileIfExists
 from envgenehelper.logger import logger
 from envgenehelper.plugin_engine import PluginEngine
-from envgenehelper.sd_merge_helper import basic_merge_multiple
-from envgenehelper.collections_helper import split_multi_value_param
-
-
-class MergeType(Enum):
-    EXTENDED = "extended-merge"
-    REPLACE = "replace"
-    BASIC = "basic-merge"
-    BASIC_EXCLUSION = "basic-exclusion-merge"
-
-    @classmethod
-    def from_value(cls, value: str):
-        if not isinstance(value, str):
-            raise ValueError(f"SD_REPO_MERGE_MODE value: '{value}' cannot be non-string")
-        value_lower = value.strip().lower()
-        for member in cls:
-            if member.value == value_lower:
-                return member
-        valid_values = [member.value for member in cls]
-        raise ValueError(
-            f"Invalid SD_REPO_MERGE_MODE: '{value}'. Valid values are: {valid_values}"
-        )
-
+from envgenehelper.sd_helper import (basic_merge_multiple, MergeType, calculate_merge_mode,
+                                     get_sd_dir, SD_FILE_NAME, DELTA_SD_FILE_NAME)
+from typing_extensions import deprecated
 
 MERGE_METHODS = {
     MergeType.BASIC: helper.basic_merge,
@@ -88,7 +67,7 @@ def handle_deploy_postfix_namespace_transformation(sd_data: dict, namespace_dict
 
 def prepare_vars_and_run_sd_handling():
     base_dir = getenv_and_log('CI_PROJECT_DIR')
-    env_name = getenv_and_log('ENV_NAME')
+    env_name = getenv_and_log('ENVIRONMENT_NAME')
     cluster = getenv_and_log('CLUSTER_NAME')
 
     env = Environment(base_dir, cluster, env_name)
@@ -134,30 +113,14 @@ def build_namespace_dict(env) -> dict:
 def merge_sd(sd_path: Path, sd_data, merge_func):
     logger.info(f"Final destination! - {sd_path}")
     full_sd_yaml = helper.openYaml(sd_path)
-    logger.info(f"full_sd.yaml before merge: {full_sd_yaml}")
+    logger.info(f"Full sd before merge: {full_sd_yaml}")
     helper.check_dir_exist_and_create(sd_path.parent)
     result = merge_func(full_sd_yaml, sd_data)
     helper.writeYamlToFile(sd_path, result)
     logger.info(f"Merged data into Target Path! - {result}")
 
 
-def calculate_merge_mode(sd_merge_mode, sd_delta) -> MergeType:
-    if sd_merge_mode is not None:
-        effective_merge_mode = MergeType.from_value(sd_merge_mode)
-    elif sd_delta == "true":
-        effective_merge_mode = MergeType.EXTENDED
-        logger.info(
-            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
-    elif sd_delta == "false":
-        effective_merge_mode = MergeType.REPLACE
-        logger.info(
-            f"SD_REPO_MERGE_MODE not passed. Calculated based on SD_DELTA={sd_delta}: {effective_merge_mode.value}")
-    else:
-        effective_merge_mode = MergeType.BASIC
-        logger.info(f"SD_REPO_MERGE_MODE not passed. Default value: {effective_merge_mode.value}")
-    return effective_merge_mode
-
-
+@deprecated("SD_DELTA is deprecated")
 def calculate_sd_delta(sd_delta):
     logger.info(f"printing sd_delta before {sd_delta}")
     if sd_delta is not None and str(sd_delta).strip() != "":
@@ -189,12 +152,13 @@ def multiply_sds_to_single(sds_data, effective_merge_mode):
 
 
 def handle_sd(env, sd_source_type, sd_version, sd_data, sd_delta, sd_merge_mode):
-    base_sd_path = Path(f'{env.env_path}/Inventory/solution-descriptor/')
-
+    base_sd_path = get_sd_dir()
     sd_delta = calculate_sd_delta(sd_delta)
     effective_merge_mode = calculate_merge_mode(sd_merge_mode, sd_delta)
 
     helper.check_dir_exist_and_create(base_sd_path)
+    # do not commit delta sd to repo, delete old ones
+    deleteFileIfExists(base_sd_path.joinpath(DELTA_SD_FILE_NAME))
     if sd_source_type == "artifact":
         download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mode)
     elif sd_source_type == "json":
@@ -238,13 +202,13 @@ def extract_sds_from_json(env, base_sd_path: Path, sd_data, effective_merge_mode
     full_sd_from_pipe = multiply_sds_to_single(transformed_data, effective_merge_mode)
     validate_applications(full_sd_from_pipe, effective_merge_mode)
 
-    sd_path = base_sd_path.joinpath("sd.yaml")
-    sd_delta_path = base_sd_path.joinpath("delta_sd.yaml")
+    sd_path = base_sd_path.joinpath(SD_FILE_NAME)
+    sd_delta_path = base_sd_path.joinpath(DELTA_SD_FILE_NAME)
     if effective_merge_mode == MergeType.REPLACE:
         logger.info("Inside replace")
         if helper.check_file_exists(sd_path):
             full_sd_yaml = helper.openYaml(sd_path)
-            logger.info(f"full_sd.yaml before replacement: {json.dumps(full_sd_yaml, indent=2)}")
+            logger.info(f"Full sd before replacement: {json.dumps(full_sd_yaml, indent=2)}")
         else:
             logger.info("No existing SD found at destination. Proceeding to write new SD.")
         helper.check_dir_exist_and_create(path.dirname(sd_path))
@@ -306,7 +270,7 @@ def download_sd_by_appver(app_name: str, version: str, plugins: PluginEngine) ->
 
     artifact_info = asyncio.run(
         artifact.check_artifact_async(app_def, artifact.FileExtension.JSON, version,
-                                       auth_headers=auth_headers))
+                                      auth_headers=auth_headers))
     if not artifact_info:
         raise ValueError(
             f'Solution descriptor content was not received for {app_name}:{version}')

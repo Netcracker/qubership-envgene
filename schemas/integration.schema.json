@@ -97,7 +97,6 @@
     }
   },
   "required": [
-    "cp_discovery",
-    "self_token"
+    "cp_discovery"
   ]
 }

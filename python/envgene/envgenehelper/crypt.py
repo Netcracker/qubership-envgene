@@ -71,7 +71,7 @@ def encrypt_file(file_path, *, secret_key=None, in_place=True, public_key=None, 
         if not check_file_exists(old_file_path):
             minimize_diff = False
             logger.warning(f"Cred file at {old_file_path} doesn't exist, minimize_diff parameter is ignored")
-        if not is_encrypted(old_file_path, crypt_backend):
+        elif not is_encrypted(old_file_path, crypt_backend):
             minimize_diff = False
             logger.warning(f"Cred file at {old_file_path} is not encrypted, minimize_diff parameter is ignored")
     res = _handle_missing_file(file_path, default_yaml, allow_default)
@@ -155,21 +155,19 @@ def check_for_encrypted_files(files):
 
 
 def decrypt_all_cred_files_for_env(**kwargs):
-    IS_CRYPT = get_crypt()
     files = get_all_necessary_cred_files()
-    if not IS_CRYPT:
+    if not get_crypt():
         check_for_encrypted_files(files)
-    else:
-        for f in files:
-            decrypt_file(f, **kwargs)
-        logger.debug("Decrypted next cred files:")
-        logger.debug(files)
+        return
+
+    for f in files:
+        decrypt_file(f, **kwargs)
+    logger.debug(f"Decrypted next cred files:\n{files}")
 
 
 def encrypt_all_cred_files_for_env(**kwargs):
     files = get_all_necessary_cred_files()
-    logger.debug("Attempting to encrypt(if crypt is true) next files:")
-    logger.debug(files)
+    logger.debug(f"Attempting to encrypt(if crypt is true) next files:\n{files}")
     for f in files:
         encrypt_file(f, **kwargs)
 

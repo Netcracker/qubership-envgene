@@ -82,28 +82,32 @@ public class CloudMap extends DynamicMap {
 
         CredentialUtils credentialUtils = Injector.getInstance().getCredentialUtils();
         for (DBaaS dbaas : config.getDbaasCfg()) {
-            if (dbaas.getApiUrl() != null) {
-                map.putIfAbsent("API_DBAAS_ADDRESS", dbaas.getApiUrl());
-            } else {
-                map.putIfAbsent("API_DBAAS_ADDRESS", "");
-            }
-            if (dbaas.getAggregatorUrl() != null) {
-                map.putIfAbsent("DBAAS_AGGREGATOR_ADDRESS", dbaas.getAggregatorUrl());
-            } else {
-                map.putIfAbsent("DBAAS_AGGREGATOR_ADDRESS", "");
-            }
+            if (dbaas.isEnable()) {
+                if (dbaas.getApiUrl() != null) {
+                    map.putIfAbsent("API_DBAAS_ADDRESS", dbaas.getApiUrl());
+                } else {
+                    map.putIfAbsent("API_DBAAS_ADDRESS", "");
+                }
+                if (dbaas.getAggregatorUrl() != null) {
+                    map.putIfAbsent("DBAAS_AGGREGATOR_ADDRESS", dbaas.getAggregatorUrl());
+                } else {
+                    map.putIfAbsent("DBAAS_AGGREGATOR_ADDRESS", "");
+                }
 
-            Credential cred = credentialUtils.getCredentialsById(dbaas.getCredId());
-            if (cred instanceof UsernamePasswordCredentials) {
-                map.putIfAbsent("DBAAS_AGGREGATOR_USERNAME", ((UsernamePasswordCredentials) cred).getUsername());
-                map.putIfAbsent("DBAAS_AGGREGATOR_PASSWORD", ((UsernamePasswordCredentials) cred).getPassword());
-                map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", ((UsernamePasswordCredentials) cred).getUsername());
-                map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", ((UsernamePasswordCredentials) cred).getPassword());
-            } else {
-                map.putIfAbsent("DBAAS_AGGREGATOR_USERNAME", DEFAULT_DBAAS_AGGREGATOR_LOGIN);
-                map.putIfAbsent("DBAAS_AGGREGATOR_PASSWORD", DEFAULT_DBAAS_AGGREGATOR_PASSWORD);
-                map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", DEFAULT_DBAAS_AGGREGATOR_LOGIN);
-                map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", DEFAULT_DBAAS_AGGREGATOR_PASSWORD);
+                if (StringUtils.isNotBlank(dbaas.getCredId())) {
+                    Credential cred = credentialUtils.getCredentialsById(dbaas.getCredId());
+                    if (cred instanceof UsernamePasswordCredentials) {
+                        map.putIfAbsent("DBAAS_AGGREGATOR_USERNAME", ((UsernamePasswordCredentials) cred).getUsername());
+                        map.putIfAbsent("DBAAS_AGGREGATOR_PASSWORD", ((UsernamePasswordCredentials) cred).getPassword());
+                        map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", ((UsernamePasswordCredentials) cred).getUsername());
+                        map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", ((UsernamePasswordCredentials) cred).getPassword());
+                    } else {
+                        map.putIfAbsent("DBAAS_AGGREGATOR_USERNAME", DEFAULT_DBAAS_AGGREGATOR_LOGIN);
+                        map.putIfAbsent("DBAAS_AGGREGATOR_PASSWORD", DEFAULT_DBAAS_AGGREGATOR_PASSWORD);
+                        map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_USERNAME", DEFAULT_DBAAS_AGGREGATOR_LOGIN);
+                        map.putIfAbsent("DBAAS_CLUSTER_DBA_CREDENTIALS_PASSWORD", DEFAULT_DBAAS_AGGREGATOR_PASSWORD);
+                    }
+                }
             }
             map.putIfAbsent("DBAAS_ENABLED", new Parameter(dbaas.isEnable()));
         }
@@ -117,13 +121,15 @@ public class CloudMap extends DynamicMap {
 
                 map.put("MAAS_EXTERNAL_ROUTE", maas.getMaasUrl());
                 map.put("MAAS_INTERNAL_ADDRESS", maas.getMaasInternalAddress());
-                Credential cred = credentialUtils.getCredentialsById(maas.getCredId());
-                if (cred instanceof UsernamePasswordCredentials) {
-                    map.putIfAbsent("MAAS_CREDENTIALS_USERNAME", ((UsernamePasswordCredentials) cred).getUsername());
-                    map.putIfAbsent("MAAS_CREDENTIALS_PASSWORD", ((UsernamePasswordCredentials) cred).getPassword());
-                } else {
-                    map.putIfAbsent("MAAS_CREDENTIALS_USERNAME", DEFAULT_MAAS_LOGIN);
-                    map.putIfAbsent("MAAS_CREDENTIALS_PASSWORD", DEFAULT_MAAS_PASSWORD);
+                if (StringUtils.isNotBlank(maas.getCredId())) {
+                    Credential cred = credentialUtils.getCredentialsById(maas.getCredId());
+                    if (cred instanceof UsernamePasswordCredentials) {
+                        map.putIfAbsent("MAAS_CREDENTIALS_USERNAME", ((UsernamePasswordCredentials) cred).getUsername());
+                        map.putIfAbsent("MAAS_CREDENTIALS_PASSWORD", ((UsernamePasswordCredentials) cred).getPassword());
+                    } else {
+                        map.putIfAbsent("MAAS_CREDENTIALS_USERNAME", DEFAULT_MAAS_LOGIN);
+                        map.putIfAbsent("MAAS_CREDENTIALS_PASSWORD", DEFAULT_MAAS_PASSWORD);
+                    }
                 }
             }
         } else {
@@ -139,24 +145,26 @@ public class CloudMap extends DynamicMap {
             String address = StringUtils.isEmpty(vaultConfig.getPublicVaultUrl()) ? vaultConfig.getVaultUrl() : vaultConfig.getPublicVaultUrl();
             map.putIfAbsent("PUBLIC_VAULT_URL", address);
 
-            Credential credentials = credentialUtils.getCredentialsById(vaultConfig.getCredId());
-            if (credentials instanceof VaultAppRoleCredentials) {
-                try {
-                    VaultAppRoleCredentials vaultAppRole = (VaultAppRoleCredentials) credentials;
-                    com.bettercloud.vault.Vault vault = new com.bettercloud.vault.Vault(new com.bettercloud.vault.VaultConfig()
-                            .address(address)
-                            .engineVersion(2)
-                            .sslConfig(new SslConfig().verify(false).build())
-                            .build());
-                    String token = vault.auth()
-                            .loginByAppRole(vaultAppRole.getPath(), vaultAppRole.getRoleId(), vaultAppRole.getSecretId())
-                            .getAuthClientToken();
-                    map.put("VAULT_TOKEN", token);
-                } catch (VaultException e) {
+            if (StringUtils.isNotBlank(vaultConfig.getCredId())) {
+                Credential credentials = credentialUtils.getCredentialsById(vaultConfig.getCredId());
+                if (credentials instanceof VaultAppRoleCredentials) {
+                    try {
+                        VaultAppRoleCredentials vaultAppRole = (VaultAppRoleCredentials) credentials;
+                        com.bettercloud.vault.Vault vault = new com.bettercloud.vault.Vault(new com.bettercloud.vault.VaultConfig()
+                                .address(address)
+                                .engineVersion(2)
+                                .sslConfig(new SslConfig().verify(false).build())
+                                .build());
+                        String token = vault.auth()
+                                .loginByAppRole(vaultAppRole.getPath(), vaultAppRole.getRoleId(), vaultAppRole.getSecretId())
+                                .getAuthClientToken();
+                        map.put("VAULT_TOKEN", token);
+                    } catch (VaultException e) {
+                        map.putIfAbsent("VAULT_TOKEN", "");
+                    }
+                } else {
                     map.putIfAbsent("VAULT_TOKEN", "");
                 }
-            } else {
-                map.putIfAbsent("VAULT_TOKEN", "");
             }
         }
         Consul consul = config.getConsul();
@@ -164,11 +172,13 @@ public class CloudMap extends DynamicMap {
             map.putIfAbsent("CONSUL_URL", consul.getInternalUrl());
             map.putIfAbsent("CONSUL_PUBLIC_URL", consul.getPublicUrl());
 
-            Credential cred = credentialUtils.getCredentialsById(consul.getTokenSecret());
-            if (cred instanceof StringCredentials) {
-                map.putIfAbsent("CONSUL_ADMIN_TOKEN", ((StringCredentials) cred).getSecret());
-            } else {
-                map.putIfAbsent("CONSUL_ADMIN_TOKEN", "");
+            if (StringUtils.isNotBlank(consul.getTokenSecret())) {
+                Credential cred = credentialUtils.getCredentialsById(consul.getTokenSecret());
+                if (cred instanceof StringCredentials) {
+                    map.putIfAbsent("CONSUL_ADMIN_TOKEN", ((StringCredentials) cred).getSecret());
+                } else {
+                    map.putIfAbsent("CONSUL_ADMIN_TOKEN", "");
+                }
             }
         }
 
