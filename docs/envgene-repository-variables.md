@@ -234,7 +234,7 @@ JSON directly.
 
 ### `AWS_ACCESS_KEY_ID`
 
-**Description**: AWS access key id used by the
+**Description**: AWS access key ID used by the
 [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to authenticate to AWS
 Secrets Manager for an AWS [Secret Store](/docs/features/external-creds.md#secret-store). When the Secret Store
 identifier is not `default_store`, set the prefixed variant `<id>_AWS_ACCESS_KEY_ID` instead. Paired with
