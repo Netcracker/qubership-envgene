@@ -17,6 +17,10 @@
     - [`DOCKER_REGISTRY` (in instance repository)](#docker_registry-in-instance-repository)
     - [`DOCKER_CLOUD_REGISTRY_PROVIDER`](#docker_cloud_registry_provider)
     - [`GCP_SA_KEY`](#gcp_sa_key)
+    - [`VAULT_TOKEN`](#vault_token)
+    - [`GOOGLE_APPLICATION_CREDENTIALS`](#google_application_credentials)
+    - [`AWS_ACCESS_KEY_ID`](#aws_access_key_id)
+    - [`AWS_SECRET_ACCESS_KEY`](#aws_secret_access_key)
   - [Template EnvGene Repository](#template-envgene-repository)
     - [`ENV_TEMPLATE_TEST`](#env_template_test)
     - [`ENVGENE_LOG_LEVEL` (in template repository)](#envgene_log_level-in-template-repository)
@@ -199,6 +203,60 @@ CALCULATOR_CLI_JAVA_OPTIONS="-Djava.util.concurrent.ForkJoinPool.common.parallel
 **Example**: `{"type":"service_account","project_id":"...",...}`
 
 **Note**: Store as a secret (GitHub Actions Secrets) or masked variable. Never commit to the repository. Use a service account with at least `Artifact Registry Reader` role. See [Docker Registry Configuration](/docs/how-to/docker-registry-configuration.md) for details.
+
+### `VAULT_TOKEN`
+
+**Description**: Vault authentication token used by the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to read and write
+credentials in a Vault [Secret Store](/docs/features/external-creds.md#secret-store). When the Secret Store
+identifier is not `default_store`, set the prefixed variant `<id>_VAULT_TOKEN` instead (one set per store). See
+[Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
+
+**Default Value**: None
+
+**Mandatory**: Yes, if any external Credential references a Vault Secret Store
+
+### `GOOGLE_APPLICATION_CREDENTIALS`
+
+**Description**: GCP service account credentials used by the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to read and write
+credentials in a GCP Secret Manager [Secret Store](/docs/features/external-creds.md#secret-store). When the
+Secret Store identifier is not `default_store`, set the prefixed variant `<id>_GOOGLE_APPLICATION_CREDENTIALS`
+instead. See
+[Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
+
+The variable holds the full JSON content of the service account key, not a file path - the CLI consumes the
+JSON directly.
+
+**Default Value**: None
+
+**Mandatory**: Yes, if any external Credential references a GCP Secret Manager Secret Store
+
+### `AWS_ACCESS_KEY_ID`
+
+**Description**: AWS access key id used by the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to authenticate to AWS
+Secrets Manager for an AWS [Secret Store](/docs/features/external-creds.md#secret-store). When the Secret Store
+identifier is not `default_store`, set the prefixed variant `<id>_AWS_ACCESS_KEY_ID` instead. Paired with
+[`AWS_SECRET_ACCESS_KEY`](#aws_secret_access_key). See
+[Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
+
+**Default Value**: None
+
+**Mandatory**: Yes, if any external Credential references an AWS Secrets Manager Secret Store
+
+### `AWS_SECRET_ACCESS_KEY`
+
+**Description**: AWS secret access key used by the
+[External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to authenticate to AWS
+Secrets Manager for an AWS [Secret Store](/docs/features/external-creds.md#secret-store). When the Secret Store
+identifier is not `default_store`, set the prefixed variant `<id>_AWS_SECRET_ACCESS_KEY` instead. Paired with
+[`AWS_ACCESS_KEY_ID`](#aws_access_key_id). See
+[Store identifier and CI/CD variables](/docs/features/external-creds.md#store-identifier-and-cicd-variables).
+
+**Default Value**: None
+
+**Mandatory**: Yes, if any external Credential references an AWS Secrets Manager Secret Store
 
 ## Template EnvGene Repository
 
