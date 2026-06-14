@@ -1,0 +1,86 @@
+API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
+APPLICATION_NAME: eso-app
+APP_PARAM: &id001
+- STATIC_VAL: abc
+ARTIFACT_DESCRIPTOR_ARTIFACT_ID: test.platform.system.monitoring_monitoring-operator
+ARTIFACT_DESCRIPTOR_GROUP_ID: org.qubership.deploy.product
+ARTIFACT_DESCRIPTOR_MAVEN_REPO: https://maven.qubership.org/repository/release
+ARTIFACT_DESCRIPTOR_VERSION: 0.1.0-delivery-20261115.141230-4-RELEASE
+BUILD_TAG_NEW: keycloak-database
+CLIENT_PREFIX: ns-test-pl
+CLOUDNAME: cluster_01_pl_02
+CLOUD_API_HOST: api.cluster-01.qubership.org
+CLOUD_API_PORT: '6443'
+CLOUD_PRIVATE_HOST: cluster-01.qubership.org
+CLOUD_PROTOCOL: https
+CLOUD_PUBLIC_HOST: cluster-01.qubership.org
+CONSUL_PUBLIC_URL: http://consul.consul:8080
+CONSUL_URL: http://consul.consul:8080
+CUSTOM_HOST: cluster-01.qubership.org
+DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.qubership.org
+DBAAS_ENABLED: true
+DB_TOKEN: &id002
+  DEPLOY_CFG:
+    param_type: deploy
+  SECURED_FLAG: 'true'
+DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
+GATEWAY_URL: http://internal-gateway-service:8080
+MAAS_ENABLED: false
+NAMESPACE: ns-test-pl
+OPENSHIFT_SERVER: https://api.cluster-01.qubership.org:6443
+ORIGIN_NAMESPACE: ns-test-pl
+PRIVATE_GATEWAY_URL: https://private-gateway-ns-test-pl.cluster-01.qubership.org
+PRIVATE_IDENTITY_PROVIDER_URL: https://private-gateway-ns-test-pl.cluster-01.qubership.org
+PRODUCTION_MODE: false
+PUBLIC_GATEWAY_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
+PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
+SECRET_FLOW: external-values
+SECRET_META: &id003
+  normalizedSecretName: test-cluster-01--env-1--app-db-cred
+  secretKeys:
+  - remoteKeyName: password
+  secretStoreId: custom-store
+SERVER_HOSTNAME: cluster-01.qubership.org
+SSL_SECRET: defaultsslcertificate
+STATIC_CACHE_SERVICE_ROUTE_HOST: static-cache-service-ns-test-pl.cluster-01.qubership.org
+TENANTNAME: Platform
+global: &id004
+  API_DBAAS_ADDRESS: http://dbaas.dbaas:8080
+  APPLICATION_NAME: eso-app
+  APP_PARAM: *id001
+  ARTIFACT_DESCRIPTOR_ARTIFACT_ID: test.platform.system.monitoring_monitoring-operator
+  ARTIFACT_DESCRIPTOR_GROUP_ID: org.qubership.deploy.product
+  ARTIFACT_DESCRIPTOR_MAVEN_REPO: https://maven.qubership.org/repository/release
+  ARTIFACT_DESCRIPTOR_VERSION: 0.1.0-delivery-20261115.141230-4-RELEASE
+  BUILD_TAG_NEW: keycloak-database
+  CLIENT_PREFIX: ns-test-pl
+  CLOUDNAME: cluster_01_pl_02
+  CLOUD_API_HOST: api.cluster-01.qubership.org
+  CLOUD_API_PORT: '6443'
+  CLOUD_PRIVATE_HOST: cluster-01.qubership.org
+  CLOUD_PROTOCOL: https
+  CLOUD_PUBLIC_HOST: cluster-01.qubership.org
+  CONSUL_PUBLIC_URL: http://consul.consul:8080
+  CONSUL_URL: http://consul.consul:8080
+  CUSTOM_HOST: cluster-01.qubership.org
+  DBAAS_AGGREGATOR_ADDRESS: https://dbaas.cluster-01.qubership.org
+  DBAAS_ENABLED: true
+  DB_TOKEN: *id002
+  DEPLOYMENT_SESSION_ID: d3ef5cc0-df5c-42b7-82a8-b1aaaca8532d
+  GATEWAY_URL: http://internal-gateway-service:8080
+  MAAS_ENABLED: false
+  NAMESPACE: ns-test-pl
+  OPENSHIFT_SERVER: https://api.cluster-01.qubership.org:6443
+  ORIGIN_NAMESPACE: ns-test-pl
+  PRIVATE_GATEWAY_URL: https://private-gateway-ns-test-pl.cluster-01.qubership.org
+  PRIVATE_IDENTITY_PROVIDER_URL: https://private-gateway-ns-test-pl.cluster-01.qubership.org
+  PRODUCTION_MODE: false
+  PUBLIC_GATEWAY_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
+  PUBLIC_IDENTITY_PROVIDER_URL: https://public-gateway-ns-test-pl.cluster-01.qubership.org
+  SECRET_FLOW: external-values
+  SECRET_META: *id003
+  SERVER_HOSTNAME: cluster-01.qubership.org
+  SSL_SECRET: defaultsslcertificate
+  STATIC_CACHE_SERVICE_ROUTE_HOST: static-cache-service-ns-test-pl.cluster-01.qubership.org
+  TENANTNAME: Platform
+cloud-events-exporter: *id004
