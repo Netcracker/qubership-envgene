@@ -79,7 +79,10 @@ The CLI reads the external credentials context YAML at the path given as the pos
 argument.
 
 The context is a `credentials` map. Each entry addresses a secret with a VALS reference
-string, a strategy enum value, and a `data` map that describes the credential content.
+string and a strategy enum value. Entries with a write strategy (`create_if_absent` or
+`overwrite`) also carry a `data` field describing the credential content. Entries with
+`fail_if_absent` omit `data` because the CLI does not write.
+
 The CLI infers the store type from the VALS scheme and adapts `data` to the target
 store's format. Store configuration and authentication come from the process environment
 (see [Environment variables](#environment-variables)).
@@ -98,7 +101,9 @@ credentials:
     # Mandatory
     # See the Strategy enum section for the meaning of each value.
     strategy: enum [fail_if_absent, create_if_absent, overwrite]
-    # Mandatory
+    # Required when strategy is `create_if_absent` or `overwrite`. Omitted when
+    # strategy is `fail_if_absent` (no write happens, so `data` has no use).
+    #
     # Credential content. Two shapes are accepted:
     #
     # - Map of named field values for a multi-field credential (for example
@@ -127,7 +132,7 @@ credentials:
 
   db-readonly-cred:
     vals: "ref+vault://kv/data/env-1/db-readonly-cred"
-    strategy: fail_if_absent
+    strategy: create_if_absent
     data:
       username: username
       password: _generateValue
@@ -138,9 +143,29 @@ credentials:
     data:
       value: token
 
+  monitoring-token:
+    vals: "ref+vault://kv/data/env-1/monitoring-token"
+    strategy: fail_if_absent
+
+  gcp-license-token:
+    vals: "ref+gcpsecrets://example-project/gcp-license-token"
+    strategy: create_if_absent
+    data: _generateValue
+
+  smtp-relay-cred:
+    vals: "ref+gcpsecrets://example-project/smtp-relay-cred"
+    strategy: create_if_absent
+    data:
+      username: smtp_user
+      password: _generateValue
+
   third-party-api-token:
     vals: "ref+gcpsecrets://example-project/third-party-api-token"
     strategy: fail_if_absent
+
+  jwt-signing-key:
+    vals: "ref+awssecrets://prod/jwt-signing-key?region=us-east-1"
+    strategy: overwrite
     data: _generateValue
 ```
 
@@ -161,6 +186,9 @@ The strategy is an attribute on each credential entry in the context.
 The "credential is present" check is performed via the store's `list` operation against
 the target path. The CLI does not `get` the credential value and does not validate the
 structure or the content of an existing credential.
+
+`fail_if_absent` entries do not carry a `data` field: the CLI does not write.
+`create_if_absent` and `overwrite` entries carry `data`.
 
 A per-credential failure does not stop the run. The CLI logs each
 failure and continues with the next credential so the log carries the full list of
