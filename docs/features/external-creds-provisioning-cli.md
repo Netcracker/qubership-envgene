@@ -42,7 +42,7 @@ external-cred-provision --dry-run effective-set/external-credential/external-cre
 
 | Flag                       | Default | Meaning                                              |
 |----------------------------|---------|------------------------------------------------------|
-| `--dry-run`                | off     | Run prerequisite checks only, no writes              |
+| `--dry-run`                | off     | Run checks only, no writes                           |
 
 When `--dry-run` is set, the CLI runs the [Dry-run phase](#dry-run-phase). No writes happen.
 
@@ -51,16 +51,20 @@ When `--dry-run` is set, the CLI runs the [Dry-run phase](#dry-run-phase). No wr
 All store configuration is read from the process environment. The CLI determines the
 store type from the VALS reference scheme in each credential's `vals` field
 (`ref+vault://...` → `vault`, `ref+gcpsecrets://...` → `gcp`, `ref+awssecrets://...` →
-`aws`). The store identifier comes from the `secret_store_id` query parameter in
-`vals`, or defaults to `default-store` when the parameter is absent.
+`aws`).
 
-For each store identifier, the CLI looks up variables prefixed with the store name.
+For each store type, the CLI reads the following variables from the process
+environment. When the `vals` reference carries a `secret_store_id` query parameter,
+the CLI prepends the value as-is to each bare name, with `_` as separator (not part of
+the value). The value is expected to match `[A-Za-z0-9_]+`.
 
-| Store type | Variable(s)                                                                |
-|------------|----------------------------------------------------------------------------|
-| `vault`    | `<SECRET_STORE>_VAULT_TOKEN`                                               |
-| `gcp`      | `<SECRET_STORE>_GOOGLE_APPLICATION_CREDENTIALS`                            |
-| `aws`      | `<SECRET_STORE>_AWS_ACCESS_KEY_ID`, `<SECRET_STORE>_AWS_SECRET_ACCESS_KEY` |
+The right column illustrates with `secret_store_id=secret_store`:
+
+| Store type | Without `secret_store_id`                    | With `secret_store_id=secret_store`                                    |
+|------------|----------------------------------------------|------------------------------------------------------------------------|
+| `vault`    | `VAULT_TOKEN`                                | `secret_store_VAULT_TOKEN`                                             |
+| `gcp`      | `GOOGLE_APPLICATION_CREDENTIALS`             | `secret_store_GOOGLE_APPLICATION_CREDENTIALS`                          |
+| `aws`      | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` | `secret_store_AWS_ACCESS_KEY_ID`, `secret_store_AWS_SECRET_ACCESS_KEY` |
 
 The variable suffix conventions (`VAULT_TOKEN`, `GOOGLE_APPLICATION_CREDENTIALS`, etc.)
 follow the `secret_manager` module contract per store type. The authoritative source is
@@ -89,21 +93,25 @@ credentials:
     # VALS reference string that addresses the secret. The string is a path only — no
     # key segments (no `#` fragment). The CLI infers the store type from the VALS
     # scheme. The store identifier comes from the `secret_store_id` query parameter,
-    # or defaults to `default-store` when the parameter is absent.
+    # or defaults to `default_store` when the parameter is absent.
     vals: string
     # Mandatory
     # See the Strategy enum section for the meaning of each value.
-    strategy: enum [fail_if_absent, create_if_absent, create_if_present]
+    strategy: enum [fail_if_absent, create_if_absent, overwrite]
     # Mandatory
-    # Credential content as a map of named field values. The shape reflects the
-    # credential's structure: `value` for a single-value
-    # credential (token, secret); `username` and `password` for the usernamePassword
-    # pair. Each value is either a real
-    # plaintext value or the reserved marker `envgeneGenerateValue`.
-    data:
-      username: string
-      password: string
-      value: string
+    # Credential content. Two shapes are accepted:
+    #
+    # - Map of named field values for a multi-field credential (for example
+    #   `username` and `password` for the usernamePassword pair), or for a
+    #   single-value credential in a store that requires a named field
+    #   (for example Vault, where the secret path must carry a field segment).
+    #
+    # - Scalar string for a single-value credential in a store that addresses
+    #   the secret directly (for example GCP Secret Manager).
+    #
+    # Each value (the scalar, or each field value in the map) is either a real
+    # plaintext value or the reserved marker `_generateValue`.
+    data: string | map
 ```
 
 Example:
@@ -122,7 +130,7 @@ credentials:
     strategy: fail_if_absent
     data:
       username: username
-      password: envgeneGenerateValue
+      password: _generateValue
 
   mq-connection-secret:
     vals: "ref+vault://kv/data/env-1/mq-connection-secret"
@@ -133,23 +141,26 @@ credentials:
   third-party-api-token:
     vals: "ref+gcpsecrets://example-project/third-party-api-token"
     strategy: fail_if_absent
-    data:
-      value: envgeneGenerateValue
+    data: _generateValue
 ```
 
 > [!IMPORTANT]
-> `envgeneGenerateValue` is a reserved marker in the EnvGene catalogue of reserved values.
+> `_generateValue` is a reserved marker in the EnvGene catalogue of reserved values.
 > It signals "CLI must generate this" during provisioning.
 
 ## Strategy enum
 
 The strategy is an attribute on each credential entry in the context.
 
-| Strategy             | Credential is present    | Credential is absent  |
-|----------------------|--------------------------|-----------------------|
-| `fail_if_absent`     | skip the credential      | fail                  |
-| `create_if_absent`   | skip the credential      | create the credential |
-| `create_if_present`  | overwrite the credential | create the credential |
+| Strategy           | Credential is present    | Credential is absent  |
+|--------------------|--------------------------|-----------------------|
+| `fail_if_absent`   | skip the credential      | fail                  |
+| `create_if_absent` | skip the credential      | create the credential |
+| `overwrite`        | overwrite the credential | create the credential |
+
+The "credential is present" check is performed via the store's `list` operation against
+the target path. The CLI does not `get` the credential value and does not validate the
+structure or the content of an existing credential.
 
 A per-credential failure does not stop the run. The CLI logs each
 failure and continues with the next credential so the log carries the full list of
@@ -158,17 +169,17 @@ failures. The summary line tallies them.
 In dry-run mode the CLI performs no writes. For each strategy, the CLI runs the
 prerequisite check shown below.
 
-| Strategy             | Dry-run check                                              |
-|----------------------|------------------------------------------------------------|
-| `fail_if_absent`     | the credential exists at the target path                   |
-| `create_if_absent`   | the authenticated principal can create at the target path  |
-| `create_if_present`  | the authenticated principal can create at the target path  |
+| Strategy           | Dry-run check                                              |
+|--------------------|------------------------------------------------------------|
+| `fail_if_absent`   | the credential exists at the target path                   |
+| `create_if_absent` | the authenticated principal can create at the target path  |
+| `overwrite`        | the authenticated principal can create at the target path  |
 
 ## Value generation
 
-When the CLI writes a credential and a `data` field carries the `envgeneGenerateValue`
-marker, the CLI generates a value following the rules below. The rules apply to both
-multiple-value and single-value credential types.
+When the CLI writes a credential and `data` carries the `_generateValue` marker —
+either as the scalar value, or as a value inside the `data` map — the CLI generates a
+value following the rules below. The rules apply to every occurrence of the marker.
 
 Generated values use **only** characters from this set:
 
@@ -187,10 +198,9 @@ Length is 16 characters.
 
 Runs before any per-credential work.
 
-1. **Check env vars.** For every unique store identifier referenced by `vals` fields
-   (the `secret_store_id` query parameter, or `default-store` when absent), the
-   corresponding prefixed environment variables are present.
-2. **Check authentication.** Authenticate to each referenced store using the prefixed
+1. **Check env vars.** For every distinct store referenced by `vals` fields, the
+   corresponding environment variables are present in the process environment.
+2. **Check authentication.** Authenticate to each referenced store using its
    environment variables.
 
 On failure, the CLI logs the failure and exits non-zero. No further phase runs.
@@ -199,7 +209,7 @@ On failure, the CLI logs the failure and exits non-zero. No further phase runs.
 
 Runs in apply mode (non `--dry-run`). For each `credentials.<id>` entry, in input order
 apply the strategy per the behaviour table in [Strategy enum](#strategy-enum). When
-the strategy calls for a write, generate values for each `envgeneGenerateValue`
+the strategy calls for a write, generate values for each `_generateValue`
 marker using the default pattern for the field. Real values from `data` go through
 as is. Write the result to the store through `secret_manager`. Log the outcome.
 
