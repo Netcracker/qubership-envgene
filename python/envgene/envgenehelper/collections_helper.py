@@ -126,8 +126,9 @@ def split_multi_value_param(param: str)-> list[str]:
     has_semicolon = ';' in param
     has_space = ' ' in param
     has_newline = '\n' in param
+    has_literal_newline = '\\n' in param
 
-    delimiter_count = sum([has_comma, has_semicolon, has_space, has_newline])
+    delimiter_count = sum([has_comma, has_semicolon, has_space, has_newline, has_literal_newline])
 
     if delimiter_count > 1:
         raise ValueError(
@@ -146,6 +147,9 @@ def split_multi_value_param(param: str)-> list[str]:
     elif has_newline:
         logger.info(f"env names {param} has newline as delimiter. splitting it")
         parts = param.splitlines()
+    elif has_literal_newline:
+        logger.debug(f"env names {param} has literal newline as delimiter. splitting it")
+        parts = param.split('\\n')
     else:
         return [param]
 
