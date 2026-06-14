@@ -418,9 +418,17 @@ cp_discovery:
     branch: master
     # Mandatory
     # Authentication token for the discovery repository
-    # Recommended to set via cred macro:
-    # ${creds.get('<cred-id>').secret}
+    # Set via creds.get macro for local Credentials, or $type: credRef for external
     token: string
+# Authentication token for EnvGene to access the instance repository
+# Required for EnvGene to commit changes to the instance repository
+# Set via creds.get macro for local Credentials, or $type: credRef for external
+self_token: string
+# Optional
+# Authentication credential for the Docker registry that EnvGene reads
+# Set via creds.get macro for local Credentials, or $type: credRef for external
+# Falls back to GCP_SA_KEY CI/CD variable when absent
+docker_registry_auth: string
 ```
 
 ## `deployer.yml`
@@ -450,13 +458,11 @@ Located at:
 <name>:
   # Mandatory
   # Username for authentication with external CMDB
-  # Recommended to set via cred macro:
-  # envgen.creds.get(<cred-id>).secret
+  # Set via creds.get macro for local Credentials, or $type: credRef for external
   username: string
   # Mandatory
   # Token for authentication with external CMDB
-  # Recommended to set via cred macro:
-  # envgen.creds.get(<cred-id>).secret
+  # Set via creds.get macro for local Credentials, or $type: credRef for external
   token: string
   # Mandatory
   # URL of external CMDB

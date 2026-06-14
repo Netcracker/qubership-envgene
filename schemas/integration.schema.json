@@ -4,6 +4,29 @@
   "title": "Integration Configuration",
   "description": "Defines the integration configuration",
   "additionalProperties": true,
+  "definitions": {
+    "credRef": {
+      "type": "object",
+      "title": "Credential Reference",
+      "description": "Reference to an external Credential, resolved at runtime through the Secret Store",
+      "properties": {
+        "$type": {
+          "type": "string",
+          "const": "credRef"
+        },
+        "credId": {
+          "type": "string",
+          "description": "Identifier of the referenced Credential entry"
+        },
+        "property": {
+          "type": "string",
+          "description": "Optional property name to read from a multi-field Credential"
+        }
+      },
+      "required": ["$type", "credId"],
+      "additionalProperties": false
+    }
+  },
   "properties": {
     "cp_discovery": {
       "type": "object",
@@ -37,12 +60,11 @@
               ]
             },
             "token": {
-              "type": "string",
               "title": "Access Token",
-              "description": "The access token granting the access to discovery repository for calling Cloud Passport discovery",
-              "examples": [
-                "glpat-67890fghij",
-                "glpat-11223klmno"
+              "description": "The access token granting the access to discovery repository for calling Cloud Passport discovery. Accepts a plain string or a `$type: credRef` form for an external Credential",
+              "oneOf": [
+                { "type": "string" },
+                { "$ref": "#/definitions/credRef" }
               ]
             }
           },
@@ -55,6 +77,22 @@
       },
       "required": [
         "gitlab"
+      ]
+    },
+    "self_token": {
+      "title": "Self Token",
+      "description": "The access token granting the access to this repository for committing changes. Accepts a plain string or a `$type: credRef` form for an external Credential",
+      "oneOf": [
+        { "type": "string" },
+        { "$ref": "#/definitions/credRef" }
+      ]
+    },
+    "docker_registry_auth": {
+      "title": "Docker Registry Auth",
+      "description": "Authentication credential for the Docker registry that EnvGene reads. Accepts a plain string or a `$type: credRef` form for an external Credential. Falls back to the `GCP_SA_KEY` CI/CD variable when absent",
+      "oneOf": [
+        { "type": "string" },
+        { "$ref": "#/definitions/credRef" }
       ]
     }
   },
