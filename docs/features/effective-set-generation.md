@@ -198,15 +198,10 @@ For `remote` and `dual`, EnvGene resolves each connection parameter in this orde
 2. DCL parameters (`DCL_*`) from `e2eParameters` in `cloud.yaml` for the environment when the matching `ARGOCD_*` value
    is not in Cloud Passport
 
-| ARGOCD parameter         | DCL fallback in `e2eParameters` |
-|--------------------------|---------------------------------|
-| `ARGOCD_GITLAB_URL`      | `DCL_GIT_URL`                   |
-| `ARGOCD_GITLAB_BRANCH`   | `DCL_GIT_BRANCH`                |
-| `ARGOCD_GITLAB_USER`     | `DCL_CONFIG_GITLAB_USER`        |
-| `ARGOCD_GITLAB_PASSWORD` | `DCL_CONFIG_GITLAB_TOKEN`       |
-| `ARGOCD_URL`             | `DCL_CONFIG_ARGOCD_URL`         |
-| `ARGOCD_USER`            | `DCL_CONFIG_ARGOCD_USER`        |
-| `ARGOCD_PASSWORD`        | `DCL_CONFIG_ARGOCD_PASSWORD`    |
+| ARGOCD parameter         | DCL fallback in `e2eParameters` | Description |
+|--------------------------|---------------------------------|-------------|
+| `ARGOCD_GITLAB_URL`      | `DCL_GIT_URL`                   | External GitLab repository URL for Effective Set publish |
+| `ARGOCD_GITLAB_PASSWORD` | `DCL_CONFIG_GITLAB_TOKEN`       | GitLab access token with push permission to the publish branch |
 
 ### Branch resolution
 
@@ -219,8 +214,7 @@ For `remote` and `dual`, the publish branch is resolved in this order:
 ### Validation
 
 > [!NOTE]
-> For `remote` and `dual`, each rule below terminates the `generate_effective_set` job. The error names the failing
-> check and, when relevant, the missing parameter or URL.
+> For `remote` and `dual`, each rule below terminates the `generate_effective_set` job.
 
 #### During parameter resolution
 
@@ -230,9 +224,8 @@ For `remote` and `dual`, the publish branch is resolved in this order:
 
 #### During repository access check
 
-1. **Reachability.** The external GitLab URL responds before publish. Failure code: `endpoint_unreachable`.
-2. **Authentication.** Resolved credentials authenticate to that URL. Failure code: `authentication_failed` (includes
-   the URL and remediation guidance).
+1. **Reachability.** The external GitLab URL responds before publish.
+2. **Authentication.** The resolved GitLab token authenticates to that URL.
 
 See [Effective Set external export use cases](/docs/use-cases/effective-set-external-export.md) for worked examples.
 
