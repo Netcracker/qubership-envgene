@@ -176,7 +176,7 @@ Generation](#full-generation) and [Partial Generation](#partial-generation) supp
 ### External repository location
 
 ```text
-/environments/<environment_id>/effective-set
+/environments/<cluster-name>/<env-name>/effective-set
 ```
 
 > [!NOTE]
