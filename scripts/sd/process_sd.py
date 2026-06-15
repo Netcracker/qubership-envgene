@@ -284,7 +284,7 @@ def download_sds_with_version(env, base_sd_path, sd_version, effective_merge_mod
         logger.error("No valid SD versions found in SD_VERSION")
         exit(1)
 
-    app_def_getter_plugins = PluginEngine(plugins_dir='/module/scripts/handle_sd_plugins/app_def_getter')
+    app_def_getter_plugins = PluginEngine(plugins_dir='/module/scripts/plugins/handle_sd_plugins')
     sd_data_list = []
     for entry in sd_entries:  # appvers
         if ":" not in entry:

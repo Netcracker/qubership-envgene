@@ -69,7 +69,7 @@ class PipelineParametersHandler(BaseModel):
             "NAMESPACE_NAMES": getenv("NAMESPACE_NAMES", ""),
         }
 
-        pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/pipegene_plugins/pipe_parameters')
+        pipe_param_plugin = PluginEngine(plugins_dir='/module/scripts/plugins/pipe_parameters')
         if pipe_param_plugin.modules:
             pipe_param_plugin.run(pipeline_params=params)
 
