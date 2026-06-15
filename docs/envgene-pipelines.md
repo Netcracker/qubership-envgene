@@ -93,7 +93,7 @@ flowchart TB
 9. **generate_effective_set**:
    - **What happens in this job**:
        1. Generates the Effective Set
-       2. Invokes the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to materialize each external Credential in its target Secret Store. See [Credential provisioning](/docs/features/external-creds.md#credential-provisioning) for the CI/CD variable contract and failure semantics.
+       2. Invokes the [External Credentials provisioning CLI](/docs/features/external-creds-provisioning-cli.md) to materialize each external Credential in its target Secret Store. Skipped when the Environment Instance contains no external Credentials. See [Credential provisioning](/docs/features/external-creds.md#credential-provisioning) for the CI/CD variable contract and failure semantics.
    - **Condition**: Runs if [`GENERATE_EFFECTIVE_SET: true`](/docs/instance-pipeline-parameters.md#generate_effective_set)
    - **Docker image**: [`qubership-effective-set-generator`](https://github.com/Netcracker/qubership-envgene/pkgs/container/qubership-effective-set-generator)
 

@@ -53,15 +53,16 @@
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `credentials.yaml`](#version-20pipeline-parameter-context-credentialsyaml)
         - [\[Version 2.0\]\[Pipeline Parameter Context\] `external-credentials.yaml`](#version-20pipeline-parameter-context-external-credentialsyaml)
         - [Consumer Specific Context of Pipeline Context](#consumer-specific-context-of-pipeline-context)
-          - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-parameters.yaml`](#version-20pipeline-parameter-context-consumer-parametersyaml)
-          - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer>-credentials.yaml`](#version-20pipeline-parameter-context-consumer-credentialsyaml)
+          - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer-name>-parameters.yaml`](#version-20pipeline-parameter-context-consumer-name-parametersyaml)
+          - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer-name>-credentials.yaml`](#version-20pipeline-parameter-context-consumer-name-credentialsyaml)
+          - [\[Version 2.0\]\[Pipeline Parameter Context\] `<consumer-name>-external-credentials.yaml`](#version-20pipeline-parameter-context-consumer-name-external-credentialsyaml)
       - [\[Version 2.0\] Topology Context](#version-20-topology-context)
-        - [\[Version 2.0\]\[Topology Context\] `external-credentials.yaml`](#version-20topology-context-external-credentialsyaml)
         - [\[Version 2.0\]\[Topology Context\] `composite_structure` Example](#version-20topology-context-composite_structure-example)
         - [\[Version 2.0\]\[Topology Context\] `k8s_tokens` Example](#version-20topology-context-k8s_tokens-example)
         - [\[Version 2.0\]\[Topology Context\] `environments` Example](#version-20topology-context-environments-example)
         - [\[Version 2.0\]\[Topology Context\] `cluster` Example](#version-20topology-context-cluster-example)
         - [\[Version 2.0\]\[Topology Context\] `bg_domain` Example](#version-20topology-context-bg_domain-example)
+        - [\[Version 2.0\]\[Topology Context\] `external-credentials.yaml`](#version-20topology-context-external-credentialsyaml)
       - [\[Version 2.0\] Runtime Parameter Context](#version-20-runtime-parameter-context)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `parameters.yaml`](#version-20runtime-parameter-context-parametersyaml)
         - [\[Version 2.0\]\[Runtime Parameter Context\] `credentials.yaml`](#version-20runtime-parameter-context-credentialsyaml)
@@ -814,6 +815,9 @@ global: &id001
 
 This file contains **external** sensitive parameters defined in the `deployParameters` section of the `Tenant`, `Cloud`, `Namespace`, `Application` Environment Instance objects.
 
+The file is emitted once per application that has at least one external Credential Reference in its
+`deployParameters`. Applications without any external Credential Reference do not produce this file.
+
 For more information, refer to [Sensitive parameters via external Credentials](#version-20-sensitive-parameters-via-external-credentials).
 
 The structure of this file is as follows:
@@ -1212,7 +1216,8 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ##### \[Version 2.0][Pipeline Parameter Context] `credentials.yaml`
 
-This file contains **local** sensitive parameters defined in the `e2eParameters` section of the `Cloud` Environment Instance object.
+This file contains **local** sensitive parameters defined in the `e2eParameters` section of the `Cloud`
+Environment Instance object.
 
 The structure of this file is as follows:
 
@@ -1225,7 +1230,9 @@ The `<value>` can be complex, such as a map or a list, whose elements can also b
 
 ##### \[Version 2.0][Pipeline Parameter Context] `external-credentials.yaml`
 
-This file contains references for sensitive `e2eParameters` whose values resolve to external Credentials.
+This file contains references for sensitive parameters defined in the `e2eParameters` section of the `Cloud`
+Environment Instance object, whose values resolve to external Credentials.
+
 It is a flat map of parameter key to VALS URI:
 
 ```yaml
@@ -1233,8 +1240,8 @@ It is a flat map of parameter key to VALS URI:
 <key-N>: <vals-uri>
 ```
 
-A per-consumer subset is also emitted as `effective-set/pipeline/<consumer-name>-external-credentials.yaml`,
-filtered by the consumer's schema (same selector used for `<consumer-name>-credentials.yaml`).
+The global file is emitted when at least one `e2eParameter` resolves to an external Credential. Otherwise
+the file is not produced.
 
 For VALS URI form, generation algorithm, and consumer responsibilities, see
 [Pipeline context](/docs/features/external-creds.md#pipeline-context)
@@ -1242,25 +1249,44 @@ in [External Credentials Management](/docs/features/external-creds.md).
 
 ##### Consumer Specific Context of Pipeline Context
 
-Optionally, the pipeline context can include file pairs containing **consumer-specific** [sensitive](#version-20pipeline-parameter-context-consumer-credentialsyaml)/[non-sensitive](#version-20pipeline-parameter-context-consumer-parametersyaml) parameters. These parameters, derived as subsets of `parameters.yaml` and `credentials.yaml`, are generated based on a JSON schema provided by the `--pipeline-context-schema-path` attribute. The resulting parameters are saved in a separate pair of files:
+Optionally, the pipeline context can include files containing **consumer-specific** parameters. These
+parameters, derived as subsets of `parameters.yaml`, `credentials.yaml`, and `external-credentials.yaml`,
+are generated based on a JSON schema provided by the `--pipeline-context-schema-path` attribute. The
+resulting parameters are saved in a separate set of files:
 
-- `<consumer>-parameters.yaml`
-- `<consumer>-credentials.yaml`
+- `<consumer-name>-parameters.yaml`
+- `<consumer-name>-credentials.yaml`
+- `<consumer-name>-external-credentials.yaml`
 
-The `consumer` value is extracted from the filename (with `.schema.json` removed) of the JSON schema provided via the `--pipeline-context-schema-path` argument.
+The `consumer-name` value is extracted from the filename (with `.schema.json` removed) of the JSON schema
+provided via the `--pipeline-context-schema-path` argument.
 
-The calculator forms consumer-specific parameters according to the following principles:
+For each root-level parameter declared in the consumer's JSON schema, the calculator routes the parameter
+to one of the consumer-specific files (`<consumer-name>-parameters.yaml`,
+`<consumer-name>-credentials.yaml`, `<consumer-name>-external-credentials.yaml`) according to the following
+principles:
 
-1. If the JSON schema contains a parameter that exists in the general parameters, it is added to the consumer-specific parameters
-2. If the JSON schema contains a parameter that does not exist in the general parameters:
-   1. If a default value is set for this parameter, it will be added to the consumer-specific parameters
-   2. If no default value is set for this parameter and the parameter is not mandatory, the parameter will not be added
-   3. If no default value is set for this parameter and the parameter is mandatory, the generation process will terminate with an error
-3. These rules apply only to root-level parameters
+1. If the parameter exists in the general `parameters.yaml`, its value is added to
+   `<consumer-name>-parameters.yaml`
+2. Otherwise, if the parameter exists in the general `credentials.yaml`, its value is added to
+   `<consumer-name>-credentials.yaml`
+3. Otherwise, if the parameter exists in the global `external-credentials.yaml`, its entry (a VALS
+   reference) is added to `<consumer-name>-external-credentials.yaml`
+4. Otherwise:
+   1. If a default value is set for this parameter in the schema, the default is added to
+      `<consumer-name>-parameters.yaml`. A schema default is treated as a plain non-sensitive value and
+      cannot represent a local credential or an external Credential
+   2. If no default value is set and the parameter is not mandatory, the parameter is not added
+   3. If no default value is set and the parameter is mandatory, the generation process terminates with
+      an error
+5. These rules apply only to root-level parameters
+6. `<consumer-name>-parameters.yaml` and `<consumer-name>-credentials.yaml` are produced when the consumer
+   is declared (each file may be empty). `<consumer-name>-external-credentials.yaml` is produced only when
+   rule 3 adds at least one entry. Otherwise the file is not produced
 
 [Example of consumer-specific pipeline context component JSON schema](/examples/consumer-v1.0.json)
 
-###### \[Version 2.0][Pipeline Parameter Context] `<consumer>-parameters.yaml`
+###### \[Version 2.0][Pipeline Parameter Context] `<consumer-name>-parameters.yaml`
 
 This file contains consumer-specific non-sensitive parameters.
 The structure of this file is as follows:
@@ -1272,7 +1298,7 @@ The structure of this file is as follows:
 
 The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
 
-###### \[Version 2.0][Pipeline Parameter Context] `<consumer>-credentials.yaml`
+###### \[Version 2.0][Pipeline Parameter Context] `<consumer-name>-credentials.yaml`
 
 This file contains consumer-specific **local** sensitive parameters.
 
@@ -1284,6 +1310,24 @@ The structure of this file is as follows:
 ```
 
 The `<value>` can be complex, such as a map or a list, whose elements can also be complex.
+
+###### \[Version 2.0][Pipeline Parameter Context] `<consumer-name>-external-credentials.yaml`
+
+This file contains references for **external** sensitive consumer-specific parameters. It is the
+per-consumer subset of [`external-credentials.yaml`](#version-20pipeline-parameter-context-external-credentialsyaml),
+filtered by the consumer's JSON schema.
+
+It is a flat map of parameter key to VALS URI:
+
+```yaml
+<key-1>: <vals-uri>
+<key-N>: <vals-uri>
+```
+
+The file is produced when at least one parameter from the consumer's JSON schema is routed to it under rule
+3 of the routing algorithm in
+[Consumer Specific Context of Pipeline Context](#consumer-specific-context-of-pipeline-context). Otherwise
+the file is not produced.
 
 #### [Version 2.0] Topology Context
 
@@ -1438,6 +1482,9 @@ bg_domain:
     username: <vals-uri>
     password: <vals-uri>
 ```
+
+The file is emitted when at least one Built-in credential reference resolves to an external Credential.
+Otherwise the file is not produced.
 
 For VALS URI form, generation algorithm, the default-store constraint, and consumer responsibilities, see
 [Topology context](/docs/features/external-creds.md#topology-context) in
